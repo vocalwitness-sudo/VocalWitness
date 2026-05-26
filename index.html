@@ -5,9 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VocalWitness - Decentralized Truth Ledger</title>
     
+    <!-- External Frameworks -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/exifr.min.js"></script>
 
+    <!-- Global App Styles -->
     <style>
         body {
             background-color: #030712;
@@ -49,10 +51,11 @@
 </head>
 <body class="min-h-screen pb-28">
 
+    <!-- TOP HEADER & LANGUAGE NAVIGATION -->
     <nav class="sticky top-0 z-50 bg-[#060b16]/90 backdrop-blur-md border-b border-zinc-900 px-4 py-4">
         <div class="max-w-2xl mx-auto flex justify-between items-center">
             <div class="flex items-center gap-2 cursor-pointer" onclick="window.switchTab(0)">
-                <svg class="w-7 h-7 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                <span class="text-3xl">👁️</span>
                 <h1 class="text-2xl font-black text-emerald-400 tracking-tight">VocalWitness</h1>
             </div>
             <select id="langSelect" onchange="window.changeLanguage()" 
@@ -74,10 +77,9 @@
 
     <main class="max-w-2xl mx-auto px-4 mt-4">
 
+        <!-- SECURITY / GATEWAY AUTHENTICATION SECTION -->
         <section id="authSection" class="glass rounded-[32px] p-8 text-center my-12 shadow-2xl">
-            <div class="w-16 h-16 bg-emerald-500/10 rounded-3xl flex items-center justify-center mx-auto mb-4 text-emerald-400">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-            </div>
+            <div class="w-16 h-16 bg-emerald-500/10 rounded-3xl flex items-center justify-center mx-auto mb-4 text-3xl">🔐</div>
             <h2 id="authTitle" class="text-2xl font-black tracking-tight mb-2">Anchor Your Identity Node</h2>
             <p id="authSubtitle" class="text-zinc-400 text-sm mb-8 max-w-sm mx-auto">Access decentralized ledger channels across Nigeria. Only human verified nodes can broadcast truth.</p>
             
@@ -86,8 +88,10 @@
             </button>
         </section>
 
+        <!-- SECURE DASHBOARD (HIDDEN PRE-AUTH) -->
         <div id="mainApp" class="hidden space-y-6">
 
+            <!-- METRIC HUD PANEL -->
             <header class="glass rounded-3xl p-5 flex justify-between items-center shadow-lg">
                 <div class="flex items-center gap-3">
                     <div id="userAvatar" class="w-11 h-11 bg-emerald-500 rounded-xl flex items-center justify-center font-black text-black text-lg">V</div>
@@ -102,22 +106,20 @@
                 </div>
             </header>
 
+            <!-- WITNESS CHANNELS FEED SECTION -->
             <div id="feedViewContainer" class="space-y-6">
                 <div class="grid grid-cols-2 gap-3">
                     <button onclick="window.switchFeed('vocaltruth')" id="vocalTab" class="tab-active py-3.5 rounded-2xl font-bold text-sm transition-all shadow-md">Vocal Truth</button>
                     <button onclick="window.switchFeed('streettalk')" id="streetTab" class="bg-zinc-900/40 hover:bg-zinc-900 border border-zinc-800 text-zinc-400 py-3.5 rounded-2xl font-bold text-sm transition-all">Street Talk</button>
                 </div>
 
+                <!-- COMPOSER INTERFACE -->
                 <div class="glass rounded-3xl p-5 shadow-xl relative">
                     <textarea id="mainInput" rows="4" class="w-full bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-4 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500 placeholder-zinc-500 resize-none" placeholder="What factual event did you personally witness?"></textarea>
                     
                     <div class="grid grid-cols-2 gap-3 my-4">
-                        <button onclick="window.triggerImageUpload()" class="py-3 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-xl text-xs font-bold text-zinc-300 flex items-center justify-center gap-2">
-                            <svg class="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg> Photo/Forensic
-                        </button>
-                        <button id="voiceBtn" onclick="window.toggleRecording()" class="py-3 bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-xs font-bold text-emerald-400 flex items-center justify-center gap-2">
-                            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg> Voice Note
-                        </button>
+                        <button onclick="window.triggerImageUpload()" class="py-3 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-xl text-xs font-bold text-zinc-300 flex items-center justify-center gap-2">📸 Photo/Forensic</button>
+                        <button id="voiceBtn" onclick="window.toggleRecording()" class="py-3 bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-xs font-bold text-emerald-400 flex items-center justify-center gap-2">🎙️ Voice Note</button>
                     </div>
 
                     <input type="file" id="imageInput" accept="image/*" class="hidden" onchange="window.handleImage(event)">
@@ -126,52 +128,50 @@
                     <button onclick="window.submitPost()" id="submitBtn" class="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold py-4 rounded-2xl text-base shadow-lg">ANCHOR TESTIMONY</button>
                 </div>
 
+                <!-- DYNAMIC TARGET CARDS HOUSING -->
                 <div id="feed" class="space-y-4"></div>
             </div>
 
+            <!-- CRYPTOGRAPHIC HISTORY LOGS -->
             <div id="myTestimoniesView" class="hidden space-y-4">
-                <h3 class="text-sm font-bold tracking-widest text-zinc-400 uppercase">Your Anchored Ledger Artifacts</h3>
+                <div class="p-1 bg-zinc-950 rounded-2xl border border-zinc-900 mb-2">
+                    <div class="px-4 py-3 text-xs font-bold text-zinc-400 tracking-wider uppercase">Your Cryptographic Logs</div>
+                </div>
                 <div id="myTestimoniesTab" class="space-y-4"></div>
             </div>
 
-            <div id="profileView" class="hidden space-y-6">
-                <div class="glass rounded-3xl p-6 text-center shadow-xl">
-                    <div id="profileBigAvatar" class="w-20 h-20 bg-emerald-500 text-black font-black text-3xl flex items-center justify-center mx-auto rounded-2xl shadow-lg">V</div>
-                    <h3 id="profileName" class="text-xl font-bold mt-4">Verified Node</h3>
-                    <p class="text-xs text-emerald-400 font-bold mt-1 uppercase tracking-widest">Active Verification Core</p>
-                    
-                    <div id="profileStatsContainer"></div>
-
-                    <div class="mt-8">
-                        <button onclick="window.logout()" class="w-full py-3.5 bg-red-950/30 hover:bg-red-900/20 border border-red-500/30 text-red-400 font-extrabold rounded-2xl transition">DISCONNECT IDENTITY NODE</button>
-                    </div>
+            <!-- ACCOUNT INTERFACE -->
+            <div id="profileView" class="hidden space-y-4">
+                <div class="glass rounded-3xl p-6 text-center">
+                    <div id="profileBigAvatar" class="w-20 h-20 mx-auto bg-gradient-to-tr from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center text-4xl font-black text-black shadow-inner mb-3">V</div>
+                    <h3 id="profileName" class="text-xl font-extrabold tracking-tight">Verified Node Account</h3>
+                    <p id="profileTierText" class="text-emerald-400 text-xs font-bold mt-0.5">Level 1 Witness</p>
                 </div>
+                <button onclick="window.logout()" class="w-full py-3.5 bg-red-950/30 hover:bg-red-900/20 border border-red-500/30 text-red-400 font-extrabold rounded-2xl">DISCONNECT IDENTITY NODE</button>
             </div>
-
         </div>
     </main>
 
+    <!-- NAV BAR CORE LAYOUT -->
     <div class="fixed bottom-0 left-0 right-0 max-w-2xl mx-auto bg-[#060b16]/95 border-t border-zinc-900/80 backdrop-blur-lg z-50 px-4">
         <div class="grid grid-cols-3 py-2 text-center">
             <button onclick="window.switchTab(0)" id="navFeedBtn" class="nav-active flex flex-col items-center justify-center p-2.5 text-zinc-400 transition">
-                <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 4a2 2 0 012 2v7a2 2 0 01-2 2H9a2 2 0 01-2-2v-1"/></svg>
-                <span id="navTextFeed" class="text-[9px] font-bold mt-1">PUBLIC FEED</span>
+                <span class="text-xl">📰</span><span id="navTextFeed" class="text-[9px] font-bold mt-1">FEED</span>
             </button>
             <button onclick="window.switchTab(1)" id="navDocsBtn" class="flex flex-col items-center justify-center p-2.5 text-zinc-400 transition">
-                <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
-                <span id="navTextLogs" class="text-[9px] font-bold mt-1">LEDGER HISTORY</span>
+                <span class="text-xl">📂</span><span id="navTextLogs" class="text-[9px] font-bold mt-1">LOGS</span>
             </button>
             <button onclick="window.switchTab(2)" id="navUserBtn" class="flex flex-col items-center justify-center p-2.5 text-zinc-400 transition">
-                <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                <span id="navTextProfile" class="text-[9px] font-bold mt-1">NODE PROFILE</span>
+                <span class="text-xl">👤</span><span id="navTextProfile" class="text-[9px] font-bold mt-1">PROFILE</span>
             </button>
         </div>
     </div>
 
+    <!-- REVERSED DEPLOYMENT ENGINE (ES MODULE) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, onSnapshot, query, where, orderBy, serverTimestamp, doc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, where, orderBy, serverTimestamp, doc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-storage.js";
 
         // Decentralized Cluster Node Handshake Parameters
@@ -192,17 +192,17 @@
 
         // Internationalization Core Configurations
         const i18n = {
-            en: { authTitle: "Anchor Your Identity Node", authSubtitle: "Only human verified nodes can broadcast truth.", composerVT: "What factual event did you personally witness?", composerST: "Gist, rumors, chats, or general community vibes...", submitBtn: "ANCHOR TESTIMONY", feedTab: "PUBLIC FEED", logsTab: "LEDGER HISTORY", profileTab: "NODE PROFILE" },
-            pidgin: { authTitle: "Lock Your Account Join Us", authSubtitle: "Enter the side where pure truth dey standard.", composerVT: "Wetin you eye see? Drop am sharp sharp...", composerST: "Drop the gist, talk talk, area updates...", submitBtn: "POST MATTERS NOW", feedTab: "GIST FEED", logsTab: "MY HISTORY", profileTab: "PROFILE SETUP" },
-            yo: { authTitle: "Fi Ẹsẹ Rẹ Lélẹ̀", authSubtitle: "Wọlé sí ibi tí otitọ gidi ti ń jọba.", composerVT: "Kí lo rí pẹ̀lú ojú rẹ?", composerST: "Sọ̀rọ̀ nípa àwọn ọ̀rọ̀ ìgboro...", submitBtn: "FI Ẹ̀RÍ SỌ́LẸ̀", feedTab: "ÌWÉ ÌRÒYÌN", logsTab: "ÀWỌN ÀKỌSÍLẸ̀ MI", profileTab: "ÈTÒ ARA ẸNI" },
-            ha: { authTitle: "Tabbatar da Shaidarka", authSubtitle: "Shiga kafar sadarwa ta gaskiya.", composerVT: "Mene ne idanunka suka gani?", composerST: "Kace wani abu game da zantukan gari...", submitBtn: "TABBATAR DA SHAIDA", feedTab: "LABARAI", logsTab: "TARIHI NA", profileTab: "SAITUNA" },
-            ig: { authTitle: "Kọwaa Onwe Gị", authSubtitle: "Banye na netwọk eziokwu.", composerVT: "Gịnị kpọmkwem ka i jiri anya gị abụọ hụ?", composerST: "Kọọ akụkọ gbasara ihe na-eme n'okporo ụzọ...", submitBtn: "GBASAO EZIOKWU", feedTab: "OZI OKPORO", logsTab: "IHE NDEKỌ M", profileTab: "NHAZI ONWE" },
-            fr: { authTitle: "Ancrez Votre Identité", authSubtitle: "Seuls les nœuds humains vérifiés peuvent diffuser la vérité.", composerVT: "Quel événement avez-vous personnellement témoigné ?", composerST: "Ragots, rumeurs, discussions communautaires...", submitBtn: "ANCRER LE TÉMOIGNAGE", feedTab: "FLUX PUBLIC", logsTab: "MES LOGS", profileTab: "PROFIL" },
-            es: { authTitle: "Ancla Tu Identidad", authSubtitle: "Solo nodos humanos verificados pueden transmitir verdad.", composerVT: "¿Qué evento presenciaste personalmente?", composerST: "Chismes, rumores, charlas comunitarias...", submitBtn: "ANCLAR TESTIMONIO", feedTab: "FEED PÚBLICO", logsTab: "MIS REGISTROS", profileTab: "PERFIL" },
-            ar: { authTitle: "ثبت هويتك", authSubtitle: "فقط العقد البشرية الموثقة يمكنها بث الحقيقة.", composerVT: "ما الحدث الذي شهدته بنفسك؟", composerST: "القيل والقال، الشائعات، أحادث المجتمع...", submitBtn: "تثبيت الشهادة", feedTab: "التدفق العام", logsTab: "سجلاتي", profileTab: "الملف الشخصي" },
-            zh: { authTitle: "锚定您的身份", authSubtitle: "只有经过验证的人类节点才能传播真相。", composerVT: "您亲眼目睹了什么事件？", composerST: "闲话、谣言、社区讨论...", submitBtn: "锚定证词", feedTab: "公共动态", logsTab: "我的记录", profileTab: "个人资料" },
-            pt: { authTitle: "Ancore Sua Identidade", authSubtitle: "Apenas nós humanos verificados podem transmitir a verdade.", composerVT: "Qual evento você testemunhou pessoalmente?", composerST: "Fofocas, rumores, conversas comunitárias...", submitBtn: "ANCORAR TESTEMUNHO", feedTab: "FEED PÚBLICO", logsTab: "MEUS REGISTROS", profileTab: "PERFIL" },
-            de: { authTitle: "Verankere Deine Identität", authSubtitle: "Nur verifizierte menschliche Knoten können Wahrheit senden.", composerVT: "Welches Ereignis haben Sie persönlich erlebt?", composerST: "Klatsch, Gerüchte, Community-Gespräche...", submitBtn: "ZEUGNIS VERANKERN", feedTab: "PUBLIC FEED", logsTab: "MEINE LOGS", profileTab: "PROFIL" }
+            en: { authTitle: "Anchor Your Identity Node", authSubtitle: "Only human verified nodes can broadcast truth.", composerVT: "What factual event did you personally witness?", composerST: "Gist, rumors, chats, or general community vibes...", submitBtn: "ANCHOR TESTIMONY", feedTab: "Feed", logsTab: "My Logs", profileTab: "Profile" },
+            pidgin: { authTitle: "Lock Your Account Join Us", authSubtitle: "Enter the side where pure truth dey standard.", composerVT: "Wetin you eye see? Drop am sharp sharp...", composerST: "Drop the gist, talk talk, area updates...", submitBtn: "POST MATTERS NOW", feedTab: "Gist Feed", logsTab: "My History", profileTab: "Profile Setup" },
+            yo: { authTitle: "Fi Ẹsẹ Rẹ Lélẹ̀", authSubtitle: "Wọlé sí ibi tí otitọ gidi ti ń jọba.", composerVT: "Kí lo rí pẹ̀lú ojú rẹ?", composerST: "Sọ̀rọ̀ nípa àwọn ọ̀rọ̀ ìgboro...", submitBtn: "FI Ẹ̀RÍ SỌ́LẸ̀", feedTab: "Ìwé Ìròyìn", logsTab: "Àwọn Àkọsílẹ̀ Mi", profileTab: "Ètò Ara Ẹni" },
+            ha: { authTitle: "Tabbatar da Shaidarka", authSubtitle: "Shiga kafar sadarwa ta gaskiya.", composerVT: "Mene ne idanunka suka gani?", composerST: "Kace wani abu game da zantukan gari...", submitBtn: "TABBATAR DA SHAIDA", feedTab: "Labarai", logsTab: "Tarihi Na", profileTab: "Saituna" },
+            ig: { authTitle: "Kọwaa Onwe Gị", authSubtitle: "Banye na netwọk eziokwu.", composerVT: "Gịnị kpọmkwem ka i jiri anya gị abụọ hụ?", composerST: "Kọọ akụkọ gbasara ihe na-eme n'okporo ụzọ...", submitBtn: "GBASAO EZIOKWU", feedTab: "Ozi Okporo", logsTab: "Ihe Ndekọ M", profileTab: "Nhazi Onwe" },
+            fr: { authTitle: "Ancrez Votre Identité", authSubtitle: "Seuls les nœuds humains vérifiés peuvent diffuser la vérité.", composerVT: "Quel événement avez-vous personnellement témoigné ?", composerST: "Ragots, rumeurs, discussions communautaires...", submitBtn: "ANCRER LE TÉMOIGNAGE", feedTab: "Flux", logsTab: "Mes Logs", profileTab: "Profil" },
+            es: { authTitle: "Ancla Tu Identidad", authSubtitle: "Solo nodos humanos verificados pueden transmitir verdad.", composerVT: "¿Qué evento presenciaste personalmente?", composerST: "Chismes, rumores, charlas comunitarias...", submitBtn: "ANCLAR TESTIMONIO", feedTab: "Feed", logsTab: "Mis Registros", profileTab: "Perfil" },
+            ar: { authTitle: "ثبت هويتك", authSubtitle: "فقط العقد البشرية الموثقة يمكنها بث الحقيقة.", composerVT: "ما الحدث الذي شهدته بنفسك؟", composerST: "القيل والقال، الشائعات، أحادث المجتمع...", submitBtn: "تثبيت الشهادة", feedTab: "التدفق", logsTab: "سجلاتي", profileTab: "الملف" },
+            zh: { authTitle: "锚定您的身份", authSubtitle: "只有经过验证的人类节点才能传播真相。", composerVT: "您亲眼目睹了什么事件？", composerST: "闲话、谣言、社区讨论...", submitBtn: "锚定证词", feedTab: "动态", logsTab: "我的记录", profileTab: "个人资料" },
+            pt: { authTitle: "Ancore Sua Identidade", authSubtitle: "Apenas nós humanos verificados podem transmitir a verdade.", composerVT: "Qual evento você testemunhou pessoalmente?", composerST: "Fofocas, rumores, conversas comunitárias...", submitBtn: "ANCORAR TESTEMUNHO", feedTab: "Feed", logsTab: "Meus Registros", profileTab: "Perfil" },
+            de: { authTitle: "Verankere Deine Identität", authSubtitle: "Nur verifizierte menschliche Knoten können Wahrheit senden.", composerVT: "Welches Ereignis haben Sie persönlich erlebt?", composerST: "Klatsch, Gerüchte, Community-Gespräche...", submitBtn: "ZEUGNIS VERANKERN", feedTab: "Feed", logsTab: "Meine Logs", profileTab: "Profil" }
         };
 
         // App Reactive Engine Memory Structures
@@ -253,7 +253,6 @@
                 document.getElementById('profileName').textContent = user.displayName || "Verified Node";
                 window.changeLanguage();
                 setupRealtimeListeners();
-                renderProfileStats();
                 window.switchTab(0);
             } else {
                 if (unsubscribeFeed) unsubscribeFeed();
@@ -265,13 +264,7 @@
             if (unsubscribeFeed) unsubscribeFeed();
             if (unsubscribeLogs) unsubscribeLogs();
 
-            const feedQuery = query(
-                collection(db, "posts"), 
-                where("type", "==", currentFeed), 
-                where("status", "==", "active"), 
-                orderBy("createdAt", "desc")
-            );
-            
+            const feedQuery = query(collection(db, "posts"), where("type", "==", currentFeed), orderBy("createdAt", "desc"));
             unsubscribeFeed = onSnapshot(feedQuery, (snapshot) => {
                 const feedEl = document.getElementById('feed');
                 feedEl.innerHTML = '';
@@ -279,20 +272,11 @@
             }, (error) => console.error("Database connection logs: ", error));
 
             if (currentUser) {
-                const logsQuery = query(
-                    collection(db, "posts"), 
-                    where("uid", "==", currentUser.uid), 
-                    where("status", "==", "active"),
-                    orderBy("createdAt", "desc")
-                );
-                
+                const logsQuery = query(collection(db, "posts"), where("uid", "==", currentUser.uid), orderBy("createdAt", "desc"));
                 unsubscribeLogs = onSnapshot(logsQuery, (snapshot) => {
                     const logsTabEl = document.getElementById('myTestimoniesTab');
-                    if (logsTabEl) {
-                        logsTabEl.innerHTML = '';
-                        snapshot.forEach((docSnap) => renderCard(logsTabEl, docSnap, true));
-                    }
-                    renderProfileStats();
+                    logsTabEl.innerHTML = '';
+                    snapshot.forEach((docSnap) => renderCard(logsTabEl, docSnap, true));
                 });
             }
         }
@@ -306,45 +290,23 @@
             if (data.imageUrl) mediaHtml += `<img src="${data.imageUrl}" class="image-preview mt-2" loading="lazy">`;
             if (data.voiceUrl) mediaHtml += `<audio controls class="w-full mt-2" style="color-scheme: dark;"><source src="${data.voiceUrl}" type="audio/webm"></audio>`;
 
-            const isCurrentUserOwner = currentUser && currentUser.uid === data.uid;
-            const softDeleteBtnHtml = isCurrentUserOwner ? `
-                <button onclick="window.requestSoftDelete('${docSnap.id}')" class="text-[10px] tracking-wider bg-red-950/40 hover:bg-red-900 border border-red-900/60 text-red-400 px-2.5 py-1 rounded-xl font-bold ml-auto transition">
-                    🗑️ HIDE TRUTH
-                </button>
-            ` : '';
-
             card.innerHTML = `
                 <div class="flex justify-between items-start">
-                    <div class="w-full">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-bold text-emerald-400 tracking-wider">@${data.author}</span>
-                            ${softDeleteBtnHtml}
-                        </div>
+                    <div>
+                        <span class="text-xs font-bold text-emerald-400 tracking-wider">@${data.author}</span>
                         <p class="text-sm text-zinc-200 mt-2 leading-relaxed">${data.text}</p>
                         ${mediaHtml}
                     </div>
                 </div>
                 <div class="flex items-center gap-4 text-xs pt-2 border-t border-zinc-900">
                     <button onclick="window.respectPost('${docSnap.id}')" class="flex items-center gap-1.5 text-zinc-400 hover:text-emerald-400 transition font-bold">
-                        ✊ Respect <span class="bg-zinc-900 px-2 py-0.5 rounded-full text-[10px] text-emerald-400">${data.respects || 0}</span>
+                        Respect <span class="bg-zinc-900 px-2 py-0.5 rounded-full text-[10px] text-emerald-400">${data.respects || 0}</span>
                     </button>
                     <span class="text-zinc-600 font-medium ml-auto">${data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleDateString() : 'Syncing...'}</span>
                 </div>
             `;
             targetContainer.appendChild(card);
         }
-
-        window.requestSoftDelete = async (postId) => {
-            if (confirm("Hide this testimony from the active global truth feed layout?")) {
-                try {
-                    const docRef = doc(db, "posts", postId);
-                    await updateDoc(docRef, { status: "hidden" });
-                    showToast("Ledger Artifact Hidden from Feed View");
-                } catch (err) {
-                    showToast("Adjustment Error: " + err.message);
-                }
-            }
-        };
 
         window.respectPost = async (postId) => {
             try {
@@ -354,42 +316,6 @@
                 console.error("Ledger correction failure: ", err);
             }
         };
-
-        async function renderProfileStats() {
-            if (!currentUser) return;
-            try {
-                const statsQuery = query(
-                    collection(db, "posts"),
-                    where("uid", "==", currentUser.uid),
-                    where("status", "==", "active")
-                );
-                const querySnapshot = await getDocs(statsQuery);
-                let totalRespectsEarned = 0;
-                let totalPostsAnchored = querySnapshot.size;
-                
-                querySnapshot.forEach((doc) => {
-                    totalRespectsEarned += (doc.data().respects || 0);
-                });
-
-                const container = document.getElementById("profileStatsContainer");
-                if (container) {
-                    container.innerHTML = `
-                        <div class="grid grid-cols-2 gap-3 mt-6 text-center">
-                            <div class="bg-zinc-950/60 p-4 rounded-2xl border border-zinc-900">
-                                <div class="text-[10px] text-zinc-500 font-bold tracking-wider uppercase">TRUTHS ANCHORED</div>
-                                <div class="text-2xl font-black text-emerald-400 mt-1">${totalPostsAnchored}</div>
-                            </div>
-                            <div class="bg-zinc-950/60 p-4 rounded-2xl border border-zinc-900">
-                                <div class="text-[10px] text-zinc-500 font-bold tracking-wider uppercase">GLOBAL RESPECT</div>
-                                <div class="text-2xl font-black text-amber-400 mt-1">✨ ${totalRespectsEarned}</div>
-                            </div>
-                        </div>
-                    `;
-                }
-            } catch (err) {
-                console.error("Stats processing error:", err);
-            }
-        }
 
         window.submitPost = async () => {
             const text = document.getElementById('mainInput').value.trim();
@@ -423,7 +349,6 @@
                     imageUrl: imageUrl,
                     voiceUrl: voiceUrl,
                     respects: 0,
-                    status: "active",
                     createdAt: serverTimestamp()
                 });
 
@@ -432,10 +357,9 @@
                 window.clearMediaPreviews();
             } catch (err) {
                 showToast("Error: " + err.message);
-            } {
+            } finally {
                 submitBtn.disabled = false;
                 window.changeLanguage();
-                renderProfileStats();
             }
         };
 
@@ -504,9 +428,6 @@
                 const el = document.getElementById(id);
                 if (el) el.classList.toggle('nav-active', i === tabIndex);
             });
-            if(tabIndex === 2) {
-                renderProfileStats();
-            }
         };
 
         window.switchFeed = (feedType) => {
@@ -526,4 +447,4 @@
         window.changeLanguage();
     </script>
 </body>
-</html>
+</html> 
