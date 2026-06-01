@@ -18,23 +18,28 @@
 </head>
 <body class="min-h-screen pb-28">
     
+    <!-- HEADER STICKY NAVIGATION CHANNEL -->
     <nav class="sticky top-0 z-50 bg-[#060b16]/90 backdrop-blur-md border-b border-zinc-900 px-4 py-4">
         <div class="max-w-2xl mx-auto flex justify-between items-center">
             <div class="flex items-center gap-2 cursor-pointer" onclick="window.switchTab(0)">
-                <span class="text-3xl">👁️</span>
                 <h1 class="text-2xl font-black text-emerald-400 tracking-tight">VocalWitness</h1>
             </div>
+            <!-- ALL REGIONAL NIGERIAN LINGUISTIC TARGETS RESTORED -->
             <select id="langSelect" onchange="window.changeLanguage()" class="bg-zinc-900 text-white text-sm border border-zinc-700 rounded-full px-4 py-2 focus:outline-none focus:ring-1 focus:ring-emerald-500">
                 <option value="en">English</option>
                 <option value="pidgin">Pidgin</option>
+                <option value="igbo">Igbo</option>
+                <option value="yoruba">Yorùbá</option>
+                <option value="hausa">Hausa</option>
             </select>
         </div>
     </nav>
 
+    <!-- CORE APPARATUS CONTAINER MATRIX -->
     <main class="max-w-2xl mx-auto px-4 mt-4">
         
+        <!-- INITIAL DISCONNECTED IDENTITY AUTH REGISTRATION NODE -->
         <section id="authSection" class="glass rounded-[32px] p-8 text-center my-12 shadow-2xl">
-            <div class="w-16 h-16 bg-emerald-500/10 rounded-3xl flex items-center justify-center mx-auto mb-4 text-3xl">🔐</div>
             <h2 id="authTitle" class="text-2xl font-black tracking-tight mb-2">Anchor Your Identity Node</h2>
             <p id="authSubtitle" class="text-zinc-400 text-sm mb-8 max-w-sm mx-auto">Access decentralized ledger channels across Nigeria. Only human verified nodes can broadcast truth.</p>
             <button onclick="window.googleLogin()" class="w-full py-4 bg-white text-black hover:bg-zinc-100 font-bold rounded-2xl text-base flex items-center justify-center gap-3 transition-all shadow-lg">
@@ -42,8 +47,10 @@
             </button>
         </section>
 
+        <!-- MAIN SECURE VERIFIED INTERFACE SHELL -->
         <div id="mainApp" class="hidden space-y-6">
             
+            <!-- APPLICATION NODE STATUS BANNER -->
             <header class="glass rounded-3xl p-5 flex justify-between items-center shadow-lg">
                 <div class="flex items-center gap-3">
                     <div id="userAvatar" class="w-11 h-11 bg-emerald-500 rounded-xl flex items-center justify-center font-black text-black text-lg cursor-pointer" onclick="window.switchTab(2)">V</div>
@@ -58,29 +65,35 @@
                 </div>
             </header>
 
+            <!-- APPARATUS PERSISTENT VIEWS INTERCHANGE CONTROLS -->
             <div id="feedViewContainer" class="space-y-6">
                 <div class="grid grid-cols-2 gap-3">
                     <button onclick="window.switchFeed('vocaltruth')" id="vocalTab" class="bg-zinc-900/40 border border-zinc-800 text-zinc-400 py-3.5 rounded-2xl font-bold text-sm">Vocal Truth</button>
                     <button onclick="window.switchFeed('streettalk')" id="streetTab" class="tab-active py-3.5 rounded-2xl font-bold text-sm">Street Talk</button>
                 </div>
 
+                <!-- ANCHOR DATA INJECTION INPUT CONSOLE -->
                 <div class="glass rounded-3xl p-5">
                     <textarea id="mainInput" rows="4" class="w-full bg-zinc-900/60 border border-zinc-800 rounded-2xl p-4 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500" placeholder="What factual event did you personally witness?"></textarea>
                     
+                    <!-- HIGH-RESILIENCE TEXT CONTROLS FOR ALL DEVICE OPERATING SYSTEMS -->
                     <div class="grid grid-cols-2 gap-3 my-4">
-                        <button onclick="window.triggerImageUpload()" class="py-3 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-xl text-xs font-bold">📸 Photo</button>
-                        <button id="voiceBtn" onclick="window.toggleRecording()" class="py-3 bg-emerald-500/5 border border-emerald-500/30 rounded-xl text-xs font-bold text-emerald-400">🎙️ Voice Note</button>
+                        <button onclick="window.triggerImageUpload()" class="py-3 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-xl text-xs font-bold uppercase tracking-wider text-zinc-300">Add Photo</button>
+                        <button id="voiceBtn" onclick="window.toggleRecording()" class="py-3 bg-emerald-500/5 border border-emerald-500/30 rounded-xl text-xs font-bold text-emerald-400 uppercase tracking-wider">Record Voice</button>
                     </div>
                     
+                    <!-- HIDDEN ASSET STREAM CHANNELS -->
                     <input type="file" id="imageInput" accept="image/*" class="hidden" onchange="window.handleImage(event)">
                     <div id="previewArea" class="hidden mb-4"></div>
                     
-                    <button onclick="window.submitPost()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold py-4 rounded-2xl">ANCHOR TESTIMONY</button>
+                    <button id="submitPostBtn" onclick="window.submitPost()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold py-4 rounded-2xl uppercase tracking-wider text-sm">ANCHOR TESTIMONY</button>
                 </div>
 
+                <!-- REAL-TIME LEDGER FEED RENDERING FIELD -->
                 <div id="feed" class="space-y-4"></div>
             </div>
 
+            <!-- SECURE SYSTEM ACCOUNT PROFILE VIEW -->
             <div id="profileView" class="hidden space-y-6">
                 <div class="glass rounded-3xl p-8 text-center">
                     <div class="flex flex-col items-center space-y-3 mb-6">
@@ -95,32 +108,36 @@
                     <div class="flex justify-center gap-3 mt-4" id="verificationBadges"></div>
                 </div>
 
+                <!-- ENHANCED CRYPTOGRAPHIC GATEWAY SYSTEMS -->
                 <div class="glass rounded-3xl p-6 space-y-4">
                     <div id="recaptcha-container"></div>
-                    <button onclick="window.startPhoneVerification()" class="w-full py-4 bg-white text-black rounded-2xl font-semibold">Verify Phone (Global OTP)</button>
-                    <button onclick="window.startZKVerification()" class="w-full py-4 bg-amber-500/10 border border-amber-500 text-amber-400 rounded-2xl font-semibold">Enable Zero-Knowledge</button>
-                    <button onclick="window.viewZKProof()" class="w-full py-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 rounded-2xl font-semibold">🔍 View My ZK Proof</button>
+                    <button id="phoneVerifyBtn" onclick="window.startPhoneVerification()" class="w-full py-4 bg-white text-black rounded-2xl font-semibold uppercase text-xs tracking-wider">Verify Phone (Global OTP)</button>
+                    <button id="zkVerifyBtn" onclick="window.startZKVerification()" class="w-full py-4 bg-amber-500/10 border border-amber-500 text-amber-400 rounded-2xl font-semibold uppercase text-xs tracking-wider">Enable Zero-Knowledge</button>
+                    <button onclick="window.viewZKProof()" class="w-full py-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 rounded-2xl font-semibold uppercase text-xs tracking-wider">View My ZK Proof</button>
                 </div>
 
+                <!-- SECURITY COMPLIANCE BLOCKED NODES COMPARTMENT -->
                 <div class="glass rounded-3xl p-6 space-y-4">
-                    <h4 class="font-bold text-red-400">🚫 Restricted Nodes</h4>
+                    <h4 class="font-bold text-red-400 text-sm uppercase tracking-wider">Restricted Nodes</h4>
                     <div id="blockedListContainer" class="space-y-2 max-h-48 overflow-y-auto text-xs text-zinc-500">
                         No nodes restricted from this local interface terminal block.
                     </div>
                 </div>
 
-                <button onclick="window.logout()" class="w-full py-3.5 bg-red-950/30 border border-red-500/30 text-red-400 font-extrabold rounded-2xl">DISCONNECT IDENTITY NODE</button>
+                <button onclick="window.logout()" class="w-full py-3.5 bg-red-950/30 border border-red-500/30 text-red-400 font-extrabold rounded-2xl uppercase text-xs tracking-wider">Disconnect Identity Node</button>
             </div>
         </div>
     </main>
 
+    <!-- FLOATING TAB CONTROLS DOCKER -->
     <div class="fixed bottom-0 left-0 right-0 max-w-2xl mx-auto bg-[#060b16]/95 border-t border-zinc-900/80 backdrop-blur-lg z-50 px-4">
         <div class="grid grid-cols-2 py-2 text-center">
-            <button onclick="window.switchTab(0)" class="nav-active flex flex-col items-center p-2.5 text-zinc-400"><span class="text-xl">📰</span><span class="text-[9px]">FEED</span></button>
-            <button onclick="window.switchTab(2)" class="flex flex-col items-center p-2.5 text-zinc-400"><span class="text-xl">👤</span><span class="text-[9px]">PROFILE</span></button>
+            <button onclick="window.switchTab(0)" class="nav-active flex flex-col items-center p-2.5 text-zinc-400 font-bold"><span class="text-xs uppercase tracking-widest">Feed</span></button>
+            <button onclick="window.switchTab(2)" class="flex flex-col items-center p-2.5 text-zinc-400 font-bold"><span class="text-xs uppercase tracking-widest">Profile</span></button>
         </div>
     </div>
 
+    <!-- MAIN FIREBASE SYSTEM APPLICATION SCRIPTS -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
@@ -315,7 +332,6 @@
             const modalHTML = `
                 <div id="zkModal" class="fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center z-[200] p-4">
                     <div class="glass rounded-[32px] p-8 max-w-md w-full text-center border border-amber-500/30 shadow-2xl">
-                        <div id="zkStatusIcon" class="w-16 h-16 bg-amber-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl text-amber-400">🛡️</div>
                         <h3 id="zkModalTitle" class="text-xl font-black text-amber-400 tracking-tight mb-2">Generating ZK Human Proof</h3>
                         <p id="zkModalDesc" class="text-zinc-400 text-xs mb-6 leading-relaxed">Computing cryptographic elements over zero-knowledge parameters to unlink your phone matrix identity while preserving node authority.</p>
                         
@@ -369,10 +385,6 @@
                     if (document.getElementById('zkModalTitle')) {
                         document.getElementById('zkModalTitle').innerText = "ZK Proof Generated!";
                         document.getElementById('zkModalTitle').className = "text-xl font-black text-emerald-400 tracking-tight mb-2";
-                    }
-                    if (document.getElementById('zkStatusIcon')) {
-                        document.getElementById('zkStatusIcon').innerHTML = "✅";
-                        document.getElementById('zkStatusIcon').className = "w-16 h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl text-emerald-400";
                     }
                     if (document.getElementById('zkModalActions')) {
                         document.getElementById('zkModalActions').style.display = 'flex';
@@ -457,7 +469,7 @@
             return `
                 <div class="glass rounded-2xl p-5 border ${post.pinned ? 'border-amber-500' : 'border-zinc-800'} space-y-3">
                     <div class="flex justify-between items-center text-xs text-zinc-400">
-                        <span class="font-bold text-emerald-400 flex items-center gap-1">👁️ ${post.author || 'Anonymous Node'}</span>
+                        <span class="font-bold text-emerald-400 flex items-center gap-1">Node: ${post.author || 'Anonymous Node'}</span>
                         <span class="text-[10px] text-zinc-500">${post.createdAt ? new Date(post.createdAt.seconds * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Just now'}</span>
                     </div>
                     <p class="text-sm text-zinc-200 leading-relaxed select-text">${post.text}</p>
@@ -526,8 +538,8 @@
                 document.getElementById('previewArea').classList.add('hidden');
                 
                 const voiceBtn = document.getElementById('voiceBtn');
-                voiceBtn.className = "py-3 bg-emerald-500/5 border border-emerald-500/30 rounded-xl text-xs font-bold text-emerald-400";
-                voiceBtn.innerHTML = "🎙️ Voice Note";
+                voiceBtn.className = "py-3 bg-emerald-500/5 border border-emerald-500/30 rounded-xl text-xs font-bold text-emerald-400 uppercase tracking-wider";
+                voiceBtn.innerHTML = "Record Voice";
                 
                 selectedImageFile = null;
                 recordedAudioBlob = null;
@@ -606,8 +618,8 @@
                 mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
                 mediaRecorder.onstop = () => {
                     recordedAudioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
-                    voiceBtn.className = "py-3 bg-emerald-500/5 border border-emerald-500/30 rounded-xl text-xs font-bold text-emerald-400";
-                    voiceBtn.innerHTML = "🎙️ Voice Note Linked";
+                    voiceBtn.className = "py-3 bg-emerald-500/5 border border-emerald-500/30 rounded-xl text-xs font-bold text-emerald-400 uppercase tracking-wider";
+                    voiceBtn.innerHTML = "Voice Note Linked";
                     showToast("Audio witness segment buffered internally for injection on channel commit.");
                     if (stream) {
                         stream.getTracks().forEach(track => track.stop());
@@ -615,8 +627,8 @@
                 };
 
                 mediaRecorder.start();
-                voiceBtn.className = "py-3 border border-red-500/50 rounded-xl text-xs font-bold text-red-500 recording-pulse";
-                voiceBtn.innerHTML = "🛑 STOP RECORDING";
+                voiceBtn.className = "py-3 border border-red-500/50 rounded-xl text-xs font-bold text-red-500 recording-pulse uppercase tracking-wider";
+                voiceBtn.innerHTML = "STOP RECORDING";
             } catch (err) {
                 showToast("Hardware channel rejected. Verify browser microphone permissions context.");
             }
@@ -628,16 +640,43 @@
             const authTitle = document.getElementById('authTitle');
             const authSubtitle = document.getElementById('authSubtitle');
             const mainInput = document.getElementById('mainInput');
+            const submitPostBtn = document.getElementById('submitPostBtn');
+            const phoneVerifyBtn = document.getElementById('phoneVerifyBtn');
+            const zkVerifyBtn = document.getElementById('zkVerifyBtn');
 
             if (lang === 'pidgin') {
                 if(authTitle) authTitle.innerText = "Hold Your Identity Node Titi";
                 if(authSubtitle) authSubtitle.innerText = "Connect to correct decentralized channel inside Naija. Only human nodes go fit talk truth inside code.";
                 if(mainInput) mainInput.placeholder = "Wetin happen clear-clear wey you see with your eye?";
+                if(submitPostBtn) submitPostBtn.innerText = "ANCHOR TESTIMONY (Naija)";
+                if(phoneVerifyBtn) phoneVerifyBtn.innerText = "Verify Phone (OTP Packet)";
+                if(zkVerifyBtn) zkVerifyBtn.innerText = "Chook Hand Inside Zero-Knowledge";
                 showToast("Language set to Pidgin channel context.");
+            } else if (lang === 'igbo') {
+                if(authTitle) authTitle.innerText = "Nchekwa Node Gị";
+                if(authSubtitle) authSubtitle.innerText = "Banye na netwọkụ eziokwu decentralized na Naịjirịa.";
+                if(mainInput) mainInput.placeholder = "Gịnị bụ eziokwu merenụ i ji anya gị hụ?";
+                if(submitPostBtn) submitPostBtn.innerText = "BUNYE PROOF";
+                showToast("Agbanwela gaa na Igbo Node.");
+            } else if (lang === 'yoruba') {
+                if(authTitle) authTitle.innerText = "Sopọ Mọ Node Rẹ";
+                if(authSubtitle) authSubtitle.innerText = "Wọle si nẹtiwọọki otitọ ti ko ni agbedemeji ni Orilẹ-ede Naijiria.";
+                if(mainInput) mainInput.placeholder = "Kini iṣẹlẹ gidi ti o foju ara rẹ rí?";
+                if(submitPostBtn) submitPostBtn.innerText = "FI JẸRI HAN";
+                showToast("Elo rẹ ti yipada si Yorùbá Node.");
+            } else if (lang === 'hausa') {
+                if(authTitle) authTitle.innerText = "Haɗa Node Identity Naka";
+                if(authSubtitle) authSubtitle.innerText = "Shiga cikin tsarin gaskiya a Najeriya.";
+                if(mainInput) mainInput.placeholder = "Wane lamari ne tabbatacce ka shaida da idonka?";
+                if(submitPostBtn) submitPostBtn.innerText = "TURA SHAIDARKA";
+                showToast("An canza zuwa Hausa Node.");
             } else {
                 if(authTitle) authTitle.innerText = "Anchor Your Identity Node";
                 if(authSubtitle) authSubtitle.innerText = "Access decentralized ledger channels across Nigeria. Only human verified nodes can broadcast truth.";
                 if(mainInput) mainInput.placeholder = "What factual event did you personally witness?";
+                if(submitPostBtn) submitPostBtn.innerText = "ANCHOR TESTIMONY";
+                if(phoneVerifyBtn) phoneVerifyBtn.innerText = "Verify Phone (Global OTP)";
+                if(zkVerifyBtn) zkVerifyBtn.innerText = "Enable Zero-Knowledge";
                 showToast("Language rolled back to standard English channel.");
             }
         };
