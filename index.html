@@ -90,6 +90,7 @@
                 </div>
 
                 <div class="glass rounded-3xl p-6 space-y-4">
+                    <div id="recaptcha-container"></div>
                     <button onclick="window.startPhoneVerification()" class="w-full py-4 bg-white text-black rounded-2xl font-semibold">Verify Phone (Global OTP)</button>
                     <button onclick="window.startZKVerification()" class="w-full py-4 bg-amber-500/10 border border-amber-500 text-amber-400 rounded-2xl font-semibold">Enable Zero-Knowledge</button>
                     <button onclick="window.viewZKProof()" class="w-full py-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 rounded-2xl font-semibold">🔍 View My ZK Proof</button>
@@ -114,7 +115,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp, increment } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-storage.js";
 
@@ -462,35 +463,65 @@
             document.getElementById('humanityScore').textContent = currentTrustScore;
         };
 
+        // Real Live Phone Verification Gateway with Invisible reCAPTCHA Engine Wired In
         window.startPhoneVerification = async () => {
             if (isPhoneVerified) return showToast("Phone route already bound to node.");
-            const num = prompt("Enter mobile phone number to route global cryptographic OTP verification link (+234...):");
-            if (!num) return;
             
-            showToast(`Routing OTP packet chain to configuration gateway for terminal target ${num}...`);
-            setTimeout(async () => {
-                const otp = prompt("Provide the 6-digit verification code routed to your device context:");
-                if (otp && otp.trim().length === 6) {
-                    isPhoneVerified = true;
-                    currentTrustScore = 85;
-                    
-                    try {
-                        if (currentUser) {
-                            await updateDoc(doc(db, "users", currentUser.uid), {
-                                phoneVerified: true,
-                                humanityScore: 85
-                            });
-                        }
-                    } catch(e) {
-                        console.log("Phone verification saved to instance memory pipeline.");
-                    }
+            const num = prompt("Enter mobile phone number with country code (+234...):");
+            if (!num) return;
 
-                    window.loadUserVerificationStatus();
-                    showToast("Phone connection identity verified. Node upgraded.");
-                } else {
-                    showToast("Failed authentication code. Sequence aborted.");
+            // 1. Initialize the Invisible reCAPTCHA Instance
+            if (!window.recaptchaVerifier) {
+                window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+                    'size': 'invisible',
+                    'callback': (response) => {
+                        console.log("reCAPTCHA cryptographic token generated successfully.");
+                    },
+                    'expired-callback': () => {
+                        showToast("reCAPTCHA context expired. Please re-verify.");
+                        if(window.recaptchaVerifier) window.recaptchaVerifier.clear();
+                    }
+                });
+            }
+
+            try {
+                showToast("Contacting global authentication gateway...");
+                
+                // 2. Trigger the live SMS route via Firebase Web Engine API
+                const confirmationResult = await signInWithPhoneNumber(auth, num, window.recaptchaVerifier);
+                showToast(`OTP packet dispatched to terminal target ${num}`);
+                
+                // 3. Ask the user for the verification code received via SMS
+                const otp = prompt("Provide the 6-digit verification code sent to your device:");
+                if (!otp) return;
+
+                // 4. Confirm handshake token with Firebase server cluster
+                const result = await confirmationResult.confirm(otp);
+                
+                // 5. Upgrade parameters permanently in local storage and live Firestore matrix
+                isPhoneVerified = true;
+                currentTrustScore = 85;
+                
+                const userRef = doc(db, "users", currentUser.uid);
+                await updateDoc(userRef, {
+                    phoneVerified: true,
+                    humanityScore: 85
+                });
+
+                window.loadUserVerificationStatus();
+                showToast("Phone connection identity verified. Node upgraded successfully!");
+
+            } catch (error) {
+                console.error("Phone Auth Failure:", error);
+                showToast(`SMS Verification aborted: ${error.message}`);
+                
+                // Reset the reCAPTCHA instance on terminal failure so click handlers clear completely
+                if (window.recaptchaVerifier) {
+                    window.recaptchaVerifier.render().then(widgetId => {
+                        grecaptcha.reset(widgetId);
+                    });
                 }
-            }, 1000);
+            }
         };
 
         window.triggerImageUpload = () => document.getElementById('imageInput').click();
