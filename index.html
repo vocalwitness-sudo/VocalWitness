@@ -29,16 +29,22 @@
     </nav>
 
     <main class="max-w-2xl mx-auto px-4 mt-6">
-        <section id="authSection" class="glass rounded-3xl p-8 text-center my-12 shadow-2xl">
-            <h2 id="authTitle" class="text-2xl font-black tracking-tight mb-3">Join Vocal Witness</h2>
-            <p id="authSubtitle" class="text-zinc-400 text-sm mb-8">Speak truth safely. Your voice matters. Privacy protected.</p>
-            <button onclick="googleLogin()" class="w-full py-4 bg-white text-black hover:bg-zinc-100 font-bold rounded-2xl flex items-center justify-center gap-3 transition-all">
-                Continue with Google
-            </button>
-            <p class="text-emerald-400 text-center text-sm mt-4">Speak Truth • Protect Privacy • Build Trust Worldwide</p>
-        </section>
+        <section id="authSection" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[150] backdrop-blur-sm">
+    <div class="glass max-w-sm w-full rounded-3xl p-8 text-center shadow-2xl relative border border-zinc-800 bg-[#090f1d]/90">
+        <button type="button" onclick="document.getElementById('authSection').classList.add('hidden')" class="absolute top-4 right-4 text-zinc-500 hover:text-white transition-all text-lg font-bold">✕</button>
+        
+        <h2 id="authTitle" class="text-2xl font-black tracking-tight mb-3 text-white">Identity Verification</h2>
+        <p id="authSubtitle" class="text-zinc-400 text-xs mb-8">To maintain ledger transparency, you must sign in with a verified account to interact with posts.</p>
+        
+        <button id="googleLoginBtn" class="w-full py-4 bg-white text-black hover:bg-zinc-100 font-bold rounded-2xl flex items-center justify-center gap-3 transition-all shadow-lg">
+            Continue with Google
+        </button>
+        
+        <p class="text-emerald-400/80 text-center text-[11px] mt-6 tracking-wide">Secure Ledger Verification • Privacy Protected</p>
+    </div>
+</section>
 
-        <div id="mainApp" class="hidden space-y-6">
+        <div id="mainApp" class="max-w-2xl mx-auto px-4 pt-4">
             <header class="glass rounded-3xl p-5 flex justify-between items-center">
                 <div class="flex items-center gap-3">
                     <div id="userAvatar" onclick="switchTab(2)" class="w-11 h-11 bg-emerald-500 rounded-2xl flex items-center justify-center font-black text-black text-xl cursor-pointer">V</div>
@@ -75,7 +81,7 @@
                     <input type="file" id="imageInput" accept="image/*" class="hidden" onchange="handleImage(event)">
                     <div id="previewArea" class="hidden mb-4 relative"></div>
 
-                    <button id="submitPostBtn" onclick="submitPost()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold py-4 rounded-2xl text-sm tracking-widest flex items-center justify-center gap-2">
+                    <button id="submitPostBtn" class="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold py-4 rounded-2xl text-sm tracking-widest flex items-center justify-center gap-2">
                         <span id="submitText">SHARE WITNESS</span>
                         <span id="submitSpinner" class="hidden animate-spin h-4 w-4 border-2 border-black border-t-transparent rounded-full"></span>
                     </button>
