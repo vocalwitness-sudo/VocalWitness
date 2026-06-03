@@ -10,60 +10,50 @@
 <body class="min-h-screen pb-28">
 
     <div id="toastContainer" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] space-y-2 w-11/12 max-w-sm"></div>
-    <!-- Visible Controls for Testing -->
-<div style="padding: 20px; background: #f9f9f9; border: 2px dashed #ccc; text-align: center;">
-    <h3>🎙️ Test Your Voice Recorder Module</h3>
-    <p>Click Start, speak into your mic, then click Stop to process the audio asset.</p>
-    
-    <button id="btn-start" style="padding: 10px 20px; background: green; color: white;">Start Recording</button>
-    <button id="btn-stop" style="padding: 10px 20px; background: red; color: white;" disabled>Stop Recording</button>
-    
-    <br><br>
-    <div id="status-message" style="font-weight: bold; color: blue;">Status: Idle</div>
-</div>
 
     <nav class="sticky top-0 z-50 bg-[#060b16]/95 backdrop-blur-md border-b border-zinc-900 px-4 py-4">
         <div class="max-w-2xl mx-auto flex justify-between items-center">
             <div onclick="switchTab(0)" class="flex items-center gap-2 cursor-pointer">
                 <h1 class="text-2xl font-black text-emerald-400 tracking-tight">VocalWitness</h1>
             </div>
+            <!-- Your 15 Language Selector mapping perfectly to engine modules -->
             <select id="language-select" onchange="changeLanguage()" 
-        class="bg-zinc-900 text-white text-sm border border-zinc-700 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500">
-    <option value="+255">🇹🇿 Swahili</option>
-    <option value="+20">🇪🇬 Arabic</option>
-    <option value="+252">🇸🇴 Somali</option> 
-    <option value="+234-ha">🇳🇬 Hausa</option>
-    <option value="+251-am">🇪🇹 Amharic</option>
-    <option value="+234-yo">🇳🇬 Yoruba</option>
-    <option value="+251-or">🇪🇹 Oromo</option>
-    <option value="+234-ig">🇳🇬 Igbo</option>
-    <option value="+27-zu">🇿🇦 Zulu</option>
-    <option value="+27-xh">🇿🇦 Xhosa</option>
-    
-    <option value="+44">🇬🇧 English</option>
-    <option value="+86">🇨🇳 Mandarin Chinese</option>
-    <option value="+34">🇪🇸 Spanish</option>
-    <option value="+91">🇮🇳 Hindi</option>
-    <option value="+33">🇫🇷 French</option>
-</select>
+                class="bg-zinc-900 text-white text-sm border border-zinc-700 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                <option value="+255">🇹🇿 Swahili</option>
+                <option value="+20">🇪🇬 Arabic</option>
+                <option value="+252">🇸🇴 Somali</option> 
+                <option value="+234-ha">🇳🇬 Hausa</option>
+                <option value="+251-am">🇪🇹 Amharic</option>
+                <option value="+234-yo">🇳🇬 Yoruba</option>
+                <option value="+251-or">🇪🇹 Oromo</option>
+                <option value="+234-ig">🇳🇬 Igbo</option>
+                <option value="+27-zu">🇿🇦 Zulu</option>
+                <option value="+27-xh">🇿🇦 Xhosa</option>
+                
+                <option value="+44">🇬🇧 English</option>
+                <option value="+86">🇨🇳 Mandarin Chinese</option>
+                <option value="+34">🇪🇸 Spanish</option>
+                <option value="+91">🇮🇳 Hindi</option>
+                <option value="+33">🇫🇷 French</option>
+            </select>
         </div>
     </nav>
 
     <main class="max-w-2xl mx-auto px-4 mt-6">
         <section id="authSection" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[150] backdrop-blur-sm">
-    <div class="glass max-w-sm w-full rounded-3xl p-8 text-center shadow-2xl relative border border-zinc-800 bg-[#090f1d]/90">
-        <button type="button" onclick="document.getElementById('authSection').classList.add('hidden')" class="absolute top-4 right-4 text-zinc-500 hover:text-white transition-all text-lg font-bold">✕</button>
-        
-        <h2 id="authTitle" class="text-2xl font-black tracking-tight mb-3 text-white">Identity Verification</h2>
-        <p id="authSubtitle" class="text-zinc-400 text-xs mb-8">To maintain ledger transparency, you must sign in with a verified account to interact with posts.</p>
-        
-        <button id="googleLoginBtn" class="w-full py-4 bg-white text-black hover:bg-zinc-100 font-bold rounded-2xl flex items-center justify-center gap-3 transition-all shadow-lg">
-            Continue with Google
-        </button>
-        
-        <p class="text-emerald-400/80 text-center text-[11px] mt-6 tracking-wide">Secure Ledger Verification • Privacy Protected</p>
-    </div>
-</section>
+            <div class="glass max-w-sm w-full rounded-3xl p-8 text-center shadow-2xl relative border border-zinc-800 bg-[#090f1d]/90">
+                <button type="button" onclick="document.getElementById('authSection').classList.add('hidden')" class="absolute top-4 right-4 text-zinc-500 hover:text-white transition-all text-lg font-bold">✕</button>
+                
+                <h2 id="authTitle" class="text-2xl font-black tracking-tight mb-3 text-white">Identity Verification</h2>
+                <p id="authSubtitle" class="text-zinc-400 text-xs mb-8">To maintain ledger transparency, you must sign in with a verified account to interact with posts.</p>
+                
+                <button id="googleLoginBtn" class="w-full py-4 bg-white text-black hover:bg-zinc-100 font-bold rounded-2xl flex items-center justify-center gap-3 transition-all shadow-lg">
+                    Continue with Google
+                </button>
+                
+                <p class="text-emerald-400/80 text-center text-[11px] mt-6 tracking-wide">Secure Ledger Verification • Privacy Protected</p>
+            </div>
+        </section>
 
         <div id="mainApp" class="max-w-2xl mx-auto px-4 pt-4">
             <header class="glass rounded-3xl p-5 flex justify-between items-center">
@@ -81,6 +71,7 @@
             </header>
 
             <div id="feedViewContainer" class="space-y-6">
+                <!-- "Digital Campfires" Navigation Toggles -->
                 <div class="grid grid-cols-2 gap-3">
                     <button onclick="switchFeed('streettalk')" id="streetTab" class="tab-active py-3.5 rounded-2xl font-bold text-sm">Street Talk</button>
                     <button onclick="switchFeed('vocaltruth')" id="vocalTab" class="py-3.5 rounded-2xl font-bold text-sm border border-zinc-700 text-zinc-400">Vocal Truth</button>
@@ -96,13 +87,15 @@
 
                     <div class="grid grid-cols-2 gap-3 my-4">
                         <button onclick="triggerImageUpload()" class="py-3 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 rounded-xl text-xs font-bold tracking-wider">📸 Add Photo</button>
-                        <button id="voiceBtn" onclick="toggleRecording()" class="py-3 bg-emerald-500/10 border border-emerald-500/40 rounded-xl text-xs font-bold text-emerald-400 tracking-wider transition-all">🎤 Record Voice</button>
+                        <!-- Voice Recording state handler hooked directly to production engine execution loops -->
+                        <button id="voiceBtn" onclick="handleLiveVoiceToggle()" class="py-3 bg-emerald-500/10 border border-emerald-500/40 rounded-xl text-xs font-bold text-emerald-400 tracking-wider transition-all">🎤 Record Voice</button>
                     </div>
 
                     <input type="file" id="imageInput" accept="image/*" class="hidden" onchange="handleImage(event)">
                     <div id="previewArea" class="hidden mb-4 relative"></div>
 
-                    <button id="submitPostBtn" class="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold py-4 rounded-2xl text-sm tracking-widest flex items-center justify-center gap-2">
+                    <!-- Production Submission triggers pipeline execution directly to Firestore 'vocal_truth' -->
+                    <button id="submitPostBtn" onclick="handleProductionSubmission()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold py-4 rounded-2xl text-sm tracking-widest flex items-center justify-center gap-2">
                         <span id="submitText">SHARE WITNESS</span>
                         <span id="submitSpinner" class="hidden animate-spin h-4 w-4 border-2 border-black border-t-transparent rounded-full"></span>
                     </button>
@@ -138,6 +131,109 @@
         </div>
     </div>
 
+    <!-- Core Runtime Script Config linking UI elements to committed vocalWitnessEngine.js -->
+    <script type="module">
+        import { VocalWitnessEngine } from './vocalWitnessEngine.js';
+
+        // Tie into your active production Firebase configurations 
+        // (Assuming 'db' and 'storage' are securely initialized inside your core script.js)
+        let isRecordingActive = false;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (typeof db !== 'undefined' && typeof storage !== 'undefined') {
+                window.engine = new VocalWitnessEngine(db, storage);
+            } else {
+                // Fallback catch to ensure window object doesn't throw errors before script.js instances initialize
+                setTimeout(() => {
+                    if (typeof db !== 'undefined' && typeof storage !== 'undefined') {
+                        window.engine = new VocalWitnessEngine(db, storage);
+                    }
+                }, 1000);
+            }
+        });
+
+        // 1. Voice Record Toggle Handler (Direct Interface Update)
+        async function handleLiveVoiceToggle() {
+            const voiceBtn = document.getElementById('voiceBtn');
+            if (!window.engine) return;
+
+            if (!isRecordingActive) {
+                await window.engine.startVoiceRecording();
+                isRecordingActive = true;
+                voiceBtn.innerText = "🛑 Stop Voice Asset";
+                voiceBtn.classList.remove('bg-emerald-500/10', 'text-emerald-400', 'border-emerald-500/40');
+                voiceBtn.classList.add('bg-red-500/20', 'text-red-400', 'border-red-500/50');
+            } else {
+                window.engine.stopVoiceRecording();
+                isRecordingActive = false;
+                voiceBtn.innerText = "🎤 Voice Pack Assembled";
+                voiceBtn.classList.remove('bg-red-500/20', 'text-red-400', 'border-red-500/50');
+                voiceBtn.classList.add('bg-zinc-800', 'text-white', 'border-zinc-600');
+            }
+        }
+
+        // 2. Continuous Production Submission Pipeline (Trust Currency Automation)
+        async function handleProductionSubmission() {
+            const submitBtn = document.getElementById('submitPostBtn');
+            const submitText = document.getElementById('submitText');
+            const spinner = document.getElementById('submitSpinner');
+            const selectedLanguage = document.getElementById('language-select').value;
+            const currentFeedMode = document.getElementById('vocalTab').classList.contains('tab-active') ? 'vocaltruth' : 'streettalk';
+
+            if (!window.engine) {
+                alert("Database Engine initializing. Please try again in a moment.");
+                return;
+            }
+
+            // Fallback user identification configuration
+            let userId = "anonymous_witness_node";
+            if (typeof firebase !== 'undefined' && firebase.auth().currentUser) {
+                userId = firebase.auth().currentUser.uid;
+            }
+
+            try {
+                submitBtn.disabled = true;
+                spinner.classList.remove('hidden');
+                submitText.innerText = "VERIFYING LEDGER...";
+
+                // Uploads the encapsulated audio asset directly into the firestore 'vocal_truth' data collection
+                const liveDocId = await window.engine.packageAndUploadTestimony(userId, selectedLanguage, currentFeedMode);
+                
+                submitText.innerText = "SHARE WITNESS";
+                spinner.classList.add('hidden');
+                submitBtn.disabled = false;
+                
+                // Triggers structural clear for input panels
+                document.getElementById('mainInput').value = "";
+                document.getElementById('voiceBtn').innerText = "🎤 Record Voice";
+                document.getElementById('voiceBtn').className = "py-3 bg-emerald-500/10 border border-emerald-500/40 rounded-xl text-xs font-bold text-emerald-400 tracking-wider transition-all";
+                
+                if (typeof showToast === 'function') {
+                    showToast("Testimony permanently logged onto the vocal truth ledger!");
+                } else {
+                    alert(`Success! Entry logged to ledger Node ID: ${liveDocId}`);
+                }
+            } catch (err) {
+                alert(`Error uploading testimony asset: ${err.message || err}`);
+                submitText.innerText = "SHARE WITNESS";
+                spinner.classList.add('hidden');
+                submitBtn.disabled = false;
+            }
+        }
+
+        // 3. Digital Campfires Filtering Link
+        function changeLanguage() {
+            const selectedLanguage = document.getElementById('language-select').value;
+            if (window.engine && typeof window.engine.filterFeedMode === 'function') {
+                window.engine.filterFeedMode(selectedLanguage);
+            }
+        }
+
+        // Pass scoping logic to window layer so HTML properties can reference functions seamlessly
+        window.handleLiveVoiceToggle = handleLiveVoiceToggle;
+        window.handleProductionSubmission = handleProductionSubmission;
+        window.changeLanguage = changeLanguage;
+    </script>
     <script type="module" src="script.js"></script>
 </body>
 </html>
