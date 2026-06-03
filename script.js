@@ -7,11 +7,11 @@ import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.g
 
 // Your Personal Firebase Credentials
 const firebaseConfig = {
-    apiKey: "YOUR_REAL_API_KEY_FROM_THE_CONFIG_SCREEN", 
+    apiKey: "AIzaSyATxYekXgjdLP2SfR42FG8rEdajq_pIEb0", 
     authDomain: "vocalwitness-3affa.firebaseapp.com",
     projectId: "vocalwitness-3affa",
     storageBucket: "vocalwitness-3affa.appspot.com",
-    messagingSenderId: "YOUR_REAL_SENDER_ID",
+    messagingSenderId: "108466981866",
     appId: "1:108466981866:web:b53360ad44012a576c8093" // Matched from your screenshot!
 };
 // Initialize Firebase Core & Services
