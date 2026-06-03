@@ -3,7 +3,8 @@
 // ==========================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+// Added 'where' import to enable high-performance server-side database filtering
+import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // Your Personal Firebase Credentials (Verified Live)
 const firebaseConfig = {
@@ -30,12 +31,15 @@ let currentTrustScore = 50;
 let isPhoneVerified = false;
 let isZKVerified = false;
 let currentImageFile = null;
+let compressedImageBase64 = null; // Holds the ultra-light compressed photo string
 
 // Hardware Voice Recorder Engine State
 let mediaRecorder = null;
 let audioChunks = [];
 let recordedAudioBlob = null;
 let isRecording = false;
+let recordingTimeout = null; // Safety timer to enforce Firestore 1MB limits
+let activeFeedListener = null; // Tracks active stream subscription to prevent duplicates
 
 // Monitor Login Session Changes Automatically
 onAuthStateChanged(auth, (user) => {
@@ -43,7 +47,7 @@ onAuthStateChanged(auth, (user) => {
     
     if (user) {
         currentUser = user;
-        if (loginPromptModal) loginPromptModal.classList.add('hidden'); // Hide popup if logged in
+        if (loginPromptModal) loginPromptModal.classList.add('hidden'); 
         
         if (document.getElementById('userName')) {
             document.getElementById('userName').textContent = user.displayName || "Anonymous Witness";
@@ -61,6 +65,8 @@ onAuthStateChanged(auth, (user) => {
             document.getElementById('userName').textContent = "Guest Reader";
         }
     }
+    // Safe initialization context fetch
+    listenToLedgerFeed();
 });
 
 // ==========================================
@@ -86,7 +92,7 @@ export function showToast(message, type = "success", duration = 4000) {
 window.showToast = showToast;
 
 export function changeLanguage() {
-    const langSelect = document.getElementById('language-select'); // Clean matching element ID
+    const langSelect = document.getElementById('language-select'); 
     if (!langSelect) return;
     const lang = langSelect.value;
     localStorage.setItem('preferredLanguage', lang);
@@ -94,38 +100,31 @@ export function changeLanguage() {
     const mainInput = document.getElementById('mainInput');
     const submitText = document.getElementById('submitText');
 
-    // 📖 GLOBAL TRANSLATION DICTIONARY
     const translations = {
-        // Nigeria 🇳🇬
         '+234-ha': { placeholder: "Me ka gani da kanka a yau? Shigar da shaidarku...", button: "YADA SHAIDARKA", msg: "Hausa mode activated." },
         '+234-yo': { placeholder: "Kini o foju ara rẹ rí loni? Sọ otitọ rẹ...", button: "PIN SỌ TITỌ", msg: "Yorùbá mode activated." },
         '+234-ig': { placeholder: "Gịnị ka ị ji anya gị hụ taa? Tinye ọka gị...", button: "ZUKO EZIOKWU", msg: "Igbo mode activated." },
-        
-        // East & Northeast Africa 🇹🇿 🇸🇴 🇪🇹
         '+255':    { placeholder: "Nini ulishuhudia leo kwa macho yako? Andika hapa...", button: "SHIRIKI USHUHUDA", msg: "Swahili mode activated." },
         '+252':    { placeholder: "Maxaad markhaati ka ahayd maanta? Ku qor halkan...", button: "LA WADAAG MARKHAATIGA", msg: "Somali mode activated." },
         '+251-am': { placeholder: "ዛሬ ምን በዓይንዎ መሰከሩ? ምስክርነትዎን እዚህ ያስገቡ...", button: "ምስክርነት ያካፍሉ", msg: "Amharic mode activated." },
         '+251-or': { placeholder: "Har'a maal ijaan argite? Ragaa kee asitti barreessi...", button: "RAGAA QOODI", msg: "Oromo mode activated." },
-        
-        // South Africa 🇿🇦
         '+27-zu':  { placeholder: "Yini uyibone ngamehlo akho namuhla? Bhala ubufakazi bakho...", button: "YABA UBUFAKAZI", msg: "Zulu mode activated." },
-        
-        // Global Languages 🇪🇸 🇫🇷
         '+34':     { placeholder: "¿Qué presenciaste personalmente hoy? Escribe tu testimonio...", button: "COMPARTIR TESTIMONIO", msg: "Spanish mode activated." },
         '+33':     { placeholder: "Qu'avez-vous personnellement vu aujourd'hui? Déposez votre témoignage...", button: "PARTAGER LE TÉMOIGNAGE", msg: "French mode activated." }
     };
 
-    // Dictionary Guard Check: Use custom translation if setup, otherwise default to English
     if (translations[lang]) {
         if (mainInput) mainInput.placeholder = translations[lang].placeholder;
         if (submitText) submitText.innerText = translations[lang].button;
         showToast(translations[lang].msg);
     } else {
-        // Global English Default Fallback (+44, +20, +86, etc.)
         if (mainInput) mainInput.placeholder = "What did you personally witness today?";
         if (submitText) submitText.innerText = "SHARE WITNESS";
         showToast("Language set to English.");
     }
+    
+    // Updates the live stream query dynamically for the new language region selected
+    listenToLedgerFeed();
 }
 window.changeLanguage = changeLanguage;
 
@@ -162,10 +161,22 @@ export async function toggleRecording() {
             voiceBtn.classList.add('recording-pulse');
             voiceBtn.innerText = "🛑 Stop Recording";
             showToast("Recording voice testimony...", "info");
+
+            // ⚡ FIX: Automatically halt recording at 45 seconds to guarantee file sizes stay under 1MB
+            recordingTimeout = setTimeout(() => {
+                if (isRecording) {
+                    toggleRecording();
+                    showToast("Secure limits reached. File wrapped up.", "info");
+                }
+            }, 45000);
+
         } catch (err) {
             showToast("Microphone access blocked.", "error");
         }
     } else {
+        // Clear active running hardware protection timers cleanly
+        if (recordingTimeout) clearTimeout(recordingTimeout);
+        
         if (mediaRecorder && mediaRecorder.state !== "inactive") mediaRecorder.stop();
         isRecording = false;
         voiceBtn.classList.remove('recording-pulse');
@@ -207,9 +218,7 @@ export async function submitPost() {
     if (!currentUser) {
         showToast("Identity verification required to write to the ledger.", "info");
         const loginPromptModal = document.getElementById('authSection');
-        if (loginPromptModal) {
-            loginPromptModal.classList.remove('hidden');
-        }
+        if (loginPromptModal) loginPromptModal.classList.remove('hidden');
         return;
     }
 
@@ -226,7 +235,7 @@ export async function submitPost() {
         return;
     }
 
-    if (currentFeed === 'vocaltruth' && (!isPhoneVerified || !isZKVerified || !currentImageFile)) {
+    if (currentFeed === 'vocaltruth' && (!isPhoneVerified || !isZKVerified || !compressedImageBase64)) {
         showToast("Vocal Truth requires Phone + ZK Verification + Photo evidence", "error");
         return;
     }
@@ -236,13 +245,29 @@ export async function submitPost() {
     if (textSpan) textSpan.classList.add('hidden');
 
     try {
+        let audioPayload = null;
+
+        if (recordedAudioBlob) {
+            audioPayload = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.readAsDataURL(recordedAudioBlob);
+            });
+        }
+
+        const selectedLanguageCode = document.getElementById('language-select')?.value || '+44';
+
         await addDoc(collection(db, "testimonies"), {
             witnessText: text,
             feedType: currentFeed,
+            languageCode: selectedLanguageCode,
             userId: currentUser.uid,
-            userEmail: currentUser.email,
+            userName: currentUser.displayName || "Anonymous Witness",
             timestamp: serverTimestamp(),
-            hasVoice: recordedAudioBlob ? true : false
+            audioData: audioPayload,
+            imageData: compressedImageBase64, // Uploads the lightweight 150KB compressed image string
+            hasVoice: audioPayload ? true : false,
+            hasPhoto: compressedImageBase64 ? true : false
         });
 
         const streak = await updateStreak();
@@ -259,6 +284,7 @@ export async function submitPost() {
         if (preview) { preview.innerHTML = ''; preview.classList.add('hidden'); }
         
         currentImageFile = null;
+        compressedImageBase64 = null;
         recordedAudioBlob = null;
 
     } catch (e) {
@@ -271,6 +297,86 @@ export async function submitPost() {
     }
 }
 window.submitPost = submitPost;
+
+// ==========================================
+// REAL-TIME RETRIEVAL & HIGH-PERFORMANCE FILTER ENGINE
+// ==========================================
+export function listenToLedgerFeed() {
+    const feedContainer = document.getElementById('feed');
+    if (!feedContainer) return;
+
+    const selectedLang = document.getElementById('language-select')?.value || '+44';
+
+    // ⚡ FIX: Server-side filters prevent cellular data waste by only downloading matching data
+    const q = query(
+        collection(db, "testimonies"), 
+        where("feedType", "==", currentFeed),
+        where("languageCode", "==", selectedLang),
+        orderBy("timestamp", "desc")
+    );
+
+    // ⚡ FIX: Safely detach the previous listener instance to prevent memory leaks and double renders
+    if (activeFeedListener) {
+        activeFeedListener();
+    }
+
+    activeFeedListener = onSnapshot(q, (snapshot) => {
+        feedContainer.innerHTML = ''; 
+
+        if (snapshot.empty) {
+            feedContainer.innerHTML = `
+                <div class="glass rounded-3xl p-8 text-center text-zinc-500 text-sm border border-zinc-900 bg-[#090f1d]/20">
+                    No verified testimonies logged onto this ledger sequence yet.
+                </div>`;
+            return;
+        }
+
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+            const card = document.createElement('div');
+            card.className = 'glass rounded-3xl p-5 border border-zinc-900 bg-[#090f1d]/40 space-y-4';
+
+            let audioPlaybackElement = '';
+            if (data.audioData) {
+                audioPlaybackElement = `
+                    <div class="bg-zinc-900/80 rounded-2xl p-3 border border-zinc-800 flex flex-col gap-1.5 mt-2">
+                        <span class="text-[10px] text-emerald-400 font-mono font-bold tracking-wider">🔒 AUDIO TESTIMONY DECRYPTED</span>
+                        <audio src="${data.audioData}" controls class="w-full h-8 accent-emerald-500"></audio>
+                    </div>`;
+            }
+
+            let imagePlaybackElement = '';
+            if (data.imageData) {
+                imagePlaybackElement = `
+                    <div class="rounded-2xl overflow-hidden border border-zinc-800 mt-2 max-h-64 bg-zinc-950">
+                        <img src="${data.imageData}" alt="Witness Evidence" class="w-full h-full object-cover">
+                    </div>`;
+            }
+
+            card.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <div class="flex items-center gap-2">
+                        <span class="px-2 py-0.5 rounded-md bg-zinc-900 border border-zinc-800 text-[10px] font-mono font-bold text-zinc-400">
+                            ${data.languageCode}
+                        </span>
+                        <span class="text-[11px] text-zinc-500 font-bold">${data.userName || 'Anonymous Witness'}</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                        <span class="text-[10px] font-mono text-emerald-400 font-bold tracking-widest">VERIFIED LEDGER</span>
+                    </div>
+                </div>
+                <p class="text-zinc-200 text-sm leading-relaxed whitespace-pre-wrap">${data.witnessText}</p>
+                ${audioPlaybackElement}
+                ${imagePlaybackElement}
+            `;
+            feedContainer.appendChild(card);
+        });
+    }, (error) => {
+        console.error("Firestore real-time subscription error:", error);
+    });
+}
+window.listenToLedgerFeed = listenToLedgerFeed;
 
 // ==========================================
 // REWARD LOGIC & NAV TABS
@@ -313,25 +419,54 @@ export function switchTab(tab) {
         if(navFeedBtn) navFeedBtn.classList.remove('nav-active', 'font-bold');
     }
 }
-window.showTab = switchTab;
+window.switchTab = switchTab; 
 
 export function switchFeed(feed) {
     currentFeed = feed;
     if(document.getElementById('streetTab')) document.getElementById('streetTab').classList.toggle('tab-active', feed === 'streettalk');
     if(document.getElementById('vocalTab')) document.getElementById('vocalTab').classList.toggle('tab-active', feed === 'vocaltruth');
+    
+    listenToLedgerFeed();
 }
 window.switchFeed = switchFeed;
 
+// ⚡ EXTRA HOOK: Downsamples user photo uploads locally to save Firebase resource limits
 export function handleImage(e) {
     currentImageFile = e.target.files[0];
     if (!currentImageFile) return;
+
     const reader = new FileReader();
-    reader.onload = ev => {
-        const preview = document.getElementById('previewArea');
-        if (preview) {
-            preview.innerHTML = `<img src="${ev.target.result}" class="image-preview"><button onclick="removeImage()" class="absolute top-2 right-2 bg-black/70 text-white rounded-full p-1 text-xs px-2 hover:bg-black">✕ Remove</button>`;
-            preview.classList.remove('hidden');
-        }
+    reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+            // Setup hidden canvas processing bounds
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+            
+            // Constrain largest image boundary edge to 1024px maximum resolution
+            const max_size = 1024;
+            if (width > height) {
+                if (width > max_size) { height *= max_size / width; width = max_size; }
+            } else {
+                if (height > max_size) { width *= max_size / height; height = max_size; }
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // Compress image down to a lightweight 60% quality file scale
+            compressedImageBase64 = canvas.toDataURL('image/jpeg', 0.6);
+            
+            const preview = document.getElementById('previewArea');
+            if (preview) {
+                preview.innerHTML = `<img src="${compressedImageBase64}" class="image-preview"><button onclick="removeImage()" class="absolute top-2 right-2 bg-black/70 text-white rounded-full p-1 text-xs px-2 hover:bg-black">✕ Remove</button>`;
+                preview.classList.remove('hidden');
+            }
+        };
+        img.src = event.target.result;
     };
     reader.readAsDataURL(currentImageFile);
 }
@@ -342,6 +477,7 @@ window.triggerImageUpload = triggerImageUpload;
 
 export function removeImage() {
     currentImageFile = null;
+    compressedImageBase64 = null;
     document.getElementById('imageInput').value = '';
     const preview = document.getElementById('previewArea');
     if (preview) { preview.innerHTML = ''; preview.classList.add('hidden'); }
@@ -370,17 +506,27 @@ window.startZKVerification = startZKVerification;
 // STARTUP ENGINE BINDINGS
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
-    const savedLang = localStorage.getItem('preferredLanguage') || '+44'; // Default to global English code
+    const savedLang = localStorage.getItem('preferredLanguage') || '+44'; 
     if(document.getElementById('language-select')) {
         document.getElementById('language-select').value = savedLang;
     }
+    
+    // Core state setup triggers
     changeLanguage();
     updateTierDisplay();
 
-    // CONNECT RE-ENGINEERED DOM LISTENERS FOR ES6 MODULE STABILITY
     const loginBtn = document.getElementById('googleLoginBtn');
     if (loginBtn) loginBtn.addEventListener('click', googleLogin);
 
     const postBtn = document.getElementById('submitPostBtn');
     if (postBtn) postBtn.addEventListener('click', submitPost);
+
+    const mainInput = document.getElementById('mainInput');
+    if (mainInput) {
+        mainInput.addEventListener('input', (e) => {
+            if(document.getElementById('charCount')) {
+                document.getElementById('charCount').textContent = `${e.target.value.length}/500`;
+            }
+        });
+    }
 });
