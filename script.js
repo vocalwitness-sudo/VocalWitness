@@ -3,8 +3,7 @@
 // ==========================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-// Added 'where' import to enable high-performance server-side database filtering
-import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, where, doc, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // Your Personal Firebase Credentials (Verified Live)
 const firebaseConfig = {
@@ -31,15 +30,15 @@ let currentTrustScore = 50;
 let isPhoneVerified = false;
 let isZKVerified = false;
 let currentImageFile = null;
-let compressedImageBase64 = null; // Holds the ultra-light compressed photo string
+let compressedImageBase64 = null; 
 
 // Hardware Voice Recorder Engine State
 let mediaRecorder = null;
 let audioChunks = [];
 let recordedAudioBlob = null;
 let isRecording = false;
-let recordingTimeout = null; // Safety timer to enforce Firestore 1MB limits
-let activeFeedListener = null; // Tracks active stream subscription to prevent duplicates
+let recordingTimeout = null; 
+let activeFeedListener = null; 
 
 // Monitor Login Session Changes Automatically
 onAuthStateChanged(auth, (user) => {
@@ -65,7 +64,6 @@ onAuthStateChanged(auth, (user) => {
             document.getElementById('userName').textContent = "Guest Reader";
         }
     }
-    // Safe initialization context fetch
     listenToLedgerFeed();
 });
 
@@ -123,7 +121,6 @@ export function changeLanguage() {
         showToast("Language set to English.");
     }
     
-    // Updates the live stream query dynamically for the new language region selected
     listenToLedgerFeed();
 }
 window.changeLanguage = changeLanguage;
@@ -162,7 +159,6 @@ export async function toggleRecording() {
             voiceBtn.innerText = "🛑 Stop Recording";
             showToast("Recording voice testimony...", "info");
 
-            // ⚡ FIX: Automatically halt recording at 45 seconds to guarantee file sizes stay under 1MB
             recordingTimeout = setTimeout(() => {
                 if (isRecording) {
                     toggleRecording();
@@ -174,9 +170,7 @@ export async function toggleRecording() {
             showToast("Microphone access blocked.", "error");
         }
     } else {
-        // Clear active running hardware protection timers cleanly
         if (recordingTimeout) clearTimeout(recordingTimeout);
-        
         if (mediaRecorder && mediaRecorder.state !== "inactive") mediaRecorder.stop();
         isRecording = false;
         voiceBtn.classList.remove('recording-pulse');
@@ -184,6 +178,14 @@ export async function toggleRecording() {
     }
 }
 window.toggleRecording = toggleRecording;
+
+// Cryptographic Integrity Hash Generator (The Trust Currency Feature)
+async function generateSha256Hash(blob) {
+    const arrayBuffer = await blob.arrayBuffer();
+    const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 32);
+}
 
 // ==========================================
 // GOOGLE LOGIN VIA POPUP
@@ -246,8 +248,12 @@ export async function submitPost() {
 
     try {
         let audioPayload = null;
+        let finalIntegrityHash = "N/A - TEXT UPDATE";
 
         if (recordedAudioBlob) {
+            // Generate Trust Currency asset hash before string translation
+            finalIntegrityHash = await generateSha256Hash(recordedAudioBlob);
+            
             audioPayload = await new Promise((resolve) => {
                 const reader = new FileReader();
                 reader.onloadend = () => resolve(reader.result);
@@ -265,9 +271,17 @@ export async function submitPost() {
             userName: currentUser.displayName || "Anonymous Witness",
             timestamp: serverTimestamp(),
             audioData: audioPayload,
-            imageData: compressedImageBase64, // Uploads the lightweight 150KB compressed image string
+            imageData: compressedImageBase64, 
             hasVoice: audioPayload ? true : false,
-            hasPhoto: compressedImageBase64 ? true : false
+            hasPhoto: compressedImageBase64 ? true : false,
+            // Ledger Security Injections
+            integrityHash: finalIntegrityHash,
+            moderation: {
+                trustScore: 100,
+                verificationsCount: 0,
+                disputesCount: 0,
+                votedUsers: []
+            }
         });
 
         const streak = await updateStreak();
@@ -299,6 +313,55 @@ export async function submitPost() {
 window.submitPost = submitPost;
 
 // ==========================================
+// DEMOCRATIC PEER REVIEW AUDITING (NEW ENGINE WORK)
+// ==========================================
+export async function submitPeerVote(testimonyId, voteType) {
+    if (!currentUser) {
+        showToast("You must be logged in to audit this testimony.", "error");
+        return;
+    }
+
+    const docRef = doc(db, "testimonies", testimonyId);
+
+    try {
+        await runTransaction(db, async (transaction) => {
+            const sfDoc = await transaction.get(docRef);
+            if (!sfDoc.exists()) {
+                throw new Error("Document is missing from the database.");
+            }
+
+            const data = sfDoc.data();
+            // Fallback setup for posts that don't have moderation blocks yet
+            const moderation = data.moderation || { trustScore: 100, verificationsCount: 0, disputesCount: 0, votedUsers: [] };
+
+            if (moderation.votedUsers && moderation.votedUsers.includes(currentUser.uid)) {
+                throw new Error("You have already audited this node.");
+            }
+
+            let newVerifications = moderation.verificationsCount || 0;
+            let newDisputes = moderation.disputesCount || 0;
+
+            if (voteType === 'verify') newVerifications += 1;
+            if (voteType === 'dispute') newDisputes += 1;
+
+            const totalVotes = newVerifications + newDisputes;
+            const newTrustScore = totalVotes > 0 ? Math.round((newVerifications / totalVotes) * 100) : 100;
+
+            transaction.update(docRef, {
+                'moderation.verificationsCount': newVerifications,
+                'moderation.disputesCount': newDisputes,
+                'moderation.trustScore': newTrustScore,
+                'moderation.votedUsers': [...(moderation.votedUsers || []), currentUser.uid]
+            });
+        });
+        showToast("Ledger audit successfully updated!", "success");
+    } catch (err) {
+        showToast(err.message || err, "error");
+    }
+}
+window.submitPeerVote = submitPeerVote;
+
+// ==========================================
 // REAL-TIME RETRIEVAL & HIGH-PERFORMANCE FILTER ENGINE
 // ==========================================
 export function listenToLedgerFeed() {
@@ -307,7 +370,6 @@ export function listenToLedgerFeed() {
 
     const selectedLang = document.getElementById('language-select')?.value || '+44';
 
-    // ⚡ FIX: Server-side filters prevent cellular data waste by only downloading matching data
     const q = query(
         collection(db, "testimonies"), 
         where("feedType", "==", currentFeed),
@@ -315,7 +377,6 @@ export function listenToLedgerFeed() {
         orderBy("timestamp", "desc")
     );
 
-    // ⚡ FIX: Safely detach the previous listener instance to prevent memory leaks and double renders
     if (activeFeedListener) {
         activeFeedListener();
     }
@@ -332,9 +393,13 @@ export function listenToLedgerFeed() {
         }
 
         snapshot.forEach((doc) => {
+            const id = doc.id;
             const data = doc.data();
             const card = document.createElement('div');
             card.className = 'glass rounded-3xl p-5 border border-zinc-900 bg-[#090f1d]/40 space-y-4';
+
+            const modData = data.moderation || { trustScore: 100, verificationsCount: 0, disputesCount: 0 };
+            const assetHash = data.integrityHash || "VERIFIED TEXT ENTRY";
 
             let audioPlaybackElement = '';
             if (data.audioData) {
@@ -363,17 +428,27 @@ export function listenToLedgerFeed() {
                     </div>
                     <div class="flex items-center gap-1.5">
                         <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-                        <span class="text-[10px] font-mono text-emerald-400 font-bold tracking-widest">VERIFIED LEDGER</span>
+                        <span class="text-[10px] font-mono text-emerald-400 font-bold tracking-widest">TRUST: ${modData.trustScore}%</span>
                     </div>
                 </div>
                 <p class="text-zinc-200 text-sm leading-relaxed whitespace-pre-wrap">${data.witnessText}</p>
                 ${audioPlaybackElement}
                 ${imagePlaybackElement}
+                
+                <div class="pt-2 border-t border-zinc-900 flex flex-col sm:flex-row justify-between items-center gap-3">
+                    <span class="text-[9px] font-mono text-zinc-600 truncate max-w-[200px]">HASH: ${assetHash}</span>
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <button onclick="window.submitPeerVote('${id}', 'verify')" class="flex-1 sm:flex-none px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded-xl text-[11px] font-bold transition-all border border-emerald-500/20">
+                            ✅ Agree (${modData.verificationsCount || 0})
+                        </button>
+                        <button onclick="window.submitPeerVote('${id}', 'dispute')" class="flex-1 sm:flex-none px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl text-[11px] font-bold transition-all border border-red-500/20">
+                            ⚠️ Dispute (${modData.disputesCount || 0})
+                        </button>
+                    </div>
+                </div>
             `;
             feedContainer.appendChild(card);
         });
-    }, (error) => {
-        console.error("Firestore real-time subscription error:", error);
     });
 }
 window.listenToLedgerFeed = listenToLedgerFeed;
@@ -430,7 +505,6 @@ export function switchFeed(feed) {
 }
 window.switchFeed = switchFeed;
 
-// ⚡ EXTRA HOOK: Downsamples user photo uploads locally to save Firebase resource limits
 export function handleImage(e) {
     currentImageFile = e.target.files[0];
     if (!currentImageFile) return;
@@ -439,12 +513,10 @@ export function handleImage(e) {
     reader.onload = (event) => {
         const img = new Image();
         img.onload = () => {
-            // Setup hidden canvas processing bounds
             const canvas = document.createElement('canvas');
             let width = img.width;
             let height = img.height;
             
-            // Constrain largest image boundary edge to 1024px maximum resolution
             const max_size = 1024;
             if (width > height) {
                 if (width > max_size) { height *= max_size / width; width = max_size; }
@@ -457,7 +529,6 @@ export function handleImage(e) {
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, width, height);
             
-            // Compress image down to a lightweight 60% quality file scale
             compressedImageBase64 = canvas.toDataURL('image/jpeg', 0.6);
             
             const preview = document.getElementById('previewArea');
@@ -511,7 +582,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('language-select').value = savedLang;
     }
     
-    // Core state setup triggers
     changeLanguage();
     updateTierDisplay();
 
