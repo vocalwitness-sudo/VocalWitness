@@ -5,15 +5,16 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// Your Personal Firebase Credentials
+// Your Personal Firebase Credentials (Verified Live)
 const firebaseConfig = {
     apiKey: "AIzaSyATxYekXgjdLP2SfR42FG8rEdajq_pIEb0", 
     authDomain: "vocalwitness-3affa.firebaseapp.com",
     projectId: "vocalwitness-3affa",
     storageBucket: "vocalwitness-3affa.appspot.com",
     messagingSenderId: "108466981866",
-    appId: "1:108466981866:web:b53360ad44012a576c8093" // Matched from your screenshot!
+    appId: "1:108466981866:web:b53360ad44012a576c8093"
 };
+
 // Initialize Firebase Core & Services
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -38,18 +39,27 @@ let isRecording = false;
 
 // Monitor Login Session Changes Automatically
 onAuthStateChanged(auth, (user) => {
+    const loginPromptModal = document.getElementById('authSection');
+    
     if (user) {
         currentUser = user;
-        document.getElementById('authSection').classList.add('hidden');
-        document.getElementById('mainApp').classList.remove('hidden');
-        document.getElementById('userName').textContent = user.displayName || "Anonymous Witness";
-        if(document.getElementById('profileName')) document.getElementById('profileName').textContent = user.displayName || "Verified Witness";
-        if(document.getElementById('profileEmail')) document.getElementById('profileEmail').textContent = user.email || "";
+        if (loginPromptModal) loginPromptModal.classList.add('hidden'); // Hide popup if logged in
+        
+        if (document.getElementById('userName')) {
+            document.getElementById('userName').textContent = user.displayName || "Anonymous Witness";
+        }
+        if (document.getElementById('profileName')) {
+            document.getElementById('profileName').textContent = user.displayName || "Verified Witness";
+        }
+        if (document.getElementById('profileEmail')) {
+            document.getElementById('profileEmail').textContent = user.email || "";
+        }
         updateTierDisplay();
     } else {
         currentUser = null;
-        document.getElementById('authSection').classList.remove('hidden');
-        document.getElementById('mainApp').classList.add('hidden');
+        if (document.getElementById('userName')) {
+            document.getElementById('userName').textContent = "Guest Reader";
+        }
     }
 });
 
@@ -87,12 +97,12 @@ export function changeLanguage() {
     const submitText = document.getElementById('submitText');
 
     if (lang === 'pidgin') {
-        if (authTitle) authTitle.innerText = "Join Vocal Witness";
+        if (authTitle) authTitle.innerText = "Identity Verification";
         if (mainInput) mainInput.placeholder = "Wetin you see today? Drop your testimony...";
         if (submitText) submitText.innerText = "POST MY WITNESS";
         showToast("Pidgin mode activated.");
     } else {
-        if (authTitle) authTitle.innerText = "Join Vocal Witness";
+        if (authTitle) authTitle.innerText = "Identity Verification";
         if (mainInput) mainInput.placeholder = "What did you personally witness today?";
         if (submitText) submitText.innerText = "SHARE WITNESS";
         showToast("Language set to English.");
@@ -175,6 +185,16 @@ window.logout = logout;
 // DATABASE SUBMISSION (SAVE TO FIRESTORE)
 // ==========================================
 export async function submitPost() {
+    // GUEST GUARD DOG DETECTOR:
+    if (!currentUser) {
+        showToast("Identity verification required to write to the ledger.", "info");
+        const loginPromptModal = document.getElementById('authSection');
+        if (loginPromptModal) {
+            loginPromptModal.classList.remove('hidden'); // Open popup
+        }
+        return;
+    }
+
     const mainInput = document.getElementById('mainInput');
     const btn = document.getElementById('submitPostBtn');
     const spinner = document.getElementById('submitSpinner');
@@ -198,12 +218,11 @@ export async function submitPost() {
     if (textSpan) textSpan.classList.add('hidden');
 
     try {
-        // Save database entry safely into Firestore collection named 'testimonies'
         await addDoc(collection(db, "testimonies"), {
             witnessText: text,
             feedType: currentFeed,
-            userId: currentUser ? currentUser.uid : "anonymous",
-            userEmail: currentUser ? currentUser.email : "anonymous",
+            userId: currentUser.uid,
+            userEmail: currentUser.email,
             timestamp: serverTimestamp(),
             hasVoice: recordedAudioBlob ? true : false
         });
@@ -211,13 +230,13 @@ export async function submitPost() {
         const streak = await updateStreak();
         const reward = currentFeed === 'vocaltruth' ? 35 : 15;
         currentTrustScore = Math.min(98, currentTrustScore + reward);
-        document.getElementById('humanityScore').textContent = currentTrustScore;
+        if(document.getElementById('humanityScore')) document.getElementById('humanityScore').textContent = currentTrustScore;
         updateTierDisplay();
 
         showToast(`Posted directly to Ledger! +${reward} Trust • ${streak} day streak 🔥`, "success");
 
         mainInput.value = '';
-        document.getElementById('charCount').textContent = '0/500';
+        if(document.getElementById('charCount')) document.getElementById('charCount').textContent = '0/500';
         const preview = document.getElementById('previewArea');
         if (preview) { preview.innerHTML = ''; preview.classList.add('hidden'); }
         
@@ -265,23 +284,23 @@ export function switchTab(tab) {
     const navProfileBtn = document.getElementById('navProfileBtn');
 
     if (tab === 0) {
-        feedContainer.classList.remove('hidden');
-        profileView.classList.add('hidden');
-        navFeedBtn.classList.add('nav-active', 'font-bold');
-        navProfileBtn.classList.remove('nav-active', 'font-bold');
+        if(feedContainer) feedContainer.classList.remove('hidden');
+        if(profileView) profileView.classList.add('hidden');
+        if(navFeedBtn) navFeedBtn.classList.add('nav-active', 'font-bold');
+        if(navProfileBtn) navProfileBtn.classList.remove('nav-active', 'font-bold');
     } else if (tab === 2) {
-        feedContainer.classList.add('hidden');
-        profileView.classList.remove('hidden');
-        navProfileBtn.classList.add('nav-active', 'font-bold');
-        navFeedBtn.classList.remove('nav-active', 'font-bold');
+        if(feedContainer) feedContainer.classList.add('hidden');
+        if(profileView) profileView.classList.remove('hidden');
+        if(navProfileBtn) navProfileBtn.classList.add('nav-active', 'font-bold');
+        if(navFeedBtn) navFeedBtn.classList.remove('nav-active', 'font-bold');
     }
 }
 window.switchTab = switchTab;
 
 export function switchFeed(feed) {
     currentFeed = feed;
-    document.getElementById('streetTab').classList.toggle('tab-active', feed === 'streettalk');
-    document.getElementById('vocalTab').classList.toggle('tab-active', feed === 'vocaltruth');
+    if(document.getElementById('streetTab')) document.getElementById('streetTab').classList.toggle('tab-active', feed === 'streettalk');
+    if(document.getElementById('vocalTab')) document.getElementById('vocalTab').classList.toggle('tab-active', feed === 'vocaltruth');
 }
 window.switchFeed = switchFeed;
 
@@ -329,9 +348,19 @@ window.startPhoneVerification = startPhoneVerification;
 export function startZKVerification() { isZKVerified = true; showToast("Zero-Knowledge Verification Complete", "success"); }
 window.startZKVerification = startZKVerification;
 
+// ==========================================
+// STARTUP ENGINE BINDINGS
+// ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     const savedLang = localStorage.getItem('preferredLanguage') || 'en';
-    document.getElementById('langSelect').value = savedLang;
+    if(document.getElementById('langSelect')) document.getElementById('langSelect').value = savedLang;
     changeLanguage();
     updateTierDisplay();
+
+    // CONNECT RE-ENGINEERED DOM LISTENERS FOR ES6 MODULE STABILITY
+    const loginBtn = document.getElementById('googleLoginBtn');
+    if (loginBtn) loginBtn.addEventListener('click', googleLogin);
+
+    const postBtn = document.getElementById('submitPostBtn');
+    if (postBtn) postBtn.addEventListener('click', submitPost);
 });
