@@ -10,6 +10,17 @@
 <body class="min-h-screen pb-28">
 
     <div id="toastContainer" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] space-y-2 w-11/12 max-w-sm"></div>
+    <!-- Visible Controls for Testing -->
+<div style="padding: 20px; background: #f9f9f9; border: 2px dashed #ccc; text-align: center;">
+    <h3>🎙️ Test Your Voice Recorder Module</h3>
+    <p>Click Start, speak into your mic, then click Stop to process the audio asset.</p>
+    
+    <button id="btn-start" style="padding: 10px 20px; background: green; color: white;">Start Recording</button>
+    <button id="btn-stop" style="padding: 10px 20px; background: red; color: white;" disabled>Stop Recording</button>
+    
+    <br><br>
+    <div id="status-message" style="font-weight: bold; color: blue;">Status: Idle</div>
+</div>
 
     <nav class="sticky top-0 z-50 bg-[#060b16]/95 backdrop-blur-md border-b border-zinc-900 px-4 py-4">
         <div class="max-w-2xl mx-auto flex justify-between items-center">
