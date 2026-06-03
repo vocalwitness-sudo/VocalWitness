@@ -7,7 +7,7 @@ import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.g
 
 // Your Personal Firebase Credentials (Verified Live)
 const firebaseConfig = {
-    apiKey: "AIzaSyATxYekXgjdLP2SfR42FG8rEdajq_pIEb0", 
+    apiKey: "AIzaSyATxYekxgjdLP2SfR42FG8rEdajq_pIEb0", 
     authDomain: "vocalwitness-3affa.firebaseapp.com",
     projectId: "vocalwitness-3affa",
     storageBucket: "vocalwitness-3affa.appspot.com",
@@ -86,23 +86,42 @@ export function showToast(message, type = "success", duration = 4000) {
 window.showToast = showToast;
 
 export function changeLanguage() {
-    const langSelect = document.getElementById('langSelect');
+    const langSelect = document.getElementById('language-select'); // Clean matching element ID
     if (!langSelect) return;
     const lang = langSelect.value;
     localStorage.setItem('preferredLanguage', lang);
 
-    const authTitle = document.getElementById('authTitle');
-    const authSubtitle = document.getElementById('authSubtitle');
     const mainInput = document.getElementById('mainInput');
     const submitText = document.getElementById('submitText');
 
-    if (lang === 'pidgin') {
-        if (authTitle) authTitle.innerText = "Identity Verification";
-        if (mainInput) mainInput.placeholder = "Wetin you see today? Drop your testimony...";
-        if (submitText) submitText.innerText = "POST MY WITNESS";
-        showToast("Pidgin mode activated.");
+    // 📖 GLOBAL TRANSLATION DICTIONARY
+    const translations = {
+        // Nigeria 🇳🇬
+        '+234-ha': { placeholder: "Me ka gani da kanka a yau? Shigar da shaidarku...", button: "YADA SHAIDARKA", msg: "Hausa mode activated." },
+        '+234-yo': { placeholder: "Kini o foju ara rẹ rí loni? Sọ otitọ rẹ...", button: "PIN SỌ TITỌ", msg: "Yorùbá mode activated." },
+        '+234-ig': { placeholder: "Gịnị ka ị ji anya gị hụ taa? Tinye ọka gị...", button: "ZUKO EZIOKWU", msg: "Igbo mode activated." },
+        
+        // East & Northeast Africa 🇹🇿 🇸🇴 🇪🇹
+        '+255':    { placeholder: "Nini ulishuhudia leo kwa macho yako? Andika hapa...", button: "SHIRIKI USHUHUDA", msg: "Swahili mode activated." },
+        '+252':    { placeholder: "Maxaad markhaati ka ahayd maanta? Ku qor halkan...", button: "LA WADAAG MARKHAATIGA", msg: "Somali mode activated." },
+        '+251-am': { placeholder: "ዛሬ ምን በዓይንዎ መሰከሩ? ምስክርነትዎን እዚህ ያስገቡ...", button: "ምስክርነት ያካፍሉ", msg: "Amharic mode activated." },
+        '+251-or': { placeholder: "Har'a maal ijaan argite? Ragaa kee asitti barreessi...", button: "RAGAA QOODI", msg: "Oromo mode activated." },
+        
+        // South Africa 🇿🇦
+        '+27-zu':  { placeholder: "Yini uyibone ngamehlo akho namuhla? Bhala ubufakazi bakho...", button: "YABA UBUFAKAZI", msg: "Zulu mode activated." },
+        
+        // Global Languages 🇪🇸 🇫🇷
+        '+34':     { placeholder: "¿Qué presenciaste personalmente hoy? Escribe tu testimonio...", button: "COMPARTIR TESTIMONIO", msg: "Spanish mode activated." },
+        '+33':     { placeholder: "Qu'avez-vous personnellement vu aujourd'hui? Déposez votre témoignage...", button: "PARTAGER LE TÉMOIGNAGE", msg: "French mode activated." }
+    };
+
+    // Dictionary Guard Check: Use custom translation if setup, otherwise default to English
+    if (translations[lang]) {
+        if (mainInput) mainInput.placeholder = translations[lang].placeholder;
+        if (submitText) submitText.innerText = translations[lang].button;
+        showToast(translations[lang].msg);
     } else {
-        if (authTitle) authTitle.innerText = "Identity Verification";
+        // Global English Default Fallback (+44, +20, +86, etc.)
         if (mainInput) mainInput.placeholder = "What did you personally witness today?";
         if (submitText) submitText.innerText = "SHARE WITNESS";
         showToast("Language set to English.");
@@ -185,12 +204,11 @@ window.logout = logout;
 // DATABASE SUBMISSION (SAVE TO FIRESTORE)
 // ==========================================
 export async function submitPost() {
-    // GUEST GUARD DOG DETECTOR:
     if (!currentUser) {
         showToast("Identity verification required to write to the ledger.", "info");
         const loginPromptModal = document.getElementById('authSection');
         if (loginPromptModal) {
-            loginPromptModal.classList.remove('hidden'); // Open popup
+            loginPromptModal.classList.remove('hidden');
         }
         return;
     }
@@ -295,7 +313,7 @@ export function switchTab(tab) {
         if(navFeedBtn) navFeedBtn.classList.remove('nav-active', 'font-bold');
     }
 }
-window.switchTab = switchTab;
+window.showTab = switchTab;
 
 export function switchFeed(feed) {
     currentFeed = feed;
@@ -352,8 +370,10 @@ window.startZKVerification = startZKVerification;
 // STARTUP ENGINE BINDINGS
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
-    const savedLang = localStorage.getItem('preferredLanguage') || 'en';
-    if(document.getElementById('langSelect')) document.getElementById('langSelect').value = savedLang;
+    const savedLang = localStorage.getItem('preferredLanguage') || '+44'; // Default to global English code
+    if(document.getElementById('language-select')) {
+        document.getElementById('language-select').value = savedLang;
+    }
     changeLanguage();
     updateTierDisplay();
 
