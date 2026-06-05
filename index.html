@@ -68,9 +68,16 @@
             <div id="topTalkers" class="flex gap-3 overflow-x-auto pb-2"></div>
         </div>
 
+        <!-- 🔄 Synced Premium Grid Feed Controls -->
         <nav class="grid grid-cols-3 gap-3 mb-4">
-            <button id="tab-true-witness" onclick="switchFeed('true-witness')" class="bg-emerald-500 text-black py-4 rounded-3xl flex flex-col items-center justify-center gap-1 font-bold text-sm transition-all shadow-lg shadow-emerald-950/20">📢 True Witness</button>
-            <button id="tab-citizen-talk" onclick="switchFeed('citizen-talk')" class="bg-zinc-900/60 border border-zinc-800 text-zinc-400 hover:bg-zinc-800 py-4 rounded-3xl flex flex-col items-center justify-center gap-1 font-semibold text-sm transition-all">👥 Citizen Talk</button>
+            <button onclick="switchFeed('vocaltruth')" id="btn-vocaltruth" class="bg-emerald-500 text-black py-4 rounded-2xl font-semibold text-sm transition-all shadow-lg border border-emerald-400/20">
+                📢 Vocal Truth
+            </button>
+            
+            <button onclick="switchFeed('citizentalk')" id="btn-citizentalk" class="bg-zinc-800 text-zinc-400 hover:text-white py-4 rounded-2xl font-semibold text-sm transition-all border border-zinc-900">
+                💬 Citizen Talk
+            </button>
+
             <button onclick="showLiveArena()" class="relative bg-zinc-900/60 border border-zinc-800 text-zinc-400 hover:bg-zinc-800 py-4 rounded-3xl flex flex-col items-center justify-center gap-1 font-semibold text-sm transition-all">
                 Live Arena <span class="teaser-badge">v2.4</span>
             </button>
@@ -162,6 +169,41 @@
     <script type="module">
         import { populateCountryDropdown } from './js/verification.js';
         import { translateUIElements } from './js/utils.js';
+
+        // Global State Variables
+        let currentFeed = 'vocaltruth';
+
+        // 🔄 Dynamic Feed Switcher & Visual Highlighting Engine
+        window.switchFeed = (feedType) => {
+            // 1. Update your global tracking variable
+            currentFeed = feedType; 
+            
+            // 2. Grab references to both button elements from the DOM
+            const truthBtn = document.getElementById('btn-vocaltruth');
+            const citizenBtn = document.getElementById('btn-citizentalk');
+            
+            if (!truthBtn || !citizenBtn) return; // Safety guard clause
+
+            // 3. Apply active/inactive visual states dynamically
+            if (feedType === 'citizentalk') {
+                // Highlight Citizen Talk
+                citizenBtn.className = "bg-emerald-500 text-black py-4 rounded-2xl font-semibold text-sm transition-all shadow-lg border border-emerald-400/20";
+                // Dim Vocal Truth
+                truthBtn.className = "bg-zinc-800 text-zinc-400 hover:text-white py-4 rounded-2xl font-semibold text-sm transition-all border border-zinc-900";
+            } else {
+                // Highlight Vocal Truth
+                truthBtn.className = "bg-emerald-500 text-black py-4 rounded-2xl font-semibold text-sm transition-all shadow-lg border border-emerald-400/20";
+                // Dim Citizen Talk
+                citizenBtn.className = "bg-zinc-800 text-zinc-400 hover:text-white py-4 rounded-2xl font-semibold text-sm transition-all border border-zinc-900";
+            }
+            
+            // 4. Force your data display framework to load the clean filtered feed posts
+            if (typeof renderFeed === 'function') {
+                renderFeed();
+            } else {
+                console.log(`Feed switched to ${feedType}, waiting for dataset streams...`);
+            }
+        };
 
         // Global UI State Triggers
         window.showProfile = () => document.getElementById('profilePage').classList.remove('hidden');
