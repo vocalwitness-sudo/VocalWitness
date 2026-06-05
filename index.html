@@ -3,17 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VocalWitness • Real Voices, Real Truth</title>
+    <title>VocalWitness • Premium Forensic Ledger & Public Square</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/exifr.min.js"></script>
     
     <style>
         body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: white; }
-        .glass { background: rgba(17, 24, 39, 0.92); backdrop-filter: blur(16px); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .glass { background: rgba(17, 24, 39, 0.92); backdrop-filter: blur(16px); border: 1px solid rgba(16, 185, 129, 0.2); }
         .post-card { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         .image-preview { max-height: 320px; object-fit: cover; border-radius: 20px; width: 100%; }
-        .verified { border: 2px solid #10b981; }
-        .badge { font-size: 11px; padding: 2px 8px; border-radius: 9999px; font-weight: 600; }
         .recording-active { animation: pulse 1.5s infinite; background-color: #ef4444 !important; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
         .teaser-badge { position: absolute; top: -6px; right: -6px; background: #f59e0b; color: black; font-size: 9px; padding: 1px 6px; border-radius: 9999px; font-weight: 700; }
@@ -21,151 +19,135 @@
 </head>
 <body class="min-h-screen pb-28 p-4">
 
-    <div class="max-w-2xl mx-auto bg-red-950/80 border border-red-600/50 backdrop-blur-sm rounded-3xl p-5 text-xs mb-6 shadow-xl">
-        <strong>Important Legal Notice:</strong><br>
-        VocalWitness functions strictly as an un-manipulated decentralized distribution medium.
+    <div class="max-w-2xl mx-auto bg-red-950/40 border border-red-500/30 backdrop-blur-sm rounded-3xl p-5 text-xs mb-6 shadow-xl text-zinc-300">
+        <strong class="text-red-400 font-bold">Important Legal Notice:</strong><br>
+        VocalWitness functions strictly as an un-manipulated decentralized distribution medium. All forensic entries on True Witness are client-side scrubbed of identification metadata prior to ledger recording.
     </div>
 
     <div class="max-w-2xl mx-auto">
         <header class="flex items-center justify-between mb-6">
             <div class="flex items-center gap-3">
-                <h1 class="text-3xl font-bold text-emerald-400 tracking-tight">VocalWitness</h1>
+                <h1 class="text-3xl font-black text-emerald-400 tracking-tight">VocalWitness</h1>
             </div>
             <div class="flex items-center gap-2">
                 <button onclick="showEarnModal()" class="px-5 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-bold rounded-3xl text-sm shadow-md hover:scale-105 transition">Earn</button>
                 <button onclick="showPremiumBenefits()" class="px-4 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-semibold rounded-3xl text-xs shadow-md">Premium</button>
-                <button onclick="showProfile()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-3xl text-xs font-medium">Profile</button>
+                <button onclick="showProfile()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 font-medium text-black font-bold rounded-3xl text-xs transition">Profile</button>
             </div>
         </header>
 
         <div class="mb-6">
-            <h3 class="text-amber-400 text-sm font-medium flex items-center gap-2 mb-3">Top Active True Talkers</h3>
+            <h3 class="text-amber-400 text-xs uppercase font-bold tracking-wider font-mono flex items-center gap-2 mb-3">👥 Top Active True Talkers</h3>
             <div id="topTalkers" class="flex gap-3 overflow-x-auto pb-2"></div>
         </div>
 
         <nav class="grid grid-cols-3 gap-3 mb-4">
-            <button id="tab-vocaltruth" onclick="switchFeed('vocaltruth')" class="bg-emerald-500 text-black py-4 rounded-3xl flex flex-col items-center justify-center gap-1 font-semibold text-sm">Vocal Truth</button>
-            <button id="tab-streettalk" onclick="switchFeed('streettalk')" class="bg-zinc-800 hover:bg-zinc-700 py-4 rounded-3xl flex flex-col items-center justify-center gap-1 font-medium text-sm text-gray-300">Street Talk</button>
-            <button onclick="showLiveArena()" class="relative bg-zinc-800 hover:bg-zinc-700 py-4 rounded-3xl flex flex-col items-center justify-center gap-1 font-medium text-sm text-gray-300">
+            <button id="tab-true-witness" onclick="switchFeed('true-witness')" class="bg-emerald-500 text-black py-4 rounded-3xl flex flex-col items-center justify-center gap-1 font-bold text-sm transition-all shadow-lg shadow-emerald-950/20">📢 True Witness</button>
+            <button id="tab-citizen-talk" onclick="switchFeed('citizen-talk')" class="bg-zinc-900/60 border border-zinc-800 text-zinc-400 hover:bg-zinc-800 py-4 rounded-3xl flex flex-col items-center justify-center gap-1 font-semibold text-sm transition-all">👥 Citizen Talk</button>
+            <button onclick="showLiveArena()" class="relative bg-zinc-900/60 border border-zinc-800 text-zinc-400 hover:bg-zinc-800 py-4 rounded-3xl flex flex-col items-center justify-center gap-1 font-semibold text-sm transition-all">
                 Live Arena <span class="teaser-badge">v2.4</span>
             </button>
         </nav>
 
-        <div class="grid grid-cols-3 gap-3 mb-8 text-sm">
-            <button onclick="showTrustCircles()" class="bg-zinc-900 hover:bg-zinc-800 py-3 rounded-2xl flex items-center justify-center gap-2 text-gray-300">Trust Circles <span class="text-amber-400 text-xs font-bold">soon</span></button>
-            <button onclick="showFutures()" class="bg-zinc-900 hover:bg-zinc-800 py-3 rounded-2xl flex items-center justify-center gap-2 text-gray-300">Predictions <span class="text-amber-400 text-xs font-bold">soon</span></button>
-            <button onclick="showSavedSection()" class="bg-zinc-900 hover:bg-zinc-800 py-3 rounded-2xl flex items-center justify-center gap-2 text-gray-300">Saved <span class="text-amber-400 text-xs font-bold">soon</span></button>
+        <div class="grid grid-cols-2 gap-3 mb-8 text-sm">
+            <button onclick="showTrustCircles()" class="bg-zinc-900/40 border border-zinc-800 hover:bg-zinc-800/40 py-3 rounded-2xl flex items-center justify-center gap-2 text-zinc-400">Trust Circles <span class="text-amber-500 text-[10px] font-mono font-bold uppercase">soon</span></button>
+            <button onclick="showSavedSection()" class="bg-zinc-900/40 border border-zinc-800 hover:bg-zinc-800/40 py-3 rounded-2xl flex items-center justify-center gap-2 text-zinc-400">Saved Records <span class="text-amber-500 text-[10px] font-mono font-bold uppercase">soon</span></button>
         </div>
 
         <div class="bg-[#111827] rounded-3xl p-6 mb-10 glass" id="composer">
-            <div id="composerTitle" class="font-bold text-lg mb-4">Vocal Truth Feed</div>
-            <textarea id="mainInput" rows="4" class="w-full bg-[#1e293b] text-white rounded-2xl p-5 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none text-sm" placeholder="What did you personally witness?"></textarea>
+            <div id="composerTitle" class="font-black text-lg mb-4 text-emerald-400 tracking-tight">True Witness Ledger Dispatch</div>
+            <textarea id="mainInput" rows="4" class="w-full bg-[#1e293b] text-white border border-zinc-800 rounded-2xl p-5 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none text-sm" placeholder="Provide raw, unedited personal journalistic or forensic descriptions..."></textarea>
             
             <div class="grid grid-cols-2 gap-3 mt-4">
-                <button onclick="triggerImageUpload()" class="py-3.5 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-sm font-medium flex items-center justify-center gap-2">Photo + Forensic</button>
-                <button onclick="startVoiceRecording()" id="voiceBtn" class="py-3.5 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-sm font-medium flex items-center justify-center gap-2">Voice Testimony</button>
+                <button onclick="triggerImageUpload()" class="py-3.5 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 rounded-2xl text-sm font-medium flex items-center justify-center gap-2 transition">Photo + Forensic Shield</button>
+                <button onclick="startVoiceRecording()" id="voiceBtn" class="py-3.5 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 rounded-2xl text-sm font-medium flex items-center justify-center gap-2 transition">Voice Testimony</button>
             </div>
 
             <input type="file" id="imageInput" accept="image/*" class="hidden" onchange="handleImageSelect(event)">
-            <div id="previewArea" class="mt-4 hidden bg-zinc-900 p-3 rounded-2xl border border-zinc-800"></div>
+            <div id="previewArea" class="mt-4 hidden bg-zinc-950 p-3 rounded-2xl border border-zinc-900"></div>
 
-            <button onclick="postNow()" id="postButton" class="mt-6 w-full bg-emerald-500 hover:bg-emerald-600 text-black py-4 rounded-2xl font-bold text-base shadow-lg">Submit to Vocal Truth</button>
+            <button onclick="postNow()" id="postButton" class="mt-6 w-full bg-emerald-500 hover:bg-emerald-600 text-black py-4 rounded-2xl font-bold text-base shadow-lg transition-all">Publish to Decentralized Ledger</button>
         </div>
 
         <div id="feed" class="space-y-6"></div>
     </div>
 
-    <div id="earnModal" class="hidden fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="max-w-md w-full bg-zinc-900 rounded-3xl p-8 text-center border border-amber-500/30 shadow-2xl">
-            <h2 class="text-3xl font-bold text-amber-400 mb-4">Earn Real Rewards</h2>
-            <p class="text-zinc-400 text-sm mb-6">Top Verified Witnesses earn real rewards through:</p>
-            <ul class="text-left space-y-3 text-sm mb-8 text-gray-300 pl-4 list-disc">
-                <li>Reputation-based payouts</li>
-                <li>Media stream monetization (Level 4)</li>
-                <li>Trust Circle leadership bonuses</li>
-                <li>Prediction market rewards</li>
+    <div id="earnModal" class="hidden fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4 backdrop-blur-md">
+        <div class="max-w-md w-full bg-zinc-900 border border-zinc-800 rounded-3xl p-8 text-center shadow-2xl">
+            <h2 class="text-3xl font-black text-amber-400 mb-4 tracking-tight">Reputation Payouts</h2>
+            <p class="text-zinc-400 text-sm mb-6">Verified platform anchors monetize their contributions progressively based on their network reputation tier:</p>
+            <ul class="text-left space-y-3 text-sm mb-8 text-zinc-300 pl-4 list-disc font-mono">
+                <li>Tier 1: Verified Witness reach multipliers</li>
+                <li>Tier 2: Trusted Voice custom Circle nodes</li>
+                <li>Tier 3: Elite Guardian (Level 4 Media Streams)</li>
             </ul>
-            <p class="text-amber-300 text-xs mb-6 font-medium">Feature rolling out progressively. Keep building your reputation!</p>
-            <button onclick="closeModal('earnModal')" class="w-full py-4 bg-amber-500 text-black font-bold rounded-2xl shadow-lg hover:bg-amber-400 transition">Keep Contributing</button>
+            <p class="text-amber-500/80 text-xs mb-6 font-medium">System verification cycles auto-process parameters every 24 hours.</p>
+            <button onclick="closeModal('earnModal')" class="w-full py-4 bg-amber-500 hover:bg-amber-400 text-black font-extrabold rounded-2xl shadow-lg transition">Acknowledge Framework</button>
         </div>
     </div>
 
-    <div id="profilePage" class="hidden fixed inset-0 bg-black/95 z-50 overflow-auto backdrop-blur-sm">
+    <div id="profilePage" class="hidden fixed inset-0 bg-black/95 z-50 overflow-auto backdrop-blur-md">
         <div class="max-w-2xl mx-auto p-6">
-            <button onclick="closeModal('profilePage')" class="mb-6 text-emerald-400 flex items-center gap-1 font-medium">← Back to Feed</button>
+            <button onclick="closeModal('profilePage')" class="mb-6 text-emerald-400 flex items-center gap-1 font-semibold text-sm transition">← Return to Main Feed</button>
             
-            <div class="text-center mb-10 bg-zinc-900 rounded-3xl p-8 border border-zinc-800">
-                <div id="profileAvatar" class="w-24 h-24 mx-auto bg-emerald-600 rounded-full text-5xl font-black flex items-center justify-center mb-4 text-black">V</div>
-                <h2 id="profileName" class="text-2xl font-bold">Anonymous Witness</h2>
-                <p id="profileEmail" class="text-zinc-500 text-sm mt-1"></p>
+            <div class="text-center mb-6 bg-zinc-900/60 border border-zinc-800 rounded-3xl p-8">
+                <div id="profileAvatar" class="w-24 h-24 mx-auto bg-gradient-to-tr from-emerald-600 to-teal-600 rounded-3xl text-5xl font-black flex items-center justify-center mb-4 text-black shadow-inner">V</div>
+                <h2 id="profileName" class="text-2xl font-black tracking-tight">Node Endpoint Identity</h2>
+                <p id="profileEmail" class="text-zinc-500 text-xs font-mono mt-1"></p>
+                
+                <div class="mt-6 p-4 rounded-2xl bg-emerald-950/20 border border-emerald-500/20 text-left">
+                    <div class="flex items-center gap-2 mb-1.5">
+                        <span class="text-emerald-400 text-xs">🛡️</span>
+                        <h5 class="text-[11px] font-bold text-emerald-400 font-mono uppercase tracking-wider">Zero-Knowledge Cryptographic Protocol Notice</h5>
+                    </div>
+                    <p class="text-[11px] text-zinc-400 leading-relaxed font-sans">
+                        VocalWitness verifies humanity credentials and local geographic nodes exclusively via zero-knowledge mathematics and decentralized hardware telemetry. **We do not collect, process, or retain government-issued documentation** (e.g., passports, national ID indices). Personal real-world identification maps remain strictly outside the data layer.
+                    </p>
+                </div>
             </div>
 
             <div class="space-y-3">
-                <button onclick="manageVerification()" class="w-full py-4 bg-emerald-600 text-black font-bold rounded-2xl shadow-md hover:bg-emerald-500 transition">Verify Identity (Phone + ZK)</button>
-                <button onclick="showSettings()" class="w-full py-4 bg-zinc-800 text-white font-semibold rounded-2xl border border-zinc-700 hover:bg-zinc-700 transition">Settings</button>
-                <button onclick="logout()" class="w-full py-4 bg-red-900/40 border border-red-700/40 text-red-400 font-bold rounded-2xl hover:bg-red-900/60 transition">Disconnect Hub</button>
+                <button onclick="manageVerification()" class="w-full py-4 bg-emerald-500 text-black font-extrabold rounded-2xl shadow-md hover:bg-emerald-400 transition">Upgrade Humanity Node Level (OTP + ZK)</button>
+                <button onclick="showSettings()" class="w-full py-4 bg-zinc-900 border border-zinc-800 text-zinc-300 font-bold rounded-2xl hover:bg-zinc-800 transition">Node Settings Matrix</button>
+                <button onclick="logout()" class="w-full py-4 bg-red-950/30 border border-red-500/20 text-red-400 font-extrabold rounded-2xl hover:bg-red-900/20 transition tracking-wide">DISCONNECT INSTANCE HUB</button>
             </div>
         </div>
     </div>
 
     <div id="settingsModal" class="hidden fixed inset-0 bg-black/95 z-[60] flex items-center justify-center p-4 backdrop-blur-md">
-        <div class="max-w-md w-full bg-zinc-900 rounded-3xl p-6 border border-zinc-800 shadow-2xl relative">
-            <button onclick="closeModal('settingsModal')" class="absolute top-4 right-4 text-zinc-500 hover:text-white transition font-bold">✕</button>
-            <h3 class="font-bold text-xl text-white mb-6">Account Settings</h3>
-            <div class="space-y-3">
-                <button onclick="changePassword()" class="w-full py-4 bg-zinc-800 hover:bg-zinc-700 transition border border-zinc-700 rounded-2xl font-medium text-sm text-left px-5">🔑 Change Password / Rotate Keys</button>
-                <button onclick="privacySettings()" class="w-full py-4 bg-zinc-800 hover:bg-zinc-700 transition border border-zinc-700 rounded-2xl font-medium text-sm text-left px-5">🛡️ Privacy & Metadata Controls</button>
+        <div class="max-w-md w-full bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl relative">
+            <button onclick="closeModal('settingsModal')" class="absolute top-4 right-4 text-zinc-500 hover:text-white transition font-bold font-mono">✕</button>
+            <h3 class="font-black text-xl text-white mb-6 tracking-tight">Configuration Settings</h3>
+            <div class="space-y-3 font-mono">
+                <button onclick="changePassword()" class="w-full py-4 bg-zinc-950 border border-zinc-800 text-zinc-400 hover:text-white rounded-2xl text-xs text-left px-5 transition">🔑 Rotate Passwords & Security Keys</button>
+                <button onclick="privacySettings()" class="w-full py-4 bg-zinc-950 border border-zinc-800 text-zinc-400 hover:text-white rounded-2xl text-xs text-left px-5 transition">🛡️ HTML5 Client canvas Stripping Configurations</button>
             </div>
         </div>
     </div>
 
+    <script type="module" src="js/firebase-config.js"></script>
+    <script type="module" src="js/auth.js"></script>
+    <script type="module" src="js/feed.js"></script>
+    <script type="module" src="js/verification.js"></script>
+    <script type="module" src="js/circles.js"></script>
+    <script type="module" src="js/utils.js"></script>
+
     <script type="module">
-        // Global Interface Bindings
-        window.showProfile = () => {
-            document.getElementById('profilePage').classList.remove('hidden');
-        };
+        // Global UI State Triggers
+        window.showProfile = () => document.getElementById('profilePage').classList.remove('hidden');
+        window.showEarnModal = () => document.getElementById('earnModal').classList.remove('hidden');
+        window.showSettings = () => document.getElementById('settingsModal').classList.remove('hidden');
+        window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
 
-        window.showEarnModal = () => {
-            document.getElementById('earnModal').classList.remove('hidden');
-        };
+        // Feature Announcement Notification Toasts
+        window.showLiveArena = () => showToast("🎥 Live Arena (Real-time decentralized video streams) — Scheduled for v2.4 network deployment.");
+        window.showTrustCircles = () => showToast("🔒 Trust Circles — Private validated clusters coming in next core release.");
+        window.showSavedSection = () => showToast("💾 Saved Records — Enforcing localized ledger pinning next cycle.");
+        window.showPremiumBenefits = () => showToast("✨ Premium Multipliers activate on subsequent account credit updates.");
+        window.changePassword = () => showToast("🔐 Security validation keys are anchored directly on your Google Node identity parameters.");
+        window.privacySettings = () => showToast("⚙️ HTML5 sandbox hardware canvas filters are permanently hard-locked.");
+        window.manageVerification = () => showToast("🆔 ZK node mapping profiles launch inside next governance lifecycle.");
 
-        window.showSettings = () => {
-            document.getElementById('settingsModal').classList.remove('hidden');
-        };
-
-        window.closeModal = (id) => {
-            document.getElementById(id).classList.add('hidden');
-        };
-
-        // Teaser Notifications
-        window.showLiveArena = () => {
-            showToast("🎥 Live Arena (Real-time decentralized video) — Planned for v2.4. Stay tuned!");
-        };
-        window.showTrustCircles = () => {
-            showToast("🔒 Trust Circles — Private encrypted community groups. Coming in next major version.");
-        };
-        window.showFutures = () => {
-            showToast("📈 Prediction Markets — Verify events & earn rewards. Arriving soon.");
-        };
-        window.showSavedSection = () => {
-            showToast("💾 Saved Posts — Secure local network archives. Next update.");
-        };
-        window.showPremiumBenefits = () => {
-            showToast("✨ Premium Tier verification bonuses rolling out in the next network cycle.");
-        };
-
-        // Security Core Interop placeholders
-        window.changePassword = () => {
-            showToast("🔐 Security Key rotation managed via Google Account security settings.");
-        };
-        window.privacySettings = () => {
-            showToast("⚙️ Media metadata stripping settings active.");
-        };
-        window.manageVerification = () => {
-            showToast("🆔 Phone verification & Zero-Knowledge registration opening shortly.");
-        };
-
-        // Global Alert Broker
         function showToast(msg) {
             const container = document.getElementById('toastContainer') || (() => {
                 const c = document.createElement('div');
@@ -176,21 +158,21 @@
             })();
             
             const t = document.createElement('div');
-            t.className = "bg-emerald-500 text-black px-5 py-3.5 rounded-2xl font-bold shadow-2xl text-xs tracking-wide text-center transition-all duration-300 animate-bounce";
+            t.className = "bg-emerald-500 text-black px-5 py-3.5 rounded-2xl font-black shadow-2xl text-xs tracking-wide text-center transition-all duration-300";
             t.textContent = msg;
             container.appendChild(t);
-            setTimeout(() => { t.remove(); }, 4500);
+            setTimeout(() => { t.remove(); }, 4000);
         }
+        window.showToast = showToast;
 
-        // Mock UI Initializer for local validation
         function populateTopTalkers() {
             const container = document.getElementById('topTalkers');
             if (!container) return;
             const items = ['Witness_04', 'TruthSeeker', 'Kano_Node', 'Lagos_Voice'];
             container.innerHTML = items.map(name => `
-                <div class="flex-shrink-0 bg-zinc-900 border border-zinc-800 rounded-2xl px-4 py-2 flex items-center gap-2 text-xs">
-                    <div class="w-2 h-2 rounded-full bg-emerald-400"></div>
-                    <span class="font-mono text-gray-300">${name}</span>
+                <div class="flex-shrink-0 bg-zinc-950 border border-zinc-900 rounded-2xl px-4 py-2 flex items-center gap-2 text-xs">
+                    <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+                    <span class="font-mono text-zinc-400 font-bold">${name}</span>
                 </div>
             `).join('');
         }
@@ -199,8 +181,6 @@
             populateTopTalkers();
             showToast("⚡ VocalWitness Node Terminal Online");
         };
-
-        // === Paste your functional backend Firebase logic/imports right below here ===
     </script>
 </body>
 </html>
