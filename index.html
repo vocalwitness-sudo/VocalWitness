@@ -25,14 +25,41 @@
     </div>
 
     <div class="max-w-2xl mx-auto">
-        <header class="flex items-center justify-between mb-6">
-            <div class="flex items-center gap-3">
-                <h1 class="text-3xl font-black text-emerald-400 tracking-tight">VocalWitness</h1>
+        <header class="flex flex-col gap-4 mb-6"> 
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3"> 
+                    <span class="text-4xl">⚖️</span> 
+                    <h1 class="text-3xl font-bold text-emerald-400">VocalWitness</h1> 
+                </div> 
+                <div class="flex items-center gap-3"> 
+                    <button onclick="showPremiumBenefits()" class="px-5 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-medium rounded-3xl text-sm flex items-center gap-1">⭐️ Premium</button> 
+                    <button onclick="showNotifications()" class="w-11 h-11 bg-zinc-800 hover:bg-zinc-700 rounded-3xl flex items-center justify-center text-xl relative">🔔</button> 
+                    <button onclick="showProfile()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-3xl text-sm font-medium">👤 Profile</button> 
+                </div> 
             </div>
-            <div class="flex items-center gap-2">
-                <button onclick="showEarnModal()" class="px-5 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-bold rounded-3xl text-sm shadow-md hover:scale-105 transition">Earn</button>
-                <button onclick="showPremiumBenefits()" class="px-4 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-semibold rounded-3xl text-xs shadow-md">Premium</button>
-                <button onclick="showProfile()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 font-medium text-black font-bold rounded-3xl text-xs transition">Profile</button>
+
+            <div class="bg-[#111827] border border-zinc-800 rounded-2xl p-3 flex items-center justify-between glass">
+                <div class="flex items-center gap-2 text-xs text-zinc-400 font-medium">
+                    <span>🌐 Node Language:</span>
+                    <span id="activeLanguageDisplay" class="text-emerald-400 font-bold bg-emerald-950/80 px-2 py-0.5 rounded-md border border-emerald-800/40">English (EN)</span>
+                </div>
+                <select id="languageSelector" onchange="window.handleLanguageChange(this.value)" class="bg-[#1e293b] text-sm text-white font-medium px-3 py-1.5 rounded-xl border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer max-w-[180px]">
+                    <option value="en" selected>English (EN)</option>
+                    <option value="sw">Kiswahili (SW)</option>
+                    <option value="ha">Hausa (HA)</option>
+                    <option value="yo">Yoruba (YO)</option>
+                    <option value="ig">Igbo (IG)</option>
+                    <option value="so">Somali (SO)</option>
+                    <option value="am">Amharic (AM)</option>
+                    <option value="om">Oromo (OM)</option>
+                    <option value="zu">isiZulu (ZU)</option>
+                    <option value="xh">isiXhosa (XH)</option>
+                    <option value="ar">العربية (AR)</option>
+                    <option value="zh">中文 (ZH)</option>
+                    <option value="es">Español (ES)</option>
+                    <option value="hi">हिन्दी (HI)</option>
+                    <option value="fr">Français (FR)</option>
+                </select>
             </div>
         </header>
 
@@ -140,6 +167,7 @@
         window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
 
         // Feature Announcement Notification Toasts
+        window.showNotifications = () => showToast("🔔 Notifications pane updating via local node ledger syncing mechanics.");
         window.showLiveArena = () => showToast("🎥 Live Arena (Real-time decentralized video streams) — Scheduled for v2.4 network deployment.");
         window.showTrustCircles = () => showToast("🔒 Trust Circles — Private validated clusters coming in next core release.");
         window.showSavedSection = () => showToast("💾 Saved Records — Enforcing localized ledger pinning next cycle.");
@@ -147,6 +175,21 @@
         window.changePassword = () => showToast("🔐 Security validation keys are anchored directly on your Google Node identity parameters.");
         window.privacySettings = () => showToast("⚙️ HTML5 sandbox hardware canvas filters are permanently hard-locked.");
         window.manageVerification = () => showToast("🆔 ZK node mapping profiles launch inside next governance lifecycle.");
+
+        // Placeholder for dropdown handler if utils or localized scripts aren't capturing it yet
+        window.handleLanguageChange = (val) => {
+            const labelMap = {
+                en: "English (EN)", sw: "Kiswahili (SW)", ha: "Hausa (HA)", yo: "Yoruba (YO)",
+                ig: "Igbo (IG)", so: "Somali (SO)", am: "Amharic (AM)", om: "Oromo (OM)",
+                zu: "isiZulu (ZU)", xh: "isiXhosa (XH)", ar: "العربية (AR)", zh: "中文 (ZH)",
+                es: "Español (ES)", hi: "हिन्दी (HI)", fr: "Français (FR)"
+            };
+            const displaySpan = document.getElementById('activeLanguageDisplay');
+            if (displaySpan && labelMap[val]) {
+                displaySpan.textContent = labelMap[val];
+            }
+            showToast(`🌐 System localization updated to language node: [${val.toUpperCase()}]`);
+        };
 
         function showToast(msg) {
             const container = document.getElementById('toastContainer') || (() => {
