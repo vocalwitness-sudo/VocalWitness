@@ -34,6 +34,14 @@ export const translationDictionary = {
     }
 };
 
+// Add this to your existing js/utils.js
+export function showToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'fixed bottom-5 right-5 bg-gray-800 text-white p-4 rounded shadow-lg z-50';
+    toast.innerText = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
 // ==========================================
 // 🔄 LIVE DOM LANGUAGE TRANSLATION ENGINE
 // ==========================================
