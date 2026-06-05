@@ -25,11 +25,14 @@
     </div>
 
     <div class="max-w-2xl mx-auto">
+        
         <header class="flex flex-col gap-4 mb-6"> 
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3"> 
-                    <span class="text-4xl">⚖️</span> 
-                    <h1 class="text-3xl font-bold text-emerald-400">VocalWitness</h1> 
+                    <div class="w-11 h-11 overflow-hidden rounded-xl flex items-center justify-center bg-zinc-900/50 backdrop-blur-sm border border-emerald-500/10">
+                        <img src="logo.png" alt="VocalWitness Icon" class="w-full h-auto scale-[2.4] translate-y-[-15px] object-contain">
+                    </div>
+                    <h1 class="text-3xl font-bold text-emerald-400 tracking-tight">VocalWitness</h1> 
                 </div> 
                 <div class="flex items-center gap-3"> 
                     <button onclick="showPremiumBenefits()" class="px-5 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-medium rounded-3xl text-sm flex items-center gap-1">⭐️ Premium</button> 
@@ -63,12 +66,18 @@
             </div>
         </header>
 
+        <div class="flex flex-col items-center justify-center my-8 text-center bg-zinc-950/30 border border-zinc-900/50 rounded-3xl py-6 px-4 backdrop-blur-xs">
+            <div class="w-64 h-64 overflow-hidden flex items-center justify-center mb-0">
+                <img src="logo.png" alt="VocalWitness Full Logo" class="w-full h-auto scale-[1.35] translate-y-[-2px] object-contain">
+            </div>
+            <p class="text-zinc-400 text-sm font-medium tracking-wide mt-2">Premium Forensic Ledger & Public Square</p>
+        </div>
+
         <div class="mb-6">
             <h3 class="text-amber-400 text-xs uppercase font-bold tracking-wider font-mono flex items-center gap-2 mb-3">👥 Top Active True Talkers</h3>
             <div id="topTalkers" class="flex gap-3 overflow-x-auto pb-2"></div>
         </div>
 
-        <!-- 🔄 Synced Premium Grid Feed Controls -->
         <nav class="grid grid-cols-3 gap-3 mb-4">
             <button onclick="switchFeed('vocaltruth')" id="btn-vocaltruth" class="bg-emerald-500 text-black py-4 rounded-2xl font-semibold text-sm transition-all shadow-lg border border-emerald-400/20">
                 📢 Vocal Truth
@@ -175,29 +184,21 @@
 
         // 🔄 Dynamic Feed Switcher & Visual Highlighting Engine
         window.switchFeed = (feedType) => {
-            // 1. Update your global tracking variable
             currentFeed = feedType; 
             
-            // 2. Grab references to both button elements from the DOM
             const truthBtn = document.getElementById('btn-vocaltruth');
             const citizenBtn = document.getElementById('btn-citizentalk');
             
-            if (!truthBtn || !citizenBtn) return; // Safety guard clause
+            if (!truthBtn || !citizenBtn) return; 
 
-            // 3. Apply active/inactive visual states dynamically
             if (feedType === 'citizentalk') {
-                // Highlight Citizen Talk
                 citizenBtn.className = "bg-emerald-500 text-black py-4 rounded-2xl font-semibold text-sm transition-all shadow-lg border border-emerald-400/20";
-                // Dim Vocal Truth
                 truthBtn.className = "bg-zinc-800 text-zinc-400 hover:text-white py-4 rounded-2xl font-semibold text-sm transition-all border border-zinc-900";
             } else {
-                // Highlight Vocal Truth
                 truthBtn.className = "bg-emerald-500 text-black py-4 rounded-2xl font-semibold text-sm transition-all shadow-lg border border-emerald-400/20";
-                // Dim Citizen Talk
                 citizenBtn.className = "bg-zinc-800 text-zinc-400 hover:text-white py-4 rounded-2xl font-semibold text-sm transition-all border border-zinc-900";
             }
             
-            // 4. Force your data display framework to load the clean filtered feed posts
             if (typeof renderFeed === 'function') {
                 renderFeed();
             } else {
@@ -223,10 +224,8 @@
 
         // 🌐 Activated Global Language Sync Engine
         window.handleLanguageChange = (langCode) => {
-            // 1. Run the layout string replacement engine from utils.js
             translateUIElements(langCode);
             
-            // 2. Dynamically shift the text label indicator in your header
             const selector = document.getElementById('languageSelector');
             if (selector) {
                 const displayLabel = document.getElementById('activeLanguageDisplay');
@@ -235,7 +234,6 @@
                 }
             }
             
-            // 3. Clear and re-filter your content stream data matching the new node language
             if (typeof renderFeed === 'function') {
                 renderFeed();
             }
@@ -272,7 +270,6 @@
         }
 
         window.onload = () => {
-            // Populates your country code drop-down when the application boots up
             populateCountryDropdown('languageSelector'); 
             populateTopTalkers();
             showToast("⚡ VocalWitness Node Terminal Online");
