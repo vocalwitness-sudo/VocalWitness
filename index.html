@@ -160,6 +160,9 @@
     <script type="module" src="js/utils.js"></script>
 
     <script type="module">
+        import { populateCountryDropdown } from './js/verification.js';
+        import { translateUIElements } from './js/utils.js';
+
         // Global UI State Triggers
         window.showProfile = () => document.getElementById('profilePage').classList.remove('hidden');
         window.showEarnModal = () => document.getElementById('earnModal').classList.remove('hidden');
@@ -176,19 +179,25 @@
         window.privacySettings = () => showToast("⚙️ HTML5 sandbox hardware canvas filters are permanently hard-locked.");
         window.manageVerification = () => showToast("🆔 ZK node mapping profiles launch inside next governance lifecycle.");
 
-        // Placeholder for dropdown handler if utils or localized scripts aren't capturing it yet
-        window.handleLanguageChange = (val) => {
-            const labelMap = {
-                en: "English (EN)", sw: "Kiswahili (SW)", ha: "Hausa (HA)", yo: "Yoruba (YO)",
-                ig: "Igbo (IG)", so: "Somali (SO)", am: "Amharic (AM)", om: "Oromo (OM)",
-                zu: "isiZulu (ZU)", xh: "isiXhosa (XH)", ar: "العربية (AR)", zh: "中文 (ZH)",
-                es: "Español (ES)", hi: "हिन्दी (HI)", fr: "Français (FR)"
-            };
-            const displaySpan = document.getElementById('activeLanguageDisplay');
-            if (displaySpan && labelMap[val]) {
-                displaySpan.textContent = labelMap[val];
+        // 🌐 Activated Global Language Sync Engine
+        window.handleLanguageChange = (langCode) => {
+            // 1. Run the layout string replacement engine from utils.js
+            translateUIElements(langCode);
+            
+            // 2. Dynamically shift the text label indicator in your header
+            const selector = document.getElementById('languageSelector');
+            if (selector) {
+                const displayLabel = document.getElementById('activeLanguageDisplay');
+                if (displayLabel) {
+                    displayLabel.textContent = selector.options[selector.selectedIndex].text;
+                }
             }
-            showToast(`🌐 System localization updated to language node: [${val.toUpperCase()}]`);
+            
+            // 3. Clear and re-filter your content stream data matching the new node language
+            if (typeof renderFeed === 'function') {
+                renderFeed();
+            }
+            showToast(`🌐 System localization updated to language node: [${langCode.toUpperCase()}]`);
         };
 
         function showToast(msg) {
@@ -221,6 +230,8 @@
         }
 
         window.onload = () => {
+            // Populates your country code drop-down when the application boots up
+            populateCountryDropdown('languageSelector'); 
             populateTopTalkers();
             showToast("⚡ VocalWitness Node Terminal Online");
         };
