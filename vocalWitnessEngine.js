@@ -1,7 +1,20 @@
 /**
  * VocalWitness Engine - Core Frontend Architecture Module
  * Handles: Digital Campfires, Integrity Ledgers, and Democratic Moderation
+ * Upgraded to Firebase v10 Modular SDK Standards
  */
+
+import { 
+    collection, 
+    doc, 
+    addDoc, 
+    runTransaction 
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { 
+    ref, 
+    uploadBytes, 
+    getDownloadURL 
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
 export class VocalWitnessEngine {
   constructor(firebaseFirestore, firebaseStorage) {
@@ -17,7 +30,7 @@ export class VocalWitnessEngine {
   // ==========================================
   /**
    * Filters the UI feed based on user's chosen "Campfire" mode
-   * @param {string} mode - 'street-talk', 'witness-circle', or a specific language code (e.g. '+252')
+   * @param {string} mode - 'citizen-talk', 'true-witness', or a specific language code (e.g. '+252')
    */
   filterFeedMode(mode) {
     console.log(`Switching campfire feed to: ${mode}`);
@@ -27,11 +40,11 @@ export class VocalWitnessEngine {
       const cardMode = card.getAttribute('data-mode');
       const cardLang = card.getAttribute('data-lang');
 
-      if (mode === 'street-talk') {
-        // Public feed shows everything
+      if (mode === 'citizen-talk') {
+        // Public feed shows all base entries
         card.style.display = 'block';
-      } else if (mode === 'witness-circle' && cardMode === 'circle') {
-        // Show private circle updates only
+      } else if (mode === 'true-witness' && cardMode === 'true-witness') {
+        // Show high-integrity premium verification updates only
         card.style.display = 'block';
       } else if (cardLang === mode) {
         // Filter by specific language/country code community
@@ -97,7 +110,7 @@ export class VocalWitnessEngine {
   /**
    * Bundles the audio asset with its verified metadata payload
    */
-  async packageAndUploadTestimony(userId, selectedLanguageCode, feedType = 'public') {
+  async packageAndUploadTestimony(userId, selectedLanguageCode, feedType = 'citizen-talk') {
     if (!this.currentAudioBlob) {
       throw new Error("No voice recording found to upload.");
     }
@@ -107,10 +120,10 @@ export class VocalWitnessEngine {
     const timestamp = new Date().toISOString();
     const storageRefPath = `testimonies/${userId}_${Date.now()}.webm`;
 
-    // 1. Upload file to Firebase Storage
-    const storageRef = this.storage.ref(storageRefPath);
-    const uploadTask = await storageRef.put(this.currentAudioBlob);
-    const downloadURL = await uploadTask.ref.getDownloadURL();
+    // 1. Upload file to Firebase Storage via v10 modular function patterns
+    const storageReference = ref(this.storage, storageRefPath);
+    const uploadResult = await uploadBytes(storageReference, this.currentAudioBlob);
+    const downloadURL = await getDownloadURL(uploadResult.ref);
 
     // 2. Construct the tamper-proof ledger document
     const testimonyPayload = {
@@ -119,18 +132,19 @@ export class VocalWitnessEngine {
       storagePath: storageRefPath,
       timestamp: timestamp,
       languageCode: selectedLanguageCode, // Values like '+234', '+255', '+252'
-      feedVisibility: feedType, // 'public' or 'circle'
-      integrityHash: integrityHash, // Immutability proof
+      feedVisibility: feedType,           // 'citizen-talk' or 'true-witness'
+      integrityHash: integrityHash,       // Immutability proof
       moderation: {
         trustScore: 100,
         verificationsCount: 0,
         disputesCount: 0,
-        votedUsers: [] // Prevents double voting
+        votedUsers: []                    // Prevents double voting
       }
     };
 
-    // 3. Save to Firestore
-    const docRef = await this.db.collection('vocal_truth').add(testimonyPayload);
+    // 3. Save to Firestore collection using addDoc()
+    const targetCollection = collection(this.db, 'testimonies');
+    const docRef = await addDoc(targetCollection, testimonyPayload);
     return docRef.id;
   }
 
@@ -144,24 +158,24 @@ export class VocalWitnessEngine {
    * @param {string} voteType - 'verify' or 'dispute'
    */
   async submitPeerVote(testimonyId, userId, voteType) {
-    const docRef = this.db.collection('vocal_truth').doc(testimonyId);
+    const docRef = doc(this.db, 'testimonies', testimonyId);
     
-    return this.db.runTransaction(async (transaction) => {
+    return runTransaction(this.db, async (transaction) => {
       const sfDoc = await transaction.get(docRef);
-      if (!sfDoc.exists) {
-        throw "Document does not exist!";
+      if (!sfDoc.exists()) {
+        throw new Error("Document does not exist!");
       }
 
       const data = sfDoc.data();
-      const moderation = data.moderation;
+      const moderation = data.moderation || { trustScore: 100, verificationsCount: 0, disputesCount: 0, votedUsers: [] };
 
       // Prevent a user from voting multiple times on the same record
       if (moderation.votedUsers.includes(userId)) {
-        throw "You have already audited this testimony.";
+        throw new Error("You have already audited this testimony.");
       }
 
-      let newVerifications = moderation.verificationsCount;
-      let newDisputes = moderation.disputesCount;
+      let newVerifications = moderation.verificationsCount || 0;
+      let newDisputes = moderation.disputesCount || 0;
 
       if (voteType === 'verify') {
         newVerifications += 1;
@@ -173,7 +187,7 @@ export class VocalWitnessEngine {
       const totalVotes = newVerifications + newDisputes;
       const newTrustScore = totalVotes > 0 ? Math.round((newVerifications / totalVotes) * 100) : 100;
 
-      // Update the ledger immutably inside the transaction
+      // Update the ledger immutably inside the transaction block
       transaction.update(docRef, {
         'moderation.verificationsCount': newVerifications,
         'moderation.disputesCount': newDisputes,
