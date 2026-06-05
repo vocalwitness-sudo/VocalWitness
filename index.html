@@ -29,15 +29,15 @@
         <header class="flex flex-col gap-4 mb-6"> 
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3"> 
-                    <div class="w-11 h-11 overflow-hidden rounded-xl flex items-center justify-center bg-zinc-900/50 backdrop-blur-sm border border-emerald-500/10">
-                        <img src="logo.png" alt="VocalWitness Icon" class="w-full h-auto scale-[2.4] translate-y-[-15px] object-contain">
+                    <div class="w-11 h-11 overflow-hidden rounded-xl flex items-center justify-center bg-[#0a0f1c] border border-emerald-500/20 shadow-inner">
+                        <img src="logo.png" alt="VocalWitness Icon" class="w-full h-auto scale-[2.5] translate-y-[-12px] object-contain">
                     </div>
                     <h1 class="text-3xl font-bold text-emerald-400 tracking-tight">VocalWitness</h1> 
                 </div> 
                 <div class="flex items-center gap-3"> 
-                    <button onclick="showPremiumBenefits()" class="px-5 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-medium rounded-3xl text-sm flex items-center gap-1">⭐️ Premium</button> 
-                    <button onclick="showNotifications()" class="w-11 h-11 bg-zinc-800 hover:bg-zinc-700 rounded-3xl flex items-center justify-center text-xl relative">🔔</button> 
-                    <button onclick="showProfile()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-3xl text-sm font-medium">👤 Profile</button> 
+                    <button onclick="showPremiumBenefits()" class="px-5 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-semibold rounded-3xl text-sm flex items-center gap-1.5 shadow-md">⭐ Premium</button> 
+                    <button onclick="showNotifications()" class="w-11 h-11 bg-zinc-800 hover:bg-zinc-700 rounded-3xl flex items-center justify-center text-lg relative">🔔</button> 
+                    <button onclick="showProfile()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-3xl text-sm font-semibold flex items-center gap-1">👤 Profile</button> 
                 </div> 
             </div>
 
@@ -66,29 +66,22 @@
             </div>
         </header>
 
-        <div class="flex flex-col items-center justify-center my-8 text-center bg-zinc-950/30 border border-zinc-900/50 rounded-3xl py-6 px-4 backdrop-blur-xs">
-            <div class="w-64 h-64 overflow-hidden flex items-center justify-center mb-0">
-                <img src="logo.png" alt="VocalWitness Full Logo" class="w-full h-auto scale-[1.35] translate-y-[-2px] object-contain">
-            </div>
-            <p class="text-zinc-400 text-sm font-medium tracking-wide mt-2">Premium Forensic Ledger & Public Square</p>
-        </div>
-
         <div class="mb-6">
             <h3 class="text-amber-400 text-xs uppercase font-bold tracking-wider font-mono flex items-center gap-2 mb-3">👥 Top Active True Talkers</h3>
             <div id="topTalkers" class="flex gap-3 overflow-x-auto pb-2"></div>
         </div>
 
         <nav class="grid grid-cols-3 gap-3 mb-4">
-            <button onclick="switchFeed('vocaltruth')" id="btn-vocaltruth" class="bg-emerald-500 text-black py-4 rounded-2xl font-semibold text-sm transition-all shadow-lg border border-emerald-400/20">
+            <button onclick="switchFeed('vocaltruth')" id="btn-vocaltruth" class="bg-emerald-500 text-black py-4 rounded-2xl font-bold text-sm transition-all shadow-lg border border-emerald-400/20 flex items-center justify-center gap-1.5">
                 📢 Vocal Truth
             </button>
             
-            <button onclick="switchFeed('citizentalk')" id="btn-citizentalk" class="bg-zinc-800 text-zinc-400 hover:text-white py-4 rounded-2xl font-semibold text-sm transition-all border border-zinc-900">
+            <button onclick="switchFeed('citizentalk')" id="btn-citizentalk" class="bg-zinc-800 text-zinc-400 hover:text-white py-4 rounded-2xl font-bold text-sm transition-all border border-zinc-900 flex items-center justify-center gap-1.5">
                 💬 Citizen Talk
             </button>
 
-            <button onclick="showLiveArena()" class="relative bg-zinc-900/60 border border-zinc-800 text-zinc-400 hover:bg-zinc-800 py-4 rounded-3xl flex flex-col items-center justify-center gap-1 font-semibold text-sm transition-all">
-                Live Arena <span class="teaser-badge">v2.4</span>
+            <button onclick="showLiveArena()" class="relative bg-zinc-900/60 border border-zinc-800 text-zinc-400 hover:bg-zinc-800 py-4 rounded-3xl flex flex-col items-center justify-center gap-1 font-bold text-sm transition-all">
+                🎥 Live Arena <span class="teaser-badge">v2.4</span>
             </button>
         </nav>
 
@@ -192,11 +185,15 @@
             if (!truthBtn || !citizenBtn) return; 
 
             if (feedType === 'citizentalk') {
-                citizenBtn.className = "bg-emerald-500 text-black py-4 rounded-2xl font-semibold text-sm transition-all shadow-lg border border-emerald-400/20";
-                truthBtn.className = "bg-zinc-800 text-zinc-400 hover:text-white py-4 rounded-2xl font-semibold text-sm transition-all border border-zinc-900";
+                // Highlight Citizen Talk with Premium Accents
+                citizenBtn.className = "bg-emerald-500 text-black py-4 rounded-2xl font-bold text-sm transition-all shadow-lg border border-emerald-400/20 flex items-center justify-center gap-1.5";
+                // Dim Vocal Truth
+                truthBtn.className = "bg-zinc-800 text-zinc-400 hover:text-white py-4 rounded-2xl font-bold text-sm transition-all border border-zinc-900 flex items-center justify-center gap-1.5";
             } else {
-                truthBtn.className = "bg-emerald-500 text-black py-4 rounded-2xl font-semibold text-sm transition-all shadow-lg border border-emerald-400/20";
-                citizenBtn.className = "bg-zinc-800 text-zinc-400 hover:text-white py-4 rounded-2xl font-semibold text-sm transition-all border border-zinc-900";
+                // Highlight Vocal Truth with Premium Accents
+                truthBtn.className = "bg-emerald-500 text-black py-4 rounded-2xl font-bold text-sm transition-all shadow-lg border border-emerald-400/20 flex items-center justify-center gap-1.5";
+                // Dim Citizen Talk
+                citizenBtn.className = "bg-zinc-800 text-zinc-400 hover:text-white py-4 rounded-2xl font-bold text-sm transition-all border border-zinc-900 flex items-center justify-center gap-1.5";
             }
             
             if (typeof renderFeed === 'function') {
