@@ -14,7 +14,40 @@ export function updateTierDisplay() {
     else if (currentTrustScore >= 65) tierEl.textContent = "Verified Witness";
     else tierEl.textContent = "Rising Witness";
 }
+// ==========================================
+// 📞 COUNTRY DIALING CODES RESOURCE
+// ==========================================
+export const countryCodes = [
+    { name: "Nigeria", code: "+234", iso: "NG" },
+    { name: "United Kingdom", code: "+44", iso: "GB" },
+    { name: "United States", code: "+1", iso: "US" },
+    { name: "Ghana", code: "+233", iso: "GH" },
+    { name: "Kenya", code: "+254", iso: "KE" },
+    { name: "South Africa", code: "+27", iso: "ZA" },
+    { name: "Egypt", code: "+20", iso: "EG" },
+    { name: "France", code: "+33", iso: "FR" },
+    { name: "Germany", code: "+49", iso: "DE" },
+    { name: "India", code: "+91", iso: "IN" }
+];
 
+// ==========================================
+// 🛠️ INITIALIZE COUNTRY PHONE DROPDOWN
+// ==========================================
+export function populateCountryDropdown(selectElementId) {
+    const dropdown = document.getElementById(selectElementId);
+    if (!dropdown) return;
+
+    // Reset dropdown with a clean placeholder option
+    dropdown.innerHTML = `<option value="" disabled selected>-- Select Phone Code --</option>`;
+
+    // Loop through countries and add them as clean options
+    countryCodes.forEach(country => {
+        const option = document.createElement('option');
+        option.value = country.code;
+        option.textContent = `${country.name} (${country.code})`;
+        dropdown.appendChild(option);
+    });
+}
 /**
  * Executes a Zero-Knowledge Cryptographic verification pass.
  * Validates identity patterns locally on-device without exposing personal raw data.
