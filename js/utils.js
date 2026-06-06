@@ -57,6 +57,14 @@ export function translateUIElements(langCode) {
 
     if (privacyNoticeText) privacyNoticeText.textContent = lexicon.privacyWarning;
     if (securityUpgradeText) securityUpgradeText.textContent = lexicon.upgradeSecurity;
+
+    // Add this to js/utils.js
+export async function generateSha256Hash(message) {
+    const msgBuffer = new TextEncoder().encode(message);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
     if (settingsDashboardText) settingsDashboardText.textContent = lexicon.settingsDashboard;
     if (logoutActionText) logoutActionText.textContent = lexicon.logoutBtn;
 }
