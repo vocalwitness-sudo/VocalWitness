@@ -58,6 +58,29 @@ export function translateUIElements(langCode) {
     if (privacyNoticeText) privacyNoticeText.textContent = lexicon.privacyWarning;
     if (securityUpgradeText) securityUpgradeText.textContent = lexicon.upgradeSecurity;
 
+    // js/utils.js
+
+/**
+ * Displays a temporary notification
+ */
+export function showToast(message, type = "success") {
+    const toast = document.createElement('div');
+    toast.className = `fixed bottom-5 right-5 p-4 rounded shadow-lg z-50 text-white ${type === 'error' ? 'bg-red-600' : 'bg-gray-800'}`;
+    toast.innerText = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+/**
+ * Generates a SHA-256 hash for file integrity
+ */
+export async function generateSha256Hash(file) {
+    const arrayBuffer = await file.arrayBuffer();
+    const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
     // Add this to js/utils.js
 export async function generateSha256Hash(message) {
     const msgBuffer = new TextEncoder().encode(message);
@@ -65,6 +88,7 @@ export async function generateSha256Hash(message) {
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
+   
     if (settingsDashboardText) settingsDashboardText.textContent = lexicon.settingsDashboard;
     if (logoutActionText) logoutActionText.textContent = lexicon.logoutBtn;
 }
