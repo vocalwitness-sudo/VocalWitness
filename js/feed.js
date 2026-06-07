@@ -115,4 +115,10 @@ export function listenToLedgerFeed() {
         });
     });
 }
+// Inside your feed rendering loop:
+const showImage = !isLowDataMode();
+card.innerHTML = `
+    <p>${data.witnessText}</p>
+    ${showImage && data.imageUrl ? `<img src="${data.imageUrl}">` : '<p>[Image hidden to save data]</p>'}
+`;
 window.listenToLedgerFeed = listenToLedgerFeed;
