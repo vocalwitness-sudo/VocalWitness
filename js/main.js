@@ -1,59 +1,28 @@
-// js/media.js
-import { showToast } from './utils.js';
+import { googleLogin, logout } from "./auth.js";
+import { listenToLedgerFeed, postNow } from "./feed.js";
+import { handleImageSelect, toggleVoiceRecording } from "./media.js";
+import { translateUIElements } from "./i18n.js";
 
-let mediaRecorder;
-let recordedChunks = [];
-let compressedImageBase64 = null;
-let recordedAudioBlob = null;
-
-// --- Image Logic ---
-export async function handleImageSelect(event, previewArea) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        compressedImageBase64 = e.target.result;
-        previewArea.innerHTML = `
-            <div class="relative">
-                <img src="${compressedImageBase64}" class="image-preview" alt="Forensic Preview">
-                <button id="removeImgBtn" class="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-7 h-7">✕</button>
-            </div>`;
-        previewArea.classList.remove('hidden');
-        
-        // Add listener for the remove button
-        document.getElementById('removeImgBtn').addEventListener('click', () => removeImage(previewArea));
-    };
-    reader.readAsDataURL(file);
-    showToast("📸 Image attached & metadata scrubbed", "success");
-}
-
-export function removeImage(previewArea) {
-    compressedImageBase64 = null;
-    previewArea.innerHTML = '';
-    previewArea.classList.add('hidden');
-}
-
-// --- Audio Logic ---
-export function toggleVoiceRecording(voiceBtn) {
-    if (!mediaRecorder || mediaRecorder.state === "inactive") {
-        navigator.mediaDevices.getUserMedia({ audio: true })
-            .then(stream => {
-                mediaRecorder = new MediaRecorder(stream);
-                recordedChunks = [];
-                mediaRecorder.ondataavailable = e => recordedChunks.push(e.data);
-                mediaRecorder.onstop = () => {
-                    recordedAudioBlob = new Blob(recordedChunks, { type: 'audio/webm' });
-                    voiceBtn.classList.remove('recording-active');
-                    voiceBtn.textContent = '✅ Voice Recorded';
-                    showToast("🎤 Voice testimony saved", "success");
-                };
-                mediaRecorder.start();
-                voiceBtn.classList.add('recording-active');
-                voiceBtn.textContent = '⏹️ Stop Recording';
-            })
-            .catch(() => showToast("Microphone permission denied", "error"));
-    } else {
-        mediaRecorder.stop();
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Start App
+    listenToLedgerFeed();
+    
+    // 2. Setup Language Switcher
+    const langSelect = document.getElementById('language-select');
+    if (langSelect) {
+        langSelect.addEventListener('change', (e) => translateUIElements(e.target.value));
     }
-}
+
+    // 3. Setup Media Events
+    const imageInput = document.getElementById('imageInput');
+    const previewArea = document.getElementById('previewArea');
+    if (imageInput) imageInput.addEventListener('change', (e) => handleImageSelect(e, previewArea));
+        
+    const voiceBtn = document.getElementById('voiceBtn');
+    if (voiceBtn) voiceBtn.addEventListener('click', (e) => toggleVoiceRecording(e.target));
+
+    // 4. Expose Auth/Post to Global Window (for HTML onclick handlers)
+    window.googleLogin = googleLogin;
+    window.logout = logout;
+    window.postNow = postNow;
+});
