@@ -12,6 +12,17 @@ export async function postNow() {
     if (!currentUser) {
         showToast("Identity verification required.", "info");
         return;
+        export function searchTestimonies(queryText) {
+    const feedContainer = document.getElementById('feed');
+    const cards = feedContainer.getElementsByClassName('witness-card'); // Ensure your cards have this class
+    
+    const term = queryText.toLowerCase();
+    Array.from(cards).forEach(card => {
+        const text = card.textContent.toLowerCase();
+        card.style.display = text.includes(term) ? '' : 'none';
+    });
+}
+window.searchTestimonies = searchTestimonies;
     }
 
     const mainInput = document.getElementById('mainInput');
