@@ -27,10 +27,21 @@ export function switchFeed(feedType) {
     // Refresh display
     listenToLedgerFeed();
 }
+// Inside your postNow() function in feed.js
 export async function postNow() {
-    if (!currentUser) {
-        showToast("Identity verification required.", "info");
-        return;
+    // ... existing checks
+    
+    // The "Gatekeeper" logic
+    if (currentFeed === 'witness-voice') {
+        const isVerified = (isPhoneVerified && isZKVerified); 
+        if (!isVerified) {
+            showToast("Upgrade to Tier 1 Witness Circle to post in this feed.", "error");
+            return; // Block execution
+        }
+    }
+    
+    // ... proceed with uploading if verified
+}
         export function searchTestimonies(queryText) {
     const feedContainer = document.getElementById('feed');
     const cards = feedContainer.getElementsByClassName('witness-card'); // Ensure your cards have this class
