@@ -122,3 +122,24 @@ card.innerHTML = `
     ${showImage && data.imageUrl ? `<img src="${data.imageUrl}">` : '<p>[Image hidden to save data]</p>'}
 `;
 window.listenToLedgerFeed = listenToLedgerFeed;
+// js/feed.js
+
+export function switchFeed(feedType) {
+    // 1. Update active tab UI
+    const citizenTab = document.getElementById('citizenTab');
+    const witnessTab = document.getElementById('witnessTab');
+    
+    if (feedType === 'citizentalk') {
+        citizenTab.className = "tab-active py-3.5 rounded-2xl font-bold text-sm";
+        witnessTab.className = "py-3.5 rounded-2xl font-bold text-sm border border-zinc-700 text-zinc-400";
+        currentFeed = 'citizen-talk';
+    } else {
+        witnessTab.className = "tab-active py-3.5 rounded-2xl font-bold text-sm";
+        citizenTab.className = "py-3.5 rounded-2xl font-bold text-sm border border-zinc-700 text-zinc-400";
+        currentFeed = 'witness-voice';
+    }
+    
+    // 2. Refresh the ledger display for the new feed type
+    listenToLedgerFeed();
+}
+window.switchFeed = switchFeed;
