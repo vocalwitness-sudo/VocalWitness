@@ -4,33 +4,32 @@ import { showToast } from "./utils.js";
 
 export let currentUser = null;
 
+// The Auth Observer
 onAuthStateChanged(auth, (user) => {
+    currentUser = user;
     const loginPromptModal = document.getElementById('authSection');
     
+    // UI Updates - safely checking if elements exist before updating
+    const updateUI = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value;
+    };
+
     if (user) {
-        currentUser = user;
-        if (loginPromptModal) loginPromptModal.classList.add('hidden'); 
+        if (loginPromptModal) loginPromptModal.classList.add('hidden');
+        updateUI('userName', user.displayName || "Anonymous Witness");
+        updateUI('profileName', user.displayName || "Verified Witness");
+        updateUI('profileEmail', user.email || "");
         
-        if (document.getElementById('userName')) {
-            document.getElementById('userName').textContent = user.displayName || "Anonymous Witness";
-        }
-        if (document.getElementById('profileName')) {
-            document.getElementById('profileName').textContent = user.displayName || "Verified Witness";
-        }
-        if (document.getElementById('profileEmail')) {
-            document.getElementById('profileEmail').textContent = user.email || "";
-        }
-        
-        // Broadcast event to refresh global UI indicators dynamically
         window.dispatchEvent(new CustomEvent('nodeAuthChanged', { detail: user }));
     } else {
-        currentUser = null;
-        if (document.getElementById('userName')) {
-            document.getElementById('userName').textContent = "Guest Reader";
-        }
+        updateUI('userName', "Guest Reader");
     }
     
-    if (window.listenToLedgerFeed) window.listenToLedgerFeed();
+    // Refresh ledger feed on auth state change
+    if (typeof window.listenToLedgerFeed === 'function') {
+        window.listenToLedgerFeed();
+    }
 });
 
 export async function googleLogin() {
@@ -38,7 +37,7 @@ export async function googleLogin() {
         await signInWithPopup(auth, provider);
         showToast("Signed in successfully!", "success");
     } catch (error) {
-        console.error(error);
+        console.error("Auth Error:", error);
         showToast("Authentication failed.", "error");
     }
 }
@@ -48,7 +47,7 @@ export async function logout() {
     if (confirm("Disconnect from VocalWitness?")) {
         try {
             await signOut(auth);
-            location.reload();
+            window.location.reload();
         } catch (error) {
             showToast("Error signing out.", "error");
         }
