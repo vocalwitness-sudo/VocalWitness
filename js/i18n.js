@@ -35,11 +35,13 @@ export const translationDictionary = {
 
 /**
  * Updates UI elements based on the provided language code.
- * @param {string} langCode - The language key (e.g., 'en', 'ha')
  */
 export function translateUIElements(langCode) {
     const lexicon = translationDictionary[langCode];
     if (!lexicon) return;
+
+    // Persist language choice
+    localStorage.setItem('preferredLang', langCode);
 
     const elements = {
         'privacy-notice-text': lexicon.privacyWarning,
