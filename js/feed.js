@@ -8,6 +8,25 @@ import { uploadToStorage } from "./storage.js";
 export let currentFeed = 'citizen-talk';
 export let activeFeedListener = null;
 
+// js/feed.js
+
+// Ensure default is set
+export let currentFeed = 'citizen-talk';
+
+export function switchFeed(feedType) {
+    // Check if user is trying to access Witness Voice without permissions
+    if (feedType === 'witness-voice') {
+        // You can add your "Is Verified?" check here
+        // If not verified, you could show a toast: "Upgrade required for Witness Voice"
+        // For now, we allow the switch, but your postNow() will block the actual writing
+    }
+
+    // Update internal state
+    currentFeed = (feedType === 'witness-voice') ? 'witness-voice' : 'citizen-talk';
+
+    // Refresh display
+    listenToLedgerFeed();
+}
 export async function postNow() {
     if (!currentUser) {
         showToast("Identity verification required.", "info");
