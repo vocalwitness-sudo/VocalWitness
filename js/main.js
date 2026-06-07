@@ -2,6 +2,20 @@ import { googleLogin, logout } from "./auth.js";
 import { listenToLedgerFeed, postNow } from "./feed.js";
 import { handleImageSelect, toggleVoiceRecording } from "./media.js";
 import { translateUIElements } from "./i18n.js";
+// js/main.js
+import { googleLogin, logout } from "./auth.js";
+import { listenToLedgerFeed, postNow, switchFeed } from "./feed.js"; // Import switchFeed
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Expose all necessary functions to the window
+    window.googleLogin = googleLogin;
+    window.logout = logout;
+    window.postNow = postNow;
+    window.switchFeed = switchFeed; // Expose the switcher
+    
+    listenToLedgerFeed();
+    // ... rest of your initialization code
+});
 
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Start App
