@@ -42,6 +42,16 @@ export function showToast(message) {
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
 }
+export function isLowDataMode() {
+    return localStorage.getItem('lowDataMode') === 'true';
+}
+
+export function toggleLowDataMode() {
+    const current = isLowDataMode();
+    localStorage.setItem('lowDataMode', !current);
+    location.reload(); // Refresh to apply changes
+}
+window.toggleLowDataMode = toggleLowDataMode;
 // ==========================================
 // 🔄 LIVE DOM LANGUAGE TRANSLATION ENGINE
 // ==========================================
