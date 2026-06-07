@@ -1,7 +1,6 @@
-// storage.js
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
-
-const storage = getStorage();
+// js/storage.js
+import { storage } from "./firebase-config.js"; // Import the initialized instance
+import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
 /**
  * Uploads a file and returns the download URL
