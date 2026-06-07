@@ -3,8 +3,9 @@ import { collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, where,
 import { currentUser } from "./auth.js";
 import { showToast, generateSha256Hash } from "./utils.js";
 import { isPhoneVerified, isZKVerified } from "./verification.js";
+import { uploadToStorage } from "./storage.js";
 
-export let currentFeed = 'citizen-talk'; // Renamed normalized default state
+export let currentFeed = 'citizen-talk';
 export let activeFeedListener = null;
 
 export async function postNow() {
@@ -18,69 +19,61 @@ export async function postNow() {
     if (!mainInput || !postButton) return;
 
     const text = mainInput.value.trim();
-
-    if (text.length < 15 && !window.recordedAudioBlob) {
-        showToast("Your testimony must be at least 15 characters long or have a voice recording.", "error");
+    if (text.length < 15 && !window.recordedAudioBlob && !window.selectedImageFile) {
+        showToast("Your testimony must contain text, audio, or an image.", "error");
         return;
     }
 
-    // Standardized check verifying metadata matching premium validation standards
-    if (currentFeed === 'true-witness' && (!isPhoneVerified || !isZKVerified || !window.compressedImageBase64)) {
-        showToast("True Witness ledger feed requires Phone + ZK Verification + Photo evidence", "error");
+    if (currentFeed === 'true-witness' && (!isPhoneVerified || !isZKVerified || !window.selectedImageFile)) {
+        showToast("True Witness requires Phone + ZK Verification + Photo", "error");
         return;
     }
 
     postButton.disabled = true;
-    postButton.innerText = "Processing Forensic Scrub...";
+    postButton.innerText = "Securing Media & Publishing...";
 
     try {
-        let audioPayload = null;
-        let finalIntegrityHash = "N/A - TEXT UPDATE";
+        let audioUrl = null;
+        let imageUrl = null;
+        let finalIntegrityHash = "N/A";
 
+        // Upload media to Storage if present
         if (window.recordedAudioBlob) {
             finalIntegrityHash = await generateSha256Hash(window.recordedAudioBlob);
-            audioPayload = await new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result);
-                reader.readAsDataURL(window.recordedAudioBlob);
-            });
+            audioUrl = await uploadToStorage(window.recordedAudioBlob, 'audio');
         }
 
-        const selectedLanguageCode = document.getElementById('language-select')?.value || '+44';
+        if (window.selectedImageFile) {
+            imageUrl = await uploadToStorage(window.selectedImageFile, 'images');
+        }
 
+        // Save metadata and URLs to Firestore
         await addDoc(collection(db, "testimonies"), {
             witnessText: text,
             feedType: currentFeed,
-            languageCode: selectedLanguageCode,
+            languageCode: document.getElementById('language-select')?.value || '+44',
             userId: currentUser.uid,
             userName: currentUser.displayName || "Anonymous Witness",
             timestamp: serverTimestamp(),
-            audioData: audioPayload,
-            imageData: window.compressedImageBase64 || null, 
-            hasVoice: !!audioPayload,
-            hasPhoto: !!window.compressedImageBase64,
+            audioUrl: audioUrl,
+            imageUrl: imageUrl,
+            hasVoice: !!audioUrl,
+            hasPhoto: !!imageUrl,
             integrityHash: finalIntegrityHash,
-            moderation: {
-                trustScore: 100,
-                verificationsCount: 0,
-                disputesCount: 0,
-                votedUsers: []
-            }
+            moderation: { trustScore: 100, verificationsCount: 0, disputesCount: 0, votedUsers: [] }
         });
 
-        // Trigger streak recalculations internally inside global context modules
         if (window.triggerRewardCycle) window.triggerRewardCycle(currentFeed);
 
         mainInput.value = '';
         if (document.getElementById('charCount')) document.getElementById('charCount').textContent = '0/500';
-        window.removeImage();
+        window.removeImage?.();
         window.recordedAudioBlob = null;
 
-        showToast("Record successfully written onto the decentralized timeline structure.", "success");
-
+        showToast("Record successfully written to the ledger.", "success");
     } catch (e) {
-        console.error("Firebase Database Error: ", e);
-        showToast("Database error. Check Firestore security rules.", "error");
+        console.error("Firebase Error: ", e);
+        showToast("Database error. Check Firestore/Storage rules.", "error");
     } finally {
         postButton.disabled = false;
         postButton.innerText = "Publish to Decentralized Ledger";
@@ -90,43 +83,33 @@ window.postNow = postNow;
 
 export async function submitPeerVote(testimonyId, voteType) {
     if (!currentUser) {
-        showToast("You must be logged in to audit this testimony.", "error");
+        showToast("Login required to audit.", "error");
         return;
     }
-
     const docRef = doc(db, "testimonies", testimonyId);
-
     try {
         await runTransaction(db, async (transaction) => {
             const sfDoc = await transaction.get(docRef);
-            if (!sfDoc.exists()) throw new Error("Document is missing from the database.");
-
+            if (!sfDoc.exists()) throw new Error("Document missing.");
             const data = sfDoc.data();
-            const moderation = data.moderation || { trustScore: 100, verificationsCount: 0, disputesCount: 0, votedUsers: [] };
+            const mod = data.moderation || { trustScore: 100, verificationsCount: 0, disputesCount: 0, votedUsers: [] };
 
-            if (moderation.votedUsers && moderation.votedUsers.includes(currentUser.uid)) {
-                throw new Error("You have already audited this node.");
-            }
+            if (mod.votedUsers?.includes(currentUser.uid)) throw new Error("Already audited.");
 
-            let newVerifications = moderation.verificationsCount || 0;
-            let newDisputes = moderation.disputesCount || 0;
-
-            if (voteType === 'verify') newVerifications += 1;
-            if (voteType === 'dispute') newDisputes += 1;
-
-            const totalVotes = newVerifications + newDisputes;
-            const newTrustScore = totalVotes > 0 ? Math.round((newVerifications / totalVotes) * 100) : 100;
-
+            let v = (mod.verificationsCount || 0) + (voteType === 'verify' ? 1 : 0);
+            let d = (mod.disputesCount || 0) + (voteType === 'dispute' ? 1 : 0);
+            const total = v + d;
+            
             transaction.update(docRef, {
-                'moderation.verificationsCount': newVerifications,
-                'moderation.disputesCount': newDisputes,
-                'moderation.trustScore': newTrustScore,
-                'moderation.votedUsers': [...(moderation.votedUsers || []), currentUser.uid]
+                'moderation.verificationsCount': v,
+                'moderation.disputesCount': d,
+                'moderation.trustScore': Math.round((v / total) * 100),
+                'moderation.votedUsers': [...(mod.votedUsers || []), currentUser.uid]
             });
         });
-        showToast("Ledger audit successfully updated!", "success");
+        showToast("Audit updated!", "success");
     } catch (err) {
-        showToast(err.message || err, "error");
+        showToast(err.message, "error");
     }
 }
 window.submitPeerVote = submitPeerVote;
@@ -134,74 +117,26 @@ window.submitPeerVote = submitPeerVote;
 export function listenToLedgerFeed() {
     const feedContainer = document.getElementById('feed');
     if (!feedContainer) return;
-
-    const selectedLang = document.getElementById('language-select')?.value || '+44';
-
-    const q = query(
-        collection(db, "testimonies"), 
-        where("feedType", "==", currentFeed),
-        where("languageCode", "==", selectedLang),
-        orderBy("timestamp", "desc")
-    );
+    const q = query(collection(db, "testimonies"), where("feedType", "==", currentFeed), orderBy("timestamp", "desc"));
 
     if (activeFeedListener) activeFeedListener();
 
     activeFeedListener = onSnapshot(q, (snapshot) => {
-        feedContainer.innerHTML = ''; 
-
-        if (snapshot.empty) {
-            feedContainer.innerHTML = `
-                <div class="glass rounded-3xl p-8 text-center text-zinc-500 text-sm border border-zinc-900 bg-[#090f1d]/20">
-                    No verified testimonies logged onto this ledger sequence yet.
-                </div>`;
-            return;
-        }
-
+        feedContainer.innerHTML = '';
         snapshot.forEach((doc) => {
-            const id = doc.id;
             const data = doc.data();
             const card = document.createElement('div');
-            card.className = 'glass rounded-3xl p-5 border border-zinc-900 bg-[#090f1d]/40 space-y-4 post-card';
+            card.className = 'glass rounded-3xl p-5 border border-zinc-900 bg-[#090f1d]/40 space-y-4';
 
-            const modData = data.moderation || { trustScore: 100, verificationsCount: 0, disputesCount: 0 };
-            const assetHash = data.integrityHash || "VERIFIED TEXT ENTRY";
-
-            let audioPlaybackElement = data.audioData ? `
-                <div class="bg-zinc-900/80 rounded-2xl p-3 border border-zinc-800 flex flex-col gap-1.5 mt-2">
-                    <span class="text-[10px] text-emerald-400 font-mono font-bold tracking-wider">🔒 AUDIO TESTIMONY DECRYPTED</span>
-                    <audio src="${data.audioData}" controls class="w-full h-8 accent-emerald-500"></audio>
-                </div>` : '';
-
-            let imagePlaybackElement = data.imageData ? `
-                <div class="rounded-2xl overflow-hidden border border-zinc-800 mt-2 max-h-64 bg-zinc-950">
-                    <img src="${data.imageData}" alt="Witness Evidence" class="w-full h-full object-cover">
-                </div>` : '';
+            // Use data.audioUrl and data.imageUrl
+            const audioHTML = data.audioUrl ? `<audio src="${data.audioUrl}" controls class="w-full mt-2"></audio>` : '';
+            const imageHTML = data.imageUrl ? `<img src="${data.imageUrl}" class="w-full rounded-2xl mt-2">` : '';
 
             card.innerHTML = `
-                <div class="flex justify-between items-start">
-                    <div class="flex items-center gap-2">
-                        <span class="px-2 py-0.5 rounded-md bg-zinc-900 border border-zinc-800 text-[10px] font-mono font-bold text-zinc-400">${data.languageCode}</span>
-                        <span class="text-[11px] text-zinc-500 font-bold">${data.userName || 'Anonymous Witness'}</span>
-                    </div>
-                    <div class="flex items-center gap-1.5">
-                        <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-                        <span class="text-[10px] font-mono text-emerald-400 font-bold tracking-widest">TRUST: ${modData.trustScore}%</span>
-                    </div>
-                </div>
-                <p class="text-zinc-200 text-sm leading-relaxed whitespace-pre-wrap">${data.witnessText}</p>
-                ${audioPlaybackElement}
-                ${imagePlaybackElement}
-                <div class="pt-2 border-t border-zinc-900 flex flex-col sm:flex-row justify-between items-center gap-3">
-                    <span class="text-[9px] font-mono text-zinc-600 truncate max-w-[200px]">HASH: ${assetHash}</span>
-                    <div class="flex items-center gap-2 w-full sm:w-auto">
-                        <button onclick="window.submitPeerVote('${id}', 'verify')" class="flex-1 sm:flex-none px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded-xl text-[11px] font-bold transition-all border border-emerald-500/20">
-                            ✅ Agree (${modData.verificationsCount || 0})
-                        </button>
-                        <button onclick="window.submitPeerVote('${id}', 'dispute')" class="flex-1 sm:flex-none px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl text-[11px] font-bold transition-all border border-red-500/20">
-                            ⚠️ Dispute (${modData.disputesCount || 0})
-                        </button>
-                    </div>
-                </div>
+                <p>${data.witnessText}</p>
+                ${audioHTML}
+                ${imageHTML}
+                <button onclick="window.submitPeerVote('${doc.id}', 'verify')">Agree</button>
             `;
             feedContainer.appendChild(card);
         });
@@ -211,21 +146,6 @@ window.listenToLedgerFeed = listenToLedgerFeed;
 
 export function switchFeed(feed) {
     currentFeed = feed;
-    
-    const tabTrue = document.getElementById('tab-true-witness');
-    const tabCitizen = document.getElementById('tab-citizen-talk');
-    
-    if (tabTrue && tabCitizen) {
-        if (feed === 'true-witness') {
-            tabTrue.className = "bg-emerald-500 text-black py-4 rounded-3xl flex flex-col items-center justify-center gap-1 font-bold text-sm transition-all shadow-lg shadow-emerald-950/20";
-            tabCitizen.className = "bg-zinc-900/60 border border-zinc-800 text-zinc-400 hover:bg-zinc-800 py-4 rounded-3xl flex flex-col items-center justify-center gap-1 font-semibold text-sm transition-all";
-            document.getElementById('composerTitle').textContent = "True Witness Ledger Dispatch";
-        } else {
-            tabCitizen.className = "bg-emerald-500 text-black py-4 rounded-3xl flex flex-col items-center justify-center gap-1 font-bold text-sm transition-all shadow-lg shadow-emerald-950/20";
-            tabTrue.className = "bg-zinc-900/60 border border-zinc-800 text-zinc-400 hover:bg-zinc-800 py-4 rounded-3xl flex flex-col items-center justify-center gap-1 font-semibold text-sm transition-all";
-            document.getElementById('composerTitle').textContent = "Citizen Talk Public Entry";
-        }
-    }
     listenToLedgerFeed();
 }
 window.switchFeed = switchFeed;
