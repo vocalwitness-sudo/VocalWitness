@@ -3,14 +3,14 @@ import { collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, where,
 import { currentUser } from "./auth.js";
 import { showToast, generateSha256Hash } from "./utils.js";
 import { isPhoneVerified, isZKVerified } from "./verification.js";
-import { uploadToStorage } from "./storage.js"; // New modular import
+import { uploadToStorage } from "./storage.js";
 
 export let currentFeed = 'citizen-talk';
 export let activeFeedListener = null;
 
 export async function postNow() {
     if (!currentUser) {
-        showToast("Identity verification required to write to the ledger.", "info");
+        showToast("Identity verification required.", "info");
         return;
     }
 
@@ -19,26 +19,24 @@ export async function postNow() {
     if (!mainInput || !postButton) return;
 
     const text = mainInput.value.trim();
-
     if (text.length < 15 && !window.selectedAudioFile) {
-        showToast("Testimony must be at least 15 chars or include audio.", "error");
+        showToast("Testimony must be at least 15 characters or include audio.", "error");
         return;
     }
 
     if (currentFeed === 'true-witness' && (!isPhoneVerified || !isZKVerified || !window.selectedImageFile)) {
-        showToast("True Witness ledger requires Phone/ZK Verification + Photo evidence.", "error");
+        showToast("True Witness requires Phone/ZK Verification + Photo.", "error");
         return;
     }
 
     postButton.disabled = true;
-    postButton.innerText = "Encrypting & Uploading Evidence...";
+    postButton.innerText = "Processing...";
 
     try {
         let imageUrl = null;
         let audioUrl = null;
         let finalIntegrityHash = "N/A";
 
-        // Handle File Uploads via storage.js
         if (window.selectedImageFile) {
             imageUrl = await uploadToStorage(window.selectedImageFile, 'posts/images');
         }
@@ -57,63 +55,27 @@ export async function postNow() {
             userId: currentUser.uid,
             userName: currentUser.displayName || "Anonymous Witness",
             timestamp: serverTimestamp(),
-            audioUrl: audioUrl,   // URL Reference
-            imageUrl: imageUrl,   // URL Reference
+            audioUrl: audioUrl,
+            imageUrl: imageUrl,
             hasVoice: !!audioUrl,
             hasPhoto: !!imageUrl,
             integrityHash: finalIntegrityHash,
-            moderation: {
-                trustScore: 100,
-                verificationsCount: 0,
-                disputesCount: 0,
-                votedUsers: []
-            }
+            moderation: { trustScore: 100, verificationsCount: 0, disputesCount: 0, votedUsers: [] }
         });
-
-        if (window.triggerRewardCycle) window.triggerRewardCycle(currentFeed);
 
         mainInput.value = '';
         window.selectedImageFile = null;
         window.selectedAudioFile = null;
-
-        showToast("Record successfully written onto the decentralized ledger.", "success");
-
+        showToast("Record successfully written to the ledger.", "success");
     } catch (e) {
-        console.error("Ledger Write Error: ", e);
-        showToast("Database error. Check Firestore security rules.", "error");
+        console.error(e);
+        showToast("Database error.", "error");
     } finally {
         postButton.disabled = false;
         postButton.innerText = "Publish to Decentralized Ledger";
     }
 }
 window.postNow = postNow;
-
-// Peer Audit Logic
-export async function submitPeerVote(testimonyId, voteType) {
-    if (!currentUser) return showToast("Login required.", "error");
-    const docRef = doc(db, "testimonies", testimonyId);
-    try {
-        await runTransaction(db, async (transaction) => {
-            const sfDoc = await transaction.get(docRef);
-            const data = sfDoc.data();
-            const mod = data.moderation;
-            
-            if (mod.votedUsers?.includes(currentUser.uid)) throw new Error("Already audited.");
-
-            let verif = (mod.verificationsCount || 0) + (voteType === 'verify' ? 1 : 0);
-            let disp = (mod.disputesCount || 0) + (voteType === 'dispute' ? 1 : 0);
-            
-            transaction.update(docRef, {
-                'moderation.verificationsCount': verif,
-                'moderation.disputesCount': disp,
-                'moderation.trustScore': Math.round((verif / (verif + disp)) * 100),
-                'moderation.votedUsers': [...(mod.votedUsers || []), currentUser.uid]
-            });
-        });
-        showToast("Audit recorded.", "success");
-    } catch (err) { showToast(err.message, "error"); }
-}
-window.submitPeerVote = submitPeerVote;
 
 export function listenToLedgerFeed() {
     const feedContainer = document.getElementById('feed');
@@ -126,10 +88,19 @@ export function listenToLedgerFeed() {
 
     activeFeedListener = onSnapshot(q, (snapshot) => {
         feedContainer.innerHTML = ''; 
-        snapshot.forEach((doc) => {
-            const data = doc.data();
-            // Card rendering logic remains same, but swap data.audioData/imageData for data.audioUrl/imageUrl
-            // ... (keep your existing UI rendering logic here)
+        snapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            const id = docSnap.id;
+            const card = document.createElement('div');
+            card.className = 'glass rounded-3xl p-5 border border-zinc-900 bg-[#090f1d]/40 space-y-4';
+
+            card.innerHTML = `
+                <p class="text-zinc-200 text-sm">${data.witnessText}</p>
+                ${data.audioUrl ? `<audio src="${data.audioUrl}" controls class="w-full"></audio>` : ''}
+                ${data.imageUrl ? `<img src="${data.imageUrl}" class="rounded-lg w-full">` : ''}
+                <button onclick="window.submitPeerVote('${id}', 'verify')">Agree (${data.moderation.verificationsCount})</button>
+            `;
+            feedContainer.appendChild(card);
         });
     });
 }
