@@ -4,7 +4,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
+// Example of the correct, standardized import pattern for your other files
+import { db, auth } from "./firebase-config.js";
 const firebaseConfig = {
     apiKey: "AIzaSyATxYekxgjdLP2SfR42FG8rEdajq_pIEb0", 
     authDomain: "vocalwitness-3affa.firebaseapp.com",
