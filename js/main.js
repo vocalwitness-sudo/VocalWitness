@@ -14,51 +14,34 @@ import {
 export const witnessEngine = new VocalWitnessEngine(db, storage);
 
 document.addEventListener('DOMContentLoaded', () => {
+    // 1. Initializations
     listenToLedgerFeed();
+    populateCountryDropdown('languageSelector');
+    showToast("⚡ VocalWitness Node Terminal Online");
 
-    function attemptWitnessAction(user) {
-  // Check if user is verified in your Firestore 'users' collection
-  if (!user.isVerified) {
-    alert("This is the Vault. Please complete your identity verification to enter.");
-    window.location.href = "/verify.html"; // Redirect to your new verification page
-    return;
-  }
-  
-  // If they ARE verified, they can enter the Vault
-  startZKVerification(); 
-}
-    
-    // Bind functions to window so HTML buttons work
+    // 2. Window Bindings (Functions available to HTML buttons)
     window.googleLogin = googleLogin;
     window.logout = logout;
     window.postNow = postNow;
     window.switchFeed = switchFeed;
     window.toggleVoiceRecording = toggleVoiceRecording;
     window.showToast = showToast;
+    window.startZKVerification = startZKVerification;
+    window.startPhoneVerification = startPhoneVerification;
+    
     window.triggerImageUpload = () => document.getElementById('imageInput').click();
     
-    // Global UI State Triggers
+    // 3. UI State Triggers
     window.showProfile = () => document.getElementById('profilePage').classList.remove('hidden');
     window.showEarnModal = () => document.getElementById('earnModal').classList.remove('hidden');
     window.showSettings = () => document.getElementById('settingsModal').classList.remove('hidden');
     window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
     
-    // Feature Toasts
     window.showNotifications = () => showToast("🔔 Notifications pane updating.");
     window.showLiveArena = () => showToast("🎥 Live Arena — Scheduled for v2.4.");
 
-    // Initialization
-    populateCountryDropdown('languageSelector');
-    showToast("⚡ VocalWitness Node Terminal Online");
-
-    // Event Listeners
+    // 4. Event Listeners
     document.getElementById('languageSelector')?.addEventListener('change', (e) => translateUIElements(e.target.value));
     document.getElementById('imageInput')?.addEventListener('change', (e) => handleImageSelect(e, document.getElementById('previewArea')));
     document.getElementById('voiceBtn')?.addEventListener('click', (e) => toggleVoiceRecording(e.target));
 });
-
-// Add this at the bottom of verification.js
-export function startZKVerification() {
-    // Your ZK logic here
-    console.log("ZK Verification started");
-}
