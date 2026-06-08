@@ -5,6 +5,9 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getAuth, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getStorage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+// main.js
+import { db, storage } from "./firebase-config.js";
+export const witnessEngine = new VocalWitnessEngine(db, storage);
 
 const firebaseConfig = {
     apiKey: "AIzaSyATxYekxgjdLP2SfR42FG8rEdajq_pIEb0", 
