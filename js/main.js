@@ -1,5 +1,3 @@
-console.log("Exifr is loaded:", typeof exifr !== 'undefined');
-
 import { 
     populateCountryDropdown, 
     startZKVerification, 
