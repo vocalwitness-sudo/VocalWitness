@@ -1,6 +1,9 @@
 import { auth, provider } from "./firebase-config.js";
 import { signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { showToast } from "./utils.js";
+// main.js
+import { db, storage } from "./firebase-config.js";
+export const witnessEngine = new VocalWitnessEngine(db, storage);
 
 export let currentUser = null;
 
