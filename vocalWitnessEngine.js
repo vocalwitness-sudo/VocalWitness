@@ -23,179 +23,111 @@ export class VocalWitnessEngine {
     this.mediaRecorder = null;
     this.audioChunks = [];
     this.currentAudioBlob = null;
+    this.recordingTimeout = null;
   }
 
-  // ==========================================
-  // 1. DIGITAL CAMPFIRES: Segmented Feed Logic
-  // ==========================================
   /**
-   * Filters the UI feed based on user's chosen "Campfire" mode
-   * @param {string} mode - 'citizen-talk', 'true-witness', or a specific language code (e.g. '+252')
+   * Starts recording with enforced duration limits
+   * @param {string} feedType - 'citizen-talk' (2m) or 'witness-voice' (5m)
    */
-  filterFeedMode(mode) {
-    console.log(`Switching campfire feed to: ${mode}`);
-    const feedCards = document.querySelectorAll('.testimony-card');
-    
-    feedCards.forEach(card => {
-      const cardMode = card.getAttribute('data-mode');
-      const cardLang = card.getAttribute('data-lang');
-
-      if (mode === 'citizen-talk') {
-        // Public feed shows all base entries
-        card.style.display = 'block';
-      } else if (mode === 'true-witness' && cardMode === 'true-witness') {
-        // Show high-integrity premium verification updates only
-        card.style.display = 'block';
-      } else if (cardLang === mode) {
-        // Filter by specific language/country code community
-        card.style.display = 'block';
-      } else {
-        card.style.display = 'none';
-      }
-    });
-  }
-
-  // ==========================================
-  // 2. THE TRUST CURRENCY: Voice Integrity Ledger
-  // ==========================================
-  /**
-   * Starts the browser Web Audio API recording session
-   */
-  async startVoiceRecording() {
+  async startVoiceRecording(feedType) {
     this.audioChunks = [];
+    // Duration Logic: 120,000ms (2m) vs 300,000ms (5m)
+    const durationLimit = (feedType === 'witness-voice') ? 300000 : 120000;
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      // Using audio/webm as it is widely supported across modern mobile browsers
       this.mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
       
-      this.mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          this.audioChunks.push(event.data);
+      // Auto-stop safety timer
+      this.recordingTimeout = setTimeout(() => {
+        if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+          this.stopVoiceRecording();
         }
+      }, durationLimit);
+
+      this.mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) this.audioChunks.push(event.data);
       };
 
-      this.mediaRecorder.onstop = async () => {
-        // Compressed audio blob ready for mobile networks
+      this.mediaRecorder.onstop = () => {
         this.currentAudioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
-        console.log("Voice recording captured successfully.");
+        clearTimeout(this.recordingTimeout);
       };
 
       this.mediaRecorder.start();
     } catch (err) {
-      console.error("Error accessing microphone: ", err);
+      console.error("Microphone access denied: ", err);
       alert("Microphone access is required to record testimony.");
     }
   }
 
-  /**
-   * Stops active recording
-   */
   stopVoiceRecording() {
     if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
       this.mediaRecorder.stop();
+      clearTimeout(this.recordingTimeout);
     }
   }
 
   /**
    * Generates a unique SHA-256 cryptographic hash of the voice asset
-   * This proves the file has not been altered or tampered with post-upload
    */
   async generateAudioHash(blob) {
     const arrayBuffer = await blob.arrayBuffer();
     const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    return Array.from(new Uint8Array(hashBuffer))
+      .map(b => b.toString(16).padStart(2, '0')).join('');
   }
 
   /**
-   * Bundles the audio asset with its verified metadata payload
+   * Bundles the audio asset with its verified metadata
    */
   async packageAndUploadTestimony(userId, selectedLanguageCode, feedType = 'citizen-talk') {
-    if (!this.currentAudioBlob) {
-      throw new Error("No voice recording found to upload.");
-    }
+    if (!this.currentAudioBlob) throw new Error("No recording available.");
 
-    // Generate integrity marker before sending over network
     const integrityHash = await this.generateAudioHash(this.currentAudioBlob);
-    const timestamp = new Date().toISOString();
     const storageRefPath = `testimonies/${userId}_${Date.now()}.webm`;
 
-    // 1. Upload file to Firebase Storage via v10 modular function patterns
     const storageReference = ref(this.storage, storageRefPath);
     const uploadResult = await uploadBytes(storageReference, this.currentAudioBlob);
     const downloadURL = await getDownloadURL(uploadResult.ref);
 
-    // 2. Construct the tamper-proof ledger document
     const testimonyPayload = {
       authorId: userId,
       audioUrl: downloadURL,
-      storagePath: storageRefPath,
-      timestamp: timestamp,
-      languageCode: selectedLanguageCode, // Values like '+234', '+255', '+252'
-      feedVisibility: feedType,           // 'citizen-talk' or 'true-witness'
-      integrityHash: integrityHash,       // Immutability proof
-      moderation: {
-        trustScore: 100,
-        verificationsCount: 0,
-        disputesCount: 0,
-        votedUsers: []                    // Prevents double voting
-      }
+      timestamp: new Date().toISOString(),
+      languageCode: selectedLanguageCode,
+      feedVisibility: feedType,
+      integrityHash: integrityHash,
+      moderation: { trustScore: 100, verificationsCount: 0, disputesCount: 0, votedUsers: [] }
     };
 
-    // 3. Save to Firestore collection using addDoc()
-    const targetCollection = collection(this.db, 'testimonies');
-    const docRef = await addDoc(targetCollection, testimonyPayload);
-    return docRef.id;
+    return await addDoc(collection(this.db, 'testimonies'), testimonyPayload);
   }
 
-  // ==========================================
-  // 3. DEMOCRATIC MODERATION: Peer Ledger Auditing
-  // ==========================================
   /**
-   * Updates the truth ledger based on peer votes directly from the UI
-   * @param {string} testimonyId - The Firestore document reference ID
-   * @param {string} userId - The current user voting
-   * @param {string} voteType - 'verify' or 'dispute'
+   * Updates the truth ledger based on peer votes
    */
   async submitPeerVote(testimonyId, userId, voteType) {
     const docRef = doc(this.db, 'testimonies', testimonyId);
-    
     return runTransaction(this.db, async (transaction) => {
       const sfDoc = await transaction.get(docRef);
-      if (!sfDoc.exists()) {
-        throw new Error("Document does not exist!");
-      }
+      if (!sfDoc.exists()) throw new Error("Document not found.");
 
       const data = sfDoc.data();
-      const moderation = data.moderation || { trustScore: 100, verificationsCount: 0, disputesCount: 0, votedUsers: [] };
+      const mod = data.moderation;
+      if (mod.votedUsers.includes(userId)) throw new Error("Already audited.");
 
-      // Prevent a user from voting multiple times on the same record
-      if (moderation.votedUsers.includes(userId)) {
-        throw new Error("You have already audited this testimony.");
-      }
+      const newVerifications = (voteType === 'verify') ? mod.verificationsCount + 1 : mod.verificationsCount;
+      const newDisputes = (voteType === 'dispute') ? mod.disputesCount + 1 : mod.disputesCount;
+      const total = newVerifications + newDisputes;
 
-      let newVerifications = moderation.verificationsCount || 0;
-      let newDisputes = moderation.disputesCount || 0;
-
-      if (voteType === 'verify') {
-        newVerifications += 1;
-      } else if (voteType === 'dispute') {
-        newDisputes += 1;
-      }
-
-      // Calculate dynamic community trust percentage
-      const totalVotes = newVerifications + newDisputes;
-      const newTrustScore = totalVotes > 0 ? Math.round((newVerifications / totalVotes) * 100) : 100;
-
-      // Update the ledger immutably inside the transaction block
       transaction.update(docRef, {
         'moderation.verificationsCount': newVerifications,
         'moderation.disputesCount': newDisputes,
-        'moderation.trustScore': newTrustScore,
-        'moderation.votedUsers': [...moderation.votedUsers, userId]
+        'moderation.trustScore': Math.round((newVerifications / total) * 100),
+        'moderation.votedUsers': [...mod.votedUsers, userId]
       });
-
-      return { trustScore: newTrustScore, totalVotes };
     });
   }
 }
