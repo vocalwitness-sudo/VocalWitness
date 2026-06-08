@@ -1,4 +1,7 @@
 import { showToast } from "./utils.js";
+// main.js
+import { db, storage } from "./firebase-config.js";
+export const witnessEngine = new VocalWitnessEngine(db, storage);
 
 export let currentTrustScore = 50;
 export let isPhoneVerified = false;
