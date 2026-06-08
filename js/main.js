@@ -52,3 +52,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('imageInput')?.addEventListener('change', (e) => handleImageSelect(e, document.getElementById('previewArea')));
     document.getElementById('voiceBtn')?.addEventListener('click', (e) => toggleVoiceRecording(e.target));
 });
+
+// Add this at the bottom of verification.js
+export function startZKVerification() {
+    // Your ZK logic here
+    console.log("ZK Verification started");
+}
