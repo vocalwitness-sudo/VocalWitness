@@ -1,13 +1,11 @@
 // =========================================================================
 // CENTRALIZED FIREBASE HARDWARE MATRIX INITIALIZATION
 // =========================================================================
+// js/firebase-config.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getStorage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
-// main.js
-import { db, storage } from "./firebase-config.js";
-export const witnessEngine = new VocalWitnessEngine(db, storage);
 
 const firebaseConfig = {
     apiKey: "AIzaSyATxYekxgjdLP2SfR42FG8rEdajq_pIEb0", 
@@ -17,6 +15,13 @@ const firebaseConfig = {
     messagingSenderId: "108466981866",
     appId: "1:108466981866:web:b53360ad44012a576c8093"
 };
+
+const app = initializeApp(firebaseConfig);
+
+export const auth = getAuth(app);
+export const db = getFirestore(app);
+export const storage = getStorage(app);
+export const provider = new GoogleAuthProvider();
 
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
