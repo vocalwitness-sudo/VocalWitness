@@ -5,7 +5,11 @@ import { handleImageSelect, toggleVoiceRecording } from "./media.js";
 import { translateUIElements } from "./i18n.js";
 import { VocalWitnessEngine } from "./engine.js";
 import { showToast } from "./utils.js";
-import { populateCountryDropdown } from "./verification.js";
+import { 
+    populateCountryDropdown, 
+    startZKVerification, 
+    startPhoneVerification 
+} from "./verification.js";
 
 export const witnessEngine = new VocalWitnessEngine(db, storage);
 
