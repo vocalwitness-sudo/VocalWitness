@@ -1,6 +1,9 @@
-// ==========================================
-// 🌐 MULTI-LANGUAGE TRANSLATION DICTIONARY
-// ==========================================
+/**
+ * VocalWitness Utilities Module
+ * Handles Localization, Cryptographic Hashing, and UI Feedback
+ */
+
+// 🌐 Multi-Language Dictionary
 export const translationDictionary = {
     en: {
         privacyWarning: "Privacy Protection Warning (ZERO-KNOWLEDGE CRYPTOGRAPHIC PROTOCOL NOTICE)",
@@ -34,18 +37,21 @@ export const translationDictionary = {
     }
 };
 
-// main.js
-import { db, storage } from "./firebase-config.js";
-export const witnessEngine = new VocalWitnessEngine(db, storage);
-
-// Add this to your existing js/utils.js
-export function showToast(message) {
+/**
+ * UI Feedback: Displays a temporary notification
+ */
+export function showToast(message, type = "success") {
     const toast = document.createElement('div');
-    toast.className = 'fixed bottom-5 right-5 bg-gray-800 text-white p-4 rounded shadow-lg z-50';
+    const bgColor = type === 'error' ? 'bg-red-600' : 'bg-emerald-600';
+    toast.className = `fixed bottom-5 right-5 p-4 rounded-2xl shadow-2xl z-[100] text-white font-bold text-sm ${bgColor}`;
     toast.innerText = message;
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
 }
+
+/**
+ * Data Mode Toggle
+ */
 export function isLowDataMode() {
     return localStorage.getItem('lowDataMode') === 'true';
 }
@@ -53,56 +59,42 @@ export function isLowDataMode() {
 export function toggleLowDataMode() {
     const current = isLowDataMode();
     localStorage.setItem('lowDataMode', !current);
-    location.reload(); // Refresh to apply changes
+    location.reload();
 }
-window.toggleLowDataMode = toggleLowDataMode;
-// ==========================================
-// 🔄 LIVE DOM LANGUAGE TRANSLATION ENGINE
-// ==========================================
+
+/**
+ * Cryptographic Hash Generator (for Files)
+ */
+export async function generateSha256Hash(fileOrString) {
+    const data = (typeof fileOrString === 'string') 
+        ? new TextEncoder().encode(fileOrString) 
+        : await fileOrString.arrayBuffer();
+        
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(hashBuffer))
+        .map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * Live DOM Translation Engine
+ */
 export function translateUIElements(langCode) {
     const lexicon = translationDictionary[langCode];
-    if (!lexicon) return; // Skip if chosen language translation isn't added yet
+    if (!lexicon) return;
 
-    // Direct, target matches for your layout elements
-    const privacyNoticeText = document.getElementById('privacy-notice-text');
-    const securityUpgradeText = document.getElementById('security-upgrade-text');
-    const settingsDashboardText = document.getElementById('settings-dashboard-text');
-    const logoutActionText = document.getElementById('logout-action-text');
+    const mappings = {
+        'privacy-notice-text': lexicon.privacyWarning,
+        'security-upgrade-text': lexicon.upgradeSecurity,
+        'settings-dashboard-text': lexicon.settingsDashboard,
+        'logout-action-text': lexicon.logoutBtn
+    };
 
-    if (privacyNoticeText) privacyNoticeText.textContent = lexicon.privacyWarning;
-    if (securityUpgradeText) securityUpgradeText.textContent = lexicon.upgradeSecurity;
-
-    // js/utils.js
-
-/**
- * Displays a temporary notification
- */
-export function showToast(message, type = "success") {
-    const toast = document.createElement('div');
-    toast.className = `fixed bottom-5 right-5 p-4 rounded shadow-lg z-50 text-white ${type === 'error' ? 'bg-red-600' : 'bg-gray-800'}`;
-    toast.innerText = message;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
+    Object.keys(mappings).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = mappings[id];
+    });
 }
 
-/**
- * Generates a SHA-256 hash for file integrity
- */
-export async function generateSha256Hash(file) {
-    const arrayBuffer = await file.arrayBuffer();
-    const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-    // Add this to js/utils.js
-export async function generateSha256Hash(message) {
-    const msgBuffer = new TextEncoder().encode(message);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-   
-    if (settingsDashboardText) settingsDashboardText.textContent = lexicon.settingsDashboard;
-    if (logoutActionText) logoutActionText.textContent = lexicon.logoutBtn;
-}
+// Bind to window for global access
+window.showToast = showToast;
+window.toggleLowDataMode = toggleLowDataMode;
