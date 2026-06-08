@@ -4,6 +4,9 @@ import { handleImageSelect, toggleVoiceRecording } from "./media.js";
 import { translateUIElements } from "./i18n.js";
 // js/main.js
 import { googleLogin, logout } from "./auth.js";
+// main.js
+import { db, storage } from "./firebase-config.js";
+export const witnessEngine = new VocalWitnessEngine(db, storage);
 import { listenToLedgerFeed, postNow, switchFeed } from "./feed.js"; // Import switchFeed
 
 document.addEventListener('DOMContentLoaded', () => {
