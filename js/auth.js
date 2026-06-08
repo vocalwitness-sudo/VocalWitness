@@ -1,9 +1,11 @@
+/**
+ * VocalWitness Auth Module
+ * Manages identity state and observer patterns for Node synchronization
+ */
+
 import { auth, provider } from "./firebase-config.js";
 import { signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { showToast } from "./utils.js";
-// main.js
-import { db, storage } from "./firebase-config.js";
-export const witnessEngine = new VocalWitnessEngine(db, storage);
 
 export let currentUser = null;
 
@@ -12,7 +14,7 @@ onAuthStateChanged(auth, (user) => {
     currentUser = user;
     const loginPromptModal = document.getElementById('authSection');
     
-    // UI Updates - safely checking if elements exist before updating
+    // UI Utility
     const updateUI = (id, value) => {
         const el = document.getElementById(id);
         if (el) el.textContent = value;
@@ -24,12 +26,13 @@ onAuthStateChanged(auth, (user) => {
         updateUI('profileName', user.displayName || "Verified Witness");
         updateUI('profileEmail', user.email || "");
         
+        // Notify the application of identity state
         window.dispatchEvent(new CustomEvent('nodeAuthChanged', { detail: user }));
     } else {
         updateUI('userName', "Guest Reader");
     }
     
-    // Refresh ledger feed on auth state change
+    // Refresh ledger feed if available on the window
     if (typeof window.listenToLedgerFeed === 'function') {
         window.listenToLedgerFeed();
     }
@@ -38,22 +41,20 @@ onAuthStateChanged(auth, (user) => {
 export async function googleLogin() {
     try {
         await signInWithPopup(auth, provider);
-        showToast("Signed in successfully!", "success");
+        showToast("⚡ Node Identity Synced.");
     } catch (error) {
         console.error("Auth Error:", error);
-        showToast("Authentication failed.", "error");
+        showToast("❌ Identity Sync Failed.");
     }
 }
-window.googleLogin = googleLogin;
 
 export async function logout() {
-    if (confirm("Disconnect from VocalWitness?")) {
+    if (confirm("Disconnect from VocalWitness node?")) {
         try {
             await signOut(auth);
             window.location.reload();
         } catch (error) {
-            showToast("Error signing out.", "error");
+            showToast("Error signing out.");
         }
     }
 }
-window.logout = logout;
