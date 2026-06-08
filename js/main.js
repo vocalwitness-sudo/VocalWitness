@@ -11,6 +11,18 @@ export const witnessEngine = new VocalWitnessEngine(db, storage);
 
 document.addEventListener('DOMContentLoaded', () => {
     listenToLedgerFeed();
+
+    function attemptWitnessAction(user) {
+  // Check if user is verified in your Firestore 'users' collection
+  if (!user.isVerified) {
+    alert("This is the Vault. Please complete your identity verification to enter.");
+    window.location.href = "/verify.html"; // Redirect to your new verification page
+    return;
+  }
+  
+  // If they ARE verified, they can enter the Vault
+  startZKVerification(); 
+}
     
     // Bind functions to window so HTML buttons work
     window.googleLogin = googleLogin;
