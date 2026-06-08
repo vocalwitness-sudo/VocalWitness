@@ -12,6 +12,13 @@ import { handleImageSelect, toggleVoiceRecording } from "./media.js";
 import { translateUIElements } from "./i18n.js";
 import { VocalWitnessEngine } from "./engine.js";
 import { showToast } from "./utils.js";
+import exifr from 'exifr';
+
+// Now you can use it!
+async function readMetadata(file) {
+    let output = await exifr.parse(file);
+    console.log('EXIF data:', output);
+}
 
 export const witnessEngine = new VocalWitnessEngine(db, storage);
 
