@@ -1,4 +1,7 @@
-// js/i18n.js
+/**
+ * VocalWitness Internationalization (i18n) Module
+ * Manages global accessibility and localized node interface
+ */
 
 export const translationDictionary = {
     en: {
@@ -34,24 +37,33 @@ export const translationDictionary = {
 };
 
 /**
- * Updates UI elements based on the provided language code.
+ * Updates UI elements and saves user preference
  */
 export function translateUIElements(langCode) {
     const lexicon = translationDictionary[langCode];
     if (!lexicon) return;
 
-    // Persist language choice
     localStorage.setItem('preferredLang', langCode);
 
-    const elements = {
+    const mappings = {
         'privacy-notice-text': lexicon.privacyWarning,
         'security-upgrade-text': lexicon.upgradeSecurity,
         'settings-dashboard-text': lexicon.settingsDashboard,
         'logout-action-text': lexicon.logoutBtn
     };
 
-    for (const [id, text] of Object.entries(elements)) {
+    Object.entries(mappings).forEach(([id, text]) => {
         const el = document.getElementById(id);
         if (el) el.textContent = text;
-    }
+    });
+}
+
+/**
+ * Auto-load user's last saved language
+ */
+export function initLanguage() {
+    const savedLang = localStorage.getItem('preferredLang') || 'en';
+    translateUIElements(savedLang);
+    const langSelect = document.getElementById('language-select');
+    if (langSelect) langSelect.value = savedLang;
 }
