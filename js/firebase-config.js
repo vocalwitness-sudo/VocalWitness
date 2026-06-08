@@ -1,6 +1,3 @@
-// =========================================================================
-// CENTRALIZED FIREBASE HARDWARE MATRIX INITIALIZATION
-// =========================================================================
 // js/firebase-config.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -21,10 +18,4 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
-export const provider = new GoogleAuthProvider();
-
-export const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export const storage = getStorage(app); // Added storage initialization here
 export const provider = new GoogleAuthProvider();
