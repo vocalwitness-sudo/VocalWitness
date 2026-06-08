@@ -5,6 +5,9 @@ import { currentUser } from "./auth.js";
 import { showToast, generateSha256Hash, isLowDataMode } from "./utils.js";
 import { isPhoneVerified, isZKVerified } from "./verification.js";
 import { uploadToStorage } from "./storage.js";
+// main.js
+import { db, storage } from "./firebase-config.js";
+export const witnessEngine = new VocalWitnessEngine(db, storage);
 
 // State Management
 export let currentFeed = 'citizen-talk';
