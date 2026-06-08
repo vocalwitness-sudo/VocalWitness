@@ -2,7 +2,7 @@
  * VocalWitness Verification Module
  * Manages Identity Tiering, ZK Proofs, and Peer Invitations
  */
-import { collection, addDoc, doc, getDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { collection, addDoc, doc, getDoc, updateDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { db, auth } from "./firebase-config.js";
 import { showToast } from "./utils.js";
 
@@ -21,16 +21,33 @@ export async function checkInitialVerificationStatus() {
         if (userData.tier >= 1) {
             isPhoneVerified = true;
             isZKVerified = true;
-            // Update UI accordingly
             const btn = document.getElementById('upgradeNodeBtn');
             if (btn) btn.textContent = "✓ Identity Cryptographically Secured";
         }
     }
 }
 
-// ... [Keep the countryCodes array, populateCountryDropdown, and startZKVerification functions here] ...
+/**
+ * ZK Verification Logic
+ */
+export async function startZKVerification() {
+    console.log("ZK Verification started");
+    // Placeholder for your ZK-proof implementation
+    showToast("🔐 Initializing Zero-Knowledge Proof sequence...");
+    // Future: Integrate SnarkJS or custom ZK logic here
+}
 
-// Updated Peer-to-Peer Invitation System
+/**
+ * Phone Verification Placeholder
+ */
+export async function startPhoneVerification() {
+    console.log("Phone Verification started");
+    showToast("📱 Starting SMS identity challenge...");
+}
+
+/**
+ * Peer-to-Peer Invitation System
+ */
 export const sendInvitation = async () => {
     if (!auth.currentUser) return showToast("❌ Unauthorized: Login required.");
     
@@ -52,17 +69,22 @@ export const sendInvitation = async () => {
     }
 };
 
+/**
+ * Redemption of Invite Codes
+ */
 export const checkIncomingInvite = async () => {
     if (!auth.currentUser) return showToast("❌ Please log in first.");
     const inputCode = prompt("Enter your validation invite code:");
     if (!inputCode) return;
     
     try {
-        await updateDoc(doc(db, "users", auth.currentUser.uid), {
+        // Using setDoc with { merge: true } ensures user doc is created if missing
+        await setDoc(doc(db, "users", auth.currentUser.uid), {
             tier: 1,
             invitedByCode: inputCode,
             verifiedAt: serverTimestamp()
-        });
+        }, { merge: true });
+        
         showToast("🛡️ Node Upgraded: Welcome to the Tier 1 Witness Circle!");
         setTimeout(() => location.reload(), 1500);
     } catch (error) {
@@ -70,7 +92,7 @@ export const checkIncomingInvite = async () => {
     }
 };
 
-// Expose to window for UI
+// Expose to window for UI buttons
 window.sendInvitation = sendInvitation;
 window.checkIncomingInvite = checkIncomingInvite;
 window.startZKVerification = startZKVerification;
