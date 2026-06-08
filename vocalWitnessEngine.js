@@ -38,6 +38,16 @@ export class VocalWitnessEngine {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       this.mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+        // Example check inside your Engine's upload method
+async function validateWitnessAccess(user) {
+  const userRef = doc(this.db, 'users', user.uid);
+  const userDoc = await getDoc(userRef);
+  
+  // Rule: Only users with 'isWitnessVerified: true' can access Witness Voice
+  if (!userDoc.data().isWitnessVerified) {
+    throw new Error("Witness Voice access requires verified identity.");
+  }
+}
       
       // Auto-stop safety timer
       this.recordingTimeout = setTimeout(() => {
