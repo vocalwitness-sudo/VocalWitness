@@ -69,6 +69,32 @@ export const sendInvitation = async () => {
     }
 };
 
+// Add this function to js/verification.js
+export function populateCountryDropdown(elementId) {
+    const select = document.getElementById(elementId);
+    if (!select) return;
+
+    const countries = [
+        { code: '+234-ha', name: 'Hausa (Nigeria)' },
+        { code: '+234-yo', name: 'Yorùbá (Nigeria)' },
+        { code: '+234-ig', name: 'Igbo (Nigeria)' },
+        { code: '+255', name: 'Swahili (Tanzania)' },
+        { code: '+252', name: 'Somali (Somalia)' },
+        { code: '+251-am', name: 'Amharic (Ethiopia)' },
+        { code: '+251-or', name: 'Oromo (Ethiopia)' },
+        { code: '+27-zu', name: 'Zulu (South Africa)' },
+        { code: '+34', name: 'Spanish (Spain)' },
+        { code: '+33', name: 'French (France)' }
+    ];
+
+    countries.forEach(country => {
+        const option = document.createElement('option');
+        option.value = country.code;
+        option.textContent = country.name;
+        select.appendChild(option);
+    });
+}
+
 /**
  * Redemption of Invite Codes
  */
