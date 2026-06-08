@@ -7,8 +7,15 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script type="module" src="js/main.js"></script>
 <script src="https://unpkg.com/exifr@7.1.3/dist/exifr.min.js"></script>
-  
-    
+
+    <script type="importmap">
+{
+  "imports": {
+    "exifr": "https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/exifr.esm.js"
+  }
+}
+</script>
+                                   
     <style>
         body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: white; }
         .glass { background: rgba(17, 24, 39, 0.92); backdrop-filter: blur(16px); border: 1px solid rgba(16, 185, 129, 0.2); }
