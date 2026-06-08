@@ -1,45 +1,45 @@
+/**
+ * VocalWitness Main Orchestrator
+ * Centralizes initialization and binds modules to the global window scope
+ */
+
+import { db, storage } from "./firebase-config.js";
 import { googleLogin, logout } from "./auth.js";
-import { listenToLedgerFeed, postNow } from "./feed.js";
+import { listenToLedgerFeed, postNow, switchFeed } from "./feed.js";
 import { handleImageSelect, toggleVoiceRecording } from "./media.js";
 import { translateUIElements } from "./i18n.js";
-// js/main.js
-import { googleLogin, logout } from "./auth.js";
-// main.js
-import { db, storage } from "./firebase-config.js";
+import { VocalWitnessEngine } from "./engine.js";
+
+// Initialize Engine
 export const witnessEngine = new VocalWitnessEngine(db, storage);
-import { listenToLedgerFeed, postNow, switchFeed } from "./feed.js"; // Import switchFeed
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Expose all necessary functions to the window
+    // 1. Initialize Feed
+    listenToLedgerFeed();
+    
+    // 2. Global Window Exposure (for HTML inline onclick handlers)
     window.googleLogin = googleLogin;
     window.logout = logout;
     window.postNow = postNow;
-    window.switchFeed = switchFeed; // Expose the switcher
-    
-    listenToLedgerFeed();
-    // ... rest of your initialization code
-});
+    window.switchFeed = switchFeed;
+    window.toggleVoiceRecording = toggleVoiceRecording;
 
-document.addEventListener('DOMContentLoaded', () => {
-    // 1. Start App
-    listenToLedgerFeed();
-    
-    // 2. Setup Language Switcher
-    const langSelect = document.getElementById('language-select');
+    // 3. Setup UI Event Listeners
+    const langSelect = document.getElementById('languageSelector'); // Updated ID match
     if (langSelect) {
         langSelect.addEventListener('change', (e) => translateUIElements(e.target.value));
     }
 
-    // 3. Setup Media Events
     const imageInput = document.getElementById('imageInput');
     const previewArea = document.getElementById('previewArea');
-    if (imageInput) imageInput.addEventListener('change', (e) => handleImageSelect(e, previewArea));
+    if (imageInput) {
+        imageInput.addEventListener('change', (e) => handleImageSelect(e, previewArea));
+    }
         
     const voiceBtn = document.getElementById('voiceBtn');
-    if (voiceBtn) voiceBtn.addEventListener('click', (e) => toggleVoiceRecording(e.target));
-
-    // 4. Expose Auth/Post to Global Window (for HTML onclick handlers)
-    window.googleLogin = googleLogin;
-    window.logout = logout;
-    window.postNow = postNow;
+    if (voiceBtn) {
+        voiceBtn.addEventListener('click', (e) => toggleVoiceRecording(e.target));
+    }
+    
+    console.log("⚡ VocalWitness Node Terminal Online: Main Orchestrator Initialized");
 });
