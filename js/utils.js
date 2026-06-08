@@ -34,6 +34,10 @@ export const translationDictionary = {
     }
 };
 
+// main.js
+import { db, storage } from "./firebase-config.js";
+export const witnessEngine = new VocalWitnessEngine(db, storage);
+
 // Add this to your existing js/utils.js
 export function showToast(message) {
     const toast = document.createElement('div');
