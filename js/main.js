@@ -12,15 +12,7 @@ import { handleImageSelect, toggleVoiceRecording } from "./media.js";
 import { translateUIElements } from "./i18n.js";
 import { VocalWitnessEngine } from "./engine.js";
 import { showToast } from "./utils.js";
-// In js/main.js
-import { startZKVerification } from './verification.js';
 
-document.addEventListener('DOMContentLoaded', () => {
-    const zkButton = document.getElementById('zkButtonId'); // Make sure your button has this ID
-    if (zkButton) {
-        zkButton.addEventListener('click', startZKVerification);
-    }
-});
 
 // Now you can use it!
 async function readMetadata(file) {
