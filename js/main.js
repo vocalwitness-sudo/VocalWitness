@@ -33,7 +33,12 @@ document.getElementById('feed').addEventListener('click', (e) => {
 document.getElementById('btn-login')?.addEventListener('click', googleLogin);
 document.getElementById('btn-logout')?.addEventListener('click', logout);
 
-
+// Add these to your DOMContentLoaded listener in main.js:
+document.getElementById('btn-invite')?.addEventListener('click', sendInvitation);
+document.getElementById('btn-redeem-invite')?.addEventListener('click', checkIncomingInvite);
+document.getElementById('vw-btn')?.addEventListener('click', startZKVerification);
+// If you have a phone button:
+// document.getElementById('btn-phone-verify')?.addEventListener('click', startPhoneVerification);
     
     // 2. Button Event Listeners (The "Bridge" solution)
     
