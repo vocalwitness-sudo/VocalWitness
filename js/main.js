@@ -16,6 +16,8 @@ import {
 // Initialize the engine once
 const engine = new VocalWitnessEngine(db, storage);
 
+import { populateCountryDropdown, startZKVerification, ... } from "./verification.js";
+
 
 // Ensure every function you import in main.js has 'export' in front of it
 export function populateCountryDropdown(elementId) {
