@@ -75,3 +75,11 @@ export function toggleVoiceRecording(voiceBtn) {
         mediaRecorder.stop();
     }
 }
+
+
+// Add this to js/media.js
+export function resetMediaState() {
+    selectedImageFile = null;
+    selectedAudioFile = null;
+    // You may also want to clear UI previews here
+}
