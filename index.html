@@ -5,12 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VocalWitness • Premium Forensic Ledger & Public Square</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script type="module" src="js/main.js"></script>
-<script src="https://unpkg.com/exifr@7.1.3/dist/exifr.min.js"></script>
-
-  
-</script>
-                                   
+    <script src="https://unpkg.com/exifr@7.1.3/dist/exifr.min.js"></script>
     <style>
         body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: white; }
         .glass { background: rgba(17, 24, 39, 0.92); backdrop-filter: blur(16px); border: 1px solid rgba(16, 185, 129, 0.2); }
@@ -25,155 +20,59 @@
 
     <div class="max-w-2xl mx-auto bg-red-950/40 border border-red-500/30 backdrop-blur-sm rounded-3xl p-5 text-xs mb-6 shadow-xl text-zinc-300">
         <strong class="text-red-400 font-bold">Important Legal Notice:</strong><br>
-        VocalWitness functions strictly as an un-manipulated decentralized distribution medium. All forensic entries on True Witness are client-side scrubbed of identification metadata prior to ledger recording.
+        VocalWitness functions strictly as an un-manipulated decentralized distribution medium.
     </div>
 
     <div class="max-w-2xl mx-auto">
-        
-       <header class="flex flex-col gap-4 mb-6"> 
-    <div class="flex items-center justify-between">
-        <div class="flex items-center gap-3"> 
-            <!-- Updated code block for line 32 -->
-<div class="w-11 h-11 flex-shrink-0 flex items-center justify-center bg-[#0a0f1c] border border-emerald-500/20 rounded-xl overflow-hidden shadow-inner">
-    <img src="logo.png" alt="VocalWitness Icon" class="w-full h-full object-cover">
-</div>
-            <h1 class="text-3xl font-bold text-emerald-400 tracking-tight">VocalWitness</h1> 
-        </div> 
-        <div class="flex items-center gap-3"> 
-            <button onclick="showPremiumBenefits()" class="px-5 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-semibold rounded-3xl text-sm flex items-center gap-1.5 shadow-md">⭐ Premium</button> 
-            <button onclick="showNotifications()" class="w-11 h-11 bg-zinc-800 hover:bg-zinc-700 rounded-3xl flex items-center justify-center text-lg relative">🔔</button> 
-            <button onclick="showProfile()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-3xl text-sm font-semibold flex items-center gap-1">👤 Profile</button> 
-        </div> 
-    </div>
-    <!-- ... rest of header (Node Language selector) ... -->
-</header>
-
+        <header class="flex flex-col gap-4 mb-6"> 
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3"> 
+                    <div class="w-11 h-11 flex-shrink-0 flex items-center justify-center bg-[#0a0f1c] border border-emerald-500/20 rounded-xl overflow-hidden shadow-inner">
+                        <img src="logo.png" alt="VocalWitness Icon" class="w-full h-full object-cover">
+                    </div>
+                    <h1 class="text-3xl font-bold text-emerald-400 tracking-tight">VocalWitness</h1> 
+                </div> 
+                <div class="flex items-center gap-3"> 
+                    <button id="btn-premium" class="px-5 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-semibold rounded-3xl text-sm flex items-center gap-1.5 shadow-md">⭐ Premium</button> 
+                    <button id="btn-notifications" class="w-11 h-11 bg-zinc-800 hover:bg-zinc-700 rounded-3xl flex items-center justify-center text-lg relative">🔔</button> 
+                    <button id="btn-profile" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-3xl text-sm font-semibold flex items-center gap-1">👤 Profile</button> 
+                </div> 
+            </div>
             <div class="bg-[#111827] border border-zinc-800 rounded-2xl p-3 flex items-center justify-between glass">
                 <div class="flex items-center gap-2 text-xs text-zinc-400 font-medium">
                     <span>🌐 Node Language:</span>
                     <span id="activeLanguageDisplay" class="text-emerald-400 font-bold bg-emerald-950/80 px-2 py-0.5 rounded-md border border-emerald-800/40">English (EN)</span>
                 </div>
-                <select id="languageSelector" onchange="window.handleLanguageChange(this.value)" class="bg-[#1e293b] text-sm text-white font-medium px-3 py-1.5 rounded-xl border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer max-w-[180px]">
+                <select id="languageSelector" class="bg-[#1e293b] text-sm text-white font-medium px-3 py-1.5 rounded-xl border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer max-w-[180px]">
                     <option value="en" selected>English (EN)</option>
                     <option value="sw">Kiswahili (SW)</option>
-                    <option value="ha">Hausa (HA)</option>
-                    <option value="yo">Yoruba (YO)</option>
-                    <option value="ig">Igbo (IG)</option>
-                    <option value="so">Somali (SO)</option>
-                    <option value="am">Amharic (AM)</option>
-                    <option value="om">Oromo (OM)</option>
-                    <option value="zu">isiZulu (ZU)</option>
-                    <option value="xh">isiXhosa (XH)</option>
-                    <option value="ar">العربية (AR)</option>
-                    <option value="zh">中文 (ZH)</option>
-                    <option value="es">Español (ES)</option>
-                    <option value="hi">हिन्दी (HI)</option>
-                    <option value="fr">Français (FR)</option>
                 </select>
             </div>
         </header>
 
-        <div class="mb-6">
-            <h3 class="text-amber-400 text-xs uppercase font-bold tracking-wider font-mono flex items-center gap-2 mb-3">👥 Top Active True Talkers</h3>
-            <div id="topTalkers" class="flex gap-3 overflow-x-auto pb-2"></div>
-        </div>
-
         <nav class="grid grid-cols-3 gap-3 mb-4">
-            <button onclick="switchFeed('vocaltruth')" id="btn-vocaltruth" class="bg-emerald-500 text-black py-4 rounded-2xl font-bold text-sm transition-all shadow-lg border border-emerald-400/20 flex items-center justify-center gap-1.5">
-                📢 Vocal Truth
-            </button>
-            
-            <button onclick="switchFeed('citizentalk')" id="btn-citizentalk" class="bg-zinc-800 text-zinc-400 hover:text-white py-4 rounded-2xl font-bold text-sm transition-all border border-zinc-900 flex items-center justify-center gap-1.5">
-                💬 Citizen Talk
-            </button>
-
-            <button onclick="showLiveArena()" class="relative bg-zinc-900/60 border border-zinc-800 text-zinc-400 hover:bg-zinc-800 py-4 rounded-3xl flex flex-col items-center justify-center gap-1 font-bold text-sm transition-all">
-                🎥 Live Arena <span class="teaser-badge">v2.4</span>
-            </button>
+            <button id="btn-vocaltruth" class="bg-emerald-500 text-black py-4 rounded-2xl font-bold text-sm transition-all shadow-lg border border-emerald-400/20 flex items-center justify-center gap-1.5">📢 Vocal Truth</button>
+            <button id="btn-citizentalk" class="bg-zinc-800 text-zinc-400 hover:text-white py-4 rounded-2xl font-bold text-sm transition-all border border-zinc-900 flex items-center justify-center gap-1.5">💬 Citizen Talk</button>
+            <button id="btn-livearena" class="relative bg-zinc-900/60 border border-zinc-800 text-zinc-400 hover:bg-zinc-800 py-4 rounded-3xl flex flex-col items-center justify-center gap-1 font-bold text-sm transition-all">🎥 Live Arena</button>
         </nav>
 
-        <div class="grid grid-cols-2 gap-3 mb-8 text-sm">
-            <button onclick="showTrustCircles()" class="bg-zinc-900/40 border border-zinc-800 hover:bg-zinc-800/40 py-3 rounded-2xl flex items-center justify-center gap-2 text-zinc-400">Trust Circles <span class="text-amber-500 text-[10px] font-mono font-bold uppercase">soon</span></button>
-            <button onclick="showSavedSection()" class="bg-zinc-900/40 border border-zinc-800 hover:bg-zinc-800/40 py-3 rounded-2xl flex items-center justify-center gap-2 text-zinc-400">Saved Records <span class="text-amber-500 text-[10px] font-mono font-bold uppercase">soon</span></button>
-        </div>
-
         <div class="bg-[#111827] rounded-3xl p-6 mb-10 glass" id="composer">
-            <div id="composerTitle" class="font-black text-lg mb-4 text-emerald-400 tracking-tight">True Witness Ledger Dispatch</div>
-            <textarea id="mainInput" rows="4" class="w-full bg-[#1e293b] text-white border border-zinc-800 rounded-2xl p-5 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none text-sm" placeholder="Provide raw, unedited personal journalistic or forensic descriptions..."></textarea>
-            
+            <textarea id="mainInput" rows="4" class="w-full bg-[#1e293b] text-white border border-zinc-800 rounded-2xl p-5 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none text-sm" placeholder="Provide raw description..."></textarea>
             <div class="grid grid-cols-2 gap-3 mt-4">
-                <button onclick="triggerImageUpload()" class="py-3.5 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 rounded-2xl text-sm font-medium flex items-center justify-center gap-2 transition">Photo + Forensic Shield</button>
-                <button onclick="startVoiceRecording()" id="voiceBtn" class="py-3.5 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 rounded-2xl text-sm font-medium flex items-center justify-center gap-2 transition">Voice Testimony</button>
+                <button id="btn-photo" class="py-3.5 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 rounded-2xl text-sm font-medium flex items-center justify-center gap-2 transition">Photo + Forensic Shield</button>
+                <button id="btn-voice" class="py-3.5 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 rounded-2xl text-sm font-medium flex items-center justify-center gap-2 transition">Voice Testimony</button>
             </div>
-
-            <input type="file" id="imageInput" accept="image/*" class="hidden" onchange="handleImageSelect(event)">
-            <div id="previewArea" class="mt-4 hidden bg-zinc-950 p-3 rounded-2xl border border-zinc-900"></div>
-
-            <button onclick="postNow()" id="postButton" class="mt-6 w-full bg-emerald-500 hover:bg-emerald-600 text-black py-4 rounded-2xl font-bold text-base shadow-lg transition-all">Publish to Decentralized Ledger</button>
-        </div>
-
-        <div id="feed" class="space-y-6"></div>
-    </div>
-
-    <div id="earnModal" class="hidden fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4 backdrop-blur-md">
-        <div class="max-w-md w-full bg-zinc-900 border border-zinc-800 rounded-3xl p-8 text-center shadow-2xl">
-            <h2 class="text-3xl font-black text-amber-400 mb-4 tracking-tight">Reputation Payouts</h2>
-            <p class="text-zinc-400 text-sm mb-6">Verified platform anchors monetize their contributions progressively based on their network reputation tier:</p>
-            <ul class="text-left space-y-3 text-sm mb-8 text-zinc-300 pl-4 list-disc font-mono">
-                <li>Tier 1: Verified Witness reach multipliers</li>
-                <li>Tier 2: Trusted Voice custom Circle nodes</li>
-                <li>Tier 3: Elite Guardian (Level 4 Media Streams)</li>
-            </ul>
-            <p class="text-amber-500/80 text-xs mb-6 font-medium">System verification cycles auto-process parameters every 24 hours.</p>
-            <button onclick="closeModal('earnModal')" class="w-full py-4 bg-amber-500 hover:bg-amber-400 text-black font-extrabold rounded-2xl shadow-lg transition">Acknowledge Framework</button>
+            <button id="postButton" class="mt-6 w-full bg-emerald-500 hover:bg-emerald-600 text-black py-4 rounded-2xl font-bold text-base shadow-lg transition-all">Publish to Decentralized Ledger</button>
         </div>
     </div>
 
     <div id="profilePage" class="hidden fixed inset-0 bg-black/95 z-50 overflow-auto backdrop-blur-md">
         <div class="max-w-2xl mx-auto p-6">
-            <button onclick="closeModal('profilePage')" class="mb-6 text-emerald-400 flex items-center gap-1 font-semibold text-sm transition">← Return to Main Feed</button>
-            
-            <div class="text-center mb-6 bg-zinc-900/60 border border-zinc-800 rounded-3xl p-8">
-                <div id="profileAvatar" class="w-24 h-24 mx-auto bg-gradient-to-tr from-emerald-600 to-teal-600 rounded-3xl text-5xl font-black flex items-center justify-center mb-4 text-black shadow-inner">V</div>
-                <h2 id="profileName" class="text-2xl font-black tracking-tight">Your Computer's Network Name</h2>
-                <p id="profileEmail" class="text-zinc-500 text-xs font-mono mt-1"></p>
-                
-                <div class="mt-6 p-4 rounded-2xl bg-emerald-950/20 border border-emerald-500/20 text-left">
-                    <div class="flex items-center gap-2 mb-1.5">
-                        <span class="text-emerald-400 text-xs">🛡️</span>
-                        <h5 class="text-[11px] font-bold text-emerald-400 font-mono uppercase tracking-wider">Privacy Protection Warning (ZERO-KNOWLEDGE CRYPTOGRAPHIC PROTOCOL NOTICE)</h5>
-                    </div>
-                    <p class="text-[11px] text-zinc-400 leading-relaxed font-sans">
-                        VocalWitness verifies humanity credentials and local geographic nodes exclusively via zero-knowledge mathematics and decentralized hardware telemetry. **We do not collect, process, or retain government-issued documentation** (e.g., passports, national ID indices). Personal real-world identification maps remain strictly outside the data layer.
-                    </p>
-                </div>
-            </div>
-
-            <div class="space-y-3">
-                <button onclick="manageVerification()" class="w-full py-4 bg-emerald-500 text-black font-extrabold rounded-2xl shadow-md hover:bg-emerald-400 transition">Upgrade Security and Permissions (Code + Privacy Proofs)</button>
-                <button onclick="showSettings()" class="w-full py-4 bg-zinc-900 border border-zinc-800 text-zinc-300 font-bold rounded-2xl hover:bg-zinc-800 transition">Settings Dashboard</button>
-                <button onclick="logout()" class="w-full py-4 bg-red-950/30 border border-red-500/20 text-red-400 font-extrabold rounded-2xl hover:bg-red-900/20 transition tracking-wide">Log Out</button>
-           <button onclick="startZKVerification()">Start Verification</button>
-            </div>
+            <button id="btn-close-profile" class="mb-6 text-emerald-400 flex items-center gap-1 font-semibold text-sm transition">← Return</button>
+            <button id="vw-btn" class="w-full py-4 bg-emerald-500 text-black font-extrabold rounded-2xl shadow-md hover:bg-emerald-400 transition">Start Verification</button>
         </div>
     </div>
 
-    <div id="settingsModal" class="hidden fixed inset-0 bg-black/95 z-[60] flex items-center justify-center p-4 backdrop-blur-md">
-        <div class="max-w-md w-full bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl relative">
-            <button onclick="closeModal('settingsModal')" class="absolute top-4 right-4 text-zinc-500 hover:text-white transition font-bold font-mono">✕</button>
-            <h3 class="font-black text-xl text-white mb-6 tracking-tight">Setup & Adjustments</h3>
-            <div class="space-y-3 font-mono">
-                <button onclick="changePassword()" class="w-full py-4 bg-zinc-950 border border-zinc-800 text-zinc-400 hover:text-white rounded-2xl text-xs text-left px-5 transition">🔑 Change Security Keys & Passwords</button>
-                <button onclick="privacySettings()" class="w-full py-4 bg-zinc-950 border border-zinc-800 text-zinc-400 hover:text-white rounded-2xl text-xs text-left px-5 transition">🛡️ Anti-Tracking Privacy Settings</button>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/exifr/dist/full.umd.js"></script>
-
-<script src="js/verification.js"></script> <script src="js/main.js"></script>
     <script type="module" src="js/main.js"></script>
-   
 </body>
-</html> 
+</html>
