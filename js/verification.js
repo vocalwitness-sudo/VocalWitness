@@ -32,9 +32,7 @@ export async function checkInitialVerificationStatus() {
 /**
  * ZK Verification Logic
  */
-export function startZKVerification() {
-    // ... your code
-}
+
 export async function startZKVerification() {
     console.log("ZK Verification started");
     // Placeholder for your ZK-proof implementation
