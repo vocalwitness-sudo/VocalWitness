@@ -21,6 +21,11 @@ document.addEventListener('DOMContentLoaded', () => {
     populateCountryDropdown('languageSelector');
     showToast("⚡ VocalWitness Node Terminal Online");
 
+    // In main.js - DOMContentLoaded
+document.getElementById('language-select')?.addEventListener('change', (e) => {
+    changeLanguage(e.target.value);
+});
+
     // Add this to your main.js
 document.getElementById('feed').addEventListener('click', (e) => {
     if (e.target.classList.contains('peer-vote-btn')) {
