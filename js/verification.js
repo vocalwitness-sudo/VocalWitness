@@ -18,3 +18,9 @@ export let isZKVerified = false;
 // window.checkIncomingInvite = checkIncomingInvite;
 // window.startZKVerification = startZKVerification;
 // window.startPhoneVerification = startPhoneVerification;
+
+
+// Ensure 'export' is here
+export async function checkIncomingInvite(userId) { 
+    // ... your logic ...
+}
