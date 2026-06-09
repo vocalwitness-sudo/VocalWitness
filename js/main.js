@@ -29,6 +29,12 @@ document.getElementById('feed').addEventListener('click', (e) => {
     }
 });
 
+    // In main.js - DOMContentLoaded block
+document.getElementById('btn-login')?.addEventListener('click', googleLogin);
+document.getElementById('btn-logout')?.addEventListener('click', logout);
+
+
+    
     // 2. Button Event Listeners (The "Bridge" solution)
     
     // Auth & Navigation
