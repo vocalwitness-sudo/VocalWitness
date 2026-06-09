@@ -3,10 +3,6 @@
  * Handles Localization, Cryptographic Hashing, and UI Feedback
  */
 
-import { showToast } from "./utils.js";
-
-// Then just call it directly
-showToast("Node Identity Synced.");
 
 // 🌐 Multi-Language Dictionary (Keep as is)
 export const translationDictionary = { /* ... */ };
