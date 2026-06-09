@@ -5,6 +5,7 @@
 import { collection, addDoc, doc, getDoc, updateDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { db, auth } from "./firebase-config.js";
 import { showToast } from "./utils.js";
+import { startZKVerification } from './verification.js';
 
 // State
 export let isPhoneVerified = false;
@@ -30,6 +31,9 @@ export async function checkInitialVerificationStatus() {
 /**
  * ZK Verification Logic
  */
+export function startZKVerification() {
+    // ... your code
+}
 export async function startZKVerification() {
     console.log("ZK Verification started");
     // Placeholder for your ZK-proof implementation
