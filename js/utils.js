@@ -1,15 +1,10 @@
 /**
  * VocalWitness Utilities Module
- * Handles Localization, Cryptographic Hashing, and UI Feedback
  */
 
+// 1. Remove the import line entirely
+// 2. Remove the test call (showToast("...")) entirely
 
-// 🌐 Multi-Language Dictionary (Keep as is)
-export const translationDictionary = { /* ... */ };
-
-/**
- * UI Feedback: Displays a temporary notification
- */
 export function showToast(message, type = "success") {
     const toast = document.createElement('div');
     const bgColor = type === 'error' ? 'bg-red-600' : 'bg-emerald-600';
@@ -19,9 +14,6 @@ export function showToast(message, type = "success") {
     setTimeout(() => toast.remove(), 3000);
 }
 
-/**
- * Data Mode Toggle
- */
 export function isLowDataMode() {
     return localStorage.getItem('lowDataMode') === 'true';
 }
@@ -32,9 +24,6 @@ export function toggleLowDataMode() {
     location.reload();
 }
 
-/**
- * Cryptographic Hash Generator (for Files)
- */
 export async function generateSha256Hash(fileOrString) {
     const data = (typeof fileOrString === 'string') 
         ? new TextEncoder().encode(fileOrString) 
@@ -45,22 +34,6 @@ export async function generateSha256Hash(fileOrString) {
         .map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-/**
- * Live DOM Translation Engine
- */
 export function translateUIElements(langCode) {
-    const lexicon = translationDictionary[langCode];
-    if (!lexicon) return;
-
-    const mappings = {
-        'privacy-notice-text': lexicon.privacyWarning,
-        'security-upgrade-text': lexicon.upgradeSecurity,
-        'settings-dashboard-text': lexicon.settingsDashboard,
-        'logout-action-text': lexicon.logoutBtn
-    };
-
-    Object.keys(mappings).forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = mappings[id];
-    });
+    // ... your translation logic here ...
 }
