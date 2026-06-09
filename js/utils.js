@@ -3,39 +3,13 @@
  * Handles Localization, Cryptographic Hashing, and UI Feedback
  */
 
-// 🌐 Multi-Language Dictionary
-export const translationDictionary = {
-    en: {
-        privacyWarning: "Privacy Protection Warning (ZERO-KNOWLEDGE CRYPTOGRAPHIC PROTOCOL NOTICE)",
-        upgradeSecurity: "Upgrade Security and Permissions (Code + Privacy Proofs)",
-        settingsDashboard: "Settings Dashboard",
-        logoutBtn: "Log Out"
-    },
-    ha: {
-        privacyWarning: "Gargaɗi Game da Tsaron Sirri (SANARWAR TSARIN SIRRI NA ZERO-KNOWLEDGE)",
-        upgradeSecurity: "Haɓaka Tsaro da Izini (Lambar Shaidar Sirri)",
-        settingsDashboard: "Saitunan Dashboard",
-        logoutBtn: "Fita Daga Shafin"
-    },
-    yo: {
-        privacyWarning: "Ikilo Idaabobo Aṣiri (AṢIYAN PROTOCOL CRYPTOGRAPHIC KÒ SÍ ÌMỌ̀-IṢẸ́)",
-        upgradeSecurity: "Ṣe Imudojuiwọn Aabo ati Awọn Gbigbanilaaye",
-        settingsDashboard: "Dashboard Eto",
-        logoutBtn: "Wọlé Kúrò"
-    },
-    ig: {
-        privacyWarning: "Ịdọ aka na ntị maka nchebe nzuzo (ZERO-KNOWLEDGE CRYPTOGRAPHIC PROTOCOL NOTICE)",
-        upgradeSecurity: "Melite Nchebe na Ikike",
-        settingsDashboard: "Ebe Ndabere Ntọala",
-        logoutBtn: "Banye Pụọ"
-    },
-    sw: {
-        privacyWarning: "Onyo la Kulinda Faragha (ILANI YA PROTOKALI YA USINDIKAJI WA BIOMETRIKI)",
-        upgradeSecurity: "Boresha Usalama na Ruhusa",
-        settingsDashboard: "Eneo la Mipangilio",
-        logoutBtn: "Ondoka Kwenye Akaunti"
-    }
-};
+import { showToast } from "./utils.js";
+
+// Then just call it directly
+showToast("Node Identity Synced.");
+
+// 🌐 Multi-Language Dictionary (Keep as is)
+export const translationDictionary = { /* ... */ };
 
 /**
  * UI Feedback: Displays a temporary notification
@@ -94,7 +68,3 @@ export function translateUIElements(langCode) {
         if (el) el.textContent = mappings[id];
     });
 }
-
-// Bind to window for global access
-window.showToast = showToast;
-window.toggleLowDataMode = toggleLowDataMode;
