@@ -13,13 +13,6 @@ import {
     sendInvitation
 } from "./verification.js";
 
-
-// Now you can use it!
-async function readMetadata(file) {
-    let output = await exifr.parse(file);
-    console.log('EXIF data:', output);
-}
-
 export const witnessEngine = new VocalWitnessEngine(db, storage);
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -28,32 +21,33 @@ document.addEventListener('DOMContentLoaded', () => {
     populateCountryDropdown('languageSelector');
     showToast("⚡ VocalWitness Node Terminal Online");
 
-    // 2. Window Bindings (Functions available to HTML buttons)
-    window.googleLogin = googleLogin;
-    window.logout = logout;
-    window.postNow = postNow;
-    window.switchFeed = switchFeed;
-    window.toggleVoiceRecording = toggleVoiceRecording;
-    window.showToast = showToast;
-    window.startZKVerification = startZKVerification;
-    window.startPhoneVerification = startPhoneVerification;
-    // Attach functions to the window object so HTML buttons can see them
-window.sendInvitation = sendInvitation;
-window.checkIncomingInvite = checkIncomingInvite;
-window.populateCountryDropdown = populateCountryDropdown;
-    window.triggerImageUpload = () => document.getElementById('imageInput').click();
+    // 2. Button Event Listeners (The "Bridge" solution)
     
-    // 3. UI State Triggers
-    window.showProfile = () => document.getElementById('profilePage').classList.remove('hidden');
-    window.showEarnModal = () => document.getElementById('earnModal').classList.remove('hidden');
-    window.showSettings = () => document.getElementById('settingsModal').classList.remove('hidden');
-    window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
-    
-    window.showNotifications = () => showToast("🔔 Notifications pane updating.");
-    window.showLiveArena = () => showToast("🎥 Live Arena — Scheduled for v2.4.");
+    // Auth & Navigation
+    document.getElementById('btn-profile')?.addEventListener('click', () => 
+        document.getElementById('profilePage').classList.remove('hidden'));
+        
+    document.getElementById('btn-close-profile')?.addEventListener('click', () => 
+        document.getElementById('profilePage').classList.add('hidden'));
 
-    // 4. Event Listeners
-    document.getElementById('languageSelector')?.addEventListener('change', (e) => translateUIElements(e.target.value));
+    document.getElementById('btn-premium')?.addEventListener('click', () => showToast("Premium benefits..."));
+    document.getElementById('btn-notifications')?.addEventListener('click', () => showToast("🔔 Notifications pane updating."));
+    document.getElementById('btn-livearena')?.addEventListener('click', () => showToast("🎥 Live Arena — Scheduled for v2.4."));
+    
+    // Ledger Interaction
+    document.getElementById('postButton')?.addEventListener('click', postNow);
+    document.getElementById('btn-vocaltruth')?.addEventListener('click', () => switchFeed('vocaltruth'));
+    document.getElementById('btn-citizentalk')?.addEventListener('click', () => switchFeed('citizentalk'));
+    
+    // Verification
+    document.getElementById('vw-btn')?.addEventListener('click', startZKVerification);
+    
+    // Media & Inputs
+    document.getElementById('btn-photo')?.addEventListener('click', () => document.getElementById('imageInput').click());
     document.getElementById('imageInput')?.addEventListener('change', (e) => handleImageSelect(e, document.getElementById('previewArea')));
-    document.getElementById('voiceBtn')?.addEventListener('click', (e) => toggleVoiceRecording(e.target));
+    document.getElementById('btn-voice')?.addEventListener('click', (e) => toggleVoiceRecording(e.target));
+    document.getElementById('languageSelector')?.addEventListener('change', (e) => translateUIElements(e.target.value));
+
+    // Modals
+    // Add similar listeners for settings/earn modals as needed...
 });
