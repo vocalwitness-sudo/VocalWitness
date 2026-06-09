@@ -2,10 +2,10 @@
  * VocalWitness Auth Module
  * Manages identity state and observer patterns for Node synchronization
  */
-
 import { auth, provider } from "./firebase-config.js";
 import { signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { showToast } from "./utils.js";
+import { listenToLedgerFeed } from "./feed.js"; // Import directly
 
 export let currentUser = null;
 
@@ -25,17 +25,12 @@ onAuthStateChanged(auth, (user) => {
         updateUI('userName', user.displayName || "Anonymous Witness");
         updateUI('profileName', user.displayName || "Verified Witness");
         updateUI('profileEmail', user.email || "");
-        
-        // Notify the application of identity state
-        window.dispatchEvent(new CustomEvent('nodeAuthChanged', { detail: user }));
     } else {
         updateUI('userName', "Guest Reader");
     }
     
-    // Refresh ledger feed if available on the window
-    if (typeof window.listenToLedgerFeed === 'function') {
-        window.listenToLedgerFeed();
-    }
+    // Refresh ledger feed directly via import, no window check needed
+    listenToLedgerFeed();
 });
 
 export async function googleLogin() {
