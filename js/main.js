@@ -21,6 +21,14 @@ document.addEventListener('DOMContentLoaded', () => {
     populateCountryDropdown('languageSelector');
     showToast("⚡ VocalWitness Node Terminal Online");
 
+    // Add this to your main.js
+document.getElementById('feed').addEventListener('click', (e) => {
+    if (e.target.classList.contains('peer-vote-btn')) {
+        const postId = e.target.getAttribute('data-post-id');
+        submitPeerVote(postId, 'verify');
+    }
+});
+
     // 2. Button Event Listeners (The "Bridge" solution)
     
     // Auth & Navigation
