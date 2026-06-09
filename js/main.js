@@ -26,6 +26,15 @@ document.getElementById('language-select')?.addEventListener('change', (e) => {
     changeLanguage(e.target.value);
 });
 
+    // In main.js
+const engine = new VocalWitnessEngine(db, storage);
+
+// When a button is clicked
+document.getElementById('recordBtn').addEventListener('click', () => {
+    engine.startVoiceRecording('citizen-talk');
+});
+
+    
     // Add this to your main.js
 document.getElementById('feed').addEventListener('click', (e) => {
     if (e.target.classList.contains('peer-vote-btn')) {
