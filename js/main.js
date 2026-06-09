@@ -1,4 +1,3 @@
-
 import { db, storage } from "./firebase-config.js";
 import { googleLogin, logout } from "./auth.js";
 import { listenToLedgerFeed, postNow, switchFeed } from "./feed.js";
@@ -6,6 +5,13 @@ import { handleImageSelect, toggleVoiceRecording } from "./media.js";
 import { translateUIElements } from "./i18n.js";
 import { VocalWitnessEngine } from "./engine.js";
 import { showToast } from "./utils.js";
+import { 
+    populateCountryDropdown, 
+    startZKVerification, 
+    startPhoneVerification,
+    checkIncomingInvite,
+    sendInvitation
+} from "./verification.js";
 
 
 // Now you can use it!
