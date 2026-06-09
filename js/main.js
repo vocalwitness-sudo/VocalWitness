@@ -16,6 +16,28 @@ import {
 // Initialize the engine once
 const engine = new VocalWitnessEngine(db, storage);
 
+
+// Ensure every function you import in main.js has 'export' in front of it
+export function populateCountryDropdown(elementId) {
+    // your code
+}
+
+export function startZKVerification() {
+    // your code
+}
+
+export function startPhoneVerification() {
+    // your code
+}
+
+export function checkIncomingInvite(userId) {
+    // your code
+}
+
+export function sendInvitation() {
+    // your code
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Initializations
     listenToLedgerFeed();
