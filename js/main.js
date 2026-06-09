@@ -1,3 +1,4 @@
+import { startZKVerification } from './verification.js';
 import { 
     populateCountryDropdown, 
     startZKVerification, 
