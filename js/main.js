@@ -37,7 +37,10 @@ document.addEventListener('DOMContentLoaded', () => {
     window.showToast = showToast;
     window.startZKVerification = startZKVerification;
     window.startPhoneVerification = startPhoneVerification;
-    
+    // Attach functions to the window object so HTML buttons can see them
+window.sendInvitation = sendInvitation;
+window.checkIncomingInvite = checkIncomingInvite;
+window.populateCountryDropdown = populateCountryDropdown;
     window.triggerImageUpload = () => document.getElementById('imageInput').click();
     
     // 3. UI State Triggers
