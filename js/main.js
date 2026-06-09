@@ -1,10 +1,4 @@
-import { 
-    populateCountryDropdown, 
-    startZKVerification, 
-    startPhoneVerification,
-    checkIncomingInvite,
-    sendInvitation
-} from "./verification.js";
+
 import { db, storage } from "./firebase-config.js";
 import { googleLogin, logout } from "./auth.js";
 import { listenToLedgerFeed, postNow, switchFeed } from "./feed.js";
