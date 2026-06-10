@@ -2,7 +2,7 @@ import { db, storage } from "./firebase-config.js";
 import { googleLogin, logout } from "./auth.js";
 import { listenToLedgerFeed, postNow, switchFeed, submitPeerVote } from "./feed.js";
 import { handleImageSelect, toggleVoiceRecording } from "./media.js";
-import { translateUIElements, changeLanguage } from "./i18n.js";
+import { translateUIElements, initLanguage } from "./i18n.js";
 import { VocalWitnessEngine } from "./engine.js";
 import { showToast } from "./utils.js";
 import { 
