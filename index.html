@@ -72,11 +72,62 @@
     </div>
 
     <div id="profilePage" class="hidden fixed inset-0 bg-black/95 z-50 overflow-auto backdrop-blur-md">
-        <div class="max-w-2xl mx-auto p-6">
-            <button id="btn-close-profile" class="mb-6 text-emerald-400 flex items-center gap-1 font-semibold text-sm transition">← Return</button>
-            <button id="vw-btn" class="w-full py-4 bg-emerald-500 text-black font-extrabold rounded-2xl shadow-md hover:bg-emerald-400 transition">Start Verification</button>
+    <div class="max-w-2xl mx-auto p-6">
+        <button id="btn-close-profile" 
+                class="mb-6 text-emerald-400 flex items-center gap-1 font-semibold text-sm transition">
+            ← Return to Node
+        </button>
+
+        <div class="glass rounded-3xl p-8">
+            <h2 class="text-2xl font-bold mb-6 text-emerald-400">👤 My Profile</h2>
+            
+            <!-- User Info -->
+            <div class="flex items-center gap-4 mb-8">
+                <div class="w-20 h-20 bg-zinc-700 rounded-2xl flex items-center justify-center text-4xl">👤</div>
+                <div>
+                    <p id="profile-username" class="text-xl font-semibold">User</p>
+                    <p id="profile-email" class="text-zinc-400 text-sm">user@vocalwitness.io</p>
+                    <p id="profile-tier" class="text-emerald-400 text-sm mt-1">Citizen • Tier 0</p>
+                </div>
+            </div>
+
+            <!-- Verification Button -->
+            <button id="vw-btn" 
+                    class="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-black font-bold rounded-2xl mb-8 transition">
+                🔐 Start ZK Verification (Upgrade to Witness)
+            </button>
+
+            <!-- Settings -->
+            <div class="space-y-6">
+                <div>
+                    <h3 class="text-sm uppercase tracking-widest text-zinc-500 mb-3">Account Settings</h3>
+                    <button id="btn-change-password" 
+                            class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-2xl text-left px-5 flex justify-between items-center">
+                        <span>🔑 Change Password</span>
+                        <span class="text-xs text-zinc-500">→</span>
+                    </button>
+                </div>
+
+                <div>
+                    <h3 class="text-sm uppercase tracking-widest text-zinc-500 mb-3">Language &amp; Region</h3>
+                    <button onclick="document.getElementById('languageSelector').focus()" 
+                            class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-2xl text-left px-5 flex justify-between items-center">
+                        <span>🌐 Change Interface Language</span>
+                        <span class="text-xs text-zinc-500">→</span>
+                    </button>
+                </div>
+
+                <div>
+                    <h3 class="text-sm uppercase tracking-widest text-zinc-500 mb-3">Danger Zone</h3>
+                    <button id="btn-logout" 
+                            class="w-full py-3 bg-red-900/50 hover:bg-red-900 text-red-400 rounded-2xl">
+                        Logout
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
+</div>
 
     <script type="module" src="js/main.js"></script>
 </body>
