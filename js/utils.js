@@ -37,3 +37,23 @@ export async function generateSha256Hash(fileOrString) {
 export function translateUIElements(langCode) {
     // ... your translation logic here ...
 }
+ // utils.js
+export async function executeAction(actionFn, buttonEl, loadingText = "Processing...") {
+    const originalText = buttonEl.textContent;
+    
+    // 1. Enter Pending State
+    buttonEl.disabled = true;
+    buttonEl.textContent = loadingText;
+
+    try {
+        // 2. Perform the action
+        await actionFn();
+    } catch (error) {
+        console.error("Action Failed:", error);
+        alert("Operation failed. Please check your connection.");
+    } finally {
+        // 3. Reset State
+        buttonEl.disabled = false;
+        buttonEl.textContent = originalText;
+    }
+}
