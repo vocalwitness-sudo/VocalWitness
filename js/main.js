@@ -18,23 +18,6 @@ const engine = new VocalWitnessEngine(db, storage);
 
 
 
-
-export function startZKVerification() {
-    // your code
-}
-
-export function startPhoneVerification() {
-    // your code
-}
-
-export function checkIncomingInvite(userId) {
-    // your code
-}
-
-export function sendInvitation() {
-    // your code
-}
-
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Initializations
     listenToLedgerFeed();
