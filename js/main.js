@@ -18,12 +18,15 @@ const engine = new VocalWitnessEngine(db, storage);
 
 
 
-document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', () => {
     // 1. Initializations
+    initLanguage();                    // ← ADD THIS LINE
+
     listenToLedgerFeed();
     populateCountryDropdown('languageSelector');
     showToast("⚡ VocalWitness Node Terminal Online");
 
+        
     // 2. Auth & Navigation
     document.getElementById('btn-login')?.addEventListener('click', googleLogin);
     document.getElementById('btn-logout')?.addEventListener('click', logout);
