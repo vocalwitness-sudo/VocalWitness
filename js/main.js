@@ -81,5 +81,24 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-livearena')?.addEventListener('click', () => showToast("🎥 Live Arena — Coming v2.4"));
     document.getElementById('btn-change-password')?.addEventListener('click', () => {
         showToast("Password change feature coming soon", "info");
+
+
+        // main.js - The Gatekeeper Logic
+async function handlePostAttempt(content, feedType) {
+    const user = auth.currentUser;
+
+    if (feedType === 'vocaltruth') {
+        // Check for Witness Verification (Tier 2)
+        const isVerified = await checkUserVerificationStatus(user); // Logic to check DB/Claims
+        if (!isVerified) {
+            showToast("Upgrade to 'Witness Voice' required. Redirecting...");
+            // Trigger your ZK Verification UI flow here
+            return; 
+        }
+    }
+    
+    // If we reach here, user is allowed
+    await postToLedger(content);
+}
     });
 });
