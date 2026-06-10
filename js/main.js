@@ -1,4 +1,5 @@
 import { db, storage } from "./firebase-config.js";
+import { auth } from "./firebase-config.js";           // ← Added this line
 import { googleLogin, logout } from "./auth.js";
 import { listenToLedgerFeed, postNow, switchFeed, submitPeerVote } from "./feed.js";
 import { handleImageSelect, toggleVoiceRecording } from "./media.js";
@@ -21,7 +22,7 @@ function updateProfileUI() {
     const user = auth?.currentUser;
     if (!user) {
         document.getElementById('profile-username').textContent = "Not Logged In";
-        document.getElementById('profile-email').textContent = "";
+        document.getElementById('profile-email').textContent = "Please login first";
         return;
     }
 
@@ -67,11 +68,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('postButton')?.addEventListener('click', postNow);
     document.getElementById('btn-vocaltruth')?.addEventListener('click', () => switchFeed('vocaltruth'));
     document.getElementById('btn-citizentalk')?.addEventListener('click', () => switchFeed('citizentalk'));
-    document.getElementById('feed')?.addEventListener('click', (e) => {
-        if (e.target.classList.contains('peer-vote-btn')) {
-            submitPeerVote(e.target.getAttribute('data-post-id'), 'verify');
-        }
-    });
 
     // 5. Media & Utility
     document.getElementById('btn-photo')?.addEventListener('click', () => document.getElementById('imageInput').click());
@@ -79,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-voice')?.addEventListener('click', (e) => toggleVoiceRecording(e.target));
     document.getElementById('languageSelector')?.addEventListener('change', (e) => translateUIElements(e.target.value));
 
-    // 6. Miscellaneous & Profile Settings
+    // 6. Miscellaneous
     document.getElementById('btn-premium')?.addEventListener('click', () => showToast("Premium benefits..."));
     document.getElementById('btn-notifications')?.addEventListener('click', () => showToast("🔔 Notifications pane"));
     document.getElementById('btn-livearena')?.addEventListener('click', () => showToast("🎥 Live Arena — Coming v2.4"));
