@@ -9,11 +9,30 @@ export const translationDictionary = {
         upgradeSecurity: "Upgrade Security and Permissions (Code + Privacy Proofs)",
         settingsDashboard: "Settings Dashboard",
         logoutBtn: "Log Out",
-        // Main UI
         placeholder: "Provide raw, unedited description...",
         postButton: "Publish to Decentralized Ledger",
         witnessVoice: "👁️ Witness Voice",
         activeLanguage: "English (EN)"
+    },
+    fr: {
+        privacyWarning: "Avertissement de Protection de la Vie Privée (PROTOCOLE CRYPTOGRAPHIQUE ZERO-KNOWLEDGE)",
+        upgradeSecurity: "Améliorer la Sécurité et les Permissions",
+        settingsDashboard: "Tableau de Bord des Paramètres",
+        logoutBtn: "Se Déconnecter",
+        placeholder: "Fournissez une description brute, non éditée...",
+        postButton: "Publier sur le Registre Décentralisé",
+        witnessVoice: "👁️ Voix du Témoin",
+        activeLanguage: "Français (FR)"
+    },
+    es: {
+        privacyWarning: "Advertencia de Protección de Privacidad (PROTOCOLO CRIPTOGRÁFICO ZERO-KNOWLEDGE)",
+        upgradeSecurity: "Mejorar Seguridad y Permisos",
+        settingsDashboard: "Panel de Configuración",
+        logoutBtn: "Cerrar Sesión",
+        placeholder: "Proporcione una descripción cruda, sin editar...",
+        postButton: "Publicar en el Ledger Descentralizado",
+        witnessVoice: "👁️ Voz del Testigo",
+        activeLanguage: "Español (ES)"
     },
     ha: {
         privacyWarning: "Gargaɗi Game da Tsaron Sirri (SANARWAR TSARIN SIRRI NA ZERO-KNOWLEDGE)",
@@ -97,7 +116,6 @@ export function translateUIElements(langCode) {
 export function initLanguage() {
     const savedLang = localStorage.getItem('preferredLang') || 'en';
     
-    // Update selector
     const langSelect = document.getElementById('languageSelector');
     if (langSelect) langSelect.value = savedLang;
 
