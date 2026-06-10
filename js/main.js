@@ -18,13 +18,46 @@ const engine = new VocalWitnessEngine(db, storage);
 
 
 
-    document.addEventListener('DOMContentLoaded', () => {
-    // 1. Initializations
-    initLanguage();                    // ← ADD THIS LINE
+        // Profile & Verification
+    const profileBtn = document.getElementById('btn-profile');
+    const profilePage = document.getElementById('profilePage');
+    const closeProfileBtn = document.getElementById('btn-close-profile');
 
-    listenToLedgerFeed();
-    populateCountryDropdown('languageSelector');
-    showToast("⚡ VocalWitness Node Terminal Online");
+    profileBtn?.addEventListener('click', () => {
+        updateProfileUI();
+        profilePage.classList.remove('hidden');
+    });
+
+    closeProfileBtn?.addEventListener('click', () => {
+        profilePage.classList.add('hidden');
+    });
+
+// Update Profile UI with user data
+function updateProfileUI() {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    document.getElementById('profile-username').textContent = user.displayName || "Anonymous User";
+    document.getElementById('profile-email').textContent = user.email || "No email";
+
+    const tierEl = document.getElementById('profile-tier');
+    if (tierEl) {
+        tierEl.textContent = isZKVerified ? "Witness • Tier 2" : "Citizen • Tier 0";
+        tierEl.style.color = isZKVerified ? "#10b981" : "#eab308";
+    }
+}
+
+
+    // Start Verification Button
+    document.getElementById('vw-btn')?.addEventListener('click', startZKVerification);
+
+    // New Profile Buttons
+    document.getElementById('btn-change-password')?.addEventListener('click', () => {
+        showToast("Password change coming in v2.1", "info");
+    });
+
+    document.getElementById('btn-logout')?.addEventListener('click', logout);
+
 
         
     // 2. Auth & Navigation
