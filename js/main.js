@@ -1,104 +1,54 @@
-import { db, storage } from "./firebase-config.js";
-import { auth } from "./firebase-config.js";           // ← Added this line
-import { googleLogin, logout } from "./auth.js";
-import { listenToLedgerFeed, postNow, switchFeed, submitPeerVote } from "./feed.js";
-import { handleImageSelect, toggleVoiceRecording } from "./media.js";
-import { translateUIElements, initLanguage } from "./i18n.js";
-import { VocalWitnessEngine } from "./engine.js";
-import { showToast } from "./utils.js";
-import {
-    populateCountryDropdown,
-    startZKVerification,
-    startPhoneVerification,
-    checkIncomingInvite,
-    sendInvitation
-} from "./verification.js";
+import { collection, addDoc, onSnapshot, query, orderBy } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
 
-// Initialize the engine once
-const engine = new VocalWitnessEngine(db, storage);
+// Access global db from HTML
+const db = window.db;
 
-// Update Profile UI with user data
-function updateProfileUI() {
-    const user = auth?.currentUser;
-    if (!user) {
-        document.getElementById('profile-username').textContent = "Not Logged In";
-        document.getElementById('profile-email').textContent = "Please login first";
-        return;
+// Save to Firestore
+export async function postToLedger(content) {
+    try {
+        await addDoc(collection(db, "witness_posts"), {
+            text: content,
+            timestamp: new Date()
+        });
+        console.log("Post published!");
+    } catch (e) {
+        console.error("Error writing to ledger: ", e);
     }
+}
 
-    document.getElementById('profile-username').textContent = user.displayName || "Anonymous User";
-    document.getElementById('profile-email').textContent = user.email || "No email";
+// Render dynamic feed
+export function initDynamicFeed() {
+    const feedContainer = document.getElementById('feedContainer');
+    if (!feedContainer) return;
 
-    const tierEl = document.getElementById('profile-tier');
-    if (tierEl) {
-        tierEl.textContent = isZKVerified ? "Witness • Tier 2" : "Citizen • Tier 0";
-        tierEl.style.color = isZKVerified ? "#10b981" : "#eab308";
-    }
+    const q = query(collection(db, "witness_posts"), orderBy("timestamp", "desc"));
+    
+    onSnapshot(q, (snapshot) => {
+        feedContainer.innerHTML = '';
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+            const post = document.createElement('div');
+            post.className = "bg-zinc-900 p-4 rounded-xl border border-zinc-800 mb-4";
+            post.innerHTML = `
+                <p class="text-white text-sm">${data.text}</p>
+                <small class="text-emerald-500 text-[10px]">Posted: ${data.timestamp.toDate().toLocaleTimeString()}</small>
+            `;
+            feedContainer.appendChild(post);
+        });
+    });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 0. Initialize Language
-    initLanguage();
+    initDynamicFeed(); // Start the live feed
 
-    // 1. Initializations
-    listenToLedgerFeed();
-    populateCountryDropdown('languageSelector');
-    showToast("⚡ VocalWitness Node Terminal Online");
-
-    // 2. Auth & Navigation
-    document.getElementById('btn-login')?.addEventListener('click', googleLogin);
-    document.getElementById('btn-logout')?.addEventListener('click', logout);
-
-    // Profile Page
-    const profilePage = document.getElementById('profilePage');
-    document.getElementById('btn-profile')?.addEventListener('click', () => {
-        updateProfileUI();
-        profilePage.classList.remove('hidden');
-    });
-    document.getElementById('btn-close-profile')?.addEventListener('click', () => {
-        profilePage.classList.add('hidden');
-    });
-
-    // 3. Verification Listeners
-    document.getElementById('btn-invite')?.addEventListener('click', sendInvitation);
-    document.getElementById('btn-redeem-invite')?.addEventListener('click', checkIncomingInvite);
-    document.getElementById('vw-btn')?.addEventListener('click', startZKVerification);
-
-    // 4. Ledger & Feed Interaction
-    document.getElementById('postButton')?.addEventListener('click', postNow);
-    document.getElementById('btn-vocaltruth')?.addEventListener('click', () => switchFeed('vocaltruth'));
-    document.getElementById('btn-citizentalk')?.addEventListener('click', () => switchFeed('citizentalk'));
-
-    // 5. Media & Utility
-    document.getElementById('btn-photo')?.addEventListener('click', () => document.getElementById('imageInput').click());
-    document.getElementById('imageInput')?.addEventListener('change', (e) => handleImageSelect(e, document.getElementById('previewArea')));
-    document.getElementById('btn-voice')?.addEventListener('click', (e) => toggleVoiceRecording(e.target));
-    document.getElementById('languageSelector')?.addEventListener('change', (e) => translateUIElements(e.target.value));
-
-    // 6. Miscellaneous
-    document.getElementById('btn-premium')?.addEventListener('click', () => showToast("Premium benefits..."));
-    document.getElementById('btn-notifications')?.addEventListener('click', () => showToast("🔔 Notifications pane"));
-    document.getElementById('btn-livearena')?.addEventListener('click', () => showToast("🎥 Live Arena — Coming v2.4"));
-    document.getElementById('btn-change-password')?.addEventListener('click', () => {
-        showToast("Password change feature coming soon", "info");
-
-
-        // main.js - The Gatekeeper Logic
-async function handlePostAttempt(content, feedType) {
-    const user = auth.currentUser;
-
-    if (feedType === 'vocaltruth') {
-        // Check for Witness Verification (Tier 2)
-        const isVerified = await checkUserVerificationStatus(user); // Logic to check DB/Claims
-        if (!isVerified) {
-            showToast("Upgrade to 'Witness Voice' required. Redirecting...");
-            // Trigger your ZK Verification UI flow here
-            return; 
-        }
+    const postBtn = document.getElementById('postButton');
+    if (postBtn) {
+        postBtn.addEventListener('click', async () => {
+            const input = document.getElementById('mainInput');
+            if (input.value.trim()) {
+                await postToLedger(input.value);
+                input.value = '';
+            }
+        });
     }
-    
-    // If we reach here, user is allowed
-    await postToLedger(content);
-}
-    });
 });
