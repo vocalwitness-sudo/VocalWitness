@@ -153,13 +153,9 @@
   window.db = db; // This makes it available to your main.js
 </script>
 
-    <script type="module">
-    import { initUI } from './js/main.js';
-    
-    // This ensures your buttons are "live" as soon as the HTML loads
-    document.addEventListener('DOMContentLoaded', () => {
-        initUI();
-    });
+   <script type="module">
+    import { init } from './js/main.js'; // Change 'initUI' to 'init'
+    document.addEventListener('DOMContentLoaded', init);
 </script>
     
 </body>
