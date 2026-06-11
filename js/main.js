@@ -21,7 +21,7 @@ export function initDynamicFeed() {
     const feedContainer = document.getElementById('feedContainer');
     if (!feedContainer) return;
 
-    const q = query(collection(db, "witness_posts"), orderBy("timestamp", "desc"));
+    const q = query(collection(db, "testimonies"), orderBy("timestamp", "desc"));
     
     onSnapshot(q, (snapshot) => {
         feedContainer.innerHTML = '';
@@ -38,17 +38,28 @@ export function initDynamicFeed() {
     });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    initDynamicFeed(); // Start the live feed
+// Inside main.js
+postButton.addEventListener('click', async () => {
+    const text = mainInput.value.trim();
+    const user = auth.currentUser; // Make sure 'auth' is imported
+    
+    if (!text || !user) return;
 
-    const postBtn = document.getElementById('postButton');
-    if (postBtn) {
-        postBtn.addEventListener('click', async () => {
-            const input = document.getElementById('mainInput');
-            if (input.value.trim()) {
-                await postToLedger(input.value);
-                input.value = '';
-            }
+    try {
+        await addDoc(collection(db, "testimonies"), { // Changed collection name to 'testimonies' to match your rules
+            authorId: user.uid,
+            witnessText: text,
+            feedVisibility: 'citizentalk', // Default for now
+            integrityHash: 'N/A',
+            moderation: {
+                votedUsers: []
+            },
+            timestamp: new Date()
         });
+        mainInput.value = "";
+        alert("Post Published!");
+    } catch (e) {
+        console.error("Rules Validation Error: ", e);
+        alert("Publishing failed: Check console for rules violation.");
     }
 });
