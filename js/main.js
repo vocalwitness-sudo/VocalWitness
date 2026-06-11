@@ -62,32 +62,37 @@ function initDynamicFeed() {
 
 // 3. UI Initialization & Listeners
 export function init() {
-    // Buttons
-    const postButton = document.getElementById('postButton');
-    const mainInput = document.getElementById('mainInput');
-    const btnProfile = document.getElementById('btn-profile');
-    const btnCloseProfile = document.getElementById('btn-close-profile');
+    console.log("Initializing UI...");
 
-    if (postButton) {
-        postButton.addEventListener('click', async () => {
-            if (mainInput.value.trim()) {
-                await postToLedger(mainInput.value.trim());
-                mainInput.value = "";
-            }
-        });
-    }
+    const checkButtons = setInterval(() => {
+        const postButton = document.getElementById('postButton');
+        const btnProfile = document.getElementById('btn-profile');
+        const btnCloseProfile = document.getElementById('btn-close-profile');
 
-    if (btnProfile) {
-        btnProfile.addEventListener('click', () => {
-            document.getElementById('profilePage').classList.remove('hidden');
-        });
-    }
+        if (postButton && btnProfile && btnCloseProfile) {
+            clearInterval(checkButtons); // Stop the checker once we find the buttons
+            console.log("Buttons found, attaching listeners.");
 
-    if (btnCloseProfile) {
-        btnCloseProfile.addEventListener('click', () => {
-            document.getElementById('profilePage').classList.add('hidden');
-        });
-    }
+            // Attach Listeners
+            postButton.addEventListener('click', async () => {
+                const mainInput = document.getElementById('mainInput');
+                if (mainInput && mainInput.value.trim()) {
+                    await postToLedger(mainInput.value.trim());
+                    mainInput.value = "";
+                } else {
+                    alert("Enter text first.");
+                }
+            });
 
-    initDynamicFeed();
+            btnProfile.addEventListener('click', () => {
+                document.getElementById('profilePage').classList.remove('hidden');
+            });
+
+            btnCloseProfile.addEventListener('click', () => {
+                document.getElementById('profilePage').classList.add('hidden');
+            });
+
+            initDynamicFeed();
+        }
+    }, 200); // Check every 200ms until found
 }
