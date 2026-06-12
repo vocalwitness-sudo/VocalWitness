@@ -1,5 +1,5 @@
 // js/signup.js
-import { state } from './store.js';
+import { state } from './storage.js'; // Updated path
 import { showToast } from './utils.js';
 
 export async function upgradeToWitnessTier() {
@@ -9,7 +9,7 @@ export async function upgradeToWitnessTier() {
     // 2. Trigger the ZK Worker process
     showToast("Initializing Forensic Verification...");
     
-    // Send message to the worker you created earlier
+    // Send message to the worker
     window.zkWorker.postMessage({ 
         type: 'VERIFY_IDENTITY', 
         uid: state.user.uid 
@@ -18,7 +18,8 @@ export async function upgradeToWitnessTier() {
     // 3. Listen for success
     window.zkWorker.onmessage = (e) => {
         if (e.data.success) {
-            state.isVerified = true;
+            // Updated to match the property in storage.js
+            state.isWitnessVerified = true; 
             state.tier = 'witness';
             showToast("✅ Forensic Identity Verified. Tier 1 Access Granted.");
             // Refresh feed to show new options
