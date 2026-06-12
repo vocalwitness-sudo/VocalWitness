@@ -7,6 +7,16 @@ import { signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstati
 import { showToast } from "./utils.js";
 import { listenToLedgerFeed } from "./feed.js"; // Import directly
 
+// js/auth.js
+import { state } from "./store.js"; // Import the central state
+
+onAuthStateChanged(auth, (user) => {
+    state.user = user; // Update the shared state
+    state.isWitnessVerified = !!user; // Simplified logic, update this later with your ZK check
+    
+    // ... your existing UI logic ...
+});
+
 export let currentUser = null;
 
 // The Auth Observer
