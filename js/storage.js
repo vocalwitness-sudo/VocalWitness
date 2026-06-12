@@ -1,10 +1,21 @@
 // js/storage.js
 import { storage } from "./firebase-config.js";
-import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
 import { showToast } from "./utils.js";
 
+/**
+ * Central App State
+ */
+export const state = {
+    user: null,
+    isWitnessVerified: false
+};
+
+/**
+ * Media Storage Operations
+ */
 export async function uploadToStorage(file, folder) {
-    const MAX_SIZE = 10 * 1024 * 1024;
+    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
     if (file.size > MAX_SIZE) {
         showToast("❌ File too large. Max 10MB.", "error");
         throw new Error("File exceeds size limit");
@@ -22,9 +33,3 @@ export async function uploadToStorage(file, folder) {
         throw error;
     }
 }
-
-// Add this to the end of js/storage.js
-export const state = {
-    user: null,
-    isWitnessVerified: false
-};
