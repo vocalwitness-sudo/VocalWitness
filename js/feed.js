@@ -4,7 +4,7 @@ import { collection, query, orderBy, onSnapshot, where, doc, updateDoc, incremen
 import { currentUser } from "./auth.js";
 import { showToast } from "./utils.js";
 // Inside js/feed.js
-import { state } from './store.js';
+import { state } from './storage.js';
 
 export async function postNow() {
     const feedType = currentFeed; // 'vocal-truth' or 'citizen-talk'
