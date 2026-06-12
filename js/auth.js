@@ -5,7 +5,7 @@
  */
 import { auth, provider } from "./firebase-config.js";
 import { signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { state } from "./store.js";
+import { state } from "./storage.js";
 import { showToast } from "./utils.js";
 
 // Internal UI helper - scoped only to this file
