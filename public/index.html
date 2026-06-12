@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en-NG">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VocalWitness • Premium Forensic Ledger & Public Square</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: white; }
+        .glass { background: rgba(17, 24, 39, 0.92); backdrop-filter: blur(16px); border: 1px solid rgba(16, 185, 129, 0.2); }
+        .post-card { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .image-preview { max-height: 320px; object-fit: cover; border-radius: 20px; width: 100%; }
+        .recording-active { animation: pulse 1.5s infinite; background-color: #ef4444 !important; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+        .teaser-badge { position: absolute; top: -6px; right: -6px; background: #f59e0b; color: black; font-size: 9px; padding: 1px 6px; border-radius: 9999px; font-weight: 700; }
+    </style>
+</head>
+<body class="min-h-screen pb-28 p-4">
+
+    <div class="max-w-2xl mx-auto bg-red-950/40 border border-red-500/30 backdrop-blur-sm rounded-3xl p-5 text-xs mb-6 shadow-xl text-zinc-300">
+        <strong class="text-red-400 font-bold">Important Legal Notice:</strong><br>
+        VocalWitness functions strictly as an un-manipulated decentralized distribution medium.
+    </div>
+
+    <div class="max-w-2xl mx-auto">
+        <header class="flex flex-col gap-4 mb-6"> 
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3"> 
+                    <div class="w-11 h-11 flex-shrink-0 flex items-center justify-center bg-[#0a0f1c] border border-emerald-500/20 rounded-xl overflow-hidden shadow-inner">
+                        <img src="logo.png" alt="VocalWitness Icon" class="w-full h-full object-cover">
+                    </div>
+                    <h1 class="text-3xl font-bold text-emerald-400 tracking-tight">VocalWitness</h1> 
+                </div> 
+                <div class="flex items-center gap-3"> 
+                    <button id="btn-premium" class="px-5 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-semibold rounded-3xl text-sm flex items-center gap-1.5 shadow-md">⭐ Premium</button> 
+                    <button id="btn-notifications" class="w-11 h-11 bg-zinc-800 hover:bg-zinc-700 rounded-3xl flex items-center justify-center text-lg relative">🔔</button> 
+                    <button id="btn-profile" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-3xl text-sm font-semibold flex items-center gap-1">👤 Profile</button> 
+                </div> 
+            </div>
+            <div class="bg-[#111827] border border-zinc-800 rounded-2xl p-3 flex items-center justify-between glass">
+                <div class="flex items-center gap-2 text-xs text-zinc-400 font-medium">
+                    <span>🌐 Node Language:</span>
+                    <span id="activeLanguageDisplay" class="text-emerald-400 font-bold bg-emerald-950/80 px-2 py-0.5 rounded-md border border-emerald-800/40">English (EN)</span>
+                </div>
+                <select id="languageSelector" class="bg-[#1e293b] text-sm text-white font-medium px-3 py-1.5 rounded-xl border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer max-w-[180px]">
+                    <option value="en" selected>English (EN)</option>
+                    <option value="fr">Français (FR)</option>
+                    <option value="es">Español (ES)</option>
+                    <option value="ha">Hausa (HA)</option>
+                    <option value="yo">Yorùbá (YO)</option>
+                    <option value="ig">Igbo (IG)</option>
+                    <option value="sw">Kiswahili (SW)</option>
+                </select>
+            </div>
+        </header>
+
+        <nav class="grid grid-cols-3 gap-3 mb-4">
+            <button id="btn-witnessvoice" class="bg-emerald-500 text-black py-4 rounded-2xl font-bold text-sm transition-all shadow-lg border border-emerald-400/20 flex items-center justify-center gap-1.5">👁️ Witness Voice</button>
+            <button id="btn-citizentalk" class="bg-zinc-800 text-zinc-400 hover:text-white py-4 rounded-2xl font-bold text-sm transition-all border border-zinc-900 flex items-center justify-center gap-1.5">💬 Citizen Talk</button>
+            <button id="btn-livearena" class="relative bg-zinc-900/60 border border-zinc-800 text-zinc-400 hover:bg-zinc-800 py-4 rounded-3xl flex flex-col items-center justify-center gap-1 font-bold text-sm transition-all">🎥 Live Arena</button>
+        </nav>
+
+        <div id="feedContainer" class="mb-8 space-y-4"></div>
+
+        <div class="bg-[#111827] rounded-3xl p-6 mb-10 glass" id="composer">
+            <textarea id="mainInput" rows="4" class="w-full bg-[#1e293b] text-white border border-zinc-800 rounded-2xl p-5 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none text-sm" placeholder="Provide raw description..."></textarea>
+            <div class="grid grid-cols-2 gap-3 mt-4">
+                <button id="btn-photo" class="py-3.5 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 rounded-2xl text-sm font-medium flex items-center justify-center gap-2 transition">Photo + Forensic Shield</button>
+                <button id="btn-voice" class="py-3.5 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 rounded-2xl text-sm font-medium flex items-center justify-center gap-2 transition">Voice Testimony</button>
+            </div>
+            <button id="postButton" class="mt-6 w-full bg-emerald-500 hover:bg-emerald-600 text-black py-4 rounded-2xl font-bold text-base shadow-lg transition-all">Publish to Decentralized Ledger</button>
+        </div>
+    </div>
+
+    <div id="profilePage" class="hidden fixed inset-0 bg-black/95 z-50 overflow-auto backdrop-blur-md">
+        <div class="max-w-2xl mx-auto p-6">
+            <button id="btn-close-profile" class="mb-6 text-emerald-400 flex items-center gap-1 font-semibold text-sm transition">← Return to Node</button>
+            <div class="glass rounded-3xl p-8">
+                <h2 class="text-2xl font-bold mb-6 text-emerald-400">👤 My Profile</h2>
+                <div class="flex items-center gap-4 mb-8">
+                    <div class="w-20 h-20 bg-zinc-700 rounded-2xl flex items-center justify-center text-4xl">👤</div>
+                    <div>
+                        <p id="profile-username" class="text-xl font-semibold">User</p>
+                        <p id="profile-email" class="text-zinc-400 text-sm">user@vocalwitness.io</p>
+                        <p id="profile-tier" class="text-emerald-400 text-sm mt-1">Citizen • Tier 0</p>
+                    </div>
+                </div>
+                <button id="vw-btn" class="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-black font-bold rounded-2xl mb-8 transition">🔐 Start ZK Verification (Upgrade to Witness)</button>
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-sm uppercase tracking-widest text-zinc-500 mb-3">Account Settings</h3>
+                        <button id="btn-change-password" class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-2xl text-left px-5 flex justify-between items-center">
+                            <span>🔑 Change Password</span>
+                            <span class="text-xs text-zinc-500">→</span>
+                        </button>
+                    </div>
+                    <div>
+                        <h3 class="text-sm uppercase tracking-widest text-zinc-500 mb-3">Language &amp; Region</h3>
+                        <button onclick="document.getElementById('languageSelector').focus()" class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-2xl text-left px-5 flex justify-between items-center">
+                            <span>🌐 Change Interface Language</span>
+                            <span class="text-xs text-zinc-500">→</span>
+                        </button>
+                    </div>
+                    <div>
+                        <h3 class="text-sm uppercase tracking-widest text-zinc-500 mb-3">Danger Zone</h3>
+                        <button id="btn-logout" class="w-full py-3 bg-red-900/50 hover:bg-red-900 text-red-400 rounded-2xl">Logout</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js';
+        import { getFirestore } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyATxYekXgjdLP2SfR42FG8rEdajq_pIEb0",
+            authDomain: "vocalwitness-3affa.firebaseapp.com",
+            projectId: "vocalwitness-3affa",
+            storageBucket: "vocalwitness-3affa.firebasestorage.app",
+            messagingSenderId: "108466981866",
+            appId: "1:108466981866:web:b53360ad44012a576c8093"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        window.db = db;
+    </script>
+    <script type="module">
+        import { init } from './js/main.js';
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
