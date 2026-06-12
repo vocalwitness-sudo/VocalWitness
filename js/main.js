@@ -31,3 +31,29 @@ async function bootstrap() {
 
 // Ensure DOM is ready before starting
 document.addEventListener('DOMContentLoaded', bootstrap);
+
+// js/main.js
+document.getElementById('postButton').addEventListener('click', async () => {
+    const input = document.getElementById('mainInput');
+    const text = input.value.trim();
+    if (!text) return alert("Enter text.");
+
+    // 1. Optimistic UI: Add to DOM immediately
+    const tempId = 'temp-' + Date.now();
+    addPostToFeed({ witnessText: text, id: tempId, status: 'syncing' });
+    input.value = ""; // Clear input immediately
+
+    // 2. Background Sync
+    try {
+        await addDoc(collection(db, "testimonies"), {
+            witnessText: text,
+            feedVisibility: 'citizentalk',
+            timestamp: new Date()
+        });
+        // 3. Optional: Update status to 'verified' after success
+    } catch (err) {
+        // 4. Rollback: If it fails, remove the temp post
+        removePostFromFeed(tempId);
+        showToast("Publishing failed, please try again.", "error");
+    }
+});
