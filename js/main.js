@@ -1,4 +1,3 @@
-// js/main.js
 import { initAuth, handleGoogleLogin, handleLogout } from './auth.js';
 import { initFeed, addPostToFeed, removePostFromFeed } from './feed.js';
 import { VocalWitnessEngine } from './engine.js';
@@ -37,7 +36,23 @@ async function bootstrap() {
  * Event Listeners: Separating UI interaction from App Logic
  */
 function attachUIListeners() {
-    // Post Button (Optimistic UI Update)
+    // --- Navigation Listeners ---
+    document.getElementById('btn-witnessvoice')?.addEventListener('click', () => {
+        console.log("Switching to Witness Voice...");
+        // Call your engine/feed filter logic here
+    });
+
+    document.getElementById('btn-citizentalk')?.addEventListener('click', () => {
+        console.log("Switching to Citizen Talk...");
+        // Call your engine/feed filter logic here
+    });
+
+    document.getElementById('btn-livearena')?.addEventListener('click', () => {
+        console.log("Switching to Live Arena...");
+        // Call your engine/feed filter logic here
+    });
+
+    // --- Post Button (Optimistic UI Update) ---
     const postBtn = document.getElementById('postButton');
     if (postBtn) {
         postBtn.addEventListener('click', async () => {
@@ -62,12 +77,27 @@ function attachUIListeners() {
         });
     }
 
-    // Profile/Auth Actions
-    const logoutBtn = document.querySelector('[onclick="logout()"]');
-    const verifyBtn = document.querySelector('[onclick="manageVerification()"]');
+    // --- Profile/Auth Actions ---
+    // Updated selectors to match your HTML ID attributes
+    const logoutBtn = document.getElementById('btn-logout');
+    const verifyBtn = document.getElementById('vw-btn');
+    const profileBtn = document.getElementById('btn-profile');
+    const closeProfileBtn = document.getElementById('btn-close-profile');
 
     if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
     if (verifyBtn) verifyBtn.addEventListener('click', upgradeToWitnessTier);
+    
+    // UI Toggles for Profile Modal
+    if (profileBtn) {
+        profileBtn.addEventListener('click', () => {
+            document.getElementById('profilePage').classList.remove('hidden');
+        });
+    }
+    if (closeProfileBtn) {
+        closeProfileBtn.addEventListener('click', () => {
+            document.getElementById('profilePage').classList.add('hidden');
+        });
+    }
 }
 
 /**
