@@ -6,22 +6,26 @@ import { upgradeToWitnessTier } from './signup.js';
 import { getFirestore, collection, addDoc } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
 import { app } from './firebase-config.js';
 
+// 1. Core Initialization
 const db = getFirestore(app);
 const engine = new VocalWitnessEngine(db);
 
+/**
+ * Bootstrap: Orchestrates the startup sequence
+ */
 async function bootstrap() {
     try {
         console.log("VocalWitness Engine Initializing...");
         
-        // 1. Init Modules
+        // Initialize Modules
         initAuth();
         initFeed(db);
 
-        // 2. Initialize Web Worker
+        // Initialize Background Workers
         window.zkWorker = new Worker('./js/zk-worker.js');
 
-        // 3. Attach UI Event Listeners
-        attachEventListeners();
+        // Wire up UI events
+        attachUIListeners();
 
         console.log("VocalWitness ready.");
     } catch (err) {
@@ -29,8 +33,11 @@ async function bootstrap() {
     }
 }
 
-function attachEventListeners() {
-    // Post Button (Optimistic)
+/**
+ * Event Listeners: Separating UI interaction from App Logic
+ */
+function attachUIListeners() {
+    // Post Button (Optimistic UI Update)
     const postBtn = document.getElementById('postButton');
     if (postBtn) {
         postBtn.addEventListener('click', async () => {
@@ -50,12 +57,12 @@ function attachEventListeners() {
                 });
             } catch (err) {
                 removePostFromFeed(tempId);
-                console.error("Sync failed", err);
+                console.error("Sync failed:", err);
             }
         });
     }
 
-    // Profile/Auth Buttons
+    // Profile/Auth Actions
     const logoutBtn = document.querySelector('[onclick="logout()"]');
     const verifyBtn = document.querySelector('[onclick="manageVerification()"]');
 
@@ -63,4 +70,14 @@ function attachEventListeners() {
     if (verifyBtn) verifyBtn.addEventListener('click', upgradeToWitnessTier);
 }
 
+/**
+ * Reactivity: Event-driven feed updates
+ * Triggered automatically by auth.js dispatching 'auth-changed'
+ */
+window.addEventListener('auth-changed', (event) => {
+    console.log("User session updated. Refreshing ledger...");
+    initFeed(db); 
+});
+
+// Run bootstrap when DOM is fully loaded
 document.addEventListener('DOMContentLoaded', bootstrap);
