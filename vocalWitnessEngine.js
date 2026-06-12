@@ -1,7 +1,6 @@
 /**
  * VocalWitness Engine - Core Frontend Architecture Module
- * Handles: Digital Campfires, Integrity Ledgers, and Democratic Moderation
- * Upgraded to Firebase v10 Modular SDK Standards
+ * Upgraded with Scalable Sub-collection Ledger
  */
 
 import { 
@@ -9,7 +8,8 @@ import {
     doc, 
     getDoc, 
     addDoc, 
-    runTransaction 
+    runTransaction,
+    setDoc 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { 
     ref, 
@@ -27,9 +27,6 @@ export class VocalWitnessEngine {
         this.recordingTimeout = null;
     }
 
-    /**
-     * Verifies if a user is authorized for Witness Voice (Tier 2)
-     */
     async validateWitnessAccess(userId) {
         const userRef = doc(this.db, 'users', userId);
         const userDoc = await getDoc(userRef);
@@ -38,10 +35,6 @@ export class VocalWitnessEngine {
         }
     }
 
-    /**
-     * Starts recording with enforced duration limits
-     * @param {string} feedType - 'citizen-talk' (2m) or 'witness-voice' (5m)
-     */
     async startVoiceRecording(feedType) {
         this.audioChunks = [];
         const durationLimit = (feedType === 'witness-voice') ? 300000 : 120000;
@@ -50,7 +43,6 @@ export class VocalWitnessEngine {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             this.mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
 
-            // Auto-stop safety timer
             this.recordingTimeout = setTimeout(() => {
                 if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
                     this.stopVoiceRecording();
@@ -80,9 +72,6 @@ export class VocalWitnessEngine {
         }
     }
 
-    /**
-     * Generates a unique SHA-256 cryptographic hash of the voice asset
-     */
     async generateAudioHash(blob) {
         const arrayBuffer = await blob.arrayBuffer();
         const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
@@ -90,9 +79,6 @@ export class VocalWitnessEngine {
             .map(b => b.toString(16).padStart(2, '0')).join('');
     }
 
-    /**
-     * Bundles the audio asset with its verified metadata
-     */
     async packageAndUploadTestimony(userId, selectedLanguageCode, feedType = 'citizen-talk') {
         if (!this.currentAudioBlob) throw new Error("No recording available.");
 
@@ -110,34 +96,39 @@ export class VocalWitnessEngine {
             languageCode: selectedLanguageCode,
             feedVisibility: feedType,
             integrityHash: integrityHash,
-            moderation: { trustScore: 100, verificationsCount: 0, disputesCount: 0, votedUsers: [] }
+            moderation: { trustScore: 100, verificationsCount: 0, disputesCount: 0 }
         };
 
         return await addDoc(collection(this.db, 'testimonies'), testimonyPayload);
     }
 
-    /**
-     * Updates the truth ledger based on peer votes
-     */
     async submitPeerVote(testimonyId, userId, voteType) {
-        const docRef = doc(this.db, 'testimonies', testimonyId);
-        return runTransaction(this.db, async (transaction) => {
-            const sfDoc = await transaction.get(docRef);
-            if (!sfDoc.exists()) throw new Error("Document not found.");
+        const testimonyRef = doc(this.db, 'testimonies', testimonyId);
+        const voteRef = doc(this.db, 'testimonies', testimonyId, 'votes', userId);
 
-            const data = sfDoc.data();
+        return runTransaction(this.db, async (transaction) => {
+            const testimonyDoc = await transaction.get(testimonyRef);
+            const voteDoc = await transaction.get(voteRef);
+
+            if (!testimonyDoc.exists()) throw new Error("Testimony not found.");
+            if (voteDoc.exists()) throw new Error("User has already voted.");
+
+            const data = testimonyDoc.data();
             const mod = data.moderation;
-            if (mod.votedUsers.includes(userId)) throw new Error("Already audited.");
 
             const newVerifications = (voteType === 'verify') ? mod.verificationsCount + 1 : mod.verificationsCount;
             const newDisputes = (voteType === 'dispute') ? mod.disputesCount + 1 : mod.disputesCount;
             const total = newVerifications + newDisputes;
 
-            transaction.update(docRef, {
+            transaction.update(testimonyRef, {
                 'moderation.verificationsCount': newVerifications,
                 'moderation.disputesCount': newDisputes,
-                'moderation.trustScore': Math.round((newVerifications / total) * 100),
-                'moderation.votedUsers': [...mod.votedUsers, userId]
+                'moderation.trustScore': Math.round((newVerifications / total) * 100)
+            });
+
+            transaction.set(voteRef, { 
+                voteType: voteType, 
+                timestamp: new Date().toISOString() 
             });
         });
     }
