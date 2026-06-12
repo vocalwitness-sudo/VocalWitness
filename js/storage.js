@@ -1,35 +1,48 @@
-// js/storage.js
-import { storage } from "./firebase-config.js";
-import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
+import { auth, provider } from "./firebase-config.js";
+import { signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { state } from "./storage.js";
 import { showToast } from "./utils.js";
 
-/**
- * Central App State
- */
-export const state = {
-    user: null,
-    isWitnessVerified: false
+const updateUI = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
 };
 
-/**
- * Media Storage Operations
- */
-export async function uploadToStorage(file, folder) {
-    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
-    if (file.size > MAX_SIZE) {
-        showToast("❌ File too large. Max 10MB.", "error");
-        throw new Error("File exceeds size limit");
+onAuthStateChanged(auth, (user) => {
+    state.user = user;
+    state.isWitnessVerified = !!user;
+
+    const authSection = document.getElementById('authSection');
+    if (user) {
+        if (authSection) authSection.classList.add('hidden');
+        updateUI('userName', user.displayName || "Anonymous Witness");
+        updateUI('profileName', user.displayName || "Verified Witness");
+        updateUI('profileEmail', user.email || "");
+    } else {
+        updateUI('userName', "Guest Reader");
     }
 
+    const authEvent = new CustomEvent('auth-changed', { detail: { user } });
+    window.dispatchEvent(authEvent);
+});
+
+export async function googleLogin() {
     try {
-        const timestamp = Date.now();
-        const fileName = `${folder}/${timestamp}_${file.name || 'blob'}`;
-        const storageRef = ref(storage, fileName);
-        const snapshot = await uploadBytes(storageRef, file);
-        return await getDownloadURL(snapshot.ref);
+        await signInWithPopup(auth, provider);
+        showToast("⚡ Node Identity Synced.");
     } catch (error) {
-        console.error("Storage Error:", error);
-        showToast("❌ Media upload failed.", "error");
-        throw error;
+        console.error("Auth Error:", error);
+        showToast("❌ Identity Sync Failed.");
+    }
+}
+
+export async function logout() {
+    if (confirm("Disconnect from VocalWitness node?")) {
+        try {
+            await signOut(auth);
+            window.location.reload();
+        } catch (error) {
+            showToast("Error signing out.");
+        }
     }
 }
