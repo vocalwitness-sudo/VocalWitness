@@ -1,9 +1,8 @@
 // js/firebase-config.js
-// js/firebase-config.js
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
-import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
-import { getAuth, GoogleAuthProvider } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
-import { getStorage } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js';
+import { getFirestore } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
+import { getAuth, GoogleAuthProvider } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js';
+import { getStorage } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js';
 
 const firebaseConfig = {
     apiKey: "AIzaSyATxYekXgjdLP2SfR42FG8rEdajq_pIEb0",
@@ -15,12 +14,8 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
+
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 export const provider = new GoogleAuthProvider();
-// In js/verification.js
-export async function startZKVerification() {
-    console.log("ZK Verification logic triggered.");
-    // Add your ZK logic here
-}
