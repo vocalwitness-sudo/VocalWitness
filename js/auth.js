@@ -1,35 +1,24 @@
-/**
- * VocalWitness Auth Module
- * Manages identity state and observer patterns for Node synchronization
- */
+// js/auth.js
 import { auth, provider } from "./firebase-config.js";
 import { signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { state } from "./store.js";
 import { showToast } from "./utils.js";
-import { listenToLedgerFeed } from "./feed.js"; // Import directly
+import { listenToLedgerFeed } from "./ledger.js"; // Make sure this path is correct
 
-// js/auth.js
-import { state } from "./store.js"; // Import the central state
-
-onAuthStateChanged(auth, (user) => {
-    state.user = user; // Update the shared state
-    state.isWitnessVerified = !!user; // Simplified logic, update this later with your ZK check
-    
-    // ... your existing UI logic ...
-});
-
-export let currentUser = null;
+// UI Utility
+const updateUI = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+};
 
 // The Auth Observer
 onAuthStateChanged(auth, (user) => {
-    currentUser = user;
-    const loginPromptModal = document.getElementById('authSection');
-    
-    // UI Utility
-    const updateUI = (id, value) => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = value;
-    };
+    // 1. Update State
+    state.user = user;
+    state.isWitnessVerified = !!user;
 
+    // 2. Update UI
+    const loginPromptModal = document.getElementById('authSection');
     if (user) {
         if (loginPromptModal) loginPromptModal.classList.add('hidden');
         updateUI('userName', user.displayName || "Anonymous Witness");
@@ -39,10 +28,11 @@ onAuthStateChanged(auth, (user) => {
         updateUI('userName', "Guest Reader");
     }
     
-    // Refresh ledger feed directly via import, no window check needed
+    // 3. Trigger Feed
     listenToLedgerFeed();
 });
 
+// Exported Auth Actions
 export async function googleLogin() {
     try {
         await signInWithPopup(auth, provider);
