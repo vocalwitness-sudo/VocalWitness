@@ -3,6 +3,19 @@ import { db } from "./firebase-config.js";
 import { collection, query, orderBy, onSnapshot, where, doc, updateDoc, increment, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { currentUser } from "./auth.js";
 import { showToast } from "./utils.js";
+// Inside js/feed.js
+import { state } from './store.js';
+
+export async function postNow() {
+    const feedType = currentFeed; // 'vocal-truth' or 'citizen-talk'
+    
+    // The Gatekeeper: Strict logic for the Forensic Office
+    if (feedType === 'vocal-truth' && !state.isVerified) {
+        return showToast("⚠️ Forensic Access requires Tier 1 Verification.");
+    }
+
+    // Proceed with standard upload logic...
+}
 
 const feedContainer = document.getElementById('feed');
 let activeFeedListener = null;
