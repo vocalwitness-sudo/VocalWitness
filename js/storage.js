@@ -22,3 +22,9 @@ export async function uploadToStorage(file, folder) {
         throw error;
     }
 }
+
+// js/store.js
+export const state = {
+    user: null, // This will hold the currentUser
+    isWitnessVerified: false
+};
