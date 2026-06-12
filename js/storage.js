@@ -23,8 +23,8 @@ export async function uploadToStorage(file, folder) {
     }
 }
 
-// js/store.js
+// Add this to the end of js/storage.js
 export const state = {
-    user: null, // This will hold the currentUser
+    user: null,
     isWitnessVerified: false
 };
