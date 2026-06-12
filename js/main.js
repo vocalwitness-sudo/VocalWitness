@@ -77,3 +77,28 @@ export function init() {
     // Initial Load
     initDynamicFeed('citizentalk');
 }
+
+// Initialize the worker
+const zkWorker = new Worker('js/zk-worker.js');
+
+function startWitnessUpgrade(userIdentity) {
+    // Show UI loading state
+    showToast("Generating ZK Proof... please wait.", "info");
+
+    // Send data to worker
+    zkWorker.postMessage({ 
+        identityCommitment: userIdentity,
+        witnessData: "current_session_token"
+    });
+}
+
+// Receive the result
+zkWorker.onmessage = (e) => {
+    if (e.data.success) {
+        console.log("Proof generated:", e.data.proof);
+        // Now send this proof to Firebase Functions
+        sendProofToVerificationServer(e.data.proof);
+    } else {
+        console.error("ZK Generation Failed:", e.data.error);
+    }
+};
