@@ -1,10 +1,11 @@
 // js/firebase-config.js
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js';
-import { getFirestore } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
-import { getAuth, GoogleAuthProvider } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js';
-import { getStorage } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js';
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { getStorage } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
 
 const firebaseConfig = {
+    // ... your credentials here
+
     apiKey: "AIzaSyATxYekXgjdLP2SfR42FG8rEdajq_pIEb0",
     authDomain: "vocalwitness-3affa.firebaseapp.com",
     projectId: "vocalwitness-3affa",
@@ -15,7 +16,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
-export const db = getFirestore(app);
+export const app = initializeApp(firebaseConfig); 
 export const auth = getAuth(app);
-export const storage = getStorage(app);
 export const provider = new GoogleAuthProvider();
+export const storage = getStorage(app);
