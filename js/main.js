@@ -1,4 +1,4 @@
-import { initAuth, handleGoogleLogin, handleLogout } from './auth.js';
+import { googleLogin, logout } from "./auth.js"; 
 import { initFeed, addPostToFeed, removePostFromFeed } from './feed.js';
 import { VocalWitnessEngine } from './engine.js';
 import { upgradeToWitnessTier } from './signup.js';
