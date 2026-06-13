@@ -3,11 +3,24 @@
  * Handles identity state via Firebase. 
  * Dispatches events so other modules can react without being tightly coupled.
  */
-// js/auth.js
-import { auth, provider } from "./firebase-config.js";
-import { signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import { state } from "./storage.js"; // Importing the state defined in storage.js
+// js/storage.js
+import { storage } from "./firebase-config.js";
+import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
 import { showToast } from "./utils.js";
+
+// Define the state here
+export const state = {
+    user: null,
+    isWitnessVerified: false
+};
+
+export async function uploadToStorage(file, folder) {
+    // ... your logic
+}
+
+
+
+
 
 // ... rest of your auth code (onAuthStateChanged, googleLogin, logout)
 
