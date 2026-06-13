@@ -1,64 +1,21 @@
-// js/main.js - VocalWitness Main Entry Point
-import { googleLogin, logout } from "./auth.js";
-import { initFeed, addPostToFeed, removePostFromFeed } from './feed.js';
-import { VocalWitnessEngine } from './engine.js';
-import { upgradeToWitnessTier } from './signup.js';
-import { getFirestore, collection, addDoc } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
+// js/main.js - Simplified Working Version
+import { getFirestore, collection, addDoc, getDocs, query, orderBy } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
 import { app } from './firebase-config.js';
 
-// Core setup
 const db = getFirestore(app);
-const engine = new VocalWitnessEngine(db);   // if engine.js is properly written
 
 let currentFeed = 'citizentalk';
 
-// Bootstrap
-async function bootstrap() {
-    console.log("✅ VocalWitness Engine Initializing...");
+export function init() {
+    console.log("✅ VocalWitness loaded successfully");
 
-    try {
-        // Initialize feed
-        if (typeof initFeed === 'function') initFeed(db);
-
-        // Wire UI
-        attachUIListeners();
-
-        console.log("✅ VocalWitness is ready.");
-    } catch (err) {
-        console.error("Initialization failed:", err);
-    }
+    setupButtons();
+    loadFeed();
 }
 
-function attachUIListeners() {
+function setupButtons() {
     // Post Button
-    const postBtn = document.getElementById('postButton');
-    if (postBtn) {
-        postBtn.addEventListener('click', async () => {
-            const input = document.getElementById('mainInput');
-            const text = input.value.trim();
-            if (!text) return alert("Please write something.");
-
-            const tempId = 'temp-' + Date.now();
-            if (typeof addPostToFeed === 'function') {
-                addPostToFeed({ witnessText: text, id: tempId }, true);
-            }
-
-            input.value = "";
-
-            try {
-                await addDoc(collection(db, "testimonies"), {
-                    witnessText: text,
-                    feedVisibility: currentFeed,
-                    timestamp: new Date().toISOString()
-                });
-                alert("✅ Published successfully!");
-            } catch (err) {
-                console.error(err);
-                if (typeof removePostFromFeed === 'function') removePostFromFeed(tempId);
-                alert("Failed to publish.");
-            }
-        });
-    }
+    document.getElementById('postButton')?.addEventListener('click', handlePost);
 
     // Navigation
     document.getElementById('btn-witnessvoice')?.addEventListener('click', () => switchFeed('witness-voice'));
@@ -69,21 +26,71 @@ function attachUIListeners() {
     document.getElementById('btn-profile')?.addEventListener('click', () => {
         document.getElementById('profilePage').classList.remove('hidden');
     });
-
     document.getElementById('btn-close-profile')?.addEventListener('click', () => {
         document.getElementById('profilePage').classList.add('hidden');
     });
-
-    document.getElementById('btn-logout')?.addEventListener('click', logout);
-    document.getElementById('vw-btn')?.addEventListener('click', upgradeToWitnessTier);
 }
 
-function switchFeed(feedType) {
-    currentFeed = feedType;
-    console.log(`Switched to ${feedType}`);
-    // TODO: Call feed refresh here when feed.js is ready
-    if (typeof initFeed === 'function') initFeed(db);
+async function handlePost() {
+    const input = document.getElementById('mainInput');
+    const text = input?.value.trim();
+
+    if (!text) return alert("Please write something...");
+
+    try {
+        await addDoc(collection(db, "testimonies"), {
+            witnessText: text,
+            feedVisibility: currentFeed,
+            timestamp: new Date().toISOString(),
+            author: "Citizen"
+        });
+
+        input.value = "";
+        alert("✅ Published to ledger!");
+        loadFeed();
+    } catch (e) {
+        console.error(e);
+        alert("Failed to publish. Check console.");
+    }
 }
 
-// Start the app
-document.addEventListener('DOMContentLoaded', bootstrap);
+function switchFeed(type) {
+    currentFeed = type;
+    loadFeed();
+}
+
+async function loadFeed() {
+    const container = document.getElementById('feedContainer');
+    if (!container) return;
+
+    container.innerHTML = "<p class='text-center py-8 text-zinc-400'>Loading testimonies...</p>";
+
+    try {
+        const q = query(collection(db, "testimonies"), orderBy("timestamp", "desc"));
+        const snapshot = await getDocs(q);
+
+        container.innerHTML = "";
+
+        if (snapshot.empty) {
+            container.innerHTML = `<div class="text-center py-12 text-zinc-400">No posts yet. Be the first!</div>`;
+            return;
+        }
+
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const div = document.createElement('div');
+            div.className = "post-card glass rounded-3xl p-6 mb-4";
+            div.innerHTML = `
+                <p class="text-zinc-100">${data.witnessText}</p>
+                <small class="text-zinc-500 block mt-3">${new Date(data.timestamp).toLocaleString()}</small>
+            `;
+            container.appendChild(div);
+        });
+    } catch (err) {
+        console.error(err);
+        container.innerHTML = `<p class="text-red-400 text-center">Error loading feed</p>`;
+    }
+}
+
+// Auto start
+document.addEventListener('DOMContentLoaded', init);
