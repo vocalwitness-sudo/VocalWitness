@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VocalWitness • Premium Forensic Ledger & Public Square</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module" src="js/main.js"></script>
     <style>
         body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: white; }
         .glass { background: rgba(17, 24, 39, 0.92); backdrop-filter: blur(16px); border: 1px solid rgba(16, 185, 129, 0.2); }
@@ -17,13 +18,11 @@
 </head>
 <body class="min-h-screen pb-28 p-4">
 
-    <!-- Legal Notice -->
     <div class="max-w-2xl mx-auto bg-red-950/40 border border-red-500/30 backdrop-blur-sm rounded-3xl p-5 text-xs mb-6 shadow-xl text-zinc-300">
         <strong class="text-red-400 font-bold">Important Legal Notice:</strong><br>
         VocalWitness functions strictly as an un-manipulated decentralized distribution medium.
     </div>
 
-    <!-- Main UI Content -->
     <div class="max-w-2xl mx-auto">
         <header class="flex flex-col gap-4 mb-6"> 
             <div class="flex items-center justify-between">
@@ -74,7 +73,6 @@
         </div>
     </div>
 
-    <!-- Profile Page -->
     <div id="profilePage" class="hidden fixed inset-0 bg-black/95 z-50 overflow-auto backdrop-blur-md">
         <div class="max-w-2xl mx-auto p-6">
             <button id="btn-close-profile" class="mb-6 text-emerald-400 flex items-center gap-1 font-semibold text-sm transition">← Return to Node</button>
@@ -113,7 +111,27 @@
         </div>
     </div>
 
-    <!-- Final Script -->
     <script type="module" src="js/main.js"></script>
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js';
+        import { getFirestore } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyATxYekXgjdLP2SfR42FG8rEdajq_pIEb0",
+            authDomain: "vocalwitness-3affa.firebaseapp.com",
+            projectId: "vocalwitness-3affa",
+            storageBucket: "vocalwitness-3affa.firebasestorage.app",
+            messagingSenderId: "108466981866",
+            appId: "1:108466981866:web:b53360ad44012a576c8093"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        window.db = db;
+    </script>
+    <script type="module">
+        import { init } from './js/main.js';
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
 </body>
-</html>
+</html> 
