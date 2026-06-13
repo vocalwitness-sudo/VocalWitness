@@ -1,10 +1,29 @@
+<!DOCTYPE html>
+<html lang="en-NG">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VocalWitness • Premium Forensic Ledger & Public Square</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: white; }
+        .glass { background: rgba(17, 24, 39, 0.92); backdrop-filter: blur(16px); border: 1px solid rgba(16, 185, 129, 0.2); }
+        .post-card { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .image-preview { max-height: 320px; object-fit: cover; border-radius: 20px; width: 100%; }
+        .recording-active { animation: pulse 1.5s infinite; background-color: #ef4444 !important; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+        .teaser-badge { position: absolute; top: -6px; right: -6px; background: #f59e0b; color: black; font-size: 9px; padding: 1px 6px; border-radius: 9999px; font-weight: 700; }
+    </style>
+</head>
 <body class="min-h-screen pb-28 p-4">
 
+    <!-- Legal Notice -->
     <div class="max-w-2xl mx-auto bg-red-950/40 border border-red-500/30 backdrop-blur-sm rounded-3xl p-5 text-xs mb-6 shadow-xl text-zinc-300">
         <strong class="text-red-400 font-bold">Important Legal Notice:</strong><br>
         VocalWitness functions strictly as an un-manipulated decentralized distribution medium.
     </div>
 
+    <!-- Main UI Content -->
     <div class="max-w-2xl mx-auto">
         <header class="flex flex-col gap-4 mb-6"> 
             <div class="flex items-center justify-between">
@@ -19,6 +38,21 @@
                     <button id="btn-notifications" class="w-11 h-11 bg-zinc-800 hover:bg-zinc-700 rounded-3xl flex items-center justify-center text-lg relative">🔔</button> 
                     <button id="btn-profile" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-3xl text-sm font-semibold flex items-center gap-1">👤 Profile</button> 
                 </div> 
+            </div>
+            <div class="bg-[#111827] border border-zinc-800 rounded-2xl p-3 flex items-center justify-between glass">
+                <div class="flex items-center gap-2 text-xs text-zinc-400 font-medium">
+                    <span>🌐 Node Language:</span>
+                    <span id="activeLanguageDisplay" class="text-emerald-400 font-bold bg-emerald-950/80 px-2 py-0.5 rounded-md border border-emerald-800/40">English (EN)</span>
+                </div>
+                <select id="languageSelector" class="bg-[#1e293b] text-sm text-white font-medium px-3 py-1.5 rounded-xl border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer max-w-[180px]">
+                    <option value="en" selected>English (EN)</option>
+                    <option value="fr">Français (FR)</option>
+                    <option value="es">Español (ES)</option>
+                    <option value="ha">Hausa (HA)</option>
+                    <option value="yo">Yorùbá (YO)</option>
+                    <option value="ig">Igbo (IG)</option>
+                    <option value="sw">Kiswahili (SW)</option>
+                </select>
             </div>
         </header>
 
@@ -40,6 +74,7 @@
         </div>
     </div>
 
+    <!-- Profile Page -->
     <div id="profilePage" class="hidden fixed inset-0 bg-black/95 z-50 overflow-auto backdrop-blur-md">
         <div class="max-w-2xl mx-auto p-6">
             <button id="btn-close-profile" class="mb-6 text-emerald-400 flex items-center gap-1 font-semibold text-sm transition">← Return to Node</button>
@@ -50,13 +85,35 @@
                     <div>
                         <p id="profile-username" class="text-xl font-semibold">User</p>
                         <p id="profile-email" class="text-zinc-400 text-sm">user@vocalwitness.io</p>
+                        <p id="profile-tier" class="text-emerald-400 text-sm mt-1">Citizen • Tier 0</p>
                     </div>
                 </div>
-                <button id="vw-btn" class="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-black font-bold rounded-2xl mb-8 transition">🔐 Start ZK Verification</button>
-                <button id="btn-logout" class="w-full py-3 bg-red-900/50 hover:bg-red-900 text-red-400 rounded-2xl">Logout</button>
+                <button id="vw-btn" class="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-black font-bold rounded-2xl mb-8 transition">🔐 Start ZK Verification (Upgrade to Witness)</button>
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-sm uppercase tracking-widest text-zinc-500 mb-3">Account Settings</h3>
+                        <button id="btn-change-password" class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-2xl text-left px-5 flex justify-between items-center">
+                            <span>🔑 Change Password</span>
+                            <span class="text-xs text-zinc-500">→</span>
+                        </button>
+                    </div>
+                    <div>
+                        <h3 class="text-sm uppercase tracking-widest text-zinc-500 mb-3">Language &amp; Region</h3>
+                        <button onclick="document.getElementById('languageSelector').focus()" class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-2xl text-left px-5 flex justify-between items-center">
+                            <span>🌐 Change Interface Language</span>
+                            <span class="text-xs text-zinc-500">→</span>
+                        </button>
+                    </div>
+                    <div>
+                        <h3 class="text-sm uppercase tracking-widest text-zinc-500 mb-3">Danger Zone</h3>
+                        <button id="btn-logout" class="w-full py-3 bg-red-900/50 hover:bg-red-900 text-red-400 rounded-2xl">Logout</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- Final Script -->
     <script type="module" src="js/main.js"></script>
 </body>
+</html>
