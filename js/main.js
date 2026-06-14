@@ -1,14 +1,11 @@
 // js/main.js
-import { googleLogin, logout } from "./auth.js";
+import { googleLogin, logout, initAuth } from "./auth.js";
 import { initFeed, addPostToFeed } from './feed.js';
 import { VocalWitnessEngine } from './engine.js';
 import { upgradeToWitnessTier } from './signup.js';
 import { db, storage } from './firebase-config.js';
 import { showToast, initLanguage } from './utils.js';
 import { handleImageSelect, toggleVoiceRecording, resetMediaState } from './media.js';
-import { initAuth } from './auth.js';
-...
-initAuth();
 
 let engine;
 let currentFeed = 'citizen-talk';
@@ -18,12 +15,12 @@ async function bootstrap() {
         console.log("🚀 VocalWitness Initializing...");
         engine = new VocalWitnessEngine(db, storage);
 
+        initAuth();           // ← Important
         initFeed(db, currentFeed);
         initLanguage();
         attachUIListeners();
 
         console.log("✅ VocalWitness Node Online");
-        showToast("Node Connected Successfully");
     } catch (err) {
         console.error("Bootstrap failed:", err);
         showToast("Failed to initialize node", "error");
@@ -31,30 +28,33 @@ async function bootstrap() {
 }
 
 function attachUIListeners() {
-    // Language
-    const langSelector = document.getElementById('languageSelector');
-    langSelector?.addEventListener('change', (e) => {
-        changeLanguage(e.target.value); // from i18n
+    // Auth UI updates
+    window.addEventListener('auth-changed', (e) => {
+        const user = e.detail.user;
+        if (user) {
+            document.getElementById('profile-username').textContent = user.displayName || "Witness";
+            document.getElementById('profile-email').textContent = user.email || "";
+        }
     });
 
-    // Navigation
+    // Language selector
+    document.getElementById('languageSelector')?.addEventListener('change', (e) => {
+        changeLanguage(e.target.value); // from i18n.js
+    });
+
+    // Navigation buttons
     document.getElementById('btn-witnessvoice')?.addEventListener('click', () => {
         currentFeed = 'witness-voice';
         initFeed(db, currentFeed);
-        showToast("👁️ Witness Voice Mode");
     });
 
     document.getElementById('btn-citizentalk')?.addEventListener('click', () => {
         currentFeed = 'citizen-talk';
         initFeed(db, currentFeed);
-        showToast("💬 Citizen Talk Mode");
     });
 
-    // Media Buttons
-    const photoBtn = document.getElementById('btn-photo');
-    const voiceBtn = document.getElementById('btn-voice');
-
-    photoBtn?.addEventListener('click', () => {
+    // Media
+    document.getElementById('btn-photo')?.addEventListener('click', () => {
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = 'image/*';
@@ -62,36 +62,29 @@ function attachUIListeners() {
         input.click();
     });
 
-    voiceBtn?.addEventListener('click', () => {
-        toggleVoiceRecording(voiceBtn);
-    });
+    document.getElementById('btn-voice')?.addEventListener('click', () => toggleVoiceRecording(document.getElementById('btn-voice')));
 
-    // Post Button
+    // Post
     document.getElementById('postButton')?.addEventListener('click', async () => {
         const input = document.getElementById('mainInput');
         const text = input?.value.trim();
         if (!text) return showToast("Please provide a description", "error");
 
         const tempId = 'temp-' + Date.now();
-        addPostToFeed({ id: tempId, witnessText: text, timestamp: new Date() }, true);
+        addPostToFeed({ id: tempId, witnessText: text }, true);
 
         try {
-            // Use engine for full testimony if audio exists
-            if (engine.currentAudioBlob) {
-                await engine.uploadTestimony("current-user-id", "en", currentFeed);
-            } else {
-                // Text-only fallback
-                await addDoc(collection(db, "testimonies"), {
-                    witnessText: text,
-                    feedVisibility: currentFeed,
-                    timestamp: new Date().toISOString()
-                });
-            }
+            // TODO: integrate engine.uploadTestimony() later
+            await addDoc(collection(db, "testimonies"), { // you'll need to import addDoc if not already
+                witnessText: text,
+                feedVisibility: currentFeed,
+                authorId: engine?.currentUserId || "anonymous",
+                timestamp: new Date().toISOString()
+            });
             input.value = '';
             resetMediaState();
-            showToast("✅ Published to Decentralized Ledger");
+            showToast("✅ Published to Ledger");
         } catch (e) {
-            console.error(e);
             showToast("Failed to publish", "error");
         }
     });
@@ -100,7 +93,6 @@ function attachUIListeners() {
     document.getElementById('btn-profile')?.addEventListener('click', () => {
         document.getElementById('profilePage').classList.remove('hidden');
     });
-
     document.getElementById('btn-close-profile')?.addEventListener('click', () => {
         document.getElementById('profilePage').classList.add('hidden');
     });
