@@ -53,12 +53,25 @@ function attachUIListeners() {
         initFeed(db, currentFeed);
     });
 
-    // Media handlers
+    // === MEDIA HANDLERS ===
     document.getElementById('btn-photo')?.addEventListener('click', () => {
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = 'image/*';
-        input.onchange = (e) => handleImageSelect(e, document.getElementById('preview-area') || document.createElement('div'));
+
+        // Create preview area if it doesn't exist
+        let previewArea = document.getElementById('preview-area');
+        if (!previewArea) {
+            previewArea = document.createElement('div');
+            previewArea.id = 'preview-area';
+            const composer = document.getElementById('composer');
+            const textarea = document.getElementById('mainInput');
+            if (composer && textarea) {
+                textarea.parentNode.insertBefore(previewArea, textarea.nextSibling);
+            }
+        }
+
+        input.onchange = (e) => handleImageSelect(e, previewArea);
         input.click();
     });
 
@@ -66,7 +79,7 @@ function attachUIListeners() {
         toggleVoiceRecording(document.getElementById('btn-voice'));
     });
 
-    // Post button - FIXED with dynamic import
+    // === POST BUTTON ===
     document.getElementById('postButton')?.addEventListener('click', async () => {
         const input = document.getElementById('mainInput');
         const text = input?.value.trim();
@@ -76,8 +89,9 @@ function attachUIListeners() {
         addPostToFeed({ id: tempId, witnessText: text }, true);
 
         try {
+            // Dynamic import (safe for CDN setup)
             const { addDoc, collection } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
-            
+
             await addDoc(collection(db, "testimonies"), {
                 witnessText: text,
                 feedVisibility: currentFeed,
@@ -94,7 +108,7 @@ function attachUIListeners() {
         }
     });
 
-    // Profile controls
+    // === PROFILE ===
     document.getElementById('btn-profile')?.addEventListener('click', () => {
         document.getElementById('profilePage').classList.remove('hidden');
     });
