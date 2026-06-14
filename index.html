@@ -15,17 +15,7 @@
         .teaser-badge { position: absolute; top: -6px; right: -6px; background: #f59e0b; color: black; font-size: 9px; padding: 1px 6px; border-radius: 9999px; font-weight: 700; }
     </style>
 
-    <!-- 🔥 IMPORT MAP - MUST BE BEFORE ANY type="module" -->
-    <script type="importmap">
-    {
-      "imports": {
-        "firebase/app": "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js",
-        "firebase/auth": "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js",
-        "firebase/firestore": "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js",
-        "firebase/storage": "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js"
-      }
-    }
-    </script>
+   
 </head>
 <body class="min-h-screen pb-28 p-4">
     <!-- Your existing content (unchanged) -->
@@ -123,7 +113,7 @@
         </div>
     </div>
 
-    <!-- Main App -->
+        <!-- Main Application -->
     <script type="module" src="js/main.js"></script>
 
     <!-- Initialize -->
@@ -131,5 +121,7 @@
         import { init } from './js/main.js';
         document.addEventListener('DOMContentLoaded', init);
     </script>
+</body>
+</html>
 </body>
 </html>
