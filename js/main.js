@@ -37,7 +37,6 @@ function attachUIListeners() {
 
     // Language selector
     document.getElementById('languageSelector')?.addEventListener('change', (e) => {
-        // Make sure changeLanguage is available globally or import it
         if (typeof window.changeLanguage === 'function') {
             window.changeLanguage(e.target.value);
         }
@@ -54,7 +53,7 @@ function attachUIListeners() {
         initFeed(db, currentFeed);
     });
 
-    // Media
+    // Media handlers
     document.getElementById('btn-photo')?.addEventListener('click', () => {
         const input = document.createElement('input');
         input.type = 'file';
@@ -67,7 +66,7 @@ function attachUIListeners() {
         toggleVoiceRecording(document.getElementById('btn-voice'));
     });
 
-    // Post button
+    // Post button - FIXED with dynamic import
     document.getElementById('postButton')?.addEventListener('click', async () => {
         const input = document.getElementById('mainInput');
         const text = input?.value.trim();
@@ -77,9 +76,8 @@ function attachUIListeners() {
         addPostToFeed({ id: tempId, witnessText: text }, true);
 
         try {
-            // Dynamic import for Firebase Firestore (important for CDN setup)
             const { addDoc, collection } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
-
+            
             await addDoc(collection(db, "testimonies"), {
                 witnessText: text,
                 feedVisibility: currentFeed,
@@ -91,12 +89,12 @@ function attachUIListeners() {
             resetMediaState();
             showToast("✅ Published to Ledger");
         } catch (e) {
-            console.error(e);
+            console.error("Publish error:", e);
             showToast("Failed to publish", "error");
         }
     });
 
-    // Profile
+    // Profile controls
     document.getElementById('btn-profile')?.addEventListener('click', () => {
         document.getElementById('profilePage').classList.remove('hidden');
     });
