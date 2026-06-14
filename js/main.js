@@ -1,5 +1,5 @@
 // js/main.js
-import { initAuth, logout } from "./auth.js";
+import { initAuth, logout, googleLogin } from "./auth.js";
 import { initFeed, addPostToFeed } from './feed.js';
 import { VocalWitnessEngine } from './engine.js';
 import { upgradeToWitnessTier } from './signup.js';
@@ -30,7 +30,7 @@ function attachUIListeners() {
     window.addEventListener('auth-changed', (e) => {
         const user = e.detail.user;
         if (user) {
-            document.getElementById('profile-username').textContent = user.displayName || "Witness";
+            document.getElementById('profile-username').textContent = user.displayName || user.email || "Witness";
             document.getElementById('profile-email').textContent = user.email || "";
         }
     });
@@ -42,7 +42,7 @@ function attachUIListeners() {
         }
     });
 
-    // Navigation buttons
+    // Navigation
     document.getElementById('btn-witnessvoice')?.addEventListener('click', () => {
         currentFeed = 'witness-voice';
         initFeed(db, currentFeed);
@@ -53,22 +53,18 @@ function attachUIListeners() {
         initFeed(db, currentFeed);
     });
 
-    // === MEDIA HANDLERS ===
+    // Media
     document.getElementById('btn-photo')?.addEventListener('click', () => {
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = 'image/*';
 
-        // Create preview area if it doesn't exist
         let previewArea = document.getElementById('preview-area');
         if (!previewArea) {
             previewArea = document.createElement('div');
             previewArea.id = 'preview-area';
-            const composer = document.getElementById('composer');
             const textarea = document.getElementById('mainInput');
-            if (composer && textarea) {
-                textarea.parentNode.insertBefore(previewArea, textarea.nextSibling);
-            }
+            if (textarea) textarea.parentNode.insertBefore(previewArea, textarea.nextSibling);
         }
 
         input.onchange = (e) => handleImageSelect(e, previewArea);
@@ -79,7 +75,7 @@ function attachUIListeners() {
         toggleVoiceRecording(document.getElementById('btn-voice'));
     });
 
-    // === POST BUTTON ===
+    // Post Button
     document.getElementById('postButton')?.addEventListener('click', async () => {
         const input = document.getElementById('mainInput');
         const text = input?.value.trim();
@@ -89,9 +85,8 @@ function attachUIListeners() {
         addPostToFeed({ id: tempId, witnessText: text }, true);
 
         try {
-            // Dynamic import (safe for CDN setup)
             const { addDoc, collection } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
-
+            
             await addDoc(collection(db, "testimonies"), {
                 witnessText: text,
                 feedVisibility: currentFeed,
@@ -101,14 +96,14 @@ function attachUIListeners() {
 
             input.value = '';
             resetMediaState();
-            showToast("✅ Published to Ledger");
+            showToast("✅ Published to Decentralized Ledger");
         } catch (e) {
             console.error("Publish error:", e);
             showToast("Failed to publish", "error");
         }
     });
 
-    // === PROFILE ===
+    // Profile & Auth
     document.getElementById('btn-profile')?.addEventListener('click', () => {
         document.getElementById('profilePage').classList.remove('hidden');
     });
@@ -117,6 +112,54 @@ function attachUIListeners() {
         document.getElementById('profilePage').classList.add('hidden');
     });
 
-    document.getElementById('btn-logout')?.addEventListener('click', logout);
+    // Logout / Open Login
+    document.getElementById('btn-logout')?.addEventListener('click', () => {
+        if (auth?.currentUser) {   // Check if logged in
+            logout();
+        } else {
+            document.getElementById('authModal')?.classList.remove('hidden');
+        }
+    });
+
     document.getElementById('vw-btn')?.addEventListener('click', upgradeToWitnessTier);
+
+    // === AUTH MODAL CONTROLS ===
+    const authModal = document.getElementById('authModal');
+
+    document.getElementById('google-signin-btn')?.addEventListener('click', async () => {
+        await googleLogin();
+        authModal?.classList.add('hidden');
+    });
+
+    document.getElementById('email-signup-btn')?.addEventListener('click', async () => {
+        const email = document.getElementById('email-input')?.value.trim();
+        const password = document.getElementById('password-input')?.value.trim();
+        
+        if (email && password?.length >= 6) {
+            try {
+                const mod = await import('./auth.js');
+                await mod.emailSignup(email, password);
+                authModal?.classList.add('hidden');
+            } catch (e) {}
+        } else {
+            showToast("Email and password (min 6 chars) required", "error");
+        }
+    });
+
+    document.getElementById('email-login-btn')?.addEventListener('click', async () => {
+        const email = document.getElementById('email-input')?.value.trim();
+        const password = document.getElementById('password-input')?.value.trim();
+        
+        if (email && password) {
+            try {
+                const mod = await import('./auth.js');
+                await mod.emailLogin(email, password);
+                authModal?.classList.add('hidden');
+            } catch (e) {}
+        }
+    });
+
+    document.getElementById('close-auth-modal')?.addEventListener('click', () => {
+        authModal?.classList.add('hidden');
+    });
 }
