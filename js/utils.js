@@ -34,6 +34,17 @@ export async function generateSha256Hash(fileOrString) {
         .map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+export async function submitPeerVote(postId, voteType) {
+    try {
+        // Example: Replace with your actual Firebase/Firestore logic
+        // await db.collection('votes').add({ postId, voteType, timestamp: Date.now() });
+        showToast("✅ Vote submitted successfully");
+    } catch (error) {
+        console.error("Voting failed:", error);
+        showToast("❌ Failed to submit vote", "error");
+    }
+}
+
 export function translateUIElements(langCode) {
     // ... your translation logic here ...
 }
