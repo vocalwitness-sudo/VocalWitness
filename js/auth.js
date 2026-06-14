@@ -1,41 +1,80 @@
 // js/auth.js
-import { auth, provider } from "./firebase-config.js";
-import { signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import { state } from "./storage.js";
-import { showToast } from "./utils.js";
+import { auth, provider } from './firebase-config.js';
+import { 
+    signInWithPopup, 
+    signOut, 
+    onAuthStateChanged,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword 
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 
 export function initAuth() {
     onAuthStateChanged(auth, (user) => {
-        state.user = user;
-        state.isWitnessVerified = !!user;
+        console.log("🔐 Auth state:", user ? user.email : "Guest");
 
-        // Dispatch event so main.js / UI can react
-        const authEvent = new CustomEvent('auth-changed', { detail: { user } });
-        window.dispatchEvent(authEvent);
+        const event = new CustomEvent('auth-changed', { detail: { user } });
+        window.dispatchEvent(event);
 
-        if (!user) {
-            showToast("Guest Mode Active");
-        }
+        // Update UI
+        updateAuthUI(user);
     });
+}
+
+function updateAuthUI(user) {
+    const profileBtn = document.getElementById('btn-profile');
+    const logoutBtn = document.getElementById('btn-logout');
+    
+    if (user) {
+        if (profileBtn) profileBtn.textContent = "👤 " + (user.displayName || "Profile");
+        if (logoutBtn) logoutBtn.textContent = "Logout";
+    } else {
+        if (profileBtn) profileBtn.textContent = "👤 Profile";
+        if (logoutBtn) logoutBtn.textContent = "Sign In";
+    }
 }
 
 export async function googleLogin() {
     try {
-        await signInWithPopup(auth, provider);
-        showToast("✅ Node Identity Synced");
+        const result = await signInWithPopup(auth, provider);
+        console.log("✅ Google Sign In:", result.user.email);
+        showToast("Welcome to VocalWitness!", "success");
     } catch (error) {
-        console.error("Auth Error:", error);
-        showToast("❌ Identity Sync Failed", "error");
+        console.error("Google login error:", error);
+        showToast("Login failed: " + error.message, "error");
+    }
+}
+
+export async function emailSignup(email, password) {
+    try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        console.log("✅ New user created:", userCredential.user.email);
+        showToast("Account created successfully!", "success");
+        return userCredential.user;
+    } catch (error) {
+        console.error("Signup error:", error);
+        showToast(error.message, "error");
+        throw error;
+    }
+}
+
+export async function emailLogin(email, password) {
+    try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        console.log("✅ Email login successful:", userCredential.user.email);
+        showToast("Welcome back!", "success");
+        return userCredential.user;
+    } catch (error) {
+        console.error("Login error:", error);
+        showToast("Invalid credentials", "error");
+        throw error;
     }
 }
 
 export async function logout() {
-    if (confirm("Disconnect from VocalWitness node?")) {
-        try {
-            await signOut(auth);
-            window.location.reload();
-        } catch (error) {
-            showToast("Error signing out", "error");
-        }
+    try {
+        await signOut(auth);
+        showToast("Signed out successfully", "success");
+    } catch (error) {
+        console.error("Logout error:", error);
     }
 }
