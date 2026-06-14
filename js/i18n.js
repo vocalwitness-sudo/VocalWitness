@@ -96,7 +96,7 @@ export function translateUIElements(langCode) {
     if (witnessVoiceBtn) witnessVoiceBtn.textContent = lexicon.witnessVoice;
     if (activeBadge) activeBadge.textContent = lexicon.activeLanguage;
 
-    // Update other elements from your original mappings
+    // Update static UI text elements via ID mapping
     const mappings = {
         'privacy-notice-text': lexicon.privacyWarning,
         'security-upgrade-text': lexicon.upgradeSecurity,
@@ -120,4 +120,13 @@ export function initLanguage() {
     if (langSelect) langSelect.value = savedLang;
 
     translateUIElements(savedLang);
+}
+
+/**
+ * Wrapper for the language change event
+ */
+export function changeLanguage(langCode) {
+    translateUIElements(langCode);
+    // Assuming showToast is still imported from './utils.js'
+    // showToast(`Language switched to ${langCode.toUpperCase()}`);
 }
