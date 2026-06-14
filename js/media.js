@@ -1,85 +1,109 @@
-/**
- * VocalWitness Media Module
- * Handles raw asset capture, previewing, and temporary storage
- */
-import { showToast } from './utils.js';
+// js/main.js
+import { googleLogin, logout } from "./auth.js";
+import { initFeed, addPostToFeed } from './feed.js';
+import { VocalWitnessEngine } from './engine.js';
+import { upgradeToWitnessTier } from './signup.js';
+import { db, storage } from './firebase-config.js';
+import { showToast, initLanguage } from './utils.js';
+import { handleImageSelect, toggleVoiceRecording, resetMediaState } from './media.js';
 
-let mediaRecorder;
-let recordedChunks = [];
-let mediaStream = null;
+let engine;
+let currentFeed = 'citizen-talk';
 
-export let selectedImageFile = null;
-export let selectedAudioFile = null;
+async function bootstrap() {
+    try {
+        console.log("🚀 VocalWitness Initializing...");
+        engine = new VocalWitnessEngine(db, storage);
 
-/**
- * Image Capture: Handles preview generation and state management
- */
-export async function handleImageSelect(event, previewArea) {
-    const file = event.target.files[0];
-    if (!file) return;
-    
-    selectedImageFile = file;
-    const reader = new FileReader();
-    
-    reader.onload = (e) => {
-        previewArea.innerHTML = `
-            <div class="relative group">
-                <img src="${e.target.result}" class="rounded-2xl border border-zinc-700 w-full object-cover max-h-48" alt="Forensic Preview">
-                <button id="removeImgBtn" class="absolute top-2 right-2 bg-red-600 text-white rounded-full w-8 h-8 font-bold">✕</button>
-            </div>`;
-        previewArea.classList.remove('hidden');
-        document.getElementById('removeImgBtn').addEventListener('click', () => removeImage(previewArea));
-    };
-    reader.readAsDataURL(file);
-    showToast("📸 Image asset captured for ledger.");
-}
+        initFeed(db, currentFeed);
+        initLanguage();
+        attachUIListeners();
 
-export function removeImage(previewArea) {
-    selectedImageFile = null;
-    previewArea.innerHTML = '';
-    previewArea.classList.add('hidden');
-}
-
-/**
- * Audio Capture: Manages the MediaRecorder lifecycle
- */
-export function toggleVoiceRecording(voiceBtn) {
-    if (!mediaRecorder || mediaRecorder.state === "inactive") {
-        navigator.mediaDevices.getUserMedia({ audio: true })
-            .then(stream => {
-                mediaStream = stream;
-                recordedChunks = [];
-                mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
-                
-                mediaRecorder.ondataavailable = e => recordedChunks.push(e.data);
-                
-                mediaRecorder.onstop = () => {
-                    selectedAudioFile = new File(recordedChunks, `audio_${Date.now()}.webm`, { type: 'audio/webm' });
-                    voiceBtn.classList.remove('animate-pulse', 'bg-red-500');
-                    voiceBtn.textContent = '✅ Testimony Captured';
-                    showToast("🎤 Forensic audio archived.");
-                    
-                    // Stop all audio tracks to release the mic
-                    mediaStream.getTracks().forEach(track => track.stop());
-                };
-                
-                mediaRecorder.start();
-                voiceBtn.classList.add('animate-pulse', 'bg-red-500');
-                voiceBtn.textContent = '⏹️ Stop Recording';
-            })
-            .catch(err => {
-                console.error(err);
-                showToast("Microphone access denied.", "error");
-            });
-    } else {
-        mediaRecorder.stop();
+        console.log("✅ VocalWitness Node Online");
+        showToast("Node Connected Successfully");
+    } catch (err) {
+        console.error("Bootstrap failed:", err);
+        showToast("Failed to initialize node", "error");
     }
 }
 
+function attachUIListeners() {
+    // Language
+    const langSelector = document.getElementById('languageSelector');
+    langSelector?.addEventListener('change', (e) => {
+        changeLanguage(e.target.value); // from i18n
+    });
 
-// Add this to js/media.js
-export function resetMediaState() {
-    selectedImageFile = null;
-    selectedAudioFile = null;
-    // You may also want to clear UI previews here
+    // Navigation
+    document.getElementById('btn-witnessvoice')?.addEventListener('click', () => {
+        currentFeed = 'witness-voice';
+        initFeed(db, currentFeed);
+        showToast("👁️ Witness Voice Mode");
+    });
+
+    document.getElementById('btn-citizentalk')?.addEventListener('click', () => {
+        currentFeed = 'citizen-talk';
+        initFeed(db, currentFeed);
+        showToast("💬 Citizen Talk Mode");
+    });
+
+    // Media Buttons
+    const photoBtn = document.getElementById('btn-photo');
+    const voiceBtn = document.getElementById('btn-voice');
+
+    photoBtn?.addEventListener('click', () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.onchange = (e) => handleImageSelect(e, document.getElementById('preview-area') || document.createElement('div'));
+        input.click();
+    });
+
+    voiceBtn?.addEventListener('click', () => {
+        toggleVoiceRecording(voiceBtn);
+    });
+
+    // Post Button
+    document.getElementById('postButton')?.addEventListener('click', async () => {
+        const input = document.getElementById('mainInput');
+        const text = input?.value.trim();
+        if (!text) return showToast("Please provide a description", "error");
+
+        const tempId = 'temp-' + Date.now();
+        addPostToFeed({ id: tempId, witnessText: text, timestamp: new Date() }, true);
+
+        try {
+            // Use engine for full testimony if audio exists
+            if (engine.currentAudioBlob) {
+                await engine.uploadTestimony("current-user-id", "en", currentFeed);
+            } else {
+                // Text-only fallback
+                await addDoc(collection(db, "testimonies"), {
+                    witnessText: text,
+                    feedVisibility: currentFeed,
+                    timestamp: new Date().toISOString()
+                });
+            }
+            input.value = '';
+            resetMediaState();
+            showToast("✅ Published to Decentralized Ledger");
+        } catch (e) {
+            console.error(e);
+            showToast("Failed to publish", "error");
+        }
+    });
+
+    // Profile
+    document.getElementById('btn-profile')?.addEventListener('click', () => {
+        document.getElementById('profilePage').classList.remove('hidden');
+    });
+
+    document.getElementById('btn-close-profile')?.addEventListener('click', () => {
+        document.getElementById('profilePage').classList.add('hidden');
+    });
+
+    document.getElementById('btn-logout')?.addEventListener('click', logout);
+    document.getElementById('vw-btn')?.addEventListener('click', upgradeToWitnessTier);
 }
+
+document.addEventListener('DOMContentLoaded', bootstrap);
