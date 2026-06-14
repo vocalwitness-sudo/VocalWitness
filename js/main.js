@@ -6,6 +6,9 @@ import { upgradeToWitnessTier } from './signup.js';
 import { db, storage } from './firebase-config.js';
 import { showToast, initLanguage } from './utils.js';
 import { handleImageSelect, toggleVoiceRecording, resetMediaState } from './media.js';
+import { initAuth } from './auth.js';
+...
+initAuth();
 
 let engine;
 let currentFeed = 'citizen-talk';
