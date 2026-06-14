@@ -7,11 +7,14 @@ import { showToast } from "./utils.js";
 export function initAuth() {
     onAuthStateChanged(auth, (user) => {
         state.user = user;
-        state.isWitnessVerified = !!user; // Update later with real verification
+        state.isWitnessVerified = !!user;
 
-        if (user) {
-            document.getElementById('profile-username').textContent = user.displayName || "Witness";
-            document.getElementById('profile-email').textContent = user.email || "";
+        // Dispatch event so main.js / UI can react
+        const authEvent = new CustomEvent('auth-changed', { detail: { user } });
+        window.dispatchEvent(authEvent);
+
+        if (!user) {
+            showToast("Guest Mode Active");
         }
     });
 }
@@ -19,16 +22,20 @@ export function initAuth() {
 export async function googleLogin() {
     try {
         await signInWithPopup(auth, provider);
-        showToast("✅ Identity Synced Successfully");
+        showToast("✅ Node Identity Synced");
     } catch (error) {
-        console.error(error);
-        showToast("❌ Google Sign-in Failed", "error");
+        console.error("Auth Error:", error);
+        showToast("❌ Identity Sync Failed", "error");
     }
 }
 
 export async function logout() {
-    if (confirm("Disconnect from VocalWitness Node?")) {
-        await signOut(auth);
-        window.location.reload();
+    if (confirm("Disconnect from VocalWitness node?")) {
+        try {
+            await signOut(auth);
+            window.location.reload();
+        } catch (error) {
+            showToast("Error signing out", "error");
+        }
     }
 }
