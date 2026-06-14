@@ -1,59 +1,67 @@
-import { db, auth } from "./firebase-config.js";
-import { collection, query, orderBy, onSnapshot, where, doc, updateDoc, increment, setDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-import { showToast } from "./utils.js";
-import { state } from './storage.js';
+// js/feed.js
+import { collection, query, orderBy, onSnapshot, where } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { showToast } from './utils.js';
+import { submitPeerVote } from './utils.js'; // or separate file
 
-export async function postNow() {
-    const feedType = currentFeed; 
-    
-    // Using state.isWitnessVerified instead of state.isVerified for consistency
-    if (feedType === 'vocal-truth' && !state.isWitnessVerified) {
-        return showToast("⚠️ Forensic Access requires Tier 1 Verification.");
-    }
-}
-
-const feedContainer = document.getElementById('feed');
 let activeFeedListener = null;
+const feedContainer = document.getElementById('feedContainer');
 const optimisticPosts = new Set();
 
-export function addPostToFeed(postData, isOptimistic = false) {
-    const post = document.createElement('div');
-    post.id = postData.id;
-    post.className = `witness-card glass rounded-3xl p-5 border border-zinc-900 bg-[#090f1d]/40 ${isOptimistic ? 'opacity-60' : ''}`;
-    post.innerHTML = `<p>${postData.witnessText}</p><small>${isOptimistic ? 'Syncing...' : 'Verified'}</small>`;
-    
-    if (feedContainer) feedContainer.prepend(post);
-    if (isOptimistic) optimisticPosts.add(postData.id);
-}
-
-export async function submitPeerVote(postId, action = 'verify') {
-    const user = auth.currentUser;
-    if (!user) return showToast("Must be logged in.");
-
-    const postRef = doc(db, "testimonies", postId);
-    const voteRef = doc(db, "testimonies", postId, "votes", user.uid);
-
-    try {
-        await setDoc(voteRef, { voteType: action, timestamp: new Date() });
-        await updateDoc(postRef, {
-            "moderation.verificationsCount": increment(1)
-        });
-        showToast("✅ Vote recorded.");
-    } catch (e) {
-        showToast("Vote failed.");
-    }
-}
-
-export function listenToLedgerFeed(currentFeed) {
+export function initFeed(db, currentFeed = 'citizen-talk') {
     if (activeFeedListener) activeFeedListener();
 
-    const q = query(collection(db, "testimonies"), where("feedType", "==", currentFeed), orderBy("timestamp", "desc"));
+    const q = query(
+        collection(db, "testimonies"),
+        where("feedVisibility", "==", currentFeed),
+        orderBy("timestamp", "desc")
+    );
 
     activeFeedListener = onSnapshot(q, (snapshot) => {
-        if (feedContainer) feedContainer.innerHTML = '';
+        if (!feedContainer) return;
+        feedContainer.innerHTML = '';
+
         snapshot.forEach((docSnap) => {
+            const data = docSnap.data();
             if (optimisticPosts.has(docSnap.id)) return;
-            // ... (rest of your rendering logic)
+
+            const postEl = document.createElement('div');
+            postEl.className = `post-card glass rounded-3xl p-6 mb-4 border border-emerald-900/30`;
+            postEl.innerHTML = `
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 bg-zinc-700 rounded-2xl flex items-center justify-center">👤</div>
+                        <div>
+                            <p class="font-semibold">${data.authorId || 'Anonymous'}</p>
+                            <p class="text-xs text-zinc-500">${new Date(data.timestamp).toLocaleString()}</p>
+                        </div>
+                    </div>
+                    <span class="text-xs bg-emerald-900/50 px-3 py-1 rounded-full">${data.languageCode || 'en'}</span>
+                </div>
+                ${data.witnessText ? `<p class="mb-4 text-zinc-200">${data.witnessText}</p>` : ''}
+                ${data.audioUrl ? `
+                    <audio controls class="w-full mb-4">
+                        <source src="${data.audioUrl}" type="audio/webm">
+                    </audio>
+                ` : ''}
+                <div class="flex gap-4 text-sm">
+                    <button onclick="submitPeerVote('${docSnap.id}', 'verify')" class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-2xl">✅ Verify (${data.moderation?.verificationsCount || 0})</button>
+                    <button onclick="submitPeerVote('${docSnap.id}', 'dispute')" class="flex-1 py-2 bg-red-900/50 hover:bg-red-900 rounded-2xl">⚠️ Dispute (${data.moderation?.disputesCount || 0})</button>
+                </div>
+            `;
+            feedContainer.appendChild(postEl);
         });
     });
+}
+
+export function addPostToFeed(postData, isOptimistic = false) {
+    if (!feedContainer) return;
+    const post = document.createElement('div');
+    post.id = postData.id;
+    post.className = `post-card glass rounded-3xl p-6 mb-4 border border-emerald-900/30 ${isOptimistic ? 'opacity-70' : ''}`;
+    post.innerHTML = `
+        <p class="text-zinc-200">${postData.witnessText || ''}</p>
+        <small class="text-emerald-400">${isOptimistic ? 'Syncing to ledger...' : '✓ On-chain'}</small>
+    `;
+    feedContainer.prepend(post);
+    if (isOptimistic) optimisticPosts.add(postData.id);
 }
