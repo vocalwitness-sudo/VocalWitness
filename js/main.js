@@ -1,25 +1,23 @@
-import { googleLogin, logout, initAuth } from "./auth.js";
+// js/main.js
+import { initAuth, logout } from "./auth.js";
 import { initFeed, addPostToFeed } from './feed.js';
 import { VocalWitnessEngine } from './engine.js';
 import { upgradeToWitnessTier } from './signup.js';
 import { db, storage } from './firebase-config.js';
 import { showToast, initLanguage } from './utils.js';
 import { handleImageSelect, toggleVoiceRecording, resetMediaState } from './media.js';
-import { addDoc, collection } from "firebase/firestore"; // Ensure these are imported
 
 let engine;
 let currentFeed = 'citizen-talk';
 
-export async function init() { 
+export async function init() {
     try {
         console.log("🚀 VocalWitness Initializing...");
         engine = new VocalWitnessEngine(db, storage);
-
         initAuth();
         initFeed(db, currentFeed);
         initLanguage();
         attachUIListeners();
-
         console.log("✅ VocalWitness Node Online");
     } catch (err) {
         console.error("Initialization failed:", err);
@@ -39,7 +37,10 @@ function attachUIListeners() {
 
     // Language selector
     document.getElementById('languageSelector')?.addEventListener('change', (e) => {
-        changeLanguage(e.target.value); // from i18n.js
+        // Make sure changeLanguage is available globally or import it
+        if (typeof window.changeLanguage === 'function') {
+            window.changeLanguage(e.target.value);
+        }
     });
 
     // Navigation buttons
@@ -62,9 +63,11 @@ function attachUIListeners() {
         input.click();
     });
 
-    document.getElementById('btn-voice')?.addEventListener('click', () => toggleVoiceRecording(document.getElementById('btn-voice')));
+    document.getElementById('btn-voice')?.addEventListener('click', () => {
+        toggleVoiceRecording(document.getElementById('btn-voice'));
+    });
 
-    // Post
+    // Post button
     document.getElementById('postButton')?.addEventListener('click', async () => {
         const input = document.getElementById('mainInput');
         const text = input?.value.trim();
@@ -74,17 +77,21 @@ function attachUIListeners() {
         addPostToFeed({ id: tempId, witnessText: text }, true);
 
         try {
-            // TODO: integrate engine.uploadTestimony() later
+            // Dynamic import for Firebase Firestore (important for CDN setup)
+            const { addDoc, collection } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
+
             await addDoc(collection(db, "testimonies"), {
                 witnessText: text,
                 feedVisibility: currentFeed,
                 authorId: engine?.currentUserId || "anonymous",
                 timestamp: new Date().toISOString()
             });
+
             input.value = '';
             resetMediaState();
             showToast("✅ Published to Ledger");
         } catch (e) {
+            console.error(e);
             showToast("Failed to publish", "error");
         }
     });
@@ -93,6 +100,7 @@ function attachUIListeners() {
     document.getElementById('btn-profile')?.addEventListener('click', () => {
         document.getElementById('profilePage').classList.remove('hidden');
     });
+
     document.getElementById('btn-close-profile')?.addEventListener('click', () => {
         document.getElementById('profilePage').classList.add('hidden');
     });
@@ -100,6 +108,3 @@ function attachUIListeners() {
     document.getElementById('btn-logout')?.addEventListener('click', logout);
     document.getElementById('vw-btn')?.addEventListener('click', upgradeToWitnessTier);
 }
-
-// Call init instead of bootstrap
-document.addEventListener('DOMContentLoaded', init);
