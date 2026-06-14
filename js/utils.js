@@ -63,6 +63,11 @@ export async function submitPeerVote(postId, voteType) {
     }
 }
 
+// updated
+export function initLanguage() {
+    // ... your existing code ...
+}
+
 export function translateUIElements(langCode) {
-    // ... your translation logic here ...
+    // ... your existing code ...
 }
