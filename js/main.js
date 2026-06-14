@@ -35,21 +35,25 @@ function attachUIListeners() {
         }
     });
 
-    // Language selector
-    document.getElementById('languageSelector')?.addEventListener('change', (e) => {
-        if (typeof window.changeLanguage === 'function') {
-            window.changeLanguage(e.target.value);
-        }
-    });
+    // === SEARCH BAR ===
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase().trim();
+            initFeed(db, currentFeed, term);   // Pass search term to feed
+        });
+    }
 
-    // Navigation
+    // === DATA MODE TOGGLE (Witness / Citizen) ===
     document.getElementById('btn-witnessvoice')?.addEventListener('click', () => {
         currentFeed = 'witness-voice';
+        updateActiveFeedButton();
         initFeed(db, currentFeed);
     });
 
     document.getElementById('btn-citizentalk')?.addEventListener('click', () => {
         currentFeed = 'citizen-talk';
+        updateActiveFeedButton();
         initFeed(db, currentFeed);
     });
 
@@ -112,9 +116,8 @@ function attachUIListeners() {
         document.getElementById('profilePage').classList.add('hidden');
     });
 
-    // Logout / Open Login
     document.getElementById('btn-logout')?.addEventListener('click', () => {
-        if (auth?.currentUser) {   // Check if logged in
+        if (auth?.currentUser) {
             logout();
         } else {
             document.getElementById('authModal')?.classList.remove('hidden');
@@ -123,9 +126,8 @@ function attachUIListeners() {
 
     document.getElementById('vw-btn')?.addEventListener('click', upgradeToWitnessTier);
 
-    // === AUTH MODAL CONTROLS ===
+    // Auth Modal
     const authModal = document.getElementById('authModal');
-
     document.getElementById('google-signin-btn')?.addEventListener('click', async () => {
         await googleLogin();
         authModal?.classList.add('hidden');
@@ -134,7 +136,6 @@ function attachUIListeners() {
     document.getElementById('email-signup-btn')?.addEventListener('click', async () => {
         const email = document.getElementById('email-input')?.value.trim();
         const password = document.getElementById('password-input')?.value.trim();
-        
         if (email && password?.length >= 6) {
             try {
                 const mod = await import('./auth.js');
@@ -149,7 +150,6 @@ function attachUIListeners() {
     document.getElementById('email-login-btn')?.addEventListener('click', async () => {
         const email = document.getElementById('email-input')?.value.trim();
         const password = document.getElementById('password-input')?.value.trim();
-        
         if (email && password) {
             try {
                 const mod = await import('./auth.js');
@@ -162,4 +162,12 @@ function attachUIListeners() {
     document.getElementById('close-auth-modal')?.addEventListener('click', () => {
         authModal?.classList.add('hidden');
     });
+
+    // Highlight active feed button
+    updateActiveFeedButton();
+}
+
+function updateActiveFeedButton() {
+    document.getElementById('btn-witnessvoice')?.classList.toggle('active', currentFeed === 'witness-voice');
+    document.getElementById('btn-citizentalk')?.classList.toggle('active', currentFeed === 'citizen-talk');
 }
