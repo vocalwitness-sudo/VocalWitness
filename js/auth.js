@@ -1,49 +1,34 @@
 // js/auth.js
 import { auth, provider } from "./firebase-config.js";
 import { signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import { state } from "./storage.js"; // This imports the state from the other file
+import { state } from "./storage.js";
 import { showToast } from "./utils.js";
 
-const updateUI = (id, value) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = value;
-};
+export function initAuth() {
+    onAuthStateChanged(auth, (user) => {
+        state.user = user;
+        state.isWitnessVerified = !!user; // Update later with real verification
 
-onAuthStateChanged(auth, (user) => {
-    state.user = user;
-    state.isWitnessVerified = !!user;
-
-    const authSection = document.getElementById('authSection');
-    if (user) {
-        if (authSection) authSection.classList.add('hidden');
-        updateUI('userName', user.displayName || "Anonymous Witness");
-        updateUI('profileName', user.displayName || "Verified Witness");
-        updateUI('profileEmail', user.email || "");
-    } else {
-        updateUI('userName', "Guest Reader");
-    }
-
-    const authEvent = new CustomEvent('auth-changed', { detail: { user } });
-    window.dispatchEvent(authEvent);
-});
+        if (user) {
+            document.getElementById('profile-username').textContent = user.displayName || "Witness";
+            document.getElementById('profile-email').textContent = user.email || "";
+        }
+    });
+}
 
 export async function googleLogin() {
     try {
         await signInWithPopup(auth, provider);
-        showToast("⚡ Node Identity Synced.");
+        showToast("✅ Identity Synced Successfully");
     } catch (error) {
-        console.error("Auth Error:", error);
-        showToast("❌ Identity Sync Failed.");
+        console.error(error);
+        showToast("❌ Google Sign-in Failed", "error");
     }
 }
 
 export async function logout() {
-    if (confirm("Disconnect from VocalWitness node?")) {
-        try {
-            await signOut(auth);
-            window.location.reload();
-        } catch (error) {
-            showToast("Error signing out.");
-        }
+    if (confirm("Disconnect from VocalWitness Node?")) {
+        await signOut(auth);
+        window.location.reload();
     }
 }
