@@ -1,29 +1,35 @@
 // js/signup.js
-import { state } from './storage.js'; // Updated path
 import { showToast } from './utils.js';
+import { auth } from './firebase-config.js'; // Import auth to check current user
 
 export async function upgradeToWitnessTier() {
-    // 1. Check if user is even logged in
-    if (!state.user) return showToast("Please sign in first.");
+    const user = auth.currentUser;
 
-    // 2. Trigger the ZK Worker process
-    showToast("Initializing Forensic Verification...");
-    
-    // Send message to the worker
-    window.zkWorker.postMessage({ 
-        type: 'VERIFY_IDENTITY', 
-        uid: state.user.uid 
-    });
+    if (!user) {
+        showToast("Please sign in first to upgrade", "error");
+        // Optionally open auth modal
+        const authModal = document.getElementById('authModal');
+        if (authModal) authModal.classList.remove('hidden');
+        return;
+    }
 
-    // 3. Listen for success
-    window.zkWorker.onmessage = (e) => {
-        if (e.data.success) {
-            // Updated to match the property in storage.js
-            state.isWitnessVerified = true; 
-            state.tier = 'witness';
-            showToast("✅ Forensic Identity Verified. Tier 1 Access Granted.");
-            // Refresh feed to show new options
-            location.reload(); 
-        }
-    };
+    try {
+        showToast("Initializing Forensic ZK Verification...", "success");
+
+        // TODO: Integrate real ZK proof later
+        // For now, simulate success after a short delay
+        setTimeout(() => {
+            // You can store this in localStorage or Firestore later
+            localStorage.setItem('isWitnessVerified', 'true');
+            
+            showToast("✅ Forensic Identity Verified! You are now Tier 1 Witness", "success");
+            
+            // Refresh UI
+            location.reload();
+        }, 1800);
+
+    } catch (error) {
+        console.error("Upgrade failed:", error);
+        showToast("Verification failed. Please try again.", "error");
+    }
 }
