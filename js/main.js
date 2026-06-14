@@ -1,4 +1,3 @@
-// js/main.js
 import { googleLogin, logout, initAuth } from "./auth.js";
 import { initFeed, addPostToFeed } from './feed.js';
 import { VocalWitnessEngine } from './engine.js';
@@ -6,23 +5,24 @@ import { upgradeToWitnessTier } from './signup.js';
 import { db, storage } from './firebase-config.js';
 import { showToast, initLanguage } from './utils.js';
 import { handleImageSelect, toggleVoiceRecording, resetMediaState } from './media.js';
+import { addDoc, collection } from "firebase/firestore"; // Ensure these are imported
 
 let engine;
 let currentFeed = 'citizen-talk';
 
-async function bootstrap() {
+export async function init() { 
     try {
         console.log("🚀 VocalWitness Initializing...");
         engine = new VocalWitnessEngine(db, storage);
 
-        initAuth();           // ← Important
+        initAuth();
         initFeed(db, currentFeed);
         initLanguage();
         attachUIListeners();
 
         console.log("✅ VocalWitness Node Online");
     } catch (err) {
-        console.error("Bootstrap failed:", err);
+        console.error("Initialization failed:", err);
         showToast("Failed to initialize node", "error");
     }
 }
@@ -75,7 +75,7 @@ function attachUIListeners() {
 
         try {
             // TODO: integrate engine.uploadTestimony() later
-            await addDoc(collection(db, "testimonies"), { // you'll need to import addDoc if not already
+            await addDoc(collection(db, "testimonies"), {
                 witnessText: text,
                 feedVisibility: currentFeed,
                 authorId: engine?.currentUserId || "anonymous",
@@ -101,4 +101,5 @@ function attachUIListeners() {
     document.getElementById('vw-btn')?.addEventListener('click', upgradeToWitnessTier);
 }
 
-document.addEventListener('DOMContentLoaded', bootstrap);
+// Call init instead of bootstrap
+document.addEventListener('DOMContentLoaded', init);
