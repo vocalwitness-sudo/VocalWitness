@@ -2,9 +2,6 @@
  * VocalWitness Utilities Module
  */
 
-// 1. Remove the import line entirely
-// 2. Remove the test call (showToast("...")) entirely
-
 export function showToast(message, type = "success") {
     const toast = document.createElement('div');
     const bgColor = type === 'error' ? 'bg-red-600' : 'bg-emerald-600';
@@ -22,6 +19,27 @@ export function toggleLowDataMode() {
     const current = isLowDataMode();
     localStorage.setItem('lowDataMode', !current);
     location.reload();
+}
+
+export async function executeAction(actionFn, buttonEl, loadingText = "Processing...") {
+    const originalText = buttonEl.textContent;
+    
+    // 1. Enter Pending State
+    buttonEl.disabled = true;
+    buttonEl.textContent = loadingText;
+
+    try {
+        // 2. Perform the action
+        await actionFn();
+    } catch (error) {
+        console.error("Action Failed:", error);
+        // Integrated showToast instead of browser alert
+        showToast("Operation failed. Please check your connection.", "error");
+    } finally {
+        // 3. Reset State
+        buttonEl.disabled = false;
+        buttonEl.textContent = originalText;
+    }
 }
 
 export async function generateSha256Hash(fileOrString) {
@@ -47,24 +65,4 @@ export async function submitPeerVote(postId, voteType) {
 
 export function translateUIElements(langCode) {
     // ... your translation logic here ...
-}
- // utils.js
-export async function executeAction(actionFn, buttonEl, loadingText = "Processing...") {
-    const originalText = buttonEl.textContent;
-    
-    // 1. Enter Pending State
-    buttonEl.disabled = true;
-    buttonEl.textContent = loadingText;
-
-    try {
-        // 2. Perform the action
-        await actionFn();
-    } catch (error) {
-        console.error("Action Failed:", error);
-        alert("Operation failed. Please check your connection.");
-    } finally {
-        // 3. Reset State
-        buttonEl.disabled = false;
-        buttonEl.textContent = originalText;
-    }
 }
