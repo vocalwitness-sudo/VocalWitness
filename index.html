@@ -121,27 +121,25 @@
         </div>
     </div>
 
-    <script type="module" src="js/main.js"></script>
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js';
-        import { getFirestore } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
+ <!-- Import Map (must be first) -->
+<script type="importmap">
+{
+  "imports": {
+    "firebase/app": "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js",
+    "firebase/auth": "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js",
+    "firebase/firestore": "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js",
+    "firebase/storage": "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js"
+  }
+}
+</script>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyATxYekXgjdLP2SfR42FG8rEdajq_pIEb0",
-            authDomain: "vocalwitness-3affa.firebaseapp.com",
-            projectId: "vocalwitness-3affa",
-            storageBucket: "vocalwitness-3affa.firebasestorage.app",
-            messagingSenderId: "108466981866",
-            appId: "1:108466981866:web:b53360ad44012a576c8093"
-        };
+<!-- Main Application -->
+<script type="module" src="js/main.js"></script>
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        window.db = db;
-    </script>
-   <script type="module">
-        import { init } from './js/main.js';
-        document.addEventListener('DOMContentLoaded', init);
-    </script>
+<!-- App Initialization -->
+<script type="module">
+    import { init } from './js/main.js';
+    document.addEventListener('DOMContentLoaded', init);
+</script>
 </body>
 </html>  
