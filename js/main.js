@@ -4,17 +4,17 @@ import { initFeed, addPostToFeed } from './feed.js';
 import { db, storage } from './firebase-config.js';
 import { showToast } from './utils.js';
 import { initLanguage, changeLanguage } from './i18n.js';
-import { 
-    handleImageSelect, 
-    toggleVoiceRecording, 
-    resetMediaState, 
-    uploadForensicMedia, 
+import {
+    handleImageSelect,
+    toggleVoiceRecording,
+    resetMediaState,
+    uploadForensicMedia,
     selectedImageFile,
-    setEngine 
+    setEngine
 } from './media.js';
 import { addDoc, collection } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { VocalWitnessEngine } from './engine.js';
-import { state } from './storage.js';
+import { state } from './storage.js';   // Keep for now
 
 let currentFeed = 'citizen-talk';
 let engine = null;
@@ -26,17 +26,16 @@ export function init() {
 async function bootstrap() {
     try {
         console.log("🚀 Initializing VocalWitness...");
-
         initAuth();
         initFeed(db, currentFeed);
         initLanguage();
-
+        
         // Core Engine
         engine = new VocalWitnessEngine(db, storage);
         setEngine(engine);
-
+        
         attachUIListeners();
-
+        
         console.log("✅ VocalWitness Core Loaded Successfully");
         showToast("Platform Ready • Witness Voice + Citizen Talk Active");
     } catch (err) {
@@ -123,7 +122,7 @@ function attachUIListeners() {
 
     // Profile Button
     document.getElementById('btn-profile')?.addEventListener('click', () => {
-        if (!state.user) {
+        if (!state?.user) {
             googleLogin();
         }
         document.getElementById('profilePage').classList.remove('hidden');
