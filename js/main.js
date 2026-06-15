@@ -20,8 +20,8 @@ async function bootstrap() {
         initLanguage();
         attachUIListeners();
 
-        console.log("✅ VocalWitness Core Loaded");
-        showToast("Platform Ready • Two Lungs Active");
+        console.log("✅ VocalWitness Core Loaded Successfully");
+        showToast("Platform Ready • Witness Voice + Citizen Talk Active");
     } catch (err) {
         console.error("Bootstrap error:", err);
         showToast("Initialization issue - check console", "error");
@@ -29,12 +29,12 @@ async function bootstrap() {
 }
 
 function attachUIListeners() {
-    // Language
+    // Language Selector
     document.getElementById('languageSelector')?.addEventListener('change', (e) => {
         changeLanguage(e.target.value);
     });
 
-    // Witness Voice & Citizen Talk (The Two Lungs)
+    // Two Lungs Navigation
     document.getElementById('btn-witnessvoice')?.addEventListener('click', () => {
         currentFeed = 'witness-voice';
         initFeed(db, currentFeed);
@@ -58,7 +58,9 @@ function attachUIListeners() {
 
     // Voice Button
     const voiceBtn = document.getElementById('btn-voice');
-    if (voiceBtn) voiceBtn.addEventListener('click', () => toggleVoiceRecording(voiceBtn));
+    if (voiceBtn) {
+        voiceBtn.addEventListener('click', () => toggleVoiceRecording(voiceBtn));
+    }
 
     // Publish Button
     document.getElementById('postButton')?.addEventListener('click', async () => {
@@ -97,4 +99,7 @@ function attachUIListeners() {
     document.getElementById('btn-logout')?.addEventListener('click', logout);
 }
 
-document.addEventListener('DOMContentLoaded', bootstrap); // Fallback safety
+// Safety fallback
+document.addEventListener('DOMContentLoaded', () => {
+    if (typeof init === 'function') init();
+});
