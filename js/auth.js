@@ -1,18 +1,22 @@
 // js/auth.js
 import { auth, provider } from './firebase-config.js';
-import { 
-    signInWithPopup, 
-    signOut, 
+import {
+    signInWithPopup,
+    signOut,
     onAuthStateChanged,
     createUserWithEmailAndPassword,
-    signInWithEmailAndPassword 
+    signInWithEmailAndPassword
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+
+import { showToast } from "./utils.js";
 
 export function initAuth() {
     onAuthStateChanged(auth, (user) => {
         console.log("🔐 Auth state:", user ? user.email : "Guest");
 
-        const event = new CustomEvent('auth-changed', { detail: { user } });
+        const event = new CustomEvent('auth-changed', { 
+            detail: { user } 
+        });
         window.dispatchEvent(event);
 
         // Update UI
@@ -23,7 +27,7 @@ export function initAuth() {
 function updateAuthUI(user) {
     const profileBtn = document.getElementById('btn-profile');
     const logoutBtn = document.getElementById('btn-logout');
-    
+   
     if (user) {
         if (profileBtn) profileBtn.textContent = "👤 " + (user.displayName || "Profile");
         if (logoutBtn) logoutBtn.textContent = "Logout";
@@ -76,5 +80,6 @@ export async function logout() {
         showToast("Signed out successfully", "success");
     } catch (error) {
         console.error("Logout error:", error);
+        showToast("Error signing out", "error");
     }
 }
