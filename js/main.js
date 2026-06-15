@@ -1,4 +1,3 @@
-// js/main.js
 import { googleLogin, logout, initAuth } from "./auth.js";
 import { initFeed, addPostToFeed } from './feed.js';
 import { db } from './firebase-config.js';
@@ -29,6 +28,16 @@ async function bootstrap() {
 }
 
 function attachUIListeners() {
+    // Add near the top of attachUIListeners()
+    document.getElementById('btn-premium')?.addEventListener('click', () => {
+        showToast("Premium features coming soon");
+    });
+
+    // Google Login
+    document.getElementById('google-login-btn')?.addEventListener('click', () => {
+        googleLogin();
+    });
+
     // Language Selector
     document.getElementById('languageSelector')?.addEventListener('change', (e) => {
         changeLanguage(e.target.value);
