@@ -126,14 +126,20 @@
         </div>
     </div>
 
-    <!-- Scripts -->
     <script type="module" src="js/main.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('/sw.js').then(() => console.log('✅ SW registered')).catch(console.error);
-            }
-        });
+        // Register Service Worker once (for PWA offline)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => {
+                        console.log('✅ Service Worker registered successfully');
+                    })
+                    .catch(err => {
+                        console.error('❌ Service Worker registration failed:', err);
+                    });
+            });
+        }
     </script>
 </body>
 </html>
