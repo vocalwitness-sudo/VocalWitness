@@ -6,6 +6,13 @@ import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/fireba
 export let selectedImageFile = null;
 export let selectedAudioFile = null;
 
+let engineInstance = null;
+
+export function setEngine(engine) {
+    engineInstance = engine;
+}
+
+// ====================== PHOTO FORENSIC HASHING ======================
 export async function handleImageSelect(event, previewArea) {
     const file = event.target.files[0];
     if (!file) return;
@@ -20,7 +27,7 @@ export async function handleImageSelect(event, previewArea) {
         reader.onload = (e) => {
             previewArea.innerHTML = `
                 <div class="relative group">
-                    <img src="${e.target.result}" class="image-preview rounded-2xl" alt="Forensic Preview">
+                    <img src="${e.target.result}" class="image-preview rounded-2xl w-full" alt="Forensic Preview">
                     <div class="teaser-badge">🔐 HASHED</div>
                     <button id="removeImgBtn" class="absolute top-2 right-2 bg-red-600 text-white rounded-full w-8 h-8 font-bold">✕</button>
                 </div>`;
@@ -30,10 +37,10 @@ export async function handleImageSelect(event, previewArea) {
         };
         reader.readAsDataURL(file);
 
-        showToast("📸 Image captured with Forensic Hash");
+        showToast("📸 Image captured + Forensic Hash generated");
     } catch (err) {
         console.error(err);
-        showToast("Image processing failed", "error");
+        showToast("Failed to process image", "error");
     }
 }
 
@@ -43,48 +50,57 @@ export function removeImage(previewArea) {
     previewArea.classList.add('hidden');
 }
 
-// Photo Upload to Firebase (called from postButton)
-export async function uploadForensicImage(userId) {
-    if (!selectedImageFile) return null;
-
-    const hash = await generateSha256Hash(selectedImageFile);
-    const storageRef = ref(storage, `images/${userId}_${Date.now()}.jpg`);
-
-    await uploadBytes(storageRef, selectedImageFile);
-    const downloadURL = await getDownloadURL(storageRef);
-
-    return { downloadURL, integrityHash: hash };
-}
-
-
-// Add this to the bottom of media.js
-import { VocalWitnessEngine } from './engine.js';
-
-let engineInstance;
-
-export function setEngine(engine) {
-    engineInstance = engine;
-}
-
+// ====================== VOICE RECORDING (Connected to Engine) ======================
 export function toggleVoiceRecording(voiceBtn) {
     if (!engineInstance) {
-        showToast("Engine not initialized", "error");
+        showToast("Engine not ready yet", "error");
         return;
     }
 
     if (!engineInstance.mediaRecorder || engineInstance.mediaRecorder.state === "inactive") {
-        const duration = 120000; // 2 minutes
-        engineInstance.startVoiceRecording(duration);
-
+        // Start Recording
+        engineInstance.startVoiceRecording(120000);
         voiceBtn.classList.add('recording-active');
         voiceBtn.textContent = '⏹️ Stop Recording';
-        showToast("🎤 Recording started...");
-
+        showToast("🎤 Recording... (Max 2 minutes)");
     } else {
+        // Stop Recording
         engineInstance.stopVoiceRecording();
-
         voiceBtn.classList.remove('recording-active');
         voiceBtn.textContent = '✅ Testimony Captured';
-        showToast("🎤 Recording saved");
+        showToast("🎤 Recording saved to memory");
     }
+}
+
+// ====================== UPLOAD BOTH MEDIA (Called from Post) ======================
+export async function uploadForensicMedia(userId = "anonymous") {
+    const mediaData = {};
+
+    // Upload Image if exists
+    if (selectedImageFile) {
+        try {
+            const hash = await generateSha256Hash(selectedImageFile);
+            const imageRef = ref(storage, `images/${userId}_${Date.now()}.jpg`);
+            await uploadBytes(imageRef, selectedImageFile);
+            mediaData.imageUrl = await getDownloadURL(imageRef);
+            mediaData.imageHash = hash;
+        } catch (e) {
+            console.error("Image upload failed", e);
+        }
+    }
+
+    // Upload Audio if exists (from engine)
+    if (engineInstance?.currentAudioBlob) {
+        try {
+            const hash = await generateSha256Hash(engineInstance.currentAudioBlob);
+            const audioRef = ref(storage, `testimonies/${userId}_${Date.now()}.webm`);
+            await uploadBytes(audioRef, engineInstance.currentAudioBlob);
+            mediaData.audioUrl = await getDownloadURL(audioRef);
+            mediaData.audioHash = hash;
+        } catch (e) {
+            console.error("Audio upload failed", e);
+        }
+    }
+
+    return mediaData;
 }
