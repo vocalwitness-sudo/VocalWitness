@@ -1,49 +1,100 @@
-// js/media.js
-import { showToast, generateSha256Hash } from './utils.js';
+// js/main.js
+import { googleLogin, logout, initAuth } from "./auth.js";
+import { initFeed, addPostToFeed } from './feed.js';
+import { db } from './firebase-config.js';
+import { showToast } from './utils.js';
+import { initLanguage, changeLanguage } from './i18n.js';
+import { handleImageSelect, toggleVoiceRecording, resetMediaState } from './media.js';
+import { addDoc, collection } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
-export let selectedImageFile = null;
-export let selectedAudioFile = null;
+let currentFeed = 'citizen-talk';
 
-// Image Capture with Forensic Hash
-export async function handleImageSelect(event, previewArea) {
-    const file = event.target.files[0];
-    if (!file) return;
+export function init() {
+    bootstrap();
+}
 
-    selectedImageFile = file;
-
+async function bootstrap() {
     try {
-        const hash = await generateSha256Hash(file);
-        console.log("🛡️ Forensic Image Hash:", hash);
+        initAuth();
+        initFeed(db, currentFeed);
+        initLanguage();
+        attachUIListeners();
 
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            previewArea.innerHTML = `
-                <div class="relative group">
-                    <img src="${e.target.result}" class="image-preview" alt="Forensic Preview">
-                    <div class="teaser-badge">HASHED</div>
-                    <button id="removeImgBtn" class="absolute top-2 right-2 bg-red-600 text-white rounded-full w-8 h-8 font-bold">✕</button>
-                </div>`;
-            
-            previewArea.classList.remove('hidden');
-            document.getElementById('removeImgBtn').addEventListener('click', () => removeImage(previewArea));
-        };
-        reader.readAsDataURL(file);
-
-        showToast("📸 Image captured + Forensic Hash generated");
+        console.log("✅ VocalWitness Core Loaded");
+        showToast("Platform Ready • Two Lungs Active");
     } catch (err) {
-        console.error(err);
-        showToast("Failed to process image", "error");
+        console.error("Bootstrap error:", err);
+        showToast("Initialization issue - check console", "error");
     }
 }
 
-export function removeImage(previewArea) {
-    selectedImageFile = null;
-    previewArea.innerHTML = '';
-    previewArea.classList.add('hidden');
+function attachUIListeners() {
+    // Language
+    document.getElementById('languageSelector')?.addEventListener('change', (e) => {
+        changeLanguage(e.target.value);
+    });
+
+    // Witness Voice & Citizen Talk (The Two Lungs)
+    document.getElementById('btn-witnessvoice')?.addEventListener('click', () => {
+        currentFeed = 'witness-voice';
+        initFeed(db, currentFeed);
+        showToast("👁️ Witness Voice Mode");
+    });
+
+    document.getElementById('btn-citizentalk')?.addEventListener('click', () => {
+        currentFeed = 'citizen-talk';
+        initFeed(db, currentFeed);
+        showToast("💬 Citizen / Street Talk Mode");
+    });
+
+    // Photo Button
+    document.getElementById('btn-photo')?.addEventListener('click', () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.onchange = (e) => handleImageSelect(e, document.getElementById('preview-area') || document.createElement('div'));
+        input.click();
+    });
+
+    // Voice Button
+    const voiceBtn = document.getElementById('btn-voice');
+    if (voiceBtn) voiceBtn.addEventListener('click', () => toggleVoiceRecording(voiceBtn));
+
+    // Publish Button
+    document.getElementById('postButton')?.addEventListener('click', async () => {
+        const input = document.getElementById('mainInput');
+        const text = input?.value.trim();
+        if (!text) return showToast("Please write something", "error");
+
+        const tempId = 'temp-' + Date.now();
+        addPostToFeed({ id: tempId, witnessText: text }, true);
+
+        try {
+            await addDoc(collection(db, "testimonies"), {
+                witnessText: text,
+                feedVisibility: currentFeed,
+                timestamp: new Date().toISOString(),
+                languageCode: localStorage.getItem('preferredLang') || 'en'
+            });
+            input.value = '';
+            resetMediaState();
+            showToast("✅ Published to Decentralized Ledger");
+        } catch (e) {
+            console.error(e);
+            showToast("Publish failed", "error");
+        }
+    });
+
+    // Profile
+    document.getElementById('btn-profile')?.addEventListener('click', () => {
+        document.getElementById('profilePage').classList.remove('hidden');
+    });
+
+    document.getElementById('btn-close-profile')?.addEventListener('click', () => {
+        document.getElementById('profilePage').classList.add('hidden');
+    });
+
+    document.getElementById('btn-logout')?.addEventListener('click', logout);
 }
 
-// Voice Recording (already improved)
-export function toggleVoiceRecording(voiceBtn) {
-    // ... your existing recording logic from before ...
-    // (keep your current implementation or let me know if you want an updated one)
-}
+document.addEventListener('DOMContentLoaded', bootstrap); // Fallback safety
