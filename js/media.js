@@ -1,57 +1,57 @@
 // js/media.js
-export function handleImageSelect(e, previewContainer) {
-    const file = e.target.files[0];
+import { showToast, generateSha256Hash } from './utils.js';
+import { storage } from './firebase-config.js';
+import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
+
+export let selectedImageFile = null;
+export let selectedAudioFile = null;
+
+export async function handleImageSelect(event, previewArea) {
+    const file = event.target.files[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    
-    reader.onload = function(event) {
-        // Safety check - make sure container exists
-        if (!previewContainer) {
-            console.warn("Preview container not found");
-            return;
-        }
+    selectedImageFile = file;
 
-        // Clear previous preview
-        previewContainer.innerHTML = '';
+    try {
+        const hash = await generateSha256Hash(file);
+        console.log("🛡️ Forensic Image Hash:", hash);
 
-        const img = document.createElement('img');
-        img.src = event.target.result;
-        img.className = "image-preview max-h-64 rounded-2xl mt-3 border border-emerald-500/30";
-        img.alt = "Selected image";
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            previewArea.innerHTML = `
+                <div class="relative group">
+                    <img src="${e.target.result}" class="image-preview rounded-2xl" alt="Forensic Preview">
+                    <div class="teaser-badge">🔐 HASHED</div>
+                    <button id="removeImgBtn" class="absolute top-2 right-2 bg-red-600 text-white rounded-full w-8 h-8 font-bold">✕</button>
+                </div>`;
+            previewArea.classList.remove('hidden');
 
-        previewContainer.appendChild(img);
-        
-        // Optional: Show a small "Forensic Shield" badge
-        const badge = document.createElement('div');
-        badge.className = "text-xs bg-emerald-600 text-white px-3 py-1 rounded-full inline-flex items-center gap-1 mt-2";
-        badge.innerHTML = '🔒 Forensic Shield Active';
-        previewContainer.appendChild(badge);
-    };
+            document.getElementById('removeImgBtn').addEventListener('click', () => removeImage(previewArea));
+        };
+        reader.readAsDataURL(file);
 
-    reader.readAsDataURL(file);
-}
-
-export function toggleVoiceRecording(btn) {
-    if (!btn) return;
-    
-    const isRecording = btn.classList.contains('recording-active');
-    
-    if (isRecording) {
-        btn.classList.remove('recording-active');
-        btn.textContent = '🎤 Voice Testimony';
-        // TODO: Stop recording logic
-        console.log("Voice recording stopped");
-    } else {
-        btn.classList.add('recording-active');
-        btn.textContent = '⏹️ Stop Recording';
-        // TODO: Start recording logic
-        console.log("Voice recording started");
+        showToast("📸 Image captured with Forensic Hash");
+    } catch (err) {
+        console.error(err);
+        showToast("Image processing failed", "error");
     }
 }
 
-export function resetMediaState() {
-    // Clear image preview if exists
-    const preview = document.getElementById('preview-area') || document.querySelector('.image-preview')?.parentElement;
-    if (preview) preview.innerHTML = '';
+export function removeImage(previewArea) {
+    selectedImageFile = null;
+    previewArea.innerHTML = '';
+    previewArea.classList.add('hidden');
+}
+
+// Photo Upload to Firebase (called from postButton)
+export async function uploadForensicImage(userId) {
+    if (!selectedImageFile) return null;
+
+    const hash = await generateSha256Hash(selectedImageFile);
+    const storageRef = ref(storage, `images/${userId}_${Date.now()}.jpg`);
+
+    await uploadBytes(storageRef, selectedImageFile);
+    const downloadURL = await getDownloadURL(storageRef);
+
+    return { downloadURL, integrityHash: hash };
 }
