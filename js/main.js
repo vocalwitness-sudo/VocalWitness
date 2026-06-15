@@ -1,20 +1,19 @@
-// js/main.js - Final Upgraded Version
+// js/main.js
 import { googleLogin, logout, initAuth } from "./auth.js";
 import { initFeed, addPostToFeed } from './feed.js';
 import { db, storage } from './firebase-config.js';
 import { showToast } from './utils.js';
 import { initLanguage, changeLanguage } from './i18n.js';
-import { 
-    handleImageSelect, 
-    toggleVoiceRecording, 
-    resetMediaState, 
-    uploadForensicMedia, 
+import {
+    handleImageSelect,
+    toggleVoiceRecording,
+    resetMediaState,
+    uploadForensicMedia,
     selectedImageFile,
-    setEngine 
+    setEngine
 } from './media.js';
 import { addDoc, collection } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { VocalWitnessEngine } from './engine.js';
-import { state } from './storage.js';
 
 let currentFeed = 'citizen-talk';
 let engine = null;
@@ -26,17 +25,16 @@ export function init() {
 async function bootstrap() {
     try {
         console.log("🚀 Initializing VocalWitness...");
-
         initAuth();
         initFeed(db, currentFeed);
         initLanguage();
-
-        // Core Engine
+        
+        // Initialize Core Engine
         engine = new VocalWitnessEngine(db, storage);
         setEngine(engine);
-
+        
         attachUIListeners();
-
+        
         console.log("✅ VocalWitness Core Loaded Successfully");
         showToast("Platform Ready • Witness Voice + Citizen Talk Active");
     } catch (err) {
@@ -48,6 +46,11 @@ async function bootstrap() {
 function attachUIListeners() {
     // Premium Button
     document.getElementById('btn-premium')?.addEventListener('click', () => {
+        googleLogin();
+    });
+
+    // Google Login
+    document.getElementById('google-login-btn')?.addEventListener('click', () => {
         googleLogin();
     });
 
@@ -84,7 +87,7 @@ function attachUIListeners() {
         voiceBtn.addEventListener('click', () => toggleVoiceRecording(voiceBtn));
     }
 
-    // Publish Button - Full Media Support
+    // Publish Button
     document.getElementById('postButton')?.addEventListener('click', async () => {
         const input = document.getElementById('mainInput');
         const text = input?.value.trim();
@@ -109,9 +112,8 @@ function attachUIListeners() {
                 moderation: { trustScore: 100, verificationsCount: 0, disputesCount: 0 }
             });
 
-            // Reset UI
             input.value = '';
-            if (typeof resetMediaState === 'function') resetMediaState();
+            resetMediaState();
             if (engine) engine.currentAudioBlob = null;
 
             showToast("✅ Forensic Testimony Published Successfully");
@@ -121,9 +123,10 @@ function attachUIListeners() {
         }
     });
 
-    // Profile Button
+    // Profile
     document.getElementById('btn-profile')?.addEventListener('click', () => {
-        if (!state.user) {
+        // Use auth check once auth.js is ready
+        if (!window.auth?.currentUser) {
             googleLogin();
         }
         document.getElementById('profilePage').classList.remove('hidden');
@@ -136,7 +139,6 @@ function attachUIListeners() {
     document.getElementById('btn-logout')?.addEventListener('click', logout);
 }
 
-// Safety fallback
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof init === 'function') init();
 });
