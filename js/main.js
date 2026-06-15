@@ -1,16 +1,16 @@
-// js/main.js - Full Upgraded Version
+// js/main.js
 import { googleLogin, logout, initAuth } from "./auth.js";
 import { initFeed, addPostToFeed } from './feed.js';
 import { db, storage } from './firebase-config.js';
 import { showToast } from './utils.js';
 import { initLanguage, changeLanguage } from './i18n.js';
-import { 
-    handleImageSelect, 
-    toggleVoiceRecording, 
-    resetMediaState, 
-    uploadForensicMedia, 
+import {
+    handleImageSelect,
+    toggleVoiceRecording,
+    resetMediaState,
+    uploadForensicMedia,
     selectedImageFile,
-    setEngine 
+    setEngine
 } from './media.js';
 import { addDoc, collection } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { VocalWitnessEngine } from './engine.js';
@@ -25,17 +25,16 @@ export function init() {
 async function bootstrap() {
     try {
         console.log("🚀 Initializing VocalWitness...");
-
         initAuth();
         initFeed(db, currentFeed);
         initLanguage();
-
+        
         // Initialize Core Engine
         engine = new VocalWitnessEngine(db, storage);
         setEngine(engine);
-
+        
         attachUIListeners();
-
+        
         console.log("✅ VocalWitness Core Loaded Successfully");
         showToast("Platform Ready • Witness Voice + Citizen Talk Active");
     } catch (err) {
@@ -50,12 +49,17 @@ function attachUIListeners() {
         googleLogin();
     });
 
+    // Google Login
+    document.getElementById('google-login-btn')?.addEventListener('click', () => {
+        googleLogin();
+    });
+
     // Language Selector
     document.getElementById('languageSelector')?.addEventListener('change', (e) => {
         changeLanguage(e.target.value);
     });
 
-    // === TWO LUNGS NAVIGATION ===
+    // Two Lungs Navigation
     document.getElementById('btn-witnessvoice')?.addEventListener('click', () => {
         currentFeed = 'witness-voice';
         initFeed(db, currentFeed);
@@ -68,7 +72,7 @@ function attachUIListeners() {
         showToast("💬 Citizen / Street Talk Mode Activated");
     });
 
-    // === MEDIA BUTTONS ===
+    // Photo Button
     document.getElementById('btn-photo')?.addEventListener('click', () => {
         const input = document.createElement('input');
         input.type = 'file';
@@ -77,12 +81,13 @@ function attachUIListeners() {
         input.click();
     });
 
+    // Voice Button
     const voiceBtn = document.getElementById('btn-voice');
     if (voiceBtn) {
         voiceBtn.addEventListener('click', () => toggleVoiceRecording(voiceBtn));
     }
 
-    // === PUBLISH BUTTON - Full Forensic Flow ===
+    // Publish Button
     document.getElementById('postButton')?.addEventListener('click', async () => {
         const input = document.getElementById('mainInput');
         const text = input?.value.trim();
@@ -107,7 +112,6 @@ function attachUIListeners() {
                 moderation: { trustScore: 100, verificationsCount: 0, disputesCount: 0 }
             });
 
-            // Reset everything
             input.value = '';
             resetMediaState();
             if (engine) engine.currentAudioBlob = null;
@@ -119,9 +123,10 @@ function attachUIListeners() {
         }
     });
 
-    // === PROFILE ===
+    // Profile
     document.getElementById('btn-profile')?.addEventListener('click', () => {
-        if (!state?.user) {
+        // Use auth check once auth.js is ready
+        if (!window.auth?.currentUser) {
             googleLogin();
         }
         document.getElementById('profilePage').classList.remove('hidden');
@@ -134,7 +139,6 @@ function attachUIListeners() {
     document.getElementById('btn-logout')?.addEventListener('click', logout);
 }
 
-// Safety fallback
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof init === 'function') init();
 });
