@@ -55,3 +55,36 @@ export async function uploadForensicImage(userId) {
 
     return { downloadURL, integrityHash: hash };
 }
+
+
+// Add this to the bottom of media.js
+import { VocalWitnessEngine } from './engine.js';
+
+let engineInstance;
+
+export function setEngine(engine) {
+    engineInstance = engine;
+}
+
+export function toggleVoiceRecording(voiceBtn) {
+    if (!engineInstance) {
+        showToast("Engine not initialized", "error");
+        return;
+    }
+
+    if (!engineInstance.mediaRecorder || engineInstance.mediaRecorder.state === "inactive") {
+        const duration = 120000; // 2 minutes
+        engineInstance.startVoiceRecording(duration);
+
+        voiceBtn.classList.add('recording-active');
+        voiceBtn.textContent = '⏹️ Stop Recording';
+        showToast("🎤 Recording started...");
+
+    } else {
+        engineInstance.stopVoiceRecording();
+
+        voiceBtn.classList.remove('recording-active');
+        voiceBtn.textContent = '✅ Testimony Captured';
+        showToast("🎤 Recording saved");
+    }
+}
