@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#10b981">
+    <link rel="manifest" href="manifest.json">
     <title>VocalWitness • Premium Forensic Ledger & Public Square</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -13,8 +15,6 @@
         .recording-active { animation: pulse 1.5s infinite; background-color: #ef4444 !important; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
         .teaser-badge { position: absolute; top: -6px; right: -6px; background: #f59e0b; color: black; font-size: 9px; padding: 1px 6px; border-radius: 9999px; font-weight: 700; }
-        
-        /* Active feed button */
         .active {
             background-color: #10b981 !important;
             color: black !important;
@@ -28,7 +28,6 @@
         <strong class="text-red-400 font-bold">Important Legal Notice:</strong><br>
         VocalWitness functions strictly as an un-manipulated decentralized distribution medium.
     </div>
-
     <div class="max-w-2xl mx-auto">
         <header class="flex flex-col gap-4 mb-6">
             <div class="flex items-center justify-between">
@@ -38,15 +37,12 @@
                     </div>
                     <h1 class="text-3xl font-bold text-emerald-400 tracking-tight">VocalWitness</h1>
                 </div>
-                <div id="preview-area" class="hidden mt-4"></div>
                 <div class="flex items-center gap-3">
-                    <div id="preview-area" class="hidden mt-4 p-4 bg-zinc-900/50 rounded-2xl"></div>
                     <button id="btn-premium" class="px-5 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-semibold rounded-3xl text-sm flex items-center gap-1.5 shadow-md">⭐ Premium</button>
                     <button id="btn-notifications" class="w-11 h-11 bg-zinc-800 hover:bg-zinc-700 rounded-3xl flex items-center justify-center text-lg relative">🔔</button>
                     <button id="btn-profile" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-3xl text-sm font-semibold flex items-center gap-1">👤 Profile</button>
                 </div>
             </div>
-
             <!-- Language + Search -->
             <div class="bg-[#111827] border border-zinc-800 rounded-2xl p-3 glass">
                 <div class="flex items-center justify-between mb-3">
@@ -64,26 +60,19 @@
                         <option value="sw">Kiswahili (SW)</option>
                     </select>
                 </div>
-                
-                <!-- Strong Search Bar -->
-                <input id="searchInput" 
-                       type="text" 
-                       placeholder="🔍 Search testimonies, witnesses, keywords..." 
-                       class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-3 focus:outline-none focus:border-emerald-500 text-sm">
+                <input id="searchInput" type="text" placeholder="🔍 Search testimonies, witnesses, keywords..." class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-3 focus:outline-none focus:border-emerald-500 text-sm">
             </div>
         </header>
-
         <!-- Navigation -->
         <nav class="grid grid-cols-3 gap-3 mb-4">
-            <button id="btn-witnessvoice" class="bg-emerald-500 text-black py-4 rounded-2xl font-bold text-sm transition-all shadow-lg border border-emerald-400/20 flex items-center justify-center gap-1.5">👁️ Witness Voice</button>
+            <button id="btn-witnessvoice" class="bg-emerald-500 text-black py-4 rounded-2xl font-bold text-sm transition-all shadow-lg border border-emerald-400/20 flex items-center justify-center gap-1.5 active">👁️ Witness Voice</button>
             <button id="btn-citizentalk" class="bg-zinc-800 text-zinc-400 hover:text-white py-4 rounded-2xl font-bold text-sm transition-all border border-zinc-900 flex items-center justify-center gap-1.5">💬 Citizen Talk</button>
             <button id="btn-livearena" class="relative bg-zinc-900/60 border border-zinc-800 text-zinc-400 hover:bg-zinc-800 py-4 rounded-3xl flex flex-col items-center justify-center gap-1 font-bold text-sm transition-all">🎥 Live Arena</button>
         </nav>
-
         <div id="feedContainer" class="mb-8 space-y-4"></div>
-
         <!-- Composer -->
         <div class="bg-[#111827] rounded-3xl p-6 mb-10 glass" id="composer">
+            <div id="preview-area" class="hidden mt-4 p-4 bg-zinc-900/50 rounded-2xl"></div>
             <textarea id="mainInput" rows="4" class="w-full bg-[#1e293b] text-white border border-zinc-800 rounded-2xl p-5 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none text-sm" placeholder="Provide raw description..."></textarea>
             <div class="grid grid-cols-2 gap-3 mt-4">
                 <button id="btn-photo" class="py-3.5 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 rounded-2xl text-sm font-medium flex items-center justify-center gap-2 transition">📸 Photo + Forensic Shield</button>
@@ -95,7 +84,6 @@
 
     <!-- Profile Modal -->
     <div id="profilePage" class="hidden fixed inset-0 bg-black/95 z-50 overflow-auto backdrop-blur-md">
-        <!-- ... your existing profile modal content ... -->
         <div class="max-w-2xl mx-auto p-6">
             <button id="btn-close-profile" class="mb-6 text-emerald-400 flex items-center gap-1 font-semibold text-sm transition">← Return to Node</button>
             <div class="glass rounded-3xl p-8">
@@ -109,7 +97,6 @@
                     </div>
                 </div>
                 <button id="vw-btn" class="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-black font-bold rounded-2xl mb-8 transition">🔐 Start ZK Verification (Upgrade to Witness)</button>
-                <!-- other profile content -->
                 <div class="space-y-6">
                     <div>
                         <h3 class="text-sm uppercase tracking-widest text-zinc-500 mb-3">Danger Zone</h3>
@@ -120,14 +107,12 @@
         </div>
     </div>
 
-    <!-- Auth Modal (New) -->
+    <!-- Auth Modal -->
     <div id="authModal" class="hidden fixed inset-0 bg-black/90 z-[100] flex items-center justify-center">
         <div class="glass rounded-3xl p-8 w-full max-w-md mx-4">
             <h2 class="text-2xl font-bold mb-6 text-center text-emerald-400">Join VocalWitness</h2>
             <div class="space-y-4">
-                <button id="google-signin-btn" class="w-full py-4 bg-white text-black font-semibold rounded-2xl flex items-center justify-center gap-3 hover:bg-gray-100">
-                    🔑 Continue with Google
-                </button>
+                <button id="google-signin-btn" class="w-full py-4 bg-white text-black font-semibold rounded-2xl flex items-center justify-center gap-3 hover:bg-gray-100">🔑 Continue with Google</button>
                 <div class="relative my-6">
                     <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-zinc-700"></div></div>
                     <div class="relative flex justify-center text-xs uppercase tracking-widest text-zinc-500">or</div>
@@ -143,9 +128,12 @@
 
     <!-- Scripts -->
     <script type="module" src="js/main.js"></script>
-    <script type="module">
-        import { init } from './js/main.js';
-        document.addEventListener('DOMContentLoaded', init);
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/sw.js').then(() => console.log('✅ SW registered')).catch(console.error);
+            }
+        });
     </script>
 </body>
 </html>
