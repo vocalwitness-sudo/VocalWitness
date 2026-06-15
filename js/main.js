@@ -32,6 +32,10 @@ function attachUIListeners() {
     document.getElementById('btn-premium')?.addEventListener('click', () => {
         showToast("Premium features coming soon");
     });
+    // Google Login (add this)
+document.getElementById('btn-premium')?.addEventListener('click', () => {
+    googleLogin();   // or show login modal
+});
 
     // Google Login
     document.getElementById('google-login-btn')?.addEventListener('click', () => {
