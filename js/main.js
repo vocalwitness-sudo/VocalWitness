@@ -1,4 +1,3 @@
-// js/main.js - Final Upgraded Version with Profile Badges & Tier System
 import { googleLogin, logout, initAuth } from "./auth.js";
 import { initFeed, addPostToFeed } from './feed.js';
 import { db, storage } from './firebase-config.js';
@@ -14,7 +13,7 @@ import {
 } from './media.js';
 import { addDoc, collection } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { VocalWitnessEngine } from './engine.js';
-import { state } from './storage.js';   // Keep for now
+import { state } from './storage.js';
 
 let currentFeed = 'citizen-talk';
 let engine = null;
@@ -23,30 +22,33 @@ export function init() {
     bootstrap();
 }
 
-// Register Service Worker (Add this)
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/VocalWitness/js/sw.js')
-        .then((registration) => {
-            console.log('✅ Service Worker registered successfully');
-        })
-        .catch((error) => {
-            console.error('❌ Service Worker registration failed:', error);
-        });
-}
-
+// Main initialization
 async function bootstrap() {
     try {
         console.log("🚀 Initializing VocalWitness...");
+
         initAuth();
+
+        // === SERVICE WORKER REGISTRATION ===
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/VocalWitness/js/sw.js')
+                .then((registration) => {
+                    console.log('✅ Service Worker registered successfully');
+                })
+                .catch((error) => {
+                    console.error('❌ Service Worker registration failed:', error);
+                });
+        }
+
         initFeed(db, currentFeed);
         initLanguage();
-        
+       
         // Core Engine
         engine = new VocalWitnessEngine(db, storage);
         setEngine(engine);
-        
+       
         attachUIListeners();
-        
+       
         console.log("✅ VocalWitness Core Loaded Successfully");
         showToast("Platform Ready • Witness Voice + Citizen Talk Active");
     } catch (err) {
@@ -94,11 +96,10 @@ function attachUIListeners() {
         voiceBtn.addEventListener('click', () => toggleVoiceRecording(voiceBtn));
     }
 
-    // Publish Button - Full Media Support
+    // Publish Button
     document.getElementById('postButton')?.addEventListener('click', async () => {
         const input = document.getElementById('mainInput');
         const text = input?.value.trim();
-
         if (!text && !selectedImageFile && !engine?.currentAudioBlob) {
             return showToast("Please add text, photo, or voice testimony", "error");
         }
@@ -108,7 +109,6 @@ function attachUIListeners() {
 
         try {
             const mediaData = await uploadForensicMedia("current-user");
-
             await addDoc(collection(db, "testimonies"), {
                 witnessText: text || "",
                 feedVisibility: currentFeed,
@@ -131,7 +131,7 @@ function attachUIListeners() {
         }
     });
 
-    // Integrated Profile Trigger & UI Sync Action
+    // Profile & Logout
     document.getElementById('btn-profile')?.addEventListener('click', () => {
         if (!state?.user) {
             googleLogin();
@@ -147,16 +147,8 @@ function attachUIListeners() {
 
     document.getElementById('btn-logout')?.addEventListener('click', logout);
 }
-async function endorseUser(targetUserId) {
-    if (!state.isWitnessVerified) {
-        showToast("Only Witnesses can endorse others", "error");
-        return;
-    }
-    // TODO: Save to Firestore
-    showToast("✅ Endorsement sent! Reputation increased.", "success");
-    state.reputation = (state.reputation || 0) + 20;
-}
-// Profile Badges & Tier System Utilities
+
+// Profile UI
 function updateProfileUI(user) {
     const usernameEl = document.getElementById('profile-username');
     const emailEl = document.getElementById('profile-email');
@@ -166,15 +158,12 @@ function updateProfileUI(user) {
     if (usernameEl) usernameEl.textContent = user?.displayName || "@citizen";
     if (emailEl) emailEl.textContent = user?.email || "guest@vocalwitness.io";
 
-    // Clear previous badges
     if (badgesContainer) badgesContainer.innerHTML = '';
 
     let tierHTML = '';
-
     if (state?.isWitnessVerified) {
         tierHTML = `<span class="px-4 py-1 bg-emerald-900 text-emerald-400 rounded-full text-sm font-medium">👁️ Witness</span>`;
         addBadge("👁️ Witness", "emerald");
-        
         if (state.reputation >= 70) {
             addBadge("⭐ Trusted Witness", "purple");
         }
@@ -185,7 +174,7 @@ function updateProfileUI(user) {
 
     if (tierContainer) tierContainer.innerHTML = tierHTML;
 
-    // Update stats
+    // Stats
     const postCountEl = document.getElementById('post-count');
     const verifyCountEl = document.getElementById('verify-count');
     const reputationScoreEl = document.getElementById('reputation-score');
@@ -198,7 +187,7 @@ function updateProfileUI(user) {
 function addBadge(text, color) {
     const container = document.getElementById('profile-badges');
     if (!container) return;
-    
+
     const badge = document.createElement('span');
     badge.className = `px-4 py-1 bg-${color}-900 text-${color}-400 rounded-full text-sm font-medium`;
     badge.textContent = text;
