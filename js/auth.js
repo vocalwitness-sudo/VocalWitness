@@ -9,21 +9,33 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 
 import { showToast } from "./utils.js";
+import { updateUser } from './storage.js';
 
+/**
+ * Initializes the Auth listener.
+ * This is the "single source of truth" for auth state.
+ */
 export function initAuth() {
     onAuthStateChanged(auth, (user) => {
         console.log("🔐 Auth state:", user ? user.email : "Guest");
 
+        // 1. Sync with reactive storage
+        updateUser(user);
+
+        // 2. Dispatch custom event for other modules
         const event = new CustomEvent('auth-changed', { 
             detail: { user } 
         });
         window.dispatchEvent(event);
 
-        // Update UI
+        // 3. Update the UI
         updateAuthUI(user);
     });
 }
 
+/**
+ * Updates UI elements based on authentication status.
+ */
 function updateAuthUI(user) {
     const profileBtn = document.getElementById('btn-profile');
     const logoutBtn = document.getElementById('btn-logout');
@@ -37,10 +49,11 @@ function updateAuthUI(user) {
     }
 }
 
+// --- Auth Actions ---
+
 export async function googleLogin() {
     try {
-        const result = await signInWithPopup(auth, provider);
-        console.log("✅ Google Sign In:", result.user.email);
+        await signInWithPopup(auth, provider);
         showToast("Welcome to VocalWitness!", "success");
     } catch (error) {
         console.error("Google login error:", error);
@@ -51,7 +64,6 @@ export async function googleLogin() {
 export async function emailSignup(email, password) {
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        console.log("✅ New user created:", userCredential.user.email);
         showToast("Account created successfully!", "success");
         return userCredential.user;
     } catch (error) {
@@ -64,7 +76,6 @@ export async function emailSignup(email, password) {
 export async function emailLogin(email, password) {
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        console.log("✅ Email login successful:", userCredential.user.email);
         showToast("Welcome back!", "success");
         return userCredential.user;
     } catch (error) {
