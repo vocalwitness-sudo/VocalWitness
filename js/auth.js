@@ -11,10 +11,14 @@ import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.0/f
 import { showToast } from "./utils.js";
 import { updateUser } from './storage.js';
 
+/**
+ * Syncs user to Firestore on first login
+ */
 async function syncUserToFirestore(user) {
     if (!user) return;
     const userRef = doc(db, "users", user.uid);
     const userSnap = await getDoc(userRef);
+    
     if (!userSnap.exists()) {
         await setDoc(userRef, {
             email: user.email,
@@ -36,15 +40,15 @@ export function initAuth() {
         updateAuthUI(user);
     });
 
-    // Handle return from redirect
+    // Handle return from Google redirect
     getRedirectResult(auth).then((result) => {
         if (result?.user) {
             syncUserToFirestore(result.user);
             showToast("Welcome to VocalWitness!", "success");
         }
-    }).catch(err => {
-        if (err.code !== 'auth/redirect-cancelled-by-user') {
-            console.error("Redirect error:", err);
+    }).catch((error) => {
+        if (error.code !== 'auth/redirect-cancelled-by-user') {
+            console.error("Redirect result error:", error);
         }
     });
 }
@@ -52,6 +56,7 @@ export function initAuth() {
 function updateAuthUI(user) {
     const profileBtn = document.getElementById('btn-profile');
     const logoutBtn = document.getElementById('btn-logout');
+   
     if (user) {
         if (profileBtn) profileBtn.textContent = "👤 " + (user.displayName || user.email?.split('@')[0] || "Profile");
         if (logoutBtn) logoutBtn.textContent = "Sign Out";
