@@ -1,0 +1,16 @@
+{
+  "name": "VocalWitness",
+  "short_name": "VocalWitness",
+  "description": "Forensic Testimony & Public Square",
+  "start_url": "/VocalWitness/",
+  "display": "standalone",
+  "background_color": "#0a0f1c",
+  "theme_color": "#10b981",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
