@@ -23,6 +23,17 @@ export function init() {
     bootstrap();
 }
 
+// Register Service Worker (Add this)
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/VocalWitness/js/sw.js')
+        .then((registration) => {
+            console.log('✅ Service Worker registered successfully');
+        })
+        .catch((error) => {
+            console.error('❌ Service Worker registration failed:', error);
+        });
+}
+
 async function bootstrap() {
     try {
         console.log("🚀 Initializing VocalWitness...");
