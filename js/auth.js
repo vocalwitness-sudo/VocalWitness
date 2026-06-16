@@ -1,6 +1,5 @@
 import { auth, provider, db } from './firebase-config.js';
 import {
-    signInWithPopup,
     signInWithRedirect,
     signOut,
     onAuthStateChanged,
@@ -12,9 +11,6 @@ import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.0/f
 import { showToast } from "./utils.js";
 import { updateUser } from './storage.js';
 
-/**
- * Syncs user to Firestore on first login
- */
 async function syncUserToFirestore(user) {
     if (!user) return;
     const userRef = doc(db, "users", user.uid);
@@ -40,15 +36,15 @@ export function initAuth() {
         updateAuthUI(user);
     });
 
-    // Handle redirect result (important for signInWithRedirect)
+    // Handle return from redirect
     getRedirectResult(auth).then((result) => {
         if (result?.user) {
             syncUserToFirestore(result.user);
             showToast("Welcome to VocalWitness!", "success");
         }
-    }).catch((error) => {
-        if (error.code !== 'auth/redirect-cancelled-by-user') {
-            console.error("Redirect result error:", error);
+    }).catch(err => {
+        if (err.code !== 'auth/redirect-cancelled-by-user') {
+            console.error("Redirect error:", err);
         }
     });
 }
@@ -56,7 +52,6 @@ export function initAuth() {
 function updateAuthUI(user) {
     const profileBtn = document.getElementById('btn-profile');
     const logoutBtn = document.getElementById('btn-logout');
-   
     if (user) {
         if (profileBtn) profileBtn.textContent = "👤 " + (user.displayName || user.email?.split('@')[0] || "Profile");
         if (logoutBtn) logoutBtn.textContent = "Sign Out";
@@ -68,22 +63,8 @@ function updateAuthUI(user) {
 
 export async function googleLogin() {
     try {
-        console.log("🚀 Starting Google Sign In...");
-
-        // First try Popup
-        try {
-            const result = await signInWithPopup(auth, provider);
-            await syncUserToFirestore(result.user);
-            console.log("✅ Google Sign In successful (Popup):", result.user.email);
-            showToast("Welcome to VocalWitness!", "success");
-            return;
-        } catch (popupError) {
-            console.warn("Popup failed, falling back to Redirect...", popupError);
-        }
-
-        // Fallback to Redirect (more reliable on GitHub Pages)
+        console.log("🚀 Starting Google Sign In (Redirect)...");
         await signInWithRedirect(auth, provider);
-
     } catch (error) {
         console.error("Google login error:", error);
         showToast("Login failed: " + (error.message || error.code), "error");
