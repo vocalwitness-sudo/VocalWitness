@@ -51,6 +51,23 @@ function updateAuthUI(user) {
     }
 }
 
+async function syncUserToFirestore(user) {
+    if (!user) return;
+    const userRef = doc(db, "users", user.uid);
+    const userSnap = await getDoc(userRef);
+
+    // If this is their first time, create the profile
+    if (!userSnap.exists()) {
+        await setDoc(userRef, {
+            email: user.email,
+            displayName: user.displayName,
+            photoURL: user.photoURL,
+            role: "admin", // Sets you as admin
+            createdAt: new Date().toISOString()
+        });
+        console.log("✅ User synced to Firestore");
+    }
+}
 // --- Auth Actions ---
 
 export async function googleLogin() {
