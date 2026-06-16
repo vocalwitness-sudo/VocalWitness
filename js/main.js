@@ -136,7 +136,15 @@ function attachUIListeners() {
 
     document.getElementById('btn-logout')?.addEventListener('click', logout);
 }
-
+async function endorseUser(targetUserId) {
+    if (!state.isWitnessVerified) {
+        showToast("Only Witnesses can endorse others", "error");
+        return;
+    }
+    // TODO: Save to Firestore
+    showToast("✅ Endorsement sent! Reputation increased.", "success");
+    state.reputation = (state.reputation || 0) + 20;
+}
 // Profile Badges & Tier System Utilities
 function updateProfileUI(user) {
     const usernameEl = document.getElementById('profile-username');
