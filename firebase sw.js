@@ -1,6 +1,6 @@
 const CACHE_NAME = 'vocalwitness-v4';
 
-// Install - Caching
+// Install
 self.addEventListener('install', (event) => {
     console.log('🔧 Service Worker installing...');
     event.waitUntil(
@@ -22,37 +22,32 @@ self.addEventListener('install', (event) => {
     );
 });
 
-// 🔥 Fetch handler - Caching + Referrer Fix for Firebase/Google
+// 🔥 Main Fix: Referrer for Google/Firebase
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
 
-    // === REFERER FIX FOR GOOGLE IDENTITYTOOLKIT (Main Fix) ===
-    if (url.origin === 'https://identitytoolkit.googleapis.com' ||
+    if (url.origin === 'https://identitytoolkit.googleapis.com' || 
         url.origin.includes('googleapis.com')) {
         
-        console.log('🔧 Fixing referrer for:', url.href);
+        console.log('🔧 Fixing referrer for Google API:', url.href);
         
         const modifiedRequest = new Request(event.request, {
-            referrer: 'https://vocalwitness-sudo.github.io/',
+            referrer: 'https://vocalwitness-sudo.github.io/VocalWitness/',
             referrerPolicy: 'no-referrer-when-downgrade'
         });
         
         event.respondWith(fetch(modifiedRequest));
-        return;  // Skip caching for these API calls
+        return;
     }
 
-    // === Normal Caching Logic (your original code) ===
+    // Original caching logic
     event.respondWith(
         caches.match(event.request).then((cachedResponse) => {
             return cachedResponse || fetch(event.request).catch(() => {
-                // Offline fallback
                 if (event.request.destination === 'document') {
                     return caches.match('/VocalWitness/index.html');
                 }
-                return new Response('Offline - No internet connection', {
-                    status: 503,
-                    statusText: 'Service Unavailable'
-                });
+                return new Response('Offline', { status: 503 });
             });
         })
     );
@@ -61,5 +56,5 @@ self.addEventListener('fetch', (event) => {
 // Activate
 self.addEventListener('activate', (event) => {
     console.log('✅ Service Worker activated');
-    event.waitUntil(clients.claim());   // Important for immediate control
+    event.waitUntil(clients.claim());
 });
