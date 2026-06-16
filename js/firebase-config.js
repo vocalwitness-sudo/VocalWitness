@@ -13,14 +13,12 @@ const firebaseConfig = {
     appId: "1:108466981866:web:b53360ad44012a576c8093"
 };
 
-// Add this line after initializing auth
-auth.settings = {
-    appVerificationDisabledForTesting: true
-};
-
 const app = initializeApp(firebaseConfig);
 
+// Export after initialization
 export const auth = getAuth(app);
 export const provider = new GoogleAuthProvider();
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+
+console.log("✅ Firebase Config Loaded");
