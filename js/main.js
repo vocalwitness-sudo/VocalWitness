@@ -1,4 +1,4 @@
-// js/main.js - Final Upgraded Version
+// js/main.js - Final Upgraded Version with Profile Badges & Tier System
 import { googleLogin, logout, initAuth } from "./auth.js";
 import { initFeed, addPostToFeed } from './feed.js';
 import { db, storage } from './firebase-config.js';
@@ -120,12 +120,14 @@ function attachUIListeners() {
         }
     });
 
-    // Profile Button
+    // Integrated Profile Trigger & UI Sync Action
     document.getElementById('btn-profile')?.addEventListener('click', () => {
         if (!state?.user) {
             googleLogin();
+            return;
         }
         document.getElementById('profilePage').classList.remove('hidden');
+        updateProfileUI(state.user);
     });
 
     document.getElementById('btn-close-profile')?.addEventListener('click', () => {
@@ -133,6 +135,55 @@ function attachUIListeners() {
     });
 
     document.getElementById('btn-logout')?.addEventListener('click', logout);
+}
+
+// Profile Badges & Tier System Utilities
+function updateProfileUI(user) {
+    const usernameEl = document.getElementById('profile-username');
+    const emailEl = document.getElementById('profile-email');
+    const tierContainer = document.getElementById('profile-tier-container');
+    const badgesContainer = document.getElementById('profile-badges');
+
+    if (usernameEl) usernameEl.textContent = user?.displayName || "@citizen";
+    if (emailEl) emailEl.textContent = user?.email || "guest@vocalwitness.io";
+
+    // Clear previous badges
+    if (badgesContainer) badgesContainer.innerHTML = '';
+
+    let tierHTML = '';
+
+    if (state?.isWitnessVerified) {
+        tierHTML = `<span class="px-4 py-1 bg-emerald-900 text-emerald-400 rounded-full text-sm font-medium">👁️ Witness</span>`;
+        addBadge("👁️ Witness", "emerald");
+        
+        if (state.reputation >= 70) {
+            addBadge("⭐ Trusted Witness", "purple");
+        }
+    } else {
+        tierHTML = `<span class="px-4 py-1 bg-green-900 text-green-400 rounded-full text-sm font-medium">🟢 Citizen</span>`;
+        addBadge("🟢 Citizen", "green");
+    }
+
+    if (tierContainer) tierContainer.innerHTML = tierHTML;
+
+    // Update stats
+    const postCountEl = document.getElementById('post-count');
+    const verifyCountEl = document.getElementById('verify-count');
+    const reputationScoreEl = document.getElementById('reputation-score');
+
+    if (postCountEl) postCountEl.textContent = state?.postCount || 0;
+    if (verifyCountEl) verifyCountEl.textContent = state?.verifyCount || 0;
+    if (reputationScoreEl) reputationScoreEl.textContent = state?.reputation || 42;
+}
+
+function addBadge(text, color) {
+    const container = document.getElementById('profile-badges');
+    if (!container) return;
+    
+    const badge = document.createElement('span');
+    badge.className = `px-4 py-1 bg-${color}-900 text-${color}-400 rounded-full text-sm font-medium`;
+    badge.textContent = text;
+    container.appendChild(badge);
 }
 
 // Safety fallback
