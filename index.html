@@ -23,7 +23,6 @@
     </style>
 </head>
 <body class="min-h-screen pb-28 p-4">
-    <!-- Legal Notice -->
     <div class="max-w-2xl mx-auto bg-red-950/40 border border-red-500/30 backdrop-blur-sm rounded-3xl p-5 text-xs mb-6 shadow-xl text-zinc-300">
         <strong class="text-red-400 font-bold">Important Legal Notice:</strong><br>
         VocalWitness functions strictly as an un-manipulated decentralized distribution medium.
@@ -45,7 +44,6 @@
                 </div>
             </div>
 
-            <!-- Language + Search -->
             <div class="bg-[#111827] border border-zinc-800 rounded-2xl p-3 glass">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-2 text-xs text-zinc-400 font-medium">
@@ -66,7 +64,6 @@
             </div>
         </header>
 
-        <!-- Navigation -->
         <nav class="grid grid-cols-3 gap-3 mb-4">
             <button id="btn-witnessvoice" class="bg-emerald-500 text-black py-4 rounded-2xl font-bold text-sm transition-all shadow-lg border border-emerald-400/20 flex items-center justify-center gap-1.5 active">👁️ Witness Voice</button>
             <button id="btn-citizentalk" class="bg-zinc-800 text-zinc-400 hover:text-white py-4 rounded-2xl font-bold text-sm transition-all border border-zinc-900 flex items-center justify-center gap-1.5">💬 Citizen Talk</button>
@@ -75,7 +72,6 @@
 
         <div id="feedContainer" class="mb-8 space-y-4"></div>
 
-        <!-- Composer -->
         <div class="bg-[#111827] rounded-3xl p-6 mb-10 glass" id="composer">
             <div id="preview-area" class="hidden mt-4 p-4 bg-zinc-900/50 rounded-2xl"></div>
             <textarea id="mainInput" rows="4" class="w-full bg-[#1e293b] text-white border border-zinc-800 rounded-2xl p-5 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none text-sm" placeholder="Provide raw description..."></textarea>
@@ -87,35 +83,56 @@
         </div>
     </div>
 
-    <!-- Profile Modal -->
     <div id="profilePage" class="hidden fixed inset-0 bg-black/95 z-50 overflow-auto backdrop-blur-md">
         <div class="max-w-2xl mx-auto p-6">
             <button id="btn-close-profile" class="mb-6 text-emerald-400 flex items-center gap-1 font-semibold text-sm transition">← Return to Node</button>
+            
             <div class="glass rounded-3xl p-8">
                 <h2 class="text-2xl font-bold mb-6 text-emerald-400">👤 My Profile</h2>
+                
                 <div class="flex items-center gap-4 mb-8">
-                    <div class="w-20 h-20 bg-zinc-700 rounded-2xl flex items-center justify-center text-4xl">👤</div>
+                    <div id="profile-avatar" class="w-20 h-20 bg-zinc-700 rounded-2xl flex items-center justify-center text-5xl border-2 border-emerald-500/30">👤</div>
                     <div>
-                        <p id="profile-username" class="text-xl font-semibold">User</p>
-                        <p id="profile-email" class="text-zinc-400 text-sm">user@vocalwitness.io</p>
-                        <p id="profile-tier" class="text-emerald-400 text-sm mt-1">Citizen • Tier 0</p>
+                        <p id="profile-username" class="text-2xl font-bold">@username</p>
+                        <p id="profile-email" class="text-zinc-400">user@vocalwitness.io</p>
+                        <div id="profile-tier-container" class="mt-2"></div>
                     </div>
                 </div>
 
-                <button id="vw-btn" class="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-black font-bold rounded-2xl mb-8 transition">🔐 Start ZK Verification (Upgrade to Witness)</button>
+                <div class="mb-8">
+                    <p class="text-xs uppercase tracking-widest text-zinc-500 mb-3">Badges</p>
+                    <div id="profile-badges" class="flex flex-wrap gap-2"></div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-4 mb-8 text-center">
+                    <div class="bg-zinc-900 rounded-2xl p-4">
+                        <p class="text-2xl font-bold text-emerald-400" id="post-count">0</p>
+                        <p class="text-xs text-zinc-400">Testimonies</p>
+                    </div>
+                    <div class="bg-zinc-900 rounded-2xl p-4">
+                        <p class="text-2xl font-bold text-emerald-400" id="verify-count">0</p>
+                        <p class="text-xs text-zinc-400">Verifications</p>
+                    </div>
+                    <div class="bg-zinc-900 rounded-2xl p-4">
+                        <p class="text-2xl font-bold text-emerald-400" id="reputation-score">42</p>
+                        <p class="text-xs text-zinc-400">Reputation</p>
+                    </div>
+                </div>
+
+                <button id="vw-btn" class="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-black font-bold rounded-2xl mb-6 transition">
+                    🔐 Start ZK Verification (Become Witness)
+                </button>
+
                 <div class="space-y-6">
                     <div>
                         <h3 class="text-sm uppercase tracking-widest text-zinc-500 mb-3">Danger Zone</h3>
-                        <button id="btn-logout" class="w-full py-3 bg-red-900/50 hover:bg-red-900 text-red-400 rounded-2xl">Logout / Sign In</button>
+                        <button id="btn-logout" class="w-full py-3 bg-red-900/50 hover:bg-red-900 text-red-400 rounded-2xl">Logout</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-<button onclick="endorseUser()" class="text-purple-400 hover:text-purple-300">
-    ⭐ Endorse this Witness
-</button>
-    <!-- Auth Modal -->
+
     <div id="authModal" class="hidden fixed inset-0 bg-black/90 z-[100] flex items-center justify-center">
         <div class="glass rounded-3xl p-8 w-full max-w-md mx-4">
             <h2 class="text-2xl font-bold mb-6 text-center text-emerald-400">Join VocalWitness</h2>
@@ -134,15 +151,14 @@
         </div>
     </div>
 
-    <!-- Scripts -->
     <script type="module" src="js/main.js"></script>
     <script>
         // Register Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/VocalWitness/js/sw.js')
-                    .then(reg => console.log('✅ Service Worker registered successfully'))
-                    .catch(err => console.error('❌ SW registration failed:', err));
+                navigator.serviceWorker.register('/VocalWitness/sw.js')   // ← Root path setup
+                    .then(reg => console.log('✅ Service Worker registered'))
+                    .catch(err => console.error('❌ SW failed:', err));
             });
         }
     </script>
