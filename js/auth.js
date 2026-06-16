@@ -1,5 +1,5 @@
 // js/auth.js
-import { auth, provider } from './firebase-config.js';
+import { auth, provider, db } from './firebase-config.js'; // Ensure db is exported from your config
 import {
     signInWithPopup,
     signOut,
@@ -7,37 +7,43 @@ import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 import { showToast } from "./utils.js";
 import { updateUser } from './storage.js';
-import { db } from './firebase-config.js'; 
-import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 /**
- * Initializes the Auth listener.
- * This is the "single source of truth" for auth state.
+ * Syncs user to Firestore on first login
  */
+async function syncUserToFirestore(user) {
+    if (!user) return;
+    const userRef = doc(db, "users", user.uid);
+    const userSnap = await getDoc(userRef);
+
+    // If this is their first time, create the profile
+    if (!userSnap.exists()) {
+        await setDoc(userRef, {
+            email: user.email,
+            displayName: user.displayName,
+            photoURL: user.photoURL,
+            role: "admin", // Sets user as admin
+            createdAt: new Date().toISOString()
+        });
+        console.log("✅ User synced to Firestore");
+    }
+}
+
 export function initAuth() {
     onAuthStateChanged(auth, (user) => {
         console.log("🔐 Auth state:", user ? user.email : "Guest");
-
-        // 1. Sync with reactive storage
         updateUser(user);
 
-        // 2. Dispatch custom event for other modules
-        const event = new CustomEvent('auth-changed', { 
-            detail: { user } 
-        });
+        const event = new CustomEvent('auth-changed', { detail: { user } });
         window.dispatchEvent(event);
-
-        // 3. Update the UI
         updateAuthUI(user);
     });
 }
 
-/**
- * Updates UI elements based on authentication status.
- */
 function updateAuthUI(user) {
     const profileBtn = document.getElementById('btn-profile');
     const logoutBtn = document.getElementById('btn-logout');
@@ -51,28 +57,14 @@ function updateAuthUI(user) {
     }
 }
 
-async function syncUserToFirestore(user) {
-    if (!user) return;
-    const userRef = doc(db, "users", user.uid);
-    const userSnap = await getDoc(userRef);
-
-    // If this is their first time, create the profile
-    if (!userSnap.exists()) {
-        await setDoc(userRef, {
-            email: user.email,
-            displayName: user.displayName,
-            photoURL: user.photoURL,
-            role: "admin", // Sets you as admin
-            createdAt: new Date().toISOString()
-        });
-        console.log("✅ User synced to Firestore");
-    }
-}
-// --- Auth Actions ---
-
 export async function googleLogin() {
     try {
-        await signInWithPopup(auth, provider);
+        const result = await signInWithPopup(auth, provider);
+        
+        // Call the sync function immediately after login
+        await syncUserToFirestore(result.user);
+        
+        console.log("✅ Google Sign In:", result.user.email);
         showToast("Welcome to VocalWitness!", "success");
     } catch (error) {
         console.error("Google login error:", error);
@@ -83,6 +75,7 @@ export async function googleLogin() {
 export async function emailSignup(email, password) {
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        await syncUserToFirestore(userCredential.user);
         showToast("Account created successfully!", "success");
         return userCredential.user;
     } catch (error) {
