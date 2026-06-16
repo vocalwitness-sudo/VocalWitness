@@ -5,7 +5,10 @@ import {
     onAuthStateChanged,
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
-    getRedirectResult
+    getRedirectResult,
+    updatePassword,
+    reauthenticateWithCredential,
+    EmailAuthProvider
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { showToast } from "./utils.js";
@@ -56,7 +59,7 @@ export function initAuth() {
 function updateAuthUI(user) {
     const profileBtn = document.getElementById('btn-profile');
     const logoutBtn = document.getElementById('btn-logout');
-   
+    
     if (user) {
         if (profileBtn) profileBtn.textContent = "👤 " + (user.displayName || user.email?.split('@')[0] || "Profile");
         if (logoutBtn) logoutBtn.textContent = "Sign Out";
@@ -108,5 +111,29 @@ export async function logout() {
     } catch (error) {
         console.error("Logout error:", error);
         showToast("Error signing out", "error");
+    }
+}
+
+/* ==================== CHANGE PASSWORD ==================== */
+export async function changePassword(currentPassword, newPassword) {
+    try {
+        const user = auth.currentUser;
+        if (!user || !user.email) {
+            throw new Error("This feature is only available for Email & Password accounts");
+        }
+
+        // Re-authenticate first (Firebase security requirement)
+        const credential = EmailAuthProvider.credential(user.email, currentPassword);
+        await reauthenticateWithCredential(user, credential);
+
+        // Update password
+        await updatePassword(user, newPassword);
+        
+        showToast("✅ Password changed successfully!", "success");
+        return true;
+    } catch (error) {
+        console.error("Change password error:", error);
+        showToast("Failed: " + error.message, "error");
+        return false;
     }
 }
