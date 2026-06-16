@@ -22,22 +22,17 @@ export function init() {
     bootstrap();
 }
 
-// Main initialization
 async function bootstrap() {
     try {
         console.log("🚀 Initializing VocalWitness...");
 
         initAuth();
 
-        // === SERVICE WORKER REGISTRATION ===
+        // Service Worker Registration
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/VocalWitness/js/sw.js')
-                .then((registration) => {
-                    console.log('✅ Service Worker registered successfully');
-                })
-                .catch((error) => {
-                    console.error('❌ Service Worker registration failed:', error);
-                });
+                .then(() => console.log('✅ Service Worker registered'))
+                .catch(err => console.error('❌ SW registration failed:', err));
         }
 
         initFeed(db, currentFeed);
@@ -68,7 +63,7 @@ function attachUIListeners() {
         changeLanguage(e.target.value);
     });
 
-    // Two Lungs Navigation
+    // Navigation
     document.getElementById('btn-witnessvoice')?.addEventListener('click', () => {
         currentFeed = 'witness-voice';
         initFeed(db, currentFeed);
@@ -81,7 +76,7 @@ function attachUIListeners() {
         showToast("💬 Citizen / Street Talk Mode Activated");
     });
 
-    // Photo Button
+    // Media Buttons
     document.getElementById('btn-photo')?.addEventListener('click', () => {
         const input = document.createElement('input');
         input.type = 'file';
@@ -90,7 +85,6 @@ function attachUIListeners() {
         input.click();
     });
 
-    // Voice Button
     const voiceBtn = document.getElementById('btn-voice');
     if (voiceBtn) {
         voiceBtn.addEventListener('click', () => toggleVoiceRecording(voiceBtn));
@@ -119,7 +113,6 @@ function attachUIListeners() {
                 moderation: { trustScore: 100, verificationsCount: 0, disputesCount: 0 }
             });
 
-            // Reset UI
             input.value = '';
             if (typeof resetMediaState === 'function') resetMediaState();
             if (engine) engine.currentAudioBlob = null;
@@ -131,7 +124,7 @@ function attachUIListeners() {
         }
     });
 
-    // Profile & Logout
+    // Profile Button
     document.getElementById('btn-profile')?.addEventListener('click', () => {
         if (!state?.user) {
             googleLogin();
@@ -145,10 +138,64 @@ function attachUIListeners() {
         document.getElementById('profilePage').classList.add('hidden');
     });
 
+    // Logout
     document.getElementById('btn-logout')?.addEventListener('click', logout);
+
+    // ==================== CHANGE PASSWORD MODAL ====================
+    const changePassModal = document.getElementById('changePasswordModal');
+    const btnChangePassword = document.getElementById('btn-change-password');
+    const cancelChangeBtn = document.getElementById('cancel-change-password');
+    const confirmChangeBtn = document.getElementById('confirm-change-password');
+
+    if (btnChangePassword) {
+        btnChangePassword.addEventListener('click', () => {
+            changePassModal.classList.remove('hidden');
+            document.getElementById('current-password').value = '';
+            document.getElementById('new-password').value = '';
+            document.getElementById('confirm-password').value = '';
+        });
+    }
+
+    if (cancelChangeBtn) {
+        cancelChangeBtn.addEventListener('click', () => {
+            changePassModal.classList.add('hidden');
+        });
+    }
+
+    changePassModal?.addEventListener('click', (e) => {
+        if (e.target === changePassModal) {
+            changePassModal.classList.add('hidden');
+        }
+    });
+
+    if (confirmChangeBtn) {
+        confirmChangeBtn.addEventListener('click', async () => {
+            const currentPass = document.getElementById('current-password').value.trim();
+            const newPass = document.getElementById('new-password').value.trim();
+            const confirmPass = document.getElementById('confirm-password').value.trim();
+
+            if (!currentPass || !newPass || !confirmPass) {
+                return showToast("All fields are required", "error");
+            }
+            if (newPass.length < 6) {
+                return showToast("New password must be at least 6 characters", "error");
+            }
+            if (newPass !== confirmPass) {
+                return showToast("New passwords do not match", "error");
+            }
+
+            // Import dynamically to avoid circular issues
+            const { changePassword } = await import('./auth.js');
+            const success = await changePassword(currentPass, newPass);
+            
+            if (success) {
+                changePassModal.classList.add('hidden');
+            }
+        });
+    }
 }
 
-// Profile UI
+// Profile UI Update
 function updateProfileUI(user) {
     const usernameEl = document.getElementById('profile-username');
     const emailEl = document.getElementById('profile-email');
@@ -161,15 +208,10 @@ function updateProfileUI(user) {
     if (badgesContainer) badgesContainer.innerHTML = '';
 
     let tierHTML = '';
-    if (state?.isWitnessVerified) {
+    if (state?.isWitnessVerified || state?.role === "witness") {
         tierHTML = `<span class="px-4 py-1 bg-emerald-900 text-emerald-400 rounded-full text-sm font-medium">👁️ Witness</span>`;
-        addBadge("👁️ Witness", "emerald");
-        if (state.reputation >= 70) {
-            addBadge("⭐ Trusted Witness", "purple");
-        }
     } else {
         tierHTML = `<span class="px-4 py-1 bg-green-900 text-green-400 rounded-full text-sm font-medium">🟢 Citizen</span>`;
-        addBadge("🟢 Citizen", "green");
     }
 
     if (tierContainer) tierContainer.innerHTML = tierHTML;
@@ -181,17 +223,7 @@ function updateProfileUI(user) {
 
     if (postCountEl) postCountEl.textContent = state?.postCount || 0;
     if (verifyCountEl) verifyCountEl.textContent = state?.verifyCount || 0;
-    if (reputationScoreEl) reputationScoreEl.textContent = state?.reputation || 42;
-}
-
-function addBadge(text, color) {
-    const container = document.getElementById('profile-badges');
-    if (!container) return;
-
-    const badge = document.createElement('span');
-    badge.className = `px-4 py-1 bg-${color}-900 text-${color}-400 rounded-full text-sm font-medium`;
-    badge.textContent = text;
-    container.appendChild(badge);
+    if (reputationScoreEl) reputationScoreEl.textContent = state?.reputation || 50;
 }
 
 // Safety fallback
