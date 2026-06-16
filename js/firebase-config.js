@@ -13,6 +13,11 @@ const firebaseConfig = {
     appId: "1:108466981866:web:b53360ad44012a576c8093"
 };
 
+// Add this line after initializing auth
+auth.settings = {
+    appVerificationDisabledForTesting: true
+};
+
 const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
