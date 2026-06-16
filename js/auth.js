@@ -47,10 +47,10 @@ export function initAuth() {
 function updateAuthUI(user) {
     const profileBtn = document.getElementById('btn-profile');
     const logoutBtn = document.getElementById('btn-logout');
-   
+    
     if (user) {
-        if (profileBtn) profileBtn.textContent = "👤 " + (user.displayName || "Profile");
-        if (logoutBtn) logoutBtn.textContent = "Logout";
+        if (profileBtn) profileBtn.textContent = "👤 " + (user.displayName || user.email || "Profile");
+        if (logoutBtn) logoutBtn.textContent = "Logout";   // ← Change this
     } else {
         if (profileBtn) profileBtn.textContent = "👤 Profile";
         if (logoutBtn) logoutBtn.textContent = "Sign In";
