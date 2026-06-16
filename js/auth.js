@@ -1,14 +1,14 @@
-// js/auth.js
-import { auth, provider, db } from './firebase-config.js'; // Ensure db is exported from your config
+import { auth, provider, db } from './firebase-config.js';
 import {
     signInWithPopup,
+    signInWithRedirect,
     signOut,
     onAuthStateChanged,
     createUserWithEmailAndPassword,
-    signInWithEmailAndPassword
+    signInWithEmailAndPassword,
+    getRedirectResult
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-
 import { showToast } from "./utils.js";
 import { updateUser } from './storage.js';
 
@@ -19,14 +19,12 @@ async function syncUserToFirestore(user) {
     if (!user) return;
     const userRef = doc(db, "users", user.uid);
     const userSnap = await getDoc(userRef);
-
-    // If this is their first time, create the profile
     if (!userSnap.exists()) {
         await setDoc(userRef, {
             email: user.email,
-            displayName: user.displayName,
+            displayName: user.displayName || user.email?.split('@')[0],
             photoURL: user.photoURL,
-            role: "admin", // Sets user as admin
+            role: "admin",
             createdAt: new Date().toISOString()
         });
         console.log("✅ User synced to Firestore");
@@ -37,20 +35,31 @@ export function initAuth() {
     onAuthStateChanged(auth, (user) => {
         console.log("🔐 Auth state:", user ? user.email : "Guest");
         updateUser(user);
-
         const event = new CustomEvent('auth-changed', { detail: { user } });
         window.dispatchEvent(event);
         updateAuthUI(user);
+    });
+
+    // Handle redirect result (important for signInWithRedirect)
+    getRedirectResult(auth).then((result) => {
+        if (result?.user) {
+            syncUserToFirestore(result.user);
+            showToast("Welcome to VocalWitness!", "success");
+        }
+    }).catch((error) => {
+        if (error.code !== 'auth/redirect-cancelled-by-user') {
+            console.error("Redirect result error:", error);
+        }
     });
 }
 
 function updateAuthUI(user) {
     const profileBtn = document.getElementById('btn-profile');
     const logoutBtn = document.getElementById('btn-logout');
-    
+   
     if (user) {
-        if (profileBtn) profileBtn.textContent = "👤 " + (user.displayName || user.email || "Profile");
-        if (logoutBtn) logoutBtn.textContent = "Logout";   // ← Change this
+        if (profileBtn) profileBtn.textContent = "👤 " + (user.displayName || user.email?.split('@')[0] || "Profile");
+        if (logoutBtn) logoutBtn.textContent = "Sign Out";
     } else {
         if (profileBtn) profileBtn.textContent = "👤 Profile";
         if (logoutBtn) logoutBtn.textContent = "Sign In";
@@ -59,16 +68,25 @@ function updateAuthUI(user) {
 
 export async function googleLogin() {
     try {
-        const result = await signInWithPopup(auth, provider);
-        
-        // Call the sync function immediately after login
-        await syncUserToFirestore(result.user);
-        
-        console.log("✅ Google Sign In:", result.user.email);
-        showToast("Welcome to VocalWitness!", "success");
+        console.log("🚀 Starting Google Sign In...");
+
+        // First try Popup
+        try {
+            const result = await signInWithPopup(auth, provider);
+            await syncUserToFirestore(result.user);
+            console.log("✅ Google Sign In successful (Popup):", result.user.email);
+            showToast("Welcome to VocalWitness!", "success");
+            return;
+        } catch (popupError) {
+            console.warn("Popup failed, falling back to Redirect...", popupError);
+        }
+
+        // Fallback to Redirect (more reliable on GitHub Pages)
+        await signInWithRedirect(auth, provider);
+
     } catch (error) {
         console.error("Google login error:", error);
-        showToast("Login failed: " + error.message, "error");
+        showToast("Login failed: " + (error.message || error.code), "error");
     }
 }
 
