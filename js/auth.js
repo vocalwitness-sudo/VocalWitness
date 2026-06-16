@@ -10,6 +10,8 @@ import {
 
 import { showToast } from "./utils.js";
 import { updateUser } from './storage.js';
+import { db } from './firebase-config.js'; 
+import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 /**
  * Initializes the Auth listener.
