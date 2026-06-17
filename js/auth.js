@@ -8,7 +8,9 @@ import {
     getRedirectResult,
     updatePassword,
     reauthenticateWithCredential,
-    EmailAuthProvider
+    EmailAuthProvider,
+    RecaptchaVerifier,
+    signInWithPhoneNumber
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { showToast } from "./utils.js";
@@ -134,6 +136,68 @@ export async function changePassword(currentPassword, newPassword) {
     } catch (error) {
         console.error("Change password error:", error);
         showToast("Failed: " + error.message, "error");
+        return false;
+    }
+}
+
+// ==================== PHONE VERIFICATION WITH RECAPTCHA v3 ====================
+let recaptchaVerifier;
+
+export function initRecaptcha() {
+    if (recaptchaVerifier) {
+        recaptchaVerifier.clear();
+    }
+    
+    recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        'size': 'invisible',
+        'callback': (response) => {
+            console.log("✅ reCAPTCHA v3 verified");
+        },
+        'expired-callback': () => {
+            console.warn("reCAPTCHA expired");
+        }
+    });
+}
+
+export async function sendPhoneVerification(phoneNumber) {
+    try {
+        if (!recaptchaVerifier) {
+            initRecaptcha();
+        }
+
+        const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifier);
+        window.confirmationResult = confirmationResult;
+
+        showToast("✅ 6-digit code sent to your phone", "success");
+        return true;
+    } catch (error) {
+        console.error("Phone auth error:", error);
+        showToast("Failed to send code: " + error.message, "error");
+        return false;
+    }
+}
+
+export async function verifyPhoneCode(code) {
+    try {
+        if (!window.confirmationResult) {
+            throw new Error("No verification session found");
+        }
+
+        const result = await window.confirmationResult.confirm(code);
+        
+        // Update Firestore
+        const userRef = doc(db, "users", result.user.uid);
+        await setDoc(userRef, {
+            isPhoneVerified: true,
+            phoneNumber: result.user.phoneNumber,
+            phoneVerifiedAt: new Date().toISOString()
+        }, { merge: true });
+
+        showToast("✅ Phone number verified successfully! Trust increased.", "success");
+        return true;
+    } catch (error) {
+        console.error("Code verification error:", error);
+        showToast("Invalid or expired code. Please try again.", "error");
         return false;
     }
 }
