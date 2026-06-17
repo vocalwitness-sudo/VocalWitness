@@ -1,63 +1,15 @@
-import { googleLogin, logout, initAuth } from "./auth.js";
-import { initFeed, addPostToFeed } from './feed.js';
-import { db, storage } from './firebase-config.js';
-import { showToast } from './utils.js';
-import { initLanguage, changeLanguage } from './i18n.js';
-import {
-    handleImageSelect,
-    toggleVoiceRecording,
-    resetMediaState,
-    uploadForensicMedia,
-    selectedImageFile,
-    setEngine
-} from './media.js';
-import { addDoc, collection } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-import { VocalWitnessEngine } from './engine.js';
-import { state } from './storage.js';
-
-let currentFeed = 'citizen-talk';
-let engine = null;
-
-export function init() {
-    bootstrap();
-}
-
-async function bootstrap() {
-    try {
-        console.log("🚀 Initializing VocalWitness...");
-        initAuth();
-
-        // Service Worker Registration
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/VocalWitness/sw.js')
-                .then(reg => console.log('✅ SW registered:', reg.scope))
-                .catch(err => console.error('❌ SW failed:', err));
-        }
-
-        initFeed(db, currentFeed);
-        initLanguage();
-
-        engine = new VocalWitnessEngine(db, storage);
-        setEngine(engine);
-
-        attachUIListeners();
-
-        // FIX: Ensure UI is visible immediately upon load
-        const profilePage = document.getElementById('profilePage');
-        if (profilePage) profilePage.classList.remove('hidden');
-
-        console.log("✅ VocalWitness Core Loaded Successfully");
-        showToast("Platform Ready • Witness Voice + Citizen Talk Active");
-    } catch (err) {
-        console.error("Bootstrap error:", err);
-        showToast("Initialization issue - check console", "error");
-    }
-}
-
 function attachUIListeners() {
-    document.getElementById('btn-premium')?.addEventListener('click', () => googleLogin());
-    document.getElementById('languageSelector')?.addEventListener('change', (e) => changeLanguage(e.target.value));
+    // Premium Button
+    document.getElementById('btn-premium')?.addEventListener('click', () => {
+        googleLogin();
+    });
 
+    // Language Selector
+    document.getElementById('languageSelector')?.addEventListener('change', (e) => {
+        changeLanguage(e.target.value);
+    });
+
+    // Navigation (Feed tabs)
     document.getElementById('btn-witnessvoice')?.addEventListener('click', () => {
         currentFeed = 'witness-voice';
         initFeed(db, currentFeed);
@@ -70,6 +22,7 @@ function attachUIListeners() {
         showToast("💬 Citizen / Street Talk Mode Activated");
     });
 
+    // Media Buttons
     document.getElementById('btn-photo')?.addEventListener('click', () => {
         const input = document.createElement('input');
         input.type = 'file';
@@ -79,46 +32,144 @@ function attachUIListeners() {
     });
 
     const voiceBtn = document.getElementById('btn-voice');
-    if (voiceBtn) voiceBtn.addEventListener('click', () => toggleVoiceRecording(voiceBtn));
+    if (voiceBtn) {
+        voiceBtn.addEventListener('click', () => toggleVoiceRecording(voiceBtn));
+    }
 
+    // Publish Button
     document.getElementById('postButton')?.addEventListener('click', async () => {
         const input = document.getElementById('mainInput');
         const text = input?.value.trim();
-
         if (!text && !selectedImageFile && !engine?.currentAudioBlob) {
             return showToast("Please add text, photo, or voice testimony", "error");
         }
 
-        const postButton = document.getElementById('postButton');
-        const originalText = postButton?.innerText || "Publish";
-        postButton.disabled = true;
-        postButton.innerText = "Publishing...";
+        const tempId = 'temp-' + Date.now();
+        addPostToFeed({ id: tempId, witnessText: text || "📸 Media Testimony" }, true);
+
+        const clientPhoneVerified = !!state?.user?.providerData?.some(p => p.providerId === 'phone') || 
+                                   !!document.getElementById('trust-score')?.innerText.includes('100');
 
         try {
-            const user = state?.user;
-            const mediaData = await uploadForensicMedia(user?.uid || "anonymous");
+            const mediaData = await uploadForensicMedia("current-user");
             await addDoc(collection(db, "testimonies"), {
                 witnessText: text || "",
                 feedVisibility: currentFeed,
                 timestamp: new Date().toISOString(),
-                authorId: user?.uid || "anonymous",
-                ...mediaData
+                languageCode: localStorage.getItem('preferredLang') || 'en',
+                authorId: "user-" + Date.now().toString().slice(-6),
+                ...mediaData,
+                moderation: {
+                    trustScore: clientPhoneVerified ? 100 : 50,
+                    verificationsCount: 0,
+                    disputesCount: 0
+                }
             });
 
-            if (input) input.value = '';
+            input.value = '';
             if (typeof resetMediaState === 'function') resetMediaState();
-            showToast("✅ Published Successfully", "success");
+            if (engine) engine.currentAudioBlob = null;
+            showToast("✅ Forensic Testimony Published Successfully");
         } catch (e) {
-            showToast("Failed to publish", "error");
-        } finally {
-            postButton.disabled = false;
-            postButton.innerText = originalText;
+            console.error(e);
+            showToast("Failed to publish testimony", "error");
         }
     });
 
-    document.getElementById('btn-logout')?.addEventListener('click', logout);
-}
+    // ==================== PROFILE NAVIGATION ====================
+    const profileBtn = document.getElementById('btn-profile');
+    const homeSection = document.getElementById('homeSection');
+    const profileSection = document.getElementById('profileSection');
+    const closeProfileBtn = document.getElementById('btn-close-profile');
 
-document.addEventListener('DOMContentLoaded', () => {
-    if (typeof init === 'function') init();
-});
+    if (profileBtn) {
+        profileBtn.addEventListener('click', () => {
+            if (!state?.user) {
+                googleLogin();
+                return;
+            }
+            // Switch sections
+            homeSection.classList.remove('active');
+            profileSection.classList.add('active');
+            updateProfileUI(state.user);
+        });
+    }
+
+    if (closeProfileBtn) {
+        closeProfileBtn.addEventListener('click', () => {
+            profileSection.classList.remove('active');
+            homeSection.classList.add('active');
+        });
+    }
+
+    // Logout
+    document.getElementById('btn-logout')?.addEventListener('click', logout);
+
+    // ==================== PHONE VERIFICATION MODAL ====================
+    const phoneModal = document.getElementById('phoneModal');
+    const btnOpenPhoneModal = document.getElementById('btn-verify-phone');
+    const btnClosePhoneModal = document.getElementById('close-phone-modal');
+    const step1Container = document.getElementById('phone-step-1');
+    const step2Container = document.getElementById('phone-step-2');
+    const phoneNumberInput = document.getElementById('phone-number-input');
+    const phoneOtpInput = document.getElementById('phone-otp-input');
+    const btnSendOtp = document.getElementById('btn-send-otp');
+    const btnVerifyOtp = document.getElementById('btn-verify-otp');
+
+    if (btnOpenPhoneModal) {
+        btnOpenPhoneModal.addEventListener('click', () => {
+            if (step1Container && step2Container) {
+                step1Container.classList.remove('hidden');
+                step2Container.classList.add('hidden');
+            }
+            if (phoneNumberInput) phoneNumberInput.value = "";
+            if (phoneOtpInput) phoneOtpInput.value = "";
+            phoneModal?.classList.remove('hidden');
+        });
+    }
+
+    if (btnClosePhoneModal) {
+        btnClosePhoneModal.addEventListener('click', () => {
+            phoneModal?.classList.add('hidden');
+        });
+    }
+
+    if (btnSendOtp) {
+        btnSendOtp.addEventListener('click', async () => {
+            const phoneRaw = phoneNumberInput?.value.trim();
+            if (!phoneRaw || !phoneRaw.startsWith('+') || phoneRaw.length < 8) {
+                return showToast("Please enter a valid phone number starting with + and country code.", "error");
+            }
+            btnSendOtp.disabled = true;
+            btnSendOtp.innerText = "Processing security handshake...";
+            const isSent = await sendPhoneVerification(phoneRaw);
+            if (isSent) {
+                step1Container?.classList.add('hidden');
+                step2Container?.classList.remove('hidden');
+            }
+            btnSendOtp.disabled = false;
+            btnSendOtp.innerText = "Send Verification Code";
+        });
+    }
+
+    if (btnVerifyOtp) {
+        btnVerifyOtp.addEventListener('click', async () => {
+            const otpCode = phoneOtpInput?.value.trim();
+            if (!otpCode || otpCode.length !== 6 || isNaN(otpCode)) {
+                return showToast("Please enter a valid 6-digit verification code.", "error");
+            }
+            btnVerifyOtp.disabled = true;
+            btnVerifyOtp.innerText = "Anchoring confirmation data...";
+            const success = await verifyPhoneCode(otpCode);
+            if (success) {
+                phoneModal?.classList.add('hidden');
+                const trustScoreEl = document.getElementById('trust-score');
+                if (trustScoreEl) trustScoreEl.innerText = "100";
+            }
+            btnVerifyOtp.disabled = false;
+            btnVerifyOtp.innerText = "Verify & Upgrade Account";
+        });
+    }
+
+    // (Add your change password modal listeners here if needed)
+}
