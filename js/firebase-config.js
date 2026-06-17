@@ -1,5 +1,18 @@
+// js/firebase-config.js
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { getStorage } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
 const CACHE_NAME = 'vocalwitness-v6'; // Incremented version to force cache refresh
 
+const firebaseConfig = {
+    apiKey: "AIzaSyATxYekXgjdLP2SfR42FG8rEdajq_pIEb0",
+    authDomain: "vocalwitness-3affa.firebaseapp.com",
+    projectId: "vocalwitness-3affa",
+    storageBucket: "vocalwitness-3affa.firebasestorage.app",
+    messagingSenderId: "108466981866",
+    appId: "1:108466981866:web:b53360ad44012a576c8093"
+};
 const STATIC_ASSETS = [
     '/VocalWitness/',
     '/VocalWitness/index.html',
@@ -17,6 +30,7 @@ const STATIC_ASSETS = [
     '/VocalWitness/js/firebase-config.js'
 ];
 
+const app = initializeApp(firebaseConfig);
 // Install Event
 self.addEventListener('install', (event) => {
     self.skipWaiting(); // Force the new service worker to activate immediately
@@ -27,6 +41,11 @@ self.addEventListener('install', (event) => {
     );
 });
 
+// Export after initialization
+export const auth = getAuth(app);
+export const provider = new GoogleAuthProvider();
+export const db = getFirestore(app);
+export const storage = getStorage(app);
 // Activate Event - Cleanup old caches
 self.addEventListener('activate', (event) => {
     event.waitUntil(
@@ -42,6 +61,7 @@ self.addEventListener('activate', (event) => {
     );
 });
 
+console.log("✅ Firebase Config Loaded");
 // Fetch Event
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
