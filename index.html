@@ -169,16 +169,7 @@
     <div id="recaptcha-container"></div>
 
     <script type="module" src="js/main.js"></script>
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/VocalWitness/js/sw.js')
-                    .then(() => console.log('✅ Service Worker registered'))
-                    .catch(err => console.error('❌ SW failed:', err));
-            });
-        }
-    </script>
-    <!-- Place this just before the closing </body> tag -->
+    
 <script>
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
