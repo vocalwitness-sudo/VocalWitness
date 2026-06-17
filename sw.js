@@ -1,3 +1,4 @@
+const CACHE_NAME = 'vocalwitness-v6'; // Incremented version to force cache refresh
 
 const STATIC_ASSETS = [
     '/VocalWitness/',
@@ -13,16 +14,14 @@ const STATIC_ASSETS = [
     '/VocalWitness/js/engine.js',
     '/VocalWitness/js/utils.js',
     '/VocalWitness/js/i18n.js',
-    '/VocalWitness/js/firebase-config.js',
-    '/VocalWitness/js/sw.js'  // Self-reference
+    '/VocalWitness/js/firebase-config.js'
 ];
 
 // Install Event
 self.addEventListener('install', (event) => {
-    console.log('🔧 Service Worker installing...');
+    self.skipWaiting(); // Force the new service worker to activate immediately
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
-            console.log('📦 Caching static assets');
             return cache.addAll(STATIC_ASSETS);
         })
     );
@@ -30,13 +29,11 @@ self.addEventListener('install', (event) => {
 
 // Activate Event - Cleanup old caches
 self.addEventListener('activate', (event) => {
-    console.log('✅ Service Worker activated');
     event.waitUntil(
         caches.keys().then((cacheNames) => {
             return Promise.all(
                 cacheNames.map((cacheName) => {
                     if (cacheName !== CACHE_NAME) {
-                        console.log('🗑️ Deleting old cache:', cacheName);
                         return caches.delete(cacheName);
                     }
                 })
@@ -49,33 +46,18 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
 
-    // Special handling for Google/Firebase Auth APIs (referrer fix)
+    // 1. NETWORK BYPASS: Do not intercept Firebase/Google services
     if (url.origin.includes('googleapis.com') || 
-        url.origin.includes('identitytoolkit.googleapis.com') ||
+        url.origin.includes('gstatic.com') ||
         url.origin.includes('firebase')) {
-        
-        console.log('🔧 Handling Google/Firebase request:', url.href);
-        
-        const modifiedRequest = new Request(event.request, {
-            referrer: 'https://vocalwitness-sudo.github.io/VocalWitness/',
-            referrerPolicy: 'no-referrer-when-downgrade',
-            mode: 'cors',
-            credentials: 'same-origin'
-        });
-
-        event.respondWith(fetch(modifiedRequest));
-        return;
+        return; 
     }
 
-    // Cache-First strategy for static assets
+    // 2. CACHE-FIRST for static assets
     event.respondWith(
         caches.match(event.request).then((cachedResponse) => {
-            if (cachedResponse) {
-                return cachedResponse;
-            }
-
-            return fetch(event.request).then((networkResponse) => {
-                // Cache successful responses
+            return cachedResponse || fetch(event.request).then((networkResponse) => {
+                // Only cache successful requests
                 if (networkResponse && networkResponse.status === 200) {
                     const responseToCache = networkResponse.clone();
                     caches.open(CACHE_NAME).then((cache) => {
@@ -83,19 +65,7 @@ self.addEventListener('fetch', (event) => {
                     });
                 }
                 return networkResponse;
-            }).catch(() => {
-                // Offline fallback
-                if (event.request.destination === 'document') {
-                    return caches.match('/VocalWitness/index.html');
-                }
-                if (event.request.destination === 'image') {
-                    return caches.match('/VocalWitness/logo.png');
-                }
-                return new Response('Offline - Please check your connection', { 
-                    status: 503, 
-                    statusText: 'Service Unavailable' 
-                });
             });
         })
     );
-}); 
+});
