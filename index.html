@@ -184,6 +184,38 @@
       </button>
     </section>
 
+    <section id="security-settings-section">
+      <h3>🔒 Account Security</h3>
+      <p style="color: var(--text-muted); font-size: 0.9rem;">Keep your identity protected by altering your authentication credentials.</p>
+      
+      <div style="margin-top: 15px;">
+        <button id="btn-open-password-mod" style="padding: 10px 16px; background: #27272a; color: #ffffff; border: 1px solid #3f3f46; border-radius: 6px; cursor: pointer; font-weight: 500;">
+          Change Password
+        </button>
+      </div>
+
+      <div id="password-form-container" style="display: none; margin-top: 20px; background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px;">
+        <div style="margin-bottom: 12px;">
+          <label style="display: block; font-size: 0.85rem; margin-bottom: 6px; color: var(--text-muted);">New Security Password</label>
+          <input type="password" id="input-new-password" style="width: 100%; padding: 10px; background: #121214; border: 1px solid #3f3f46; border-radius: 6px; color: white; box-sizing: border-box;">
+        </div>
+        
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; font-size: 0.85rem; margin-bottom: 6px; color: var(--text-muted);">Confirm Password</label>
+          <input type="password" id="input-confirm-password" style="width: 100%; padding: 10px; background: #121214; border: 1px solid #3f3f46; border-radius: 6px; color: white; box-sizing: border-box;">
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <button id="btn-submit-password" style="padding: 8px 16px; background: var(--witness-green, #10b981); color: black; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">
+            Save Changes
+          </button>
+          <button id="btn-cancel-password" style="padding: 8px 16px; background: transparent; color: var(--text-muted); border: none; cursor: pointer;">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </section>
+
     <div id="witness-locked-notice" class="lock-notice" style="display: block;">
       🔒 <strong>Witness Arena Locked</strong><br>
       Verify your phone number, complete cryptographic ZK verification, and maintain a high reputation score to unlock your <strong>Trust Circle</strong> and <strong>Video Arena</strong> access.
@@ -192,5 +224,34 @@
   </div>
 
   <script type="module" src="js/profile.js"></script>
+  <script type="module" src="js/security.js"></script>
+
+  <script>
+    // 3. Lock the Private Key (Encrypt)
+    async function encryptKey(privateKey, masterLock) {
+        const iv = window.crypto.getRandomValues(new Uint8Array(12)); // Unique vector for every lock
+        const encodedKey = new TextEncoder().encode(privateKey);
+        
+        const encrypted = await window.crypto.subtle.encrypt(
+            { name: "AES-GCM", iv: iv },
+            masterLock,
+            encodedKey
+        );
+
+        // Return both the IV and the encrypted data (you need both to unlock it later!)
+        return { iv, encrypted };
+    }
+
+    // 4. Unlock the Private Key (Decrypt)
+    async function decryptKey(encryptedData, iv, masterLock) {
+        const decrypted = await window.crypto.subtle.decrypt(
+            { name: "AES-GCM", iv: iv },
+            masterLock,
+            encryptedData
+        );
+        
+        return new TextDecoder().decode(decrypted);
+    }
+  </script>
 </body>
 </html>
