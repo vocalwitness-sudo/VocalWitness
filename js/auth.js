@@ -29,7 +29,7 @@ async function syncUserToFirestore(user) {
             email: user.email,
             displayName: user.displayName || user.email?.split('@')[0],
             photoURL: user.photoURL,
-            role: "admin",
+            role: "citizen",
             createdAt: new Date().toISOString()
         });
         console.log("✅ User synced to Firestore");
@@ -135,7 +135,12 @@ export async function changePassword(currentPassword, newPassword) {
         return true;
     } catch (error) {
         console.error("Change password error:", error);
-        showToast("Failed: " + error.message, "error");
+        
+        if (error.code === "auth/requires-recent-login" || error.code === "auth/wrong-password") {
+            showToast("Security mismatch: Check current password or re-login.", "error");
+        } else {
+            showToast("Failed: " + error.message, "error");
+        }
         return false;
     }
 }
