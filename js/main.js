@@ -1,15 +1,29 @@
+/**
+ * Centralized UI Listener Attachment
+ * Refactored for safety, readability, and modular navigation
+ */
 function attachUIListeners() {
-    // Premium Button
-    document.getElementById('btn-premium')?.addEventListener('click', () => {
-        googleLogin();
-    });
+    
+    // ==========================================
+    // HELPER: Navigation Logic
+    // ==========================================
+    const navigate = (sectionId) => {
+        const sections = ['homeSection', 'profileSection']; // Add more as you create them
+        sections.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.toggle('active', id === sectionId);
+        });
+    };
 
-    // Language Selector
+    // ==========================================
+    // NAVIGATION & FEED
+    // ==========================================
+    document.getElementById('btn-premium')?.addEventListener('click', googleLogin);
+
     document.getElementById('languageSelector')?.addEventListener('change', (e) => {
         changeLanguage(e.target.value);
     });
 
-    // Navigation (Feed tabs)
     document.getElementById('btn-witnessvoice')?.addEventListener('click', () => {
         currentFeed = 'witness-voice';
         initFeed(db, currentFeed);
@@ -22,7 +36,9 @@ function attachUIListeners() {
         showToast("💬 Citizen / Street Talk Mode Activated");
     });
 
-    // Media Buttons
+    // ==========================================
+    // MEDIA & PUBLISHING
+    // ==========================================
     document.getElementById('btn-photo')?.addEventListener('click', () => {
         const input = document.createElement('input');
         input.type = 'file';
@@ -31,15 +47,12 @@ function attachUIListeners() {
         input.click();
     });
 
-    const voiceBtn = document.getElementById('btn-voice');
-    if (voiceBtn) {
-        voiceBtn.addEventListener('click', () => toggleVoiceRecording(voiceBtn));
-    }
+    document.getElementById('btn-voice')?.addEventListener('click', (e) => toggleVoiceRecording(e.currentTarget));
 
-    // Publish Button
     document.getElementById('postButton')?.addEventListener('click', async () => {
         const input = document.getElementById('mainInput');
         const text = input?.value.trim();
+        
         if (!text && !selectedImageFile && !engine?.currentAudioBlob) {
             return showToast("Please add text, photo, or voice testimony", "error");
         }
@@ -52,17 +65,12 @@ function attachUIListeners() {
 
         try {
             const mediaData = await uploadForensicMedia("current-user");
-            
-            // UPDATED: Use state?.user?.uid for author identification
             await addDoc(collection(db, "testimonies"), {
                 witnessText: text || "",
                 feedVisibility: currentFeed,
                 timestamp: new Date().toISOString(),
                 languageCode: localStorage.getItem('preferredLang') || 'en',
-                
-                // Fixed: Use real UID when logged in, otherwise "anonymous"
                 authorId: state?.user?.uid || "anonymous",
-                
                 ...mediaData,
                 moderation: {
                     trustScore: clientPhoneVerified ? 100 : 50,
@@ -71,7 +79,7 @@ function attachUIListeners() {
                 }
             });
 
-            input.value = '';
+            if (input) input.value = '';
             if (typeof resetMediaState === 'function') resetMediaState();
             if (engine) engine.currentAudioBlob = null;
             showToast("✅ Forensic Testimony Published Successfully");
@@ -81,97 +89,61 @@ function attachUIListeners() {
         }
     });
 
-    // ==================== PROFILE NAVIGATION ====================
-    // ... (rest of your existing function code remains unchanged)
-    const profileBtn = document.getElementById('btn-profile');
-    const homeSection = document.getElementById('homeSection');
-    const profileSection = document.getElementById('profileSection');
-    const closeProfileBtn = document.getElementById('btn-close-profile');
+    // ==========================================
+    // PROFILE NAVIGATION
+    // ==========================================
+    document.getElementById('btn-profile')?.addEventListener('click', () => {
+        if (!state?.user) {
+            showToast("Sign in required to view your profile", "info");
+            googleLogin();
+            return;
+        }
+        navigate('profileSection');
+        updateProfileUI(state.user);
+    });
 
-    if (profileBtn) {
-        profileBtn.addEventListener('click', () => {
-            if (!state?.user) {
-                googleLogin();
-                return;
-            }
-            homeSection.classList.remove('active');
-            profileSection.classList.add('active');
-            updateProfileUI(state.user);
-        });
-    }
-
-    if (closeProfileBtn) {
-        closeProfileBtn.addEventListener('click', () => {
-            profileSection.classList.remove('active');
-            homeSection.classList.add('active');
-        });
-    }
-
+    document.getElementById('btn-close-profile')?.addEventListener('click', () => navigate('homeSection'));
     document.getElementById('btn-logout')?.addEventListener('click', logout);
 
-    // ==================== PHONE VERIFICATION MODAL ====================
+    // ==========================================
+    // PHONE VERIFICATION
+    // ==========================================
     const phoneModal = document.getElementById('phoneModal');
-    const btnOpenPhoneModal = document.getElementById('btn-verify-phone');
-    const btnClosePhoneModal = document.getElementById('close-phone-modal');
-    const step1Container = document.getElementById('phone-step-1');
-    const step2Container = document.getElementById('phone-step-2');
-    const phoneNumberInput = document.getElementById('phone-number-input');
-    const phoneOtpInput = document.getElementById('phone-otp-input');
-    const btnSendOtp = document.getElementById('btn-send-otp');
-    const btnVerifyOtp = document.getElementById('btn-verify-otp');
+    
+    document.getElementById('btn-verify-phone')?.addEventListener('click', () => {
+        document.getElementById('phone-step-1')?.classList.remove('hidden');
+        document.getElementById('phone-step-2')?.classList.add('hidden');
+        phoneModal?.classList.remove('hidden');
+    });
 
-    if (btnOpenPhoneModal) {
-        btnOpenPhoneModal.addEventListener('click', () => {
-            if (step1Container && step2Container) {
-                step1Container.classList.remove('hidden');
-                step2Container.classList.add('hidden');
-            }
-            if (phoneNumberInput) phoneNumberInput.value = "";
-            if (phoneOtpInput) phoneOtpInput.value = "";
-            phoneModal?.classList.remove('hidden');
-        });
-    }
+    document.getElementById('close-phone-modal')?.addEventListener('click', () => phoneModal?.classList.add('hidden'));
 
-    if (btnClosePhoneModal) {
-        btnClosePhoneModal.addEventListener('click', () => {
+    document.getElementById('btn-send-otp')?.addEventListener('click', async (e) => {
+        const phoneRaw = document.getElementById('phone-number-input')?.value.trim();
+        if (!phoneRaw || !phoneRaw.startsWith('+') || phoneRaw.length < 8) {
+            return showToast("Please enter a valid phone number (e.g., +1234567890)", "error");
+        }
+        e.target.disabled = true;
+        const isSent = await sendPhoneVerification(phoneRaw);
+        if (isSent) {
+            document.getElementById('phone-step-1')?.classList.add('hidden');
+            document.getElementById('phone-step-2')?.classList.remove('hidden');
+        }
+        e.target.disabled = false;
+    });
+
+    document.getElementById('btn-verify-otp')?.addEventListener('click', async (e) => {
+        const otpCode = document.getElementById('phone-otp-input')?.value.trim();
+        if (!otpCode || otpCode.length !== 6 || isNaN(otpCode)) {
+            return showToast("Please enter a valid 6-digit code.", "error");
+        }
+        e.target.disabled = true;
+        const success = await verifyPhoneCode(otpCode);
+        if (success) {
             phoneModal?.classList.add('hidden');
-        });
-    }
-
-    if (btnSendOtp) {
-        btnSendOtp.addEventListener('click', async () => {
-            const phoneRaw = phoneNumberInput?.value.trim();
-            if (!phoneRaw || !phoneRaw.startsWith('+') || phoneRaw.length < 8) {
-                return showToast("Please enter a valid phone number starting with + and country code.", "error");
-            }
-            btnSendOtp.disabled = true;
-            btnSendOtp.innerText = "Processing security handshake...";
-            const isSent = await sendPhoneVerification(phoneRaw);
-            if (isSent) {
-                step1Container?.classList.add('hidden');
-                step2Container?.classList.remove('hidden');
-            }
-            btnSendOtp.disabled = false;
-            btnSendOtp.innerText = "Send Verification Code";
-        });
-    }
-
-    if (btnVerifyOtp) {
-        btnVerifyOtp.addEventListener('click', async () => {
-            const otpCode = phoneOtpInput?.value.trim();
-            if (!otpCode || otpCode.length !== 6 || isNaN(otpCode)) {
-                return showToast("Please enter a valid 6-digit verification code.", "error");
-            }
-            btnVerifyOtp.disabled = true;
-            btnVerifyOtp.innerText = "Anchoring confirmation data...";
-            const success = await verifyPhoneCode(otpCode);
-            if (success) {
-                phoneModal?.classList.add('hidden');
-                const trustScoreEl = document.getElementById('trust-score');
-                if (trustScoreEl) trustScoreEl.innerText = "100";
-            }
-            btnVerifyOtp.disabled = false;
-            btnVerifyOtp.innerText = "Verify & Upgrade Account";
-        });
-    }
+            const score = document.getElementById('trust-score');
+            if (score) score.innerText = "100";
+        }
+        e.target.disabled = false;
+    });
 }
