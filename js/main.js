@@ -25,25 +25,26 @@ export function init() {
 async function bootstrap() {
     try {
         console.log("🚀 Initializing VocalWitness...");
-
         initAuth();
 
-        // Service Worker Registration
+        // Service Worker Registration - Root sw.js (GitHub Pages)
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/VocalWitness/js/sw.js')
-                .then(() => console.log('✅ Service Worker registered'))
+            navigator.serviceWorker.register('/VocalWitness/sw.js')
+                .then(reg => {
+                    console.log('✅ Service Worker registered with scope:', reg.scope);
+                })
                 .catch(err => console.error('❌ SW registration failed:', err));
         }
 
         initFeed(db, currentFeed);
         initLanguage();
-        
+
         // Core Engine
         engine = new VocalWitnessEngine(db, storage);
         setEngine(engine);
-        
+
         attachUIListeners();
-        
+
         console.log("✅ VocalWitness Core Loaded Successfully");
         showToast("Platform Ready • Witness Voice + Citizen Talk Active");
     } catch (err) {
@@ -90,43 +91,61 @@ function attachUIListeners() {
         voiceBtn.addEventListener('click', () => toggleVoiceRecording(voiceBtn));
     }
 
-    // Publish Button
+    // Publish Button - Improved
     document.getElementById('postButton')?.addEventListener('click', async () => {
         const input = document.getElementById('mainInput');
         const text = input?.value.trim();
+
         if (!text && !selectedImageFile && !engine?.currentAudioBlob) {
             return showToast("Please add text, photo, or voice testimony", "error");
+        }
+
+        const postButton = document.getElementById('postButton');
+        const originalText = postButton?.innerText || "Publish";
+        if (postButton) {
+            postButton.disabled = true;
+            postButton.innerText = "Publishing...";
         }
 
         const tempId = 'temp-' + Date.now();
         addPostToFeed({ id: tempId, witnessText: text || "📸 Media Testimony" }, true);
 
-        const clientPhoneVerified = !!state?.user?.providerData?.some(p => p.providerId === 'phone') || !!document.getElementById('trust-score')?.innerText.includes('100');
-
         try {
-            const mediaData = await uploadForensicMedia("current-user");
+            const user = state?.user;
+            const clientPhoneVerified = !!(user?.phoneNumber || state?.isWitnessVerified);
+
+            const mediaData = await uploadForensicMedia(user?.uid || "anonymous");
+
             await addDoc(collection(db, "testimonies"), {
                 witnessText: text || "",
                 feedVisibility: currentFeed,
                 timestamp: new Date().toISOString(),
                 languageCode: localStorage.getItem('preferredLang') || 'en',
-                authorId: "user-" + Date.now().toString().slice(-6),
+                authorId: user?.uid || "anonymous-" + Date.now().toString().slice(-6),
+                authorName: user?.displayName || "Citizen Witness",
+                authorPhoto: user?.photoURL || "",
                 ...mediaData,
-                moderation: { 
-                    trustScore: clientPhoneVerified ? 100 : 50, 
-                    verificationsCount: 0, 
-                    disputesCount: 0 
+                moderation: {
+                    trustScore: clientPhoneVerified ? 100 : 50,
+                    verificationsCount: 0,
+                    disputesCount: 0
                 }
             });
 
+            // Reset UI
             if (input) input.value = '';
             if (typeof resetMediaState === 'function') resetMediaState();
             if (engine) engine.currentAudioBlob = null;
 
-            showToast("✅ Forensic Testimony Published Successfully");
+            showToast("✅ Forensic Testimony Published Successfully", "success");
         } catch (e) {
-            console.error(e);
-            showToast("Failed to publish testimony", "error");
+            console.error("Publish error:", e);
+            showToast(e.message || "Failed to publish testimony", "error");
+        } finally {
+            if (postButton) {
+                postButton.disabled = false;
+                postButton.innerText = originalText;
+            }
         }
     });
 
@@ -147,7 +166,7 @@ function attachUIListeners() {
     // Logout
     document.getElementById('btn-logout')?.addEventListener('click', logout);
 
-    // ==================== CHANGE PASSWORD MODAL ====================
+    // Change Password Modal
     const changePassModal = document.getElementById('changePasswordModal');
     const btnChangePassword = document.getElementById('btn-change-password');
     const cancelChangeBtn = document.getElementById('cancel-change-password');
@@ -156,25 +175,16 @@ function attachUIListeners() {
     if (btnChangePassword) {
         btnChangePassword.addEventListener('click', () => {
             changePassModal?.classList.remove('hidden');
-            const curr = document.getElementById('current-password');
-            const npass = document.getElementById('new-password');
-            const cpass = document.getElementById('confirm-password');
-            if (curr) curr.value = '';
-            if (npass) npass.value = '';
-            if (cpass) cpass.value = '';
+            ['current-password', 'new-password', 'confirm-password'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
         });
     }
 
-    if (cancelChangeBtn) {
-        cancelChangeBtn.addEventListener('click', () => {
-            changePassModal?.classList.add('hidden');
-        });
-    }
-
+    if (cancelChangeBtn) cancelChangeBtn.addEventListener('click', () => changePassModal?.classList.add('hidden'));
     changePassModal?.addEventListener('click', (e) => {
-        if (e.target === changePassModal) {
-            changePassModal.classList.add('hidden');
-        }
+        if (e.target === changePassModal) changePassModal.classList.add('hidden');
     });
 
     if (confirmChangeBtn) {
@@ -183,32 +193,23 @@ function attachUIListeners() {
             const newPass = document.getElementById('new-password')?.value.trim();
             const confirmPass = document.getElementById('confirm-password')?.value.trim();
 
-            if (!currentPass || !newPass || !confirmPass) {
-                return showToast("All fields are required", "error");
-            }
-            if (newPass.length < 6) {
-                return showToast("New password must be at least 6 characters", "error");
-            }
-            if (newPass !== confirmPass) {
-                return showToast("New passwords do not match", "error");
-            }
+            if (!currentPass || !newPass || !confirmPass) return showToast("All fields are required", "error");
+            if (newPass.length < 6) return showToast("New password must be at least 6 characters", "error");
+            if (newPass !== confirmPass) return showToast("New passwords do not match", "error");
 
             confirmChangeBtn.disabled = true;
             confirmChangeBtn.innerText = "Processing change...";
 
             const { changePassword } = await import('./auth.js');
             const success = await changePassword(currentPass, newPass);
-            
+
             confirmChangeBtn.disabled = false;
             confirmChangeBtn.innerText = "Confirm & Save Changes";
-
-            if (success) {
-                changePassModal?.classList.add('hidden');
-            }
+            if (success) changePassModal?.classList.add('hidden');
         });
     }
 
-    // ==================== PHONE VERIFICATION MODAL FLOW ====================
+    // Phone Verification Modal
     const phoneModal = document.getElementById('phoneModal');
     const btnOpenPhoneModal = document.getElementById('btn-verify-phone');
     const btnClosePhoneModal = document.getElementById('close-phone-modal');
@@ -221,21 +222,15 @@ function attachUIListeners() {
 
     if (btnOpenPhoneModal) {
         btnOpenPhoneModal.addEventListener('click', () => {
-            if (step1Container && step2Container) {
-                step1Container.classList.remove('hidden');
-                step2Container.classList.add('hidden');
-            }
+            step1Container?.classList.remove('hidden');
+            step2Container?.classList.add('hidden');
             if (phoneNumberInput) phoneNumberInput.value = "";
             if (phoneOtpInput) phoneOtpInput.value = "";
             phoneModal?.classList.remove('hidden');
         });
     }
 
-    if (btnClosePhoneModal) {
-        btnClosePhoneModal.addEventListener('click', () => {
-            phoneModal?.classList.add('hidden');
-        });
-    }
+    if (btnClosePhoneModal) btnClosePhoneModal.addEventListener('click', () => phoneModal?.classList.add('hidden'));
 
     if (btnSendOtp) {
         btnSendOtp.addEventListener('click', async () => {
@@ -281,7 +276,6 @@ function attachUIListeners() {
     }
 }
 
-// Profile UI Update
 function updateProfileUI(user) {
     const usernameEl = document.getElementById('profile-username');
     const emailEl = document.getElementById('profile-email');
@@ -293,12 +287,9 @@ function updateProfileUI(user) {
 
     if (badgesContainer) badgesContainer.innerHTML = '';
 
-    let tierHTML = '';
-    if (state?.isWitnessVerified || state?.role === "witness") {
-        tierHTML = `<span class="px-4 py-1 bg-emerald-900 text-emerald-400 rounded-full text-sm font-medium">👁️ Witness</span>`;
-    } else {
-        tierHTML = `<span class="px-4 py-1 bg-green-900 text-green-400 rounded-full text-sm font-medium">🟢 Citizen</span>`;
-    }
+    let tierHTML = (state?.isWitnessVerified || state?.role === "witness")
+        ? `<span class="px-4 py-1 bg-emerald-900 text-emerald-400 rounded-full text-sm font-medium">👁️ Witness</span>`
+        : `<span class="px-4 py-1 bg-green-900 text-green-400 rounded-full text-sm font-medium">🟢 Citizen</span>`;
 
     if (tierContainer) tierContainer.innerHTML = tierHTML;
 
@@ -315,7 +306,6 @@ function updateProfileUI(user) {
 export async function encryptKey(privateKey, masterLock) {
     const iv = window.crypto.getRandomValues(new Uint8Array(12));
     const encodedKey = new TextEncoder().encode(privateKey);
-    
     const encrypted = await window.crypto.subtle.encrypt(
         { name: "AES-GCM", iv: iv },
         masterLock,
@@ -337,8 +327,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof init === 'function') init();
 });
 
-// Force the profile closed on initial page load, regardless of other settings
+// Force profile closed on load
 const profileContainer = document.getElementById('profilePage');
-if (profileContainer) {
-    profileContainer.classList.add('hidden');
-}
+if (profileContainer) profileContainer.classList.add('hidden');
