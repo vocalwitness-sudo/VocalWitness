@@ -101,7 +101,6 @@ function attachUIListeners() {
         const tempId = 'temp-' + Date.now();
         addPostToFeed({ id: tempId, witnessText: text || "📸 Media Testimony" }, true);
 
-        // Safely infer phone verified state dynamically for data metrics
         const clientPhoneVerified = !!state?.user?.providerData?.some(p => p.providerId === 'phone') || !!document.getElementById('trust-score')?.innerText.includes('100');
 
         try {
@@ -120,7 +119,7 @@ function attachUIListeners() {
                 }
             });
 
-            input.value = '';
+            if (input) input.value = '';
             if (typeof resetMediaState === 'function') resetMediaState();
             if (engine) engine.currentAudioBlob = null;
 
@@ -137,12 +136,12 @@ function attachUIListeners() {
             googleLogin();
             return;
         }
-        document.getElementById('profilePage').classList.remove('hidden');
+        document.getElementById('profilePage')?.classList.remove('hidden');
         updateProfileUI(state.user);
     });
 
     document.getElementById('btn-close-profile')?.addEventListener('click', () => {
-        document.getElementById('profilePage').classList.add('hidden');
+        document.getElementById('profilePage')?.classList.add('hidden');
     });
 
     // Logout
@@ -156,16 +155,19 @@ function attachUIListeners() {
 
     if (btnChangePassword) {
         btnChangePassword.addEventListener('click', () => {
-            changePassModal.classList.remove('hidden');
-            document.getElementById('current-password').value = '';
-            document.getElementById('new-password').value = '';
-            document.getElementById('confirm-password').value = '';
+            changePassModal?.classList.remove('hidden');
+            const curr = document.getElementById('current-password');
+            const npass = document.getElementById('new-password');
+            const cpass = document.getElementById('confirm-password');
+            if (curr) curr.value = '';
+            if (npass) npass.value = '';
+            if (cpass) cpass.value = '';
         });
     }
 
     if (cancelChangeBtn) {
         cancelChangeBtn.addEventListener('click', () => {
-            changePassModal.classList.add('hidden');
+            changePassModal?.classList.add('hidden');
         });
     }
 
@@ -177,9 +179,9 @@ function attachUIListeners() {
 
     if (confirmChangeBtn) {
         confirmChangeBtn.addEventListener('click', async () => {
-            const currentPass = document.getElementById('current-password').value.trim();
-            const newPass = document.getElementById('new-password').value.trim();
-            const confirmPass = document.getElementById('confirm-password').value.trim();
+            const currentPass = document.getElementById('current-password')?.value.trim();
+            const newPass = document.getElementById('new-password')?.value.trim();
+            const confirmPass = document.getElementById('confirm-password')?.value.trim();
 
             if (!currentPass || !newPass || !confirmPass) {
                 return showToast("All fields are required", "error");
@@ -191,12 +193,17 @@ function attachUIListeners() {
                 return showToast("New passwords do not match", "error");
             }
 
-            // Import dynamically to avoid circular issues
+            confirmChangeBtn.disabled = true;
+            confirmChangeBtn.innerText = "Processing change...";
+
             const { changePassword } = await import('./auth.js');
             const success = await changePassword(currentPass, newPass);
             
+            confirmChangeBtn.disabled = false;
+            confirmChangeBtn.innerText = "Confirm & Save Changes";
+
             if (success) {
-                changePassModal.classList.add('hidden');
+                changePassModal?.classList.add('hidden');
             }
         });
     }
@@ -295,7 +302,6 @@ function updateProfileUI(user) {
 
     if (tierContainer) tierContainer.innerHTML = tierHTML;
 
-    // Stats
     const postCountEl = document.getElementById('post-count');
     const verifyCountEl = document.getElementById('verify-count');
     const reputationScoreEl = document.getElementById('reputation-score');
@@ -305,7 +311,28 @@ function updateProfileUI(user) {
     if (reputationScoreEl) reputationScoreEl.textContent = state?.reputation || 50;
 }
 
-// Safety fallback
+/* ==================== CORE PLATFORM CRYPTOGRAPHY UTILITIES ==================== */
+export async function encryptKey(privateKey, masterLock) {
+    const iv = window.crypto.getRandomValues(new Uint8Array(12));
+    const encodedKey = new TextEncoder().encode(privateKey);
+    
+    const encrypted = await window.crypto.subtle.encrypt(
+        { name: "AES-GCM", iv: iv },
+        masterLock,
+        encodedKey
+    );
+    return { iv, encrypted };
+}
+
+export async function decryptKey(encryptedData, iv, masterLock) {
+    const decrypted = await window.crypto.subtle.decrypt(
+        { name: "AES-GCM", iv: iv },
+        masterLock,
+        encryptedData
+    );
+    return new TextDecoder().decode(decrypted);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof init === 'function') init();
 });
