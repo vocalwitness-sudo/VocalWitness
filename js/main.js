@@ -336,3 +336,9 @@ export async function decryptKey(encryptedData, iv, masterLock) {
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof init === 'function') init();
 });
+
+// Force the profile closed on initial page load, regardless of other settings
+const profileContainer = document.getElementById('profilePage');
+if (profileContainer) {
+    profileContainer.classList.add('hidden');
+}
