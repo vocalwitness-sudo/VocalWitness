@@ -1,153 +1,238 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-NG">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VocalWitness - Your Voice, Your Truth</title>
-  
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="favicon.ico">
-
-  <style>
-    :root {
-      --bg-dark: #121214;
-      --card-bg: #1c1c1f;
-      --accent: #10b981;
-    }
-    body {
-      background-color: var(--bg-dark);
-      color: white;
-      font-family: system-ui, -apple-system, sans-serif;
-    }
-    .feed {
-      max-width: 600px;
-      margin: 0 auto;
-    }
-    .post {
-      background: var(--card-bg);
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 16px;
-    }
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.8);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
-    .modal-backdrop.show {
-      display: flex;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#10b981">
+    <link rel="manifest" href="manifest.json">
+    <title>VocalWitness • Premium Forensic Ledger & Public Square</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: white; }
+        .glass { background: rgba(17, 24, 39, 0.92); backdrop-filter: blur(16px); border: 1px solid rgba(16, 185, 129, 0.2); }
+        .post-card { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .image-preview { max-height: 320px; object-fit: cover; border-radius: 20px; width: 100%; }
+        .recording-active { animation: pulse 1.5s infinite; background-color: #ef4444 !important; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+        .teaser-badge { position: absolute; top: -6px; right: -6px; background: #f59e0b; color: black; font-size: 9px; padding: 1px 6px; border-radius: 9999px; font-weight: 700; }
+        .active {
+            background-color: #10b981 !important;
+            color: black !important;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3);
+        }
+    </style>
 </head>
-<body class="min-h-screen pb-8">
-
-  <!-- Top Navigation -->
-  <nav class="bg-zinc-900 border-b border-zinc-800 sticky top-0 z-50">
-    <div class="max-w-2xl mx-auto flex items-center justify-between px-4 py-3">
-      <h1 class="text-xl font-bold flex items-center gap-2">
-        🔥 VocalWitness
-      </h1>
-      <div class="flex gap-2">
-        <button id="btn-citizentalk" class="nav-btn active px-4 py-2 rounded-full text-sm font-medium">💬 Citizen Talk</button>
-        <button id="btn-witnessvoice" class="nav-btn px-4 py-2 rounded-full text-sm font-medium">👁️ Witness Voice</button>
-        <button id="btn-profile" class="nav-btn px-4 py-2 rounded-full text-sm font-medium">👤 Profile</button>
-      </div>
-    </div>
-  </nav>
-
-  <div class="max-w-2xl mx-auto px-4 pt-6">
-
-    <!-- POST COMPOSER -->
-    <div class="post-composer bg-zinc-900 rounded-2xl p-4 mb-8 border border-zinc-700">
-      <textarea id="mainInput" rows="3"
-        class="w-full bg-zinc-800 text-white rounded-xl px-4 py-3 resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500"
-        placeholder="Share your testimony... What did you witness?"></textarea>
-      
-      <div class="flex items-center gap-3 mt-4">
-        <button id="btn-photo" class="flex-1 bg-zinc-800 hover:bg-zinc-700 py-3 rounded-xl flex items-center justify-center gap-2">
-          📸 Photo
-        </button>
-        <button id="btn-voice" class="flex-1 bg-zinc-800 hover:bg-zinc-700 py-3 rounded-xl flex items-center justify-center gap-2">
-          🎤 Voice
-        </button>
-        <button id="postButton" 
-          class="flex-1 bg-emerald-600 hover:bg-emerald-500 py-3 rounded-xl font-semibold">
-          Publish Testimony
-        </button>
-      </div>
-      
-      <div id="preview-area" class="mt-4"></div>
+<body class="min-h-screen pb-28 p-4">
+    <div class="max-w-2xl mx-auto bg-red-950/40 border border-red-500/30 backdrop-blur-sm rounded-3xl p-5 text-xs mb-6 shadow-xl text-zinc-300">
+        <strong class="text-red-400 font-bold">Important Legal Notice:</strong><br>
+        VocalWitness functions strictly as an un-manipulated decentralized distribution medium.
     </div>
 
-    <!-- FEED -->
-    <div id="feed-container">
-      <div id="feed" class="feed"></div>
+    <div class="max-w-2xl mx-auto">
+        <header class="flex flex-col gap-4 mb-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 flex-shrink-0 flex items-center justify-center bg-[#0a0f1c] border border-emerald-500/20 rounded-xl overflow-hidden shadow-inner">
+                        <img src="logo.png" alt="VocalWitness Icon" class="w-full h-full object-cover">
+                    </div>
+                    <h1 class="text-3xl font-bold text-emerald-400 tracking-tight">VocalWitness</h1>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button id="btn-premium" class="px-5 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-semibold rounded-3xl text-sm flex items-center gap-1.5 shadow-md">⭐ Premium</button>
+                    <button id="btn-notifications" class="w-11 h-11 bg-zinc-800 hover:bg-zinc-700 rounded-3xl flex items-center justify-center text-lg relative">🔔</button>
+                    <button id="btn-profile" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-3xl text-sm font-semibold flex items-center gap-1">👤 Profile</button>
+                </div>
+            </div>
+
+            <div class="bg-[#111827] border border-zinc-800 rounded-2xl p-3 glass">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2 text-xs text-zinc-400 font-medium">
+                        <span>🌐 Node Language:</span>
+                        <span id="activeLanguageDisplay" class="text-emerald-400 font-bold bg-emerald-950/80 px-2 py-0.5 rounded-md border border-emerald-800/40">English (EN)</span>
+                    </div>
+                    <select id="languageSelector" class="bg-[#1e293b] text-sm text-white font-medium px-3 py-1.5 rounded-xl border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer">
+                        <option value="en" selected>English (EN)</option>
+                        <option value="fr">Français (FR)</option>
+                        <option value="es">Español (ES)</option>
+                        <option value="ha">Hausa (HA)</option>
+                        <option value="yo">Yorùbá (YO)</option>
+                        <option value="ig">Igbo (IG)</option>
+                        <option value="sw">Kiswahili (SW)</option>
+                    </select>
+                </div>
+                <input id="searchInput" type="text" placeholder="🔍 Search testimonies, witnesses, keywords..." class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-3 focus:outline-none focus:border-emerald-500 text-sm">
+            </div>
+        </header>
+
+        <nav class="grid grid-cols-3 gap-3 mb-4">
+            <button id="btn-witnessvoice" class="bg-emerald-500 text-black py-4 rounded-2xl font-bold text-sm transition-all shadow-lg border border-emerald-400/20 flex items-center justify-center gap-1.5 active">👁️ Witness Voice</button>
+            <button id="btn-citizentalk" class="bg-zinc-800 text-zinc-400 hover:text-white py-4 rounded-2xl font-bold text-sm transition-all border border-zinc-900 flex items-center justify-center gap-1.5">💬 Citizen Talk</button>
+            <button id="btn-livearena" class="relative bg-zinc-900/60 border border-zinc-800 text-zinc-400 hover:bg-zinc-800 py-4 rounded-3xl flex flex-col items-center justify-center gap-1 font-bold text-sm transition-all">🎥 Live Arena</button>
+        </nav>
+
+        <div id="feedContainer" class="mb-8 space-y-4"></div>
+
+        <div class="bg-[#111827] rounded-3xl p-6 mb-10 glass" id="composer">
+            <div id="preview-area" class="hidden mt-4 p-4 bg-zinc-900/50 rounded-2xl"></div>
+            <textarea id="mainInput" rows="4" class="w-full bg-[#1e293b] text-white border border-zinc-800 rounded-2xl p-5 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none text-sm" placeholder="Provide raw description..."></textarea>
+            <div class="grid grid-cols-2 gap-3 mt-4">
+                <button id="btn-photo" class="py-3.5 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 rounded-2xl text-sm font-medium flex items-center justify-center gap-2 transition">📸 Photo + Forensic Shield</button>
+                <button id="btn-voice" class="py-3.5 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 rounded-2xl text-sm font-medium flex items-center justify-center gap-2 transition">🎤 Voice Testimony</button>
+            </div>
+            <button id="postButton" class="mt-6 w-full bg-emerald-500 hover:bg-emerald-600 text-black py-4 rounded-2xl font-bold text-base shadow-lg transition-all">Publish to Decentralized Ledger</button>
+        </div>
     </div>
 
-    <!-- PROFILE PAGE (Hidden by default) -->
-    <div id="profilePage" class="hidden">
-      <div class="profile-card bg-zinc-900 rounded-2xl p-6 mb-8">
-        <img id="user-avatar" src="https://placehold.co/150" alt="Avatar" 
-             class="w-24 h-24 rounded-full mx-auto mb-4 object-cover">
-        <h2 id="profile-username" class="text-2xl font-bold text-center">@citizen</h2>
-        <p id="profile-email" class="text-center text-zinc-400">guest@vocalwitness.io</p>
+    <div id="profilePage" class="hidden fixed inset-0 bg-black/95 z-50 overflow-auto backdrop-blur-md">
+        <div class="max-w-2xl mx-auto p-6">
+            <button id="btn-close-profile" 
+                    class="mb-6 text-emerald-400 flex items-center gap-2 font-semibold text-sm hover:text-emerald-300 transition">
+                &larr; Return to Node
+            </button>
+            
+            <div class="glass rounded-3xl p-8">
+                
+                <div class="flex flex-col md:flex-row items-center gap-6 mb-8">
+                    <div id="profile-avatar" 
+                         class="w-28 h-28 bg-zinc-700 rounded-3xl flex items-center justify-center text-7xl border-4 border-emerald-500/50 shadow-xl flex-shrink-0">
+                        &#128100;
+                    </div>
+                    
+                    <div class="flex-1 text-center md:text-left">
+                        <p id="profile-username" class="text-3xl font-bold">@username</p>
+                        <p id="profile-email" class="text-zinc-400">user@vocalwitness.io</p>
+                        
+                        <div class="flex items-center gap-3 mt-3 justify-center md:justify-start">
+                            <div id="profile-tier-container" class="inline-flex items-center gap-2"></div>
+                            <div id="trust-circle" class="text-sm font-medium px-3 py-1 bg-emerald-950/70 rounded-full border border-emerald-500/30">
+                                Trust Circle: <span id="trust-score" class="text-emerald-400 font-bold">50</span>%
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-        <div id="profile-tier-container" class="flex justify-center my-4"></div>
-        <div id="profile-badges" class="flex justify-center gap-2 my-4"></div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div class="bg-zinc-900 rounded-2xl p-5 text-center">
+                        <p id="post-count" class="text-3xl font-bold text-emerald-400">0</p>
+                        <p class="text-xs text-zinc-400">Testimonies</p>
+                    </div>
+                    <div class="bg-zinc-900 rounded-2xl p-5 text-center">
+                        <p id="reputation-score" class="text-3xl font-bold text-emerald-400">50</p>
+                        <p class="text-xs text-zinc-400">Reputation</p>
+                    </div>
+                    <div class="bg-zinc-900 rounded-2xl p-5 text-center">
+                        <p id="verify-count" class="text-3xl font-bold text-emerald-400">0</p>
+                        <p class="text-xs text-zinc-400">Verifications</p>
+                    </div>
+                    <div class="bg-zinc-900 rounded-2xl p-5 text-center">
+                        <p id="endorsements-count" class="text-3xl font-bold text-amber-400">0</p>
+                        <p class="text-xs text-zinc-400">Endorsements</p>
+                    </div>
+                </div>
 
-        <div class="grid grid-cols-3 gap-4 text-center my-8">
-          <div>
-            <div id="post-count" class="text-3xl font-bold">0</div>
-            <div class="text-xs text-zinc-500">Testimonies</div>
-          </div>
-          <div>
-            <div id="verify-count" class="text-3xl font-bold">0</div>
-            <div class="text-xs text-zinc-500">Verifications</div>
-          </div>
-          <div>
-            <div id="reputation-score" class="text-3xl font-bold text-amber-400">50</div>
-            <div class="text-xs text-zinc-500">Reputation</div>
-          </div>
+                <div class="mb-8">
+                    <p class="text-xs uppercase tracking-widest text-zinc-500 mb-3">Achievements & Badges</p>
+                    <div id="profile-badges" class="flex flex-wrap gap-2">
+                        </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-3 mb-8">
+                    <button id="vw-btn" 
+                            class="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-black font-bold rounded-2xl transition flex items-center justify-center gap-2">
+                        &#128274; Start ZK Verification (Become Witness)
+                    </button>
+                    
+                    <button id="btn-verify-phone" 
+                            class="w-full py-4 bg-zinc-800 hover:bg-zinc-700 text-white font-medium rounded-2xl transition">
+                        &#128241; Verify Phone Number
+                    </button>
+                    
+                    <button id="btn-my-testimonies" 
+                            class="w-full py-4 bg-zinc-800 hover:bg-zinc-700 text-white font-medium rounded-2xl transition">
+                        &#128220; View My Testimonies
+                    </button>
+                </div>
+
+                <div class="mt-8 pt-6 border-t border-zinc-700 mb-6">
+                    <p class="text-xs uppercase tracking-widest text-zinc-500 mb-4">Account Security</p>
+                    
+                    <button id="btn-change-password" 
+                            class="w-full py-4 bg-zinc-800 hover:bg-zinc-700 text-white font-medium rounded-2xl transition flex items-center justify-center gap-2">
+                        &#128273; Change Password
+                    </button>
+                    
+                    <p class="text-[10px] text-zinc-500 text-center mt-3">
+                        Only for users who signed up with Email & Password
+                    </p>
+                </div>
+
+                <button id="btn-logout" 
+                        class="w-full py-4 bg-red-900/70 hover:bg-red-900 text-red-400 hover:text-red-300 rounded-2xl font-medium transition">
+                    Sign Out
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="phoneModal" class="hidden fixed inset-0 bg-black/90 z-[110] flex items-center justify-center backdrop-blur-md">
+    <div class="glass rounded-3xl p-8 w-full max-w-md mx-4 border border-emerald-500/30">
+        <h2 class="text-2xl font-bold mb-2 text-center text-emerald-400">📱 Phone Verification</h2>
+        <p class="text-xs text-zinc-400 text-center mb-6">Verify your device to boost your Trust Score and get your Witness Shield badge.</p>
+        
+        <div id="phone-step-1" class="space-y-4">
+            <label class="text-xs font-semibold tracking-wide text-zinc-400 uppercase">Phone Number</label>
+            <input id="phone-number-input" type="tel" placeholder="+234 801 234 5678" 
+                   class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4 focus:outline-none focus:border-emerald-500 tracking-wider">
+            <p class="text-[10px] text-zinc-500">Include international country code prefix (e.g., +234 for Nigeria).</p>
+            <button id="btn-send-otp" class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-2xl transition shadow-md">
+                Send Verification Code
+            </button>
         </div>
 
-        <div class="flex gap-3">
-          <button id="btn-change-password" class="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-xl">🔒 Change Password</button>
-          <button id="btn-logout" class="flex-1 py-3 bg-red-900 hover:bg-red-800 rounded-xl">Sign Out</button>
+        <div id="phone-step-2" class="hidden space-y-4">
+            <label class="text-xs font-semibold tracking-wide text-zinc-400 uppercase">Enter 6-Digit Code</label>
+            <input id="phone-otp-input" type="text" maxlength="6" placeholder="000000" 
+                   class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4 focus:outline-none focus:border-emerald-500 text-center text-2xl tracking-widest font-bold">
+            <button id="btn-verify-otp" class="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold rounded-2xl transition shadow-md">
+                Verify & Upgrade Account
+            </button>
         </div>
-      </div>
 
-      <!-- Witness Ascension Checklist -->
-      <div class="bg-zinc-900 rounded-2xl p-6">
-        <h3 class="text-lg font-semibold mb-4">⚡ Witness Ascension Checklist</h3>
-        <div id="verification-panel">
-          <!-- Your existing verification items will be populated by JS -->
+        <button id="close-phone-modal" class="mt-6 text-zinc-400 hover:text-white text-sm w-full text-center block transition">Cancel</button>
+    </div>
+</div>
+
+    
+    <div id="authModal" class="hidden fixed inset-0 bg-black/90 z-[100] flex items-center justify-center">
+        <div class="glass rounded-3xl p-8 w-full max-w-md mx-4">
+            <h2 class="text-2xl font-bold mb-6 text-center text-emerald-400">Join VocalWitness</h2>
+            <div class="space-y-4">
+                <button id="google-signin-btn" class="w-full py-4 bg-white text-black font-semibold rounded-2xl flex items-center justify-center gap-3 hover:bg-gray-100">🔑 Continue with Google</button>
+                <div class="relative my-6">
+                    <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-zinc-700"></div></div>
+                    <div class="relative flex justify-center text-xs uppercase tracking-widest text-zinc-500">or</div>
+                </div>
+                <input id="email-input" type="email" placeholder="Email address" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4 focus:outline-none focus:border-emerald-500">
+                <input id="password-input" type="password" placeholder="Password (min 6 characters)" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4 focus:outline-none focus:border-emerald-500">
+                <button id="email-signup-btn" class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-2xl">Create Account</button>
+                <button id="email-login-btn" class="w-full py-4 bg-zinc-800 hover:bg-zinc-700 text-white font-semibold rounded-2xl">Sign In with Email</button>
+            </div>
+            <button id="close-auth-modal" class="mt-6 text-zinc-400 hover:text-white text-sm w-full">Cancel</button>
         </div>
-      </div>
     </div>
-  </div>
 
-  <!-- Modals -->
-  <div id="changePasswordModal" class="modal-backdrop hidden">
-    <!-- Add your change password modal content here -->
-    <div class="bg-zinc-900 rounded-2xl p-6 w-full max-w-md mx-4">
-      <h3 class="text-xl font-bold mb-4">Change Password</h3>
-      <!-- inputs here -->
-      <div class="flex gap-3 mt-6">
-        <button id="cancel-change-password" class="flex-1 py-3 bg-zinc-800 rounded-xl">Cancel</button>
-        <button id="confirm-change-password" class="flex-1 py-3 bg-emerald-600 rounded-xl">Save Changes</button>
-      </div>
-    </div>
-  </div>
+    <div id="recaptcha-container"></div>
 
-  <div id="phoneModal" class="modal-backdrop hidden">
-    <!-- Your phone verification modal content -->
-  </div>
-
-  <script type="module" src="js/main.js"></script>
+    <script type="module" src="js/main.js"></script>
+    <script>
+        // Service Worker Registration (Consistent Path)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/VocalWitness/js/sw.js')
+                    .then(() => console.log('✅ Service Worker registered'))
+                    .catch(err => console.error('❌ SW failed:', err));
+            });
+        }
+    </script>
 </body>
 </html>
