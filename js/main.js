@@ -48,16 +48,21 @@ function attachUIListeners() {
         addPostToFeed({ id: tempId, witnessText: text || "📸 Media Testimony" }, true);
 
         const clientPhoneVerified = !!state?.user?.providerData?.some(p => p.providerId === 'phone') || 
-                                   !!document.getElementById('trust-score')?.innerText.includes('100');
+                                    !!document.getElementById('trust-score')?.innerText.includes('100');
 
         try {
             const mediaData = await uploadForensicMedia("current-user");
+            
+            // UPDATED: Use state?.user?.uid for author identification
             await addDoc(collection(db, "testimonies"), {
                 witnessText: text || "",
                 feedVisibility: currentFeed,
                 timestamp: new Date().toISOString(),
                 languageCode: localStorage.getItem('preferredLang') || 'en',
-                authorId: "user-" + Date.now().toString().slice(-6),
+                
+                // Fixed: Use real UID when logged in, otherwise "anonymous"
+                authorId: state?.user?.uid || "anonymous",
+                
                 ...mediaData,
                 moderation: {
                     trustScore: clientPhoneVerified ? 100 : 50,
@@ -77,6 +82,7 @@ function attachUIListeners() {
     });
 
     // ==================== PROFILE NAVIGATION ====================
+    // ... (rest of your existing function code remains unchanged)
     const profileBtn = document.getElementById('btn-profile');
     const homeSection = document.getElementById('homeSection');
     const profileSection = document.getElementById('profileSection');
@@ -88,7 +94,6 @@ function attachUIListeners() {
                 googleLogin();
                 return;
             }
-            // Switch sections
             homeSection.classList.remove('active');
             profileSection.classList.add('active');
             updateProfileUI(state.user);
@@ -102,7 +107,6 @@ function attachUIListeners() {
         });
     }
 
-    // Logout
     document.getElementById('btn-logout')?.addEventListener('click', logout);
 
     // ==================== PHONE VERIFICATION MODAL ====================
@@ -170,6 +174,4 @@ function attachUIListeners() {
             btnVerifyOtp.innerText = "Verify & Upgrade Account";
         });
     }
-
-    // (Add your change password modal listeners here if needed)
 }
