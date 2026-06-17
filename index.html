@@ -147,6 +147,43 @@
       </div>
     </section>
 
+    <section id="verification-panel">
+      <h3>⚡ Witness Ascension Checklist</h3>
+      <p style="color: var(--text-muted); font-size: 0.9rem;">Complete these requirements to activate your Witness Voice and unlock the Trust Circle.</p>
+      
+      <ul style="list-style: none; padding: 0; margin: 16px 0;">
+        <li style="margin-bottom: 12px; display: flex; align-items: center; gap: 10px;">
+          <span id="chk-phone">❌</span> 
+          <div>
+            <strong>Phone Accountability:</strong> 
+            <span id="phone-status-text" style="color: var(--text-muted);">Not Verified</span>
+            <button id="btn-verify-phone" style="margin-left: 10px; padding: 4px 8px; font-size: 0.8rem; cursor: pointer;">Verify Now</button>
+          </div>
+        </li>
+        
+        <li style="margin-bottom: 12px; display: flex; align-items: center; gap: 10px;">
+          <span id="chk-zk">❌</span> 
+          <div>
+            <strong>ZK Cryptographic Proof:</strong> 
+            <span id="zk-status-text" style="color: var(--text-muted);">Pending</span>
+            <button id="btn-verify-zk" style="margin-left: 10px; padding: 4px 8px; font-size: 0.8rem; cursor: pointer;">Generate Proof</button>
+          </div>
+        </li>
+
+        <li style="margin-bottom: 12px; display: flex; align-items: center; gap: 10px;">
+          <span id="chk-testimonies">❌</span> 
+          <div>
+            <strong>Active Participation:</strong> 
+            <span id="testimonies-status-text" style="color: var(--text-muted);">0 / 3 Testimonies posted</span>
+          </div>
+        </li>
+      </ul>
+
+      <button id="btn-upgrade-witness" disabled style="width: 100%; padding: 12px; background: #3f3f46; color: #a1a1aa; border: none; border-radius: 6px; font-weight: bold; cursor: not-allowed;">
+        Ascend to Witness Status
+      </button>
+    </section>
+
     <div id="witness-locked-notice" class="lock-notice" style="display: block;">
       🔒 <strong>Witness Arena Locked</strong><br>
       Verify your phone number, complete cryptographic ZK verification, and maintain a high reputation score to unlock your <strong>Trust Circle</strong> and <strong>Video Arena</strong> access.
