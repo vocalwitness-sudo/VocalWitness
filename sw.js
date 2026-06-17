@@ -1,6 +1,7 @@
 const CACHE_NAME = 'vocalwitness-v5'; // Increased version
 
 const STATIC_ASSETS = [
+   const STATIC_ASSETS = [
     '/VocalWitness/',
     '/VocalWitness/index.html',
     '/VocalWitness/manifest.json',
@@ -14,8 +15,9 @@ const STATIC_ASSETS = [
     '/VocalWitness/js/engine.js',
     '/VocalWitness/js/utils.js',
     '/VocalWitness/js/i18n.js',
-    '/VocalWitness/js/firebase-config.js',
-    '/VocalWitness/js/sw.js'  // Self-reference
+    '/VocalWitness/js/firebase-config.js'
+    // Removed '/VocalWitness/js/sw.js'
+]; // Self-reference
 ];
 
 // Install Event
