@@ -173,23 +173,26 @@
 <script>
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            // Correct path for your GitHub Pages repo
-            const swPath = '/VocalWitness/js/sw.js';
+            const basePath = '/VocalWitness/';
+            const swPath = basePath + 'js/sw.js';
+            
+            console.log('Attempting to register SW at:', swPath);
             
             navigator.serviceWorker.register(swPath)
                 .then(reg => {
-                    console.log('✅ Service Worker registered successfully with scope:', reg.scope);
+                    console.log('✅ Service Worker registered successfully!', reg.scope);
                 })
                 .catch(err => {
-                    console.error('❌ SW registration failed:', err);
+                    console.error('❌ Main SW registration failed:', err);
                     
-                    // Fallback attempt
+                    // Try relative path as fallback
                     navigator.serviceWorker.register('js/sw.js')
-                        .then(reg => console.log('✅ SW registered with fallback path'))
-                        .catch(e => console.error('All SW registration attempts failed:', e));
+                        .then(reg => console.log('✅ SW registered via fallback'))
+                        .catch(e => console.error('❌ All SW attempts failed:', e));
                 });
         });
     }
+</script>
 </script>
 </body>
 </html>
