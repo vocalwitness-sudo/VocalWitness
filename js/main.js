@@ -215,7 +215,3 @@ export async function decryptKey(encryptedData, iv, masterLock) {
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof init === 'function') init();
 });
-
-// Force profile closed on load
-const profileContainer = document.getElementById('profilePage');
-if (profileContainer) profileContainer.classList.add('hidden');
