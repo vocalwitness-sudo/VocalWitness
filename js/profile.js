@@ -13,7 +13,7 @@ const witnessSection = document.getElementById('witness-features-section');
 const witnessLockedNotice = document.getElementById('witness-locked-notice');
 const trustCircleScoreEl = document.getElementById('trust-circle-score');
 
-// NEW Checkbox/Verification DOM Elements
+// Checkbox/Verification DOM Elements
 const panelVerification = document.getElementById('verification-panel');
 const chkPhone = document.getElementById('chk-phone');
 const chkZk = document.getElementById('chk-zk');
@@ -23,8 +23,19 @@ const zkText = document.getElementById('zk-status-text');
 const testimoniesText = document.getElementById('testimonies-status-text');
 const btnUpgrade = document.getElementById('btn-upgrade-witness');
 const btnVerifyZK = document.getElementById("btn-verify-zk");
+const btnVerifyPhone = document.getElementById('btn-verify-phone');
 
 let currentUserId = null;
+
+// Initialize ZK button as an informational coming-soon notification
+if (btnVerifyZK) {
+  btnVerifyZK.textContent = "⚙️ Cryptographic Prover Coming Soon";
+  btnVerifyZK.disabled = true;
+  btnVerifyZK.style.background = "#27272a";
+  btnVerifyZK.style.color = "var(--text-muted)";
+  btnVerifyZK.style.cursor = "not-allowed";
+  btnVerifyZK.style.border = "1px dashed #52525b";
+}
 
 onAuthStateChanged(auth, (user) => {
   if (user) {
@@ -43,23 +54,23 @@ function listenToUserProfile(userId) {
       const userData = snapshot.data();
       
       // Populate basic info
-      avatarEl.src = userData.photoURL || "https://placehold.co/150";
-      displayNameEl.textContent = userData.displayName;
-      usernameEl.textContent = `@${userData.username}`;
-      roleBadgeEl.textContent = userData.role.toUpperCase();
+      if (avatarEl) avatarEl.src = userData.photoURL || "https://placehold.co/150";
+      if (displayNameEl) displayNameEl.textContent = userData.displayName || "Anonymous User";
+      if (usernameEl) usernameEl.textContent = `@${userData.username || 'user'}`;
+      if (roleBadgeEl) roleBadgeEl.textContent = (userData.role || 'citizen').toUpperCase();
 
       // Handle the Two Lungs Display Logic
       if (userData.role === "witness" || userData.role === "trusted_witness") {
-        witnessSection.style.display = "block";
-        witnessLockedNotice.style.display = "none";
-        panelVerification.style.display = "none"; // Hide checklist if already a Witness
-        trustCircleScoreEl.textContent = userData.trustCircle;
-        roleBadgeEl.className = "badge badge-witness";
+        if (witnessSection) witnessSection.style.display = "block";
+        if (witnessLockedNotice) witnessLockedNotice.style.display = "none";
+        if (panelVerification) panelVerification.style.display = "none"; 
+        if (trustCircleScoreEl) trustCircleScoreEl.textContent = userData.trustCircle || 0;
+        if (roleBadgeEl) roleBadgeEl.className = "badge badge-witness";
       } else {
-        witnessSection.style.display = "none";
-        witnessLockedNotice.style.display = "block";
-        panelVerification.style.display = "block"; // Show checklist to Citizens
-        roleBadgeEl.className = "badge badge-citizen";
+        if (witnessSection) witnessSection.style.display = "none";
+        if (witnessLockedNotice) witnessLockedNotice.style.display = "block";
+        if (panelVerification) panelVerification.style.display = "block"; 
+        if (roleBadgeEl) roleBadgeEl.className = "badge badge-citizen";
         
         // Evaluate Checklist Status for Citizens
         evaluateChecklist(userData);
@@ -71,117 +82,75 @@ function listenToUserProfile(userId) {
 // Function to calculate if a Citizen is ready to upgrade
 function evaluateChecklist(data) {
   let phoneReady = data.isPhoneVerified === true;
-  let zkReady = data.zkVerified === true;
-  let testimoniesReady = data.testimoniesCount >= 3;
+  let testimoniesReady = (data.testimoniesCount || 0) >= 3;
 
-  // Update UI Checkmarks & Subtext
-  chkPhone.textContent = phoneReady ? "✅" : "❌";
-  phoneText.textContent = phoneReady ? `Verified (${data.phoneNumber})` : "Not Verified";
-  if (phoneReady) document.getElementById('btn-verify-phone').style.display = 'none';
+  // Update Phone Item
+  if (chkPhone) chkPhone.textContent = phoneReady ? "✅" : "❌";
+  if (phoneText) phoneText.textContent = phoneReady ? `Verified (${data.phoneNumber || 'Stored'})` : "Not Verified";
+  if (btnVerifyPhone) {
+    btnVerifyPhone.style.display = phoneReady ? 'none' : 'inline-block';
+  }
 
-  chkZk.textContent = zkReady ? "✅" : "❌";
-  zkText.textContent = zkReady ? "Verified Cryptographically" : "Pending";
-  if (zkReady) btnVerifyZK.style.display = 'none';
+  // ZK Item remains automatically marked with an informational status symbol for now
+  if (chkZk) chkZk.textContent = "⏳";
+  if (zkText) zkText.textContent = "Bypassed for Beta (Module Coming Soon)";
 
-  chkTestimonies.textContent = testimoniesReady ? "✅" : "❌";
-  testimoniesText.textContent = `${data.testimoniesCount} / 3 Testimonies posted`;
+  // Update Testimonies Item
+  if (chkTestimonies) chkTestimonies.textContent = testimoniesReady ? "✅" : "❌";
+  if (testimoniesText) testimoniesText.textContent = `${data.testimoniesCount || 0} / 3 Testimonies posted`;
 
-  // If all conditions are met, unlock the Ascend button
-  if (phoneReady && zkReady && testimoniesReady) {
-    btnUpgrade.disabled = false;
-    btnUpgrade.style.background = "#10b981"; // Change button to Witness Green
-    btnUpgrade.style.color = "black";
-    btnUpgrade.style.cursor = "pointer";
-  } else {
-    btnUpgrade.disabled = true;
-    btnUpgrade.style.background = "#3f3f3f";
-    btnUpgrade.style.color = "#a1a1aa";
-    btnUpgrade.style.cursor = "not-allowed";
+  // Focus primarily on Phone Verification and Active Participation to unlock Ascension
+  if (btnUpgrade) {
+    if (phoneReady && testimoniesReady) {
+      btnUpgrade.disabled = false;
+      btnUpgrade.style.background = "#10b981"; 
+      btnUpgrade.style.color = "black";
+      btnUpgrade.style.cursor = "pointer";
+    } else {
+      btnUpgrade.disabled = true;
+      btnUpgrade.style.background = "#3f3f3f";
+      btnUpgrade.style.color = "#a1a1aa";
+      btnUpgrade.style.cursor = "not-allowed";
+    }
   }
 }
 
 // Event Listener for the Ascension Action
-btnUpgrade.addEventListener('click', async () => {
-  if (!currentUserId) return;
-  
-  const userRef = doc(db, "users", currentUserId);
-  
-  try {
-    await updateDoc(userRef, {
-      role: "witness",
-      trustCircle: 25, // Trust Circle initializes at 25% strength on ascension
-      level: 2,
-      badges: ["verified_witness"]
-    });
-    alert("Congratulations! You have ascended to Witness status. Your Trust Circle is now active.");
-  } catch (error) {
-    console.error("Error upgrading user status:", error);
-  }
-});
-
-// Mocking phone verification step for testing
-document.getElementById('btn-verify-phone').addEventListener('click', () => {
-  alert("Redirecting to phone authentication flow...");
-});
-
-// REAL-TIME WORKER INTEGRATION FOR ZERO-KNOWLEDGE PROOF
-if (btnVerifyZK) {
-  btnVerifyZK.addEventListener("click", () => {
-    if (!currentUserId) {
-      alert("Please wait until authentication finishes initializing.");
-      return;
+if (btnUpgrade) {
+  btnUpgrade.addEventListener('click', async () => {
+    if (!currentUserId) return;
+    
+    const userRef = doc(db, "users", currentUserId);
+    
+    try {
+      await updateDoc(userRef, {
+        role: "witness",
+        trustCircle: 25, 
+        level: 2,
+        badges: ["verified_witness"]
+      });
+      alert("Congratulations! You have ascended to Witness status. Your Trust Circle is now active.");
+    } catch (error) {
+      console.error("Error upgrading user status:", error);
     }
+  });
+}
 
-    // 1. Change button UI to show it is computing in the background
-    btnVerifyZK.textContent = "Computing ZK Proof... ⚡";
-    btnVerifyZK.disabled = true;
-    btnVerifyZK.style.cursor = "not-allowed";
-
-    // 2. Spin up your Web Worker file
-    const zkWorker = new Worker('js/zk-worker.js');
-
-    // 3. Send data to the worker to kick off the simulation
-    zkWorker.postMessage({
-      identityCommitment: `0x_witness_${currentUserId.substring(0, 5)}_hash`,
-      witnessData: { testimonies: 3 }
-    });
-
-    // 4. Listen for the worker to finish up
-    zkWorker.onmessage = async (event) => {
-      const { success, proof, error } = event.data;
-
-      if (success) {
-        console.log("Success! Generated proof:", proof);
-
-        try {
-          // 🔥 Write the successful verification back to Firestore
-          const userRef = doc(db, "users", currentUserId);
-          await updateDoc(userRef, { 
-            zkVerified: true,
-            verifiedAt: new Date()
-          });
-
-          // Update UI styles immediately
-          document.getElementById("chk-zk").textContent = "✅";
-          zkText.textContent = "Verified Cryptographically";
-          zkText.style.color = "var(--witness-green)";
-          btnVerifyZK.textContent = "Proof Securely Saved";
-          
-        } catch (dbError) {
-          console.error("Error updating Firestore ZK state:", dbError);
-          btnVerifyZK.textContent = "Sync Error. Retry";
-          btnVerifyZK.disabled = false;
-          btnVerifyZK.style.cursor = "pointer";
-        }
-      } else {
-        console.error("ZK Error:", error);
-        btnVerifyZK.textContent = "Proof Failed. Retry";
-        btnVerifyZK.disabled = false;
-        btnVerifyZK.style.cursor = "pointer";
-      }
-
-      // 5. Turn off the worker to save device memory
-      zkWorker.terminate();
-    };
+// Real Action: Connect your active Phone verification hook here
+if (btnVerifyPhone) {
+  btnVerifyPhone.addEventListener('click', async () => {
+    if (!currentUserId) return;
+    
+    // Simulating a phone verification write for your prototype environment:
+    try {
+      const userRef = doc(db, "users", currentUserId);
+      await updateDoc(userRef, {
+        isPhoneVerified: true,
+        phoneNumber: "+1 (555) 019-2831"
+      });
+      alert("Phone verified successfully!");
+    } catch (error) {
+      console.error("Error updating phone status:", error);
+    }
   });
 }
