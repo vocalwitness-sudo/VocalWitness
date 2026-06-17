@@ -13,6 +13,7 @@
       --citizen-bronze: #cd7f32;
       --witness-green: #10b981;
       --witness-glow: rgba(16, 185, 129, 0.2);
+      --modal-overlay: rgba(0, 0, 0, 0.75);
     }
 
     body {
@@ -30,7 +31,16 @@
       max-width: 600px;
     }
 
-    /* Profile Header */
+    section {
+      background-color: var(--card-bg);
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+
+    h3 { margin-top: 0; }
+
+    /* Profile Header Layout */
     .profile-card {
       background-color: var(--card-bg);
       padding: 24px;
@@ -46,70 +56,65 @@
       margin-bottom: 12px;
     }
 
-    .username {
-      color: var(--text-muted);
-      margin: 4px 0 16px 0;
+    /* Modal Backdrop Layer */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: var(--modal-overlay);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
     }
 
-    /* Dynamic Badges */
-    .badge {
-      display: inline-block;
-      padding: 6px 16px;
-      border-radius: 20px;
-      font-weight: bold;
-      text-transform: uppercase;
-      font-size: 0.85rem;
-    }
-    .badge-citizen {
-      background-color: rgba(205, 127, 50, 0.15);
-      color: var(--citizen-bronze);
-      border: 1px solid var(--citizen-bronze);
-    }
-    .badge-witness {
-      background-color: rgba(16, 185, 129, 0.15);
-      color: var(--witness-green);
-      border: 1px solid var(--witness-green);
-      box-shadow: 0 0 10px var(--witness-glow);
-    }
-
-    /* Sections */
-    section {
+    /* Standardized Modal Window */
+    .modal-content {
       background-color: var(--card-bg);
-      padding: 20px;
+      padding: 24px;
       border-radius: 12px;
-      margin-bottom: 20px;
+      width: 90%;
+      max-width: 400px;
+      border: 1px solid #27272a;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
     }
 
-    h3 { margin-top: 0; }
-
-    /* Witness Features Component Boxes */
-    .witness-feature-box {
-      background: rgba(255, 255, 255, 0.03);
-      border-left: 4px solid var(--witness-green);
-      padding: 15px;
-      border-radius: 4px;
-      margin-top: 15px;
+    .input-field {
+      width: 100%;
+      padding: 10px;
+      background: #121214;
+      border: 1px solid #3f3f46;
+      border-radius: 6px;
+      color: white;
+      box-sizing: border-box;
+      margin-top: 6px;
+      margin-bottom: 14px;
     }
 
-    .btn-arena {
-      background-color: var(--witness-green);
+    .btn-primary {
+      padding: 10px 16px;
+      background: var(--witness-green);
       color: black;
       border: none;
-      padding: 10px 20px;
       border-radius: 6px;
       font-weight: bold;
       cursor: pointer;
     }
 
-    /* Lock Screen for Citizens */
-    .lock-notice {
-      background-color: rgba(239, 68, 68, 0.1);
-      border: 1px dashed #ef4444;
-      color: #fca5a5;
-      padding: 16px;
-      border-radius: 12px;
-      text-align: center;
-      line-height: 1.5;
+    .btn-secondary {
+      padding: 10px 16px;
+      background: #27272a;
+      color: white;
+      border: 1px solid #3f3f46;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    /* Helper utility class to hide modal frames */
+    .hidden {
+      display: none !important;
     }
   </style>
 </head>
@@ -119,62 +124,60 @@
 
     <div class="profile-card">
       <img id="user-avatar" class="avatar" src="https://placehold.co/150" alt="Avatar" width="100">
-      <h2 id="user-display-name" style="margin:0;">Loading...</h2>
-      <p id="user-username" class="username">@...</p>
-      <span id="user-role-badge" class="badge badge-citizen">Citizen</span>
+      <h2 id="profile-username" style="margin:0;">@citizen</h2>
+      <p id="profile-email" style="color: var(--text-muted); margin: 4px 0 12px 0;">guest@vocalwitness.io</p>
+      
+      <div id="profile-tier-container" style="margin-bottom: 14px;">
+         <span class="px-4 py-1 bg-green-900 text-green-400 rounded-full text-sm font-medium">🟢 Citizen</span>
+      </div>
+      
+      <div id="profile-badges"></div>
+
+      <div style="border-top: 1px solid #27272a; margin-top: 16px; padding-top: 16px; display: flex; gap: 10px; justify-content: center;">
+        <button id="btn-change-password" class="btn-secondary">🔒 Change Password</button>
+        <button id="btn-logout" class="btn-secondary" style="color: #fca5a5; border-color: #7f1d1d;">Sign Out</button>
+      </div>
     </div>
 
-    <section id="citizen-talk-section">
-      <h3>🗣️ Citizen Talk</h3>
-      <p style="color: var(--text-muted);">Casual public conversations and community noise.</p>
-      <div style="background: rgba(255,255,255,0.02); padding: 12px; border-radius: 8px;">
-        <strong>@citizen_4921:</strong> Has anyone seen the local transit construction updates? 🚧
-      </div>
-    </section>
-
-    <section id="witness-features-section" style="display: none;">
-      <h3 style="color: var(--witness-green);">🛡️ Witness Voice Hub</h3>
-      
-      <div class="witness-feature-box">
-        <h4>🟢 Your Trust Circle</h4>
-        <p>Connected, verified network truth-tellers. Core Influence: <strong id="trust-circle-score">0</strong>%</p>
-      </div>
-
-      <div class="witness-feature-box">
-        <h4>🎥 The Video Arena</h4>
-        <p>Review high-fidelity encrypted video evidence.</p>
-        <button class="btn-arena">Enter Arena</button>
+    <section>
+      <h3>📈 Witness Metrics</h3>
+      <div style="display: flex; justify-content: space-around; text-align: center; margin-top: 10px;">
+        <div>
+          <div id="post-count" style="font-size: 1.5rem; font-weight: bold;">0</div>
+          <div style="color: var(--text-muted); font-size: 0.85rem;">Testimonies</div>
+        </div>
+        <div>
+          <div id="verify-count" style="font-size: 1.5rem; font-weight: bold;">0</div>
+          <div style="color: var(--text-muted); font-size: 0.85rem;">Verifications</div>
+        </div>
+        <div>
+          <div id="reputation-score" style="font-size: 1.5rem; font-weight: bold; color: var(--citizen-bronze);">50</div>
+          <div style="color: var(--text-muted); font-size: 0.85rem;">Reputation</div>
+        </div>
       </div>
     </section>
 
     <section id="verification-panel">
       <h3>⚡ Witness Ascension Checklist</h3>
-      <p style="color: var(--text-muted); font-size: 0.9rem;">Complete these requirements to activate your Witness Voice and unlock the Trust Circle.</p>
+      <p style="color: var(--text-muted); font-size: 0.9rem;">Complete these authentication links to activate your Witness Voice stream.</p>
       
       <ul style="list-style: none; padding: 0; margin: 16px 0;">
-        <li style="margin-bottom: 12px; display: flex; align-items: center; gap: 10px;">
-          <span id="chk-phone">❌</span> 
-          <div>
+        <li style="margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
+          <span id="chk-phone" style="font-size: 1.2rem;">❌</span> 
+          <div style="flex-grow: 1;">
             <strong>Phone Accountability:</strong> 
-            <span id="phone-status-text" style="color: var(--text-muted);">Not Verified</span>
-            <button id="btn-verify-phone" style="margin-left: 10px; padding: 4px 8px; font-size: 0.8rem; cursor: pointer;">Verify Now</button>
+            <span id="phone-status-text" style="color: var(--text-muted); display: block; font-size: 0.85rem;">Not Linked</span>
           </div>
+          <button id="btn-verify-phone" class="btn-primary" style="padding: 6px 12px; font-size: 0.8rem;">Verify Now</button>
         </li>
         
-        <li style="margin-bottom: 12px; display: flex; align-items: center; gap: 10px;">
-          <span id="chk-zk">❌</span> 
+        <li style="margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
+          <span id="chk-zk" style="font-size: 1.2rem;">⏳</span> 
           <div>
             <strong>ZK Cryptographic Proof:</strong> 
-            <span id="zk-status-text" style="color: var(--text-muted);">Pending</span>
-            <button id="btn-verify-zk" style="margin-left: 10px; padding: 4px 8px; font-size: 0.8rem; cursor: pointer;">Generate Proof</button>
-          </div>
-        </li>
-
-        <li style="margin-bottom: 12px; display: flex; align-items: center; gap: 10px;">
-          <span id="chk-testimonies">❌</span> 
-          <div>
-            <strong>Active Participation:</strong> 
-            <span id="testimonies-status-text" style="color: var(--text-muted);">0 / 3 Testimonies posted</span>
+            <span id="zk-status-text" style="color: var(--text-muted); display: block; font-size: 0.85rem; font-style: italic;">
+              ⚙️ Module Bypassed for Beta (Coming Soon)
+            </span>
           </div>
         </li>
       </ul>
@@ -184,74 +187,50 @@
       </button>
     </section>
 
-    <section id="security-settings-section">
-      <h3>🔒 Account Security</h3>
-      <p style="color: var(--text-muted); font-size: 0.9rem;">Keep your identity protected by altering your authentication credentials.</p>
-      
-      <div style="margin-top: 15px;">
-        <button id="btn-open-password-mod" style="padding: 10px 16px; background: #27272a; color: #ffffff; border: 1px solid #3f3f46; border-radius: 6px; cursor: pointer; font-weight: 500;">
-          Change Password
-        </button>
-      </div>
-
-      <div id="password-form-container" style="display: none; margin-top: 20px; background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px;">
-        <div style="margin-bottom: 12px;">
-          <label style="display: block; font-size: 0.85rem; margin-bottom: 6px; color: var(--text-muted);">New Security Password</label>
-          <input type="password" id="input-new-password" style="width: 100%; padding: 10px; background: #121214; border: 1px solid #3f3f46; border-radius: 6px; color: white; box-sizing: border-box;">
-        </div>
-        
-        <div style="margin-bottom: 16px;">
-          <label style="display: block; font-size: 0.85rem; margin-bottom: 6px; color: var(--text-muted);">Confirm Password</label>
-          <input type="password" id="input-confirm-password" style="width: 100%; padding: 10px; background: #121214; border: 1px solid #3f3f46; border-radius: 6px; color: white; box-sizing: border-box;">
-        </div>
-
-        <div style="display: flex; gap: 10px;">
-          <button id="btn-submit-password" style="padding: 8px 16px; background: var(--witness-green, #10b981); color: black; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">
-            Save Changes
-          </button>
-          <button id="btn-cancel-password" style="padding: 8px 16px; background: transparent; color: var(--text-muted); border: none; cursor: pointer;">
-            Cancel
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <div id="witness-locked-notice" class="lock-notice" style="display: block;">
-      🔒 <strong>Witness Arena Locked</strong><br>
-      Verify your phone number, complete cryptographic ZK verification, and maintain a high reputation score to unlock your <strong>Trust Circle</strong> and <strong>Video Arena</strong> access.
-    </div>
-
   </div>
 
-  <script type="module" src="js/profile.js"></script>
-  <script type="module" src="js/security.js"></script>
+  <div id="changePasswordModal" class="modal-backdrop hidden">
+    <div class="modal-content">
+      <h3 style="margin-top: 0;">🔒 Update Credentials</h3>
+      
+      <label style="font-size: 0.85rem; color: var(--text-muted);">Current Password</label>
+      <input type="password" id="current-password" class="input-field">
 
-  <script>
-    // 3. Lock the Private Key (Encrypt)
-    async function encryptKey(privateKey, masterLock) {
-        const iv = window.crypto.getRandomValues(new Uint8Array(12)); // Unique vector for every lock
-        const encodedKey = new TextEncoder().encode(privateKey);
-        
-        const encrypted = await window.crypto.subtle.encrypt(
-            { name: "AES-GCM", iv: iv },
-            masterLock,
-            encodedKey
-        );
+      <label style="font-size: 0.85rem; color: var(--text-muted);">New Password</label>
+      <input type="password" id="new-password" class="input-field">
 
-        // Return both the IV and the encrypted data (you need both to unlock it later!)
-        return { iv, encrypted };
-    }
+      <label style="font-size: 0.85rem; color: var(--text-muted);">Confirm Password</label>
+      <input type="password" id="confirm-password" class="input-field">
 
-    // 4. Unlock the Private Key (Decrypt)
-    async function decryptKey(encryptedData, iv, masterLock) {
-        const decrypted = await window.crypto.subtle.decrypt(
-            { name: "AES-GCM", iv: iv },
-            masterLock,
-            encryptedData
-        );
-        
-        return new TextDecoder().decode(decrypted);
-    }
-  </script>
+      <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
+        <button id="cancel-change-password" class="btn-secondary">Cancel</button>
+        <button id="confirm-change-password" class="btn-primary">Save changes</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="phoneModal" class="modal-backdrop hidden">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="margin: 0;">📱 Phone Link</h3>
+        <button id="close-phone-modal" style="background: none; border: none; color: white; cursor: pointer; font-size: 1.2rem;">&times;</button>
+      </div>
+
+      <div id="phone-step-1">
+        <label style="font-size: 0.85rem; color: var(--text-muted);">Phone Number (International Format)</label>
+        <input type="text" id="phone-number-input" class="input-field" placeholder="+1234567890">
+        <div id="recaptcha-container" style="margin-bottom: 10px;"></div>
+        <button id="btn-send-otp" class="btn-primary" style="width: 100%;">Send Verification Code</button>
+      </div>
+
+      <div id="phone-step-2" class="hidden">
+        <label style="font-size: 0.85rem; color: var(--text-muted);">Enter 6-Digit Code</label>
+        <input type="text" id="phone-otp-input" class="input-field" placeholder="123456" maxlength="6">
+        <button id="btn-verify-otp" class="btn-primary" style="width: 100%;">Verify & Upgrade Account</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>
