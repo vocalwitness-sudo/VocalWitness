@@ -1,4 +1,4 @@
-import { googleLogin, logout, initAuth, sendPhoneVerification, verifyPhoneCode } from "./auth.js";
+import { googleLogin, logout, initAuth } from "./auth.js";
 import { initFeed, addPostToFeed } from './feed.js';
 import { db, storage } from './firebase-config.js';
 import { showToast } from './utils.js';
@@ -27,25 +27,24 @@ async function bootstrap() {
         console.log("🚀 Initializing VocalWitness...");
         initAuth();
 
-        // Service Worker Registration - sw.js is in ROOT
+        // Service Worker Registration
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/VocalWitness/sw.js')
-                .then(reg => {
-                    console.log('✅ Service Worker registered successfully with scope:', reg.scope);
-                })
-                .catch(err => {
-                    console.error('❌ SW registration failed:', err);
-                });
+                .then(reg => console.log('✅ SW registered:', reg.scope))
+                .catch(err => console.error('❌ SW failed:', err));
         }
 
         initFeed(db, currentFeed);
         initLanguage();
 
-        // Core Engine
         engine = new VocalWitnessEngine(db, storage);
         setEngine(engine);
 
         attachUIListeners();
+
+        // FIX: Ensure UI is visible immediately upon load
+        const profilePage = document.getElementById('profilePage');
+        if (profilePage) profilePage.classList.remove('hidden');
 
         console.log("✅ VocalWitness Core Loaded Successfully");
         showToast("Platform Ready • Witness Voice + Citizen Talk Active");
@@ -56,15 +55,9 @@ async function bootstrap() {
 }
 
 function attachUIListeners() {
-    // Premium Button
     document.getElementById('btn-premium')?.addEventListener('click', () => googleLogin());
+    document.getElementById('languageSelector')?.addEventListener('change', (e) => changeLanguage(e.target.value));
 
-    // Language Selector
-    document.getElementById('languageSelector')?.addEventListener('change', (e) => {
-        changeLanguage(e.target.value);
-    });
-
-    // Navigation
     document.getElementById('btn-witnessvoice')?.addEventListener('click', () => {
         currentFeed = 'witness-voice';
         initFeed(db, currentFeed);
@@ -77,7 +70,6 @@ function attachUIListeners() {
         showToast("💬 Citizen / Street Talk Mode Activated");
     });
 
-    // Media Buttons
     document.getElementById('btn-photo')?.addEventListener('click', () => {
         const input = document.createElement('input');
         input.type = 'file';
@@ -89,7 +81,6 @@ function attachUIListeners() {
     const voiceBtn = document.getElementById('btn-voice');
     if (voiceBtn) voiceBtn.addEventListener('click', () => toggleVoiceRecording(voiceBtn));
 
-    // Publish Button
     document.getElementById('postButton')?.addEventListener('click', async () => {
         const input = document.getElementById('mainInput');
         const text = input?.value.trim();
@@ -100,116 +91,32 @@ function attachUIListeners() {
 
         const postButton = document.getElementById('postButton');
         const originalText = postButton?.innerText || "Publish";
-        if (postButton) {
-            postButton.disabled = true;
-            postButton.innerText = "Publishing...";
-        }
-
-        const tempId = 'temp-' + Date.now();
-        addPostToFeed({ id: tempId, witnessText: text || "📸 Media Testimony" }, true);
+        postButton.disabled = true;
+        postButton.innerText = "Publishing...";
 
         try {
             const user = state?.user;
-            const clientPhoneVerified = !!(user?.phoneNumber || state?.isWitnessVerified);
             const mediaData = await uploadForensicMedia(user?.uid || "anonymous");
-
             await addDoc(collection(db, "testimonies"), {
                 witnessText: text || "",
                 feedVisibility: currentFeed,
                 timestamp: new Date().toISOString(),
-                languageCode: localStorage.getItem('preferredLang') || 'en',
-                authorId: user?.uid || "anonymous-" + Date.now().toString().slice(-6),
-                authorName: user?.displayName || "Citizen Witness",
-                authorPhoto: user?.photoURL || "",
-                ...mediaData,
-                moderation: {
-                    trustScore: clientPhoneVerified ? 100 : 50,
-                    verificationsCount: 0,
-                    disputesCount: 0
-                }
+                authorId: user?.uid || "anonymous",
+                ...mediaData
             });
 
             if (input) input.value = '';
             if (typeof resetMediaState === 'function') resetMediaState();
-            if (engine) engine.currentAudioBlob = null;
-
-            showToast("✅ Forensic Testimony Published Successfully", "success");
+            showToast("✅ Published Successfully", "success");
         } catch (e) {
-            console.error("Publish error:", e);
-            showToast(e.message || "Failed to publish testimony", "error");
+            showToast("Failed to publish", "error");
         } finally {
-            if (postButton) {
-                postButton.disabled = false;
-                postButton.innerText = originalText;
-            }
+            postButton.disabled = false;
+            postButton.innerText = originalText;
         }
-    });
-
-    // Profile & Other UI listeners (unchanged from your version)
-    document.getElementById('btn-profile')?.addEventListener('click', () => {
-        if (!state?.user) {
-            googleLogin();
-            return;
-        }
-        document.getElementById('profilePage')?.classList.remove('hidden');
-        updateProfileUI(state.user);
-    });
-
-    document.getElementById('btn-close-profile')?.addEventListener('click', () => {
-        document.getElementById('profilePage')?.classList.add('hidden');
     });
 
     document.getElementById('btn-logout')?.addEventListener('click', logout);
-
-    // Change Password Modal, Phone Modal, etc. — all your code kept as-is
-    // ... (the rest of attachUIListeners is identical to what you pasted)
-}
-
-function updateProfileUI(user) {
-    // Your existing function (unchanged)
-    const usernameEl = document.getElementById('profile-username');
-    const emailEl = document.getElementById('profile-email');
-    const tierContainer = document.getElementById('profile-tier-container');
-    const badgesContainer = document.getElementById('profile-badges');
-
-    if (usernameEl) usernameEl.textContent = user?.displayName || "@citizen";
-    if (emailEl) emailEl.textContent = user?.email || "guest@vocalwitness.io";
-    if (badgesContainer) badgesContainer.innerHTML = '';
-
-    let tierHTML = (state?.isWitnessVerified || state?.role === "witness")
-        ? `<span class="px-4 py-1 bg-emerald-900 text-emerald-400 rounded-full text-sm font-medium">👁️ Witness</span>`
-        : `<span class="px-4 py-1 bg-green-900 text-green-400 rounded-full text-sm font-medium">🟢 Citizen</span>`;
-
-    if (tierContainer) tierContainer.innerHTML = tierHTML;
-
-    const postCountEl = document.getElementById('post-count');
-    const verifyCountEl = document.getElementById('verify-count');
-    const reputationScoreEl = document.getElementById('reputation-score');
-
-    if (postCountEl) postCountEl.textContent = state?.postCount || 0;
-    if (verifyCountEl) verifyCountEl.textContent = state?.verifyCount || 0;
-    if (reputationScoreEl) reputationScoreEl.textContent = state?.reputation || 50;
-}
-
-/* ==================== CORE PLATFORM CRYPTOGRAPHY UTILITIES ==================== */
-export async function encryptKey(privateKey, masterLock) {
-    const iv = window.crypto.getRandomValues(new Uint8Array(12));
-    const encodedKey = new TextEncoder().encode(privateKey);
-    const encrypted = await window.crypto.subtle.encrypt(
-        { name: "AES-GCM", iv: iv },
-        masterLock,
-        encodedKey
-    );
-    return { iv, encrypted };
-}
-
-export async function decryptKey(encryptedData, iv, masterLock) {
-    const decrypted = await window.crypto.subtle.decrypt(
-        { name: "AES-GCM", iv: iv },
-        masterLock,
-        encryptedData
-    );
-    return new TextDecoder().decode(decrypted);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
