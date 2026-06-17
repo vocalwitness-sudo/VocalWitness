@@ -1,7 +1,24 @@
 {
-  "hosting": {
-    "public": ".",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-    "rewrites": [{ "source": "**", "destination": "/index.html" }]
-  }
+  "uid": "USER_ID_HERE",
+  "email": "user@example.com",
+  "displayName": "John Doe",
+  "username": "citizen_johndoe",
+  "photoURL": "default_avatar_url",
+  "role": "citizen",
+  
+  "reputationScore": 50,
+  "trustCircle": 0, 
+  "level": 1,
+  
+  "isPhoneVerified": false,
+  "phoneNumber": "",
+  "zkVerified": false,
+  
+  "testimoniesCount": 0,
+  "verificationsMade": 0,
+  "endorsementsReceived": 0,
+  "successfulEvidence": 0,
+  "debunkedEvidence": 0,
+  
+  "badges": ["new_citizen"]
 }
