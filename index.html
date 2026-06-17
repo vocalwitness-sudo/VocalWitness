@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VocalWitness - Profile Dashboard</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  
   <style>
     :root {
       --bg-dark: #121214;
@@ -12,10 +15,8 @@
       --text-muted: #a1a1aa;
       --citizen-bronze: #cd7f32;
       --witness-green: #10b981;
-      --witness-glow: rgba(16, 185, 129, 0.2);
       --modal-overlay: rgba(0, 0, 0, 0.75);
     }
-
     body {
       font-family: system-ui, -apple-system, sans-serif;
       background-color: var(--bg-dark);
@@ -25,18 +26,8 @@
       display: flex;
       justify-content: center;
     }
-
     .container { width: 100%; max-width: 600px; }
-    section { background-color: var(--card-bg); padding: 20px; border-radius: 12px; margin-bottom: 20px; }
-    h3 { margin-top: 0; }
-    .profile-card { background-color: var(--card-bg); padding: 24px; border-radius: 16px; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
-    .avatar { border-radius: 50%; border: 3px solid var(--text-muted); margin-bottom: 12px; }
-    .modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--modal-overlay); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-    .modal-content { background-color: var(--card-bg); padding: 24px; border-radius: 12px; width: 90%; max-width: 400px; border: 1px solid #27272a; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-    .input-field { width: 100%; padding: 10px; background: #121214; border: 1px solid #3f3f46; border-radius: 6px; color: white; box-sizing: border-box; margin-top: 6px; margin-bottom: 14px; }
-    .btn-primary { padding: 10px 16px; background: var(--witness-green); color: black; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
-    .btn-secondary { padding: 10px 16px; background: #27272a; color: white; border: 1px solid #3f3f46; border-radius: 6px; cursor: pointer; }
-    .hidden { display: none !important; }
+    /* ... keep your other CSS rules here ... */
   </style>
 </head>
 <body>
