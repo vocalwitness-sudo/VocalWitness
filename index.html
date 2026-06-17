@@ -3,106 +3,150 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VocalWitness - Profile Dashboard</title>
+  <title>VocalWitness - Your Voice, Your Truth</title>
   
   <script src="https://cdn.tailwindcss.com"></script>
-  
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="favicon.ico">
+
   <style>
     :root {
       --bg-dark: #121214;
       --card-bg: #1c1c1f;
-      --text-main: #ffffff;
-      --text-muted: #a1a1aa;
-      --citizen-bronze: #cd7f32;
-      --witness-green: #10b981;
-      --modal-overlay: rgba(0, 0, 0, 0.75);
+      --accent: #10b981;
     }
     body {
-      font-family: system-ui, -apple-system, sans-serif;
       background-color: var(--bg-dark);
-      color: var(--text-main);
-      margin: 0;
-      padding: 20px;
-      display: flex;
-      justify-content: center;
+      color: white;
+      font-family: system-ui, -apple-system, sans-serif;
     }
-    .container { width: 100%; max-width: 600px; }
-    /* ... keep your other CSS rules here ... */
+    .feed {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .post {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal-backdrop.show {
+      display: flex;
+    }
   </style>
 </head>
-<body>
+<body class="min-h-screen pb-8">
 
-  <div id="profilePage" class="container">
-
-    <div class="profile-card">
-      <img id="user-avatar" class="avatar" src="https://placehold.co/150" alt="Avatar" width="100">
-      <h2 id="profile-username" style="margin:0;">@citizen</h2>
-      <p id="profile-email" style="color: var(--text-muted); margin: 4px 0 12px 0;">guest@vocalwitness.io</p>
-      
-      <div id="profile-tier-container" style="margin-bottom: 14px;">
-         <span class="px-4 py-1 bg-green-900 text-green-400 rounded-full text-sm font-medium">🟢 Citizen</span>
-      </div>
-      
-      <div id="profile-badges"></div>
-
-      <div style="border-top: 1px solid #27272a; margin-top: 16px; padding-top: 16px; display: flex; gap: 10px; justify-content: center;">
-        <button id="btn-change-password" class="btn-secondary">🔒 Change Password</button>
-        <button id="btn-logout" class="btn-secondary" style="color: #fca5a5; border-color: #7f1d1d;">Sign Out</button>
-        <button id="btn-close-profile" class="btn-secondary">Close</button>
+  <!-- Top Navigation -->
+  <nav class="bg-zinc-900 border-b border-zinc-800 sticky top-0 z-50">
+    <div class="max-w-2xl mx-auto flex items-center justify-between px-4 py-3">
+      <h1 class="text-xl font-bold flex items-center gap-2">
+        🔥 VocalWitness
+      </h1>
+      <div class="flex gap-2">
+        <button id="btn-citizentalk" class="nav-btn active px-4 py-2 rounded-full text-sm font-medium">💬 Citizen Talk</button>
+        <button id="btn-witnessvoice" class="nav-btn px-4 py-2 rounded-full text-sm font-medium">👁️ Witness Voice</button>
+        <button id="btn-profile" class="nav-btn px-4 py-2 rounded-full text-sm font-medium">👤 Profile</button>
       </div>
     </div>
+  </nav>
 
-    <section>
-      <h3>📈 Witness Metrics</h3>
-      <div style="display: flex; justify-content: space-around; text-align: center; margin-top: 10px;">
-        <div>
-          <div id="post-count" style="font-size: 1.5rem; font-weight: bold;">0</div>
-          <div style="color: var(--text-muted); font-size: 0.85rem;">Testimonies</div>
+  <div class="max-w-2xl mx-auto px-4 pt-6">
+
+    <!-- POST COMPOSER -->
+    <div class="post-composer bg-zinc-900 rounded-2xl p-4 mb-8 border border-zinc-700">
+      <textarea id="mainInput" rows="3"
+        class="w-full bg-zinc-800 text-white rounded-xl px-4 py-3 resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        placeholder="Share your testimony... What did you witness?"></textarea>
+      
+      <div class="flex items-center gap-3 mt-4">
+        <button id="btn-photo" class="flex-1 bg-zinc-800 hover:bg-zinc-700 py-3 rounded-xl flex items-center justify-center gap-2">
+          📸 Photo
+        </button>
+        <button id="btn-voice" class="flex-1 bg-zinc-800 hover:bg-zinc-700 py-3 rounded-xl flex items-center justify-center gap-2">
+          🎤 Voice
+        </button>
+        <button id="postButton" 
+          class="flex-1 bg-emerald-600 hover:bg-emerald-500 py-3 rounded-xl font-semibold">
+          Publish Testimony
+        </button>
+      </div>
+      
+      <div id="preview-area" class="mt-4"></div>
+    </div>
+
+    <!-- FEED -->
+    <div id="feed-container">
+      <div id="feed" class="feed"></div>
+    </div>
+
+    <!-- PROFILE PAGE (Hidden by default) -->
+    <div id="profilePage" class="hidden">
+      <div class="profile-card bg-zinc-900 rounded-2xl p-6 mb-8">
+        <img id="user-avatar" src="https://placehold.co/150" alt="Avatar" 
+             class="w-24 h-24 rounded-full mx-auto mb-4 object-cover">
+        <h2 id="profile-username" class="text-2xl font-bold text-center">@citizen</h2>
+        <p id="profile-email" class="text-center text-zinc-400">guest@vocalwitness.io</p>
+
+        <div id="profile-tier-container" class="flex justify-center my-4"></div>
+        <div id="profile-badges" class="flex justify-center gap-2 my-4"></div>
+
+        <div class="grid grid-cols-3 gap-4 text-center my-8">
+          <div>
+            <div id="post-count" class="text-3xl font-bold">0</div>
+            <div class="text-xs text-zinc-500">Testimonies</div>
+          </div>
+          <div>
+            <div id="verify-count" class="text-3xl font-bold">0</div>
+            <div class="text-xs text-zinc-500">Verifications</div>
+          </div>
+          <div>
+            <div id="reputation-score" class="text-3xl font-bold text-amber-400">50</div>
+            <div class="text-xs text-zinc-500">Reputation</div>
+          </div>
         </div>
-        <div>
-          <div id="verify-count" style="font-size: 1.5rem; font-weight: bold;">0</div>
-          <div style="color: var(--text-muted); font-size: 0.85rem;">Verifications</div>
-        </div>
-        <div>
-          <div id="reputation-score" style="font-size: 1.5rem; font-weight: bold; color: var(--citizen-bronze);">50</div>
-          <div style="color: var(--text-muted); font-size: 0.85rem;">Reputation</div>
+
+        <div class="flex gap-3">
+          <button id="btn-change-password" class="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-xl">🔒 Change Password</button>
+          <button id="btn-logout" class="flex-1 py-3 bg-red-900 hover:bg-red-800 rounded-xl">Sign Out</button>
         </div>
       </div>
-    </section>
 
-    <section id="verification-panel">
-      <h3>⚡ Witness Ascension Checklist</h3>
-      <p style="color: var(--text-muted); font-size: 0.9rem;">Complete these authentication links to activate your Witness Voice stream.</p>
-      
-      <ul style="list-style: none; padding: 0; margin: 16px 0;">
-        <li style="margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
-          <span id="chk-phone" style="font-size: 1.2rem;">❌</span> 
-          <div style="flex-grow: 1;">
-            <strong>Phone Accountability:</strong> 
-            <span id="phone-status-text" style="color: var(--text-muted); display: block; font-size: 0.85rem;">Not Linked</span>
-          </div>
-          <button id="btn-verify-phone" class="btn-primary" style="padding: 6px 12px; font-size: 0.8rem;">Verify Now</button>
-        </li>
-        
-        <li style="margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
-          <span id="chk-zk" style="font-size: 1.2rem;">⏳</span> 
-          <div>
-            <strong>ZK Cryptographic Proof:</strong> 
-            <span id="zk-status-text" style="color: var(--text-muted); display: block; font-size: 0.85rem; font-style: italic;">
-              ⚙️ Module Bypassed for Beta (Coming Soon)
-            </span>
-          </div>
-        </li>
-      </ul>
-
-      <button id="btn-upgrade-witness" disabled style="width: 100%; padding: 12px; background: #3f3f46; color: #a1a1aa; border: none; border-radius: 6px; font-weight: bold; cursor: not-allowed;">
-        Ascend to Witness Status
-      </button>
-    </section>
+      <!-- Witness Ascension Checklist -->
+      <div class="bg-zinc-900 rounded-2xl p-6">
+        <h3 class="text-lg font-semibold mb-4">⚡ Witness Ascension Checklist</h3>
+        <div id="verification-panel">
+          <!-- Your existing verification items will be populated by JS -->
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div id="changePasswordModal" class="modal-backdrop hidden">...</div>
-  <div id="phoneModal" class="modal-backdrop hidden">...</div>
+  <!-- Modals -->
+  <div id="changePasswordModal" class="modal-backdrop hidden">
+    <!-- Add your change password modal content here -->
+    <div class="bg-zinc-900 rounded-2xl p-6 w-full max-w-md mx-4">
+      <h3 class="text-xl font-bold mb-4">Change Password</h3>
+      <!-- inputs here -->
+      <div class="flex gap-3 mt-6">
+        <button id="cancel-change-password" class="flex-1 py-3 bg-zinc-800 rounded-xl">Cancel</button>
+        <button id="confirm-change-password" class="flex-1 py-3 bg-emerald-600 rounded-xl">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="phoneModal" class="modal-backdrop hidden">
+    <!-- Your phone verification modal content -->
+  </div>
 
   <script type="module" src="js/main.js"></script>
 </body>
