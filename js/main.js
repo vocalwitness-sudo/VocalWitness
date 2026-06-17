@@ -1,4 +1,4 @@
-import { googleLogin, logout, initAuth } from "./auth.js";
+import { googleLogin, logout, initAuth, sendPhoneVerification, verifyPhoneCode } from "./auth.js";
 import { initFeed, addPostToFeed } from './feed.js';
 import { db, storage } from './firebase-config.js';
 import { showToast } from './utils.js';
@@ -37,13 +37,13 @@ async function bootstrap() {
 
         initFeed(db, currentFeed);
         initLanguage();
-       
+        
         // Core Engine
         engine = new VocalWitnessEngine(db, storage);
         setEngine(engine);
-       
+        
         attachUIListeners();
-       
+        
         console.log("✅ VocalWitness Core Loaded Successfully");
         showToast("Platform Ready • Witness Voice + Citizen Talk Active");
     } catch (err) {
@@ -101,6 +101,9 @@ function attachUIListeners() {
         const tempId = 'temp-' + Date.now();
         addPostToFeed({ id: tempId, witnessText: text || "📸 Media Testimony" }, true);
 
+        // Safely infer phone verified state dynamically for data metrics
+        const clientPhoneVerified = !!state?.user?.providerData?.some(p => p.providerId === 'phone') || !!document.getElementById('trust-score')?.innerText.includes('100');
+
         try {
             const mediaData = await uploadForensicMedia("current-user");
             await addDoc(collection(db, "testimonies"), {
@@ -110,7 +113,11 @@ function attachUIListeners() {
                 languageCode: localStorage.getItem('preferredLang') || 'en',
                 authorId: "user-" + Date.now().toString().slice(-6),
                 ...mediaData,
-                moderation: { trustScore: 100, verificationsCount: 0, disputesCount: 0 }
+                moderation: { 
+                    trustScore: clientPhoneVerified ? 100 : 50, 
+                    verificationsCount: 0, 
+                    disputesCount: 0 
+                }
             });
 
             input.value = '';
@@ -191,6 +198,78 @@ function attachUIListeners() {
             if (success) {
                 changePassModal.classList.add('hidden');
             }
+        });
+    }
+
+    // ==================== PHONE VERIFICATION MODAL FLOW ====================
+    const phoneModal = document.getElementById('phoneModal');
+    const btnOpenPhoneModal = document.getElementById('btn-verify-phone');
+    const btnClosePhoneModal = document.getElementById('close-phone-modal');
+    const step1Container = document.getElementById('phone-step-1');
+    const step2Container = document.getElementById('phone-step-2');
+    const phoneNumberInput = document.getElementById('phone-number-input');
+    const phoneOtpInput = document.getElementById('phone-otp-input');
+    const btnSendOtp = document.getElementById('btn-send-otp');
+    const btnVerifyOtp = document.getElementById('btn-verify-otp');
+
+    if (btnOpenPhoneModal) {
+        btnOpenPhoneModal.addEventListener('click', () => {
+            if (step1Container && step2Container) {
+                step1Container.classList.remove('hidden');
+                step2Container.classList.add('hidden');
+            }
+            if (phoneNumberInput) phoneNumberInput.value = "";
+            if (phoneOtpInput) phoneOtpInput.value = "";
+            phoneModal?.classList.remove('hidden');
+        });
+    }
+
+    if (btnClosePhoneModal) {
+        btnClosePhoneModal.addEventListener('click', () => {
+            phoneModal?.classList.add('hidden');
+        });
+    }
+
+    if (btnSendOtp) {
+        btnSendOtp.addEventListener('click', async () => {
+            const phoneRaw = phoneNumberInput?.value.trim();
+            if (!phoneRaw || !phoneRaw.startsWith('+') || phoneRaw.length < 8) {
+                return showToast("Please enter a valid phone number starting with + and country code.", "error");
+            }
+
+            btnSendOtp.disabled = true;
+            btnSendOtp.innerText = "Processing security handshake...";
+
+            const isSent = await sendPhoneVerification(phoneRaw);
+            if (isSent) {
+                step1Container?.classList.add('hidden');
+                step2Container?.classList.remove('hidden');
+            }
+
+            btnSendOtp.disabled = false;
+            btnSendOtp.innerText = "Send Verification Code";
+        });
+    }
+
+    if (btnVerifyOtp) {
+        btnVerifyOtp.addEventListener('click', async () => {
+            const otpCode = phoneOtpInput?.value.trim();
+            if (!otpCode || otpCode.length !== 6 || isNaN(otpCode)) {
+                return showToast("Please enter a valid 6-digit verification code.", "error");
+            }
+
+            btnVerifyOtp.disabled = true;
+            btnVerifyOtp.innerText = "Anchoring confirmation data...";
+
+            const success = await verifyPhoneCode(otpCode);
+            if (success) {
+                phoneModal?.classList.add('hidden');
+                const trustScoreEl = document.getElementById('trust-score');
+                if (trustScoreEl) trustScoreEl.innerText = "100";
+            }
+
+            btnVerifyOtp.disabled = false;
+            btnVerifyOtp.innerText = "Verify & Upgrade Account";
         });
     }
 }
