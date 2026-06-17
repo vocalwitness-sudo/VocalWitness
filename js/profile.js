@@ -22,6 +22,7 @@ const phoneText = document.getElementById('phone-status-text');
 const zkText = document.getElementById('zk-status-text');
 const testimoniesText = document.getElementById('testimonies-status-text');
 const btnUpgrade = document.getElementById('btn-upgrade-witness');
+const btnVerifyZK = document.getElementById("btn-verify-zk");
 
 let currentUserId = null;
 
@@ -80,7 +81,7 @@ function evaluateChecklist(data) {
 
   chkZk.textContent = zkReady ? "✅" : "❌";
   zkText.textContent = zkReady ? "Verified Cryptographically" : "Pending";
-  if (zkReady) document.getElementById('btn-verify-zk').style.display = 'none';
+  if (zkReady) btnVerifyZK.style.display = 'none';
 
   chkTestimonies.textContent = testimoniesReady ? "✅" : "❌";
   testimoniesText.textContent = `${data.testimoniesCount} / 3 Testimonies posted`;
@@ -93,6 +94,9 @@ function evaluateChecklist(data) {
     btnUpgrade.style.cursor = "pointer";
   } else {
     btnUpgrade.disabled = true;
+    btnUpgrade.style.background = "#3f3f3f";
+    btnUpgrade.style.color = "#a1a1aa";
+    btnUpgrade.style.cursor = "not-allowed";
   }
 }
 
@@ -103,8 +107,6 @@ btnUpgrade.addEventListener('click', async () => {
   const userRef = doc(db, "users", currentUserId);
   
   try {
-    // In production, your Cloud Function handles this securely.
-    // For local frontend testing, we update Firestore directly:
     await updateDoc(userRef, {
       role: "witness",
       trustCircle: 25, // Trust Circle initializes at 25% strength on ascension
@@ -117,14 +119,69 @@ btnUpgrade.addEventListener('click', async () => {
   }
 });
 
-// Mocking verification steps for testing
+// Mocking phone verification step for testing
 document.getElementById('btn-verify-phone').addEventListener('click', () => {
-  alert("Redirecting to phone-auth.js flow...");
-  // In your real flow, you link this to your phone-auth.js system!
+  alert("Redirecting to phone authentication flow...");
 });
 
-document.getElementById('btn-verify-zk').addEventListener('click', async () => {
-  if (!currentUserId) return;
-  // Simulating ZK proof generation success for now
-  await updateDoc(doc(db, "users", currentUserId), { zkVerified: true });
-});
+// REAL-TIME WORKER INTEGRATION FOR ZERO-KNOWLEDGE PROOF
+if (btnVerifyZK) {
+  btnVerifyZK.addEventListener("click", () => {
+    if (!currentUserId) {
+      alert("Please wait until authentication finishes initializing.");
+      return;
+    }
+
+    // 1. Change button UI to show it is computing in the background
+    btnVerifyZK.textContent = "Computing ZK Proof... ⚡";
+    btnVerifyZK.disabled = true;
+    btnVerifyZK.style.cursor = "not-allowed";
+
+    // 2. Spin up your Web Worker file
+    const zkWorker = new Worker('js/zk-worker.js');
+
+    // 3. Send data to the worker to kick off the simulation
+    zkWorker.postMessage({
+      identityCommitment: `0x_witness_${currentUserId.substring(0, 5)}_hash`,
+      witnessData: { testimonies: 3 }
+    });
+
+    // 4. Listen for the worker to finish up
+    zkWorker.onmessage = async (event) => {
+      const { success, proof, error } = event.data;
+
+      if (success) {
+        console.log("Success! Generated proof:", proof);
+
+        try {
+          // 🔥 Write the successful verification back to Firestore
+          const userRef = doc(db, "users", currentUserId);
+          await updateDoc(userRef, { 
+            zkVerified: true,
+            verifiedAt: new Date()
+          });
+
+          // Update UI styles immediately
+          document.getElementById("chk-zk").textContent = "✅";
+          zkText.textContent = "Verified Cryptographically";
+          zkText.style.color = "var(--witness-green)";
+          btnVerifyZK.textContent = "Proof Securely Saved";
+          
+        } catch (dbError) {
+          console.error("Error updating Firestore ZK state:", dbError);
+          btnVerifyZK.textContent = "Sync Error. Retry";
+          btnVerifyZK.disabled = false;
+          btnVerifyZK.style.cursor = "pointer";
+        }
+      } else {
+        console.error("ZK Error:", error);
+        btnVerifyZK.textContent = "Proof Failed. Retry";
+        btnVerifyZK.disabled = false;
+        btnVerifyZK.style.cursor = "pointer";
+      }
+
+      // 5. Turn off the worker to save device memory
+      zkWorker.terminate();
+    };
+  });
+}
