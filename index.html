@@ -174,6 +174,35 @@
         </div>
     </div>
 
+    <div id="phoneModal" class="hidden fixed inset-0 bg-black/90 z-[110] flex items-center justify-center backdrop-blur-md">
+    <div class="glass rounded-3xl p-8 w-full max-w-md mx-4 border border-emerald-500/30">
+        <h2 class="text-2xl font-bold mb-2 text-center text-emerald-400">📱 Phone Verification</h2>
+        <p class="text-xs text-zinc-400 text-center mb-6">Verify your device to boost your Trust Score and get your Witness Shield badge.</p>
+        
+        <div id="phone-step-1" class="space-y-4">
+            <label class="text-xs font-semibold tracking-wide text-zinc-400 uppercase">Phone Number</label>
+            <input id="phone-number-input" type="tel" placeholder="+234 801 234 5678" 
+                   class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4 focus:outline-none focus:border-emerald-500 tracking-wider">
+            <p class="text-[10px] text-zinc-500">Include international country code prefix (e.g., +234 for Nigeria).</p>
+            <button id="btn-send-otp" class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-2xl transition shadow-md">
+                Send Verification Code
+            </button>
+        </div>
+
+        <div id="phone-step-2" class="hidden space-y-4">
+            <label class="text-xs font-semibold tracking-wide text-zinc-400 uppercase">Enter 6-Digit Code</label>
+            <input id="phone-otp-input" type="text" maxlength="6" placeholder="000000" 
+                   class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4 focus:outline-none focus:border-emerald-500 text-center text-2xl tracking-widest font-bold">
+            <button id="btn-verify-otp" class="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold rounded-2xl transition shadow-md">
+                Verify & Upgrade Account
+            </button>
+        </div>
+
+        <button id="close-phone-modal" class="mt-6 text-zinc-400 hover:text-white text-sm w-full text-center block transition">Cancel</button>
+    </div>
+</div>
+
+    
     <div id="authModal" class="hidden fixed inset-0 bg-black/90 z-[100] flex items-center justify-center">
         <div class="glass rounded-3xl p-8 w-full max-w-md mx-4">
             <h2 class="text-2xl font-bold mb-6 text-center text-emerald-400">Join VocalWitness</h2>
