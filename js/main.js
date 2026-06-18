@@ -244,7 +244,27 @@ function updateProfileUI(user) {
     document.getElementById('reputation-score').textContent = state?.reputation || 50;
 }
 
-// Safety fallback
+// Emergency fallback for buttons
 document.addEventListener('DOMContentLoaded', () => {
-    if (typeof init === 'function') init();
+    console.log("🔧 DOM ready - applying button safety");
+    
+    // Force profile button to work even if auth is slow
+    const profileBtn = document.getElementById('btn-profile');
+    if (profileBtn) {
+        profileBtn.addEventListener('click', () => {
+            const home = document.getElementById('homeSection');
+            const profile = document.getElementById('profileSection');
+            if (home && profile) {
+                home.classList.remove('active');
+                profile.classList.add('active');
+                console.log("✅ Profile opened via fallback");
+            }
+        });
+    }
+    
+    // Close profile
+    document.getElementById('btn-close-profile')?.addEventListener('click', () => {
+        document.getElementById('profileSection')?.classList.remove('active');
+        document.getElementById('homeSection')?.classList.add('active');
+    });
 });
