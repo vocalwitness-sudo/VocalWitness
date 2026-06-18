@@ -214,13 +214,11 @@
 
     <script type="module" src="js/main.js"></script>
 
-    <!-- Service Worker Registration -->
-  <script>
+   <script>
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            // Using the full path from the domain root ensures it resolves 
-            // correctly on GitHub Pages.
-            navigator.serviceWorker.register('/VocalWitness/sw.js')
+        
+            navigator.serviceWorker.register('./sw.js')
                 .then(reg => {
                     console.log('✅ Service Worker registered with scope:', reg.scope);
                 })
