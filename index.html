@@ -216,25 +216,22 @@
 
     <!-- Service Worker Registration -->
     <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                const swPath = './sw.js';
-                
-                console.log('🔄 Attempting to register SW at:', swPath);
-                
-                navigator.serviceWorker.register(swPath)
-                    .then(reg => {
-                        console.log('✅ Service Worker registered successfully!', reg.scope);
-                    })
-                    .catch(err => {
-                        console.error('❌ Main SW registration failed:', err);
-                        // Fallback
-                        navigator.serviceWorker.register('js/sw.js')
-                            .then(reg => console.log('✅ SW registered via fallback path'))
-                            .catch(e => console.error('❌ All SW registration attempts failed:', e));
-                    });
-            });
-        }
-    </script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            // Because sw.js is in the root, we use './sw.js'
+            const swPath = './sw.js';
+            
+            console.log('🔄 Attempting to register SW at:', swPath);
+            
+            navigator.serviceWorker.register(swPath)
+                .then(reg => {
+                    console.log('✅ Service Worker registered successfully!', reg.scope);
+                })
+                .catch(err => {
+                    console.error('❌ Service Worker registration failed:', err);
+                });
+        });
+    }
+</script>
 </body>
 </html>
