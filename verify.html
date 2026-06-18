@@ -1,0 +1,47 @@
+<!-- verify.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>VocalWitness Integrity Check</title>
+</head>
+<body>
+    <h1>VocalWitness Integrity Check</h1>
+    <div id="status">Verifying document...</div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js";
+
+        // IMPORTANT: Replace the empty {} below with your actual Firebase config object
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "vocalwitness-3affa.firebaseapp.com",
+            projectId: "vocalwitness-3affa",
+            storageBucket: "vocalwitness-3affa.appspot.com",
+            messagingSenderId: "YOUR_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        async function verifyDoc() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const docId = urlParams.get('id');
+            const statusDiv = document.getElementById('status');
+
+            if (!docId) { statusDiv.innerText = "❌ Invalid Request"; return; }
+
+            const docRef = doc(db, "verifiable_docs", docId);
+            const docSnap = await getDoc(docRef);
+
+            if (docSnap.exists()) {
+                statusDiv.innerHTML = "✅ <b>AUTHENTIC:</b> This document is verified by the VocalWitness Ledger.";
+            } else {
+                statusDiv.innerHTML = "❌ <b>FORGERY ALERT:</b> This document does not exist in our ledger.";
+            }
+        }
+        verifyDoc();
+    </script>
+</body>
+</html>
