@@ -215,17 +215,13 @@
     <script type="module" src="js/main.js"></script>
 
     <!-- Service Worker Registration -->
-    <script>
+  <script>
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            // Because sw.js is in the root, we use './sw.js'
-            const swPath = './sw.js';
-            
-            console.log('🔄 Attempting to register SW at:', swPath);
-            
-            navigator.serviceWorker.register(swPath)
+            // Explicitly look for the file in the root directory
+            navigator.serviceWorker.register('/VocalWitness/sw.js')
                 .then(reg => {
-                    console.log('✅ Service Worker registered successfully!', reg.scope);
+                    console.log('✅ Service Worker registered with scope:', reg.scope);
                 })
                 .catch(err => {
                     console.error('❌ Service Worker registration failed:', err);
