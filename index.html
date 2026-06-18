@@ -219,7 +219,7 @@
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             // Explicitly look for the file in the root directory
-            navigator.serviceWorker.register('/VocalWitness/sw.js')
+                        navigator.serviceWorker.register('js/sw.js')
                 .then(reg => {
                     console.log('✅ Service Worker registered with scope:', reg.scope);
                 })
