@@ -218,11 +218,12 @@
   <script>
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            // Explicitly look for the file in the root directory
-                       navigator.serviceWorker.register('/VocalWitness/sw.js')
-    .then(reg => {
-        console.log('✅ Service Worker registered with scope:', reg.scope);
-    })
+            // Using the full path from the domain root ensures it resolves 
+            // correctly on GitHub Pages.
+            navigator.serviceWorker.register('/VocalWitness/sw.js')
+                .then(reg => {
+                    console.log('✅ Service Worker registered with scope:', reg.scope);
+                })
                 .catch(err => {
                     console.error('❌ Service Worker registration failed:', err);
                 });
