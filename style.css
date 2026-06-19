@@ -101,6 +101,21 @@ button:active {
     border-radius: 1rem;
 }
 
+/* Active state for navigation/tabs */
+.nav-btn {
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+}
+
+.nav-btn.active {
+    background-color: #10b981; /* Primary Brand Green */
+    color: #000000;
+    border-color: #ffffff;
+    font-weight: 700;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+}
+
+
 /* Animations & Feedback */
 .recording-pulse {
     animation: pulse 1.5s infinite;
