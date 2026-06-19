@@ -143,6 +143,15 @@
                         <div id="profile-badges" class="flex flex-wrap gap-2"></div>
                     </div>
 
+                    <!-- Witness Token PDF Section -->
+                    <div class="mt-6 pt-6 border-t border-zinc-700 mb-8">
+                        <button id="btn-download-pdf" 
+                                class="w-full py-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 text-black font-bold rounded-2xl flex items-center justify-center gap-3 text-lg disabled:opacity-50 transition-all">
+                            📄 Download My Witness Token PDF
+                        </button>
+                        <p id="pdf-status" class="text-xs text-center mt-3 text-zinc-400"></p>
+                    </div>
+
                     <div class="grid grid-cols-1 gap-3 mb-8">
                         <button id="vw-btn" class="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-black font-bold rounded-2xl transition flex items-center justify-center gap-2">
                             🔒 Start ZK Verification (Become Witness)
@@ -169,7 +178,7 @@
         <div class="glass rounded-3xl p-8 w-full max-w-md mx-4 border border-emerald-500/30">
             <h2 class="text-2xl font-bold mb-2 text-center text-emerald-400">📱 Phone Verification</h2>
             <p class="text-xs text-zinc-400 text-center mb-6">Verify your device to boost your Trust Score and get your Witness Shield badge.</p>
-            
+           
             <div id="phone-step-1" class="space-y-4">
                 <label class="text-xs font-semibold tracking-wide text-zinc-400 uppercase">Phone Number</label>
                 <input id="phone-number-input" type="tel" placeholder="+234 801 234 5678"
@@ -213,20 +222,14 @@
     <div id="recaptcha-container"></div>
 
     <script type="module" src="js/main.js"></script>
-
-   <script>
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-        
-            navigator.serviceWorker.register('./sw.js')
-                .then(reg => {
-                    console.log('✅ Service Worker registered with scope:', reg.scope);
-                })
-                .catch(err => {
-                    console.error('❌ Service Worker registration failed:', err);
-                });
-        });
-    }
-</script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('✅ Service Worker registered'))
+                    .catch(err => console.error('❌ Service Worker failed:', err));
+            });
+        }
+    </script>
 </body>
 </html>
