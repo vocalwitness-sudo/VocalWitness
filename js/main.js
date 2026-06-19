@@ -134,17 +134,7 @@ document.addEventListener('DOMContentLoaded', bootstrap);
 // Add this helper to finish the logic for the Post button
 async function handlePostSubmission() {
     if (!state?.user) return showToast("Please sign in to post", "error");
-    // Add this inside handlePostSubmission
-const postBtn = document.getElementById('btn-post');
-if (postBtn) postBtn.disabled = true; // Disable to prevent double-click
-
-try {
-    // ... your logic ...
-} finally {
-    if (postBtn) postBtn.disabled = false; // Re-enable regardless of success/fail
-}
     
-    // Check if there is media to upload
     const previewArea = document.getElementById('preview-area');
     const hasMedia = previewArea && !previewArea.classList.contains('hidden');
     
@@ -152,20 +142,30 @@ try {
 
     try {
         showToast("Uploading to ledger...");
+        
         // 1. Upload to Firebase Storage and get URLs/Hashes
         const mediaData = await uploadForensicMedia(state.user.uid);
         
-        // 2. Push to Firestore
+        // 2. Push to Firestore (This is where you place the block)
         await addDoc(collection(db, "testimonies"), {
-            ...mediaData,
+            ...mediaData, // Contains imageUrl, imageHash, audioUrl, audioHash
             author: state.user.displayName,
             authorId: state.user.uid,
             timestamp: new Date().toISOString(),
-            content: document.getElementById('post-text')?.value || ""
+            content: document.getElementById('post-text')?.value || "",
+            // Ledger Integrity Fields:
+            verified: false, 
+            format: mediaData.imageUrl ? "image/jpeg" : "audio/webm",
+            clientVersion: "1.0.0" 
         });
 
         showToast("✅ Witness testimony secured!");
         resetMediaState();
+        
+        // Optional: clear the text input after successful post
+        const postInput = document.getElementById('post-text');
+        if (postInput) postInput.value = "";
+        
     } catch (err) {
         console.error("Post error:", err);
         showToast("Post failed: " + err.message, "error");
