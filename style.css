@@ -31,6 +31,57 @@ body {
     object-fit: contain;
 }
 
+/* Ledger Feed Styling */
+.testimony-card {
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    border-radius: 1rem;
+    border-left: 4px solid #10b981;
+    background: rgba(30, 41, 59, 0.5);
+}
+
+.timestamp-text {
+    font-size: 0.75rem;
+    color: #a1a1aa;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Interaction & Touch Targets */
+button {
+    min-height: 44px; 
+    min-width: 44px;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: transform 0.1s ease, opacity 0.2s;
+    border: none; /* Ensure consistent reset */
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+.btn-disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Spinner (Loading State) */
+.spinner {
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #10b981;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 8px;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
 /* UI States & Utilities */
 .tab-active {
     background-color: #10b981;
