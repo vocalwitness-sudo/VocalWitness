@@ -42,6 +42,11 @@ function attachUIListeners() {
         if (!btn) return;
 
         switch(btn.id) {
+            case 'btn-post':
+                // Ensure this function is defined below in main.js
+                await handlePostSubmission(); 
+                break;
+
             case 'btn-photo':
                 const input = document.createElement('input');
                 input.type = 'file';
@@ -95,14 +100,12 @@ function attachUIListeners() {
         }
     });
 
-    // Separate listener for change events (e.g., Select dropdowns)
     document.addEventListener('change', (event) => {
         if (event.target.id === 'languageSelector') {
             changeLanguage(event.target.value);
         }
     });
 }
-
 // Helper to handle active state styling
 function setActiveNav(activeBtn) {
     document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
@@ -127,3 +130,44 @@ function updateProfileUI(user) {
 
 // Start the app
 document.addEventListener('DOMContentLoaded', bootstrap);
+
+// Add this helper to finish the logic for the Post button
+async function handlePostSubmission() {
+    if (!state?.user) return showToast("Please sign in to post", "error");
+    // Add this inside handlePostSubmission
+const postBtn = document.getElementById('btn-post');
+if (postBtn) postBtn.disabled = true; // Disable to prevent double-click
+
+try {
+    // ... your logic ...
+} finally {
+    if (postBtn) postBtn.disabled = false; // Re-enable regardless of success/fail
+}
+    
+    // Check if there is media to upload
+    const previewArea = document.getElementById('preview-area');
+    const hasMedia = previewArea && !previewArea.classList.contains('hidden');
+    
+    if (!hasMedia) return showToast("Please attach media first", "error");
+
+    try {
+        showToast("Uploading to ledger...");
+        // 1. Upload to Firebase Storage and get URLs/Hashes
+        const mediaData = await uploadForensicMedia(state.user.uid);
+        
+        // 2. Push to Firestore
+        await addDoc(collection(db, "testimonies"), {
+            ...mediaData,
+            author: state.user.displayName,
+            authorId: state.user.uid,
+            timestamp: new Date().toISOString(),
+            content: document.getElementById('post-text')?.value || ""
+        });
+
+        showToast("✅ Witness testimony secured!");
+        resetMediaState();
+    } catch (err) {
+        console.error("Post error:", err);
+        showToast("Post failed: " + err.message, "error");
+    }
+}
