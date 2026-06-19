@@ -120,3 +120,17 @@ function updateProfileUI(user) {
 // Start the app
 document.addEventListener('DOMContentLoaded', bootstrap);
 window.addEventListener('load', bootstrap); // Extra safety
+
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        // Because your sw.js is in the root, use '/sw.js'
+        navigator.serviceWorker.register('/VocalWitness/sw.js')
+            .then(registration => {
+                console.log('✅ ServiceWorker registered with scope:', registration.scope);
+            })
+            .catch(error => {
+                console.error('❌ ServiceWorker registration failed:', error);
+            });
+    });
+}
