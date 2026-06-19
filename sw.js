@@ -1,5 +1,25 @@
-// js/sw.js
-const CACHE_NAME = 'vocalwitness-v7'; // Increased version
+importScripts('https://storage.googleapis.com/workbox-cdn/releases/7.0.0/workbox-sw.js');
+
+const { BackgroundSyncPlugin } = workbox.backgroundSync;
+const { registerRoute } = workbox.routing;
+const { NetworkOnly } = workbox.strategies;
+
+const CACHE_NAME = 'vocalwitness-v7';
+
+// Initialize the Workbox Background Sync Plugin
+const bgSyncPlugin = new BackgroundSyncPlugin('vocalwitness-queue', {
+  maxRetentionTime: 24 * 60 // Retry for up to 24 hours
+});
+
+// 1. Define the route for your API/Testimony submission
+// This automatically intercepts requests and queues them if the network fails
+registerRoute(
+  ({ url }) => url.pathname.includes('/api/submit-testimony'), // Adjust this path to match your actual API endpoint
+  new NetworkOnly({
+    plugins: [bgSyncPlugin]
+  }),
+  'POST'
+);
 
 const STATIC_ASSETS = [
     '/VocalWitness/',
@@ -60,31 +80,3 @@ self.addEventListener('fetch', (event) => {
         })
     );
 });
-
-// --- DATABASE QUEUE LOGIC ---
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'publish-testimony') {
-    event.waitUntil(processQueue());
-  }
-});
-
-async function processQueue() {
-  console.log("🔄 Background Sync started...");
-  try {
-    const dbRequest = indexedDB.open('VocalWitnessDB', 1);
-    dbRequest.onsuccess = (e) => {
-      const db = e.target.result;
-      const tx = db.transaction('offline-posts', 'readonly');
-      const store = tx.objectStore('offline-posts');
-      const getAll = store.getAll();
-      
-      getAll.onsuccess = () => {
-        const posts = getAll.result;
-        console.log("📦 Posts found in queue:", posts.length);
-        // Your upload logic would go here
-      };
-    };
-  } catch (err) {
-    console.error("Sync error:", err);
-  }
-}
