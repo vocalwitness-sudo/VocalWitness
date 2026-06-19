@@ -33,6 +33,15 @@ async function bootstrap() {
     }
 }
 
+function setActiveTab(buttonElement) {
+    // Remove 'active' class from all navigation buttons
+    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+    
+    // Add 'active' class to the clicked button
+    buttonElement.classList.add('active');
+}
+
+
 function attachUIListeners() {
     console.log("🔗 Attaching event delegation...");
 
