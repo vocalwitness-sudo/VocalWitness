@@ -18,10 +18,18 @@ export async function generateAndDownloadPDF(user, db) {
         return;
     }
 
+    // ==================== GATEKEEPER NOTICE ====================
+    const gatekeeperMessage = `This document is a Verifiable Credential.\n\nIt is cryptographically linked to your VocalWitness Truth Ledger record.\n\nBy downloading, you agree that any alteration to this file will invalidate its authenticity.`;
+
+    if (!confirm(gatekeeperMessage)) {
+        statusEl.innerHTML = "Download cancelled.";
+        return;
+    }
+
     try {
         const token = crypto.randomUUID();
 
-        // Save Witness Token to Ledger
+        // === THE LEDGER ENGRAVING ===
         await setDoc(doc(db, "verifiable_docs", token), {
             ownerId: user.uid,
             timestamp: new Date().toISOString(),
@@ -46,16 +54,16 @@ export async function generateAndDownloadPDF(user, db) {
         pdf.text(`Issued: ${new Date().toLocaleDateString()}`, 20, 90);
 
         pdf.setFontSize(11);
-        pdf.text("Verify this document here:", 20, 110);
-        pdf.text(`https://vocalwitness-sudo.github.io/VocalWitness/verify.html?id=${token}`, 20, 120);
+        pdf.text("Verify this document here:", 20, 115);
+        pdf.text(`https://vocalwitness-sudo.github.io/VocalWitness/verify.html?id=${token}`, 20, 125);
 
-        pdf.text("This token is cryptographically linked to the VocalWitness Ledger.", 20, 145);
-        pdf.text("Any alteration will invalidate its authenticity.", 20, 155);
+        pdf.text("This token is cryptographically linked to the VocalWitness Ledger.", 20, 150);
+        pdf.text("Any alteration will invalidate its authenticity.", 20, 160);
 
         pdf.save(`WitnessToken_${tier.name}_${token.slice(0,8)}.pdf`);
 
-        statusEl.innerHTML = "✅ Witness Token PDF downloaded & engraved!";
-        showToast("Witness Token successfully engraved to the Ledger", "success");
+        statusEl.innerHTML = "✅ Witness Token PDF downloaded & engraved to Ledger!";
+        showToast("Witness Token successfully engraved!", "success");
 
     } catch (error) {
         console.error("PDF Generation Error:", error);
