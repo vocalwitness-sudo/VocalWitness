@@ -23,16 +23,12 @@ let engine = null;
 async function bootstrap() {
     try {
         console.log("🚀 Initializing VocalWitness...");
-
         initAuth();
         initLanguage();
-
         engine = new VocalWitnessEngine(db, storage);
         setEngine(engine);
-
         initFeed(db, currentFeed);
         attachUIListeners();
-
         console.log("✅ Core Loaded Successfully");
         showToast("Platform Ready");
     } catch (err) {
@@ -44,18 +40,18 @@ async function bootstrap() {
 function attachUIListeners() {
     console.log("🔗 Attaching buttons...");
 
-    // Remove old listeners to prevent conflicts
+    // Remove old listeners safely to prevent duplicate clicks
     document.querySelectorAll('button, select').forEach(el => {
         const newEl = el.cloneNode(true);
-        el.parentNode.replaceChild(newEl, el);
+        if (el.parentNode) el.parentNode.replaceChild(newEl, el);
     });
 
-    // Language
+    // Language Selector
     document.getElementById('languageSelector')?.addEventListener('change', (e) => {
         changeLanguage(e.target.value);
     });
 
-    // Feed Navigation (Most Important)
+    // Feed Navigation
     document.getElementById('btn-witnessvoice')?.addEventListener('click', () => {
         currentFeed = 'witness-voice';
         document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
@@ -72,7 +68,7 @@ function attachUIListeners() {
         showToast("💬 Citizen Talk Mode Activated");
     });
 
-    // Profile
+    // Profile Section
     document.getElementById('btn-profile')?.addEventListener('click', () => {
         if (!state?.user) {
             showToast("Please sign in first", "error");
@@ -95,7 +91,7 @@ function attachUIListeners() {
         await generateAndDownloadPDF(state.user, db);
     });
 
-    // Media buttons
+    // Media Buttons
     document.getElementById('btn-photo')?.addEventListener('click', () => {
         const input = document.createElement('input');
         input.type = 'file';
@@ -105,27 +101,51 @@ function attachUIListeners() {
     });
 
     const voiceBtn = document.getElementById('btn-voice');
-    if (voiceBtn) voiceBtn.addEventListener('click', () => toggleVoiceRecording(voiceBtn));
+    if (voiceBtn) {
+        voiceBtn.addEventListener('click', () => toggleVoiceRecording(voiceBtn));
+    }
 
     // Logout
     document.getElementById('btn-logout')?.addEventListener('click', logout);
 }
 
-// Profile UI Update
+// Profile UI Update - with explicit button visibility toggling
 function updateProfileUI(user) {
-    document.getElementById('profile-username').textContent = user?.displayName || "@citizen";
-    document.getElementById('profile-email').textContent = user?.email || "guest@vocalwitness.io";
+    if (!user) return;
+
+    document.getElementById('profile-username').textContent = user.displayName || "@citizen";
+    document.getElementById('profile-email').textContent = user.email || "guest@vocalwitness.io";
+
+    const isWitness = state?.isWitnessVerified || false;
+
+    // === Explicit Button Visibility Toggling ===
+    const btnLogout = document.getElementById('btn-logout');
+    const btnVerifyPhone = document.getElementById('btn-verify-phone');
+    const witnessActions = document.getElementById('witness-actions'); // witness-only section if exists
+
+    if (btnLogout) {
+        btnLogout.style.display = 'block';           // Always show logout when logged in
+    }
+
+    if (btnVerifyPhone) {
+        btnVerifyPhone.style.display = isWitness ? 'none' : 'block';
+    }
+
+    if (witnessActions) {
+        witnessActions.style.display = isWitness ? 'block' : 'none';
+    }
+
+    console.log(`📋 Profile UI updated for ${user.email} | Witness: ${isWitness}`);
 }
 
 // Start the app
 document.addEventListener('DOMContentLoaded', bootstrap);
 window.addEventListener('load', bootstrap); // Extra safety
 
-// Register Service Worker
+// Register Service Worker - using relative path (better for GitHub Pages)
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        // Because your sw.js is in the root, use '/sw.js'
-        navigator.serviceWorker.register('/VocalWitness/sw.js')
+        navigator.serviceWorker.register('./sw.js')
             .then(registration => {
                 console.log('✅ ServiceWorker registered with scope:', registration.scope);
             })
