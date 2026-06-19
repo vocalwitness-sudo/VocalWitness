@@ -128,6 +128,33 @@ function updateProfileUI(user) {
     if (witnessActions) witnessActions.style.display = isWitness ? 'block' : 'none';
 }
 
+// In your main.js file
+document.addEventListener('DOMContentLoaded', () => {
+    const postButton = document.getElementById('post-btn');
+
+    postButton.addEventListener('click', async () => {
+        // 1. Trigger loading state
+        postButton.classList.add('btn-disabled');
+        postButton.innerHTML = '<span class="spinner"></span> Posting...';
+
+        // 2. Simulate your ledger update logic
+        try {
+            // Your API call would go here
+            await new Promise(resolve => setTimeout(resolve, 2000)); 
+            
+            // 3. Reset after success
+            postButton.innerHTML = 'Success!';
+        } catch (error) {
+            postButton.innerHTML = 'Error, try again';
+        } finally {
+            // 4. Return to normal state
+            setTimeout(() => {
+                postButton.classList.remove('btn-disabled');
+                postButton.innerHTML = 'Post to Ledger';
+            }, 1000);
+        }
+    });
+});
 // Start the app
 document.addEventListener('DOMContentLoaded', bootstrap);
 
