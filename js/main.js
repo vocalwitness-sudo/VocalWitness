@@ -1,17 +1,13 @@
 import { googleLogin, logout, initAuth } from "./auth.js";
-import { initFeed, addPostToFeed } from './feed.js';
+import { initFeed } from './feed.js';
 import { db, storage } from './firebase-config.js';
 import { showToast } from './utils.js';
 import { initLanguage, changeLanguage } from './i18n.js';
 import {
     handleImageSelect,
     toggleVoiceRecording,
-    resetMediaState,
-    uploadForensicMedia,
-    selectedImageFile,
     setEngine
 } from './media.js';
-import { addDoc, collection } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { VocalWitnessEngine } from './engine.js';
 import { state } from './storage.js';
 import { generateAndDownloadPDF } from './pdf.js';
@@ -38,78 +34,81 @@ async function bootstrap() {
 }
 
 function attachUIListeners() {
-    console.log("🔗 Attaching buttons...");
+    console.log("🔗 Attaching event delegation...");
 
-    // Remove old listeners safely to prevent duplicate clicks
-    document.querySelectorAll('button, select').forEach(el => {
-        const newEl = el.cloneNode(true);
-        if (el.parentNode) el.parentNode.replaceChild(newEl, el);
-    });
+    // Event Delegation: Single listener for all UI interactions
+    document.addEventListener('click', async (event) => {
+        const btn = event.target.closest('button');
+        if (!btn) return;
 
-    // Language Selector
-    document.getElementById('languageSelector')?.addEventListener('change', (e) => {
-        changeLanguage(e.target.value);
-    });
+        switch(btn.id) {
+            case 'btn-photo':
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*';
+                input.onchange = (e) => handleImageSelect(e, document.getElementById('preview-area'));
+                input.click();
+                break;
 
-    // Feed Navigation
-    document.getElementById('btn-witnessvoice')?.addEventListener('click', () => {
-        currentFeed = 'witness-voice';
-        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-        document.getElementById('btn-witnessvoice').classList.add('active');
-        initFeed(db, currentFeed);
-        showToast("👁️ Witness Voice Mode Activated");
-    });
+            case 'btn-voice':
+                toggleVoiceRecording(btn);
+                break;
 
-    document.getElementById('btn-citizentalk')?.addEventListener('click', () => {
-        currentFeed = 'citizen-talk';
-        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-        document.getElementById('btn-citizentalk').classList.add('active');
-        initFeed(db, currentFeed);
-        showToast("💬 Citizen Talk Mode Activated");
-    });
+            case 'btn-witnessvoice':
+                setActiveNav(btn);
+                currentFeed = 'witness-voice';
+                initFeed(db, currentFeed);
+                showToast("👁️ Witness Voice Mode Activated");
+                break;
 
-    // Profile Section
-    document.getElementById('btn-profile')?.addEventListener('click', () => {
-        if (!state?.user) {
-            showToast("Please sign in first", "error");
-            googleLogin();
-            return;
+            case 'btn-citizentalk':
+                setActiveNav(btn);
+                currentFeed = 'citizen-talk';
+                initFeed(db, currentFeed);
+                showToast("💬 Citizen Talk Mode Activated");
+                break;
+
+            case 'btn-profile':
+                if (!state?.user) {
+                    showToast("Please sign in first", "error");
+                    googleLogin(); 
+                    return; 
+                }
+                document.getElementById('homeSection').classList.remove('active');
+                document.getElementById('profileSection').classList.add('active');
+                updateProfileUI(state.user);
+                break;
+
+            case 'btn-close-profile':
+                document.getElementById('profileSection').classList.remove('active');
+                document.getElementById('homeSection').classList.add('active');
+                break;
+
+            case 'btn-download-pdf':
+                if (!state?.user) return showToast("Please sign in first", "error");
+                await generateAndDownloadPDF(state.user, db);
+                break;
+
+            case 'btn-logout':
+                logout();
+                break;
         }
-        document.getElementById('homeSection').classList.remove('active');
-        document.getElementById('profileSection').classList.add('active');
-        updateProfileUI(state.user);
     });
 
-    document.getElementById('btn-close-profile')?.addEventListener('click', () => {
-        document.getElementById('profileSection').classList.remove('active');
-        document.getElementById('homeSection').classList.add('active');
+    // Separate listener for change events (e.g., Select dropdowns)
+    document.addEventListener('change', (event) => {
+        if (event.target.id === 'languageSelector') {
+            changeLanguage(event.target.value);
+        }
     });
-
-    // PDF Download
-    document.getElementById('btn-download-pdf')?.addEventListener('click', async () => {
-        if (!state?.user) return showToast("Please sign in first", "error");
-        await generateAndDownloadPDF(state.user, db);
-    });
-
-    // Media Buttons
-    document.getElementById('btn-photo')?.addEventListener('click', () => {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*';
-        input.onchange = (e) => handleImageSelect(e, document.getElementById('preview-area'));
-        input.click();
-    });
-
-    const voiceBtn = document.getElementById('btn-voice');
-    if (voiceBtn) {
-        voiceBtn.addEventListener('click', () => toggleVoiceRecording(voiceBtn));
-    }
-
-    // Logout
-    document.getElementById('btn-logout')?.addEventListener('click', logout);
 }
 
-// Profile UI Update - with explicit button visibility toggling
+// Helper to handle active state styling
+function setActiveNav(activeBtn) {
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    activeBtn.classList.add('active');
+}
+
 function updateProfileUI(user) {
     if (!user) return;
 
@@ -117,40 +116,14 @@ function updateProfileUI(user) {
     document.getElementById('profile-email').textContent = user.email || "guest@vocalwitness.io";
 
     const isWitness = state?.isWitnessVerified || false;
-
-    // === Explicit Button Visibility Toggling ===
     const btnLogout = document.getElementById('btn-logout');
     const btnVerifyPhone = document.getElementById('btn-verify-phone');
-    const witnessActions = document.getElementById('witness-actions'); // witness-only section if exists
+    const witnessActions = document.getElementById('witness-actions');
 
-    if (btnLogout) {
-        btnLogout.style.display = 'block';           // Always show logout when logged in
-    }
-
-    if (btnVerifyPhone) {
-        btnVerifyPhone.style.display = isWitness ? 'none' : 'block';
-    }
-
-    if (witnessActions) {
-        witnessActions.style.display = isWitness ? 'block' : 'none';
-    }
-
-    console.log(`📋 Profile UI updated for ${user.email} | Witness: ${isWitness}`);
+    if (btnLogout) btnLogout.style.display = 'block';
+    if (btnVerifyPhone) btnVerifyPhone.style.display = isWitness ? 'none' : 'block';
+    if (witnessActions) witnessActions.style.display = isWitness ? 'block' : 'none';
 }
 
 // Start the app
 document.addEventListener('DOMContentLoaded', bootstrap);
-window.addEventListener('load', bootstrap); // Extra safety
-
-// Register Service Worker - using relative path (better for GitHub Pages)
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-            .then(registration => {
-                console.log('✅ ServiceWorker registered with scope:', registration.scope);
-            })
-            .catch(error => {
-                console.error('❌ ServiceWorker registration failed:', error);
-            });
-    });
-}
