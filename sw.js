@@ -60,3 +60,31 @@ self.addEventListener('fetch', (event) => {
         })
     );
 });
+
+// --- DATABASE QUEUE LOGIC ---
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'publish-testimony') {
+    event.waitUntil(processQueue());
+  }
+});
+
+async function processQueue() {
+  console.log("🔄 Background Sync started...");
+  try {
+    const dbRequest = indexedDB.open('VocalWitnessDB', 1);
+    dbRequest.onsuccess = (e) => {
+      const db = e.target.result;
+      const tx = db.transaction('offline-posts', 'readonly');
+      const store = tx.objectStore('offline-posts');
+      const getAll = store.getAll();
+      
+      getAll.onsuccess = () => {
+        const posts = getAll.result;
+        console.log("📦 Posts found in queue:", posts.length);
+        // Your upload logic would go here
+      };
+    };
+  } catch (err) {
+    console.error("Sync error:", err);
+  }
+}
