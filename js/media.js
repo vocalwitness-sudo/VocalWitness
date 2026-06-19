@@ -126,5 +126,18 @@ export async function uploadForensicMedia(userId = "anonymous") {
     return mediaData;
 }
 
+const publishBtn = document.getElementById('publish-btn');
+
+publishBtn.addEventListener('click', async () => {
+    publishBtn.innerHTML = 'Broadcasting...'; // Professional status update
+    publishBtn.classList.add('btn-disabled');
+
+    try {
+        await commitToLedger(); // Your function name
+        publishBtn.innerHTML = 'Verified & Published'; // Confirmation of success
+    } catch (e) {
+        publishBtn.innerHTML = 'Submission Failed';
+    }
+});
 // Export engineInstance for compatibility
 export { engineInstance };
