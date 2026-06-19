@@ -1,18 +1,48 @@
-<!-- verify.html -->
 <!DOCTYPE html>
-<html>
+<html lang="en-NG">
 <head>
-    <title>VocalWitness Integrity Check</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VocalWitness • Integrity Check</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: white; }
+        .glass { background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(16px); border: 1px solid rgba(16, 185, 129, 0.3); }
+    </style>
 </head>
-<body>
-    <h1>VocalWitness Integrity Check</h1>
-    <div id="status">Verifying document...</div>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="max-w-lg w-full">
+        <!-- Header -->
+        <div class="flex items-center justify-center gap-3 mb-8">
+            <div class="w-10 h-10 bg-emerald-500/20 rounded-2xl flex items-center justify-center text-2xl">🔍</div>
+            <h1 class="text-3xl font-bold text-emerald-400 tracking-tight">VocalWitness</h1>
+        </div>
+
+        <div class="glass rounded-3xl p-8 shadow-2xl">
+            <h2 class="text-2xl font-bold text-center mb-2">Document Integrity Check</h2>
+            <p class="text-zinc-400 text-center mb-8 text-sm">
+                Verifying against the VocalWitness Truth Ledger
+            </p>
+
+            <div id="status" class="min-h-[120px] flex items-center justify-center text-center text-lg font-medium p-8 rounded-2xl bg-zinc-900/50">
+                Verifying document...
+            </div>
+
+            <div id="details" class="mt-6 text-xs text-zinc-400 text-center hidden"></div>
+        </div>
+
+        <p class="text-center text-[10px] text-zinc-500 mt-8">
+            This document is cryptographically linked to the VocalWitness Ledger.<br>
+            Any alteration invalidates authenticity.
+        </p>
+    </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
-        // IMPORTANT: Replace the empty {} below with your actual Firebase config object
+        // TODO: Replace with your real Firebase config (same as firebase-config.js)
         const firebaseConfig = {
             apiKey: "YOUR_API_KEY",
             authDomain: "vocalwitness-3affa.firebaseapp.com",
@@ -26,21 +56,46 @@
         const db = getFirestore(app);
 
         async function verifyDoc() {
+            const statusDiv = document.getElementById('status');
+            const detailsDiv = document.getElementById('details');
+
             const urlParams = new URLSearchParams(window.location.search);
             const docId = urlParams.get('id');
-            const statusDiv = document.getElementById('status');
 
-            if (!docId) { statusDiv.innerText = "❌ Invalid Request"; return; }
+            if (!docId) {
+                statusDiv.innerHTML = `❌ <span class="text-red-400">Invalid Request</span><br><span class="text-sm">No Document ID provided.</span>`;
+                return;
+            }
 
-            const docRef = doc(db, "verifiable_docs", docId);
-            const docSnap = await getDoc(docRef);
+            statusDiv.innerHTML = `🔍 Checking Ledger...`;
 
-            if (docSnap.exists()) {
-                statusDiv.innerHTML = "✅ <b>AUTHENTIC:</b> This document is verified by the VocalWitness Ledger.";
-            } else {
-                statusDiv.innerHTML = "❌ <b>FORGERY ALERT:</b> This document does not exist in our ledger.";
+            try {
+                const docRef = doc(db, "verifiable_docs", docId);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    statusDiv.innerHTML = `✅ <span class="text-emerald-400 font-bold">AUTHENTIC DOCUMENT</span>`;
+                    
+                    detailsDiv.classList.remove('hidden');
+                    detailsDiv.innerHTML = `
+                        Tier: <strong>${data.tier || 'Bronze'}</strong><br>
+                        Trust Score: <strong>${data.trustScore || 'N/A'}%</strong><br>
+                        Issued: ${new Date(data.timestamp).toLocaleDateString()}<br><br>
+                        <span class="text-emerald-500">This document is genuine and recorded in the VocalWitness Ledger.</span>
+                    `;
+                } else {
+                    statusDiv.innerHTML = `❌ <span class="text-red-400 font-bold">FORGERY ALERT</span><br>
+                    <span class="text-sm">This document does not exist in our ledger or has been revoked.</span>`;
+                }
+            } catch (error) {
+                console.error(error);
+                statusDiv.innerHTML = `⚠️ <span class="text-amber-400">Verification Error</span><br>
+                <span class="text-sm">Could not connect to ledger. Try again later.</span>`;
             }
         }
+
+        // Run verification automatically
         verifyDoc();
     </script>
 </body>
