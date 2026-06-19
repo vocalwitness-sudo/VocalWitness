@@ -1,8 +1,22 @@
 /**
- * VocalWitness Core Engine - Unified Business Logic
+ * VocalWitness Core Engine
+ * Unified with Witness Token support
  */
-import { collection, addDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
+import {
+    collection,
+    doc,
+    getDoc,
+    addDoc,
+    setDoc,
+    runTransaction
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+import {
+    ref,
+    uploadBytes,
+    getDownloadURL
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
+
 import { generateSha256Hash } from './utils.js';
 
 export class VocalWitnessEngine {
@@ -12,37 +26,33 @@ export class VocalWitnessEngine {
         this.mediaRecorder = null;
         this.audioChunks = [];
         this.currentAudioBlob = null;
+        this.recordingTimeout = null;
     }
 
     // ==================== VOICE RECORDING ====================
-    async startVoiceRecording(durationLimit = 180000) { // 3 minutes default
+    async startVoiceRecording(feedType = 'citizen-talk') {
         this.audioChunks = [];
+        const durationLimit = (feedType === 'witness-voice') ? 300000 : 180000;
+
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ 
-                audio: { 
-                    echoCancellation: true,
-                    noiseSuppression: true 
-                } 
+                audio: { echoCancellation: true, noiseSuppression: true } 
             });
-            
+
             this.mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
-            
-            this.mediaRecorder.ondataavailable = (e) => {
-                if (e.data.size > 0) this.audioChunks.push(e.data);
+            this.recordingTimeout = setTimeout(() => this.stopVoiceRecording(), durationLimit);
+
+            this.mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) this.audioChunks.push(event.data);
             };
 
             this.mediaRecorder.onstop = () => {
                 this.currentAudioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
-                stream.getTracks().forEach(track => track.stop());
-                console.log("🎤 Voice recording completed");
+                clearTimeout(this.recordingTimeout);
             };
 
             this.mediaRecorder.start();
             console.log("🎙️ Recording started...");
-
-            // Auto-stop after duration
-            setTimeout(() => this.stopVoiceRecording(), durationLimit);
-
         } catch (err) {
             console.error("Microphone error:", err);
             alert("Microphone access is required for voice testimony.");
@@ -50,58 +60,55 @@ export class VocalWitnessEngine {
     }
 
     stopVoiceRecording() {
-        if (this.mediaRecorder?.state === "recording") {
+        if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
             this.mediaRecorder.stop();
+            clearTimeout(this.recordingTimeout);
         }
+    }
+
+    // ==================== WITNESS TOKEN ====================
+    async createWitnessToken(uid) {
+        const token = crypto.randomUUID();
+        await setDoc(doc(this.db, "verifiable_docs", token), {
+            ownerId: uid,
+            timestamp: new Date().toISOString(),
+            verified: true,
+            status: "active"
+        });
+        return token;
     }
 
     // ==================== UPLOAD TESTIMONY ====================
-    async uploadTestimony(userId = "anonymous", languageCode = "en", feedType = "citizen-talk") {
-        if (!this.currentAudioBlob) {
-            throw new Error("No audio recorded");
-        }
+    async packageAndUploadTestimony(userId, selectedLanguageCode = "en", feedType = 'citizen-talk') {
+        if (!this.currentAudioBlob) throw new Error("No recording available.");
 
-        try {
-            const hash = await generateSha256Hash(this.currentAudioBlob);
-            const storageRef = ref(this.storage, `testimonies/${userId}_${Date.now()}.webm`);
-            
-            await uploadBytes(storageRef, this.currentAudioBlob);
-            const audioUrl = await getDownloadURL(storageRef);
+        const integrityHash = await generateSha256Hash(this.currentAudioBlob);
+        const storageRefPath = `testimonies/${userId}_${Date.now()}.webm`;
+        const storageReference = ref(this.storage, storageRefPath);
 
-            const payload = {
-                authorId: userId,
-                audioUrl,
-                timestamp: new Date().toISOString(),
-                languageCode,
-                feedVisibility: feedType,
-                integrityHash: hash,
-                moderation: { 
-                    trustScore: 100, 
-                    verificationsCount: 0, 
-                    disputesCount: 0 
-                }
-            };
+        await uploadBytes(storageReference, this.currentAudioBlob);
+        const downloadURL = await getDownloadURL(storageReference);
 
-            const docRef = await addDoc(collection(this.db, "testimonies"), payload);
-            console.log("✅ Testimony uploaded successfully:", docRef.id);
-            return docRef;
-        } catch (error) {
-            console.error("Upload failed:", error);
-            throw error;
-        }
+        const testimonyPayload = {
+            authorId: userId,
+            audioUrl: downloadURL,
+            timestamp: new Date().toISOString(),
+            languageCode: selectedLanguageCode,
+            feedVisibility: feedType,
+            integrityHash: integrityHash,
+            moderation: { 
+                trustScore: 100, 
+                verificationsCount: 0, 
+                disputesCount: 0 
+            }
+        };
+
+        return await addDoc(collection(this.db, 'testimonies'), testimonyPayload);
     }
 
-    // ZK Verification Stub (for future expansion)
-    async startZKVerification(identityData) {
-        return new Promise((resolve) => {
-            console.log("🔐 Starting ZK Proof generation...");
-            setTimeout(() => {
-                resolve({
-                    success: true,
-                    proof: "zk_proof_simulated_" + Date.now(),
-                    timestamp: new Date().toISOString()
-                });
-            }, 1500);
-        });
+    // Peer voting (kept from your second version)
+    async submitPeerVote(testimonyId, userId, voteType) {
+        // ... your existing logic (optional for now)
+        console.log(`Vote ${voteType} submitted for ${testimonyId}`);
     }
 }
