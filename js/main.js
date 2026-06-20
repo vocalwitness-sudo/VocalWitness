@@ -11,6 +11,7 @@ import {
 import { VocalWitnessEngine } from './engine.js';
 import { state } from './storage.js';
 import { generateAndDownloadPDF } from './pdf.js';
+import { collection, addDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 let currentFeed = 'citizen-talk';
 let engine = null;
