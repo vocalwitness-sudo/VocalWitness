@@ -37,6 +37,20 @@ async function syncUserToFirestore(user) {
 }
 
 export function initAuth() {
+    // 1. Initialize App Check once at startup
+    if (typeof window !== 'undefined') {
+        try {
+            initializeAppCheck(auth.app, {
+                provider: new ReCaptchaV3Provider('YOUR_RECAPTCHA_V3_SITE_KEY_HERE'),
+                isTokenAutoRefreshEnabled: true
+            });
+            console.log("🛡️ App Check initialized");
+        } catch (e) { 
+            console.warn("App Check failed to init", e); 
+        }
+    }
+
+    // 2. Auth State Listener
     onAuthStateChanged(auth, (user) => {
         console.log("🔐 Auth state:", user ? user.email : "Guest");
         updateUser(user);
@@ -45,7 +59,7 @@ export function initAuth() {
         updateAuthUI(user);
     });
 
-    // Handle return from Google redirect
+    // 3. Handle return from Google redirect
     getRedirectResult(auth).then((result) => {
         if (result?.user) {
             syncUserToFirestore(result.user);
