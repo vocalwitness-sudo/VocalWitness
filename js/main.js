@@ -28,7 +28,7 @@ async function bootstrap() {
     initLanguage();
     
     engine = new VocalWitnessEngine(db);
-    setEngine(engine);
+if (typeof storage !== 'undefined') engine.setStorage(storage);  
     
     initFeed(db, currentFeed);
     
