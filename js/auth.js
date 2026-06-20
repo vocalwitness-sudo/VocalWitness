@@ -17,16 +17,18 @@ import { showToast } from "./utils.js";
 import { updateUser } from './storage.js';
 import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app-check.js";
 
-// Inside initAuth(), after onAuthStateChanged:
-if (typeof window !== 'undefined') {
-    try {
-        initializeAppCheck(auth.app, {
-            provider: new ReCaptchaV3Provider('6Ld76yktAAAAAPmdJpO4jayNIgF7OLWe0AHjsk1Y'),
-            isTokenAutoRefreshEnabled: true
-        });
-    } catch (e) { console.warn("App Check failed to init", e); }
-}
+import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app-check.js";
 
+// Inside initAuth() function, right after onAuthStateChanged:
+try {
+    const appCheck = initializeAppCheck(auth.app, {
+        provider: new ReCaptchaV3Provider('6Ld76yktAAAAAPmdJpO4jayNIgF7OLWe0AHjsk1Y'),
+        isTokenAutoRefreshEnabled: true
+    });
+    console.log("🔐 App Check initialized with reCAPTCHA v3");
+} catch (e) {
+    console.warn("App Check init warning (non-blocking):", e.message);
+}
 /**
  * Syncs user to Firestore on first login
  */
