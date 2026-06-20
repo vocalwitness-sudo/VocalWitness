@@ -69,6 +69,15 @@ export function initAuth() {
         window.dispatchEvent(event);
         updateAuthUI(user);
     });
+    // App Check (anti-abuse)
+try {
+    initializeAppCheck(auth.app, {
+        provider: new ReCaptchaV3Provider('YOUR_RECAPTCHA_SITE_KEY'), // Get from Google reCAPTCHA admin
+        isTokenAutoRefreshEnabled: true
+    });
+} catch (e) {
+    console.warn("App Check init failed (non-critical for now)", e);
+}
 
     // 3. Handle return from Google redirect
     getRedirectResult(auth).then((result) => {
