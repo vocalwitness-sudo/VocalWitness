@@ -1,156 +1,115 @@
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-import { getFirestore, doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+// js/profile.js
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+import { auth } from './firebase-init.js';
+import { 
+  updateUserProfile, getUserData, editPost, deletePost, 
+  togglePinPost, getUserPosts 
+} from './db.js';
 
-const auth = getAuth();
-const db = getFirestore();
+let currentUser = null;
+let currentUserData = null;
 
-// Existing DOM Elements
-const avatarEl = document.getElementById('user-avatar');
-const displayNameEl = document.getElementById('user-display-name');
-const usernameEl = document.getElementById('user-username');
-const roleBadgeEl = document.getElementById('user-role-badge');
-const witnessSection = document.getElementById('witness-features-section');
-const witnessLockedNotice = document.getElementById('witness-locked-notice');
-const trustCircleScoreEl = document.getElementById('trust-circle-score');
+// DOM Elements (only cache what exists)
+let elements = {};
 
-// Checkbox/Verification DOM Elements
-const panelVerification = document.getElementById('verification-panel');
-const chkPhone = document.getElementById('chk-phone');
-const chkZk = document.getElementById('chk-zk');
-const chkTestimonies = document.getElementById('chk-testimonies');
-const phoneText = document.getElementById('phone-status-text');
-const zkText = document.getElementById('zk-status-text');
-const testimoniesText = document.getElementById('testimonies-status-text');
-const btnUpgrade = document.getElementById('btn-upgrade-witness');
-const btnVerifyZK = document.getElementById("btn-verify-zk");
-const btnVerifyPhone = document.getElementById('btn-verify-phone');
-
-let currentUserId = null;
-
-// Initialize ZK button as an informational coming-soon notification
-if (btnVerifyZK) {
-  btnVerifyZK.textContent = "⚙️ Cryptographic Prover Coming Soon";
-  btnVerifyZK.disabled = true;
-  btnVerifyZK.style.background = "#27272a";
-  btnVerifyZK.style.color = "var(--text-muted)";
-  btnVerifyZK.style.cursor = "not-allowed";
-  btnVerifyZK.style.border = "1px dashed #52525b";
+function cacheDOM() {
+  elements = {
+    avatar: document.getElementById('user-avatar'),
+    displayName: document.getElementById('user-display-name'),
+    username: document.getElementById('user-username'),
+    roleBadge: document.getElementById('user-role-badge'),
+    bioEl: document.getElementById('user-bio'),           // Add this in HTML
+    nameCooldown: document.getElementById('name-cooldown'), // Add this
+    // ... keep your existing ones
+    witnessSection: document.getElementById('witness-features-section'),
+    witnessLockedNotice: document.getElementById('witness-locked-notice'),
+    trustCircleScore: document.getElementById('trust-circle-score'),
+    myPostsContainer: document.getElementById('my-posts-list') // Add this
+  };
 }
 
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
   if (user) {
-    currentUserId = user.uid;
-    listenToUserProfile(user.uid);
-  } else {
-    console.log("No user signed in.");
+    currentUser = user;
+    cacheDOM();
+    await loadProfile(user.uid);
   }
 });
 
-function listenToUserProfile(userId) {
-  const userRef = doc(db, "users", userId);
+async function loadProfile(userId) {
+  currentUserData = await getUserData(userId);
+  if (!currentUserData) return;
 
-  onSnapshot(userRef, (snapshot) => {
-    if (snapshot.exists()) {
-      const userData = snapshot.data();
-      
-      // Populate basic info
-      if (avatarEl) avatarEl.src = userData.photoURL || "https://placehold.co/150";
-      if (displayNameEl) displayNameEl.textContent = userData.displayName || "Anonymous User";
-      if (usernameEl) usernameEl.textContent = `@${userData.username || 'user'}`;
-      if (roleBadgeEl) roleBadgeEl.textContent = (userData.role || 'citizen').toUpperCase();
+  // Populate profile
+  if (elements.avatar) elements.avatar.src = currentUserData.photoURL || "https://placehold.co/150";
+  if (elements.displayName) elements.displayName.textContent = currentUserData.displayName || "Anonymous";
+  if (elements.username) elements.username.textContent = `@${currentUserData.username || 'user'}`;
+  if (elements.roleBadge) elements.roleBadge.textContent = (currentUserData.role || 'citizen').toUpperCase();
+  if (elements.bioEl) elements.bioEl.textContent = currentUserData.bio || "No biography yet.";
 
-      // Handle the Two Lungs Display Logic
-      if (userData.role === "witness" || userData.role === "trusted_witness") {
-        if (witnessSection) witnessSection.style.display = "block";
-        if (witnessLockedNotice) witnessLockedNotice.style.display = "none";
-        if (panelVerification) panelVerification.style.display = "none"; 
-        if (trustCircleScoreEl) trustCircleScoreEl.textContent = userData.trustCircle || 0;
-        if (roleBadgeEl) roleBadgeEl.className = "badge badge-witness";
-      } else {
-        if (witnessSection) witnessSection.style.display = "none";
-        if (witnessLockedNotice) witnessLockedNotice.style.display = "block";
-        if (panelVerification) panelVerification.style.display = "block"; 
-        if (roleBadgeEl) roleBadgeEl.className = "badge badge-citizen";
-        
-        // Evaluate Checklist Status for Citizens
-        evaluateChecklist(userData);
-      }
-    }
-  });
+  showNameCooldown(currentUserData.lastNameChange);
+  renderMyPosts(userId);
+  // Keep your existing witness/citizen logic
+  handleWitnessLogic(currentUserData);
 }
 
-// Function to calculate if a Citizen is ready to upgrade
-function evaluateChecklist(data) {
-  let phoneReady = data.isPhoneVerified === true;
-  let testimoniesReady = (data.testimoniesCount || 0) >= 3;
-
-  // Update Phone Item
-  if (chkPhone) chkPhone.textContent = phoneReady ? "✅" : "❌";
-  if (phoneText) phoneText.textContent = phoneReady ? `Verified (${data.phoneNumber || 'Stored'})` : "Not Verified";
-  if (btnVerifyPhone) {
-    btnVerifyPhone.style.display = phoneReady ? 'none' : 'inline-block';
-  }
-
-  // ZK Item remains automatically marked with an informational status symbol for now
-  if (chkZk) chkZk.textContent = "⏳";
-  if (zkText) zkText.textContent = "Bypassed for Beta (Module Coming Soon)";
-
-  // Update Testimonies Item
-  if (chkTestimonies) chkTestimonies.textContent = testimoniesReady ? "✅" : "❌";
-  if (testimoniesText) testimoniesText.textContent = `${data.testimoniesCount || 0} / 3 Testimonies posted`;
-
-  // Focus primarily on Phone Verification and Active Participation to unlock Ascension
-  if (btnUpgrade) {
-    if (phoneReady && testimoniesReady) {
-      btnUpgrade.disabled = false;
-      btnUpgrade.style.background = "#10b981"; 
-      btnUpgrade.style.color = "black";
-      btnUpgrade.style.cursor = "pointer";
-    } else {
-      btnUpgrade.disabled = true;
-      btnUpgrade.style.background = "#3f3f3f";
-      btnUpgrade.style.color = "#a1a1aa";
-      btnUpgrade.style.cursor = "not-allowed";
-    }
+function showNameCooldown(lastChange) {
+  if (!elements.nameCooldown || !lastChange) return;
+  const daysLeft = Math.ceil((lastChange + 60*24*60*60*1000 - Date.now()) / (86400000));
+  if (daysLeft > 0) {
+    elements.nameCooldown.textContent = `(Next name change in ${daysLeft} days)`;
   }
 }
 
-// Event Listener for the Ascension Action
-if (btnUpgrade) {
-  btnUpgrade.addEventListener('click', async () => {
-    if (!currentUserId) return;
-    
-    const userRef = doc(db, "users", currentUserId);
-    
-    try {
-      await updateDoc(userRef, {
-        role: "witness",
-        trustCircle: 25, 
-        level: 2,
-        badges: ["verified_witness"]
-      });
-      alert("Congratulations! You have ascended to Witness status. Your Trust Circle is now active.");
-    } catch (error) {
-      console.error("Error upgrading user status:", error);
-    }
-  });
+// ==================== EDIT PROFILE ====================
+window.saveProfile = async () => {
+  const newDisplayName = document.getElementById('edit-displayName')?.value.trim();
+  const newBio = document.getElementById('edit-bio')?.value.trim();
+
+  try {
+    await updateUserProfile(currentUser.uid, {
+      displayName: newDisplayName,
+      bio: newBio
+    });
+    alert("✅ Profile updated successfully!");
+    loadProfile(currentUser.uid); // refresh
+  } catch (err) {
+    alert("❌ " + err.message);
+  }
+};
+
+// ==================== MY POSTS ====================
+async function renderMyPosts(userId) {
+  if (!elements.myPostsContainer) return;
+  elements.myPostsContainer.innerHTML = "<p>Loading your posts...</p>";
+
+  // You can improve this later with onSnapshot for real-time
+  // For now, basic query
+  const q = getUserPosts(userId);
+  // ... render logic with Edit/Delete/Pin buttons
 }
 
-// Real Action: Connect your active Phone verification hook here
-if (btnVerifyPhone) {
-  btnVerifyPhone.addEventListener('click', async () => {
-    if (!currentUserId) return;
-    
-    // Simulating a phone verification write for your prototype environment:
-    try {
-      const userRef = doc(db, "users", currentUserId);
-      await updateDoc(userRef, {
-        isPhoneVerified: true,
-        phoneNumber: "+1 (555) 019-2831"
-      });
-      alert("Phone verified successfully!");
-    } catch (error) {
-      console.error("Error updating phone status:", error);
-    }
-  });
-}
+// Add these window functions for buttons
+window.editPostHandler = async (postId) => {
+  const newContent = prompt("Edit post content:");
+  if (!newContent) return;
+  try {
+    await editPost(postId, currentUser.uid, newContent);
+    renderMyPosts(currentUser.uid);
+  } catch (e) { alert(e.message); }
+};
+
+window.deletePostHandler = async (postId) => {
+  if (!confirm("Delete this post?")) return;
+  try {
+    await deletePost(postId, currentUser.uid);
+    renderMyPosts(currentUser.uid);
+  } catch (e) { alert(e.message); }
+};
+
+window.togglePinHandler = async (postId) => {
+  try {
+    await togglePinPost(postId, currentUser.uid);
+    renderMyPosts(currentUser.uid);
+  } catch (e) { alert(e.message); }
+};
