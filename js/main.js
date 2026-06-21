@@ -127,6 +127,14 @@ async function handlePostSubmission(button) {
     }
 }
 
+const contributionWeight = state.isWitnessVerified ? 2 : 1; 
+
+await addDoc(collection(db, "testimonies"), {
+    ...,
+    contributionWeight: contributionWeight, // Store this now!
+    tokenEligible: true
+});
+
 // ====================== HELPER FUNCTIONS ======================
 function triggerPhotoUpload() {
     const input = document.createElement('input');
