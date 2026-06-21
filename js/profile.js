@@ -1,6 +1,6 @@
 // js/profile.js
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-import { getFirestore, doc, onSnapshot, updateDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { getFirestore, doc, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { auth } from './firebase-init.js';
 import { updateUserProfile, getUserPosts, editPost, deletePost, togglePinPost } from './db.js';
 
@@ -9,36 +9,32 @@ const db = getFirestore();
 let currentUserId = null;
 let currentUserData = null;
 
-// Cache DOM elements
-const avatarEl = document.getElementById('user-avatar');
-const displayNameEl = document.getElementById('user-display-name');
-const usernameEl = document.getElementById('user-username');
-const roleBadgeEl = document.getElementById('user-role-badge');
-const witnessSection = document.getElementById('witness-features-section');
-const witnessLockedNotice = document.getElementById('witness-locked-notice');
-const trustCircleScoreEl = document.getElementById('trust-circle-score');
+// DOM Elements - Will be cached after DOM is ready
+let elements = {};
 
-// New elements from the enhanced HTML
-const editDisplayNameInput = document.getElementById('edit-displayName');
-const editBioInput = document.getElementById('edit-bio');
-const nameCooldownEl = document.getElementById('name-cooldown');
-const myPostsContainer = document.getElementById('my-posts-list');
+// Cache DOM elements safely
+function cacheDOM() {
+  elements = {
+    avatar: document.getElementById('profile-avatar'),
+    username: document.getElementById('profile-username'),
+    email: document.getElementById('profile-email'),
+    roleBadge: document.getElementById('profile-role-badge'),
+    trustScore: document.getElementById('trust-score'),
+    editDisplayName: document.getElementById('edit-displayName'),
+    editBio: document.getElementById('edit-bio'),
+    nameCooldown: document.getElementById('name-cooldown'),
+    myPostsList: document.getElementById('my-posts-list'),
+    // Existing elements (add more if needed)
+    witnessSection: document.getElementById('witness-features-section'),
+    witnessLockedNotice: document.getElementById('witness-locked-notice'),
+  };
+}
 
-// Keep existing verification elements...
-const panelVerification = document.getElementById('verification-panel');
-const chkPhone = document.getElementById('chk-phone');
-const chkZk = document.getElementById('chk-zk');
-const chkTestimonies = document.getElementById('chk-testimonies');
-const phoneText = document.getElementById('phone-status-text');
-const zkText = document.getElementById('zk-status-text');
-const testimoniesText = document.getElementById('testimonies-status-text');
-const btnUpgrade = document.getElementById('btn-upgrade-witness');
-const btnVerifyZK = document.getElementById("btn-verify-zk");
-const btnVerifyPhone = document.getElementById('btn-verify-phone');
-
+// Listen to auth state
 onAuthStateChanged(auth, (user) => {
   if (user) {
     currentUserId = user.uid;
+    cacheDOM();
     listenToUserProfile(user.uid);
   }
 });
@@ -49,65 +45,66 @@ function listenToUserProfile(userId) {
   onSnapshot(userRef, (snapshot) => {
     if (snapshot.exists()) {
       currentUserData = snapshot.data();
-      
-      // Populate basic info
-      if (avatarEl) avatarEl.src = currentUserData.photoURL || "https://placehold.co/150";
-      if (displayNameEl) displayNameEl.textContent = currentUserData.displayName || "Anonymous User";
-      if (usernameEl) usernameEl.textContent = `@${currentUserData.username || 'user'}`;
-      if (roleBadgeEl) roleBadgeEl.textContent = (currentUserData.role || 'citizen').toUpperCase();
-
-      // New fields
-      if (editDisplayNameInput) editDisplayNameInput.value = currentUserData.displayName || '';
-      if (editBioInput) editBioInput.value = currentUserData.bio || '';
-
-      showNameCooldown(currentUserData.lastNameChange);
-      
-      // Existing witness logic
-      handleWitnessLogic(currentUserData);
-      
-      // Load user's posts
+      renderProfileUI();
       renderMyPosts(userId);
     }
   });
 }
 
-function showNameCooldown(lastChange) {
-  if (!nameCooldownEl || !lastChange) return;
-  const daysLeft = Math.ceil((lastChange + 60 * 24 * 60 * 60 * 1000 - Date.now()) / (86400000));
-  if (daysLeft > 0) {
-    nameCooldownEl.textContent = `(Next change in ${daysLeft} days)`;
-  } else {
-    nameCooldownEl.textContent = '';
+function renderProfileUI() {
+  if (!currentUserData) return;
+
+  // Basic profile info
+  if (elements.avatar) {
+    elements.avatar.innerHTML = currentUserData.photoURL 
+      ? `<img src="${currentUserData.photoURL}" class="w-full h-full object-cover">` 
+      : '👤';
+    elements.avatar.onclick = uploadAvatar;
   }
+
+  if (elements.username) elements.username.textContent = `@${currentUserData.username || 'user'}`;
+  if (elements.email) elements.email.textContent = currentUserData.email || currentUserData.displayName || '';
+  if (elements.roleBadge) {
+    elements.roleBadge.textContent = (currentUserData.role || 'citizen').toUpperCase();
+  }
+  if (elements.trustScore) elements.trustScore.textContent = currentUserData.trustCircle || 50;
+
+  // Edit form
+  if (elements.editDisplayName) elements.editDisplayName.value = currentUserData.displayName || '';
+  if (elements.editBio) elements.editBio.value = currentUserData.bio || '';
+
+  showNameCooldown(currentUserData.lastNameChange);
+  handleWitnessLogic(currentUserData);
+}
+
+function showNameCooldown(lastChange) {
+  if (!elements.nameCooldown || !lastChange) return;
+  const daysLeft = Math.ceil((lastChange + 60 * 24 * 60 * 60 * 1000 - Date.now()) / 86400000);
+  elements.nameCooldown.textContent = daysLeft > 0 ? `(Next change in ${daysLeft} days)` : '';
 }
 
 function handleWitnessLogic(userData) {
-  // Keep your existing witness/citizen logic here (unchanged)
+  // TODO: Expand with your full witness logic
   if (userData.role === "witness" || userData.role === "trusted_witness") {
-    if (witnessSection) witnessSection.style.display = "block";
-    if (witnessLockedNotice) witnessLockedNotice.style.display = "none";
-    if (panelVerification) panelVerification.style.display = "none"; 
-    if (trustCircleScoreEl) trustCircleScoreEl.textContent = userData.trustCircle || 0;
+    if (elements.witnessSection) elements.witnessSection.style.display = "block";
+    if (elements.witnessLockedNotice) elements.witnessLockedNotice.style.display = "none";
   } else {
-    if (witnessSection) witnessSection.style.display = "none";
-    if (witnessLockedNotice) witnessLockedNotice.style.display = "block";
-    if (panelVerification) panelVerification.style.display = "block"; 
-    evaluateChecklist(userData);
+    if (elements.witnessSection) elements.witnessSection.style.display = "none";
+    if (elements.witnessLockedNotice) elements.witnessLockedNotice.style.display = "block";
   }
 }
 
-// ==================== UPDATED saveProfile() ====================
+// ==================== SAVE PROFILE ====================
 window.saveProfile = async () => {
   if (!currentUserId) return;
 
   const updates = {
-    displayName: editDisplayNameInput ? editDisplayNameInput.value.trim() : null,
-    bio: editBioInput ? editBioInput.value.trim() : null
+    displayName: elements.editDisplayName?.value.trim(),
+    bio: elements.editBio?.value.trim()
   };
 
-  // Remove null values
   Object.keys(updates).forEach(key => {
-    if (updates[key] === null || updates[key] === undefined) delete updates[key];
+    if (!updates[key]) delete updates[key];
   });
 
   try {
@@ -118,56 +115,51 @@ window.saveProfile = async () => {
   }
 };
 
-// ==================== AVATAR UPLOAD LOGIC ====================
+// ==================== AVATAR UPLOAD ====================
 window.uploadAvatar = async () => {
   if (!currentUserId) return;
 
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = 'image/*';
-  
+
   input.onchange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
     if (file.size > 5 * 1024 * 1024) {
       alert("Image must be smaller than 5MB");
       return;
     }
 
     try {
-      // You can integrate with your existing storage.js or add here
-      alert("🖼️ Avatar upload flow ready. Connect to storage.js for full implementation.");
-      
-      // Example placeholder (replace with real upload):
-      // const photoURL = await uploadToFirebaseStorage(file, currentUserId);
-      // await updateDoc(doc(db, "users", currentUserId), { photoURL });
-      
-    } catch (error) {
-      console.error(error);
+      alert("🖼️ Avatar upload ready. Connect with storage.js for full support.");
+      // Future: Integrate with your storage.js
+    } catch (err) {
+      console.error(err);
       alert("Failed to upload avatar");
     }
   };
-  
+
   input.click();
 };
 
-// ==================== IMPROVED MY POSTS RENDERING ====================
+// ==================== MY POSTS ====================
 async function renderMyPosts(userId) {
-  if (!myPostsContainer) return;
-  
-  myPostsContainer.innerHTML = `<p class="text-zinc-400 text-center py-8">Loading your posts...</p>`;
+  const container = elements.myPostsList;
+  if (!container) return;
+
+  container.innerHTML = `<p class="text-zinc-400 text-center py-8">Loading your posts...</p>`;
 
   try {
     const q = getUserPosts(userId);
     const snapshot = await getDocs(q);
 
     if (snapshot.empty) {
-      myPostsContainer.innerHTML = `<p class="text-zinc-400 text-center py-8">You haven't posted any testimonies yet.</p>`;
+      container.innerHTML = `<p class="text-zinc-400 text-center py-8">You haven't posted any testimonies yet.</p>`;
       return;
     }
 
-    myPostsContainer.innerHTML = '';
+    container.innerHTML = '';
     let count = 0;
 
     snapshot.forEach((docSnap) => {
@@ -202,18 +194,18 @@ async function renderMyPosts(userId) {
           <button onclick="reactToPost('${post.id}', '🔥')" class="px-3 py-2 hover:bg-zinc-700 rounded-2xl">🔥</button>
         </div>
       `;
-      myPostsContainer.appendChild(postEl);
+      container.appendChild(postEl);
     });
   } catch (e) {
     console.error(e);
-    myPostsContainer.innerHTML = `<p class="text-red-400">Failed to load posts.</p>`;
+    container.innerHTML = `<p class="text-red-400">Failed to load posts.</p>`;
   }
 }
 
-// Global handlers
+// Global Handlers
 window.editPostHandler = async (postId) => {
   const newContent = prompt("Edit your testimony:", "");
-  if (newContent === null) return;
+  if (newContent === null || !newContent.trim()) return;
   try {
     await editPost(postId, currentUserId, newContent);
   } catch (e) { alert(e.message); }
@@ -240,5 +232,5 @@ window.sharePost = (postId) => {
 };
 
 window.reactToPost = (postId, emoji) => {
-  alert(`Reacted with ${emoji} (Full reactions system coming soon)`);
+  alert(`Reacted with ${emoji} (Full reaction system coming soon)`);
 };
