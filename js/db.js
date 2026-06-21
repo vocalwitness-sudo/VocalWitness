@@ -16,3 +16,14 @@ enableIndexedDbPersistence(db).catch((err) => {
         console.warn("Browser doesn't support persistence.");
     }
 });
+
+// js/db.js
+import { db } from './firebase-init.js'; // or wherever you init Firestore
+
+export const updateUserProfile = async (userId, updates) => {
+  // 60-day name change logic here
+};
+
+export const getUserPosts = (userId) => { ... };
+export const pinPost = async (...) => { ... };
+export const deletePost = async (...) => { ... };
