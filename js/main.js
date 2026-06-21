@@ -4,16 +4,16 @@ import { initFeed } from './feed.js';
 import { db } from './firebase-config.js';
 import { showToast } from './utils.js';
 import { initLanguage, changeLanguage } from './i18n.js';
-import { 
-    handleImageSelect, 
-    toggleVoiceRecording, 
-    setEngine, 
-    uploadForensicMedia, 
-    resetMediaState 
+import {
+    handleImageSelect,
+    toggleVoiceRecording,
+    uploadForensicMedia,
+    resetMediaState
 } from './media.js';
 import { VocalWitnessEngine } from './engine.js';
 import { state } from './storage.js';
 import { generateAndDownloadPDF } from './pdf.js';
+import { loadProfile } from './profile.js';        // ← NEW
 import { collection, addDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 // --- State ---
@@ -23,17 +23,17 @@ let engine = null;
 // --- Initialization ---
 async function bootstrap() {
     console.log("🚀 Initializing VocalWitness...");
-    
+   
     initAuth();
     initLanguage();
-    
+   
     engine = new VocalWitnessEngine(db);
-if (typeof storage !== 'undefined') engine.setStorage(storage);  
-    
+    if (typeof storage !== 'undefined') engine.setStorage(storage);
+   
     initFeed(db, currentFeed);
-    
+   
     attachUIListeners();
-    
+   
     console.log("✅ Core Loaded Successfully");
     showToast("Platform Ready");
 }
@@ -45,6 +45,7 @@ function attachUIListeners() {
         if (!btn) return;
 
         switch(btn.id) {
+            case 'postButton':                    // Fixed ID
             case 'btn-post':
                 await handlePostSubmission(btn);
                 break;
@@ -53,10 +54,6 @@ function attachUIListeners() {
                 break;
             case 'btn-voice':
                 toggleVoiceRecording(btn);
-                break;
-            case 'btn-witnessvoice':
-            case 'btn-citizentalk':
-                handleFeedSwitch(btn);
                 break;
             case 'btn-profile':
                 showProfileSection();
@@ -87,10 +84,9 @@ async function handlePostSubmission(button) {
         return showToast("Please sign in to post", "error");
     }
 
-    const postInput = document.getElementById('post-text');
+    const postInput = document.getElementById('mainInput');   // Updated to match your HTML
     const postText = postInput?.value?.trim() || "";
 
-    // Check media from module state
     if (!postText && !window.selectedImageFile && !engine?.currentAudioBlob) {
         return showToast("Add text, photo, or voice testimony", "error");
     }
@@ -110,14 +106,16 @@ async function handlePostSubmission(button) {
             verified: false,
             trustScore: 50,
             language: "en",
-            feedVisibility: currentFeed
+            feedVisibility: currentFeed,
+            contributionWeight: state.isWitnessVerified ? 2 : 1,
+            tokenEligible: true
         });
 
         showToast("✅ Testimony published to ledger!", "success");
-        
+       
         resetMediaState();
         if (postInput) postInput.value = "";
-
+        
     } catch (err) {
         console.error("Post failed:", err);
         showToast("❌ Failed: " + (err.message || err), "error");
@@ -126,14 +124,6 @@ async function handlePostSubmission(button) {
         button.textContent = "Publish to Decentralized Ledger";
     }
 }
-
-const contributionWeight = state.isWitnessVerified ? 2 : 1; 
-
-await addDoc(collection(db, "testimonies"), {
-    ...,
-    contributionWeight: contributionWeight, // Store this now!
-    tokenEligible: true
-});
 
 // ====================== HELPER FUNCTIONS ======================
 function triggerPhotoUpload() {
@@ -147,29 +137,28 @@ function triggerPhotoUpload() {
 function handleFeedSwitch(btn) {
     document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    
-    currentFeed = btn.id === 'btn-witnessvoice' ? 'witness-voice' : 'citizen-talk';
+   
+    currentFeed = btn.id.includes('witness') ? 'witness-voice' : 'citizen-talk';
     initFeed(db, currentFeed);
-    
-    showToast(`${btn.id === 'btn-witnessvoice' ? '👁️ Witness Voice' : '💬 Citizen Talk'} Mode Activated`);
+   
+    showToast(`${btn.id.includes('witness') ? '👁️ Witness Voice' : '💬 Citizen Talk'} Mode Activated`);
 }
 
 function showProfileSection() {
-    if (!state?.user) return googleLogin();
-    
+    if (!state?.user) {
+        return googleLogin();
+    }
+   
     document.getElementById('homeSection')?.classList.remove('active');
     document.getElementById('profileSection')?.classList.add('active');
-    updateProfileUI(state.user);
+    
+    // Use the enhanced profile system
+    loadProfile(state.user);
 }
 
 function hideProfileSection() {
     document.getElementById('profileSection')?.classList.remove('active');
     document.getElementById('homeSection')?.classList.add('active');
-}
-
-function updateProfileUI(user) {
-    document.getElementById('profile-username').textContent = user.displayName || "@citizen";
-    document.getElementById('profile-email').textContent = user.email || "guest@vocalwitness.io";
 }
 
 // --- Start ---
