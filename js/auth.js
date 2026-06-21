@@ -1,3 +1,4 @@
+// js/auth.js
 import { auth, provider, db } from './firebase-config.js';
 import {
     signInWithRedirect,
@@ -15,77 +16,74 @@ import {
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { showToast } from "./utils.js";
 import { updateUser } from './storage.js';
-import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app-check.js";
 
-import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app-check.js";
-
-// Inside initAuth() function, right after onAuthStateChanged:
-try {
-    const appCheck = initializeAppCheck(auth.app, {
-        provider: new ReCaptchaV3Provider('6Ld76yktAAAAAPmdJpO4jayNIgF7OLWe0AHjsk1Y'),
-        isTokenAutoRefreshEnabled: true
-    });
-    console.log("🔐 App Check initialized with reCAPTCHA v3");
-} catch (e) {
-    console.warn("App Check init warning (non-blocking):", e.message);
+// ==================== APP CHECK (Anti-Abuse) ====================
+function initAppCheck() {
+    try {
+        // Replace with your actual reCAPTCHA v3 Site Key from Google
+        const appCheck = initializeAppCheck(auth.app, {
+            provider: new ReCaptchaV3Provider('6Ld76yktAAAAAPmdJpO4jayNIgF7OLWe0AHjsk1Y'),
+            isTokenAutoRefreshEnabled: true
+        });
+        console.log("🛡️ Firebase App Check initialized");
+    } catch (e) {
+        console.warn("App Check initialization skipped (non-critical):", e.message);
+    }
 }
+
 /**
- * Syncs user to Firestore on first login
+ * Sync new user to Firestore
  */
 async function syncUserToFirestore(user) {
     if (!user) return;
     const userRef = doc(db, "users", user.uid);
     const userSnap = await getDoc(userRef);
-    
+
     if (!userSnap.exists()) {
         await setDoc(userRef, {
+            uid: user.uid,
             email: user.email,
-            displayName: user.displayName || user.email?.split('@')[0],
-            photoURL: user.photoURL,
+            displayName: user.displayName || user.email?.split('@')[0] || "Citizen",
+            username: user.email?.split('@')[0] || `user_${Date.now()}`,
+            photoURL: user.photoURL || "",
             role: "citizen",
-            createdAt: new Date().toISOString()
+            trustCircle: 50,
+            reputationScore: 50,
+            createdAt: new Date().toISOString(),
+            lastLogin: new Date().toISOString()
         });
-        console.log("✅ User synced to Firestore");
+        console.log("✅ New user synced to Firestore");
+    } else {
+        // Update last login
+        await setDoc(userRef, { lastLogin: new Date().toISOString() }, { merge: true });
     }
 }
 
 export function initAuth() {
-    // 1. Initialize App Check once at startup
-    if (typeof window !== 'undefined') {
-        try {
-            initializeAppCheck(auth.app, {
-                provider: new ReCaptchaV3Provider('YOUR_RECAPTCHA_V3_SITE_KEY_HERE'),
-                isTokenAutoRefreshEnabled: true
-            });
-            console.log("🛡️ App Check initialized");
-        } catch (e) { 
-            console.warn("App Check failed to init", e); 
+    console.log("🔐 Initializing Authentication...");
+
+    // Initialize App Check
+    initAppCheck();
+
+    // Auth State Listener
+    onAuthStateChanged(auth, async (user) => {
+        console.log("🔐 Auth state changed:", user ? user.email : "Guest");
+        
+        if (user) {
+            await syncUserToFirestore(user);
         }
-    }
-
-    // 2. Auth State Listener
-    onAuthStateChanged(auth, (user) => {
-        console.log("🔐 Auth state:", user ? user.email : "Guest");
+        
         updateUser(user);
-        const event = new CustomEvent('auth-changed', { detail: { user } });
-        window.dispatchEvent(event);
         updateAuthUI(user);
-    });
-    // App Check (anti-abuse)
-try {
-    initializeAppCheck(auth.app, {
-        provider: new ReCaptchaV3Provider('YOUR_RECAPTCHA_SITE_KEY'), // Get from Google reCAPTCHA admin
-        isTokenAutoRefreshEnabled: true
-    });
-} catch (e) {
-    console.warn("App Check init failed (non-critical for now)", e);
-}
 
-    // 3. Handle return from Google redirect
+        // Dispatch global event
+        window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
+    });
+
+    // Handle Google Redirect Result
     getRedirectResult(auth).then((result) => {
         if (result?.user) {
-            syncUserToFirestore(result.user);
-            showToast("Welcome to VocalWitness!", "success");
+            showToast("Welcome to VocalWitness! 🎉", "success");
         }
     }).catch((error) => {
         if (error.code !== 'auth/redirect-cancelled-by-user') {
@@ -96,32 +94,27 @@ try {
 
 function updateAuthUI(user) {
     const profileBtn = document.getElementById('btn-profile');
-    const logoutBtn = document.getElementById('btn-logout');
-    
-    if (user) {
-        if (profileBtn) profileBtn.textContent = "👤 " + (user.displayName || user.email?.split('@')[0] || "Profile");
-        if (logoutBtn) logoutBtn.textContent = "Sign Out";
-    } else {
-        if (profileBtn) profileBtn.textContent = "👤 Profile";
-        if (logoutBtn) logoutBtn.textContent = "Sign In";
+    if (profileBtn) {
+        profileBtn.textContent = user 
+            ? `👤 ${user.displayName || user.email?.split('@')[0] || "Profile"}` 
+            : "👤 Profile";
     }
 }
 
+// ==================== LOGIN METHODS ====================
 export async function googleLogin() {
     try {
-        console.log("🚀 Starting Google Sign In (Redirect)...");
         await signInWithRedirect(auth, provider);
     } catch (error) {
         console.error("Google login error:", error);
-        showToast("Login failed: " + (error.message || error.code), "error");
+        showToast("Google Sign-In failed: " + error.message, "error");
     }
 }
 
 export async function emailSignup(email, password) {
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        await syncUserToFirestore(userCredential.user);
-        showToast("Account created successfully!", "success");
+        showToast("Account created successfully! 🎉", "success");
         return userCredential.user;
     } catch (error) {
         console.error("Signup error:", error);
@@ -133,11 +126,11 @@ export async function emailSignup(email, password) {
 export async function emailLogin(email, password) {
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        showToast("Welcome back!", "success");
+        showToast("Welcome back! 👋", "success");
         return userCredential.user;
     } catch (error) {
         console.error("Login error:", error);
-        showToast("Invalid credentials", "error");
+        showToast("Invalid email or password", "error");
         throw error;
     }
 }
@@ -152,67 +145,53 @@ export async function logout() {
     }
 }
 
-/* ==================== CHANGE PASSWORD ==================== */
+// ==================== PASSWORD MANAGEMENT ====================
 export async function changePassword(currentPassword, newPassword) {
     try {
         const user = auth.currentUser;
-        if (!user || !user.email) {
-            throw new Error("This feature is only available for Email & Password accounts");
-        }
+        if (!user?.email) throw new Error("This feature is only for email/password accounts");
 
-        // Re-authenticate first (Firebase security requirement)
         const credential = EmailAuthProvider.credential(user.email, currentPassword);
         await reauthenticateWithCredential(user, credential);
-
-        // Update password
         await updatePassword(user, newPassword);
-        
+
         showToast("✅ Password changed successfully!", "success");
         return true;
     } catch (error) {
         console.error("Change password error:", error);
-        
-        if (error.code === "auth/requires-recent-login" || error.code === "auth/wrong-password") {
-            showToast("Security mismatch: Check current password or re-login.", "error");
+        if (error.code === "auth/wrong-password") {
+            showToast("Current password is incorrect", "error");
         } else {
-            showToast("Failed: " + error.message, "error");
+            showToast(error.message, "error");
         }
         return false;
     }
 }
 
-// ==================== PHONE VERIFICATION WITH RECAPTCHA v3 ====================
+// ==================== PHONE VERIFICATION ====================
 let recaptchaVerifier;
 
 export function initRecaptcha() {
-    if (recaptchaVerifier) {
-        recaptchaVerifier.clear();
-    }
-    
+    if (recaptchaVerifier) recaptchaVerifier.clear();
+
     recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        'size': 'invisible',
-        'callback': (response) => {
-            console.log("✅ reCAPTCHA v3 verified");
-        },
-        'expired-callback': () => {
-            console.warn("reCAPTCHA expired");
-        }
+        size: 'invisible',
+        callback: () => console.log("✅ reCAPTCHA verified"),
+        'expired-callback': () => console.warn("reCAPTCHA expired")
     });
 }
 
 export async function sendPhoneVerification(phoneNumber) {
     try {
-        if (!recaptchaVerifier) {
-            initRecaptcha();
-        }
-
+        if (!recaptchaVerifier) initRecaptcha();
+        
         const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifier);
         window.confirmationResult = confirmationResult;
-
-        showToast("✅ 6-digit code sent to your phone", "success");
+        
+        showToast("✅ Verification code sent to your phone", "success");
         return true;
     } catch (error) {
-        console.error("Phone auth error:", error);
+        console.error("Phone verification error:", error);
         showToast("Failed to send code: " + error.message, "error");
         return false;
     }
@@ -220,13 +199,11 @@ export async function sendPhoneVerification(phoneNumber) {
 
 export async function verifyPhoneCode(code) {
     try {
-        if (!window.confirmationResult) {
-            throw new Error("No verification session found");
-        }
+        if (!window.confirmationResult) throw new Error("No verification session active");
 
         const result = await window.confirmationResult.confirm(code);
-        
-        // Update Firestore
+
+        // Update user profile
         const userRef = doc(db, "users", result.user.uid);
         await setDoc(userRef, {
             isPhoneVerified: true,
@@ -234,11 +211,11 @@ export async function verifyPhoneCode(code) {
             phoneVerifiedAt: new Date().toISOString()
         }, { merge: true });
 
-        showToast("✅ Phone number verified successfully! Trust increased.", "success");
+        showToast("✅ Phone verified! Trust Score increased.", "success");
         return true;
     } catch (error) {
-        console.error("Code verification error:", error);
-        showToast("Invalid or expired code. Please try again.", "error");
+        console.error("Code verification failed:", error);
+        showToast("Invalid or expired code", "error");
         return false;
     }
 }
