@@ -1,11 +1,14 @@
 // js/db.js
 import { db } from './firebase-init.js';
-import { 
+import {
   doc, getDoc, updateDoc, deleteDoc, collection, query, where, getDocs,
-  serverTimestamp 
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
 // ==================== USER PROFILE ====================
+/**
+ * Update user profile with 60-day name change cooldown
+ */
 export const updateUserProfile = async (userId, updates) => {
   const userRef = doc(db, "users", userId);
   const userSnap = await getDoc(userRef);
@@ -40,13 +43,13 @@ export const getUserData = async (userId) => {
 export const editPost = async (postId, userId, newContent) => {
   const postRef = doc(db, "posts", postId);
   const postSnap = await getDoc(postRef);
-  
+
   if (!postSnap.exists() || postSnap.data().authorId !== userId) {
     throw new Error("Not authorized to edit this post");
   }
 
   await updateDoc(postRef, {
-    content: newContent,
+    content: newContent.trim(),
     editedAt: serverTimestamp()
   });
 };
@@ -54,7 +57,7 @@ export const editPost = async (postId, userId, newContent) => {
 export const deletePost = async (postId, userId) => {
   const postRef = doc(db, "posts", postId);
   const postSnap = await getDoc(postRef);
-  
+
   if (!postSnap.exists() || postSnap.data().authorId !== userId) {
     throw new Error("Not authorized to delete this post");
   }
@@ -65,7 +68,7 @@ export const deletePost = async (postId, userId) => {
 export const togglePinPost = async (postId, userId) => {
   const postRef = doc(db, "posts", postId);
   const postSnap = await getDoc(postRef);
-  
+
   if (!postSnap.exists() || postSnap.data().authorId !== userId) {
     throw new Error("Not authorized");
   }
@@ -77,8 +80,7 @@ export const togglePinPost = async (postId, userId) => {
     await updateDoc(postRef, { pinnedBy: null, pinnedAt: null });
   } else {
     // Check if user already has a pinned post
-    const pinnedQuery = query(collection(db, "posts"), 
-      where("pinnedBy", "==", userId));
+    const pinnedQuery = query(collection(db, "posts"), where("pinnedBy", "==", userId));
     const pinnedSnap = await getDocs(pinnedQuery);
 
     if (!pinnedSnap.empty) {
