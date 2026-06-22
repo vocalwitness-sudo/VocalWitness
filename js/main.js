@@ -156,6 +156,65 @@ async function handleSendOTP() {
         showToast("OTP sent! Check your phone.", "success");
     }
 }
+// ====================== PHONE VERIFICATION INTEGRATION ======================
+let currentPhoneNumber = "";
+
+async function handlePhoneVerification() {
+    const ui = document.getElementById('phone-verification-ui');
+    if (ui) ui.classList.toggle('hidden');
+}
+
+async function handleSendOTP() {
+    const countryCode = document.getElementById('country-code').value;
+    const phoneInput = document.getElementById('phone-number').value.trim();
+    
+    if (!phoneInput) {
+        showToast("Please enter your phone number", "error");
+        return;
+    }
+
+    currentPhoneNumber = countryCode + phoneInput;
+
+    const success = await sendPhoneVerification(currentPhoneNumber);
+    
+    if (success) {
+        document.getElementById('otp-section').classList.remove('hidden');
+        document.getElementById('btn-send-otp').classList.add('hidden');
+        document.getElementById('otp-input').focus();
+    }
+}
+
+async function handleVerifyOTP() {
+    const otpInput = document.getElementById('otp-input');
+    const code = otpInput.value.trim();
+
+    if (code.length !== 6) {
+        showToast("Please enter the 6-digit OTP", "error");
+        return;
+    }
+
+    const success = await verifyPhoneCode(code);
+    
+    if (success) {
+        // Hide UI after successful verification
+        document.getElementById('phone-verification-ui').classList.add('hidden');
+        document.getElementById('otp-section').classList.add('hidden');
+        document.getElementById('btn-send-otp').classList.remove('hidden');
+        otpInput.value = "";
+    }
+}
+
+// In attachUIListeners() - Add these cases:
+case 'btn-verify-phone':
+    handlePhoneVerification();
+    break;
+case 'btn-send-otp':
+    handleSendOTP();
+    break;
+case 'btn-verify-otp':
+    handleVerifyOTP();
+    break;
+
 
 // ====================== POST SUBMISSION ======================
 async function handlePostSubmission(button) { /* ... your existing code ... */ }
