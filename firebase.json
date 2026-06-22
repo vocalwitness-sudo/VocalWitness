@@ -22,3 +22,14 @@
   
   "badges": ["new_citizen"]
 }
+
+{
+  "fullName": "John Doe",
+  "bio": "Human rights advocate...",
+  "photoURL": "...",
+  "preferredLanguage": "en",
+  "countryCode": "+234",
+  "phoneNumber": "8012345678",
+  "isVerified": false,
+  "lastUpdated": 1720000000000
+}
