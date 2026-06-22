@@ -74,6 +74,7 @@ function attachUIListeners() {
         const btn = event.target.closest('button');
         if (!btn) return;
 
+        // Handle Nav Selection
         if (btn.classList.contains('nav-btn')) {
             navButtons.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
@@ -112,9 +113,29 @@ function attachUIListeners() {
             case 'btn-send-otp':
                 handleSendOTP();
                 break;
+            case 'btn-verify-otp': // Added this missing case
+                await handleVerifyOTP();
+                break;
         }
     });
 
+    // Language Selector with persistence
+    document.addEventListener('change', async (event) => {
+        if (event.target.id === 'languageSelector') {
+            const newLang = event.target.value;
+            changeLanguage(newLang);
+            if (auth.currentUser) {
+                try {
+                    const userRef = doc(db, "users", auth.currentUser.uid);
+                    await updateDoc(userRef, { preferredLanguage: newLang });
+                    showToast("✅ Language preference saved");
+                } catch (err) {
+                    console.error("Failed to save language:", err);
+                }
+            }
+        }
+    });
+}
     // Language Selector with persistence
     document.addEventListener('change', async (event) => {
         if (event.target.id === 'languageSelector') {
