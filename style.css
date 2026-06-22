@@ -14,6 +14,13 @@ button {
     cursor: pointer;
 }
 
+button:active {
+    transform: scale(0.95); /* Shrinks slightly */
+    background-color: #059669 !important; /* A darker emerald */
+    transition: transform 0.1s, background-color 0.1s;
+}
+
+
 /* Ensure glass containers don't swallow events */
 .glass {
     pointer-events: auto;
