@@ -1,4 +1,4 @@
-import { googleLogin, logout, initAuth } from "./auth.js";
+import { googleLogin, logout, initAuth, sendPhoneVerification, verifyPhoneCode } from "./auth.js";
 import { initFeed, switchFeed } from './feed.js'; // Ensure switchFeed is imported/defined
 import { db } from './firebase-config.js';
 import { showToast } from './utils.js';
