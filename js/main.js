@@ -136,3 +136,8 @@ function attachUIListeners() {
 }
 // --- Bootstrap ---
 document.addEventListener('DOMContentLoaded', bootstrap);
+
+document.addEventListener('click', (e) => {
+    console.log("DEBUG: You clicked on element:", e.target);
+    console.log("DEBUG: Is it a button?", e.target.closest('button') ? "YES" : "NO");
+}, true);
