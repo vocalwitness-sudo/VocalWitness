@@ -154,5 +154,80 @@ function hideProfileSection() {
     document.getElementById('homeSection')?.classList.add('active');
 }
 
-// --- Start App ---
+
+// js/main.js
+let provider;
+let signer;
+let currentUser = { address: null, isWitness: false };
+
+async function initWeb3() {
+    if (window.ethereum) {
+        provider = new ethers.BrowserProvider(window.ethereum);
+        signer = await provider.getSigner();
+        currentUser.address = await signer.getAddress();
+        console.log("✅ Connected:", currentUser.address);
+    }
+}
+
+async function generateZKWitnessProof() {
+    const btn = document.getElementById('vw-btn');
+    const originalText = btn.innerHTML;
+    
+    btn.disabled = true;
+    btn.innerHTML = '🔄 Generating ZK Proof... (This may take 10-30s)';
+
+    try {
+        await initWeb3();
+
+        // Mock input for witness proof (in real app: hash of testimony + identity data)
+        const input = {
+            secret: 123456789,           // Private witness key / commitment
+            nullifier: Date.now(),       // Anti-replay
+            isValidWitness: 1
+        };
+
+        console.log("🧠 Generating ZK-SNARK proof...");
+
+        // FullProve with mock circuit (replace with real .wasm + .zkey in production)
+        const { proof, publicSignals } = await snarkjs.groth16.fullProve(
+            input,
+            "https://cdn.jsdelivr.net/gh/iden3/snarkjs@latest/build/circuit.wasm", // placeholder
+            "https://cdn.jsdelivr.net/gh/iden3/snarkjs@latest/build/circuit_final.zkey" // placeholder
+        );
+
+        console.log("✅ Proof generated:", proof);
+        console.log("Public Signals:", publicSignals);
+
+        // Verify locally
+        const vKey = await (await fetch("https://cdn.jsdelivr.net/gh/iden3/snarkjs@latest/build/verification_key.json")).json();
+        const isValid = await snarkjs.groth16.verify(vKey, publicSignals, proof);
+
+        if (isValid) {
+            alert("🎉 ZK Witness Proof Verified Successfully!\n\nYou are now a verified Witness on the Ledger.");
+            
+            // Mark user as witness
+            currentUser.isWitness = true;
+            document.getElementById('profile-role-badge').textContent = "✅ WITNESS";
+            document.getElementById('profile-role-badge').classList.add('bg-emerald-500');
+        } else {
+            alert("❌ Proof verification failed.");
+        }
+
+    } catch (error) {
+        console.error(error);
+        alert("⚠️ ZK Proof generation failed. (Demo mode - real circuits needed for production)");
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = originalText;
+}
+
+// Event Listeners
+document.addEventListener('DOMContentLoaded', () => {
+    const vwBtn = document.getElementById('vw-btn');
+    if (vwBtn) vwBtn.addEventListener('click', generateZKWitnessProof);
+
+    // Other existing functionality...
+    console.log("🚀 VocalWitness ZK-SNARK module loaded");
+});
 document.addEventListener('DOMContentLoaded', bootstrap);
