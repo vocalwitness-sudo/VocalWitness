@@ -81,7 +81,6 @@ async function handleVerifyOTP() {
 // --- Event Listeners ---
 function attachUIListeners() {
     document.addEventListener('click', async (event) => {
-        // Use closest() to find the button, but log if it fails
         const btn = event.target.closest('button');
         
         if (!btn) {
@@ -91,25 +90,37 @@ function attachUIListeners() {
 
         console.log("Action button clicked:", btn.id || "No ID on button");
 
+        // 1. Handle Navigation and Auth (ID-based)
         switch (btn.id) {
-            case 'postButton': 
+            case 'postButton': case 'postButton': 
                 console.log("Post button detected!");
                 await handlePostSubmission(btn); 
                 break;
-                  case 'btn-post': await handlePostSubmission(btn); break;
-                case 'btn-photo': triggerPhotoUpload(); break;
-                case 'btn-voice': toggleVoiceRecording(btn); break;
-                case 'btn-profile': showProfileSection(); break;
-                case 'btn-close-profile': hideProfileSection(); break;
-                case 'btn-verify-phone': handlePhoneVerification(); break;
-                case 'btn-send-otp': handleSendOTP(); break;
-                case 'btn-verify-otp': await handleVerifyOTP(); break;
-                case 'btn-logout': logout(); break;
+            case 'btn-post': await handlePostSubmission(btn); break;
+            case 'btn-photo': triggerPhotoUpload(); break;
+            case 'btn-voice': toggleVoiceRecording(btn); break;
+            case 'btn-profile': showProfileSection(); break;
+            case 'btn-close-profile': hideProfileSection(); break;
+            case 'btn-verify-phone': handlePhoneVerification(); break;
+            case 'btn-send-otp': handleSendOTP(); break;
+            case 'btn-verify-otp': await handleVerifyOTP(); break;
+            case 'btn-logout': logout(); break;
+            case 'btn-witness-voice': switchFeed('witness-voice'); break;
+            case 'btn-citizen-talk': switchFeed('citizen-talk'); break;
+        }
+
+        // 2. Handle Feed/Dynamic buttons (Data-Action based)
+        const action = btn.getAttribute('data-action');
+        if (action === 'peer-vote') {
+            const id = btn.getAttribute('data-id');
+            const type = btn.getAttribute('data-type');
+            console.log(`Peer vote: ${type} on post ${id}`);
+            await submitPeerVote(id, type); 
         }
     });
 }
-              
 
+// ... rest of your functions (updatePostButton, switchFeed, bootstrap) ...
         // --- 2. Handle Feed/Dynamic buttons (Data-Action based) ---
         const action = btn.getAttribute('data-action');
         if (action === 'peer-vote') {
