@@ -53,13 +53,17 @@ async function handleSendOTP() {
     if (!phoneInput) return showToast("Enter phone number", "error");
     
     try {
+        console.log("Attempting to send OTP to:", countryCode + phoneInput);
         const success = await sendPhoneVerification(countryCode + phoneInput);
         if (success) {
             showToast("OTP sent!", "success");
-            document.getElementById('otp-section')?.classList.remove('hidden');
-            document.getElementById('btn-send-otp')?.classList.add('hidden');
+            // ... rest of your code
         }
-    } catch (err) { showToast("Failed to send OTP", "error"); }
+    } catch (err) { 
+        // THIS LOG WILL SHOW THE REAL ERROR
+        console.error("DEBUG - OTP FAILED:", err); 
+        showToast("Error: " + err.message, "error"); 
+    }
 }
 
 async function handleVerifyOTP() {
