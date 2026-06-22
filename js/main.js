@@ -72,15 +72,33 @@ function attachUIListeners() {
         });
     });
 
+    // 1. Move function definitions OUTSIDE of the Event Listener
+async function handlePostSubmission(button) {
+    const isPremium = state?.user?.isPremium || false; 
+    if (!isPremium) {
+        showToast("Premium account required to post", "error");
+        return;
+    }
+    // ... rest of your existing logic ...
+}
 
-        document.addEventListener('click', async (event) => {
+// 2. The event listener stays clean
+document.addEventListener('click', async (event) => {
     const btn = event.target.closest('button');
     if (!btn) return;
     
-    // DEBUG: Click this in your app, check your console to see if the ID is detected
+  // DEBUG: Click this in your app, check your console to see if the ID is detected
     console.log("Button clicked:", btn.id); 
 
-    // ... your switch case code
+
+    switch (btn.id) {
+        case 'postButton':
+        case 'btn-post':
+            await handlePostSubmission(btn); // Now this calls the function outside
+            break;
+        // ... (rest of cases)
+    }
+});
 
         // Handle Nav Selection
         if (btn.classList.contains('nav-btn')) {
