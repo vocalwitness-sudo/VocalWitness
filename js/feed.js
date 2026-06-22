@@ -49,6 +49,20 @@ export function initFeed(db, currentFeed = 'citizen-talk') {
     });
 }
 
+async function switchFeed(feedType) {
+    currentFeed = feedType; // e.g., 'witness-voice' or 'citizen-talk'
+    console.log(`Switching to: ${currentFeed}`);
+    
+    // 1. Clear current feed
+    const container = document.getElementById('feedContainer');
+    container.innerHTML = '<p>Loading testimonies...</p>';
+    
+    // 2. Fetch data from Firestore based on the feed
+    // This assumes you have a 'feedVisibility' field in your 'testimonies' collection
+    await initFeed(db, currentFeed); 
+}
+
+
 function addLoadMoreButton(db, currentFeed) {
     const btn = document.createElement('button');
     btn.className = "w-full py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl mt-6 text-white font-medium transition";
