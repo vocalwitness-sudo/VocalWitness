@@ -97,3 +97,20 @@ export const togglePinPost = async (postId, userId) => {
 export const getUserPosts = (userId) => {
   return query(collection(db, "posts"), where("authorId", "==", userId));
 };
+
+/**
+ * Handles peer verification/dispute
+ */
+export const submitPeerVote = async (postId, type) => {
+  const postRef = doc(db, "posts", postId);
+  
+  // Logic: increment the specific vote count in Firestore
+  // Ensure your Firestore security rules allow this update
+  await updateDoc(postRef, {
+    [`votes.${type}`]: (/* current count */) + 1, // You'll need to fetch current, or use increment()
+    lastUpdated: serverTimestamp()
+  });
+  
+  // Return success
+  return true;
+};
