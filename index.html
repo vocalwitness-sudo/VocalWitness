@@ -30,10 +30,9 @@
 <body class="min-h-screen pb-28 p-4">
     <!-- Legal Notice -->
     <div class="max-w-2xl mx-auto bg-red-950/40 border border-red-500/30 backdrop-blur-sm rounded-3xl p-5 text-xs mb-6 shadow-xl text-zinc-300" id="legal-notice">
-        <strong class="text-red-400 font-bold">Important Legal Notice:</strong><br>
-        VocalWitness functions strictly as an un-manipulated decentralized distribution medium.
+        <strong data-i18n="legalNotice" class="text-red-400 font-bold">Important Legal Notice:</strong><br>
+        <span data-i18n="privacyWarning">VocalWitness functions strictly as an un-manipulated decentralized distribution medium.</span>
     </div>
-
     <div class="max-w-2xl mx-auto">
         <!-- Shared Header -->
         <header class="flex flex-col gap-4 mb-6">
@@ -45,14 +44,12 @@
                     <h1 class="text-3xl font-bold text-emerald-400 tracking-tight">VocalWitness</h1>
                 </div>
                 <div class="flex items-center gap-3">
-                    <button id="btn-premium" class="px-5 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-semibold rounded-3xl text-sm flex items-center gap-1.5 shadow-md">⭐ Premium</button>
+                    <button id="btn-premium" data-i18n="premium" class="px-5 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-semibold rounded-3xl text-sm flex items-center gap-1.5 shadow-md">⭐ Premium</button>
                     <button id="btn-notifications" class="w-11 h-11 bg-zinc-800 hover:bg-zinc-700 rounded-3xl flex items-center justify-center text-lg relative">🛎️</button>
                     <button id="btn-profile" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-3xl text-sm font-semibold flex items-center gap-1">👤 Profile</button>
                 </div>
             </div>
-
-            <button id="post-btn" class="glass">Post to Ledger</button>
-
+            <button id="post-btn" data-i18n="postToLedger" class="glass">Post to Ledger</button>
             <div class="bg-[#111827] border border-zinc-800 rounded-2xl p-3 glass">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-2 text-xs text-zinc-400 font-medium">
@@ -62,25 +59,23 @@
                     <select id="languageSelector" class="bg-[#1e293b] text-sm text-white font-medium px-3 py-1.5 rounded-xl border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer">
                     </select>
                 </div>
-                <input id="searchInput" type="text" placeholder="Search testimonies, witnesses, keywords..." 
+                <input id="searchInput" type="text" placeholder="Search testimonies, witnesses, keywords..."
                        class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-3 focus:outline-none focus:border-emerald-500 text-sm">
             </div>
         </header>
-
         <!-- NAV -->
         <nav class="grid grid-cols-3 gap-3 mb-6">
-            <button class="nav-btn active py-4 rounded-2xl text-sm">Witness Voice</button>
-            <button class="nav-btn py-4 rounded-2xl text-sm">Citizen Talk</button>
-            <button class="nav-btn py-4 rounded-2xl text-sm">Live Arena</button>
+            <button class="nav-btn active py-4 rounded-2xl text-sm" data-i18n="witnessVoice">Witness Voice</button>
+            <button class="nav-btn py-4 rounded-2xl text-sm" data-i18n="citizenTalk">Citizen Talk</button>
+            <button class="nav-btn py-4 rounded-2xl text-sm" data-i18n="liveArena">Live Arena</button>
         </nav>
-
         <!-- HOME / FEED SECTION -->
         <div id="homeSection" class="section active">
             <div id="feedContainer" class="mb-8 space-y-4"></div>
             <div class="bg-[#111827] rounded-3xl p-6 mb-10 glass" id="composer">
                 <div id="preview-area" class="hidden mt-4 p-4 bg-zinc-900/50 rounded-2xl"></div>
-                <textarea id="mainInput" rows="4" 
-                          class="w-full bg-[#1e293b] text-white border border-zinc-800 rounded-2xl p-5 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none text-sm" 
+                <textarea id="mainInput" rows="4"
+                          class="w-full bg-[#1e293b] text-white border border-zinc-800 rounded-2xl p-5 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none text-sm"
                           placeholder="Provide raw description..."></textarea>
                 <div class="grid grid-cols-2 gap-3 mt-4">
                     <button id="btn-photo" class="py-3.5 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 rounded-2xl text-sm font-medium flex items-center justify-center gap-2 transition">📸 Photo + Forensic Shield</button>
@@ -89,7 +84,6 @@
                 <button id="postButton" class="mt-6 w-full bg-emerald-500 hover:bg-emerald-600 text-black py-4 rounded-2xl font-bold text-base shadow-lg transition-all">Publish to Decentralized Ledger</button>
             </div>
         </div>
-
         <!-- ==================== FULL ENHANCED PROFILE SECTION ==================== -->
         <div id="profileSection" class="section">
             <div class="max-w-2xl mx-auto p-4">
@@ -97,7 +91,6 @@
                         class="mb-6 text-emerald-400 flex items-center gap-2 font-semibold text-sm hover:text-emerald-300 transition">
                     ← Return to Node
                 </button>
-
                 <div class="glass rounded-3xl p-8">
                     <!-- Profile Header -->
                     <div class="flex flex-col md:flex-row items-center gap-6 mb-8">
@@ -118,30 +111,28 @@
                             </div>
                         </div>
                     </div>
-
                     <!-- Edit Profile -->
                     <div class="bg-zinc-900/70 rounded-2xl p-6 mb-8">
-                        <h3 class="text-lg font-semibold mb-4 text-emerald-400">Edit Profile</h3>
+                        <h3 data-i18n="editProfile" class="text-lg font-semibold mb-4 text-emerald-400">Edit Profile</h3>
                         <div class="space-y-5">
                             <div>
-                                <label class="block text-xs uppercase tracking-widest text-zinc-400 mb-1">
+                                <label data-i18n="fullName" class="block text-xs uppercase tracking-widest text-zinc-400 mb-1">
                                     Full Name <span id="name-cooldown" class="text-amber-400 text-[10px]"></span>
                                 </label>
-                                <input id="edit-displayName" type="text" 
+                                <input id="edit-displayName" type="text"
                                        class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-5 py-3 focus:outline-none focus:border-emerald-500">
                             </div>
                             <div>
-                                <label class="block text-xs uppercase tracking-widest text-zinc-400 mb-1">Biography</label>
-                                <textarea id="edit-bio" rows="4" 
+                                <label data-i18n="biography" class="block text-xs uppercase tracking-widest text-zinc-400 mb-1">Biography</label>
+                                <textarea id="edit-bio" rows="4"
                                           class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-5 py-3 focus:outline-none focus:border-emerald-500 resize-y"></textarea>
                             </div>
                         </div>
-                        <button onclick="saveProfile()" 
+                        <button onclick="saveProfile()" data-i18n="saveChanges"
                                 class="mt-6 w-full bg-emerald-600 hover:bg-emerald-700 py-4 rounded-2xl font-semibold">
                             💾 Save Changes
                         </button>
                     </div>
-
                     <!-- Stats -->
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                         <div class="bg-zinc-900 rounded-2xl p-5 text-center">
@@ -161,16 +152,14 @@
                             <p class="text-xs text-zinc-400">Endorsements</p>
                         </div>
                     </div>
-
                     <!-- My Posts -->
                     <div class="mb-10">
                         <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-xl font-semibold">My Testimonies & Posts</h3>
+                            <h3 data-i18n="myTestimonies" class="text-xl font-semibold">My Testimonies & Posts</h3>
                             <span id="posts-count-badge" class="text-xs bg-zinc-800 px-3 py-1 rounded-full"></span>
                         </div>
                         <div id="my-posts-list" class="space-y-6"></div>
                     </div>
-
                     <!-- Witness Token PDF -->
                     <div class="mt-6 pt-6 border-t border-zinc-700 mb-8">
                         <button id="btn-download-pdf"
@@ -179,7 +168,6 @@
                         </button>
                         <p id="pdf-status" class="text-xs text-center mt-3 text-zinc-400"></p>
                     </div>
-
                     <!-- Quick Actions -->
                     <div class="grid grid-cols-1 gap-3 mb-8">
                         <button id="vw-btn" class="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-black font-bold rounded-2xl transition flex items-center justify-center gap-2">
@@ -188,21 +176,31 @@
                         <button id="btn-verify-phone" class="w-full py-4 bg-zinc-800 hover:bg-zinc-700 text-white font-medium rounded-2xl transition">📱 Verify Phone Number</button>
                     </div>
 
+                    <!-- Phone Verification UI -->
+                    <div id="phone-verification-ui" class="hidden mt-4 bg-zinc-900 p-4 rounded-2xl">
+                        <div class="flex gap-2">
+                            <select id="country-code" class="bg-zinc-800 text-white rounded-xl px-2">
+                                <option value="+234">+234 (Nigeria)</option>
+                                <option value="+1">+1 (USA)</option>
+                                <!-- Add other supported countries -->
+                            </select>
+                            <input id="phone-number" type="tel" placeholder="8012345678" class="flex-1 bg-zinc-800 text-white rounded-xl px-4">
+                        </div>
+                        <button id="btn-send-otp" class="mt-2 w-full bg-emerald-600 py-2 rounded-xl">Send OTP</button>
+                    </div>
+
                     <!-- Security -->
                     <div class="mt-8 pt-6 border-t border-zinc-700 mb-6">
                         <p class="text-xs uppercase tracking-widest text-zinc-500 mb-4">Account Security</p>
                         <button id="btn-change-password" class="w-full py-4 bg-zinc-800 hover:bg-zinc-700 text-white font-medium rounded-2xl transition flex items-center justify-center gap-2">🔑 Change Password</button>
                     </div>
-
                     <button id="btn-logout" class="w-full py-4 bg-red-900/70 hover:bg-red-900 text-red-400 hover:text-red-300 rounded-2xl font-medium transition">Sign Out</button>
                 </div>
             </div>
         </div>
     </div>
-
     <!-- Modals -->
     <!-- (Your existing Phone and Auth modals can stay here - unchanged) -->
-
     <script type="module" src="js/main.js"></script>
     <script>
     if ('serviceWorker' in navigator) {
