@@ -67,6 +67,8 @@ function attachUIListeners() {
         btn.addEventListener('click', () => {
             navButtons.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
+            case 'btn-witness-voice': switchFeed('witness-voice'); break;
+            case 'btn-citizen-talk': switchFeed('citizen-talk'); break;
         });
     });
 
