@@ -134,28 +134,6 @@ function attachUIListeners() {
 }
 
 // ====================== PHONE VERIFICATION INTEGRATION ======================
-async function handlePhoneVerification() {
-    const ui = document.getElementById('phone-verification-ui');
-    if (ui) {
-        ui.classList.toggle('hidden');
-    }
-}
-
-async function handleSendOTP() {
-    const countryCode = document.getElementById('country-code').value;
-    const phoneNumberInput = document.getElementById('phone-number').value;
-    const fullPhone = countryCode + phoneNumberInput;
-
-    if (!phoneNumberInput) {
-        showToast("Please enter phone number", "error");
-        return;
-    }
-
-    const success = await sendPhoneVerification(fullPhone); // from auth.js
-    if (success) {
-        showToast("OTP sent! Check your phone.", "success");
-    }
-}
 // ====================== PHONE VERIFICATION INTEGRATION ======================
 let currentPhoneNumber = "";
 
@@ -165,8 +143,8 @@ async function handlePhoneVerification() {
 }
 
 async function handleSendOTP() {
-    const countryCode = document.getElementById('country-code').value;
-    const phoneInput = document.getElementById('phone-number').value.trim();
+    const countryCode = document.getElementById('country-code')?.value;
+    const phoneInput = document.getElementById('phone-number')?.value?.trim();
     
     if (!phoneInput) {
         showToast("Please enter your phone number", "error");
@@ -175,15 +153,27 @@ async function handleSendOTP() {
 
     currentPhoneNumber = countryCode + phoneInput;
 
-    const success = await sendPhoneVerification(currentPhoneNumber);
-    
-    if (success) {
-        document.getElementById('otp-section').classList.remove('hidden');
-        document.getElementById('btn-send-otp').classList.add('hidden');
-        document.getElementById('otp-input').focus();
+    try {
+        const success = await sendPhoneVerification(currentPhoneNumber);
+        
+        if (success) {
+            showToast("OTP sent! Check your phone.", "success");
+            
+            // Toggle visibility for OTP input section
+            const otpSection = document.getElementById('otp-section');
+            const sendBtn = document.getElementById('btn-send-otp');
+            
+            if (otpSection) otpSection.classList.remove('hidden');
+            if (sendBtn) sendBtn.classList.add('hidden');
+            
+            const otpInput = document.getElementById('otp-input');
+            if (otpInput) otpInput.focus();
+        }
+    } catch (err) {
+        console.error("OTP Send Error:", err);
+        showToast("Failed to send OTP", "error");
     }
 }
-
 async function handleVerifyOTP() {
     const otpInput = document.getElementById('otp-input');
     const code = otpInput.value.trim();
