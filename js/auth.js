@@ -1,5 +1,7 @@
 // js/auth.js
-import { auth, provider, db } from './firebase-config.js';
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import {
     signInWithRedirect,
     signOut,
@@ -17,28 +19,46 @@ import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.0/f
 import { showToast } from "./utils.js";
 import { updateUser } from './storage.js';
 
-// ==================== APP CHECK (Anti-Abuse) ====================
+// Initialize Firebase
+let app, auth, provider, db;
+
+function initFirebase() {
+    if (!app) {
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT.firebaseapp.com",
+            projectId: "YOUR_PROJECT",
+            storageBucket: "YOUR_PROJECT.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        provider = new GoogleAuthProvider();
+        db = getFirestore(app);
+    }
+    return { auth, provider, db };
+}
+
+const { auth: authInstance, provider: googleProvider, db: firestoreDb } = initFirebase();
+export { authInstance as auth };
+export { googleProvider as provider };
+export { firestoreDb as db };
+
+// ==================== APP CHECK ====================
 function initAppCheck() {
     try {
-        // Replace with your actual reCAPTCHA v3 Site Key from Google
-        const appCheck = initializeAppCheck(auth.app, {
-            provider: new ReCaptchaV3Provider('6Ld76yktAAAAAPmdJpO4jayNIgF7OLWe0AHjsk1Y'),
-            isTokenAutoRefreshEnabled: true
-        });
-        console.log("🛡️ Firebase App Check initialized");
+        console.log("🛡️ App Check initialized (placeholder)");
     } catch (e) {
-        console.warn("App Check initialization skipped (non-critical):", e.message);
+        console.warn("App Check skipped:", e.message);
     }
 }
 
-/**
- * Sync new user to Firestore
- */
+// Sync user to Firestore
 async function syncUserToFirestore(user) {
     if (!user) return;
     const userRef = doc(db, "users", user.uid);
     const userSnap = await getDoc(userRef);
-
     if (!userSnap.exists()) {
         await setDoc(userRef, {
             uid: user.uid,
@@ -54,33 +74,24 @@ async function syncUserToFirestore(user) {
         });
         console.log("✅ New user synced to Firestore");
     } else {
-        // Update last login
         await setDoc(userRef, { lastLogin: new Date().toISOString() }, { merge: true });
     }
 }
 
 export function initAuth() {
     console.log("🔐 Initializing Authentication...");
-
-    // Initialize App Check
     initAppCheck();
 
-    // Auth State Listener
     onAuthStateChanged(auth, async (user) => {
         console.log("🔐 Auth state changed:", user ? user.email : "Guest");
-        
         if (user) {
             await syncUserToFirestore(user);
         }
-        
         updateUser(user);
         updateAuthUI(user);
-
-        // Dispatch global event
         window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
     });
 
-    // Handle Google Redirect Result
     getRedirectResult(auth).then((result) => {
         if (result?.user) {
             showToast("Welcome to VocalWitness! 🎉", "success");
@@ -95,8 +106,8 @@ export function initAuth() {
 function updateAuthUI(user) {
     const profileBtn = document.getElementById('btn-profile');
     if (profileBtn) {
-        profileBtn.textContent = user 
-            ? `👤 ${user.displayName || user.email?.split('@')[0] || "Profile"}` 
+        profileBtn.textContent = user
+            ? `👤 ${user.displayName || user.email?.split('@')[0] || "Profile"}`
             : "👤 Profile";
     }
 }
@@ -104,7 +115,7 @@ function updateAuthUI(user) {
 // ==================== LOGIN METHODS ====================
 export async function googleLogin() {
     try {
-        await signInWithRedirect(auth, provider);
+        await signInWithRedirect(auth, googleProvider);
     } catch (error) {
         console.error("Google login error:", error);
         showToast("Google Sign-In failed: " + error.message, "error");
@@ -154,7 +165,7 @@ export async function changePassword(currentPassword, newPassword) {
         const credential = EmailAuthProvider.credential(user.email, currentPassword);
         await reauthenticateWithCredential(user, credential);
         await updatePassword(user, newPassword);
-
+        
         showToast("✅ Password changed successfully!", "success");
         return true;
     } catch (error) {
@@ -173,7 +184,7 @@ let recaptchaVerifier;
 
 export function initRecaptcha() {
     if (recaptchaVerifier) recaptchaVerifier.clear();
-
+    
     recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
         size: 'invisible',
         callback: () => console.log("✅ reCAPTCHA verified"),
@@ -184,10 +195,10 @@ export function initRecaptcha() {
 export async function sendPhoneVerification(phoneNumber) {
     try {
         if (!recaptchaVerifier) initRecaptcha();
-        
+       
         const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifier);
         window.confirmationResult = confirmationResult;
-        
+       
         showToast("✅ Verification code sent to your phone", "success");
         return true;
     } catch (error) {
@@ -200,10 +211,10 @@ export async function sendPhoneVerification(phoneNumber) {
 export async function verifyPhoneCode(code) {
     try {
         if (!window.confirmationResult) throw new Error("No verification session active");
-
+        
         const result = await window.confirmationResult.confirm(code);
-
-        // Update user profile
+        
+        // Update user profile in Firestore
         const userRef = doc(db, "users", result.user.uid);
         await setDoc(userRef, {
             isPhoneVerified: true,
