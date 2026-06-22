@@ -22,6 +22,7 @@ import { auth } from './auth.js';
 let provider;
 let signer;
 let currentUser = { address: null, isWitness: false };
+let cachedVerificationKey = null;   // ← Global cache for verification key
 
 // --- State ---
 let currentFeed = 'citizen-talk';
@@ -34,7 +35,7 @@ async function bootstrap() {
     initAuth();
     initLanguage();
   
-    // Fetch and apply user language preference from Firestore
+    // Fetch user language preference
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             try {
@@ -97,15 +98,10 @@ function attachUIListeners() {
         }
     });
 
-    // Language Selector with Firestore Persistence
     document.addEventListener('change', async (event) => {
         if (event.target.id === 'languageSelector') {
             const newLang = event.target.value;
-           
-            // Update UI immediately
             changeLanguage(newLang);
-           
-            // Persist to Firestore if user is signed in
             if (auth.currentUser) {
                 try {
                     const userRef = doc(db, "users", auth.currentUser.uid);
@@ -113,53 +109,34 @@ function attachUIListeners() {
                     showToast("✅ Language preference saved");
                 } catch (err) {
                     console.error("Failed to save language:", err);
-                    showToast("Language updated locally", "warning");
                 }
             }
         }
     });
 }
 
-// ====================== POST SUBMISSION ======================
-async function handlePostSubmission(button) {
-    if (!state?.user) {
-        return showToast("Please sign in to post", "error");
+// ====================== ZK-SNARK HELPERS ======================
+async function getVerificationKey() {
+    if (cachedVerificationKey) {
+        console.log("🔑 Using cached verification key");
+        return cachedVerificationKey;
     }
-    const postInput = document.getElementById('mainInput');
-    const postText = postInput?.value?.trim() || "";
-    if (!postText && !window.selectedImageFile && !engine?.currentAudioBlob) {
-        return showToast("Add text, photo, or voice testimony", "error");
-    }
+
     try {
-        button.disabled = true;
-        button.textContent = "🔒 Securing to ledger...";
-        const mediaData = await uploadForensicMedia(state.user.uid);
-        await addDoc(collection(db, "testimonies"), {
-            ...mediaData,
-            author: state.user.displayName || "Anonymous",
-            authorId: state.user.uid,
-            content: postText,
-            timestamp: new Date().toISOString(),
-            verified: false,
-            trustScore: 50,
-            language: currentLang || "en",
-            feedVisibility: currentFeed,
-            contributionWeight: state.isWitnessVerified ? 2 : 1,
-            tokenEligible: true
-        });
-        showToast("✅ Testimony published to ledger!", "success");
-        resetMediaState();
-        if (postInput) postInput.value = "";
-    } catch (err) {
-        console.error("Post failed:", err);
-        showToast("❌ Failed: " + (err.message || err), "error");
-    } finally {
-        button.disabled = false;
-        button.textContent = "Publish to Decentralized Ledger";
+        console.log("📥 Fetching verification key...");
+        const response = await fetch("/circuits/verification_key.json");
+        if (!response.ok) throw new Error("Verification key not found");
+        
+        cachedVerificationKey = await response.json();
+        console.log("✅ Verification key cached successfully");
+        return cachedVerificationKey;
+    } catch (error) {
+        console.error("Failed to load verification key:", error);
+        throw new Error("VERIFICATION_KEY_MISSING");
     }
 }
 
-// ====================== ZK-SNARK WITNESS PROOF (Advanced) ======================
+// ====================== ZK-SNARK WITNESS PROOF ======================
 async function initWeb3() {
     if (window.ethereum) {
         provider = new ethers.BrowserProvider(window.ethereum);
@@ -208,7 +185,7 @@ async function generateZKWitnessProof() {
             pathIndices: pathIndices
         };
 
-        console.log("🧠 Generating ZK-SNARK proof with Merkle + Selective Disclosure...");
+        console.log("🧠 Generating ZK-SNARK proof...");
 
         const { proof, publicSignals } = await snarkjs.groth16.fullProve(
             input,
@@ -216,11 +193,14 @@ async function generateZKWitnessProof() {
             "/circuits/witness_final.zkey"
         );
 
-        const vKey = await (await fetch("/circuits/verification_key.json")).json();
+        console.log("✅ Proof generated");
+
+        // Use cached verification key
+        const vKey = await getVerificationKey();
         const isValid = await snarkjs.groth16.verify(vKey, publicSignals, proof);
 
         if (isValid) {
-            alert(`🎉 ZK Witness Proof Verified Successfully!\n\n• Trust Score ≥ ${minTrustScore}\n• Posts ≥ ${minPosts}\n\nYou are now a verified Witness on the Ledger.`);
+            alert(`🎉 ZK Witness Proof Verified Successfully!\n\n• Trust Score ≥ ${minTrustScore}\n• Posts ≥ ${minPosts}\n\nYou are now a verified Witness.`);
           
             currentUser.isWitness = true;
             const badge = document.getElementById('profile-role-badge');
@@ -234,7 +214,11 @@ async function generateZKWitnessProof() {
         }
     } catch (error) {
         console.error(error);
-        alert("⚠️ ZK Proof failed.\n\nMake sure circuit files are in /circuits/");
+        if (error.message === "VERIFICATION_KEY_MISSING") {
+            alert("⚠️ Verification key missing. Please upload verification_key.json to /circuits/");
+        } else {
+            alert("⚠️ ZK Proof failed.\n\nMake sure circuit files are correctly uploaded.");
+        }
     } finally {
         btn.disabled = false;
         btn.innerHTML = originalText;
@@ -252,7 +236,6 @@ function triggerPhotoUpload() {
 
 function showProfileSection() {
     if (!state?.user) return googleLogin();
-  
     document.getElementById('homeSection')?.classList.remove('active');
     document.getElementById('profileSection')?.classList.add('active');
     loadProfile(state.user);
