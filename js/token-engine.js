@@ -14,3 +14,11 @@ export async function processWitnessProof(userId, proofHash, confidenceScore) {
     
     return { status: 'success', scoreAdded: confidenceScore };
 }
+
+import { getFunctions, httpsCallable } from "firebase/functions";
+
+export async function processWitnessProof(userId, confidenceScore) {
+    const functions = getFunctions();
+    const addProof = httpsCallable(functions, 'addWitnessProof');
+    return await addProof({ userId, confidenceScore });
+}
