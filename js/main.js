@@ -134,7 +134,7 @@ function attachUIListeners() {
 }
 
 // ====================== PHONE VERIFICATION INTEGRATION ======================
-// ====================== PHONE VERIFICATION INTEGRATION ======================
+
 let currentPhoneNumber = "";
 
 async function handlePhoneVerification() {
@@ -154,10 +154,51 @@ async function handleSendOTP() {
     currentPhoneNumber = countryCode + phoneInput;
 
     try {
+        // Ensure sendPhoneVerification is imported from auth.js
         const success = await sendPhoneVerification(currentPhoneNumber);
         
         if (success) {
             showToast("OTP sent! Check your phone.", "success");
+            
+            const otpSection = document.getElementById('otp-section');
+            const sendBtn = document.getElementById('btn-send-otp');
+            
+            if (otpSection) otpSection.classList.remove('hidden');
+            if (sendBtn) sendBtn.classList.add('hidden');
+            
+            const otpInput = document.getElementById('otp-input');
+            if (otpInput) otpInput.focus();
+        }
+    } catch (err) {
+        console.error("OTP Send Error:", err);
+        showToast("Failed to send OTP", "error");
+    }
+}
+
+async function handleVerifyOTP() {
+    const otpInput = document.getElementById('otp-input');
+    const code = otpInput?.value?.trim();
+
+    if (!code || code.length < 6) {
+        showToast("Please enter the 6-digit OTP", "error");
+        return;
+    }
+
+    // Ensure verifyPhoneCode is imported from auth.js
+    const success = await verifyPhoneCode(code);
+    
+    if (success) {
+        showToast("✅ Phone verified successfully!", "success");
+        const ui = document.getElementById('phone-verification-ui');
+        const otpSection = document.getElementById('otp-section');
+        const sendBtn = document.getElementById('btn-send-otp');
+        
+        if (ui) ui.classList.add('hidden');
+        if (otpSection) otpSection.classList.add('hidden');
+        if (sendBtn) sendBtn.classList.remove('hidden');
+        if (otpInput) otpInput.value = "";
+    }
+}
             
             // Toggle visibility for OTP input section
             const otpSection = document.getElementById('otp-section');
