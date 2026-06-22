@@ -13,3 +13,21 @@ export function setLanguage(langCode) {
         element.innerText = activeData[key];
     });
 }
+
+export function updateUILanguage(langCode) {
+    document.documentElement.lang = langCode;
+    const activeData = translations[langCode] || translations['en'];
+    
+    // Update innerText
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (activeData[key]) el.innerText = activeData[key];
+    });
+
+    // Update Placeholders
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        if (activeData[key]) el.placeholder = activeData[key];
+    });
+}
+
