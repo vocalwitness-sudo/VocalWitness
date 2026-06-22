@@ -81,17 +81,22 @@ async function handleVerifyOTP() {
 // --- Event Listeners ---
 function attachUIListeners() {
     document.addEventListener('click', async (event) => {
+        // Use closest() to find the button, but log if it fails
         const btn = event.target.closest('button');
-        if (!btn) return;
+        
+        if (!btn) {
+            console.log("Clicked something that isn't a button:", event.target);
+            return;
+        }
 
-        // --- 1. Handle Navigation and Auth (ID-based) ---
-        if (btn.id) {
-            console.log("Action button clicked:", btn.id);
-            switch (btn.id) {
-                case 'btn-witness-voice': switchFeed('witness-voice'); break;
-                case 'btn-citizen-talk': switchFeed('citizen-talk'); break;
-                case 'postButton':
-                case 'btn-post': await handlePostSubmission(btn); break;
+        console.log("Action button clicked:", btn.id || "No ID on button");
+
+        switch (btn.id) {
+            case 'postButton': 
+                console.log("Post button detected!");
+                await handlePostSubmission(btn); 
+                break;
+                  case 'btn-post': await handlePostSubmission(btn); break;
                 case 'btn-photo': triggerPhotoUpload(); break;
                 case 'btn-voice': toggleVoiceRecording(btn); break;
                 case 'btn-profile': showProfileSection(); break;
@@ -100,8 +105,10 @@ function attachUIListeners() {
                 case 'btn-send-otp': handleSendOTP(); break;
                 case 'btn-verify-otp': await handleVerifyOTP(); break;
                 case 'btn-logout': logout(); break;
-            }
         }
+    });
+}
+              
 
         // --- 2. Handle Feed/Dynamic buttons (Data-Action based) ---
         const action = btn.getAttribute('data-action');
