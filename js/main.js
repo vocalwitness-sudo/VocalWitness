@@ -70,9 +70,15 @@ function attachUIListeners() {
         });
     });
 
-    document.addEventListener('click', async (event) => {
-        const btn = event.target.closest('button');
-        if (!btn) return;
+
+        document.addEventListener('click', async (event) => {
+    const btn = event.target.closest('button');
+    if (!btn) return;
+    
+    // DEBUG: Click this in your app, check your console to see if the ID is detected
+    console.log("Button clicked:", btn.id); 
+
+    // ... your switch case code
 
         // Handle Nav Selection
         if (btn.classList.contains('nav-btn')) {
