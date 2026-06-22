@@ -200,7 +200,29 @@
         </div>
     </div>
 
+    <!-- Phone Verification UI - Updated -->
+<div id="phone-verification-ui" class="hidden mt-4 bg-zinc-900 p-4 rounded-2xl">
+    <div class="flex gap-2 mb-3">
+        <select id="country-code" class="bg-zinc-800 text-white rounded-xl px-2 py-3">
+            <option value="+234">+234 (Nigeria)</option>
+            <option value="+1">+1 (USA)</option>
+            <!-- Add more countries -->
+        </select>
+        <input id="phone-number" type="tel" placeholder="8012345678" 
+               class="flex-1 bg-zinc-800 text-white rounded-xl px-4 py-3">
+    </div>
     
+    <button id="btn-send-otp" class="w-full bg-emerald-600 py-3 rounded-xl mb-3">Send OTP</button>
+    
+    <!-- OTP Input Section (Hidden initially) -->
+    <div id="otp-section" class="hidden">
+        <input id="otp-input" type="text" maxlength="6" placeholder="Enter 6-digit OTP" 
+               class="w-full bg-zinc-800 text-white rounded-xl px-4 py-3 text-center text-lg tracking-widest mb-3">
+        <button id="btn-verify-otp" class="w-full bg-emerald-500 hover:bg-emerald-600 py-3 rounded-xl">
+            Verify OTP
+        </button>
+    </div>
+</div>
     <!-- Modals -->
     <!-- (Your existing Phone and Auth modals can stay here - unchanged) -->
     <script type="module" src="js/main.js"></script>
