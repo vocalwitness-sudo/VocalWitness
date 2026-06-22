@@ -1,24 +1,37 @@
 // js/zk-worker.js
-// Importing a hypothetical ZK library (e.g., snarkjs or a custom WASM module)
-importScripts('https://cdn.jsdelivr.net/npm/snarkjs@latest/build/snarkjs.min.js');
+importScripts('https://cdn.jsdelivr.net/npm/snarkjs@0.7.0/build/snarkjs.min.js');
 
 self.onmessage = async (e) => {
-    const { identityCommitment, witnessData } = e.data;
+    const { secret, nullifier, isValidWitness, commitment } = e.data;
 
     try {
-        // Heavy ZK math performed here
-        // Example: const { proof, publicSignals } = await snarkjs.groth16.fullProve(...);
-        
-        // Simulating heavy computation for demonstration
-        const proof = await generateComplexProof(identityCommitment, witnessData);
+        console.log("🧠 Worker: Starting ZK Proof Generation...");
 
-        self.postMessage({ success: true, proof });
+        const input = {
+            secret: secret.toString(),
+            nullifier: nullifier.toString(),
+            isValidWitness: isValidWitness.toString(),
+            commitment: commitment.toString()
+        };
+
+        // Real proof generation (will use your circuit files when available)
+        const { proof, publicSignals } = await snarkjs.groth16.fullProve(
+            input,
+            "/circuits/witness.wasm",      // ← Change when you upload real files
+            "/circuits/witness_final.zkey"
+        );
+
+        self.postMessage({ 
+            success: true, 
+            proof: proof,
+            publicSignals: publicSignals 
+        });
+
     } catch (error) {
-        self.postMessage({ success: false, error: error.message });
+        console.error("Worker Error:", error);
+        self.postMessage({ 
+            success: false, 
+            error: error.message || "Proof generation failed" 
+        });
     }
 };
-
-async function generateComplexProof(id, data) {
-    // This is where the intense computation occurs
-    return new Promise(resolve => setTimeout(() => resolve("zk_proof_data_0x123"), 2000));
-}
