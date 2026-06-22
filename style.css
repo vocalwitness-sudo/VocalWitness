@@ -6,6 +6,24 @@
         color: white; 
     }
 
+/* Force buttons to be interactable and on top */
+button {
+    position: relative;
+    z-index: 100;
+    pointer-events: auto !important; /* Forces the browser to register clicks */
+    cursor: pointer;
+}
+
+/* Ensure glass containers don't swallow events */
+.glass {
+    pointer-events: auto;
+}
+
+/* This is a helper to see if a container is covering your buttons */
+.debug-outline {
+    outline: 2px solid red !important;
+}
+
     /* Layout & Utilities */
     .glass { 
         background: rgba(17, 24, 39, 0.92); 
