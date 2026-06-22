@@ -1,0 +1,61 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions for readability
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(uid) { return isSignedIn() && request.auth.uid == uid; }
+
+    // Users collection: Securely manage profiles and trust scores
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(userId);
+      
+      // Update rule: Only allow the owner to update their profile, 
+      // but block direct modification of the 'trustScore' field.
+      // This forces all score updates to go through your secure Cloud Function.
+      allow update: if isOwner(userId) 
+                    && request.resource.data.trustScore == resource.data.trustScore; 
+    }
+
+    // Testimonies: Public access for viewing, protected for writing
+    match /testimonies/{postId} {
+      allow read: if true;
+      
+      // User can only create if they are logged in and correctly set themselves as the author
+      allow create: if isSignedIn() 
+                    && request.resource.data.authorId == request.auth.uid;
+      
+      // Only the author can update or delete their own post
+      allow update, delete: if isOwner(resource.data.authorId);
+      
+      // Votes subcollection
+      match /votes/{voteId} {
+        allow read: if true;
+        allow create: if isSignedIn();
+      }
+    }
+  }
+
+import { getFunctions, httpsCallable } from "firebase/functions";
+
+export async function processWitnessProof(userId, confidenceScore) {
+    const functions = getFunctions();
+    const addProof = httpsCallable(functions, 'addWitnessProof');
+    return await addProof({ userId, confidenceScore });
+}
+
+const functions = require('firebase-functions');
+const admin = require('firebase-admin');
+admin.initializeApp();
+
+exports.addWitnessProof = functions.https.onCall((data, context) => {
+    if (!context.auth) throw new functions.https.HttpsError('unauthenticated');
+
+    const userRef = admin.firestore().collection('users').doc(data.userId);
+    return userRef.update({
+        trustScore: admin.firestore.FieldValue.increment(data.confidenceScore)
+    });
+});
+}
+
