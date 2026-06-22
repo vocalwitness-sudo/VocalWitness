@@ -65,6 +65,7 @@
                        class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-3 focus:outline-none focus:border-emerald-500 text-sm">
             </div>
         </header>
+        
         <!-- NAV -->
         <nav class="grid grid-cols-3 gap-3 mb-6">
             <button class="nav-btn active py-4 rounded-2xl text-sm" data-i18n="witnessVoice">Witness Voice</button>
@@ -76,6 +77,7 @@
             <div id="feedContainer" class="mb-8 space-y-4"></div>
             <div class="bg-[#111827] rounded-3xl p-6 mb-10 glass" id="composer">
                 <div id="preview-area" class="hidden mt-4 p-4 bg-zinc-900/50 rounded-2xl"></div>
+               <div id="recaptcha-container"></div>
                 <textarea id="mainInput" rows="4"
                           class="w-full bg-[#1e293b] text-white border border-zinc-800 rounded-2xl p-5 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none text-sm"
                           placeholder="Provide raw description..."></textarea>
