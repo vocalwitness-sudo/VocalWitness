@@ -1,4 +1,4 @@
-// js/main.js - CLEAN VERSION
+// js/main.js - FIXED (Removed broken loadProfile import)
 import { googleLogin, logout, initAuth, sendPhoneVerification, verifyPhoneCode } from "./auth.js";
 import { initFeed, switchFeed } from './feed.js';
 import { db } from './firebase-config.js';
@@ -12,9 +12,6 @@ import { generateAndDownloadPDF } from './pdf.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { auth } from './auth.js';
-
-// Remove the broken import
-// import { loadProfile } from './profile.js';   ← Deleted
 
 let engineInstance = null;
 
@@ -45,7 +42,7 @@ async function bootstrap() {
     window.engineInstance = engineInstance;
 }
 
-// Handlers
+// Handlers (same as before)
 async function handlePostSubmission(button) {
     const isPremium = state?.user?.isPremium || false;
     if (!isPremium) {
@@ -109,11 +106,14 @@ function attachUIListeners() {
                 toggleVoiceRecording(btn);
                 break;
             case 'btn-profile':
-                // Use global function from profile.js
+                // Profile handler (using window global from profile.js)
                 if (typeof window.showProfileSection === 'function') {
                     window.showProfileSection();
                 } else {
-                    console.log("Profile section handler not available yet");
+                    console.warn("Profile handler not loaded yet");
+                    // Fallback: try to show profile section directly
+                    document.getElementById('profileSection')?.classList.remove('hidden');
+                    document.getElementById('homeSection')?.classList.remove('active');
                 }
                 break;
             case 'btn-close-profile':
