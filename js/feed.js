@@ -161,3 +161,6 @@ function renderPost(id, data) {
 
     feedContainer.appendChild(postEl);
 }
+
+//switch export
+export { initFeed, switchFeed };
