@@ -69,6 +69,10 @@ function attachUIListeners() {
             case 'btn-close-premium':
                 document.getElementById('premiumModal')?.classList.add('hidden');
                 break;
+            case 'btn-upgrade-now':
+            case 'btn-premium':
+                handlePremiumUpgrade();
+                break;
         }
 
         // Peer vote buttons
@@ -78,6 +82,32 @@ function attachUIListeners() {
             const type = btn.getAttribute('data-type');
             await submitPeerVote(id, type);
         }
+
+        async function handlePremiumUpgrade() {
+    const user = auth.currentUser;
+    if (!user) {
+        alert("Please sign in first!");
+        return;
+    }
+
+    const handler = PaystackPop.setup({
+        key: 'pk_test_your_paystack_public_key_here', // ← Change to live key later
+        email: user.email,
+        amount: 4990, // ₦4,990
+        currency: "NGN",
+        ref: 'VW_' + Math.floor((Math.random() * 1000000000) + 1),
+        callback: function(response) {
+            console.log("✅ Payment successful:", response);
+            alert("🎉 Premium Activated! Thank you.");
+            // TODO: Update user.isPremium = true in Firestore
+        },
+        onClose: function() {
+            console.log("Payment cancelled");
+        }
+    });
+    
+    handler.openIframe();
+}
     });
 }
 
