@@ -1,4 +1,4 @@
-// js/main.js - FIXED VERSION (No duplicate code, no syntax error)
+// js/main.js - CLEAN FINAL VERSION
 import { googleLogin, logout, initAuth, sendPhoneVerification, verifyPhoneCode } from "./auth.js";
 import { initFeed, switchFeed } from './feed.js';
 import { db } from './firebase-config.js';
@@ -16,7 +16,6 @@ import { auth } from './auth.js';
 
 let engineInstance = null;
 
-// Bootstrap the app
 async function bootstrap() {
     console.log("🚀 Initializing VocalWitness...");
     
@@ -52,7 +51,6 @@ async function handlePostSubmission(button) {
         return;
     }
     showToast("Post submitted (demo)", "success");
-    // Add real posting logic later
 }
 
 async function handlePhoneVerification() {
@@ -85,22 +83,20 @@ async function handleVerifyOTP() {
     }
 }
 
-// Main Event Delegation (This fixes the buttons)
+// Main Click Handler
 function attachUIListeners() {
     document.addEventListener('click', async (event) => {
         const btn = event.target.closest('button');
         if (!btn) return;
 
-        console.log("✅ Button clicked:", btn.id || btn.textContent?.trim());
+        console.log("✅ Button clicked:", btn.id || btn.textContent?.slice(0, 30));
 
-        // ID-based buttons
         switch (btn.id) {
             case 'postButton':
             case 'btn-post':
                 await handlePostSubmission(btn);
                 break;
             case 'btn-photo':
-                // Trigger photo upload
                 const fileInput = document.createElement('input');
                 fileInput.type = 'file';
                 fileInput.accept = 'image/*';
@@ -114,8 +110,8 @@ function attachUIListeners() {
                 loadProfile();
                 break;
             case 'btn-close-profile':
-                document.getElementById('profileSection').classList.add('hidden');
-                document.getElementById('homeSection').classList.add('active');
+                document.getElementById('profileSection')?.classList.add('hidden');
+                document.getElementById('homeSection')?.classList.add('active');
                 break;
             case 'btn-verify-phone':
                 handlePhoneVerification();
@@ -129,12 +125,17 @@ function attachUIListeners() {
             case 'btn-logout':
                 logout();
                 break;
+            case 'btn-witness-voice':
+                switchFeed('witness-voice');
+                break;
+            case 'btn-citizen-talk':
+                switchFeed('citizen-talk');
+                break;
             case 'btn-download-pdf':
                 generateAndDownloadPDF();
                 break;
         }
 
-        // Data-action buttons (Verify / Dispute in feed)
         const action = btn.getAttribute('data-action');
         if (action === 'peer-vote') {
             const id = btn.getAttribute('data-id');
@@ -144,5 +145,4 @@ function attachUIListeners() {
     });
 }
 
-// Start everything
 document.addEventListener('DOMContentLoaded', bootstrap);
