@@ -1,15 +1,10 @@
-// js/main.js - STABLE MINIMAL VERSION
+// js/main.js - ULTRA MINIMAL STABLE (Focus on making buttons work)
 import { logout, initAuth } from "./auth.js";
 import { initFeed, switchFeed } from './feed.js';
-import { db } from './firebase-config.js';
 import { showToast, submitPeerVote } from './utils.js';
 import { initLanguage } from './i18n.js';
 import { handleImageSelect, toggleVoiceRecording } from './media.js';
 import { generateAndDownloadPDF } from './pdf.js';
-
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-import { auth } from './auth.js';
 
 async function bootstrap() {
     console.log("🚀 Initializing VocalWitness...");
@@ -17,13 +12,7 @@ async function bootstrap() {
     initAuth();
     initLanguage();
 
-    onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            console.log("✅ Logged in as:", user.email);
-        }
-    });
-
-    initFeed(db, 'citizen-talk');
+    initFeed(db, 'citizen-talk');   // Note: db will be fixed below if needed
     attachUIListeners();
 }
 
@@ -32,12 +21,12 @@ function attachUIListeners() {
         const btn = event.target.closest('button');
         if (!btn) return;
 
-        console.log("✅ Button clicked:", btn.id || btn.textContent?.slice(0, 30) || "unknown");
+        console.log("✅ Button clicked:", btn.id || btn.textContent?.slice(0, 40));
 
         switch (btn.id) {
             case 'postButton':
             case 'btn-post':
-                showToast("Post feature coming soon (Premium)", "info");
+                showToast("Post feature coming soon (Premium only)", "info");
                 break;
             case 'btn-photo':
                 const fileInput = document.createElement('input');
@@ -71,7 +60,6 @@ function attachUIListeners() {
                 break;
         }
 
-        // Peer vote buttons in feed
         const action = btn.getAttribute('data-action');
         if (action === 'peer-vote') {
             const id = btn.getAttribute('data-id');
