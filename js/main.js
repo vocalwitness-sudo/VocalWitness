@@ -1,4 +1,4 @@
-// js/main.js - CLEAN FINAL VERSION
+// js/main.js - CLEAN VERSION
 import { googleLogin, logout, initAuth, sendPhoneVerification, verifyPhoneCode } from "./auth.js";
 import { initFeed, switchFeed } from './feed.js';
 import { db } from './firebase-config.js';
@@ -8,11 +8,13 @@ import { handleImageSelect, toggleVoiceRecording } from './media.js';
 import { VocalWitnessEngine } from './engine.js';
 import { state } from './storage.js';
 import { generateAndDownloadPDF } from './pdf.js';
-import { loadProfile } from './profile.js';
 
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { auth } from './auth.js';
+
+// Remove the broken import
+// import { loadProfile } from './profile.js';   ← Deleted
 
 let engineInstance = null;
 
@@ -107,7 +109,12 @@ function attachUIListeners() {
                 toggleVoiceRecording(btn);
                 break;
             case 'btn-profile':
-                loadProfile();
+                // Use global function from profile.js
+                if (typeof window.showProfileSection === 'function') {
+                    window.showProfileSection();
+                } else {
+                    console.log("Profile section handler not available yet");
+                }
                 break;
             case 'btn-close-profile':
                 document.getElementById('profileSection')?.classList.add('hidden');
