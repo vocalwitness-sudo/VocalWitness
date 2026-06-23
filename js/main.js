@@ -1,25 +1,28 @@
-// js/main.js - CLEANED & FIXED
+// js/main.js - FIXED VERSION (No duplicate code, no syntax error)
 import { googleLogin, logout, initAuth, sendPhoneVerification, verifyPhoneCode } from "./auth.js";
 import { initFeed, switchFeed } from './feed.js';
 import { db } from './firebase-config.js';
 import { showToast, submitPeerVote } from './utils.js';
 import { initLanguage, changeLanguage } from './i18n.js';
-import { handleImageSelect, toggleVoiceRecording, resetMediaState } from './media.js';
+import { handleImageSelect, toggleVoiceRecording } from './media.js';
 import { VocalWitnessEngine } from './engine.js';
 import { state } from './storage.js';
 import { generateAndDownloadPDF } from './pdf.js';
 import { loadProfile } from './profile.js';
 
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { auth } from './auth.js';
+
 let engineInstance = null;
 
-// --- Bootstrap ---
+// Bootstrap the app
 async function bootstrap() {
     console.log("🚀 Initializing VocalWitness...");
     
     initAuth();
     initLanguage();
     
-    // Auth state handling
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             try {
@@ -37,20 +40,19 @@ async function bootstrap() {
     initFeed(db, 'citizen-talk');
     attachUIListeners();
 
-    // Initialize engine
     engineInstance = new VocalWitnessEngine();
-    window.engineInstance = engineInstance; // for media.js
+    window.engineInstance = engineInstance;
 }
 
-// --- Handlers ---
+// Handlers
 async function handlePostSubmission(button) {
     const isPremium = state?.user?.isPremium || false;
     if (!isPremium) {
         showToast("Premium account required to post", "error");
         return;
     }
-    // TODO: Add actual post logic here
     showToast("Post submitted (demo)", "success");
+    // Add real posting logic later
 }
 
 async function handlePhoneVerification() {
@@ -63,8 +65,13 @@ async function handleSendOTP() {
     const phoneInput = document.getElementById('phone-number')?.value?.trim();
     if (!phoneInput) return showToast("Enter phone number", "error");
 
-    const success = await sendPhoneVerification(countryCode + phoneInput);
-    if (success) showToast("OTP sent!", "success");
+    try {
+        const success = await sendPhoneVerification(countryCode + phoneInput);
+        if (success) showToast("OTP sent!", "success");
+    } catch (err) {
+        console.error("OTP error:", err);
+        showToast("Failed to send OTP", "error");
+    }
 }
 
 async function handleVerifyOTP() {
@@ -78,22 +85,22 @@ async function handleVerifyOTP() {
     }
 }
 
-// --- Main Event Delegation ---
+// Main Event Delegation (This fixes the buttons)
 function attachUIListeners() {
     document.addEventListener('click', async (event) => {
         const btn = event.target.closest('button');
         if (!btn) return;
 
-        console.log("✅ Button clicked:", btn.id || btn.textContent?.slice(0, 30));
+        console.log("✅ Button clicked:", btn.id || btn.textContent?.trim());
 
-        // ID-based handlers
+        // ID-based buttons
         switch (btn.id) {
             case 'postButton':
             case 'btn-post':
                 await handlePostSubmission(btn);
                 break;
             case 'btn-photo':
-                // Trigger file input if needed
+                // Trigger photo upload
                 const fileInput = document.createElement('input');
                 fileInput.type = 'file';
                 fileInput.accept = 'image/*';
@@ -104,10 +111,11 @@ function attachUIListeners() {
                 toggleVoiceRecording(btn);
                 break;
             case 'btn-profile':
-                loadProfile(); // or showProfileSection()
+                loadProfile();
                 break;
             case 'btn-close-profile':
-                // hideProfileSection();
+                document.getElementById('profileSection').classList.add('hidden');
+                document.getElementById('homeSection').classList.add('active');
                 break;
             case 'btn-verify-phone':
                 handlePhoneVerification();
@@ -121,18 +129,12 @@ function attachUIListeners() {
             case 'btn-logout':
                 logout();
                 break;
-            case 'btn-witness-voice':
-                switchFeed('witness-voice');
-                break;
-            case 'btn-citizen-talk':
-                switchFeed('citizen-talk');
-                break;
             case 'btn-download-pdf':
                 generateAndDownloadPDF();
                 break;
         }
 
-        // Data-action handlers (e.g. Verify/Dispute buttons)
+        // Data-action buttons (Verify / Dispute in feed)
         const action = btn.getAttribute('data-action');
         if (action === 'peer-vote') {
             const id = btn.getAttribute('data-id');
@@ -142,10 +144,5 @@ function attachUIListeners() {
     });
 }
 
-// Import missing Firebase functions
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-import { auth } from './auth.js';
-
-// Start the app
+// Start everything
 document.addEventListener('DOMContentLoaded', bootstrap);
