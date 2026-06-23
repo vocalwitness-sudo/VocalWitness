@@ -1,19 +1,11 @@
-// js/main.js - ULTRA MINIMAL STABLE (Focus on making buttons work)
+// js/main.js - CLEAN & FIXED (No duplicate 'db')
 import { logout, initAuth } from "./auth.js";
 import { initFeed, switchFeed } from './feed.js';
+import { db } from './firebase-config.js';           // ← Only ONE import
 import { showToast, submitPeerVote } from './utils.js';
 import { initLanguage } from './i18n.js';
 import { handleImageSelect, toggleVoiceRecording } from './media.js';
 import { generateAndDownloadPDF } from './pdf.js';
-import { initializeApp } from "firebase/app";
-import { db } from './firebase-config.js';
-import { getFirestore } from "firebase/firestore";
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app); // This defines the db
-
-// Now pass 'db' when you invoke your function
-bootstrap(db);
 
 async function bootstrap() {
     console.log("🚀 Initializing VocalWitness...");
@@ -21,7 +13,11 @@ async function bootstrap() {
     initAuth();
     initLanguage();
 
-    initFeed(db, 'citizen-talk');   // Note: db will be fixed below if needed
+    // Initialize Feed
+    if (typeof initFeed === 'function' && db) {
+        initFeed(db, 'citizen-talk');
+    }
+
     attachUIListeners();
 }
 
@@ -41,7 +37,10 @@ function attachUIListeners() {
                 const fileInput = document.createElement('input');
                 fileInput.type = 'file';
                 fileInput.accept = 'image/*';
-                fileInput.onchange = (e) => handleImageSelect(e, document.getElementById('preview-area'));
+                fileInput.onchange = (e) => {
+                    const preview = document.getElementById('preview-area');
+                    if (preview) handleImageSelect(e, preview);
+                };
                 fileInput.click();
                 break;
             case 'btn-voice':
@@ -64,11 +63,15 @@ function attachUIListeners() {
             case 'btn-logout':
                 logout();
                 break;
-            case 'btn-download-pdf':
-                generateAndDownloadPDF();
+            case 'btn-premium':
+                document.getElementById('premiumModal')?.classList.remove('hidden');
+                break;
+            case 'btn-close-premium':
+                document.getElementById('premiumModal')?.classList.add('hidden');
                 break;
         }
 
+        // Peer vote buttons
         const action = btn.getAttribute('data-action');
         if (action === 'peer-vote') {
             const id = btn.getAttribute('data-id');
@@ -77,5 +80,13 @@ function attachUIListeners() {
         }
     });
 }
+
+// Close Premium Modal when clicking outside
+document.addEventListener('click', (e) => {
+    const modal = document.getElementById('premiumModal');
+    if (e.target === modal) {
+        modal.classList.add('hidden');
+    }
+});
 
 document.addEventListener('DOMContentLoaded', bootstrap);
