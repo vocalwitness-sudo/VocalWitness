@@ -158,7 +158,4 @@ function renderPost(id, data) {
                 ⚠️ Dispute
             </button>
         </div>
-    `;
-
-    feedContainer.appendChild(postEl);
-}
+    
