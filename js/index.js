@@ -16,15 +16,15 @@ exports.initializeCitizenProfile = functions.auth.user().onCreate(async (user) =
     email: user.email || "",
     displayName: user.displayName || "New Citizen",
     username: defaultUsername,
-    photoURL: user.photoURL || "https://placehold.co/150", // placeholder avatar
-    role: "citizen", // Lung 1: Casual Citizen
+    photoURL: user.photoURL || "https://placehold.co/150",
+    role: "citizen",
 
-    // Reputation System (Initialized but dormant for Citizens)
+    // Reputation System
     reputationScore: 50,  
-    trustCircle: 0,       // 0 means Locked/Not Activated
+    trustCircle: 0,
     level: 1,
 
-    // Verification States (Unverified)
+    // Verification States
     isPhoneVerified: false,
     phoneNumber: "",
     zkVerified: false,
@@ -34,8 +34,8 @@ exports.initializeCitizenProfile = functions.auth.user().onCreate(async (user) =
     testimoniesCount: 0,
     verificationsMade: 0,
     endorsementsReceived: 0,
-    successfulEvidence: 0, // Green
-    debunkedEvidence: 0,   // Red
+    successfulEvidence: 0,
+    debunkedEvidence: 0,
 
     // Metadata & Timestamps
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -54,4 +54,4 @@ exports.initializeCitizenProfile = functions.auth.user().onCreate(async (user) =
     console.error(`Error initializing profile for ${userId}:`, error);
     return null;
   }
-});
+}); // <--- THIS WAS MISSING
