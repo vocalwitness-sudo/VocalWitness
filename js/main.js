@@ -6,6 +6,7 @@ import { initLanguage } from './i18n.js';
 import { handleImageSelect, toggleVoiceRecording } from './media.js';
 import { generateAndDownloadPDF } from './pdf.js';
 import { initializeApp } from "firebase/app";
+import { db } from './firebase-config.js';
 import { getFirestore } from "firebase/firestore";
 
 const app = initializeApp(firebaseConfig);
