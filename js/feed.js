@@ -1,4 +1,4 @@
-// js/feed.js - Full Pagination + Load More + i18n Support
+// js/feed.js - Cleaned & Fixed (No duplicate exports)
 import {
     collection, query, orderBy, onSnapshot, where, limit, startAfter, getDocs
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
@@ -6,12 +6,17 @@ import { showToast } from './utils.js';
 
 let activeFeedListener = null;
 let lastDoc = null;
+let currentFeed = 'citizen-talk';
 const feedContainer = document.getElementById('feedContainer');
 const PAGE_SIZE = 15;
 
-export function initFeed(db, currentFeed = 'citizen-talk') {
-    if (activeFeedListener) activeFeedListener();
-    
+export function initFeed(db, feedType = 'citizen-talk') {
+    currentFeed = feedType;
+
+    if (activeFeedListener) {
+        activeFeedListener();
+    }
+   
     feedContainer.innerHTML = '<div class="text-center py-8 text-zinc-400">Loading testimonies...</div>';
     lastDoc = null;
 
@@ -49,25 +54,16 @@ export function initFeed(db, currentFeed = 'citizen-talk') {
     });
 }
 
-async function switchFeed(feedType) {
-    currentFeed = feedType; // e.g., 'witness-voice' or 'citizen-talk'
-    console.log(`Switching to: ${currentFeed}`);
-    
-    // 1. Clear current feed
-    const container = document.getElementById('feedContainer');
-    container.innerHTML = '<p>Loading testimonies...</p>';
-    
-    // 2. Fetch data from Firestore based on the feed
-    // This assumes you have a 'feedVisibility' field in your 'testimonies' collection
-    await initFeed(db, currentFeed); 
+export async function switchFeed(feedType) {
+    console.log(`Switching to feed: ${feedType}`);
+    await initFeed(db, feedType);   // Reuse initFeed
 }
 
-
-function addLoadMoreButton(db, currentFeed) {
+function addLoadMoreButton(db, feedType) {
     const btn = document.createElement('button');
     btn.className = "w-full py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl mt-6 text-white font-medium transition";
     btn.textContent = "↓ Load More Testimonies";
-    btn.onclick = () => loadMoreFeed(db, currentFeed, btn);
+    btn.onclick = () => loadMoreFeed(db, feedType, btn);
     feedContainer.appendChild(btn);
 }
 
@@ -78,15 +74,14 @@ function addEndMessage() {
     feedContainer.appendChild(msg);
 }
 
-async function loadMoreFeed(db, currentFeed, btn) {
+async function loadMoreFeed(db, feedType, btn) {
     if (!lastDoc) return;
-
     btn.textContent = "Loading...";
     btn.disabled = true;
 
     const q = query(
         collection(db, "testimonies"),
-        where("feedVisibility", "==", currentFeed),
+        where("feedVisibility", "==", feedType),
         orderBy("timestamp", "desc"),
         startAfter(lastDoc),
         limit(PAGE_SIZE)
@@ -162,5 +157,5 @@ function renderPost(id, data) {
     feedContainer.appendChild(postEl);
 }
 
-//switch export
+// Final Export - Only ONE export block
 export { initFeed, switchFeed, renderPost };
