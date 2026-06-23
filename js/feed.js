@@ -112,6 +112,8 @@ async function loadMoreFeed(db, feedType, btn) {
     }
 }
 
+// ... (keep your existing imports and variables at the top)
+
 function renderPost(id, data) {
     const postEl = document.createElement('div');
     postEl.className = 'post-card glass rounded-3xl p-6 mb-4';
@@ -127,6 +129,7 @@ function renderPost(id, data) {
             </audio>`;
     }
 
+    // Fixed the template literal and added the closing HTML/Function tags
     postEl.innerHTML = `
         <div class="flex justify-between items-start mb-4">
             <div class="flex items-center gap-3">
@@ -152,4 +155,7 @@ function renderPost(id, data) {
                 ⚠️ Dispute
             </button>
         </div>
+    `;
     
+    feedContainer.appendChild(postEl);
+}
