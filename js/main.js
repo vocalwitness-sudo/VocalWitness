@@ -13,9 +13,6 @@ const db = getFirestore(app); // This defines the db
 
 // Now pass 'db' when you invoke your function
 bootstrap(db);
-function bootstrap(db) { // db is now defined here
-    // your code that uses db...
-}
 
 async function bootstrap() {
     console.log("🚀 Initializing VocalWitness...");
