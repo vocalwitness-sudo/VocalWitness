@@ -163,4 +163,4 @@ function renderPost(id, data) {
 }
 
 //switch export
-export { initFeed, switchFeed };
+export { initFeed, switchFeed, renderPost };
