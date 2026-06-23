@@ -59,12 +59,6 @@ export async function switchFeed(feedType) {
     await initFeed(db, feedType);
 }
 
-export { renderPost };
-export async function switchFeed(feedType) {
-    console.log(`Switching to feed: ${feedType}`);
-    await initFeed(db, feedType);   // Reuse initFeed
-}
-
 function addLoadMoreButton(db, feedType) {
     const btn = document.createElement('button');
     btn.className = "w-full py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl mt-6 text-white font-medium transition";
