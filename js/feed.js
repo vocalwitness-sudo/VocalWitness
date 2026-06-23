@@ -144,32 +144,6 @@ function renderPost(id, data) {
             ${data.pinnedBy ? `<span class="text-amber-400 text-sm">📌 Pinned</span>` : ''}
         </div>
 
-        function renderPost(id, data) {
-    const postEl = document.createElement('div');
-    postEl.className = 'post-card glass rounded-3xl p-6 mb-4';
-
-    // 1. Build Media HTML
-    let mediaHTML = '';
-    if (data.mediaURL || data.imageUrl) {
-        mediaHTML += `<img src="${data.mediaURL || data.imageUrl}" class="image-preview rounded-2xl mt-3 mb-4 w-full object-cover" alt="Evidence">`;
-    }
-    if (data.audioUrl) {
-        mediaHTML += `<audio controls class="w-full mt-3 rounded-xl"><source src="${data.audioUrl}" type="audio/webm"></audio>`;
-    }
-
-    // 2. Build the full HTML structure
-    postEl.innerHTML = `
-        <div class="flex justify-between items-start mb-4">
-            <div class="flex items-center gap-3">
-                <div class="w-9 h-9 bg-zinc-700 rounded-2xl flex items-center justify-center text-xl">👤</div>
-                <div>
-                    <p class="font-semibold">${data.author || 'Anonymous'}</p>
-                    <p class="text-xs text-zinc-500">${new Date(data.timestamp || data.createdAt).toLocaleString()}</p>
-                </div>
-            </div>
-            ${data.pinnedBy ? `<span class="text-amber-400 text-sm">📌 Pinned</span>` : ''}
-        </div>
-
         ${data.content ? `<p class="mb-4 text-zinc-100 leading-relaxed">${data.content}</p>` : ''}
         ${mediaHTML}
 
@@ -185,6 +159,5 @@ function renderPost(id, data) {
         </div>
     `;
 
-    // 3. Attach to the DOM
     feedContainer.appendChild(postEl);
 }
