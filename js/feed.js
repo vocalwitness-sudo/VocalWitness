@@ -56,6 +56,12 @@ export function initFeed(db, feedType = 'citizen-talk') {
 
 export async function switchFeed(feedType) {
     console.log(`Switching to feed: ${feedType}`);
+    await initFeed(db, feedType);
+}
+
+export { renderPost };
+export async function switchFeed(feedType) {
+    console.log(`Switching to feed: ${feedType}`);
     await initFeed(db, feedType);   // Reuse initFeed
 }
 
@@ -156,6 +162,3 @@ function renderPost(id, data) {
 
     feedContainer.appendChild(postEl);
 }
-
-// Final Export - Only ONE export block
-export { initFeed, switchFeed, renderPost };
