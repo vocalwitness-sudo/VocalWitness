@@ -73,6 +73,9 @@ function attachUIListeners() {
             case 'btn-premium':
                 handlePremiumUpgrade();
                 break;
+            case 'btn-live-arena':
+                showToast("Live Arena coming soon...", "info");
+                break;
         }
 
         // Peer vote buttons
