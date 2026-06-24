@@ -80,22 +80,42 @@
             <button class="nav-btn py-4 rounded-2xl text-sm" data-i18n="citizenTalk">Citizen Talk</button>
             <button class="nav-btn py-4 rounded-2xl text-sm" data-i18n="liveArena">Live Arena</button>
         </nav>
+        
         <!-- HOME / FEED SECTION -->
-        <div id="homeSection" class="section active">
-            <div id="feedContainer" class="mb-8 space-y-4"></div>
-            <div class="bg-[#111827] rounded-3xl p-6 mb-10 glass" id="composer">
-                <div id="preview-area" class="hidden mt-4 p-4 bg-zinc-900/50 rounded-2xl"></div>
-               <div id="recaptcha-container"></div>
-                <textarea id="mainInput" rows="4"
-                          class="w-full bg-[#1e293b] text-white border border-zinc-800 rounded-2xl p-5 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none text-sm"
-                          placeholder="Provide raw description..."></textarea>
-                <div class="grid grid-cols-2 gap-3 mt-4">
-                    <button id="btn-photo" class="py-3.5 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 rounded-2xl text-sm font-medium flex items-center justify-center gap-2 transition">📸 Photo + Forensic Shield</button>
-                    <button id="btn-voice" class="py-3.5 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 rounded-2xl text-sm font-medium flex items-center justify-center gap-2 transition">🎙️ Voice Testimony</button>
-                </div>
-                <button id="postButton" class="mt-6 w-full bg-emerald-500 hover:bg-emerald-600 text-black py-4 rounded-2xl font-bold text-base shadow-lg transition-all">Publish</button>
+        <!-- HOME / COMPOSER + FEED SECTION -->
+        
+<div id="homeSection" class="section active">
+
+    <!-- Enhanced Composer Box -->
+    <div class="glass rounded-3xl p-8 mb-12 shadow-2xl">
+        <textarea id="mainInput" rows="4" 
+                  class="w-full bg-transparent border-0 focus:outline-none text-lg placeholder-zinc-400 resize-none leading-relaxed min-h-[120px]"
+                  placeholder="Share your raw testimony... What did you witness?"></textarea>
+
+        <!-- Media Actions -->
+        <div class="flex items-center justify-between mt-6">
+            <div class="flex gap-3">
+                <button id="btn-photo" 
+                        class="flex items-center gap-3 px-6 py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl transition-all font-medium">
+                    📸 Photo + Forensic Shield
+                </button>
+                <button id="btn-voice" 
+                        class="flex items-center gap-3 px-6 py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl transition-all font-medium">
+                    🎤 Voice Testimony
+                </button>
             </div>
         </div>
+
+        <div id="preview-area" class="mt-6 hidden border border-zinc-700 rounded-2xl p-4 bg-black/30"></div>
+
+        <button id="postButton" 
+                class="mt-8 w-full py-5 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-600 hover:via-teal-600 hover:to-cyan-600 text-black font-bold text-lg rounded-3xl transition-all active:scale-[0.985] shadow-xl">
+            🚀 Publish Testimony to the Square
+        </button>
+    </div>
+    <div id="feedContainer" class="space-y-6"></div>
+</div>
+        
         <!-- ==================== FULL ENHANCED PROFILE SECTION ==================== -->
         <div id="profileSection" class="section">
             <div class="max-w-2xl mx-auto p-4">
