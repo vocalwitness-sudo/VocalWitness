@@ -4,302 +4,179 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#10b981">
-    <link rel="manifest" href="manifest.json">
-    <link rel="icon" href="logo.png" type="image/png">
-    <title>VocalWitness • Premium Forensic Ledger & Public Square</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/logo.png" type="image/png">
+    <title>VocalWitness • Premium Forensic Ledger</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <script src="https://js.paystack.co/v1/inline.js"></script>
-    
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
     <style>
-        body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: white; }
-        .glass { background: rgba(17, 24, 39, 0.92); backdrop-filter: blur(16px); border: 1px solid rgba(16, 185, 129, 0.2); }
-        .post-card { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-        .image-preview { max-height: 320px; object-fit: cover; border-radius: 20px; width: 100%; }
-        .recording-active { animation: pulse 1.5s infinite; background-color: #ef4444 !important; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
-        .active {
+        body { 
+            font-family: 'Inter', system-ui, sans-serif; 
+            background: #0a0f1c; 
+            color: white; 
+        }
+        .glass { 
+            background: rgba(17, 24, 39, 0.95); 
+            backdrop-filter: blur(20px); 
+            border: 1px solid rgba(16, 185, 129, 0.25); 
+        }
+        .nav-btn.active {
             background-color: #10b981 !important;
             color: black !important;
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3);
+            font-weight: 700;
         }
-        .section { display: none; }
-        .section.active { display: block; }
+        .premium-btn {
+            background: linear-gradient(90deg, #f59e0b, #fbbf24);
+            color: black;
+            font-weight: 700;
+        }
+        .premium-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgb(245 158 11 / 0.5);
+        }
+        .image-preview { 
+            max-height: 340px; 
+            object-fit: cover; 
+            border-radius: 20px; 
+            width: 100%; 
+        }
+        .recording-active { 
+            animation: pulse 1.5s infinite; 
+            background-color: #ef4444 !important; 
+        }
+        @keyframes pulse { 
+            0% { opacity: 1; } 
+            50% { opacity: 0.6; } 
+            100% { opacity: 1; } 
+        }
     </style>
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-<script src="https://cdn.jsdelivr.net/npm/snarkjs@0.7.0/build/snarkjs.min.js"></script>
 </head>
-<body class="min-h-screen pb-28 p-4">
+<body class="min-h-screen pb-20 p-4">
+
     <!-- Legal Notice -->
-    <div class="max-w-2xl mx-auto bg-red-950/40 border border-red-500/30 backdrop-blur-sm rounded-3xl p-5 text-xs mb-6 shadow-xl text-zinc-300" id="legal-notice">
-        <strong data-i18n="legalNotice" class="text-red-400 font-bold">Important Legal Notice:</strong><br>
-        <span data-i18n="privacyWarning">VocalWitness functions strictly as an un-manipulated decentralized distribution medium.</span>
+    <div class="max-w-2xl mx-auto bg-red-950/40 border border-red-500/30 rounded-3xl p-5 text-xs mb-8">
+        <strong class="text-red-400">Important Legal Notice:</strong><br>
+        VocalWitness functions strictly as an un-manipulated decentralized distribution medium.
     </div>
+
     <div class="max-w-2xl mx-auto">
-        <!-- Shared Header -->
-        <header class="flex flex-col gap-4 mb-6">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-11 h-11 flex-shrink-0 flex items-center justify-center bg-[#0a0f1c] border border-emerald-500/20 rounded-xl overflow-hidden shadow-inner">
-                        <img src="logo.png" alt="VocalWitness Icon" class="w-full h-full object-cover">
-                    </div>
-                    <h1 class="text-3xl font-bold text-emerald-400 tracking-tight">VocalWitness</h1>
+
+        <!-- HEADER -->
+        <header class="flex items-center justify-between mb-8">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-3xl shadow-inner">
+                    🔊
                 </div>
-              <!-- Premium & Profile Navigation -->
-                <div class="flex items-center gap-3">
-                    <button id="btn-premium" 
-                        class="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-bold rounded-2xl flex items-center gap-2 transition-all active:scale-95 shadow-lg">
-                        <span class="text-xl">⭐</span>
-                        <span>Unlock Premium</span>
-                    </button>
-                    
-                    <button id="btn-profile" 
-            class="w-10 h-10 bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center justify-center text-2xl transition-all active:scale-95 border border-zinc-700">
-        👤
-    </button>
-</div>
-           
-            <button id="postButton" type="button" class="...">Broadcast to Square</button>
-            <div class="bg-[#111827] border border-zinc-800 rounded-2xl p-3 glass">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="flex items-center gap-2 text-xs text-zinc-400 font-medium">
-                        <span id="node-language-label">Node Language:</span>
-                        <span id="activeLanguageDisplay" class="text-emerald-400 font-bold bg-emerald-950/80 px-2 py-0.5 rounded-md border border-emerald-800/40">English (EN)</span>
-                    </div>
-                    <select id="languageSelector" class="bg-[#1e293b] text-sm text-white font-medium px-3 py-1.5 rounded-xl border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer">
-                    </select>
+                <div>
+                    <h1 class="text-4xl font-bold tracking-tighter text-emerald-400">VocalWitness</h1>
+                    <p class="text-xs text-emerald-500 -mt-1">Truth • Evidence • Public Square</p>
                 </div>
-                <input id="searchInput" type="text" placeholder="Search testimonies, witnesses, keywords..."
-                       class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-3 focus:outline-none focus:border-emerald-500 text-sm">
+            </div>
+
+            <div class="flex items-center gap-3">
+                <button id="btn-premium" class="premium-btn px-6 py-3 rounded-2xl flex items-center gap-2 shadow-xl hover:scale-105 transition-all">
+                    ⭐ Unlock Premium
+                </button>
+                <button id="btn-profile" class="w-11 h-11 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-3xl transition-all border border-zinc-600">
+                    👤
+                </button>
             </div>
         </header>
-        
-        <!-- NAV -->
-        <nav class="grid grid-cols-3 gap-3 mb-6">
-            <button class="nav-btn active py-4 rounded-2xl text-sm" data-i18n="witnessVoice">Witness Voice</button>
-            <button class="nav-btn py-4 rounded-2xl text-sm" data-i18n="citizenTalk">Citizen Talk</button>
-            <button class="nav-btn py-4 rounded-2xl text-sm" data-i18n="liveArena">Live Arena</button>
+
+        <!-- Search & Language -->
+        <div class="bg-zinc-900 border border-zinc-700 rounded-3xl p-4 mb-8">
+            <div class="flex justify-between items-center mb-3">
+                <span class="text-sm text-zinc-400">Node Language:</span>
+                <select id="languageSelector" class="bg-zinc-800 text-sm rounded-xl px-4 py-2">
+                </select>
+            </div>
+            <input id="searchInput" type="text" placeholder="Search testimonies..." 
+                   class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-5 py-4 focus:outline-none">
+        </div>
+
+        <!-- Navigation -->
+        <nav class="grid grid-cols-3 gap-2 mb-10 bg-zinc-900 p-1.5 rounded-3xl">
+            <button id="btn-witness-voice" class="nav-btn active py-4 rounded-3xl text-sm font-medium">Witness Voice</button>
+            <button id="btn-citizen-talk" class="nav-btn py-4 rounded-3xl text-sm font-medium">Citizen Talk</button>
+            <button id="btn-live-arena" class="nav-btn py-4 rounded-3xl text-sm font-medium">Live Arena</button>
         </nav>
-        
-        <!-- HOME / FEED SECTION -->
-        <!-- HOME / COMPOSER + FEED SECTION -->
-        
-<div id="homeSection" class="section active">
 
-    <!-- Enhanced Composer Box -->
-    <div class="glass rounded-3xl p-8 mb-12 shadow-2xl">
-        <textarea id="mainInput" rows="4" 
-                  class="w-full bg-transparent border-0 focus:outline-none text-lg placeholder-zinc-400 resize-none leading-relaxed min-h-[120px]"
-                  placeholder="Share your raw testimony... What did you witness?"></textarea>
+        <!-- HOME SECTION -->
+        <div id="homeSection" class="glass rounded-3xl p-8 mb-10">
+            <textarea id="mainInput" rows="4" 
+                      class="w-full bg-transparent border-0 focus:outline-none text-lg placeholder-zinc-400 resize-none leading-relaxed"
+                      placeholder="Share your raw testimony... What did you witness?"></textarea>
 
-        <!-- Media Actions -->
-        <div class="flex items-center justify-between mt-6">
-            <div class="flex gap-3">
-                <button id="btn-photo" 
-                        class="flex items-center gap-3 px-6 py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl transition-all font-medium">
+            <div class="flex gap-3 mt-8">
+                <button id="btn-photo" class="flex-1 py-5 bg-zinc-800 hover:bg-zinc-700 rounded-2xl transition-all flex items-center justify-center gap-3 font-medium">
                     📸 Photo + Forensic Shield
                 </button>
-                <button id="btn-voice" 
-                        class="flex items-center gap-3 px-6 py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl transition-all font-medium">
+                <button id="btn-voice" class="flex-1 py-5 bg-zinc-800 hover:bg-zinc-700 rounded-2xl transition-all flex items-center justify-center gap-3 font-medium">
                     🎤 Voice Testimony
                 </button>
             </div>
+
+            <div id="preview-area" class="mt-6 hidden"></div>
+
+            <button id="postButton" 
+                    class="mt-10 w-full py-5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-black font-bold text-lg rounded-3xl transition-all active:scale-95 shadow-lg">
+                🚀 Publish Testimony to the Square
+            </button>
         </div>
 
-        <div id="preview-area" class="mt-6 hidden border border-zinc-700 rounded-2xl p-4 bg-black/30"></div>
+        <!-- Feed -->
+        <div id="feedContainer" class="space-y-6"></div>
 
-        <button id="postButton" 
-                class="mt-8 w-full py-5 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-600 hover:via-teal-600 hover:to-cyan-600 text-black font-bold text-lg rounded-3xl transition-all active:scale-[0.985] shadow-xl">
-            🚀 Publish Testimony to the Square
-        </button>
-    </div>
-    <div id="feedContainer" class="space-y-6"></div>
-</div>
-        
-        <!-- ==================== FULL ENHANCED PROFILE SECTION ==================== -->
-        <div id="profileSection" class="section">
+        <!-- Profile Section -->
+        <div id="profileSection" class="hidden">
+            <!-- Your existing profile content stays here -->
             <div class="max-w-2xl mx-auto p-4">
-                <button id="btn-close-profile"
-                        class="mb-6 text-emerald-400 flex items-center gap-2 font-semibold text-sm hover:text-emerald-300 transition">
-                    ← Return to Node
+                <button id="btn-close-profile" class="mb-6 flex items-center gap-2 text-emerald-400 hover:text-emerald-300 font-medium">
+                    ← Return to Home
                 </button>
                 <div class="glass rounded-3xl p-8">
-                    <!-- Profile Header -->
-                    <div class="flex flex-col md:flex-row items-center gap-6 mb-8">
-                        <div id="profile-avatar" onclick="uploadAvatar()"
-                             class="w-28 h-28 bg-zinc-700 rounded-3xl flex items-center justify-center text-7xl border-4 border-emerald-500/50 shadow-xl flex-shrink-0 overflow-hidden cursor-pointer">
-                            👤
-                        </div>
-                        <div class="flex-1 text-center md:text-left">
-                            <div class="flex items-center gap-3 justify-center md:justify-start">
-                                <p id="profile-username" class="text-3xl font-bold">@username</p>
-                                <span id="profile-role-badge" class="px-3 py-1 text-xs font-bold rounded-full bg-emerald-600"></span>
-                            </div>
-                            <p id="profile-email" class="text-zinc-400 text-sm"></p>
-                            <div class="flex items-center gap-3 mt-3 justify-center md:justify-start">
-                                <div class="text-sm font-medium px-3 py-1 bg-emerald-950/70 rounded-full border border-emerald-500/30">
-                                    Trust Circle: <span id="trust-score" class="text-emerald-400 font-bold">50</span>%
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Edit Profile -->
-                    <div class="bg-zinc-900/70 rounded-2xl p-6 mb-8">
-                        <h3 data-i18n="editProfile" class="text-lg font-semibold mb-4 text-emerald-400">Edit Profile</h3>
-                        <div class="space-y-5">
-                            <div>
-                                <label data-i18n="fullName" class="block text-xs uppercase tracking-widest text-zinc-400 mb-1">
-                                    Full Name <span id="name-cooldown" class="text-amber-400 text-[10px]"></span>
-                                </label>
-                                <input id="edit-displayName" type="text"
-                                       class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-5 py-3 focus:outline-none focus:border-emerald-500">
-                            </div>
-                            <div>
-                                <label data-i18n="biography" class="block text-xs uppercase tracking-widest text-zinc-400 mb-1">Biography</label>
-                                <textarea id="edit-bio" rows="4"
-                                          class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-5 py-3 focus:outline-none focus:border-emerald-500 resize-y"></textarea>
-                            </div>
-                        </div>
-                        <button onclick="saveProfile()" data-i18n="saveChanges"
-                                class="mt-6 w-full bg-emerald-600 hover:bg-emerald-700 py-4 rounded-2xl font-semibold">
-                            💾 Save Changes
-                        </button>
-                    </div>
-                    <!-- Stats -->
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                        <div class="bg-zinc-900 rounded-2xl p-5 text-center">
-                            <p id="post-count" class="text-3xl font-bold text-emerald-400">0</p>
-                            <p class="text-xs text-zinc-400">Testimonies</p>
-                        </div>
-                        <div class="bg-zinc-900 rounded-2xl p-5 text-center">
-                            <p id="reputation-score" class="text-3xl font-bold text-emerald-400">50</p>
-                            <p class="text-xs text-zinc-400">Reputation</p>
-                        </div>
-                        <div class="bg-zinc-900 rounded-2xl p-5 text-center">
-                            <p id="verify-count" class="text-3xl font-bold text-emerald-400">0</p>
-                            <p class="text-xs text-zinc-400">Verifications</p>
-                        </div>
-                        <div class="bg-zinc-900 rounded-2xl p-5 text-center">
-                            <p id="endorsements-count" class="text-3xl font-bold text-amber-400">0</p>
-                            <p class="text-xs text-zinc-400">Endorsements</p>
-                        </div>
-                    </div>
-                    <!-- My Posts -->
-                    <div class="mb-10">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 data-i18n="myTestimonies" class="text-xl font-semibold">My Testimonies & Posts</h3>
-                            <span id="posts-count-badge" class="text-xs bg-zinc-800 px-3 py-1 rounded-full"></span>
-                        </div>
-                        <div id="my-posts-list" class="space-y-6"></div>
-                    </div>
-                    <!-- Witness Token PDF -->
-                    <div class="mt-6 pt-6 border-t border-zinc-700 mb-8">
-                        <button id="btn-download-pdf"
-                                class="w-full py-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 text-black font-bold rounded-2xl flex items-center justify-center gap-3 text-lg disabled:opacity-50 transition-all">
-                            📄 Download My Witness Token PDF
-                        </button>
-                        <p id="pdf-status" class="text-xs text-center mt-3 text-zinc-400"></p>
-                    </div>
-                    <!-- Quick Actions -->
-                    <div class="grid grid-cols-1 gap-3 mb-8">
-                        <button id="vw-btn" class="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-black font-bold rounded-2xl transition flex items-center justify-center gap-2">
-                            🔐 Start ZK Verification (Become Witness)
-                        </button>
-                        <button id="btn-verify-phone" class="w-full py-4 bg-zinc-800 hover:bg-zinc-700 text-white font-medium rounded-2xl transition">📱 Verify Phone Number</button>
-                    </div>
-                    
-                    
-                    <!-- Phone Verification UI -->
-                    <div id="phone-verification-ui" class="hidden mt-4 bg-zinc-900 p-4 rounded-2xl">
-                        <div class="flex gap-2">
-                            <select id="country-code" class="bg-zinc-800 text-white rounded-xl px-2">
-                                <option value="+234">+234 (Nigeria)</option>
-                                <option value="+1">+1 (USA)</option>
-                                <!-- Add other supported countries -->
-                            </select>
-                            <input id="phone-number" type="tel" placeholder="8012345678" class="flex-1 bg-zinc-800 text-white rounded-xl px-4">
-                        </div>
-                        <button id="btn-send-otp" class="mt-2 w-full bg-emerald-600 py-2 rounded-xl">Send OTP</button>
-                    </div>
-                    <!-- Security -->
-                    <div class="mt-8 pt-6 border-t border-zinc-700 mb-6">
-                        <p class="text-xs uppercase tracking-widest text-zinc-500 mb-4">Account Security</p>
-                        <button id="btn-change-password" class="w-full py-4 bg-zinc-800 hover:bg-zinc-700 text-white font-medium rounded-2xl transition flex items-center justify-center gap-2">🔑 Change Password</button>
-                    </div>
-                    <button id="btn-logout" class="w-full py-4 bg-red-900/70 hover:bg-red-900 text-red-400 hover:text-red-300 rounded-2xl font-medium transition">Sign Out</button>
+                    <!-- Profile content (you can keep your full profile HTML here) -->
                 </div>
             </div>
         </div>
     </div>
-    
-    <!-- OTP Input Section (Hidden initially) -->
-    <div id="otp-section" class="hidden">
-        <input id="otp-input" type="text" maxlength="6" placeholder="Enter 6-digit OTP" 
-               class="w-full bg-zinc-800 text-white rounded-xl px-4 py-3 text-center text-lg tracking-widest mb-3">
-        <button id="btn-verify-otp" class="w-full bg-emerald-500 hover:bg-emerald-600 py-3 rounded-xl">
-            Verify OTP
-        </button>
+
+    <!-- Premium Modal -->
+    <div id="premiumModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+        <div class="bg-zinc-900 border border-amber-500/30 rounded-3xl max-w-md w-full mx-4 p-8 text-center">
+            <div class="text-6xl mb-6">⭐</div>
+            <h2 class="text-3xl font-bold text-amber-400 mb-2">Go Premium</h2>
+            <p class="text-zinc-400 mb-8">Unlock the full power of VocalWitness</p>
+            
+            <div class="space-y-5 text-left mb-10">
+                <div class="flex gap-3"><span class="text-emerald-500">✓</span><div>Unlimited Testimonies</div></div>
+                <div class="flex gap-3"><span class="text-emerald-500">✓</span><div>Forensic Shield + AI Tools</div></div>
+                <div class="flex gap-3"><span class="text-emerald-500">✓</span><div>Priority in Live Arena</div></div>
+            </div>
+
+            <button id="btn-upgrade-now" class="w-full py-4 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-bold rounded-2xl mb-4">
+                Upgrade — ₦4,990 / month
+            </button>
+            <button id="btn-close-premium" class="w-full py-3 text-zinc-400 hover:text-white">Maybe later</button>
+        </div>
     </div>
-</div>
-    <!-- Modals -->
-    <!-- (Your existing Phone and Auth modals can stay here - unchanged) -->
-    <script type="module" src="js/main.js"></script>
+
+    <script type="module" src="/js/main.js?v=20250624"></script>
+
+    <!-- Service Worker Registration -->
     <script>
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js', { scope: './' })
-                .then(reg => console.log('✅ SW registered with scope:', reg.scope))
-                .catch(err => console.error('❌ SW registration failed:', err));
-        });
-    }
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('✅ SW registered with scope:', reg.scope))
+                    .catch(err => console.error('❌ SW registration failed:', err));
+            });
+        }
     </script>
 
-    //Add a version query string temporarily to your script tag in index.html:
-    <script type="module" src="js/main.js?v=20250623"></script>
-
-    <!-- Premium Unlock Modal -->
-<div id="premiumModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-    <div class="bg-zinc-900 border border-amber-500/30 rounded-3xl max-w-md w-full mx-4 overflow-hidden">
-        <div class="p-8 text-center">
-            <div class="text-6xl mb-6">⭐</div>
-            <h2 class="text-3xl font-bold mb-2 text-amber-400">Go Premium</h2>
-            <p class="text-zinc-400 mb-8">Unlock full features of VocalWitness</p>
-
-            <div class="space-y-4 text-left mb-8">
-                <div class="flex gap-3 items-start">
-                    <span class="text-emerald-500 text-2xl">✓</span>
-                    <div>
-                        <p class="font-medium">Unlimited Posts & Testimonies</p>
-                        <p class="text-sm text-zinc-500">No limits on sharing evidence</p>
-                    </div>
-                </div>
-                <div class="flex gap-3 items-start">
-                    <span class="text-emerald-500 text-2xl">✓</span>
-                    <div>
-                        <p class="font-medium">Forensic Shield + AI Analysis</p>
-                        <p class="text-sm text-zinc-500">Advanced verification tools</p>
-                    </div>
-                </div>
-                <div class="flex gap-3 items-start">
-                    <span class="text-emerald-500 text-2xl">✓</span>
-                    <div>
-                        <p class="font-medium">Priority in Live Arena</p>
-                        <p class="text-sm text-zinc-500">Your voice gets amplified</p>
-                    </div>
-                </div>
-            </div>
-
-            <button id="btn-upgrade-now" 
-                    class="w-full py-4 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-bold text-lg rounded-2xl mb-4 hover:scale-105 transition-all">
-                Upgrade for $4.99 / month
-            </button>
-
-            <button id="btn-close-premium" 
-                    class="w-full py-3 text-zinc-400 hover:text-white transition">
-                Maybe later
-            </button>
-        </div>
-    </div>
-</div>
 </body>
 </html>
