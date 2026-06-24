@@ -49,9 +49,13 @@
             background-color: #ef4444 !important; 
         }
         @keyframes pulse { 
-            0% { opacity: 1; } 
-            50% { opacity: 0.6; } 
-            100% { opacity: 1; } 
+            0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } 
+        }
+        button {
+            position: relative;
+            z-index: 50;
+            pointer-events: auto !important;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -87,13 +91,8 @@
             </div>
         </header>
 
-        <!-- Search & Language -->
+        <!-- Search -->
         <div class="bg-zinc-900 border border-zinc-700 rounded-3xl p-4 mb-8">
-            <div class="flex justify-between items-center mb-3">
-                <span class="text-sm text-zinc-400">Node Language:</span>
-                <select id="languageSelector" class="bg-zinc-800 text-sm rounded-xl px-4 py-2">
-                </select>
-            </div>
             <input id="searchInput" type="text" placeholder="Search testimonies..." 
                    class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-5 py-4 focus:outline-none">
         </div>
@@ -105,7 +104,7 @@
             <button id="btn-live-arena" class="nav-btn py-4 rounded-3xl text-sm font-medium">Live Arena</button>
         </nav>
 
-        <!-- HOME SECTION -->
+        <!-- Composer -->
         <div id="homeSection" class="glass rounded-3xl p-8 mb-10">
             <textarea id="mainInput" rows="4" 
                       class="w-full bg-transparent border-0 focus:outline-none text-lg placeholder-zinc-400 resize-none leading-relaxed"
@@ -133,13 +132,15 @@
 
         <!-- Profile Section -->
         <div id="profileSection" class="hidden">
-            <!-- Your existing profile content stays here -->
             <div class="max-w-2xl mx-auto p-4">
                 <button id="btn-close-profile" class="mb-6 flex items-center gap-2 text-emerald-400 hover:text-emerald-300 font-medium">
                     ← Return to Home
                 </button>
                 <div class="glass rounded-3xl p-8">
-                    <!-- Profile content (you can keep your full profile HTML here) -->
+                    <!-- Your full profile content goes here -->
+                    <div class="text-center py-12 text-zinc-400">
+                        Profile Section Ready
+                    </div>
                 </div>
             </div>
         </div>
@@ -167,7 +168,7 @@
 
     <script type="module" src="/js/main.js?v=20250624"></script>
 
-    <!-- Service Worker Registration -->
+    <!-- Service Worker -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
