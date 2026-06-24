@@ -1,19 +1,40 @@
 # VocalWitness Deployment Checklist
 
-### 1. Circuit & Logic Check (The Vault)
-- [ ] Have I modified any files in the `js/` folder?
-- [ ] If I changed `witness.circom`, have I re-compiled and verified the output locally?
+## Pre-Deploy Checks (Must Do Every Time)
 
-### 2. Security Rule Check (The Firewall)
-- [ ] Open `firestore.rules`. Are the rules still set to block unauthorized writes?
-- [ ] Have I tested a "negative" case (e.g., trying to write to the database without being logged in) to make sure it fails?
+### 1. Code & Syntax Check
+- [ ] No JavaScript errors in console (`Ctrl + Shift + R` hard refresh)
+- [ ] All buttons are clickable and working (Photo, Voice, Profile, Feed tabs)
+- [ ] `js/main.js`, `js/feed.js`, `js/media.js`, `js/auth.js` are clean
+- [ ] No duplicate imports or `Identifier already declared` errors
 
-### 3. Verification Check (The Core)
-- [ ] Open the site in a browser window.
-- [ ] Run a test witness generation. Does the ZK proof generate successfully?
-- [ ] Does the `console` show any errors or warnings?
+### 2. Firebase Rules Check (Security)
+- [ ] Rules are updated in **Firebase Console** (not just GitHub file)
+- [ ] Testimonies are publicly readable
+- [ ] Only authenticated users can create posts
+- [ ] Users can only edit their own data
 
-### 4. Final Deploy
-- [ ] Save all files.
-- [ ] Run `firebase deploy`.
-- [ ] Verify the live site by performing one final test upload.
+**Current Secure Rules** (copy to Firebase Console):
+```js
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(uid) { return isSignedIn() && request.auth.uid == uid; }
+
+    match /users/{userId} {
+      allow read, create, update: if isOwner(userId);
+    }
+
+    match /testimonies/{postId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isOwner(resource.data.authorId);
+    }
+
+    match /testimonies/{postId}/votes/{voteId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+    }
+  }
+}
