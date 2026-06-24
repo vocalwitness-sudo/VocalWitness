@@ -1,68 +1,128 @@
 <style>
     /* Base Styles */
-    body { 
-        font-family: 'Inter', system-ui, sans-serif; 
-        background: #0a0f1c; 
-        color: white; 
+    body {
+        font-family: 'Inter', system-ui, sans-serif;
+        background: #0a0f1c;
+        color: white;
+        line-height: 1.6;
     }
 
-/* Force buttons to be interactable and on top */
-button {
-    position: relative;
-    z-index: 100;
-    pointer-events: auto !important; /* Forces the browser to register clicks */
-    cursor: pointer;
-}
+    /* Force buttons to be interactable and on top */
+    button {
+        position: relative;
+        z-index: 100;
+        pointer-events: auto !important;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
 
-button:active {
-    transform: scale(0.95); /* Shrinks slightly */
-    background-color: #059669 !important; /* A darker emerald */
-    transition: transform 0.1s, background-color 0.1s;
-}
+    button:active {
+        transform: scale(0.95);
+        background-color: #059669 !important;
+        transition: transform 0.1s, background-color 0.1s;
+        filter: brightness(0.9);
+    }
 
-
-/* Ensure glass containers don't swallow events */
-.glass {
-    pointer-events: auto;
-}
-
-/* This is a helper to see if a container is covering your buttons */
-.debug-outline {
-    outline: 2px solid red !important;
-}
+    /* Ensure glass containers don't swallow events */
+    .glass {
+        pointer-events: auto;
+        background: rgba(17, 24, 39, 0.92);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(16, 185, 129, 0.25);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
 
     /* Layout & Utilities */
-    .glass { 
-        background: rgba(17, 24, 39, 0.92); 
-        backdrop-filter: blur(16px); 
-        border: 1px solid rgba(16, 185, 129, 0.2); 
-    }
     .section { display: none; }
     .section.active { display: block; }
+    
+    .debug-outline {
+        outline: 2px solid red !important;
+    }
 
     /* Navigation Styling */
-    .nav-btn { 
-        transition: all 0.3s ease; 
-        background: #18181b; 
-        color: #a1a1aa; 
+    .nav-btn {
+        transition: all 0.3s ease;
+        background: #18181b;
+        color: #a1a1aa;
         border: 1px solid transparent;
-        cursor: pointer;
+        font-weight: 500;
     }
-    
+
     .nav-btn:hover {
         background: #27272a;
         color: white;
+        transform: translateY(-1px);
     }
 
-    .nav-btn.active { 
-        background-color: #10b981 !important; 
-        color: black !important; 
-        font-weight: 700; 
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); 
+    .nav-btn.active {
+        background-color: #10b981 !important;
+        color: black !important;
+        font-weight: 700;
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
         border-color: #ffffff;
     }
 
-    /* Other UI elements */
-    .recording-active { animation: pulse 1.5s infinite; background-color: #ef4444 !important; }
-    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+    /* Composer & Main Elements */
+    #mainInput {
+        scrollbar-width: thin;
+        scrollbar-color: #10b981 #1f2937;
+    }
+
+    #postButton {
+        position: relative;
+        overflow: hidden;
+    }
+
+    #postButton::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 40%;
+        height: 200%;
+        background: linear-gradient(120deg, transparent, rgba(255,255,255,0.4), transparent);
+        transform: skewX(-25deg);
+        animation: shine 4s infinite;
+    }
+
+    @keyframes shine {
+        0% { transform: translateX(-150%) skewX(-25deg); }
+        20% { transform: translateX(300%) skewX(-25deg); }
+        100% { transform: translateX(300%) skewX(-25deg); }
+    }
+
+    /* Recording Animation */
+    .recording-active {
+        animation: pulse 1.5s infinite;
+        background-color: #ef4444 !important;
+        color: white;
+    }
+
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.6; }
+        100% { opacity: 1; }
+    }
+
+    /* Premium Button */
+    .premium-btn {
+        background: linear-gradient(90deg, #f59e0b, #fbbf24);
+        color: black;
+        font-weight: 700;
+        box-shadow: 0 10px 15px -3px rgb(245 158 11 / 0.4);
+    }
+
+    .premium-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 25px -5px rgb(245 158 11 / 0.5);
+    }
+
+    /* Image Preview */
+    .image-preview {
+        max-height: 340px;
+        object-fit: cover;
+        border-radius: 20px;
+        width: 100%;
+    }
 </style>
