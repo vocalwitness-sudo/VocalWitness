@@ -6,6 +6,10 @@ import { showToast, submitPeerVote } from './utils.js';
 import { initLanguage } from './i18n.js';
 import { handleImageSelect, toggleVoiceRecording } from './media.js';
 import { generateAndDownloadPDF } from './pdf.js';
+import { initStorage } from './storage.js';
+
+// Inside bootstrap():
+initStorage();
 
 async function bootstrap() {
     console.log("🚀 Initializing VocalWitness...");
