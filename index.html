@@ -170,15 +170,15 @@
     <script type="module" src="/js/main.js?v=20250624"></script>
 
     <!-- Service Worker -->
- <script>
+ <!-- Replace your current SW script with this -->
+<script>
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        // Correct registration - sw.js should be in the ROOT folder
         navigator.serviceWorker.register('/sw.js', { 
             scope: '/' 
         })
         .then(reg => {
-            console.log('✅ Service Worker registered successfully!', reg.scope);
+            console.log('✅ Service Worker registered successfully with scope:', reg.scope);
         })
         .catch(err => {
             console.error('❌ Service Worker registration failed:', err);
