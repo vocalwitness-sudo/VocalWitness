@@ -3,7 +3,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/fi
 import { getFirestore, doc, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { auth } from './firebase-init.js';
 import { updateUserProfile, getUserPosts, editPost, deletePost, togglePinPost } from './db.js';
-import { getTier, calculateTrustScore } from './utils.js';
+import { getTier, calculateTrustScore, showToast } from './utils.js';
 
 const db = getFirestore();
 
@@ -12,7 +12,7 @@ let currentUserData = null;
 
 let elements = {};
 
-// Cache DOM elements
+// Cache DOM elements safely
 function cacheDOM() {
     elements = {
         avatar: document.getElementById('profile-avatar'),
@@ -25,11 +25,12 @@ function cacheDOM() {
         nameCooldown: document.getElementById('name-cooldown'),
         myPostsList: document.getElementById('my-posts-list'),
         postCount: document.getElementById('post-count'),
-        reputationScore: document.getElementById('reputation-score')
+        reputationScore: document.getElementById('reputation-score'),
+        profileTierContainer: document.getElementById('profile-tier-container')
     };
 }
 
-// Auth Listener
+// Auth State Listener
 onAuthStateChanged(auth, (user) => {
     if (user) {
         currentUserId = user.uid;
@@ -53,7 +54,8 @@ function listenToUserProfile(userId) {
 function renderProfileUI() {
     if (!currentUserData) return;
 
-    const tier = getTier(currentUserData.trustCircle || 50);
+    const trustScore = currentUserData.trustCircle || 50;
+    const tier = getTier(trustScore);
 
     // Avatar
     if (elements.avatar) {
@@ -65,17 +67,25 @@ function renderProfileUI() {
 
     // Basic Info
     if (elements.username) elements.username.textContent = `@${currentUserData.username || 'user'}`;
-    if (elements.email) elements.email.textContent = currentUserData.email || '';
+    if (elements.email) elements.email.textContent = currentUserData.email || currentUserData.displayName || '';
     if (elements.roleBadge) {
         elements.roleBadge.textContent = (currentUserData.role || 'citizen').toUpperCase();
     }
-    if (elements.trustScore) {
-        elements.trustScore.textContent = currentUserData.trustCircle || 50;
-    }
+    if (elements.trustScore) elements.trustScore.textContent = trustScore;
 
     // Stats
     if (elements.postCount) elements.postCount.textContent = currentUserData.testimoniesCount || 0;
     if (elements.reputationScore) elements.reputationScore.textContent = calculateTrustScore(currentUserData);
+
+    // Tier Badge
+    if (elements.profileTierContainer) {
+        elements.profileTierContainer.innerHTML = `
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-bold rounded-2xl text-sm shadow-md">
+                <span>${tier.badge}</span>
+                <span class="text-xs opacity-75">${tier.name} Tier</span>
+            </div>
+        `;
+    }
 
     // Edit Form
     if (elements.editDisplayName) elements.editDisplayName.value = currentUserData.displayName || '';
@@ -84,7 +94,6 @@ function renderProfileUI() {
     showNameCooldown(currentUserData.lastNameChange);
 }
 
-// Name Change Cooldown
 function showNameCooldown(lastChange) {
     if (!elements.nameCooldown || !lastChange) return;
     const daysLeft = Math.ceil((lastChange + 60 * 24 * 60 * 60 * 1000 - Date.now()) / 86400000);
@@ -106,7 +115,7 @@ window.saveProfile = async () => {
 
     try {
         await updateUserProfile(currentUserId, updates);
-        showToast("✅ Profile updated successfully!", "success");   // Better than alert
+        showToast("✅ Profile updated successfully!", "success");
     } catch (error) {
         showToast("❌ " + error.message, "error");
     }
@@ -127,15 +136,10 @@ window.uploadAvatar = async () => {
             showToast("Image must be smaller than 5MB", "error");
             return;
         }
-
         try {
-            // TODO: Connect with storage.js later
-            showToast("🖼️ Avatar upload ready. Integrate with storage.js for full functionality.");
-            // Example:
-            // const photoURL = await uploadAvatarToStorage(file, currentUserId);
-            // await updateUserProfile(currentUserId, { photoURL });
+            showToast("🖼️ Avatar upload ready. Connect with storage.js for full support.");
+            // Future implementation: upload to Firebase Storage
         } catch (err) {
-            console.error(err);
             showToast("Failed to upload avatar", "error");
         }
     };
@@ -143,7 +147,7 @@ window.uploadAvatar = async () => {
     input.click();
 };
 
-// ==================== MY POSTS RENDERING ====================
+// ==================== MY POSTS ====================
 async function renderMyPosts(userId) {
     const container = elements.myPostsList;
     if (!container) return;
@@ -169,6 +173,7 @@ async function renderMyPosts(userId) {
 
             const postEl = document.createElement('div');
             postEl.className = 'glass rounded-3xl p-6 border border-zinc-700';
+
             postEl.innerHTML = `
                 <div class="flex justify-between items-start mb-3">
                     <div class="flex items-center gap-2 text-xs text-zinc-400">
@@ -194,6 +199,7 @@ async function renderMyPosts(userId) {
                     <button onclick="reactToPost('${post.id}', '🔥')" class="px-3 py-2 hover:bg-zinc-700 rounded-2xl">🔥</button>
                 </div>
             `;
+
             container.appendChild(postEl);
         });
     } catch (e) {
@@ -202,7 +208,7 @@ async function renderMyPosts(userId) {
     }
 }
 
-// Global Handlers
+// ==================== GLOBAL HANDLERS ====================
 window.editPostHandler = async (postId) => {
     const newContent = prompt("Edit your testimony:", "");
     if (newContent === null || !newContent.trim()) return;
@@ -218,7 +224,7 @@ window.deletePostHandler = async (postId) => {
     if (!confirm("Delete this post permanently?")) return;
     try {
         await deletePost(postId, currentUserId);
-        showToast("Post deleted");
+        showToast("Post deleted successfully");
     } catch (e) { 
         showToast(e.message, "error"); 
     }
@@ -227,6 +233,7 @@ window.deletePostHandler = async (postId) => {
 window.togglePinHandler = async (postId) => {
     try {
         await togglePinPost(postId, currentUserId);
+        showToast("Pin status updated");
     } catch (e) { 
         showToast(e.message, "error"); 
     }
@@ -240,5 +247,5 @@ window.sharePost = (postId) => {
 };
 
 window.reactToPost = (postId, emoji) => {
-    showToast(`Reacted with ${emoji} (Full reactions system coming soon)`);
+    showToast(`Reacted with ${emoji} (Full reaction system coming soon)`);
 };
