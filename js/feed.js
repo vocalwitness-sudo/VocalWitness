@@ -145,16 +145,16 @@ function renderPost(id, data) {
         ${data.content ? `<p class="mb-4 text-zinc-100 leading-relaxed">${data.content}</p>` : ''}
         ${mediaHTML}
 
-        <div class="flex gap-3 mt-5">
-            <button data-action="peer-vote" data-id="${id}" data-type="verify" 
-                    class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 rounded-2xl text-sm font-medium transition">
-                ✅ Verify
-            </button>
-            <button data-action="peer-vote" data-id="${id}" data-type="dispute" 
-                    class="flex-1 py-3 bg-red-900/60 hover:bg-red-900 rounded-2xl text-sm font-medium transition">
-                ⚠️ Dispute
-            </button>
-        </div>
+       <div class="flex gap-3 mt-5">
+    <button onclick="window.submitPeerVote('${id}', 'verify')" 
+            class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 rounded-2xl text-sm font-medium transition">
+        ✅ Verify
+    </button>
+    <button onclick="window.submitPeerVote('${id}', 'dispute')" 
+            class="flex-1 py-3 bg-red-900/60 hover:bg-red-900 rounded-2xl text-sm font-medium transition">
+        ⚠️ Dispute
+    </button>
+</div>
     `;
     
     feedContainer.appendChild(postEl);
