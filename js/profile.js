@@ -9,10 +9,8 @@ const db = getFirestore();
 
 let currentUserId = null;
 let currentUserData = null;
-
 let elements = {};
 
-// Cache DOM elements safely
 function cacheDOM() {
     elements = {
         avatar: document.getElementById('profile-avatar'),
@@ -30,7 +28,6 @@ function cacheDOM() {
     };
 }
 
-// Auth State Listener
 onAuthStateChanged(auth, (user) => {
     if (user) {
         currentUserId = user.uid;
@@ -41,7 +38,6 @@ onAuthStateChanged(auth, (user) => {
 
 function listenToUserProfile(userId) {
     const userRef = doc(db, "users", userId);
-    
     onSnapshot(userRef, (snapshot) => {
         if (snapshot.exists()) {
             currentUserData = snapshot.data();
@@ -67,25 +63,29 @@ function renderProfileUI() {
 
     // Basic Info
     if (elements.username) elements.username.textContent = `@${currentUserData.username || 'user'}`;
-    if (elements.email) elements.email.textContent = currentUserData.email || currentUserData.displayName || '';
-    if (elements.roleBadge) {
-        elements.roleBadge.textContent = (currentUserData.role || 'citizen').toUpperCase();
-    }
+    if (elements.email) elements.email.textContent = currentUserData.email || '';
+    if (elements.roleBadge) elements.roleBadge.textContent = (currentUserData.role || 'citizen').toUpperCase();
     if (elements.trustScore) elements.trustScore.textContent = trustScore;
 
     // Stats
     if (elements.postCount) elements.postCount.textContent = currentUserData.testimoniesCount || 0;
     if (elements.reputationScore) elements.reputationScore.textContent = calculateTrustScore(currentUserData);
 
-    // Tier Badge
+    // === DYNAMIC TIER BADGE ===
     if (elements.profileTierContainer) {
         elements.profileTierContainer.innerHTML = `
-            <div class="inline-flex items-center gap-2 px-4 py-1.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-bold rounded-2xl text-sm shadow-md">
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-2xl text-sm font-bold shadow-md" 
+                 style="background: linear-gradient(90deg, ${tier.color}, #f59e0b); color: black;">
                 <span>${tier.badge}</span>
-                <span class="text-xs opacity-75">${tier.name} Tier</span>
+                <span class="text-xs opacity-90">${tier.name} Tier</span>
             </div>
         `;
     }
+
+    showNameCooldown(currentUserData.lastNameChange);
+}
+
+// ... (rest of your functions: showNameCooldown, saveProfile, uploadAvatar, renderMyPosts, handlers remain the same)
 
     // Edit Form
     if (elements.editDisplayName) elements.editDisplayName.value = currentUserData.displayName || '';
