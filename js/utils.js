@@ -150,3 +150,6 @@ export function calculateTrustScore(userData = {}) {
 
     return Math.max(0, Math.min(100, Math.round(trust)));
 }
+
+// Make submitPeerVote available globally for inline onclick handlers
+window.submitPeerVote = submitPeerVote;
