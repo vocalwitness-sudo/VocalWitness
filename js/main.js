@@ -1,42 +1,53 @@
-// js/main.js - CLEAN & FIXED (No duplicate 'db')
-import { logout, initAuth } from "./auth.js";
-import { initFeed, switchFeed } from './feed.js';
-import { db } from './firebase-config.js';           // ← Only ONE import
+// js/main.js - Clean & Complete
+import { logout, initAuth, googleLogin } from "./auth.js";
+import { initFeed } from './feed.js';
+import { db } from './firebase-config.js';
 import { showToast, submitPeerVote } from './utils.js';
-import { initLanguage } from './i18n.js';
-import { handleImageSelect, toggleVoiceRecording } from './media.js';
+import { initLanguage, changeLanguage } from './i18n.js';
+import {
+    handleImageSelect,
+    toggleVoiceRecording,
+    resetMediaState,
+    setCurrentMode
+} from './media.js';
 import { generateAndDownloadPDF } from './pdf.js';
 import { initStorage } from './storage.js';
+import { loadProfile } from './profile.js';
 
-// Inside bootstrap():
-initStorage();
+// --- State ---
+let currentFeed = 'citizen-talk';
 
+// --- Initialization ---
 async function bootstrap() {
     console.log("🚀 Initializing VocalWitness...");
 
     initAuth();
     initLanguage();
+    initStorage();
 
-    // Initialize Feed
-    if (typeof initFeed === 'function' && db) {
-        initFeed(db, 'citizen-talk');
-    }
+    // Start with Citizen Talk (default)
+    initFeed(db, currentFeed);
+    setCurrentMode(currentFeed);   // Important for media module
 
     attachUIListeners();
+
+    console.log("✅ Core Loaded Successfully");
+    showToast("Platform Ready", "success");
 }
 
+// --- Event Listeners ---
 function attachUIListeners() {
     document.addEventListener('click', async (event) => {
         const btn = event.target.closest('button');
         if (!btn) return;
 
-        console.log("✅ Button clicked:", btn.id || btn.textContent?.slice(0, 40));
-
         switch (btn.id) {
             case 'postButton':
             case 'btn-post':
-                showToast("Post feature coming soon (Premium only)", "info");
+                // TODO: Connect to full post handler later
+                showToast("Post feature coming soon (Premium)", "info");
                 break;
+
             case 'btn-photo':
                 const fileInput = document.createElement('input');
                 fileInput.type = 'file';
@@ -47,83 +58,84 @@ function attachUIListeners() {
                 };
                 fileInput.click();
                 break;
+
             case 'btn-voice':
                 toggleVoiceRecording(btn);
                 break;
+
             case 'btn-profile':
-                document.getElementById('profileSection')?.classList.remove('hidden');
-                document.getElementById('homeSection')?.classList.add('hidden');
+                showProfileSection();
                 break;
+
             case 'btn-close-profile':
-                document.getElementById('profileSection')?.classList.add('hidden');
-                document.getElementById('homeSection')?.classList.remove('hidden');
+                hideProfileSection();
                 break;
-            case 'btn-witness-voice':
-                switchFeed('witness-voice');
+
+            case 'btn-download-pdf':
+                // TODO: Get current user from state or auth
+                showToast("PDF generation coming soon", "info");
                 break;
-            case 'btn-citizen-talk':
-                switchFeed('citizen-talk');
-                break;
+
             case 'btn-logout':
                 logout();
                 break;
+
             case 'btn-premium':
-                document.getElementById('premiumModal')?.classList.remove('hidden');
+                showToast("Premium features coming soon", "info");
                 break;
-            case 'btn-close-premium':
-                document.getElementById('premiumModal')?.classList.add('hidden');
-                break;
-            case 'btn-upgrade-now':
-            case 'btn-premium':
-                handlePremiumUpgrade();
-                break;
-            case 'btn-live-arena':
-                showToast("Live Arena coming soon...", "info");
-                break;
-        }
-
-        // Peer vote buttons
-        const action = btn.getAttribute('data-action');
-        if (action === 'peer-vote') {
-            const id = btn.getAttribute('data-id');
-            const type = btn.getAttribute('data-type');
-            await submitPeerVote(id, type);
-        }
-
-        async function handlePremiumUpgrade() {
-    const user = auth.currentUser;
-    if (!user) {
-        alert("Please sign in first!");
-        return;
-    }
-
-    const handler = PaystackPop.setup({
-        key: 'pk_test_your_paystack_public_key_here', // ← Change to live key later
-        email: user.email,
-        amount: 4990, // ₦4,990
-        currency: "NGN",
-        ref: 'VW_' + Math.floor((Math.random() * 1000000000) + 1),
-        callback: function(response) {
-            console.log("✅ Payment successful:", response);
-            alert("🎉 Premium Activated! Thank you.");
-            // TODO: Update user.isPremium = true in Firestore
-        },
-        onClose: function() {
-            console.log("Payment cancelled");
         }
     });
+
+    // Language Selector
+    const langSelector = document.getElementById('languageSelector');
+    if (langSelector) {
+        langSelector.addEventListener('change', (e) => {
+            changeLanguage(e.target.value);
+        });
+    }
+}
+
+// ====================== PROFILE NAVIGATION ======================
+function showProfileSection() {
+    document.getElementById('homeSection')?.classList.remove('active');
+    document.getElementById('profileSection')?.classList.add('active');
     
-    handler.openIframe();
-}
-    });
-}
-
-// Close Premium Modal when clicking outside
-document.addEventListener('click', (e) => {
-    const modal = document.getElementById('premiumModal');
-    if (e.target === modal) {
-        modal.classList.add('hidden');
+    // Load enhanced profile
+    const currentUser = auth?.currentUser; // from auth module
+    if (currentUser) {
+        loadProfile(currentUser);
+    } else {
+        googleLogin();
     }
-});
+}
 
+function hideProfileSection() {
+    document.getElementById('profileSection')?.classList.remove('active');
+    document.getElementById('homeSection')?.classList.add('active');
+}
+
+// ====================== FEED SWITCHING ======================
+export function switchFeed(newFeed) {
+    currentFeed = newFeed;
+    
+    // Update media module mode
+    setCurrentMode(newFeed);
+
+    // Re-initialize feed
+    initFeed(db, newFeed);
+
+    // Visual feedback
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.toggle('active', 
+            (newFeed === 'witness-voice' && btn.textContent.includes('Witness')) ||
+            (newFeed === 'citizen-talk' && btn.textContent.includes('Citizen'))
+        );
+    });
+
+    showToast(newFeed === 'witness-voice' 
+        ? "👁️ Switched to Witness Voice (Forensic Mode)" 
+        : "💬 Switched to Citizen Talk", "success");
+}
+
+// --- Start App ---
 document.addEventListener('DOMContentLoaded', bootstrap);
