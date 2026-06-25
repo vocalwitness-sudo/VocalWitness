@@ -170,23 +170,21 @@
     <script type="module" src="/js/main.js?v=20250624"></script>
 
     <!-- Service Worker -->
-   <!-- Place this before the closing </body> tag -->
-<script>
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            // Correct path: sw.js should be in the ROOT, not inside /js/
-            navigator.serviceWorker.register('/sw.js', { 
-                scope: '/' 
-            })
-            .then(reg => {
-                console.log('✅ Service Worker registered successfully with scope:', reg.scope);
-            })
-            .catch(err => {
-                console.error('❌ Service Worker registration failed:', err);
-            });
+ <script>
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        // Correct registration - sw.js should be in the ROOT folder
+        navigator.serviceWorker.register('/sw.js', { 
+            scope: '/' 
+        })
+        .then(reg => {
+            console.log('✅ Service Worker registered successfully!', reg.scope);
+        })
+        .catch(err => {
+            console.error('❌ Service Worker registration failed:', err);
         });
-    }
+    });
+}
 </script>
-
 </body>
 </html>
