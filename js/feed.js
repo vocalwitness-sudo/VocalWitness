@@ -2,7 +2,7 @@
 import {
     collection, query, orderBy, onSnapshot, where, limit, startAfter, getDocs
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-import { showToast } from './utils.js';
+import { showToast, submitPeerVote } from './utils.js';
 
 let activeFeedListener = null;
 let lastDoc = null;
