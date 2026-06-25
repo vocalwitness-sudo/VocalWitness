@@ -4,11 +4,16 @@
   "displayName": "John Doe",
   "username": "citizen_johndoe",
   "photoURL": "default_avatar_url",
-  "role": "citizen",
   
+  "role": "citizen",
+  "tier": "Explorer",
+  
+  "trustCircle": 50,
   "reputationScore": 50,
-  "trustCircle": 0, 
   "level": 1,
+  
+  "bio": "Human rights advocate and citizen journalist...",
+  "preferredLanguage": "en",
   
   "isPhoneVerified": false,
   "phoneNumber": "",
@@ -20,16 +25,8 @@
   "successfulEvidence": 0,
   "debunkedEvidence": 0,
   
-  "badges": ["new_citizen"]
-}
-
-{
-  "fullName": "John Doe",
-  "bio": "Human rights advocate...",
-  "photoURL": "...",
-  "preferredLanguage": "en",
-  "countryCode": "+234",
-  "phoneNumber": "8012345678",
-  "isVerified": false,
-  "lastUpdated": 1720000000000
+  "badges": ["new_citizen"],
+  "lastNameChange": 1720000000000,
+  "lastUpdated": 1720000000000,
+  "createdAt": 1720000000000
 }
