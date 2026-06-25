@@ -164,8 +164,6 @@ function renderPost(id, data) {
     const postEl = document.createElement('div');
     postEl.className = 'post-card glass rounded-3xl p-6 mb-4';
 
-    const tier = getTier(data.authorTrustScore || 50);   // Assume you store authorTrustScore or fetch it
-
     let mediaHTML = '';
     if (data.mediaURL || data.imageUrl) {
         mediaHTML += `<img src="${data.mediaURL || data.imageUrl}" class="image-preview rounded-2xl mt-3 mb-4 w-full object-cover" alt="Evidence">`;
@@ -180,25 +178,23 @@ function renderPost(id, data) {
                 <div class="w-9 h-9 bg-zinc-700 rounded-2xl flex items-center justify-center text-xl">👤</div>
                 <div>
                     <p class="font-semibold">${data.author || 'Anonymous'}</p>
-                    <div class="flex items-center gap-2 text-xs">
-                        <span class="text-zinc-500">${new Date(data.timestamp || data.createdAt).toLocaleString()}</span>
-                        <span class="px-2 py-0.5 rounded-full text-[10px] font-medium" 
-                              style="background: ${tier.color}20; color: ${tier.color}">
-                            ${tier.name}
-                        </span>
-                    </div>
+                    <p class="text-xs text-zinc-500">${new Date(data.timestamp || data.createdAt).toLocaleString()}</p>
                 </div>
             </div>
-            ${data.pinnedBy ? `<span class="text-amber-400 text-sm">📌 Pinned</span>` : ''}
         </div>
 
         ${data.content ? `<p class="mb-4 text-zinc-100 leading-relaxed">${data.content}</p>` : ''}
-
         ${mediaHTML}
 
         <div class="flex gap-3 mt-5">
-            <button onclick="submitPeerVote('${id}', 'verify')" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 rounded-2xl text-sm font-medium transition">✅ Verify</button>
-            <button onclick="submitPeerVote('${id}', 'dispute')" class="flex-1 py-3 bg-red-900/60 hover:bg-red-900 rounded-2xl text-sm font-medium transition">⚠️ Dispute</button>
+            <button onclick="submitPeerVote('${id}', 'verify')" 
+                    class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 rounded-2xl text-sm font-medium transition">
+                ✅ Verify
+            </button>
+            <button onclick="submitPeerVote('${id}', 'dispute')" 
+                    class="flex-1 py-3 bg-red-900/60 hover:bg-red-900 rounded-2xl text-sm font-medium transition">
+                ⚠️ Dispute
+            </button>
         </div>
     `;
 
