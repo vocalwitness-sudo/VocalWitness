@@ -1,4 +1,4 @@
-// js/main.js - MINIMAL STABLE VERSION
+// js/main.js - STABLE VERSION (Rollback + Fixes)
 import { initAuth } from "./auth.js";
 import { initFeed } from './feed.js';
 import { db } from './firebase-config.js';
@@ -9,31 +9,30 @@ import { handleImageSelect, toggleVoiceRecording } from './media.js';
 let currentTab = 'citizen-talk';
 let listenersAttached = false;
 
-// ====================== TAB SWITCHING ======================
 function switchTab(tab) {
-    console.log("🔄 Switching to:", tab);
+    console.log("🔄 Switching to tab:", tab);
     currentTab = tab;
 
-    document.querySelectorAll('#main-nav button').forEach(btn => {
-        btn.classList.remove('active');
-    });
-
+    // Update active tab
+    document.querySelectorAll('#main-nav button').forEach(btn => btn.classList.remove('active'));
+    
     if (tab === 'citizen-talk') document.getElementById('citizenBtn')?.classList.add('active');
     if (tab === 'true-witness') document.getElementById('trueBtn')?.classList.add('active');
     if (tab === 'live-arena') document.getElementById('liveBtn')?.classList.add('active');
 
     if (tab === 'true-witness') {
-        showToast("👁️ True Witness Mode", "success");
+        showToast("👁️ True Witness • Forensic Mode", "success");
     } else if (tab === 'live-arena') {
-        showToast("🎥 Live Arena - Coming Soon", "info");
+        showToast("🎥 Live Arena — Coming Soon", "info");
     } else {
         showToast("💬 Citizen Talk", "success");
     }
 
-    if (typeof initFeed === 'function') initFeed(db, tab);
+    if (typeof initFeed === 'function') {
+        initFeed(db, tab);
+    }
 }
 
-// ====================== PROFILE ======================
 function showProfileSection() {
     console.log("👤 Opening Profile");
     document.getElementById('homeSection')?.classList.add('hidden');
@@ -48,7 +47,6 @@ function hideProfileSection() {
     document.getElementById('feedContainer')?.classList.remove('hidden');
 }
 
-// ====================== MAIN CLICK HANDLER ======================
 function attachUIListeners() {
     if (listenersAttached) return;
     listenersAttached = true;
@@ -59,12 +57,9 @@ function attachUIListeners() {
 
         console.log("🖱️ Clicked:", btn.id);
 
-        // Tabs
         if (btn.id === 'citizenBtn') switchTab('citizen-talk');
         else if (btn.id === 'trueBtn') switchTab('true-witness');
         else if (btn.id === 'liveBtn') switchTab('live-arena');
-
-        // Other buttons
         else if (btn.id === 'btn-profile') showProfileSection();
         else if (btn.id === 'btn-close-profile') hideProfileSection();
         else if (btn.id === 'btn-premium') {
@@ -84,12 +79,11 @@ function attachUIListeners() {
             toggleVoiceRecording(btn);
         }
         else if (btn.id === 'postButton') {
-            showToast("Posting coming soon", "info");
+            showToast("Full posting coming soon (Premium)", "info");
         }
     });
 }
 
-// ====================== START ======================
 async function bootstrap() {
     console.log("🚀 Initializing VocalWitness...");
     try {
@@ -98,10 +92,10 @@ async function bootstrap() {
         attachUIListeners();
         switchTab(currentTab);
 
-        console.log("✅ Core Loaded");
+        console.log("✅ VocalWitness Core Loaded Successfully");
         showToast("Platform Ready", "success");
     } catch (error) {
-        console.error("❌ Failed:", error);
+        console.error("❌ Bootstrap failed:", error);
     }
 }
 
