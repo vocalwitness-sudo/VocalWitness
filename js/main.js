@@ -1,4 +1,4 @@
-// js/main.js - Clean & Modern VocalWitness Core
+// js/main.js - MINIMAL STABLE VERSION
 import { initAuth } from "./auth.js";
 import { initFeed } from './feed.js';
 import { db } from './firebase-config.js';
@@ -6,16 +6,14 @@ import { showToast } from './utils.js';
 import { initLanguage } from './i18n.js';
 import { handleImageSelect, toggleVoiceRecording } from './media.js';
 
-// Global State
 let currentTab = 'citizen-talk';
 let listenersAttached = false;
 
 // ====================== TAB SWITCHING ======================
 function switchTab(tab) {
-    console.log("🔄 Switching to tab:", tab);
+    console.log("🔄 Switching to:", tab);
     currentTab = tab;
 
-    // Update active states
     document.querySelectorAll('#main-nav button').forEach(btn => {
         btn.classList.remove('active');
     });
@@ -24,19 +22,15 @@ function switchTab(tab) {
     if (tab === 'true-witness') document.getElementById('trueBtn')?.classList.add('active');
     if (tab === 'live-arena') document.getElementById('liveBtn')?.classList.add('active');
 
-    // User feedback
     if (tab === 'true-witness') {
-        showToast("👁️ True Witness • Forensic Mode Activated", "success");
+        showToast("👁️ True Witness Mode", "success");
     } else if (tab === 'live-arena') {
-        showToast("🎥 Live Arena — Coming Soon", "info");
+        showToast("🎥 Live Arena - Coming Soon", "info");
     } else {
         showToast("💬 Citizen Talk", "success");
     }
 
-    // Load feed
-    if (typeof initFeed === 'function') {
-        initFeed(db, tab);
-    }
+    if (typeof initFeed === 'function') initFeed(db, tab);
 }
 
 // ====================== PROFILE ======================
@@ -54,7 +48,7 @@ function hideProfileSection() {
     document.getElementById('feedContainer')?.classList.remove('hidden');
 }
 
-// ====================== CLICK HANDLER ======================
+// ====================== MAIN CLICK HANDLER ======================
 function attachUIListeners() {
     if (listenersAttached) return;
     listenersAttached = true;
@@ -65,12 +59,12 @@ function attachUIListeners() {
 
         console.log("🖱️ Clicked:", btn.id);
 
-        // Tab Navigation
+        // Tabs
         if (btn.id === 'citizenBtn') switchTab('citizen-talk');
         else if (btn.id === 'trueBtn') switchTab('true-witness');
         else if (btn.id === 'liveBtn') switchTab('live-arena');
 
-        // Other Main Buttons
+        // Other buttons
         else if (btn.id === 'btn-profile') showProfileSection();
         else if (btn.id === 'btn-close-profile') hideProfileSection();
         else if (btn.id === 'btn-premium') {
@@ -90,28 +84,25 @@ function attachUIListeners() {
             toggleVoiceRecording(btn);
         }
         else if (btn.id === 'postButton') {
-            showToast("Full posting coming soon (Premium)", "info");
+            showToast("Posting coming soon", "info");
         }
     });
 }
 
-// ====================== BOOTSTRAP ======================
+// ====================== START ======================
 async function bootstrap() {
     console.log("🚀 Initializing VocalWitness...");
     try {
         await initAuth();
         initLanguage();
-
         attachUIListeners();
-        switchTab(currentTab);        // Load default tab
+        switchTab(currentTab);
 
-        console.log("✅ VocalWitness Core Loaded Successfully");
+        console.log("✅ Core Loaded");
         showToast("Platform Ready", "success");
     } catch (error) {
-        console.error("❌ Bootstrap failed:", error);
-        showToast("Failed to initialize. Please refresh.", "error");
+        console.error("❌ Failed:", error);
     }
 }
 
-// Start App
 document.addEventListener('DOMContentLoaded', bootstrap);
