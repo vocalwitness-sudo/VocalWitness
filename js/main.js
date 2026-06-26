@@ -1,4 +1,4 @@
-// js/main.js - Clean Modern VocalWitness Core
+// js/main.js - Clean & Modern VocalWitness Core (No Duplicates)
 import { initAuth } from "./auth.js";
 import { initFeed } from './feed.js';
 import { db } from './firebase-config.js';
@@ -9,15 +9,19 @@ import { handleImageSelect, toggleVoiceRecording } from './media.js';
 // Global State
 let currentTab = 'citizen-talk';
 
-// Tab Switching Function
+// ====================== TAB SWITCHING ======================
 function switchTab(tab) {
     console.log("🔄 Switching to tab:", tab);
     currentTab = tab;
 
-    // Update active button
+    // Update active states
     document.querySelectorAll('#main-nav button').forEach(btn => {
-        btn.classList.toggle('active', btn.id === getButtonId(tab));
+        btn.classList.remove('active');
     });
+
+    if (tab === 'citizen-talk') document.getElementById('citizenBtn')?.classList.add('active');
+    if (tab === 'true-witness') document.getElementById('trueBtn')?.classList.add('active');
+    if (tab === 'live-arena') document.getElementById('liveBtn')?.classList.add('active');
 
     // Feedback
     if (tab === 'true-witness') {
@@ -28,41 +32,27 @@ function switchTab(tab) {
         showToast("💬 Citizen Talk", "success");
     }
 
-    // Load feed
     if (typeof initFeed === 'function') {
         initFeed(db, tab);
     }
 }
 
-function getButtonId(tab) {
-    if (tab === 'citizen-talk') return 'citizenBtn';
-    if (tab === 'true-witness') return 'trueBtn';
-    if (tab === 'live-arena') return 'liveBtn';
-    return 'citizenBtn';
-}
-
-// Profile Functions
+// ====================== PROFILE ======================
 function showProfileSection() {
     console.log("👤 Opening Profile");
-    document.getElementById('homeSection').classList.add('hidden');
-    document.getElementById('feedContainer').classList.add('hidden'); // Hide feed too
-    const profile = document.getElementById('profileSection');
-    profile.classList.remove('hidden');
-    profile.scrollTop = 0;
+    document.getElementById('homeSection')?.classList.add('hidden');
+    document.getElementById('feedContainer')?.classList.add('hidden');
+    document.getElementById('profileSection')?.classList.remove('hidden');
 }
 
 function hideProfileSection() {
     console.log("👤 Closing Profile");
-    document.getElementById('profileSection').classList.add('hidden');
-    document.getElementById('homeSection').classList.remove('hidden');
-    document.getElementById('feedContainer').classList.remove('hidden');
-}
-function hideProfileSection() {
-    document.getElementById('profileSection').classList.add('hidden');
-    document.getElementById('homeSection').classList.remove('hidden');
+    document.getElementById('profileSection')?.classList.add('hidden');
+    document.getElementById('homeSection')?.classList.remove('hidden');
+    document.getElementById('feedContainer')?.classList.remove('hidden');
 }
 
-// Main Click Handler (Handles Everything)
+// ====================== CLICK HANDLER ======================
 function attachUIListeners() {
     document.addEventListener('click', (e) => {
         const btn = e.target.closest('button');
@@ -70,7 +60,7 @@ function attachUIListeners() {
 
         console.log("🖱️ Clicked button:", btn.id);
 
-        // Tab Buttons
+        // Tabs
         if (btn.id === 'citizenBtn') switchTab('citizen-talk');
         if (btn.id === 'trueBtn') switchTab('true-witness');
         if (btn.id === 'liveBtn') switchTab('live-arena');
@@ -92,7 +82,7 @@ function attachUIListeners() {
     });
 }
 
-// Bootstrap
+// ====================== BOOTSTRAP ======================
 async function bootstrap() {
     console.log("🚀 Initializing VocalWitness...");
     try {
@@ -100,17 +90,15 @@ async function bootstrap() {
         initLanguage();
 
         attachUIListeners();
-        
-        // Load default tab
-        switchTab(currentTab);
+        switchTab(currentTab);   // Load default tab
 
         console.log("✅ VocalWitness Core Loaded Successfully");
         showToast("Platform Ready", "success");
     } catch (error) {
         console.error("❌ Bootstrap failed:", error);
-        showToast("Failed to initialize. Refresh page.", "error");
+        showToast("Failed to initialize. Please refresh.", "error");
     }
 }
 
-// Start
+// Start App
 document.addEventListener('DOMContentLoaded', bootstrap);
