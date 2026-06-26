@@ -64,8 +64,7 @@ function attachUIListeners() {
         if (btn.id === 'citizenBtn') switchTab('citizen-talk');
         if (btn.id === 'trueBtn') switchTab('true-witness');
         if (btn.id === 'liveBtn') switchTab('live-arena');
-
-        // Other buttons
+}
         if (btn.id === 'btn-profile') showProfileSection();
         if (btn.id === 'btn-close-profile') hideProfileSection();
         if (btn.id === 'btn-photo') {
@@ -78,6 +77,8 @@ function attachUIListeners() {
         if (btn.id === 'btn-voice') toggleVoiceRecording(btn);
         if (btn.id === 'btn-premium') {
             document.getElementById('premiumModal')?.classList.remove('hidden');
+            if (btn.id === 'btn-close-premium') {
+                document.getElementById('premiumModal').classList.add('hidden');
         }
     });
 }
