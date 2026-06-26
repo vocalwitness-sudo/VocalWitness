@@ -1,4 +1,4 @@
-// js/main.js - Clean & Modern VocalWitness Core (No Duplicates)
+// js/main.js - Clean & Modern VocalWitness Core
 import { initAuth } from "./auth.js";
 import { initFeed } from './feed.js';
 import { db } from './firebase-config.js';
@@ -8,6 +8,7 @@ import { handleImageSelect, toggleVoiceRecording } from './media.js';
 
 // Global State
 let currentTab = 'citizen-talk';
+let listenersAttached = false;
 
 // ====================== TAB SWITCHING ======================
 function switchTab(tab) {
@@ -23,7 +24,7 @@ function switchTab(tab) {
     if (tab === 'true-witness') document.getElementById('trueBtn')?.classList.add('active');
     if (tab === 'live-arena') document.getElementById('liveBtn')?.classList.add('active');
 
-    // Feedback
+    // User feedback
     if (tab === 'true-witness') {
         showToast("👁️ True Witness • Forensic Mode Activated", "success");
     } else if (tab === 'live-arena') {
@@ -32,6 +33,7 @@ function switchTab(tab) {
         showToast("💬 Citizen Talk", "success");
     }
 
+    // Load feed
     if (typeof initFeed === 'function') {
         initFeed(db, tab);
     }
@@ -54,31 +56,41 @@ function hideProfileSection() {
 
 // ====================== CLICK HANDLER ======================
 function attachUIListeners() {
+    if (listenersAttached) return;
+    listenersAttached = true;
+
     document.addEventListener('click', (e) => {
         const btn = e.target.closest('button');
         if (!btn) return;
 
-        console.log("🖱️ Clicked button:", btn.id);
+        console.log("🖱️ Clicked:", btn.id);
 
-        // Tabs
+        // Tab Navigation
         if (btn.id === 'citizenBtn') switchTab('citizen-talk');
-        if (btn.id === 'trueBtn') switchTab('true-witness');
-        if (btn.id === 'liveBtn') switchTab('live-arena');
-}
-        if (btn.id === 'btn-profile') showProfileSection();
-        if (btn.id === 'btn-close-profile') hideProfileSection();
-        if (btn.id === 'btn-photo') {
+        else if (btn.id === 'trueBtn') switchTab('true-witness');
+        else if (btn.id === 'liveBtn') switchTab('live-arena');
+
+        // Other Main Buttons
+        else if (btn.id === 'btn-profile') showProfileSection();
+        else if (btn.id === 'btn-close-profile') hideProfileSection();
+        else if (btn.id === 'btn-premium') {
+            document.getElementById('premiumModal')?.classList.remove('hidden');
+        }
+        else if (btn.id === 'btn-close-premium') {
+            document.getElementById('premiumModal')?.classList.add('hidden');
+        }
+        else if (btn.id === 'btn-photo') {
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = 'image/*';
             input.onchange = (ev) => handleImageSelect(ev, document.getElementById('preview-area'));
             input.click();
         }
-        if (btn.id === 'btn-voice') toggleVoiceRecording(btn);
-        if (btn.id === 'btn-premium') {
-            document.getElementById('premiumModal')?.classList.remove('hidden');
-            if (btn.id === 'btn-close-premium') {
-                document.getElementById('premiumModal').classList.add('hidden');
+        else if (btn.id === 'btn-voice') {
+            toggleVoiceRecording(btn);
+        }
+        else if (btn.id === 'postButton') {
+            showToast("Full posting coming soon (Premium)", "info");
         }
     });
 }
@@ -91,7 +103,7 @@ async function bootstrap() {
         initLanguage();
 
         attachUIListeners();
-        switchTab(currentTab);   // Load default tab
+        switchTab(currentTab);        // Load default tab
 
         console.log("✅ VocalWitness Core Loaded Successfully");
         showToast("Platform Ready", "success");
