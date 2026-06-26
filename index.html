@@ -142,11 +142,23 @@
         </div>
     </div>
 </div>
+        
     <!-- Premium Modal -->
-    <div id="premiumModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-        <!-- ... keep your existing premium modal ... -->
+<div id="premiumModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[60]">
+    <div class="glass rounded-3xl max-w-md w-full mx-4 p-8 text-center">
+        <div class="text-6xl mb-6">⭐</div>
+        <h2 class="text-3xl font-bold text-amber-400 mb-2">Go Premium</h2>
+        <p class="text-zinc-400 mb-8">Unlock the full power of VocalWitness</p>
+        
+        <div class="space-y-5 text-left mb-10">
+            <div class="flex gap-3"><span class="text-emerald-500">✓</span><div>Unlimited Testimonies</div></div>
+            <div class="flex gap-3"><span class="text-emerald-500">✓</span><div>Forensic Shield + AI Tools</div></div>
+            <div class="flex gap-3"><span class="text-emerald-500">✓</span><div>Priority in Live Arena</div></div>
+        </div>
+        
+        <button id="btn-upgrade-now" class="w-full py-4 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-bold rounded-2xl mb-4">
+            Upgrade — ₦4,990 / month
+        </button>
+        <button id="btn-close-premium" class="w-full py-3 text-zinc-400 hover:text-white">Maybe later</button>
     </div>
-
-    <script type="module" src="/js/main.js?v=20250626"></script>
-</body>
-</html>
+</div>
