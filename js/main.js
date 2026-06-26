@@ -42,11 +42,13 @@ async function bootstrap() {
     }
 }
 
-// --- UI Event Listeners ---
+// ====================== UI EVENT LISTENERS ======================
 function attachUIListeners() {
     const mainClickHandler = async (event) => {
         const btn = event.target.closest('button');
         if (!btn) return;
+
+        console.log("🔘 Button clicked:", btn.id || btn.textContent?.trim().slice(0, 40));
 
         try {
             switch (btn.id) {
@@ -71,19 +73,30 @@ function attachUIListeners() {
                     break;
 
                 case 'btn-profile':
-                    showProfileSection();
+                    if (typeof window.showProfileSection === 'function') {
+                        window.showProfileSection();
+                    } else {
+                        console.warn("showProfileSection not found - using fallback");
+                        document.getElementById('profileSection')?.classList.add('active');
+                        document.getElementById('homeSection')?.classList.remove('active');
+                    }
                     break;
 
                 case 'btn-close-profile':
-                    hideProfileSection();
+                    if (typeof window.hideProfileSection === 'function') {
+                        window.hideProfileSection();
+                    } else {
+                        document.getElementById('profileSection')?.classList.remove('active');
+                        document.getElementById('homeSection')?.classList.add('active');
+                    }
                     break;
 
                 case 'btn-download-pdf':
                     const postId = btn.dataset.postId;
-                    if (postId) {
+                    if (postId && typeof generateAndDownloadPDF === 'function') {
                         generateAndDownloadPDF(postId);
                     } else {
-                        showToast("Please select a testimony to download", "warning");
+                        showToast("PDF download coming soon", "info");
                     }
                     break;
 
@@ -92,11 +105,27 @@ function attachUIListeners() {
                     break;
 
                 case 'btn-premium':
-                    showToast("Premium subscription coming soon", "info");
+                    showToast("Premium features (Unlimited posts, AI tools, Priority) coming soon", "info");
+                    break;
+
+                // Additional useful buttons
+                case 'btn-witness-voice':
+                case 'btn-citizen-talk':
+                    if (typeof window.switchFeed === 'function') {
+                        window.switchFeed(btn.id.includes('witness') ? 'witness-voice' : 'citizen-talk');
+                    } else {
+                        location.reload(); // fallback
+                    }
                     break;
 
                 default:
-                    // Handle other buttons if needed
+                    // Try data-action attribute for extra buttons
+                    const action = btn.getAttribute('data-action');
+                    if (action === 'peer-vote') {
+                        const id = btn.getAttribute('data-id');
+                        const type = btn.getAttribute('data-type');
+                        if (id && type) submitPeerVote(id, type);
+                    }
                     break;
             }
         } catch (err) {
@@ -105,7 +134,18 @@ function attachUIListeners() {
         }
     };
 
+    // Remove any old listeners to prevent duplicates
+    document.removeEventListener('click', mainClickHandler);
     document.addEventListener('click', mainClickHandler);
+
+    // Language selector
+    const langSelector = document.getElementById('languageSelector');
+    if (langSelector) {
+        langSelector.addEventListener('change', (e) => {
+            changeLanguage(e.target.value);
+        });
+    }
+}
 
     // Language Selector
     const langSelector = document.getElementById('languageSelector');
