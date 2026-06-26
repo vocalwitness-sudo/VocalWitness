@@ -99,11 +99,19 @@
         </div>
 
         <!-- Navigation -->
-        <nav class="grid grid-cols-3 gap-2 mb-10 bg-zinc-900 p-1.5 rounded-3xl">
-            <button id="btn-witness-voice" class="nav-btn active py-4 rounded-3xl text-sm font-medium">Witness Voice</button>
-            <button id="btn-citizen-talk" class="nav-btn py-4 rounded-3xl text-sm font-medium">Citizen Talk</button>
-            <button id="btn-live-arena" class="nav-btn py-4 rounded-3xl text-sm font-medium">Live Arena</button>
-        </nav>
+       <nav class="grid grid-cols-2 gap-2 mb-10 bg-zinc-900 p-1.5 rounded-3xl">
+    <button onclick="switchLung('citizen')" id="citizenBtn" class="nav-btn active py-4 rounded-3xl text-sm font-medium">Citizen Talk</button>
+    <button onclick="switchLung('true')" id="trueBtn" class="nav-btn py-4 rounded-3xl text-sm font-medium">True Witness</button>
+</nav>
+
+<div class="flex gap-2 mb-8">
+    <button id="btn-live-arena" class="true-witness-only hidden py-3 px-6 bg-zinc-800 rounded-2xl text-sm border border-zinc-700">
+        Live Arena
+    </button>
+    <button id="btn-witness-circle" class="true-witness-only hidden py-3 px-6 bg-zinc-800 rounded-2xl text-sm border border-zinc-700">
+        Witness Circle
+    </button>
+</div>
 
         <!-- Composer -->
         <div id="homeSection" class="glass rounded-3xl p-8 mb-10">
