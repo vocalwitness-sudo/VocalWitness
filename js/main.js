@@ -1,4 +1,4 @@
-// js/main.js - Clean & Modern VocalWitness Core (No Duplicates)
+// js/main.js - Clean & Modern VocalWitness Core
 import { initAuth } from "./auth.js";
 import { initFeed } from './feed.js';
 import { db } from './firebase-config.js';
@@ -19,9 +19,13 @@ function switchTab(tab) {
         btn.classList.remove('active');
     });
 
-    if (tab === 'citizen-talk') document.getElementById('citizenBtn')?.classList.add('active');
-    if (tab === 'true-witness') document.getElementById('trueBtn')?.classList.add('active');
-    if (tab === 'live-arena') document.getElementById('liveBtn')?.classList.add('active');
+    if (tab === 'citizen-talk') {
+        document.getElementById('citizenBtn')?.classList.add('active');
+    } else if (tab === 'true-witness') {
+        document.getElementById('trueBtn')?.classList.add('active');
+    } else if (tab === 'live-arena') {
+        document.getElementById('liveBtn')?.classList.add('active');
+    }
 
     // Feedback
     if (tab === 'true-witness') {
@@ -37,19 +41,31 @@ function switchTab(tab) {
     }
 }
 
-// ====================== PROFILE ======================
-function showProfileSection() {
-    console.log("👤 Opening Profile");
-    document.getElementById('homeSection')?.classList.add('hidden');
-    document.getElementById('feedContainer')?.classList.add('hidden');
-    document.getElementById('profileSection')?.classList.remove('hidden');
-}
+// ====================== PUBLISH TESTIMONY ======================
+async function publishTestimony() {
+    const textarea = document.getElementById('mainInput');
+    const text = textarea?.value.trim();
 
-function hideProfileSection() {
-    console.log("👤 Closing Profile");
-    document.getElementById('profileSection')?.classList.add('hidden');
-    document.getElementById('homeSection')?.classList.remove('hidden');
-    document.getElementById('feedContainer')?.classList.remove('hidden');
+    if (!text || text.length < 10) {
+        showToast("Please write a proper testimony (min 10 characters)", "error");
+        return;
+    }
+
+    showToast("Publishing to the Square...", "info");
+
+    try {
+        // TODO: Connect to vocalWitnessEngine.js here
+        console.log("📤 Publishing testimony:", text);
+        
+        // Example integration point:
+        // await vocalWitnessEngine.publish({ text, type: currentTab });
+
+        showToast("✅ Testimony published successfully!", "success");
+        textarea.value = ''; // Clear input
+    } catch (err) {
+        console.error(err);
+        showToast("Failed to publish. Please try again.", "error");
+    }
 }
 
 // ====================== CLICK HANDLER ======================
@@ -58,7 +74,7 @@ function attachUIListeners() {
         const btn = e.target.closest('button');
         if (!btn) return;
 
-        console.log("🖱️ Clicked button:", btn.id);
+        console.log("🖱️ Clicked:", btn.id || btn.textContent.trim());
 
         // Tabs
         if (btn.id === 'citizenBtn') switchTab('citizen-talk');
@@ -79,7 +95,30 @@ function attachUIListeners() {
         if (btn.id === 'btn-premium') {
             document.getElementById('premiumModal')?.classList.remove('hidden');
         }
+        if (btn.id === 'postButton') {
+            publishTestimony();
+        }
+        if (btn.id === 'btn-upgrade-now') {
+            showToast("Redirecting to payment...", "info");
+            // Paystack code here later
+        }
+        if (btn.id === 'btn-close-premium') {
+            document.getElementById('premiumModal')?.classList.add('hidden');
+        }
     });
+}
+
+// Profile functions (keep your existing ones)
+function showProfileSection() {
+    document.getElementById('homeSection')?.classList.add('hidden');
+    document.getElementById('feedContainer')?.classList.add('hidden');
+    document.getElementById('profileSection')?.classList.remove('hidden');
+}
+
+function hideProfileSection() {
+    document.getElementById('profileSection')?.classList.add('hidden');
+    document.getElementById('homeSection')?.classList.remove('hidden');
+    document.getElementById('feedContainer')?.classList.remove('hidden');
 }
 
 // ====================== BOOTSTRAP ======================
@@ -88,10 +127,8 @@ async function bootstrap() {
     try {
         await initAuth();
         initLanguage();
-
         attachUIListeners();
-        switchTab(currentTab);   // Load default tab
-
+        switchTab(currentTab); // Default tab
         console.log("✅ VocalWitness Core Loaded Successfully");
         showToast("Platform Ready", "success");
     } catch (error) {
@@ -100,5 +137,4 @@ async function bootstrap() {
     }
 }
 
-// Start App
 document.addEventListener('DOMContentLoaded', bootstrap);
