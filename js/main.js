@@ -1,4 +1,4 @@
-// js/main.js - Clean & Complete
+// js/main.js - Upgraded VocalWitness Core
 import { logout, initAuth, googleLogin } from "./auth.js";
 import { initFeed } from './feed.js';
 import { db } from './firebase-config.js';
@@ -14,77 +14,98 @@ import { generateAndDownloadPDF } from './pdf.js';
 import { initStorage } from './storage.js';
 import { loadProfile } from './profile.js';
 
-// --- State ---
+// --- Global State ---
 let currentFeed = 'citizen-talk';
+let currentUser = null;
 
-// --- Initialization ---
+// --- Main Bootstrap ---
 async function bootstrap() {
     console.log("🚀 Initializing VocalWitness...");
 
-    initAuth();
-    initLanguage();
-    initStorage();
+    try {
+        // Initialize core modules
+        initAuth();
+        initLanguage();
+        initStorage();
 
-    // Start with Citizen Talk (default)
-    initFeed(db, currentFeed);
-    setCurrentMode(currentFeed);   // Important for media module
+        // Default feed
+        setCurrentMode(currentFeed);
+        initFeed(db, currentFeed);
 
-    attachUIListeners();
-
-    console.log("✅ Core Loaded Successfully");
-    showToast("Platform Ready", "success");
+        attachUIListeners();
+        
+        console.log("✅ VocalWitness Core Loaded Successfully");
+        showToast("Platform Ready", "success");
+    } catch (error) {
+        console.error("❌ Bootstrap failed:", error);
+        showToast("Failed to initialize app. Please refresh.", "error");
+    }
 }
 
-// --- Event Listeners ---
+// --- UI Event Listeners ---
 function attachUIListeners() {
-    document.addEventListener('click', async (event) => {
+    const mainClickHandler = async (event) => {
         const btn = event.target.closest('button');
         if (!btn) return;
 
-        switch (btn.id) {
-            case 'postButton':
-            case 'btn-post':
-                // TODO: Connect to full post handler later
-                showToast("Post feature coming soon (Premium)", "info");
-                break;
+        try {
+            switch (btn.id) {
+                case 'postButton':
+                case 'btn-post':
+                    showToast("Full posting coming soon (Premium feature)", "info");
+                    break;
 
-            case 'btn-photo':
-                const fileInput = document.createElement('input');
-                fileInput.type = 'file';
-                fileInput.accept = 'image/*';
-                fileInput.onchange = (e) => {
-                    const preview = document.getElementById('preview-area');
-                    if (preview) handleImageSelect(e, preview);
-                };
-                fileInput.click();
-                break;
+                case 'btn-photo':
+                    const fileInput = document.createElement('input');
+                    fileInput.type = 'file';
+                    fileInput.accept = 'image/*';
+                    fileInput.onchange = (e) => {
+                        const preview = document.getElementById('preview-area');
+                        if (preview) handleImageSelect(e, preview);
+                    };
+                    fileInput.click();
+                    break;
 
-            case 'btn-voice':
-                toggleVoiceRecording(btn);
-                break;
+                case 'btn-voice':
+                    toggleVoiceRecording(btn);
+                    break;
 
-            case 'btn-profile':
-                showProfileSection();
-                break;
+                case 'btn-profile':
+                    showProfileSection();
+                    break;
 
-            case 'btn-close-profile':
-                hideProfileSection();
-                break;
+                case 'btn-close-profile':
+                    hideProfileSection();
+                    break;
 
-            case 'btn-download-pdf':
-                // TODO: Get current user from state or auth
-                showToast("PDF generation coming soon", "info");
-                break;
+                case 'btn-download-pdf':
+                    const postId = btn.dataset.postId;
+                    if (postId) {
+                        generateAndDownloadPDF(postId);
+                    } else {
+                        showToast("Please select a testimony to download", "warning");
+                    }
+                    break;
 
-            case 'btn-logout':
-                logout();
-                break;
+                case 'btn-logout':
+                    logout();
+                    break;
 
-            case 'btn-premium':
-                showToast("Premium features coming soon", "info");
-                break;
+                case 'btn-premium':
+                    showToast("Premium subscription coming soon", "info");
+                    break;
+
+                default:
+                    // Handle other buttons if needed
+                    break;
+            }
+        } catch (err) {
+            console.error("UI Handler Error:", err);
+            showToast("Action failed. Please try again.", "error");
         }
-    });
+    };
+
+    document.addEventListener('click', mainClickHandler);
 
     // Language Selector
     const langSelector = document.getElementById('languageSelector');
@@ -95,47 +116,57 @@ function attachUIListeners() {
     }
 }
 
-// ====================== PROFILE NAVIGATION ======================
+// ====================== PROFILE SECTION ======================
 function showProfileSection() {
-    document.getElementById('homeSection')?.classList.remove('active');
-    document.getElementById('profileSection')?.classList.add('active');
-    
-    // Load enhanced profile
-    const currentUser = auth?.currentUser; // from auth module
+    const homeSection = document.getElementById('homeSection');
+    const profileSection = document.getElementById('profileSection');
+
+    if (homeSection) homeSection.classList.remove('active');
+    if (profileSection) profileSection.classList.add('active');
+
+    currentUser = window.auth?.currentUser; // assuming auth is exposed globally
+
     if (currentUser) {
         loadProfile(currentUser);
     } else {
+        showToast("Please sign in to view profile", "warning");
         googleLogin();
     }
 }
 
 function hideProfileSection() {
-    document.getElementById('profileSection')?.classList.remove('active');
-    document.getElementById('homeSection')?.classList.add('active');
+    const homeSection = document.getElementById('homeSection');
+    const profileSection = document.getElementById('profileSection');
+
+    if (profileSection) profileSection.classList.remove('active');
+    if (homeSection) homeSection.classList.add('active');
 }
 
 // ====================== FEED SWITCHING ======================
 export function switchFeed(newFeed) {
     currentFeed = newFeed;
-    
-    // Update media module mode
     setCurrentMode(newFeed);
-
-    // Re-initialize feed
     initFeed(db, newFeed);
 
-    // Visual feedback
+    // Update active nav buttons
     document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.classList.toggle('active', 
-            (newFeed === 'witness-voice' && btn.textContent.includes('Witness')) ||
-            (newFeed === 'citizen-talk' && btn.textContent.includes('Citizen'))
-        );
+        const isWitness = newFeed === 'witness-voice' && btn.textContent.toLowerCase().includes('witness');
+        const isCitizen = newFeed === 'citizen-talk' && btn.textContent.toLowerCase().includes('citizen');
+        
+        btn.classList.toggle('active', isWitness || isCitizen);
     });
 
-    showToast(newFeed === 'witness-voice' 
-        ? "👁️ Switched to Witness Voice (Forensic Mode)" 
-        : "💬 Switched to Citizen Talk", "success");
+    showToast(
+        newFeed === 'witness-voice' 
+            ? "👁️ Switched to Witness Voice • Forensic Mode" 
+            : "💬 Switched to Citizen Talk",
+        "success"
+    );
 }
 
-// --- Start App ---
+// ====================== GLOBAL EXPOSURES ======================
+window.switchFeed = switchFeed;           // Make available for inline HTML calls
+window.submitPeerVote = submitPeerVote;   // Safety for feed buttons
+
+// ====================== START APP ======================
 document.addEventListener('DOMContentLoaded', bootstrap);
