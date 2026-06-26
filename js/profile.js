@@ -1,251 +1,114 @@
-// js/profile.js
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import { getFirestore, doc, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-import { auth } from './firebase-init.js';
-import { updateUserProfile, getUserPosts, editPost, deletePost, togglePinPost } from './db.js';
-import { getTier, calculateTrustScore, showToast } from './utils.js';
+// js/profile.js - Clean & Upgraded Profile Module
+import { showToast, getTier, calculateTrustScore } from './utils.js';
+import { db } from './firebase-config.js';
+import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
-const db = getFirestore();
+let currentProfileUser = null;
 
-let currentUserId = null;
-let currentUserData = null;
-let elements = {};
-
-function cacheDOM() {
-    elements = {
-        avatar: document.getElementById('profile-avatar'),
-        username: document.getElementById('profile-username'),
-        email: document.getElementById('profile-email'),
-        roleBadge: document.getElementById('profile-role-badge'),
-        trustScore: document.getElementById('trust-score'),
-        editDisplayName: document.getElementById('edit-displayName'),
-        editBio: document.getElementById('edit-bio'),
-        nameCooldown: document.getElementById('name-cooldown'),
-        myPostsList: document.getElementById('my-posts-list'),
-        postCount: document.getElementById('post-count'),
-        reputationScore: document.getElementById('reputation-score'),
-        profileTierContainer: document.getElementById('profile-tier-container')
-    };
-}
-
-onAuthStateChanged(auth, (user) => {
-    if (user) {
-        currentUserId = user.uid;
-        cacheDOM();
-        listenToUserProfile(user.uid);
-    }
-});
-
-function listenToUserProfile(userId) {
-    const userRef = doc(db, "users", userId);
-    onSnapshot(userRef, (snapshot) => {
-        if (snapshot.exists()) {
-            currentUserData = snapshot.data();
-            renderProfileUI();
-            renderMyPosts(userId);
-        }
-    });
-}
-
-function renderProfileUI() {
-    if (!currentUserData) return;
-
-    const trustScore = currentUserData.trustCircle || 50;
-    const tier = getTier(trustScore);
-
-    // Avatar
-    if (elements.avatar) {
-        elements.avatar.innerHTML = currentUserData.photoURL 
-            ? `<img src="${currentUserData.photoURL}" class="w-full h-full object-cover">` 
-            : '👤';
-        elements.avatar.onclick = uploadAvatar;
+export async function loadProfile(user) {
+    if (!user) {
+        showToast("Please sign in to view profile", "warning");
+        return;
     }
 
-    // Basic Info
-    if (elements.username) elements.username.textContent = `@${currentUserData.username || 'user'}`;
-    if (elements.email) elements.email.textContent = currentUserData.email || '';
-    if (elements.roleBadge) elements.roleBadge.textContent = (currentUserData.role || 'citizen').toUpperCase();
-    if (elements.trustScore) elements.trustScore.textContent = trustScore;
+    currentProfileUser = user;
+    const profileSection = document.getElementById('profileSection');
+    if (!profileSection) return;
 
-    // Stats
-    if (elements.postCount) elements.postCount.textContent = currentUserData.testimoniesCount || 0;
-    if (elements.reputationScore) elements.reputationScore.textContent = calculateTrustScore(currentUserData);
+    try {
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+        const userData = userSnap.exists() ? userSnap.data() : {};
 
-    // === DYNAMIC TIER BADGE ===
-    if (elements.profileTierContainer) {
-        elements.profileTierContainer.innerHTML = `
-            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-2xl text-sm font-bold shadow-md" 
-                 style="background: linear-gradient(90deg, ${tier.color}, #f59e0b); color: black;">
-                <span>${tier.badge}</span>
-                <span class="text-xs opacity-90">${tier.name} Tier</span>
+        const trustScore = calculateTrustScore(userData);
+        const tier = getTier(trustScore);
+
+        profileSection.innerHTML = `
+            <div class="max-w-2xl mx-auto p-6">
+                <div class="flex justify-between items-center mb-8">
+                    <h2 class="text-3xl font-bold">👤 My Profile</h2>
+                    <button onclick="hideProfileSection()" 
+                            class="px-6 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-2xl transition">Close</button>
+                </div>
+
+                <div class="glass rounded-3xl p-8">
+                    <div class="flex flex-col items-center mb-8">
+                        <div class="w-28 h-28 rounded-3xl overflow-hidden border-4 border-emerald-500">
+                            <img src="${user.photoURL || 'https://via.placeholder.com/150?text=👤'}" 
+                                 class="w-full h-full object-cover" alt="Profile">
+                        </div>
+                        <h3 class="mt-4 text-2xl font-semibold">${user.displayName || user.email}</h3>
+                        <p class="text-emerald-400">@${userData.username || 'citizen'}</p>
+                    </div>
+
+                    <div class="text-center mb-8">
+                        <div class="inline-flex items-center gap-2 bg-zinc-900 px-6 py-3 rounded-2xl">
+                            <span style="color: ${tier.color}" class="text-3xl">${tier.badge || '🌟'}</span>
+                            <div>
+                                <p class="font-bold text-lg">${tier.name} Tier</p>
+                                <p class="text-xs text-zinc-400">Trust Score: ${trustScore}/100</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mb-8">
+                        <div class="bg-zinc-900 p-5 rounded-2xl text-center">
+                            <p class="text-3xl font-bold text-emerald-400">${userData.testimoniesCount || 0}</p>
+                            <p class="text-sm text-zinc-400">Testimonies</p>
+                        </div>
+                        <div class="bg-zinc-900 p-5 rounded-2xl text-center">
+                            <p class="text-3xl font-bold text-emerald-400">${userData.verificationsMade || 0}</p>
+                            <p class="text-sm text-zinc-400">Verifications</p>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm text-zinc-400 mb-2">Bio</label>
+                        <textarea id="bioInput" class="w-full h-24 bg-zinc-900 rounded-2xl p-4 text-zinc-100" 
+                                  placeholder="Tell us about yourself...">${userData.bio || ''}</textarea>
+                    </div>
+
+                    <button onclick="saveProfileChanges()" 
+                            class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 rounded-2xl font-medium transition">
+                        💾 Save Changes
+                    </button>
+                </div>
             </div>
         `;
-    }
 
-    showNameCooldown(currentUserData.lastNameChange);
-}
-
-// ... (rest of your functions: showNameCooldown, saveProfile, uploadAvatar, renderMyPosts, handlers remain the same)
-
-    // Edit Form
-    if (elements.editDisplayName) elements.editDisplayName.value = currentUserData.displayName || '';
-    if (elements.editBio) elements.editBio.value = currentUserData.bio || '';
-
-    showNameCooldown(currentUserData.lastNameChange);
-}
-
-function showNameCooldown(lastChange) {
-    if (!elements.nameCooldown || !lastChange) return;
-    const daysLeft = Math.ceil((lastChange + 60 * 24 * 60 * 60 * 1000 - Date.now()) / 86400000);
-    elements.nameCooldown.textContent = daysLeft > 0 ? `(Next change in ${daysLeft} days)` : '';
-}
-
-// ==================== SAVE PROFILE ====================
-window.saveProfile = async () => {
-    if (!currentUserId) return;
-
-    const updates = {
-        displayName: elements.editDisplayName?.value.trim(),
-        bio: elements.editBio?.value.trim()
-    };
-
-    Object.keys(updates).forEach(key => {
-        if (!updates[key]) delete updates[key];
-    });
-
-    try {
-        await updateUserProfile(currentUserId, updates);
-        showToast("✅ Profile updated successfully!", "success");
+        console.log("✅ Profile loaded");
     } catch (error) {
-        showToast("❌ " + error.message, "error");
-    }
-};
-
-// ==================== AVATAR UPLOAD ====================
-window.uploadAvatar = async () => {
-    if (!currentUserId) return;
-
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-
-    input.onchange = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        if (file.size > 5 * 1024 * 1024) {
-            showToast("Image must be smaller than 5MB", "error");
-            return;
-        }
-        try {
-            showToast("🖼️ Avatar upload ready. Connect with storage.js for full support.");
-            // Future implementation: upload to Firebase Storage
-        } catch (err) {
-            showToast("Failed to upload avatar", "error");
-        }
-    };
-
-    input.click();
-};
-
-// ==================== MY POSTS ====================
-async function renderMyPosts(userId) {
-    const container = elements.myPostsList;
-    if (!container) return;
-
-    container.innerHTML = `<p class="text-zinc-400 text-center py-8">Loading your posts...</p>`;
-
-    try {
-        const q = getUserPosts(userId);
-        const snapshot = await getDocs(q);
-
-        if (snapshot.empty) {
-            container.innerHTML = `<p class="text-zinc-400 text-center py-8">You haven't posted any testimonies yet.</p>`;
-            return;
-        }
-
-        container.innerHTML = '';
-        let count = 0;
-
-        snapshot.forEach((docSnap) => {
-            count++;
-            const post = { id: docSnap.id, ...docSnap.data() };
-            const isPinned = post.pinnedBy === userId;
-
-            const postEl = document.createElement('div');
-            postEl.className = 'glass rounded-3xl p-6 border border-zinc-700';
-
-            postEl.innerHTML = `
-                <div class="flex justify-between items-start mb-3">
-                    <div class="flex items-center gap-2 text-xs text-zinc-400">
-                        ${isPinned ? '<span class="text-amber-400">📌 Pinned</span>' : ''}
-                        <span>${new Date(post.createdAt?.toDate?.() || post.createdAt).toLocaleDateString()}</span>
-                    </div>
-                    ${post.editedAt ? '<span class="text-[10px] text-zinc-500">Edited</span>' : ''}
-                </div>
-                
-                <div class="text-sm leading-relaxed mb-5">${post.content || ''}</div>
-                
-                ${post.mediaURL ? `<img src="${post.mediaURL}" class="w-full rounded-2xl mb-4">` : ''}
-                
-                <div class="flex flex-wrap gap-2 text-sm border-t border-zinc-700 pt-4">
-                    <button onclick="editPostHandler('${post.id}')" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-2xl">✏️ Edit</button>
-                    <button onclick="togglePinHandler('${post.id}')" class="px-4 py-2 ${isPinned ? 'bg-amber-600' : 'bg-zinc-800 hover:bg-zinc-700'} rounded-2xl">${isPinned ? '📌 Unpin' : '📍 Pin'}</button>
-                    <button onclick="deletePostHandler('${post.id}')" class="px-4 py-2 bg-red-900/50 hover:bg-red-900 text-red-300 rounded-2xl">🗑️ Delete</button>
-                    
-                    <button onclick="sharePost('${post.id}')" class="px-4 py-2 bg-emerald-900/50 hover:bg-emerald-900 rounded-2xl ml-auto">🔗 Share</button>
-                    
-                    <button onclick="reactToPost('${post.id}', '👍')" class="px-3 py-2 hover:bg-zinc-700 rounded-2xl">👍</button>
-                    <button onclick="reactToPost('${post.id}', '❤️')" class="px-3 py-2 hover:bg-zinc-700 rounded-2xl">❤️</button>
-                    <button onclick="reactToPost('${post.id}', '🔥')" class="px-3 py-2 hover:bg-zinc-700 rounded-2xl">🔥</button>
-                </div>
-            `;
-
-            container.appendChild(postEl);
-        });
-    } catch (e) {
-        console.error(e);
-        container.innerHTML = `<p class="text-red-400">Failed to load posts.</p>`;
+        console.error("Profile load error:", error);
+        showToast("Failed to load profile", "error");
     }
 }
 
-// ==================== GLOBAL HANDLERS ====================
-window.editPostHandler = async (postId) => {
-    const newContent = prompt("Edit your testimony:", "");
-    if (newContent === null || !newContent.trim()) return;
+export async function saveProfileChanges() {
+    if (!currentProfileUser) return;
+
+    const bioInput = document.getElementById('bioInput');
+    if (!bioInput) return;
+
     try {
-        await editPost(postId, currentUserId, newContent);
-        showToast("Post updated successfully");
-    } catch (e) { 
-        showToast(e.message, "error"); 
+        const userRef = doc(db, "users", currentProfileUser.uid);
+        await updateDoc(userRef, {
+            bio: bioInput.value.trim(),
+            lastUpdated: new Date().toISOString()
+        });
+        showToast("Profile updated successfully!", "success");
+        loadProfile(currentProfileUser);
+    } catch (error) {
+        console.error("Save profile error:", error);
+        showToast("Failed to save changes", "error");
     }
+}
+
+// Global functions for HTML buttons
+window.hideProfileSection = () => {
+    const home = document.getElementById('homeSection');
+    const profile = document.getElementById('profileSection');
+    if (profile) profile.classList.remove('active');
+    if (home) home.classList.add('active');
 };
 
-window.deletePostHandler = async (postId) => {
-    if (!confirm("Delete this post permanently?")) return;
-    try {
-        await deletePost(postId, currentUserId);
-        showToast("Post deleted successfully");
-    } catch (e) { 
-        showToast(e.message, "error"); 
-    }
-};
-
-window.togglePinHandler = async (postId) => {
-    try {
-        await togglePinPost(postId, currentUserId);
-        showToast("Pin status updated");
-    } catch (e) { 
-        showToast(e.message, "error"); 
-    }
-};
-
-window.sharePost = (postId) => {
-    const url = `${window.location.origin}/?post=${postId}`;
-    navigator.clipboard.writeText(url).then(() => {
-        showToast("✅ Link copied to clipboard!");
-    });
-};
-
-window.reactToPost = (postId, emoji) => {
-    showToast(`Reacted with ${emoji} (Full reaction system coming soon)`);
-};
+window.saveProfileChanges = saveProfileChanges;
