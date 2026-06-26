@@ -43,10 +43,20 @@ function getButtonId(tab) {
 
 // Profile Functions
 function showProfileSection() {
+    console.log("👤 Opening Profile");
     document.getElementById('homeSection').classList.add('hidden');
-    document.getElementById('profileSection').classList.remove('hidden');
+    document.getElementById('feedContainer').classList.add('hidden'); // Hide feed too
+    const profile = document.getElementById('profileSection');
+    profile.classList.remove('hidden');
+    profile.scrollTop = 0;
 }
 
+function hideProfileSection() {
+    console.log("👤 Closing Profile");
+    document.getElementById('profileSection').classList.add('hidden');
+    document.getElementById('homeSection').classList.remove('hidden');
+    document.getElementById('feedContainer').classList.remove('hidden');
+}
 function hideProfileSection() {
     document.getElementById('profileSection').classList.add('hidden');
     document.getElementById('homeSection').classList.remove('hidden');
