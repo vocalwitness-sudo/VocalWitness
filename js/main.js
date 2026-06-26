@@ -415,7 +415,17 @@ export function switchFeed(newFeed) {
         "success"
     );
 }
+function refreshUIForLung() {
+    const isTrue = currentLung === 'true';
+    
+    // Toggle UI visibility
+    document.querySelectorAll('.true-witness-only').forEach(el => {
+        el.classList.toggle('hidden', !isTrue);
+    });
 
+    // Optional: Change the visual theme of the UI to reflect the "Forensic" nature
+    document.body.classList.toggle('forensic-mode', isTrue);
+}
 // ====================== GLOBAL EXPOSURES ======================
 window.switchFeed = switchFeed;           // Make available for inline HTML calls
 window.submitPeerVote = submitPeerVote;   // Safety for feed buttons
