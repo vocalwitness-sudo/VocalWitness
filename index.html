@@ -7,27 +7,31 @@
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="/logo.png" type="image/png">
     <title>VocalWitness • Premium Forensic Ledger</title>
-    
+   
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <script src="https://js.paystack.co/v1/inline.js"></script>
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-
+    
     <style>
-        body { 
-            font-family: 'Inter', system-ui, sans-serif; 
-            background: #0a0f1c; 
-            color: white; 
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: #0a0f1c;
+            color: white;
         }
-        .glass { 
-            background: rgba(17, 24, 39, 0.95); 
-            backdrop-filter: blur(20px); 
-            border: 1px solid rgba(16, 185, 129, 0.25); 
+        .glass {
+            background: rgba(17, 24, 39, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+        }
+        .nav-btn {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .nav-btn.active {
             background-color: #10b981 !important;
-            color: black !important;
+            color: #111827 !important;
             font-weight: 700;
+            box-shadow: 0 10px 15px -3px rgb(16 185 129 / 0.4);
         }
         .premium-btn {
             background: linear-gradient(90deg, #f59e0b, #fbbf24);
@@ -38,37 +42,28 @@
             transform: translateY(-2px);
             box-shadow: 0 10px 20px -5px rgb(245 158 11 / 0.5);
         }
-        .image-preview { 
-            max-height: 340px; 
-            object-fit: cover; 
-            border-radius: 20px; 
-            width: 100%; 
+        .image-preview {
+            max-height: 340px;
+            object-fit: cover;
+            border-radius: 20px;
+            width: 100%;
         }
-        .recording-active { 
-            animation: pulse 1.5s infinite; 
-            background-color: #ef4444 !important; 
+        .recording-active {
+            animation: pulse 1.5s infinite;
+            background-color: #ef4444 !important;
         }
-        @keyframes pulse { 
-            0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } 
-        }
-        button {
-            position: relative;
-            z-index: 50;
-            pointer-events: auto !important;
-            cursor: pointer;
+        @keyframes pulse {
+            0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; }
         }
     </style>
 </head>
 <body class="min-h-screen pb-20 p-4">
-
-    <!-- Legal Notice -->
-    <div class="max-w-2xl mx-auto bg-red-950/40 border border-red-500/30 rounded-3xl p-5 text-xs mb-8">
-        <strong class="text-red-400">Important Legal Notice:</strong><br>
-        VocalWitness functions strictly as an un-manipulated decentralized distribution medium.
+    <!-- Legal Notice (smaller & less intrusive) -->
+    <div class="max-w-2xl mx-auto bg-red-950/30 border border-red-500/20 rounded-3xl p-4 text-xs mb-6 text-center">
+        <strong class="text-red-400">Legal:</strong> VocalWitness is an un-manipulated decentralized distribution medium.
     </div>
 
     <div class="max-w-2xl mx-auto">
-
         <!-- HEADER -->
         <header class="flex items-center justify-between mb-8">
             <div class="flex items-center gap-3">
@@ -80,45 +75,38 @@
                     <p class="text-xs text-emerald-500 -mt-1">Truth • Evidence • Public Square</p>
                 </div>
             </div>
-
             <div class="flex items-center gap-3">
                 <button id="btn-premium" class="premium-btn px-6 py-3 rounded-2xl flex items-center gap-2 shadow-xl hover:scale-105 transition-all">
                     ⭐ Unlock Premium
                 </button>
-                <button id="btn-profile" class="w-11 h-11 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-3xl transition-all border border-zinc-600">
+                <button id="btn-profile" class="w-11 h-11 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-3xl transition-all border border-zinc-600 flex items-center justify-center">
                     👤
                 </button>
             </div>
-            <div id="profile-tier-container" class="inline-flex items-center gap-2"></div>
         </header>
 
         <!-- Search -->
-        <div class="bg-zinc-900 border border-zinc-700 rounded-3xl p-4 mb-8">
+        <div class="mb-8">
             <input id="searchInput" type="text" placeholder="Search testimonies..." 
-                   class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-5 py-4 focus:outline-none">
+                   class="w-full bg-zinc-900 border border-zinc-700 rounded-3xl px-6 py-4 focus:outline-none focus:border-emerald-500 text-lg">
         </div>
 
-        <!-- Navigation -->
-       <nav class="grid grid-cols-2 gap-2 mb-10 bg-zinc-900 p-1.5 rounded-3xl">
-    <button onclick="switchLung('citizen')" id="citizenBtn" class="nav-btn active py-4 rounded-3xl text-sm font-medium">Citizen Talk</button>
-    <button onclick="switchLung('true')" id="trueBtn" class="nav-btn py-4 rounded-3xl text-sm font-medium">True Witness</button>
-</nav>
-
-<div class="flex gap-2 mb-8">
-    <button id="btn-live-arena" class="true-witness-only hidden py-3 px-6 bg-zinc-800 rounded-2xl text-sm border border-zinc-700">
-        Live Arena
-    </button>
-    <button id="btn-witness-circle" class="true-witness-only hidden py-3 px-6 bg-zinc-800 rounded-2xl text-sm border border-zinc-700">
-        Witness Circle
-    </button>
-</div>
+        <!-- Navigation Tabs -->
+        <nav class="grid grid-cols-3 gap-2 mb-10 bg-zinc-900 p-1.5 rounded-3xl">
+            <button onclick="switchTab('citizen-talk')" id="citizenBtn" 
+                    class="nav-btn active py-4 rounded-3xl text-sm font-medium">Citizen Talk</button>
+            <button onclick="switchTab('true-witness')" id="trueBtn" 
+                    class="nav-btn py-4 rounded-3xl text-sm font-medium">True Witness</button>
+            <button onclick="switchTab('live-arena')" id="liveBtn" 
+                    class="nav-btn py-4 rounded-3xl text-sm font-medium">Live Arena</button>
+        </nav>
 
         <!-- Composer -->
         <div id="homeSection" class="glass rounded-3xl p-8 mb-10">
-            <textarea id="mainInput" rows="4" 
+            <textarea id="mainInput" rows="4"
                       class="w-full bg-transparent border-0 focus:outline-none text-lg placeholder-zinc-400 resize-none leading-relaxed"
                       placeholder="Share your raw testimony... What did you witness?"></textarea>
-
+            
             <div class="flex gap-3 mt-8">
                 <button id="btn-photo" class="flex-1 py-5 bg-zinc-800 hover:bg-zinc-700 rounded-2xl transition-all flex items-center justify-center gap-3 font-medium">
                     📸 Photo + Forensic Shield
@@ -127,10 +115,10 @@
                     🎤 Voice Testimony
                 </button>
             </div>
-
+            
             <div id="preview-area" class="mt-6 hidden"></div>
-
-            <button id="postButton" 
+            
+            <button id="postButton"
                     class="mt-10 w-full py-5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-black font-bold text-lg rounded-3xl transition-all active:scale-95 shadow-lg">
                 🚀 Publish Testimony to the Square
             </button>
@@ -146,8 +134,7 @@
                     ← Return to Home
                 </button>
                 <div class="glass rounded-3xl p-8">
-                    <!-- Your full profile content goes here -->
-                    <div class="text-center py-12 text-zinc-400">
+                    <div class="text-center py-12 text-zinc-400" id="profile-content">
                         Profile Section Ready
                     </div>
                 </div>
@@ -157,42 +144,9 @@
 
     <!-- Premium Modal -->
     <div id="premiumModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-        <div class="bg-zinc-900 border border-amber-500/30 rounded-3xl max-w-md w-full mx-4 p-8 text-center">
-            <div class="text-6xl mb-6">⭐</div>
-            <h2 class="text-3xl font-bold text-amber-400 mb-2">Go Premium</h2>
-            <p class="text-zinc-400 mb-8">Unlock the full power of VocalWitness</p>
-            
-            <div class="space-y-5 text-left mb-10">
-                <div class="flex gap-3"><span class="text-emerald-500">✓</span><div>Unlimited Testimonies</div></div>
-                <div class="flex gap-3"><span class="text-emerald-500">✓</span><div>Forensic Shield + AI Tools</div></div>
-                <div class="flex gap-3"><span class="text-emerald-500">✓</span><div>Priority in Live Arena</div></div>
-            </div>
-
-            <button id="btn-upgrade-now" class="w-full py-4 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-bold rounded-2xl mb-4">
-                Upgrade — ₦4,990 / month
-            </button>
-            <button id="btn-close-premium" class="w-full py-3 text-zinc-400 hover:text-white">Maybe later</button>
-        </div>
+        <!-- ... keep your existing premium modal ... -->
     </div>
 
-    <script type="module" src="/js/main.js?v=20250624"></script>
-
-    <!-- Service Worker -->
- <!-- Replace your current SW script with this -->
-<script>
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js', { 
-            scope: '/' 
-        })
-        .then(reg => {
-            console.log('✅ Service Worker registered successfully with scope:', reg.scope);
-        })
-        .catch(err => {
-            console.error('❌ Service Worker registration failed:', err);
-        });
-    });
-}
-</script>
+    <script type="module" src="/js/main.js?v=20250626"></script>
 </body>
 </html>
