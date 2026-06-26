@@ -27,6 +27,17 @@ export class VocalWitnessEngine {
         this.recordingTimeout = null;
     }
 
+    // /js/vocalWitnessEngine.js
+export class BaseEngine { /* ... your common methods ... */ }
+
+export class TruthWitnessEngine extends BaseEngine {
+    constructor() { super(); /* Setup for high-trust forensic mode */ }
+}
+
+export class CitizenTalkEngine extends BaseEngine {
+    constructor() { super(); /* Setup for open community mode */ }
+}
+
     async validateWitnessAccess(userId) {
         const userRef = doc(this.db, 'users', userId);
         const userDoc = await getDoc(userRef);
