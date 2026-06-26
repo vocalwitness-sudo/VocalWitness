@@ -22,3 +22,30 @@ export async function processWitnessProof(userId, confidenceScore) {
     const addProof = httpsCallable(functions, 'addWitnessProof');
     return await addProof({ userId, confidenceScore });
 }
+// /js/vocalWitnessEngine.js
+
+// 1. Base Class: Shared functionality (recording, storage)
+class BaseEngine {
+    constructor() {
+        this.mediaRecorder = null;
+        this.audioChunks = [];
+        // Shared methods like stopVoiceRecording, cleanupStream, etc.
+    }
+}
+
+// 2. Truth Witness Engine: Forensic-level, high-security
+export class TruthWitnessEngine extends BaseEngine {
+    async publish(data) {
+        // Enforce ZK Proof validation BEFORE allowing write to /truth_witness
+        console.log("Validating forensic integrity...");
+        // Call your ZK verification here
+    }
+}
+
+// 3. Citizen Talk Engine: Fast, public square logic
+export class CitizenTalkEngine extends BaseEngine {
+    async publish(data) {
+        // Simple, fast write to /citizen_talk
+        console.log("Publishing to public square...");
+    }
+}
