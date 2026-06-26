@@ -92,7 +92,7 @@ function renderProfileUI() {
     if (elements.editBio) elements.editBio.value = currentUserData.bio || '';
 
     showNameCooldown(currentUserData.lastNameChange);
-}
+
 
 function showNameCooldown(lastChange) {
     if (!elements.nameCooldown || !lastChange) return;
