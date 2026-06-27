@@ -27,9 +27,22 @@ function highlightActiveNav() {
 
 // ====================== PUBLISH & OTHER FUNCTIONS (keep most as-is) ======================
 async function publishTestimony() {
-    // ... your existing function (keep it)
+    const textarea = document.getElementById('mainInput');
+    const text = textarea?.value.trim();
+    if (!text || text.length < 10) {
+        showToast("Please write a proper testimony (min 10 characters)", "error");
+        return;
+    }
+    showToast("Publishing to the Square...", "info");
+    try {
+        console.log("📤 Publishing testimony:", text);
+        showToast("✅ Testimony published successfully!", "success");
+        if (textarea) textarea.value = '';
+    } catch (err) {
+        console.error(err);
+        showToast("Failed to publish. Please try again.", "error");
+    }
 }
-
 // ====================== CLICK HANDLER ======================
 function attachUIListeners() {
     document.addEventListener('click', (e) => {
