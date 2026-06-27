@@ -84,6 +84,3 @@ function renderPost(id, data) {
     `;
     feedContainer.appendChild(postEl);
 }
-
-// Export for other files if needed
-export { initFeed };
