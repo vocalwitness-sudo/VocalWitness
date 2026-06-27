@@ -1,12 +1,11 @@
-// js/profile.js - Upgraded (Preserves your original structure + Better UX)
+// js/profile.js - Fixed & Clean
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { auth } from './firebase-init.js';
-import { updateUserProfile } from './db.js';           // Keep your db.js functions
+import { updateUserProfile } from './db.js';
 import { getTier, calculateTrustScore, showToast } from './utils.js';
 
 const db = getFirestore();
-
 let currentUserId = null;
 let currentUserData = null;
 let elements = {};
@@ -46,21 +45,21 @@ function listenToUserProfile(userId) {
         if (snapshot.exists()) {
             currentUserData = snapshot.data();
             renderProfileUI();
-            renderMyPosts(userId);   // Keep your existing function
+            // renderMyPosts(userId); // Uncomment when function exists
         }
     });
 }
 
 function renderProfileUI() {
     if (!currentUserData) return;
-
+    
     const trustScore = currentUserData.trustCircle || currentUserData.reputationScore || 50;
     const tier = getTier(trustScore);
 
     // Avatar
     if (elements.avatar) {
-        elements.avatar.innerHTML = currentUserData.photoURL 
-            ? `<img src="${currentUserData.photoURL}" class="w-full h-full object-cover rounded-3xl">` 
+        elements.avatar.innerHTML = currentUserData.photoURL
+            ? `<img src="${currentUserData.photoURL}" class="w-full h-full object-cover rounded-3xl">`
             : `<span class="text-6xl">👤</span>`;
         elements.avatar.onclick = window.uploadAvatar;
     }
@@ -90,9 +89,9 @@ function renderProfileUI() {
     // Edit fields
     if (elements.editDisplayName) elements.editDisplayName.value = currentUserData.displayName || '';
     if (elements.editBio) elements.editBio.value = currentUserData.bio || '';
-
     showNameCooldown(currentUserData.lastNameChange);
-    
+}
+
 function showNameCooldown(lastChange) {
     if (!elements.nameCooldown || !lastChange) return;
     const daysLeft = Math.ceil((lastChange + 60*24*60*60*1000 - Date.now()) / 86400000);
@@ -107,7 +106,6 @@ window.saveProfile = async () => {
         bio: elements.editBio?.value.trim()
     };
     Object.keys(updates).forEach(key => { if (!updates[key]) delete updates[key]; });
-
     try {
         await updateUserProfile(currentUserId, updates);
         showToast("✅ Profile updated successfully!", "success");
@@ -130,21 +128,17 @@ window.uploadAvatar = async () => {
             return;
         }
         showToast("Avatar upload connected to storage.js (coming soon)", "info");
-        // TODO: Connect to uploadForensicMedia later
     };
     input.click();
 };
 
 // Show / Hide Profile
 window.showProfileSection = () => {
-    if (elements.profileSection) elements.profileSection.classList.add('active');
-    if (elements.homeSection) elements.homeSection.classList.remove('active');
+    if (elements.profileSection) elements.profileSection.classList.remove('hidden');
+    if (elements.homeSection) elements.homeSection.classList.add('hidden');
 };
 
 window.hideProfileSection = () => {
-    if (elements.profileSection) elements.profileSection.classList.remove('active');
-    if (elements.homeSection) elements.homeSection.classList.add('active');
+    if (elements.profileSection) elements.profileSection.classList.add('hidden');
+    if (elements.homeSection) elements.homeSection.classList.remove('hidden');
 };
-
-// Keep your other handlers (renderMyPosts, editPostHandler, etc.)
-// Paste them here if they exist in your backup
