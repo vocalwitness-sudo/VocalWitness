@@ -1,32 +1,69 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-NG">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VocalWitness - Citizen Talk</title>
-    <link rel="stylesheet" href="style.css">
-    <!-- Remove Tailwind CDN here once we switch to proper Tailwind -->
-    <script src="https://cdn.tailwindcss.com"></script>   <!-- temporary -->
+    <meta name="theme-color" content="#10b981">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/logo.png" type="image/png">
+    <title>VocalWitness • True Witness</title>
+ 
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+    <script src="https://js.paystack.co/v1/inline.js"></script>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: white; }
+        .glass { background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(16, 185, 129, 0.25); }
+        .nav-btn { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .nav-btn.active { background-color: #10b981 !important; color: #111827 !important; font-weight: 700; box-shadow: 0 10px 15px -3px rgb(16 185 129 / 0.4); }
+        .premium-btn { background: linear-gradient(90deg, #f59e0b, #fbbf24); color: black; font-weight: 700; }
+        .premium-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgb(245 158 11 / 0.5); }
+    </style>
 </head>
-<body>
-    <!-- Header / Nav -->
-    <header>
-        <!-- Your logo + navigation links -->
-        <a href="/">Home</a>
-        <a href="/true-witness">True Witness</a>
-        <a href="/live-arena">Live Arena</a>
-    </header>
+<body class="min-h-screen pb-20 p-4">
+    <!-- Legal Notice -->
+    <div class="max-w-2xl mx-auto bg-red-950/30 border border-red-500/20 rounded-3xl p-4 text-xs mb-6 text-center">
+        <strong class="text-red-400">Legal:</strong> VocalWitness is an un-manipulated decentralized distribution medium.
+    </div>
 
-    <main>
-        <h1>Citizen Talk</h1>
-        <!-- Put the content/logic that was in the citizen-talk tab here -->
-        <!-- You can include specific JS only for this page -->
-    </main>
+    <div class="max-w-2xl mx-auto">
+        <!-- HEADER -->
+        <header class="flex items-center justify-between mb-8">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-3xl shadow-inner">🔊</div>
+                <div>
+                    <h1 class="text-4xl font-bold tracking-tighter text-emerald-400">VocalWitness</h1>
+                    <p class="text-xs text-emerald-500 -mt-1">True Witness • Forensic Mode</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button id="btn-premium" class="premium-btn px-6 py-3 rounded-2xl flex items-center gap-2 shadow-xl hover:scale-105 transition-all">⭐ Unlock Premium</button>
+                <button id="btn-profile" class="w-11 h-11 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-3xl transition-all border border-zinc-600 flex items-center justify-center">👤</button>
+            </div>
+        </header>
 
-    <script src="js/firebase-config.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/utils.js"></script>
-    <!-- Add page-specific scripts -->
-    <script src="js/citizen-talk.js"></script>   <!-- we'll create this later if needed -->
+        <div class="glass rounded-3xl p-8 text-center">
+            <div class="text-6xl mb-6">👁️</div>
+            <h2 class="text-3xl font-bold mb-4 text-emerald-400">True Witness</h2>
+            <p class="text-zinc-400 mb-10">Forensic Shield + Verified Evidence</p>
+            
+            <!-- Add your True Witness specific UI here later (e.g. advanced upload with ZK proof) -->
+            <div class="text-zinc-500 py-12">
+                True Witness features coming soon...<br>
+                <span class="text-emerald-500">• Voice + Photo Forensic Analysis</span><br>
+                <span class="text-emerald-500">• Zero-Knowledge Proofs</span>
+            </div>
+            
+            <button id="btn-photo" class="w-full py-5 bg-zinc-800 hover:bg-zinc-700 rounded-2xl mb-4">📸 Start Forensic Upload</button>
+            <button id="btn-voice" class="w-full py-5 bg-zinc-800 hover:bg-zinc-700 rounded-2xl">🎤 Voice Testimony + Proof</button>
+        </div>
+    </div>
+
+    <script>
+        tailwind.config = { content: ["./**/*.{html,js}"] };
+    </script>
+    <script type="module" src="js/main.js"></script>
 </body>
 </html>
