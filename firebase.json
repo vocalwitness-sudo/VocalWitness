@@ -6,9 +6,27 @@
       "**/.*",
       "**/node_modules/**",
       "functions/**",
-      ".git/**"
+      ".git/**",
+      "tailwind.config.js",
+      "postcss.config.js"
     ],
     "rewrites": [
+      {
+        "source": "/verify",
+        "destination": "/verify.html"
+      },
+      {
+        "source": "/citizen-talk",
+        "destination": "/citizen-talk.html"
+      },
+      {
+        "source": "/true-witness",
+        "destination": "/true-witness.html"
+      },
+      {
+        "source": "/live-arena",
+        "destination": "/live-arena.html"
+      },
       {
         "source": "**",
         "destination": "/index.html"
@@ -16,7 +34,7 @@
     ],
     "headers": [
       {
-        "source": "**/*.@(js|css)",
+        "source": "**/*.@(js|css|png|jpg|jpeg|gif|ico|svg)",
         "headers": [
           {
             "key": "Cache-Control",
@@ -25,7 +43,7 @@
         ]
       },
       {
-        "source": "**/index.html",
+        "source": "**/*.html",
         "headers": [
           {
             "key": "Cache-Control",
