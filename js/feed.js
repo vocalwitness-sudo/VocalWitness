@@ -83,4 +83,4 @@ function renderPost(id, data) {
         </div>
     `;
     feedContainer.appendChild(postEl);
-}
+
