@@ -92,8 +92,7 @@ function renderProfileUI() {
     if (elements.editBio) elements.editBio.value = currentUserData.bio || '';
 
     showNameCooldown(currentUserData.lastNameChange);
-
-
+    
 function showNameCooldown(lastChange) {
     if (!elements.nameCooldown || !lastChange) return;
     const daysLeft = Math.ceil((lastChange + 60*24*60*60*1000 - Date.now()) / 86400000);
