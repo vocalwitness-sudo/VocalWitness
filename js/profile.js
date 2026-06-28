@@ -52,44 +52,29 @@ function listenToUserProfile(userId) {
 
 function renderProfileUI() {
     if (!currentUserData) return;
+
+    const tierInfo = getTierInfo(currentUserData);
     
-    const trustScore = currentUserData.trustCircle || currentUserData.reputationScore || 50;
-    const tier = getTier(trustScore);
-
-    // Avatar
-    if (elements.avatar) {
-        elements.avatar.innerHTML = currentUserData.photoURL
-            ? `<img src="${currentUserData.photoURL}" class="w-full h-full object-cover rounded-3xl">`
-            : `<span class="text-6xl">👤</span>`;
-        elements.avatar.onclick = window.uploadAvatar;
-    }
-
-    // Basic Info
+    // Avatar, username, email (keep your existing code)
+    if (elements.avatar) { ... } // your code
     if (elements.username) elements.username.textContent = `@${currentUserData.username || 'citizen'}`;
     if (elements.email) elements.email.textContent = currentUserData.email || '';
-    if (elements.roleBadge) elements.roleBadge.textContent = (currentUserData.role || 'citizen').toUpperCase();
-    if (elements.trustScore) elements.trustScore.textContent = trustScore;
 
-    // Stats
-    if (elements.postCount) elements.postCount.textContent = currentUserData.testimoniesCount || 0;
-    if (elements.reputationScore) elements.reputationScore.textContent = calculateTrustScore(currentUserData);
-
-    // Tier Badge
+    // Updated Tier Badge
     if (elements.profileTierContainer) {
         elements.profileTierContainer.innerHTML = `
-            <div class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-bold rounded-3xl text-lg shadow-lg">
-                <span class="text-3xl">${tier.badge || '🌟'}</span>
-                <div>
-                    <div>${tier.name} Tier</div>
-                    <div class="text-xs opacity-75">Trust Score: ${trustScore}/100</div>
+            <div class="inline-flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-${tierInfo.color}-500 to-${tierInfo.color}-600 text-black font-bold rounded-3xl shadow-lg">
+                <span class="text-4xl">${tierInfo.emoji}</span>
+                <div class="text-left">
+                    <div class="text-xl">${tierInfo.name}</div>
+                    <div class="text-xs opacity-90">${tierInfo.desc}</div>
                 </div>
             </div>`;
     }
 
-    // Edit fields
-    if (elements.editDisplayName) elements.editDisplayName.value = currentUserData.displayName || '';
-    if (elements.editBio) elements.editBio.value = currentUserData.bio || '';
-    showNameCooldown(currentUserData.lastNameChange);
+    // Trust Score
+    const trustScore = currentUserData.trustCircle || currentUserData.reputationScore || 50;
+    if (elements.trustScore) elements.trustScore.textContent = trustScore;
 }
 
 function showNameCooldown(lastChange) {
