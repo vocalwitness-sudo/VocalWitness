@@ -2,7 +2,9 @@
 import {
     collection, query, orderBy, onSnapshot, where, limit, startAfter, getDocs
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-import { showToast, submitPeerVote } from './utils.js';
+// In js/feed.js, add this at the bottom:
+import { submitPeerVote } from './utils.js';
+window.submitPeerVote = submitPeerVote;
 
 let activeFeedListener = null;
 let lastDoc = null;
