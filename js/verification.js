@@ -1,47 +1,11 @@
-/**
- * VocalWitness Verification Module
- * Manages Identity Tiering, ZK Proofs, and Peer Invitations
- */
-
-import { collection, addDoc, doc, getDoc, updateDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+// js/verification.js  (Recommended new name)
+import { collection, addDoc, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { db, auth } from "./firebase-config.js";
 import { showToast } from "./utils.js";
-
-// State
-export let isPhoneVerified = false;
-export let isZKVerified = false;
+import { upgradeToTrustCircle } from './tier.js';   // from earlier
 
 /**
- * Start Zero-Knowledge Verification
- */
-export async function startZKVerification() {
-    try {
-        if (!auth.currentUser) {
-            showToast("Please log in first", "error");
-            return;
-        }
-
-        showToast("🔐 Starting ZK Verification...");
-
-        // TODO: Add your actual ZK proof logic here later
-        // For now, simulate success
-        setTimeout(() => {
-            isZKVerified = true;
-            showToast("✅ ZK Verification Successful! You are now Tier 2", "success");
-            
-            // Optional: Update UI
-            const statusEl = document.getElementById('zk-status');
-            if (statusEl) statusEl.textContent = "Verified";
-        }, 1500);
-
-    } catch (error) {
-        console.error("ZK Verification failed:", error);
-        showToast("❌ ZK Verification failed", "error");
-    }
-}
-
-/**
- * Start Phone Verification
+ * Start Phone Verification → Trust Circle
  */
 export async function startPhoneVerification() {
     try {
@@ -50,81 +14,47 @@ export async function startPhoneVerification() {
             return;
         }
 
-        showToast("📱 Starting Phone Verification...");
-        
-        // TODO: Add real phone verification (e.g. Firebase Phone Auth)
-        setTimeout(() => {
-            isPhoneVerified = true;
-            showToast("✅ Phone Verified! You are now Tier 1", "success");
-        }, 1200);
+        showToast("📱 Sending verification code to your phone...", "info");
+
+        // TODO: Replace with real SMS service later
+        setTimeout(async () => {
+            // Auto-verify for demo (replace with real OTP flow)
+            await upgradeToTrustCircle(auth.currentUser.uid);
+            showToast("✅ Phone Verified! You are now in Trust Circle", "success");
+        }, 1500);
 
     } catch (error) {
-        console.error("Phone verification failed:", error);
+        console.error(error);
         showToast("❌ Phone verification failed", "error");
     }
 }
 
 /**
- * Send Invitation to Another User
+ * Start ZK Verification → True Witness
  */
-export async function sendInvitation() {
+export async function startZKVerification() {
     try {
         if (!auth.currentUser) {
-            showToast("Please log in to send invites", "error");
+            showToast("Please log in first", "error");
             return;
         }
 
-        const inviteCode = "VW-" + Math.random().toString(36).substring(2, 10).toUpperCase();
-        
-        await addDoc(collection(db, "invites"), {
-            from: auth.currentUser.uid,
-            code: inviteCode,
-            createdAt: serverTimestamp(),
-            used: false
-        });
+        showToast("🔐 Starting Zero-Knowledge Verification...", "info");
 
-        showToast(`✅ Invitation sent! Code: ${inviteCode}`, "success");
-        
-    } catch (error) {
-        console.error("Failed to send invite:", error);
-        showToast("❌ Failed to send invitation", "error");
-    }
-}
+        // TODO: Real ZK logic later
+        setTimeout(async () => {
+            const userRef = doc(db, "users", auth.currentUser.uid);
+            await updateDoc(userRef, {
+                zkVerified: true,
+                tier: "true_witness",
+                lastUpdated: serverTimestamp()
+            });
 
-/**
- * Check Incoming Invite
- */
-export async function checkIncomingInvite() {
-    try {
-        if (!auth.currentUser) return;
-
-        showToast("🔍 Checking for invites...");
-
-        // TODO: Add real query logic
-        setTimeout(() => {
-            showToast("📬 No pending invites found (demo)", "info");
-        }, 800);
+            showToast("🛡️ ZK Verification Complete! You are now a True Witness", "success");
+        }, 2000);
 
     } catch (error) {
-        console.error("Invite check failed:", error);
+        console.error(error);
+        showToast("❌ ZK Verification failed", "error");
     }
-}
-
-/**
- * Populate Country Dropdown (for language or phone codes)
- */
-export function populateCountryDropdown(selectorId) {
-    const selector = document.getElementById(selectorId);
-    if (!selector) return;
-
-    const countries = [
-        { code: "en", name: "🇬🇧 English" },
-        { code: "fr", name: "🇫🇷 Français" },
-        { code: "es", name: "🇪🇸 Español" },
-        // Add more as needed
-    ];
-
-    selector.innerHTML = countries.map(c => 
-        `<option value="${c.code}">${c.name}</option>`
-    ).join('');
 }
