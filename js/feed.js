@@ -8,7 +8,7 @@ let activeFeedListener = null;
 let lastDoc = null;
 let currentFeed = 'citizen-talk';
 
-function initFeed(db, feedType = 'citizen-talk') {
+export function initFeed(db, feedType = 'citizen-talk') {
     currentFeed = feedType;
 
     const feedContainer = document.getElementById('feedContainer');
@@ -85,4 +85,3 @@ function renderPost(id, data) {
     feedContainer.appendChild(postEl);
 }
 
-export { initFeed };
