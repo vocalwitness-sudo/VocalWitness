@@ -14,38 +14,15 @@
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     
     <style>
-        body {
-            font-family: 'Inter', system-ui, sans-serif;
-            background: #0a0f1c;
-            color: white;
-        }
-        .glass {
-            background: rgba(17, 24, 39, 0.95);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(16, 185, 129, 0.25);
-        }
-        .guardian-btn {
-            background: linear-gradient(90deg, #10b981, #34d399);
-            color: black;
-            font-weight: 700;
-        }
-        .guardian-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px -5px rgb(16 185 129 / 0.6);
-        }
-        .image-preview {
-            max-height: 340px;
-            object-fit: cover;
-            border-radius: 20px;
-            width: 100%;
-        }
-        .recording-active {
-            animation: pulse 1.5s infinite;
-            background-color: #ef4444 !important;
-        }
-        @keyframes pulse {
-            0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; }
-        }
+        body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: white; }
+        .glass { background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(16, 185, 129, 0.25); }
+        .nav-btn { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .nav-btn.active { background-color: #10b981 !important; color: #111827 !important; font-weight: 700; box-shadow: 0 10px 15px -3px rgb(16 185 129 / 0.4); }
+        .guardian-btn { background: linear-gradient(90deg, #10b981, #34d399); color: black; font-weight: 700; }
+        .guardian-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgb(16 185 129 / 0.6); }
+        .image-preview { max-height: 340px; object-fit: cover; border-radius: 20px; width: 100%; }
+        .recording-active { animation: pulse 1.5s infinite; background-color: #ef4444 !important; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
     </style>
 </head>
 <body class="min-h-screen pb-20 p-4 bg-[#0a0f1c]">
@@ -56,7 +33,7 @@
 
     <div class="max-w-2xl mx-auto">
         <!-- HEADER -->
-        <header class="flex items-center justify-between mb-8">
+        <header class="flex items-center justify-between mb-6">
             <div class="flex items-center gap-3">
                 <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-3xl shadow-inner">🔊</div>
                 <div>
@@ -74,8 +51,15 @@
             </div>
         </header>
 
-        <main class="max-w-2xl mx-auto">
-            <div id="feedContainer" class="w-full min-h-[60vh]"></div>
+        <!-- MAIN NAVIGATION -->
+        <div class="flex gap-2 mb-8 overflow-x-auto pb-2" id="main-nav">
+            <a href="/" class="nav-btn active px-6 py-3 rounded-2xl whitespace-nowrap font-medium">Citizen Talk</a>
+            <a href="/true-witness.html" class="nav-btn px-6 py-3 rounded-2xl whitespace-nowrap font-medium">True Witness</a>
+            <a href="/live-arena.html" class="nav-btn px-6 py-3 rounded-2xl whitespace-nowrap font-medium">Live Arena</a>
+        </div>
+
+        <main>
+            <div id="feedContainer" class="w-full"></div>
         </main>
     </div>
 
