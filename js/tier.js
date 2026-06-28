@@ -39,3 +39,14 @@ export function getTierInfo(userData) {
   };
   return map[tier];
 }
+
+// Add this to js/tier.js
+export function upgradeToTrustCircle(userId) {
+    const userRef = doc(db, "users", userId);
+    return setDoc(userRef, {
+        isPhoneVerified: true,
+        tier: "trust_circle",
+        trustCircle: 70,
+        lastUpdated: new Date().toISOString()
+    }, { merge: true });
+}
