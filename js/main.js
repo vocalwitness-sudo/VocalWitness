@@ -111,34 +111,31 @@ function attachUIListeners() {
 async function bootstrap() {
     console.log("🚀 Initializing VocalWitness...");
     try {
-        // 1. Ensure Auth is set up
         await initAuth();
-        
-        // 2. UI Setup
         initLanguage();
         attachUIListeners();
         highlightActiveNav();
-        
-        // 3. Feed Setup
+
+        const feedContainer = document.getElementById('feedContainer');
         const currentPage = getCurrentPage();
-        if (typeof initFeed === 'function') {
+
+        if (feedContainer && typeof initFeed === 'function') {
             initFeed(db, currentPage);
+        } else {
+            console.warn("⚠️ feedContainer not found or initFeed missing");
+            // Fallback: show a welcome message
+            if (feedContainer) {
+                feedContainer.innerHTML = `
+                    <div class="text-center py-12 text-zinc-400">
+                        <p class="text-4xl mb-4">👋</p>
+                        <p class="text-xl">Welcome to the Public Square</p>
+                        <p class="text-sm mt-2">Be the first to share your voice!</p>
+                    </div>`;
+            }
         }
-        
+
         console.log("✅ VocalWitness Core Loaded Successfully");
     } catch (error) {
         console.error("❌ Bootstrap failed:", error);
-        
-        // In your bootstrap()
-const feedContainer = document.getElementById('feedContainer');
-
-if (feedContainer) {
-    // Only run if the element actually exists on THIS page
-    initFeed(db, currentPage);
-} else {
-    console.warn("Feed container not found on this page. Skipping feed init.");
-}
     }
 }
-
-document.addEventListener('DOMContentLoaded', bootstrap);
