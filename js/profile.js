@@ -1,9 +1,11 @@
-// js/profile.js - Fixed & Clean
+// js/profile.js
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { auth } from './firebase-init.js';
 import { updateUserProfile } from './db.js';
-import { getTier, calculateTrustScore, showToast } from './utils.js';
+import { getTierInfo } from './tier.js';           // ← Changed
+import { sendPhoneVerification, verifyPhoneCode } from './phoneVerification.js';  // ← Added
+import { showToast } from './utils.js';
 
 const db = getFirestore();
 let currentUserId = null;
@@ -45,7 +47,6 @@ function listenToUserProfile(userId) {
         if (snapshot.exists()) {
             currentUserData = snapshot.data();
             renderProfileUI();
-            // renderMyPosts(userId); // Uncomment when function exists
         }
     });
 }
@@ -54,13 +55,18 @@ function renderProfileUI() {
     if (!currentUserData) return;
 
     const tierInfo = getTierInfo(currentUserData);
-    
-    // Avatar, username, email (keep your existing code)
-    if (elements.avatar) { ... } // your code
+
+    // Avatar
+    if (elements.avatar) {
+        elements.avatar.innerHTML = currentUserData.photoURL 
+            ? `<img src="${currentUserData.photoURL}" class="w-full h-full object-cover rounded-3xl">` 
+            : `<span class="text-6xl">👤</span>`;
+    }
+
     if (elements.username) elements.username.textContent = `@${currentUserData.username || 'citizen'}`;
     if (elements.email) elements.email.textContent = currentUserData.email || '';
 
-    // Updated Tier Badge
+    // Tier Badge
     if (elements.profileTierContainer) {
         elements.profileTierContainer.innerHTML = `
             <div class="inline-flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-${tierInfo.color}-500 to-${tierInfo.color}-600 text-black font-bold rounded-3xl shadow-lg">
@@ -72,73 +78,26 @@ function renderProfileUI() {
             </div>`;
     }
 
-    // Trust Score
     const trustScore = currentUserData.trustCircle || currentUserData.reputationScore || 50;
     if (elements.trustScore) elements.trustScore.textContent = trustScore;
 }
 
-function showNameCooldown(lastChange) {
-    if (!elements.nameCooldown || !lastChange) return;
-    const daysLeft = Math.ceil((lastChange + 60*24*60*60*1000 - Date.now()) / 86400000);
-    elements.nameCooldown.textContent = daysLeft > 0 ? `(Next change in ${daysLeft} days)` : 'You can change now';
-}
-
-// ==================== SAVE PROFILE ====================
-window.saveProfile = async () => {
-    if (!currentUserId) return;
-    const updates = {
-        displayName: elements.editDisplayName?.value.trim(),
-        bio: elements.editBio?.value.trim()
-    };
-    Object.keys(updates).forEach(key => { if (!updates[key]) delete updates[key]; });
-    try {
-        await updateUserProfile(currentUserId, updates);
-        showToast("✅ Profile updated successfully!", "success");
-    } catch (error) {
-        showToast("❌ Failed to update profile: " + error.message, "error");
-    }
-};
-//phone number verification lawmann
+// Phone Verification Handlers
 window.sendOTP = async () => {
-    const phone = document.getElementById('phoneInput').value.trim();
-    const success = await sendPhoneVerification(phone, currentUserId);
-    if (success) {
-        document.getElementById('otpInput').classList.remove('hidden');
-        document.getElementById('verifyBtn').classList.remove('hidden');
-    }
+    const phone = document.getElementById('phoneInput')?.value.trim();
+    if (!phone) return showToast("Enter phone number", "error");
+    await sendPhoneVerification(phone, currentUserId);
 };
 
 window.verifyOTP = async () => {
-    const code = document.getElementById('otpInput').value.trim();
+    const code = document.getElementById('otpInput')?.value.trim();
+    if (!code) return;
     await verifyPhoneCode(code);
 };
 
+// Save Profile & Avatar (keep your existing)
+window.saveProfile = async () => { ... };   // your code
+window.uploadAvatar = async () => { ... };  // your code
 
-// ==================== AVATAR UPLOAD ====================
-window.uploadAvatar = async () => {
-    if (!currentUserId) return;
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.onchange = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        if (file.size > 5 * 1024 * 1024) {
-            showToast("Image must be under 5MB", "error");
-            return;
-        }
-        showToast("Avatar upload connected to storage.js (coming soon)", "info");
-    };
-    input.click();
-};
-
-// Show / Hide Profile
-window.showProfileSection = () => {
-    if (elements.profileSection) elements.profileSection.classList.remove('hidden');
-    if (elements.homeSection) elements.homeSection.classList.add('hidden');
-};
-
-window.hideProfileSection = () => {
-    if (elements.profileSection) elements.profileSection.classList.add('hidden');
-    if (elements.homeSection) elements.homeSection.classList.remove('hidden');
-};
+window.showProfileSection = () => { ... };
+window.hideProfileSection = () => { ... };
