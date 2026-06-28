@@ -109,16 +109,23 @@ function attachUIListeners() {
 
 // ====================== BOOTSTRAP ======================
 async function bootstrap() {
+    console.log("🚀 Initializing VocalWitness...");
     try {
+        // 1. Ensure Auth is set up
         await initAuth();
+        
+        // 2. UI Setup
         initLanguage();
         attachUIListeners();
         highlightActiveNav();
         
+        // 3. Feed Setup
         const currentPage = getCurrentPage();
         if (typeof initFeed === 'function') {
             initFeed(db, currentPage);
         }
+        
+        console.log("✅ VocalWitness Core Loaded Successfully");
     } catch (error) {
         console.error("❌ Bootstrap failed:", error);
     }
