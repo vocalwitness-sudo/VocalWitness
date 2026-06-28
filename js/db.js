@@ -1,9 +1,11 @@
 // js/db.js
+// js/db.js
 import { db } from './firebase-init.js';
 import {
   doc, getDoc, updateDoc, deleteDoc, collection, query, where, getDocs,
   serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js"; // Updated version
+import { showToast } from './utils.js';
 
 // ==================== USER PROFILE ====================
 /**
