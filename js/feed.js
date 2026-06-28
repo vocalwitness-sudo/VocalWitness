@@ -57,8 +57,8 @@ function renderPost(id, data) {
     if (!feedContainer) return;
 
     const postEl = document.createElement('div');
-    postEl.className = 'post-card glass rounded-3xl p-6 mb-4';
-   
+    postEl.className = 'post-card glass rounded-3xl p-6 mb-6';
+
     let mediaHTML = '';
     if (data.mediaURL || data.imageUrl) {
         mediaHTML += `<img src="${data.mediaURL || data.imageUrl}" class="image-preview rounded-2xl mt-3 mb-4 w-full object-cover max-h-96" alt="Evidence">`;
@@ -76,14 +76,35 @@ function renderPost(id, data) {
                     <p class="text-xs text-zinc-500">${new Date(data.timestamp || data.createdAt).toLocaleString()}</p>
                 </div>
             </div>
+            <button onclick="pinPost('${id}')" class="text-2xl hover:scale-110 transition-transform">📌</button>
         </div>
+
         ${data.content ? `<p class="mb-4 text-zinc-100 leading-relaxed">${data.content}</p>` : ''}
+
         ${mediaHTML}
-        <div class="flex gap-3 mt-5">
-            <button onclick="window.submitPeerVote('${id}', 'verify')" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 rounded-2xl text-sm font-medium">✅ Verify</button>
-            <button onclick="window.submitPeerVote('${id}', 'dispute')" class="flex-1 py-3 bg-red-900/70 hover:bg-red-900 rounded-2xl text-sm font-medium">⚠️ Dispute</button>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center justify-between mt-6 pt-4 border-t border-zinc-700">
+            <div class="flex gap-3">
+                <button onclick="likePost('${id}')" 
+                    class="flex items-center gap-2 px-5 py-2 hover:bg-zinc-800 rounded-2xl transition-all text-emerald-400">
+                    👍 <span id="like-count-${id}">0</span>
+                </button>
+                <button onclick="disputePost('${id}')" 
+                    class="flex items-center gap-2 px-5 py-2 hover:bg-zinc-800 rounded-2xl transition-all text-red-400">
+                    ⚠️ Dispute
+                </button>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="sharePost('${id}')" 
+                    class="px-5 py-2 hover:bg-zinc-800 rounded-2xl transition-all">🔗 Share</button>
+                
+                <button onclick="editPost('${id}')" 
+                    class="px-5 py-2 hover:bg-zinc-800 rounded-2xl transition-all">✏️ Edit</button>
+            </div>
         </div>
     `;
+
     feedContainer.appendChild(postEl);
 }
-
