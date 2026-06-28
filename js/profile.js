@@ -98,6 +98,21 @@ window.saveProfile = async () => {
         showToast("❌ Failed to update profile: " + error.message, "error");
     }
 };
+//phone number verification lawmann
+window.sendOTP = async () => {
+    const phone = document.getElementById('phoneInput').value.trim();
+    const success = await sendPhoneVerification(phone, currentUserId);
+    if (success) {
+        document.getElementById('otpInput').classList.remove('hidden');
+        document.getElementById('verifyBtn').classList.remove('hidden');
+    }
+};
+
+window.verifyOTP = async () => {
+    const code = document.getElementById('otpInput').value.trim();
+    await verifyPhoneCode(code);
+};
+
 
 // ==================== AVATAR UPLOAD ====================
 window.uploadAvatar = async () => {
