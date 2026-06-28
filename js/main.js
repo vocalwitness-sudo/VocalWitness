@@ -108,34 +108,45 @@ function attachUIListeners() {
 }
 
 // ====================== BOOTSTRAP ======================
+// ====================== BOOTSTRAP ======================
 async function bootstrap() {
     console.log("🚀 Initializing VocalWitness...");
+    
     try {
+        // 1. Auth
         await initAuth();
+        
+        // 2. UI + Language
         initLanguage();
         attachUIListeners();
         highlightActiveNav();
-
-        const feedContainer = document.getElementById('feedContainer');
+        
+        // 3. Feed
         const currentPage = getCurrentPage();
-
+        const feedContainer = document.getElementById('feedContainer');
+        
         if (feedContainer && typeof initFeed === 'function') {
             initFeed(db, currentPage);
         } else {
-            console.warn("⚠️ feedContainer not found or initFeed missing");
-            // Fallback: show a welcome message
-            if (feedContainer) {
-                feedContainer.innerHTML = `
-                    <div class="text-center py-12 text-zinc-400">
-                        <p class="text-4xl mb-4">👋</p>
-                        <p class="text-xl">Welcome to the Public Square</p>
-                        <p class="text-sm mt-2">Be the first to share your voice!</p>
-                    </div>`;
-            }
+            console.warn("⚠️ Feed container or initFeed not available");
         }
 
         console.log("✅ VocalWitness Core Loaded Successfully");
+        
     } catch (error) {
         console.error("❌ Bootstrap failed:", error);
+        
+        // Safe fallback
+        const feedContainer = document.getElementById('feedContainer');
+        if (feedContainer) {
+            feedContainer.innerHTML = `
+                <div class="text-center py-12 text-amber-400">
+                    <p class="text-3xl mb-4">⚠️</p>
+                    <p class="text-lg">Platform is loading slowly...</p>
+                    <p class="text-sm mt-2">Please refresh the page</p>
+                </div>`;
+        }
     }
 }
+
+document.addEventListener('DOMContentLoaded', bootstrap);
