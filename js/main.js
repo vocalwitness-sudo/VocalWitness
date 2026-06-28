@@ -8,22 +8,25 @@ import { handleImageSelect, toggleVoiceRecording } from './media.js';
 
 // ====================== UTILITIES & NAV ======================
 function getCurrentPage() {
-    const path = window.location.pathname;
+    const path = window.location.pathname.toLowerCase();
+    console.log("📍 Current path:", path); // Debug
+
     if (path.includes('true-witness')) return 'true-witness';
     if (path.includes('live-arena')) return 'live-arena';
     return 'citizen-talk';
 }
 
 function highlightActiveNav() {
-    const path = window.location.pathname;
-    const current = getCurrentPage();
+    const path = window.location.pathname.toLowerCase();
     
     document.querySelectorAll('#main-nav a').forEach(link => {
         link.classList.remove('active');
         
-        if (path === '/' || path === '/index.html') {
-            if (link.getAttribute('href') === '/') link.classList.add('active');
-        } else if (link.getAttribute('href').includes(current)) {
+        const href = link.getAttribute('href').toLowerCase();
+        
+        if ((path === '/' || path === '/index.html' || path === '') && href === '/') {
+            link.classList.add('active');
+        } else if (path.includes(href.replace('/', ''))) {
             link.classList.add('active');
         }
     });
