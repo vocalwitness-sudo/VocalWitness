@@ -1,4 +1,4 @@
-// js/feed.js - Fixed & Safe Version
+// js/feed.js - Complete & Fixed
 import {
     collection, query, orderBy, onSnapshot, where, limit, startAfter, getDocs
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
@@ -18,7 +18,7 @@ export function initFeed(db, feedType = 'citizen-talk') {
     }
 
     if (activeFeedListener) activeFeedListener();
-    
+   
     feedContainer.innerHTML = '<div class="text-center py-8 text-zinc-400">Loading testimonies...</div>';
     lastDoc = null;
 
@@ -56,7 +56,7 @@ function renderPost(id, data) {
 
     const postEl = document.createElement('div');
     postEl.className = 'post-card glass rounded-3xl p-6 mb-4';
-    
+   
     let mediaHTML = '';
     if (data.mediaURL || data.imageUrl) {
         mediaHTML += `<img src="${data.mediaURL || data.imageUrl}" class="image-preview rounded-2xl mt-3 mb-4 w-full object-cover max-h-96" alt="Evidence">`;
@@ -83,4 +83,6 @@ function renderPost(id, data) {
         </div>
     `;
     feedContainer.appendChild(postEl);
+}
 
+export { initFeed };
