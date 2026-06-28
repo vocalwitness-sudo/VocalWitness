@@ -7,12 +7,13 @@
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="/logo.png" type="image/png">
     <title>VocalWitness • Truth • Evidence • Public Square</title>
- 
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <script src="https://js.paystack.co/v1/inline.js"></script>
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-   
+    
+    <style>
         body {
             font-family: 'Inter', system-ui, sans-serif;
             background: #0a0f1c;
@@ -23,16 +24,6 @@
             backdrop-filter: blur(20px);
             border: 1px solid rgba(16, 185, 129, 0.25);
         }
-        .nav-btn {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .nav-btn.active {
-            background-color: #10b981 !important;
-            color: #111827 !important;
-            font-weight: 700;
-            box-shadow: 0 10px 15px -3px rgb(16 185 129 / 0.4);
-        }
-        /* Updated Guardian Witness Button */
         .guardian-btn {
             background: linear-gradient(90deg, #10b981, #34d399);
             color: black;
@@ -57,25 +48,23 @@
         }
     </style>
 </head>
-<body class="min-h-screen pb-20 p-4">
+<body class="min-h-screen pb-20 p-4 bg-[#0a0f1c]">
     <!-- Legal Notice -->
     <div class="max-w-2xl mx-auto bg-red-950/30 border border-red-500/20 rounded-3xl p-4 text-xs mb-6 text-center">
         <strong class="text-red-400">Legal:</strong> VocalWitness is an un-manipulated decentralized distribution medium.
     </div>
+
     <div class="max-w-2xl mx-auto">
         <!-- HEADER -->
         <header class="flex items-center justify-between mb-8">
             <div class="flex items-center gap-3">
-                <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-3xl shadow-inner">
-                    🔊
-                </div>
+                <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-3xl shadow-inner">🔊</div>
                 <div>
                     <h1 class="text-4xl font-bold tracking-tighter text-emerald-400">VocalWitness</h1>
                     <p class="text-xs text-emerald-500 -mt-1">Truth • Evidence • Public Square</p>
                 </div>
             </div>
             <div class="flex items-center gap-3">
-                <!-- Changed to Guardian Witness -->
                 <button id="btn-guardian" class="guardian-btn px-6 py-3 rounded-2xl flex items-center gap-2 shadow-xl hover:scale-105 transition-all">
                     🛡️ Guardian Witness
                 </button>
@@ -85,56 +74,34 @@
             </div>
         </header>
 
-      <main class="max-w-2xl mx-auto">
-    <div id="feedContainer" class="w-full">
-        </div></main>
-
-        <!-- Guardian Witness Modal (Replaced Premium Modal) -->
-        <div id="guardianModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[60]">
-            <div class="glass rounded-3xl max-w-md w-full mx-4 p-8 text-center">
-                <div class="text-6xl mb-6">🛡️</div>
-                <h2 class="text-3xl font-bold text-emerald-400 mb-2">Become a Guardian Witness</h2>
-                <p class="text-zinc-400 mb-8">Protect the Public Square with enhanced responsibility &amp; tools</p>
-              
-                <div class="space-y-5 text-left mb-10">
-                    <div class="flex gap-3"><span class="text-emerald-500">✓</span><div>Forensic Shield + Advanced Tools</div></div>
-                    <div class="flex gap-3"><span class="text-emerald-500">✓</span><div>Priority in Live Arena</div></div>
-                    <div class="flex gap-3"><span class="text-emerald-500">✓</span><div>Higher Witness Impact</div></div>
-                    <div class="flex gap-3"><span class="text-emerald-500">✓</span><div>Support the Platform</div></div>
-                </div>
-                <div id="phoneVerificationModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-    <div class="glass rounded-3xl p-8 max-w-md w-full mx-4">
-        <h2 class="text-2xl font-bold mb-6">Verify Phone Number</h2>
-        <input id="phoneInput" type="tel" placeholder="+234 801 234 5678" 
-               class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-6 py-4 mb-4">
-        
-        <button onclick="sendOTP()" 
-                class="w-full py-4 bg-emerald-600 rounded-2xl mb-4">
-            Send Verification Code
-        </button>
-
-        <input id="otpInput" type="text" placeholder="Enter 6-digit code" maxlength="6"
-               class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-6 py-4 hidden mb-4">
-        
-        <button onclick="verifyOTP()" id="verifyBtn"
-                class="w-full py-4 bg-emerald-500 text-black font-bold rounded-2xl hidden">
-            Verify & Join Trust Circle
-        </button>
+        <main class="max-w-2xl mx-auto">
+            <div id="feedContainer" class="w-full min-h-[60vh]"></div>
+        </main>
     </div>
-</div>
-              
-                <button id="btn-activate-guardian" class="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold rounded-2xl mb-4">
-                    Activate Guardian Witness — ₦4,990 / month
-                </button>
-                <button id="btn-close-guardian" class="w-full py-3 text-zinc-400 hover:text-white">Maybe later</button>
+
+    <!-- Guardian Modal -->
+    <div id="guardianModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[60]">
+        <div class="glass rounded-3xl max-w-md w-full mx-4 p-8 text-center">
+            <div class="text-6xl mb-6">🛡️</div>
+            <h2 class="text-3xl font-bold text-emerald-400 mb-2">Become a Guardian Witness</h2>
+            <p class="text-zinc-400 mb-8">Protect the Public Square with enhanced responsibility & tools</p>
+            
+            <div class="space-y-5 text-left mb-10">
+                <div class="flex gap-3"><span class="text-emerald-500">✓</span><div>Forensic Shield + Advanced Tools</div></div>
+                <div class="flex gap-3"><span class="text-emerald-500">✓</span><div>Priority in Live Arena</div></div>
+                <div class="flex gap-3"><span class="text-emerald-500">✓</span><div>Higher Witness Impact</div></div>
+                <div class="flex gap-3"><span class="text-emerald-500">✓</span><div>Support the Platform</div></div>
             </div>
+
+            <button id="btn-activate-guardian" class="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold rounded-2xl mb-4">
+                Activate Guardian Witness — ₦4,990 / month
+            </button>
+            <button id="btn-close-guardian" class="w-full py-3 text-zinc-400 hover:text-white">Maybe later</button>
         </div>
     </div>
 
     <script>
-        tailwind.config = {
-            content: ["./**/*.{html,js}"],
-        }
+        tailwind.config = { content: ["./**/*.{html,js}"] };
     </script>
     <script type="module" src="js/main.js"></script>
 </body>
