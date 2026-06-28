@@ -108,3 +108,31 @@ function renderPost(id, data) {
 
     feedContainer.appendChild(postEl);
 }
+
+// Global Post Actions
+window.likePost = function(postId) {
+    console.log("👍 Liked post:", postId);
+    showToast("✅ Upvoted! Thank you for supporting truth.", "success");
+    // TODO: Update Firestore likes count
+};
+
+window.disputePost = function(postId) {
+    console.log("⚠️ Disputed post:", postId);
+    showToast("⚠️ Dispute submitted for review.", "error");
+};
+
+window.sharePost = function(postId) {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url).then(() => {
+        showToast("🔗 Link copied! Share the truth.", "success");
+    });
+};
+
+window.pinPost = function(postId) {
+    showToast("📌 Post pinned (saved for later)", "success");
+    // TODO: Save to user's pinned posts
+};
+
+window.editPost = function(postId) {
+    showToast("✏️ Edit mode coming soon for your own posts", "info");
+};
