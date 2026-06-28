@@ -1,4 +1,4 @@
-// js/main.js - Updated for Multi-Page
+// js/main.js - Updated for Multi-Page + Guardian Witness
 import { initAuth } from "./auth.js";
 import { initFeed } from './feed.js';
 import { db } from './firebase-config.js';
@@ -25,7 +25,29 @@ function highlightActiveNav() {
     });
 }
 
-// ====================== PUBLISH & OTHER FUNCTIONS (keep most as-is) ======================
+// ====================== GUARDIAN WITNESS FUNCTIONS ======================
+function showGuardianModal() {
+    document.getElementById('guardianModal')?.classList.remove('hidden');
+}
+
+function hideGuardianModal() {
+    document.getElementById('guardianModal')?.classList.add('hidden');
+}
+
+function activateGuardianWitness() {
+    // TODO: Connect to your backend / payment logic here
+    showToast("🛡️ Activating Guardian Witness...", "info");
+    
+    // Simulate activation (replace with real logic later)
+    setTimeout(() => {
+        showToast("✅ You are now a Guardian Witness! Welcome to the higher responsibility.", "success");
+        hideGuardianModal();
+        
+        // You can add UI refresh here later (show guardian badge, unlock features, etc.)
+    }, 1500);
+}
+
+// ====================== PUBLISH & OTHER FUNCTIONS ======================
 async function publishTestimony() {
     const textarea = document.getElementById('mainInput');
     const text = textarea?.value.trim();
@@ -43,17 +65,19 @@ async function publishTestimony() {
         showToast("Failed to publish. Please try again.", "error");
     }
 }
+
 // ====================== CLICK HANDLER ======================
 function attachUIListeners() {
     document.addEventListener('click', (e) => {
         const btn = e.target.closest('button');
         if (!btn) return;
-
+        
         console.log("🖱️ Clicked:", btn.id || btn.textContent.trim());
 
-        // Other buttons (keep these)
+        // Existing buttons
         if (btn.id === 'btn-profile') showProfileSection();
         if (btn.id === 'btn-close-profile') hideProfileSection();
+        
         if (btn.id === 'btn-photo') {
             const input = document.createElement('input');
             input.type = 'file';
@@ -61,13 +85,21 @@ function attachUIListeners() {
             input.onchange = (ev) => handleImageSelect(ev, document.getElementById('preview-area'));
             input.click();
         }
+        
         if (btn.id === 'btn-voice') toggleVoiceRecording(btn);
-        if (btn.id === 'btn-premium') {
-            document.getElementById('premiumModal')?.classList.remove('hidden');
-        }
         if (btn.id === 'postButton') publishTestimony();
-        if (btn.id === 'btn-upgrade-now' || btn.id === 'btn-close-premium') {
-            // your existing premium logic
+
+        // === NEW GUARDIAN WITNESS HANDLERS ===
+        if (btn.id === 'btn-guardian') {
+            showGuardianModal();
+        }
+        
+        if (btn.id === 'btn-activate-guardian') {
+            activateGuardianWitness();
+        }
+        
+        if (btn.id === 'btn-close-guardian') {
+            hideGuardianModal();
         }
     });
 }
@@ -79,14 +111,15 @@ async function bootstrap() {
         await initAuth();
         initLanguage();
         attachUIListeners();
-        highlightActiveNav();           // New
+        highlightActiveNav();
+        
         const currentPage = getCurrentPage();
         console.log(`✅ Loaded ${currentPage} mode`);
-        
+       
         if (typeof initFeed === 'function') {
             initFeed(db, currentPage);
         }
-        
+       
         console.log("✅ VocalWitness Core Loaded Successfully");
     } catch (error) {
         console.error("❌ Bootstrap failed:", error);
