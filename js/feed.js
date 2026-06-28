@@ -2,11 +2,13 @@
 import {
     collection, query, orderBy, onSnapshot, where, limit, startAfter, getDocs
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+// Import Auth for user ID
 import { auth } from './firebase-config.js';
+
+// Global submitPeerVote
 import { submitPeerVote } from './utils.js';
 window.submitPeerVote = submitPeerVote;
-
-
 let activeFeedListener = null;
 let lastDoc = null;
 let currentFeed = 'citizen-talk';
