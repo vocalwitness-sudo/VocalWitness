@@ -8,7 +8,7 @@ let activeFeedListener = null;
 let lastDoc = null;
 let currentFeed = 'citizen-talk';
 
-export function initFeed(db, feedType = 'citizen-talk') {
+function initFeed(db, feedType = 'citizen-talk') {
     currentFeed = feedType;
 
     const feedContainer = document.getElementById('feedContainer');
