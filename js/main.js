@@ -6,15 +6,14 @@ import { showToast } from './utils.js';
 import { initLanguage } from './i18n.js';
 import { handleImageSelect, toggleVoiceRecording } from './media.js';
 
-// Detect current page
+// ====================== UTILITIES & NAV ======================
 function getCurrentPage() {
     const path = window.location.pathname;
     if (path.includes('true-witness')) return 'true-witness';
     if (path.includes('live-arena')) return 'live-arena';
-    return 'citizen-talk'; // default
+    return 'citizen-talk';
 }
 
-// ====================== NAVIGATION ======================
 function highlightActiveNav() {
     const current = getCurrentPage();
     document.querySelectorAll('#main-nav a').forEach(link => {
@@ -25,7 +24,7 @@ function highlightActiveNav() {
     });
 }
 
-// ====================== GUARDIAN WITNESS FUNCTIONS ======================
+// ====================== GUARDIAN WITNESS ======================
 function showGuardianModal() {
     document.getElementById('guardianModal')?.classList.remove('hidden');
 }
@@ -35,19 +34,14 @@ function hideGuardianModal() {
 }
 
 function activateGuardianWitness() {
-    // TODO: Connect to your backend / payment logic here
     showToast("🛡️ Activating Guardian Witness...", "info");
-    
-    // Simulate activation (replace with real logic later)
     setTimeout(() => {
-        showToast("✅ You are now a Guardian Witness! Welcome to the higher responsibility.", "success");
+        showToast("✅ You are now a Guardian Witness!", "success");
         hideGuardianModal();
-        
-        // You can add UI refresh here later (show guardian badge, unlock features, etc.)
     }, 1500);
 }
 
-// ====================== PUBLISH & OTHER FUNCTIONS ======================
+// ====================== PUBLISH & ACTIONS ======================
 async function publishTestimony() {
     const textarea = document.getElementById('mainInput');
     const text = textarea?.value.trim();
@@ -58,59 +52,63 @@ async function publishTestimony() {
     showToast("Publishing to the Square...", "info");
     try {
         console.log("📤 Publishing testimony:", text);
-        showToast("✅ Testimony published successfully!", "success");
         if (textarea) textarea.value = '';
+        showToast("✅ Testimony published successfully!", "success");
     } catch (err) {
-        console.error(err);
-        showToast("Failed to publish. Please try again.", "error");
+        showToast("Failed to publish.", "error");
     }
 }
 
 // ====================== CLICK HANDLER ======================
-
-
-        document.addEventListener('click', (e) => {
-    if (e.target.classList.contains('verify-btn')) {
-        const id = e.target.dataset.id;
-        submitPeerVote(id, 'verify');
-    }
-});
-        
-        console.log("🖱️ Clicked:", btn.id || btn.textContent.trim());
-
-        // Existing buttons
-        if (btn.id === 'btn-profile') showProfileSection();
-        if (btn.id === 'btn-close-profile') hideProfileSection();
-        
-        if (btn.id === 'btn-photo') {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'image/*';
-            input.onchange = (ev) => handleImageSelect(ev, document.getElementById('preview-area'));
-            input.click();
+function attachUIListeners() {
+    document.addEventListener('click', (e) => {
+        // 1. Delegation for dynamic elements
+        if (e.target.classList.contains('verify-btn')) {
+            const id = e.target.dataset.id;
+            // Ensure submitPeerVote is imported or defined
+            if (typeof submitPeerVote === 'function') submitPeerVote(id, 'verify');
+            return;
         }
-        
-        if (btn.id === 'btn-voice') toggleVoiceRecording(btn);
-        if (btn.id === 'postButton') publishTestimony();
 
-        // === NEW GUARDIAN WITNESS HANDLERS ===
-        if (btn.id === 'btn-guardian') {
-            showGuardianModal();
-        }
-        
-        if (btn.id === 'btn-activate-guardian') {
-            activateGuardianWitness();
-        }
-        
-        if (btn.id === 'btn-close-guardian') {
-            hideGuardianModal();
+        // 2. Standard buttons
+        const btn = e.target.closest('button');
+        if (!btn) return;
+
+        switch(btn.id) {
+            case 'btn-profile':
+                document.getElementById('profileSection')?.classList.remove('hidden');
+                break;
+            case 'btn-close-profile':
+                document.getElementById('profileSection')?.classList.add('hidden');
+                break;
+            case 'btn-photo':
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*';
+                input.onchange = (ev) => handleImageSelect(ev, document.getElementById('preview-area'));
+                input.click();
+                break;
+            case 'btn-voice':
+                toggleVoiceRecording(btn);
+                break;
+            case 'postButton':
+                publishTestimony();
+                break;
+            case 'btn-guardian':
+                showGuardianModal();
+                break;
+            case 'btn-activate-guardian':
+                activateGuardianWitness();
+                break;
+            case 'btn-close-guardian':
+                hideGuardianModal();
+                break;
         }
     });
 }
 
 // ====================== BOOTSTRAP ======================
 async function bootstrap() {
-    console.log("🚀 Initializing VocalWitness...");
     try {
         await initAuth();
         initLanguage();
@@ -118,13 +116,9 @@ async function bootstrap() {
         highlightActiveNav();
         
         const currentPage = getCurrentPage();
-        console.log(`✅ Loaded ${currentPage} mode`);
-       
         if (typeof initFeed === 'function') {
             initFeed(db, currentPage);
         }
-       
-        console.log("✅ VocalWitness Core Loaded Successfully");
     } catch (error) {
         console.error("❌ Bootstrap failed:", error);
     }
