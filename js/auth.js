@@ -82,3 +82,9 @@ export async function logout() {
 
 window.googleLogin = googleLogin;
 window.logout = logout;
+
+// Add these imports at the top
+import { getUserTier, getTierInfo } from './tier.js';
+
+// Inside syncUserToFirestore function, after baseData, add:
+const currentTier = getUserTier(baseData); // This will be updated later when verification happens
