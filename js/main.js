@@ -67,10 +67,14 @@ async function publishTestimony() {
 }
 
 // ====================== CLICK HANDLER ======================
-function attachUIListeners() {
-    document.addEventListener('click', (e) => {
-        const btn = e.target.closest('button');
-        if (!btn) return;
+
+
+        document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('verify-btn')) {
+        const id = e.target.dataset.id;
+        submitPeerVote(id, 'verify');
+    }
+});
         
         console.log("🖱️ Clicked:", btn.id || btn.textContent.trim());
 
