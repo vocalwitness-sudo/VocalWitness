@@ -1,4 +1,9 @@
 // js/tier.js
+
+// js/tier.js
+import { doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { db } from './firebase-config.js'; // Ensure you have this path correct
+
 export const TIERS = {
   CITIZEN: 'citizen',
   TRUST_CIRCLE: 'trust_circle',
