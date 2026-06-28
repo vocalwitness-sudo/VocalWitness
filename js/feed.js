@@ -1,29 +1,29 @@
-// js/feed.js - Complete & Fixed
+// js/feed.js - Complete with Real Firestore Likes/Disputes
 import {
     collection, query, orderBy, onSnapshot, where, limit, startAfter, getDocs
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
-// Import Auth for user ID
+import { doc, updateDoc, increment, arrayUnion } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { auth } from './firebase-config.js';
-
-// Global submitPeerVote
+import { db } from './firebase-config.js';
 import { submitPeerVote } from './utils.js';
+import { showToast } from './utils.js';
+
 window.submitPeerVote = submitPeerVote;
+
 let activeFeedListener = null;
 let lastDoc = null;
 let currentFeed = 'citizen-talk';
 
 export function initFeed(db, feedType = 'citizen-talk') {
     currentFeed = feedType;
-
     const feedContainer = document.getElementById('feedContainer');
     if (!feedContainer) {
         console.warn("⚠️ feedContainer not found on this page. Skipping feed.");
         return;
     }
-
     if (activeFeedListener) activeFeedListener();
-   
+  
     feedContainer.innerHTML = '<div class="text-center py-8 text-zinc-400">Loading testimonies...</div>';
     lastDoc = null;
 
@@ -37,13 +37,11 @@ export function initFeed(db, feedType = 'citizen-talk') {
     activeFeedListener = onSnapshot(q, (snapshot) => {
         feedContainer.innerHTML = '';
         let hasRealPosts = false;
-
         snapshot.forEach((docSnap) => {
             hasRealPosts = true;
             renderPost(docSnap.id, docSnap.data());
             lastDoc = docSnap;
         });
-
         if (!hasRealPosts) {
             feedContainer.innerHTML = `
                 <div class="text-center py-12 text-zinc-400">
@@ -83,28 +81,20 @@ function renderPost(id, data) {
         </div>
 
         ${data.content ? `<p class="mb-4 text-zinc-100 leading-relaxed">${data.content}</p>` : ''}
-
         ${mediaHTML}
 
-        <!-- Action Buttons -->
         <div class="flex items-center justify-between mt-6 pt-4 border-t border-zinc-700">
             <div class="flex gap-3">
-                <button onclick="likePost('${id}')" 
-                    class="flex items-center gap-2 px-5 py-2 hover:bg-zinc-800 rounded-2xl transition-all text-emerald-400">
-                    👍 <span id="like-count-${id}">0</span>
+                <button onclick="likePost('${id}')" class="flex items-center gap-2 px-5 py-2 hover:bg-zinc-800 rounded-2xl transition-all text-emerald-400">
+                    👍 <span id="like-count-${id}">${data.likes || 0}</span>
                 </button>
-                <button onclick="disputePost('${id}')" 
-                    class="flex items-center gap-2 px-5 py-2 hover:bg-zinc-800 rounded-2xl transition-all text-red-400">
-                    ⚠️ Dispute
+                <button onclick="disputePost('${id}')" class="flex items-center gap-2 px-5 py-2 hover:bg-zinc-800 rounded-2xl transition-all text-red-400">
+                    ⚠️ <span>${data.disputes || 0}</span>
                 </button>
             </div>
-
             <div class="flex gap-3">
-                <button onclick="sharePost('${id}')" 
-                    class="px-5 py-2 hover:bg-zinc-800 rounded-2xl transition-all">🔗 Share</button>
-                
-                <button onclick="editPost('${id}')" 
-                    class="px-5 py-2 hover:bg-zinc-800 rounded-2xl transition-all">✏️ Edit</button>
+                <button onclick="sharePost('${id}')" class="px-5 py-2 hover:bg-zinc-800 rounded-2xl transition-all">🔗 Share</button>
+                <button onclick="editPost('${id}')" class="px-5 py-2 hover:bg-zinc-800 rounded-2xl transition-all">✏️ Edit</button>
             </div>
         </div>
     `;
@@ -112,67 +102,54 @@ function renderPost(id, data) {
     feedContainer.appendChild(postEl);
 }
 
-// Global Post Actions
-
-// ==================== REAL FIRESTORE ACTIONS ====================
-import { doc, updateDoc, increment, arrayUnion } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-import { db } from './firebase-config.js';
-import { auth } from './firebase-config.js';   // ← Make sure this import exists
-import { showToast } from './utils.js';
-
-// Like / Upvote
+// ==================== FIRESTORE ACTIONS ====================
 window.likePost = async function(postId) {
     if (!auth.currentUser) {
         showToast("Please sign in to like posts", "error");
         return;
     }
-
     try {
         const postRef = doc(db, "testimonies", postId);
         await updateDoc(postRef, {
             likes: increment(1),
             likedBy: arrayUnion(auth.currentUser.uid)
         });
-        showToast("✅ Upvoted! Thank you for supporting truth.", "success");
+        showToast("✅ Upvoted!", "success");
     } catch (error) {
         console.error("Like failed:", error);
-        showToast("Could not like post right now", "error");
+        showToast("Could not like post", "error");
     }
 };
 
-// Dispute
 window.disputePost = async function(postId) {
     if (!auth.currentUser) {
-        showToast("Please sign in to dispute posts", "error");
+        showToast("Please sign in to dispute", "error");
         return;
     }
-
     try {
         const postRef = doc(db, "testimonies", postId);
         await updateDoc(postRef, {
             disputes: increment(1),
             disputedBy: arrayUnion(auth.currentUser.uid)
         });
-        showToast("⚠️ Dispute submitted. Community will review.", "error");
+        showToast("⚠️ Dispute submitted", "error");
     } catch (error) {
         console.error("Dispute failed:", error);
         showToast("Could not submit dispute", "error");
     }
 };
 
-// Share (no change needed)
 window.sharePost = function(postId) {
     const url = `${window.location.origin}/?post=${postId}`;
     navigator.clipboard.writeText(url).then(() => {
-        showToast("🔗 Link copied! Share the truth.", "success");
+        showToast("🔗 Link copied!", "success");
     });
 };
 
-// Pin & Edit (no change)
 window.pinPost = function(postId) {
-    showToast("📌 Post pinned to your profile", "success");
+    showToast("📌 Post pinned", "success");
 };
 
 window.editPost = function(postId) {
-    showToast("✏️ Edit mode coming soon for your own posts", "info");
+    showToast("✏️ Edit coming soon", "info");
 };
