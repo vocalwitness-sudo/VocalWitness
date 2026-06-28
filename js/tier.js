@@ -1,4 +1,6 @@
 // js/tier.js - Expanded Tier System
+import { doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { db } from './firebase-config.js';
 export const TIERS = {
   CITIZEN: 'citizen',
   TRUST_CIRCLE: 'trust_circle',
