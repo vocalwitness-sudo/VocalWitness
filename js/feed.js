@@ -110,18 +110,25 @@ function renderPost(id, data) {
 }
 
 // Global Post Actions
+
 // ==================== REAL FIRESTORE ACTIONS ====================
 import { doc, updateDoc, increment, arrayUnion } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { db } from './firebase-config.js';
+import { auth } from './firebase-config.js';   // ← Make sure this import exists
 import { showToast } from './utils.js';
 
 // Like / Upvote
 window.likePost = async function(postId) {
+    if (!auth.currentUser) {
+        showToast("Please sign in to like posts", "error");
+        return;
+    }
+
     try {
         const postRef = doc(db, "testimonies", postId);
         await updateDoc(postRef, {
             likes: increment(1),
-            likedBy: arrayUnion("current-user-uid") // TODO: replace with real user.uid
+            likedBy: arrayUnion(auth.currentUser.uid)
         });
         showToast("✅ Upvoted! Thank you for supporting truth.", "success");
     } catch (error) {
@@ -132,11 +139,16 @@ window.likePost = async function(postId) {
 
 // Dispute
 window.disputePost = async function(postId) {
+    if (!auth.currentUser) {
+        showToast("Please sign in to dispute posts", "error");
+        return;
+    }
+
     try {
         const postRef = doc(db, "testimonies", postId);
         await updateDoc(postRef, {
             disputes: increment(1),
-            disputedBy: arrayUnion("current-user-uid")
+            disputedBy: arrayUnion(auth.currentUser.uid)
         });
         showToast("⚠️ Dispute submitted. Community will review.", "error");
     } catch (error) {
@@ -145,7 +157,7 @@ window.disputePost = async function(postId) {
     }
 };
 
-// Share
+// Share (no change needed)
 window.sharePost = function(postId) {
     const url = `${window.location.origin}/?post=${postId}`;
     navigator.clipboard.writeText(url).then(() => {
@@ -153,13 +165,11 @@ window.sharePost = function(postId) {
     });
 };
 
-// Pin
+// Pin & Edit (no change)
 window.pinPost = function(postId) {
     showToast("📌 Post pinned to your profile", "success");
-    // TODO: Add to user's pinned collection
 };
 
-// Edit (basic)
 window.editPost = function(postId) {
     showToast("✏️ Edit mode coming soon for your own posts", "info");
 };
