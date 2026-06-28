@@ -117,5 +117,20 @@
         tailwind.config = { content: ["./**/*.{html,js}"] };
     </script>
     <script type="module" src="js/main.js"></script>
+
+    <script>
+    window.sendOTP = async () => {
+        const phone = document.getElementById('phoneInput').value.trim();
+        const userId = "current-user-id"; // Replace with real user.uid from auth
+        await sendPhoneVerification(phone, userId);
+        document.getElementById('otpInput').classList.remove('hidden');
+        document.getElementById('verifyBtn').classList.remove('hidden');
+    };
+
+    window.verifyOTP = async () => {
+        const code = document.getElementById('otpInput').value.trim();
+        await verifyPhoneCode(code);
+    };
+</script>
 </body>
 </html>
