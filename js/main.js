@@ -15,10 +15,15 @@ function getCurrentPage() {
 }
 
 function highlightActiveNav() {
+    const path = window.location.pathname;
     const current = getCurrentPage();
+    
     document.querySelectorAll('#main-nav a').forEach(link => {
         link.classList.remove('active');
-        if (link.getAttribute('href').includes(current)) {
+        
+        if (path === '/' || path === '/index.html') {
+            if (link.getAttribute('href') === '/') link.classList.add('active');
+        } else if (link.getAttribute('href').includes(current)) {
             link.classList.add('active');
         }
     });
