@@ -1,0 +1,42 @@
+// js/tier.js
+export const TIERS = {
+  CITIZEN: 'citizen',
+  TRUST_CIRCLE: 'trust_circle',
+  TRUE_WITNESS: 'true_witness'
+};
+
+export function getUserTier(userData) {
+  if (!userData) return TIERS.CITIZEN;
+
+  if (userData.zkVerified === true) {
+    return TIERS.TRUE_WITNESS;
+  }
+  if (userData.isPhoneVerified === true) {
+    return TIERS.TRUST_CIRCLE;
+  }
+  return TIERS.CITIZEN;
+}
+
+export function canAccessFeature(userData, feature) {
+  const tier = getUserTier(userData);
+
+  const permissions = {
+    'forensic_shield': [TIERS.TRUE_WITNESS],
+    'zk_proof': [TIERS.TRUE_WITNESS],
+    'witness_cycle': [TIERS.TRUE_WITNESS],
+    'data_export': [TIERS.TRUE_WITNESS],
+    'join_circle': [TIERS.TRUST_CIRCLE, TIERS.TRUE_WITNESS],
+    'basic_attest': [TIERS.TRUST_CIRCLE, TIERS.TRUE_WITNESS],
+    'high_visibility': [TIERS.TRUST_CIRCLE, TIERS.TRUE_WITNESS]
+  };
+
+  return permissions[feature] ? permissions[feature].includes(tier) : true;
+}
+
+// Helper for UI
+export function getTierBadge(userData) {
+  const tier = getUserTier(userData);
+  if (tier === TIERS.TRUE_WITNESS) return { name: "True Witness", emoji: "🛡️", color: "emerald" };
+  if (tier === TIERS.TRUST_CIRCLE) return { name: "Trust Circle", emoji: "🤝", color: "amber" };
+  return { name: "Citizen Talk", emoji: "🗣️", color: "zinc" };
+}
