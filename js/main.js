@@ -128,6 +128,16 @@ async function bootstrap() {
         console.log("✅ VocalWitness Core Loaded Successfully");
     } catch (error) {
         console.error("❌ Bootstrap failed:", error);
+        
+        // In your bootstrap()
+const feedContainer = document.getElementById('feedContainer');
+
+if (feedContainer) {
+    // Only run if the element actually exists on THIS page
+    initFeed(db, currentPage);
+} else {
+    console.warn("Feed container not found on this page. Skipping feed init.");
+}
     }
 }
 
