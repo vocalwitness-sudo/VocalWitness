@@ -4,6 +4,7 @@ import { signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstati
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { showToast } from "./utils.js";
 import { updateUser } from './storage.js';
+import { getUserTier } from './tier.js'; // Imported tier logic
 
 async function syncUserToFirestore(user) {
     if (!user) return;
@@ -11,6 +12,7 @@ async function syncUserToFirestore(user) {
     const userRef = doc(db, "users", user.uid);
     const userSnap = await getDoc(userRef);
 
+    // Initial base data structure
     const baseData = {
         uid: user.uid,
         email: user.email,
@@ -18,7 +20,7 @@ async function syncUserToFirestore(user) {
         username: (user.email?.split('@')[0] || `user_${Date.now()}`).toLowerCase(),
         photoURL: user.photoURL || "",
         role: "citizen",
-        tier: "Explorer",
+        tier: "Explorer", // Default tier
         trustCircle: 50,
         reputationScore: 50,
         level: 1,
@@ -37,11 +39,18 @@ async function syncUserToFirestore(user) {
         lastUpdated: new Date().toISOString()
     };
 
+    // Integrate tier logic based on baseData
+    baseData.tier = getUserTier(baseData); 
+
     if (!userSnap.exists()) {
         await setDoc(userRef, baseData);
         showToast("Welcome to VocalWitness! 🎉", "success");
     } else {
-        await setDoc(userRef, { lastUpdated: new Date().toISOString(), lastLogin: new Date().toISOString() }, { merge: true });
+        // Update login metadata
+        await setDoc(userRef, { 
+            lastUpdated: new Date().toISOString(), 
+            lastLogin: new Date().toISOString() 
+        }, { merge: true });
     }
 }
 
@@ -82,9 +91,3 @@ export async function logout() {
 
 window.googleLogin = googleLogin;
 window.logout = logout;
-
-// Add these imports at the top
-import { getUserTier, getTierInfo } from './tier.js';
-
-// Inside syncUserToFirestore function, after baseData, add:
-const currentTier = getUserTier(baseData); // This will be updated later when verification happens
