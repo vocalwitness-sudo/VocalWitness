@@ -58,6 +58,32 @@
             <a href="/live-arena.html" class="nav-btn px-6 py-3 rounded-2xl whitespace-nowrap font-medium">Live Arena</a>
         </div>
 
+        <!-- COMPOSER -->
+        <div class="glass rounded-3xl p-6 mb-8">
+            <textarea id="mainInput" rows="3" 
+                class="w-full bg-transparent border-0 focus:outline-none text-lg placeholder-zinc-400 resize-none"
+                placeholder="Share your raw testimony... What did you witness?"></textarea>
+            
+            <div class="flex gap-3 mt-6">
+                <button id="btn-photo" 
+                    class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl transition-all flex items-center justify-center gap-3 font-medium">
+                    📸 Photo + Forensic Shield
+                </button>
+                <button id="btn-voice" 
+                    class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl transition-all flex items-center justify-center gap-3 font-medium">
+                    🎤 Voice Testimony
+                </button>
+            </div>
+            
+            <div id="preview-area" class="mt-6"></div>
+            
+            <button id="postButton" 
+                class="mt-8 w-full py-5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-black font-bold text-lg rounded-3xl transition-all active:scale-95 shadow-lg">
+                🚀 Publish Testimony to the Square
+            </button>
+        </div>
+
+        <!-- FEED -->
         <main>
             <div id="feedContainer" class="w-full"></div>
         </main>
