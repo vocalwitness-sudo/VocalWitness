@@ -72,9 +72,71 @@
         </main>
     </div>
 
-    <!-- Modals (Guardian + Profile) - kept your versions -->
-    <!-- ... paste your existing modals here if needed ... -->
+    <!-- Guardian Modal -->
+<div id="guardianModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[70]">
+    <div class="glass rounded-3xl max-w-md w-full mx-4 p-8 text-center">
+        <div class="text-6xl mb-6">🛡️</div>
+        <h2 class="text-3xl font-bold text-emerald-400 mb-2">Become a Guardian Witness</h2>
+        <p class="text-zinc-400 mb-8">Protect the Public Square with enhanced responsibility & tools</p>
+        <div class="space-y-5 text-left mb-10">
+            <div class="flex gap-3"><span class="text-emerald-500">✓</span><div>Forensic Shield + Advanced Tools</div></div>
+            <div class="flex gap-3"><span class="text-emerald-500">✓</span><div>Priority in Live Arena</div></div>
+            <div class="flex gap-3"><span class="text-emerald-500">✓</span><div>Higher Witness Impact</div></div>
+            <div class="flex gap-3"><span class="text-emerald-500">✓</span><div>Support the Platform</div></div>
+        </div>
+        <button id="btn-activate-guardian" class="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold rounded-2xl mb-4">
+            Activate Guardian Witness — ₦4,990 / month
+        </button>
+        <button id="btn-close-guardian" class="w-full py-3 text-zinc-400 hover:text-white">Maybe later</button>
+    </div>
+</div>
 
+<!-- Profile Modal -->
+<div id="profileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[80]">
+    <div class="glass rounded-3xl max-w-lg w-full mx-4 p-8 max-h-[85vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold">My Profile</h2>
+            <button onclick="closeProfile()" class="text-3xl text-zinc-400 hover:text-white">×</button>
+        </div>
+        
+        <div class="text-center mb-8">
+            <div class="w-24 h-24 mx-auto bg-gradient-to-br from-emerald-500 to-teal-500 rounded-3xl flex items-center justify-center text-6xl mb-4 shadow-inner">👤</div>
+            <h3 id="profileName" class="text-xl font-bold">Citizen User</h3>
+            <p id="profileUsername" class="text-emerald-400">@citizen_xxxx</p>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-3 gap-4 mb-8">
+            <div class="bg-zinc-900/70 rounded-2xl p-4 text-center">
+                <div class="text-2xl font-bold text-emerald-400" id="post-count">0</div>
+                <div class="text-xs text-zinc-400">Testimonies</div>
+            </div>
+            <div class="bg-zinc-900/70 rounded-2xl p-4 text-center">
+                <div class="text-2xl font-bold text-emerald-400" id="reputation-score">50</div>
+                <div class="text-xs text-zinc-400">Reputation</div>
+            </div>
+            <div class="bg-zinc-900/70 rounded-2xl p-4 text-center">
+                <div class="text-2xl font-bold text-emerald-400" id="trust-score">60</div>
+                <div class="text-xs text-zinc-400">Trust Score</div>
+            </div>
+        </div>
+
+        <div class="space-y-4 mb-8">
+            <div class="bg-zinc-900/70 rounded-2xl p-5">
+                <div class="flex justify-between items-center">
+                    <span>Role</span>
+                    <span class="px-4 py-1 bg-emerald-600 text-xs rounded-full font-medium">Citizen</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="space-y-3">
+            <button onclick="alert('Edit profile coming soon')" class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl">✏️ Edit Profile</button>
+            <button onclick="document.getElementById('guardianModal').classList.remove('hidden'); closeProfile()" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold rounded-2xl">🛡️ Upgrade to Guardian Witness</button>
+            <button onclick="logout()" class="w-full py-3 text-red-400 hover:bg-red-900/30 rounded-2xl">Sign Out</button>
+        </div>
+    </div>
+</div>
     <script>
         tailwind.config = { content: ["./**/*.{html,js}"] };
     </script>
