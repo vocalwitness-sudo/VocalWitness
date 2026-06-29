@@ -50,15 +50,14 @@
         </header>
 
         <!-- NAV -->
-        <nav id="main-nav" class="flex gap-2 mb-6 overflow-x-auto pb-2">
-            <button onclick="loadFeed('citizen-talk')" class="nav-btn active px-6 py-3 rounded-3xl whitespace-nowrap" data-feed="citizen-talk">Citizen Talk</button>
-            <button onclick="loadFeed('true')" class="nav-btn px-6 py-3 rounded-3xl whitespace-nowrap" data-feed="true">True Witness</button>
-            <button onclick="loadFeed('live')" class="nav-btn px-6 py-3 rounded-3xl whitespace-nowrap" data-feed="live">Live Arena</button>
-            <button onclick="window.googleLogin()" 
-                class="px-5 py-2.5 bg-white text-black rounded-2xl font-medium flex items-center gap-2 hover:bg-gray-100">
-                <span>Sign in with Google</span>
-            </button>
-        </nav>
+       <nav id="main-nav" class="flex gap-2 mb-6 overflow-x-auto pb-2">
+    <button onclick="window.loadFeed('citizen-talk')" class="nav-btn active px-6 py-3 rounded-3xl whitespace-nowrap" data-feed="citizen-talk">Citizen Talk</button>
+    <button onclick="window.loadFeed('true-witness')" class="nav-btn px-6 py-3 rounded-3xl whitespace-nowrap" data-feed="true-witness">True Witness</button>
+    <button onclick="window.loadFeed('live')" class="nav-btn px-6 py-3 rounded-3xl whitespace-nowrap" data-feed="live">Live Arena</button>
+    <button onclick="window.googleLogin()" class="px-5 py-2.5 bg-white text-black rounded-2xl font-medium flex items-center gap-2 hover:bg-gray-100">
+        <span>Sign in with Google</span>
+    </button>
+       </nav>
 
         <!-- COMPOSER (unchanged for now) -->
         <div class="glass rounded-3xl p-6 mb-8">
