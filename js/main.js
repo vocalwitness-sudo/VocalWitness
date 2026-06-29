@@ -1,4 +1,4 @@
-// js/main.js - CLEAN FIXED VERSION
+// js/main.js - FULL CLEAN & WORKING VERSION
 import { initAuth } from "./auth.js";
 import { initFeed } from './feed.js';
 import { db, storage } from './firebase-config.js';
@@ -11,19 +11,23 @@ import { collection, addDoc } from "https://www.gstatic.com/firebasejs/11.0.0/fi
 let engineInstance = null;
 let currentUser = null;
 
+// ====================== ENGINE ======================
 function initEngine() {
     if (!engineInstance) {
         engineInstance = new CitizenTalkEngine(db, storage);
         window.engineInstance = engineInstance;
         import('./media.js').then(m => m.setEngine(engineInstance));
+        console.log("✅ Engine initialized");
     }
 }
 
+// ====================== PUBLISH ======================
 window.publishTestimony = async () => {
     if (!currentUser) {
         showToast("Please sign in with Google first", "error");
         return;
     }
+
     const textarea = document.getElementById('mainInput');
     const content = textarea?.value.trim() || "";
 
@@ -58,27 +62,31 @@ window.publishTestimony = async () => {
 
     } catch (err) {
         console.error("Publish error:", err);
-        showToast("Failed to publish", "error");
+        showToast("Failed to publish. Check console.", "error");
     } finally {
         postBtn.disabled = false;
         postBtn.textContent = '🚀 Publish Testimony to the Square';
     }
 };
 
+// ====================== FEED ======================
 window.loadFeed = (feedType) => {
-    console.log("Loading feed:", feedType);
+    console.log("🔄 Loading feed:", feedType);
     document.querySelectorAll('#main-nav button').forEach(btn => btn.classList.remove('active'));
-    const btn = document.querySelector(`button[data-feed="${feedType}"]`);
-    if (btn) btn.classList.add('active');
+    const activeBtn = document.querySelector(`button[data-feed="${feedType}"]`);
+    if (activeBtn) activeBtn.classList.add('active');
     initFeed(db, feedType);
 };
 
+// ====================== UI LISTENERS ======================
 function attachUIListeners() {
     console.log("👂 UI Listeners Attached");
-    document.getElementById('btn-profile')?.addEventListener('click', () => window.showProfileSection());
+
+    document.getElementById('btn-profile')?.addEventListener('click', window.showProfileSection);
     document.getElementById('btn-guardian')?.addEventListener('click', () => document.getElementById('guardianModal')?.classList.remove('hidden'));
     document.getElementById('btn-close-guardian')?.addEventListener('click', () => document.getElementById('guardianModal')?.classList.add('hidden'));
 
+    // Photo
     const photoBtn = document.getElementById('btn-photo');
     if (photoBtn) {
         photoBtn.addEventListener('click', () => {
@@ -90,13 +98,17 @@ function attachUIListeners() {
         });
     }
 
+    // Voice
     const voiceBtn = document.getElementById('btn-voice');
     if (voiceBtn) voiceBtn.addEventListener('click', (e) => toggleVoiceRecording(e.currentTarget));
 
+    // Publish
     document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
 }
 
+// ====================== BOOTSTRAP ======================
 async function bootstrap() {
+    console.log("🚀 Initializing VocalWitness...");
     try {
         await initAuth();
         initLanguage();
@@ -105,12 +117,12 @@ async function bootstrap() {
         setTimeout(() => window.loadFeed('citizen-talk'), 800);
         console.log("✅ VocalWitness Loaded Successfully");
     } catch (e) {
-        console.error(e);
+        console.error("Bootstrap error:", e);
     }
 }
 
 document.addEventListener('DOMContentLoaded', bootstrap);
 
-// Global functions
+// Global Helpers
 window.showProfileSection = () => document.getElementById('profileModal')?.classList.remove('hidden');
 window.closeProfile = () => document.getElementById('profileModal')?.classList.add('hidden');
