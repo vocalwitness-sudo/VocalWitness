@@ -1,5 +1,4 @@
 /* ==================== VocalWitness Global Styles ==================== */
-
 body {
     font-family: 'Inter', system-ui, sans-serif;
     background: #0a0f1c;
@@ -7,7 +6,6 @@ body {
     line-height: 1.6;
 }
 
-/* Glassmorphism Cards */
 .glass {
     background: rgba(17, 24, 39, 0.95);
     backdrop-filter: blur(20px);
@@ -15,27 +13,13 @@ body {
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
-/* Buttons */
-button {
-    position: relative;
-    z-index: 100;
-    pointer-events: auto !important;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-button:active {
-    transform: scale(0.95);
-    filter: brightness(0.9);
-}
-
-/* Navigation */
+/* Navigation Buttons */
 .nav-btn {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     background: #18181b;
     color: #a1a1aa;
     border: 1px solid transparent;
     font-weight: 500;
+    transition: all 0.3s ease;
 }
 
 .nav-btn:hover {
@@ -63,12 +47,18 @@ button:active {
     box-shadow: 0 10px 20px -5px rgb(16 185 129 / 0.6);
 }
 
-/* Composer & Feed */
-#mainInput {
-    scrollbar-width: thin;
-    scrollbar-color: #10b981 #1f2937;
+/* Composer Buttons */
+#btn-photo, #btn-voice {
+    background: #27272a;
+    border: 1px solid #3f3f46;
 }
 
+#btn-photo:hover, #btn-voice:hover {
+    background: #3f3f46;
+    border-color: #10b981;
+}
+
+/* Post Button */
 #postButton {
     position: relative;
     overflow: hidden;
@@ -105,32 +95,13 @@ button:active {
     100% { opacity: 1; }
 }
 
-/* Post Cards */
-.post-card {
-    transition: transform 0.2s ease;
+/* Language Selector */
+#languageSelector {
+    min-width: 160px;
 }
 
-.post-card:hover {
-    transform: translateY(-2px);
-}
-
-/* Image Preview */
-.image-preview {
-    max-height: 340px;
-    object-fit: cover;
-    border-radius: 20px;
-    width: 100%;
-}
-
-/* Utility */
-.hidden { display: none !important; }
-
-/* Toast */
-.toast {
-    animation: slideUp 0.3s ease;
-}
-
-@keyframes slideUp {
-    from { transform: translateY(20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+/* Profile Modal Improvements */
+#profileModal .glass {
+    max-height: 85vh;
+    overflow-y: auto;
 }
