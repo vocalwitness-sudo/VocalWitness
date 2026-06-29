@@ -45,46 +45,33 @@ window.goBack = () => {
     else window.location.href = '/';
 };
 
-// ====================== CLICK HANDLER ======================
 function attachUIListeners() {
-    console.log("👂 Attaching UI listeners...");
+    console.log("👂 UI Listeners Attached");
 
+    // Direct button assignments (more reliable)
+    const profileBtn = document.getElementById('btn-profile');
+    if (profileBtn) {
+        profileBtn.addEventListener('click', () => {
+            console.log("Profile button clicked");
+            window.showProfileSection();
+        });
+    }
+
+    const guardianBtn = document.getElementById('btn-guardian');
+    if (guardianBtn) {
+        guardianBtn.addEventListener('click', () => {
+            console.log("Guardian button clicked");
+            document.getElementById('guardianModal')?.classList.remove('hidden');
+        });
+    }
+
+    // Fallback event delegation
     document.addEventListener('click', (e) => {
         const btn = e.target.closest('button');
         if (!btn) return;
 
-        console.log("Button clicked:", btn.id);   // ← For debugging
-
-        switch(btn.id) {
-            case 'btn-profile':
-                window.showProfileSection();
-                break;
-
-            case 'btn-guardian':
-            case 'btn-activate-guardian':
-                const guardianModal = document.getElementById('guardianModal');
-                if (guardianModal) guardianModal.classList.remove('hidden');
-                break;
-
-            case 'btn-close-guardian':
-                document.getElementById('guardianModal')?.classList.add('hidden');
-                break;
-
-            case 'btn-photo':
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.accept = 'image/*';
-                input.onchange = (ev) => handleImageSelect(ev, document.getElementById('preview-area'));
-                input.click();
-                break;
-
-            case 'btn-voice':
-                toggleVoiceRecording(btn);
-                break;
-
-            case 'postButton':
-                window.publishTestimony?.();
-                break;
+        if (btn.id === 'btn-close-guardian') {
+            document.getElementById('guardianModal')?.classList.add('hidden');
         }
     });
 }
