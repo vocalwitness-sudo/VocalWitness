@@ -33,26 +33,44 @@
     <div class="max-w-2xl mx-auto bg-red-950/30 border border-red-500/20 rounded-3xl p-4 text-xs mb-6 text-center">
         <strong class="text-red-400">Legal:</strong> VocalWitness is an un-manipulated decentralized distribution medium.
     </div>
-
     <div class="max-w-2xl mx-auto">
+
+        
         <!-- HEADER -->
-        <header class="flex items-center justify-between mb-6">
-            <div class="flex items-center gap-3">
-                <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-3xl shadow-inner">🔊</div>
-                <div>
-                    <h1 class="text-4xl font-bold tracking-tighter text-emerald-400">VocalWitness</h1>
-                    <p class="text-xs text-emerald-500 -mt-1">Truth • Evidence • Public Square</p>
-                </div>
+<header class="flex items-center justify-between mb-8">
+    <div class="flex items-center gap-3">
+        <!-- Back Arrow (shows only when needed) -->
+        <button onclick="goBack()" 
+                class="w-10 h-10 flex items-center justify-center text-2xl hover:bg-zinc-800 rounded-2xl transition-all hidden md:flex"
+                id="back-button">
+            ←
+        </button>
+
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-3xl shadow-inner">
+                🔊
             </div>
-            <div class="flex items-center gap-3">
-                <button id="btn-guardian" class="guardian-btn px-6 py-3 rounded-2xl flex items-center gap-2 shadow-xl hover:scale-105 transition-all">
-                    🛡️ Guardian Witness
-                </button>
-                <button id="btn-profile" class="w-11 h-11 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-3xl transition-all border border-zinc-600 flex items-center justify-center">
-                    👤
-                </button>
+            <div>
+                <h1 class="text-4xl font-bold tracking-tighter text-emerald-400">VocalWitness</h1>
+                <p class="text-xs text-emerald-500 -mt-1">Truth • Evidence • Public Square</p>
             </div>
-        </header>
+        </div>
+    </div>
+
+    <div class="flex items-center gap-3">
+        
+        <!-- Guardian Witness Button -->
+        <button id="btn-guardian" 
+                class="guardian-btn px-6 py-3 rounded-2xl flex items-center gap-2 shadow-xl hover:scale-105 transition-all text-sm font-semibold">
+            🛡️ Guardian Witness
+        </button>
+
+        <button id="btn-profile" 
+                class="w-11 h-11 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-3xl transition-all border border-zinc-600 flex items-center justify-center">
+            👤
+        </button>
+    </div>
+</header>
 
         <!-- MAIN NAVIGATION -->
         <div class="flex gap-2 mb-8 overflow-x-auto pb-2" id="main-nav">
