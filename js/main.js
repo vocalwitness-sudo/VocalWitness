@@ -7,32 +7,42 @@ import { initLanguage } from './i18n.js';
 import { handleImageSelect, toggleVoiceRecording } from './media.js';
 import { getTierInfo, canAccessFeature } from './tier.js';
 
-// ====================== UTILITIES ======================
-function getCurrentPage() {
-    const path = window.location.pathname;
-    if (path.includes('true-witness')) return 'true-witness';
-    if (path.includes('live-arena')) return 'live-arena';
-    return 'citizen-talk';
-}
-
-function highlightActiveNav() {
-    const current = getCurrentPage(); 
-    // Target the button elements specifically
+// ====================== NAVIGATION ======================
+function highlightActiveNav(feedType = 'citizen') {
     document.querySelectorAll('#main-nav button').forEach(btn => {
         btn.classList.remove('active');
-        // Match the feed type to the button's data attribute or content
-        if (btn.textContent.toLowerCase().includes(current.replace('-', ' '))) {
+        if (btn.dataset.feed === feedType) {
             btn.classList.add('active');
         }
     });
 }
 
-// ====================== FEATURE GATING ======================
-function applyFeatureGating(userData) {
-    // Example: Hide Forensic Shield button for non-True Witness users
-    const forensicBtn = document.getElementById('btn-photo');
-    if (forensicBtn && !canAccessFeature(userData, 'forensic_shield')) {
-        forensicBtn.textContent = "📸 Photo (Basic)";
+window.loadFeed = (feedType) => {
+    highlightActiveNav(feedType);
+    
+    if (typeof initFeed === 'function') {
+        initFeed(db, feedType);
+    }
+    
+    // Optional: Update URL
+    const path = feedType === 'citizen' ? '/' : `/${feedType}-witness`;
+    window.history.pushState({ feed: feedType }, '', path);
+};
+
+// ====================== BACK BUTTON ======================
+window.goBack = () => {
+    if (window.history.length > 1) {
+        window.history.back();
+    } else {
+        window.location.href = '/';
+    }
+};
+
+function toggleBackButton() {
+    const backBtn = document.getElementById('back-button');
+    if (backBtn) {
+        const isHome = window.location.pathname === '/' || window.location.pathname.includes('index');
+        backBtn.classList.toggle('hidden', isHome);
     }
 }
 
@@ -45,9 +55,6 @@ function attachUIListeners() {
         switch(btn.id) {
             case 'btn-profile':
                 window.showProfileSection?.();
-                break;
-            case 'btn-close-profile':
-                window.hideProfileSection?.();
                 break;
             case 'btn-photo':
                 const input = document.createElement('input');
@@ -62,7 +69,15 @@ function attachUIListeners() {
             case 'postButton':
                 window.publishTestimony?.();
                 break;
-            // Add more as needed
+            case 'btn-guardian':
+                document.getElementById('guardianModal')?.classList.remove('hidden');
+                break;
+            case 'btn-activate-guardian':
+                // your guardian logic
+                break;
+            case 'btn-close-guardian':
+                document.getElementById('guardianModal')?.classList.add('hidden');
+                break;
         }
     });
 }
@@ -70,59 +85,18 @@ function attachUIListeners() {
 // ====================== BOOTSTRAP ======================
 async function bootstrap() {
     console.log("🚀 Initializing VocalWitness...");
-
     try {
         await initAuth();
         initLanguage();
         attachUIListeners();
-        highlightActiveNav();
-
-        const currentPage = getCurrentPage();
-        if (typeof initFeed === 'function') {
-            initFeed(db, currentPage);
-        }
+        
+        // Default load
+        loadFeed('citizen');
+        toggleBackButton();
 
         console.log("✅ VocalWitness Core Loaded Successfully");
     } catch (error) {
         console.error("❌ Bootstrap failed:", error);
-    }
-}
-
-window.loadFeed = (feedType) => {
-    // 1. Remove 'active' class from all nav buttons
-    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-    
-    // 2. Add 'active' class to the clicked button
-    event.target.classList.add('active');
-
-    // 3. Trigger the feed load
-    // We pass the db object as your initFeed requires it based on bootstrap()
-    if (typeof initFeed === 'function') {
-        initFeed(db, feedType); 
-    }
-
-    // 4. Update the URL without reloading the page (SEO/History friendly)
-    const newPath = feedType === 'citizen' ? '/' : `/${feedType.replace('_', '-')}`;
-    window.history.pushState({ feed: feedType }, '', newPath);
-    
-    // 5. Toggle the back button visibility
-    toggleBackButton();
-};
-
-window.goBack = () => {
-    if (window.history.length > 1) {
-        window.history.back();
-    } else {
-        window.location.href = '/';
-    }
-};
-
-// Show/hide back button based on page
-function toggleBackButton() {
-    const backBtn = document.getElementById('back-button');
-    if (backBtn) {
-        const isHome = window.location.pathname === '/' || window.location.pathname.includes('index');
-        backBtn.classList.toggle('hidden', isHome);
     }
 }
 
