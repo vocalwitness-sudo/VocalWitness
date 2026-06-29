@@ -127,5 +127,17 @@ async function bootstrap() {
         showToast("Failed to initialize app", "error");
     }
 }
+// === EMERGENCY PROFILE FIX ===
+window.showProfileSection = () => {
+    console.log("👤 Profile button clicked!");
+    const modal = document.getElementById('profileModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        console.log("✅ Profile modal opened");
+    } else {
+        console.error("❌ Profile modal element not found!");
+        alert("Profile modal not found in HTML");
+    }
+};
 
 document.addEventListener('DOMContentLoaded', bootstrap);
