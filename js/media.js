@@ -1,131 +1,161 @@
-// js/main.js - FINAL FIXED VERSION
-import { initAuth } from "./auth.js";
-import { initFeed } from './feed.js';
-import { db, storage } from './firebase-config.js';
-import { showToast } from './utils.js';
-import { initLanguage } from './i18n.js';
-import { handleImageSelect, toggleVoiceRecording, uploadForensicMedia, resetMediaState } from './media.js';
-import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
+// js/media.js - Enhanced & Production-Ready Media Handling
+import { showToast, generateSha256Hash } from './utils.js';
+import { storage } from './firebase-config.js';
+import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
+
+export let selectedImageFile = null;
+export let selectedAudioFile = null;
 
 let engineInstance = null;
-let currentUser = null;
+let currentMode = 'citizen-talk';
 
-// ====================== INITIALIZE ENGINE ======================
-function initEngine() {
-    if (!engineInstance) {
-        engineInstance = new CitizenTalkEngine(db, storage);
-        window.engineInstance = engineInstance;
-        import('./media.js').then(m => m.setEngine(engineInstance));
-        console.log("✅ Engine initialized");
+export function setEngine(engine) {
+    engineInstance = engine;
+    console.log("✅ Engine connected to media.js");
+}
+
+export function setCurrentMode(mode) {
+    currentMode = mode;
+    console.log(`🎥 Media mode updated to: ${mode}`);
+}
+
+// ====================== PHOTO HANDLING ======================
+export async function handleImageSelect(event, previewArea) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+        showToast("Please select a valid image file", "error");
+        return;
+    }
+    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        showToast("Image must be under 10MB", "error");
+        return;
+    }
+
+    selectedImageFile = file;
+
+    try {
+        const hash = await generateSha256Hash(file);
+        console.log("🛡️ Forensic Image Hash:", hash);
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            previewArea.innerHTML = `
+                <div class="relative group">
+                    <img src="${e.target.result}" class="image-preview rounded-2xl w-full max-h-96 object-cover" alt="Forensic Preview">
+                    <div class="absolute top-3 right-3 bg-black/80 text-[10px] px-3 py-1 rounded-full text-emerald-400 font-medium">🔐 HASHED</div>
+                    <button id="removeImgBtn" class="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white rounded-full w-8 h-8 flex items-center justify-center text-xl leading-none transition-all">✕</button>
+                </div>`;
+            
+            document.getElementById('removeImgBtn')?.addEventListener('click', () => removeImage(previewArea));
+        };
+        reader.readAsDataURL(file);
+        
+        showToast("📸 Image secured with forensic hash", "success");
+    } catch (err) {
+        console.error("Image processing error:", err);
+        showToast("Failed to process image", "error");
     }
 }
 
-// ====================== PUBLISH TESTIMONY ======================
-window.publishTestimony = async () => {
-    if (!currentUser) {
-        showToast("Please sign in first", "error");
+export function removeImage(previewArea) {
+    selectedImageFile = null;
+    if (previewArea) {
+        previewArea.innerHTML = '';
+        previewArea.classList.add('hidden');
+    }
+}
+
+// ====================== VOICE RECORDING ======================
+export function toggleVoiceRecording(voiceBtn) {
+    if (!engineInstance) {
+        showToast("Voice engine not initialized yet", "error");
         return;
     }
 
-    const textarea = document.getElementById('mainInput');
-    const content = textarea?.value.trim() || "";
+    const isWitnessMode = currentMode === 'witness-voice';
 
-    if (!content && !window.selectedImageFile && !engineInstance?.currentAudioBlob) {
-        showToast("Please add text, photo, or voice testimony", "error");
-        return;
-    }
-
-    const postBtn = document.getElementById('postButton');
-    postBtn.disabled = true;
-    postBtn.textContent = '🚀 Publishing...';
-
-    try {
-        const mediaData = await uploadForensicMedia(currentUser.uid);
-        showToast("✅ Testimony published to the Square!", "success");
+    if (!engineInstance.mediaRecorder || engineInstance.mediaRecorder.state === "inactive") {
+        // Start recording
+        const maxDuration = isWitnessMode ? 300000 : 120000; // 5min Witness / 2min Citizen
+        engineInstance.startVoiceRecording(maxDuration);
         
-        if (textarea) textarea.value = '';
-        resetMediaState();
+        voiceBtn.classList.add('recording-active');
+        voiceBtn.textContent = '⏹️ Stop Recording';
+        showToast(isWitnessMode ? "🎤 Forensic Witness Voice Recording Active" : "🎤 Recording...", "info");
+    } else {
+        // Stop recording
+        engineInstance.stopVoiceRecording();
         
-    } catch (err) {
-        console.error(err);
-        showToast("Failed to publish testimony", "error");
-    } finally {
-        postBtn.disabled = false;
-        postBtn.textContent = '🚀 Publish Testimony to the Square';
+        voiceBtn.classList.remove('recording-active');
+        voiceBtn.textContent = '🎙️ Voice Testimony';
+        showToast("✅ Recording completed", "success");
     }
-};
+}
 
-// ====================== FEED SWITCHING ======================
-window.loadFeed = (feedType) => {
-    console.log("🔄 Loading feed:", feedType);
-    
-    const normalized = feedType === 'citizen-talk' ? 'citizen-talk' :
-                       feedType === 'true' ? 'true-witness' : feedType;
+// ====================== UPLOAD MEDIA ======================
+export async function uploadForensicMedia(userId = "anonymous") {
+    const mediaData = { mode: currentMode, hasImage: false, hasAudio: false };
 
-    document.querySelectorAll('#main-nav button').forEach(btn => {
-        btn.classList.remove('active');
-        if (btn.dataset.feed === feedType) btn.classList.add('active');
-    });
-
-    initFeed(db, normalized);
-};
-
-// ====================== UI LISTENERS ======================
-function attachUIListeners() {
-    console.log("👂 UI Listeners Attached");
-
-    document.getElementById('btn-profile')?.addEventListener('click', () => {
-        window.showProfileSection?.();
-    });
-
-    document.getElementById('btn-guardian')?.addEventListener('click', () => {
-        document.getElementById('guardianModal')?.classList.remove('hidden');
-    });
-
-    document.getElementById('btn-close-guardian')?.addEventListener('click', () => {
-        document.getElementById('guardianModal')?.classList.add('hidden');
-    });
-
-    // Photo Button
-    const photoBtn = document.getElementById('btn-photo');
-    if (photoBtn) {
-        photoBtn.addEventListener('click', () => {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'image/*';
-            input.onchange = (e) => handleImageSelect(e, document.getElementById('preview-area'));
-            input.click();
-        });
+    // Image Upload
+    if (selectedImageFile) {
+        try {
+            const hash = await generateSha256Hash(selectedImageFile);
+            const timestamp = Date.now();
+            const imageRef = ref(storage, `images/${userId}/${timestamp}.jpg`);
+            await uploadBytes(imageRef, selectedImageFile);
+            mediaData.imageUrl = await getDownloadURL(imageRef);
+            mediaData.imageHash = hash;
+            mediaData.hasImage = true;
+            console.log("✅ Image uploaded successfully");
+        } catch (e) {
+            console.error("Image upload failed:", e);
+            showToast("Image upload failed", "error");
+        }
     }
 
-    // Voice Button
+    // Audio Upload
+    if (engineInstance?.currentAudioBlob) {
+        try {
+            const hash = await generateSha256Hash(engineInstance.currentAudioBlob);
+            const timestamp = Date.now();
+            const audioRef = ref(storage, `testimonies/${userId}/${timestamp}.webm`);
+            await uploadBytes(audioRef, engineInstance.currentAudioBlob);
+            mediaData.audioUrl = await getDownloadURL(audioRef);
+            mediaData.audioHash = hash;
+            mediaData.hasAudio = true;
+            console.log("✅ Audio uploaded successfully");
+        } catch (e) {
+            console.error("Audio upload failed:", e);
+            showToast("Voice upload failed", "error");
+        }
+    }
+
+    return mediaData;
+}
+
+// ====================== RESET ======================
+export function resetMediaState() {
+    selectedImageFile = null;
+    selectedAudioFile = null;
+
+    const previewArea = document.getElementById('preview-area');
+    if (previewArea) {
+        previewArea.innerHTML = '';
+        previewArea.classList.add('hidden');
+    }
+
     const voiceBtn = document.getElementById('btn-voice');
     if (voiceBtn) {
-        voiceBtn.addEventListener('click', (e) => toggleVoiceRecording(e.currentTarget));
+        voiceBtn.classList.remove('recording-active');
+        voiceBtn.textContent = '🎙️ Voice Testimony';
     }
-
-    // Publish Button
-    document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
+    
+    console.log("🧹 Media state reset");
 }
 
-// ====================== BOOTSTRAP ======================
-async function bootstrap() {
-    console.log("🚀 Initializing VocalWitness...");
-    try {
-        await initAuth();
-        initLanguage();
-        initEngine();
-        attachUIListeners();
-        
-        // Default feed
-        setTimeout(() => window.loadFeed('citizen-talk'), 500);
-
-        console.log("✅ VocalWitness Loaded Successfully");
-        showToast("Platform Ready", "success");
-    } catch (error) {
-        console.error("❌ Bootstrap failed:", error);
-        showToast("Failed to initialize app", "error");
-    }
-}
-
-document.addEventListener('DOMContentLoaded', bootstrap);
+// Global exposures for inline usage if needed
+window.handleImageSelect = handleImageSelect;
+window.toggleVoiceRecording = toggleVoiceRecording;
+window.resetMediaState = resetMediaState;
