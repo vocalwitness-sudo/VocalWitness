@@ -79,6 +79,9 @@ function attachUIListeners() {
             case 'btn-close-guardian':
                 document.getElementById('guardianModal')?.classList.add('hidden');
                 break;
+                case 'btn-profile':
+                window.showProfileSection();
+                break;
         }
     });
 }
