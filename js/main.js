@@ -103,6 +103,23 @@ async function bootstrap() {
         else if (path.includes('live-arena')) defaultFeed = 'live';
 
         window.loadFeed(defaultFeed);
+        // Profile Controls
+window.showProfileSection = () => {
+    const modal = document.getElementById('profileModal');
+    if (modal) modal.classList.remove('hidden');
+    else console.error("Profile modal not found in DOM");
+};
+
+window.closeProfile = () => {
+    document.getElementById('profileModal')?.classList.add('hidden');
+};
+
+window.logout = () => {
+    if (confirm("Sign out of VocalWitness?")) {
+        showToast("Signed out", "success");
+        closeProfile();
+    }
+};
 
         console.log("✅ VocalWitness Core Loaded Successfully | Default:", defaultFeed);
     } catch (error) {
