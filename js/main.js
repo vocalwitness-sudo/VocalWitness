@@ -62,7 +62,7 @@ window.publishTestimony = async () => {
 
     } catch (err) {
         console.error("Publish error:", err);
-        showToast("Failed to publish. Check console.", "error");
+        showToast("Failed to publish", "error");
     } finally {
         postBtn.disabled = false;
         postBtn.textContent = '🚀 Publish Testimony to the Square';
