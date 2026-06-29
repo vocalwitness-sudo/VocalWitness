@@ -122,6 +122,35 @@ async function bootstrap() {
 }
 
 document.addEventListener('DOMContentLoaded', bootstrap);
+window.signUpWithEmail = async () => {
+    const email = document.getElementById('signupEmail').value;
+    const password = document.getElementById('signupPassword').value;
+
+    if (!email || !password) {
+        showToast("Please fill all fields", "error");
+        return;
+    }
+
+    try {
+        const { createUserWithEmailAndPassword } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js");
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        showToast("Account created successfully!", "success");
+        window.closeSignupModal();
+        // Auto login
+        currentUser = userCredential.user;
+    } catch (error) {
+        showToast(error.message, "error");
+    }
+};
+
+window.closeSignupModal = () => {
+    document.getElementById('signupModal').classList.add('hidden');
+};
+
+// Show signup modal from somewhere (e.g., a "Sign Up" button)
+window.showSignupModal = () => {
+    document.getElementById('signupModal').classList.remove('hidden');
+};
 
 // Global Helpers
 window.showProfileSection = () => document.getElementById('profileModal')?.classList.remove('hidden');
