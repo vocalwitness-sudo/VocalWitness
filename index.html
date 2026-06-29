@@ -39,64 +39,26 @@
         <!-- HEADER -->
 <header class="flex items-center justify-between mb-8">
     <div class="flex items-center gap-3">
-        <!-- Back Arrow -->
-        <button onclick="goBack()" 
-                id="back-button"
-                class="w-10 h-10 flex items-center justify-center text-2xl hover:bg-zinc-800 rounded-2xl transition-all hidden md:flex">
-            ←
-        </button>
-
+        <button onclick="goBack()" id="back-button" class="w-10 h-10 flex items-center justify-center text-2xl hover:bg-zinc-800 rounded-2xl transition-all hidden md:flex">←</button>
         <div class="flex items-center gap-3">
-            <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-3xl shadow-inner">
-                🔊
-            </div>
+            <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-3xl shadow-inner">🔊</div>
             <div>
                 <h1 class="text-4xl font-bold tracking-tighter text-emerald-400">VocalWitness</h1>
                 <p class="text-xs text-emerald-500 -mt-1">Truth • Evidence • Public Square</p>
             </div>
         </div>
     </div>
-
     <div class="flex items-center gap-3">
-        <button id="btn-guardian" 
-                class="guardian-btn px-6 py-3 rounded-2xl flex items-center gap-2 shadow-xl hover:scale-105 transition-all text-sm font-semibold">
-            🛡️ Guardian Witness
-        </button>
-
-        <button id="btn-profile" 
-                class="w-11 h-11 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-3xl transition-all border border-zinc-600 flex items-center justify-center">
-            👤
-        </button>
-    </div>
-</header>
-        
-        <!-- Guardian Witness Button -->
-        <button id="btn-guardian" 
-                class="guardian-btn px-6 py-3 rounded-2xl flex items-center gap-2 shadow-xl hover:scale-105 transition-all text-sm font-semibold">
-            🛡️ Guardian Witness
-        </button>
-
-        <button id="btn-profile" 
-                class="w-11 h-11 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-3xl transition-all border border-zinc-600 flex items-center justify-center">
-            👤
-        </button>
+        <button id="btn-guardian" class="guardian-btn px-6 py-3 rounded-2xl flex items-center gap-2 shadow-xl hover:scale-105 transition-all text-sm font-semibold">🛡️ Guardian Witness</button>
+        <button id="btn-profile" class="w-11 h-11 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-3xl transition-all border border-zinc-600 flex items-center justify-center">👤</button>
     </div>
 </header>
 
-    
-        <!-- Navigation Tabs -->
 <nav class="grid grid-cols-3 gap-2 mb-10 bg-zinc-900 p-1.5 rounded-3xl" id="main-nav">
-    <a href="/" class="nav-btn active py-4 rounded-3xl text-sm font-medium text-center">
-        Citizen Talk
-    </a>
-    <a href="/true-witness" class="nav-btn py-4 rounded-3xl text-sm font-medium text-center">
-        True Witness
-    </a>
-    <a href="/live-arena" class="nav-btn py-4 rounded-3xl text-sm font-medium text-center">
-        Live Arena
-    </a>
+    <button onclick="loadFeed('citizen')" class="nav-btn active py-4 rounded-3xl text-sm font-medium">Citizen Talk</button>
+    <button onclick="loadFeed('true')" class="nav-btn py-4 rounded-3xl text-sm font-medium">True Witness</button>
+    <button onclick="loadFeed('live')" class="nav-btn py-4 rounded-3xl text-sm font-medium">Live Arena</button>
 </nav>
-
         <!-- COMPOSER -->
         <div class="glass rounded-3xl p-6 mb-8">
             <textarea id="mainInput" rows="3" 
