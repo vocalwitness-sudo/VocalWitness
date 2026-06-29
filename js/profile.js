@@ -56,30 +56,27 @@ function renderProfileUI() {
 
     const tierInfo = getTierInfo(currentUserData);
 
-    // Avatar
-    if (elements.avatar) {
-        elements.avatar.innerHTML = currentUserData.photoURL 
-            ? `<img src="${currentUserData.photoURL}" class="w-full h-full object-cover rounded-3xl">` 
-            : `<span class="text-6xl">👤</span>`;
-    }
+    // ... your existing avatar, username, email, tier badge code ...
 
-    if (elements.username) elements.username.textContent = `@${currentUserData.username || 'citizen'}`;
-    if (elements.email) elements.email.textContent = currentUserData.email || '';
-
-    // Tier Badge
-    if (elements.profileTierContainer) {
-        elements.profileTierContainer.innerHTML = `
-            <div class="inline-flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-${tierInfo.color}-500 to-${tierInfo.color}-600 text-black font-bold rounded-3xl shadow-lg">
-                <span class="text-4xl">${tierInfo.emoji}</span>
-                <div class="text-left">
-                    <div class="text-xl">${tierInfo.name}</div>
-                    <div class="text-xs opacity-90">${tierInfo.desc}</div>
+    // === NEW: Witness Cycle Status ===
+    const cycleContainer = document.getElementById('witness-cycle-status');
+    if (cycleContainer) {
+        const isActive = currentUserData.activeWitnessCycle === true;
+        cycleContainer.innerHTML = `
+            <div class="flex items-center justify-between bg-zinc-900/70 rounded-2xl p-5">
+                <div>
+                    <div class="text-sm text-zinc-400">Witness Cycle</div>
+                    <div class="font-semibold ${isActive ? 'text-emerald-400' : 'text-zinc-400'}">
+                        ${isActive ? '🟢 Active - Attesting' : '⚪ Inactive'}
+                    </div>
                 </div>
+                ${!isActive && tierInfo.name === "True Witness" ? `
+                <button onclick="startWitnessCycleFromProfile()" 
+                        class="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 rounded-2xl text-sm font-medium">
+                    Start Cycle
+                </button>` : ''}
             </div>`;
     }
-
-    const trustScore = currentUserData.trustCircle || currentUserData.reputationScore || 50;
-    if (elements.trustScore) elements.trustScore.textContent = trustScore;
 }
 
 // Phone Verification Handlers
