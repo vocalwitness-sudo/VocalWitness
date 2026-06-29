@@ -3,32 +3,25 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/fi
 import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { auth } from './firebase-init.js';
 import { updateUserProfile } from './db.js';
-import { getTierInfo } from './tier.js';           // ← Changed
-import { sendPhoneVerification, verifyPhoneCode } from './phoneVerification.js';  // ← Added
+import { getTierInfo } from './tier.js';
+import { sendPhoneVerification, verifyPhoneCode } from './phoneVerification.js';
 import { showToast } from './utils.js';
 
 const db = getFirestore();
 let currentUserId = null;
 let currentUserData = null;
-let elements = {};
 
 // Cache DOM elements
 function cacheDOM() {
-    elements = {
-        avatar: document.getElementById('profile-avatar'),
-        username: document.getElementById('profile-username'),
-        email: document.getElementById('profile-email'),
-        roleBadge: document.getElementById('profile-role-badge'),
-        trustScore: document.getElementById('trust-score'),
-        editDisplayName: document.getElementById('edit-displayName'),
-        editBio: document.getElementById('edit-bio'),
-        nameCooldown: document.getElementById('name-cooldown'),
-        myPostsList: document.getElementById('my-posts-list'),
+    return {
+        profileModal: document.getElementById('profileModal'),
+        profileName: document.getElementById('profileName'),
+        profileUsername: document.getElementById('profileUsername'),
         postCount: document.getElementById('post-count'),
         reputationScore: document.getElementById('reputation-score'),
-        profileTierContainer: document.getElementById('profile-tier-container'),
-        profileSection: document.getElementById('profileSection'),
-        homeSection: document.getElementById('homeSection')
+        trustScore: document.getElementById('trust-score'),
+        roleBadge: document.getElementById('profile-role-badge'),
+        witnessCycleStatus: document.getElementById('witness-cycle-status')
     };
 }
 
@@ -36,7 +29,6 @@ function cacheDOM() {
 onAuthStateChanged(auth, (user) => {
     if (user) {
         currentUserId = user.uid;
-        cacheDOM();
         listenToUserProfile(user.uid);
     }
 });
@@ -54,12 +46,21 @@ function listenToUserProfile(userId) {
 function renderProfileUI() {
     if (!currentUserData) return;
 
+    const els = cacheDOM();
     const tierInfo = getTierInfo(currentUserData);
 
-    // ... your existing avatar, username, email, tier badge code ...
+    // Basic Profile Info
+    if (els.profileName) els.profileName.textContent = currentUserData.displayName || "Anonymous Witness";
+    if (els.profileUsername) els.profileUsername.textContent = `@${currentUserData.username || 'user'}`;
+    if (els.roleBadge) els.roleBadge.textContent = tierInfo.name || "Citizen";
 
-    // === NEW: Witness Cycle Status ===
-    const cycleContainer = document.getElementById('witness-cycle-status');
+    // Stats
+    if (els.postCount) els.postCount.textContent = currentUserData.postCount || 0;
+    if (els.reputationScore) els.reputationScore.textContent = currentUserData.reputation || 0;
+    if (els.trustScore) els.trustScore.textContent = currentUserData.trustScore || 85;
+
+    // Witness Cycle Status
+    const cycleContainer = els.witnessCycleStatus;
     if (cycleContainer) {
         const isActive = currentUserData.activeWitnessCycle === true;
         cycleContainer.innerHTML = `
@@ -79,7 +80,27 @@ function renderProfileUI() {
     }
 }
 
-// Phone Verification Handlers
+// ==================== PROFILE MODAL CONTROLS ====================
+window.showProfileSection = () => {
+    const modal = document.getElementById('profileModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        if (currentUserData) {
+            renderProfileUI();
+        } else if (currentUserId) {
+            listenToUserProfile(currentUserId);
+        }
+    } else {
+        console.error("❌ Profile modal not found");
+        showToast("Profile modal not available", "error");
+    }
+};
+
+window.closeProfile = () => {
+    document.getElementById('profileModal')?.classList.add('hidden');
+};
+
+// Phone Verification
 window.sendOTP = async () => {
     const phone = document.getElementById('phoneInput')?.value.trim();
     if (!phone) return showToast("Enter phone number", "error");
@@ -92,14 +113,24 @@ window.verifyOTP = async () => {
     await verifyPhoneCode(code);
 };
 
-// Save Profile & Avatar (keep your existing)
-window.saveProfile = async () => { ... };   // your code
-window.uploadAvatar = async () => { ... };  // your code
+// Placeholders for other functions
+window.saveProfile = async () => {
+    showToast("Profile save coming soon...", "info");
+};
 
-window.showProfileSection = () => { ... };
-window.hideProfileSection = () => { ... };
+window.logout = () => {
+    showToast("Signed out successfully", "success");
+    // Add actual logout logic here
+    window.location.reload();
+};
+
 window.startWitnessCycleFromProfile = async () => {
     if (!currentUserData) return;
-    const { startWitnessCycle } = await import('./witnessCycle.js');
-    await startWitnessCycle(currentUserData);
+    try {
+        const { startWitnessCycle } = await import('./witnessCycle.js');
+        await startWitnessCycle(currentUserData);
+    } catch (e) {
+        console.error(e);
+        showToast("Witness cycle feature not ready yet", "error");
+    }
 };
