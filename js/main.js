@@ -139,5 +139,8 @@ window.showProfileSection = () => {
         alert("Profile modal not found in HTML");
     }
 };
+window.closeProfile = () => {
+    document.getElementById('profileModal')?.classList.add('hidden');
+};
 
 document.addEventListener('DOMContentLoaded', bootstrap);
