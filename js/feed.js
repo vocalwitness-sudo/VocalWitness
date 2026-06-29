@@ -1,34 +1,27 @@
-// js/feed.js - Complete with Real Firestore Likes/Disputes
+// js/feed.js - Updated for better feed switching
 import {
-    collection, query, orderBy, onSnapshot, where, limit, startAfter, getDocs
+    collection, query, orderBy, onSnapshot, where, limit
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-
 import { doc, updateDoc, increment, arrayUnion } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { auth } from './firebase-config.js';
 import { db } from './firebase-config.js';
-import { submitPeerVote } from './utils.js';
 import { showToast } from './utils.js';
-
-window.submitPeerVote = submitPeerVote;
 
 let activeFeedListener = null;
 let lastDoc = null;
 let currentFeed = 'citizen-talk';
 
-export function initFeed(db, feedType = 'citizen-talk') {
+export function initFeed(dbInstance, feedType = 'citizen-talk') {
     currentFeed = feedType;
     const feedContainer = document.getElementById('feedContainer');
-    if (!feedContainer) {
-        console.warn("⚠️ feedContainer not found on this page. Skipping feed.");
-        return;
-    }
+    if (!feedContainer) return;
+
     if (activeFeedListener) activeFeedListener();
-  
+
     feedContainer.innerHTML = '<div class="text-center py-8 text-zinc-400">Loading testimonies...</div>';
-    lastDoc = null;
 
     const q = query(
-        collection(db, "testimonies"),
+        collection(dbInstance, "testimonies"),
         where("feedVisibility", "==", currentFeed),
         orderBy("timestamp", "desc"),
         limit(15)
@@ -37,11 +30,13 @@ export function initFeed(db, feedType = 'citizen-talk') {
     activeFeedListener = onSnapshot(q, (snapshot) => {
         feedContainer.innerHTML = '';
         let hasRealPosts = false;
+
         snapshot.forEach((docSnap) => {
             hasRealPosts = true;
             renderPost(docSnap.id, docSnap.data());
             lastDoc = docSnap;
         });
+
         if (!hasRealPosts) {
             feedContainer.innerHTML = `
                 <div class="text-center py-12 text-zinc-400">
@@ -50,6 +45,9 @@ export function initFeed(db, feedType = 'citizen-talk') {
                     <p class="text-sm mt-2">Be the first to share your voice!</p>
                 </div>`;
         }
+    }, (error) => {
+        console.error("Feed error:", error);
+        feedContainer.innerHTML = `<div class="text-red-400 text-center">Error loading feed</div>`;
     });
 }
 
