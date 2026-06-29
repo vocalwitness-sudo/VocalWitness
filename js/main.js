@@ -86,4 +86,21 @@ async function bootstrap() {
     }
 }
 
+window.goBack = () => {
+    if (window.history.length > 1) {
+        window.history.back();
+    } else {
+        window.location.href = '/';
+    }
+};
+
+// Show/hide back button based on page
+function toggleBackButton() {
+    const backBtn = document.getElementById('back-button');
+    if (backBtn) {
+        const isHome = window.location.pathname === '/' || window.location.pathname.includes('index');
+        backBtn.classList.toggle('hidden', isHome);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', bootstrap);
