@@ -50,6 +50,8 @@ function attachUIListeners() {
     document.addEventListener('click', (e) => {
         const btn = e.target.closest('button');
         if (!btn) return;
+        window.showProfileSection = () => document.getElementById('profileModal').classList.remove('hidden');
+        window.closeProfile = () => document.getElementById('profileModal').classList.add('hidden');
 
         switch(btn.id) {
             case 'btn-profile':
