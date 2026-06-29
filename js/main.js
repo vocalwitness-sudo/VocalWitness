@@ -151,6 +151,23 @@ window.closeSignupModal = () => {
 window.showSignupModal = () => {
     document.getElementById('signupModal').classList.remove('hidden');
 };
+window.sendOTP = async () => {
+    const phone = document.getElementById('phoneInput').value.trim();
+    if (!phone) return showToast("Enter phone number", "error");
+    
+    const { sendPhoneVerification } = await import('./phoneVerification.js');
+    await sendPhoneVerification(phone, currentUser?.uid);
+};
+
+window.verifyOTP = async () => {
+    const code = document.getElementById('otpInput').value.trim();
+    if (!code) return;
+    
+    const { verifyPhoneCode } = await import('./phoneVerification.js');
+    await verifyPhoneCode(code);
+};
+// Example in upgrade flow
+document.getElementById('phoneVerificationModal').classList.remove('hidden');
 
 // Global Helpers
 window.showProfileSection = () => document.getElementById('profileModal')?.classList.remove('hidden');
