@@ -6,40 +6,43 @@ import { showToast } from './utils.js';
 import { initLanguage } from './i18n.js';
 import { handleImageSelect, toggleVoiceRecording } from './media.js';
 
-// ====================== FEED SWITCHING ======================
+// ====================== FEED SWITCHING (Fixed Mapping) ======================
 window.loadFeed = (feedType) => {
     console.log("🔄 Loading feed:", feedType);
+    
+    // Normalize feed types
+    const feedMap = {
+        'citizen': 'citizen-talk',
+        'true': 'true-witness',
+        'live': 'live'
+    };
+    const normalized = feedMap[feedType] || feedType;
 
     // Highlight active tab
-    document.querySelectorAll('#main-nav button').forEach(btn => {
+    document.querySelectorAll('#main-nav button, .nav-btn').forEach(btn => {
         btn.classList.remove('active');
         if (btn.dataset.feed === feedType) {
             btn.classList.add('active');
         }
     });
 
-    // Clear current feed
     const feedContainer = document.getElementById('feedContainer');
     if (feedContainer) {
-        feedContainer.innerHTML = `<div class="py-12 text-center text-zinc-400">Loading ${feedType} feed...</div>`;
+        feedContainer.innerHTML = `<div class="py-12 text-center text-zinc-400">Loading ${normalized} feed...</div>`;
     }
 
-    // Load the feed
     if (typeof initFeed === 'function') {
-        initFeed(db, feedType);
+        initFeed(db, normalized);
     } else {
-        console.error("❌ initFeed function is not available");
-        showToast("Feed system not ready yet", "error");
+        console.error("❌ initFeed not available");
+        showToast("Feed system not ready", "error");
     }
 };
 
-// ====================== BACK BUTTON ======================
+// ====================== OTHER UTILITIES ======================
 window.goBack = () => {
-    if (window.history.length > 1) {
-        window.history.back();
-    } else {
-        window.location.href = '/';
-    }
+    if (window.history.length > 1) window.history.back();
+    else window.location.href = '/';
 };
 
 // ====================== CLICK HANDLER ======================
@@ -50,7 +53,7 @@ function attachUIListeners() {
 
         switch(btn.id) {
             case 'btn-profile':
-                window.showProfileSection?.();
+                // Implement profile if needed
                 break;
             case 'btn-photo':
                 const input = document.createElement('input');
@@ -69,7 +72,7 @@ function attachUIListeners() {
                 document.getElementById('guardianModal')?.classList.remove('hidden');
                 break;
             case 'btn-activate-guardian':
-                // Add guardian logic later
+                showToast("Guardian activation coming soon", "info");
                 break;
             case 'btn-close-guardian':
                 document.getElementById('guardianModal')?.classList.add('hidden');
@@ -86,8 +89,10 @@ async function bootstrap() {
         initLanguage();
         attachUIListeners();
 
-        // Default load
-        window.loadFeed('citizen');
+        // Default to citizen on main page
+        const defaultFeed = window.location.pathname.includes('true-witness') ? 'true' : 
+                           window.location.pathname.includes('live-arena') ? 'live' : 'citizen';
+        window.loadFeed(defaultFeed);
 
         console.log("✅ VocalWitness Core Loaded Successfully");
     } catch (error) {
