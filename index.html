@@ -106,6 +106,15 @@
         </div>
     </div>
 
+    <!-- Language Selector -->
+<div class="flex justify-end mb-4">
+    <select id="languageSelector" 
+            onchange="changeLanguage(this.value)"
+            class="bg-zinc-800 border border-zinc-700 text-white px-4 py-2 rounded-2xl text-sm focus:outline-none focus:border-emerald-500">
+        <!-- Populated by JS -->
+    </select>
+</div>
+
     <!-- PROFILE MODAL -->
     <div id="profileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[70]">
         <div class="glass rounded-3xl max-w-lg w-full mx-4 p-8 max-h-[90vh] overflow-y-auto">
