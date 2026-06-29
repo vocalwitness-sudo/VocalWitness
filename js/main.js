@@ -5,28 +5,32 @@ import { db } from './firebase-config.js';
 import { showToast } from './utils.js';
 import { initLanguage } from './i18n.js';
 import { handleImageSelect, toggleVoiceRecording } from './media.js';
-import { getTierInfo, canAccessFeature } from './tier.js';
 
-// ====================== NAVIGATION ======================
-function highlightActiveNav(feedType = 'citizen') {
+// ====================== FEED SWITCHING ======================
+window.loadFeed = (feedType) => {
+    console.log("🔄 Loading feed:", feedType);
+
+    // Highlight active tab
     document.querySelectorAll('#main-nav button').forEach(btn => {
         btn.classList.remove('active');
         if (btn.dataset.feed === feedType) {
             btn.classList.add('active');
         }
     });
-}
 
-window.loadFeed = (feedType) => {
-    highlightActiveNav(feedType);
-    
+    // Clear current feed
+    const feedContainer = document.getElementById('feedContainer');
+    if (feedContainer) {
+        feedContainer.innerHTML = `<div class="py-12 text-center text-zinc-400">Loading ${feedType} feed...</div>`;
+    }
+
+    // Load the feed
     if (typeof initFeed === 'function') {
         initFeed(db, feedType);
+    } else {
+        console.error("❌ initFeed function is not available");
+        showToast("Feed system not ready yet", "error");
     }
-    
-    // Optional: Update URL
-    const path = feedType === 'citizen' ? '/' : `/${feedType}-witness`;
-    window.history.pushState({ feed: feedType }, '', path);
 };
 
 // ====================== BACK BUTTON ======================
@@ -37,14 +41,6 @@ window.goBack = () => {
         window.location.href = '/';
     }
 };
-
-function toggleBackButton() {
-    const backBtn = document.getElementById('back-button');
-    if (backBtn) {
-        const isHome = window.location.pathname === '/' || window.location.pathname.includes('index');
-        backBtn.classList.toggle('hidden', isHome);
-    }
-}
 
 // ====================== CLICK HANDLER ======================
 function attachUIListeners() {
@@ -73,7 +69,7 @@ function attachUIListeners() {
                 document.getElementById('guardianModal')?.classList.remove('hidden');
                 break;
             case 'btn-activate-guardian':
-                // your guardian logic
+                // Add guardian logic later
                 break;
             case 'btn-close-guardian':
                 document.getElementById('guardianModal')?.classList.add('hidden');
@@ -89,10 +85,9 @@ async function bootstrap() {
         await initAuth();
         initLanguage();
         attachUIListeners();
-        
+
         // Default load
-        loadFeed('citizen');
-        toggleBackButton();
+        window.loadFeed('citizen');
 
         console.log("✅ VocalWitness Core Loaded Successfully");
     } catch (error) {
