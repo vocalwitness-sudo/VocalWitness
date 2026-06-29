@@ -98,3 +98,8 @@ window.uploadAvatar = async () => { ... };  // your code
 
 window.showProfileSection = () => { ... };
 window.hideProfileSection = () => { ... };
+window.startWitnessCycleFromProfile = async () => {
+    if (!currentUserData) return;
+    const { startWitnessCycle } = await import('./witnessCycle.js');
+    await startWitnessCycle(currentUserData);
+};
