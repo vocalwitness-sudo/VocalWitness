@@ -16,11 +16,13 @@ function getCurrentPage() {
 }
 
 function highlightActiveNav() {
-    const current = getCurrentPage();
-    document.querySelectorAll('#main-nav a').forEach(link => {
-        link.classList.remove('active');
-        if (link.getAttribute('href').includes(current)) {
-            link.classList.add('active');
+    const current = getCurrentPage(); 
+    // Target the button elements specifically
+    document.querySelectorAll('#main-nav button').forEach(btn => {
+        btn.classList.remove('active');
+        // Match the feed type to the button's data attribute or content
+        if (btn.textContent.toLowerCase().includes(current.replace('-', ' '))) {
+            btn.classList.add('active');
         }
     });
 }
@@ -85,6 +87,27 @@ async function bootstrap() {
         console.error("❌ Bootstrap failed:", error);
     }
 }
+
+window.loadFeed = (feedType) => {
+    // 1. Remove 'active' class from all nav buttons
+    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+    
+    // 2. Add 'active' class to the clicked button
+    event.target.classList.add('active');
+
+    // 3. Trigger the feed load
+    // We pass the db object as your initFeed requires it based on bootstrap()
+    if (typeof initFeed === 'function') {
+        initFeed(db, feedType); 
+    }
+
+    // 4. Update the URL without reloading the page (SEO/History friendly)
+    const newPath = feedType === 'citizen' ? '/' : `/${feedType.replace('_', '-')}`;
+    window.history.pushState({ feed: feedType }, '', newPath);
+    
+    // 5. Toggle the back button visibility
+    toggleBackButton();
+};
 
 window.goBack = () => {
     if (window.history.length > 1) {
