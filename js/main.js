@@ -1,11 +1,11 @@
-// js/main.js - FIXED & ENHANCED
+// js/main.js - FINAL FIXED VERSION
 import { initAuth } from "./auth.js";
 import { initFeed } from './feed.js';
-import { db } from './firebase-config.js';
+import { db, storage } from './firebase-config.js';
 import { showToast } from './utils.js';
 import { initLanguage } from './i18n.js';
 import { handleImageSelect, toggleVoiceRecording, uploadForensicMedia, resetMediaState } from './media.js';
-import { VocalWitnessEngine } from '../vocalWitnessEngine.js';   // ← Important
+import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
 
 let engineInstance = null;
 let currentUser = null;
@@ -13,10 +13,10 @@ let currentUser = null;
 // ====================== INITIALIZE ENGINE ======================
 function initEngine() {
     if (!engineInstance) {
-        engineInstance = new VocalWitnessEngine(db.storage || db, db); // adjust based on your config
-        window.engineInstance = engineInstance; // for debugging
-        // Pass to media.js
+        engineInstance = new CitizenTalkEngine(db, storage);
+        window.engineInstance = engineInstance;
         import('./media.js').then(m => m.setEngine(engineInstance));
+        console.log("✅ Engine initialized");
     }
 }
 
@@ -30,31 +30,28 @@ window.publishTestimony = async () => {
     const textarea = document.getElementById('mainInput');
     const content = textarea?.value.trim() || "";
 
-    if (!content && !selectedImageFile && !engineInstance?.currentAudioBlob) {
+    if (!content && !window.selectedImageFile && !engineInstance?.currentAudioBlob) {
         showToast("Please add text, photo, or voice testimony", "error");
         return;
     }
 
     const postBtn = document.getElementById('postButton');
     postBtn.disabled = true;
-    postBtn.innerHTML = '🚀 Publishing...';
+    postBtn.textContent = '🚀 Publishing...';
 
     try {
         const mediaData = await uploadForensicMedia(currentUser.uid);
+        showToast("✅ Testimony published to the Square!", "success");
         
-        // TODO: Add to Firestore (you can expand this)
-        showToast("✅ Testimony published successfully!", "success");
-        
-        // Reset form
         if (textarea) textarea.value = '';
         resetMediaState();
         
     } catch (err) {
         console.error(err);
-        showToast("Failed to publish. Try again.", "error");
+        showToast("Failed to publish testimony", "error");
     } finally {
         postBtn.disabled = false;
-        postBtn.innerHTML = '🚀 Publish Testimony to the Square';
+        postBtn.textContent = '🚀 Publish Testimony to the Square';
     }
 };
 
@@ -62,15 +59,12 @@ window.publishTestimony = async () => {
 window.loadFeed = (feedType) => {
     console.log("🔄 Loading feed:", feedType);
     
-    // Normalize feed type
-    const normalized = feedType === 'citizen' ? 'citizen-talk' : 
-                      feedType === 'true' ? 'true-witness' : feedType;
+    const normalized = feedType === 'citizen-talk' ? 'citizen-talk' :
+                       feedType === 'true' ? 'true-witness' : feedType;
 
     document.querySelectorAll('#main-nav button').forEach(btn => {
         btn.classList.remove('active');
-        if (btn.dataset.feed === feedType || btn.textContent.toLowerCase().includes(feedType)) {
-            btn.classList.add('active');
-        }
+        if (btn.dataset.feed === feedType) btn.classList.add('active');
     });
 
     initFeed(db, normalized);
@@ -80,12 +74,10 @@ window.loadFeed = (feedType) => {
 function attachUIListeners() {
     console.log("👂 UI Listeners Attached");
 
-    // Profile
     document.getElementById('btn-profile')?.addEventListener('click', () => {
         window.showProfileSection?.();
     });
 
-    // Guardian
     document.getElementById('btn-guardian')?.addEventListener('click', () => {
         document.getElementById('guardianModal')?.classList.remove('hidden');
     });
@@ -94,7 +86,7 @@ function attachUIListeners() {
         document.getElementById('guardianModal')?.classList.add('hidden');
     });
 
-    // Photo & Voice (already good, but ensure)
+    // Photo Button
     const photoBtn = document.getElementById('btn-photo');
     if (photoBtn) {
         photoBtn.addEventListener('click', () => {
@@ -106,10 +98,13 @@ function attachUIListeners() {
         });
     }
 
+    // Voice Button
     const voiceBtn = document.getElementById('btn-voice');
-    if (voiceBtn) voiceBtn.addEventListener('click', (e) => toggleVoiceRecording(e.currentTarget));
+    if (voiceBtn) {
+        voiceBtn.addEventListener('click', (e) => toggleVoiceRecording(e.currentTarget));
+    }
 
-    // Publish Button - MAIN FIX
+    // Publish Button
     document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
 }
 
@@ -119,17 +114,17 @@ async function bootstrap() {
     try {
         await initAuth();
         initLanguage();
-        initEngine();           // ← New
+        initEngine();
         attachUIListeners();
         
         // Default feed
-        setTimeout(() => window.loadFeed('citizen'), 300);
+        setTimeout(() => window.loadFeed('citizen-talk'), 500);
 
         console.log("✅ VocalWitness Loaded Successfully");
         showToast("Platform Ready", "success");
     } catch (error) {
         console.error("❌ Bootstrap failed:", error);
-        showToast("Failed to initialize", "error");
+        showToast("Failed to initialize app", "error");
     }
 }
 
