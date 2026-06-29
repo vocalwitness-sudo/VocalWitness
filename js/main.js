@@ -89,15 +89,18 @@ async function bootstrap() {
         initLanguage();
         attachUIListeners();
 
-        // Default to citizen on main page
-        const defaultFeed = window.location.pathname.includes('true-witness') ? 'true' : 
-                           window.location.pathname.includes('live-arena') ? 'live' : 'citizen';
+        // DEFAULT TO CITIZEN TALK (as per your preference)
+        let defaultFeed = 'citizen';
+
+        // Override based on URL for other pages
+        const path = window.location.pathname;
+        if (path.includes('true-witness')) defaultFeed = 'true';
+        else if (path.includes('live-arena')) defaultFeed = 'live';
+
         window.loadFeed(defaultFeed);
 
-        console.log("✅ VocalWitness Core Loaded Successfully");
+        console.log("✅ VocalWitness Core Loaded Successfully | Default:", defaultFeed);
     } catch (error) {
         console.error("❌ Bootstrap failed:", error);
     }
 }
-
-document.addEventListener('DOMContentLoaded', bootstrap);
