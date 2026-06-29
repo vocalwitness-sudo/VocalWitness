@@ -96,22 +96,26 @@
     </div>
 
     <!-- PROFESSIONAL PROFILE MODAL -->
-    <div id="profileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[70] p-4">
-        <div class="glass rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <div class="p-8">
-                <!-- Header -->
-                <div class="flex justify-between items-center mb-8">
-                    <h2 class="text-3xl font-bold text-emerald-400">My Profile</h2>
-                    <button onclick="closeProfile()" class="text-4xl leading-none text-zinc-400 hover:text-white">×</button>
-                </div>
+<div id="profileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[70]">
+    <div class="glass rounded-3xl max-w-lg w-full p-8 max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold">My Profile</h2>
+            <button onclick="closeProfile()" class="text-3xl text-zinc-400 hover:text-white">×</button>
+        </div>
+        
+        <div class="text-center mb-8">
+            <div class="w-24 h-24 mx-auto bg-zinc-700 rounded-3xl flex items-center justify-center text-6xl mb-4">👤</div>
+            <h3 id="profileName" class="text-xl font-bold">Loading...</h3>
+            <p id="profileUsername" class="text-emerald-400">@username</p>
+        </div>
 
-                <!-- Basic Info -->
-                <div class="text-center mb-10">
-                    <div class="w-28 h-28 mx-auto bg-gradient-to-br from-zinc-700 to-zinc-800 rounded-3xl flex items-center justify-center text-7xl mb-4 border-4 border-emerald-500/30">👤</div>
-                    <h3 id="profileName" class="text-2xl font-bold">Citizen User</h3>
-                    <p id="profileUsername" class="text-emerald-400 text-lg">@citizen_user</p>
-                    <p id="profileBio" class="text-zinc-400 mt-2 text-sm">Witnessing truth in the public square.</p>
-                </div>
+        <div class="space-y-6">
+            <button onclick="alert('Edit profile coming soon')" class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl">Edit Profile</button>
+            <button onclick="document.getElementById('guardianModal').classList.remove('hidden'); closeProfile()" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold rounded-2xl">Upgrade to Guardian Witness</button>
+            <button onclick="logout()" class="w-full py-3 text-red-400 hover:bg-red-900/30 rounded-2xl">Sign Out</button>
+        </div>
+    </div>
+</div>
 
                 <!-- Stats -->
                 <div class="grid grid-cols-3 gap-4 mb-8">
