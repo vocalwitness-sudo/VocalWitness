@@ -47,16 +47,29 @@ window.goBack = () => {
 
 // ====================== CLICK HANDLER ======================
 function attachUIListeners() {
+    console.log("👂 Attaching UI listeners...");
+
     document.addEventListener('click', (e) => {
         const btn = e.target.closest('button');
         if (!btn) return;
-        window.showProfileSection = () => document.getElementById('profileModal').classList.remove('hidden');
-        window.closeProfile = () => document.getElementById('profileModal').classList.add('hidden');
+
+        console.log("Button clicked:", btn.id);   // ← For debugging
 
         switch(btn.id) {
             case 'btn-profile':
-                // Implement profile if needed
+                window.showProfileSection();
                 break;
+
+            case 'btn-guardian':
+            case 'btn-activate-guardian':
+                const guardianModal = document.getElementById('guardianModal');
+                if (guardianModal) guardianModal.classList.remove('hidden');
+                break;
+
+            case 'btn-close-guardian':
+                document.getElementById('guardianModal')?.classList.add('hidden');
+                break;
+
             case 'btn-photo':
                 const input = document.createElement('input');
                 input.type = 'file';
@@ -64,23 +77,13 @@ function attachUIListeners() {
                 input.onchange = (ev) => handleImageSelect(ev, document.getElementById('preview-area'));
                 input.click();
                 break;
+
             case 'btn-voice':
                 toggleVoiceRecording(btn);
                 break;
+
             case 'postButton':
                 window.publishTestimony?.();
-                break;
-            case 'btn-guardian':
-                document.getElementById('guardianModal')?.classList.remove('hidden');
-                break;
-            case 'btn-activate-guardian':
-                showToast("Guardian activation coming soon", "info");
-                break;
-            case 'btn-close-guardian':
-                document.getElementById('guardianModal')?.classList.add('hidden');
-                break;
-                case 'btn-profile':
-                window.showProfileSection();
                 break;
         }
     });
