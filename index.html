@@ -55,9 +55,15 @@
 </header>
 
 <nav class="grid grid-cols-3 gap-2 mb-10 bg-zinc-900 p-1.5 rounded-3xl" id="main-nav">
-    <button onclick="loadFeed('citizen')" class="nav-btn active py-4 rounded-3xl text-sm font-medium">Citizen Talk</button>
-    <button onclick="loadFeed('true')" class="nav-btn py-4 rounded-3xl text-sm font-medium">True Witness</button>
-    <button onclick="loadFeed('live')" class="nav-btn py-4 rounded-3xl text-sm font-medium">Live Arena</button>
+    <button onclick="loadFeed('citizen')" class="nav-btn active py-4 rounded-3xl text-sm font-medium" data-feed="citizen">
+        Citizen Talk
+    </button>
+    <button onclick="loadFeed('true')" class="nav-btn py-4 rounded-3xl text-sm font-medium" data-feed="true">
+        True Witness
+    </button>
+    <button onclick="loadFeed('live')" class="nav-btn py-4 rounded-3xl text-sm font-medium" data-feed="live">
+        Live Arena
+    </button>
 </nav>
         <!-- COMPOSER -->
         <div class="glass rounded-3xl p-6 mb-8">
