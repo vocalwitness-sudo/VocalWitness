@@ -80,3 +80,5 @@ export async function changeLanguage(langCode) {
     if (!supportedLanguages[langCode]) return;
     await loadTranslations(langCode);
 }
+// Global exposure for inline onchange
+window.changeLanguage = changeLanguage;
