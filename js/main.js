@@ -115,3 +115,9 @@ window.closeProfile = () => document.getElementById('profileModal')?.classList.a
 window.googleLogin = () => {
     import('./auth.js').then(m => m.googleLogin());
 };
+
+// Expose functions to HTML onclick
+window.loadFeed = loadFeed;
+window.googleLogin = googleLogin;
+window.showProfileSection = showProfileSection;
+window.publishTestimony = publishTestimony;
