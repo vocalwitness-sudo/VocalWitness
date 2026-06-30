@@ -124,6 +124,15 @@ function attachUIListeners() {
     // Publish
     document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
 }
+// Hide/show sign in buttons based on auth state
+function updateAuthUI(user) {
+    const signInBtns = document.querySelectorAll('button[onclick*="googleLogin"], button[onclick*="showSignupModal"]');
+    signInBtns.forEach(btn => {
+        btn.style.display = user ? 'none' : 'inline-flex';
+    });
+}
+
+// Call this in onAuthStateChanged (in auth.js or main.js)
 
 // ====================== BOOTSTRAP ======================
 async function bootstrap() {
@@ -177,6 +186,16 @@ window.signUpWithEmailPassword = async () => {
     } catch (error) {
         console.error(error);
         showToast(error.message || "Sign up failed", "error");
+    }
+};
+
+window.updateAuthUI = (user) => {
+    const signInArea = document.querySelector('#main-nav'); // or a specific container
+    if (user) {
+        // Hide sign in buttons
+        document.querySelectorAll('button[onclick*="googleLogin"], button[onclick*="showSignupModal"]').forEach(btn => {
+            btn.style.display = 'none';
+        });
     }
 };
 
