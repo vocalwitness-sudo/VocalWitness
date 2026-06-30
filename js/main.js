@@ -1,4 +1,4 @@
-// js/main.js - CLEAN & ORGANIZED
+// js/main.js - CLEAN FINAL VERSION
 import { initAuth } from "./auth.js";
 import { initFeed } from './feed.js';
 import { db, storage } from './firebase-config.js';
@@ -7,7 +7,6 @@ import { initLanguage } from './i18n.js';
 import { handleImageSelect, toggleVoiceRecording, uploadForensicMedia, resetMediaState } from './media.js';
 import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
 import { collection, addDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-import { auth } from './firebase-config.js';
 
 let engineInstance = null;
 let currentUser = null;
@@ -59,6 +58,7 @@ window.publishTestimony = async () => {
 
         if (textarea) textarea.value = '';
         resetMediaState();
+        window.loadFeed('citizen-talk');
 
     } catch (err) {
         console.error("Publish error:", err);
@@ -78,26 +78,6 @@ window.loadFeed = (feedType) => {
     initFeed(db, feedType);
 };
 
-window.signUpWithEmailPassword = async () => {
-    const email = document.getElementById('signupEmail')?.value.trim();
-    const password = document.getElementById('signupPassword')?.value.trim();
-
-    if (!email || !password || password.length < 6) {
-        showToast("Please enter valid email and password", "error");
-        return;
-    }
-
-    const { signUpWithEmail } = await import('./auth.js');
-    const user = await signUpWithEmail(email, password);
-    
-    if (user) {
-        currentUser = user;
-        window.closeSignupModal();
-        setTimeout(() => document.getElementById('phoneVerificationModal')?.classList.remove('hidden'), 1000);
-    }
-};
-
-
 // ====================== UI LISTENERS ======================
 function attachUIListeners() {
     console.log("👂 UI Listeners Attached");
@@ -106,7 +86,6 @@ function attachUIListeners() {
     document.getElementById('btn-guardian')?.addEventListener('click', () => document.getElementById('guardianModal')?.classList.remove('hidden'));
     document.getElementById('btn-close-guardian')?.addEventListener('click', () => document.getElementById('guardianModal')?.classList.add('hidden'));
 
-    // Photo & Voice
     const photoBtn = document.getElementById('btn-photo');
     if (photoBtn) {
         photoBtn.addEventListener('click', () => {
@@ -121,18 +100,8 @@ function attachUIListeners() {
     const voiceBtn = document.getElementById('btn-voice');
     if (voiceBtn) voiceBtn.addEventListener('click', (e) => toggleVoiceRecording(e.currentTarget));
 
-    // Publish
     document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
 }
-// Hide/show sign in buttons based on auth state
-function updateAuthUI(user) {
-    const signInBtns = document.querySelectorAll('button[onclick*="googleLogin"], button[onclick*="showSignupModal"]');
-    signInBtns.forEach(btn => {
-        btn.style.display = user ? 'none' : 'inline-flex';
-    });
-}
-
-// Call this in onAuthStateChanged (in auth.js or main.js)
 
 // ====================== BOOTSTRAP ======================
 async function bootstrap() {
@@ -151,79 +120,16 @@ async function bootstrap() {
 
 document.addEventListener('DOMContentLoaded', bootstrap);
 
-// ====================== EMAIL/PASSWORD SIGN UP ======================
-window.showSignupModal = () => {
-    document.getElementById('signupModal')?.classList.remove('hidden');
-};
-
-window.closeSignupModal = () => {
-    document.getElementById('signupModal')?.classList.add('hidden');
-};
-
-window.signUpWithEmailPassword = async () => {
-    const email = document.getElementById('signupEmail')?.value.trim();
-    const password = document.getElementById('signupPassword')?.value.trim();
-
-    if (!email || !password || password.length < 6) {
-        showToast("Please enter valid email and password (min 6 characters)", "error");
-        return;
-    }
-
-    try {
-        const { createUserWithEmailAndPassword } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js");
-        // Note: global 'auth' instance should be initialized/exported inside your auth.js setup
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        
-        showToast("✅ Account created successfully! Welcome to Citizen Talk.", "success");
-        currentUser = userCredential.user;
-        window.closeSignupModal();
-        
-        // Auto trigger phone verification after successful sign up
-        setTimeout(() => {
-            document.getElementById('phoneVerificationModal')?.classList.remove('hidden');
-        }, 1200);
-
-    } catch (error) {
-        console.error(error);
-        showToast(error.message || "Sign up failed", "error");
-    }
-};
-
-window.updateAuthUI = (user) => {
-    const signInArea = document.querySelector('#main-nav'); // or a specific container
-    if (user) {
-        // Hide sign in buttons
-        document.querySelectorAll('button[onclick*="googleLogin"], button[onclick*="showSignupModal"]').forEach(btn => {
-            btn.style.display = 'none';
-        });
-    }
-};
-
-// ====================== PHONE VERIFICATION (OTP) ======================
-window.sendOTP = async () => {
-    const phone = document.getElementById('phoneInput')?.value.trim();
-    if (!phone) return showToast("Enter phone number", "error");
-
-    const { sendPhoneVerification } = await import('./phoneVerification.js');
-    await sendPhoneVerification(phone, currentUser?.uid);
-};
-
-window.verifyOTP = async () => {
-    const code = document.getElementById('otpInput')?.value.trim();
-    if (!code) return showToast("Enter OTP code", "error");
-
-    const { verifyPhoneCode } = await import('./phoneVerification.js');
-    await verifyPhoneCode(code);
-};
-
-// Hide Sign In buttons when user is logged in
-function updateAuthUI(user) {
-    const signInButtons = document.querySelectorAll('button[onclick*="googleLogin"], button[onclick*="showSignupModal"]');
-    signInButtons.forEach(btn => {
-        btn.style.display = user ? 'none' : 'inline-flex';
-    });
-}
-
-// Global Helpers
+// ====================== GLOBAL HELPERS ======================
 window.showProfileSection = () => document.getElementById('profileModal')?.classList.remove('hidden');
 window.closeProfile = () => document.getElementById('profileModal')?.classList.add('hidden');
+window.googleLogin = () => {
+    import('./auth.js').then(m => m.googleLogin());
+};
+
+// Update Auth UI (hide sign in after login)
+window.updateAuthUI = (user) => {
+    document.querySelectorAll('button[onclick*="googleLogin"], button[onclick*="showSignupModal"]').forEach(btn => {
+        btn.style.display = user ? 'none' : 'inline-flex';
+    });
+};
