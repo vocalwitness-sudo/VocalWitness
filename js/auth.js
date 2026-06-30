@@ -104,3 +104,7 @@ export async function logout() {
 // Global exposures
 window.googleLogin = googleLogin;
 window.logout = logout;
+
+export function getCurrentUser() {
+    return auth.currentUser;
+}
