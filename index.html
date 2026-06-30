@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <!-- script src="https://js.paystack.co/v1/inline.js"></script -->
+
     <style>
         body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: white; }
         .glass { background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(16, 185, 129, 0.25); }
@@ -21,6 +22,14 @@
         .image-preview { max-height: 340px; object-fit: cover; border-radius: 20px; width: 100%; }
         .recording-active { animation: pulse 1.5s infinite; background-color: #ef4444 !important; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+
+        /* Spectrum Canvas Styling */
+        #spectrum {
+            border-radius: 12px;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            background: #111827;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.15);
+        }
     </style>
 </head>
 <body class="min-h-screen pb-20 p-4 bg-[#0a0f1c]">
@@ -39,6 +48,7 @@
                     <p class="text-xs text-emerald-500 -mt-1">Truth • Evidence • Public Square</p>
                 </div>
             </div>
+
             <div class="flex items-center gap-3 flex-wrap">
                 <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white px-5 py-2.5 rounded-2xl text-sm focus:outline-none focus:border-emerald-500"></select>
                 <button id="btn-guardian" class="guardian-btn px-6 py-3 rounded-2xl flex items-center gap-2 text-sm font-semibold whitespace-nowrap">🛡️ Guardian Witness</button>
@@ -51,9 +61,9 @@
             <button onclick="window.loadFeed('citizen-talk')" class="nav-btn active px-6 py-3 rounded-3xl whitespace-nowrap" data-feed="citizen-talk">Citizen Talk</button>
             <button onclick="window.loadFeed('true-witness')" class="nav-btn px-6 py-3 rounded-3xl whitespace-nowrap" data-feed="true-witness">True Witness</button>
             <button onclick="window.loadFeed('live')" class="nav-btn px-6 py-3 rounded-3xl whitespace-nowrap" data-feed="live">Live Arena</button>
-            <button onclick="window.googleLogin()" class="px-5 py-2.5 bg-white text-black rounded-2xl font-medium flex items-center gap-2 hover:bg-gray-100">
-                <span>Sign in with Google</span>
-            </button>
+            
+            <!-- Dynamic Auth Button Container -->
+            <div id="auth-button-container" class="flex items-center"></div>
         </nav>
 
         <!-- COMPOSER -->
@@ -112,7 +122,7 @@
                 <h2 class="text-2xl font-bold">My Profile</h2>
                 <button onclick="closeProfile()" class="text-3xl text-zinc-400 hover:text-white">×</button>
             </div>
-           
+            
             <div class="text-center mb-8">
                 <div class="w-24 h-24 mx-auto bg-gradient-to-br from-emerald-500 to-teal-500 rounded-3xl flex items-center justify-center text-6xl mb-4 shadow-inner">👤</div>
                 <h3 id="profileName" class="text-xl font-bold">Citizen User</h3>
@@ -157,12 +167,12 @@
         <div class="glass rounded-3xl max-w-md w-full mx-4 p-8 text-center">
             <h2 class="text-2xl font-bold mb-4">Verify Your Phone</h2>
             <p class="text-zinc-400 mb-6">Enter your phone number to unlock Citizen Cycle benefits</p>
-           
+            
             <input id="phoneInput" type="tel" placeholder="+234 801 234 5678" class="w-full mb-4 p-4 bg-zinc-900 rounded-2xl text-center">
             <button onclick="window.sendOTP()" class="w-full py-4 bg-emerald-500 text-black font-bold rounded-2xl mb-4">
                 Send OTP
             </button>
-           
+            
             <input id="otpInput" type="text" maxlength="6" placeholder="Enter 6-digit OTP" class="w-full p-4 bg-zinc-900 rounded-2xl text-center mb-4">
             <button onclick="window.verifyOTP()" class="w-full py-4 bg-white text-black font-bold rounded-2xl">
                 Verify OTP
