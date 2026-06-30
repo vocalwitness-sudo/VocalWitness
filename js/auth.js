@@ -54,6 +54,17 @@ async function syncUserToFirestore(user) {
     }
 }
 
+onAuthStateChanged(auth, async (user) => {
+    if (user) {
+        console.log("✅ Auth state:", user.email);
+        await syncUserToFirestore(user);
+        updateUser(user);
+    } else {
+        console.log("👤 No user signed in");
+        updateUser(null);
+    }
+});
+
 export function initAuth() {
     console.log("🔐 Initializing Authentication...");
     onAuthStateChanged(auth, async (user) => {
