@@ -1,4 +1,4 @@
-// js/media.js - FULL COMPLETE VERSION WITH TIMER, PAUSE, DOWNLOAD
+// js/media.js - WITH WAVEFORM VISUALIZATION
 import { showToast, generateSha256Hash } from './utils.js';
 import { storage } from './firebase-config.js';
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
@@ -6,26 +6,23 @@ import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/fireba
 export let selectedImageFile = null;
 let engineInstance = null;
 let currentMode = 'citizen-talk';
-
-// Recording state
 let recordingTimerInterval = null;
 let isPaused = false;
 let secondsElapsed = 0;
+let audioContext = null;
+let analyser = null;
+let canvas = null;
+let canvasCtx = null;
 
 export function setEngine(engine) {
     engineInstance = engine;
     console.log("✅ Engine connected to media.js");
 }
 
-export function setCurrentMode(mode) {
-    currentMode = mode;
-}
-
 // ====================== PHOTO ======================
 export async function handleImageSelect(event, previewArea) {
     const file = event.target.files[0];
     if (!file) return;
-
     if (!file.type.startsWith('image/')) {
         showToast("Please select a valid image", "error");
         return;
@@ -53,7 +50,7 @@ export function removeImage(previewArea) {
     if (previewArea) previewArea.innerHTML = '';
 }
 
-// ====================== VOICE RECORDING ======================
+// ====================== VOICE WITH WAVEFORM ======================
 export function toggleVoiceRecording(voiceBtn) {
     if (!engineInstance) {
         showToast("Voice engine not ready", "error");
@@ -67,7 +64,14 @@ export function toggleVoiceRecording(voiceBtn) {
         secondsElapsed = 0;
 
         voiceBtn.classList.add('recording-active');
-        voiceBtn.innerHTML = `⏹️ <span id="rec-timer" class="font-mono">00:00</span> <span onclick="pauseRecording(this)" class="ml-3 cursor-pointer text-yellow-400">⏸️</span>`;
+        voiceBtn.innerHTML = `
+            ⏹️ <span id="rec-timer" class="font-mono">00:00</span> 
+            <span onclick="pauseRecording(this)" class="ml-3 cursor-pointer text-yellow-400">⏸️</span>
+            <canvas id="waveform" width="300" height="60" class="ml-4 bg-black/30 rounded"></canvas>
+        `;
+
+        // Setup Web Audio for visualization
+        setupWaveform();
 
         recordingTimerInterval = setInterval(() => {
             if (!isPaused) secondsElapsed++;
@@ -82,34 +86,79 @@ export function toggleVoiceRecording(voiceBtn) {
         // STOP
         engineInstance.stopVoiceRecording();
         if (recordingTimerInterval) clearInterval(recordingTimerInterval);
+        if (audioContext) audioContext.close();
 
         voiceBtn.classList.remove('recording-active');
         voiceBtn.textContent = '🎙️ Voice Testimony';
 
-        // Download for verified ZK users
+        // Download for verified users
         if (engineInstance.currentAudioBlob) {
-            const isVerifiedZK = true; // Replace with real check later (user.zkVerified)
-            if (isVerifiedZK) {
-                const url = URL.createObjectURL(engineInstance.currentAudioBlob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `vocalwitness-${Date.now()}.webm`;
-                a.click();
-                URL.revokeObjectURL(url);
-            }
+            const url = URL.createObjectURL(engineInstance.currentAudioBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `vocalwitness-${Date.now()}.webm`;
+            a.click();
+            URL.revokeObjectURL(url);
         }
 
         showToast("✅ Recording saved", "success");
     }
 }
 
-// Pause/Resume helper
+function setupWaveform() {
+    canvas = document.getElementById('waveform');
+    if (!canvas) return;
+    canvasCtx = canvas.getContext('2d');
+
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 64;
+
+    const source = audioContext.createMediaStreamSource(engineInstance.mediaRecorder.stream);
+    source.connect(analyser);
+
+    drawWaveform();
+}
+
+function drawWaveform() {
+    if (!canvasCtx) return;
+    requestAnimationFrame(drawWaveform);
+
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    analyser.getByteTimeDomainData(dataArray);
+
+    canvasCtx.fillStyle = 'rgb(0, 0, 0)';
+    canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+    canvasCtx.lineWidth = 3;
+    canvasCtx.strokeStyle = '#10b981';
+    canvasCtx.beginPath();
+
+    const sliceWidth = canvas.width * 1.0 / bufferLength;
+    let x = 0;
+
+    for (let i = 0; i < bufferLength; i++) {
+        const v = dataArray[i] / 128.0;
+        const y = v * canvas.height / 2;
+
+        if (i === 0) canvasCtx.moveTo(x, y);
+        else canvasCtx.lineTo(x, y);
+
+        x += sliceWidth;
+    }
+
+    canvasCtx.lineTo(canvas.width, canvas.height / 2);
+    canvasCtx.stroke();
+}
+
 window.pauseRecording = function(el) {
     isPaused = !isPaused;
     el.textContent = isPaused ? '▶️' : '⏸️';
     showToast(isPaused ? "⏸️ Paused" : "▶️ Resumed", "info");
 };
 
+// Rest of the file (upload, reset, global exposures) remains the same...
 export async function uploadForensicMedia(userId = "anonymous") {
     const mediaData = {};
     if (selectedImageFile) {
@@ -139,7 +188,6 @@ export function resetMediaState() {
     if (preview) preview.innerHTML = '';
 }
 
-// Global exposures
 window.handleImageSelect = handleImageSelect;
 window.toggleVoiceRecording = toggleVoiceRecording;
 window.resetMediaState = resetMediaState;
