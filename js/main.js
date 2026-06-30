@@ -7,6 +7,7 @@ import { initLanguage } from './i18n.js';
 import { handleImageSelect, toggleVoiceRecording, uploadForensicMedia, resetMediaState } from './media.js';
 import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
 import { collection, addDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { auth } from './firebase-config.js';
 
 let engineInstance = null;
 let currentUser = null;
