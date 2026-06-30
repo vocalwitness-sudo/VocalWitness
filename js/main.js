@@ -78,6 +78,26 @@ window.loadFeed = (feedType) => {
     initFeed(db, feedType);
 };
 
+window.signUpWithEmailPassword = async () => {
+    const email = document.getElementById('signupEmail')?.value.trim();
+    const password = document.getElementById('signupPassword')?.value.trim();
+
+    if (!email || !password || password.length < 6) {
+        showToast("Please enter valid email and password", "error");
+        return;
+    }
+
+    const { signUpWithEmail } = await import('./auth.js');
+    const user = await signUpWithEmail(email, password);
+    
+    if (user) {
+        currentUser = user;
+        window.closeSignupModal();
+        setTimeout(() => document.getElementById('phoneVerificationModal')?.classList.remove('hidden'), 1000);
+    }
+};
+
+
 // ====================== UI LISTENERS ======================
 function attachUIListeners() {
     console.log("👂 UI Listeners Attached");
