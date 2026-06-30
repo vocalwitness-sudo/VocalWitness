@@ -1,4 +1,4 @@
-// js/main.js - FULL CLEAN & WORKING VERSION
+// js/main.js - CLEAN & ORGANIZED
 import { initAuth } from "./auth.js";
 import { initFeed } from './feed.js';
 import { db, storage } from './firebase-config.js';
@@ -17,14 +17,13 @@ function initEngine() {
         engineInstance = new CitizenTalkEngine(db, storage);
         window.engineInstance = engineInstance;
         import('./media.js').then(m => m.setEngine(engineInstance));
-        console.log("✅ Engine initialized");
     }
 }
 
 // ====================== PUBLISH ======================
 window.publishTestimony = async () => {
     if (!currentUser) {
-        showToast("Please sign in with Google first", "error");
+        showToast("Please sign in first", "error");
         return;
     }
 
@@ -86,7 +85,7 @@ function attachUIListeners() {
     document.getElementById('btn-guardian')?.addEventListener('click', () => document.getElementById('guardianModal')?.classList.remove('hidden'));
     document.getElementById('btn-close-guardian')?.addEventListener('click', () => document.getElementById('guardianModal')?.classList.add('hidden'));
 
-    // Photo
+    // Photo & Voice
     const photoBtn = document.getElementById('btn-photo');
     if (photoBtn) {
         photoBtn.addEventListener('click', () => {
@@ -98,7 +97,6 @@ function attachUIListeners() {
         });
     }
 
-    // Voice
     const voiceBtn = document.getElementById('btn-voice');
     if (voiceBtn) voiceBtn.addEventListener('click', (e) => toggleVoiceRecording(e.currentTarget));
 
@@ -122,39 +120,30 @@ async function bootstrap() {
 }
 
 document.addEventListener('DOMContentLoaded', bootstrap);
-window.signUpWithEmail = async () => {
-    const email = document.getElementById('signupEmail').value;
-    const password = document.getElementById('signupPassword').value;
 
-    if (!email || !password) {
-        showToast("Please fill all fields", "error");
-        return;
-    }
+// ====================== SIGN UP & PHONE ======================
+window.showSignupModal = () => document.getElementById('signupModal')?.classList.remove('hidden');
+window.closeSignupModal = () => document.getElementById('signupModal')?.classList.add('hidden');
+
+window.signUpWithEmail = async () => {
+    const email = document.getElementById('signupEmail').value.trim();
+    const password = document.getElementById('signupPassword').value.trim();
+    if (!email || !password) return showToast("Please fill all fields", "error");
 
     try {
         const { createUserWithEmailAndPassword } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js");
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        showToast("Account created successfully!", "success");
-        window.closeSignupModal();
-        // Auto login
+        showToast("Account created! Welcome.", "success");
         currentUser = userCredential.user;
+        window.closeSignupModal();
     } catch (error) {
         showToast(error.message, "error");
     }
 };
 
-window.closeSignupModal = () => {
-    document.getElementById('signupModal').classList.add('hidden');
-};
-
-// Show signup modal from somewhere (e.g., a "Sign Up" button)
-window.showSignupModal = () => {
-    document.getElementById('signupModal').classList.remove('hidden');
-};
 window.sendOTP = async () => {
     const phone = document.getElementById('phoneInput').value.trim();
     if (!phone) return showToast("Enter phone number", "error");
-    
     const { sendPhoneVerification } = await import('./phoneVerification.js');
     await sendPhoneVerification(phone, currentUser?.uid);
 };
@@ -162,12 +151,9 @@ window.sendOTP = async () => {
 window.verifyOTP = async () => {
     const code = document.getElementById('otpInput').value.trim();
     if (!code) return;
-    
     const { verifyPhoneCode } = await import('./phoneVerification.js');
     await verifyPhoneCode(code);
 };
-// Example in upgrade flow
-document.getElementById('phoneVerificationModal').classList.remove('hidden');
 
 // Global Helpers
 window.showProfileSection = () => document.getElementById('profileModal')?.classList.remove('hidden');
