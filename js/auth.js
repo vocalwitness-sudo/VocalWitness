@@ -79,6 +79,20 @@ export async function googleLogin() {
     }
 }
 
+export async function signUpWithEmail(email, password) {
+    try {
+        const { createUserWithEmailAndPassword } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js");
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        await syncUserToFirestore(userCredential.user);
+        showToast("Account created successfully!", "success");
+        return userCredential.user;
+    } catch (error) {
+        console.error(error);
+        showToast(error.message, "error");
+        return null;
+    }
+}
+
 export async function logout() {
     try {
         await signOut(auth);
