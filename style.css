@@ -100,6 +100,44 @@ body {
     min-width: 160px;
 }
 
+/* ====================== VOICE RECORDING SPECTRUM ====================== */
+#spectrum {
+    border-radius: 12px;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    background: #111827;
+    image-rendering: crisp-edges;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.15);
+}
+
+.recording-active #spectrum {
+    animation: spectrum-glow 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes spectrum-glow {
+    from { 
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.25); 
+        border-color: rgba(16, 185, 129, 0.5);
+    }
+    to { 
+        box-shadow: 0 4px 25px rgba(16, 185, 129, 0.45); 
+        border-color: rgba(16, 185, 129, 0.8);
+    }
+}
+
+/* Timer styling during recording */
+#rec-timer {
+    font-family: 'Space Grotesk', 'Inter', monospace;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: #ef4444;
+}
+
+/* Make the recording button more prominent when active */
+.recording-active {
+    animation: pulse 1.2s infinite;
+    box-shadow: 0 0 25px rgba(239, 68, 68, 0.6) !important;
+}
+
 /* Profile Modal Improvements */
 #profileModal .glass {
     max-height: 85vh;
