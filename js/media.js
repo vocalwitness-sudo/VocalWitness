@@ -1,11 +1,10 @@
-// js/media.js - WITH WAVEFORM VISUALIZATION
+// js/media.js - WITH FREQUENCY SPECTRUM ANALYZER
 import { showToast, generateSha256Hash } from './utils.js';
 import { storage } from './firebase-config.js';
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
 
 export let selectedImageFile = null;
 let engineInstance = null;
-let currentMode = 'citizen-talk';
 let recordingTimerInterval = null;
 let isPaused = false;
 let secondsElapsed = 0;
@@ -31,7 +30,6 @@ export async function handleImageSelect(event, previewArea) {
         showToast("Image too large (max 10MB)", "error");
         return;
     }
-
     selectedImageFile = file;
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -50,7 +48,7 @@ export function removeImage(previewArea) {
     if (previewArea) previewArea.innerHTML = '';
 }
 
-// ====================== VOICE WITH WAVEFORM ======================
+// ====================== VOICE RECORDING + FREQUENCY SPECTRUM ======================
 export function toggleVoiceRecording(voiceBtn) {
     if (!engineInstance) {
         showToast("Voice engine not ready", "error");
@@ -58,40 +56,30 @@ export function toggleVoiceRecording(voiceBtn) {
     }
 
     if (!engineInstance.mediaRecorder || engineInstance.mediaRecorder.state === "inactive") {
-        // START
+        // START RECORDING
         engineInstance.startVoiceRecording(300000);
         isPaused = false;
         secondsElapsed = 0;
 
         voiceBtn.classList.add('recording-active');
         voiceBtn.innerHTML = `
-            ⏹️ <span id="rec-timer" class="font-mono">00:00</span> 
+            ⏹️ <span id="rec-timer" class="font-mono">00:00</span>
             <span onclick="pauseRecording(this)" class="ml-3 cursor-pointer text-yellow-400">⏸️</span>
-            <canvas id="waveform" width="300" height="60" class="ml-4 bg-black/30 rounded"></canvas>
+            <canvas id="spectrum" width="320" height="80" class="ml-4 bg-black/40 rounded"></canvas>
         `;
 
-        // Setup Web Audio for visualization
-        setupWaveform();
+        setupSpectrumAnalyzer();
+        recordingTimerInterval = setInterval(updateTimer, 1000);
 
-        recordingTimerInterval = setInterval(() => {
-            if (!isPaused) secondsElapsed++;
-            const min = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
-            const sec = String(secondsElapsed % 60).padStart(2, '0');
-            const timerEl = document.getElementById('rec-timer');
-            if (timerEl) timerEl.textContent = `${min}:${sec}`;
-        }, 1000);
-
-        showToast("🎤 Recording started", "info");
+        showToast("🎤 Recording started - Spectrum Active", "info");
     } else {
-        // STOP
+        // STOP RECORDING
         engineInstance.stopVoiceRecording();
-        if (recordingTimerInterval) clearInterval(recordingTimerInterval);
-        if (audioContext) audioContext.close();
+        stopSpectrumAnalyzer();
 
         voiceBtn.classList.remove('recording-active');
         voiceBtn.textContent = '🎙️ Voice Testimony';
 
-        // Download for verified users
         if (engineInstance.currentAudioBlob) {
             const url = URL.createObjectURL(engineInstance.currentAudioBlob);
             const a = document.createElement('a');
@@ -100,65 +88,85 @@ export function toggleVoiceRecording(voiceBtn) {
             a.click();
             URL.revokeObjectURL(url);
         }
-
         showToast("✅ Recording saved", "success");
     }
 }
 
-function setupWaveform() {
-    canvas = document.getElementById('waveform');
+function updateTimer() {
+    if (!isPaused) secondsElapsed++;
+    const min = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
+    const sec = String(secondsElapsed % 60).padStart(2, '0');
+    const timerEl = document.getElementById('rec-timer');
+    if (timerEl) timerEl.textContent = `${min}:${sec}`;
+}
+
+function setupSpectrumAnalyzer() {
+    canvas = document.getElementById('spectrum');
     if (!canvas) return;
     canvasCtx = canvas.getContext('2d');
 
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    analyser = audioContext.createAnalyser();
-    analyser.fftSize = 64;
+    try {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 128;           // Higher = more detail
+        analyser.smoothingTimeConstant = 0.85;
 
-    const source = audioContext.createMediaStreamSource(engineInstance.mediaRecorder.stream);
-    source.connect(analyser);
-
-    drawWaveform();
+        if (engineInstance.mediaRecorder && engineInstance.mediaRecorder.stream) {
+            const source = audioContext.createMediaStreamSource(engineInstance.mediaRecorder.stream);
+            source.connect(analyser);
+            drawSpectrum();
+        }
+    } catch (e) {
+        console.warn("Spectrum analyzer not available", e);
+    }
 }
 
-function drawWaveform() {
-    if (!canvasCtx) return;
-    requestAnimationFrame(drawWaveform);
+function drawSpectrum() {
+    if (!canvasCtx || !analyser) return;
+
+    requestAnimationFrame(drawSpectrum);
 
     const bufferLength = analyser.frequencyBinCount;
     const dataArray = new Uint8Array(bufferLength);
-    analyser.getByteTimeDomainData(dataArray);
+    analyser.getByteFrequencyData(dataArray);
 
-    canvasCtx.fillStyle = 'rgb(0, 0, 0)';
+    // Clear canvas
+    canvasCtx.fillStyle = 'rgb(17, 24, 39)';
     canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
 
-    canvasCtx.lineWidth = 3;
-    canvasCtx.strokeStyle = '#10b981';
-    canvasCtx.beginPath();
-
-    const sliceWidth = canvas.width * 1.0 / bufferLength;
+    const barWidth = (canvas.width / bufferLength) * 1.5;
     let x = 0;
 
     for (let i = 0; i < bufferLength; i++) {
-        const v = dataArray[i] / 128.0;
-        const y = v * canvas.height / 2;
+        const barHeight = (dataArray[i] / 255) * canvas.height * 0.9;
 
-        if (i === 0) canvasCtx.moveTo(x, y);
-        else canvasCtx.lineTo(x, y);
+        // Dynamic color based on frequency intensity
+        const hue = 120 - (dataArray[i] / 2); // Green to yellow/red
+        canvasCtx.fillStyle = `hsl(${hue}, 90%, 60%)`;
 
-        x += sliceWidth;
+        canvasCtx.fillRect(x, canvas.height - barHeight, barWidth - 2, barHeight);
+        x += barWidth + 1;
     }
+}
 
-    canvasCtx.lineTo(canvas.width, canvas.height / 2);
-    canvasCtx.stroke();
+function stopSpectrumAnalyzer() {
+    if (recordingTimerInterval) {
+        clearInterval(recordingTimerInterval);
+        recordingTimerInterval = null;
+    }
+    if (audioContext) {
+        audioContext.close();
+        audioContext = null;
+    }
 }
 
 window.pauseRecording = function(el) {
     isPaused = !isPaused;
     el.textContent = isPaused ? '▶️' : '⏸️';
-    showToast(isPaused ? "⏸️ Paused" : "▶️ Resumed", "info");
+    showToast(isPaused ? "⏸️ Recording Paused" : "▶️ Recording Resumed", "info");
 };
 
-// Rest of the file (upload, reset, global exposures) remains the same...
+// ====================== UPLOAD & RESET ======================
 export async function uploadForensicMedia(userId = "anonymous") {
     const mediaData = {};
     if (selectedImageFile) {
@@ -188,6 +196,7 @@ export function resetMediaState() {
     if (preview) preview.innerHTML = '';
 }
 
+// Global exposures
 window.handleImageSelect = handleImageSelect;
 window.toggleVoiceRecording = toggleVoiceRecording;
 window.resetMediaState = resetMediaState;
