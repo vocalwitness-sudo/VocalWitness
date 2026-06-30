@@ -1,18 +1,16 @@
-// js/auth.js - Enhanced Authentication
+// js/auth.js - CLEAN & FIXED
 import { auth, provider, db } from './firebase-config.js';
 import { signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { showToast } from "./utils.js";
 import { updateUser } from './storage.js';
-import { getUserTier } from './tier.js'; // Imported tier logic
+import { getUserTier } from './tier.js';
 
 async function syncUserToFirestore(user) {
     if (!user) return;
-
     const userRef = doc(db, "users", user.uid);
     const userSnap = await getDoc(userRef);
 
-    // Initial base data structure
     const baseData = {
         uid: user.uid,
         email: user.email,
@@ -20,7 +18,7 @@ async function syncUserToFirestore(user) {
         username: (user.email?.split('@')[0] || `user_${Date.now()}`).toLowerCase(),
         photoURL: user.photoURL || "",
         role: "citizen",
-        tier: "Explorer", // Default tier
+        tier: "Explorer",
         trustCircle: 50,
         reputationScore: 50,
         level: 1,
@@ -39,31 +37,18 @@ async function syncUserToFirestore(user) {
         lastUpdated: new Date().toISOString()
     };
 
-    // Integrate tier logic based on baseData
-    baseData.tier = getUserTier(baseData); 
+    baseData.tier = getUserTier(baseData);
 
     if (!userSnap.exists()) {
         await setDoc(userRef, baseData);
         showToast("Welcome to VocalWitness! 🎉", "success");
     } else {
-        // Update login metadata
-        await setDoc(userRef, { 
-            lastUpdated: new Date().toISOString(), 
-            lastLogin: new Date().toISOString() 
+        await setDoc(userRef, {
+            lastUpdated: new Date().toISOString(),
+            lastLogin: new Date().toISOString()
         }, { merge: true });
     }
 }
-
-onAuthStateChanged(auth, async (user) => {
-    if (user) {
-        console.log("✅ Auth state:", user.email);
-        await syncUserToFirestore(user);
-        updateUser(user);
-    } else {
-        console.log("👤 No user signed in");
-        updateUser(null);
-    }
-});
 
 export function initAuth() {
     console.log("🔐 Initializing Authentication...");
@@ -72,9 +57,11 @@ export function initAuth() {
             console.log("✅ Auth state:", user.email);
             await syncUserToFirestore(user);
             updateUser(user);
+            window.updateAuthUI?.(user);   // Hide sign in buttons
         } else {
             console.log("👤 No user signed in");
             updateUser(null);
+            window.updateAuthUI?.(null);   // Show sign in buttons
         }
     });
 }
@@ -114,5 +101,6 @@ export async function logout() {
     }
 }
 
+// Global exposures
 window.googleLogin = googleLogin;
 window.logout = logout;
