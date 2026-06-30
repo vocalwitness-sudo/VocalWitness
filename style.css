@@ -114,17 +114,11 @@ body {
 }
 
 @keyframes spectrum-glow {
-    from { 
-        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.25); 
-        border-color: rgba(16, 185, 129, 0.5);
-    }
-    to { 
-        box-shadow: 0 4px 25px rgba(16, 185, 129, 0.45); 
-        border-color: rgba(16, 185, 129, 0.8);
-    }
+    from { box-shadow: 0 4px 15px rgba(16, 185, 129, 0.25); border-color: rgba(16, 185, 129, 0.5); }
+    to   { box-shadow: 0 4px 25px rgba(16, 185, 129, 0.45); border-color: rgba(16, 185, 129, 0.8); }
 }
 
-/* Timer styling during recording */
+/* Timer */
 #rec-timer {
     font-family: 'Space Grotesk', 'Inter', monospace;
     font-weight: 600;
@@ -132,13 +126,13 @@ body {
     color: #ef4444;
 }
 
-/* Make the recording button more prominent when active */
+/* Recording Button */
 .recording-active {
     animation: pulse 1.2s infinite;
     box-shadow: 0 0 25px rgba(239, 68, 68, 0.6) !important;
 }
 
-/* Profile Modal Improvements */
+/* Profile Modal */
 #profileModal .glass {
     max-height: 85vh;
     overflow-y: auto;
