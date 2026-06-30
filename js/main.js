@@ -2,6 +2,7 @@
 import { showToast, generateSha256Hash } from './utils.js';
 import { storage } from './firebase-config.js';
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
+import { auth } from './firebase-config.js'; // Add this
 
 export let selectedImageFile = null;
 let engineInstance = null;
