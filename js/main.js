@@ -121,36 +121,57 @@ async function bootstrap() {
 
 document.addEventListener('DOMContentLoaded', bootstrap);
 
-// ====================== SIGN UP & PHONE ======================
-window.showSignupModal = () => document.getElementById('signupModal')?.classList.remove('hidden');
-window.closeSignupModal = () => document.getElementById('signupModal')?.classList.add('hidden');
+// ====================== EMAIL/PASSWORD SIGN UP ======================
+window.showSignupModal = () => {
+    document.getElementById('signupModal')?.classList.remove('hidden');
+};
 
-window.signUpWithEmail = async () => {
-    const email = document.getElementById('signupEmail').value.trim();
-    const password = document.getElementById('signupPassword').value.trim();
-    if (!email || !password) return showToast("Please fill all fields", "error");
+window.closeSignupModal = () => {
+    document.getElementById('signupModal')?.classList.add('hidden');
+};
+
+window.signUpWithEmailPassword = async () => {
+    const email = document.getElementById('signupEmail')?.value.trim();
+    const password = document.getElementById('signupPassword')?.value.trim();
+
+    if (!email || !password || password.length < 6) {
+        showToast("Please enter valid email and password (min 6 characters)", "error");
+        return;
+    }
 
     try {
         const { createUserWithEmailAndPassword } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js");
+        // Note: global 'auth' instance should be initialized/exported inside your auth.js setup
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        showToast("Account created! Welcome.", "success");
+        
+        showToast("✅ Account created successfully! Welcome to Citizen Talk.", "success");
         currentUser = userCredential.user;
         window.closeSignupModal();
+        
+        // Auto trigger phone verification after successful sign up
+        setTimeout(() => {
+            document.getElementById('phoneVerificationModal')?.classList.remove('hidden');
+        }, 1200);
+
     } catch (error) {
-        showToast(error.message, "error");
+        console.error(error);
+        showToast(error.message || "Sign up failed", "error");
     }
 };
 
+// ====================== PHONE VERIFICATION (OTP) ======================
 window.sendOTP = async () => {
-    const phone = document.getElementById('phoneInput').value.trim();
+    const phone = document.getElementById('phoneInput')?.value.trim();
     if (!phone) return showToast("Enter phone number", "error");
+
     const { sendPhoneVerification } = await import('./phoneVerification.js');
     await sendPhoneVerification(phone, currentUser?.uid);
 };
 
 window.verifyOTP = async () => {
-    const code = document.getElementById('otpInput').value.trim();
-    if (!code) return;
+    const code = document.getElementById('otpInput')?.value.trim();
+    if (!code) return showToast("Enter OTP code", "error");
+
     const { verifyPhoneCode } = await import('./phoneVerification.js');
     await verifyPhoneCode(code);
 };
