@@ -216,6 +216,14 @@ window.verifyOTP = async () => {
     await verifyPhoneCode(code);
 };
 
+// Hide Sign In buttons when user is logged in
+function updateAuthUI(user) {
+    const signInButtons = document.querySelectorAll('button[onclick*="googleLogin"], button[onclick*="showSignupModal"]');
+    signInButtons.forEach(btn => {
+        btn.style.display = user ? 'none' : 'inline-flex';
+    });
+}
+
 // Global Helpers
 window.showProfileSection = () => document.getElementById('profileModal')?.classList.remove('hidden');
 window.closeProfile = () => document.getElementById('profileModal')?.classList.add('hidden');
