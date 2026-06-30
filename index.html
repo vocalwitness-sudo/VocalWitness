@@ -93,6 +93,9 @@
         class="px-6 py-3 bg-white hover:bg-gray-100 text-black rounded-2xl font-semibold flex items-center gap-2 transition-all">
     🔑 Sign in with Google
 </button>
+    <button onclick="window.showSignupModal()" class="px-6 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-white">
+    Sign Up with Email
+</button>
 
     <!-- Guardian Modal -->
 <div id="guardianModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[70]">
@@ -110,6 +113,10 @@
             Activate Guardian Witness — ₦4,990 / month
         </button>
         <button id="btn-close-guardian" class="w-full py-3 text-zinc-400 hover:text-white">Maybe later</button>
+       <!-- zk button placeholder -->
+        <button onclick="startZKVerification()" class="w-full py-3 bg-gradient-to-r from-purple-500 to-violet-500 text-white rounded-2xl">
+    🔐 ZK Verification (True Witness)
+</button>
     </div>
 </div>
 
