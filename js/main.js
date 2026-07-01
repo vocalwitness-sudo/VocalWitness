@@ -128,16 +128,19 @@ window.showProfile = () => {
     else showToast("Profile modal not found", "error");
 };
 
-// Profile & Guardian
+
+// Profile & Guardian buttons
 window.showProfile = () => {
     const modal = document.getElementById('profileModal');
     if (modal) {
         modal.classList.remove('hidden');
+        showToast("👤 Profile opened", "success");
     } else {
-        showToast("Profile modal not found", "error");
+        showToast("Profile modal not found in HTML", "error");
     }
 };
 
 window.showGuardian = () => {
-    showToast("🛡️ Guardian Mode (Advanced Verification)", "info");
+    showToast("🛡️ Guardian Features (Advanced Security)", "info");
+    // You can expand this later
 };
