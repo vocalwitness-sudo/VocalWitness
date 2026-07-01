@@ -95,3 +95,22 @@ window.closeProfile = () => document.getElementById('profileModal')?.classList.a
 window.logout = () => { console.log("Logout called"); };
 window.signUpWithEmail = () => showToast("Sign up coming soon", "info");
 window.sendOTP = window.verifyOTP = () => showToast("Phone verification coming soon", "info");
+
+// Temporary fixes for broken buttons
+window.showTrueWitness = () => {
+    showToast("True Witness mode coming soon (ZK verification)", "info");
+};
+
+window.showLiveArena = () => {
+    showToast("Live Arena coming soon", "info");
+};
+
+window.showGuardian = () => {
+    showToast("Guardian features coming soon", "info");
+};
+
+window.showProfile = () => {
+    const modal = document.getElementById('profileModal');
+    if (modal) modal.classList.remove('hidden');
+    else showToast("Profile modal not found", "error");
+};
