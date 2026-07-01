@@ -1,3 +1,4 @@
+// js/feed.js - FIXED
 import {
     collection, query, orderBy, onSnapshot, where, limit
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
@@ -22,9 +23,14 @@ export function initFeed(dbInstance, feedType = 'citizen-talk') {
 
     feedContainer.innerHTML = '<div class="text-center py-8 text-zinc-400">Loading testimonies...</div>';
 
+    // Use fallback for new feeds
+    const effectiveFeed = (feedType === 'true-witness' || feedType === 'live') 
+        ? 'citizen-talk' 
+        : feedType;
+
     const q = query(
         collection(dbInstance, "testimonies"),
-        where("feedVisibility", "==", currentFeed),
+        where("feedVisibility", "==", effectiveFeed),
         orderBy("timestamp", "desc"),
         limit(15)
     );
@@ -51,7 +57,7 @@ export function initFeed(dbInstance, feedType = 'citizen-talk') {
         feedContainer.innerHTML = `
             <div class="text-center py-12 text-red-400">
                 <p>Failed to load feed. Please check your connection.</p>
-                <button onclick="window.loadFeed('${currentFeed}')" 
+                <button onclick="window.loadFeed('${currentFeed}')"
                         class="mt-4 px-6 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-2xl">
                     Retry
                 </button>
@@ -106,7 +112,7 @@ function renderPost(id, data) {
     feedContainer.appendChild(postEl);
 }
 
-// Firestore Actions (unchanged but safe)
+// Global actions
 window.likePost = async function(postId) {
     if (!auth.currentUser) {
         showToast("Please sign in to like posts", "error");
