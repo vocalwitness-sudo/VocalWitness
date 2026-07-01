@@ -20,7 +20,7 @@ window.loadFeed = (feedType) => {
 window.publishTestimony = async () => {
     const textarea = document.getElementById('mainInput');
     const content = textarea?.value.trim() || "";
-    
+
     if (!content && !window.selectedImageFile && !engineInstance?.currentAudioBlob) {
         return showToast("Please add text, photo or voice", "error");
     }
@@ -30,29 +30,39 @@ window.publishTestimony = async () => {
     postBtn.textContent = '🚀 Publishing...';
 
     try {
-        const mediaData = await mediaModule.uploadForensicMedia("user");
+        // === CRITICAL FIX: Use real user UID ===
+        const currentUser = auth.currentUser;  // from firebase-config or import
+        if (!currentUser) {
+            showToast("Please sign in to publish", "error");
+            return;
+        }
+
+        const mediaData = await mediaModule.uploadForensicMedia(currentUser.uid);
+
         const { collection, addDoc } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
-        
+
         await addDoc(collection(db, "testimonies"), {
+            authorId: currentUser.uid,
+            author: currentUser.displayName || "Anonymous Witness",
             content: content,
             imageUrl: mediaData.imageUrl || null,
             audioUrl: mediaData.audioUrl || null,
             timestamp: new Date().toISOString(),
             feedVisibility: "citizen-talk"
         });
+
         showToast("✅ Testimony published!", "success");
         if (textarea) textarea.value = '';
         mediaModule.resetMediaState();
         window.loadFeed('citizen-talk');
     } catch (err) {
-        console.error(err);
-        showToast("Failed to publish", "error");
+        console.error("Publish error:", err);
+        showToast("Failed to publish: " + (err.message || "Check permissions"), "error");
     } finally {
         postBtn.disabled = false;
         postBtn.textContent = '🚀 Publish Testimony to the Square';
     }
 };
-
 async function bootstrap() {
     await initAuth();
     initLanguage();
