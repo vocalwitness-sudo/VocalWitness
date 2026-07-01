@@ -1,4 +1,4 @@
-// js/media.js - IMPROVED VERSION
+// js/media.js - SECURE VERSION WITH WITNESS MODE
 import { showToast, generateSha256Hash } from './utils.js';
 import { storage } from './firebase-config.js';
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
@@ -22,12 +22,10 @@ export function setEngine(engine) {
 export async function handleImageSelect(event, previewArea) {
     const file = event.target.files[0];
     if (!file) return;
-
     if (!file.type.startsWith('image/')) return showToast("Invalid image", "error");
     if (file.size > 10 * 1024 * 1024) return showToast("Image too large (max 10MB)", "error");
 
     selectedImageFile = file;
-
     const reader = new FileReader();
     reader.onload = (e) => {
         previewArea.innerHTML = `
@@ -50,7 +48,6 @@ export function toggleVoiceRecording(voiceBtn) {
     if (!engineInstance) return showToast("Voice engine not ready", "error");
 
     if (!engineInstance.mediaRecorder || engineInstance.mediaRecorder.state === "inactive") {
-        // START RECORDING
         engineInstance.startVoiceRecording(300000);
         isPaused = false;
         secondsElapsed = 0;
@@ -69,7 +66,6 @@ export function toggleVoiceRecording(voiceBtn) {
         recordingTimerInterval = setInterval(updateTimer, 1000);
         showToast("🎤 Recording started", "info");
     } else {
-        // STOP RECORDING
         engineInstance.stopVoiceRecording();
         stopSpectrumAnalyzer();
 
@@ -145,26 +141,38 @@ window.pauseRecording = function(el) {
     el.textContent = isPaused ? '▶️' : '⏸️';
 };
 
-// ====================== UPLOAD ======================
-export async function uploadForensicMedia(userId = "anonymous") {
+// ====================== SECURE UPLOAD ======================
+export async function uploadForensicMedia(userId = "anonymous", isWitnessMode = false) {
+    if (!userId || userId === "anonymous") {
+        throw new Error("User must be authenticated");
+    }
+
     const mediaData = { imageUrl: null, audioUrl: null };
 
+    // Image Upload
     if (selectedImageFile) {
         try {
             const hash = await generateSha256Hash(selectedImageFile);
-            const imageRef = ref(storage, `images/${userId}/${Date.now()}_${selectedImageFile.name}`);
+            const path = isWitnessMode 
+                ? `witness/${userId}/${Date.now()}_${selectedImageFile.name}`
+                : `images/${userId}/${Date.now()}_${selectedImageFile.name}`;
+
+            const imageRef = ref(storage, path);
             await uploadBytes(imageRef, selectedImageFile);
             mediaData.imageUrl = await getDownloadURL(imageRef);
             mediaData.imageHash = hash;
+            console.log(`✅ Uploaded to ${path}`);
         } catch (e) {
             console.error("Image upload failed", e);
+            throw e;
         }
     }
 
+    // Audio Upload
     if (engineInstance?.currentAudioBlob) {
         try {
             const hash = await generateSha256Hash(engineInstance.currentAudioBlob);
-            const audioRef = ref(storage, `audio/${userId}/${Date.now()}.webm`);
+            const audioRef = ref(storage, `testimonies/${userId}/${Date.now()}.webm`);
             await uploadBytes(audioRef, engineInstance.currentAudioBlob);
             mediaData.audioUrl = await getDownloadURL(audioRef);
             mediaData.audioHash = hash;
