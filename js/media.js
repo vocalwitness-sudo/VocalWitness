@@ -1,4 +1,4 @@
-// js/media.js - FIXED FOR PUBLISHING
+// js/media.js - IMPROVED VERSION
 import { showToast, generateSha256Hash } from './utils.js';
 import { storage } from './firebase-config.js';
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
@@ -22,16 +22,18 @@ export function setEngine(engine) {
 export async function handleImageSelect(event, previewArea) {
     const file = event.target.files[0];
     if (!file) return;
+
     if (!file.type.startsWith('image/')) return showToast("Invalid image", "error");
     if (file.size > 10 * 1024 * 1024) return showToast("Image too large (max 10MB)", "error");
 
     selectedImageFile = file;
+
     const reader = new FileReader();
     reader.onload = (e) => {
         previewArea.innerHTML = `
-            <div class="relative">
+            <div class="relative mt-4">
                 <img src="${e.target.result}" class="image-preview rounded-2xl w-full" alt="Preview">
-                <button id="removeImgBtn" class="absolute top-3 right-3 bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-xl">✕</button>
+                <button id="removeImgBtn" class="absolute top-3 right-3 bg-red-600 hover:bg-red-700 text-white rounded-full w-8 h-8 flex items-center justify-center text-xl shadow-lg">✕</button>
             </div>`;
         document.getElementById('removeImgBtn').onclick = () => removeImage(previewArea);
     };
@@ -48,28 +50,31 @@ export function toggleVoiceRecording(voiceBtn) {
     if (!engineInstance) return showToast("Voice engine not ready", "error");
 
     if (!engineInstance.mediaRecorder || engineInstance.mediaRecorder.state === "inactive") {
-        // START
+        // START RECORDING
         engineInstance.startVoiceRecording(300000);
         isPaused = false;
         secondsElapsed = 0;
 
         voiceBtn.classList.add('recording-active');
         voiceBtn.innerHTML = `
-            ⏹️ <span id="rec-timer" class="font-mono ml-2">00:00</span>
-            <span onclick="pauseRecording(this)" class="ml-4 cursor-pointer text-yellow-400">⏸️</span>
-            <canvas id="spectrum" width="260" height="65" class="ml-6 bg-black/40 rounded"></canvas>
+            <span class="flex items-center gap-3">
+                ⏹️ 
+                <span id="rec-timer" class="font-mono text-lg">00:00</span>
+                <span onclick="pauseRecording(this)" class="ml-2 cursor-pointer text-2xl text-yellow-400 hover:text-yellow-300">⏸️</span>
+                <canvas id="spectrum" width="260" height="65" class="ml-4 bg-black/40 rounded"></canvas>
+            </span>
         `;
 
-        setTimeout(setupSpectrumAnalyzer, 300);
+        setTimeout(setupSpectrumAnalyzer, 350);
         recordingTimerInterval = setInterval(updateTimer, 1000);
         showToast("🎤 Recording started", "info");
     } else {
-        // STOP
+        // STOP RECORDING
         engineInstance.stopVoiceRecording();
         stopSpectrumAnalyzer();
 
         voiceBtn.classList.remove('recording-active');
-        voiceBtn.textContent = '🎤 Voice Testimony';
+        voiceBtn.innerHTML = '🎤 Voice Testimony';
 
         if (engineInstance.currentAudioBlob) {
             const url = URL.createObjectURL(engineInstance.currentAudioBlob);
@@ -144,7 +149,6 @@ window.pauseRecording = function(el) {
 export async function uploadForensicMedia(userId = "anonymous") {
     const mediaData = { imageUrl: null, audioUrl: null };
 
-    // Upload Image
     if (selectedImageFile) {
         try {
             const hash = await generateSha256Hash(selectedImageFile);
@@ -157,7 +161,6 @@ export async function uploadForensicMedia(userId = "anonymous") {
         }
     }
 
-    // Upload Audio
     if (engineInstance?.currentAudioBlob) {
         try {
             const hash = await generateSha256Hash(engineInstance.currentAudioBlob);
