@@ -1,7 +1,7 @@
-// js/main.js - COMPATIBLE WITH YOUR index.html + Firebase v11
+// js/main.js - FIXED & COMPATIBLE WITH Firebase v11
 import { initAuth } from "./auth.js";
 import { initFeed } from './feed.js';
-import { db } from './firebase-config.js';
+import { db, auth } from './firebase-config.js';   // ← Added auth here
 import { showToast } from './utils.js';
 import { initLanguage } from './i18n.js';
 import * as mediaModule from './media.js';
@@ -30,8 +30,7 @@ window.publishTestimony = async () => {
     postBtn.textContent = '🚀 Publishing...';
 
     try {
-        // === CRITICAL FIX: Use real user UID ===
-        const currentUser = auth.currentUser;  // from firebase-config or import
+        const currentUser = auth.currentUser;
         if (!currentUser) {
             showToast("Please sign in to publish", "error");
             return;
@@ -63,15 +62,20 @@ window.publishTestimony = async () => {
         postBtn.textContent = '🚀 Publish Testimony to the Square';
     }
 };
+export async function uploadForensicMedia(userId) {
+    if (!userId || userId === "anonymous") {
+        console.warn("No valid userId passed to upload");
+        throw new Error("User must be authenticated");
+    }
+    
 async function bootstrap() {
     await initAuth();
     initLanguage();
-
-    engineInstance = new CitizenTalkEngine(db, null); // storage if needed
+    engineInstance = new CitizenTalkEngine(db, null);
     window.engineInstance = engineInstance;
     mediaModule.setEngine(engineInstance);
 
-    // Attach button listeners (backup for onclicks)
+    // Attach button listeners
     document.getElementById('btn-photo')?.addEventListener('click', () => {
         const input = document.createElement('input');
         input.type = 'file';
@@ -89,8 +93,8 @@ async function bootstrap() {
 
 document.addEventListener('DOMContentLoaded', bootstrap);
 
-// Expose missing globals used in HTML
+// Expose missing globals
 window.closeProfile = () => document.getElementById('profileModal')?.classList.add('hidden');
-window.logout = () => { console.log("Logout called"); /* import from auth */ };
-window.signUpWithEmail = () => { console.log("Sign up called"); /* implement */ };
+window.logout = () => { /* import from auth.js if needed */ };
+window.signUpWithEmail = () => showToast("Sign up coming soon", "info");
 window.sendOTP = window.verifyOTP = () => showToast("Phone verification coming soon", "info");
