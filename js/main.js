@@ -1,111 +1,149 @@
-// js/auth.js - CLEAN & FIXED
-import { auth, provider, db } from './firebase-config.js';
-import { signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-import { showToast } from "./utils.js";
-import { updateUser } from './storage.js';
-import { getUserTier } from './tier.js';
+// js/main.js - FIXED GLOBAL FUNCTIONS
+import { initAuth, getCurrentUser, googleLogin as authGoogleLogin } from "./auth.js";
+import { initFeed } from './feed.js';
+import { db, storage } from './firebase-config.js';
+import { showToast } from './utils.js';
+import { initLanguage } from './i18n.js';
+import { handleImageSelect, toggleVoiceRecording, uploadForensicMedia, resetMediaState } from './media.js';
+import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
+import { collection, addDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
-async function syncUserToFirestore(user) {
-    if (!user) return;
-    const userRef = doc(db, "users", user.uid);
-    const userSnap = await getDoc(userRef);
+let engineInstance = null;
+let currentUser = null;
 
-    const baseData = {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName || user.email?.split('@')[0] || "Citizen",
-        username: (user.email?.split('@')[0] || `user_${Date.now()}`).toLowerCase(),
-        photoURL: user.photoURL || "",
-        role: "citizen",
-        tier: "Explorer",
-        trustCircle: 50,
-        reputationScore: 50,
-        level: 1,
-        bio: "",
-        preferredLanguage: "en",
-        isPhoneVerified: false,
-        phoneNumber: "",
-        zkVerified: false,
-        testimoniesCount: 0,
-        verificationsMade: 0,
-        endorsementsReceived: 0,
-        successfulEvidence: 0,
-        debunkedEvidence: 0,
-        badges: ["new_citizen"],
-        createdAt: new Date().toISOString(),
-        lastUpdated: new Date().toISOString()
-    };
-
-    baseData.tier = getUserTier(baseData);
-
-    if (!userSnap.exists()) {
-        await setDoc(userRef, baseData);
-        showToast("Welcome to VocalWitness! 🎉", "success");
-    } else {
-        await setDoc(userRef, {
-            lastUpdated: new Date().toISOString(),
-            lastLogin: new Date().toISOString()
-        }, { merge: true });
+// ====================== ENGINE ======================
+function initEngine() {
+    if (!engineInstance) {
+        engineInstance = new CitizenTalkEngine(db, storage);
+        window.engineInstance = engineInstance;
+        import('./media.js').then(m => m.setEngine(engineInstance));
     }
 }
 
-export function initAuth() {
-    console.log("🔐 Initializing Authentication...");
-    onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            console.log("✅ Auth state:", user.email);
-            await syncUserToFirestore(user);
-            updateUser(user);
-            window.updateAuthUI?.(user);
-        } else {
-            console.log("👤 No user signed in");
-            updateUser(null);
-            window.updateAuthUI?.(null);
-        }
+// ====================== GLOBAL FEED FUNCTION ======================
+window.loadFeed = (feedType) => {
+    console.log("🔄 Loading feed:", feedType);
+    
+    document.querySelectorAll('#main-nav button[data-feed]').forEach(btn => {
+        btn.classList.remove('active');
     });
-}
 
-export async function googleLogin() {
+    const activeBtn = document.querySelector(`button[data-feed="${feedType}"]`);
+    if (activeBtn) activeBtn.classList.add('active');
+
+    initFeed(db, feedType);
+};
+
+// ====================== PUBLISH ======================
+window.publishTestimony = async () => {
+    if (!currentUser) {
+        showToast("Please sign in first", "error");
+        return;
+    }
+    const textarea = document.getElementById('mainInput');
+    const content = textarea?.value.trim() || "";
+
+    if (!content && !window.selectedImageFile && !engineInstance?.currentAudioBlob) {
+        showToast("Please add text, photo, or voice", "error");
+        return;
+    }
+
+    const postBtn = document.getElementById('postButton');
+    postBtn.disabled = true;
+    postBtn.textContent = '🚀 Publishing...';
+
     try {
-        const result = await signInWithPopup(auth, provider);
-        return result.user;
-    } catch (error) {
-        console.error("Google login error:", error);
-        showToast("Sign-in failed: " + (error.message || "Please try again"), "error");
-        return null;
+        const mediaData = await uploadForensicMedia(currentUser.uid);
+        await addDoc(collection(db, "testimonies"), {
+            author: currentUser.displayName || "Anonymous Witness",
+            authorId: currentUser.uid,
+            content: content,
+            imageUrl: mediaData.imageUrl || null,
+            audioUrl: mediaData.audioUrl || null,
+            timestamp: new Date().toISOString(),
+            feedVisibility: "citizen-talk",
+            likes: 0,
+            disputes: 0
+        });
+
+        showToast("✅ Testimony published successfully!", "success");
+        if (textarea) textarea.value = '';
+        resetMediaState();
+        window.loadFeed('citizen-talk');
+    } catch (err) {
+        console.error("Publish error:", err);
+        showToast("Failed to publish", "error");
+    } finally {
+        postBtn.disabled = false;
+        postBtn.textContent = '🚀 Publish Testimony to the Square';
+    }
+};
+
+// ====================== AUTH UI ======================
+function updateAuthUI(user) {
+    const container = document.getElementById('auth-button-container');
+    if (!container) return;
+
+    if (!user) {
+        container.innerHTML = `
+            <button onclick="window.googleLogin()" class="px-5 py-2.5 bg-white text-black rounded-2xl font-medium flex items-center gap-2 hover:bg-gray-100">
+                Sign in with Google
+            </button>
+        `;
+    } else {
+        container.innerHTML = `
+            <button onclick="window.showProfileSection()" class="w-9 h-9 bg-emerald-600 hover:bg-emerald-500 rounded-2xl flex items-center justify-center text-lg">👤</button>
+        `;
     }
 }
 
-export async function signUpWithEmail(email, password) {
+// ====================== UI LISTENERS ======================
+function attachUIListeners() {
+    console.log("👂 UI Listeners Attached");
+
+    document.getElementById('btn-profile')?.addEventListener('click', window.showProfileSection);
+    document.getElementById('btn-guardian')?.addEventListener('click', () => document.getElementById('guardianModal')?.classList.remove('hidden'));
+    document.getElementById('btn-close-guardian')?.addEventListener('click', () => document.getElementById('guardianModal')?.classList.add('hidden'));
+
+    const photoBtn = document.getElementById('btn-photo');
+    if (photoBtn) {
+        photoBtn.addEventListener('click', () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = (e) => handleImageSelect(e, document.getElementById('preview-area'));
+            input.click();
+        });
+    }
+
+    const voiceBtn = document.getElementById('btn-voice');
+    if (voiceBtn) voiceBtn.addEventListener('click', (e) => toggleVoiceRecording(e.currentTarget));
+
+    document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
+}
+
+// ====================== BOOTSTRAP ======================
+async function bootstrap() {
+    console.log("🚀 Initializing VocalWitness...");
     try {
-        const { createUserWithEmailAndPassword } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js");
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        await syncUserToFirestore(userCredential.user);
-        showToast("Account created successfully!", "success");
-        return userCredential.user;
-    } catch (error) {
-        console.error(error);
-        showToast(error.message, "error");
-        return null;
+        await initAuth();
+        currentUser = getCurrentUser();
+        updateAuthUI(currentUser);
+
+        initLanguage();
+        initEngine();
+        attachUIListeners();
+
+        setTimeout(() => window.loadFeed('citizen-talk'), 800);
+        console.log("✅ VocalWitness Loaded Successfully");
+    } catch (e) {
+        console.error("Bootstrap error:", e);
     }
 }
 
-export async function logout() {
-    try {
-        await signOut(auth);
-        showToast("Signed out successfully", "success");
-    } catch (error) {
-        console.error("Logout error:", error);
-        showToast("Error signing out", "error");
-    }
-}
+document.addEventListener('DOMContentLoaded', bootstrap);
 
-// NEW: Added for main.js
-export function getCurrentUser() {
-    return auth.currentUser;
-}
-
-// Global exposures
-window.googleLogin = googleLogin;
-window.logout = logout;
+// ====================== GLOBAL HELPERS ======================
+window.showProfileSection = () => document.getElementById('profileModal')?.classList.remove('hidden');
+window.closeProfile = () => document.getElementById('profileModal')?.classList.add('hidden');
+window.googleLogin = () => authGoogleLogin();
