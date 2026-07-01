@@ -12,9 +12,22 @@ let engineInstance = null;
 // ====================== GLOBAL FUNCTIONS ======================
 window.loadFeed = (feedType) => {
     document.querySelectorAll('#main-nav button').forEach(btn => btn.classList.remove('active'));
+    
     const active = document.querySelector(`button[data-feed="${feedType}"]`);
     if (active) active.classList.add('active');
-    initFeed(db, feedType);
+
+    console.log(`Switching to feed: ${feedType}`);
+
+    if (feedType === 'true-witness') {
+        showToast("🔒 True Witness Mode (ZK Verified)", "info");
+        // TODO: Load witness-specific feed later
+        initFeed(db, 'citizen-talk'); // fallback for now
+    } else if (feedType === 'live') {
+        showToast("🏟️ Live Arena (coming soon)", "info");
+        initFeed(db, 'citizen-talk'); // fallback
+    } else {
+        initFeed(db, feedType);
+    }
 };
 
 window.publishTestimony = async () => {
