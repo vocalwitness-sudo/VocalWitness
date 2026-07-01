@@ -1,4 +1,4 @@
-// js/main.js - FIXED GLOBAL FUNCTIONS
+// js/main.js - ROBUST WITH ERROR HANDLING
 import { initAuth, getCurrentUser, googleLogin as authGoogleLogin } from "./auth.js";
 import { initFeed } from './feed.js';
 import { db, storage } from './firebase-config.js';
@@ -11,27 +11,40 @@ import { collection, addDoc } from "https://www.gstatic.com/firebasejs/11.0.0/fi
 let engineInstance = null;
 let currentUser = null;
 
+// Safe DOM selector
+function safeGetElement(id) {
+    const el = document.getElementById(id);
+    if (!el) {
+        console.warn(`Element with id "${id}" not found`);
+    }
+    return el;
+}
+
 // ====================== ENGINE ======================
 function initEngine() {
     if (!engineInstance) {
         engineInstance = new CitizenTalkEngine(db, storage);
         window.engineInstance = engineInstance;
-        import('./media.js').then(m => m.setEngine(engineInstance));
+        import('./media.js').then(m => m.setEngine?.(engineInstance));
     }
 }
 
-// ====================== GLOBAL FEED FUNCTION ======================
+// ====================== FEED ======================
 window.loadFeed = (feedType) => {
     console.log("🔄 Loading feed:", feedType);
     
-    document.querySelectorAll('#main-nav button[data-feed]').forEach(btn => {
-        btn.classList.remove('active');
-    });
+    try {
+        document.querySelectorAll('#main-nav button[data-feed]').forEach(btn => {
+            btn.classList.remove('active');
+        });
 
-    const activeBtn = document.querySelector(`button[data-feed="${feedType}"]`);
-    if (activeBtn) activeBtn.classList.add('active');
+        const activeBtn = document.querySelector(`button[data-feed="${feedType}"]`);
+        if (activeBtn) activeBtn.classList.add('active');
 
-    initFeed(db, feedType);
+        initFeed(db, feedType);
+    } catch (err) {
+        console.error("Feed loading error:", err);
+    }
 };
 
 // ====================== PUBLISH ======================
@@ -40,7 +53,8 @@ window.publishTestimony = async () => {
         showToast("Please sign in first", "error");
         return;
     }
-    const textarea = document.getElementById('mainInput');
+
+    const textarea = safeGetElement('mainInput');
     const content = textarea?.value.trim() || "";
 
     if (!content && !window.selectedImageFile && !engineInstance?.currentAudioBlob) {
@@ -48,9 +62,11 @@ window.publishTestimony = async () => {
         return;
     }
 
-    const postBtn = document.getElementById('postButton');
-    postBtn.disabled = true;
-    postBtn.textContent = '🚀 Publishing...';
+    const postBtn = safeGetElement('postButton');
+    if (postBtn) {
+        postBtn.disabled = true;
+        postBtn.textContent = '🚀 Publishing...';
+    }
 
     try {
         const mediaData = await uploadForensicMedia(currentUser.uid);
@@ -72,16 +88,18 @@ window.publishTestimony = async () => {
         window.loadFeed('citizen-talk');
     } catch (err) {
         console.error("Publish error:", err);
-        showToast("Failed to publish", "error");
+        showToast("Failed to publish testimony", "error");
     } finally {
-        postBtn.disabled = false;
-        postBtn.textContent = '🚀 Publish Testimony to the Square';
+        if (postBtn) {
+            postBtn.disabled = false;
+            postBtn.textContent = '🚀 Publish Testimony to the Square';
+        }
     }
 };
 
 // ====================== AUTH UI ======================
 function updateAuthUI(user) {
-    const container = document.getElementById('auth-button-container');
+    const container = safeGetElement('auth-button-container');
     if (!container) return;
 
     if (!user) {
@@ -101,25 +119,29 @@ function updateAuthUI(user) {
 function attachUIListeners() {
     console.log("👂 UI Listeners Attached");
 
-    document.getElementById('btn-profile')?.addEventListener('click', window.showProfileSection);
-    document.getElementById('btn-guardian')?.addEventListener('click', () => document.getElementById('guardianModal')?.classList.remove('hidden'));
-    document.getElementById('btn-close-guardian')?.addEventListener('click', () => document.getElementById('guardianModal')?.classList.add('hidden'));
+    safeGetElement('btn-profile')?.addEventListener('click', window.showProfileSection);
+    safeGetElement('btn-guardian')?.addEventListener('click', () => {
+        safeGetElement('guardianModal')?.classList.remove('hidden');
+    });
+    safeGetElement('btn-close-guardian')?.addEventListener('click', () => {
+        safeGetElement('guardianModal')?.classList.add('hidden');
+    });
 
-    const photoBtn = document.getElementById('btn-photo');
+    const photoBtn = safeGetElement('btn-photo');
     if (photoBtn) {
         photoBtn.addEventListener('click', () => {
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = 'image/*';
-            input.onchange = (e) => handleImageSelect(e, document.getElementById('preview-area'));
+            input.onchange = (e) => handleImageSelect(e, safeGetElement('preview-area'));
             input.click();
         });
     }
 
-    const voiceBtn = document.getElementById('btn-voice');
+    const voiceBtn = safeGetElement('btn-voice');
     if (voiceBtn) voiceBtn.addEventListener('click', (e) => toggleVoiceRecording(e.currentTarget));
 
-    document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
+    safeGetElement('postButton')?.addEventListener('click', window.publishTestimony);
 }
 
 // ====================== BOOTSTRAP ======================
@@ -138,12 +160,13 @@ async function bootstrap() {
         console.log("✅ VocalWitness Loaded Successfully");
     } catch (e) {
         console.error("Bootstrap error:", e);
+        showToast("Failed to initialize app", "error");
     }
 }
 
 document.addEventListener('DOMContentLoaded', bootstrap);
 
 // ====================== GLOBAL HELPERS ======================
-window.showProfileSection = () => document.getElementById('profileModal')?.classList.remove('hidden');
-window.closeProfile = () => document.getElementById('profileModal')?.classList.add('hidden');
+window.showProfileSection = () => safeGetElement('profileModal')?.classList.remove('hidden');
+window.closeProfile = () => safeGetElement('profileModal')?.classList.add('hidden');
 window.googleLogin = () => authGoogleLogin();
