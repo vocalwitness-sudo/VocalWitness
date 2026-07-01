@@ -1,7 +1,7 @@
-// js/main.js - FIXED for Firebase v11 + Auth/Storage
+// js/main.js - FIXED, CLEAN & COMPATIBLE (Firebase v11)
 import { initAuth } from "./auth.js";
 import { initFeed } from './feed.js';
-import { db, auth, storage } from './firebase-config.js';   // ← IMPORTANT: added auth + storage
+import { db, auth, storage } from './firebase-config.js';
 import { showToast } from './utils.js';
 import { initLanguage } from './i18n.js';
 import * as mediaModule from './media.js';
@@ -9,7 +9,7 @@ import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
 
 let engineInstance = null;
 
-// Global functions
+// ====================== GLOBAL FUNCTIONS ======================
 window.loadFeed = (feedType) => {
     document.querySelectorAll('#main-nav button').forEach(btn => btn.classList.remove('active'));
     const active = document.querySelector(`button[data-feed="${feedType}"]`);
@@ -63,10 +63,12 @@ window.publishTestimony = async () => {
     }
 };
 
+// ====================== BOOTSTRAP ======================
 async function bootstrap() {
     await initAuth();
     initLanguage();
-    engineInstance = new CitizenTalkEngine(db, storage);   // ← pass storage too
+
+    engineInstance = new CitizenTalkEngine(db, storage);
     window.engineInstance = engineInstance;
     mediaModule.setEngine(engineInstance);
 
@@ -82,11 +84,14 @@ async function bootstrap() {
     document.getElementById('btn-voice')?.addEventListener('click', (e) => mediaModule.toggleVoiceRecording(e.currentTarget));
     document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
 
+    // Initial load
     setTimeout(() => window.loadFeed('citizen-talk'), 600);
 }
 
 document.addEventListener('DOMContentLoaded', bootstrap);
 
-// Globals
+// ====================== GLOBAL EXPOSURES ======================
 window.closeProfile = () => document.getElementById('profileModal')?.classList.add('hidden');
 window.logout = () => { console.log("Logout called"); };
+window.signUpWithEmail = () => showToast("Sign up coming soon", "info");
+window.sendOTP = window.verifyOTP = () => showToast("Phone verification coming soon", "info");
