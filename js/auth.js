@@ -57,11 +57,19 @@ export function initAuth() {
             console.log("✅ Auth state:", user.email);
             await syncUserToFirestore(user);
             updateUser(user);
-            window.updateAuthUI?.(user);   // Hide sign in buttons
+            
+            // Sync to main.js
+            if (typeof window.updateCurrentUser === 'function') {
+                window.updateCurrentUser(user);
+            }
+            window.updateAuthUI?.(user);
         } else {
             console.log("👤 No user signed in");
             updateUser(null);
-            window.updateAuthUI?.(null);   // Show sign in buttons
+            if (typeof window.updateCurrentUser === 'function') {
+                window.updateCurrentUser(null);
+            }
+            window.updateAuthUI?.(null);
         }
     });
 }
@@ -73,20 +81,6 @@ export async function googleLogin() {
     } catch (error) {
         console.error("Google login error:", error);
         showToast("Sign-in failed: " + (error.message || "Please try again"), "error");
-        return null;
-    }
-}
-
-export async function signUpWithEmail(email, password) {
-    try {
-        const { createUserWithEmailAndPassword } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js");
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        await syncUserToFirestore(userCredential.user);
-        showToast("Account created successfully!", "success");
-        return userCredential.user;
-    } catch (error) {
-        console.error(error);
-        showToast(error.message, "error");
         return null;
     }
 }
@@ -104,7 +98,6 @@ export async function logout() {
 // Global exposures
 window.googleLogin = googleLogin;
 window.logout = logout;
-
 export function getCurrentUser() {
     return auth.currentUser;
 }
