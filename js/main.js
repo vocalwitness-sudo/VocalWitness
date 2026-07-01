@@ -1,17 +1,16 @@
-// js/main.js
-import { initAuth, getCurrentUser } from "./auth.js";
+// js/main.js - FIXED & CLEAN
+import { initAuth } from "./auth.js";
 import { initFeed } from './feed.js';
 import { db, storage, auth } from './firebase-config.js';
 import { showToast } from './utils.js';
 import { initLanguage } from './i18n.js';
-import { 
-    handleImageSelect, 
-    toggleVoiceRecording, 
-    uploadForensicMedia, 
+import {
+    handleImageSelect,
+    toggleVoiceRecording,
+    uploadForensicMedia,
     resetMediaState,
-    setEngine   // ← Added
+    setEngine
 } from './media.js';
-
 import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
 import { collection, addDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
@@ -29,23 +28,9 @@ function initEngine() {
     if (!engineInstance) {
         engineInstance = new CitizenTalkEngine(db, storage);
         window.engineInstance = engineInstance;
-        setEngine?.(engineInstance);   // Safe call
+        setEngine?.(engineInstance);
     }
 }
-
-// ====================== FEED ======================
-window.loadFeed = (feedType) => {
-    console.log("🔄 Loading feed:", feedType);
-    
-    document.querySelectorAll('#main-nav button[data-feed]').forEach(btn => 
-        btn.classList.remove('active')
-    );
-    
-    const activeBtn = document.querySelector(`button[data-feed="${feedType}"]`);
-    if (activeBtn) activeBtn.classList.add('active');
-
-    initFeed(db, feedType);
-};
 
 // ====================== PUBLISH ======================
 window.publishTestimony = async () => {
@@ -63,7 +48,7 @@ window.publishTestimony = async () => {
         return;
     }
 
-    const postBtn = safeGetElement('postButton');
+    const postBtn = document.getElementById('postButton');
     if (postBtn) {
         postBtn.disabled = true;
         postBtn.textContent = '🚀 Publishing...';
@@ -71,26 +56,28 @@ window.publishTestimony = async () => {
 
     try {
         const mediaData = await uploadForensicMedia(user.uid);
-        
+
         await addDoc(collection(db, "testimonies"), {
             author: user.displayName || "Anonymous Witness",
             authorId: user.uid,
-            content,
+            content: content,
             imageUrl: mediaData.imageUrl || null,
             audioUrl: mediaData.audioUrl || null,
             timestamp: new Date().toISOString(),
-            feedVisibility: "citizen-talk"
+            feedVisibility: "citizen-talk",
+            likes: 0,
+            disputes: 0
         });
 
-        showToast("✅ Testimony published!", "success");
-        
+        showToast("✅ Testimony published successfully!", "success");
+
         if (textarea) textarea.value = '';
         resetMediaState();
         window.loadFeed('citizen-talk');
-        
+
     } catch (err) {
         console.error("Publish error:", err);
-        showToast("Publish failed. Please try again.", "error");
+        showToast("Failed to publish. Please try again.", "error");
     } finally {
         if (postBtn) {
             postBtn.disabled = false;
@@ -99,72 +86,65 @@ window.publishTestimony = async () => {
     }
 };
 
-// ====================== UI HELPERS ======================
-function safeGetElement(id) {
-    const el = document.getElementById(id);
-    if (!el) console.warn(`Element with id "${id}" not found`);
-    return el;
-}
+// ====================== FEED ======================
+window.loadFeed = (feedType) => {
+    console.log("🔄 Loading feed:", feedType);
+    document.querySelectorAll('#main-nav button[data-feed]').forEach(btn => btn.classList.remove('active'));
+    const activeBtn = document.querySelector(`button[data-feed="${feedType}"]`);
+    if (activeBtn) activeBtn.classList.add('active');
+    initFeed(db, feedType);
+};
 
 // ====================== UI LISTENERS ======================
 function attachUIListeners() {
     console.log("👂 Attaching UI Listeners");
 
-    safeGetElement('btn-profile')?.addEventListener('click', window.showProfileSection);
-    safeGetElement('btn-guardian')?.addEventListener('click', () => {
-        safeGetElement('guardianModal')?.classList.remove('hidden');
+    document.getElementById('btn-profile')?.addEventListener('click', window.showProfileSection);
+    document.getElementById('btn-guardian')?.addEventListener('click', () => {
+        document.getElementById('guardianModal')?.classList.remove('hidden');
     });
-    safeGetElement('btn-close-guardian')?.addEventListener('click', () => {
-        safeGetElement('guardianModal')?.classList.add('hidden');
+    document.getElementById('btn-close-guardian')?.addEventListener('click', () => {
+        document.getElementById('guardianModal')?.classList.add('hidden');
     });
 
-    // Photo upload
-    const photoBtn = safeGetElement('btn-photo');
+    // Photo
+    const photoBtn = document.getElementById('btn-photo');
     if (photoBtn) {
         photoBtn.addEventListener('click', () => {
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = 'image/*';
-            input.onchange = (e) => handleImageSelect(e, safeGetElement('preview-area'));
+            input.onchange = (e) => handleImageSelect(e, document.getElementById('preview-area'));
             input.click();
         });
     }
 
-    // Voice recording
-    const voiceBtn = safeGetElement('btn-voice');
-    if (voiceBtn) {
-        voiceBtn.addEventListener('click', (e) => toggleVoiceRecording(e.currentTarget));
-    }
+    // Voice
+    const voiceBtn = document.getElementById('btn-voice');
+    if (voiceBtn) voiceBtn.addEventListener('click', (e) => toggleVoiceRecording(e.currentTarget));
 
-    safeGetElement('postButton')?.addEventListener('click', window.publishTestimony);
+    // Publish
+    document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
 }
 
 // ====================== BOOTSTRAP ======================
 async function bootstrap() {
     console.log("🚀 Initializing VocalWitness...");
-
     try {
         await initAuth();
-        currentUser = getCurrentUser?.() || auth.currentUser;
-
         initLanguage();
         initEngine();
         attachUIListeners();
-
-        // Load default feed
         setTimeout(() => window.loadFeed('citizen-talk'), 800);
-
         console.log("✅ VocalWitness Loaded Successfully");
     } catch (e) {
         console.error("Bootstrap error:", e);
-        showToast("Failed to initialize app", "error");
     }
 }
 
 document.addEventListener('DOMContentLoaded', bootstrap);
 
-// ====================== GLOBAL EXPORTS ======================
-window.showProfileSection = () => safeGetElement('profileModal')?.classList.remove('hidden');
-window.closeProfile = () => safeGetElement('profileModal')?.classList.add('hidden');
-window.loadFeed = window.loadFeed;
+// Global helpers
+window.showProfileSection = () => document.getElementById('profileModal')?.classList.remove('hidden');
+window.closeProfile = () => document.getElementById('profileModal')?.classList.add('hidden');
 window.updateCurrentUser = updateCurrentUser;
