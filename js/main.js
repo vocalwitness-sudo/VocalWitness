@@ -1,89 +1,86 @@
-// js/main.js - FIXED VERSION (Firebase v11 compatible)
+// js/main.js - COMPATIBLE WITH YOUR index.html + Firebase v11
 import { initAuth } from "./auth.js";
 import { initFeed } from './feed.js';
-import { db, storage } from './firebase-config.js';
+import { db } from './firebase-config.js';
 import { showToast } from './utils.js';
 import { initLanguage } from './i18n.js';
-import * as media from './media.js';
+import * as mediaModule from './media.js';
 import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
 
 let engineInstance = null;
-let currentUser = null;
 
+// Global functions expected by your HTML
 window.loadFeed = (feedType) => {
-    document.querySelectorAll('#main-nav button').forEach(b => b.classList.remove('active'));
-    const btn = document.querySelector(`[data-feed="${feedType}"]`);
-    if (btn) btn.classList.add('active');
+    document.querySelectorAll('#main-nav button').forEach(btn => btn.classList.remove('active'));
+    const active = document.querySelector(`button[data-feed="${feedType}"]`);
+    if (active) active.classList.add('active');
     initFeed(db, feedType);
 };
 
 window.publishTestimony = async () => {
-    const user = currentUser || (await import('./auth.js')).getCurrentUser?.();
-    if (!user) return showToast("Sign in first", "error");
-
-    const content = document.getElementById('mainInput')?.value.trim() || "";
+    const textarea = document.getElementById('mainInput');
+    const content = textarea?.value.trim() || "";
+    
     if (!content && !window.selectedImageFile && !engineInstance?.currentAudioBlob) {
-        return showToast("Add text/photo/voice", "error");
+        return showToast("Please add text, photo or voice", "error");
     }
 
-    const btn = document.getElementById('postButton');
-    btn.disabled = true;
-    btn.textContent = "Publishing...";
+    const postBtn = document.getElementById('postButton');
+    postBtn.disabled = true;
+    postBtn.textContent = '🚀 Publishing...';
 
     try {
-        const mediaData = await media.uploadForensicMedia(user.uid);
+        const mediaData = await mediaModule.uploadForensicMedia("user");
         const { collection, addDoc } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
         
         await addDoc(collection(db, "testimonies"), {
-            authorId: user.uid,
-            author: user.displayName || "Witness",
-            content,
-            imageUrl: mediaData.imageUrl,
-            audioUrl: mediaData.audioUrl,
+            content: content,
+            imageUrl: mediaData.imageUrl || null,
+            audioUrl: mediaData.audioUrl || null,
             timestamp: new Date().toISOString(),
-            feedVisibility: "citizen-talk",
-            likes: 0,
-            disputes: 0
+            feedVisibility: "citizen-talk"
         });
-
-        showToast("✅ Published!", "success");
-        document.getElementById('mainInput').value = '';
-        media.resetMediaState();
+        showToast("✅ Testimony published!", "success");
+        if (textarea) textarea.value = '';
+        mediaModule.resetMediaState();
         window.loadFeed('citizen-talk');
-    } catch (e) {
-        console.error(e);
-        showToast("Publish failed", "error");
+    } catch (err) {
+        console.error(err);
+        showToast("Failed to publish", "error");
     } finally {
-        btn.disabled = false;
-        btn.textContent = "🚀 Publish Testimony to the Square";
+        postBtn.disabled = false;
+        postBtn.textContent = '🚀 Publish Testimony to the Square';
     }
 };
 
 async function bootstrap() {
-    console.log("🚀 VocalWitness Starting...");
     await initAuth();
     initLanguage();
-    
-    engineInstance = new CitizenTalkEngine(db, storage);
-    window.engineInstance = engineInstance;
-    media.setEngine(engineInstance);
 
-    // Attach all listeners
+    engineInstance = new CitizenTalkEngine(db, null); // storage if needed
+    window.engineInstance = engineInstance;
+    mediaModule.setEngine(engineInstance);
+
+    // Attach button listeners (backup for onclicks)
     document.getElementById('btn-photo')?.addEventListener('click', () => {
         const input = document.createElement('input');
-        input.type = 'file'; input.accept = 'image/*';
-        input.onchange = e => media.handleImageSelect(e, document.getElementById('preview-area'));
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.onchange = (e) => mediaModule.handleImageSelect(e, document.getElementById('preview-area'));
         input.click();
     });
 
-    document.getElementById('btn-voice')?.addEventListener('click', e => media.toggleVoiceRecording(e.currentTarget));
+    document.getElementById('btn-voice')?.addEventListener('click', (e) => mediaModule.toggleVoiceRecording(e.currentTarget));
     document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
 
-    setTimeout(() => window.loadFeed('citizen-talk'), 500);
+    // Initial feed
+    setTimeout(() => window.loadFeed('citizen-talk'), 600);
 }
 
 document.addEventListener('DOMContentLoaded', bootstrap);
 
-// Global helpers for HTML onclicks
-window.showProfileSection = () => document.getElementById('profileModal')?.classList.remove('hidden');
+// Expose missing globals used in HTML
 window.closeProfile = () => document.getElementById('profileModal')?.classList.add('hidden');
+window.logout = () => { console.log("Logout called"); /* import from auth */ };
+window.signUpWithEmail = () => { console.log("Sign up called"); /* implement */ };
+window.sendOTP = window.verifyOTP = () => showToast("Phone verification coming soon", "info");
