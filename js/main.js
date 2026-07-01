@@ -1,7 +1,7 @@
-// js/main.js - FIXED & COMPATIBLE WITH Firebase v11
+// js/main.js - FIXED for Firebase v11 + Auth/Storage
 import { initAuth } from "./auth.js";
 import { initFeed } from './feed.js';
-import { db, auth } from './firebase-config.js';   // ← Added auth here
+import { db, auth, storage } from './firebase-config.js';   // ← IMPORTANT: added auth + storage
 import { showToast } from './utils.js';
 import { initLanguage } from './i18n.js';
 import * as mediaModule from './media.js';
@@ -9,7 +9,7 @@ import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
 
 let engineInstance = null;
 
-// Global functions expected by your HTML
+// Global functions
 window.loadFeed = (feedType) => {
     document.querySelectorAll('#main-nav button').forEach(btn => btn.classList.remove('active'));
     const active = document.querySelector(`button[data-feed="${feedType}"]`);
@@ -62,20 +62,15 @@ window.publishTestimony = async () => {
         postBtn.textContent = '🚀 Publish Testimony to the Square';
     }
 };
-export async function uploadForensicMedia(userId) {
-    if (!userId || userId === "anonymous") {
-        console.warn("No valid userId passed to upload");
-        throw new Error("User must be authenticated");
-    }
-    
+
 async function bootstrap() {
     await initAuth();
     initLanguage();
-    engineInstance = new CitizenTalkEngine(db, null);
+    engineInstance = new CitizenTalkEngine(db, storage);   // ← pass storage too
     window.engineInstance = engineInstance;
     mediaModule.setEngine(engineInstance);
 
-    // Attach button listeners
+    // Button listeners
     document.getElementById('btn-photo')?.addEventListener('click', () => {
         const input = document.createElement('input');
         input.type = 'file';
@@ -87,14 +82,11 @@ async function bootstrap() {
     document.getElementById('btn-voice')?.addEventListener('click', (e) => mediaModule.toggleVoiceRecording(e.currentTarget));
     document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
 
-    // Initial feed
     setTimeout(() => window.loadFeed('citizen-talk'), 600);
 }
 
 document.addEventListener('DOMContentLoaded', bootstrap);
 
-// Expose missing globals
+// Globals
 window.closeProfile = () => document.getElementById('profileModal')?.classList.add('hidden');
-window.logout = () => { /* import from auth.js if needed */ };
-window.signUpWithEmail = () => showToast("Sign up coming soon", "info");
-window.sendOTP = window.verifyOTP = () => showToast("Phone verification coming soon", "info");
+window.logout = () => { console.log("Logout called"); };
