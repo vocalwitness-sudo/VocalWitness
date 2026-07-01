@@ -1,5 +1,5 @@
-// js/main.js - OPTIMIZED + FIXED
-import { initAuth, getCurrentUser, googleLogin as authGoogleLogin } from "./auth.js";
+// js/main.js - CLEAN + FIXED
+import { initAuth, getCurrentUser } from "./auth.js";
 import { initFeed } from './feed.js';
 import { db, storage } from './firebase-config.js';
 import { showToast } from './utils.js';
@@ -10,11 +10,19 @@ import { collection, addDoc } from "https://www.gstatic.com/firebasejs/11.0.0/fi
 
 let engineInstance = null;
 let currentUser = null;
-let mutationObserver = null;
 
 // Safe selector
 function safeGetElement(id) {
     return document.getElementById(id);
+}
+
+// ====================== ENGINE ======================
+function initEngine() {
+    if (!engineInstance) {
+        engineInstance = new CitizenTalkEngine(db, storage);
+        window.engineInstance = engineInstance;
+        import('./media.js').then(m => m.setEngine?.(engineInstance));
+    }
 }
 
 // ====================== FEED ======================
@@ -70,17 +78,6 @@ window.publishTestimony = async () => {
     }
 };
 
-// ====================== AUTH UI ======================
-function updateAuthUI(user) {
-    const container = safeGetElement('auth-button-container');
-    if (!container) return;
-    if (!user) {
-        container.innerHTML = `<button onclick="window.googleLogin()" class="px-5 py-2.5 bg-white text-black rounded-2xl font-medium">Sign in with Google</button>`;
-    } else {
-        container.innerHTML = `<button onclick="window.showProfileSection()" class="w-9 h-9 bg-emerald-600 rounded-2xl text-lg">👤</button>`;
-    }
-}
-
 // ====================== UI LISTENERS ======================
 function attachUIListeners() {
     console.log("👂 Attaching UI Listeners");
@@ -90,33 +87,20 @@ function attachUIListeners() {
     safeGetElement('btn-close-guardian')?.addEventListener('click', () => safeGetElement('guardianModal')?.classList.add('hidden'));
 
     const photoBtn = safeGetElement('btn-photo');
-    if (photoBtn) photoBtn.addEventListener('click', () => {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*';
-        input.onchange = (e) => handleImageSelect(e, safeGetElement('preview-area'));
-        input.click();
-    });
+    if (photoBtn) {
+        photoBtn.addEventListener('click', () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = (e) => handleImageSelect(e, safeGetElement('preview-area'));
+            input.click();
+        });
+    }
 
     const voiceBtn = safeGetElement('btn-voice');
     if (voiceBtn) voiceBtn.addEventListener('click', (e) => toggleVoiceRecording(e.currentTarget));
 
     safeGetElement('postButton')?.addEventListener('click', window.publishTestimony);
-}
-
-// ====================== MUTATION OBSERVER (Optimized) ======================
-function startMutationObserver() {
-    if (mutationObserver) return;
-
-    mutationObserver = new MutationObserver(() => {
-        // Debounced re-attach
-        if (window.reattachTimeout) clearTimeout(window.reattachTimeout);
-        window.reattachTimeout = setTimeout(() => {
-            attachUIListeners();
-        }, 300);
-    });
-
-    mutationObserver.observe(document.body, { childList: true, subtree: true });
 }
 
 // ====================== BOOTSTRAP ======================
@@ -125,12 +109,10 @@ async function bootstrap() {
     try {
         await initAuth();
         currentUser = getCurrentUser();
-        updateAuthUI(currentUser);
 
         initLanguage();
         initEngine();
         attachUIListeners();
-        startMutationObserver();
 
         setTimeout(() => window.loadFeed('citizen-talk'), 800);
         console.log("✅ VocalWitness Loaded Successfully");
@@ -141,8 +123,7 @@ async function bootstrap() {
 
 document.addEventListener('DOMContentLoaded', bootstrap);
 
-// Global Helpers
+// ====================== GLOBAL HELPERS ======================
 window.showProfileSection = () => safeGetElement('profileModal')?.classList.remove('hidden');
 window.closeProfile = () => safeGetElement('profileModal')?.classList.add('hidden');
-window.googleLogin = () => authGoogleLogin();
 window.loadFeed = window.loadFeed;
