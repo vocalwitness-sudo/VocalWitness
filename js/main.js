@@ -1,4 +1,3 @@
-// js/main.js - FIXED & CLEAN
 import { initAuth } from "./auth.js";
 import { initFeed } from './feed.js';
 import { db, storage, auth } from './firebase-config.js';
@@ -11,28 +10,25 @@ import {
     resetMediaState,
     setEngine
 } from './media.js';
-import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
-import { collection, addDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { VocalWitnessEngine } from './vocalWitnessEngine.js';   // Use consistent name
 
 let engineInstance = null;
 let currentUser = null;
 
-// Sync current user
 export function updateCurrentUser(user) {
     currentUser = user;
     window.currentUser = user;
 }
 
-// ====================== ENGINE ======================
 function initEngine() {
     if (!engineInstance) {
-        engineInstance = new CitizenTalkEngine(db, storage);
+        engineInstance = new VocalWitnessEngine(db, storage);
         window.engineInstance = engineInstance;
-        setEngine?.(engineInstance);
+        setEngine(engineInstance);
+        console.log("✅ Engine initialized with storage");
     }
 }
 
-// ====================== PUBLISH ======================
 window.publishTestimony = async () => {
     const user = currentUser || auth.currentUser;
     if (!user) {
@@ -44,7 +40,7 @@ window.publishTestimony = async () => {
     const content = textarea?.value.trim() || "";
 
     if (!content && !window.selectedImageFile && !engineInstance?.currentAudioBlob) {
-        showToast("Please add text, photo, or voice", "error");
+        showToast("Please add text, photo, or voice testimony", "error");
         return;
     }
 
@@ -56,10 +52,10 @@ window.publishTestimony = async () => {
 
     try {
         const mediaData = await uploadForensicMedia(user.uid);
-
+        
         await addDoc(collection(db, "testimonies"), {
-            author: user.displayName || "Anonymous Witness",
             authorId: user.uid,
+            author: user.displayName || "Anonymous Witness",
             content: content,
             imageUrl: mediaData.imageUrl || null,
             audioUrl: mediaData.audioUrl || null,
@@ -70,14 +66,12 @@ window.publishTestimony = async () => {
         });
 
         showToast("✅ Testimony published successfully!", "success");
-
         if (textarea) textarea.value = '';
         resetMediaState();
         window.loadFeed('citizen-talk');
-
     } catch (err) {
         console.error("Publish error:", err);
-        showToast("Failed to publish. Please try again.", "error");
+        showToast("Failed to publish. Check your connection.", "error");
     } finally {
         if (postBtn) {
             postBtn.disabled = false;
@@ -86,7 +80,6 @@ window.publishTestimony = async () => {
     }
 };
 
-// ====================== FEED ======================
 window.loadFeed = (feedType) => {
     console.log("🔄 Loading feed:", feedType);
     document.querySelectorAll('#main-nav button[data-feed]').forEach(btn => btn.classList.remove('active'));
@@ -95,7 +88,6 @@ window.loadFeed = (feedType) => {
     initFeed(db, feedType);
 };
 
-// ====================== UI LISTENERS ======================
 function attachUIListeners() {
     console.log("👂 Attaching UI Listeners");
 
@@ -107,7 +99,7 @@ function attachUIListeners() {
         document.getElementById('guardianModal')?.classList.add('hidden');
     });
 
-    // Photo
+    // Photo button
     const photoBtn = document.getElementById('btn-photo');
     if (photoBtn) {
         photoBtn.addEventListener('click', () => {
@@ -119,7 +111,7 @@ function attachUIListeners() {
         });
     }
 
-    // Voice
+    // Voice button
     const voiceBtn = document.getElementById('btn-voice');
     if (voiceBtn) voiceBtn.addEventListener('click', (e) => toggleVoiceRecording(e.currentTarget));
 
@@ -127,7 +119,6 @@ function attachUIListeners() {
     document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
 }
 
-// ====================== BOOTSTRAP ======================
 async function bootstrap() {
     console.log("🚀 Initializing VocalWitness...");
     try {
@@ -135,10 +126,14 @@ async function bootstrap() {
         initLanguage();
         initEngine();
         attachUIListeners();
-        setTimeout(() => window.loadFeed('citizen-talk'), 800);
+        
+        // Single initial feed load
+        setTimeout(() => window.loadFeed('citizen-talk'), 600);
+        
         console.log("✅ VocalWitness Loaded Successfully");
     } catch (e) {
         console.error("Bootstrap error:", e);
+        showToast("App failed to start properly", "error");
     }
 }
 
