@@ -144,3 +144,26 @@ window.showGuardian = () => {
     showToast("🛡️ Guardian Features (Advanced Security)", "info");
     // You can expand this later
 };
+// === DEBUG ONCLICK ===
+console.log("✅ Global functions exposed:");
+console.log("loadFeed:", typeof window.loadFeed);
+console.log("showProfile:", typeof window.showProfile);
+console.log("showGuardian:", typeof window.showGuardian);
+console.log("showTrueWitness:", typeof window.showTrueWitness);
+
+// Force expose again
+window.showProfile = () => {
+    console.log("showProfile called");
+    const modal = document.getElementById('profileModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        showToast("👤 Profile opened", "success");
+    } else {
+        showToast("Profile modal not found", "error");
+    }
+};
+
+window.showGuardian = () => {
+    console.log("showGuardian called");
+    showToast("🛡️ Guardian Mode", "info");
+};
