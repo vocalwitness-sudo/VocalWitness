@@ -127,3 +127,17 @@ window.showProfile = () => {
     if (modal) modal.classList.remove('hidden');
     else showToast("Profile modal not found", "error");
 };
+
+// Profile & Guardian
+window.showProfile = () => {
+    const modal = document.getElementById('profileModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+    } else {
+        showToast("Profile modal not found", "error");
+    }
+};
+
+window.showGuardian = () => {
+    showToast("🛡️ Guardian Mode (Advanced Verification)", "info");
+};
