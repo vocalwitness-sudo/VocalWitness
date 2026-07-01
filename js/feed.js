@@ -1,4 +1,3 @@
-// js/feed.js - Updated for better feed switching
 import {
     collection, query, orderBy, onSnapshot, where, limit
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
@@ -8,7 +7,6 @@ import { db } from './firebase-config.js';
 import { showToast } from './utils.js';
 
 let activeFeedListener = null;
-let lastDoc = null;
 let currentFeed = 'citizen-talk';
 
 export function initFeed(dbInstance, feedType = 'citizen-talk') {
@@ -16,7 +14,11 @@ export function initFeed(dbInstance, feedType = 'citizen-talk') {
     const feedContainer = document.getElementById('feedContainer');
     if (!feedContainer) return;
 
-    if (activeFeedListener) activeFeedListener();
+    // Clean up previous listener
+    if (activeFeedListener) {
+        activeFeedListener();
+        activeFeedListener = null;
+    }
 
     feedContainer.innerHTML = '<div class="text-center py-8 text-zinc-400">Loading testimonies...</div>';
 
@@ -34,20 +36,26 @@ export function initFeed(dbInstance, feedType = 'citizen-talk') {
         snapshot.forEach((docSnap) => {
             hasRealPosts = true;
             renderPost(docSnap.id, docSnap.data());
-            lastDoc = docSnap;
         });
 
         if (!hasRealPosts) {
             feedContainer.innerHTML = `
                 <div class="text-center py-12 text-zinc-400">
-                    <p class="text-3xl mb-3">🌍</p>
-                    <p class="text-lg">No testimonies yet in this feed.</p>
-                    <p class="text-sm mt-2">Be the first to share your voice!</p>
+                    <p class="text-4xl mb-4">🌍</p>
+                    <p class="text-xl">No testimonies yet in this feed.</p>
+                    <p class="text-sm mt-3">Be the first to share your voice!</p>
                 </div>`;
         }
     }, (error) => {
-        console.error("Feed error:", error);
-        feedContainer.innerHTML = `<div class="text-red-400 text-center">Error loading feed</div>`;
+        console.error("Feed loading error:", error);
+        feedContainer.innerHTML = `
+            <div class="text-center py-12 text-red-400">
+                <p>Failed to load feed. Please check your connection.</p>
+                <button onclick="window.loadFeed('${currentFeed}')" 
+                        class="mt-4 px-6 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-2xl">
+                    Retry
+                </button>
+            </div>`;
     });
 }
 
@@ -59,8 +67,8 @@ function renderPost(id, data) {
     postEl.className = 'post-card glass rounded-3xl p-6 mb-6';
 
     let mediaHTML = '';
-    if (data.mediaURL || data.imageUrl) {
-        mediaHTML += `<img src="${data.mediaURL || data.imageUrl}" class="image-preview rounded-2xl mt-3 mb-4 w-full object-cover max-h-96" alt="Evidence">`;
+    if (data.imageUrl) {
+        mediaHTML += `<img src="${data.imageUrl}" class="image-preview rounded-2xl mt-3 mb-4 w-full object-cover max-h-96" alt="Evidence">`;
     }
     if (data.audioUrl) {
         mediaHTML += `<audio controls class="w-full mt-3 rounded-xl"><source src="${data.audioUrl}" type="audio/webm"></audio>`;
@@ -77,10 +85,8 @@ function renderPost(id, data) {
             </div>
             <button onclick="pinPost('${id}')" class="text-2xl hover:scale-110 transition-transform">📌</button>
         </div>
-
         ${data.content ? `<p class="mb-4 text-zinc-100 leading-relaxed">${data.content}</p>` : ''}
         ${mediaHTML}
-
         <div class="flex items-center justify-between mt-6 pt-4 border-t border-zinc-700">
             <div class="flex gap-3">
                 <button onclick="likePost('${id}')" class="flex items-center gap-2 px-5 py-2 hover:bg-zinc-800 rounded-2xl transition-all text-emerald-400">
@@ -100,7 +106,7 @@ function renderPost(id, data) {
     feedContainer.appendChild(postEl);
 }
 
-// ==================== FIRESTORE ACTIONS ====================
+// Firestore Actions (unchanged but safe)
 window.likePost = async function(postId) {
     if (!auth.currentUser) {
         showToast("Please sign in to like posts", "error");
@@ -130,7 +136,7 @@ window.disputePost = async function(postId) {
             disputes: increment(1),
             disputedBy: arrayUnion(auth.currentUser.uid)
         });
-        showToast("⚠️ Dispute submitted", "error");
+        showToast("⚠️ Dispute submitted", "info");
     } catch (error) {
         console.error("Dispute failed:", error);
         showToast("Could not submit dispute", "error");
@@ -145,9 +151,9 @@ window.sharePost = function(postId) {
 };
 
 window.pinPost = function(postId) {
-    showToast("📌 Post pinned", "success");
+    showToast("📌 Post pinned (feature coming soon)", "info");
 };
 
 window.editPost = function(postId) {
-    showToast("✏️ Edit coming soon", "info");
+    showToast("✏️ Edit feature coming soon", "info");
 };
