@@ -152,12 +152,11 @@
             </div>
 
             <div class="space-y-3">
-                <button onclick="alert('Edit profile coming soon')" class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl">✏️ Edit Profile</button>
-                <button onclick="document.getElementById('guardianModal').classList.remove('hidden'); closeProfile()" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold rounded-2xl">🛡️ Upgrade to Guardian Witness</button>
-                <button onclick="logout()" class="w-full py-3 text-red-400 hover:bg-red-900/30 rounded-2xl">Sign Out</button>
-            </div>
-        </div>
-    </div>
+    <button onclick="window.showProfile()" class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl">👤 View Full Profile</button>
+    <button onclick="alert('Edit profile coming soon')" class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl">✏️ Edit Profile</button>
+    <button onclick="document.getElementById('guardianModal').classList.remove('hidden'); window.closeProfile()" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold rounded-2xl">🛡️ Upgrade to Guardian Witness</button>
+    <button onclick="window.logout()" class="w-full py-3 text-red-400 hover:bg-red-900/30 rounded-2xl">Sign Out</button>
+</div>
 
     <!-- Phone Verification Modal -->
     <div id="phoneVerificationModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[100]">
