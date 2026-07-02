@@ -140,3 +140,13 @@ window.showProfile = () => {
 console.log("✅ Global functions ready:");
 console.log("- showProfile:", typeof window.showProfile);
 console.log("- showGuardian:", typeof window.showGuardian);
+
+// Force fix for Profile and Guardian
+document.addEventListener('click', function(e) {
+    if (e.target.textContent.includes('Profile')) {
+        window.showProfile();
+    }
+    if (e.target.textContent.includes('Guardian')) {
+        window.showGuardian();
+    }
+});
