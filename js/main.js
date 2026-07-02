@@ -109,28 +109,24 @@ window.logout = () => { console.log("Logout called"); };
 window.signUpWithEmail = () => showToast("Sign up coming soon", "info");
 window.sendOTP = window.verifyOTP = () => showToast("Phone verification coming soon", "info");
 
-// Temporary fixes for broken buttons
+// Navigation & Section handlers
 window.showTrueWitness = () => {
-    showToast("True Witness mode coming soon (ZK verification)", "info");
+    showToast("🔒 True Witness mode (ZK verification)", "info");
+    window.loadFeed('true-witness');
 };
 
 window.showLiveArena = () => {
-    showToast("Live Arena coming soon", "info");
+    showToast("🏟️ Live Arena coming soon", "info");
+    window.loadFeed('live');
 };
 
 window.showGuardian = () => {
-    showToast("Guardian features coming soon", "info");
+    console.log("showGuardian called");
+    showToast("🛡️ Guardian Features (Advanced Security)", "info");
 };
 
 window.showProfile = () => {
-    const modal = document.getElementById('profileModal');
-    if (modal) modal.classList.remove('hidden');
-    else showToast("Profile modal not found", "error");
-};
-
-
-// Profile & Guardian buttons
-window.showProfile = () => {
+    console.log("showProfile called");
     const modal = document.getElementById('profileModal');
     if (modal) {
         modal.classList.remove('hidden');
@@ -140,30 +136,7 @@ window.showProfile = () => {
     }
 };
 
-window.showGuardian = () => {
-    showToast("🛡️ Guardian Features (Advanced Security)", "info");
-    // You can expand this later
-};
-// === DEBUG ONCLICK ===
-console.log("✅ Global functions exposed:");
-console.log("loadFeed:", typeof window.loadFeed);
-console.log("showProfile:", typeof window.showProfile);
-console.log("showGuardian:", typeof window.showGuardian);
-console.log("showTrueWitness:", typeof window.showTrueWitness);
-
-// Force expose again
-window.showProfile = () => {
-    console.log("showProfile called");
-    const modal = document.getElementById('profileModal');
-    if (modal) {
-        modal.classList.remove('hidden');
-        showToast("👤 Profile opened", "success");
-    } else {
-        showToast("Profile modal not found", "error");
-    }
-};
-
-window.showGuardian = () => {
-    console.log("showGuardian called");
-    showToast("🛡️ Guardian Mode", "info");
-};
+// Debug info
+console.log("✅ Global functions ready:");
+console.log("- showProfile:", typeof window.showProfile);
+console.log("- showGuardian:", typeof window.showGuardian);
