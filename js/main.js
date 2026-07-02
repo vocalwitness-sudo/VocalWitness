@@ -12,7 +12,7 @@ let engineInstance = null;
 // ====================== GLOBAL FUNCTIONS ======================
 window.loadFeed = (feedType) => {
     document.querySelectorAll('#main-nav button').forEach(btn => btn.classList.remove('active'));
-    
+   
     const active = document.querySelector(`button[data-feed="${feedType}"]`);
     if (active) active.classList.add('active');
 
@@ -20,24 +20,12 @@ window.loadFeed = (feedType) => {
 
     if (feedType === 'true-witness') {
         showToast("🔒 True Witness Mode (ZK Verified)", "info");
-        // TODO: Load witness-specific feed later
-        initFeed(db, 'citizen-talk'); // fallback for now
+        initFeed(db, 'citizen-talk'); // fallback
     } else if (feedType === 'live') {
         showToast("🏟️ Live Arena (coming soon)", "info");
         initFeed(db, 'citizen-talk'); // fallback
     } else {
         initFeed(db, feedType);
-    }
-};
-
-window.showGuardian = () => {
-    console.log("showGuardian called");
-    const guardianModal = document.getElementById('guardianModal');
-    if (guardianModal) {
-        guardianModal.classList.remove('hidden');
-        showToast("🛡️ Guardian Modal Opened", "success");
-    } else {
-        showToast("🛡️ Guardian Features (Advanced Security)", "info");
     }
 };
 
@@ -91,7 +79,6 @@ window.publishTestimony = async () => {
 async function bootstrap() {
     await initAuth();
     initLanguage();
-
     engineInstance = new CitizenTalkEngine(db, storage);
     window.engineInstance = engineInstance;
     mediaModule.setEngine(engineInstance);
@@ -120,7 +107,6 @@ window.logout = () => { console.log("Logout called"); };
 window.signUpWithEmail = () => showToast("Sign up coming soon", "info");
 window.sendOTP = window.verifyOTP = () => showToast("Phone verification coming soon", "info");
 
-// Navigation & Section handlers
 window.showTrueWitness = () => {
     showToast("🔒 True Witness mode (ZK verification)", "info");
     window.loadFeed('true-witness');
@@ -133,7 +119,13 @@ window.showLiveArena = () => {
 
 window.showGuardian = () => {
     console.log("showGuardian called");
-    showToast("🛡️ Guardian Features (Advanced Security)", "info");
+    const guardianModal = document.getElementById('guardianModal');
+    if (guardianModal) {
+        guardianModal.classList.remove('hidden');
+        showToast("🛡️ Guardian Modal Opened", "success");
+    } else {
+        showToast("🛡️ Guardian Features (Advanced Security)", "info");
+    }
 };
 
 window.showProfile = () => {
@@ -151,13 +143,3 @@ window.showProfile = () => {
 console.log("✅ Global functions ready:");
 console.log("- showProfile:", typeof window.showProfile);
 console.log("- showGuardian:", typeof window.showGuardian);
-
-// Force fix for Profile and Guardian
-document.addEventListener('click', function(e) {
-    if (e.target.textContent.includes('Profile')) {
-        window.showProfile();
-    }
-    if (e.target.textContent.includes('Guardian')) {
-        window.showGuardian();
-    }
-});
