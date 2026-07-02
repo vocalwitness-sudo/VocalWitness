@@ -30,6 +30,17 @@ window.loadFeed = (feedType) => {
     }
 };
 
+window.showGuardian = () => {
+    console.log("showGuardian called");
+    const guardianModal = document.getElementById('guardianModal');
+    if (guardianModal) {
+        guardianModal.classList.remove('hidden');
+        showToast("🛡️ Guardian Modal Opened", "success");
+    } else {
+        showToast("🛡️ Guardian Features (Advanced Security)", "info");
+    }
+};
+
 window.publishTestimony = async () => {
     const textarea = document.getElementById('mainInput');
     const content = textarea?.value.trim() || "";
