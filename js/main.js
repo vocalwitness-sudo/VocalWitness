@@ -168,3 +168,31 @@ window.showSecurityPanel = () => {
 
 // Debug
 console.log("✅ Global functions ready");
+
+// Phone Country Codes
+const countryCodes = [
+    { code: "+234", name: "Nigeria", flag: "🇳🇬" },
+    { code: "+1", name: "USA/Canada", flag: "🇺🇸" },
+    { code: "+44", name: "UK", flag: "🇬🇧" },
+    { code: "+33", name: "France", flag: "🇫🇷" },
+    { code: "+34", name: "Spain", flag: "🇪🇸" },
+    { code: "+55", name: "Brazil", flag: "🇧🇷" },
+    { code: "+27", name: "South Africa", flag: "🇿🇦" },
+    { code: "+254", name: "Kenya", flag: "🇰🇪" },
+    { code: "+20", name: "Egypt", flag: "🇪🇬" }
+];
+
+function initPhoneCountrySelector() {
+    const selector = document.getElementById('countryCodeSelector');
+    if (selector) {
+        selector.innerHTML = countryCodes.map(item => 
+            `<option value="${item.code}">${item.flag} ${item.code} (${item.name})</option>`
+        ).join('');
+        selector.value = "+234"; // Default Nigeria
+    }
+}
+
+// Call this in bootstrap()
+document.addEventListener('DOMContentLoaded', () => {
+    initPhoneCountrySelector();
+});
