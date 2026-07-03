@@ -82,3 +82,12 @@ function renderProfile(userData) {
         console.log("💚 Platform Supporter detected");
     }
 }
+window.showSupportersModal = () => {
+    const modal = document.getElementById('supportersModal');
+    if (modal) modal.classList.remove('hidden');
+};
+
+window.closeSupportersModal = () => {
+    const modal = document.getElementById('supportersModal');
+    if (modal) modal.classList.add('hidden');
+};
