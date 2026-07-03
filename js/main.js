@@ -1,4 +1,4 @@
-// js/main.js - FIXED, CLEAN & COMPATIBLE (Firebase v11)
+// js/main.js - FINAL CLEAN VERSION
 import { initAuth } from "./auth.js";
 import { initFeed } from './feed.js';
 import { db, auth, storage } from './firebase-config.js';
@@ -9,11 +9,12 @@ import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
 import { doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 let engineInstance = null;
+let profileUnsubscribe = null;
+let isAnonymous = false;
 
 // ====================== GLOBAL FUNCTIONS ======================
 window.loadFeed = (feedType) => {
     document.querySelectorAll('#main-nav button').forEach(btn => btn.classList.remove('active'));
-   
     const active = document.querySelector(`button[data-feed="${feedType}"]`);
     if (active) active.classList.add('active');
 
@@ -21,10 +22,10 @@ window.loadFeed = (feedType) => {
 
     if (feedType === 'true-witness') {
         showToast("🔒 True Witness Mode (ZK Verified)", "info");
-        initFeed(db, 'citizen-talk'); // fallback
+        initFeed(db, 'citizen-talk');
     } else if (feedType === 'live') {
         showToast("🏟️ Live Arena (coming soon)", "info");
-        initFeed(db, 'citizen-talk'); // fallback
+        initFeed(db, 'citizen-talk');
     } else {
         initFeed(db, feedType);
     }
@@ -84,7 +85,6 @@ async function bootstrap() {
     window.engineInstance = engineInstance;
     mediaModule.setEngine(engineInstance);
 
-    // Button listeners
     document.getElementById('btn-photo')?.addEventListener('click', () => {
         const input = document.createElement('input');
         input.type = 'file';
@@ -96,14 +96,21 @@ async function bootstrap() {
     document.getElementById('btn-voice')?.addEventListener('click', (e) => mediaModule.toggleVoiceRecording(e.currentTarget));
     document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
 
-    // Initial load
     setTimeout(() => window.loadFeed('citizen-talk'), 600);
 }
 
 document.addEventListener('DOMContentLoaded', bootstrap);
 
-// ====================== GLOBAL EXPOSURES ======================
-window.closeProfile = () => document.getElementById('profileModal')?.classList.add('hidden');
+// ====================== PROFILE & GLOBAL FEATURES ======================
+window.closeProfile = () => {
+    const modal = document.getElementById('profileModal');
+    if (modal) modal.classList.add('hidden');
+    if (profileUnsubscribe) {
+        profileUnsubscribe();
+        profileUnsubscribe = null;
+    }
+};
+
 window.logout = () => { console.log("Logout called"); };
 window.signUpWithEmail = () => showToast("Sign up coming soon", "info");
 window.sendOTP = window.verifyOTP = () => showToast("Phone verification coming soon", "info");
@@ -119,97 +126,60 @@ window.showLiveArena = () => {
 };
 
 window.showGuardian = () => {
-    console.log("showGuardian called");
     const guardianModal = document.getElementById('guardianModal');
     if (guardianModal) {
         guardianModal.classList.remove('hidden');
         showToast("🛡️ Guardian Modal Opened", "success");
     } else {
-        showToast("🛡️ Guardian Features (Advanced Security)", "info");
+        showToast("🛡️ Support the Platform", "info");
     }
 };
 
 window.showProfile = () => {
-    console.log("showProfile called");
     const modal = document.getElementById('profileModal');
     if (modal) {
         modal.classList.remove('hidden');
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+            // Start listener (add your startProfileListener here if you have it)
+        }
         showToast("👤 Profile opened", "success");
     } else {
-        showToast("Profile modal not found in HTML", "error");
+        showToast("Profile modal not found", "error");
     }
 };
 
-// Debug info
-console.log("✅ Global functions ready:");
-console.log("- showProfile:", typeof window.showProfile);
-console.log("- showGuardian:", typeof window.showGuardian);
-
-// Profile Features
-let isAnonymous = false;
-
 window.toggleAnonymous = () => {
     isAnonymous = !isAnonymous;
-    document.getElementById('anonStatus').textContent = isAnonymous 
-        ? "🕵️ Anonymous Mode: ON" 
-        : "👤 Anonymous Mode: OFF";
+    const statusEl = document.getElementById('anonStatus');
+    if (statusEl) statusEl.textContent = isAnonymous ? "🕵️ Anonymous Mode: ON" : "👤 Anonymous Mode: OFF";
     showToast(isAnonymous ? "Anonymous posting enabled" : "Anonymous mode disabled", "success");
 };
 
 window.uploadProfilePicture = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
-
     const currentUser = auth.currentUser;
     if (!currentUser) return showToast("Please sign in", "error");
 
     try {
         const { ref, uploadBytes, getDownloadURL } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js");
         const storageRef = ref(storage, `profiles/${currentUser.uid}/avatar.jpg`);
-        
         await uploadBytes(storageRef, file);
         const url = await getDownloadURL(storageRef);
-
         document.getElementById('profileAvatarImg').src = url;
         document.getElementById('profileAvatarImg').classList.remove('hidden');
-
-        showToast("Profile picture updated successfully!", "success");
+        showToast("Profile picture updated!", "success");
     } catch (e) {
         console.error(e);
         showToast("Failed to upload image", "error");
     }
 };
 
-let isAnonymous = false;
-
-window.toggleAnonymous = () => {
-    isAnonymous = !isAnonymous;
-    document.getElementById('anonStatus').textContent = isAnonymous ? "🕵️ Anonymous Mode: ON" : "👤 Anonymous Mode: OFF";
-    showToast(isAnonymous ? "Anonymous posting enabled" : "Anonymous mode disabled", "success");
-};
-
-window.saveBio = async () => {
-    const bio = document.getElementById('profileBio').value.trim();
-    const user = auth.currentUser;
-    if (!user || !bio) return;
-
-    try {
-        await setDoc(doc(db, "users", user.uid), { bio }, { merge: true });
-        showToast("Bio saved successfully", "success");
-    } catch (e) {
-        showToast("Failed to save bio", "error");
-    }
-};
-
-window.showSecurityPanel = () => {
-    showToast("🔐 Security Panel (Password change, Recovery, ZK) - Coming soon", "info");
-};
-
 window.saveBio = async () => {
     const bio = document.getElementById('profileBio').value.trim();
     const user = auth.currentUser;
     if (!user || !bio) return showToast("Nothing to save", "info");
-
     try {
         await setDoc(doc(db, "users", user.uid), { bio: bio }, { merge: true });
         showToast("Bio saved successfully", "success");
@@ -220,5 +190,8 @@ window.saveBio = async () => {
 };
 
 window.showSecurityPanel = () => {
-    showToast("🔐 Security & Recovery Panel\n\n• Change Password\n• Enable 2FA\n• ZK Recovery Key\n\nComing in next update", "info");
+    showToast("🔐 Security Panel - Coming soon", "info");
 };
+
+// Debug
+console.log("✅ Global functions ready");
