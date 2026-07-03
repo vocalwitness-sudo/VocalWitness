@@ -188,5 +188,12 @@ function showToast(message, type = "info") {
     alert(message);
 }
 </script>
+    <script>
+    // Debug Language Switcher
+    document.getElementById('languageSelector').addEventListener('change', function() {
+        console.log("Language changed to:", this.value);
+        alert("Trying to switch to: " + this.value + "\nCheck console for details");
+    });
+</script>
 </body>
 </html>
