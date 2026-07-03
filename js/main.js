@@ -178,3 +178,30 @@ window.uploadProfilePicture = async (event) => {
         showToast("Failed to upload image", "error");
     }
 };
+
+let isAnonymous = false;
+
+window.toggleAnonymous = () => {
+    isAnonymous = !isAnonymous;
+    document.getElementById('anonStatus').textContent = isAnonymous ? "🕵️ Anonymous Mode: ON" : "👤 Anonymous Mode: OFF";
+    showToast(isAnonymous ? "Anonymous posting enabled" : "Anonymous mode disabled", "success");
+};
+
+window.saveBio = async () => {
+    const bio = document.getElementById('profileBio').value.trim();
+    const user = auth.currentUser;
+    if (!user || !bio) return;
+
+    try {
+        await setDoc(doc(db, "users", user.uid), { bio }, { merge: true });
+        showToast("Bio saved successfully", "success");
+    } catch (e) {
+        showToast("Failed to save bio", "error");
+    }
+};
+
+window.showSecurityPanel = () => {
+    showToast("🔐 Security Panel (Password change, Recovery, ZK) - Coming soon", "info");
+};
+
+// Keep your existing uploadProfilePicture and updateStatusBar
