@@ -130,5 +130,77 @@
         };
     </script>
     <script type="module" src="js/main.js"></script>
+
+    <script src="https://checkout.flutterwave.com/v3.js"></script>
+
+<script>
+// Flutterwave Platform Support
+window.initiatePlatformSupport = async (user) => {
+    if (!user) {
+        showToast("Please sign in first", "error");
+        return;
+    }
+
+    const txRef = "VW-SUP-" + Date.now();
+
+    try {
+        FlutterwaveCheckout({
+            public_key: "FLWPUBK_TEST-XXXXXXXXXXXXXXXXXXXXXXXX", // ← Replace with your real key
+            tx_ref: txRef,
+            amount: 4990,
+            currency: "NGN",
+            payment_options: "card, banktransfer, ussd, mobilemoney",
+            customer: {
+                email: user.email || "user@vocalwitness.app",
+                name: user.displayName || "VocalWitness User",
+                phonenumber: user.phone || ""
+            },
+            customizations: {
+                title: "VocalWitness Platform Support",
+                description: "Monthly Supporter - ₦4,990",
+                logo: "https://vocalwitness-3affa.web.app/logo.png"
+            },
+            callback: async function(response) {
+                console.log("Payment successful:", response);
+                
+                if (response.status === "successful") {
+                    await updateUserAsSupporter(user.uid, txRef);
+                    showToast("✅ Thank you! You are now a Platform Supporter 💚", "success");
+                    
+                    // Close modal
+                    const modal = document.getElementById('supportersModal');
+                    if (modal) modal.classList.add('hidden');
+                }
+            },
+            onClose: function() {
+                showToast("Payment cancelled", "info");
+            }
+        });
+    } catch (err) {
+        console.error(err);
+        showToast("Failed to open payment. Try again.", "error");
+    }
+};
+
+// Update user status in Firestore
+async function updateUserAsSupporter(userId, txRef) {
+    const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
+    const { db } = await import('./firebase-config.js');
+    
+    await setDoc(doc(db, "users", userId), {
+        isPlatformSupporter: true,
+        supporterSince: new Date().toISOString(),
+        lastSupportTx: txRef,
+        supportAmount: 4990
+    }, { merge: true });
+}
+
+// Toast helper
+function showToast(message, type = "info") {
+    console.log(`[${type}] ${message}`);
+    alert(message); // Replace with nice toast UI later
+}
+</script>
 </body>
 </html>
+
