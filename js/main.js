@@ -204,4 +204,20 @@ window.showSecurityPanel = () => {
     showToast("🔐 Security Panel (Password change, Recovery, ZK) - Coming soon", "info");
 };
 
-// Keep your existing uploadProfilePicture and updateStatusBar
+window.saveBio = async () => {
+    const bio = document.getElementById('profileBio').value.trim();
+    const user = auth.currentUser;
+    if (!user || !bio) return showToast("Nothing to save", "info");
+
+    try {
+        await setDoc(doc(db, "users", user.uid), { bio: bio }, { merge: true });
+        showToast("Bio saved successfully", "success");
+    } catch (e) {
+        console.error(e);
+        showToast("Failed to save bio", "error");
+    }
+};
+
+window.showSecurityPanel = () => {
+    showToast("🔐 Security & Recovery Panel\n\n• Change Password\n• Enable 2FA\n• ZK Recovery Key\n\nComing in next update", "info");
+};
