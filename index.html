@@ -11,7 +11,6 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <!-- script src="https://js.paystack.co/v1/inline.js"></script -->
-
     <style>
         body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: white; }
         .glass { background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(16, 185, 129, 0.25); }
@@ -22,7 +21,6 @@
         .image-preview { max-height: 340px; object-fit: cover; border-radius: 20px; width: 100%; }
         .recording-active { animation: pulse 1.5s infinite; background-color: #ef4444 !important; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
-
         /* Spectrum Canvas Styling */
         #spectrum {
             border-radius: 12px;
@@ -37,9 +35,8 @@
     <div class="max-w-2xl mx-auto bg-red-950/30 border border-red-500/20 rounded-3xl p-4 text-xs mb-6 text-center">
         <strong class="text-red-400">Legal:</strong> VocalWitness is an un-manipulated decentralized distribution medium.
     </div>
-
     <div class="max-w-2xl mx-auto">
-    
+   
         <!-- HEADER -->
 <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
     <div class="flex items-center gap-3">
@@ -51,20 +48,18 @@
     </div>
     <div class="flex items-center gap-3 flex-wrap">
         <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white px-5 py-2.5 rounded-2xl text-sm focus:outline-none focus:border-emerald-500"></select>
-        
+       
         <button id="btn-guardian" onclick="window.showGuardian()" class="guardian-btn px-6 py-3 rounded-2xl flex items-center gap-2 text-sm font-semibold whitespace-nowrap">🛡️ Guardian Witness</button>
-        
+       
         <button id="btn-profile" onclick="window.showProfile()" class="w-11 h-11 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-3xl transition-all border border-zinc-600 flex items-center justify-center">👤</button>
     </div>
 </header>
-
         <!-- NAV -->
         <nav id="main-nav" class="flex gap-2 mb-6 overflow-x-auto pb-2">
             <button onclick="window.loadFeed('citizen-talk')" class="nav-btn active px-6 py-3 rounded-3xl whitespace-nowrap" data-feed="citizen-talk">Citizen Talk</button>
             <button onclick="window.loadFeed('true-witness')" class="nav-btn px-6 py-3 rounded-3xl whitespace-nowrap" data-feed="true-witness">True Witness</button>
             <button onclick="window.loadFeed('live')" class="nav-btn px-6 py-3 rounded-3xl whitespace-nowrap" data-feed="live">Live Arena</button>
         </nav>
-
         <!-- COMPOSER -->
         <div class="glass rounded-3xl p-6 mb-8">
             <textarea id="mainInput" rows="4" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none" placeholder="Share your raw testimony... What did you witness?"></textarea>
@@ -75,7 +70,6 @@
             <div id="preview-area" class="mt-6"></div>
             <button id="postButton" class="mt-8 w-full py-5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-black font-bold text-lg rounded-3xl transition-all active:scale-95 shadow-lg">🚀 Publish Testimony to the Square</button>
         </div>
-
         <!-- FEED -->
         <main>
             <div id="feedContainer" class="w-full space-y-6"></div>
@@ -99,7 +93,7 @@
     <div id="guardianModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[70]">
         <div class="glass rounded-3xl max-w-md w-full mx-4 p-8 text-center">
             <div class="text-6xl mb-6">🛡️</div>
-            <h2 class="text-3xl font-bold text-emerald-400 mb-2">Become a Guardian Witness</h2>
+            <h2 class="text-3xl font-bold text-emerald-400 mb-2">Become a Guardian / Steward Witness</h2>
             <p class="text-zinc-400 mb-8">Protect the Public Square with enhanced responsibility & tools</p>
             <div class="space-y-5 text-left mb-10">
                 <div class="flex gap-3"><span class="text-emerald-500">✓</span><div>Forensic Shield + Advanced Tools</div></div>
@@ -107,116 +101,51 @@
                 <div class="flex gap-3"><span class="text-emerald-500">✓</span><div>Higher Witness Impact</div></div>
                 <div class="flex gap-3"><span class="text-emerald-500">✓</span><div>Support the Platform</div></div>
             </div>
-            <button id="btn-activate-guardian" class="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold rounded-2xl mb-4">
-                Activate Guardian Witness — ₦4,990 / month
+            
+            <!-- Updated Guardian / Steward Button -->
+            <button onclick="initiatePlatformSupport(auth.currentUser)" 
+                    class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold rounded-2xl mb-4">
+                💚 Support the Platform (₦4,990 / month)
             </button>
-            <button onclick="document.getElementById('guardianModal').classList.add('hidden')" class="w-full py-3 text-zinc-400 hover:text-white">Maybe later</button>
+            
+            <button onclick="document.getElementById('guardianModal').classList.add('hidden')" 
+                    class="w-full py-3 text-zinc-400 hover:text-white">Maybe later</button>
         </div>
     </div>
 
-  
-<!-- Profile Modal -->
-<div id="profileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[80]">
-    <div class="glass rounded-3xl max-w-lg w-full mx-4 p-8 max-h-[90vh] overflow-y-auto">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold">My Digital Passport</h2>
-            <button onclick="window.closeProfile()" class="text-3xl text-zinc-400 hover:text-white">×</button>
-        </div>
+    <!-- Profile Modal -->
+    <div id="profileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[80]">
+        <div class="glass rounded-3xl max-w-lg w-full mx-4 p-8 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">My Digital Passport</h2>
+                <button onclick="window.closeProfile()" class="text-3xl text-zinc-400 hover:text-white">×</button>
+            </div>
+            
+            <!-- Status Tracker -->
+            <div class="mb-8">
+                <div class="flex justify-between text-xs mb-2 px-1 text-zinc-400">
+                    <span>Citizen</span>
+                    <span>Trust Circle</span>
+                    <span>True Witness</span>
+                </div>
+                <div class="h-3 bg-zinc-800 rounded-full overflow-hidden flex shadow-inner relative">
+                    <div id="tierCitizen" class="h-3 flex-1 transition-all duration-700" style="width: 33.33%"></div>
+                    <div id="tierTrust" class="h-3 flex-1 transition-all duration-700" style="width: 33.33%"></div>
+                    <div id="tierWitness" class="h-3 flex-1 transition-all duration-700" style="width: 33.33%"></div>
+                </div>
+                <div id="currentTierDisplay" class="text-center mt-4 text-sm font-semibold"></div>
+            </div>
 
-        <!-- Status Tracker profile-->
-        <div class="mb-8">
-            <div class="flex justify-between text-xs mb-2 px-1 text-zinc-400">
-                <span>Citizen</span>
-                <span>Trust Circle</span>
-                <span>True Witness</span>
+            <!-- Avatar -->
+            <div class="text-center mb-8">
+                <div onclick="document.getElementById('profilePicInput').click()" class="w-28 h-28 mx-auto bg-gradient-to-br from-emerald-500 to-teal-500 rounded-3xl flex items-center justify-center text-7xl mb-4 shadow-inner cursor-pointer relative overflow-hidden">
+                    <img id="profileAvatarImg" src="" class="hidden w-full h-full object-cover" alt="Profile">
+                    👤
+                </div>
+                <input type="file" id="profilePicInput" accept="image/*" class="hidden" onchange="uploadProfilePicture(event)">
+                <h3 id="profileName" class="text-xl font-bold">Citizen User</h3>
+                <p id="profileUsername" class="text-emerald-400">@citizen_xxxx</p>
             </div>
-            <div class="h-3 bg-zinc-800 rounded-full overflow-hidden flex shadow-inner relative">
-                <div id="tierCitizen" class="h-3 flex-1 transition-all duration-700" style="width: 33.33%"></div>
-                <div id="tierTrust" class="h-3 flex-1 transition-all duration-700" style="width: 33.33%"></div>
-                <div id="tierWitness" class="h-3 flex-1 transition-all duration-700" style="width: 33.33%"></div>
-            </div>
-            <div id="currentTierDisplay" class="text-center mt-4 text-sm font-semibold"></div>
-        </div>
-
-        <!-- Avatar profile -->
-        <div class="text-center mb-8">
-            <div onclick="document.getElementById('profilePicInput').click()" class="w-28 h-28 mx-auto bg-gradient-to-br from-emerald-500 to-teal-500 rounded-3xl flex items-center justify-center text-7xl mb-4 shadow-inner cursor-pointer relative overflow-hidden">
-                <img id="profileAvatarImg" src="" class="hidden w-full h-full object-cover" alt="Profile">
-                👤
-            </div>
-            <input type="file" id="profilePicInput" accept="image/*" class="hidden" onchange="uploadProfilePicture(event)">
-            <h3 id="profileName" class="text-xl font-bold">Citizen User</h3>
-            <p id="profileUsername" class="text-emerald-400">@citizen_xxxx</p>
-        </div>
-
-        <!-- Stats -->
-        <div class="grid grid-cols-3 gap-4 mb-8">
-            <div class="bg-zinc-900/70 rounded-2xl p-4 text-center">
-                <div class="text-2xl font-bold text-emerald-400" id="post-count">0</div>
-                <div class="text-xs text-zinc-400">Testimonies</div>
-            </div>
-            <div class="bg-zinc-900/70 rounded-2xl p-4 text-center">
-                <div class="text-2xl font-bold text-emerald-400" id="reputation-score">50</div>
-                <div class="text-xs text-zinc-400">Reputation</div>
-            </div>
-            <div class="bg-zinc-900/70 rounded-2xl p-4 text-center">
-                <div class="text-2xl font-bold text-emerald-400" id="trust-score">60</div>
-                <div class="text-xs text-zinc-400">Trust Score</div>
-            </div>
-        </div>
-
-        <!-- Bio -->
-        <div class="mb-8">
-            <label class="block text-xs text-zinc-400 mb-1">Bio</label>
-            <textarea id="profileBio" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 text-sm" rows="3" placeholder="Tell the community about yourself..."></textarea>
-            <button onclick="saveBio()" class="mt-2 text-xs px-4 py-1 bg-emerald-600 rounded-xl">Save Bio</button>
-        </div>
-
-        <!-- Actions -->
-        <div class="space-y-3">
-            <button onclick="window.toggleAnonymous()" class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center justify-center gap-2">
-                <span id="anonStatus">👤 Anonymous Mode: OFF</span>
-            </button>
-            <button onclick="window.showSecurityPanel()" class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl">🔐 Security & Recovery</button>
-            <button onclick="window.showGuardian()" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold rounded-2xl">🛡️ Support the Platform</button>
-            <button onclick="window.logout()" class="w-full py-3 text-red-400 hover:bg-red-900/30 rounded-2xl">Sign Out</button>
-        </div>
-    </div>
-</div>
-
-        <!-- Stats -->
-        <div class="grid grid-cols-3 gap-4 mb-8">
-            <div class="bg-zinc-900/70 rounded-2xl p-4 text-center">
-                <div class="text-2xl font-bold text-emerald-400" id="post-count">0</div>
-                <div class="text-xs text-zinc-400">Testimonies</div>
-            </div>
-            <div class="bg-zinc-900/70 rounded-2xl p-4 text-center">
-                <div class="text-2xl font-bold text-emerald-400" id="reputation-score">50</div>
-                <div class="text-xs text-zinc-400">Reputation</div>
-            </div>
-            <div class="bg-zinc-900/70 rounded-2xl p-4 text-center">
-                <div class="text-2xl font-bold text-emerald-400" id="trust-score">60</div>
-                <div class="text-xs text-zinc-400">Trust Score</div>
-            </div>
-        </div>
-
-        <!-- Bio -->
-        <div class="mb-8">
-            <label class="block text-xs text-zinc-400 mb-1">Bio</label>
-            <textarea id="profileBio" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 text-sm" rows="3" placeholder="Tell the community about yourself..."></textarea>
-        </div>
-
-        <!-- Actions -->
-        <div class="space-y-3">
-            <button onclick="window.toggleAnonymous()" class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center justify-center gap-2">
-                <span id="anonStatus">👤 Anonymous Mode: OFF</span>
-            </button>
-            <button onclick="alert('Edit profile coming soon')" class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl">✏️ Edit Profile</button>
-            <button onclick="window.showGuardian()" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold rounded-2xl">🛡️ Support the Platform / Become Steward</button>
-            <button onclick="window.logout()" class="w-full py-3 text-red-400 hover:bg-red-900/30 rounded-2xl">Sign Out</button>
-        </div>
-    </div>
-</div>
 
             <!-- Stats -->
             <div class="grid grid-cols-3 gap-4 mb-8">
@@ -234,33 +163,42 @@
                 </div>
             </div>
 
-            <div class="space-y-4 mb-8">
-                <div class="bg-zinc-900/70 rounded-2xl p-5">
-                    <div class="flex justify-between items-center">
-                        <span>Role</span>
-                        <span class="px-4 py-1 bg-emerald-600 text-xs rounded-full font-medium">Citizen</span>
-                    </div>
-                </div>
+            <!-- Bio -->
+            <div class="mb-8">
+                <label class="block text-xs text-zinc-400 mb-1">Bio</label>
+                <textarea id="profileBio" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 text-sm" rows="3" placeholder="Tell the community about yourself..."></textarea>
+                <button onclick="saveBio()" class="mt-2 text-xs px-4 py-1 bg-emerald-600 rounded-xl">Save Bio</button>
             </div>
 
+            <!-- Actions -->
             <div class="space-y-3">
-    <button onclick="window.showProfile()" class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl">👤 View Full Profile</button>
-    <button onclick="alert('Edit profile coming soon')" class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl">✏️ Edit Profile</button>
-    <button onclick="document.getElementById('guardianModal').classList.remove('hidden'); window.closeProfile()" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold rounded-2xl">🛡️ Upgrade to Guardian Witness</button>
-    <button onclick="window.logout()" class="w-full py-3 text-red-400 hover:bg-red-900/30 rounded-2xl">Sign Out</button>
-</div>
+                <button onclick="window.toggleAnonymous()" class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center justify-center gap-2">
+                    <span id="anonStatus">👤 Anonymous Mode: OFF</span>
+                </button>
+                <button onclick="window.showSecurityPanel()" class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl">🔐 Security & Recovery</button>
+                
+                <!-- Updated Guardian / Steward Button in Profile -->
+                <button onclick="initiatePlatformSupport(auth.currentUser)" 
+                        class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold rounded-2xl">
+                    💚 Support the Platform (₦4,990 / month)
+                </button>
+                
+                <button onclick="window.logout()" class="w-full py-3 text-red-400 hover:bg-red-900/30 rounded-2xl">Sign Out</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Phone Verification Modal -->
     <div id="phoneVerificationModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[100]">
         <div class="glass rounded-3xl max-w-md w-full mx-4 p-8 text-center">
             <h2 class="text-2xl font-bold mb-4">Verify Your Phone</h2>
             <p class="text-zinc-400 mb-6">Enter your phone number to unlock Citizen Cycle benefits</p>
-            
+           
             <input id="phoneInput" type="tel" placeholder="+234 801 234 5678" class="w-full mb-4 p-4 bg-zinc-900 rounded-2xl text-center">
             <button onclick="window.sendOTP()" class="w-full py-4 bg-emerald-500 text-black font-bold rounded-2xl mb-4">
                 Send OTP
             </button>
-            
+           
             <input id="otpInput" type="text" maxlength="6" placeholder="Enter 6-digit OTP" class="w-full p-4 bg-zinc-900 rounded-2xl text-center mb-4">
             <button onclick="window.verifyOTP()" class="w-full py-4 bg-white text-black font-bold rounded-2xl">
                 Verify OTP
