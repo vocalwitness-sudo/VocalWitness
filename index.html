@@ -135,58 +135,42 @@
             </div>
         </div>
     </div>
-
 <script>
     tailwind.config = { content: ["./**/*.{html,js}"] };
 
-    // Robust Flutterwave Support
+    // Safe Flutterwave Support
     window.initiatePlatformSupport = async () => {
-        // Safe check for auth
-        let user = null;
-        if (typeof auth !== 'undefined' && auth?.currentUser) {
-            user = auth.currentUser;
-        } else if (window.currentUser) {
-            user = window.currentUser;
-        }
-
-        if (!user) {
+        if (typeof auth === 'undefined' || !auth?.currentUser) {
             showToast("Please sign in first", "error");
             return;
         }
 
+        const user = auth.currentUser;
         const txRef = "VW-SUP-" + Date.now();
 
-        try {
-            FlutterwaveCheckout({
-                public_key: "FLWPUBK_TEST-XXXXXXXXXXXXXXXXXXXXXXXX", // ← Replace with your real key
-                tx_ref: txRef,
-                amount: 4990,
-                currency: "NGN",
-                payment_options: "card,banktransfer,ussd,mobilemoney",
-                customer: {
-                    email: user.email || "user@vocalwitness.app",
-                    name: user.displayName || "VocalWitness User",
-                    phonenumber: user.phone || ""
-                },
-                customizations: {
-                    title: "VocalWitness Platform Support",
-                    description: "Monthly Supporter - ₦4,990",
-                    logo: "https://vocalwitness-3affa.web.app/logo.png"
-                },
-                callback: async function(response) {
-                    if (response.status === "successful") {
-                        await updateUserAsSupporter(user.uid, txRef);
-                        showToast("✅ Thank you! You are now a Platform Supporter 💚", "success");
-                    }
-                },
-                onClose: function() {
-                    showToast("Payment cancelled", "info");
+        FlutterwaveCheckout({
+            public_key: "FLWPUBK_TEST-XXXXXXXXXXXXXXXXXXXXXXXX", // ← YOUR REAL KEY
+            tx_ref: txRef,
+            amount: 4990,
+            currency: "NGN",
+            payment_options: "card,banktransfer,ussd,mobilemoney",
+            customer: {
+                email: user.email || "user@vocalwitness.app",
+                name: user.displayName || "VocalWitness User"
+            },
+            customizations: {
+                title: "VocalWitness",
+                description: "Monthly Supporter - ₦4,990",
+                logo: "https://vocalwitness-3affa.web.app/logo.png"
+            },
+            callback: async (response) => {
+                if (response.status === "successful") {
+                    await updateUserAsSupporter(user.uid, txRef);
+                    showToast("✅ Thank you! You are now a Platform Supporter", "success");
                 }
-            });
-        } catch (err) {
-            console.error(err);
-            showToast("Failed to open payment. Try again.", "error");
-        }
+            },
+            onClose: () => showToast("Payment cancelled", "info")
+        });
     };
 
     async function updateUserAsSupporter(userId, txRef) {
@@ -196,21 +180,17 @@
             await setDoc(doc(db, "users", userId), {
                 isPlatformSupporter: true,
                 supporterSince: new Date().toISOString(),
-                lastSupportTx: txRef,
-                supportAmount: 4990
+                lastSupportTx: txRef
             }, { merge: true });
-        } catch (e) {
-            console.error("Failed to update supporter status", e);
-        }
+        } catch (e) { console.error(e); }
     }
 
-    function showToast(message, type = "info") {
-        console.log(`[${type}] ${message}`);
-        alert(message); // Replace with better toast later
+    function showToast(msg, type="info") {
+        alert(`[${type}] ${msg}`);
     }
 
     function showStewardInfo() {
-        alert("🛡️ How to Become a Steward:\n\n• High Trust Score (70+)\n• Consistent quality testimonies\n• Community endorsements\n• Complete ZK Verification\n\nStewards gain limited moderation tools.");
+        alert("🛡️ How to Become a Steward:\n\n• High Trust Score (70+)\n• Good testimonies\n• Community endorsements\n• ZK Verification");
     }
 
     // Modal controls
@@ -219,7 +199,8 @@
     window.closeProfile = () => document.getElementById('profileModal').classList.add('hidden');
     window.logout = () => { showToast("Signed out", "success"); window.location.reload(); };
 </script>
-    
+
+<script type="module" src="js/main.js"></script>
 <script type="module" src="js/profile.js"></script>
 </body>
 </html>
