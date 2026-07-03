@@ -110,6 +110,31 @@
             
             <button onclick="window.logout()" class="w-full py-3 mt-6 text-red-400 hover:bg-red-900/30 rounded-2xl" data-i18n="signOut">Sign Out</button>
         </div>
+        <!-- Phone Verification Modal -->
+<div id="phoneVerificationModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[100]">
+    <div class="glass rounded-3xl max-w-md w-full mx-4 p-8 text-center">
+        <h2 class="text-2xl font-bold mb-4" data-i18n="verifyPhone">Verify Your Phone</h2>
+        <p class="text-zinc-400 mb-6" data-i18n="phoneDesc">Enter your phone number to unlock Citizen Cycle benefits</p>
+        
+        <div class="flex gap-3 mb-4">
+            <!-- Country / Phone Code Selector -->
+            <select id="countryCodeSelector" class="bg-zinc-900 border border-zinc-700 text-white px-4 py-4 rounded-2xl text-sm focus:outline-none focus:border-emerald-500 w-36">
+                <!-- Populated by JS -->
+            </select>
+            
+            <input id="phoneInput" type="tel" placeholder="801 234 5678" class="flex-1 p-4 bg-zinc-900 border border-zinc-700 rounded-2xl text-center focus:outline-none focus:border-emerald-500">
+        </div>
+        
+        <button onclick="window.sendOTP()" class="w-full py-4 bg-emerald-500 text-black font-bold rounded-2xl mb-4" data-i18n="sendOTP">
+            Send OTP
+        </button>
+        
+        <input id="otpInput" type="text" maxlength="6" placeholder="Enter 6-digit OTP" class="w-full p-4 bg-zinc-900 border border-zinc-700 rounded-2xl text-center mb-4">
+        <button onclick="window.verifyOTP()" class="w-full py-4 bg-white text-black font-bold rounded-2xl" data-i18n="verifyOTP">
+            Verify OTP
+        </button>
+    </div>
+</div>
     </div>
 
     <script>
