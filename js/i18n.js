@@ -1,4 +1,4 @@
-// js/i18n.js - Most Current Stable Version
+// js/i18n.js - Full Multi-Language Support
 let currentTranslations = {};
 let currentLang = 'en';
 
@@ -7,7 +7,11 @@ const supportedLanguages = {
     ig: "Igbo (IG)",
     ha: "Hausa (HA)",
     yo: "Yorùbá (YO)",
-    sw: "Kiswahili (SW)"
+    sw: "Kiswahili (SW)",
+    fr: "Français (FR)",
+    es: "Español (ES)",
+    ar: "العربية (AR)",
+    pt: "Português (PT)"
 };
 
 export async function loadTranslations(langCode = 'en') {
@@ -33,13 +37,11 @@ export async function loadTranslations(langCode = 'en') {
 function applyTranslations() {
     console.log("Applying translations for:", currentLang);
 
-    // Update placeholder
     const mainInput = document.getElementById('mainInput');
     if (mainInput && currentTranslations.placeholder) {
         mainInput.placeholder = currentTranslations.placeholder;
     }
 
-    // Update all elements with data-i18n attribute
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
         if (currentTranslations[key]) {
@@ -58,7 +60,6 @@ export function initLanguage() {
             .join('');
         selector.value = savedLang;
 
-        // Important: Attach change listener
         selector.onchange = function() {
             loadTranslations(this.value);
         };
@@ -73,5 +74,4 @@ export function changeLanguage(langCode) {
     }
 }
 
-// Make available globally
 window.changeLanguage = changeLanguage;
