@@ -1,4 +1,4 @@
-// js/i18n.js - Improved Version
+// js/i18n.js - Improved & Stable Version
 let currentTranslations = {};
 let currentLang = 'en';
 
@@ -7,11 +7,9 @@ const supportedLanguages = {
     ha: "Hausa (HA)",
     yo: "Yorùbá (YO)",
     ig: "Igbo (IG)",
-    sw: "Kiswahili (SW)",
-    ar: "العربية (AR)"
+    sw: "Kiswahili (SW)"
+    // ar: "العربية (AR)"  // Uncomment when Arabic is ready
 };
-
-const rtlLanguages = ['ar'];
 
 export async function loadTranslations(langCode = 'en') {
     try {
@@ -20,46 +18,33 @@ export async function loadTranslations(langCode = 'en') {
             currentTranslations = await response.json();
             console.log(`✅ Loaded ${langCode} translations`);
         } else {
-            throw new Error();
+            throw new Error(`Translation file not found for ${langCode}`);
         }
     } catch (e) {
-        console.warn(`⚠️ Using fallback for ${langCode}`);
-        currentTranslations = getFallbackTranslations();
+        console.warn(`⚠️ Using English fallback for ${langCode}`);
+        currentTranslations = {};
     }
 
     currentLang = langCode;
     localStorage.setItem('preferredLang', langCode);
     
     applyTranslations();
-    applyRTLSupport(langCode);
-}
-
-function getFallbackTranslations() {
-    return {
-        placeholder: "Share your raw testimony... What did you witness?",
-        postButton: "🚀 Publish Testimony to the Square",
-        citizenTalk: "Citizen Talk",
-        trueWitness: "True Witness",
-        liveArena: "Live Arena",
-        profile: "Profile"
-    };
 }
 
 function applyTranslations() {
-    // Placeholders
+    // Handle placeholder
     const mainInput = document.getElementById('mainInput');
-    if (mainInput) mainInput.placeholder = currentTranslations.placeholder || mainInput.placeholder;
+    if (mainInput && currentTranslations.placeholder) {
+        mainInput.placeholder = currentTranslations.placeholder;
+    }
 
-    // Buttons & Nav
+    // Handle all data-i18n elements
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
-        if (currentTranslations[key]) el.textContent = currentTranslations[key];
+        if (currentTranslations[key]) {
+            el.textContent = currentTranslations[key];
+        }
     });
-}
-
-function applyRTLSupport(langCode) {
-    const isRTL = rtlLanguages.includes(langCode);
-    document.documentElement.setAttribute('dir', isRTL ? 'rtl' : 'ltr');
 }
 
 export function initLanguage() {
@@ -71,14 +56,20 @@ export function initLanguage() {
             .map(([code, name]) => `<option value="${code}">${name}</option>`)
             .join('');
         selector.value = savedLang;
+
+        // Attach change listener
+        selector.addEventListener('change', (e) => {
+            loadTranslations(e.target.value);
+        });
     }
     
     loadTranslations(savedLang);
 }
 
-export async function changeLanguage(langCode) {
-    if (!supportedLanguages[langCode]) return;
-    await loadTranslations(langCode);
+export function changeLanguage(langCode) {
+    if (supportedLanguages[langCode]) {
+        loadTranslations(langCode);
+    }
 }
-// Global exposure for inline onchange
+
 window.changeLanguage = changeLanguage;
