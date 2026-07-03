@@ -136,19 +136,27 @@
         </div>
     </div>
 
-    <script>
-        tailwind.config = { content: ["./**/*.{html,js}"] };
+<script>
+    tailwind.config = { content: ["./**/*.{html,js}"] };
 
-        // Flutterwave Support
-        window.initiatePlatformSupport = async () => {
-            const user = auth?.currentUser;
-            if (!user) {
-                showToast("Please sign in first", "error");
-                return;
-            }
+    // Robust Flutterwave Support
+    window.initiatePlatformSupport = async () => {
+        // Safe check for auth
+        let user = null;
+        if (typeof auth !== 'undefined' && auth?.currentUser) {
+            user = auth.currentUser;
+        } else if (window.currentUser) {
+            user = window.currentUser;
+        }
 
-            const txRef = "VW-SUP-" + Date.now();
+        if (!user) {
+            showToast("Please sign in first", "error");
+            return;
+        }
 
+        const txRef = "VW-SUP-" + Date.now();
+
+        try {
             FlutterwaveCheckout({
                 public_key: "FLWPUBK_TEST-XXXXXXXXXXXXXXXXXXXXXXXX", // ← Replace with your real key
                 tx_ref: txRef,
@@ -175,9 +183,14 @@
                     showToast("Payment cancelled", "info");
                 }
             });
-        };
+        } catch (err) {
+            console.error(err);
+            showToast("Failed to open payment. Try again.", "error");
+        }
+    };
 
-        async function updateUserAsSupporter(userId, txRef) {
+    async function updateUserAsSupporter(userId, txRef) {
+        try {
             const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
             const { db } = await import('./firebase-config.js');
             await setDoc(doc(db, "users", userId), {
@@ -186,25 +199,27 @@
                 lastSupportTx: txRef,
                 supportAmount: 4990
             }, { merge: true });
+        } catch (e) {
+            console.error("Failed to update supporter status", e);
         }
+    }
 
-        function showToast(message, type = "info") {
-            console.log(`[${type}] ${message}`);
-            alert(message);
-        }
+    function showToast(message, type = "info") {
+        console.log(`[${type}] ${message}`);
+        alert(message); // Replace with better toast later
+    }
 
-        function showStewardInfo() {
-            alert("🛡️ How to Become a Steward:\n\n• High Trust Score (70+)\n• Consistent quality testimonies\n• Community endorsements\n• Complete ZK Verification\n\nStewards gain limited moderation tools.");
-        }
+    function showStewardInfo() {
+        alert("🛡️ How to Become a Steward:\n\n• High Trust Score (70+)\n• Consistent quality testimonies\n• Community endorsements\n• Complete ZK Verification\n\nStewards gain limited moderation tools.");
+    }
 
-        // Modal controls
-        window.showSupportersModal = () => document.getElementById('supportersModal').classList.remove('hidden');
-        window.showProfile = () => document.getElementById('profileModal').classList.remove('hidden');
-        window.closeProfile = () => document.getElementById('profileModal').classList.add('hidden');
-        window.logout = () => { showToast("Signed out", "success"); window.location.reload(); };
-    </script>
-
-    <script type="module" src="js/main.js"></script>
-    <script type="module" src="js/profile.js"></script>
+    // Modal controls
+    window.showSupportersModal = () => document.getElementById('supportersModal').classList.remove('hidden');
+    window.showProfile = () => document.getElementById('profileModal').classList.remove('hidden');
+    window.closeProfile = () => document.getElementById('profileModal').classList.add('hidden');
+    window.logout = () => { showToast("Signed out", "success"); window.location.reload(); };
+</script>
+    
+<script type="module" src="js/profile.js"></script>
 </body>
 </html>
