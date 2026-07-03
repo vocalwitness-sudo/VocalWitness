@@ -143,3 +143,38 @@ window.showProfile = () => {
 console.log("✅ Global functions ready:");
 console.log("- showProfile:", typeof window.showProfile);
 console.log("- showGuardian:", typeof window.showGuardian);
+
+// Profile Features
+let isAnonymous = false;
+
+window.toggleAnonymous = () => {
+    isAnonymous = !isAnonymous;
+    document.getElementById('anonStatus').textContent = isAnonymous 
+        ? "🕵️ Anonymous Mode: ON" 
+        : "👤 Anonymous Mode: OFF";
+    showToast(isAnonymous ? "Anonymous posting enabled" : "Anonymous mode disabled", "success");
+};
+
+window.uploadProfilePicture = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const currentUser = auth.currentUser;
+    if (!currentUser) return showToast("Please sign in", "error");
+
+    try {
+        const { ref, uploadBytes, getDownloadURL } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js");
+        const storageRef = ref(storage, `profiles/${currentUser.uid}/avatar.jpg`);
+        
+        await uploadBytes(storageRef, file);
+        const url = await getDownloadURL(storageRef);
+
+        document.getElementById('profileAvatarImg').src = url;
+        document.getElementById('profileAvatarImg').classList.remove('hidden');
+
+        showToast("Profile picture updated successfully!", "success");
+    } catch (e) {
+        console.error(e);
+        showToast("Failed to upload image", "error");
+    }
+};
