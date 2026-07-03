@@ -1,14 +1,13 @@
-// js/i18n.js - Improved & Stable Version
+// js/i18n.js - Most Current Stable Version
 let currentTranslations = {};
 let currentLang = 'en';
 
 const supportedLanguages = {
     en: "English (EN)",
+    ig: "Igbo (IG)",
     ha: "Hausa (HA)",
     yo: "Yorùbá (YO)",
-    ig: "Igbo (IG)",
     sw: "Kiswahili (SW)"
-    // ar: "العربية (AR)"  // Uncomment when Arabic is ready
 };
 
 export async function loadTranslations(langCode = 'en') {
@@ -16,12 +15,12 @@ export async function loadTranslations(langCode = 'en') {
         const response = await fetch(`translations/${langCode}.json`);
         if (response.ok) {
             currentTranslations = await response.json();
-            console.log(`✅ Loaded ${langCode} translations`);
+            console.log(`✅ Loaded ${langCode} translations successfully`);
         } else {
-            throw new Error(`Translation file not found for ${langCode}`);
+            throw new Error(`File not found: translations/${langCode}.json`);
         }
     } catch (e) {
-        console.warn(`⚠️ Using English fallback for ${langCode}`);
+        console.warn(`⚠️ Could not load ${langCode}, using English fallback`);
         currentTranslations = {};
     }
 
@@ -32,13 +31,15 @@ export async function loadTranslations(langCode = 'en') {
 }
 
 function applyTranslations() {
-    // Handle placeholder
+    console.log("Applying translations for:", currentLang);
+
+    // Update placeholder
     const mainInput = document.getElementById('mainInput');
     if (mainInput && currentTranslations.placeholder) {
         mainInput.placeholder = currentTranslations.placeholder;
     }
 
-    // Handle all data-i18n elements
+    // Update all elements with data-i18n attribute
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
         if (currentTranslations[key]) {
@@ -57,10 +58,10 @@ export function initLanguage() {
             .join('');
         selector.value = savedLang;
 
-        // Attach change listener
-        selector.addEventListener('change', (e) => {
-            loadTranslations(e.target.value);
-        });
+        // Important: Attach change listener
+        selector.onchange = function() {
+            loadTranslations(this.value);
+        };
     }
     
     loadTranslations(savedLang);
@@ -72,4 +73,5 @@ export function changeLanguage(langCode) {
     }
 }
 
+// Make available globally
 window.changeLanguage = changeLanguage;
