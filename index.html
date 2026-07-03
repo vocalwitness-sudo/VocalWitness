@@ -115,18 +115,70 @@
     </div>
 
     <!-- Profile Modal -->
-    <div id="profileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[80]">
-        <div class="glass rounded-3xl max-w-lg w-full mx-4 p-8 max-h-[85vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold">My Profile</h2>
-                <button onclick="closeProfile()" class="text-3xl text-zinc-400 hover:text-white">×</button>
+   <!-- Profile Modal -->
+<div id="profileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[80]">
+    <div class="glass rounded-3xl max-w-lg w-full mx-4 p-8 max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold">My Digital Passport</h2>
+            <button onclick="window.closeProfile()" class="text-3xl text-zinc-400 hover:text-white">×</button>
+        </div>
+
+        <!-- Status Tracker -->
+        <div class="mb-8">
+            <div class="flex justify-between text-xs mb-2 text-zinc-400">
+                <span>Citizen</span>
+                <span>Trust Circle</span>
+                <span>True Witness</span>
             </div>
-            
-            <div class="text-center mb-8">
-                <div class="w-24 h-24 mx-auto bg-gradient-to-br from-emerald-500 to-teal-500 rounded-3xl flex items-center justify-center text-6xl mb-4 shadow-inner">👤</div>
-                <h3 id="profileName" class="text-xl font-bold">Citizen User</h3>
-                <p id="profileUsername" class="text-emerald-400">@citizen_xxxx</p>
+            <div class="h-2 bg-zinc-800 rounded-full overflow-hidden">
+                <div id="statusBar" class="h-2 bg-gradient-to-r from-emerald-500 to-teal-500 transition-all" style="width: 33%"></div>
             </div>
+        </div>
+
+        <!-- Avatar -->
+        <div class="text-center mb-8">
+            <div onclick="document.getElementById('profilePicInput').click()" class="w-28 h-28 mx-auto bg-gradient-to-br from-emerald-500 to-teal-500 rounded-3xl flex items-center justify-center text-7xl mb-4 shadow-inner cursor-pointer relative overflow-hidden">
+                <img id="profileAvatarImg" src="" class="hidden w-full h-full object-cover" alt="Profile">
+                👤
+            </div>
+            <input type="file" id="profilePicInput" accept="image/*" class="hidden" onchange="uploadProfilePicture(event)">
+            <h3 id="profileName" class="text-xl font-bold">Citizen User</h3>
+            <p id="profileUsername" class="text-emerald-400">@citizen_xxxx</p>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-3 gap-4 mb-8">
+            <div class="bg-zinc-900/70 rounded-2xl p-4 text-center">
+                <div class="text-2xl font-bold text-emerald-400" id="post-count">0</div>
+                <div class="text-xs text-zinc-400">Testimonies</div>
+            </div>
+            <div class="bg-zinc-900/70 rounded-2xl p-4 text-center">
+                <div class="text-2xl font-bold text-emerald-400" id="reputation-score">50</div>
+                <div class="text-xs text-zinc-400">Reputation</div>
+            </div>
+            <div class="bg-zinc-900/70 rounded-2xl p-4 text-center">
+                <div class="text-2xl font-bold text-emerald-400" id="trust-score">60</div>
+                <div class="text-xs text-zinc-400">Trust Score</div>
+            </div>
+        </div>
+
+        <!-- Bio -->
+        <div class="mb-8">
+            <label class="block text-xs text-zinc-400 mb-1">Bio</label>
+            <textarea id="profileBio" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 text-sm" rows="3" placeholder="Tell the community about yourself..."></textarea>
+        </div>
+
+        <!-- Actions -->
+        <div class="space-y-3">
+            <button onclick="window.toggleAnonymous()" class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center justify-center gap-2">
+                <span id="anonStatus">👤 Anonymous Mode: OFF</span>
+            </button>
+            <button onclick="alert('Edit profile coming soon')" class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl">✏️ Edit Profile</button>
+            <button onclick="window.showGuardian()" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold rounded-2xl">🛡️ Support the Platform / Become Steward</button>
+            <button onclick="window.logout()" class="w-full py-3 text-red-400 hover:bg-red-900/30 rounded-2xl">Sign Out</button>
+        </div>
+    </div>
+</div>
 
             <!-- Stats -->
             <div class="grid grid-cols-3 gap-4 mb-8">
