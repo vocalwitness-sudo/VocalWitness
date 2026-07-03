@@ -71,3 +71,14 @@ window.logout = () => {
     showToast("Signed out successfully", "success");
     window.location.reload();
 };
+
+// Inside your profile listener / render function
+function renderProfile(userData) {
+    const isSupporter = userData.isPlatformSupporter === true;
+    
+    // Example: Show badge in profile
+    if (isSupporter) {
+        // Add a visual badge somewhere in the profile modal
+        console.log("💚 Platform Supporter detected");
+    }
+}
