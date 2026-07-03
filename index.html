@@ -22,7 +22,8 @@
 <body class="min-h-screen pb-20 p-4 bg-[#0a0f1c]">
     <!-- Legal Notice -->
     <div class="max-w-2xl mx-auto bg-red-950/30 border border-red-500/20 rounded-3xl p-4 text-xs mb-6 text-center">
-        <strong class="text-red-400">Legal:</strong> VocalWitness is an un-manipulated decentralized distribution medium.
+        <strong class="text-red-400" data-i18n="legalLabel">Legal:</strong> 
+        <span id="privacyWarning" data-i18n="privacyWarning">VocalWitness functions strictly as an un-manipulated decentralized distribution medium.</span>
     </div>
 
     <div class="max-w-2xl mx-auto">
@@ -36,116 +37,108 @@
             </div>
             <div class="flex items-center gap-3 flex-wrap">
                 <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white px-5 py-2.5 rounded-2xl text-sm focus:outline-none focus:border-emerald-500"></select>
-                
-                <button onclick="window.showSupportersModal()" 
-                        class="supporter-btn px-6 py-3 rounded-2xl flex items-center gap-2 text-sm font-semibold whitespace-nowrap">
+               
+                <button onclick="window.showSupportersModal()" class="supporter-btn px-6 py-3 rounded-2xl flex items-center gap-2 text-sm font-semibold whitespace-nowrap" data-i18n="platformSupporters">
                     💚 Platform Supporters
                 </button>
-                
+               
                 <button id="btn-profile" onclick="window.showProfile()" class="w-11 h-11 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-3xl transition-all border border-zinc-600 flex items-center justify-center">👤</button>
             </div>
         </header>
 
         <!-- NAV -->
         <nav id="main-nav" class="flex gap-2 mb-6 overflow-x-auto pb-2">
-            <button onclick="window.loadFeed('citizen-talk')" class="nav-btn active px-6 py-3 rounded-3xl whitespace-nowrap" data-feed="citizen-talk">Citizen Talk</button>
-            <button onclick="window.loadFeed('true-witness')" class="nav-btn px-6 py-3 rounded-3xl whitespace-nowrap" data-feed="true-witness">True Witness</button>
-            <button onclick="window.loadFeed('live')" class="nav-btn px-6 py-3 rounded-3xl whitespace-nowrap" data-feed="live">Live Arena</button>
+            <button onclick="window.loadFeed('citizen-talk')" class="nav-btn active px-6 py-3 rounded-3xl whitespace-nowrap" data-feed="citizen-talk" data-i18n="citizenTalk">Citizen Talk</button>
+            <button onclick="window.loadFeed('true-witness')" class="nav-btn px-6 py-3 rounded-3xl whitespace-nowrap" data-feed="true-witness" data-i18n="trueWitness">True Witness</button>
+            <button onclick="window.loadFeed('live')" class="nav-btn px-6 py-3 rounded-3xl whitespace-nowrap" data-feed="live" data-i18n="liveArena">Live Arena</button>
         </nav>
 
         <!-- COMPOSER -->
         <div class="glass rounded-3xl p-6 mb-8">
             <textarea id="mainInput" rows="4" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none" placeholder="Share your raw testimony... What did you witness?"></textarea>
+            
             <div class="flex gap-3 mt-6">
-                <button id="btn-photo" class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl transition-all flex items-center justify-center gap-3 font-medium">📸 Photo + Forensic Shield</button>
-                <button id="btn-voice" class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl transition-all flex items-center justify-center gap-3 font-medium">🎤 Voice Testimony</button>
+                <button id="btn-photo" class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl transition-all flex items-center justify-center gap-3 font-medium" data-i18n="photoForensic">📸 Photo + Forensic Shield</button>
+                <button id="btn-voice" class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl transition-all flex items-center justify-center gap-3 font-medium" data-i18n="voiceTestimony">🎤 Voice Testimony</button>
             </div>
+            
             <div id="preview-area" class="mt-6"></div>
-            <button id="postButton" class="mt-8 w-full py-5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-black font-bold text-lg rounded-3xl transition-all active:scale-95 shadow-lg">🚀 Publish Testimony to the Square</button>
+            
+            <button id="postButton" class="mt-8 w-full py-5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-black font-bold text-lg rounded-3xl transition-all active:scale-95 shadow-lg" data-i18n="postButton">
+                🚀 Publish Testimony to the Square
+            </button>
         </div>
 
         <main><div id="feedContainer" class="w-full space-y-6"></div></main>
     </div>
 
-    <!-- NEW Platform Supporters Modal -->
+    <!-- Platform Supporters Modal -->
     <div id="supportersModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[70]">
         <div class="glass rounded-3xl max-w-md w-full mx-4 p-8 text-center">
             <div class="text-6xl mb-6">💚</div>
-            <h2 class="text-3xl font-bold text-emerald-400 mb-2">Platform Supporters</h2>
-            <p class="text-zinc-400 mb-8">Financial support helps run the platform.<br>Stewardship &amp; moderation power are earned.</p>
-
-            <button onclick="initiatePlatformSupport(auth.currentUser)" 
-                    class="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold rounded-2xl mb-6">
+            <h2 class="text-3xl font-bold text-emerald-400 mb-2" data-i18n="platformSupporters">Platform Supporters</h2>
+            <p class="text-zinc-400 mb-8" data-i18n="supportersDesc">Financial support helps run the platform.<br>Stewardship & moderation power are earned.</p>
+            
+            <button onclick="initiatePlatformSupport(auth.currentUser)" class="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold rounded-2xl mb-6" data-i18n="supportPlatformBtn">
                 💚 Support the Platform (₦4,990 / month)
             </button>
-
+            
             <div class="text-left text-sm space-y-4 mb-8">
-                <div class="flex gap-3"><span class="text-emerald-400">✓</span> Supporter badge</div>
-                <div class="flex gap-3"><span class="text-emerald-400">✓</span> Early feature access</div>
-                <div class="flex gap-3"><span class="text-emerald-400">✓</span> Priority in some queues</div>
-                <div class="flex gap-3"><span class="text-emerald-400">✓</span> Option to stay anonymous</div>
+                <div class="flex gap-3"><span class="text-emerald-400">✓</span><span data-i18n="supporterBadge">Supporter badge</span></div>
+                <div class="flex gap-3"><span class="text-emerald-400">✓</span><span data-i18n="earlyAccess">Early feature access</span></div>
+                <div class="flex gap-3"><span class="text-emerald-400">✓</span><span data-i18n="priorityQueues">Priority in some queues</span></div>
+                <div class="flex gap-3"><span class="text-emerald-400">✓</span><span data-i18n="stayAnonymous">Option to stay anonymous</span></div>
             </div>
-
-            <button onclick="document.getElementById('supportersModal').classList.add('hidden')" 
-                    class="w-full py-3 text-zinc-400 hover:text-white">Maybe later</button>
+            
+            <button onclick="document.getElementById('supportersModal').classList.add('hidden')" class="w-full py-3 text-zinc-400 hover:text-white" data-i18n="maybeLater">Maybe later</button>
         </div>
     </div>
 
-    <!-- Profile Modal (simplified + consistent) -->
+    <!-- Profile Modal -->
     <div id="profileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[80]">
         <div class="glass rounded-3xl max-w-lg w-full mx-4 p-8 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold">My Digital Passport</h2>
+                <h2 class="text-2xl font-bold" data-i18n="myDigitalPassport">My Digital Passport</h2>
                 <button onclick="window.closeProfile()" class="text-3xl text-zinc-400 hover:text-white">×</button>
             </div>
-
-            <button onclick="window.showSupportersModal()" 
-                    class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold rounded-2xl mb-4">
-                💚 Support the Platform
-            </button>
-
-            <button onclick="alert('Steward / True Witness is earned through activity and trust score')" 
-                    class="w-full py-3 bg-zinc-700 hover:bg-zinc-600 rounded-2xl">
+            
+            <button onclick="window.showSupportersModal()" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold rounded-2xl mb-4" data-i18n="supportPlatform">💚 Support the Platform</button>
+            
+            <button onclick="alert('Steward / True Witness is earned through activity and trust score')" class="w-full py-3 bg-zinc-700 hover:bg-zinc-600 rounded-2xl" data-i18n="pathToSteward">
                 🛡️ Path to Steward (Earned)
             </button>
-
-            <!-- Other profile content (stats, bio, etc.) can stay -->
-            <button onclick="window.logout()" class="w-full py-3 mt-6 text-red-400 hover:bg-red-900/30 rounded-2xl">Sign Out</button>
+            
+            <button onclick="window.logout()" class="w-full py-3 mt-6 text-red-400 hover:bg-red-900/30 rounded-2xl" data-i18n="signOut">Sign Out</button>
         </div>
     </div>
 
     <script>
         tailwind.config = { content: ["./**/*.{html,js}"] };
-
         window.showSupportersModal = () => {
             document.getElementById('supportersModal').classList.remove('hidden');
         };
-
         window.showProfile = () => {
             document.getElementById('profileModal').classList.remove('hidden');
         };
-
         window.closeProfile = () => {
             document.getElementById('profileModal').classList.add('hidden');
         };
     </script>
-    <script type="module" src="js/main.js"></script>
 
+    <script type="module" src="js/main.js"></script>
     <script src="https://checkout.flutterwave.com/v3.js"></script>
 
 <script>
-// Flutterwave Platform Support
+// Flutterwave Platform Support (unchanged)
 window.initiatePlatformSupport = async (user) => {
     if (!user) {
         showToast("Please sign in first", "error");
         return;
     }
-
     const txRef = "VW-SUP-" + Date.now();
-
     try {
         FlutterwaveCheckout({
-            public_key: "FLWPUBK_TEST-XXXXXXXXXXXXXXXXXXXXXXXX", // ← Replace with your real key
+            public_key: "FLWPUBK_TEST-XXXXXXXXXXXXXXXXXXXXXXXX",
             tx_ref: txRef,
             amount: 4990,
             currency: "NGN",
@@ -162,12 +155,9 @@ window.initiatePlatformSupport = async (user) => {
             },
             callback: async function(response) {
                 console.log("Payment successful:", response);
-                
                 if (response.status === "successful") {
                     await updateUserAsSupporter(user.uid, txRef);
                     showToast("✅ Thank you! You are now a Platform Supporter 💚", "success");
-                    
-                    // Close modal
                     const modal = document.getElementById('supportersModal');
                     if (modal) modal.classList.add('hidden');
                 }
@@ -182,11 +172,9 @@ window.initiatePlatformSupport = async (user) => {
     }
 };
 
-// Update user status in Firestore
 async function updateUserAsSupporter(userId, txRef) {
     const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
     const { db } = await import('./firebase-config.js');
-    
     await setDoc(doc(db, "users", userId), {
         isPlatformSupporter: true,
         supporterSince: new Date().toISOString(),
@@ -195,10 +183,9 @@ async function updateUserAsSupporter(userId, txRef) {
     }, { merge: true });
 }
 
-// Toast helper
 function showToast(message, type = "info") {
     console.log(`[${type}] ${message}`);
-    alert(message); // Replace with nice toast UI later
+    alert(message);
 }
 </script>
 </body>
