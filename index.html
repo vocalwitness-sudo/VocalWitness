@@ -21,7 +21,7 @@
     </style>
 </head>
 <body class="min-h-screen pb-20 p-4 bg-[#0a0f1c]">
-    <!-- Legal + Header + Nav + Composer (same as before) -->
+    <!-- Legal Notice -->
     <div class="max-w-2xl mx-auto bg-red-950/30 border border-red-500/20 rounded-3xl p-4 text-xs mb-6 text-center">
         <strong class="text-red-400">Legal:</strong> VocalWitness is an un-manipulated decentralized distribution medium.
     </div>
@@ -42,12 +42,14 @@
             </div>
         </header>
 
+        <!-- NAV -->
         <nav id="main-nav" class="flex gap-2 mb-6 overflow-x-auto pb-2">
             <button onclick="window.loadFeed('citizen-talk')" class="nav-btn active px-6 py-3 rounded-3xl whitespace-nowrap" data-feed="citizen-talk">Citizen Talk</button>
             <button onclick="window.loadFeed('true-witness')" class="nav-btn px-6 py-3 rounded-3xl whitespace-nowrap" data-feed="true-witness">True Witness</button>
             <button onclick="window.loadFeed('live')" class="nav-btn px-6 py-3 rounded-3xl whitespace-nowrap" data-feed="live">Live Arena</button>
         </nav>
 
+        <!-- COMPOSER -->
         <div class="glass rounded-3xl p-6 mb-8">
             <textarea id="mainInput" rows="4" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none" placeholder="Share your raw testimony... What did you witness?"></textarea>
             <div class="flex gap-3 mt-6">
@@ -67,7 +69,7 @@
             <div class="text-6xl mb-6">💚</div>
             <h2 class="text-3xl font-bold text-emerald-400 mb-2">Platform Supporters</h2>
             <p class="text-zinc-400 mb-8">Support the platform.<br>Stewardship is earned, not bought.</p>
-            <button onclick="initiatePlatformSupport(auth.currentUser)" class="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold rounded-2xl mb-6">
+            <button onclick="initiatePlatformSupport()" class="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold rounded-2xl mb-6">
                 💚 Support the Platform (₦4,990 / month)
             </button>
             <button onclick="document.getElementById('supportersModal').classList.add('hidden')" class="w-full py-3 text-zinc-400 hover:text-white">Maybe later</button>
@@ -82,10 +84,12 @@
                 <button onclick="window.closeProfile()" class="text-3xl text-zinc-400 hover:text-white">×</button>
             </div>
 
+            <!-- Supporter Badge -->
             <div id="supporterBadgeContainer" class="hidden mb-6 text-center">
                 <span class="supporter-badge inline-flex items-center gap-1">💚 Platform Supporter</span>
             </div>
 
+            <!-- Avatar -->
             <div class="text-center mb-8">
                 <div onclick="document.getElementById('profilePicInput').click()" class="w-28 h-28 mx-auto bg-gradient-to-br from-emerald-500 to-teal-500 rounded-3xl flex items-center justify-center text-7xl mb-4 shadow-inner cursor-pointer overflow-hidden">
                     <img id="profileAvatarImg" src="" class="hidden w-full h-full object-cover" alt="Profile">
@@ -96,6 +100,7 @@
                 <p id="profileUsername" class="text-emerald-400">@citizen_xxxx</p>
             </div>
 
+            <!-- Stats -->
             <div class="grid grid-cols-3 gap-4 mb-8">
                 <div class="bg-zinc-900/70 rounded-2xl p-4 text-center">
                     <div class="text-2xl font-bold text-emerald-400" id="post-count">0</div>
@@ -111,6 +116,7 @@
                 </div>
             </div>
 
+            <!-- Tier -->
             <div class="mb-8">
                 <div class="flex justify-between text-xs mb-2 px-1 text-zinc-400">
                     <span>Citizen</span><span>Trust Circle</span><span>True Witness</span>
@@ -122,12 +128,9 @@
                 </div>
             </div>
 
+            <!-- Actions -->
             <div class="space-y-3">
-                <!-- Direct Payment Button -->
-                <button onclick="initiatePlatformSupport(auth.currentUser)" 
-                        class="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold rounded-2xl">
-                    💚 Support the Platform
-                </button>
+                <button onclick="initiatePlatformSupport()" class="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold rounded-2xl">💚 Support the Platform</button>
                 <button onclick="showStewardInfo()" class="w-full py-4 bg-zinc-700 hover:bg-zinc-600 rounded-2xl">🛡️ Path to Steward (Earned)</button>
                 <button onclick="window.logout()" class="w-full py-3 text-red-400 hover:bg-red-900/30 rounded-2xl">Sign Out</button>
             </div>
@@ -137,12 +140,15 @@
     <script>
         tailwind.config = { content: ["./**/*.{html,js}"] };
 
-        window.initiatePlatformSupport = async (user) => {
+        // Flutterwave Support Function
+        window.initiatePlatformSupport = async () => {
+            const user = auth?.currentUser;
             if (!user) return showToast("Please sign in first", "error");
+
             const txRef = "VW-SUP-" + Date.now();
             
             FlutterwaveCheckout({
-                public_key: "FLWPUBK_TEST-XXXXXXXXXXXX", // ← YOUR KEY
+                public_key: "FLWPUBK_TEST-XXXXXXXXXXXX", // ← REPLACE WITH YOUR KEY
                 tx_ref: txRef,
                 amount: 4990,
                 currency: "NGN",
@@ -170,12 +176,15 @@
             }, { merge: true });
         }
 
-        function showToast(msg, type="info") { alert(`[${type.toUpperCase()}] ${msg}`); }
-
-        function showStewardInfo() {
-            alert("🛡️ How to Become a Steward:\n\n• Maintain high Trust Score (70+)\n• Post consistent, high-quality testimonies\n• Receive community endorsements\n• Complete ZK Verification\n\nStewards gain limited moderation tools. Elder Stewards get full tools.");
+        function showToast(msg, type="info") {
+            alert(`[${type.toUpperCase()}] ${msg}`);
         }
 
+        function showStewardInfo() {
+            alert("🛡️ How to Become a Steward:\n\n• High Trust Score (70+)\n• Consistent quality testimonies\n• Community endorsements\n• Complete ZK Verification\n\nStewards gain limited moderation tools.");
+        }
+
+        // Profile controls (to match your profile.js)
         window.showProfile = () => document.getElementById('profileModal').classList.remove('hidden');
         window.closeProfile = () => document.getElementById('profileModal').classList.add('hidden');
         window.showSupportersModal = () => document.getElementById('supportersModal').classList.remove('hidden');
