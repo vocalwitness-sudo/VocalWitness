@@ -25,7 +25,6 @@
     <div class="max-w-2xl mx-auto bg-red-950/30 border border-red-500/20 rounded-3xl p-4 text-xs mb-6 text-center">
         <strong class="text-red-400">Legal:</strong> VocalWitness is an un-manipulated decentralized distribution medium.
     </div>
-
     <div class="max-w-2xl mx-auto">
         <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             <div class="flex items-center gap-3">
@@ -37,7 +36,7 @@
             </div>
             <div class="flex items-center gap-3 flex-wrap">
                 <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white px-5 py-2.5 rounded-2xl text-sm focus:outline-none focus:border-emerald-500"></select>
-                <button onclick="window.showSupportersModal()" class="supporter-btn px-6 py-3 rounded-2xl flex items-center gap-2 text-sm font-semibold">💚 Platform Supporters</button>
+                <button onclick="window.showSupportersModal()" class="supporter-btn px-6 py-3 rounded-2xl flex items-center gap-2 text-sm font-semibold whitespace-nowrap">💚 Platform Supporters</button>
                 <button id="btn-profile" onclick="window.showProfile()" class="w-11 h-11 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-3xl transition-all border border-zinc-600 flex items-center justify-center">👤</button>
             </div>
         </header>
@@ -59,7 +58,6 @@
             <div id="preview-area" class="mt-6"></div>
             <button id="postButton" class="mt-8 w-full py-5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-black font-bold text-lg rounded-3xl transition-all active:scale-95 shadow-lg">🚀 Publish Testimony to the Square</button>
         </div>
-
         <main><div id="feedContainer" class="w-full space-y-6"></div></main>
     </div>
 
@@ -68,10 +66,16 @@
         <div class="glass rounded-3xl max-w-md w-full mx-4 p-8 text-center">
             <div class="text-6xl mb-6">💚</div>
             <h2 class="text-3xl font-bold text-emerald-400 mb-2">Platform Supporters</h2>
-            <p class="text-zinc-400 mb-8">Support the platform.<br>Stewardship is earned, not bought.</p>
+            <p class="text-zinc-400 mb-8">Financial support helps run the platform.<br>Stewardship & moderation power are earned.</p>
             <button onclick="initiatePlatformSupport()" class="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold rounded-2xl mb-6">
                 💚 Support the Platform (₦4,990 / month)
             </button>
+            <div class="text-left text-sm space-y-4 mb-8">
+                <div class="flex gap-3"><span class="text-emerald-400">✓</span> Supporter badge</div>
+                <div class="flex gap-3"><span class="text-emerald-400">✓</span> Early feature access</div>
+                <div class="flex gap-3"><span class="text-emerald-400">✓</span> Priority in some queues</div>
+                <div class="flex gap-3"><span class="text-emerald-400">✓</span> Option to stay anonymous</div>
+            </div>
             <button onclick="document.getElementById('supportersModal').classList.add('hidden')" class="w-full py-3 text-zinc-400 hover:text-white">Maybe later</button>
         </div>
     </div>
@@ -84,12 +88,10 @@
                 <button onclick="window.closeProfile()" class="text-3xl text-zinc-400 hover:text-white">×</button>
             </div>
 
-            <!-- Supporter Badge -->
             <div id="supporterBadgeContainer" class="hidden mb-6 text-center">
                 <span class="supporter-badge inline-flex items-center gap-1">💚 Platform Supporter</span>
             </div>
 
-            <!-- Avatar -->
             <div class="text-center mb-8">
                 <div onclick="document.getElementById('profilePicInput').click()" class="w-28 h-28 mx-auto bg-gradient-to-br from-emerald-500 to-teal-500 rounded-3xl flex items-center justify-center text-7xl mb-4 shadow-inner cursor-pointer overflow-hidden">
                     <img id="profileAvatarImg" src="" class="hidden w-full h-full object-cover" alt="Profile">
@@ -100,7 +102,6 @@
                 <p id="profileUsername" class="text-emerald-400">@citizen_xxxx</p>
             </div>
 
-            <!-- Stats -->
             <div class="grid grid-cols-3 gap-4 mb-8">
                 <div class="bg-zinc-900/70 rounded-2xl p-4 text-center">
                     <div class="text-2xl font-bold text-emerald-400" id="post-count">0</div>
@@ -116,7 +117,6 @@
                 </div>
             </div>
 
-            <!-- Tier -->
             <div class="mb-8">
                 <div class="flex justify-between text-xs mb-2 px-1 text-zinc-400">
                     <span>Citizen</span><span>Trust Circle</span><span>True Witness</span>
@@ -128,7 +128,6 @@
                 </div>
             </div>
 
-            <!-- Actions -->
             <div class="space-y-3">
                 <button onclick="initiatePlatformSupport()" class="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold rounded-2xl">💚 Support the Platform</button>
                 <button onclick="showStewardInfo()" class="w-full py-4 bg-zinc-700 hover:bg-zinc-600 rounded-2xl">🛡️ Path to Steward (Earned)</button>
@@ -140,54 +139,68 @@
     <script>
         tailwind.config = { content: ["./**/*.{html,js}"] };
 
-        // Flutterwave Support Function
+        // Flutterwave Support
         window.initiatePlatformSupport = async () => {
             const user = auth?.currentUser;
-            if (!user) return showToast("Please sign in first", "error");
+            if (!user) {
+                showToast("Please sign in first", "error");
+                return;
+            }
 
             const txRef = "VW-SUP-" + Date.now();
-            
+
             FlutterwaveCheckout({
-                public_key: "FLWPUBK_TEST-XXXXXXXXXXXX", // ← REPLACE WITH YOUR KEY
+                public_key: "FLWPUBK_TEST-XXXXXXXXXXXXXXXXXXXXXXXX", // ← Replace with your real key
                 tx_ref: txRef,
                 amount: 4990,
                 currency: "NGN",
                 payment_options: "card,banktransfer,ussd,mobilemoney",
-                customer: { email: user.email || "user@vocalwitness.app", name: user.displayName || "User" },
-                customizations: { title: "VocalWitness", description: "Monthly Platform Support", logo: "https://vocalwitness-3affa.web.app/logo.png" },
-                callback: async (response) => {
+                customer: {
+                    email: user.email || "user@vocalwitness.app",
+                    name: user.displayName || "VocalWitness User",
+                    phonenumber: user.phone || ""
+                },
+                customizations: {
+                    title: "VocalWitness Platform Support",
+                    description: "Monthly Supporter - ₦4,990",
+                    logo: "https://vocalwitness-3affa.web.app/logo.png"
+                },
+                callback: async function(response) {
                     if (response.status === "successful") {
-                        await markUserAsSupporter(user.uid, txRef);
-                        showToast("✅ Thank you! You are now a Platform Supporter", "success");
-                        window.showProfile();
+                        await updateUserAsSupporter(user.uid, txRef);
+                        showToast("✅ Thank you! You are now a Platform Supporter 💚", "success");
                     }
                 },
-                onClose: () => showToast("Transaction cancelled", "info")
+                onClose: function() {
+                    showToast("Payment cancelled", "info");
+                }
             });
         };
 
-        async function markUserAsSupporter(userId, txRef) {
+        async function updateUserAsSupporter(userId, txRef) {
             const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
             const { db } = await import('./firebase-config.js');
             await setDoc(doc(db, "users", userId), {
                 isPlatformSupporter: true,
                 supporterSince: new Date().toISOString(),
-                lastSupportTx: txRef
+                lastSupportTx: txRef,
+                supportAmount: 4990
             }, { merge: true });
         }
 
-        function showToast(msg, type="info") {
-            alert(`[${type.toUpperCase()}] ${msg}`);
+        function showToast(message, type = "info") {
+            console.log(`[${type}] ${message}`);
+            alert(message);
         }
 
         function showStewardInfo() {
             alert("🛡️ How to Become a Steward:\n\n• High Trust Score (70+)\n• Consistent quality testimonies\n• Community endorsements\n• Complete ZK Verification\n\nStewards gain limited moderation tools.");
         }
 
-        // Profile controls (to match your profile.js)
+        // Modal controls
+        window.showSupportersModal = () => document.getElementById('supportersModal').classList.remove('hidden');
         window.showProfile = () => document.getElementById('profileModal').classList.remove('hidden');
         window.closeProfile = () => document.getElementById('profileModal').classList.add('hidden');
-        window.showSupportersModal = () => document.getElementById('supportersModal').classList.remove('hidden');
         window.logout = () => { showToast("Signed out", "success"); window.location.reload(); };
     </script>
 
