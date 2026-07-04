@@ -167,26 +167,33 @@ console.log("✅ VocalWitness main.js loaded successfully");
 window.loadFeed = window.loadFeed || loadFeed;  // if you defined it inside bootstrap
 
 
-// ====================== GLOBAL EXPORTS FOR HTML & OTHER MODULES ======================
-// This makes functions available to onclick handlers in index.html
+// ====================== GLOBAL EXPORTS ======================
 window.loadFeed = loadFeed;
 window.publishTestimony = publishTestimony;
+
+// Tier functions
 window.getCurrentUserTier = getCurrentUserTier;
 window.canAccessFeature = canAccessFeature;
 window.escalatePost = escalatePost;
 window.applyTierTheme = applyTierTheme;
 
-// Re-apply tier when auth changes
-document.addEventListener('auth-changed', async (e) => {
-    if (e.detail?.user) {
-        const tier = await getCurrentUserTier();
-        applyTierTheme(tier);
-        window.currentUserTier = tier;
-    }
-});
+// Re-apply tier safely
+async function initTierOnAuth() {
+  if (auth.currentUser) {
+    try {
+      const tier = await getCurrentUserTier();
+      applyTierTheme(tier);
+      window.currentUserTier = tier;
+    } catch (e) {}
+  }
+}
 
-console.log("✅ Global functions exported successfully");
+document.addEventListener('auth-changed', initTierOnAuth);
 
+// Run once after bootstrap
+setTimeout(initTierOnAuth, 800);
+
+console.log("✅ Global functions exported");
 // Optional: re-apply tier when auth changes
 document.addEventListener('auth-changed', async (e) => {
     if (e.detail?.user) {
