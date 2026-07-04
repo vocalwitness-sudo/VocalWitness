@@ -188,3 +188,6 @@ window.pinPost = function(postId) {
 window.editPost = function(postId) {
     showToast("✏️ Edit feature coming soon", "info");
 };
+window.escalatePost = async function(postId) {
+    await escalatePost(postId);   // from tier.js
+};
