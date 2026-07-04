@@ -23,7 +23,6 @@
 </head>
 <body class="min-h-screen pb-20 p-4 bg-[#0a0f1c]">
 
-    <!-- Legal Notice -->
     <div class="max-w-2xl mx-auto bg-red-950/30 border border-red-500/20 rounded-3xl p-4 text-xs mb-6 text-center">
         <strong class="text-red-400" data-i18n="legalLabel">Legal:</strong>
         <span id="privacyWarning" data-i18n="privacyWarning">VocalWitness functions strictly as an un-manipulated decentralized distribution medium.</span>
@@ -40,7 +39,6 @@
             </div>
 
             <div class="flex items-center gap-3 flex-wrap">
-                <!-- Improved Language Selector -->
                 <select id="languageSelector" 
                         class="bg-zinc-900 border border-zinc-700 text-white px-5 py-2.5 rounded-2xl text-sm focus:outline-none focus:border-emerald-500">
                 </select>
@@ -49,18 +47,22 @@
                     💚 Platform Supporters
                 </button>
               
-                <button id="btn-profile" onclick="window.showProfile()" class="w-11 h-11 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-3xl transition-all border border-zinc-600 flex items-center justify-center">👤</button>
+                <div class="flex items-center gap-2">
+                    <button id="btn-profile" onclick="window.showProfile()" 
+                            class="w-11 h-11 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-3xl transition-all border border-zinc-600 flex items-center justify-center relative">
+                        👤
+                        <span id="tier-badge" class="absolute -top-1 -right-1 text-xs px-1.5 py-0.5 rounded-full font-bold text-black hidden"></span>
+                    </button>
+                </div>
             </div>
         </header>
 
-        <!-- NAV -->
         <nav id="main-nav" class="flex gap-2 mb-6 overflow-x-auto pb-2">
             <button onclick="window.loadFeed('citizen-talk')" class="nav-btn active px-6 py-3 rounded-3xl whitespace-nowrap" data-feed="citizen-talk" data-i18n="citizenTalk">Citizen Talk</button>
             <button onclick="window.loadFeed('true-witness')" class="nav-btn px-6 py-3 rounded-3xl whitespace-nowrap" data-feed="true-witness" data-i18n="trueWitness">True Witness</button>
             <button onclick="window.loadFeed('live')" class="nav-btn px-6 py-3 rounded-3xl whitespace-nowrap" data-feed="live" data-i18n="liveArena">Live Arena</button>
         </nav>
 
-        <!-- COMPOSER -->
         <div class="glass rounded-3xl p-6 mb-8">
             <textarea id="mainInput" rows="4" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none" placeholder="Share your raw testimony... What did you witness?"></textarea>
            
@@ -79,7 +81,6 @@
         <main><div id="feedContainer" class="w-full space-y-6"></div></main>
     </div>
 
-    <!-- Platform Supporters Modal -->
     <div id="supportersModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[70]">
         <div class="glass rounded-3xl max-w-md w-full mx-4 p-8 text-center">
             <div class="text-6xl mb-6">💚</div>
@@ -101,7 +102,6 @@
         </div>
     </div>
 
-    <!-- Profile Modal -->
     <div id="profileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[80]">
         <div class="glass rounded-3xl max-w-lg w-full mx-4 p-8 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-6">
@@ -118,7 +118,6 @@
             <button onclick="window.logout()" class="w-full py-3 mt-6 text-red-400 hover:bg-red-900/30 rounded-2xl" data-i18n="signOut">Sign Out</button>
         </div>
 
-        <!-- Phone Verification Modal -->
         <div id="phoneVerificationModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[100]">
             <div class="glass rounded-3xl max-w-md w-full mx-4 p-8 text-center">
                 <h2 class="text-2xl font-bold mb-4" data-i18n="verifyPhone">Verify Your Phone</h2>
@@ -147,7 +146,6 @@
     <script type="module" src="js/main.js"></script>
     <script src="https://checkout.flutterwave.com/v3.js"></script>
 
-    <!-- Language System -->
     <script type="module">
         import { initLanguage } from './js/i18n.js';
         document.addEventListener('DOMContentLoaded', initLanguage);
