@@ -1,4 +1,4 @@
-// js/i18n.js - Full Multi-Language Support with Flags
+// js/i18n.js - Improved Multi-Language Support
 let currentTranslations = {};
 let currentLang = 'en';
 
@@ -15,17 +15,23 @@ const supportedLanguages = [
 ];
 
 export async function loadTranslations(langCode = 'en') {
+    const isSupported = supportedLanguages.some(l => l.code === langCode);
+    if (!isSupported) {
+        console.warn(`Unsupported language: ${langCode}, falling back to en`);
+        langCode = 'en';
+    }
+
     try {
         const response = await fetch(`translations/${langCode}.json`);
         if (response.ok) {
             currentTranslations = await response.json();
-            console.log(`✅ Loaded ${langCode} translations`);
+            console.log(`✅ Loaded ${langCode} translations successfully`);
         } else {
-            console.warn(`⚠️ ${langCode}.json not found, using English`);
+            console.warn(`⚠️ ${langCode}.json not found, using English fallback`);
             currentTranslations = {};
         }
     } catch (e) {
-        console.warn(`⚠️ Failed to load ${langCode}, using fallback`);
+        console.warn(`⚠️ Failed to load ${langCode}:`, e.message);
         currentTranslations = {};
     }
 
@@ -37,13 +43,11 @@ export async function loadTranslations(langCode = 'en') {
 function applyTranslations() {
     console.log("Applying translations for:", currentLang);
 
-    // Main input placeholder
     const mainInput = document.getElementById('mainInput');
     if (mainInput && currentTranslations.placeholder) {
         mainInput.placeholder = currentTranslations.placeholder;
     }
 
-    // All elements with data-i18n
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
         if (currentTranslations[key]) {
@@ -74,8 +78,8 @@ export function initLanguage() {
 
         selector.value = savedLang;
         
-        selector.addEventListener('change', function() {
-            loadTranslations(this.value);
+        selector.addEventListener('change', (e) => {
+            loadTranslations(e.target.value);
         });
     }
 
@@ -83,8 +87,7 @@ export function initLanguage() {
 }
 
 export function changeLanguage(langCode) {
-    const lang = supportedLanguages.find(l => l.code === langCode);
-    if (lang) loadTranslations(langCode);
+    loadTranslations(langCode);
 }
 
 window.changeLanguage = changeLanguage;
