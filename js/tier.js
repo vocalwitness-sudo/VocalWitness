@@ -68,6 +68,12 @@ export async function escalatePost(postId) {
     return;
   }
 
+const proof = await generateRigorousProof({ content: postData.content, ... });
+await updateDoc(postRef, {
+  status: "verified",
+  proof,
+  escalatedAt: new Date().toISOString()
+});
   const tier = await getCurrentUserTier();
   if (!canAccessFeature(tier, 'escalate_post')) {
     showToast("You need to be Verified Citizen or higher to escalate", "error");
