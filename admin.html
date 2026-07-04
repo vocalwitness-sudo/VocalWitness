@@ -1,0 +1,39 @@
+<!-- Admin Link -->
+<button id="admin-link" class="hidden">⚙️ Admin Dashboard</button>
+
+<!-- Admin Dashboard Modal / Section -->
+<div id="admin-dashboard" class="hidden admin-modal">
+  <div class="modal-content">
+    <h2>🔧 System Command Center (Owner/Admin)</h2>
+    <p id="admin-status"></p>
+    
+    <div class="dashboard-tabs">
+      <button onclick="showTab(0)">Users Management</button>
+      <button onclick="showTab(1)">System Stats</button>
+    </div>
+
+    <!-- Users Table -->
+    <div id="tab-0">
+      <table id="admin-user-table">
+        <thead>
+          <tr>
+            <th>Avatar</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="admin-user-list"></tbody>
+      </table>
+    </div>
+
+    <!-- Stats Tab -->
+    <div id="tab-1" class="hidden">
+      <h3>Platform Statistics</h3>
+      <div id="system-stats"></div>
+    </div>
+
+    <button onclick="closeAdminDashboard()">Close</button>
+  </div>
+</div>
