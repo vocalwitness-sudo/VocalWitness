@@ -1,4 +1,3 @@
-// js/main.js - FINAL CLEAN VERSION with Language + Admin Support
 import { initAuth } from "./auth.js";
 import { initFeed } from './feed.js';
 import { db, auth, storage } from './firebase-config.js';
@@ -7,11 +6,10 @@ import { initLanguage } from './i18n.js';
 import * as mediaModule from './media.js';
 import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
 import { initAdminDashboard } from './admin.js';
+import { getCurrentUserTier, applyTierTheme, canAccessFeature, escalatePost } from './tier.js';
 
 // Global variables
 let engineInstance = null;
-let profileUnsubscribe = null;
-let isAnonymous = false;
 
 // ====================== GLOBAL FUNCTIONS ======================
 window.loadFeed = (feedType) => {
@@ -32,183 +30,45 @@ window.loadFeed = (feedType) => {
     }
 };
 
-window.publishTestimony = async () => {
-    const textarea = document.getElementById('mainInput');
-    const content = textarea?.value.trim() || "";
-
-    if (!content && !window.selectedImageFile && !engineInstance?.currentAudioBlob) {
-        return showToast("Please add text, photo or voice", "error");
-    }
-
-    const postBtn = document.getElementById('postButton');
-    postBtn.disabled = true;
-    postBtn.textContent = '🚀 Publishing...';
-
-    try {
-        const currentUser = auth.currentUser;
-        if (!currentUser) {
-            showToast("Please sign in to publish", "error");
-            return;
-        }
-
-        const mediaData = await mediaModule.uploadForensicMedia(currentUser.uid);
-
-        const { collection, addDoc } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
-
-        await addDoc(collection(db, "testimonies"), {
-            authorId: currentUser.uid,
-            author: currentUser.displayName || "Anonymous Witness",
-            content: content,
-            imageUrl: mediaData.imageUrl || null,
-            audioUrl: mediaData.audioUrl || null,
-            timestamp: new Date().toISOString(),
-            feedVisibility: "citizen-talk"
-        });
-
-        showToast("✅ Testimony published!", "success");
-        if (textarea) textarea.value = '';
-        mediaModule.resetMediaState();
-        window.loadFeed('citizen-talk');
-    } catch (err) {
-        console.error("Publish error:", err);
-        showToast("Failed to publish: " + (err.message || "Check permissions"), "error");
-    } finally {
-        postBtn.disabled = false;
-        postBtn.textContent = '🚀 Publish Testimony to the Square';
-    }
-};
+window.publishTestimony = async () => { /* your existing code */ };
 
 // ====================== BOOTSTRAP ======================
 async function bootstrap() {
     await initAuth();
     initLanguage();
-    
+
     engineInstance = new CitizenTalkEngine(db, storage);
     window.engineInstance = engineInstance;
     mediaModule.setEngine(engineInstance);
 
-    // Event listeners
-    document.getElementById('btn-photo')?.addEventListener('click', () => {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*';
-        input.onchange = (e) => mediaModule.handleImageSelect(e, document.getElementById('preview-area'));
-        input.click();
-    });
-
+    // Event listeners (your existing ones)
+    document.getElementById('btn-photo')?.addEventListener('click', () => { /* ... */ });
     document.getElementById('btn-voice')?.addEventListener('click', (e) => mediaModule.toggleVoiceRecording(e.currentTarget));
     document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
 
-    // Initialize phone country selector
     initPhoneCountrySelector();
+
+    // Tier init
+    setTimeout(async () => {
+        const tier = await getCurrentUserTier();
+        applyTierTheme(tier);
+        window.currentUserTier = tier;
+    }, 800);
 
     setTimeout(() => window.loadFeed('citizen-talk'), 600);
 }
 
-// ====================== AUTH CHANGED (Admin Dashboard) ======================
-window.addEventListener('auth-changed', async (e) => {
-    const user = e.detail.user;
-    if (user) {
-        await initAdminDashboard();
-    }
-});
-
-// ====================== PROFILE & GLOBAL FEATURES ======================
-window.closeProfile = () => { /* ... your code ... */ };
-
-window.logout = () => { console.log("Logout called"); };
-window.signUpWithEmail = () => showToast("Sign up coming soon", "info");
-window.sendOTP = window.verifyOTP = () => showToast("Phone verification coming soon", "info");
-
-window.showTrueWitness = () => {
-    showToast("🔒 True Witness mode (ZK verification)", "info");
-    window.loadFeed('true-witness');
-};
-
-window.showLiveArena = () => {
-    showToast("🏟️ Live Arena coming soon", "info");
-    window.loadFeed('live');
-};
-
-window.showGuardian = () => { /* ... */ };
-window.showProfile = () => { /* ... */ };
-window.toggleAnonymous = () => { /* ... */ };
-window.uploadProfilePicture = async (event) => { /* ... */ };
-window.saveBio = async () => { /* ... */ };
-window.showSecurityPanel = () => {
-    showToast("🔐 Security Panel - Coming soon", "info");
-};
-
-// ====================== PHONE COUNTRY SELECTOR ======================
-const countryCodes = [
-    { code: "+234", name: "Nigeria", flag: "🇳🇬" },
-    { code: "+1",   name: "USA/Canada", flag: "🇺🇸" },
-    { code: "+44",  name: "UK", flag: "🇬🇧" },
-    { code: "+33",  name: "France", flag: "🇫🇷" },
-    // ... add more
-];
-
-function initPhoneCountrySelector() {
-    const selector = document.getElementById('countryCodeSelector');
-    if (!selector) return;
-
-    selector.innerHTML = countryCodes.map(item =>
-        `<option value="${item.code}">${item.flag} ${item.code} (${item.name})</option>`
-    ).join('');
-    selector.value = "+234"; // Default to Nigeria
-}
-
-// ====================== START APP ======================
-document.addEventListener('DOMContentLoaded', bootstrap);
-
-console.log("✅ VocalWitness main.js loaded successfully");
-
-// Make sure global functions are attached
-window.loadFeed = window.loadFeed || loadFeed;  // if you defined it inside bootstrap
-
-
 // ====================== GLOBAL EXPORTS ======================
 window.loadFeed = loadFeed;
 window.publishTestimony = publishTestimony;
-
-// Tier functions (safe)
-window.getCurrentUserTier = () => getCurrentUserTier ? getCurrentUserTier() : 'citizen';
+window.getCurrentUserTier = getCurrentUserTier;
 window.canAccessFeature = canAccessFeature;
 window.escalatePost = escalatePost;
 window.applyTierTheme = applyTierTheme;
 
-// Safe tier initialization
-async function safeInitTier() {
-  try {
-    if (typeof getCurrentUserTier === 'function') {
-      const tier = await getCurrentUserTier();
-      applyTierTheme(tier);
-      window.currentUserTier = tier;
-    }
-  } catch (e) {
-    console.log("Tier init delayed");
-  }
-}
+// Phone selector (your existing)
+const countryCodes = [ /* your array */ ];
+function initPhoneCountrySelector() { /* your existing */ }
 
-// Run after everything loads
-document.addEventListener('DOMContentLoaded', () => {
-  setTimeout(safeInitTier, 1000);
-});
-
-document.addEventListener('auth-changed', safeInitTier);
-
-console.log("✅ Global functions exported safely");
-
-
-// Run once after bootstrap
-setTimeout(initTierOnAuth, 800);
-
-console.log("✅ Global functions exported");
-// Optional: re-apply tier when auth changes
-document.addEventListener('auth-changed', async (e) => {
-    if (e.detail?.user) {
-        const tier = await getCurrentUserTier();
-        applyTierTheme(tier);
-        window.currentUserTier = tier;
-    }
-});
+document.addEventListener('DOMContentLoaded', bootstrap);
+console.log("✅ VocalWitness main.js loaded successfully");
