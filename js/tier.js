@@ -90,3 +90,21 @@ export async function escalatePost(postId) {
     showToast("Failed to escalate post", "error");
   }
 }
+export function updateTierBadge() {
+    const badge = document.getElementById('tier-badge');
+    if (!badge) return;
+
+    getCurrentUserTier().then(tier => {
+        badge.classList.remove('hidden');
+        
+        if (tier === TIERS.TRUE_WITNESS) {
+            badge.textContent = '🔬';
+            badge.style.backgroundColor = '#eab308';
+        } else if (tier === TIERS.TRUST_CIRCLE) {
+            badge.textContent = '✓';
+            badge.style.backgroundColor = '#34d399';
+        } else {
+            badge.classList.add('hidden');
+        }
+    });
+}
