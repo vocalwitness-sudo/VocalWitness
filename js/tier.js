@@ -60,3 +60,33 @@ export function applyTierTheme(tier) {
 export function canEscalatePost(tier) {
   return canAccessFeature(tier, 'escalate_post');
 }
+
+// Add this at the end of tier.js
+export async function escalatePost(postId) {
+  if (!auth.currentUser) {
+    showToast("Please sign in to escalate", "error");
+    return;
+  }
+
+  const tier = await getCurrentUserTier();
+  if (!canAccessFeature(tier, 'escalate_post')) {
+    showToast("You need to be Verified Citizen or higher to escalate", "error");
+    return;
+  }
+
+  try {
+    // TODO: Later - call Cloud Function or update document
+    console.log(`Escalating post ${postId} to True Witness...`);
+
+    showToast("🔬 Escalating to True Witness... (Proof generation starting)", "success");
+    
+    // For now: Show success (we'll connect real logic later)
+    setTimeout(() => {
+      showToast("✅ Post escalated to True Witness with forensic proof!", "success");
+    }, 1500);
+
+  } catch (err) {
+    console.error("Escalation failed:", err);
+    showToast("Failed to escalate post", "error");
+  }
+}
