@@ -165,3 +165,15 @@ console.log("✅ VocalWitness main.js loaded successfully");
 
 // Make sure global functions are attached
 window.loadFeed = window.loadFeed || loadFeed;  // if you defined it inside bootstrap
+
+// === GLOBAL EXPORTS FOR HTML BUTTONS ===
+window.loadFeed = loadFeed;   // Make sure nav buttons work
+
+// Re-apply tier after auth
+document.addEventListener('auth-changed', async (e) => {
+    if (e.detail.user) {
+        const tier = await getCurrentUserTier();
+        applyTierTheme(tier);
+        window.currentUserTier = tier;
+    }
+});
