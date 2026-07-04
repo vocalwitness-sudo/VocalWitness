@@ -5,12 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#10b981">
     <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' 'unsafe-eval' https:;">
-    <meta http-equiv="Content-Security-Policy" 
-      content="default-src 'self' https:; 
-               script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://cdn.tailwindcss.com https://checkout.flutterwave.com https://www.googleapis.com; 
-               style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; 
-               img-src 'self' data: https:; 
-               connect-src 'self' https: wss:;">
+    <meta http-equiv="Content-Security-Policy" content="
+  script-src 'self' 'unsafe-inline' 'unsafe-eval' 
+  https://www.gstatic.com 
+  https://cdn.tailwindcss.com 
+  https://checkout.flutterwave.com 
+  https://www.googleapis.com 
+  https://cdnjs.cloudflare.com 
+  https://cdn.ethers.io;
+  ...other directives
+">
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="/logo.png" type="image/png">
     <title>VocalWitness • Truth • Evidence • Public Square</title>
