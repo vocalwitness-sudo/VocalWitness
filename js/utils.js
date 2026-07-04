@@ -153,3 +153,15 @@ export function calculateTrustScore(userData = {}) {
 
 // Make submitPeerVote available globally for inline onclick handlers
 window.submitPeerVote = submitPeerVote;
+
+// Escalate
+export async function escalatePost(postId) {
+  const tier = await getCurrentUserTier();
+  if (!canAccessFeature(tier, 'escalate_post')) {  // add this permission if not present
+    showToast("Higher tier required", "error");
+    return false;
+  }
+  showToast("🛡️ Escalating post to True Witness...", "info");
+  // Later: add proof generation here
+  return true;
+}
