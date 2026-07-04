@@ -1,4 +1,4 @@
-// js/main.js - CLEANED & FIXED VERSION
+// js/main.js - CLEANED with Tier Integration
 import { initAuth } from "./auth.js";
 import { initFeed } from './feed.js';
 import { db, auth, storage } from './firebase-config.js';
@@ -7,12 +7,12 @@ import { initLanguage } from './i18n.js';
 import * as mediaModule from './media.js';
 import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
 import { initAdminDashboard } from './admin.js';
-import { getCurrentUserTier, canAccessFeature } from './tier.js';
+import { getCurrentUserTier, canAccessFeature, applyTierTheme } from './tier.js';
 
 // Global variables
 let engineInstance = null;
 
-// ====================== GLOBAL FUNCTIONS (Single Source of Truth) ======================
+// ====================== GLOBAL FUNCTIONS ======================
 window.loadFeed = async (feedType) => {
     document.querySelectorAll('#main-nav button').forEach(btn => btn.classList.remove('active'));
     const active = document.querySelector(`button[data-feed="${feedType}"]`);
@@ -23,7 +23,7 @@ window.loadFeed = async (feedType) => {
     try {
         const tier = await getCurrentUserTier();
         if (feedType === 'live' && !canAccessFeature(tier, 'live_arena')) {
-            showToast("🔒 Live Arena is for verified users only", "error");
+            showToast("🔒 Live Arena is for True Witness only", "error");
             return;
         }
     } catch (e) {
@@ -32,7 +32,7 @@ window.loadFeed = async (feedType) => {
 
     if (feedType === 'true-witness') {
         showToast("🔒 True Witness Mode", "info");
-        initFeed(db, 'citizen-talk');
+        initFeed(db, 'citizen-talk'); // or special true-witness feed later
     } else if (feedType === 'live') {
         showToast("🏟️ Live Arena (coming soon)", "info");
         initFeed(db, 'citizen-talk');
@@ -98,19 +98,27 @@ async function bootstrap() {
     await initAuth();
     initLanguage();
 
+    // Load tier and apply theme
+    try {
+        const tier = await getCurrentUserTier();
+        applyTierTheme(tier);
+        window.currentUserTier = tier;   // Make available globally if needed
+    } catch (e) {
+        console.warn("Tier initialization skipped");
+    }
+
     engineInstance = new CitizenTalkEngine(db, storage);
     window.engineInstance = engineInstance;
     mediaModule.setEngine(engineInstance);
 
-    // Attach listeners once
     attachUIListeners();
+    initPhoneCountrySelector();
 
     setTimeout(() => window.loadFeed('citizen-talk'), 800);
     console.log("✅ VocalWitness initialized");
 }
 
 function attachUIListeners() {
-    // Photo button
     const btnPhoto = document.getElementById('btn-photo');
     if (btnPhoto) {
         btnPhoto.addEventListener('click', () => {
@@ -122,23 +130,20 @@ function attachUIListeners() {
         });
     }
 
-    // Voice button
     const btnVoice = document.getElementById('btn-voice');
     if (btnVoice) {
         btnVoice.addEventListener('click', (e) => mediaModule.toggleVoiceRecording(e.currentTarget));
     }
 
-    // Publish button
     const postButton = document.getElementById('postButton');
     if (postButton) {
         postButton.addEventListener('click', window.publishTestimony);
     }
 }
 
-// Phone selector stub
 function initPhoneCountrySelector() {
-    console.log("Phone selector initialized (stub)");
-    // Add your country codes here if needed
+    console.log("📱 Phone selector initialized");
+    // Add country codes logic here later
 }
 
 document.addEventListener('DOMContentLoaded', bootstrap);
