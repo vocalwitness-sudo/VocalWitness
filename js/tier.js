@@ -59,3 +59,8 @@ export async function escalatePost(postId) {
   // TODO: Later - generate proof and update post status
   return true;
 }
+window.checkTierAccess = async (feature) => {
+    const tier = await getCurrentUserTier();
+    return canAccessFeature(tier, feature);  // from tier.js
+};
+
