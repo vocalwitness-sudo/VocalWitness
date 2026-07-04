@@ -162,3 +162,6 @@ function initPhoneCountrySelector() {
 document.addEventListener('DOMContentLoaded', bootstrap);
 
 console.log("✅ VocalWitness main.js loaded successfully");
+
+// Make sure global functions are attached
+window.loadFeed = window.loadFeed || loadFeed;  // if you defined it inside bootstrap
