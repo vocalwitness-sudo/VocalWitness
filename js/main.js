@@ -143,7 +143,31 @@ async function bootstrap() {
     setTimeout(() => window.loadFeed('citizen-talk'), 1000);
 }
 // ====================== GLOBAL EXPORTS ======================
-window.loadFeed = loadFeed;
+window.loadFeed = async (feedType) => {
+    const tier = await getCurrentUserTier();
+
+    if (feedType === 'live' && !canAccessFeature(tier, 'live_arena')) {
+        showToast("🔒 Live Arena is for True Witness (ZK Verified) only", "error");
+        return;
+    }
+
+    // Original logic
+    document.querySelectorAll('#main-nav button').forEach(btn => btn.classList.remove('active'));
+    const active = document.querySelector(`button[data-feed="${feedType}"]`);
+    if (active) active.classList.add('active');
+
+    console.log(`Switching to feed: ${feedType}`);
+
+    if (feedType === 'true-witness') {
+        showToast("🔒 True Witness Mode (ZK Verified)", "info");
+        initFeed(db, 'citizen-talk');
+    } else if (feedType === 'live') {
+        showToast("🏟️ Live Arena", "success");
+        initFeed(db, 'citizen-talk'); // or special logic later
+    } else {
+        initFeed(db, feedType);
+    }
+};
 window.publishTestimony = publishTestimony;
 window.getCurrentUserTier = getCurrentUserTier;
 window.canAccessFeature = canAccessFeature;
@@ -212,3 +236,4 @@ window.publishTestimony = async () => {
         }
     }
 };
+
