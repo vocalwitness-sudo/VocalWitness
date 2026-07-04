@@ -171,24 +171,34 @@ window.loadFeed = window.loadFeed || loadFeed;  // if you defined it inside boot
 window.loadFeed = loadFeed;
 window.publishTestimony = publishTestimony;
 
-// Tier functions
-window.getCurrentUserTier = getCurrentUserTier;
+// Tier functions (safe)
+window.getCurrentUserTier = () => getCurrentUserTier ? getCurrentUserTier() : 'citizen';
 window.canAccessFeature = canAccessFeature;
 window.escalatePost = escalatePost;
 window.applyTierTheme = applyTierTheme;
 
-// Re-apply tier safely
-async function initTierOnAuth() {
-  if (auth.currentUser) {
-    try {
+// Safe tier initialization
+async function safeInitTier() {
+  try {
+    if (typeof getCurrentUserTier === 'function') {
       const tier = await getCurrentUserTier();
       applyTierTheme(tier);
       window.currentUserTier = tier;
-    } catch (e) {}
+    }
+  } catch (e) {
+    console.log("Tier init delayed");
   }
 }
 
-document.addEventListener('auth-changed', initTierOnAuth);
+// Run after everything loads
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(safeInitTier, 1000);
+});
+
+document.addEventListener('auth-changed', safeInitTier);
+
+console.log("✅ Global functions exported safely");
+
 
 // Run once after bootstrap
 setTimeout(initTierOnAuth, 800);
