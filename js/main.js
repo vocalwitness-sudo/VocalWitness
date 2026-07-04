@@ -1,4 +1,4 @@
-// js/main.js - CLEANED with Tier Integration
+// js/main.js - FINAL CLEAN VERSION with Tier-Aware Composer
 import { initAuth } from "./auth.js";
 import { initFeed } from './feed.js';
 import { db, auth, storage } from './firebase-config.js';
@@ -32,7 +32,7 @@ window.loadFeed = async (feedType) => {
 
     if (feedType === 'true-witness') {
         showToast("🔒 True Witness Mode", "info");
-        initFeed(db, 'citizen-talk'); // or special true-witness feed later
+        initFeed(db, 'citizen-talk');
     } else if (feedType === 'live') {
         showToast("🏟️ Live Arena (coming soon)", "info");
         initFeed(db, 'citizen-talk');
@@ -91,6 +91,24 @@ window.publishTestimony = async () => {
     }
 };
 
+// ====================== TIER-AWARE COMPOSER ======================
+async function updateComposerForTier() {
+    const tier = await getCurrentUserTier();
+    const btnPhoto = document.getElementById('btn-photo');
+    const btnVoice = document.getElementById('btn-voice');
+    const postButton = document.getElementById('postButton');
+
+    if (tier === 'true_witness') {
+        if (btnPhoto) btnPhoto.innerHTML = '📸 Forensic Shield + Hash';
+        if (btnVoice) btnVoice.innerHTML = '🎤 Voice with Integrity Proof';
+        if (postButton) postButton.innerHTML = '🔒 Publish as True Witness';
+        showToast("🔬 True Witness Mode Active — Forensic tools enabled", "success");
+    } else if (tier === 'trust_circle') {
+        if (btnPhoto) btnPhoto.innerHTML = '📸 Photo + Basic Shield';
+    }
+    // Citizen uses default text from HTML
+}
+
 // ====================== BOOTSTRAP ======================
 async function bootstrap() {
     console.log("🚀 Starting VocalWitness...");
@@ -98,11 +116,12 @@ async function bootstrap() {
     await initAuth();
     initLanguage();
 
-    // Load tier and apply theme
+    // Tier System
     try {
         const tier = await getCurrentUserTier();
         applyTierTheme(tier);
-        window.currentUserTier = tier;   // Make available globally if needed
+        window.currentUserTier = tier;
+        await updateComposerForTier();
     } catch (e) {
         console.warn("Tier initialization skipped");
     }
@@ -143,13 +162,7 @@ function attachUIListeners() {
 
 function initPhoneCountrySelector() {
     console.log("📱 Phone selector initialized");
-    // Add country codes logic here later
+    // Add country codes later
 }
 
 document.addEventListener('DOMContentLoaded', bootstrap);
-
-import { escalatePost } from './tier.js';   // Add this import
-
-// At the very bottom
-
-window.escalatePost = escalatePost;
