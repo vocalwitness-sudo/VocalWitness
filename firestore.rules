@@ -3,19 +3,31 @@ service cloud.firestore {
   match /databases/{database}/documents {
     function isSignedIn() { return request.auth != null; }
     function isOwner(uid) { return isSignedIn() && request.auth.uid == uid; }
+    
+    // Tier helper (reads user doc)
+    function getUserTier(uid) {
+      let userData = get(/databases/$$   (database)/documents/users/   $$(uid)).data;
+      if (userData.zkVerified == true) return "true_witness";
+      if (userData.isPhoneVerified == true) return "trust_circle";
+      return "citizen";
+    }
 
-    // Users
     match /users/{userId} {
-      allow read: if true;
+      allow read: if isSignedIn();
       allow create, update: if isOwner(userId);
     }
 
-    // Testimonies
     match /testimonies/{postId} {
       allow read: if true;
-      allow create: if isSignedIn();
-      allow update: if isOwner(resource.data.authorId) || request.auth.token.isSteward == true;
-      allow delete: if isOwner(resource.data.authorId);
+      allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
+      allow update, delete: if isOwner(resource.data.authorId) ||
+                            getUserTier(request.auth.uid) == "true_witness";  // Witnesses can help moderate
+    }
+
+    // True Witness vault (optional separate collection)
+    match /true-witness/{postId} {
+      allow read: if true;
+      allow create: if isSignedIn() && getUserTier(request.auth.uid) == "true_witness";
     }
   }
 }
