@@ -1,12 +1,15 @@
 // js/tier.js - Simplified 3-Tier System
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { db, auth } from './firebase-config.js';
 import { showToast } from './utils.js';
 
+// Import the proof function (add this line)
+import { generateRigorousProof } from './zk-crypto.js';
+
 export const TIERS = {
-  CITIZEN: 'citizen',           // Basic user
-  TRUST_CIRCLE: 'trust_circle', // Phone verified
-  TRUE_WITNESS: 'true_witness'  // Forensic / ZK verified
+  CITIZEN: 'citizen',
+  TRUST_CIRCLE: 'trust_circle',
+  TRUE_WITNESS: 'true_witness'
 };
 
 export async function getCurrentUserTier() {
@@ -31,17 +34,14 @@ export function canAccessFeature(tier, feature) {
     live_arena: [TIERS.TRUE_WITNESS],
     zk_proof: [TIERS.TRUE_WITNESS],
     forensic_shield: [TIERS.TRUE_WITNESS, TIERS.TRUST_CIRCLE],
-    escalate_post: [TIERS.TRUST_CIRCLE, TIERS.TRUE_WITNESS],   // Key for escalation
+    escalate_post: [TIERS.TRUST_CIRCLE, TIERS.TRUE_WITNESS],
     review_queue: [TIERS.TRUE_WITNESS]
   };
-
   return permissions[feature] ? permissions[feature].includes(tier) : true;
 }
 
 export function applyTierTheme(tier) {
   const body = document.body;
-  
-  // Remove old classes
   body.classList.remove('tier-citizen', 'tier-trust', 'tier-witness');
   
   if (tier === TIERS.TRUE_WITNESS) {
@@ -56,61 +56,76 @@ export function applyTierTheme(tier) {
   }
 }
 
-// Optional: Helper to check if user can escalate a post
 export function canEscalatePost(tier) {
   return canAccessFeature(tier, 'escalate_post');
 }
 
-// Add this at the end of tier.js
+// FIXED & IMPROVED escalatePost
 export async function escalatePost(postId) {
   if (!auth.currentUser) {
     showToast("Please sign in to escalate", "error");
     return;
   }
 
-const proof = await generateRigorousProof({ content: postData.content, ... });
-await updateDoc(postRef, {
-  status: "verified",
-  proof,
-  escalatedAt: new Date().toISOString()
-});
   const tier = await getCurrentUserTier();
-  if (!canAccessFeature(tier, 'escalate_post')) {
+  if (!canEscalatePost(tier)) {
     showToast("You need to be Verified Citizen or higher to escalate", "error");
     return;
   }
 
   try {
-    // TODO: Later - call Cloud Function or update document
-    console.log(`Escalating post ${postId} to True Witness...`);
+    showToast("🔬 Generating Forensic Proof...", "info");
 
-    showToast("🔬 Escalating to True Witness... (Proof generation starting)", "success");
+    // Fetch current post data first
+    const postRef = doc(db, "testimonies", postId);
+    const postSnap = await getDoc(postRef);  // Need to import getDoc if not already
+    if (!postSnap.exists()) {
+      showToast("Post not found", "error");
+      return;
+    }
+    const postData = postSnap.data();
+
+    // Generate proof
+    const proof = await generateRigorousProof({
+      content: postData.content,
+      mediaUrl: postData.imageUrl || postData.audioUrl
+    });
+
+    // Update with proof
+    await updateDoc(postRef, {
+      status: "verified",
+      proof: proof,
+      escalatedAt: new Date().toISOString(),
+      escalatedBy: auth.currentUser.uid
+    });
+
+    showToast("✅ Post escalated to True Witness with forensic proof!", "success");
     
-    // For now: Show success (we'll connect real logic later)
-    setTimeout(() => {
-      showToast("✅ Post escalated to True Witness with forensic proof!", "success");
-    }, 1500);
+    // Optional: Refresh feed
+    if (typeof window.loadFeed === 'function') {
+      setTimeout(() => window.loadFeed('citizen-talk'), 800);
+    }
 
   } catch (err) {
     console.error("Escalation failed:", err);
-    showToast("Failed to escalate post", "error");
+    showToast("Failed to escalate post: " + (err.message || ""), "error");
   }
 }
-export function updateTierBadge() {
-    const badge = document.getElementById('tier-badge');
-    if (!badge) return;
 
-    getCurrentUserTier().then(tier => {
-        badge.classList.remove('hidden');
-        
-        if (tier === TIERS.TRUE_WITNESS) {
-            badge.textContent = '🔬';
-            badge.style.backgroundColor = '#eab308';
-        } else if (tier === TIERS.TRUST_CIRCLE) {
-            badge.textContent = '✓';
-            badge.style.backgroundColor = '#34d399';
-        } else {
-            badge.classList.add('hidden');
-        }
-    });
+export function updateTierBadge() {
+  const badge = document.getElementById('tier-badge');
+  if (!badge) return;
+
+  getCurrentUserTier().then(tier => {
+    badge.classList.remove('hidden');
+    if (tier === TIERS.TRUE_WITNESS) {
+      badge.textContent = '🔬';
+      badge.style.backgroundColor = '#eab308';
+    } else if (tier === TIERS.TRUST_CIRCLE) {
+      badge.textContent = '✓';
+      badge.style.backgroundColor = '#34d399';
+    } else {
+      badge.classList.add('hidden');
+    }
+  });
 }
