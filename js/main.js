@@ -41,23 +41,38 @@ async function bootstrap() {
     window.engineInstance = engineInstance;
     mediaModule.setEngine(engineInstance);
 
-    // Event listeners (your existing ones)
-    document.getElementById('btn-photo')?.addEventListener('click', () => { /* ... */ });
-    document.getElementById('btn-voice')?.addEventListener('click', (e) => mediaModule.toggleVoiceRecording(e.currentTarget));
-    document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
+    // Wait for DOM + elements
+    setTimeout(() => {
+        // Photo button
+        const btnPhoto = document.getElementById('btn-photo');
+        if (btnPhoto) {
+            btnPhoto.addEventListener('click', () => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*';
+                input.onchange = (e) => mediaModule.handleImageSelect(e, document.getElementById('preview-area'));
+                input.click();
+            });
+        }
 
-    initPhoneCountrySelector();
+        // Voice button
+        const btnVoice = document.getElementById('btn-voice');
+        if (btnVoice) {
+            btnVoice.addEventListener('click', (e) => mediaModule.toggleVoiceRecording(e.currentTarget));
+        }
 
-    // Tier init
-    setTimeout(async () => {
-        const tier = await getCurrentUserTier();
-        applyTierTheme(tier);
-        window.currentUserTier = tier;
+        // Publish button
+        const postButton = document.getElementById('postButton');
+        if (postButton) {
+            postButton.addEventListener('click', window.publishTestimony);
+        }
+
+        console.log("✅ Event listeners attached");
     }, 800);
 
-    setTimeout(() => window.loadFeed('citizen-talk'), 600);
+    initPhoneCountrySelector();
+    setTimeout(() => window.loadFeed('citizen-talk'), 1000);
 }
-
 // ====================== GLOBAL EXPORTS ======================
 window.loadFeed = loadFeed;
 window.publishTestimony = publishTestimony;
