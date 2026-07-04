@@ -4,7 +4,7 @@ import { signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstati
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { showToast } from "./utils.js";
 import { updateUser } from './storage.js';
-import { getUserTier } from './tier.js';
+import { getCurrentUserTier } from './tier.js';
 
 async function syncUserToFirestore(user) {
     if (!user) return;
