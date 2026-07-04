@@ -112,9 +112,6 @@ function renderPost(id, data) {
     feedContainer.appendChild(postEl);
 }
 
-// === GLOBAL EXPORTS FOR HTML BUTTONS ===
-window.loadFeed = loadFeed;   // Make sure nav buttons work
-
 // Re-apply tier after auth
 document.addEventListener('auth-changed', async (e) => {
     if (e.detail.user) {
