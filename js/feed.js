@@ -112,6 +112,31 @@ function renderPost(id, data) {
     feedContainer.appendChild(postEl);
 }
 
+function renderPost(id, data) {
+    // ... existing code ...
+
+    let extraButtons = '';
+    // Show Escalate button for True Witness feed or high-tier users
+    if (window.currentUserTier && window.currentUserTier !== 'citizen') {
+        extraButtons = `
+            <button onclick="escalatePost('${id}')" 
+                    class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-2xl text-sm">
+                🛡️ Escalate to True Witness
+            </button>`;
+    }
+
+    postEl.innerHTML = `
+        ... existing header and content ...
+        <div class="flex items-center justify-between mt-6 pt-4 border-t border-zinc-700">
+            <div class="flex gap-3"> ... likes/disputes ... </div>
+            <div class="flex gap-3">
+                ${extraButtons}
+                <button onclick="sharePost('${id}')" class="px-5 py-2 hover:bg-zinc-800 rounded-2xl">🔗 Share</button>
+            </div>
+        </div>
+    `;
+    // ... append ...
+}
 // Global actions
 window.likePost = async function(postId) {
     if (!auth.currentUser) {
