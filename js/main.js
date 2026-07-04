@@ -43,39 +43,47 @@ async function bootstrap() {
 
     // Strong attachment
     const attachListeners = () => {
-        console.log("Trying to attach button listeners...");
+    console.log("Trying to attach button listeners...");
 
-        const btnPhoto = document.getElementById('btn-photo');
-        if (btnPhoto) {
-            btnPhoto.addEventListener('click', () => {
-                console.log("Photo button clicked");
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.accept = 'image/*';
-                input.onchange = (e) => mediaModule.handleImageSelect(e, document.getElementById('preview-area'));
-                input.click();
-            });
-            console.log("Photo listener attached");
-        }
+    // Photo
+    let btnPhoto = document.getElementById('btn-photo');
+    if (btnPhoto) {
+        const clone = btnPhoto.cloneNode(true);
+        btnPhoto.parentNode.replaceChild(clone, btnPhoto);
+        clone.addEventListener('click', () => {
+            console.log("Photo button clicked");
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = (e) => mediaModule.handleImageSelect(e, document.getElementById('preview-area'));
+            input.click();
+        });
+    }
 
-        const btnVoice = document.getElementById('btn-voice');
-        if (btnVoice) {
-            btnVoice.addEventListener('click', (e) => {
-                console.log("Voice button clicked");
-                mediaModule.toggleVoiceRecording(e.currentTarget);
-            });
-            console.log("Voice listener attached");
-        }
+    // Voice
+    let btnVoice = document.getElementById('btn-voice');
+    if (btnVoice) {
+        const clone = btnVoice.cloneNode(true);
+        btnVoice.parentNode.replaceChild(clone, btnVoice);
+        clone.addEventListener('click', (e) => {
+            console.log("Voice button clicked");
+            mediaModule.toggleVoiceRecording(e.currentTarget);
+        });
+    }
 
-        const postButton = document.getElementById('postButton');
-        if (postButton) {
-            postButton.addEventListener('click', () => {
-                console.log("Publish button clicked");
-                window.publishTestimony();
-            });
-            console.log("Publish listener attached");
-        }
-    };
+    // Publish
+    let postButton = document.getElementById('postButton');
+    if (postButton) {
+        const clone = postButton.cloneNode(true);
+        postButton.parentNode.replaceChild(clone, postButton);
+        clone.addEventListener('click', () => {
+            console.log("Publish button clicked");
+            window.publishTestimony();
+        });
+    }
+
+    console.log("✅ Listeners attached cleanly");
+};
 
     // Attach multiple times to be sure
     attachListeners();
