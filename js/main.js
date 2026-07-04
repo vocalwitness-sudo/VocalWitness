@@ -99,16 +99,25 @@ async function updateComposerForTier() {
     const postButton = document.getElementById('postButton');
 
     if (tier === 'true_witness') {
-        if (btnPhoto) btnPhoto.innerHTML = '📸 Forensic Shield + Hash';
-        if (btnVoice) btnVoice.innerHTML = '🎤 Voice with Integrity Proof';
-        if (postButton) postButton.innerHTML = '🔒 Publish as True Witness';
-        showToast("🔬 True Witness Mode Active — Forensic tools enabled", "success");
-    } else if (tier === 'trust_circle') {
-        if (btnPhoto) btnPhoto.innerHTML = '📸 Photo + Basic Shield';
-    }
-    // Citizen uses default text from HTML
-}
+        if (btnPhoto) btnPhoto.innerHTML = '📸 Forensic Shield + Hash + Signature';
+        if (btnVoice) btnVoice.innerHTML = '🎤 Forensic Voice + Integrity Proof';
+        if (postButton) postButton.innerHTML = '🔒 Publish Verified Testimony';
 
+        // Extra proof option for True Witness
+        const extraProof = document.createElement('button');
+        extraProof.className = "flex-1 py-4 bg-amber-500 hover:bg-amber-600 text-black rounded-2xl transition-all font-medium";
+        extraProof.innerHTML = '🛡️ Generate ZK Proof';
+        extraProof.onclick = () => showToast("🧠 ZK Proof generation started (demo)", "success");
+        
+        const composerActions = document.querySelector('.flex.gap-3.mt-6'); // adjust selector to your buttons container
+        if (composerActions) composerActions.appendChild(extraProof);
+
+        showToast("🔬 Full Forensic Mode Activated", "success");
+    } 
+    else if (tier === 'trust_circle') {
+        if (btnPhoto) btnPhoto.innerHTML = '📸 Photo + Verified Shield';
+    }
+}
 // ====================== BOOTSTRAP ======================
 async function bootstrap() {
     console.log("🚀 Starting VocalWitness...");
