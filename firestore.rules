@@ -1,32 +1,17 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
     function isSignedIn() { return request.auth != null; }
     function isOwner(uid) { return isSignedIn() && request.auth.uid == uid; }
-    
-    // Better admin check using custom claims (recommended)
-    function isAdmin() {
-      return isSignedIn() && request.auth.token.admin == true;
-    }
 
-    // Users collection
     match /users/{userId} {
-      // Admins + Owners can read all users
-      allow read: if isAdmin() || isOwner(userId);
-      
-      // Only owners can update their own profile
-      allow create, update: if isOwner(userId);
-      
-      // Admins can manage roles (via Cloud Function or restricted update)
-      allow update: if isAdmin();
+      allow read, create, update: if isOwner(userId);
     }
 
-    // Testimonies (keep your existing logic)
     match /testimonies/{postId} {
       allow read: if true;
-      allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
-      allow update, delete: if isOwner(resource.data.authorId) || isAdmin();
+      allow create: if isSignedIn();
+      allow update, delete: if isOwner(resource.data.authorId);
     }
 
     match /testimonies/{postId}/votes/{voteId} {
