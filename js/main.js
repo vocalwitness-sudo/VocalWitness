@@ -30,7 +30,56 @@ window.loadFeed = (feedType) => {
     }
 };
 
-window.publishTestimony = async () => { /* your existing code */ };
+window.publishTestimony = async () => {
+    console.log("=== PUBLISH STARTED ===");
+
+    const textarea = document.getElementById('mainInput');
+    const content = textarea?.value.trim() || "";
+
+    if (!content) {
+        console.log("No content");
+        return showToast("Please add text", "error");
+    }
+
+    const postBtn = document.getElementById('postButton');
+    postBtn.disabled = true;
+    postBtn.textContent = 'Publishing...';
+
+    try {
+        const currentUser = auth.currentUser;
+        if (!currentUser) throw new Error("No user");
+
+        console.log("User OK, uploading media...");
+        const mediaData = await mediaModule.uploadForensicMedia(currentUser.uid);
+
+        console.log("Media OK, saving to DB...");
+        const { collection, addDoc } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
+
+        await addDoc(collection(db, "testimonies"), {
+            authorId: currentUser.uid,
+            author: currentUser.displayName || "Anonymous Witness",
+            content: content,
+            imageUrl: mediaData.imageUrl || null,
+            audioUrl: mediaData.audioUrl || null,
+            timestamp: new Date().toISOString(),
+            feedVisibility: "citizen-talk"
+        });
+
+        console.log("=== PUBLISH SUCCESS ===");
+        showToast("✅ Testimony published!", "success");
+
+        if (textarea) textarea.value = '';
+        mediaModule.resetMediaState();
+        window.loadFeed('citizen-talk');
+
+    } catch (err) {
+        console.error("=== PUBLISH FAILED ===", err);
+        showToast("Failed: " + (err.message || "Check console"), "error");
+    } finally {
+        postBtn.disabled = false;
+        postBtn.textContent = '🚀 Publish Testimony to the Square';
+    }
+};
 
 // ====================== BOOTSTRAP ======================
 async function bootstrap() {
