@@ -41,34 +41,46 @@ async function bootstrap() {
     window.engineInstance = engineInstance;
     mediaModule.setEngine(engineInstance);
 
-    // Wait for DOM + elements
-    setTimeout(() => {
-        // Photo button
+    // Strong attachment
+    const attachListeners = () => {
+        console.log("Trying to attach button listeners...");
+
         const btnPhoto = document.getElementById('btn-photo');
         if (btnPhoto) {
             btnPhoto.addEventListener('click', () => {
+                console.log("Photo button clicked");
                 const input = document.createElement('input');
                 input.type = 'file';
                 input.accept = 'image/*';
                 input.onchange = (e) => mediaModule.handleImageSelect(e, document.getElementById('preview-area'));
                 input.click();
             });
+            console.log("Photo listener attached");
         }
 
-        // Voice button
         const btnVoice = document.getElementById('btn-voice');
         if (btnVoice) {
-            btnVoice.addEventListener('click', (e) => mediaModule.toggleVoiceRecording(e.currentTarget));
+            btnVoice.addEventListener('click', (e) => {
+                console.log("Voice button clicked");
+                mediaModule.toggleVoiceRecording(e.currentTarget);
+            });
+            console.log("Voice listener attached");
         }
 
-        // Publish button
         const postButton = document.getElementById('postButton');
         if (postButton) {
-            postButton.addEventListener('click', window.publishTestimony);
+            postButton.addEventListener('click', () => {
+                console.log("Publish button clicked");
+                window.publishTestimony();
+            });
+            console.log("Publish listener attached");
         }
+    };
 
-        console.log("✅ Event listeners attached");
-    }, 800);
+    // Attach multiple times to be sure
+    attachListeners();
+    setTimeout(attachListeners, 800);
+    setTimeout(attachListeners, 1500);
 
     initPhoneCountrySelector();
     setTimeout(() => window.loadFeed('citizen-talk'), 1000);
