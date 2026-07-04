@@ -147,3 +147,9 @@ function initPhoneCountrySelector() {
 }
 
 document.addEventListener('DOMContentLoaded', bootstrap);
+
+import { escalatePost } from './tier.js';   // Add this import
+
+// At the very bottom
+
+window.escalatePost = escalatePost;
