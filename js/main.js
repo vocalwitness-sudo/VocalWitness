@@ -107,3 +107,59 @@ function initPhoneCountrySelector() { /* your existing */ }
 
 document.addEventListener('DOMContentLoaded', bootstrap);
 console.log("✅ VocalWitness main.js loaded successfully");
+
+window.publishTestimony = async () => {
+    console.log("🚀 publishTestimony started");
+
+    const textarea = document.getElementById('mainInput');
+    const content = textarea?.value.trim() || "";
+
+    if (!content && !window.selectedImageFile && !engineInstance?.currentAudioBlob) {
+        return showToast("Please add text, photo or voice", "error");
+    }
+
+    const postBtn = document.getElementById('postButton');
+    if (postBtn) {
+        postBtn.disabled = true;
+        postBtn.textContent = 'Publishing...';
+    }
+
+    try {
+        console.log("Checking user...");
+        const currentUser = auth.currentUser;
+        if (!currentUser) {
+            showToast("Please sign in to publish", "error");
+            return;
+        }
+
+        console.log("Uploading media...");
+        const mediaData = await mediaModule.uploadForensicMedia(currentUser.uid);
+
+        console.log("Saving to Firestore...");
+        const { collection, addDoc } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
+
+        await addDoc(collection(db, "testimonies"), {
+            authorId: currentUser.uid,
+            author: currentUser.displayName || "Anonymous Witness",
+            content: content,
+            imageUrl: mediaData.imageUrl || null,
+            audioUrl: mediaData.audioUrl || null,
+            timestamp: new Date().toISOString(),
+            feedVisibility: "citizen-talk"
+        });
+
+        showToast("✅ Testimony published!", "success");
+        if (textarea) textarea.value = '';
+        mediaModule.resetMediaState();
+        window.loadFeed('citizen-talk');
+
+    } catch (err) {
+        console.error("❌ Publish error details:", err);
+        showToast("Failed to publish: " + (err.message || "Unknown error"), "error");
+    } finally {
+        if (postBtn) {
+            postBtn.disabled = false;
+            postBtn.textContent = '🚀 Publish Testimony to the Square';
+        }
+    }
+};
