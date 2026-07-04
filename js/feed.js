@@ -98,6 +98,10 @@ function renderPost(id, data) {
                 <button onclick="likePost('${id}')" class="flex items-center gap-2 px-5 py-2 hover:bg-zinc-800 rounded-2xl transition-all text-emerald-400">
                     👍 <span id="like-count-${id}">${data.likes || 0}</span>
                 </button>
+                <button onclick="escalatePost('${id}')" 
+        class="px-4 py-2 text-amber-400 hover:bg-zinc-800 rounded-2xl transition-all text-sm">
+  ⬆️ Escalate to True Witness
+  </button>
                 <button onclick="disputePost('${id}')" class="flex items-center gap-2 px-5 py-2 hover:bg-zinc-800 rounded-2xl transition-all text-red-400">
                     ⚠️ <span>${data.disputes || 0}</span>
                 </button>
