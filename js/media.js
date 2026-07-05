@@ -51,61 +51,66 @@ export function toggleVoiceRecording(voiceBtn) {
                                 engineInstance.mediaRecorder.state !== "inactive";
 
     if (!isCurrentlyRecording) {
-        // START RECORDING
+        // START
         engineInstance.startVoiceRecording(300000);
         isPaused = false;
         secondsElapsed = 0;
 
         voiceBtn.classList.add('recording-active');
         voiceBtn.innerHTML = `
-            <span class="flex items-center gap-4">
+            <span class="flex items-center gap-4 text-white">
                 <span class="text-red-400 animate-pulse">● REC</span>
-                <span id="rec-timer" class="font-mono text-xl font-bold text-red-200">00:00</span>
+                <span id="rec-timer" class="font-mono text-xl font-bold">00:00</span>
                 
-                <button onclick="pauseRecording(this)" 
-                        class="px-5 py-2 bg-yellow-500 hover:bg-yellow-400 text-black rounded-2xl text-sm font-semibold transition-all active:scale-95">
-                    ⏸️ Pause
-                </button>
+                <button class="pause-btn px-5 py-2 bg-yellow-500 hover:bg-yellow-400 text-black rounded-2xl text-sm font-semibold transition-all">⏸️ Pause</button>
                 
-                <button onclick="stopVoiceRecordingNow()" 
-                        class="px-6 py-2 bg-red-600 hover:bg-red-500 rounded-2xl text-sm font-semibold transition-all active:scale-95">
-                    ⏹️ Stop & Save
-                </button>
+                <button class="stop-btn px-6 py-2 bg-red-600 hover:bg-red-500 rounded-2xl text-sm font-semibold transition-all">⏹️ Stop & Save</button>
                 
                 <canvas id="spectrum" width="260" height="68" class="ml-3"></canvas>
             </span>
         `;
 
+        // Attach listeners
+        setTimeout(() => {
+            const pauseBtn = voiceBtn.querySelector('.pause-btn');
+            const stopBtn = voiceBtn.querySelector('.stop-btn');
+
+            if (pauseBtn) pauseBtn.addEventListener('click', () => pauseRecording(pauseBtn));
+            if (stopBtn) stopBtn.addEventListener('click', () => stopVoiceRecordingNow());
+        }, 100);
+
         setTimeout(setupSpectrumAnalyzer, 250);
         recordingTimerInterval = setInterval(updateTimer, 1000);
         
-        showToast("🎤 Recording in progress...", "info");
+        showToast("🎤 Recording started", "info");
 
     } else {
         stopRecordingClean(voiceBtn);
     }
 }
 
-// Global stop function
-window.stopVoiceRecordingNow = function() {
-    const voiceBtn = document.getElementById('btn-voice');
-    if (voiceBtn) stopRecordingClean(voiceBtn);
-};
-
+// Keep these functions
 function stopRecordingClean(voiceBtn) {
     engineInstance?.stopVoiceRecording();
     stopSpectrumAnalyzer();
     
     voiceBtn.classList.remove('recording-active');
-    voiceBtn.innerHTML = `
-        <span>🎤 Voice Testimony</span>
-    `;
+    voiceBtn.innerHTML = `<span>🎤 Voice Testimony</span>`;
 
     if (engineInstance?.currentAudioBlob) {
-        showToast("✅ Voice testimony saved", "success");
+        showToast("✅ Recording saved", "success");
     }
 }
 
+window.stopVoiceRecordingNow = function() {
+    const voiceBtn = document.getElementById('btn-voice');
+    if (voiceBtn) stopRecordingClean(voiceBtn);
+};
+
+window.pauseRecording = function(btn) {
+    isPaused = !isPaused;
+    btn.textContent = isPaused ? '▶️ Resume' : '⏸️ Pause';
+};
 function updateTimer() {
     if (!isPaused) secondsElapsed++;
     const min = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
