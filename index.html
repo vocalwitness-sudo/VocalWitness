@@ -104,6 +104,19 @@
             <button onclick="window.loadFeed('live')" class="nav-btn px-6 py-3 rounded-3xl whitespace-nowrap" data-feed="live" data-i18n="liveArena">Live Arena</button>
         </nav>
 
+        <!-- Sidebar -->
+<div class="w-72 bg-zinc-950 border-r border-zinc-800 h-screen fixed hidden lg:block">
+    <div class="p-6">
+        <div class="mb-8">
+            <h3 class="text-xs uppercase tracking-widest text-zinc-500 mb-3">Main Sections</h3>
+        </div>
+        
+        <!-- Dynamic Menu will load here -->
+        <div id="sidebar-menu" class="space-y-1">
+            <!-- Navigation items will appear here automatically -->
+        </div>
+    </div>
+</div>
         <div class="glass rounded-3xl p-6 mb-8">
             <textarea id="mainInput" rows="4" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none" placeholder="Share your raw testimony... What did you witness?"></textarea>
             
