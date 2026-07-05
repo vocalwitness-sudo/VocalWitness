@@ -47,40 +47,62 @@ export function removeImage(previewArea) {
 export function toggleVoiceRecording(voiceBtn) {
     if (!engineInstance) return showToast("Voice engine not ready", "error");
 
-    if (!engineInstance.mediaRecorder || engineInstance.mediaRecorder.state === "inactive") {
+    const isCurrentlyRecording = engineInstance.mediaRecorder && 
+                                engineInstance.mediaRecorder.state !== "inactive";
+
+    if (!isCurrentlyRecording) {
+        // START RECORDING
         engineInstance.startVoiceRecording(300000);
         isPaused = false;
         secondsElapsed = 0;
 
         voiceBtn.classList.add('recording-active');
         voiceBtn.innerHTML = `
-            <span class="flex items-center gap-3">
-                ⏹️ 
-                <span id="rec-timer" class="font-mono text-lg">00:00</span>
-                <span onclick="pauseRecording(this)" class="ml-2 cursor-pointer text-2xl text-yellow-400 hover:text-yellow-300">⏸️</span>
-                <canvas id="spectrum" width="260" height="65" class="ml-4 bg-black/40 rounded"></canvas>
+            <span class="flex items-center gap-4">
+                <span class="text-red-400 animate-pulse">● REC</span>
+                <span id="rec-timer" class="font-mono text-xl font-bold text-red-200">00:00</span>
+                
+                <button onclick="pauseRecording(this)" 
+                        class="px-5 py-2 bg-yellow-500 hover:bg-yellow-400 text-black rounded-2xl text-sm font-semibold transition-all active:scale-95">
+                    ⏸️ Pause
+                </button>
+                
+                <button onclick="stopVoiceRecordingNow()" 
+                        class="px-6 py-2 bg-red-600 hover:bg-red-500 rounded-2xl text-sm font-semibold transition-all active:scale-95">
+                    ⏹️ Stop & Save
+                </button>
+                
+                <canvas id="spectrum" width="260" height="68" class="ml-3"></canvas>
             </span>
         `;
 
-        setTimeout(setupSpectrumAnalyzer, 350);
+        setTimeout(setupSpectrumAnalyzer, 250);
         recordingTimerInterval = setInterval(updateTimer, 1000);
-        showToast("🎤 Recording started", "info");
+        
+        showToast("🎤 Recording in progress...", "info");
+
     } else {
-        engineInstance.stopVoiceRecording();
-        stopSpectrumAnalyzer();
+        stopRecordingClean(voiceBtn);
+    }
+}
 
-        voiceBtn.classList.remove('recording-active');
-        voiceBtn.innerHTML = '🎤 Voice Testimony';
+// Global stop function
+window.stopVoiceRecordingNow = function() {
+    const voiceBtn = document.getElementById('btn-voice');
+    if (voiceBtn) stopRecordingClean(voiceBtn);
+};
 
-        if (engineInstance.currentAudioBlob) {
-            const url = URL.createObjectURL(engineInstance.currentAudioBlob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `vocalwitness-${Date.now()}.webm`;
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-        showToast("✅ Recording saved", "success");
+function stopRecordingClean(voiceBtn) {
+    engineInstance?.stopVoiceRecording();
+    stopSpectrumAnalyzer();
+    
+    voiceBtn.classList.remove('recording-active');
+    voiceBtn.innerHTML = `
+        <span>🎤 Voice Testimony</span>
+    `;
+
+    if (engineInstance?.currentAudioBlob) {
+        showToast("✅ Voice testimony saved", "success");
     }
 }
 
