@@ -1,73 +1,91 @@
-// js/pdf.js
-import { doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-import { getTier, calculateTrustScore } from './utils.js';
+// js/profile.js - Enhanced Version
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { auth, db } from './firebase-config.js';
+import { showToast } from './utils.js';
+import { generateAndDownloadPDF } from './pdf.js';
 
-export async function generateAndDownloadPDF(user, db) {
-    const statusEl = document.getElementById('pdf-status');
-    
-    if (!user) {
-        statusEl.innerHTML = "❌ Please sign in first";
-        return;
+let currentUserData = null;
+
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        listenToUserProfile(user.uid);
     }
+});
 
-    const trustScore = calculateTrustScore(user);
-    const tier = getTier(trustScore);
+function listenToUserProfile(userId) {
+    const userRef = doc(db, "users", userId);
+    onSnapshot(userRef, (snapshot) => {
+        if (snapshot.exists()) {
+            currentUserData = snapshot.data();
+            renderProfileUI(currentUserData);
+        }
+    });
+}
 
-    if (!tier.canDownload) {
-        statusEl.innerHTML = `🔒 Reach <strong>Bronze (40+ trust)</strong> to unlock PDF download.`;
-        return;
-    }
+function renderProfileUI(userData) {
+    if (!userData) return;
 
-    // ==================== GATEKEEPER NOTICE ====================
-    const gatekeeperMessage = `This document is a Verifiable Credential.\n\nIt is cryptographically linked to your VocalWitness Truth Ledger record.\n\nBy downloading, you agree that any alteration to this file will invalidate its authenticity.`;
+    // Basic Info
+    document.getElementById('profileName').textContent = userData.displayName || "Anonymous Witness";
+    document.getElementById('profileUsername').textContent = `@${userData.username || 'user_' + (userData.uid || '').slice(0,6)}`;
 
-    if (!confirm(gatekeeperMessage)) {
-        statusEl.innerHTML = "Download cancelled.";
-        return;
-    }
+    // Stats
+    document.getElementById('post-count').textContent = userData.testimoniesCount || 0;
+    document.getElementById('reputation-score').textContent = userData.reputationScore || 50;
+    document.getElementById('trust-score').textContent = userData.trustScore || 60;
 
-    try {
-        const token = crypto.randomUUID();
+    // Tier
+    document.getElementById('profile-tier').textContent = userData.tier ? userData.tier.toUpperCase() : "CITIZEN";
 
-        // === THE LEDGER ENGRAVING ===
-        await setDoc(doc(db, "verifiable_docs", token), {
-            ownerId: user.uid,
-            timestamp: new Date().toISOString(),
-            trustScore: trustScore,
-            tier: tier.name,
-            verified: true,
-            status: "active"
-        });
-
-        // Generate PDF
-        const { jsPDF } = await import("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
-        const pdf = new jsPDF();
-
-        pdf.setFontSize(22);
-        pdf.text("VocalWitness Witness Token", 20, 30);
-
-        pdf.setFontSize(14);
-        pdf.text(`Holder: ${user.displayName || user.email || "Witness"}`, 20, 50);
-        pdf.text(`Tier: ${tier.name} (Level ${tier.level})`, 20, 60);
-        pdf.text(`Trust Score: ${trustScore}%`, 20, 70);
-        pdf.text(`Witness Token ID: ${token}`, 20, 80);
-        pdf.text(`Issued: ${new Date().toLocaleDateString()}`, 20, 90);
-
-        pdf.setFontSize(11);
-        pdf.text("Verify this document here:", 20, 115);
-        pdf.text(`https://vocalwitness-sudo.github.io/VocalWitness/verify.html?id=${token}`, 20, 125);
-
-        pdf.text("This token is cryptographically linked to the VocalWitness Ledger.", 20, 150);
-        pdf.text("Any alteration will invalidate its authenticity.", 20, 160);
-
-        pdf.save(`WitnessToken_${tier.name}_${token.slice(0,8)}.pdf`);
-
-        statusEl.innerHTML = "✅ Witness Token PDF downloaded & engraved to Ledger!";
-        showToast("Witness Token successfully engraved!", "success");
-
-    } catch (error) {
-        console.error("PDF Generation Error:", error);
-        statusEl.innerHTML = "❌ Error generating PDF. Check console.";
-        showToast("Failed to generate PDF", "error");
+    // Verification Status
+    const statusContainer = document.getElementById('verification-status');
+    if (statusContainer) {
+        statusContainer.innerHTML = `
+            <div class="flex justify-between items-center">
+                <span>Phone Verified</span>
+                <span class="${userData.isPhoneVerified ? 'text-green-400' : 'text-red-400'}">${userData.isPhoneVerified ? 'Yes' : 'No'}</span>
+            </div>
+            <div class="flex justify-between items-center">
+                <span>ZK Verified</span>
+                <span class="${userData.zkVerified ? 'text-amber-400' : 'text-red-400'}">${userData.zkVerified ? 'Yes' : 'No'}</span>
+            </div>
+        `;
     }
 }
+
+window.showProfile = () => {
+    const modal = document.getElementById('profileModal');
+    if (modal) modal.classList.remove('hidden');
+};
+
+window.closeProfile = () => {
+    const modal = document.getElementById('profileModal');
+    if (modal) modal.classList.add('hidden');
+};
+
+window.editProfile = () => {
+    const newName = prompt("Enter new display name (can only change once every 6 months):", document.getElementById('profileName').textContent);
+    if (newName && newName.length > 2) {
+        showToast("Name change request sent (simulated)", "success");
+    }
+};
+
+window.downloadPassport = () => {
+    if (currentUserData) {
+        generateAndDownloadPDF({ uid: auth.currentUser.uid, displayName: currentUserData.displayName }, db);
+    } else {
+        showToast("Please wait for profile to load", "error");
+    }
+};
+
+window.showSettings = () => {
+    showToast("Settings panel coming soon", "info");
+};
+
+window.logout = () => {
+    if (confirm("Sign out?")) {
+        showToast("Signed out successfully", "success");
+        window.location.reload();
+    }
+};
