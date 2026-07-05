@@ -16,11 +16,8 @@ const supportedLanguages = [
 
 export async function loadTranslations(langCode = 'en') {
     try {
-        // Force fallback for unsupported/missing languages
         const isSupported = supportedLanguages.some(l => l.code === langCode);
-        if (!isSupported) {
-            langCode = 'en';
-        }
+        if (!isSupported) langCode = 'en';
 
         const response = await fetch(`translations/${langCode}.json`);
 
@@ -28,19 +25,21 @@ export async function loadTranslations(langCode = 'en') {
             currentTranslations = await response.json();
             console.log(`✅ Loaded ${langCode} translations successfully`);
         } else {
-            console.warn(`⚠️ ${langCode}.json not found → using English fallback`);
-            currentTranslations = {}; // Will use English text
+            console.warn(`⚠️ ${langCode}.json not found`);
+            currentTranslations = {};
         }
     } catch (e) {
-        console.warn(`⚠️ Failed to load ${langCode}:`, e.message);
+        console.warn(`Failed to load ${langCode}`);
         currentTranslations = {};
     }
 
     currentLang = langCode;
     localStorage.setItem('preferredLang', langCode);
     applyTranslations();
-}
 
+    // ← Add this to prevent any popup
+    console.log(`Language successfully set to: ${langCode}`);
+}
 function applyTranslations() {
     console.log("Applying translations for:", currentLang);
 
