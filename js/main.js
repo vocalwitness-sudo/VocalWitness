@@ -118,7 +118,7 @@ async function bootstrap() {
     await initAuth();
     initLanguage();
     initOnboarding();                    // ← Legal + Welcome flow
-    loadDynamicNavigation();             // ← Dynamic navigation structure
+    loadDynamicNavigation().catch(console.error);
 
     // Tier System
     try {
