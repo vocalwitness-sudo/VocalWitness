@@ -89,3 +89,11 @@ window.logout = () => {
         window.location.reload();
     }
 };
+
+// Expose functions globally
+window.editProfile = editProfile;
+window.downloadPassport = downloadPassport;
+window.showSettings = showSettings;
+window.closeProfile = closeProfile;
+window.showProfile = showProfile;
+window.logout = logout;
