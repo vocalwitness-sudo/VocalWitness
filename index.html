@@ -185,7 +185,7 @@
         </div>
     </div>
 
-   <!-- PROFILE MODAL -->
+ <!-- PROFILE MODAL - Upgraded -->
 <div id="profileModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[70]">
     <div class="glass rounded-3xl max-w-lg w-full mx-4 p-8 max-h-[90vh] overflow-y-auto">
         <div class="flex justify-between items-center mb-6">
@@ -196,8 +196,54 @@
         <div class="text-center mb-8">
             <div class="w-28 h-28 mx-auto bg-gradient-to-br from-emerald-500 to-teal-500 rounded-3xl flex items-center justify-center text-7xl mb-4 shadow-inner border-4 border-zinc-800">👤</div>
             <h3 id="profileName" class="text-2xl font-bold">Loading...</h3>
-            <p id="profileUsername" class="text-emerald-400 text-lg">@username</p>
+            <p id="profileUsername" class="text-emerald-400">@username</p>
         </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-3 gap-4 mb-8">
+            <div class="bg-zinc-900/70 rounded-2xl p-4 text-center">
+                <div class="text-3xl font-bold text-emerald-400" id="post-count">0</div>
+                <div class="text-xs text-zinc-400">Testimonies</div>
+            </div>
+            <div class="bg-zinc-900/70 rounded-2xl p-4 text-center">
+                <div class="text-3xl font-bold text-emerald-400" id="reputation-score">50</div>
+                <div class="text-xs text-zinc-400">Reputation</div>
+            </div>
+            <div class="bg-zinc-900/70 rounded-2xl p-4 text-center">
+                <div class="text-3xl font-bold text-emerald-400" id="trust-score">60</div>
+                <div class="text-xs text-zinc-400">Trust Score</div>
+            </div>
+        </div>
+
+        <!-- More Info -->
+        <div class="bg-zinc-900/70 rounded-2xl p-6 mb-6 space-y-4">
+            <div class="flex justify-between">
+                <span class="text-zinc-400">Tier</span>
+                <span id="profile-tier" class="font-semibold text-emerald-400">Citizen</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-zinc-400">Joined</span>
+                <span id="profile-joined" class="font-medium">Loading...</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-zinc-400">ZK Verified</span>
+                <span id="zk-status" class="text-amber-400">No</span>
+            </div>
+        </div>
+
+        <div class="space-y-3">
+            <button onclick="alert('Support feature coming soon')" class="w-full py-4 bg-green-600 hover:bg-green-500 rounded-2xl text-white font-semibold">
+                💚 Support the Platform
+            </button>
+            <button onclick="alert('Steward path coming soon')" class="w-full py-4 bg-zinc-700 hover:bg-zinc-600 rounded-2xl">
+                🛡️ Path to Steward
+            </button>
+            <button onclick="logout()" class="w-full py-4 text-red-400 hover:bg-red-900/30 rounded-2xl">
+                Sign Out
+            </button>
+        </div>
+    </div>
+</div>
 
         <!-- Stats -->
         <div class="grid grid-cols-3 gap-4 mb-8">
