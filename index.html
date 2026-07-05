@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#10b981">
-   
+    
     <meta http-equiv="Content-Security-Policy" content="
       default-src 'self';
       script-src 'self' 'unsafe-inline' 'unsafe-eval'
@@ -26,212 +26,215 @@
       form-action 'self';
       upgrade-insecure-requests;
     ">
-    
+   
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="/logo.png" type="image/png">
     <title>VocalWitness • Truth • Evidence • Public Square</title>
-   
+  
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
-    
+   
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
-  
+
     <style>
-        body { 
-            font-family: 'Inter', system-ui, sans-serif; 
-            background: #0a0f1c; 
-            color: white; 
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: #0a0f1c;
+            color: white;
         }
-        .glass { 
-            background: rgba(17, 24, 39, 0.95); 
-            backdrop-filter: blur(20px); 
-            border: 1px solid rgba(16, 185, 129, 0.25); 
+        .glass {
+            background: rgba(17, 24, 39, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(16, 185, 129, 0.25);
         }
-        .nav-btn { 
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+        .nav-btn {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .nav-btn.active { 
-            background-color: #10b981 !important; 
-            color: #111827 !important; 
-            font-weight: 700; 
-            box-shadow: 0 10px 15px -3px rgb(16 185 129 / 0.4); 
+        .nav-btn.active {
+            background-color: #10b981 !important;
+            color: #111827 !important;
+            font-weight: 700;
+            box-shadow: 0 10px 15px -3px rgb(16 185 129 / 0.4);
         }
-        .supporter-btn { 
-            background: linear-gradient(90deg, #10b981, #34d399); 
-            color: black; 
-            font-weight: 700; 
+        .supporter-btn {
+            background: linear-gradient(90deg, #10b981, #34d399);
+            color: black;
+            font-weight: 700;
         }
-        .supporter-btn:hover { 
-            transform: translateY(-2px); 
-            box-shadow: 0 10px 20px -5px rgb(16 185 129 / 0.6); 
+        .supporter-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgb(16 185 129 / 0.6);
+        }
+        .feed-container {
+            max-width: 640px;
+            margin: 0 auto;
         }
     </style>
 </head>
-<body class="min-h-screen pb-20 p-4 bg-[#0a0f1c]">
-    <div class="max-w-2xl mx-auto bg-red-950/30 border border-red-500/20 rounded-3xl p-4 text-xs mb-6 text-center">
-        <strong class="text-red-400" data-i18n="legalLabel">Legal:</strong>
-        <span id="privacyWarning" data-i18n="privacyWarning">VocalWitness functions strictly as an un-manipulated decentralized distribution medium.</span>
+<body class="min-h-screen bg-[#0a0f1c] pb-20">
+    <!-- Legal Banner -->
+    <div class="max-w-2xl mx-auto bg-red-950/30 border border-red-500/20 rounded-3xl p-4 text-xs text-center mx-4 mt-4">
+        <strong class="text-red-400">Legal:</strong>
+        <span>VocalWitness functions strictly as an un-manipulated decentralized distribution medium.</span>
     </div>
 
-    <div class="max-w-2xl mx-auto">
-        <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-            <div class="flex items-center gap-3">
-                <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-3xl shadow-inner">🔊</div>
-                <div>
-                    <h1 class="text-4xl font-bold tracking-tighter text-emerald-400" data-i18n="appTitle">VocalWitness</h1>
-                    <p class="text-xs text-emerald-500 -mt-1" data-i18n="appTagline">Truth • Evidence • Public Square</p>
-                </div>
+    <div class="max-w-7xl mx-auto flex gap-6 px-4">
+        <!-- Sidebar (Desktop only) -->
+        <div class="w-72 hidden lg:block fixed h-screen overflow-y-auto border-r border-zinc-800 bg-zinc-950">
+            <div class="p-6 sticky top-0">
+                <h3 class="text-xs uppercase tracking-widest text-zinc-500 mb-6">Main Sections</h3>
+                <div id="sidebar-menu" class="space-y-1"></div>
             </div>
-            <div class="flex items-center gap-3 flex-wrap">
-                <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white px-5 py-2.5 rounded-2xl text-sm focus:outline-none focus:border-emerald-500"></select>
-             
-                <button onclick="window.showSupportersModal()" class="supporter-btn px-6 py-3 rounded-2xl flex items-center gap-2 text-sm font-semibold whitespace-nowrap" data-i18n="platformSupporters">
-                    💚 Platform Supporters
-                </button>
-             
-                <div class="flex items-center gap-2">
-                    <button id="btn-profile" onclick="window.showProfile()" class="w-11 h-11 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-3xl transition-all border border-zinc-600 flex items-center justify-center relative">
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 max-w-2xl mx-auto lg:ml-80 py-6">
+            <!-- Header -->
+            <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-3xl shadow-inner">🔊</div>
+                    <div>
+                        <h1 class="text-4xl font-bold tracking-tighter text-emerald-400">VocalWitness</h1>
+                        <p class="text-xs text-emerald-500 -mt-1">Truth • Evidence • Public Square</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3 flex-wrap">
+                    <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white px-5 py-2.5 rounded-2xl text-sm focus:outline-none focus:border-emerald-500"></select>
+                    
+                    <button onclick="window.showSupportersModal()" 
+                            class="supporter-btn px-6 py-3 rounded-2xl flex items-center gap-2 text-sm font-semibold whitespace-nowrap">
+                        💚 Platform Supporters
+                    </button>
+
+                    <button id="btn-profile" onclick="window.showProfile()" 
+                            class="w-11 h-11 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-3xl transition-all border border-zinc-600 flex items-center justify-center relative">
                         👤
                         <span id="tier-badge" class="absolute -top-1 -right-1 text-xs px-1.5 py-0.5 rounded-full font-bold text-black hidden"></span>
                     </button>
                 </div>
-            </div>
-        </header>
+            </header>
 
-        <nav id="main-nav" class="flex gap-2 mb-6 overflow-x-auto pb-2">
-            <button onclick="window.loadFeed('citizen-talk')" class="nav-btn active px-6 py-3 rounded-3xl whitespace-nowrap" data-feed="citizen-talk" data-i18n="citizenTalk">Citizen Talk</button>
-            <button onclick="window.loadFeed('true-witness')" class="nav-btn px-6 py-3 rounded-3xl whitespace-nowrap" data-feed="true-witness" data-i18n="trueWitness">True Witness</button>
-            <button onclick="window.loadFeed('live')" class="nav-btn px-6 py-3 rounded-3xl whitespace-nowrap" data-feed="live" data-i18n="liveArena">Live Arena</button>
-        </nav>
+            <!-- Navigation -->
+            <nav id="main-nav" class="flex gap-2 mb-8 overflow-x-auto pb-2 scrollbar-hide">
+                <button onclick="window.loadFeed('citizen-talk')" class="nav-btn active px-6 py-3 rounded-3xl whitespace-nowrap" data-feed="citizen-talk">Citizen Talk</button>
+                <button onclick="window.loadFeed('true-witness')" class="nav-btn px-6 py-3 rounded-3xl whitespace-nowrap" data-feed="true-witness">True Witness</button>
+                <button onclick="window.loadFeed('live')" class="nav-btn px-6 py-3 rounded-3xl whitespace-nowrap" data-feed="live">Live Arena</button>
+            </nav>
 
-        <!-- Sidebar -->
-<div class="w-72 bg-zinc-950 border-r border-zinc-800 h-screen fixed hidden lg:block">
-    <div class="p-6">
-        <div class="mb-8">
-            <h3 class="text-xs uppercase tracking-widest text-zinc-500 mb-3">Main Sections</h3>
-        </div>
-        
-        <!-- Dynamic Menu will load here -->
-        <div id="sidebar-menu" class="space-y-1">
-            <!-- Navigation items will appear here automatically -->
-        </div>
-    </div>
-</div>
-        <div class="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-            
-        <div class="glass rounded-3xl p-6 mb-8">
-            <textarea id="mainInput" rows="4" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none" placeholder="Share your raw testimony... What did you witness?"></textarea>
-            
-            <div id="micro-hints" class="text-xs text-zinc-500 mt-2 flex flex-wrap gap-x-4 gap-y-1 px-1">
-                <span class="hover:text-zinc-400 cursor-help">💡 Be specific and factual</span>
-                <span class="hover:text-zinc-400 cursor-help">📍 Add location if relevant</span>
-                <span class="hover:text-zinc-400 cursor-help">⏱️ Voice notes work great for details</span>
-            </div>
-          
-            <div class="flex gap-3 mt-6">
-                <button id="btn-photo" 
-                        class="group relative flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center justify-center gap-3 transition-all font-medium">
-                    <span class="text-xl">📸</span>
-                    <span>Photo + Forensic Shield</span>
-                    
-                    <div class="absolute -top-12 left-1/2 -translate-x-1/2 bg-zinc-900 text-white text-xs px-4 py-2 rounded-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all whitespace-nowrap border border-zinc-700 z-10">
-                        Take photo + add forensic proof (hash + metadata)
-                        <div class="absolute top-full left-1/2 -translate-x-1/2 w-3 h-3 bg-zinc-900 border-r border-b border-zinc-700 rotate-45"></div>
-                    </div>
-                </button>
+            <!-- Compose Area -->
+            <div class="glass rounded-3xl p-6 mb-8">
+                <textarea id="mainInput" rows="4" 
+                    class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-5 text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none"
+                    placeholder="Share your raw testimony... What did you witness?"></textarea>
 
-                <button id="btn-voice" 
-                        class="group relative flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center justify-center gap-3 transition-all font-medium">
-                    <span class="text-xl">🎤</span>
-                    <span>Voice Testimony</span>
-                    
-                    <div class="absolute -top-12 left-1/2 -translate-x-1/2 bg-zinc-900 text-white text-xs px-4 py-2 rounded-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all whitespace-nowrap border border-zinc-700 z-10">
-                        Record voice testimony (max 2 minutes)
-                        <div class="absolute top-full left-1/2 -translate-x-1/2 w-3 h-3 bg-zinc-900 border-r border-b border-zinc-700 rotate-45"></div>
-                    </div>
-                </button>
-            </div>
-          
-            <div id="preview-area" class="mt-6"></div>
-          
-            <button id="postButton" 
-                    class="group relative mt-8 w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 py-5 rounded-3xl font-bold text-lg transition-all active:scale-95 shadow-lg">
-                🚀 Publish Testimony to the Square
-                
-                <div class="absolute -top-12 left-1/2 -translate-x-1/2 bg-emerald-900 text-emerald-100 text-xs px-4 py-2 rounded-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all whitespace-nowrap border border-emerald-700 z-10 font-normal">
-                    Your testimony will be public and immutable
-                    <div class="absolute top-full left-1/2 -translate-x-1/2 w-3 h-3 bg-emerald-900 border-r border-b border-emerald-700 rotate-45"></div>
+                <div class="text-xs text-zinc-500 mt-3 flex flex-wrap gap-x-4 gap-y-1">
+                    <span class="hover:text-zinc-400 cursor-help">💡 Be specific and factual</span>
+                    <span class="hover:text-zinc-400 cursor-help">📍 Add location if relevant</span>
+                    <span class="hover:text-zinc-400 cursor-help">⏱️ Voice notes work great</span>
                 </div>
-            </button>
+
+                <div class="flex gap-3 mt-8">
+                    <button id="btn-photo" class="group relative flex-1 py-5 bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center justify-center gap-3 transition-all font-medium">
+                        <span class="text-2xl">📸</span>
+                        <span>Photo + Forensic Shield</span>
+                    </button>
+                    <button id="btn-voice" class="group relative flex-1 py-5 bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center justify-center gap-3 transition-all font-medium">
+                        <span class="text-2xl">🎤</span>
+                        <span>Voice Testimony</span>
+                    </button>
+                </div>
+
+                <div id="preview-area" class="mt-6"></div>
+
+                <button id="postButton" 
+                    class="mt-8 w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 py-5 rounded-3xl font-bold text-lg transition-all active:scale-95 shadow-lg">
+                    🚀 Publish Testimony to the Square
+                </button>
+            </div>
+
+            <!-- Feed -->
+            <main>
+                <div id="feedContainer" class="space-y-6 feed-container"></div>
+            </main>
         </div>
-       
-        <main><div id="feedContainer" class="w-full space-y-6"></div></main>
     </div>
 
+    <!-- Modals -->
+    <!-- Supporters Modal -->
     <div id="supportersModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[70]">
         <div class="glass rounded-3xl max-w-md w-full mx-4 p-8 text-center">
             <div class="text-6xl mb-6">💚</div>
-            <h2 class="text-3xl font-bold text-emerald-400 mb-2" data-i18n="platformSupporters">Platform Supporters</h2>
-            <p class="text-zinc-400 mb-8" data-i18n="supportersDesc">Financial support helps run the platform.<br>Stewardship & moderation power are earned.</p>
-          
-            <button onclick="initiatePlatformSupport(auth.currentUser)" class="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold rounded-2xl mb-6" data-i18n="supportPlatformBtn">
+            <h2 class="text-3xl font-bold text-emerald-400 mb-2">Platform Supporters</h2>
+            <p class="text-zinc-400 mb-8">Financial support helps run the platform.<br>Stewardship & moderation power are earned.</p>
+            
+            <button onclick="initiatePlatformSupport(auth.currentUser)" 
+                class="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold rounded-2xl mb-6">
                 💚 Support the Platform (₦4,990 / month)
             </button>
-          
+
             <div class="text-left text-sm space-y-4 mb-8">
-                <div class="flex gap-3"><span class="text-emerald-400">✓</span><span data-i18n="supporterBadge">Supporter badge</span></div>
-                <div class="flex gap-3"><span class="text-emerald-400">✓</span><span data-i18n="earlyAccess">Early feature access</span></div>
-                <div class="flex gap-3"><span class="text-emerald-400">✓</span><span data-i18n="priorityQueues">Priority in some queues</span></div>
-                <div class="flex gap-3"><span class="text-emerald-400">✓</span><span data-i18n="stayAnonymous">Option to stay anonymous</span></div>
+                <div class="flex gap-3"><span class="text-emerald-400">✓</span><span>Supporter badge</span></div>
+                <div class="flex gap-3"><span class="text-emerald-400">✓</span><span>Early feature access</span></div>
+                <div class="flex gap-3"><span class="text-emerald-400">✓</span><span>Priority in some queues</span></div>
+                <div class="flex gap-3"><span class="text-emerald-400">✓</span><span>Option to stay anonymous</span></div>
             </div>
-          
-            <button onclick="document.getElementById('supportersModal').classList.add('hidden')" class="w-full py-3 text-zinc-400 hover:text-white" data-i18n="maybeLater">Maybe later</button>
+
+            <button onclick="document.getElementById('supportersModal').classList.add('hidden')" 
+                class="w-full py-3 text-zinc-400 hover:text-white">Maybe later</button>
         </div>
     </div>
 
     <!-- Profile Modal -->
-<div id="profileModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[100]">
-  <div class="bg-zinc-900 rounded-3xl w-full max-w-md mx-4 overflow-hidden">
-    <!-- Your modal content -->
-    <div class="p-6">
-      <h2 class="text-2xl font-bold">My Digital Passport</h2>
-      <!-- ... -->
-    </div>
-  </div>
-</div>
-          
-            <button onclick="window.showSupportersModal()" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold rounded-2xl mb-4" data-i18n="supportPlatform">💚 Support the Platform</button>
-          
-            <button onclick="alert('Steward / True Witness is earned through activity and trust score')" class="w-full py-3 bg-zinc-700 hover:bg-zinc-600 rounded-2xl" data-i18n="pathToSteward">
-                🛡️ Path to Steward (Earned)
-            </button>
-          
-            <button onclick="window.logout()" class="w-full py-3 mt-6 text-red-400 hover:bg-red-900/30 rounded-2xl" data-i18n="signOut">Sign Out</button>
-        </div>
-
-        <div id="phoneVerificationModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[100]">
-            <div class="glass rounded-3xl max-w-md w-full mx-4 p-8 text-center">
-                <h2 class="text-2xl font-bold mb-4" data-i18n="verifyPhone">Verify Your Phone</h2>
-                <p class="text-zinc-400 mb-6" data-i18n="phoneDesc">Enter your phone number to unlock Citizen Cycle benefits</p>
-              
-                <div class="flex gap-3 mb-4">
-                    <select id="countryCodeSelector" class="bg-zinc-900 border border-zinc-700 text-white px-4 py-4 rounded-2xl text-sm focus:outline-none focus:border-emerald-500 w-36"></select>
-                    <input id="phoneInput" type="tel" placeholder="801 234 5678" class="flex-1 p-4 bg-zinc-900 border border-zinc-700 rounded-2xl text-center focus:outline-none focus:border-emerald-500">
-                </div>
-              
-                <button onclick="window.sendOTP()" class="w-full py-4 bg-emerald-500 text-black font-bold rounded-2xl mb-4" data-i18n="sendOTP">Send OTP</button>
-                <input id="otpInput" type="text" maxlength="6" placeholder="Enter 6-digit OTP" class="w-full p-4 bg-zinc-900 border border-zinc-700 rounded-2xl text-center mb-4">
-                <button onclick="window.verifyOTP()" class="w-full py-4 bg-white text-black font-bold rounded-2xl" data-i18n="verifyOTP">Verify OTP</button>
+    <div id="profileModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[100]">
+        <div class="glass rounded-3xl w-full max-w-md mx-4 overflow-hidden">
+            <div class="p-8">
+                <h2 class="text-3xl font-bold mb-6">My Digital Passport</h2>
+                <!-- Add your profile content here -->
+                <button onclick="window.showSupportersModal()" 
+                    class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold rounded-2xl mb-4">
+                    💚 Support the Platform
+                </button>
+                <button onclick="alert('Steward / True Witness is earned through activity and trust score')" 
+                    class="w-full py-3 bg-zinc-700 hover:bg-zinc-600 rounded-2xl mb-4">
+                    🛡️ Path to Steward (Earned)
+                </button>
+                <button onclick="window.logout()" 
+                    class="w-full py-3 text-red-400 hover:bg-red-900/30 rounded-2xl">Sign Out</button>
             </div>
         </div>
     </div>
 
+    <!-- Phone Verification Modal -->
+    <div id="phoneVerificationModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[100]">
+        <div class="glass rounded-3xl max-w-md w-full mx-4 p-8 text-center">
+            <h2 class="text-2xl font-bold mb-4">Verify Your Phone</h2>
+            <p class="text-zinc-400 mb-6">Enter your phone number to unlock Citizen Cycle benefits</p>
+            
+            <div class="flex gap-3 mb-4">
+                <select id="countryCodeSelector" class="bg-zinc-900 border border-zinc-700 text-white px-4 py-4 rounded-2xl text-sm w-36"></select>
+                <input id="phoneInput" type="tel" placeholder="801 234 5678" 
+                    class="flex-1 p-4 bg-zinc-900 border border-zinc-700 rounded-2xl text-center focus:outline-none focus:border-emerald-500">
+            </div>
+            
+            <button onclick="window.sendOTP()" class="w-full py-4 bg-emerald-500 text-black font-bold rounded-2xl mb-4">Send OTP</button>
+            <input id="otpInput" type="text" maxlength="6" placeholder="Enter 6-digit OTP" 
+                class="w-full p-4 bg-zinc-900 border border-zinc-700 rounded-2xl text-center mb-4">
+            <button onclick="window.verifyOTP()" class="w-full py-4 bg-white text-black font-bold rounded-2xl">Verify OTP</button>
+        </div>
+    </div>
+
+    <!-- Help Button -->
+    <button id="help-button" 
+        class="fixed bottom-6 right-6 w-14 h-14 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 rounded-2xl flex items-center justify-center text-3xl shadow-2xl transition-all z-50">
+        ?
+    </button>
+
     <script>
         tailwind.config = { content: ["./**/*.{html,js}"] };
-       
+        
         window.showSupportersModal = () => document.getElementById('supportersModal').classList.remove('hidden');
         window.showProfile = () => document.getElementById('profileModal').classList.remove('hidden');
-        window.closeProfile = () => document.getElementById('profileModal').classList.add('hidden');
     </script>
 
     <script type="module" src="js/main.js"></script>
@@ -241,10 +244,5 @@
         import { initLanguage } from './js/i18n.js';
         document.addEventListener('DOMContentLoaded', initLanguage);
     </script>
-
-    <button id="help-button" 
-            class="fixed bottom-6 right-6 w-14 h-14 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 rounded-2xl flex items-center justify-center text-3xl shadow-2xl transition-all z-50">
-        ?
-    </button>
 </body>
 </html>
