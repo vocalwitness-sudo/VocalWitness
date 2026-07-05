@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#10b981">
    
-    <!-- SINGLE CSP -->
     <meta http-equiv="Content-Security-Policy" content="
       default-src 'self';
       script-src 'self' 'unsafe-inline' 'unsafe-eval'
@@ -35,7 +34,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
     
-    <!-- Ethers loaded ONLY ONCE -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
   
     <style>
@@ -70,7 +68,6 @@
     </style>
 </head>
 <body class="min-h-screen pb-20 p-4 bg-[#0a0f1c]">
-    <!-- Legal Banner -->
     <div class="max-w-2xl mx-auto bg-red-950/30 border border-red-500/20 rounded-3xl p-4 text-xs mb-6 text-center">
         <strong class="text-red-400" data-i18n="legalLabel">Legal:</strong>
         <span id="privacyWarning" data-i18n="privacyWarning">VocalWitness functions strictly as an un-manipulated decentralized distribution medium.</span>
@@ -109,23 +106,53 @@
 
         <div class="glass rounded-3xl p-6 mb-8">
             <textarea id="mainInput" rows="4" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none" placeholder="Share your raw testimony... What did you witness?"></textarea>
+            
+            <div id="micro-hints" class="text-xs text-zinc-500 mt-2 flex flex-wrap gap-x-4 gap-y-1 px-1">
+                <span class="hover:text-zinc-400 cursor-help">💡 Be specific and factual</span>
+                <span class="hover:text-zinc-400 cursor-help">📍 Add location if relevant</span>
+                <span class="hover:text-zinc-400 cursor-help">⏱️ Voice notes work great for details</span>
+            </div>
           
             <div class="flex gap-3 mt-6">
-                <button id="btn-photo" class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl transition-all flex items-center justify-center gap-3 font-medium" data-i18n="photoForensic">📸 Photo + Forensic Shield</button>
-                <button id="btn-voice" class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl transition-all flex items-center justify-center gap-3 font-medium" data-i18n="voiceTestimony">🎤 Voice Testimony</button>
+                <button id="btn-photo" 
+                        class="group relative flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center justify-center gap-3 transition-all font-medium">
+                    <span class="text-xl">📸</span>
+                    <span>Photo + Forensic Shield</span>
+                    
+                    <div class="absolute -top-12 left-1/2 -translate-x-1/2 bg-zinc-900 text-white text-xs px-4 py-2 rounded-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all whitespace-nowrap border border-zinc-700 z-10">
+                        Take photo + add forensic proof (hash + metadata)
+                        <div class="absolute top-full left-1/2 -translate-x-1/2 w-3 h-3 bg-zinc-900 border-r border-b border-zinc-700 rotate-45"></div>
+                    </div>
+                </button>
+
+                <button id="btn-voice" 
+                        class="group relative flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center justify-center gap-3 transition-all font-medium">
+                    <span class="text-xl">🎤</span>
+                    <span>Voice Testimony</span>
+                    
+                    <div class="absolute -top-12 left-1/2 -translate-x-1/2 bg-zinc-900 text-white text-xs px-4 py-2 rounded-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all whitespace-nowrap border border-zinc-700 z-10">
+                        Record voice testimony (max 2 minutes)
+                        <div class="absolute top-full left-1/2 -translate-x-1/2 w-3 h-3 bg-zinc-900 border-r border-b border-zinc-700 rotate-45"></div>
+                    </div>
+                </button>
             </div>
           
             <div id="preview-area" class="mt-6"></div>
           
-            <button id="postButton" class="mt-8 w-full py-5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-black font-bold text-lg rounded-3xl transition-all active:scale-95 shadow-lg" data-i18n="postButton">
+            <button id="postButton" 
+                    class="group relative mt-8 w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 py-5 rounded-3xl font-bold text-lg transition-all active:scale-95 shadow-lg">
                 🚀 Publish Testimony to the Square
+                
+                <div class="absolute -top-12 left-1/2 -translate-x-1/2 bg-emerald-900 text-emerald-100 text-xs px-4 py-2 rounded-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all whitespace-nowrap border border-emerald-700 z-10 font-normal">
+                    Your testimony will be public and immutable
+                    <div class="absolute top-full left-1/2 -translate-x-1/2 w-3 h-3 bg-emerald-900 border-r border-b border-emerald-700 rotate-45"></div>
+                </div>
             </button>
         </div>
        
         <main><div id="feedContainer" class="w-full space-y-6"></div></main>
     </div>
 
-    <!-- Modals (unchanged) -->
     <div id="supportersModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[70]">
         <div class="glass rounded-3xl max-w-md w-full mx-4 p-8 text-center">
             <div class="text-6xl mb-6">💚</div>
@@ -195,5 +222,10 @@
         import { initLanguage } from './js/i18n.js';
         document.addEventListener('DOMContentLoaded', initLanguage);
     </script>
+
+    <button id="help-button" 
+            class="fixed bottom-6 right-6 w-14 h-14 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 rounded-2xl flex items-center justify-center text-3xl shadow-2xl transition-all z-50">
+        ?
+    </button>
 </body>
 </html>
