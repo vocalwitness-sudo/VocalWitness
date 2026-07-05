@@ -30,3 +30,5 @@ export async function loadNavigation() {
         console.error("Could not load navigation", e);
     }
 }
+
+export { loadDynamicNavigation };
