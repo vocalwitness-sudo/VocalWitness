@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#10b981">
    
-    <!-- SINGLE CSP - Clean & Complete -->
+    <!-- SINGLE CSP -->
     <meta http-equiv="Content-Security-Policy" content="
       default-src 'self';
       script-src 'self' 'unsafe-inline' 'unsafe-eval'
@@ -34,6 +34,8 @@
    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
+    
+    <!-- Ethers loaded ONLY ONCE -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
   
     <style>
@@ -84,17 +86,14 @@
                 </div>
             </div>
             <div class="flex items-center gap-3 flex-wrap">
-                <select id="languageSelector"
-                        class="bg-zinc-900 border border-zinc-700 text-white px-5 py-2.5 rounded-2xl text-sm focus:outline-none focus:border-emerald-500">
-                </select>
+                <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white px-5 py-2.5 rounded-2xl text-sm focus:outline-none focus:border-emerald-500"></select>
              
                 <button onclick="window.showSupportersModal()" class="supporter-btn px-6 py-3 rounded-2xl flex items-center gap-2 text-sm font-semibold whitespace-nowrap" data-i18n="platformSupporters">
                     💚 Platform Supporters
                 </button>
              
                 <div class="flex items-center gap-2">
-                    <button id="btn-profile" onclick="window.showProfile()"
-                            class="w-11 h-11 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-3xl transition-all border border-zinc-600 flex items-center justify-center relative">
+                    <button id="btn-profile" onclick="window.showProfile()" class="w-11 h-11 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-3xl transition-all border border-zinc-600 flex items-center justify-center relative">
                         👤
                         <span id="tier-badge" class="absolute -top-1 -right-1 text-xs px-1.5 py-0.5 rounded-full font-bold text-black hidden"></span>
                     </button>
@@ -126,7 +125,7 @@
         <main><div id="feedContainer" class="w-full space-y-6"></div></main>
     </div>
 
-    <!-- Supporters Modal -->
+    <!-- Modals (unchanged) -->
     <div id="supportersModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[70]">
         <div class="glass rounded-3xl max-w-md w-full mx-4 p-8 text-center">
             <div class="text-6xl mb-6">💚</div>
@@ -148,7 +147,6 @@
         </div>
     </div>
 
-    <!-- Profile Modal -->
     <div id="profileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[80]">
         <div class="glass rounded-3xl max-w-lg w-full mx-4 p-8 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-6">
@@ -165,7 +163,6 @@
             <button onclick="window.logout()" class="w-full py-3 mt-6 text-red-400 hover:bg-red-900/30 rounded-2xl" data-i18n="signOut">Sign Out</button>
         </div>
 
-        <!-- Phone Verification Modal (nested) -->
         <div id="phoneVerificationModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[100]">
             <div class="glass rounded-3xl max-w-md w-full mx-4 p-8 text-center">
                 <h2 class="text-2xl font-bold mb-4" data-i18n="verifyPhone">Verify Your Phone</h2>
@@ -193,6 +190,7 @@
 
     <script type="module" src="js/main.js"></script>
     <script src="https://checkout.flutterwave.com/v3.js"></script>
+    
     <script type="module">
         import { initLanguage } from './js/i18n.js';
         document.addEventListener('DOMContentLoaded', initLanguage);
