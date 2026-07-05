@@ -1,27 +1,21 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isSignedIn() { return request.auth != null; }
-    function isOwner(uid) { return isSignedIn() && request.auth.uid == uid; }
-
-    // Allow everyone to read MENU (for navigation)
+    // Allow public read for MENU
     match /MENU/{document} {
       allow read: if true;
-      allow write: if false;   // Only you (admin) can edit
+      allow write: if false;
     }
 
-    // Users
+    // Your other rules
     match /users/{userId} {
       allow read: if true;
-      allow create, update: if isOwner(userId);
+      allow create, update: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Testimonies
     match /testimonies/{postId} {
       allow read: if true;
-      allow create: if isSignedIn();
-      allow update: if isOwner(resource.data.authorId) || request.auth.token.isSteward == true;
-      allow delete: if isOwner(resource.data.authorId);
+      allow create: if request.auth != null;
     }
   }
 }
