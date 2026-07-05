@@ -88,3 +88,23 @@ function showWelcomeOnboarding() {
 export function initOnboarding() {
     showLegalNotice();
 }
+export function initHelpButton() {
+    const btn = document.getElementById('help-button');
+    if (!btn) return;
+
+    btn.addEventListener('click', showQuickGuide);
+}
+
+function showQuickGuide() {
+    const guide = document.createElement('div');
+    guide.className = 'fixed inset-0 bg-black/90 flex items-center justify-center z-[110]';
+    guide.innerHTML = `
+        <div class="bg-zinc-900 rounded-3xl max-w-lg p-8 max-h-[90vh] overflow-auto">
+            <h2 class="text-3xl font-bold mb-8 text-center">How to Use VocalWitness</h2>
+            <!-- Add more helpful sections here -->
+            <button onclick="this.closest('.fixed').remove()" 
+                    class="w-full py-4 bg-green-600 rounded-2xl">Got it, Thanks!</button>
+        </div>
+    `;
+    document.body.appendChild(guide);
+}
