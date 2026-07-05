@@ -189,12 +189,16 @@
         </div>
     </div>
 
-    <div id="profileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[80]">
-        <div class="glass rounded-3xl max-w-lg w-full mx-4 p-8 max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold" data-i18n="myDigitalPassport">My Digital Passport</h2>
-                <button onclick="window.closeProfile()" class="text-3xl text-zinc-400 hover:text-white">×</button>
-            </div>
+    <!-- Profile Modal -->
+<div id="profileModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[100]">
+  <div class="bg-zinc-900 rounded-3xl w-full max-w-md mx-4 overflow-hidden">
+    <!-- Your modal content -->
+    <div class="p-6">
+      <h2 class="text-2xl font-bold">My Digital Passport</h2>
+      <!-- ... -->
+    </div>
+  </div>
+</div>
           
             <button onclick="window.showSupportersModal()" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold rounded-2xl mb-4" data-i18n="supportPlatform">💚 Support the Platform</button>
           
