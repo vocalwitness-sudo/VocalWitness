@@ -1,61 +1,155 @@
-export function toggleVoiceRecording(voiceBtn) {
-    if (!engineInstance) return showToast("Voice engine not ready", "error");
-
-    const isCurrentlyRecording = engineInstance.mediaRecorder && 
-                                engineInstance.mediaRecorder.state !== "inactive";
-
-    if (!isCurrentlyRecording) {
-        // START RECORDING
-        engineInstance.startVoiceRecording(300000);
-        isPaused = false;
-        secondsElapsed = 0;
-
-        voiceBtn.classList.add('recording-active');
-        voiceBtn.innerHTML = `
-            <span class="flex items-center gap-4">
-                <span class="text-red-400 animate-pulse">● REC</span>
-                <span id="rec-timer" class="font-mono text-xl font-bold text-red-200">00:00</span>
-                
-                <button onclick="pauseRecording(this)" 
-                        class="px-5 py-2 bg-yellow-500 hover:bg-yellow-400 text-black rounded-2xl text-sm font-semibold transition-all active:scale-95">
-                    ⏸️ Pause
-                </button>
-                
-                <button onclick="stopVoiceRecordingNow()" 
-                        class="px-6 py-2 bg-red-600 hover:bg-red-500 rounded-2xl text-sm font-semibold transition-all active:scale-95">
-                    ⏹️ Stop & Save
-                </button>
-                
-                <canvas id="spectrum" width="260" height="68" class="ml-3"></canvas>
-            </span>
-        `;
-
-        setTimeout(setupSpectrumAnalyzer, 250);
-        recordingTimerInterval = setInterval(updateTimer, 1000);
-        
-        showToast("🎤 Recording in progress...", "info");
-
-    } else {
-        stopRecordingClean(voiceBtn);
-    }
+/* ====================== BASE STYLES ====================== */
+body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: #0a0f1c;
+    color: white;
 }
-
-// Global stop function
-window.stopVoiceRecordingNow = function() {
-    const voiceBtn = document.getElementById('btn-voice');
-    if (voiceBtn) stopRecordingClean(voiceBtn);
-};
-
-function stopRecordingClean(voiceBtn) {
-    engineInstance?.stopVoiceRecording();
-    stopSpectrumAnalyzer();
-    
-    voiceBtn.classList.remove('recording-active');
-    voiceBtn.innerHTML = `
-        <span>🎤 Voice Testimony</span>
-    `;
-
-    if (engineInstance?.currentAudioBlob) {
-        showToast("✅ Voice testimony saved", "success");
-    }
+.glass {
+    background: rgba(17, 24, 39, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+}
+.nav-btn {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.nav-btn.active {
+    background-color: #10b981 !important;
+    color: #111827 !important;
+    font-weight: 700;
+    box-shadow: 0 10px 15px -3px rgb(16 185 129 / 0.4);
+}
+.guardian-btn {
+    background: linear-gradient(90deg, #10b981, #34d399);
+    color: black;
+    font-weight: 700;
+}
+.guardian-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px -5px rgb(16 185 129 / 0.6);
+}
+.image-preview {
+    max-height: 340px;
+    object-fit: cover;
+    border-radius: 20px;
+    width: 100%;
+}
+.recording-active {
+    animation: pulse 1.5s infinite;
+    background-color: #ef4444 !important;
+}
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.6; }
+    100% { opacity: 1; }
+}
+/* ====================== VOICE RECORDING ====================== */
+#btn-voice {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    min-height: 56px;
+    padding: 12px 20px;
+    font-size: 1.05rem;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+#btn-voice.recording-active {
+    background-color: #ef4444 !important;
+    color: white !important;
+    transform: scale(1.02);
+    box-shadow: 0 0 35px rgba(239, 68, 68, 0.65);
+    min-height: 62px;
+    border: 2px solid rgba(255, 255, 255, 0.25);
+}
+/* Inner recording elements */
+#btn-voice.recording-active > span,
+#btn-voice.recording-active canvas {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+}
+/* Timer */
+#rec-timer {
+    font-family: 'Space Grotesk', monospace;
+    font-weight: 700;
+    font-size: 1.1rem;
+    letter-spacing: 2px;
+    color: #fee2e2;
+    min-width: 52px;
+}
+/* Spectrum Canvas */
+#spectrum {
+    width: 260px;
+    height: 68px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: #0f172a;
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+                                     /* Tier Themes */
+.tier-citizen {
+    --accent-color: #10b981;
+    --bg-glass: rgba(17, 24, 39, 0.95);
+}
+.tier-trust {
+    --accent-color: #34d399;
+    --bg-glass: rgba(16, 185, 129, 0.15);
+}
+.tier-witness {
+    --accent-color: #eab308; /* Gold/Amber */
+    --bg-glass: rgba(234, 179, 8, 0.15);
+    box-shadow: 0 0 25px rgba(234, 179, 8, 0.3);
+}
+/* Apply to main elements */
+body.tier-witness {
+    background: linear-gradient(180deg, #0a0f1c, #1a1f2e);
+}
+body.tier-witness .glass {
+    background: var(--bg-glass);
+    border-color: var(--accent-color);
+}
+body.tier-witness .nav-btn.active {
+    background-color: var(--accent-color) !important;
+    color: #111827;
+    box-shadow: 0 0 15px var(--accent-color);
+}
+body.tier-witness #postButton {
+    background: linear-gradient(90deg, #eab308, #f59e0b) !important;
+    color: #111827;
+    font-weight: 700;
+}
+/* Visual badge for True Witness */
+.tier-witness .true-witness-badge {
+    background: linear-gradient(90deg, #eab308, #f59e0b);
+    color: #111827;
+    padding: 2px 10px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+/* Pause icon hover */
+#btn-voice.recording-active span[onclick="pauseRecording(this)"] {
+    transition: transform 0.2s ease;
+    cursor: pointer;
+}
+#btn-voice.recording-active span[onclick="pauseRecording(this)"]:hover {
+    transform: scale(1.35);
+    color: #fefce8;
+}
+.supporter-badge {
+    background: linear-gradient(90deg, #10b981, #34d399);
+    color: black;
+    padding: 2px 10px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+@keyframes publishSuccess {
+    0% { transform: scale(0.8); opacity: 0; }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+}
+.success-burst {
+    animation: publishSuccess 0.6s ease-out forwards;
 }
