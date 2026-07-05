@@ -108,16 +108,12 @@ export function refreshUserTier() {
   });
 }
 
-// Update initAuth to call refresh
-export function initAuth() {
-  auth.onAuthStateChanged(async (user) => {
-    if (user) {
-      await createUserDocument(user);
-      window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
-      refreshUserTier();   // ← Add this
-    } else {
-      window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user: null } }));
-    }
-  });
-  console.log("🔐 Auth system initialized");
+// Update initAuth to call refresh - Helper to refresh tier after login
+export function refreshUserTier() {
+  import('./tier.js').then(({ getCurrentUserTier, applyTierTheme, updateTierBadge }) => {
+    getCurrentUserTier().then(tier => {
+      applyTierTheme(tier);
+      updateTierBadge();
+    }).catch(console.warn);
+  }).catch(console.warn);
 }
