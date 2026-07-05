@@ -1,4 +1,4 @@
-// js/i18n.js - Improved Multi-Language Support
+// js/i18n.js - Fixed & Robust Multi-Language Support
 let currentTranslations = {};
 let currentLang = 'en';
 
@@ -15,20 +15,21 @@ const supportedLanguages = [
 ];
 
 export async function loadTranslations(langCode = 'en') {
-    const isSupported = supportedLanguages.some(l => l.code === langCode);
-    if (!isSupported) {
-        console.warn(`Unsupported language: ${langCode}, falling back to en`);
-        langCode = 'en';
-    }
-
     try {
+        // Force fallback for unsupported/missing languages
+        const isSupported = supportedLanguages.some(l => l.code === langCode);
+        if (!isSupported) {
+            langCode = 'en';
+        }
+
         const response = await fetch(`translations/${langCode}.json`);
+
         if (response.ok) {
             currentTranslations = await response.json();
             console.log(`✅ Loaded ${langCode} translations successfully`);
         } else {
-            console.warn(`⚠️ ${langCode}.json not found, using English fallback`);
-            currentTranslations = {};
+            console.warn(`⚠️ ${langCode}.json not found → using English fallback`);
+            currentTranslations = {}; // Will use English text
         }
     } catch (e) {
         console.warn(`⚠️ Failed to load ${langCode}:`, e.message);
@@ -43,11 +44,14 @@ export async function loadTranslations(langCode = 'en') {
 function applyTranslations() {
     console.log("Applying translations for:", currentLang);
 
+    // Main input placeholder
     const mainInput = document.getElementById('mainInput');
-    if (mainInput && currentTranslations.placeholder) {
-        mainInput.placeholder = currentTranslations.placeholder;
+    if (mainInput) {
+        mainInput.placeholder = currentTranslations.placeholder || 
+            "Share your raw testimony... What did you witness?";
     }
 
+    // All data-i18n elements
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
         if (currentTranslations[key]) {
@@ -75,14 +79,14 @@ export function initLanguage() {
                     ${lang.flag} ${lang.name} (${lang.code.toUpperCase()})
                 </option>
             `).join('');
-
         selector.value = savedLang;
-        
+
         selector.addEventListener('change', (e) => {
             loadTranslations(e.target.value);
         });
     }
 
+    // Silent load on startup
     loadTranslations(savedLang);
 }
 
