@@ -9,6 +9,14 @@ body {
     backdrop-filter: blur(20px);
     border: 1px solid rgba(16, 185, 129, 0.25);
 }
+#profileModal {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 .nav-btn {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
