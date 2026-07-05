@@ -1,9 +1,9 @@
 // js/auth.js - Clean Auth with User Document Creation
-import { 
-    getAuth, 
-    signInWithPopup, 
-    GoogleAuthProvider, 
-    signOut 
+import {
+    getAuth,
+    signInWithPopup,
+    GoogleAuthProvider,
+    signOut
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 
 import { db } from './firebase-config.js';
@@ -18,7 +18,6 @@ export { auth };
 // Create or update user document
 async function createUserDocument(user) {
     if (!user) return;
-
     try {
         const userRef = doc(db, "users", user.uid);
         const snap = await getDoc(userRef);
@@ -41,7 +40,6 @@ async function createUserDocument(user) {
             console.log("✅ New user document created");
             showToast("Welcome to VocalWitness!", "success");
         } else {
-            // Update last active time
             await updateDoc(userRef, {
                 lastActive: new Date().toISOString()
             });
@@ -56,10 +54,10 @@ export async function googleLogin() {
     try {
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
-        
+       
         await createUserDocument(user);
         window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
-        
+       
         showToast(`Signed in as ${user.displayName || 'Witness'}`, "success");
         return user;
     } catch (error) {
@@ -80,57 +78,29 @@ export async function logout() {
     }
 }
 
-// Listen to auth state changes
+// Refresh tier after login
+export function refreshUserTier() {
+    import('./tier.js').then(({ getCurrentUserTier, applyTierTheme, updateTierBadge }) => {
+        getCurrentUserTier().then(tier => {
+            applyTierTheme(tier);
+            if (updateTierBadge) updateTierBadge();
+        }).catch(console.warn);
+    }).catch(console.warn);
+}
+
+// Initialize Auth Listener
 export function initAuth() {
     auth.onAuthStateChanged(async (user) => {
         if (user) {
             await createUserDocument(user);
             window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
+            refreshUserTier(); // Refresh UI after login
         } else {
             window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user: null } }));
         }
     });
-    
+   
     console.log("🔐 Auth system initialized");
-}
-
-// Expose globally
-window.googleLogin = googleLogin;
-window.logout = logout;
-
-// Call this after login to refresh tier/theme
-export function refreshUserTier() {
-  import('./tier.js').then(({ getCurrentUserTier, applyTierTheme, updateTierBadge }) => {
-    getCurrentUserTier().then(tier => {
-      applyTierTheme(tier);
-      updateTierBadge();
-    });
-  });
-}
-
-// Update initAuth to call refresh - Helper to refresh tier after login
-export function refreshUserTier() {
-  import('./tier.js').then(({ getCurrentUserTier, applyTierTheme, updateTierBadge }) => {
-    getCurrentUserTier().then(tier => {
-      applyTierTheme(tier);
-      updateTierBadge();
-    }).catch(console.warn);
-  }).catch(console.warn);
-}
-
-// Listen to auth state changes
-export function initAuth() {
-  auth.onAuthStateChanged(async (user) => {
-    if (user) {
-      await createUserDocument(user);
-      window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
-      refreshUserTier();   // Refresh UI
-    } else {
-      window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user: null } }));
-    }
-  });
-  
-  console.log("🔐 Auth system initialized");
 }
 
 // Expose globally
