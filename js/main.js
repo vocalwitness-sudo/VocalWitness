@@ -115,6 +115,7 @@ async function bootstrap() {
 
     await initAuth();
     initLanguage();
+    initOnboarding();                    // ← Legal + Welcome flow
 
     // Tier System
     try {
@@ -132,11 +133,11 @@ async function bootstrap() {
 
     attachUIListeners();
     initPhoneCountrySelector();
-
+    
     setTimeout(() => window.loadFeed('citizen-talk'), 800);
+
     console.log("✅ VocalWitness initialized");
 }
-
 function attachUIListeners() {
     const btnPhoto = document.getElementById('btn-photo');
     if (btnPhoto) {
