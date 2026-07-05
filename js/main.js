@@ -8,6 +8,7 @@ import * as mediaModule from './media.js';
 import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
 import { initAdminDashboard } from './admin.js';
 import { getCurrentUserTier, canAccessFeature, applyTierTheme } from './tier.js';
+import { initOnboarding } from './onboarding.js';
 
 // Global variables
 let engineInstance = null;
