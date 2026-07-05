@@ -32,6 +32,18 @@
         "destination": "/privacy.html"
       },
       {
+        "source": "/terms",
+        "destination": "/terms.html"
+      },
+      {
+        "source": "/safety",
+        "destination": "/safety.html"
+      },
+      {
+        "source": "/about",
+        "destination": "/about.html"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
