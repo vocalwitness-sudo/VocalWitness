@@ -117,3 +117,22 @@ export function refreshUserTier() {
     }).catch(console.warn);
   }).catch(console.warn);
 }
+
+// Listen to auth state changes
+export function initAuth() {
+  auth.onAuthStateChanged(async (user) => {
+    if (user) {
+      await createUserDocument(user);
+      window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
+      refreshUserTier();   // Refresh UI
+    } else {
+      window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user: null } }));
+    }
+  });
+  
+  console.log("🔐 Auth system initialized");
+}
+
+// Expose globally
+window.googleLogin = googleLogin;
+window.logout = logout;
