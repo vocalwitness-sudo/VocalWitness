@@ -1,4 +1,4 @@
-// js/profile.js - Fixed & Simple Version
+// js/profile.js - Clean & Safe Version
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { auth, db } from './firebase-config.js';
@@ -23,9 +23,11 @@ function listenToUserProfile(userId) {
 function renderProfileUI(userData) {
     if (!userData) return;
 
+    // Basic Info
     document.getElementById('profileName').textContent = userData.displayName || "Anonymous Witness";
     document.getElementById('profileUsername').textContent = `@${userData.username || 'user_' + (userData.uid || '').slice(0,6)}`;
 
+    // Stats
     document.getElementById('post-count').textContent = userData.testimoniesCount || 0;
     document.getElementById('reputation-score').textContent = userData.reputationScore || 50;
     document.getElementById('trust-score').textContent = userData.trustScore || 60;
@@ -33,6 +35,7 @@ function renderProfileUI(userData) {
     console.log("Profile updated:", userData);
 }
 
+// Global functions
 window.showProfile = () => {
     document.getElementById('profileModal').classList.remove('hidden');
 };
@@ -41,16 +44,8 @@ window.closeProfile = () => {
     document.getElementById('profileModal').classList.add('hidden');
 };
 
-window.logout = () => {
-    if (confirm("Sign out?")) {
-        showToast("Signed out", "success");
-        window.location.reload();
-    }
-};
-
-// Global functions for buttons
 window.editProfile = () => {
-    showToast("Edit name coming soon", "info");
+    showToast("Edit profile coming soon", "info");
 };
 
 window.downloadPassport = () => {
@@ -59,4 +54,11 @@ window.downloadPassport = () => {
 
 window.showSettings = () => {
     showToast("Settings coming soon", "info");
+};
+
+window.logout = () => {
+    if (confirm("Sign out?")) {
+        showToast("Signed out successfully", "success");
+        window.location.reload();
+    }
 };
