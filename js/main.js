@@ -111,13 +111,14 @@ async function updateComposerForTier() {
     }
 }
 
-// ====================== BOOTSTRAP ======================
+// ====================== BOOTSTRAP & LISTENERS ======================
 async function bootstrap() {
     console.log("🚀 Starting VocalWitness...");
 
     await initAuth();
     initLanguage();
     initOnboarding();                    // ← Legal + Welcome flow
+    loadDynamicNavigation();             // ← Dynamic navigation structure
 
     // Tier System
     try {
@@ -140,6 +141,7 @@ async function bootstrap() {
 
     console.log("✅ VocalWitness initialized");
 }
+
 function attachUIListeners() {
     const btnPhoto = document.getElementById('btn-photo');
     if (btnPhoto) {
@@ -163,25 +165,9 @@ function attachUIListeners() {
     }
 }
 
-async function bootstrap() {
-    console.log("🚀 Starting VocalWitness...");
-
-    await initAuth();
-    initLanguage();
-    initOnboarding();
-
-    // Add this line:
-    loadDynamicNavigation();
-
-    // ... rest of your existing code
-}
-
 function initPhoneCountrySelector() {
     console.log("📱 Phone selector initialized");
 }
 
+// Initialize Application
 document.addEventListener('DOMContentLoaded', bootstrap);
-
-// Global exposure for HTML onclick attributes
-window.loadFeed = window.loadFeed;
-window.publishTestimony = window.publishTestimony;
