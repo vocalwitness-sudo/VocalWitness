@@ -76,46 +76,54 @@
         </div>
     </div>
 
-    <!-- Profile Modal -->
-    <div id="profileModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[70]">
-        <div class="glass rounded-3xl max-w-lg w-full mx-4 p-8 max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold">My Digital Passport</h2>
-                <button onclick="closeProfile()" class="text-4xl text-zinc-400 hover:text-white">×</button>
-            </div>
-            
-            <div class="text-center mb-8">
-                <div class="w-28 h-28 mx-auto bg-gradient-to-br from-emerald-500 to-teal-500 rounded-3xl flex items-center justify-center text-7xl mb-4">👤</div>
-                <h3 id="profileName" class="text-2xl font-bold">Loading...</h3>
-                <p id="profileUsername" class="text-emerald-400">@username</p>
-            </div>
+    <!-- PROFILE MODAL -->
+<div id="profileModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[70]">
+    <div class="glass rounded-3xl max-w-lg w-full mx-4 p-8 max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold">My Digital Passport</h2>
+            <button onclick="closeProfile()" class="text-4xl text-zinc-400 hover:text-white">×</button>
+        </div>
+       
+        <div class="text-center mb-8">
+            <div class="w-28 h-28 mx-auto bg-gradient-to-br from-emerald-500 to-teal-500 rounded-3xl flex items-center justify-center text-7xl mb-4 shadow-inner border-4 border-zinc-800">👤</div>
+            <h3 id="profileName" class="text-2xl font-bold">Loading...</h3>
+            <p id="profileUsername" class="text-emerald-400">@username</p>
+        </div>
 
-            <div class="grid grid-cols-3 gap-4 mb-8">
-                <div class="bg-zinc-900/70 rounded-2xl p-4 text-center">
-                    <div class="text-3xl font-bold text-emerald-400" id="post-count">0</div>
-                    <div class="text-xs text-zinc-400">Testimonies</div>
-                </div>
-                <div class="bg-zinc-900/70 rounded-2xl p-4 text-center">
-                    <div class="text-3xl font-bold text-emerald-400" id="reputation-score">50</div>
-                    <div class="text-xs text-zinc-400">Reputation</div>
-                </div>
-                <div class="bg-zinc-900/70 rounded-2xl p-4 text-center">
-                    <div class="text-3xl font-bold text-emerald-400" id="trust-score">60</div>
-                    <div class="text-xs text-zinc-400">Trust</div>
-                </div>
+        <!-- Stats -->
+        <div class="grid grid-cols-3 gap-4 mb-8">
+            <div class="bg-zinc-900/70 rounded-2xl p-4 text-center">
+                <div class="text-3xl font-bold text-emerald-400" id="post-count">0</div>
+                <div class="text-xs text-zinc-400">Testimonies</div>
             </div>
-
-            <div class="grid grid-cols-2 gap-3">
-                <button onclick="editProfile()" class="py-4 bg-zinc-700 hover:bg-zinc-600 rounded-2xl">✏️ Edit Name</button>
-                <button onclick="downloadPassport()" class="py-4 bg-zinc-700 hover:bg-zinc-600 rounded-2xl">📄 Download PDF</button>
-                <button onclick="showSettings()" class="py-4 bg-zinc-700 hover:bg-zinc-600 rounded-2xl col-span-2">⚙️ Settings & Privacy</button>
+            <div class="bg-zinc-900/70 rounded-2xl p-4 text-center">
+                <div class="text-3xl font-bold text-emerald-400" id="reputation-score">50</div>
+                <div class="text-xs text-zinc-400">Reputation</div>
             </div>
-
-            <div class="mt-6 pt-6 border-t border-zinc-700">
-                <button onclick="logout()" class="w-full py-4 text-red-400 hover:bg-red-900/30 rounded-2xl">Sign Out</button>
+            <div class="bg-zinc-900/70 rounded-2xl p-4 text-center">
+                <div class="text-3xl font-bold text-emerald-400" id="trust-score">60</div>
+                <div class="text-xs text-zinc-400">Trust Score</div>
             </div>
         </div>
+
+        <!-- Verification Status -->
+        <div class="bg-zinc-900/70 rounded-2xl p-6 mb-6">
+            <h4 class="font-semibold mb-4">Verification Status</h4>
+            <div id="verification-status" class="space-y-3"></div>
+        </div>
+
+        <!-- Actions -->
+        <div class="grid grid-cols-2 gap-3">
+            <button onclick="editProfile()" class="py-4 bg-zinc-700 hover:bg-zinc-600 rounded-2xl">✏️ Edit Name</button>
+            <button onclick="downloadPassport()" class="py-4 bg-zinc-700 hover:bg-zinc-600 rounded-2xl">📄 Download PDF</button>
+            <button onclick="showSettings()" class="py-4 bg-zinc-700 hover:bg-zinc-600 rounded-2xl col-span-2">⚙️ Settings & Privacy</button>
+        </div>
+
+        <div class="mt-6 pt-6 border-t border-zinc-700">
+            <button onclick="logout()" class="w-full py-4 text-red-400 hover:bg-red-900/30 rounded-2xl">Sign Out</button>
+        </div>
     </div>
+</div>
 
     <script>
         tailwind.config = { content: ["./**/*.{html,js}"] };
