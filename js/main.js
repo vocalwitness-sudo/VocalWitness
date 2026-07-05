@@ -9,6 +9,7 @@ import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
 import { initAdminDashboard } from './admin.js';
 import { getCurrentUserTier, canAccessFeature, applyTierTheme } from './tier.js';
 import { initOnboarding } from './onboarding.js';
+import { loadDynamicNavigation } from './navigation.js';
 
 // Global variables
 let engineInstance = null;
@@ -160,6 +161,19 @@ function attachUIListeners() {
     if (postButton) {
         postButton.addEventListener('click', window.publishTestimony);
     }
+}
+
+async function bootstrap() {
+    console.log("🚀 Starting VocalWitness...");
+
+    await initAuth();
+    initLanguage();
+    initOnboarding();
+
+    // Add this line:
+    loadDynamicNavigation();
+
+    // ... rest of your existing code
 }
 
 function initPhoneCountrySelector() {
