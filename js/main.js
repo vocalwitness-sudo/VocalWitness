@@ -165,3 +165,7 @@ function initPhoneCountrySelector() {
 }
 
 document.addEventListener('DOMContentLoaded', bootstrap);
+
+// Global exposure for HTML onclick attributes
+window.loadFeed = window.loadFeed;
+window.publishTestimony = window.publishTestimony;
