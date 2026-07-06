@@ -1,48 +1,97 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-NG">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Privacy Policy - VocalWitness</title>
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-[#0a0f1c] text-white min-h-screen">
-
   <div class="max-w-3xl mx-auto p-8">
-    <h1 class="text-4xl font-bold mb-8">Privacy Policy</h1>
-    
-    <p class="text-zinc-400 mb-8">Last updated: July 2026</p>
-
-    <div class="prose prose-invert">
-      <h2 class="text-2xl font-semibold mt-10 mb-4">1. Introduction</h2>
-      <p>VocalWitness is a decentralized platform for sharing testimonies. We respect your privacy and are committed to protecting your personal data.</p>
-
-      <h2 class="text-2xl font-semibold mt-10 mb-4">2. What Information We Collect</h2>
-      <ul class="list-disc pl-6 space-y-2 text-zinc-300">
-        <li>Email address and profile information when you sign in with Google</li>
-        <li>Testimonies, photos, and voice recordings you publish</li>
-        <li>Technical data (IP address, browser type) for security</li>
-      </ul>
-
-      <h2 class="text-2xl font-semibold mt-10 mb-4">3. How We Use Your Information</h2>
-      <p>We use your information to:</p>
-      <ul class="list-disc pl-6 space-y-2 text-zinc-300">
-        <li>Operate and improve the platform</li>
-        <li>Display your public testimonies</li>
-        <li>Provide verification features</li>
-      </ul>
-
-      <h2 class="text-2xl font-semibold mt-10 mb-4">4. Data Storage</h2>
-      <p>Your data is stored on Firebase (Google Cloud). Testimonies are designed to be public and permanent once published.</p>
-
-      <h2 class="text-2xl font-semibold mt-10 mb-4">5. Your Rights</h2>
-      <p>You can request deletion of your account and associated personal data by contacting us.</p>
+    <div class="flex items-center gap-4 mb-10">
+      <div class="w-12 h-12 bg-emerald-500/20 rounded-3xl flex items-center justify-center text-4xl">🔒</div>
+      <h1 class="text-4xl font-bold tracking-tight">Privacy Policy</h1>
     </div>
 
-    <div class="mt-16 text-center">
-      <a href="/" class="text-green-500 hover:text-green-400 underline">← Back to Home</a>
+    <p class="text-zinc-400 mb-10">Last updated: July 2026</p>
+
+    <div class="glass rounded-3xl p-8 mb-10">
+      <p class="text-emerald-300 leading-relaxed">
+        At VocalWitness, we believe your voice matters — and so does your privacy. 
+        We are committed to being transparent and responsible with your data.
+      </p>
+    </div>
+
+    <div class="prose prose-invert max-w-none space-y-12 text-zinc-300">
+      
+      <div>
+        <h2 class="text-2xl font-semibold text-white mb-4">1. Our Promise</h2>
+        <p>
+          VocalWitness is a platform for sharing testimonies and evidence. We collect only the information necessary to provide a safe and functional service.
+        </p>
+      </div>
+
+      <div>
+        <h2 class="text-2xl font-semibold text-white mb-4">2. Information We Collect</h2>
+        <ul class="list-none space-y-6">
+          <li class="flex gap-4">
+            <span class="text-emerald-400 text-xl">👤</span>
+            <div>Account information (email, display name, profile photo) when you sign up or log in.</div>
+          </li>
+          <li class="flex gap-4">
+            <span class="text-emerald-400 text-xl">📝</span>
+            <div>Testimonies, photos, voice recordings, and other content you choose to publish.</div>
+          </li>
+          <li class="flex gap-4">
+            <span class="text-emerald-400 text-xl">🔐</span>
+            <div>Technical data (device info, IP address) for security, moderation, and platform improvement.</div>
+          </li>
+        </ul>
+      </div>
+
+      <div>
+        <h2 class="text-2xl font-semibold text-white mb-4">3. How We Use Your Information</h2>
+        <ul class="list-disc pl-6 space-y-3">
+          <li>To operate the platform and enable you to share testimonies</li>
+          <li>To provide verification and forensic features (hashing, ZK proofs)</li>
+          <li>To maintain safety through gentle moderation</li>
+          <li>To improve the service and respond to support requests</li>
+        </ul>
+      </div>
+
+      <div>
+        <h2 class="text-2xl font-semibold text-white mb-4">4. Data Storage &amp; Public Content</h2>
+        <p>
+          Your published testimonies are designed to be <strong>public and permanent</strong> once shared — this is the nature of a public square. 
+          We use secure Firebase infrastructure (Google Cloud) to store data.
+        </p>
+      </div>
+
+      <div>
+        <h2 class="text-2xl font-semibold text-white mb-4">5. Your Rights</h2>
+        <p class="mb-4">
+          You have the right to:
+        </p>
+        <ul class="list-disc pl-6 space-y-2">
+          <li>Access, correct, or delete your personal account data</li>
+          <li>Request deletion of your account (this will not remove public testimonies already shared)</li>
+          <li>Contact us with any privacy concerns</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="mt-16 p-6 bg-zinc-900/50 rounded-3xl border border-emerald-500/20 text-sm">
+      <p class="text-amber-300">
+        <strong>Note:</strong> Because testimonies are public by design, we cannot guarantee removal of content once it has been published and viewed by others.
+      </p>
+    </div>
+
+    <div class="mt-12 text-center">
+      <a href="/" class="inline-block px-8 py-4 bg-emerald-600 hover:bg-emerald-500 rounded-3xl font-medium transition-all">
+        ← Back to VocalWitness
+      </a>
     </div>
   </div>
-
 </body>
 </html>
