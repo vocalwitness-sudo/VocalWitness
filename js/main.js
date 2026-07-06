@@ -1,7 +1,6 @@
 // js/main.js - FIXED BOOTSTRAP + currentUser Issue
 import { initAuth } from "./auth.js";
 import { initFeed } from './feed.js';
-import { db, auth } from './firebase-config.js';
 import { showToast } from './utils.js';
 import { initLanguage } from './i18n.js';
 import * as mediaModule from './media.js';
@@ -11,6 +10,8 @@ import { getCurrentUserTier, canAccessFeature, applyTierTheme } from './tier.js'
 import { initOnboarding } from './onboarding.js';
 import { loadDynamicNavigation, initMobileMenu } from './navigation.js';
 import * as supporters from './supporters.js';
+// At the very top, fix the import:
+import { db, auth, storage } from './firebase-config.js';   // ← make sure storage is exported
 
 window.initiatePlatformSupport = supporters.initiatePlatformSupport;
 
