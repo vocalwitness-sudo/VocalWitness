@@ -15,6 +15,11 @@ import { loadDynamicNavigation, initMobileMenu } from './navigation.js';   // �
 let engineInstance = null;
 
 // ====================== GLOBAL FUNCTIONS ======================
+// Add this near the top with other window functions
+window.toggleNotifications = function() {
+    showToast("🛎️ Notifications coming soon!", "info");
+};
+
 window.loadFeed = async (feedType) => {
     // Update top nav buttons
     document.querySelectorAll('#main-nav button').forEach(btn => btn.classList.remove('active'));
@@ -121,9 +126,9 @@ async function bootstrap() {
     initLanguage();
     initOnboarding();
 
-    // === NEW NAVIGATION CALLS ===
-    loadDynamicNavigation().catch(console.error);
-    initMobileMenu();                    // ← New: Mobile menu support
+    // Navigation
+    loadDynamicNavigation();           // Removed .catch() - function is not async anymore
+    initMobileMenu();
 
     // Tier System
     try {
