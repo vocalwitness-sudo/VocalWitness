@@ -125,7 +125,7 @@ async function bootstrap() {
 
     await initAuth();
 
-    // Wait for auth state
+    // Wait for auth + make currentUser available
     if (!auth.currentUser && !window.currentUser) {
         await new Promise(resolve => {
             const unsubscribe = auth.onAuthStateChanged(user => {
@@ -151,14 +151,16 @@ async function bootstrap() {
         console.warn("Tier initialization skipped:", e);
     }
 
-    // FIXED: Ensure storage is available
+    // FIXED: Engine + Storage
     if (typeof storage === 'undefined') {
-        console.error("❌ storage is not defined. Check firebase-config.js");
-        showToast("Storage module failed to load. Check firebase-config.js", "error");
+        console.error("❌ storage is not defined from firebase-config");
+        showToast("Storage failed to load", "error");
     } else {
         engineInstance = new CitizenTalkEngine(db, storage);
         window.engineInstance = engineInstance;
-        mediaModule.setEngine(engineInstance);
+        if (typeof mediaModule.setEngine === 'function') {
+            mediaModule.setEngine(engineInstance);
+        }
     }
 
     attachUIListeners();
@@ -167,7 +169,6 @@ async function bootstrap() {
     setTimeout(() => window.loadFeed('citizen-talk'), 800);
     console.log("✅ VocalWitness initialized");
 }
-
 async function updateComposerForTier() {
     const tier = await getCurrentUserTier();
     const btnPhoto = document.getElementById('btn-photo');
