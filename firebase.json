@@ -10,19 +10,7 @@
       "tailwind.config.js",
       "postcss.config.js"
     ],
-    "rewrites": [
-      { "source": "/verify", "destination": "/verify.html" },
-      { "source": "/citizen-talk", "destination": "/citizen-talk.html" },
-      { "source": "/true-witness", "destination": "/true-witness.html" },
-      { "source": "/live-arena", "destination": "/live-arena.html" },
-      { "source": "/my-testimonies", "destination": "/my-testimonies.html" },
-      { "source": "/forensic-ledger", "destination": "/forensic-ledger.html" },
-      { "source": "/privacy", "destination": "/privacy.html" },
-      { "source": "/terms", "destination": "/terms.html" },
-      { "source": "/safety", "destination": "/safety.html" },
-      { "source": "/about", "destination": "/about.html" },
-      { "source": "**", "destination": "/index.html" }
-    ],
+    "rewrites": [ ... ],   // keep as is
     "headers": [
       {
         "source": "**/*.@(js|css|png|jpg|jpeg|gif|ico|svg|webm)",
@@ -41,7 +29,7 @@
         "headers": [
           {
             "key": "Content-Security-Policy",
-            "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https: blob:; media-src 'self' https: blob:; connect-src 'self' https: wss:; frame-src 'self' https:;"
+            "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https: blob:; media-src 'self' https: blob:; connect-src 'self' https: wss:; frame-src 'self' https://checkout.flutterwave.com https://checkout-v3.flutterwave.com https://*.flutterwave.com;"
           }
         ]
       }
