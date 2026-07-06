@@ -1,220 +1,121 @@
-// js/main.js - FIXED BOOTSTRAP + currentUser Issue
-import { initAuth } from "./auth.js";
-import { initFeed } from './feed.js';
-import { showToast } from './utils.js';
-import { initLanguage } from './i18n.js';
-import * as mediaModule from './media.js';
-import { initAdminDashboard } from './admin.js';
-import { getCurrentUserTier, canAccessFeature, applyTierTheme } from './tier.js';
-import { initOnboarding } from './onboarding.js';
-import { loadDynamicNavigation, initMobileMenu } from './navigation.js';
-import * as supporters from './supporters.js';
-import { db, auth, storage } from './firebase-config.js';
-import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
+<!DOCTYPE html>
+<html lang="en-NG">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#10b981">
+    
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' 'unsafe-inline' 'unsafe-eval' https:;
+        style-src 'self' 'unsafe-inline' https:;
+        img-src 'self' data: https: blob:;
+        media-src 'self' https: blob:;
+        connect-src 'self' https: wss:;
+        frame-src 'self' https: https://*.flutterwave.com;
+    ">
 
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/logo.png" type="image/png">
+    <title>VocalWitness • Truth • Evidence • Public Square</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: white; }
+        .glass { background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(16, 185, 129, 0.25); }
+    </style>
+</head>
+<body class="min-h-screen bg-[#0a0f1c]">
+    
+    <!-- Legal Banner -->
+    <div class="max-w-2xl mx-auto bg-emerald-950/40 border border-emerald-500/30 rounded-3xl p-5 text-sm text-center mx-4 mt-6">
+        <div class="flex items-center justify-center gap-3 text-emerald-400 mb-2">
+            <span class="text-xl">🛡️</span>
+            <strong>Safety First</strong>
+        </div>
+        <p class="text-zinc-300">
+            VocalWitness is an <strong>un-manipulated decentralized distribution medium</strong>.
+            We provide tools for integrity and gentle moderation, but <strong>users are responsible</strong> for what they share.
+        </p>
+    </div>
 
-window.initiatePlatformSupport = supporters.initiatePlatformSupport;
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <div id="sidebar" class="w-72 bg-zinc-950 border-r border-zinc-800 flex flex-col hidden lg:flex">
+            <div class="p-6 border-b border-zinc-800">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-2xl">🔊</div>
+                    <div>
+                        <h1 class="text-2xl font-bold tracking-tighter">VocalWitness</h1>
+                        <p class="text-xs text-emerald-500">Truth • Evidence • Public Square</p>
+                    </div>
+                </div>
+            </div>
+            <div class="flex-1 overflow-y-auto p-4">
+                <h3 class="text-xs uppercase tracking-widest text-zinc-500 px-4 mb-4">Main Sections</h3>
+                <nav id="main-sidebar-nav" class="space-y-1"></nav>
+            </div>
+            <div class="p-4 border-t border-zinc-800 mt-auto space-y-6">
+                <div class="px-2">
+                    <button onclick="window.initiatePlatformSupport && window.initiatePlatformSupport(window.currentUser)" 
+                            class="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-black font-semibold rounded-3xl flex items-center justify-center gap-3 transition-all">
+                        <span class="text-xl">❤️</span> Support VocalWitness
+                    </button>
+                </div>
+                <div class="space-y-1">
+                    <a href="/about.html" class="flex items-center gap-3 px-4 py-3 text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-2xl">ℹ️ About Us</a>
+                    <a href="/privacy.html" class="flex items-center gap-3 px-4 py-3 text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-2xl">🔒 Privacy</a>
+                    <a href="/safety.html" class="flex items-center gap-3 px-4 py-3 text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-2xl">🛡️ Safety</a>
+                    <a href="/terms.html" class="flex items-center gap-3 px-4 py-3 text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-2xl">📜 Terms</a>
+                </div>
+            </div>
+        </div>
 
-// Global variables
-let engineInstance = null;
-window.currentUser = null;
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <header class="bg-zinc-950 border-b border-zinc-800 px-6 py-4 flex items-center justify-between lg:pl-6">
+                <div class="flex items-center gap-4">
+                    <button id="mobile-menu-btn" class="lg:hidden text-3xl p-2">☰</button>
+                    <div id="page-title" class="text-2xl font-semibold text-white hidden md:block">Citizen Talk</div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white px-5 py-2.5 rounded-2xl text-sm"></select>
+                    <button onclick="toggleNotifications()" class="w-10 h-10 flex items-center justify-center text-2xl relative hover:bg-zinc-900 rounded-2xl">🛎️</button>
+                    <button onclick="window.showProfile()" class="w-11 h-11 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-3xl">👤</button>
+                </div>
+            </header>
 
-// ====================== GLOBAL HELPER FUNCTIONS ======================
-function gentleClientCheck(content) {
-    if (!content) return { safe: true };
-    const lower = content.toLowerCase();
-    if (lower.includes("kill") || lower.includes("hate you") || /!{4,}/.test(content)) {
-        return {
-            safe: false,
-            message: "This feels very strong/passionate.\n\nConsider softening the tone so others can better understand your experience?"
-        };
-    }
-    return { safe: true };
-}
+            <div class="flex-1 overflow-auto p-6">
+                <nav id="main-nav" class="flex gap-2 mb-8 overflow-x-auto pb-2">
+                    <button onclick="window.loadFeed('citizen-talk')" class="nav-btn active px-6 py-3 rounded-3xl" data-feed="citizen-talk">💬 Citizen Talk</button>
+                    <button onclick="window.loadFeed('true-witness')" class="nav-btn px-6 py-3 rounded-3xl" data-feed="true-witness">🔬 True Witness</button>
+                    <button onclick="window.loadFeed('live')" class="nav-btn px-6 py-3 rounded-3xl" data-feed="live">🏟️ Live Arena</button>
+                </nav>
 
-window.toggleNotifications = function() {
-    showToast("🛎️ Notifications coming soon!", "info");
-};
+                <!-- Composer -->
+                <div class="glass rounded-3xl p-6 mb-8">
+                    <textarea id="mainInput" rows="4" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-5 text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none" placeholder="Share your raw testimony... What did you witness?"></textarea>
+                    
+                    <div class="flex gap-3 mt-8">
+                        <button id="btn-photo" class="flex-1 py-5 bg-zinc-800 hover:bg-zinc-700 rounded-2xl transition-all">📸 Photo + Forensic Shield</button>
+                        <button id="btn-voice" class="flex-1 py-5 bg-zinc-800 hover:bg-zinc-700 rounded-2xl transition-all">🎤 Voice Testimony</button>
+                    </div>
+                    <div id="preview-area" class="mt-6"></div>
+                    <button id="postButton" class="mt-8 w-full py-5 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold text-lg rounded-3xl">🚀 Publish Testimony to the Square</button>
+                </div>
 
-window.loadFeed = async (feedType) => {
-    document.querySelectorAll('#main-nav button').forEach(btn => btn.classList.remove('active'));
-    const active = document.querySelector(`button[data-feed="${feedType}"]`);
-    if (active) active.classList.add('active');
+                <main>
+                    <div id="feedContainer" class="space-y-6"></div>
+                </main>
+            </div>
+        </div>
+    </div>
 
-    try {
-        const tier = await getCurrentUserTier();
-        if (feedType === 'live' && !canAccessFeature(tier, 'live_arena')) {
-            showToast("🔒 Live Arena is for True Witness only", "error");
-            return;
-        }
-    } catch (e) {
-        console.warn("Tier check skipped");
-    }
-
-    if (feedType === 'true-witness' || feedType === 'live') {
-        initFeed(db, 'citizen-talk');
-    } else {
-        initFeed(db, feedType);
-    }
-};
-
-window.goBack = function() {
-    window.history.length > 1 ? window.history.back() : window.location.href = '/';
-};
-
-window.publishTestimony = async () => {
-    const textarea = document.getElementById('mainInput');
-    const content = textarea?.value.trim() || "";
-    if (!content && !window.selectedImageFile && !engineInstance?.currentAudioBlob) {
-        return showToast("Please add text, photo or voice", "error");
-    }
-
-    const postBtn = document.getElementById('postButton');
-    if (postBtn) {
-        postBtn.disabled = true;
-        postBtn.textContent = 'Checking...';
-    }
-
-    try {
-        const user = auth.currentUser || window.currentUser;
-        if (!user) {
-            showToast("Please sign in to publish", "error");
-            return;
-        }
-
-        const check = gentleClientCheck(content);
-        if (!check.safe) {
-            if (!confirm(check.message + "\n\nDo you still want to publish?")) {
-                if (postBtn) postBtn.disabled = false;
-                return;
-            }
-        }
-
-        if (postBtn) postBtn.textContent = 'Publishing...';
-
-        const mediaData = await mediaModule.uploadForensicMedia(user.uid);
-        const { collection, addDoc } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
-
-        await addDoc(collection(db, "testimonies"), {
-            authorId: user.uid,
-            author: user.displayName || "Anonymous Witness",
-            content: content,
-            imageUrl: mediaData.imageUrl || null,
-            audioUrl: mediaData.audioUrl || null,
-            timestamp: new Date().toISOString(),
-            feedVisibility: "citizen-talk"
-        });
-
-        showToast("✅ Testimony published! Thank you for sharing your truth.", "success");
-        if (textarea) textarea.value = '';
-        mediaModule.resetMediaState();
-        window.loadFeed('citizen-talk');
-    } catch (err) {
-        console.error("Publish error:", err);
-        showToast("Failed to publish: " + (err.message || "Unknown error"), "error");
-    } finally {
-        if (postBtn) {
-            postBtn.disabled = false;
-            postBtn.textContent = '🚀 Publish Testimony to the Square';
-        }
-    }
-};
-
-async function bootstrap() {
-    console.log("🚀 Starting VocalWitness...");
-
-    await initAuth();
-
-    // Use the static import you already have at the top
-    try {
-        engineInstance = new CitizenTalkEngine(db, storage);
-        window.engineInstance = engineInstance;
-        if (mediaModule && typeof mediaModule.setEngine === 'function') {
-            mediaModule.setEngine(engineInstance);
-        }
-        console.log("✅ CitizenTalkEngine loaded successfully");
-    } catch (err) {
-        console.error("⚠️ Engine failed to load:", err);
-        engineInstance = {
-            startVoiceRecording: () => console.warn("Engine not available"),
-            stopVoiceRecording: () => {}
-        };
-        window.engineInstance = engineInstance;
-    }
-
-    // Rest of bootstrap...
-    if (!auth.currentUser && !window.currentUser) {
-        await new Promise(resolve => {
-            const unsubscribe = auth.onAuthStateChanged(user => {
-                window.currentUser = user;
-                unsubscribe();
-                resolve();
-            });
-        });
-    }
-
-    initLanguage();
-    initOnboarding();
-    loadDynamicNavigation();
-    initMobileMenu();
-
-    try {
-        const tier = await getCurrentUserTier();
-        applyTierTheme(tier);
-        window.currentUserTier = tier;
-        await updateComposerForTier();
-    } catch (e) {
-        console.warn("Tier initialization skipped:", e);
-    }
-
-    attachUIListeners();
-    initPhoneCountrySelector();
-
-    setTimeout(() => window.loadFeed('citizen-talk'), 800);
-    console.log("✅ VocalWitness initialized");
-}
-async function updateComposerForTier() {
-    const tier = await getCurrentUserTier();
-    const btnPhoto = document.getElementById('btn-photo');
-    const btnVoice = document.getElementById('btn-voice');
-    const postButton = document.getElementById('postButton');
-
-    if (tier === 'true_witness') {
-        if (btnPhoto) btnPhoto.innerHTML = '📸 Forensic Shield + Hash';
-        if (btnVoice) btnVoice.innerHTML = '🎤 Voice with Integrity Proof';
-        if (postButton) postButton.innerHTML = '🔒 Publish Verified Testimony';
-        showToast("🔬 True Witness Mode Active — Forensic tools enabled", "success");
-    } else if (tier === 'trust_circle') {
-        if (btnPhoto) btnPhoto.innerHTML = '📸 Photo + Basic Shield';
-    }
-}
-
-function attachUIListeners() {
-    const btnPhoto = document.getElementById('btn-photo');
-    if (btnPhoto) {
-        btnPhoto.addEventListener('click', () => {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'image/*';
-            input.onchange = (e) => mediaModule.handleImageSelect(e, document.getElementById('preview-area'));
-            input.click();
-        });
-    }
-
-    const btnVoice = document.getElementById('btn-voice');
-    if (btnVoice) {
-        btnVoice.addEventListener('click', (e) => mediaModule.toggleVoiceRecording(e.currentTarget));
-    }
-
-    const postButton = document.getElementById('postButton');
-    if (postButton) {
-        postButton.addEventListener('click', window.publishTestimony);
-    }
-}
-
-function initPhoneCountrySelector() {
-    console.log("📱 Phone selector initialized");
-}
-
-// Initialize Application
-document.addEventListener('DOMContentLoaded', bootstrap);
+    <script>
+        tailwind.config = { content: ["./**/*.{html,js}"] };
+    </script>
+    <script type="module" src="js/main.js"></script>
+    <script type="module" src="js/profile.js"></script>
+    <script src="https://checkout.flutterwave.com/v3.js"></script>
+</body>
+</html>
