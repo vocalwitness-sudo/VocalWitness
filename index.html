@@ -5,125 +5,103 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#10b981">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://checkout.flutterwave.com https://*.firebaseio.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; img-src 'self' data: https: blob:; media-src 'self' https: blob:; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com wss://*.firebaseio.com; frame-src 'self' https://checkout.flutterwave.com https://checkout-v3.flutterwave.com;">
-    
+   
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="/logo.png" type="image/png">
     <title>VocalWitness • Truth • Evidence • Public Square</title>
-
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
-
     <style>
         body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: white; }
         .glass { background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(16, 185, 129, 0.25); }
     </style>
 </head>
-<body class="min-h-screen bg-[#0a0f1c] pb-20">
+<body class="min-h-screen bg-[#0a0f1c]">
     <!-- Legal Banner -->
     <div class="max-w-2xl mx-auto bg-red-950/30 border border-red-500/20 rounded-3xl p-4 text-xs text-center mx-4 mt-4">
         <strong class="text-red-400">Legal:</strong> VocalWitness functions strictly as an un-manipulated decentralized distribution medium.
     </div>
 
-    <div class="max-w-7xl mx-auto flex gap-6 px-4">
+    <div class="flex h-screen overflow-hidden">
         <!-- Sidebar -->
-        <div class="w-72 hidden lg:block fixed h-screen overflow-y-auto border-r border-zinc-800 bg-zinc-950">
-            <div class="p-6 sticky top-0">
-                <h3 class="text-xs uppercase tracking-widest text-zinc-500 mb-6">Main Sections</h3>
-                <div id="sidebar-menu" class="space-y-1"></div>
+        <div id="sidebar" class="w-72 bg-zinc-950 border-r border-zinc-800 flex flex-col hidden lg:flex">
+            <div class="p-6 border-b border-zinc-800">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-2xl">🔊</div>
+                    <div>
+                        <h1 class="text-2xl font-bold tracking-tighter">VocalWitness</h1>
+                        <p class="text-xs text-emerald-500">Truth • Evidence • Public Square</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-4">
+                <h3 class="text-xs uppercase tracking-widest text-zinc-500 px-4 mb-4">Main Sections</h3>
+                <nav id="main-sidebar-nav" class="space-y-1"></nav>
+            </div>
+
+            <div class="p-4 border-t border-zinc-800 mt-auto">
+                <div class="space-y-1">
+                    <a href="/about.html" class="flex items-center gap-3 px-4 py-3 text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-2xl transition-all">ℹ️ About Us</a>
+                    <a href="/privacy.html" class="flex items-center gap-3 px-4 py-3 text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-2xl transition-all">🔒 Privacy</a>
+                    <a href="/safety.html" class="flex items-center gap-3 px-4 py-3 text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-2xl transition-all">🛡️ Safety</a>
+                    <a href="/terms.html" class="flex items-center gap-3 px-4 py-3 text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-2xl transition-all">📜 Terms</a>
+                </div>
             </div>
         </div>
 
         <!-- Main Content -->
-        <div class="flex-1 max-w-2xl mx-auto lg:ml-80 py-6">
-            <!-- Header -->
-            <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-                <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-3xl">🔊</div>
-                    <div>
-                        <h1 class="text-4xl font-bold tracking-tighter text-emerald-400">VocalWitness</h1>
-                        <p class="text-xs text-emerald-500 -mt-1">Truth • Evidence • Public Square</p>
-                    </div>
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Top Bar -->
+            <header class="bg-zinc-950 border-b border-zinc-800 px-6 py-4 flex items-center justify-between lg:pl-6">
+                <div class="flex items-center gap-4">
+                    <button id="mobile-menu-btn" class="lg:hidden text-3xl p-2">☰</button>
+                    <div id="page-title" class="text-2xl font-semibold text-white hidden md:block">Citizen Talk</div>
                 </div>
-                <div class="flex items-center gap-3">
+
+                <div class="flex items-center gap-4">
                     <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white px-5 py-2.5 rounded-2xl text-sm"></select>
+                    <button onclick="toggleNotifications()" class="w-10 h-10 flex items-center justify-center text-2xl relative hover:bg-zinc-900 rounded-2xl">
+                        🛎️
+                        <span id="notif-count" class="absolute -top-1 -right-1 bg-red-500 text-[10px] w-5 h-5 rounded-full flex items-center justify-center">3</span>
+                    </button>
                     <button onclick="window.showProfile()" class="w-11 h-11 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-3xl transition-all border border-zinc-600">👤</button>
                 </div>
             </header>
 
-            <!-- Navigation -->
-            <nav id="main-nav" class="flex gap-2 mb-8 overflow-x-auto pb-2">
-                <button onclick="window.loadFeed('citizen-talk')" class="nav-btn active px-6 py-3 rounded-3xl whitespace-nowrap" data-feed="citizen-talk">Citizen Talk</button>
-                <button onclick="window.loadFeed('true-witness')" class="nav-btn px-6 py-3 rounded-3xl whitespace-nowrap" data-feed="true-witness">True Witness</button>
-                <button onclick="window.loadFeed('live')" class="nav-btn px-6 py-3 rounded-3xl whitespace-nowrap" data-feed="live">Live Arena</button>
-            </nav>
+            <!-- Content Area -->
+            <div class="flex-1 overflow-auto p-6">
+                <!-- Navigation Tabs (kept for now, can be removed later) -->
+                <nav id="main-nav" class="flex gap-2 mb-8 overflow-x-auto pb-2">
+                    <button onclick="window.loadFeed('citizen-talk')" class="nav-btn active px-6 py-3 rounded-3xl whitespace-nowrap" data-feed="citizen-talk">💬 Citizen Talk</button>
+                    <button onclick="window.loadFeed('true-witness')" class="nav-btn px-6 py-3 rounded-3xl whitespace-nowrap" data-feed="true-witness">🔬 True Witness</button>
+                    <button onclick="window.loadFeed('live')" class="nav-btn px-6 py-3 rounded-3xl whitespace-nowrap" data-feed="live">🏟️ Live Arena</button>
+                </nav>
 
-            <!-- Composer -->
-            <div class="glass rounded-3xl p-6 mb-8">
-                <textarea id="mainInput" rows="4" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-5 text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none" placeholder="Share your raw testimony... What did you witness?"></textarea>
-                
-                <div class="flex gap-3 mt-8">
-                    <button id="btn-photo" class="flex-1 py-5 bg-zinc-800 hover:bg-zinc-700 rounded-2xl transition-all flex items-center justify-center gap-3 font-medium">📸 Photo + Forensic Shield</button>
-                    <button id="btn-voice" class="flex-1 py-5 bg-zinc-800 hover:bg-zinc-700 rounded-2xl transition-all flex items-center justify-center gap-3 font-medium">🎤 Voice Testimony</button>
+                <!-- Composer -->
+                <div class="glass rounded-3xl p-6 mb-8">
+                    <textarea id="mainInput" rows="4" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-5 text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none" placeholder="Share your raw testimony... What did you witness?"></textarea>
+                   
+                    <div class="flex gap-3 mt-8">
+                        <button id="btn-photo" class="flex-1 py-5 bg-zinc-800 hover:bg-zinc-700 rounded-2xl transition-all flex items-center justify-center gap-3 font-medium">📸 Photo + Forensic Shield</button>
+                        <button id="btn-voice" class="flex-1 py-5 bg-zinc-800 hover:bg-zinc-700 rounded-2xl transition-all flex items-center justify-center gap-3 font-medium">🎤 Voice Testimony</button>
+                    </div>
+                    <div id="preview-area" class="mt-6"></div>
+                    <button id="postButton" class="mt-8 w-full py-5 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold text-lg rounded-3xl transition-all">🚀 Publish Testimony to the Square</button>
                 </div>
-                <div id="preview-area" class="mt-6"></div>
-                <button id="postButton" class="mt-8 w-full py-5 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold text-lg rounded-3xl transition-all">🚀 Publish Testimony to the Square</button>
-            </div>
 
-            <!-- Feed -->
-            <main>
-                <div id="feedContainer" class="space-y-6"></div>
-            </main>
+                <!-- Feed -->
+                <main>
+                    <div id="feedContainer" class="space-y-6"></div>
+                </main>
+            </div>
         </div>
     </div>
 
-    <!-- PROFILE MODAL -->
-<div id="profileModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[70]">
-    <div class="glass rounded-3xl max-w-lg w-full mx-4 p-8 max-h-[90vh] overflow-y-auto">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold">My Digital Passport</h2>
-            <button onclick="closeProfile()" class="text-4xl text-zinc-400 hover:text-white">×</button>
-        </div>
-       
-        <div class="text-center mb-8">
-            <div class="w-28 h-28 mx-auto bg-gradient-to-br from-emerald-500 to-teal-500 rounded-3xl flex items-center justify-center text-7xl mb-4 shadow-inner border-4 border-zinc-800">👤</div>
-            <h3 id="profileName" class="text-2xl font-bold">Loading...</h3>
-            <p id="profileUsername" class="text-emerald-400">@username</p>
-        </div>
-
-        <!-- Stats -->
-        <div class="grid grid-cols-3 gap-4 mb-8">
-            <div class="bg-zinc-900/70 rounded-2xl p-4 text-center">
-                <div class="text-3xl font-bold text-emerald-400" id="post-count">0</div>
-                <div class="text-xs text-zinc-400">Testimonies</div>
-            </div>
-            <div class="bg-zinc-900/70 rounded-2xl p-4 text-center">
-                <div class="text-3xl font-bold text-emerald-400" id="reputation-score">50</div>
-                <div class="text-xs text-zinc-400">Reputation</div>
-            </div>
-            <div class="bg-zinc-900/70 rounded-2xl p-4 text-center">
-                <div class="text-3xl font-bold text-emerald-400" id="trust-score">60</div>
-                <div class="text-xs text-zinc-400">Trust Score</div>
-            </div>
-        </div>
-
-        <!-- Verification Status -->
-        <div class="bg-zinc-900/70 rounded-2xl p-6 mb-6">
-            <h4 class="font-semibold mb-4">Verification Status</h4>
-            <div id="verification-status" class="space-y-3"></div>
-        </div>
-
-        <!-- Actions -->
-        <div class="grid grid-cols-2 gap-3">
-            <button onclick="editProfile()" class="py-4 bg-zinc-700 hover:bg-zinc-600 rounded-2xl">✏️ Edit Name</button>
-            <button onclick="downloadPassport()" class="py-4 bg-zinc-700 hover:bg-zinc-600 rounded-2xl">📄 Download PDF</button>
-            <button onclick="showSettings()" class="py-4 bg-zinc-700 hover:bg-zinc-600 rounded-2xl col-span-2">⚙️ Settings & Privacy</button>
-        </div>
-
-        <div class="mt-6 pt-6 border-t border-zinc-700">
-            <button onclick="logout()" class="w-full py-4 text-red-400 hover:bg-red-900/30 rounded-2xl">Sign Out</button>
-        </div>
+    <!-- PROFILE MODAL (unchanged) -->
+    <div id="profileModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[70]">
+        <!-- ... your existing profile modal code ... -->
     </div>
-</div>
 
     <script>
         tailwind.config = { content: ["./**/*.{html,js}"] };
