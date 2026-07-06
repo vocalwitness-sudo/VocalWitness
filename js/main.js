@@ -11,6 +11,7 @@ import { getCurrentUserTier, canAccessFeature, applyTierTheme } from './tier.js'
 import { initOnboarding } from './onboarding.js';
 import { loadDynamicNavigation, initMobileMenu } from './navigation.js';   // ← Updated import
 import * as supporters from './supporters.js';
+window.initiatePlatformSupport = supporters.initiatePlatformSupport;
 
 // Global variables
 let engineInstance = null;
@@ -162,8 +163,12 @@ async function bootstrap() {
     initLanguage();
     initOnboarding();
 
-    // Make current user available for the Support button
+    // Safe assignment for support button
+    if (currentUser) {
     window.currentUser = currentUser;
+    } else {
+    console.warn("currentUser not available yet");
+    }
 
     // Navigation
     loadDynamicNavigation();           // Removed .catch() - function is not async anymore
