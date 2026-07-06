@@ -49,6 +49,14 @@ window.loadFeed = async (feedType) => {
     }
 };
 
+window.goBack = function() {
+    if (window.history.length > 1) {
+        window.history.back();
+    } else {
+        window.location.href = '/';
+    }
+};
+
 window.publishTestimony = async () => {
     // ... (your existing publishTestimony function - unchanged)
     const textarea = document.getElementById('mainInput');
