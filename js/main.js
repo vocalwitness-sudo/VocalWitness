@@ -14,8 +14,20 @@ import { loadDynamicNavigation, initMobileMenu } from './navigation.js';   // �
 // Global variables
 let engineInstance = null;
 
-// ====================== GLOBAL FUNCTIONS ======================
-// Add this near the top with other window functions
+// ====================== GLOBAL HELPER FUNCTIONS ======================
+function gentleClientCheck(content) {
+    if (!content) return { safe: true };
+    
+    const lower = content.toLowerCase();
+    if (lower.includes("kill") || lower.includes("hate you") || /!{4,}/.test(content)) {
+        return {
+            safe: false,
+            message: "This feels very strong/passionate.\n\nConsider softening the tone so others can better understand your experience?"
+        };
+    }
+    return { safe: true };
+}
+
 window.toggleNotifications = function() {
     showToast("🛎️ Notifications coming soon!", "info");
 };
@@ -58,7 +70,6 @@ window.goBack = function() {
 };
 
 window.publishTestimony = async () => {
-    // ... (your existing publishTestimony function - unchanged)
     const textarea = document.getElementById('mainInput');
     const content = textarea?.value.trim() || "";
 
@@ -69,7 +80,7 @@ window.publishTestimony = async () => {
     const postBtn = document.getElementById('postButton');
     if (postBtn) {
         postBtn.disabled = true;
-        postBtn.textContent = 'Publishing...';
+        postBtn.textContent = 'Checking...';
     }
 
     try {
@@ -78,6 +89,19 @@ window.publishTestimony = async () => {
             showToast("Please sign in to publish", "error");
             return;
         }
+
+        // === Gentle Client-Side Check ===
+        const check = gentleClientCheck(content);
+        if (!check.safe) {
+            const proceed = confirm(check.message + "\n\nDo you still want to publish?");
+            if (!proceed) {
+                if (postBtn) postBtn.disabled = false;
+                return;
+            }
+        }
+
+        // Re-update text to publishing state if moving forward
+        if (postBtn) postBtn.textContent = 'Publishing...';
 
         const mediaData = await mediaModule.uploadForensicMedia(currentUser.uid);
 
@@ -93,10 +117,12 @@ window.publishTestimony = async () => {
             feedVisibility: "citizen-talk"
         });
 
-        showToast("✅ Testimony published!", "success");
+        showToast("✅ Testimony published! Thank you for sharing your truth.", "success");
+
         if (textarea) textarea.value = '';
         mediaModule.resetMediaState();
         window.loadFeed('citizen-talk');
+
     } catch (err) {
         console.error("Publish error:", err);
         showToast("Failed to publish: " + (err.message || "Unknown error"), "error");
@@ -110,7 +136,6 @@ window.publishTestimony = async () => {
 
 // ====================== TIER-AWARE COMPOSER ======================
 async function updateComposerForTier() {
-    // ... (your existing function - unchanged)
     const tier = await getCurrentUserTier();
     const btnPhoto = document.getElementById('btn-photo');
     const btnVoice = document.getElementById('btn-voice');
@@ -160,7 +185,6 @@ async function bootstrap() {
 }
 
 function attachUIListeners() {
-    // ... (your existing function - unchanged)
     const btnPhoto = document.getElementById('btn-photo');
     if (btnPhoto) {
         btnPhoto.addEventListener('click', () => {
