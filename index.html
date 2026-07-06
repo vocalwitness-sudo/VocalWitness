@@ -5,15 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#10b981">
     
-    <meta http-equiv="Content-Security-Policy" content="
-        default-src 'self';
-        script-src 'self' 'unsafe-inline' 'unsafe-eval' https:;
-        style-src 'self' 'unsafe-inline' https:;
-        img-src 'self' data: https: blob:;
-        media-src 'self' https: blob:;
-        connect-src 'self' https: wss:;
-        frame-src 'self' https: https://*.flutterwave.com;
-    ">
+ <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self' 'unsafe-inline' 'unsafe-eval' https:;
+    style-src 'self' 'unsafe-inline' https:;
+    img-src 'self' data: https: blob:;
+    media-src 'self' https: blob:;
+    connect-src 'self' https: wss:;
+    frame-src 'self' https: https://*.flutterwave.com https://checkout-v3.flutterwave.com;
+">
 
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="/logo.png" type="image/png">
