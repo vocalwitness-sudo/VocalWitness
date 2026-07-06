@@ -11,68 +11,29 @@
       "postcss.config.js"
     ],
     "rewrites": [
-      {
-        "source": "/verify",
-        "destination": "/verify.html"
-      },
-      {
-        "source": "/citizen-talk",
-        "destination": "/citizen-talk.html"
-      },
-      {
-        "source": "/true-witness",
-        "destination": "/true-witness.html"
-      },
-      {
-        "source": "/live-arena",
-        "destination": "/live-arena.html"
-      },
-      {
-        "source": "/my-testimonies",
-        "destination": "/my-testimonies.html"
-      },
-      {
-        "source": "/forensic-ledger",
-        "destination": "/forensic-ledger.html"
-      },
-      {
-        "source": "/privacy",
-        "destination": "/privacy.html"
-      },
-      {
-        "source": "/terms",
-        "destination": "/terms.html"
-      },
-      {
-        "source": "/safety",
-        "destination": "/safety.html"
-      },
-      {
-        "source": "/about",
-        "destination": "/about.html"
-      },
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
+      { "source": "/verify", "destination": "/verify.html" },
+      { "source": "/citizen-talk", "destination": "/citizen-talk.html" },
+      { "source": "/true-witness", "destination": "/true-witness.html" },
+      { "source": "/live-arena", "destination": "/live-arena.html" },
+      { "source": "/my-testimonies", "destination": "/my-testimonies.html" },
+      { "source": "/forensic-ledger", "destination": "/forensic-ledger.html" },
+      { "source": "/privacy", "destination": "/privacy.html" },
+      { "source": "/terms", "destination": "/terms.html" },
+      { "source": "/safety", "destination": "/safety.html" },
+      { "source": "/about", "destination": "/about.html" },
+      { "source": "**", "destination": "/index.html" }
     ],
     "headers": [
       {
-        "source": "**/*.@(js|css|png|jpg|jpeg|gif|ico|svg)",
+        "source": "**/*.@(js|css|png|jpg|jpeg|gif|ico|svg|webm)",
         "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "max-age=3600"
-          }
+          { "key": "Cache-Control", "value": "max-age=3600" }
         ]
       },
       {
         "source": "**/*.html",
         "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "no-cache, no-store, must-revalidate"
-          }
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
         ]
       },
       {
@@ -80,7 +41,7 @@
         "headers": [
           {
             "key": "Content-Security-Policy",
-            "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://*.firebaseio.com https://*.googleapis.com https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://checkout.flutterwave.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; img-src 'self' data: https:; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com wss://*.firebaseio.com; frame-src 'self' https://checkout-v3.flutterwave.com https://*.flutterwave.com;"
+            "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https: blob:; media-src 'self' https: blob:; connect-src 'self' https: wss:; frame-src 'self' https:;"
           }
         ]
       }
