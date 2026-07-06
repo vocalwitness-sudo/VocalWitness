@@ -121,30 +121,31 @@ window.publishTestimony = async () => {
 };
 
 // ====================== BOOTSTRAP ======================
+// ====================== BOOTSTRAP (CLEAN FINAL) ======================
 async function bootstrap() {
     console.log("🚀 Starting VocalWitness...");
 
     await initAuth();
-    // Near the top of bootstrap(), wrap the engine creation:
-try {
-    const engineModule = await import('./vocalWitnessEngine.js');
-    engineInstance = new engineModule.CitizenTalkEngine(db, storage);
-    window.engineInstance = engineInstance;
-    if (mediaModule && typeof mediaModule.setEngine === 'function') {
-        mediaModule.setEngine(engineInstance);
-    }
-    console.log("✅ CitizenTalkEngine loaded successfully");
-} catch (err) {
-    console.error("⚠️ Engine failed to load:", err);
-    // Fallback so the rest of the app works
-    engineInstance = { 
-        startVoiceRecording: () => console.warn("Engine not available"),
-        stopVoiceRecording: () => {}
-    };
-    window.engineInstance = engineInstance;
-}
 
-    // Wait for auth + make currentUser available
+    // Engine (with fallback)
+    try {
+        const engineModule = await import('./vocalWitnessEngine.js');
+        engineInstance = new engineModule.CitizenTalkEngine(db, storage);
+        window.engineInstance = engineInstance;
+        if (mediaModule && typeof mediaModule.setEngine === 'function') {
+            mediaModule.setEngine(engineInstance);
+        }
+        console.log("✅ CitizenTalkEngine loaded successfully");
+    } catch (err) {
+        console.error("⚠️ Engine failed to load:", err);
+        engineInstance = {
+            startVoiceRecording: () => console.warn("Engine not available"),
+            stopVoiceRecording: () => {}
+        };
+        window.engineInstance = engineInstance;
+    }
+
+    // Auth ready
     if (!auth.currentUser && !window.currentUser) {
         await new Promise(resolve => {
             const unsubscribe = auth.onAuthStateChanged(user => {
@@ -168,18 +169,6 @@ try {
         await updateComposerForTier();
     } catch (e) {
         console.warn("Tier initialization skipped:", e);
-    }
-
-    // FIXED: Engine + Storage
-    if (typeof storage === 'undefined') {
-        console.error("❌ storage is not defined from firebase-config");
-        showToast("Storage failed to load", "error");
-    } else {
-        engineInstance = new CitizenTalkEngine(db, storage);
-        window.engineInstance = engineInstance;
-        if (typeof mediaModule.setEngine === 'function') {
-            mediaModule.setEngine(engineInstance);
-        }
     }
 
     attachUIListeners();
