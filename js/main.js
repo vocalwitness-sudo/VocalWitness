@@ -125,6 +125,24 @@ async function bootstrap() {
     console.log("🚀 Starting VocalWitness...");
 
     await initAuth();
+    // Near the top of bootstrap(), wrap the engine creation:
+try {
+    const engineModule = await import('./vocalWitnessEngine.js');
+    engineInstance = new engineModule.CitizenTalkEngine(db, storage);
+    window.engineInstance = engineInstance;
+    if (mediaModule && typeof mediaModule.setEngine === 'function') {
+        mediaModule.setEngine(engineInstance);
+    }
+    console.log("✅ CitizenTalkEngine loaded successfully");
+} catch (err) {
+    console.error("⚠️ Engine failed to load:", err);
+    // Fallback so the rest of the app works
+    engineInstance = { 
+        startVoiceRecording: () => console.warn("Engine not available"),
+        stopVoiceRecording: () => {}
+    };
+    window.engineInstance = engineInstance;
+}
 
     // Wait for auth + make currentUser available
     if (!auth.currentUser && !window.currentUser) {
