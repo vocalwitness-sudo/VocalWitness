@@ -10,6 +10,7 @@ import { initAdminDashboard } from './admin.js';
 import { getCurrentUserTier, canAccessFeature, applyTierTheme } from './tier.js';
 import { initOnboarding } from './onboarding.js';
 import { loadDynamicNavigation, initMobileMenu } from './navigation.js';   // ← Updated import
+import * as supporters from './supporters.js';
 
 // Global variables
 let engineInstance = null;
@@ -60,6 +61,8 @@ window.loadFeed = async (feedType) => {
         initFeed(db, feedType);
     }
 };
+
+window.initiatePlatformSupport = supporters.initiatePlatformSupport;
 
 window.goBack = function() {
     if (window.history.length > 1) {
@@ -158,6 +161,9 @@ async function bootstrap() {
     await initAuth();
     initLanguage();
     initOnboarding();
+
+    // Make current user available for the Support button
+    window.currentUser = currentUser;
 
     // Navigation
     loadDynamicNavigation();           // Removed .catch() - function is not async anymore
