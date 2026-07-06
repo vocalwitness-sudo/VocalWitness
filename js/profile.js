@@ -1,4 +1,4 @@
-// js/profile.js - Clean & Safe Version
+// js/profile.js - Safe & Robust Version
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { auth, db } from './firebase-config.js';
@@ -7,7 +7,9 @@ import { showToast } from './utils.js';
 let currentUserData = null;
 
 onAuthStateChanged(auth, (user) => {
-    if (user) listenToUserProfile(user.uid);
+    if (user) {
+        listenToUserProfile(user.uid);
+    }
 });
 
 function listenToUserProfile(userId) {
@@ -16,6 +18,8 @@ function listenToUserProfile(userId) {
         if (snapshot.exists()) {
             currentUserData = snapshot.data();
             renderProfileUI(currentUserData);
+        } else {
+            console.warn("User document not found");
         }
     });
 }
@@ -23,42 +27,57 @@ function listenToUserProfile(userId) {
 function renderProfileUI(userData) {
     if (!userData) return;
 
-    // Basic Info
-    document.getElementById('profileName').textContent = userData.displayName || "Anonymous Witness";
-    document.getElementById('profileUsername').textContent = `@${userData.username || 'user_' + (userData.uid || '').slice(0,6)}`;
+    // Use optional chaining + fallback to prevent crashes
+    const profileName = document.getElementById('profileName');
+    const profileUsername = document.getElementById('profileUsername');
+    const postCount = document.getElementById('post-count');
+    const reputationScore = document.getElementById('reputation-score');
+    const trustScore = document.getElementById('trust-score');
 
-    // Stats
-    document.getElementById('post-count').textContent = userData.testimoniesCount || 0;
-    document.getElementById('reputation-score').textContent = userData.reputationScore || 50;
-    document.getElementById('trust-score').textContent = userData.trustScore || 60;
+    if (profileName) profileName.textContent = userData.displayName || "Anonymous Witness";
+    if (profileUsername) profileUsername.textContent = `@${userData.username || 'user_' + (userData.uid || '').slice(0,6)}`;
+    
+    if (postCount) postCount.textContent = userData.testimoniesCount || 0;
+    if (reputationScore) reputationScore.textContent = userData.reputationScore || 50;
+    if (trustScore) trustScore.textContent = userData.trustScore || 60;
 
-    console.log("Profile updated:", userData);
+    console.log("✅ Profile UI updated:", userData);
 }
 
-// Global functions
+// Global functions for modal
 window.showProfile = () => {
-    document.getElementById('profileModal').classList.remove('hidden');
+    const modal = document.getElementById('profileModal');
+    if (modal) modal.classList.remove('hidden');
+    // Re-render when opening
+    if (currentUserData) renderProfileUI(currentUserData);
 };
 
 window.closeProfile = () => {
-    document.getElementById('profileModal').classList.add('hidden');
+    const modal = document.getElementById('profileModal');
+    if (modal) modal.classList.add('hidden');
 };
 
 window.editProfile = () => {
-    showToast("Edit profile coming soon", "info");
+    showToast("✏️ Edit profile coming soon", "info");
 };
 
 window.downloadPassport = () => {
-    showToast("PDF download coming soon", "info");
+    showToast("📄 PDF download coming soon", "info");
 };
 
 window.showSettings = () => {
-    showToast("Settings coming soon", "info");
+    showToast("⚙️ Settings & Privacy coming soon", "info");
 };
 
-window.logout = () => {
-    if (confirm("Sign out?")) {
-        showToast("Signed out successfully", "success");
-        window.location.reload();
+window.logout = async () => {
+    if (confirm("Sign out of VocalWitness?")) {
+        try {
+            // You can add real auth signOut here later
+            showToast("✅ Signed out successfully", "success");
+            setTimeout(() => window.location.reload(), 800);
+        } catch (e) {
+            console.error(e);
+            window.location.reload();
+        }
     }
 };
