@@ -1,4 +1,4 @@
-// js/feed.js - Enhanced with Action Menu
+// js/feed.js - Enhanced with Action Menu & Moderation Filtering
 import {
     collection, query, orderBy, onSnapshot, where, limit, doc, updateDoc, deleteDoc
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
@@ -30,19 +30,42 @@ export function initFeed(dbInstance, feedType = 'citizen-talk') {
             feedContainer.innerHTML = `<div class="text-center py-12 text-zinc-400">No testimonies yet. Be the first!</div>`;
             return;
         }
+        
+        let visiblePostsCount = 0;
         snapshot.forEach((docSnap) => {
-            renderPost(docSnap.id, docSnap.data());
+            const added = renderPost(docSnap.id, docSnap.data());
+            if (added) visiblePostsCount++;
         });
+
+        if (visiblePostsCount === 0) {
+            feedContainer.innerHTML = `<div class="text-center py-12 text-zinc-400">No public testimonies available right now.</div>`;
+        }
     });
 }
 
 function renderPost(id, data) {
+    // === Moderation Filtering ===
+    // Hide heavily flagged content from main feed
+    if (data.needsHumanReview === true && data.moderationSafe === false) {
+        return false; // Skip rendering this post
+    }
+
     const postEl = document.createElement('div');
     postEl.className = 'post-card glass rounded-3xl p-6 mb-6 transition-all hover:scale-[1.01]';
 
     let mediaHTML = '';
     if (data.imageUrl) mediaHTML += `<img src="${data.imageUrl}" class="rounded-2xl mt-4 w-full object-cover max-h-96" alt="Evidence">`;
     if (data.audioUrl) mediaHTML += `<audio controls class="w-full mt-4"><source src="${data.audioUrl}" type="audio/webm"></audio>`;
+
+    // Render an optional safe-flag warning badge or note if provided by moderation
+    let moderationNoticeHTML = '';
+    if (data.moderationNote) {
+        moderationNoticeHTML = `
+            <div class="mt-4 text-xs text-amber-400 bg-amber-900/30 p-3 rounded-2xl">
+                ⚠️ ${data.moderationNote}
+            </div>
+        `;
+    }
 
     postEl.innerHTML = `
         <div class="flex justify-between items-start">
@@ -58,6 +81,7 @@ function renderPost(id, data) {
 
         ${data.content ? `<p class="my-4 text-zinc-100 leading-relaxed">${data.content}</p>` : ''}
         ${mediaHTML}
+        ${moderationNoticeHTML}
 
         <div class="flex items-center justify-between mt-6 pt-4 border-t border-zinc-700 text-sm">
             <div class="flex gap-6">
@@ -73,6 +97,7 @@ function renderPost(id, data) {
     `;
 
     document.getElementById('feedContainer').appendChild(postEl);
+    return true;
 }
 
 // Post Action Menu
