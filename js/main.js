@@ -10,7 +10,7 @@ import { initOnboarding } from './onboarding.js';
 import { loadDynamicNavigation, initMobileMenu } from './navigation.js';
 import * as supporters from './supporters.js';
 import { db, auth, storage } from './firebase-config.js';
-import { CitizenTalkEngine } from './js/vocalWitnessEngine.js';
+import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
 
 
 window.initiatePlatformSupport = supporters.initiatePlatformSupport;
