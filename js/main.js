@@ -121,15 +121,15 @@ window.publishTestimony = async () => {
 };
 
 // ====================== BOOTSTRAP ======================
-// ====================== BOOTSTRAP (CLEAN FINAL) ======================
+// ====================== BOOTSTRAP (FINAL) ======================
 async function bootstrap() {
     console.log("🚀 Starting VocalWitness...");
 
     await initAuth();
 
-    // Engine (with fallback)
+    // Engine with correct path + fallback
     try {
-        const engineModule = await import('./vocalWitnessEngine.js');
+        const engineModule = await import('../vocalWitnessEngine.js');
         engineInstance = new engineModule.CitizenTalkEngine(db, storage);
         window.engineInstance = engineInstance;
         if (mediaModule && typeof mediaModule.setEngine === 'function') {
