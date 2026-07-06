@@ -28,6 +28,14 @@
         "destination": "/live-arena.html"
       },
       {
+        "source": "/my-testimonies",
+        "destination": "/my-testimonies.html"
+      },
+      {
+        "source": "/forensic-ledger",
+        "destination": "/forensic-ledger.html"
+      },
+      {
         "source": "/privacy",
         "destination": "/privacy.html"
       },
