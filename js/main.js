@@ -4,13 +4,14 @@ import { initFeed } from './feed.js';
 import { showToast } from './utils.js';
 import { initLanguage } from './i18n.js';
 import * as mediaModule from './media.js';
-import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
+import { CitizenTalkEngine } from './vocalWitnessEngine.js';
 import { initAdminDashboard } from './admin.js';
 import { getCurrentUserTier, canAccessFeature, applyTierTheme } from './tier.js';
 import { initOnboarding } from './onboarding.js';
 import { loadDynamicNavigation, initMobileMenu } from './navigation.js';
 import * as supporters from './supporters.js';
 import { db, auth, storage } from './firebase-config.js';
+
 
 window.initiatePlatformSupport = supporters.initiatePlatformSupport;
 
