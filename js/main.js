@@ -1,4 +1,4 @@
-// js/main.js - FINAL CLEAN VERSION
+// js/main.js - FINAL CLEAN VERSION (Updated Navigation)
 import { initAuth } from "./auth.js";
 import { initFeed } from './feed.js';
 import { db, auth, storage } from './firebase-config.js';
@@ -9,13 +9,14 @@ import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
 import { initAdminDashboard } from './admin.js';
 import { getCurrentUserTier, canAccessFeature, applyTierTheme } from './tier.js';
 import { initOnboarding } from './onboarding.js';
-import { loadDynamicNavigation } from './navigation.js';
+import { loadDynamicNavigation, initMobileMenu } from './navigation.js';   // ← Updated import
 
 // Global variables
 let engineInstance = null;
 
 // ====================== GLOBAL FUNCTIONS ======================
 window.loadFeed = async (feedType) => {
+    // Update top nav buttons
     document.querySelectorAll('#main-nav button').forEach(btn => btn.classList.remove('active'));
     const active = document.querySelector(`button[data-feed="${feedType}"]`);
     if (active) active.classList.add('active');
@@ -44,6 +45,7 @@ window.loadFeed = async (feedType) => {
 };
 
 window.publishTestimony = async () => {
+    // ... (your existing publishTestimony function - unchanged)
     const textarea = document.getElementById('mainInput');
     const content = textarea?.value.trim() || "";
 
@@ -95,6 +97,7 @@ window.publishTestimony = async () => {
 
 // ====================== TIER-AWARE COMPOSER ======================
 async function updateComposerForTier() {
+    // ... (your existing function - unchanged)
     const tier = await getCurrentUserTier();
     const btnPhoto = document.getElementById('btn-photo');
     const btnVoice = document.getElementById('btn-voice');
@@ -104,7 +107,6 @@ async function updateComposerForTier() {
         if (btnPhoto) btnPhoto.innerHTML = '📸 Forensic Shield + Hash';
         if (btnVoice) btnVoice.innerHTML = '🎤 Voice with Integrity Proof';
         if (postButton) postButton.innerHTML = '🔒 Publish Verified Testimony';
-
         showToast("🔬 True Witness Mode Active — Forensic tools enabled", "success");
     } else if (tier === 'trust_circle') {
         if (btnPhoto) btnPhoto.innerHTML = '📸 Photo + Basic Shield';
@@ -117,8 +119,11 @@ async function bootstrap() {
 
     await initAuth();
     initLanguage();
-    initOnboarding();                    // ← Legal + Welcome flow
+    initOnboarding();
+
+    // === NEW NAVIGATION CALLS ===
     loadDynamicNavigation().catch(console.error);
+    initMobileMenu();                    // ← New: Mobile menu support
 
     // Tier System
     try {
@@ -136,13 +141,13 @@ async function bootstrap() {
 
     attachUIListeners();
     initPhoneCountrySelector();
-    
+   
     setTimeout(() => window.loadFeed('citizen-talk'), 800);
-
     console.log("✅ VocalWitness initialized");
 }
 
 function attachUIListeners() {
+    // ... (your existing function - unchanged)
     const btnPhoto = document.getElementById('btn-photo');
     if (btnPhoto) {
         btnPhoto.addEventListener('click', () => {
