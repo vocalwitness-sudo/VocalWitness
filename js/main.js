@@ -10,14 +10,13 @@ import { getCurrentUserTier, canAccessFeature, applyTierTheme } from './tier.js'
 import { initOnboarding } from './onboarding.js';
 import { loadDynamicNavigation, initMobileMenu } from './navigation.js';
 import * as supporters from './supporters.js';
-// At the very top, fix the import:
-import { db, auth, storage } from './firebase-config.js';   // ← make sure storage is exported
+import { db, auth, storage } from './firebase-config.js';
 
 window.initiatePlatformSupport = supporters.initiatePlatformSupport;
 
 // Global variables
 let engineInstance = null;
-window.currentUser = null;   // ← Make it globally available
+window.currentUser = null;
 
 // ====================== GLOBAL HELPER FUNCTIONS ======================
 function gentleClientCheck(content) {
@@ -120,7 +119,7 @@ window.publishTestimony = async () => {
     }
 };
 
-// ====================== BOOTSTRAP (FIXED) ======================
+// ====================== BOOTSTRAP ======================
 async function bootstrap() {
     console.log("🚀 Starting VocalWitness...");
 
@@ -152,9 +151,15 @@ async function bootstrap() {
         console.warn("Tier initialization skipped:", e);
     }
 
-    engineInstance = new CitizenTalkEngine(db, storage); // ← storage missing? import if needed
-    window.engineInstance = engineInstance;
-    mediaModule.setEngine(engineInstance);
+    // FIXED: Ensure storage is available
+    if (typeof storage === 'undefined') {
+        console.error("❌ storage is not defined. Check firebase-config.js");
+        showToast("Storage module failed to load. Check firebase-config.js", "error");
+    } else {
+        engineInstance = new CitizenTalkEngine(db, storage);
+        window.engineInstance = engineInstance;
+        mediaModule.setEngine(engineInstance);
+    }
 
     attachUIListeners();
     initPhoneCountrySelector();
