@@ -9,7 +9,10 @@ export const menuItems = [
 
 export function loadDynamicNavigation() {
     const navContainer = document.getElementById('main-sidebar-nav');
-    if (!navContainer) return;
+    if (!navContainer) {
+        console.warn("Sidebar nav container not found");
+        return;
+    }
 
     navContainer.innerHTML = '';
 
