@@ -120,17 +120,14 @@ window.publishTestimony = async () => {
     }
 };
 
-// ====================== BOOTSTRAP ======================
-// ====================== BOOTSTRAP (FINAL) ======================
 async function bootstrap() {
     console.log("🚀 Starting VocalWitness...");
 
     await initAuth();
 
-    // Engine with correct path + fallback
+    // Use the static import you already have at the top
     try {
-        const engineModule = await import('../vocalWitnessEngine.js');
-        engineInstance = new engineModule.CitizenTalkEngine(db, storage);
+        engineInstance = new CitizenTalkEngine(db, storage);
         window.engineInstance = engineInstance;
         if (mediaModule && typeof mediaModule.setEngine === 'function') {
             mediaModule.setEngine(engineInstance);
@@ -145,7 +142,7 @@ async function bootstrap() {
         window.engineInstance = engineInstance;
     }
 
-    // Auth ready
+    // Rest of bootstrap...
     if (!auth.currentUser && !window.currentUser) {
         await new Promise(resolve => {
             const unsubscribe = auth.onAuthStateChanged(user => {
@@ -161,7 +158,6 @@ async function bootstrap() {
     loadDynamicNavigation();
     initMobileMenu();
 
-    // Tier System
     try {
         const tier = await getCurrentUserTier();
         applyTierTheme(tier);
