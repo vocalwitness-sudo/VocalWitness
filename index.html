@@ -11,8 +11,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
-    <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white px-5 py-2.5 rounded-2xl text-sm focus:outline-none focus:border-emerald-500"></select>
-    
+   
     <style>
         body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: white; }
         .glass { background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(16, 185, 129, 0.25); }
@@ -41,6 +40,10 @@
                 </div>
             </div>
             <div class="flex items-center gap-3">
+                <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white px-5 py-2.5 rounded-2xl text-sm focus:outline-none focus:border-emerald-500"></select>
+                <select id="languageSelector" aria-label="Select your language" 
+        class="bg-zinc-900 border border-zinc-700 text-white px-5 py-2.5 rounded-2xl text-sm focus:outline-none focus:border-emerald-500">
+                </select>
                 <button onclick="showGuardian()" class="guardian-btn px-6 py-3 rounded-2xl flex items-center gap-2 shadow-xl hover:scale-105 transition-all text-sm font-semibold">🛡️ Guardian Witness</button>
                 <button onclick="showProfile()" class="w-11 h-11 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-3xl transition-all border border-zinc-600 flex items-center justify-center">👤</button>
             </div>
