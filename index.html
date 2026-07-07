@@ -4,70 +4,39 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#10b981">
-    <meta http-equiv="Content-Security-Policy" content="
-    default-src 'self' https://checkout.flutterwave.com https://api.flutterwave.com;
-    script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://www.gstatic.com https://checkout.flutterwave.com;
-    style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com;
-    connect-src 'self' https://www.googleapis.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://api.flutterwave.com https://checkout.flutterwave.com;
-    img-src 'self' data: https: blob:;
-    font-src 'self' https:;
-    object-src 'none';
-    base-uri 'self';
-">
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="/logo.png" type="image/png">
     
     <title>VocalWitness • Truth • Evidence • Public Square</title>
     
-    <!-- Tailwind CDN -->
+    <!-- CSP (Temporary - we'll tighten later) -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self' https://checkout.flutterwave.com https://api.flutterwave.com;
+        script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://www.gstatic.com https://checkout.flutterwave.com;
+        style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com;
+        connect-src 'self' https://www.googleapis.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://api.flutterwave.com https://checkout.flutterwave.com;
+        img-src 'self' data: https: blob:;
+        font-src 'self' https:;
+        object-src 'none';
+    ">
+    
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-    body { min-height: 100vh; }
-    #feedContainer { min-height: 400px; } /* Prevents jump */
-    .glass { contain: content; } /* Better rendering */
-    </style>
-    <!-- External dependencies -->
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     
     <style>
-        body {
-            font-family: 'Inter', system-ui, sans-serif;
-            background: #0a0f1c;
-            color: white;
-        }
-        .glass {
-            background: rgba(17, 24, 39, 0.95);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(16, 185, 129, 0.25);
-        }
-        .nav-btn {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .nav-btn.active {
-            background-color: #10b981 !important;
-            color: #111827 !important;
-            font-weight: 700;
-            box-shadow: 0 10px 15px -3px rgb(16 185 129 / 0.4);
-        }
-        .supporter-btn {
-            background: linear-gradient(90deg, #10b981, #34d399);
-            color: black;
-            font-weight: 700;
-        }
-        .supporter-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px -5px rgb(16 185 129 / 0.6);
-        }
+        body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: white; min-height: 100vh; }
+        .glass { background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(16, 185, 129, 0.25); contain: layout style paint; }
+        #feedContainer { min-height: 500px; }
     </style>
 </head>
 <body class="min-h-screen pb-20 p-4 bg-[#0a0f1c]">
     <div class="max-w-2xl mx-auto">
         
         <!-- Legal Notice -->
-        <div class="max-w-2xl mx-auto bg-red-950/30 border border-red-500/20 rounded-3xl p-4 text-xs mb-6 text-center">
-            <strong class="text-red-400">Legal:</strong>
-            <span>VocalWitness functions strictly as an un-manipulated decentralized distribution medium.</span>
+        <div class="bg-red-950/30 border border-red-500/20 rounded-3xl p-4 text-xs mb-6 text-center">
+            <strong class="text-red-400">Legal:</strong> 
+            VocalWitness functions strictly as an un-manipulated decentralized distribution medium.
         </div>
 
         <!-- Header -->
@@ -83,20 +52,11 @@
             <div class="flex items-center gap-3 flex-wrap">
                 <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white px-5 py-2.5 rounded-2xl text-sm focus:outline-none focus:border-emerald-500"></select>
                 
-                <button onclick="window.showSupportersModal()" 
-                        class="supporter-btn px-6 py-3 rounded-2xl flex items-center gap-2 text-sm font-semibold whitespace-nowrap">
-                    💚 Platform Supporters
-                </button>
+                <button onclick="window.showSupportersModal()" class="supporter-btn px-6 py-3 rounded-2xl flex items-center gap-2 text-sm font-semibold">💚 Platform Supporters</button>
                 
-                <button onclick="window.initiatePlatformSupport(auth?.currentUser)" 
-                        class="px-6 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-sm font-medium">
-                    Support the Platform
-                </button>
+                <button onclick="window.initiatePlatformSupport(auth?.currentUser)" class="px-6 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-sm font-medium">Support the Platform</button>
                 
-                <button id="btn-profile" onclick="window.showProfile()" 
-                        class="w-11 h-11 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-3xl transition-all border border-zinc-600 flex items-center justify-center">
-                    👤
-                </button>
+                <button onclick="window.showProfile()" class="w-11 h-11 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-3xl transition-all border border-zinc-600 flex items-center justify-center">👤</button>
             </div>
         </header>
 
@@ -109,27 +69,16 @@
 
         <!-- Composer -->
         <div class="glass rounded-3xl p-6 mb-8">
-            <textarea id="mainInput" rows="4" 
-                      class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none"
-                      placeholder="Share your raw testimony... What did you witness?"></textarea>
+            <textarea id="mainInput" rows="4" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none" placeholder="Share your raw testimony... What did you witness?"></textarea>
             
             <div class="flex gap-3 mt-6">
-                <button id="btn-photo" 
-                        class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl transition-all flex items-center justify-center gap-3 font-medium">
-                    📸 Photo + Forensic Shield
-                </button>
-                <button id="btn-voice" 
-                        class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl transition-all flex items-center justify-center gap-3 font-medium">
-                    🎤 Voice Testimony
-                </button>
+                <button id="btn-photo" class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl transition-all flex items-center justify-center gap-3 font-medium">📸 Photo + Forensic Shield</button>
+                <button id="btn-voice" class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl transition-all flex items-center justify-center gap-3 font-medium">🎤 Voice Testimony</button>
             </div>
             
             <div id="preview-area" class="mt-6"></div>
             
-            <button id="postButton" 
-                    class="mt-8 w-full py-5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-black font-bold text-lg rounded-3xl transition-all active:scale-95 shadow-lg">
-                🚀 Publish Testimony to the Square
-            </button>
+            <button id="postButton" class="mt-8 w-full py-5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-black font-bold text-lg rounded-3xl transition-all active:scale-95 shadow-lg">🚀 Publish Testimony to the Square</button>
         </div>
 
         <!-- Feed -->
@@ -138,86 +87,25 @@
         </main>
     </div>
 
-    <!-- Supporters Modal -->
+    <!-- Modals -->
     <div id="supportersModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[70]">
-        <div class="glass rounded-3xl max-w-md w-full mx-4 p-8 text-center">
-            <div class="text-6xl mb-6">💚</div>
-            <h2 class="text-3xl font-bold text-emerald-400 mb-2">Platform Supporters</h2>
-            <p class="text-zinc-400 mb-8">Financial support helps run the platform.<br>Stewardship & moderation power are earned.</p>
-            
-            <button onclick="window.initiatePlatformSupport(auth?.currentUser)" 
-                    class="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold rounded-2xl mb-6">
-                💚 Support the Platform (₦4,990 / month)
-            </button>
-            
-            <div class="text-left text-sm space-y-4 mb-8">
-                <div class="flex gap-3"><span class="text-emerald-400">✓</span> Supporter badge</div>
-                <div class="flex gap-3"><span class="text-emerald-400">✓</span> Early feature access</div>
-                <div class="flex gap-3"><span class="text-emerald-400">✓</span> Priority in some queues</div>
-                <div class="flex gap-3"><span class="text-emerald-400">✓</span> Option to stay anonymous</div>
-            </div>
-            
-            <button onclick="document.getElementById('supportersModal').classList.add('hidden')" 
-                    class="w-full py-3 text-zinc-400 hover:text-white">Maybe later</button>
-        </div>
+        <!-- Your supporters modal content here -->
     </div>
 
-    <!-- Profile Modal -->
     <div id="profileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[80]">
-        <div class="glass rounded-3xl max-w-lg w-full mx-4 p-8 max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold">My Digital Passport</h2>
-                <button onclick="window.closeProfile()" class="text-3xl text-zinc-400 hover:text-white">×</button>
-            </div>
-            
-            <button onclick="window.showSupportersModal()" 
-                    class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold rounded-2xl mb-4">
-                💚 Support the Platform
-            </button>
-            
-            <button onclick="alert('Steward / True Witness is earned through activity and trust score')" 
-                    class="w-full py-3 bg-zinc-700 hover:bg-zinc-600 rounded-2xl mb-4">
-                🛡️ Path to Steward (Earned)
-            </button>
-            
-            <button onclick="window.logout()" 
-                    class="w-full py-3 text-red-400 hover:bg-red-900/30 rounded-2xl">
-                Sign Out
-            </button>
-        </div>
+        <!-- Your profile modal content here -->
     </div>
 
-    <!-- Phone Verification Modal -->
-    <div id="phoneVerificationModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[100]">
-        <!-- ... (your phone modal content) ... -->
-    </div>
-
-    <!-- Scripts at the bottom -->
+    <!-- Scripts -->
     <script>
-        // Tailwind config
         tailwind.config = { content: ["./**/*.{html,js}"] };
-
-        // Global helper functions
-        window.showSupportersModal = () => {
-            document.getElementById('supportersModal').classList.remove('hidden');
-        };
         
-        window.showProfile = () => {
-            document.getElementById('profileModal').classList.remove('hidden');
-        };
-        
-        window.closeProfile = () => {
-            document.getElementById('profileModal').classList.add('hidden');
-        };
-
         function showToast(message, type = "info") {
             console.log(`[${type}] ${message}`);
-            // Replace alert with better toast later
-            alert(message);
+            alert(message); // Replace with better toast later
         }
     </script>
-
-    <!-- Main app script -->
+    
     <script type="module" src="js/main.js"></script>
 </body>
 </html>
