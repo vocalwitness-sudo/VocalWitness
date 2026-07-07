@@ -7,6 +7,7 @@ import { initLanguage } from './i18n.js';
 import * as mediaModule from './media.js';
 import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
 import { doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { initiatePlatformSupport } from './supporters.js';
 
 let engineInstance = null;
 let profileUnsubscribe = null;
