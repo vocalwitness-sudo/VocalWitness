@@ -45,6 +45,8 @@ window.toggleAnonymous = () => {
     // Toggle logic here
     showToast("Anonymous mode toggled", "success");
 };
+window.changePassword = () => alert("Password change coming soon (Email/Password users)");
+window.editProfile = () => alert("Name change limited to once every 90 days for ZK users");
 
 
 window.publishTestimony = async () => {
