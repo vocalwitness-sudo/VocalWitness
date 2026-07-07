@@ -48,6 +48,11 @@ window.toggleAnonymous = () => {
 window.changePassword = () => alert("Password change coming soon (Email/Password users)");
 window.editProfile = () => alert("Name change limited to once every 90 days for ZK users");
 
+window.navigateToPage = (page) => {
+    window.location.href = page;
+};
+
+
 window.toggleMoreMenu = () => {
     const menu = document.getElementById('moreMenu');
     menu.classList.toggle('hidden');
@@ -55,9 +60,9 @@ window.toggleMoreMenu = () => {
 
 // Close menu when clicking outside
 document.addEventListener('click', (e) => {
-    const menu = document.getElementById('moreMenu');
     if (!e.target.closest('.relative')) {
-        menu.classList.add('hidden');
+        const menu = document.getElementById('moreMenu');
+        if (menu) menu.classList.add('hidden');
     }
 });
 
