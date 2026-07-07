@@ -40,8 +40,8 @@
                 </div>
             </div>
             <div class="flex items-center gap-3">
-                <button id="btn-guardian" class="guardian-btn px-6 py-3 rounded-2xl flex items-center gap-2 shadow-xl hover:scale-105 transition-all text-sm font-semibold">🛡️ Guardian Witness</button>
-                <button id="btn-profile" onclick="showProfile()" class="w-11 h-11 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-3xl transition-all border border-zinc-600 flex items-center justify-center">👤</button>
+                <button onclick="showGuardian()" class="guardian-btn px-6 py-3 rounded-2xl flex items-center gap-2 shadow-xl hover:scale-105 transition-all text-sm font-semibold">🛡️ Guardian Witness</button>
+                <button onclick="showProfile()" class="w-11 h-11 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-3xl transition-all border border-zinc-600 flex items-center justify-center">👤</button>
             </div>
         </header>
 
@@ -88,91 +88,89 @@
         </div>
     </div>
 
-    <!-- Profile Modal -->
-    <!-- PROFILE MODAL -->
-<div id="profileModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[70]">
-    <div class="glass rounded-3xl max-w-lg w-full mx-4 p-8 max-h-[90vh] overflow-y-auto">
-        
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold">My Digital Passport</h2>
-            <button onclick="closeProfile()" class="text-3xl text-zinc-400 hover:text-white">×</button>
-        </div>
+    <!-- PHASE 2 PROFILE MODAL -->
+    <div id="profileModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[70]">
+        <div class="glass rounded-3xl max-w-lg w-full mx-4 p-8 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">My Digital Passport</h2>
+                <button onclick="closeProfile()" class="text-3xl text-zinc-400 hover:text-white">×</button>
+            </div>
 
-        <!-- Profile Header -->
-        <div class="text-center mb-8">
-            <div onclick="uploadProfilePicture()" class="w-28 h-28 mx-auto bg-gradient-to-br from-emerald-500 to-teal-500 rounded-3xl flex items-center justify-center text-6xl mb-4 shadow-inner cursor-pointer hover:scale-105 transition-transform" id="profileAvatar">
-                👤
+            <!-- Profile Header -->
+            <div class="text-center mb-8">
+                <div onclick="uploadProfilePicture()" class="w-28 h-28 mx-auto bg-gradient-to-br from-emerald-500 to-teal-500 rounded-3xl flex items-center justify-center text-6xl mb-4 shadow-inner cursor-pointer hover:scale-105 transition-transform border-4 border-emerald-500/30" id="profileAvatar">👤</div>
+                <h3 id="profileName" class="text-xl font-bold">Loading...</h3>
+                <p id="profileUsername" class="text-emerald-400">@username</p>
+                <p id="profileBio" class="text-zinc-400 mt-2 text-sm">Tell the Square about yourself...</p>
             </div>
-            <h3 id="profileName" class="text-xl font-bold">Loading...</h3>
-            <p id="profileUsername" class="text-emerald-400">@username</p>
-            <p id="profileBio" class="text-zinc-400 mt-2 text-sm">Tell the Square about yourself...</p>
-        </div>
 
-        <!-- Stats -->
-        <div class="grid grid-cols-3 gap-4 mb-8">
-            <div class="bg-zinc-900/70 rounded-2xl p-4 text-center">
-                <div class="text-2xl font-bold text-emerald-400" id="post-count">0</div>
-                <div class="text-xs text-zinc-400">Testimonies</div>
+            <!-- Trust Cycle -->
+            <div class="bg-zinc-900/70 rounded-2xl p-5 mb-8">
+                <div class="flex justify-between text-xs mb-2">
+                    <span>Citizen Circle</span>
+                    <span id="trust-level">Level 1</span>
+                </div>
+                <div class="h-2 bg-zinc-800 rounded-full overflow-hidden">
+                    <div id="trust-bar" class="h-full bg-gradient-to-r from-emerald-500 to-teal-500 w-1/3 transition-all"></div>
+                </div>
+                <p class="text-center text-xs text-zinc-400 mt-2">Phone Verified → Trust Circle → True Witness (ZK)</p>
             </div>
-            <div class="bg-zinc-900/70 rounded-2xl p-4 text-center">
-                <div class="text-2xl font-bold text-emerald-400" id="reputation-score">0</div>
-                <div class="text-xs text-zinc-400">Reputation</div>
-            </div>
-            <div class="bg-zinc-900/70 rounded-2xl p-4 text-center">
-                <div class="text-2xl font-bold text-emerald-400" id="trust-score">0</div>
-                <div class="text-xs text-zinc-400">Trust Score</div>
-            </div>
-        </div>
 
-        <!-- Status -->
-        <div class="space-y-4 mb-8">
-            <div class="bg-zinc-900/70 rounded-2xl p-5">
-                <div class="flex justify-between items-center">
-                    <span>Current Tier</span>
-                    <span id="profile-tier-badge" class="px-4 py-1 bg-emerald-600 text-xs rounded-full font-medium">Citizen</span>
+            <!-- Stats -->
+            <div class="grid grid-cols-3 gap-4 mb-8">
+                <div class="bg-zinc-900/70 rounded-2xl p-4 text-center">
+                    <div class="text-2xl font-bold text-emerald-400" id="post-count">0</div>
+                    <div class="text-xs text-zinc-400">Testimonies</div>
+                </div>
+                <div class="bg-zinc-900/70 rounded-2xl p-4 text-center">
+                    <div class="text-2xl font-bold text-emerald-400" id="reputation-score">0</div>
+                    <div class="text-xs text-zinc-400">Reputation</div>
+                </div>
+                <div class="bg-zinc-900/70 rounded-2xl p-4 text-center">
+                    <div class="text-2xl font-bold text-emerald-400" id="trust-score">0</div>
+                    <div class="text-xs text-zinc-400">Trust Score</div>
                 </div>
             </div>
-            <div class="bg-zinc-900/70 rounded-2xl p-5">
-                <div class="flex justify-between items-center">
-                    <span>Anonymous Mode</span>
-                    <button onclick="toggleAnonymous()" id="anon-toggle" class="text-sm px-4 py-1 bg-zinc-700 rounded-full">OFF</button>
+
+            <!-- Reputation History -->
+            <div class="bg-zinc-900/70 rounded-2xl p-5 mb-8">
+                <h3 class="text-sm font-semibold mb-3">Reputation History</h3>
+                <div id="reputation-history" class="text-sm text-zinc-400 space-y-2 text-left">
+                    <div>• First testimony published</div>
+                    <div>• Phone verification completed</div>
+                    <div>• Community upvoted 3 posts</div>
                 </div>
             </div>
-        </div>
 
-        <!-- Actions -->
-        <div class="space-y-3">
-            <button onclick="editProfile()" class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center justify-center gap-2">
-                ✏️ Edit Profile
-            </button>
-            
-            <button onclick="showSecurityPanel()" class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center justify-center gap-2">
-                🔐 Account Security
-            </button>
-            
-            <button onclick="showGuardian()" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold rounded-2xl">
-                🛡️ Upgrade to Guardian Witness
-            </button>
-            
-            <button onclick="logout()" class="w-full py-3 text-red-400 hover:bg-red-900/30 rounded-2xl">
-                Sign Out
-            </button>
+            <!-- Actions -->
+            <div class="space-y-3">
+                <button onclick="editProfile()" class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl">✏️ Edit Name / Bio (90 days limit for ZK)</button>
+                <button onclick="changePassword()" class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl">🔑 Change Password</button>
+                <button onclick="showZKUpgrade()" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-black font-bold rounded-2xl">🔬 Upgrade to True Witness (ZK Verification)</button>
+                <button onclick="logout()" class="w-full py-3 text-red-400 hover:bg-red-900/30 rounded-2xl">Sign Out</button>
+            </div>
         </div>
     </div>
-</div>
 
     <script>
         tailwind.config = { content: ["./**/*.{html,js}"] };
-        
+
+        function closeProfile() {
+            document.getElementById('profileModal').classList.add('hidden');
+        }
+
         function showProfile() {
             document.getElementById('profileModal').classList.remove('hidden');
         }
-        
-        function loadFeed(type) {
-            console.log("Loading feed:", type);
-        }
+
+        function editProfile() { alert("Name change limited to once every 90 days for ZK users"); }
+        function changePassword() { alert("Password change coming soon"); }
+        function showZKUpgrade() { alert("ZK Verification & Proof path coming soon"); }
+        function uploadProfilePicture() { alert("Profile picture upload coming soon"); }
+        function showGuardian() { alert("Guardian feature coming soon"); }
+        function loadFeed(type) { console.log("Loading feed:", type); }
     </script>
-    
+
     <script type="module" src="js/main.js"></script>
 </body>
 </html>
