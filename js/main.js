@@ -132,6 +132,9 @@ async function bootstrap() {
         input.click();
     });
 
+   
+});
+
     document.getElementById('btn-voice')?.addEventListener('click', (e) => mediaModule.toggleVoiceRecording(e.currentTarget));
     document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
 
@@ -139,6 +142,10 @@ async function bootstrap() {
 }
 
 document.addEventListener('DOMContentLoaded', bootstrap);
+
+ getCurrentUserTier().then(tier => {
+    applyTierTheme(tier);
+    updateTierBadge();
 
 
 // ====================== PROFILE & GLOBAL FEATURES ======================
