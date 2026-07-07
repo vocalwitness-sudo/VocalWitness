@@ -1,12 +1,19 @@
-// js/tier.js - Aligned with Citizen Circle / Witness Circle
-import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+// js/tier.js - Refined Permission Logic
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { db, auth } from './firebase-config.js';
 import { showToast } from './utils.js';
 
 export const TIERS = {
-    CITIZEN: 'citizen',
-    CITIZEN_CIRCLE: 'citizen_circle',   // Phone Verified
-    WITNESS_CIRCLE: 'witness_circle'    // ZK Verified
+    CITIZEN: 'citizen',               // Basic user
+    CITIZEN_CIRCLE: 'citizen_circle', // Phone Verified
+    WITNESS_CIRCLE: 'witness_circle'  // ZK Verified (True Witness)
+};
+
+// Tier Hierarchy (higher index = higher privilege)
+const TIER_LEVELS = {
+    [TIERS.CITIZEN]: 0,
+    [TIERS.CITIZEN_CIRCLE]: 1,
+    [TIERS.WITNESS_CIRCLE]: 2
 };
 
 export async function getCurrentUserTier() {
@@ -21,9 +28,30 @@ export async function getCurrentUserTier() {
         if (data.isPhoneVerified === true) return TIERS.CITIZEN_CIRCLE;
         return TIERS.CITIZEN;
     } catch (e) {
-        console.warn("Tier fetch failed");
+        console.warn("Tier fetch failed, defaulting to Citizen");
         return TIERS.CITIZEN;
     }
+}
+
+export function getTierLevel(tier) {
+    return TIER_LEVELS[tier] || 0;
+}
+
+export function canAccessFeature(tier, feature) {
+    const permissions = {
+        // Feature → Minimum required tier
+        live_arena: TIERS.WITNESS_CIRCLE,
+        zk_proof: TIERS.WITNESS_CIRCLE,
+        forensic_shield: TIERS.CITIZEN_CIRCLE,
+        escalate_post: TIERS.CITIZEN_CIRCLE,
+        review_queue: TIERS.WITNESS_CIRCLE,
+        moderate_content: TIERS.WITNESS_CIRCLE
+    };
+
+    const requiredTier = permissions[feature];
+    if (!requiredTier) return true; // Default: open to all
+
+    return getTierLevel(tier) >= getTierLevel(requiredTier);
 }
 
 export function applyTierTheme(tier) {
@@ -32,21 +60,14 @@ export function applyTierTheme(tier) {
 
     if (tier === TIERS.WITNESS_CIRCLE) {
         body.classList.add('tier-witness');
+        console.log("🔬 Witness Circle theme applied");
     } else if (tier === TIERS.CITIZEN_CIRCLE) {
         body.classList.add('tier-citizen-circle');
+        console.log("🛡️ Citizen Circle theme applied");
     } else {
         body.classList.add('tier-citizen');
+        console.log("👤 Citizen theme applied");
     }
-}
-
-export function canAccessFeature(tier, feature) {
-    const permissions = {
-        live_arena: [TIERS.WITNESS_CIRCLE],
-        zk_proof: [TIERS.WITNESS_CIRCLE],
-        forensic_shield: [TIERS.CITIZEN_CIRCLE, TIERS.WITNESS_CIRCLE],
-        escalate_post: [TIERS.CITIZEN_CIRCLE, TIERS.WITNESS_CIRCLE]
-    };
-    return permissions[feature] ? permissions[feature].includes(tier) : true;
 }
 
 export async function escalatePost(postId) {
@@ -63,28 +84,10 @@ export async function escalatePost(postId) {
 
     try {
         showToast("🔬 Generating Forensic Proof...", "info");
-        // Add proof generation later
+        // TODO: Add ZK proof generation here
         showToast("✅ Post escalated to Witness Circle!", "success");
     } catch (err) {
-        console.error(err);
-        showToast("Escalation failed", "error");
+        console.error("Escalation failed:", err);
+        showToast("Failed to escalate post", "error");
     }
-}
-
-export function updateTierBadge() {
-    const badge = document.getElementById('profile-tier-badge');
-    if (!badge) return;
-
-    getCurrentUserTier().then(tier => {
-        if (tier === TIERS.WITNESS_CIRCLE) {
-            badge.textContent = "Witness Circle";
-            badge.className = "px-4 py-1 bg-amber-500 text-xs rounded-full font-medium";
-        } else if (tier === TIERS.CITIZEN_CIRCLE) {
-            badge.textContent = "Citizen Circle";
-            badge.className = "px-4 py-1 bg-emerald-600 text-xs rounded-full font-medium";
-        } else {
-            badge.textContent = "Citizen";
-            badge.className = "px-4 py-1 bg-zinc-600 text-xs rounded-full font-medium";
-        }
-    });
 }
