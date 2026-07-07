@@ -1,18 +1,13 @@
 {
   "hosting": {
-    "public": ".", 
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
+    "public": ".",
     "headers": [
       {
         "source": "**",
         "headers": [
           {
             "key": "Content-Security-Policy",
-            "value": "default-src 'self'; frame-src 'self' https://checkout.flutterwave.com https://checkout-v3.flutterwave.com;"
+            "value": "default-src 'self' https://checkout.flutterwave.com https://checkout-v3.flutterwave.com; frame-src 'self' https://checkout.flutterwave.com https://checkout-v3.flutterwave.com; script-src 'self' 'unsafe-inline' https://checkout.flutterwave.com https://cdn.tailwindcss.com;"
           }
         ]
       }
