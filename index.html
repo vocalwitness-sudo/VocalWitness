@@ -42,9 +42,10 @@
                     class="bg-zinc-900 border border-zinc-700 text-white px-5 py-2.5 rounded-2xl text-sm focus:outline-none focus:border-emerald-500">
             </select>
             
-            <button onclick="showSupportModal()" class="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-semibold rounded-2xl flex items-center gap-2 shadow-xl hover:scale-105 transition-all">
-                💚 Support the Square
-            </button> 
+            <<button onclick="showSupportModal()" 
+        class="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-black font-semibold rounded-2xl flex items-center gap-2 shadow-xl hover:scale-105 transition-all text-sm">
+    💚 Support the Square
+</button>
             <button onclick="showProfile()" class="w-11 h-11 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-3xl transition-all border border-zinc-600 flex items-center justify-center">👤</button>
         </div>
     </header>
@@ -87,27 +88,29 @@
         </main>
     </div>
 
-    <!-- SUPPORT THE PLATFORM MODAL -->
+<!-- SUPPORT THE PLATFORM MODAL -->
 <div id="supportModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[60]">
     <div class="glass rounded-3xl max-w-md w-full mx-4 p-8 text-center">
         <div class="text-6xl mb-6">💚</div>
-        <h2 class="text-3xl font-bold text-emerald-400 mb-2">Support the Platform</h2>
+        <h2 class="text-3xl font-bold text-emerald-400 mb-2">Support the Square</h2>
         <p class="text-zinc-400 mb-8">Protect the Public Square with enhanced responsibility & tools</p>
         
-        <div class="space-y-5 text-left mb-10">
-            <div class="flex gap-3"><span class="text-emerald-500">✓</span><div>Forensic Shield + Advanced Tools</div></div>
-            <div class="flex gap-3"><span class="text-emerald-500">✓</span><div>Higher Witness Impact</div></div>
-            <div class="flex gap-3"><span class="text-emerald-500">✓</span><div>Priority in Live Arena</div></div>
-            <div class="flex gap-3"><span class="text-emerald-500">✓</span><div>Stewardship & Moderation Power</div></div>
+        <div class="space-y-4 text-left mb-10 text-sm">
+            <div class="flex gap-3"><span class="text-emerald-500">✓</span> Forensic Shield + Advanced Tools</div>
+            <div class="flex gap-3"><span class="text-emerald-500">✓</span> Higher Witness Impact</div>
+            <div class="flex gap-3"><span class="text-emerald-500">✓</span> Priority in Live Arena</div>
+            <div class="flex gap-3"><span class="text-emerald-500">✓</span> Stewardship & Moderation Power</div>
         </div>
         
-        <button onclick="initiateSupport()" class="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold rounded-2xl mb-6">
-            💚 Support the Platform
+        <button onclick="initiateSupport()" 
+                class="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold rounded-2xl mb-6 hover:scale-105 transition-transform">
+            💚 Become a Steward
         </button>
         
-        <button onclick="document.getElementById('supportModal').classList.add('hidden')" class="w-full py-3 text-zinc-400 hover:text-white">Maybe later</button>
+        <button onclick="document.getElementById('supportModal').classList.add('hidden')" 
+                class="w-full py-3 text-zinc-400 hover:text-white">Maybe later</button>
         
-        <p class="text-xs text-zinc-500 mt-6">Your support is voluntary. Every contribution helps keep the Square free and open.</p>
+        <p class="text-xs text-zinc-500 mt-8">Your support is completely voluntary.<br>Every contribution helps keep the Square free and open for all.</p>
     </div>
 </div>
     
