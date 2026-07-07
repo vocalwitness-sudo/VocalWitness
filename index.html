@@ -50,12 +50,32 @@
         </div>
     </header>
 </div>
-        <!-- NAVIGATION -->
-        <nav id="main-nav" class="flex gap-2 mb-6 overflow-x-auto pb-2">
-            <button onclick="loadFeed('citizen')" class="nav-btn active px-5 py-2.5 rounded-2xl whitespace-nowrap" data-feed="citizen">Citizen Talk</button>
-            <button onclick="loadFeed('true')" class="nav-btn px-5 py-2.5 rounded-2xl whitespace-nowrap" data-feed="true">True Witness</button>
-            <button onclick="loadFeed('live')" class="nav-btn px-5 py-2.5 rounded-2xl whitespace-nowrap" data-feed="live">Live Arena</button>
-        </nav>
+        <!-- MAIN NAVIGATION -->
+<nav class="flex items-center justify-between mb-6">
+    <!-- Main Feed Tabs -->
+    <div id="main-nav" class="flex gap-2 overflow-x-auto pb-2">
+        <button onclick="loadFeed('citizen')" class="nav-btn active px-5 py-2.5 rounded-2xl whitespace-nowrap" data-feed="citizen">Citizen Talk</button>
+        <button onclick="loadFeed('true')" class="nav-btn px-5 py-2.5 rounded-2xl whitespace-nowrap" data-feed="true">True Witness</button>
+        <button onclick="loadFeed('live')" class="nav-btn px-5 py-2.5 rounded-2xl whitespace-nowrap" data-feed="live">Live Arena</button>
+    </div>
+
+    <!-- More Menu -->
+    <div class="relative">
+        <button onclick="toggleMoreMenu()" class="w-10 h-10 flex items-center justify-center text-2xl hover:bg-zinc-800 rounded-2xl transition-all">☰</button>
+        
+        <!-- Dropdown Menu -->
+        <div id="moreMenu" class="hidden absolute right-0 mt-2 w-56 bg-zinc-900 border border-zinc-700 rounded-3xl shadow-2xl py-2 z-50">
+            <a href="forensic-ledger.html" class="block px-6 py-3 hover:bg-zinc-800">📜 Forensic Ledger</a>
+            <a href="my-testimonies.html" class="block px-6 py-3 hover:bg-zinc-800">📝 My Testimonies</a>
+            <a href="true-witness.html" class="block px-6 py-3 hover:bg-zinc-800">🔒 True Witness Hub</a>
+            <hr class="my-2 border-zinc-700">
+            <a href="about.html" class="block px-6 py-3 hover:bg-zinc-800">ℹ️ About Us</a>
+            <a href="safety.html" class="block px-6 py-3 hover:bg-zinc-800">🛡️ Safety</a>
+            <a href="privacy.html" class="block px-6 py-3 hover:bg-zinc-800">🔒 Privacy</a>
+            <a href="terms.html" class="block px-6 py-3 hover:bg-zinc-800">📜 Terms</a>
+        </div>
+    </div>
+</nav>
 
         <!-- COMPOSER -->
         <div class="glass rounded-3xl p-6 mb-8">
