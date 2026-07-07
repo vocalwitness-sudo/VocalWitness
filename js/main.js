@@ -30,6 +30,23 @@ window.loadFeed = (feedType) => {
     }
 };
 
+window.closeProfile = () => {
+    document.getElementById('profileModal').classList.add('hidden');
+};
+
+window.showProfile = () => {
+    document.getElementById('profileModal').classList.remove('hidden');
+    // Load real user data here later
+};
+
+window.editProfile = () => alert("Edit profile coming soon");
+window.showSecurityPanel = () => alert("Security settings coming soon");
+window.toggleAnonymous = () => {
+    // Toggle logic here
+    showToast("Anonymous mode toggled", "success");
+};
+
+
 window.publishTestimony = async () => {
     const textarea = document.getElementById('mainInput');
     const content = textarea?.value.trim() || "";
