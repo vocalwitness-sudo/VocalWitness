@@ -41,6 +41,16 @@ function renderPost(id, data) {
 
     const postEl = document.createElement('div');
     postEl.className = 'post-card glass rounded-3xl p-6 mb-6';
+const actionBar = `
+    <div class="flex items-center justify-between mt-6 pt-4 border-t border-zinc-700 text-sm">
+        <div class="flex gap-6">
+            <button onclick="likePost('${id}')" class="flex items-center gap-1.5 hover:text-emerald-400">👍 <span>${data.likes || 0}</span></button>
+            <button onclick="commentOnPost('${id}')" class="flex items-center gap-1.5 hover:text-sky-400">💬 <span>${data.commentsCount || 0}</span></button>
+            <button onclick="escalatePost('${id}')" class="flex items-center gap-1.5 hover:text-amber-400">🔬 Escalate</button>
+        </div>
+        <button onclick="sharePost('${id}')" class="text-emerald-400">Share</button>
+    </div>
+`;
 
     let mediaHTML = '';
     if (data.imageUrl) mediaHTML += `<img src="${data.imageUrl}" class="rounded-2xl mt-4 w-full object-cover max-h-96" alt="Evidence">`;
