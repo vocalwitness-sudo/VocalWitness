@@ -1,49 +1,30 @@
-// js/main.js - Clean & Stable
-import { initAuth } from "./auth.js";
-import { initFeed } from './feed.js';
+// js/main.js - Clean Starter
 import { db, auth } from './firebase-config.js';
-import { showToast } from './utils.js';
-import { initLanguage } from './i18n.js';
-import * as mediaModule from './media.js';
-import { initiatePlatformSupport } from './supporters.js';
 
-let engineInstance = null;
+console.log("✅ VocalWitness App Started");
 
-async function bootstrap() {
+// Simple test post
+document.getElementById('postButton').addEventListener('click', async () => {
+    const input = document.getElementById('mainInput');
+    const text = input.value.trim();
+    
+    if (!text) {
+        alert("Please write something");
+        return;
+    }
+    
     try {
-        await initAuth();
-        initLanguage();
-
-        // Initialize other modules...
-        engineInstance = new CitizenTalkEngine(db, storage); // if needed
-        window.engineInstance = engineInstance;
-        mediaModule.setEngine(engineInstance);
-
-        setupEventListeners();
-        
-        // Load feed with small delay to prevent shift
-        setTimeout(() => window.loadFeed('citizen-talk'), 400);
-        
+        // TODO: Add real Firestore logic later
+        console.log("Publishing:", text);
+        alert("✅ Testimony published (test)");
+        input.value = '';
     } catch (e) {
         console.error(e);
-        showToast("Failed to load app", "error");
+        alert("Error publishing");
     }
-}
+});
 
-function setupEventListeners() {
-    document.getElementById('btn-photo')?.addEventListener('click', () => {
-        // photo handler
-    });
-    
-    document.getElementById('btn-voice')?.addEventListener('click', mediaModule.toggleVoiceRecording);
-    document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
-}
-
-window.loadFeed = (feedType) => { /* your existing logic */ };
-window.publishTestimony = async () => { /* your existing logic */ };
-window.showSupportersModal = () => { /* ... */ };
-window.showProfile = () => { /* ... */ };
-window.initiatePlatformSupport = initiatePlatformSupport;
-
-// Start the app
-document.addEventListener('DOMContentLoaded', bootstrap);
+// Initialize Firebase when ready
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("Firebase ready:", !!db);
+});
