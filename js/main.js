@@ -98,6 +98,7 @@ window.publishTestimony = async () => {
 async function bootstrap() {
     await initAuth();
     initLanguage();
+    initPhoneCountrySelector();   
 
     engineInstance = new CitizenTalkEngine(db, storage);
     window.engineInstance = engineInstance;
@@ -119,6 +120,7 @@ async function bootstrap() {
 }
 
 document.addEventListener('DOMContentLoaded', bootstrap);
+
 
 // ====================== PROFILE & GLOBAL FEATURES ======================
 window.closeProfile = () => {
