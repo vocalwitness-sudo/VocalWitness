@@ -3,45 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VocalWitness</title>
+    <title>VocalWitness Test</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body {
-            background: #0a0f1c;
-            color: white;
-            font-family: system-ui, sans-serif;
-            min-height: 100vh;
-            padding: 20px;
-        }
-        .container {
-            max-width: 640px;
-            margin: 0 auto;
-        }
-        .glass {
-            background: rgba(17, 24, 39, 0.95);
-            border: 1px solid #10b98130;
-            border-radius: 24px;
-            padding: 32px;
-        }
+        body { background: #0a0f1c; color: white; padding: 40px; font-family: sans-serif; }
+        .center { max-width: 600px; margin: 0 auto; background: #1f2937; padding: 40px; border-radius: 20px; text-align: center; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1 class="text-5xl font-bold text-center text-emerald-400 mb-2">VocalWitness</h1>
-        <p class="text-center text-emerald-500 mb-10">Truth • Evidence • Public Square</p>
-        
-        <div class="glass">
-            <textarea id="mainInput" rows="5" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-5 text-lg" placeholder="Share your raw testimony..."></textarea>
-            
-            <div class="flex gap-4 mt-6">
-                <button id="btn-photo" class="flex-1 py-4 bg-zinc-800 rounded-2xl">📸 Photo</button>
-                <button id="btn-voice" class="flex-1 py-4 bg-zinc-800 rounded-2xl">🎤 Voice</button>
-            </div>
-            
-            <button id="postButton" class="mt-8 w-full py-5 bg-emerald-500 text-black font-bold text-xl rounded-3xl">🚀 Publish Testimony</button>
-        </div>
+    <div class="center">
+        <h1 style="font-size: 3rem; color: #10b981;">VocalWitness</h1>
+        <p style="color: #34d399;">This should be perfectly centered</p>
+        <textarea style="width: 100%; height: 150px; margin: 20px 0; background: #111827; color: white; padding: 15px;" placeholder="Test textarea"></textarea>
+        <button style="background: #10b981; color: black; padding: 16px 32px; border: none; border-radius: 9999px; font-weight: bold;">Test Button</button>
     </div>
-
-    <script type="module" src="js/main.js"></script>
 </body>
 </html>
