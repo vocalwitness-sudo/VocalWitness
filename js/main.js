@@ -1,30 +1,19 @@
-// js/main.js - Clean Starter
+// js/main.js
 import { db, auth } from './firebase-config.js';
 
-console.log("✅ VocalWitness App Started");
+console.log("✅ VocalWitness - Main script loaded");
 
-// Simple test post
-document.getElementById('postButton').addEventListener('click', async () => {
-    const input = document.getElementById('mainInput');
-    const text = input.value.trim();
-    
-    if (!text) {
-        alert("Please write something");
-        return;
-    }
-    
-    try {
-        // TODO: Add real Firestore logic later
-        console.log("Publishing:", text);
-        alert("✅ Testimony published (test)");
-        input.value = '';
-    } catch (e) {
-        console.error(e);
-        alert("Error publishing");
-    }
-});
-
-// Initialize Firebase when ready
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("Firebase ready:", !!db);
+    const postBtn = document.getElementById('postButton');
+    const input = document.getElementById('mainInput');
+    
+    postBtn.addEventListener('click', async () => {
+        const text = input.value.trim();
+        if (!text) return alert("Write something first");
+        
+        alert("✅ Testimony published (basic test)");
+        input.value = '';
+    });
+    
+    console.log("Firebase DB:", db ? "Connected" : "Not connected");
 });
