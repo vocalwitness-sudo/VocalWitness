@@ -34,6 +34,31 @@ window.closeProfile = () => {
     document.getElementById('profileModal').classList.add('hidden');
 };
 
+window.showGroupModal = () => {
+    document.getElementById('groupModal').classList.remove('hidden');
+};
+
+window.closeGroupModal = () => {
+    document.getElementById('groupModal').classList.add('hidden');
+};
+
+window.createGroup = async () => {
+    const name = document.getElementById('groupName').value.trim();
+    if (!name) {
+        showToast("Group name is required", "error");
+        return;
+    }
+
+    showToast("Creating group...", "info");
+    
+    // TODO: Save to Firestore "groups" collection
+    setTimeout(() => {
+        showToast(`✅ Group "${name}" created!`, "success");
+        closeGroupModal();
+    }, 800);
+};
+
+
 window.showProfile = () => {
     document.getElementById('profileModal').classList.remove('hidden');
     // Load real user data here later
