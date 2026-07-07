@@ -1,26 +1,37 @@
 /**
  * VocalWitness Utilities Module
- * Toast, Tier System, Trust Score, Helpers
+ * Toast Notifications, Tier System, Trust Score, Helpers & Security
  */
 
 export function showToast(message, type = "success") {
     const toast = document.createElement('div');
-    const bgColor = type === 'error' ? 'bg-red-600' : 'bg-emerald-600';
-    const icon = type === 'error' ? '❌' : '✅';
     
-    toast.className = `fixed bottom-5 right-5 p-4 rounded-2xl shadow-2xl z-[100] text-white font-medium text-sm flex items-center gap-2 ${bgColor} transition-all`;
+    const styles = {
+        success: { bg: 'bg-emerald-600', icon: '✅' },
+        error:   { bg: 'bg-red-600',   icon: '❌' },
+        warning: { bg: 'bg-amber-600', icon: '⚠️' },
+        info:    { bg: 'bg-sky-600',   icon: 'ℹ️' }
+    };
+
+    const { bg, icon } = styles[type] || styles.success;
+
+    toast.className = `
+        fixed bottom-5 right-5 p-4 rounded-2xl shadow-2xl z-[100] 
+        text-white font-medium text-sm flex items-center gap-2 
+        ${bg} transition-all duration-300
+    `;
+    
     toast.innerHTML = `${icon} ${message}`;
     document.body.appendChild(toast);
 
     setTimeout(() => {
         toast.style.opacity = '0';
-        setTimeout(() => toast.remove(), 300);
+        setTimeout(() => toast.remove(), 350);
     }, 3000);
 }
 
-/**
- * Low Data Mode
- */
+/* ====================== DATA & PERFORMANCE ====================== */
+
 export function isLowDataMode() {
     return localStorage.getItem('lowDataMode') === 'true';
 }
@@ -28,18 +39,18 @@ export function isLowDataMode() {
 export function toggleLowDataMode() {
     const current = isLowDataMode();
     localStorage.setItem('lowDataMode', !current);
-    showToast(!current ? "Low Data Mode Enabled" : "Low Data Mode Disabled");
-    location.reload();
+    
+    showToast(!current ? "Low Data Mode Enabled" : "Low Data Mode Disabled", "info");
+    setTimeout(() => location.reload(), 800);
 }
 
-/**
- * Safe async button action wrapper
- */
+/* ====================== SAFE ACTION WRAPPER ====================== */
+
 export async function executeAction(actionFn, buttonEl, loadingText = "Processing...") {
-    if (!buttonEl) return;
-    
+    if (!buttonEl || typeof actionFn !== 'function') return;
+
     const originalText = buttonEl.textContent || buttonEl.innerHTML;
-    
+
     buttonEl.disabled = true;
     buttonEl.textContent = loadingText;
 
@@ -54,43 +65,47 @@ export async function executeAction(actionFn, buttonEl, loadingText = "Processin
     }
 }
 
-/**
- * SHA-256 Hash Generator
- */
-export async function generateSha256Hash(fileOrString) {
+/* ====================== CRYPTO & FORENSICS ====================== */
+
+export async function generateSha256Hash(input) {
     try {
-        const data = (typeof fileOrString === 'string')
-            ? new TextEncoder().encode(fileOrString)
-            : await fileOrString.arrayBuffer();
-        
+        const data = (typeof input === 'string')
+            ? new TextEncoder().encode(input)
+            : await input.arrayBuffer();
+
         const hashBuffer = await crypto.subtle.digest('SHA-256', data);
         return Array.from(new Uint8Array(hashBuffer))
-            .map(b => b.toString(16).padStart(2, '0')).join('');
+            .map(b => b.toString(16).padStart(2, '0'))
+            .join('');
     } catch (e) {
-        console.error("Hash generation failed", e);
+        console.error("Hash generation failed:", e);
         return null;
     }
 }
 
-/**
- * Peer Voting (Verify / Dispute)
- */
+/* ====================== PEER VOTING ====================== */
+
 export async function submitPeerVote(postId, voteType) {
+    if (!postId) return;
+
     try {
-        // TODO: Connect to actual Firestore votes collection
+        // TODO: Connect to Firestore votes collection
         console.log(`Vote submitted: ${voteType} on post ${postId}`);
-        showToast(voteType === 'verify' 
-            ? "✅ Vote submitted - Thank you for helping verify truth!" 
-            : "⚠️ Dispute submitted");
+
+        showToast(
+            voteType === 'verify' 
+                ? "✅ Thank you for helping verify truth!" 
+                : "⚠️ Dispute submitted. Thank you for your vigilance.",
+            voteType === 'verify' ? "success" : "warning"
+        );
     } catch (error) {
         console.error("Voting failed:", error);
         showToast("❌ Failed to submit vote", "error");
     }
 }
 
-/**
- * Tier System + Trust Score
- */
+/* ====================== TIER & TRUST SYSTEM ====================== */
+
 export function getTier(trustScore = 0) {
     if (trustScore >= 100) {
         return {
@@ -115,7 +130,7 @@ export function getTier(trustScore = 0) {
             name: 'Silver',
             color: '#C0C0C0',
             canDownload: true,
-            badge: 'Trusted',
+            badge: 'Trusted Witness',
             level: 2
         };
     }
@@ -138,30 +153,40 @@ export function getTier(trustScore = 0) {
 }
 
 export function calculateTrustScore(userData = {}) {
-    const { 
-        successfulEvidence = 0, 
-        endorsementsReceived = 0, 
+    const {
+        successfulEvidence = 0,
+        endorsementsReceived = 0,
         debunkedEvidence = 0,
-        testimoniesCount = 0 
+        testimoniesCount = 0
     } = userData;
 
-    let trust = (successfulEvidence * 5) + (endorsementsReceived * 2) - (debunkedEvidence * 10);
-    trust += Math.floor(testimoniesCount * 0.5); // Bonus for activity
+    let trust = (successfulEvidence * 5) + 
+                (endorsementsReceived * 2) - 
+                (debunkedEvidence * 10);
+
+    trust += Math.floor(testimoniesCount * 0.5); // Activity bonus
 
     return Math.max(0, Math.min(100, Math.round(trust)));
 }
 
-// Make submitPeerVote available globally for inline onclick handlers
-window.submitPeerVote = submitPeerVote;
+/* ====================== GLOBAL EXPORTS ====================== */
 
-// Escalate
+// Make critical functions available for inline onclick handlers
+window.submitPeerVote = submitPeerVote;
+window.showToast = showToast;
+window.goBack = function() {
+    if (window.history.length > 1) {
+        window.history.back();
+    } else {
+        window.location.href = 'index.html';
+    }
+};
+
+/* ====================== FUTURE HELPERS ====================== */
+
 export async function escalatePost(postId) {
-  const tier = await getCurrentUserTier();
-  if (!canAccessFeature(tier, 'escalate_post')) {  // add this permission if not present
-    showToast("Higher tier required", "error");
-    return false;
-  }
-  showToast("🛡️ Escalating post to True Witness...", "info");
-  // Later: add proof generation here
-  return true;
+    // TODO: Check user tier permission
+    showToast("🛡️ Escalating post to True Witness review...", "info");
+    // Add ZK proof or moderator escalation logic here later
+    return true;
 }
