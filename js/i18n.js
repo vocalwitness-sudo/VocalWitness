@@ -14,6 +14,35 @@ const supportedLanguages = [
     { code: 'ar', name: 'العربية', flag: '🇸🇦', native: 'العربية', phoneCode: '+966' },
 ];
 
+// Phone Country Selector (matches language list)
+const phoneCountries = [
+    { code: '+234', name: 'Nigeria', flag: '🇳🇬' },
+    { code: '+1', name: 'USA / Canada', flag: '🇺🇸' },
+    { code: '+44', name: 'United Kingdom', flag: '🇬🇧' },
+    { code: '+33', name: 'France', flag: '🇫🇷' },
+    { code: '+34', name: 'Spain', flag: '🇪🇸' },
+    { code: '+55', name: 'Brazil', flag: '🇧🇷' },
+    { code: '+27', name: 'South Africa', flag: '🇿🇦' },
+    { code: '+254', name: 'Kenya', flag: '🇰🇪' },
+    { code: '+20', name: 'Egypt', flag: '🇪🇬' },
+];
+
+export function initPhoneCountrySelector() {
+    const selector = document.getElementById('countryCodeSelector');
+    if (!selector) return;
+
+    selector.innerHTML = phoneCountries.map(country => `
+        <option value="${country.code}">
+            ${country.flag} ${country.code} (${country.name})
+        </option>
+    `).join('');
+
+    selector.value = '+234'; // Default to Nigeria
+}
+
+// Make available globally
+window.initPhoneCountrySelector = initPhoneCountrySelector;
+
 export async function loadTranslations(langCode = 'en') {
     try {
         const isSupported = supportedLanguages.some(l => l.code === langCode);
