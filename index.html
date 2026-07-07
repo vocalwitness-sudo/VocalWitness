@@ -3,12 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Page</title>
+    <title>VocalWitness</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <h1 id="message">Hello, World!</h1>
-    <button id="changeButton">Click Me</button>
+    <div id="app">
+        <aside id="sidebar">
+            <h1>VocalWitness</h1>
+            <nav>
+                <button onclick="loadContent('citizen')">Citizen Talk</button>
+                <button onclick="loadContent('witness')">True Witness</button>
+            </nav>
+        </aside>
+
+        <main id="main-content">
+            <section id="banner">
+                <h3>Safety First</h3>
+                <p>VocalWitness is an un-manipulated decentralized distribution medium.</p>
+            </section>
+            <div id="view">
+                </div>
+        </main>
+    </div>
 
     <script src="main.js"></script>
 </body>
