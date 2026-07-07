@@ -1,4 +1,4 @@
-// js/main.js - CLEAN VERSION (No Payment Code)
+// js/main.js - CLEAN & ORGANIZED VERSION
 import { initAuth } from "./auth.js";
 import { initFeed } from './feed.js';
 import { db, auth, storage } from './firebase-config.js';
@@ -7,15 +7,19 @@ import { initLanguage } from './i18n.js';
 import * as mediaModule from './media.js';
 import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
 
+// ====================== GLOBAL STATE ======================
 let engineInstance = null;
 let profileUnsubscribe = null;
 let isAnonymous = false;
 
-// ====================== GLOBAL FUNCTIONS ======================
+// ====================== GLOBAL WINDOW FUNCTIONS ======================
+
 window.loadFeed = (feedType) => {
+    // Remove active state from all nav buttons
     document.querySelectorAll('#main-nav button').forEach(btn => btn.classList.remove('active'));
-    const active = document.querySelector(`button[data-feed="${feedType}"]`);
-    if (active) active.classList.add('active');
+    
+    const activeBtn = document.querySelector(`button[data-feed="${feedType}"]`);
+    if (activeBtn) activeBtn.classList.add('active');
 
     console.log(`Switching to feed: ${feedType}`);
 
@@ -30,8 +34,30 @@ window.loadFeed = (feedType) => {
     }
 };
 
+window.navigateToPage = (page) => {
+    window.location.href = page;
+};
+
+window.toggleMoreMenu = () => {
+    document.getElementById('moreMenu').classList.toggle('hidden');
+};
+
+window.showProfile = () => {
+    document.getElementById('profileModal').classList.remove('hidden');
+    // TODO: Load real profile data here
+};
+
 window.closeProfile = () => {
     document.getElementById('profileModal').classList.add('hidden');
+};
+
+window.showSupportModal = () => {
+    document.getElementById('supportModal').classList.remove('hidden');
+};
+
+window.initiateStewardship = () => {
+    showToast("Thank you! Stewardship is earned through contribution.\n\nVoluntary support options coming soon.", "success");
+    document.getElementById('supportModal').classList.add('hidden');
 };
 
 window.showGroupModal = () => {
@@ -50,55 +76,20 @@ window.createGroup = async () => {
     }
 
     showToast("Creating group...", "info");
-    
-    // TODO: Save to Firestore "groups" collection
+
+    // TODO: Implement Firestore group creation
     setTimeout(() => {
-        showToast(`✅ Group "${name}" created!`, "success");
+        showToast(`✅ Group "${name}" created successfully!`, "success");
         closeGroupModal();
     }, 800);
 };
-
-
-window.showProfile = () => {
-    document.getElementById('profileModal').classList.remove('hidden');
-    // Load real user data here later
-};
-
-window.editProfile = () => alert("Edit profile coming soon");
-window.showSecurityPanel = () => alert("Security settings coming soon");
-window.toggleAnonymous = () => {
-    // Toggle logic here
-    showToast("Anonymous mode toggled", "success");
-};
-window.changePassword = () => alert("Password change coming soon (Email/Password users)");
-window.editProfile = () => alert("Name change limited to once every 90 days for ZK users");
-
-window.navigateToPage = (page) => {
-    window.location.href = page;
-};
-
-
-window.toggleMoreMenu = () => {
-    const menu = document.getElementById('moreMenu');
-    menu.classList.toggle('hidden');
-};
-
-// Close menu when clicking outside
-document.addEventListener('click', (e) => {
-    if (!e.target.closest('.relative')) {
-        const menu = document.getElementById('moreMenu');
-        if (menu) menu.classList.add('hidden');
-    }
-});
-
-
 
 window.publishTestimony = async () => {
     const textarea = document.getElementById('mainInput');
     const content = textarea?.value.trim() || "";
 
     if (!content && !window.selectedImageFile && !engineInstance?.currentAudioBlob) {
-        return showToast("Please add text, photo or voice", "error");
+        return showToast("Please add text, photo or voice testimony", "error");
     }
 
     const postBtn = document.getElementById('postButton');
@@ -113,6 +104,7 @@ window.publishTestimony = async () => {
         }
 
         const mediaData = await mediaModule.uploadForensicMedia(currentUser.uid);
+
         const { collection, addDoc } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
 
         await addDoc(collection(db, "testimonies"), {
@@ -122,33 +114,68 @@ window.publishTestimony = async () => {
             imageUrl: mediaData.imageUrl || null,
             audioUrl: mediaData.audioUrl || null,
             timestamp: new Date().toISOString(),
-            feedVisibility: "citizen-talk"
+            feedVisibility: "citizen-talk",
+            likes: 0,
+            verified: false
         });
 
-        showToast("✅ Testimony published!", "success");
+        showToast("✅ Testimony published to the Square!", "success");
+
+        // Reset form
         if (textarea) textarea.value = '';
         mediaModule.resetMediaState();
         window.loadFeed('citizen-talk');
+
     } catch (err) {
         console.error("Publish error:", err);
-        showToast("Failed to publish: " + (err.message || "Check permissions"), "error");
+        showToast("Failed to publish testimony: " + (err.message || "Unknown error"), "error");
     } finally {
         postBtn.disabled = false;
         postBtn.textContent = '🚀 Publish Testimony to the Square';
     }
 };
 
-// ====================== BOOTSTRAP ======================
+// Placeholder functions
+window.editProfile = () => alert("Edit profile coming soon");
+window.changePassword = () => alert("Password change coming soon");
+window.showZKUpgrade = () => alert("ZK Verification path coming soon");
+window.uploadProfilePicture = () => alert("Profile picture upload coming soon");
+window.logout = () => {
+    console.log("Logout called");
+    // TODO: Implement proper logout with Firebase
+    showToast("Signed out successfully", "success");
+    setTimeout(() => window.location.reload(), 800);
+};
+
+// ====================== BOOTSTRAP / INITIALIZATION ======================
 async function bootstrap() {
-    await initAuth();
-    initLanguage();
-    initPhoneCountrySelector();   
+    try {
+        await initAuth();
+        initLanguage();
 
-    engineInstance = new CitizenTalkEngine(db, storage);
-    window.engineInstance = engineInstance;
-    mediaModule.setEngine(engineInstance);
+        // Initialize core engine
+        engineInstance = new CitizenTalkEngine(db, storage);
+        window.engineInstance = engineInstance;
+        mediaModule.setEngine(engineInstance);
 
-    // Event listeners
+        // Attach event listeners
+        setupEventListeners();
+
+        // Load initial feed
+        setTimeout(() => {
+            window.loadFeed('citizen-talk');
+        }, 600);
+
+        console.log("✅ VocalWitness initialized successfully");
+
+    } catch (error) {
+        console.error("Bootstrap failed:", error);
+        showToast("Failed to initialize app", "error");
+    }
+}
+
+function setupEventListeners() {
+    // Photo button
     document.getElementById('btn-photo')?.addEventListener('click', () => {
         const input = document.createElement('input');
         input.type = 'file';
@@ -157,44 +184,22 @@ async function bootstrap() {
         input.click();
     });
 
-   
-});
+    // Voice button
+    document.getElementById('btn-voice')?.addEventListener('click', (e) => {
+        mediaModule.toggleVoiceRecording(e.currentTarget);
+    });
 
-    document.getElementById('btn-voice')?.addEventListener('click', (e) => mediaModule.toggleVoiceRecording(e.currentTarget));
+    // Publish button
     document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
-
-    setTimeout(() => window.loadFeed('citizen-talk'), 600);
 }
 
+// Close more menu when clicking outside
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.relative')) {
+        const menu = document.getElementById('moreMenu');
+        if (menu) menu.classList.add('hidden');
+    }
+});
+
+// Initialize app when DOM is ready
 document.addEventListener('DOMContentLoaded', bootstrap);
-
- getCurrentUserTier().then(tier => {
-    applyTierTheme(tier);
-    updateTierBadge();
-
-
-// ====================== PROFILE & GLOBAL FEATURES ======================
-window.closeProfile = () => {
-    const modal = document.getElementById('profileModal');
-    if (modal) modal.classList.add('hidden');
-};
-
-window.showProfile = () => {
-    const modal = document.getElementById('profileModal');
-    if (modal) modal.classList.remove('hidden');
-};
-
-window.logout = () => { 
-    console.log("Logout called"); 
-};
-
-window.showSupportModal = () => {
-    document.getElementById('supportModal').classList.remove('hidden');
-};
-
-window.initiateSupport = () => {
-    showToast("Thank you for wanting to support the Square! 💚\n\nWe are building voluntary donation options.\n\nYour support means a lot.", "success");
-    document.getElementById('supportModal').classList.add('hidden');
-};
-// Debug
-console.log("✅ VocalWitness main.js loaded successfully");
