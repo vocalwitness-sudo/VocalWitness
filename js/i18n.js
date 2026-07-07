@@ -1,17 +1,17 @@
-// js/i18n.js - Fixed & Robust Multi-Language Support
+// js/i18n.js - Enhanced with Flags + Phone Codes
 let currentTranslations = {};
 let currentLang = 'en';
 
 const supportedLanguages = [
-    { code: 'en', name: 'English', flag: '🇬🇧', native: 'English' },
-    { code: 'ig', name: 'Igbo', flag: '🇳🇬', native: 'Igbo' },
-    { code: 'ha', name: 'Hausa', flag: '🇳🇬', native: 'Hausa' },
-    { code: 'yo', name: 'Yorùbá', flag: '🇳🇬', native: 'Yorùbá' },
-    { code: 'sw', name: 'Kiswahili', flag: '🇰🇪', native: 'Kiswahili' },
-    { code: 'fr', name: 'Français', flag: '🇫🇷', native: 'Français' },
-    { code: 'es', name: 'Español', flag: '🇪🇸', native: 'Español' },
-    { code: 'ar', name: 'العربية', flag: '🇸🇦', native: 'العربية' },
-    { code: 'pt', name: 'Português', flag: '🇵🇹', native: 'Português' }
+    { code: 'en', name: 'English', flag: '🇬🇧', native: 'English', phoneCode: '+44' },
+    { code: 'ha', name: 'Hausa', flag: '🇳🇬', native: 'Hausa', phoneCode: '+234' },
+    { code: 'yo', name: 'Yorùbá', flag: '🇳🇬', native: 'Yorùbá', phoneCode: '+234' },
+    { code: 'ig', name: 'Igbo', flag: '🇳🇬', native: 'Igbo', phoneCode: '+234' },
+    { code: 'sw', name: 'Kiswahili', flag: '🇰🇪', native: 'Kiswahili', phoneCode: '+254' },
+    { code: 'fr', name: 'Français', flag: '🇫🇷', native: 'Français', phoneCode: '+33' },
+    { code: 'es', name: 'Español', flag: '🇪🇸', native: 'Español', phoneCode: '+34' },
+    { code: 'pt', name: 'Português', flag: '🇵🇹', native: 'Português', phoneCode: '+351' },
+    { code: 'ar', name: 'العربية', flag: '🇸🇦', native: 'العربية', phoneCode: '+966' },
 ];
 
 export async function loadTranslations(langCode = 'en') {
@@ -20,12 +20,11 @@ export async function loadTranslations(langCode = 'en') {
         if (!isSupported) langCode = 'en';
 
         const response = await fetch(`translations/${langCode}.json`);
-
         if (response.ok) {
             currentTranslations = await response.json();
             console.log(`✅ Loaded ${langCode} translations successfully`);
         } else {
-            console.warn(`⚠️ ${langCode}.json not found`);
+            console.warn(`⚠️ ${langCode}.json not found, using English fallback`);
             currentTranslations = {};
         }
     } catch (e) {
@@ -36,21 +35,16 @@ export async function loadTranslations(langCode = 'en') {
     currentLang = langCode;
     localStorage.setItem('preferredLang', langCode);
     applyTranslations();
-
-    // ← Add this to prevent any popup
-    console.log(`Language successfully set to: ${langCode}`);
 }
-function applyTranslations() {
-    console.log("Applying translations for:", currentLang);
 
+function applyTranslations() {
     // Main input placeholder
     const mainInput = document.getElementById('mainInput');
-    if (mainInput) {
-        mainInput.placeholder = currentTranslations.placeholder || 
-            "Share your raw testimony... What did you witness?";
+    if (mainInput && currentTranslations.placeholder) {
+        mainInput.placeholder = currentTranslations.placeholder;
     }
 
-    // All data-i18n elements
+    // All elements with data-i18n
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
         if (currentTranslations[key]) {
@@ -72,20 +66,19 @@ export function initLanguage() {
     const savedLang = localStorage.getItem('preferredLang') || 'en';
 
     if (selector) {
-        selector.innerHTML = supportedLanguages
-            .map(lang => `
-                <option value="${lang.code}">
-                    ${lang.flag} ${lang.name} (${lang.code.toUpperCase()})
-                </option>
-            `).join('');
-        selector.value = savedLang;
+        selector.innerHTML = supportedLanguages.map(lang => `
+            <option value="${lang.code}">
+                ${lang.flag} ${lang.name}
+            </option>
+        `).join('');
 
+        selector.value = savedLang;
         selector.addEventListener('change', (e) => {
             loadTranslations(e.target.value);
         });
     }
 
-    // Silent load on startup
+    // Load saved language silently
     loadTranslations(savedLang);
 }
 
@@ -93,4 +86,6 @@ export function changeLanguage(langCode) {
     loadTranslations(langCode);
 }
 
+// Global access
 window.changeLanguage = changeLanguage;
+window.initLanguage = initLanguage;
