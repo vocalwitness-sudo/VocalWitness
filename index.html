@@ -50,7 +50,24 @@
                 <button onclick="loadFeed('citizen')" class="nav-btn active px-5 py-2.5 rounded-2xl whitespace-nowrap" data-feed="citizen">Citizen Talk</button>
                 <button onclick="navigateToPage('true-witness.html')" class="nav-btn px-5 py-2.5 rounded-2xl whitespace-nowrap">True Witness</button>
                 <button onclick="navigateToPage('live-arena.html')" class="nav-btn px-5 py-2.5 rounded-2xl whitespace-nowrap">Live Arena</button>
+                <button onclick="navigateToPage('groups.html')" class="nav-btn px-5 py-2.5 rounded-2xl whitespace-nowrap">Groups</button>
+                
             </div>
+
+            <!-- GROUP CREATION MODAL -->
+<div id="groupModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[60]">
+    <div class="glass rounded-3xl max-w-md w-full mx-4 p-8">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold">Create New Group</h2>
+            <button onclick="closeGroupModal()" class="text-3xl text-zinc-400 hover:text-white">×</button>
+            </div>
+        
+        <input id="groupName" type="text" placeholder="Group Name" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 mb-4">
+        <textarea id="groupDesc" rows="3" placeholder="Group Description (optional)" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 mb-6"></textarea>
+        
+        <button onclick="createGroup()" class="w-full py-4 bg-emerald-500 text-black font-bold rounded-2xl">Create Group</button>
+    </div>
+</div>
 
             <div class="relative">
                 <button onclick="toggleMoreMenu()" class="w-10 h-10 flex items-center justify-center text-2xl hover:bg-zinc-800 rounded-2xl transition-all">☰</button>
@@ -116,19 +133,47 @@
     </div>
 
     <!-- PHASE 2 PROFILE MODAL -->
-    <div id="profileModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[70]">
-        <div class="glass rounded-3xl max-w-lg w-full mx-4 p-8 max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold">My Digital Passport</h2>
-                <button onclick="closeProfile()" class="text-3xl text-zinc-400 hover:text-white">×</button>
-            </div>
+<div id="profileModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[70]">
+    <div class="glass rounded-3xl max-w-lg w-full mx-4 p-8 max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold">My Digital Passport</h2>
+            <button onclick="closeProfile()" class="text-3xl text-zinc-400 hover:text-white">×</button>
+        </div>
 
-            <div class="text-center mb-8">
-                <div onclick="uploadProfilePicture()" class="w-28 h-28 mx-auto bg-gradient-to-br from-emerald-500 to-teal-500 rounded-3xl flex items-center justify-center text-6xl mb-4 shadow-inner cursor-pointer hover:scale-105 transition-transform border-4 border-emerald-500/30" id="profileAvatar">👤</div>
-                <h3 id="profileName" class="text-xl font-bold">Loading...</h3>
-                <p id="profileUsername" class="text-emerald-400">@username</p>
-                <p id="profileBio" class="text-zinc-400 mt-2 text-sm">Tell the Square about yourself...</p>
+        <!-- Profile Header -->
+        <div class="text-center mb-8">
+            <div onclick="uploadProfilePicture()" class="w-28 h-28 mx-auto bg-gradient-to-br from-emerald-500 to-teal-500 rounded-3xl flex items-center justify-center text-6xl mb-4 shadow-inner cursor-pointer hover:scale-105 transition-transform border-4 border-emerald-500/30" id="profileAvatar">👤</div>
+            <h3 id="profileName" class="text-xl font-bold">Loading...</h3>
+            <p id="profileUsername" class="text-emerald-400">@username</p>
+        </div>
+
+        <!-- Current Tier -->
+        <div class="bg-zinc-900/70 rounded-2xl p-6 mb-8 text-center">
+            <p class="text-xs text-zinc-400 mb-1">Current Circle</p>
+            <div id="current-tier-badge" class="inline-flex items-center gap-2 px-6 py-2 rounded-full text-sm font-semibold"></div>
+        </div>
+
+        <!-- Trust Cycle -->
+        <div class="bg-zinc-900/70 rounded-2xl p-5 mb-8">
+            <div class="flex justify-between text-xs mb-2">
+                <span>Citizen Circle</span>
+                <span id="trust-level">Level 1</span>
             </div>
+            <div class="h-2 bg-zinc-800 rounded-full overflow-hidden">
+                <div id="trust-bar" class="h-full bg-gradient-to-r from-emerald-500 to-teal-500 w-1/3 transition-all"></div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="space-y-3">
+            <button onclick="editProfile()" class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl">✏️ Edit Profile</button>
+            <button onclick="changePassword()" class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl">🔑 Change Password</button>
+            <button onclick="showZKUpgrade()" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-black font-bold rounded-2xl">🔬 Upgrade to Witness Circle (ZK)</button>
+            <button onclick="logout()" class="w-full py-3 text-red-400 hover:bg-red-900/30 rounded-2xl">Sign Out</button>
+        </div>
+    </div>
+</div>
+    
 
             <!-- Trust Cycle -->
             <div class="bg-zinc-900/70 rounded-2xl p-5 mb-8">
