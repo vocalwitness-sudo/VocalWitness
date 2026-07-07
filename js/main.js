@@ -142,7 +142,7 @@ window.showSupportModal = () => {
 };
 
 window.initiateSupport = () => {
-    alert("Thank you for wanting to support!\n\nWe are moving to voluntary donations/tips.\n\nMore options coming soon.");
+    showToast("Thank you for wanting to support the Square! 💚\n\nWe are building voluntary donation options.\n\nYour support means a lot.", "success");
     document.getElementById('supportModal').classList.add('hidden');
 };
 // Debug
