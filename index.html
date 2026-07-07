@@ -11,6 +11,11 @@
     
     <!-- Tailwind CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+    body { min-height: 100vh; }
+    #feedContainer { min-height: 400px; } /* Prevents jump */
+    .glass { contain: content; } /* Better rendering */
+    </style>
     <!-- External dependencies -->
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
