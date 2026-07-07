@@ -137,10 +137,13 @@ window.logout = () => {
     console.log("Logout called"); 
 };
 
-window.showGuardian = () => {
-    const guardianModal = document.getElementById('guardianModal');
-    if (guardianModal) guardianModal.classList.remove('hidden');
+window.showSupportModal = () => {
+    document.getElementById('supportModal').classList.remove('hidden');
 };
 
+window.initiateSupport = () => {
+    alert("Thank you for wanting to support!\n\nWe are moving to voluntary donations/tips.\n\nMore options coming soon.");
+    document.getElementById('supportModal').classList.add('hidden');
+};
 // Debug
 console.log("✅ VocalWitness main.js loaded successfully");
