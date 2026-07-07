@@ -26,29 +26,27 @@
     <div class="max-w-2xl mx-auto bg-red-950/30 border border-red-500/20 rounded-3xl p-4 text-xs mb-6 text-center">
         <strong class="text-red-400">Legal:</strong> VocalWitness is an un-manipulated decentralized distribution medium.
     </div>
-
-    <div class="max-w-2xl mx-auto">
-        <!-- HEADER -->
-        <header class="flex items-center justify-between mb-8">
-            <div class="flex items-center gap-3">
-                <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-3xl shadow-inner">🔊</div>
-                    <div>
-                        <h1 class="text-4xl font-bold tracking-tighter text-emerald-400">VocalWitness</h1>
-                        <p class="text-xs text-emerald-500 -mt-1">Truth • Evidence • Public Square</p>
-                    </div>
-                </div>
+      <!-- Header -->
+   <div class="max-w-2xl mx-auto">
+    <header class="flex items-center justify-between mb-8">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-3xl shadow-inner">🔊</div>
+            <div>
+                <h1 class="text-4xl font-bold tracking-tighter text-emerald-400">VocalWitness</h1>
+                <p class="text-xs text-emerald-500 -mt-1">Truth • Evidence • Public Square</p>
             </div>
-            <div class="flex items-center gap-3">
-                <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white px-5 py-2.5 rounded-2xl text-sm focus:outline-none focus:border-emerald-500"></select>
-                <select id="languageSelector" aria-label="Select your language" 
-        class="bg-zinc-900 border border-zinc-700 text-white px-5 py-2.5 rounded-2xl text-sm focus:outline-none focus:border-emerald-500">
-                </select>
-                <button onclick="showGuardian()" class="guardian-btn px-6 py-3 rounded-2xl flex items-center gap-2 shadow-xl hover:scale-105 transition-all text-sm font-semibold">🛡️ Guardian Witness</button>
-                <button onclick="showProfile()" class="w-11 h-11 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-3xl transition-all border border-zinc-600 flex items-center justify-center">👤</button>
-            </div>
-        </header>
+        </div>
 
+        <div class="flex items-center gap-3">
+            <select id="languageSelector" aria-label="Select your language" 
+                    class="bg-zinc-900 border border-zinc-700 text-white px-5 py-2.5 rounded-2xl text-sm focus:outline-none focus:border-emerald-500">
+            </select>
+            
+            <button onclick="showGuardian()" class="guardian-btn px-6 py-3 rounded-2xl flex items-center gap-2 shadow-xl hover:scale-105 transition-all text-sm font-semibold">🛡️ Guardian Witness</button>
+            <button onclick="showProfile()" class="w-11 h-11 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-3xl transition-all border border-zinc-600 flex items-center justify-center">👤</button>
+        </div>
+    </header>
+</div>
         <!-- NAVIGATION -->
         <nav id="main-nav" class="flex gap-2 mb-6 overflow-x-auto pb-2">
             <button onclick="loadFeed('citizen')" class="nav-btn active px-5 py-2.5 rounded-2xl whitespace-nowrap" data-feed="citizen">Citizen Talk</button>
