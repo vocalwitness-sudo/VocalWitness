@@ -1,85 +1,91 @@
-<!DOCTYPE html>
-<html lang="en-NG">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Groups - VocalWitness</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body class="min-h-screen p-4 bg-[#0a0f1c]">
-    <div class="max-w-2xl mx-auto">
-        <h1 class="text-4xl font-bold text-emerald-400 mb-8">Groups</h1>
-        
-        <button onclick="showGroupModal()" class="w-full py-4 bg-emerald-500 text-black font-bold rounded-2xl mb-8">+ Create New Group</button>
-        
-        <div id="groupsList" class="space-y-4">
-            <!-- Populated by JS -->
-        </div>
-    </div>
+// js/group.js - Full Group Membership Management
+import { db, auth } from './firebase-config.js';
+import { doc, updateDoc, arrayUnion, arrayRemove, getDoc, increment } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { showToast } from './utils.js';
 
-    <!-- Group Creation Modal -->
-    <div id="groupModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[60]">
-        <div class="glass rounded-3xl max-w-md w-full mx-4 p-8">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold">Create New Group</h2>
-                <button onclick="closeGroupModal()" class="text-3xl text-zinc-400 hover:text-white">×</button>
-            </div>
-            
-            <input id="groupName" type="text" placeholder="Group Name" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 mb-4">
-            <textarea id="groupDesc" rows="3" placeholder="Group Description (optional)" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 mb-6"></textarea>
-            
-            <button onclick="createGroup()" class="w-full py-4 bg-emerald-500 text-black font-bold rounded-2xl">Create Group</button>
-        </div>
-    </div>
+// Join Group
+export async function joinGroup(groupId) {
+    if (!auth.currentUser) {
+        showToast("Sign in to join group", "error");
+        return;
+    }
 
-    <script type="module">
-        import { db, auth } from './js/firebase-config.js';
-        import { collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+    try {
+        const groupRef = doc(db, "groups", groupId);
+        const groupSnap = await getDoc(groupRef);
+        const group = groupSnap.data();
 
-        async function loadGroups() {
-            const groupsList = document.getElementById('groupsList');
-            groupsList.innerHTML = '<p class="text-zinc-400 text-center py-8">Loading groups...</p>';
-
-            try {
-                const querySnapshot = await getDocs(collection(db, "groups"));
-                groupsList.innerHTML = '';
-
-                if (querySnapshot.empty) {
-                    groupsList.innerHTML = '<p class="text-zinc-400 text-center py-8">No groups yet. Create one!</p>';
-                    return;
-                }
-
-                querySnapshot.forEach((doc) => {
-                    const group = doc.data();
-                    const groupEl = document.createElement('div');
-                    groupEl.className = 'glass rounded-3xl p-6';
-                    groupEl.innerHTML = `
-                        <h3 class="font-bold text-lg">${group.name}</h3>
-                        <p class="text-zinc-400 text-sm mt-1">${group.description || 'No description'}</p>
-                        <p class="text-xs text-emerald-400 mt-4">${group.memberCount || 1} members</p>
-                    `;
-                    groupsList.appendChild(groupEl);
-                });
-            } catch (err) {
-                console.error(err);
-                groupsList.innerHTML = '<p class="text-red-400 text-center py-8">Failed to load groups</p>';
-            }
+        if (group.members.includes(auth.currentUser.uid)) {
+            showToast("You are already a member", "info");
+            return;
         }
 
-        window.showGroupModal = () => document.getElementById('groupModal').classList.remove('hidden');
-        window.closeGroupModal = () => document.getElementById('groupModal').classList.add('hidden');
-        window.createGroup = async () => {
-            // Reuse your existing createGroup from main.js or duplicate logic here
-            const name = document.getElementById('groupName').value.trim();
-            if (!name) return alert("Group name required");
-            
-            // Call your createGroup function
-            await createGroup(); // from main.js
-        };
+        await updateDoc(groupRef, {
+            members: arrayUnion(auth.currentUser.uid),
+            memberCount: increment(1)
+        });
 
-        // Load groups on page load
-        document.addEventListener('DOMContentLoaded', loadGroups);
-    </script>
-</body>
-</html>
+        showToast("✅ Joined the group successfully!", "success");
+    } catch (err) {
+        console.error(err);
+        showToast("Failed to join group", "error");
+    }
+}
+
+// Leave Group
+export async function leaveGroup(groupId) {
+    if (!auth.currentUser) return;
+
+    if (!confirm("Leave this group?")) return;
+
+    try {
+        const groupRef = doc(db, "groups", groupId);
+        await updateDoc(groupRef, {
+            members: arrayRemove(auth.currentUser.uid),
+            memberCount: increment(-1)
+        });
+
+        showToast("You have left the group", "success");
+    } catch (err) {
+        showToast("Failed to leave group", "error");
+    }
+}
+
+// Check if user is admin (creator)
+export async function isGroupAdmin(groupId) {
+    if (!auth.currentUser) return false;
+    try {
+        const groupSnap = await getDoc(doc(db, "groups", groupId));
+        const group = groupSnap.data();
+        return group.createdBy === auth.currentUser.uid;
+    } catch (e) {
+        return false;
+    }
+}
+
+// Admin: Remove member
+export async function removeMember(groupId, memberId) {
+    if (!await isGroupAdmin(groupId)) {
+        showToast("Only group admins can remove members", "error");
+        return;
+    }
+
+    if (!confirm("Remove this member from the group?")) return;
+
+    try {
+        const groupRef = doc(db, "groups", groupId);
+        await updateDoc(groupRef, {
+            members: arrayRemove(memberId),
+            memberCount: increment(-1)
+        });
+        showToast("Member removed successfully", "success");
+    } catch (err) {
+        showToast("Failed to remove member", "error");
+    }
+}
+
+// Make functions globally available
+window.joinGroup = joinGroup;
+window.leaveGroup = leaveGroup;
+window.removeMember = removeMember;
+window.isGroupAdmin = isGroupAdmin;
