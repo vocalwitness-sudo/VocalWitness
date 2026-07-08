@@ -69,7 +69,18 @@
     </div>
 </div>
             
-
+<div id="voteModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[60]">
+    <div class="glass rounded-3xl max-w-md w-full mx-4 p-8">
+        <h2 class="text-2xl font-bold mb-6" id="voteTitle"></h2>
+        <div class="flex gap-4 justify-center">
+            <button onclick="castVote('for', 1)" class="px-8 py-3 bg-emerald-500 text-black rounded-2xl">+1 For</button>
+            <button onclick="castVote('for', 2)" class="px-8 py-3 bg-emerald-600 text-black rounded-2xl">+4 For</button>
+            <button onclick="castVote('against', 1)" class="px-8 py-3 bg-red-500 text-black rounded-2xl">-1 Against</button>
+        </div>
+        <button onclick="closeVoteModal()" class="w-full mt-6 py-3 text-zinc-400">Cancel</button>
+    </div>
+</div>
+            
             <div class="flex items-center gap-3">
                 <!-- Language Selector -->
                 <select id="languageSelector" onchange="changeLanguage(this.value)"
