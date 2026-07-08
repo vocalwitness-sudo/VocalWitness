@@ -6,7 +6,6 @@ import { showToast } from './utils.js';
 import { initLanguage } from './i18n.js';
 import * as mediaModule from './media.js';
 import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
-import { getCurrentUserTier, applyTierTheme } from './tier.js';
 
 // ====================== GLOBAL STATE ======================
 let engineInstance = null;
@@ -55,6 +54,7 @@ window.initiateStewardship = () => {
     document.getElementById('supportModal').classList.add('hidden');
 };
 
+// ====================== GROUP FUNCTIONS ======================
 window.showGroupModal = () => {
     document.getElementById('groupModal').classList.remove('hidden');
 };
@@ -92,6 +92,59 @@ window.createGroup = async () => {
     }
 };
 
+// ====================== DAO VOTING ======================
+window.showDAOModal = () => {
+    document.getElementById('daoModal').classList.remove('hidden');
+};
+
+window.submitProposal = async () => {
+    const title = document.getElementById('proposalTitle').value.trim();
+    const desc = document.getElementById('proposalDesc').value.trim();
+    
+    if (!title) {
+        showToast("Proposal title is required", "error");
+        return;
+    }
+
+    try {
+        const { collection, addDoc } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
+        
+        await addDoc(collection(db, "dao_proposals"), {
+            title: title,
+            description: desc || "",
+            createdBy: auth.currentUser.uid,
+            createdAt: new Date().toISOString(),
+            status: "active",
+            votesFor: 0,
+            votesAgainst: 0,
+            voters: []
+        });
+
+        showToast("Proposal submitted to Steward DAO", "success");
+        document.getElementById('daoModal').classList.add('hidden');
+    } catch (err) {
+        console.error(err);
+        showToast("Failed to create proposal", "error");
+    }
+};
+
+window.castVote = async (direction, strength) => {
+    // TODO: Implement quadratic voting logic here
+    showToast(`Voted ${direction} with strength ${strength}`, "success");
+    window.closeVoteModal();
+};
+
+window.showVoteModal = (proposalId, title) => {
+    window.currentVotingProposalId = proposalId;
+    document.getElementById('voteTitle').textContent = title;
+    document.getElementById('voteModal').classList.remove('hidden');
+};
+
+window.closeVoteModal = () => {
+    document.getElementById('voteModal').classList.add('hidden');
+};
+
+// ====================== PUBLISH TESTIMONY ======================
 window.publishTestimony = async () => {
     const textarea = document.getElementById('mainInput');
     const content = textarea?.value.trim() || "";
@@ -135,17 +188,6 @@ window.publishTestimony = async () => {
         postBtn.disabled = false;
         postBtn.textContent = '🚀 Publish Testimony to the Square';
     }
-};
-
-// Placeholder functions
-window.editProfile = () => alert("Edit profile coming soon");
-window.changePassword = () => alert("Password change coming soon");
-window.showZKUpgrade = () => alert("ZK Verification path coming soon");
-window.uploadProfilePicture = () => alert("Profile picture upload coming soon");
-window.logout = () => {
-    console.log("Logout called");
-    showToast("Signed out successfully", "success");
-    setTimeout(() => window.location.reload(), 800);
 };
 
 // ====================== BOOTSTRAP ======================
