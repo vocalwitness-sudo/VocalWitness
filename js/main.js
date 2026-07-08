@@ -188,6 +188,14 @@ window.publishTestimony = async () => {
             verified: false
         });
 
+        // Inside your group rendering loop
+const isAdmin = await isGroupAdmin(doc.id);
+
+groupEl.innerHTML += `
+    ${isAdmin ? `<button onclick="removeMember('${doc.id}', 'some-user-id')" class="text-red-400 text-xs">Remove Member</button>` : ''}
+    <button onclick="joinGroup('${doc.id}')" class="text-emerald-400 text-xs">Join</button>
+`;
+
         showToast("✅ Testimony published to the Square!", "success");
 
         // Reset form
