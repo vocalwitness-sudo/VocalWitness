@@ -57,6 +57,47 @@ window.submitProposal = async () => {
     }
 };
 
+// Group related functions
+window.showGroupModal = () => {
+    document.getElementById('groupModal').classList.remove('hidden');
+};
+
+window.closeGroupModal = () => {
+    document.getElementById('groupModal').classList.add('hidden');
+};
+
+window.createGroup = async () => {
+    const name = document.getElementById('groupName').value.trim();
+    const desc = document.getElementById('groupDesc').value.trim();
+    
+    if (!name) {
+        showToast("Group name is required", "error");
+        return;
+    }
+
+    try {
+        const { collection, addDoc } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
+        
+        await addDoc(collection(db, "groups"), {
+            name: name,
+            description: desc || "",
+            createdBy: auth.currentUser.uid,
+            createdAt: new Date().toISOString(),
+            members: [auth.currentUser.uid],
+            memberCount: 1
+        });
+
+        showToast(`✅ Group "${name}" created successfully!`, "success");
+        closeGroupModal();
+        // Refresh groups list if on groups page
+        if (typeof window.loadGroups === 'function') window.loadGroups();
+    } catch (err) {
+        console.error(err);
+        showToast("Failed to create group", "error");
+    }
+};
+
+
 window.castVote = async (direction, strength) => {
     const proposalId = window.currentVotingProposalId;
     await castQuadraticVote(proposalId, direction, strength);
