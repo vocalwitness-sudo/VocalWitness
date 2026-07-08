@@ -47,6 +47,17 @@ window.showProfile = () => {
     // TODO: Load real profile data here
 };
 
+window.showDAOModal = () => document.getElementById('daoModal').classList.remove('hidden');
+window.submitProposal = async () => {
+    const title = document.getElementById('proposalTitle').value;
+    const desc = document.getElementById('proposalDesc').value;
+    if (title) {
+        await createStewardProposal(title, desc);
+        document.getElementById('daoModal').classList.add('hidden');
+    }
+};
+
+
 window.closeProfile = () => {
     document.getElementById('profileModal').classList.add('hidden');
 };
