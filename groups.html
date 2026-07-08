@@ -3,30 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#10b981">
-    <link rel="manifest" href="/manifest.json">
-    <link rel="icon" href="/logo.png" type="image/png">
     <title>Groups - VocalWitness</title>
-    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
-    
-    <style>
-        body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: white; }
-        .glass { background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(16, 185, 129, 0.25); }
-    </style>
 </head>
 <body class="min-h-screen p-4 bg-[#0a0f1c]">
     <div class="max-w-2xl mx-auto">
         <h1 class="text-4xl font-bold text-emerald-400 mb-8">Groups</h1>
         
-        <div class="glass rounded-3xl p-6 mb-6">
-            <button onclick="showGroupModal()" class="w-full py-4 bg-emerald-500 text-black font-bold rounded-2xl mb-6">+ Create New Group</button>
-            
-            <div id="groupsList" class="space-y-4">
-                <!-- Groups will be populated by JS -->
-                <p class="text-zinc-400 text-center py-8">No groups yet. Create one to start a community!</p>
-            </div>
+        <button onclick="showGroupModal()" class="w-full py-4 bg-emerald-500 text-black font-bold rounded-2xl mb-8">+ Create New Group</button>
+        
+        <div id="groupsList" class="space-y-4">
+            <!-- Populated by JS -->
         </div>
     </div>
 
@@ -45,29 +33,53 @@
         </div>
     </div>
 
-    <script>
-        function showGroupModal() {
-            document.getElementById('groupModal').classList.remove('hidden');
-        }
+    <script type="module">
+        import { db, auth } from './js/firebase-config.js';
+        import { collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
-        function closeGroupModal() {
-            document.getElementById('groupModal').classList.add('hidden');
-        }
+        async function loadGroups() {
+            const groupsList = document.getElementById('groupsList');
+            groupsList.innerHTML = '<p class="text-zinc-400 text-center py-8">Loading groups...</p>';
 
-        async function createGroup() {
-            const name = document.getElementById('groupName').value.trim();
-            if (!name) {
-                alert("Group name is required");
-                return;
+            try {
+                const querySnapshot = await getDocs(collection(db, "groups"));
+                groupsList.innerHTML = '';
+
+                if (querySnapshot.empty) {
+                    groupsList.innerHTML = '<p class="text-zinc-400 text-center py-8">No groups yet. Create one!</p>';
+                    return;
+                }
+
+                querySnapshot.forEach((doc) => {
+                    const group = doc.data();
+                    const groupEl = document.createElement('div');
+                    groupEl.className = 'glass rounded-3xl p-6';
+                    groupEl.innerHTML = `
+                        <h3 class="font-bold text-lg">${group.name}</h3>
+                        <p class="text-zinc-400 text-sm mt-1">${group.description || 'No description'}</p>
+                        <p class="text-xs text-emerald-400 mt-4">${group.memberCount || 1} members</p>
+                    `;
+                    groupsList.appendChild(groupEl);
+                });
+            } catch (err) {
+                console.error(err);
+                groupsList.innerHTML = '<p class="text-red-400 text-center py-8">Failed to load groups</p>';
             }
-            alert(`✅ Group "${name}" created successfully!`);
-            closeGroupModal();
         }
 
-        // Load some dummy groups
-        window.onload = () => {
-            console.log("Groups page loaded");
+        window.showGroupModal = () => document.getElementById('groupModal').classList.remove('hidden');
+        window.closeGroupModal = () => document.getElementById('groupModal').classList.add('hidden');
+        window.createGroup = async () => {
+            // Reuse your existing createGroup from main.js or duplicate logic here
+            const name = document.getElementById('groupName').value.trim();
+            if (!name) return alert("Group name required");
+            
+            // Call your createGroup function
+            await createGroup(); // from main.js
         };
+
+        // Load groups on page load
+        document.addEventListener('DOMContentLoaded', loadGroups);
     </script>
 </body>
 </html>
