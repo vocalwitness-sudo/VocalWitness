@@ -57,6 +57,23 @@ window.submitProposal = async () => {
     }
 };
 
+window.castVote = async (direction, strength) => {
+    const proposalId = window.currentVotingProposalId;
+    await castQuadraticVote(proposalId, direction, strength);
+    closeVoteModal();
+};
+
+window.showVoteModal = (proposalId, title) => {
+    window.currentVotingProposalId = proposalId;
+    document.getElementById('voteTitle').textContent = title;
+    document.getElementById('voteModal').classList.remove('hidden');
+};
+
+window.closeVoteModal = () => {
+    document.getElementById('voteModal').classList.add('hidden');
+};
+
+
 
 window.closeProfile = () => {
     document.getElementById('profileModal').classList.add('hidden');
