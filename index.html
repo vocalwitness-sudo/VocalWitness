@@ -4,40 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#10b981">
+    
+    <!-- Important: CSP Meta Tag -->
+    <meta http-equiv="Content-Security-Policy" 
+          content="default-src 'self' https://*.firebaseio.com https://*.googleapis.com https://*.gstatic.com https://cdnjs.cloudflare.com;
+                   script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://www.gstatic.com;
+                   style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com;
+                   connect-src 'self' https://*.firebaseio.com https://*.googleapis.com wss://*.firebaseio.com;
+                   img-src 'self' data: https: blob:;
+                   font-src 'self' https: data:;
+                   object-src 'none';
+                   base-uri 'self';">
+
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="/logo.png" type="image/png">
     <title>VocalWitness • Truth • Evidence • Public Square</title>
   
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
-  
-    <style>
-        body {
-            font-family: 'Inter', system-ui, sans-serif;
-            background: #0a0f1c;
-            color: white;
-        }
-        .glass {
-            background: rgba(17, 24, 39, 0.95);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(16, 185, 129, 0.25);
-        }
-        .nav-btn {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .nav-btn.active {
-            background-color: #10b981 !important;
-            color: #111827 !important;
-            font-weight: 700;
-            box-shadow: 0 10px 15px -3px rgb(16 185 129 / 0.4);
-        }
-        .guardian-btn {
-            background: linear-gradient(90deg, #10b981, #34d399);
-            color: black;
-            font-weight: 700;
-        }
-    </style>
 </head>
 <body class="min-h-screen pb-20 p-4 bg-[#0a0f1c]">
 
