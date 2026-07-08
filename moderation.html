@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en-NG">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moderation Dashboard - VocalWitness</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="min-h-screen p-4 bg-[#0a0f1c]">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-4xl font-bold text-emerald-400 mb-8">🛡️ Moderation Dashboard</h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="glass rounded-3xl p-6 text-center">
+                <div class="text-3xl mb-2">⏳</div>
+                <div class="text-2xl font-bold" id="pending-count">12</div>
+                <div class="text-sm text-zinc-400">Pending Review</div>
+            </div>
+            <div class="glass rounded-3xl p-6 text-center">
+                <div class="text-3xl mb-2">🚩</div>
+                <div class="text-2xl font-bold text-red-400" id="flagged-count">5</div>
+                <div class="text-sm text-zinc-400">Flagged Content</div>
+            </div>
+            <div class="glass rounded-3xl p-6 text-center">
+                <div class="text-3xl mb-2">✅</div>
+                <div class="text-2xl font-bold text-emerald-400" id="resolved-count">28</div>
+                <div class="text-sm text-zinc-400">Resolved Today</div>
+            </div>
+        </div>
+
+        <!-- Flagged Content List -->
+        <div class="glass rounded-3xl p-6">
+            <h2 class="text-xl font-bold mb-6">Flagged Content</h2>
+            <div id="flaggedList" class="space-y-4">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { db } from './js/firebase-config.js';
+        import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+        async function loadFlaggedContent() {
+            const flaggedList = document.getElementById('flaggedList');
+            flaggedList.innerHTML = '<p class="text-zinc-400 text-center py-8">Loading flagged content...</p>';
+
+            try {
+                const q = query(collection(db, "testimonies"), where("flagged", "==", true));
+                const snapshot = await getDocs(q);
+                
+                flaggedList.innerHTML = '';
+                
+                if (snapshot.empty) {
+                    flaggedList.innerHTML = '<p class="text-zinc-400 text-center py-8">No flagged content at the moment.</p>';
+                    return;
+                }
+
+                snapshot.forEach((docSnap) => {
+                    const post = docSnap.data();
+                    const item = document.createElement('div');
+                    item.className = 'bg-zinc-900 rounded-2xl p-6 border border-red-500/30';
+                    item.innerHTML = `
+                        <p class="text-sm text-zinc-300">${post.content}</p>
+                        <div class="flex gap-4 mt-4">
+                            <button onclick="approvePost('${docSnap.id}')" class="px-4 py-2 bg-emerald-500 text-black text-sm rounded-xl">Approve</button>
+                            <button onclick="removePost('${docSnap.id}')" class="px-4 py-2 bg-red-500 text-black text-sm rounded-xl">Remove</button>
+                        </div>
+                    `;
+                    flaggedList.appendChild(item);
+                });
+            } catch (err) {
+                flaggedList.innerHTML = '<p class="text-red-400 text-center py-8">Failed to load flagged content</p>';
+            }
+        }
+
+        window.approvePost = async (postId) => {
+            // TODO: Update post status in Firestore
+            showToast("Post approved", "success");
+            loadFlaggedContent();
+        };
+
+        window.removePost = async (postId) => {
+            if (!confirm("Remove this post permanently?")) return;
+            // TODO: Delete or hide post
+            showToast("Post removed", "success");
+            loadFlaggedContent();
+        };
+
+        // Load on page load
+        document.addEventListener('DOMContentLoaded', loadFlaggedContent);
+    </script>
+</body>
+</html>
