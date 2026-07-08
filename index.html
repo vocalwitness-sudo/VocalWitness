@@ -5,16 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#10b981">
     
-    <!-- Important: CSP Meta Tag -->
+    <!-- STRONGER CSP -->
     <meta http-equiv="Content-Security-Policy" 
-          content="default-src 'self' https://*.firebaseio.com https://*.googleapis.com https://*.gstatic.com https://cdnjs.cloudflare.com;
+          content="default-src 'self' https: wss: blob: data:;
                    script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://www.gstatic.com;
                    style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com;
-                   connect-src 'self' https://*.firebaseio.com https://*.googleapis.com wss://*.firebaseio.com;
-                   img-src 'self' data: https: blob:;
+                   connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com wss://*.firebaseio.com;
+                   img-src 'self' https: data: blob:;
                    font-src 'self' https: data:;
                    object-src 'none';
-                   base-uri 'self';">
+                   base-uri 'self';
+                   frame-ancestors 'none';">
 
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="/logo.png" type="image/png">
@@ -23,6 +24,15 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: white; }
+        .glass {
+            background: rgba(17, 24, 39, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+        }
+    </style>
 </head>
 <body class="min-h-screen pb-20 p-4 bg-[#0a0f1c]">
 
