@@ -1,5 +1,6 @@
 // js/storage.js - Advanced Reactive Global State
 import { getTier, calculateTrustScore } from './utils.js';
+import { db, auth } from './firebase-config.js';   // Correct relative path
 
 export const state = {
     user: null,
