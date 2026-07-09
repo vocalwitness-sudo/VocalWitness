@@ -1,0 +1,10 @@
+{
+  "name": "vocalwitness",
+  "version": "1.0.0",
+  "description": "VocalWitness - Truth • Evidence • Public Square",
+  "private": true,
+  "scripts": {
+    "build": "echo 'VocalWitness - Static site - No build required'",
+    "deploy": "firebase deploy --only hosting"
+  }
+}
