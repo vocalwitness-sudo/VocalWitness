@@ -1,4 +1,4 @@
-// js/firebase-config.js - CLEAN & STABLE (No Payment)
+// js/firebase-config.js - SINGLE SOURCE OF TRUTH
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
