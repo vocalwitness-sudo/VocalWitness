@@ -5,32 +5,39 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Groups - VocalWitness</title>
   <link rel="stylesheet" href="style.css">
-  <link rel="icon" href="logo.png" type="image/png">
   
-  <!-- Social Sharing Meta Tags -->
+  <!-- Social Sharing -->
   <meta property="og:title" content="Groups - VocalWitness">
-  <meta property="og:description" content="Join or create groups on VocalWitness">
+  <meta property="og:description" content="Join or create vocal witness groups">
   <meta property="og:image" content="https://vocalwitness-3affa.web.app/logo.png">
   <meta property="og:url" content="https://vocalwitness-3affa.web.app/groups.html">
-  <meta property="og:type" content="website">
+  
+  <link rel="icon" href="logo.png" type="image/png">
 </head>
 <body>
   <h1>Groups</h1>
-  <p id="status">Loading groups...</p>
   
+  <div id="status"></div>
   <div id="group-container"></div>
+
+  <button onclick="showCreateGroupForm()" style="margin: 20px 0; padding: 12px 24px; font-size: 1.1em;">
+    ➕ Create New Group
+  </button>
 
   <script type="module">
     console.log("✅ Groups module loaded inline");
 
     import { db, auth } from './js/firebase-config.js';
-    import { doc, updateDoc, arrayUnion, arrayRemove, getDoc, increment, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+    import { 
+      doc, updateDoc, arrayUnion, arrayRemove, getDoc, increment, 
+      collection, getDocs, query, orderBy, addDoc 
+    } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
     import { showToast } from './js/utils.js';
 
     const groupContainer = document.getElementById('group-container');
     const statusEl = document.getElementById('status');
 
-    // Fetch and display groups
+    // Load and display groups
     async function loadGroups() {
       try {
         const q = query(collection(db, "groups"), orderBy("memberCount", "desc"));
@@ -39,7 +46,13 @@
         groupContainer.innerHTML = "";
 
         if (snapshot.empty) {
-          statusEl.textContent = "No groups found.";
+          statusEl.innerHTML = `
+            <p style="text-align:center; font-size:1.2em; color:#888; margin:40px 0;">
+              No groups found yet.<br><br>
+              Be the first to create one!
+            </p>
+            <img src="logo.png" alt="VocalWitness" style="max-width:180px; opacity:0.5; display:block; margin:20px auto;">
+          `;
           return;
         }
 
@@ -49,18 +62,25 @@
           const group = docSnap.data();
           const groupId = docSnap.id;
           const isMember = group.members && group.members.includes(auth.currentUser?.uid);
-          
+          const isAdmin = group.createdBy === auth.currentUser?.uid;
+
           const div = document.createElement('div');
           div.className = "group-card";
           div.innerHTML = `
             <h3>${group.name || 'Unnamed Group'}</h3>
-            <p>Members: ${group.memberCount || 0}</p>
+            <p>${group.description || ''}</p>
+            <p><strong>Members:</strong> ${group.memberCount || 0}</p>
+            
             ${isMember ? 
-              `<button onclick="leaveGroup('${groupId}')">Leave Group</button>` : 
+              `<button onclick="leaveGroup('${groupId}')" style="background:#e74c3c;">Leave Group</button>` : 
               `<button onclick="joinGroup('${groupId}')">Join Group</button>`
             }
-            ${group.createdBy === auth.currentUser?.uid ? 
-              `<button onclick="removeMember('${groupId}', 'some-user-id')">Manage Members</button>` : ''}
+            
+            ${isAdmin ? `
+              <button onclick="alert('Member management coming soon for group: ${groupId}')" style="margin-left:10px;">
+                Manage Members
+              </button>
+            ` : ''}
           `;
           groupContainer.appendChild(div);
         });
@@ -70,10 +90,11 @@
       }
     }
 
-    // Your existing functions
+    // ==================== FULL JOIN / LEAVE FUNCTIONS ====================
+
     async function joinGroup(groupId) {
       if (!auth.currentUser) {
-        showToast("Sign in to join group", "error");
+        showToast("Sign in to join a group", "error");
         return;
       }
       try {
@@ -90,8 +111,9 @@
           members: arrayUnion(auth.currentUser.uid),
           memberCount: increment(1)
         });
+
         showToast("✅ Joined the group successfully!", "success");
-        loadGroups(); // Refresh list
+        loadGroups(); // Refresh the list
       } catch (err) {
         console.error(err);
         showToast("Failed to join group", "error");
@@ -100,16 +122,19 @@
 
     async function leaveGroup(groupId) {
       if (!auth.currentUser) return;
-      if (!confirm("Leave this group?")) return;
+      if (!confirm("Are you sure you want to leave this group?")) return;
+
       try {
         const groupRef = doc(db, "groups", groupId);
         await updateDoc(groupRef, {
           members: arrayRemove(auth.currentUser.uid),
           memberCount: increment(-1)
         });
+
         showToast("You have left the group", "success");
         loadGroups();
       } catch (err) {
+        console.error(err);
         showToast("Failed to leave group", "error");
       }
     }
@@ -131,6 +156,7 @@
         return;
       }
       if (!confirm("Remove this member from the group?")) return;
+
       try {
         const groupRef = doc(db, "groups", groupId);
         await updateDoc(groupRef, {
@@ -144,11 +170,43 @@
       }
     }
 
-    // Make functions global
+    // Create new group
+    function showCreateGroupForm() {
+      if (!auth.currentUser) {
+        showToast("You must be signed in to create a group", "error");
+        return;
+      }
+      const name = prompt("Enter Group Name:");
+      if (!name) return;
+      const description = prompt("Enter short description (optional):") || "";
+
+      createGroup(name.trim(), description.trim());
+    }
+
+    async function createGroup(name, description) {
+      try {
+        await addDoc(collection(db, "groups"), {
+          name: name,
+          description: description,
+          createdBy: auth.currentUser.uid,
+          members: [auth.currentUser.uid],
+          memberCount: 1,
+          createdAt: new Date()
+        });
+        showToast("🎉 Group created successfully!", "success");
+        loadGroups();
+      } catch (err) {
+        console.error(err);
+        showToast("Failed to create group", "error");
+      }
+    }
+
+    // Make functions available globally for onclick handlers
     window.joinGroup = joinGroup;
     window.leaveGroup = leaveGroup;
     window.removeMember = removeMember;
     window.isGroupAdmin = isGroupAdmin;
+    window.showCreateGroupForm = showCreateGroupForm;
 
     // Load groups when page loads
     loadGroups();
