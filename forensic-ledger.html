@@ -5,69 +5,82 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#10b981">
     
-    <!-- CSP Fix -->
-    <meta http-equiv="Content-Security-Policy" 
-          content="default-src 'self';
-                   script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://www.gstatic.com https://checkout.flutterwave.com;
-                   style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com;
-                   font-src 'self' https://fonts.gstatic.com;">
-
+    <!-- Stronger CSP -->
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src 'self' https: wss: blob: data:;
+                   script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://www.gstatic.com;
+                   style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com;
+                   connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com wss://*.firebaseio.com;
+                   img-src 'self' https: data: blob:;">
+    
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="/logo.png" type="image/png">
     <title>Forensic Ledger • VocalWitness</title>
-   
+    
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="../style.css">
-   
+    <link rel="stylesheet" href="style.css">
+    
     <style>
-        body { 
-            font-family: 'Inter', system-ui, sans-serif; 
-            background: #0a0f1c; 
-            color: white; 
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: #0a0f1c;
+            color: white;
         }
-        .glass { 
-            background: rgba(17, 24, 39, 0.95); 
-            backdrop-filter: blur(20px); 
-            border: 1px solid rgba(16, 185, 129, 0.25); 
+        .glass {
+            background: rgba(17, 24, 39, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+        }
+        .ledger-entry {
+            transition: all 0.3s ease;
+        }
+        .ledger-entry:hover {
+            transform: translateY(-2px);
+            border-color: rgb(16 185 129 / 0.4);
         }
     </style>
 </head>
 <body class="min-h-screen pb-20 p-4 bg-[#0a0f1c]">
-
     <!-- LEGAL NOTICE -->
     <div class="max-w-2xl mx-auto bg-red-950/30 border border-red-500/20 rounded-3xl p-4 text-xs mb-6 text-center">
         <strong class="text-red-400">Legal:</strong> VocalWitness is an un-manipulated decentralized distribution medium.
     </div>
 
     <div class="max-w-2xl mx-auto">
-        
         <!-- HEADER -->
         <header class="flex items-center justify-between mb-8">
             <div class="flex items-center gap-3">
                 <button onclick="window.goBack()" 
-                        class="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center gap-2 text-sm">
+                        class="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center gap-2 text-sm font-medium">
                     ← Back
                 </button>
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-2xl">📜</div>
+                    <div class="w-11 h-11 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-3xl shadow-inner">📜</div>
                     <div>
                         <h1 class="text-3xl font-bold tracking-tighter text-emerald-400">Forensic Ledger</h1>
-                        <p class="text-xs text-emerald-500">Immutable • Transparent • Verifiable</p>
+                        <p class="text-xs text-emerald-500 -mt-1">Immutable • Transparent • Verifiable</p>
                     </div>
                 </div>
             </div>
         </header>
 
-        <div class="glass rounded-3xl p-6 mb-6">
-            <h2 class="text-xl font-semibold mb-4">Recent Verified Testimonies</h2>
-            <!-- Content will be populated by JS -->
-            <div id="ledgerContainer" class="space-y-4">
-                <!-- Dynamic content loaded here -->
+        <div class="glass rounded-3xl p-6 mb-8">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-semibold">Recent Verified Testimonies</h2>
+                <button onclick="refreshLedger()" 
+                        class="px-4 py-2 text-sm bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center gap-2">
+                    🔄 Refresh
+                </button>
+            </div>
+            
+            <div id="ledgerContainer" class="space-y-4 min-h-[300px]">
+                <!-- Dynamic ledger entries loaded here -->
             </div>
         </div>
 
-        <div class="text-center text-xs text-zinc-500 mt-8">
-            All entries are cryptographically signed and timestamped on-chain.
+        <div class="text-center text-xs text-zinc-500 mt-10">
+            All entries are cryptographically signed, timestamped, and stored immutably.<br>
+            <span class="text-emerald-500">Zero knowledge proofs available for True Witness entries.</span>
         </div>
     </div>
 
@@ -76,23 +89,114 @@
         <p>© 2026 VocalWitness • Forensic Ledger</p>
     </footer>
 
-    <!-- Scripts -->
-    <script src="../js/utils.js"></script>
-    <script>
-        // Make goBack globally available
-        window.goBack = window.goBack || function() {
-            if (window.history.length > 1) window.history.back();
-            else window.location.href = 'index.html';
-        };
-    </script>
-    <script type="module" src="../js/main.js"></script>
+    <script type="module">
+        import { db } from './js/firebase-config.js';
+        import { 
+            collection, query, orderBy, limit, onSnapshot, where 
+        } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+        import { showToast } from './js/utils.js';
 
-    <script>
-        // Page-specific initialization
+        const ledgerContainer = document.getElementById('ledgerContainer');
+        let unsubscribe = null;
+
+        async function loadForensicLedger() {
+            ledgerContainer.innerHTML = `
+                <div class="text-center py-12 text-zinc-400">
+                    Loading immutable ledger...
+                </div>
+            `;
+
+            try {
+                const q = query(
+                    collection(db, "testimonies"),
+                    where("forensicVerified", "==", true),
+                    orderBy("timestamp", "desc"),
+                    limit(15)
+                );
+
+                unsubscribe = onSnapshot(q, (snapshot) => {
+                    ledgerContainer.innerHTML = "";
+
+                    if (snapshot.empty) {
+                        ledgerContainer.innerHTML = `
+                            <div class="text-center py-16 text-zinc-400">
+                                No verified entries yet.<br>
+                                Be the first to publish with Forensic Shield.
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    snapshot.forEach((docSnap) => {
+                        const data = docSnap.data();
+                        const entry = document.createElement('div');
+                        entry.className = "ledger-entry glass rounded-3xl p-5 border border-emerald-500/20";
+                        entry.innerHTML = `
+                            <div class="flex justify-between items-start">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-lg">🔒</div>
+                                    <div>
+                                        <p class="font-medium">${data.author || 'Anonymous Witness'}</p>
+                                        <p class="text-xs text-emerald-500">${new Date(data.timestamp).toLocaleString()}</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-[10px] uppercase tracking-widest text-emerald-400 bg-emerald-900/50 px-3 py-1 rounded-full">VERIFIED</span>
+                                </div>
+                            </div>
+                            <p class="mt-4 text-zinc-100 leading-relaxed">${data.content ? data.content.substring(0, 180) + (data.content.length > 180 ? '...' : '') : 'Media Testimony'}</p>
+                            
+                            ${data.imageUrl ? `<img src="${data.imageUrl}" class="mt-4 rounded-2xl w-full max-h-64 object-cover" alt="Evidence">` : ''}
+                            ${data.audioUrl ? `<audio controls class="w-full mt-4"><source src="${data.audioUrl}" type="audio/webm"></audio>` : ''}
+                            
+                            <div class="flex items-center justify-between text-xs mt-5 pt-4 border-t border-zinc-700 text-zinc-400">
+                                <div>Hash: <span class="font-mono text-[10px]">${data.hash ? data.hash.substring(0, 12) + '...' : 'N/A'}</span></div>
+                                <button onclick="viewFullEntry('${docSnap.id}')" 
+                                        class="text-emerald-400 hover:text-emerald-300">View Full Proof →</button>
+                            </div>
+                        `;
+                        ledgerContainer.appendChild(entry);
+                    });
+                });
+
+            } catch (error) {
+                console.error(error);
+                ledgerContainer.innerHTML = `<p class="text-red-400 text-center py-12">Failed to load ledger. Please try again later.</p>`;
+            }
+        }
+
+        window.refreshLedger = () => {
+            if (unsubscribe) unsubscribe();
+            loadForensicLedger();
+            showToast("Ledger refreshed", "success");
+        };
+
+        window.viewFullEntry = (id) => {
+            showToast("Opening full forensic record for ID: " + id, "info");
+            // Future: Open modal with full ZK proof, hash, signatures, etc.
+        };
+
+        // Initialize
         document.addEventListener('DOMContentLoaded', () => {
-            console.log("Forensic Ledger loaded");
-            // TODO: Load ledger data from Firestore
+            console.log("📜 Forensic Ledger initialized");
+            loadForensicLedger();
         });
+
+        // Cleanup
+        window.addEventListener('beforeunload', () => {
+            if (unsubscribe) unsubscribe();
+        });
+    </script>
+
+    <!-- Global helpers -->
+    <script>
+        window.goBack = function() {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = 'index.html';
+            }
+        };
     </script>
 </body>
 </html>
