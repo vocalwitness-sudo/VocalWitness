@@ -1,10 +1,7 @@
-/**
- * VocalWitness Utilities Module
- * Toast Notifications, Tier System, Trust Score, Helpers & Security
- */
+// js/utils.js
+console.log("✅ utils.js is being loaded as MODULE");
 
 export function showToast(message, type = "success") {
-    const toast = document.createElement('div');
     
     const styles = {
         success: { bg: 'bg-emerald-600', icon: '✅' },
