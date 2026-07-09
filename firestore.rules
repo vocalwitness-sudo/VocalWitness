@@ -1,21 +1,40 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
+
     // Allow public read for MENU
     match /MENU/{document} {
       allow read: if true;
       allow write: if false;
     }
 
-    // Your other rules
+    // Users
     match /users/{userId} {
       allow read: if true;
       allow create, update: if request.auth != null && request.auth.uid == userId;
     }
 
+    // Testimonies
     match /testimonies/{postId} {
       allow read: if true;
       allow create: if request.auth != null;
+    }
+
+    // === GROUPS RULES (this fixes your error) ===
+    match /groups/{groupId} {
+      allow read: if request.auth != null;                    // Signed-in users can read
+      allow create: if request.auth != null;                  // Signed-in users can create groups
+      allow update: if request.auth != null &&
+                    (resource.data.members.hasAny([request.auth.uid]) || 
+                     resource.data.createdBy == request.auth.uid);
+      allow delete: if request.auth != null && 
+                    resource.data.createdBy == request.auth.uid;
+    }
+
+    // Default deny (good security practice)
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
