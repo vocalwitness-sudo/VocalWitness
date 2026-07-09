@@ -1,4 +1,6 @@
 // js/navigation.js - Final Version
+import { db, auth } from './firebase-config.js';   // Correct relative path
+
 export const menuItems = [
     { id: "citizen-talk", icon: "💬", label: "Citizen Talk", href: "/" },
     { id: "true-witness", icon: "🔬", label: "True Witness", href: "/true-witness" },
