@@ -1,4 +1,6 @@
 // 3. Lock the Private Key (Encrypt)
+import { db, auth } from './firebase-config.js';   // Correct relative path
+
 async function encryptKey(privateKey, masterLock) {
     const iv = window.crypto.getRandomValues(new Uint8Array(12)); // Unique vector for every lock
     const encodedKey = new TextEncoder().encode(privateKey);
