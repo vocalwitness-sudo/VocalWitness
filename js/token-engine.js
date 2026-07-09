@@ -1,6 +1,6 @@
 // js/token-engine.js
 import { doc, updateDoc, increment } from "firebase/firestore";
-import { db } from "./firebase-init.js";
+import { db, auth } from './firebase-config.js';   // Correct relative path
 
 export async function processWitnessProof(userId, proofHash, confidenceScore) {
     // 1. Validate the proof via your ZK logic
