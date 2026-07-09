@@ -6,7 +6,6 @@
     import { doc, updateDoc, arrayUnion, arrayRemove, getDoc, increment } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
     import { showToast } from './js/utils.js';
 
-    // Join Group
     async function joinGroup(groupId) {
         if (!auth.currentUser) {
             showToast("Sign in to join group", "error");
@@ -31,7 +30,6 @@
         }
     }
 
-    // Leave Group
     async function leaveGroup(groupId) {
         if (!auth.currentUser) return;
         if (!confirm("Leave this group?")) return;
@@ -47,7 +45,6 @@
         }
     }
 
-    // Check if user is admin
     async function isGroupAdmin(groupId) {
         if (!auth.currentUser) return false;
         try {
@@ -59,7 +56,6 @@
         }
     }
 
-    // Admin: Remove member
     async function removeMember(groupId, memberId) {
         if (!await isGroupAdmin(groupId)) {
             showToast("Only group admins can remove members", "error");
@@ -78,7 +74,7 @@
         }
     }
 
-    // Expose to global scope for onclick handlers
+    // Make functions available globally
     window.joinGroup = joinGroup;
     window.leaveGroup = leaveGroup;
     window.removeMember = removeMember;
