@@ -2,7 +2,7 @@
  * VocalWitness Core Engine - Clean & Reliable Version
  */
 import { generateSha256Hash } from './utils.js';
-import {
+import { db, auth } from './firebase-config.js';   
     ref,
     uploadBytes,
     getDownloadURL
