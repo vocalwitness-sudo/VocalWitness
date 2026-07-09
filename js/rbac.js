@@ -1,6 +1,7 @@
 // js/rbac.js - Advanced Role-Based Access Control
 import { getCurrentUserTier, TIERS } from './tier.js';
 import { showToast } from './utils.js';
+import { db, auth } from './firebase-config.js';   // Correct relative path
 
 export const ROLES = {
     CITIZEN: TIERS.CITIZEN,
