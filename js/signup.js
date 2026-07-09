@@ -1,6 +1,6 @@
 // js/signup.js
 import { showToast } from './utils.js';
-import { auth } from './firebase-config.js'; // Import auth to check current user
+import { db, auth } from './firebase-config.js';   // Correct relative path
 
 export async function upgradeToWitnessTier() {
     const user = auth.currentUser;
