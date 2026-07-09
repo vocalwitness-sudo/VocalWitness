@@ -1,5 +1,5 @@
 // js/witnessCycle.js
-import { db } from './firebase-config.js';
+import { db, auth } from './firebase-config.js';   // Correct relative path
 import { doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { showToast } from './utils.js';
 import { canAccessFeature } from './tier.js';
