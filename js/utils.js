@@ -1,4 +1,6 @@
 // js/utils.js
+import { db, auth } from './firebase-config.js';   // Correct relative path
+
 console.log("✅ utils.js is being loaded as MODULE");
 
 export function showToast(message, type = "success") {
