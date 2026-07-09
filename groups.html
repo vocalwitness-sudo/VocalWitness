@@ -15,6 +15,14 @@
 <body>
   <h1>Groups</h1>
   
+  <div class="tabs">
+    <button onclick="switchTab(0)" class="tab-btn active" id="tab-discover">Discover</button>
+    <button onclick="switchTab(1)" class="tab-btn" id="tab-my">My Groups</button>
+  </div>
+
+  <input type="text" id="searchInput" placeholder="Search groups..." 
+         style="width:100%; max-width:400px; padding:10px; margin:15px 0;" onkeyup="filterGroups()">
+
   <div id="status"></div>
   <div id="group-container"></div>
 
@@ -24,24 +32,33 @@
 
   <!-- Create Group Modal -->
   <div id="createModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:1000;">
-    <div style="background:#fff; max-width:500px; margin:80px auto; padding:30px; border-radius:12px; max-height:90vh; overflow-y:auto;">
+    <div style="background:#fff; max-width:500px; margin:80px auto; padding:30px; border-radius:12px;">
       <h2>Create New Group</h2>
       <input type="text" id="groupName" placeholder="Group Name" style="width:100%; padding:10px; margin:10px 0;">
       <textarea id="groupDesc" placeholder="Description (optional)" style="width:100%; height:80px; padding:10px; margin:10px 0;"></textarea>
       
-      <label style="display:block; margin:15px 0 5px;">Group Type</label>
+      <label style="display:block; margin:10px 0 5px;">Group Type</label>
       <select id="groupType" style="width:100%; padding:10px; margin-bottom:15px;">
-        <option value="citizen_circle">Citizen Circle (Phone Verified)</option>
-        <option value="witness_circle">Witness Circle (ZK Verified - True Witness)</option>
+        <option value="citizen_circle">🛡️ Citizen Circle (Phone Verified)</option>
+        <option value="witness_circle">🔬 Witness Circle (ZK Verified)</option>
       </select>
       
-      <button onclick="createGroupFromModal()" style="margin-right:10px; padding:10px 20px;">Create Group</button>
-      <button onclick="hideCreateModal()" style="padding:10px 20px;">Cancel</button>
+      <button onclick="createGroupFromModal()" style="margin-right:10px;">Create Group</button>
+      <button onclick="hideCreateModal()">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Manage Modal -->
+  <div id="manageModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:1000;">
+    <div style="background:#fff; max-width:600px; margin:60px auto; padding:30px; border-radius:12px; max-height:85vh; overflow-y:auto;">
+      <h2 id="manageTitle">Manage Group</h2>
+      <div id="membersList" style="margin:20px 0;"></div>
+      <button onclick="hideManageModal()">Close</button>
     </div>
   </div>
 
   <script type="module">
-    console.log("✅ Groups module loaded - Phase 1");
+    console.log("✅ Groups Phase 2 - Full Version Loaded");
 
     import { db, auth } from './js/firebase-config.js';
     import { 
@@ -54,71 +71,72 @@
     const groupContainer = document.getElementById('group-container');
     const statusEl = document.getElementById('status');
     let unsubscribe = null;
+    let allGroups = [];
+    let currentTab = 0; // 0: Discover, 1: My Groups
 
-    // Real-time listener
+    // Real-time Listener
     function startRealTimeListener() {
       if (unsubscribe) unsubscribe();
 
       const q = query(collection(db, "groups"), orderBy("memberCount", "desc"));
       
-      unsubscribe = onSnapshot(q, async (snapshot) => {
-        groupContainer.innerHTML = "";
-        
-        if (snapshot.empty) {
-          statusEl.innerHTML = `
-            <p style="text-align:center; font-size:1.2em; color:#888; margin:40px 0;">
-              No groups yet.<br>Be the first to create one!
-            </p>
-          `;
-          return;
-        }
-
-        statusEl.style.display = "none";
-
-        const userTier = await getCurrentUserTier();
-
-        snapshot.forEach((docSnap) => {
-          const group = docSnap.data();
-          const groupId = docSnap.id;
-          const isMember = group.members && group.members.includes(auth.currentUser?.uid);
-          const isAdmin = group.createdBy === auth.currentUser?.uid;
-
-          const div = document.createElement('div');
-          div.className = "group-card";
-          div.innerHTML = `
-            <h3>${group.name}</h3>
-            <p>${group.description || ''}</p>
-            <p><strong>Type:</strong> ${group.type === 'witness_circle' ? '🔬 Witness Circle' : '🛡️ Citizen Circle'}</p>
-            <p><strong>Members:</strong> ${group.memberCount || 0}</p>
-            
-            ${isMember ? 
-              `<button onclick="leaveGroup('${groupId}')" style="background:#e74c3c;">Leave</button>` : 
-              `<button onclick="joinGroup('${groupId}')">Join</button>`
-            }
-            
-            <button onclick="copyInviteLink('${groupId}')" style="margin-left:8px;">Invite</button>
-            
-            ${isAdmin ? `<button onclick="manageGroup('${groupId}')" style="margin-left:8px;">Manage</button>` : ''}
-          `;
-          groupContainer.appendChild(div);
-        });
+      unsubscribe = onSnapshot(q, (snapshot) => {
+        allGroups = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+        renderGroups();
       }, (error) => {
         console.error("Real-time error:", error);
         showToast("Error loading groups", "error");
       });
     }
 
-    // Join Group with tier check
+    function renderGroups(filtered = null) {
+      groupContainer.innerHTML = "";
+      const groupsToShow = filtered || allGroups;
+
+      if (groupsToShow.length === 0) {
+        statusEl.innerHTML = `<p style="text-align:center; font-size:1.2em; color:#888;">No groups found.</p>`;
+        return;
+      }
+      statusEl.style.display = "none";
+
+      groupsToShow.forEach(group => {
+        const isMember = group.members && group.members.includes(auth.currentUser?.uid);
+        const isAdmin = group.createdBy === auth.currentUser?.uid;
+        const showInMyGroups = currentTab === 1 && isMember;
+        const showInDiscover = currentTab === 0;
+
+        if (!showInDiscover && !showInMyGroups) return;
+
+        const div = document.createElement('div');
+        div.className = "group-card";
+        div.innerHTML = `
+          <h3>${group.name}</h3>
+          <p>${group.description || ''}</p>
+          <p><strong>Type:</strong> ${group.type === 'witness_circle' ? '🔬 Witness Circle' : '🛡️ Citizen Circle'}</p>
+          <p><strong>Members:</strong> ${group.memberCount || 0}</p>
+          
+          ${isMember ? 
+            `<button onclick="leaveGroup('${group.id}')" style="background:#e74c3c;">Leave</button>` : 
+            `<button onclick="joinGroup('${group.id}')">Join</button>`
+          }
+          
+          <button onclick="copyInviteLink('${group.id}')" style="margin-left:8px;">Invite</button>
+          
+          ${isAdmin ? `<button onclick="showManageModal('${group.id}')" style="margin-left:8px;">Manage</button>` : ''}
+        `;
+        groupContainer.appendChild(div);
+      });
+    }
+
+    // Join Group
     async function joinGroup(groupId) {
       if (!auth.currentUser) return showToast("Sign in to join", "error");
-      
       try {
         const groupRef = doc(db, "groups", groupId);
         const groupSnap = await getDoc(groupRef);
         const group = groupSnap.data();
-        
+
         const userTier = await getCurrentUserTier();
-        
         if (group.type === 'witness_circle' && userTier !== TIERS.WITNESS_CIRCLE) {
           return showToast("Witness Circle requires ZK verification", "error");
         }
@@ -150,19 +168,16 @@
       }
     }
 
-    // Copy Invite Link
+    // Copy Invite
     function copyInviteLink(groupId) {
-      const inviteUrl = `${window.location.origin}/groups.html?join=${groupId}`;
-      navigator.clipboard.writeText(inviteUrl).then(() => {
-        showToast("✅ Invite link copied!", "success");
-      });
+      const url = `${window.location.origin}/groups.html?join=${groupId}`;
+      navigator.clipboard.writeText(url).then(() => showToast("Invite link copied!", "success"));
     }
 
-    // Modal Functions
-    async function showCreateModal() {
-      if (!auth.currentUser) return showToast("Sign in to create a group", "error");
+    // Create Modal
+    function showCreateModal() {
+      if (!auth.currentUser) return showToast("Sign in first", "error");
       document.getElementById('createModal').style.display = 'block';
-      document.getElementById('groupName').focus();
     }
 
     function hideCreateModal() {
@@ -174,18 +189,16 @@
       const desc = document.getElementById('groupDesc').value.trim();
       const type = document.getElementById('groupType').value;
 
-      if (!name) return showToast("Group name is required", "error");
+      if (!name) return showToast("Name required", "error");
 
       const userTier = await getCurrentUserTier();
       if (type === 'witness_circle' && userTier !== TIERS.WITNESS_CIRCLE) {
-        return showToast("Only Witness Circle members can create Witness groups", "error");
+        return showToast("Only Witness Circle users can create this type", "error");
       }
 
       try {
         await addDoc(collection(db, "groups"), {
-          name: name,
-          description: desc,
-          type: type,
+          name, description: desc, type,
           createdBy: auth.currentUser.uid,
           members: [auth.currentUser.uid],
           memberCount: 1,
@@ -194,43 +207,95 @@
         showToast("🎉 Group created!", "success");
         hideCreateModal();
       } catch (err) {
-        console.error(err);
-        showToast("Failed to create group", "error");
+        showToast("Creation failed", "error");
       }
     }
 
-    // Placeholder for manage
-    function manageGroup(groupId) {
-      showToast(`Manage group ${groupId} - More features in Phase 2`, "info");
+    // Manage Modal
+    async function showManageModal(groupId) {
+      const group = allGroups.find(g => g.id === groupId);
+      if (!group) return;
+
+      document.getElementById('manageTitle').textContent = `Manage: ${group.name}`;
+      const container = document.getElementById('membersList');
+      container.innerHTML = `<h3>Members (${group.members?.length || 0})</h3>`;
+
+      (group.members || []).forEach(uid => {
+        const div = document.createElement('div');
+        div.style.margin = "8px 0";
+        div.innerHTML = `
+          ${uid} ${uid === group.createdBy ? '(Admin)' : ''}
+          ${uid !== group.createdBy ? `<button onclick="removeMember('${groupId}', '${uid}')" style="margin-left:15px;">Remove</button>` : ''}
+        `;
+        container.appendChild(div);
+      });
+
+      document.getElementById('manageModal').style.display = 'block';
     }
 
-    // Auto start
+    function hideManageModal() {
+      document.getElementById('manageModal').style.display = 'none';
+    }
+
+    async function removeMember(groupId, memberId) {
+      if (!confirm("Remove member?")) return;
+      try {
+        const ref = doc(db, "groups", groupId);
+        await updateDoc(ref, {
+          members: arrayRemove(memberId),
+          memberCount: increment(-1)
+        });
+        showToast("Member removed", "success");
+        hideManageModal();
+      } catch (e) {
+        showToast("Failed", "error");
+      }
+    }
+
+    // Tabs & Search
+    function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', i === tab));
+      renderGroups();
+    }
+
+    function filterGroups() {
+      const term = document.getElementById('searchInput').value.toLowerCase().trim();
+      if (!term) return renderGroups();
+      
+      const filtered = allGroups.filter(g => 
+        g.name.toLowerCase().includes(term) || 
+        (g.description || '').toLowerCase().includes(term)
+      );
+      renderGroups(filtered);
+    }
+
+    // Init
     if (auth.currentUser) {
       startRealTimeListener();
     } else {
-      statusEl.textContent = "Please sign in to view and join groups.";
+      statusEl.textContent = "Please sign in to view groups.";
     }
 
-    // Handle invite link in URL
+    // Handle invite link
     const urlParams = new URLSearchParams(window.location.search);
     const joinId = urlParams.get('join');
-    if (joinId) {
-      setTimeout(() => joinGroup(joinId), 800);
-    }
+    if (joinId) setTimeout(() => joinGroup(joinId), 1000);
 
-    // Cleanup
-    window.addEventListener('beforeunload', () => {
-      if (unsubscribe) unsubscribe();
-    });
-
-    // Make functions global
+    // Global exports
+    window.switchTab = switchTab;
     window.showCreateModal = showCreateModal;
     window.hideCreateModal = hideCreateModal;
     window.createGroupFromModal = createGroupFromModal;
     window.joinGroup = joinGroup;
     window.leaveGroup = leaveGroup;
     window.copyInviteLink = copyInviteLink;
-    window.manageGroup = manageGroup;
+    window.showManageModal = showManageModal;
+    window.hideManageModal = hideManageModal;
+    window.removeMember = removeMember;
+    window.filterGroups = filterGroups;
+
+    window.addEventListener('beforeunload', () => { if (unsubscribe) unsubscribe(); });
   </script>
 </body>
 </html>
