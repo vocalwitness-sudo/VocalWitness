@@ -1,4 +1,6 @@
 // js/i18n.js - Enhanced with Flags + Phone Codes
+import { db, auth } from './firebase-config.js';   // Correct relative path
+
 let currentTranslations = {};
 let currentLang = 'en';
 
