@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#10b981">
 
-    <!-- CSP -->
     <meta http-equiv="Content-Security-Policy"
           content="default-src 'self' https: wss: blob: data:;
                    script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://www.gstatic.com https://www.gstatic.com/firebasejs/;
@@ -25,14 +24,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
-        .glass {
-            background: rgba(17, 24, 39, 0.95);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(16, 185, 129, 0.25);
-        }
-        .group-card {
-            transition: all 0.3s ease;
-        }
+        .glass { background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(16, 185, 129, 0.25); }
+        .group-card { transition: all 0.3s ease; }
+        .tab-btn { color: #71717a; }
+        .tab-btn.active { background: #10b981; color: #000; }
     </style>
 </head>
 <body class="min-h-screen bg-[#0a0f1c] text-white p-4 pb-20">
@@ -40,41 +35,31 @@
     <div class="max-w-4xl mx-auto">
         <header class="flex justify-between items-center mb-8">
             <h1 class="text-4xl font-bold text-emerald-400">Groups</h1>
-            <button onclick="window.history.back()" 
-                    class="px-5 py-2 text-sm border border-zinc-600 hover:border-zinc-400 rounded-2xl">
-                ← Back
-            </button>
+            <button onclick="window.history.back()" class="px-5 py-2 text-sm border border-zinc-600 hover:border-zinc-400 rounded-2xl">← Back</button>
         </header>
 
-        <!-- Tabs -->
         <div class="flex gap-2 mb-6 border-b border-zinc-700 pb-2">
-            <button onclick="switchTab(0)" class="tab-btn active px-6 py-3 rounded-2xl font-medium" id="tab-discover">Discover</button>
-            <button onclick="switchTab(1)" class="tab-btn px-6 py-3 rounded-2xl font-medium" id="tab-my">My Groups</button>
+            <button onclick="window.switchTab(0)" class="tab-btn active px-6 py-3 rounded-2xl font-medium" id="tab-discover">Discover</button>
+            <button onclick="window.switchTab(1)" class="tab-btn px-6 py-3 rounded-2xl font-medium" id="tab-my">My Groups</button>
         </div>
 
-        <!-- Search -->
-        <input type="text" id="searchInput"
+        <input type="text" id="searchInput" onkeyup="window.filterGroups()"
                class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4 mb-6 text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
-               placeholder="Search groups..." onkeyup="filterGroups()">
+               placeholder="Search groups...">
 
         <div id="status" class="my-6 min-h-[60px]"></div>
         <div id="group-container" class="space-y-6"></div>
 
-        <!-- Create Button -->
-        <button onclick="showCreateModal()"
-                class="mt-12 w-full max-w-md mx-auto block bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-semibold py-5 rounded-3xl text-lg shadow-xl active:scale-95 transition-all">
+        <button onclick="window.showCreateModal()" class="mt-12 w-full max-w-md mx-auto block bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-semibold py-5 rounded-3xl text-lg shadow-xl active:scale-95 transition-all">
             ➕ Create New Group
         </button>
     </div>
 
-    <!-- Create Group Modal -->
     <div id="createModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[100]">
         <div class="glass rounded-3xl p-8 max-w-md w-full mx-4">
             <h2 class="text-2xl font-bold mb-6">Create New Group</h2>
-            <input type="text" id="groupName" placeholder="Group Name"
-                   class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4 mb-4 focus:outline-none focus:border-emerald-500">
-            <textarea id="groupDesc" placeholder="Description (optional)"
-                      class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4 h-28 mb-6 focus:outline-none focus:border-emerald-500"></textarea>
+            <input type="text" id="groupName" placeholder="Group Name" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4 mb-4 focus:outline-none focus:border-emerald-500">
+            <textarea id="groupDesc" placeholder="Description (optional)" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4 h-28 mb-6 focus:outline-none focus:border-emerald-500"></textarea>
             
             <label class="block text-sm mb-2 text-zinc-400">Group Type</label>
             <select id="groupType" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4 mb-8 focus:outline-none focus:border-emerald-500">
@@ -83,40 +68,64 @@
             </select>
 
             <div class="flex gap-4">
-                <button onclick="createGroupFromModal()" 
-                        class="flex-1 py-4 bg-emerald-500 hover:bg-emerald-600 text-black font-bold rounded-2xl">Create Group</button>
-                <button onclick="hideCreateModal()" 
-                        class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl">Cancel</button>
+                <button onclick="window.createGroupFromModal()" class="flex-1 py-4 bg-emerald-500 hover:bg-emerald-600 text-black font-bold rounded-2xl">Create Group</button>
+                <button onclick="window.hideCreateModal()" class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl">Cancel</button>
             </div>
         </div>
     </div>
 
-    <!-- Manage Group Modal -->
     <div id="manageModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[100]">
         <div class="glass rounded-3xl p-8 max-w-lg w-full mx-4 max-h-[85vh] overflow-y-auto">
             <h2 id="manageTitle" class="text-2xl font-bold mb-6"></h2>
             <div id="membersList" class="space-y-4"></div>
-            <button onclick="hideManageModal()" 
-                    class="mt-8 w-full py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl font-medium">Close</button>
+            <button onclick="window.hideManageModal()" class="mt-8 w-full py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl font-medium">Close</button>
         </div>
     </div>
 
     <script type="module">
-        // Your full script from before goes here (the long module script)
-        // I kept it exactly as you wrote it, just removed the duplicate document
-        console.log("✅ Groups Page Loaded");
-
         import { db, auth } from './js/firebase-config.js';
-        // ... (paste all your import and functions here - they remain unchanged)
+        import { doc, updateDoc, arrayUnion, arrayRemove, getDoc, increment, collection, query, orderBy, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+        import { showToast } from './js/utils.js';
+        import { getCurrentUserTier, TIERS } from './js/tier.js';
 
-        // (For brevity I didn't repeat the entire 200+ line script, but you can copy it from your previous message)
-    </script>
+        let allGroups = [];
+        let currentTab = 0;
 
-    <script>
-        // Any global helper functions
-        window.switchTab = switchTab;
-        window.filterGroups = filterGroups;
-        // ... other window. assignments
+        // Exposed global functions for HTML buttons
+        window.switchTab = (tab) => {
+            currentTab = tab;
+            document.querySelectorAll('.tab-btn').forEach((btn, i) => btn.classList.toggle('active', i === tab));
+            renderGroups();
+        };
+
+        window.showCreateModal = () => {
+            if (!auth.currentUser) return showToast("Sign in to create a group", "error");
+            document.getElementById('createModal').classList.remove('hidden');
+        };
+
+        window.hideCreateModal = () => document.getElementById('createModal').classList.add('hidden');
+        window.hideManageModal = () => document.getElementById('manageModal').classList.add('hidden');
+
+        window.createGroupFromModal = async () => { /* Your logic here */ };
+        window.joinGroup = async (groupId) => { /* Your logic here */ };
+        window.leaveGroup = async (groupId) => { /* Your logic here */ };
+        window.filterGroups = () => { /* Your logic here */ };
+
+        function renderGroups() {
+            const container = document.getElementById('group-container');
+            // Filter allGroups based on currentTab (0 = all, 1 = user's joined groups)
+            // Use container.innerHTML = ... to update UI
+        }
+
+        function init() {
+            if (auth.currentUser) {
+                // Set up onSnapshot listener here to update allGroups and call renderGroups()
+            } else {
+                document.getElementById('status').innerHTML = `<p class="text-center text-amber-400 py-8">Please sign in to view groups.</p>`;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
