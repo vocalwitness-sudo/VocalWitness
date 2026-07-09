@@ -1,100 +1,86 @@
-// js/group.js - Full Group Membership Management
-import { db, auth } from './firebase-config.js';
-import { doc, updateDoc, arrayUnion, arrayRemove, getDoc, increment } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-import { showToast } from './utils.js';
-<meta http-equiv="Content-Security-Policy" 
-      content="default-src 'self' https: wss: blob: data:;
-               script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://www.gstatic.com;
-               style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com;
-               connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com wss://*.firebaseio.com;
-               img-src 'self' https: data: blob:;
-               font-src 'self' https: data:;
-               object-src 'none';
-               base-uri 'self';">
+<script type="module">
+    // Group Management - Inline Module for groups.html
+    console.log("✅ Groups module loaded inline");
 
-// Join Group
-export async function joinGroup(groupId) {
-    if (!auth.currentUser) {
-        showToast("Sign in to join group", "error");
-        return;
-    }
+    import { db, auth } from './js/firebase-config.js';
+    import { doc, updateDoc, arrayUnion, arrayRemove, getDoc, increment } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+    import { showToast } from './js/utils.js';
 
-    try {
-        const groupRef = doc(db, "groups", groupId);
-        const groupSnap = await getDoc(groupRef);
-        const group = groupSnap.data();
-
-        if (group.members.includes(auth.currentUser.uid)) {
-            showToast("You are already a member", "info");
+    // Join Group
+    export async function joinGroup(groupId) {
+        if (!auth.currentUser) {
+            showToast("Sign in to join group", "error");
             return;
         }
-
-        await updateDoc(groupRef, {
-            members: arrayUnion(auth.currentUser.uid),
-            memberCount: increment(1)
-        });
-
-        showToast("✅ Joined the group successfully!", "success");
-    } catch (err) {
-        console.error(err);
-        showToast("Failed to join group", "error");
-    }
-}
-
-// Leave Group
-export async function leaveGroup(groupId) {
-    if (!auth.currentUser) return;
-
-    if (!confirm("Leave this group?")) return;
-
-    try {
-        const groupRef = doc(db, "groups", groupId);
-        await updateDoc(groupRef, {
-            members: arrayRemove(auth.currentUser.uid),
-            memberCount: increment(-1)
-        });
-
-        showToast("You have left the group", "success");
-    } catch (err) {
-        showToast("Failed to leave group", "error");
-    }
-}
-
-// Check if user is admin (creator)
-export async function isGroupAdmin(groupId) {
-    if (!auth.currentUser) return false;
-    try {
-        const groupSnap = await getDoc(doc(db, "groups", groupId));
-        const group = groupSnap.data();
-        return group.createdBy === auth.currentUser.uid;
-    } catch (e) {
-        return false;
-    }
-}
-
-// Admin: Remove member
-export async function removeMember(groupId, memberId) {
-    if (!await isGroupAdmin(groupId)) {
-        showToast("Only group admins can remove members", "error");
-        return;
+        try {
+            const groupRef = doc(db, "groups", groupId);
+            const groupSnap = await getDoc(groupRef);
+            const group = groupSnap.data();
+            if (group.members.includes(auth.currentUser.uid)) {
+                showToast("You are already a member", "info");
+                return;
+            }
+            await updateDoc(groupRef, {
+                members: arrayUnion(auth.currentUser.uid),
+                memberCount: increment(1)
+            });
+            showToast("✅ Joined the group successfully!", "success");
+        } catch (err) {
+            console.error(err);
+            showToast("Failed to join group", "error");
+        }
     }
 
-    if (!confirm("Remove this member from the group?")) return;
-
-    try {
-        const groupRef = doc(db, "groups", groupId);
-        await updateDoc(groupRef, {
-            members: arrayRemove(memberId),
-            memberCount: increment(-1)
-        });
-        showToast("Member removed successfully", "success");
-    } catch (err) {
-        showToast("Failed to remove member", "error");
+    // Leave Group
+    export async function leaveGroup(groupId) {
+        if (!auth.currentUser) return;
+        if (!confirm("Leave this group?")) return;
+        try {
+            const groupRef = doc(db, "groups", groupId);
+            await updateDoc(groupRef, {
+                members: arrayRemove(auth.currentUser.uid),
+                memberCount: increment(-1)
+            });
+            showToast("You have left the group", "success");
+        } catch (err) {
+            showToast("Failed to leave group", "error");
+        }
     }
-}
 
-// Make functions globally available
-window.joinGroup = joinGroup;
-window.leaveGroup = leaveGroup;
-window.removeMember = removeMember;
-window.isGroupAdmin = isGroupAdmin;
+    // Check if user is admin
+    export async function isGroupAdmin(groupId) {
+        if (!auth.currentUser) return false;
+        try {
+            const groupSnap = await getDoc(doc(db, "groups", groupId));
+            const group = groupSnap.data();
+            return group.createdBy === auth.currentUser.uid;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    // Admin: Remove member
+    export async function removeMember(groupId, memberId) {
+        if (!await isGroupAdmin(groupId)) {
+            showToast("Only group admins can remove members", "error");
+            return;
+        }
+        if (!confirm("Remove this member from the group?")) return;
+        try {
+            const groupRef = doc(db, "groups", groupId);
+            await updateDoc(groupRef, {
+                members: arrayRemove(memberId),
+                memberCount: increment(-1)
+            });
+            showToast("Member removed successfully", "success");
+        } catch (err) {
+            showToast("Failed to remove member", "error");
+        }
+    }
+
+    // Expose to global scope for onclick handlers
+    window.joinGroup = joinGroup;
+    window.leaveGroup = leaveGroup;
+    window.removeMember = removeMember;
+    window.isGroupAdmin = isGroupAdmin;
+</script>
