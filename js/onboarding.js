@@ -1,4 +1,5 @@
 // js/onboarding.js - Legal, Welcome & Onboarding Flow
+import { db, auth } from './firebase-config.js';   // Correct relative path
 
 export function showLegalNotice() {
     if (localStorage.getItem('hasSeenLegal')) return;
