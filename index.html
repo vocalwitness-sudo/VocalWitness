@@ -4,30 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#10b981">
-    
-    <!-- STRONGER CSP -->
-    <meta http-equiv="Content-Security-Policy" 
+
+    <!-- Improved CSP -->
+    <meta http-equiv="Content-Security-Policy"
           content="default-src 'self' https: wss: blob: data:;
-                   script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://www.gstatic.com;
+                   script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://www.gstatic.com https://www.gstatic.com/firebasejs/;
                    style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com;
                    connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com wss://*.firebaseio.com;
                    img-src 'self' https: data: blob:;
                    font-src 'self' https: data:;
+                   media-src 'self' https: blob:;
                    object-src 'none';
                    base-uri 'self';
                    frame-ancestors 'none';">
 
     <link rel="manifest" href="/manifest.json">
-    <link rel="icon" href="/logo.png" type="image/png">
+    <link rel="icon" href="logo.png" type="image/png">
     <title>VocalWitness • Truth • Evidence • Public Square</title>
-  
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
-    <link rel="icon" href="logo.png" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 
     <style>
-        body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: white; }
+        body { 
+            font-family: 'Inter', system-ui, sans-serif; 
+            background: #0a0f1c; 
+            color: white; 
+        }
         .glass {
             background: rgba(17, 24, 39, 0.95);
             backdrop-filter: blur(20px);
