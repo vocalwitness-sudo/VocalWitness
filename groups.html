@@ -7,7 +7,7 @@
     import { showToast } from './js/utils.js';
 
     // Join Group
-    export async function joinGroup(groupId) {
+    async function joinGroup(groupId) {
         if (!auth.currentUser) {
             showToast("Sign in to join group", "error");
             return;
@@ -16,7 +16,7 @@
             const groupRef = doc(db, "groups", groupId);
             const groupSnap = await getDoc(groupRef);
             const group = groupSnap.data();
-            if (group.members.includes(auth.currentUser.uid)) {
+            if (group.members && group.members.includes(auth.currentUser.uid)) {
                 showToast("You are already a member", "info");
                 return;
             }
@@ -32,7 +32,7 @@
     }
 
     // Leave Group
-    export async function leaveGroup(groupId) {
+    async function leaveGroup(groupId) {
         if (!auth.currentUser) return;
         if (!confirm("Leave this group?")) return;
         try {
@@ -48,7 +48,7 @@
     }
 
     // Check if user is admin
-    export async function isGroupAdmin(groupId) {
+    async function isGroupAdmin(groupId) {
         if (!auth.currentUser) return false;
         try {
             const groupSnap = await getDoc(doc(db, "groups", groupId));
@@ -60,7 +60,7 @@
     }
 
     // Admin: Remove member
-    export async function removeMember(groupId, memberId) {
+    async function removeMember(groupId, memberId) {
         if (!await isGroupAdmin(groupId)) {
             showToast("Only group admins can remove members", "error");
             return;
