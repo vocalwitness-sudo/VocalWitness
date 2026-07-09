@@ -1,5 +1,6 @@
 import { showToast } from "./utils.js";
 import { listenToLedgerFeed } from "./feed.js";
+import { db, auth } from './firebase-config.js';   // Correct relative path
 
 const translations = {
     '+234-ha': { placeholder: "Me ka gani da kanka a yau? Shigar da shaidarku...", button: "YADA SHAIDARKA", msg: "Hausa mode activated." },
