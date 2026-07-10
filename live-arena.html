@@ -71,9 +71,9 @@
         </div>
     </div>
 
-        <!-- Scripts -->
-    <script type="module">
-        // Utils will be included here or imported properly
+      <!-- Scripts -->
+    <script>
+        // Global functions accessible to onclick handlers
         window.goBack = function() {
             if (window.history.length > 1) {
                 window.history.back();
@@ -82,18 +82,13 @@
             }
         };
 
-        function notifyLiveArena() {
+        window.notifyLiveArena = function() {
             alert("✅ You'll be notified when the Live Arena launches!\n\nThank you for your patience.");
-        }
+        };
 
-        console.log("✅ Live Arena loaded");
+        console.log("✅ Live Arena loaded successfully");
     </script>
-    <script type="module" src="../js/main.js"></script>
 
-        function notifyLiveArena() {
-            alert("✅ You'll be notified when the Live Arena launches!\n\nThank you for your patience.");
-        }
-    </script>
     <script type="module" src="../js/main.js"></script>
 </body>
 </html>
