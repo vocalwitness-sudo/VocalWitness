@@ -33,8 +33,17 @@
             ➕ Create New Group
         </button>
     </div>
+<script type="module" src="js/main.js"></script>
+    
+    <script type="module">
+        import { initGroups } from './js/group.js';
 
-    <script type="module" src="js/main.js"></script>
-    <script type="module" src="js/group.js"></script>
+        // Wait for the HTML page to fully load before initializing
+        document.addEventListener('DOMContentLoaded', () => {
+            initGroups('group-container');
+        });
+    </script>
+</body>
+</html>
 </body>
 </html>
