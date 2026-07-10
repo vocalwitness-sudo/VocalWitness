@@ -25,7 +25,6 @@
     </style>
 </head>
 <body class="min-h-screen pb-20 p-4 bg-[#0a0f1c]">
-    <!-- LEGAL NOTICE -->
     <div class="max-w-2xl mx-auto bg-red-950/30 border border-red-500/20 rounded-3xl p-4 text-xs mb-6 text-center">
         <strong data-i18n="legalLabel" class="text-red-400">Legal:</strong> 
         <span data-i18n="privacyWarning"></span>
@@ -33,7 +32,6 @@
 
     <div class="max-w-2xl mx-auto">
       
-        <!-- HEADER -->
         <header class="flex items-center justify-between mb-8">
             <div class="flex items-center gap-3">
                 <div class="flex items-center gap-3">
@@ -45,7 +43,6 @@
                 </div>
             </div>
             <div class="flex items-center gap-3">
-                <!-- Language Selector -->
                 <select id="languageSelector"
                         class="bg-zinc-900 border border-zinc-700 text-white px-5 py-2.5 rounded-2xl text-sm focus:outline-none focus:border-emerald-500">
                 </select>
@@ -62,7 +59,6 @@
             </div>
         </header>
 
-        <!-- NAVIGATION -->
         <nav class="flex items-center justify-between mb-6">
             <div id="main-nav" class="flex gap-2 overflow-x-auto pb-2">
                 <button onclick="loadFeed('citizen')" class="nav-btn active px-5 py-2.5 rounded-2xl whitespace-nowrap" data-feed="citizen" data-i18n="citizenTalk">
@@ -93,7 +89,6 @@
             </div>
         </nav>
 
-        <!-- COMPOSER -->
         <div class="glass rounded-3xl p-6 mb-8">
             <textarea id="mainInput" rows="3"
                       class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none"
@@ -115,13 +110,11 @@
             </button>
         </div>
 
-        <!-- FEED -->
         <main>
             <div id="feedContainer" class="w-full"></div>
         </main>
     </div>
 
-    <!-- FOOTER -->
     <footer class="max-w-2xl mx-auto mt-20 pt-8 border-t border-zinc-800 text-center text-xs text-zinc-500">
         <div class="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-6">
             <a href="about.html" class="hover:text-emerald-400 transition-colors" data-i18n="about">About</a>
@@ -131,8 +124,6 @@
         </div>
         <p>© 2026 VocalWitness • Built for Truth &amp; Evidence</p>
     </footer>
-
-    <!-- Your modals remain the same (you can translate them later) -->
 
     <script>
         // Basic UI Functions
@@ -185,6 +176,46 @@
             if (typeof initLanguageSelector === 'function') {
                 initLanguageSelector();
             }
+        });
+    </script>
+
+    <script>
+        // Fallback button handlers - attach directly
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("🔧 Attaching button fallbacks");
+
+            // Photo Button
+            const photoBtn = document.getElementById('btn-photo');
+            if (photoBtn) {
+                photoBtn.addEventListener('click', function() {
+                    console.log("📸 Photo button clicked");
+                    alert("Photo + Forensic Shield - Coming soon (or check console)");
+                    // Later connect to mediaModule.handleImageSelect
+                });
+            }
+
+            // Voice Button
+            const voiceBtn = document.getElementById('btn-voice');
+            if (voiceBtn) {
+                voiceBtn.addEventListener('click', function() {
+                    console.log("🎤 Voice button clicked");
+                    alert("Voice recording starting...");
+                    // Later: toggleVoiceRecording
+                });
+            }
+
+            // Publish Button
+            const postBtn = document.getElementById('postButton');
+            if (postBtn) {
+                postBtn.addEventListener('click', function() {
+                    console.log("🚀 Publish clicked");
+                    alert("Publishing testimony... (check console)");
+                    // Later: window.publishTestimony()
+                });
+            }
+
+            // Support Button (already has onclick, but reinforce)
+            console.log("💚 Support button should work via inline onclick");
         });
     </script>
 </body>
