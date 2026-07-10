@@ -244,4 +244,16 @@ document.addEventListener('click', (e) => {
     }
 });
 
+document.addEventListener('DOMContentLoaded', () => {
+    const profileBtn = document.getElementById('profile-btn');
+    if (profileBtn) {
+        profileBtn.addEventListener('click', showProfile);
+    }
+    
+    // Do the same for other buttons like Forensic Shield
+    const forensicBtn = document.getElementById('forensic-btn');
+    if (forensicBtn) {
+        forensicBtn.addEventListener('click', startForensicShield);
+    }
+});
 document.addEventListener('DOMContentLoaded', bootstrap);
