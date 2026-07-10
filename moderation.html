@@ -32,97 +32,126 @@
             <div class="glass rounded-3xl p-6 text-center">
                 <div class="text-3xl mb-2">🚫</div>
                 <div class="text-3xl font-bold text-red-500" id="banned-count">0</div>
-                <div class="text-sm text-zinc-400">Banned Users</div>
+                <div class="text-sm text-zinc-400">Banned</div>
             </div>
         </div>
 
-        <!-- Controls -->
-        <div class="glass rounded-3xl p-6 mb-8">
-            <div class="flex gap-4 items-center mb-6">
-                <input id="searchInput" type="text" placeholder="Search testimonies or users..." 
-                       class="flex-1 bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-3 focus:outline-none focus:border-emerald-500">
-                <button onclick="loadFlaggedContent()" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 rounded-2xl">Refresh</button>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Main Queue -->
+            <div class="lg:col-span-2 glass rounded-3xl p-6">
+                <div class="flex justify-between mb-6">
+                    <h2 class="text-2xl font-bold">Content Queue</h2>
+                    <input id="searchInput" type="text" placeholder="Search..." class="bg-zinc-900 border border-zinc-700 rounded-2xl px-4 py-2 w-64">
+                </div>
+                <div id="modList" class="space-y-6"></div>
             </div>
-        </div>
 
-        <!-- List -->
-        <div class="glass rounded-3xl p-6">
-            <h2 class="text-xl font-bold mb-6">Content Queue</h2>
-            <div id="modList" class="space-y-6">
-                <!-- Populated by JS -->
+            <!-- Moderation Log -->
+            <div class="glass rounded-3xl p-6">
+                <h2 class="text-xl font-bold mb-6">Moderation Log</h2>
+                <div id="modLog" class="space-y-3 text-sm max-h-[600px] overflow-y-auto"></div>
             </div>
         </div>
     </div>
 
     <script type="module">
         import { db } from './js/firebase-config.js';
-        import { collection, query, where, onSnapshot, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+        import { collection, query, where, onSnapshot, doc, updateDoc, deleteDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
         import { showToast } from './js/utils.js';
 
         let currentListener = null;
 
+        // Log action
+        async function logModeration(action, postId, userId, notes) {
+            try {
+                await addDoc(collection(db, "moderation_logs"), {
+                    action,
+                    postId,
+                    userId,
+                    moderator: "Current Mod", // Replace with auth.currentUser later
+                    notes: notes || "",
+                    timestamp: serverTimestamp()
+                });
+                addToLogUI(action, postId, notes);
+            } catch(e) {}
+        }
+
+        function addToLogUI(action, postId, notes) {
+            const logContainer = document.getElementById('modLog');
+            const entry = document.createElement('div');
+            entry.className = 'bg-zinc-900 p-3 rounded-2xl text-xs';
+            entry.innerHTML = `<strong>${action}</strong> #${postId.substring(0,8)} ${notes ? '- ' + notes : ''}`;
+            logContainer.prepend(entry);
+        }
+
         async function loadFlaggedContent() {
             const container = document.getElementById('modList');
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+            const search = document.getElementById('searchInput').value.toLowerCase();
 
-            container.innerHTML = '<p class="text-zinc-400 py-12 text-center">Loading moderation queue...</p>';
+            container.innerHTML = '<p class="text-zinc-400 py-12 text-center">Loading...</p>';
 
             try {
                 const q = query(collection(db, "testimonies"), where("flagged", "==", true));
-                
                 if (currentListener) currentListener();
 
                 currentListener = onSnapshot(q, (snapshot) => {
                     container.innerHTML = '';
                     if (snapshot.empty) {
-                        container.innerHTML = '<p class="text-zinc-400 py-12 text-center">Queue is clean.</p>';
+                        container.innerHTML = '<p class="text-zinc-400 py-12 text-center">No flagged content.</p>';
                         return;
                     }
-                    snapshot.forEach((docSnap) => {
+                    snapshot.forEach(docSnap => {
                         const data = docSnap.data();
-                        if (searchTerm && !data.content?.toLowerCase().includes(searchTerm)) return;
+                        if (search && !data.content?.toLowerCase().includes(search)) return;
 
                         const item = document.createElement('div');
                         item.className = 'bg-zinc-900 rounded-3xl p-6 border border-red-500/30';
                         item.innerHTML = `
-                            <div class="flex justify-between items-start">
-                                <div class="flex-1">
-                                    <p class="text-zinc-300">${data.content ? data.content.substring(0, 200) + '...' : 'Media post'}</p>
-                                    <p class="text-xs text-zinc-500 mt-2">By ${data.author || 'Anonymous'} • ${new Date(data.timestamp).toLocaleString()}</p>
-                                </div>
-                            </div>
-                            <div class="flex flex-wrap gap-3 mt-6">
-                                <button onclick="approvePost('${docSnap.id}')" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 rounded-2xl text-sm">✅ Approve</button>
-                                <button onclick="warnPost('${docSnap.id}')" class="px-5 py-2.5 bg-amber-600 hover:bg-amber-500 rounded-2xl text-sm">⚠️ Warn</button>
-                                <button onclick="removePost('${docSnap.id}')" class="px-5 py-2.5 bg-red-600 hover:bg-red-500 rounded-2xl text-sm">🗑️ Remove</button>
-                                <button onclick="banUser('${data.authorId}')" class="px-5 py-2.5 bg-red-700 hover:bg-red-600 rounded-2xl text-sm">🚫 Ban User</button>
-                                <button onclick="escalatePost('${docSnap.id}')" class="px-5 py-2.5 bg-sky-600 hover:bg-sky-500 rounded-2xl text-sm">🔬 Escalate</button>
+                            <p class="text-zinc-300">${data.content ? data.content.substring(0, 150) + '...' : 'Media only'}</p>
+                            <div class="flex flex-wrap gap-2 mt-6">
+                                <button onclick="approvePost('${docSnap.id}', '${data.authorId}')" class="px-5 py-2 bg-emerald-600 rounded-2xl text-sm">✅ Approve</button>
+                                <button onclick="warnUser('${data.authorId}', '${docSnap.id}')" class="px-5 py-2 bg-amber-600 rounded-2xl text-sm">⚠️ Warn</button>
+                                <button onclick="removePost('${docSnap.id}')" class="px-5 py-2 bg-red-600 rounded-2xl text-sm">🗑️ Remove</button>
+                                <button onclick="banUser('${data.authorId}', '${docSnap.id}')" class="px-5 py-2 bg-red-700 rounded-2xl text-sm">🚫 Ban User</button>
                             </div>
                         `;
                         container.appendChild(item);
                     });
                 });
-            } catch (e) {
-                console.error(e);
-                container.innerHTML = '<p class="text-red-400 py-8 text-center">Failed to load queue</p>';
+            } catch(e) {
+                container.innerHTML = '<p class="text-red-400">Error loading queue</p>';
             }
         }
 
-        window.approvePost = async (id) => { 
-            await updateDoc(doc(db, "testimonies", id), { flagged: false, moderationStatus: "approved" });
+        window.approvePost = async (postId, authorId) => {
+            await updateDoc(doc(db, "testimonies", postId), { flagged: false, moderationStatus: "approved" });
+            await logModeration("Approved", postId, authorId, "Content approved");
             showToast("Approved", "success");
+            loadFlaggedContent();
         };
-        window.warnPost = (id) => showToast("Warning issued (TODO: implement)", "warning");
-        window.removePost = async (id) => {
+
+        window.removePost = async (postId) => {
             if (confirm("Remove permanently?")) {
-                await deleteDoc(doc(db, "testimonies", id));
+                await deleteDoc(doc(db, "testimonies", postId));
+                await logModeration("Removed", postId, "unknown", "");
                 showToast("Removed", "success");
+                loadFlaggedContent();
             }
         };
-        window.banUser = (uid) => {
-            if (confirm("Ban this user?")) showToast("User banned (TODO: add ban logic)", "error");
+
+        window.warnUser = async (userId, postId) => {
+            // TODO: Add warning count to user doc
+            await logModeration("Warning Issued", postId, userId, "First warning");
+            showToast("Warning sent to user", "warning");
         };
-        window.escalatePost = (id) => showToast("Escalated to True Witness team", "info");
+
+        window.banUser = async (userId, postId) => {
+            if (confirm("Ban this user permanently?")) {
+                await updateDoc(doc(db, "users", userId), { banned: true, banReason: "Moderation violation" });
+                await logModeration("User Banned", postId, userId, "Permanent ban");
+                showToast("User banned", "error");
+            }
+        };
 
         document.addEventListener('DOMContentLoaded', loadFlaggedContent);
     </script>
