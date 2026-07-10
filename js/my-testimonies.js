@@ -4,6 +4,19 @@ import {
     deleteDoc, doc 
 } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
 import { showToast } from './utils.js';
+import { updateDoc } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
+
+window.editTestimony = async (testimonyId) => {
+    const newText = prompt("Edit your testimony:", document.getElementById(`text-${testimonyId}`).innerText);
+    if (newText !== null && newText.trim() !== "") {
+        try {
+            await updateDoc(doc(db, 'testimonies', testimonyId), { content: newText });
+            showToast("Updated successfully!", "success");
+        } catch (error) {
+            showToast("Failed to update.", "error");
+        }
+    }
+};
 
 export function initMyTestimonies(containerId) {
     const container = document.getElementById(containerId);
