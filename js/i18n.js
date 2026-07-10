@@ -1,19 +1,19 @@
-// js/i18n.js - Enhanced with Flags + Phone Codes
+// js/i18n.js - Complete Version with RTL Support
 
 let currentTranslations = {};
 let currentLang = 'en';
 
 const supportedLanguages = [
-    { code: 'en', name: 'English',       flag: '🇬🇧', native: 'English',      phoneCode: '+44' },
-    { code: 'ha', name: 'Hausa',         flag: '🇳🇬', native: 'Hausa',        phoneCode: '+234' },
-    { code: 'ig', name: 'Igbo',          flag: '🇳🇬', native: 'Igbo',         phoneCode: '+234' },
-    { code: 'yo', name: 'Yorùbá',       flag: '🇳🇬', native: 'Yorùbá',      phoneCode: '+234' },
-    { code: 'pcm', name: 'Naija Pidgin', flag: '🇳🇬', native: 'Pidgin',       phoneCode: '+234' },
-    { code: 'sw', name: 'Kiswahili',     flag: '🇰🇪', native: 'Kiswahili',    phoneCode: '+254' },
-    { code: 'fr', name: 'Français',      flag: '🇫🇷', native: 'Français',     phoneCode: '+33' },
-    { code: 'pt', name: 'Português',     flag: '🇵🇹', native: 'Português',    phoneCode: '+351' },
-    { code: 'ar', name: 'العربية',      flag: '🇸🇦', native: 'العربية',     phoneCode: '+966' },
-    { code: 'es', name: 'Español',       flag: '🇪🇸', native: 'Español',      phoneCode: '+34' }
+    { code: 'en', name: 'English',       flag: '🇬🇧', native: 'English',      phoneCode: '+44', rtl: false },
+    { code: 'ha', name: 'Hausa',         flag: '🇳🇬', native: 'Hausa',        phoneCode: '+234', rtl: false },
+    { code: 'ig', name: 'Igbo',          flag: '🇳🇬', native: 'Igbo',         phoneCode: '+234', rtl: false },
+    { code: 'yo', name: 'Yorùbá',       flag: '🇳🇬', native: 'Yorùbá',      phoneCode: '+234', rtl: false },
+    { code: 'pcm', name: 'Naija Pidgin', flag: '🇳🇬', native: 'Pidgin',       phoneCode: '+234', rtl: false },
+    { code: 'sw', name: 'Kiswahili',     flag: '🇰🇪', native: 'Kiswahili',    phoneCode: '+254', rtl: false },
+    { code: 'fr', name: 'Français',      flag: '🇫🇷', native: 'Français',     phoneCode: '+33', rtl: false },
+    { code: 'pt', name: 'Português',     flag: '🇵🇹', native: 'Português',    phoneCode: '+351', rtl: false },
+    { code: 'es', name: 'Español',       flag: '🇪🇸', native: 'Español',      phoneCode: '+34', rtl: false },
+    { code: 'ar', name: 'العربية',      flag: '🇸🇦', native: 'العربية',     phoneCode: '+966', rtl: true }
 ];
 
 // Phone Country Selector (for verification forms)
@@ -67,10 +67,18 @@ export async function loadTranslations(langCode = 'en') {
     currentLang = langCode;
     localStorage.setItem('preferredLang', langCode);
     applyTranslations();
+    applyTextDirection(langCode);
+}
+
+function applyTextDirection(langCode) {
+    const lang = supportedLanguages.find(l => l.code === langCode);
+    const isRTL = lang ? lang.rtl : false;
+    
+    document.documentElement.setAttribute('dir', isRTL ? 'rtl' : 'ltr');
+    document.body.style.textAlign = isRTL ? 'right' : 'left';
 }
 
 function applyTranslations() {
-    // Update all elements with data-i18n attribute
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
         if (currentTranslations[key]) {
@@ -82,7 +90,6 @@ function applyTranslations() {
         }
     });
 
-    // Update page title
     if (currentTranslations.pageTitle) {
         document.title = currentTranslations.pageTitle;
     }
@@ -95,7 +102,7 @@ export function initLanguage() {
     if (selector) {
         selector.innerHTML = supportedLanguages.map(lang => `
             <option value="${lang.code}">
-                ${lang.flag} ${lang.native} (${lang.name})
+                ${lang.flag} ${lang.native}
             </option>
         `).join('');
 
@@ -106,7 +113,6 @@ export function initLanguage() {
         });
     }
 
-    // Load saved language
     loadTranslations(savedLang);
 }
 
@@ -114,6 +120,6 @@ export function changeLanguage(langCode) {
     loadTranslations(langCode);
 }
 
-// Global access for inline onclick handlers
-window.changeLanguage = changeLanguage;
+// Global access
 window.initLanguage = initLanguage;
+window.changeLanguage = changeLanguage;
