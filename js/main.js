@@ -6,6 +6,8 @@ import { showToast } from './utils.js';
 import { initLanguage } from './i18n.js';
 import * as mediaModule from './media.js';
 import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
+import { createStewardProposal, castQuadraticVote } from './dao.js';
+import { initGroups } from './group.js';
 
 // ====================== GLOBAL STATE ======================
 let engineInstance = null;
