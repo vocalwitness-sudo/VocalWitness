@@ -46,7 +46,14 @@ window.showProfile = () => {
 
 window.showSupportModal = () => {
     const modal = document.getElementById('supportModal');
-    if (modal) modal.classList.remove('hidden');
+    
+    // Check if the modal exists before touching classList
+    if (modal) {
+        modal.classList.remove('hidden');
+        console.log("Support Modal opened successfully");
+    } else {
+        console.warn("Support Modal not found on this page. Check index.html.");
+    }
 };
 
 window.closeProfile = () => {
