@@ -275,5 +275,27 @@
         }
     });
 </script>
+
+    <dialog id="recordingModal" class="bg-zinc-900 text-white rounded-3xl p-0 backdrop:bg-black/80 border border-zinc-700 w-full max-w-lg shadow-2xl">
+    <div class="p-6">
+        <h2 id="modalTitle" class="text-xl font-bold mb-4">Share Your Testimony</h2>
+        
+        <div id="contextStep">
+            <input type="text" id="testimonyTitle" placeholder="Title/Context (min 10 chars)" 
+                   class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl p-4 mb-4 focus:border-emerald-500 outline-none">
+            <button id="startRecordingBtn" disabled class="w-full py-4 bg-zinc-700 text-zinc-400 font-bold rounded-2xl transition-all">
+                Enter context to unlock recording
+            </button>
+        </div>
+
+        <div id="recordingStep" class="hidden text-center">
+            <div id="timer" class="text-4xl font-mono mb-4 text-emerald-400">00:00</div>
+            <div class="flex gap-2">
+                <button id="pauseResumeBtn" class="flex-1 py-4 bg-zinc-800 rounded-2xl">Pause</button>
+                <button id="stopSaveBtn" class="flex-1 py-4 bg-red-500/20 text-red-400 rounded-2xl">Stop & Save</button>
+            </div>
+        </div>
+    </div>
+</dialog>
 </body>
 </html>
