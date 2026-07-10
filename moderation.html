@@ -42,7 +42,7 @@
         <div class="glass rounded-3xl p-6">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-2xl font-bold">Flagged Testimonies</h2>
-                <button onclick="loadFlaggedContent()" class="px-5 py-2 bg-zinc-700 hover:bg-zinc-600 rounded-2xl text-sm">Refresh</button>
+              <button onclick="window.loadFlaggedContent()" class="px-5 py-2 bg-zinc-700 hover:bg-zinc-600 rounded-2xl text-sm">Refresh</button>
             </div>
             <div id="flaggedList" class="space-y-6">
                 <!-- JS populated -->
@@ -110,6 +110,8 @@
         window.escalatePost = (id) => {
             showToast("Post escalated to True Witness review", "info");
         };
+
+        window.loadFlaggedContent = loadFlaggedContent;
 
         document.addEventListener('DOMContentLoaded', loadFlaggedContent);
     </script>
