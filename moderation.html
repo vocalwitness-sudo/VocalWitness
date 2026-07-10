@@ -9,17 +9,15 @@
     <link rel="icon" href="logo.png" type="image/png">
 </head>
 <body class="min-h-screen p-4 bg-[#0a0f1c]">
-    <div class="max-w-5xl mx-auto">
-        <h1 class="text-4xl font-bold text-emerald-400 mb-8 flex items-center gap-3">
-            🛡️ Moderation Dashboard
-        </h1>
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-4xl font-bold text-emerald-400 mb-8">🛡️ Moderation Dashboard</h1>
 
         <!-- Stats -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <div class="glass rounded-3xl p-6 text-center">
                 <div class="text-3xl mb-2">⏳</div>
-                <div class="text-3xl font-bold" id="pending-count">0</div>
-                <div class="text-sm text-zinc-400">Pending Review</div>
+                <div class="text-3xl font-bold text-amber-400" id="pending-count">0</div>
+                <div class="text-sm text-zinc-400">Pending</div>
             </div>
             <div class="glass rounded-3xl p-6 text-center">
                 <div class="text-3xl mb-2">🚩</div>
@@ -29,23 +27,29 @@
             <div class="glass rounded-3xl p-6 text-center">
                 <div class="text-3xl mb-2">✅</div>
                 <div class="text-3xl font-bold text-emerald-400" id="resolved-count">0</div>
-                <div class="text-sm text-zinc-400">Resolved Today</div>
+                <div class="text-sm text-zinc-400">Resolved</div>
             </div>
             <div class="glass rounded-3xl p-6 text-center">
-                <div class="text-3xl mb-2">👥</div>
-                <div class="text-3xl font-bold" id="active-mods">3</div>
-                <div class="text-sm text-zinc-400">Active Moderators</div>
+                <div class="text-3xl mb-2">🚫</div>
+                <div class="text-3xl font-bold text-red-500" id="banned-count">0</div>
+                <div class="text-sm text-zinc-400">Banned Users</div>
             </div>
         </div>
 
-        <!-- Flagged Content -->
-        <div class="glass rounded-3xl p-6">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold">Flagged Testimonies</h2>
-              <button onclick="window.loadFlaggedContent()" class="px-5 py-2 bg-zinc-700 hover:bg-zinc-600 rounded-2xl text-sm">Refresh</button>
+        <!-- Controls -->
+        <div class="glass rounded-3xl p-6 mb-8">
+            <div class="flex gap-4 items-center mb-6">
+                <input id="searchInput" type="text" placeholder="Search testimonies or users..." 
+                       class="flex-1 bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-3 focus:outline-none focus:border-emerald-500">
+                <button onclick="loadFlaggedContent()" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 rounded-2xl">Refresh</button>
             </div>
-            <div id="flaggedList" class="space-y-6">
-                <!-- JS populated -->
+        </div>
+
+        <!-- List -->
+        <div class="glass rounded-3xl p-6">
+            <h2 class="text-xl font-bold mb-6">Content Queue</h2>
+            <div id="modList" class="space-y-6">
+                <!-- Populated by JS -->
             </div>
         </div>
     </div>
@@ -58,60 +62,67 @@
         let currentListener = null;
 
         async function loadFlaggedContent() {
-            const container = document.getElementById('flaggedList');
-            container.innerHTML = '<p class="text-zinc-400 py-12 text-center">Loading...</p>';
+            const container = document.getElementById('modList');
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+
+            container.innerHTML = '<p class="text-zinc-400 py-12 text-center">Loading moderation queue...</p>';
 
             try {
                 const q = query(collection(db, "testimonies"), where("flagged", "==", true));
                 
                 if (currentListener) currentListener();
-                
+
                 currentListener = onSnapshot(q, (snapshot) => {
                     container.innerHTML = '';
                     if (snapshot.empty) {
-                        container.innerHTML = '<p class="text-zinc-400 py-12 text-center">No flagged content right now.</p>';
+                        container.innerHTML = '<p class="text-zinc-400 py-12 text-center">Queue is clean.</p>';
                         return;
                     }
                     snapshot.forEach((docSnap) => {
                         const data = docSnap.data();
+                        if (searchTerm && !data.content?.toLowerCase().includes(searchTerm)) return;
+
                         const item = document.createElement('div');
                         item.className = 'bg-zinc-900 rounded-3xl p-6 border border-red-500/30';
                         item.innerHTML = `
-                            <div class="flex justify-between">
-                                <p class="text-zinc-300 flex-1">${data.content ? data.content.substring(0, 180) + '...' : 'Media only post'}</p>
-                                <span class="text-xs text-red-400">${new Date(data.timestamp).toLocaleDateString()}</span>
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1">
+                                    <p class="text-zinc-300">${data.content ? data.content.substring(0, 200) + '...' : 'Media post'}</p>
+                                    <p class="text-xs text-zinc-500 mt-2">By ${data.author || 'Anonymous'} • ${new Date(data.timestamp).toLocaleString()}</p>
+                                </div>
                             </div>
-                            <div class="flex gap-3 mt-6">
-                                <button onclick="approvePost('${docSnap.id}')" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 rounded-2xl text-sm font-medium">✅ Approve</button>
-                                <button onclick="removePost('${docSnap.id}')" class="flex-1 py-3 bg-red-600 hover:bg-red-500 rounded-2xl text-sm font-medium">🗑️ Remove</button>
-                                <button onclick="escalatePost('${docSnap.id}')" class="flex-1 py-3 bg-amber-600 hover:bg-amber-500 rounded-2xl text-sm font-medium">🔬 Escalate</button>
+                            <div class="flex flex-wrap gap-3 mt-6">
+                                <button onclick="approvePost('${docSnap.id}')" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 rounded-2xl text-sm">✅ Approve</button>
+                                <button onclick="warnPost('${docSnap.id}')" class="px-5 py-2.5 bg-amber-600 hover:bg-amber-500 rounded-2xl text-sm">⚠️ Warn</button>
+                                <button onclick="removePost('${docSnap.id}')" class="px-5 py-2.5 bg-red-600 hover:bg-red-500 rounded-2xl text-sm">🗑️ Remove</button>
+                                <button onclick="banUser('${data.authorId}')" class="px-5 py-2.5 bg-red-700 hover:bg-red-600 rounded-2xl text-sm">🚫 Ban User</button>
+                                <button onclick="escalatePost('${docSnap.id}')" class="px-5 py-2.5 bg-sky-600 hover:bg-sky-500 rounded-2xl text-sm">🔬 Escalate</button>
                             </div>
                         `;
                         container.appendChild(item);
                     });
                 });
             } catch (e) {
-                container.innerHTML = '<p class="text-red-400">Error loading flagged content</p>';
+                console.error(e);
+                container.innerHTML = '<p class="text-red-400 py-8 text-center">Failed to load queue</p>';
             }
         }
 
-        window.approvePost = async (id) => {
+        window.approvePost = async (id) => { 
             await updateDoc(doc(db, "testimonies", id), { flagged: false, moderationStatus: "approved" });
-            showToast("Post approved", "success");
+            showToast("Approved", "success");
         };
-
+        window.warnPost = (id) => showToast("Warning issued (TODO: implement)", "warning");
         window.removePost = async (id) => {
-            if (confirm("Delete this testimony permanently?")) {
+            if (confirm("Remove permanently?")) {
                 await deleteDoc(doc(db, "testimonies", id));
-                showToast("Post removed", "success");
+                showToast("Removed", "success");
             }
         };
-
-        window.escalatePost = (id) => {
-            showToast("Post escalated to True Witness review", "info");
+        window.banUser = (uid) => {
+            if (confirm("Ban this user?")) showToast("User banned (TODO: add ban logic)", "error");
         };
-
-        window.loadFlaggedContent = loadFlaggedContent;
+        window.escalatePost = (id) => showToast("Escalated to True Witness team", "info");
 
         document.addEventListener('DOMContentLoaded', loadFlaggedContent);
     </script>
