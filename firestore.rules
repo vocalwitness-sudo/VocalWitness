@@ -20,6 +20,9 @@ service cloud.firestore {
       allow read: if true;
       allow create: if request.auth != null;
     }
+match /testimonies/{testimonyId} {
+  allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
+}
 
     // === GROUPS RULES (this fixes your error) ===
     match /groups/{groupId} {
