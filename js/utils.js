@@ -1,3 +1,4 @@
+// js/utils.js
 import { db, auth } from './firebase-config.js';
 import { 
     collection, 
