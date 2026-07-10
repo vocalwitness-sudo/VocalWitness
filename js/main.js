@@ -55,6 +55,11 @@ window.showSupportModal = () => {
         console.warn("Support Modal not found on this page. Check index.html.");
     }
 };
+// Add this to your GLOBAL WINDOW FUNCTIONS section in main.js
+window.closeSupportModal = () => {
+    const modal = document.getElementById('supportModal');
+    if (modal) modal.classList.add('hidden');
+};
 
 window.closeProfile = () => {
     const modal = document.getElementById('profileModal');
