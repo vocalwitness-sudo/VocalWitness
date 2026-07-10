@@ -116,5 +116,15 @@
 
         document.addEventListener('DOMContentLoaded', init);
     </script>
+    <script src="../js/main.js" type="module"></script>
+
+<script type="module">
+    import { initGroups } from './js/groups.js';
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        // Ensure you have a <div id="groupsListContainer"> in your HTML
+        initGroups('groupsListContainer');
+    });
+</script>
 </body>
 </html>
