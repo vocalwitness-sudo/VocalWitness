@@ -5,35 +5,31 @@ import {
 } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
 import { showToast } from './utils.js';
 
-// Initialize the groups feed in a specific container
+/**
+ * Initializes the groups feed and sets up one single Event Listener
+ * for the entire container (Event Delegation).
+ */
 export function initGroups(containerId) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    const q = query(collection(db, "groups"), orderBy("createdAt", "desc"));
-
-    export function initGroups(containerId) {
-    const container = document.getElementById(containerId);
-    if (!container) return;
-
-    container.addEventListener('click', (event) => {
-        // 2. Check if the clicked element (or its closest ancestor) is a .join-btn
-        const button = event.target.closest('.join-btn');
-        
-        // 3. If it is, get the ID and run your logic
-        if (button) {
-            const groupId = button.dataset.id;
-            joinGroup(groupId);
+    // 1. Setup Delegated Event Listener (Handles all Join clicks efficiently)
+    container.addEventListener('click', async (e) => {
+        const btn = e.target.closest('.join-btn');
+        if (btn) {
+            const groupId = btn.dataset.id;
+            await joinGroup(groupId);
         }
     });
 
-}
-
+    // 2. Setup Real-time Feed
+    const q = query(collection(db, "groups"), orderBy("createdAt", "desc"));
+    
     onSnapshot(q, (snapshot) => {
         container.innerHTML = '';
         
         if (snapshot.empty) {
-            container.innerHTML = '<p class="text-zinc-500 text-center">No groups found. Be the first to start one!</p>';
+            container.innerHTML = '<p class="text-zinc-500 text-center py-10">No groups found. Be the first to start one!</p>';
             return;
         }
 
@@ -41,22 +37,16 @@ export function initGroups(containerId) {
             const data = docSnap.data();
             const div = document.createElement('div');
             div.className = 'glass p-5 rounded-2xl mb-4 flex justify-between items-center';
-            // Inside initGroups in group.js
-container.addEventListener('click', (e) => {
-    if (e.target.matches('.join-btn')) {
-        const groupId = e.target.dataset.id;
-        joinGroup(groupId); // Call your logic function directly
-    }
-});
-
+            
+            // Note: We use class="join-btn" and data-id instead of onclick
             div.innerHTML = `
                 <div>
                     <h3 class="font-bold text-lg text-emerald-400">${data.name}</h3>
                     <p class="text-sm text-zinc-400">${data.description || 'No description'}</p>
                     <small class="text-xs text-zinc-500">${data.memberCount || 0} members</small>
                 </div>
-                <button class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-sm transition" 
-                        onclick="joinGroup('${docSnap.id}')">
+                <button class="join-btn bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-sm transition" 
+                        data-id="${docSnap.id}">
                     Join
                 </button>
             `;
@@ -65,8 +55,10 @@ container.addEventListener('click', (e) => {
     });
 }
 
-// Logic for joining a group
-window.joinGroup = async (groupId) => {
+/**
+ * Logic for joining a group
+ */
+export async function joinGroup(groupId) {
     if (!auth.currentUser) return showToast("Please sign in to join", "error");
 
     try {
@@ -80,4 +72,4 @@ window.joinGroup = async (groupId) => {
         console.error(err);
         showToast("Failed to join group", "error");
     }
-};
+}
