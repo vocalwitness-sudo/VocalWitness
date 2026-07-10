@@ -4,21 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#10b981">
-                   
-
+                 
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="logo.png" type="image/png">
     <title>VocalWitness • Truth • Evidence • Public Square</title>
-
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
-
     <style>
-        body { 
-            font-family: 'Inter', system-ui, sans-serif; 
-            background: #0a0f1c; 
-            color: white; 
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: #0a0f1c;
+            color: white;
         }
         .glass {
             background: rgba(17, 24, 39, 0.95);
@@ -30,38 +27,39 @@
 <body class="min-h-screen pb-20 p-4 bg-[#0a0f1c]">
 
     <!-- LEGAL NOTICE -->
-    <div class="max-w-2xl mx-auto bg-red-950/30 border border-red-500/20 rounded-3xl p-4 text-xs mb-6 text-center">
-        <strong class="text-red-400">Legal:</strong> VocalWitness uses Zero-Knowledge (ZK) cryptography to protect your identity.
-We never collect your ID cards, passports, or personal data.
-Your testimony is yours alone, distributed through an un-manipulated, decentralized medium. Truth belongs to the community—we simply provide the tools for it to be heard.
+    <div class="max-w-2xl mx-auto bg-amber-950/30 border border-amber-500/30 rounded-3xl p-4 text-xs mb-6 text-center">
+        <strong data-i18n="legalLabel" class="text-amber-400">Important Note:</strong>
+        <span data-i18n="privacyWarning">
+            VocalWitness uses Zero-Knowledge (ZK) cryptography to protect your identity. 
+            We never collect your ID cards, passports, or personal data. 
+            Your testimony is yours alone, distributed through an un-manipulated, decentralized medium. 
+            Truth belongs to the community—we simply provide the tools for it to be heard.
+        </span>
     </div>
 
     <div class="max-w-2xl mx-auto">
-       
+      
         <!-- HEADER -->
         <header class="flex items-center justify-between mb-8">
             <div class="flex items-center gap-3">
                 <div class="flex items-center gap-3">
                     <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-3xl shadow-inner">🔊</div>
                     <div>
-                        <h1 class="text-4xl font-bold tracking-tighter text-emerald-400">VocalWitness</h1>
-                        <p class="text-xs text-emerald-500 -mt-1">Truth • Evidence • Public Square</p>
+                        <h1 data-i18n="appTitle" class="text-4xl font-bold tracking-tighter text-emerald-400">VocalWitness</h1>
+                        <p data-i18n="appSubtitle" class="text-xs text-emerald-500 -mt-1">Truth • Evidence • Public Square</p>
                     </div>
                 </div>
             </div>
-
             <div class="flex items-center gap-3">
-                <!-- Language Selector -->
                 <select id="languageSelector" onchange="changeLanguage(this.value)"
                         class="bg-zinc-900 border border-zinc-700 text-white px-5 py-2.5 rounded-2xl text-sm focus:outline-none focus:border-emerald-500">
-                    <!-- Options populated by JS -->
                 </select>
-
+                
                 <button onclick="showSupportModal()"
                         class="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-semibold rounded-2xl flex items-center gap-2 shadow-xl hover:scale-105 transition-all text-sm">
-                    💚 Support the Square
+                    💚 <span data-i18n="supportPlatform">Support the Square</span>
                 </button>
-               
+              
                 <button onclick="showProfile()"
                         class="w-11 h-11 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-3xl transition-all border border-zinc-600 flex items-center justify-center">
                     👤
@@ -72,13 +70,13 @@ Your testimony is yours alone, distributed through an un-manipulated, decentrali
         <!-- NAVIGATION -->
         <nav class="flex items-center justify-between mb-6">
             <div id="main-nav" class="flex gap-2 overflow-x-auto pb-2">
-                <button onclick="loadFeed('citizen')" class="nav-btn active px-5 py-2.5 rounded-2xl whitespace-nowrap" data-feed="citizen">
+                <button onclick="loadFeed('citizen')" class="nav-btn active px-5 py-2.5 rounded-2xl whitespace-nowrap" data-feed="citizen" data-i18n="citizenTalk">
                     Citizen Talk
                 </button>
-                <button onclick="navigateToPage('true-witness.html')" class="nav-btn px-5 py-2.5 rounded-2xl whitespace-nowrap">
+                <button onclick="navigateToPage('true-witness.html')" class="nav-btn px-5 py-2.5 rounded-2xl whitespace-nowrap" data-i18n="trueWitness">
                     True Witness
                 </button>
-                <button onclick="navigateToPage('live-arena.html')" class="nav-btn px-5 py-2.5 rounded-2xl whitespace-nowrap">
+                <button onclick="navigateToPage('live-arena.html')" class="nav-btn px-5 py-2.5 rounded-2xl whitespace-nowrap" data-i18n="liveArena">
                     Live Arena
                 </button>
                 <button onclick="navigateToPage('groups.html')" class="nav-btn px-5 py-2.5 rounded-2xl whitespace-nowrap">
@@ -86,12 +84,8 @@ Your testimony is yours alone, distributed through an un-manipulated, decentrali
                 </button>
             </div>
 
-            <!-- More Menu -->
             <div class="relative">
-                <button onclick="toggleMoreMenu()"
-                        class="w-10 h-10 flex items-center justify-center text-2xl hover:bg-zinc-800 rounded-2xl transition-all">
-                    ☰
-                </button>
+                <button onclick="toggleMoreMenu()" class="w-10 h-10 flex items-center justify-center text-2xl hover:bg-zinc-800 rounded-2xl transition-all">☰</button>
                 <div id="moreMenu" class="hidden absolute right-0 mt-2 w-56 bg-zinc-900 border border-zinc-700 rounded-3xl shadow-2xl py-2 z-50">
                     <a href="moderation.html" class="block px-6 py-3 hover:bg-zinc-800">🛡️ Moderation Dashboard</a>
                     <a href="forensic-ledger.html" class="block px-6 py-3 hover:bg-zinc-800">📜 Forensic Ledger</a>
@@ -108,23 +102,21 @@ Your testimony is yours alone, distributed through an un-manipulated, decentrali
         <div class="glass rounded-3xl p-6 mb-8">
             <textarea id="mainInput" rows="3"
                       class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none"
+                      data-i18n="placeholder"
                       placeholder="Share your raw testimony... What did you witness?"></textarea>
-          
+         
             <div class="flex gap-3 mt-6">
-                <button id="btn-photo"
-                        class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl transition-all flex items-center justify-center gap-3 font-medium">
+                <button id="btn-photo" class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl transition-all flex items-center justify-center gap-3 font-medium" data-i18n="photoForensic">
                     📸 Photo + Forensic Shield
                 </button>
-                <button id="btn-voice"
-                        class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl transition-all flex items-center justify-center gap-3 font-medium">
+                <button id="btn-voice" class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl transition-all flex items-center justify-center gap-3 font-medium" data-i18n="voiceTestimony">
                     🎤 Voice Testimony
                 </button>
             </div>
-          
+         
             <div id="preview-area" class="mt-6"></div>
-          
-            <button id="postButton"
-                    class="mt-8 w-full py-5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-black font-bold text-lg rounded-3xl transition-all active:scale-95 shadow-lg">
+         
+            <button id="postButton" class="mt-8 w-full py-5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-black font-bold text-lg rounded-3xl transition-all active:scale-95 shadow-lg" data-i18n="postButton">
                 🚀 Publish Testimony to the Square
             </button>
         </div>
@@ -138,15 +130,16 @@ Your testimony is yours alone, distributed through an un-manipulated, decentrali
     <!-- FOOTER -->
     <footer class="max-w-2xl mx-auto mt-20 pt-8 border-t border-zinc-800 text-center text-xs text-zinc-500">
         <div class="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-6">
-            <a href="about.html" class="hover:text-emerald-400 transition-colors">About</a>
-            <a href="safety.html" class="hover:text-emerald-400 transition-colors">Safety</a>
-            <a href="privacy.html" class="hover:text-emerald-400 transition-colors">Privacy</a>
-            <a href="terms.html" class="hover:text-emerald-400 transition-colors">Terms</a>
+            <a href="about.html" class="hover:text-emerald-400 transition-colors" data-i18n="about">About</a>
+            <a href="safety.html" class="hover:text-emerald-400 transition-colors" data-i18n="safety">Safety</a>
+            <a href="privacy.html" class="hover:text-emerald-400 transition-colors" data-i18n="privacy">Privacy</a>
+            <a href="terms.html" class="hover:text-emerald-400 transition-colors" data-i18n="terms">Terms</a>
         </div>
         <p>© 2026 VocalWitness • Built for Truth &amp; Evidence</p>
     </footer>
 
-    <!-- MODALS -->
+    <!-- ==================== MODALS ==================== -->
+
     <!-- DAO Modal -->
     <div id="daoModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[60]">
         <div class="glass rounded-3xl max-w-md w-full mx-4 p-8">
@@ -177,14 +170,14 @@ Your testimony is yours alone, distributed through an un-manipulated, decentrali
             <div class="text-6xl mb-6">🌱</div>
             <h2 class="text-3xl font-bold text-emerald-400 mb-2">Cultivate the Public Square</h2>
             <p class="text-zinc-400 mb-8">Protect the Public Square with enhanced responsibility & tools</p>
-          
+         
             <div class="space-y-4 text-left mb-10 text-sm">
                 <div class="flex gap-3"><span class="text-emerald-500">✓</span><div>Forensic Shield + Advanced Tools</div></div>
                 <div class="flex gap-3"><span class="text-emerald-500">✓</span><div>Higher Witness Impact</div></div>
                 <div class="flex gap-3"><span class="text-emerald-500">✓</span><div>Arena Host & Moderation Rights</div></div>
                 <div class="flex gap-3"><span class="text-emerald-500">✓</span><div>Stewardship & Custodian Roles</div></div>
             </div>
-          
+         
             <button onclick="initiateStewardship()" class="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold rounded-2xl mb-6">
                 🌱 Become a Square Steward
             </button>
@@ -268,7 +261,9 @@ Your testimony is yours alone, distributed through an un-manipulated, decentrali
         function uploadProfilePicture() { alert("Profile picture upload coming soon"); }
         function closeGroupModal() { document.getElementById('groupModal').classList.add('hidden'); }
         function createGroup() { alert("Group creation coming soon"); }
-        function changeLanguage(lang) { console.log("Language changed to:", lang); }
+        function changeLanguage(lang) { 
+            console.log("Language changed to:", lang); 
+        }
         function logout() { alert("Logged out"); window.location.reload(); }
         function closeVoteModal() { document.getElementById('voteModal').classList.add('hidden'); }
 
@@ -281,6 +276,16 @@ Your testimony is yours alone, distributed through an un-manipulated, decentrali
         });
     </script>
 
+    <!-- Load i18n first, then main.js -->
+    <script type="module" src="js/i18n.js"></script>
     <script type="module" src="js/main.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof initLanguageSelector === 'function') {
+                initLanguageSelector();
+            }
+        });
+    </script>
 </body>
 </html>
