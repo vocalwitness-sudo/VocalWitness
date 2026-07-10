@@ -32,5 +32,22 @@
   "maybeLater": "Labda baadaye",
   "becomeSteward": "🌱 Kuwa Mlinzi wa Mraba",
   "cancel": "Ghairi",
-  "pageTitle": "VocalWitness • Ukweli • Ushahidi • Uwanja wa Umma"
+  "daoProposal": "Pendekezo la Steward DAO",
+  "submitProposal": "Wasilisha Pendekezo",
+  "pageTitle": "VocalWitness • Ukweli • Ushahidi • Uwanja wa Umma",
+  "moderationDashboard": "Dashibodi ya Usimamizi",
+  "forensicLedger": "Rekodi ya Uchunguzi",
+  "myTestimonies": "Ushuhuda Wangu",
+  "trustLevel": "Kiwango cha Uaminifu",
+  "currentCircle": "Mzunguko wa Sasa",
+  "level": "Kiwango",
+  "loading": "Inapakia...",
+  "success": "Imefanikiwa",
+  "error": "Hitilafu",
+  "warning": "Onyo",
+  "postPublished": "Ushuhuda umechapishwa kwa mafanikio!",
+  "postFailed": "Imeshindwa kuchapisha ushuhuda",
+  "login": "Ingia",
+  "signup": "Jisajili",
+  "logout": "Toka"
 }
