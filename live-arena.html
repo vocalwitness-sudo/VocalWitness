@@ -71,9 +71,9 @@
         </div>
     </div>
 
-    <!-- Scripts -->
-    <script src="../js/utils.js"></script>
-    <script>
+        <!-- Scripts -->
+    <script type="module">
+        // Utils will be included here or imported properly
         window.goBack = function() {
             if (window.history.length > 1) {
                 window.history.back();
@@ -81,6 +81,14 @@
                 window.location.href = 'index.html';
             }
         };
+
+        function notifyLiveArena() {
+            alert("✅ You'll be notified when the Live Arena launches!\n\nThank you for your patience.");
+        }
+
+        console.log("✅ Live Arena loaded");
+    </script>
+    <script type="module" src="../js/main.js"></script>
 
         function notifyLiveArena() {
             alert("✅ You'll be notified when the Live Arena launches!\n\nThank you for your patience.");
