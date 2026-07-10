@@ -34,7 +34,6 @@ export function initMyTestimonies(containerId) {
 function loadUserTestimonies(userId, container) {
     const testimoniesRef = collection(db, 'testimonies');
     
-    // Note: Ensure your Firestore index matches this query (userId + timestamp)
     const q = query(
         testimoniesRef, 
         where("authorId", "==", userId), 
@@ -53,17 +52,29 @@ function loadUserTestimonies(userId, container) {
             const data = docSnap.data();
             const div = document.createElement('div');
             div.className = 'glass p-4 rounded-2xl flex justify-between items-start mb-3';
-            // Inside your snapshot loop
-div.innerHTML = `
-    <div>
-        <p class="text-zinc-300" id="text-${docSnap.id}">${data.content || '...'}</p>
-        <small class="text-emerald-500">${dateStr}</small>
-    </div>
-    <div class="flex gap-2">
-        <button class="text-blue-400 hover:text-blue-300 text-xs" onclick="editTestimony('${docSnap.id}')">Edit</button>
-        <button class="text-red-400 hover:text-red-300 text-xs" onclick="deleteTestimony('${docSnap.id}')">Delete</button>
-    </div>
-`;
+            
+            // Format timestamp
+            const dateStr = data.timestamp ? new Date(data.timestamp).toLocaleDateString() : 'N/A';
+
+            // Cleaned up innerHTML with both Edit and Delete buttons
+            div.innerHTML = `
+                <div>
+                    <p class="text-zinc-300" id="text-${docSnap.id}">${data.content || '...'}</p>
+                    <small class="text-emerald-500">${dateStr}</small>
+                </div>
+                <div class="flex gap-3">
+                    <button class="text-blue-400 hover:text-blue-300 text-xs" onclick="editTestimony('${docSnap.id}')">
+                        Edit
+                    </button>
+                    <button class="text-red-400 hover:text-red-300 text-xs" onclick="deleteTestimony('${docSnap.id}')">
+                        Delete
+                    </button>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    });
+}
             
             // Format timestamp (Assuming ISO string as per your publishTestimony)
             const dateStr = data.timestamp ? new Date(data.timestamp).toLocaleDateString() : 'N/A';
