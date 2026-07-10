@@ -15,27 +15,22 @@ service cloud.firestore {
       allow create, update: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Testimonies
-    match /testimonies/{postId} {
+    // Testimonies (Merged and corrected)
+    match /testimonies/{testimonyId} {
       allow read: if true;
       allow create: if request.auth != null;
+      allow delete: if request.auth != null && request.auth.uid == resource.data.authorId;
     }
-match /testimonies/{testimonyId} {
-  allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
-}
 
-    // === GROUPS RULES (this fixes your error) ===
+    // Groups
     match /groups/{groupId} {
-      allow read: if request.auth != null;                    // Signed-in users can read
-      allow create: if request.auth != null;                  // Signed-in users can create groups
-      allow update: if request.auth != null &&
-                    (resource.data.members.hasAny([request.auth.uid]) || 
-                     resource.data.createdBy == request.auth.uid);
-      allow delete: if request.auth != null && 
-                    resource.data.createdBy == request.auth.uid;
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && (resource.data.members.hasAny([request.auth.uid]) || resource.data.createdBy == request.auth.uid);
+      allow delete: if request.auth != null && resource.data.createdBy == request.auth.uid;
     }
 
-    // Default deny (good security practice)
+    // Default deny
     match /{document=**} {
       allow read, write: if false;
     }
