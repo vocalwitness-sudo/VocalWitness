@@ -3,6 +3,12 @@ import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.0.
 import { db, auth } from './firebase-config.js';
 import { showToast } from './utils.js';
 
+export const ROLES = {
+  USER: 'user',
+  STEWARD: 'steward',
+  ADMIN: 'admin'
+};
+
 export const TIERS = {
   CITIZEN: 'citizen',
   CITIZEN_CIRCLE: 'citizen_circle',   // Phone Verified
