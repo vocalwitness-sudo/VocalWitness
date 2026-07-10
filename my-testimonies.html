@@ -45,6 +45,13 @@
 
     <script src="../js/utils.js" type="module"></script>
     <script type="module" src="../js/main.js"></script>
+    <script type="module">
+    import { initMyTestimonies } from './js/my-testimonies.js';
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        initMyTestimonies('myTestimoniesContainer');
+    });
+</script>
 
     <script>
         // UI Helper Functions
