@@ -9,76 +9,106 @@
     <link rel="icon" href="logo.png" type="image/png">
 </head>
 <body class="min-h-screen p-4 bg-[#0a0f1c]">
-    <div class="max-w-4xl mx-auto">
-        <h1 class="text-4xl font-bold text-emerald-400 mb-8">🛡️ Moderation Dashboard</h1>
-       
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="max-w-5xl mx-auto">
+        <h1 class="text-4xl font-bold text-emerald-400 mb-8 flex items-center gap-3">
+            🛡️ Moderation Dashboard
+        </h1>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
             <div class="glass rounded-3xl p-6 text-center">
                 <div class="text-3xl mb-2">⏳</div>
-                <div class="text-2xl font-bold" id="pending-count">12</div>
+                <div class="text-3xl font-bold" id="pending-count">0</div>
                 <div class="text-sm text-zinc-400">Pending Review</div>
             </div>
             <div class="glass rounded-3xl p-6 text-center">
                 <div class="text-3xl mb-2">🚩</div>
-                <div class="text-2xl font-bold text-red-400" id="flagged-count">5</div>
-                <div class="text-sm text-zinc-400">Flagged Content</div>
+                <div class="text-3xl font-bold text-red-400" id="flagged-count">0</div>
+                <div class="text-sm text-zinc-400">Flagged</div>
             </div>
             <div class="glass rounded-3xl p-6 text-center">
                 <div class="text-3xl mb-2">✅</div>
-                <div class="text-2xl font-bold text-emerald-400" id="resolved-count">28</div>
+                <div class="text-3xl font-bold text-emerald-400" id="resolved-count">0</div>
                 <div class="text-sm text-zinc-400">Resolved Today</div>
+            </div>
+            <div class="glass rounded-3xl p-6 text-center">
+                <div class="text-3xl mb-2">👥</div>
+                <div class="text-3xl font-bold" id="active-mods">3</div>
+                <div class="text-sm text-zinc-400">Active Moderators</div>
             </div>
         </div>
 
+        <!-- Flagged Content -->
         <div class="glass rounded-3xl p-6">
-            <h2 class="text-xl font-bold mb-6">Flagged Content</h2>
-            <div id="flaggedList" class="space-y-4">
-                <!-- Populated by JS -->
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">Flagged Testimonies</h2>
+                <button onclick="loadFlaggedContent()" class="px-5 py-2 bg-zinc-700 hover:bg-zinc-600 rounded-2xl text-sm">Refresh</button>
+            </div>
+            <div id="flaggedList" class="space-y-6">
+                <!-- JS populated -->
             </div>
         </div>
     </div>
 
     <script type="module">
         import { db } from './js/firebase-config.js';
-        import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+        import { collection, query, where, onSnapshot, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+        import { showToast } from './js/utils.js';
+
+        let currentListener = null;
 
         async function loadFlaggedContent() {
-            const flaggedList = document.getElementById('flaggedList');
-            flaggedList.innerHTML = '<p class="text-zinc-400 text-center py-8">Loading flagged content...</p>';
+            const container = document.getElementById('flaggedList');
+            container.innerHTML = '<p class="text-zinc-400 py-12 text-center">Loading...</p>';
+
             try {
                 const q = query(collection(db, "testimonies"), where("flagged", "==", true));
-                const snapshot = await getDocs(q);
-                flaggedList.innerHTML = '';
-                if (snapshot.empty) {
-                    flaggedList.innerHTML = '<p class="text-zinc-400 text-center py-8">No flagged content at the moment.</p>';
-                    return;
-                }
-                snapshot.forEach((docSnap) => {
-                    const post = docSnap.data();
-                    const item = document.createElement('div');
-                    item.className = 'bg-zinc-900 rounded-2xl p-6 border border-red-500/30';
-                    item.innerHTML = `
-                        <p class="text-sm text-zinc-300">${post.content || 'No content'}</p>
-                        <div class="flex gap-4 mt-4">
-                            <button onclick="approvePost('${docSnap.id}')" class="px-4 py-2 bg-emerald-500 text-black text-sm rounded-xl">Approve</button>
-                            <button onclick="removePost('${docSnap.id}')" class="px-4 py-2 bg-red-500 text-black text-sm rounded-xl">Remove</button>
-                        </div>
-                    `;
-                    flaggedList.appendChild(item);
+                
+                if (currentListener) currentListener();
+                
+                currentListener = onSnapshot(q, (snapshot) => {
+                    container.innerHTML = '';
+                    if (snapshot.empty) {
+                        container.innerHTML = '<p class="text-zinc-400 py-12 text-center">No flagged content right now.</p>';
+                        return;
+                    }
+                    snapshot.forEach((docSnap) => {
+                        const data = docSnap.data();
+                        const item = document.createElement('div');
+                        item.className = 'bg-zinc-900 rounded-3xl p-6 border border-red-500/30';
+                        item.innerHTML = `
+                            <div class="flex justify-between">
+                                <p class="text-zinc-300 flex-1">${data.content ? data.content.substring(0, 180) + '...' : 'Media only post'}</p>
+                                <span class="text-xs text-red-400">${new Date(data.timestamp).toLocaleDateString()}</span>
+                            </div>
+                            <div class="flex gap-3 mt-6">
+                                <button onclick="approvePost('${docSnap.id}')" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 rounded-2xl text-sm font-medium">✅ Approve</button>
+                                <button onclick="removePost('${docSnap.id}')" class="flex-1 py-3 bg-red-600 hover:bg-red-500 rounded-2xl text-sm font-medium">🗑️ Remove</button>
+                                <button onclick="escalatePost('${docSnap.id}')" class="flex-1 py-3 bg-amber-600 hover:bg-amber-500 rounded-2xl text-sm font-medium">🔬 Escalate</button>
+                            </div>
+                        `;
+                        container.appendChild(item);
+                    });
                 });
-            } catch (err) {
-                flaggedList.innerHTML = '<p class="text-red-400 text-center py-8">Failed to load flagged content</p>';
+            } catch (e) {
+                container.innerHTML = '<p class="text-red-400">Error loading flagged content</p>';
             }
         }
 
-        window.approvePost = async (postId) => {
+        window.approvePost = async (id) => {
+            await updateDoc(doc(db, "testimonies", id), { flagged: false, moderationStatus: "approved" });
             showToast("Post approved", "success");
-            loadFlaggedContent();
         };
-        window.removePost = async (postId) => {
-            if (!confirm("Remove this post permanently?")) return;
-            showToast("Post removed", "success");
-            loadFlaggedContent();
+
+        window.removePost = async (id) => {
+            if (confirm("Delete this testimony permanently?")) {
+                await deleteDoc(doc(db, "testimonies", id));
+                showToast("Post removed", "success");
+            }
+        };
+
+        window.escalatePost = (id) => {
+            showToast("Post escalated to True Witness review", "info");
         };
 
         document.addEventListener('DOMContentLoaded', loadFlaggedContent);
