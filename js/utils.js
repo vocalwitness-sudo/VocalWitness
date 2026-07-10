@@ -1,19 +1,22 @@
-// js/utils.js
 import { db, auth } from './firebase-config.js';   // Correct relative path
 
 console.log("✅ utils.js is being loaded as MODULE");
 
+/* ====================== TOAST NOTIFICATION ====================== */
+
 export function showToast(message, type = "success") {
-    
     const styles = {
         success: { bg: 'bg-emerald-600', icon: '✅' },
-        error:   { bg: 'bg-red-600',   icon: '❌' },
-        warning: { bg: 'bg-amber-600', icon: '⚠️' },
-        info:    { bg: 'bg-sky-600',   icon: 'ℹ️' }
+        error:   { bg: 'bg-red-600',    icon: '❌' },
+        warning: { bg: 'bg-amber-600',  icon: '⚠️' },
+        info:    { bg: 'bg-sky-600',    icon: 'ℹ️' }
     };
 
     const { bg, icon } = styles[type] || styles.success;
 
+    // Create the element dynamically
+    const toast = document.createElement('div');
+    
     toast.className = `
         fixed bottom-5 right-5 p-4 rounded-2xl shadow-2xl z-[100] 
         text-white font-medium text-sm flex items-center gap-2 
@@ -23,6 +26,7 @@ export function showToast(message, type = "success") {
     toast.innerHTML = `${icon} ${message}`;
     document.body.appendChild(toast);
 
+    // Fade out and remove
     setTimeout(() => {
         toast.style.opacity = '0';
         setTimeout(() => toast.remove(), 350);
@@ -107,48 +111,18 @@ export async function submitPeerVote(postId, voteType) {
 
 export function getTier(trustScore = 0) {
     if (trustScore >= 100) {
-        return {
-            name: 'Premium',
-            color: '#FFD700',
-            canDownload: true,
-            badge: '🌟 Verified Truth-Bearer',
-            level: 4
-        };
+        return { name: 'Premium', color: '#FFD700', canDownload: true, badge: '🌟 Verified Truth-Bearer', level: 4 };
     }
     if (trustScore >= 80) {
-        return {
-            name: 'Gold',
-            color: '#FFD700',
-            canDownload: true,
-            badge: 'Elite Witness',
-            level: 3
-        };
+        return { name: 'Gold', color: '#FFD700', canDownload: true, badge: 'Elite Witness', level: 3 };
     }
     if (trustScore >= 60) {
-        return {
-            name: 'Silver',
-            color: '#C0C0C0',
-            canDownload: true,
-            badge: 'Trusted Witness',
-            level: 2
-        };
+        return { name: 'Silver', color: '#C0C0C0', canDownload: true, badge: 'Trusted Witness', level: 2 };
     }
     if (trustScore >= 40) {
-        return {
-            name: 'Bronze',
-            color: '#CD7F32',
-            canDownload: true,
-            badge: 'Verified Citizen',
-            level: 1
-        };
+        return { name: 'Bronze', color: '#CD7F32', canDownload: true, badge: 'Verified Citizen', level: 1 };
     }
-    return {
-        name: 'Explorer',
-        color: '#808080',
-        canDownload: false,
-        badge: 'New Citizen',
-        level: 0
-    };
+    return { name: 'Explorer', color: '#808080', canDownload: false, badge: 'New Citizen', level: 0 };
 }
 
 export function calculateTrustScore(userData = {}) {
@@ -170,7 +144,6 @@ export function calculateTrustScore(userData = {}) {
 
 /* ====================== GLOBAL EXPORTS ====================== */
 
-// Make critical functions available for inline onclick handlers
 window.submitPeerVote = submitPeerVote;
 window.showToast = showToast;
 window.goBack = function() {
@@ -186,6 +159,5 @@ window.goBack = function() {
 export async function escalatePost(postId) {
     // TODO: Check user tier permission
     showToast("🛡️ Escalating post to True Witness review...", "info");
-    // Add ZK proof or moderator escalation logic here later
     return true;
 }
