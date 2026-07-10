@@ -24,7 +24,14 @@ export function initGroups(containerId) {
             const data = docSnap.data();
             const div = document.createElement('div');
             div.className = 'glass p-5 rounded-2xl mb-4 flex justify-between items-center';
-            
+            // Inside initGroups in group.js
+container.addEventListener('click', (e) => {
+    if (e.target.matches('.join-btn')) {
+        const groupId = e.target.dataset.id;
+        joinGroup(groupId); // Call your logic function directly
+    }
+});
+
             div.innerHTML = `
                 <div>
                     <h3 class="font-bold text-lg text-emerald-400">${data.name}</h3>
