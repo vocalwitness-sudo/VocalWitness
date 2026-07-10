@@ -218,6 +218,20 @@ export function resetMediaState() {
     if (preview) preview.innerHTML = '';
 }
 
+// Add this at the bottom of js/media.js
+export function startForensicShield() {
+    // This function triggers the Forensic Shield flow
+    console.log("📸 Forensic Shield Activated: Preparing metadata/ZK-proofs...");
+    
+    // Example: If you have a modal for this, show it here
+    const shieldModal = document.getElementById('forensicShieldModal');
+    if (shieldModal) {
+        shieldModal.classList.remove('hidden');
+    } else {
+        showToast("Forensic Shield Ready: Capture your evidence.", "info");
+    }
+}
+
 // Global exposure
 window.handleImageSelect = handleImageSelect;
 window.toggleVoiceRecording = toggleVoiceRecording;
