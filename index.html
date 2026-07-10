@@ -180,42 +180,42 @@
     </script>
 
     <script>
-        // Fallback button handlers - attach directly
         document.addEventListener('DOMContentLoaded', function() {
-            console.log("🔧 Attaching button fallbacks");
+            console.log("🔧 Real button handlers attached");
 
-            // Photo Button
+            // Photo
             const photoBtn = document.getElementById('btn-photo');
-            if (photoBtn) {
-                photoBtn.addEventListener('click', function() {
-                    console.log("📸 Photo button clicked");
-                    alert("Photo + Forensic Shield - Coming soon (or check console)");
-                    // Later connect to mediaModule.handleImageSelect
-                });
-            }
+            if (photoBtn) photoBtn.addEventListener('click', () => {
+                if (typeof window.handleImageSelect === 'function') {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'image/*';
+                    input.onchange = (e) => window.handleImageSelect(e, document.getElementById('preview-area'));
+                    input.click();
+                } else {
+                    alert("Photo handler not ready yet");
+                }
+            });
 
-            // Voice Button
+            // Voice
             const voiceBtn = document.getElementById('btn-voice');
-            if (voiceBtn) {
-                voiceBtn.addEventListener('click', function() {
-                    console.log("🎤 Voice button clicked");
-                    alert("Voice recording starting...");
-                    // Later: toggleVoiceRecording
-                });
-            }
+            if (voiceBtn) voiceBtn.addEventListener('click', () => {
+                if (typeof window.toggleVoiceRecording === 'function') {
+                    window.toggleVoiceRecording(voiceBtn);
+                } else {
+                    alert("Voice engine not ready");
+                }
+            });
 
-            // Publish Button
+            // Publish
             const postBtn = document.getElementById('postButton');
-            if (postBtn) {
-                postBtn.addEventListener('click', function() {
-                    console.log("🚀 Publish clicked");
-                    alert("Publishing testimony... (check console)");
-                    // Later: window.publishTestimony()
-                });
-            }
-
-            // Support Button (already has onclick, but reinforce)
-            console.log("💚 Support button should work via inline onclick");
+            if (postBtn) postBtn.addEventListener('click', () => {
+                if (typeof window.publishTestimony === 'function') {
+                    window.publishTestimony();
+                } else {
+                    alert("Publish function not ready");
+                }
+            });
         });
     </script>
 </body>
