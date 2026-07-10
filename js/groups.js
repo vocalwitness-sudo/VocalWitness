@@ -12,6 +12,23 @@ export function initGroups(containerId) {
 
     const q = query(collection(db, "groups"), orderBy("createdAt", "desc"));
 
+    export function initGroups(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    container.addEventListener('click', (event) => {
+        // 2. Check if the clicked element (or its closest ancestor) is a .join-btn
+        const button = event.target.closest('.join-btn');
+        
+        // 3. If it is, get the ID and run your logic
+        if (button) {
+            const groupId = button.dataset.id;
+            joinGroup(groupId);
+        }
+    });
+
+}
+
     onSnapshot(q, (snapshot) => {
         container.innerHTML = '';
         
