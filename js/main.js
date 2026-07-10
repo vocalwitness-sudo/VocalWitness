@@ -41,7 +41,12 @@ window.toggleMoreMenu = () => {
 };
 
 window.showProfile = () => {
-    document.getElementById('profileModal').classList.remove('hidden');
+    const modal = document.getElementById('profileModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+    } else {
+        console.warn("Profile Modal not found in this DOM. Check if it's included on this page.");
+    }
 };
 
 window.showSupportModal = () => {
