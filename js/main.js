@@ -8,6 +8,7 @@ import * as mediaModule from './media.js';
 import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
 import { createStewardProposal, castQuadraticVote } from './dao.js';
 import { initGroups } from './group.js';
+import { uploadForensicMedia, resetMediaState, handleImageSelect, toggleVoiceRecording, startForensicShield } from './media.js';
 
 // ====================== GLOBAL STATE ======================
 let engineInstance = null;
@@ -42,11 +43,6 @@ window.toggleMoreMenu = () => {
 window.showProfile = () => {
     document.getElementById('profileModal').classList.remove('hidden');
 };
-
-window.closeProfile = () => {
-    document.getElementById('profileModal').classList.add('hidden');
-};
-
 
 window.showSupportModal = () => {
     const modal = document.getElementById('supportModal');
@@ -237,23 +233,26 @@ function setupEventListeners() {
 }
 
 // Close more menu when clicking outside
-document.addEventListener('click', (e) => {
-    if (!e.target.closest('.relative')) {
-        const menu = document.getElementById('moreMenu');
-        if (menu) menu.classList.add('hidden');
-    }
-});
 
 document.addEventListener('DOMContentLoaded', () => {
+    // 1. Initialize core system (Only once)
+    bootstrap();
+
+    // 2. Register UI listeners
     const profileBtn = document.getElementById('profile-btn');
     if (profileBtn) {
-        profileBtn.addEventListener('click', showProfile);
+        profileBtn.addEventListener('click', window.showProfile);
     }
     
-    // Do the same for other buttons like Forensic Shield
     const forensicBtn = document.getElementById('forensic-btn');
     if (forensicBtn) {
-        forensicBtn.addEventListener('click', startForensicShield);
+        // Use mediaModule.startForensicShield if it's imported, 
+        // or just the function name if it's in the same scope
+        forensicBtn.addEventListener('click', mediaModule.startForensicShield);
     }
+
+    // 3. Register any other necessary UI listeners
+    const moreMenu = document.getElementById('moreMenu');
+    // Ensure the menu starts hidden
+    if (moreMenu) moreMenu.classList.add('hidden');
 });
-document.addEventListener('DOMContentLoaded', bootstrap);
