@@ -32,5 +32,22 @@
   "maybeLater": "Wani lokaci",
   "becomeSteward": "🌱 Zama Mai Kula da Dandali",
   "cancel": "Soke",
-  "pageTitle": "VocalWitness • Gaskiya • Shaida • Dandalin Jama'a"
+  "daoProposal": "Shawara na Steward DAO",
+  "submitProposal": "Saka Shawara",
+  "pageTitle": "VocalWitness • Gaskiya • Shaida • Dandalin Jama'a",
+  "moderationDashboard": "Dashboard na Kulawa",
+  "forensicLedger": "Litattafan Forensic",
+  "myTestimonies": "Shaido na",
+  "trustLevel": "Matakin Aminci",
+  "currentCircle": "Da'irar Yanzu",
+  "level": "Mataki",
+  "loading": "Ana Lodi...",
+  "success": "Nasara",
+  "error": "Kuskure",
+  "warning": "Gargadi",
+  "postPublished": "An buga shaida cikin nasara!",
+  "postFailed": "An kasa buga shaida",
+  "login": "Shiga",
+  "signup": "Yi Rajista",
+  "logout": "Fita"
 }
