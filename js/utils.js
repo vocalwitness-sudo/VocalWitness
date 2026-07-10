@@ -7,10 +7,7 @@ import {
     query, 
     where, 
     onSnapshot 
-} from 'firebase/firestore';
-
-console.log("✅ utils.js is being loaded as MODULE");
-
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 /* ====================== TOAST NOTIFICATION ====================== */
 
 export function showToast(message, type = "success") {
