@@ -47,8 +47,15 @@ window.closeProfile = () => {
     document.getElementById('profileModal').classList.add('hidden');
 };
 
+
 window.showSupportModal = () => {
-    document.getElementById('supportModal').classList.remove('hidden');
+    const modal = document.getElementById('supportModal');
+    if (modal) modal.classList.remove('hidden');
+};
+
+window.closeProfile = () => {
+    const modal = document.getElementById('profileModal');
+    if (modal) modal.classList.add('hidden');
 };
 
 window.initiateStewardship = () => {
