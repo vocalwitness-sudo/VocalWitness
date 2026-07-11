@@ -71,9 +71,25 @@ window.closeProfile = () => {
     if (modal) modal.classList.add('hidden');
 };
 
+// ====================== UPDATED STEWARDSHIP FUNCTION ======================
 window.initiateStewardship = () => {
-    showToast("Thank you! Stewardship is earned through contribution.\n\nVoluntary support options coming soon.", "success");
-    document.getElementById('supportModal').classList.add('hidden');
+    const modalContent = document.getElementById('supportModalContent');
+    const modal = document.getElementById('supportModal');
+    
+    // Ensure the modal itself is visible
+    if (modal) modal.classList.remove('hidden');
+
+    // Inject the interactive support interface
+    if (modalContent) {
+        modalContent.innerHTML = `
+            <h2 class="text-white text-xl font-bold mb-4">Support VocalWitness</h2>
+            <p class="text-zinc-400 mb-6">Your contribution helps keep the Square decentralized and free.</p>
+            <div class="flex flex-col gap-3">
+                <button class="bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">Help Build the Square</button>
+                <button class="bg-zinc-700 text-white py-2 rounded-lg hover:bg-zinc-600 transition" onclick="closeSupportModal()">Close</button>
+            </div>
+        `;
+    }
 };
 
 // ====================== GROUP FUNCTIONS ======================
