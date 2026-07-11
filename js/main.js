@@ -55,12 +55,14 @@ window.showSupportModal = () => {
     // Check if the modal exists before touching classList
     if (modal) {
         modal.classList.remove('hidden');
+        // If you want the interactive content to render automatically,
+        // you could call renderSupportModalContent() here if that function is defined.
         console.log("Support Modal opened successfully");
     } else {
         console.warn("Support Modal not found on this page. Check index.html.");
     }
 };
-// Add this to your GLOBAL WINDOW FUNCTIONS section in main.js
+
 window.closeSupportModal = () => {
     const modal = document.getElementById('supportModal');
     if (modal) modal.classList.add('hidden');
@@ -82,13 +84,63 @@ window.initiateStewardship = () => {
     // Inject the interactive support interface
     if (modalContent) {
         modalContent.innerHTML = `
-            <h2 class="text-white text-xl font-bold mb-4">Support VocalWitness</h2>
-            <p class="text-zinc-400 mb-6">Your contribution helps keep the Square decentralized and free.</p>
-            <div class="flex flex-col gap-3">
-                <button class="bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">Help Build the Square</button>
-                <button class="bg-zinc-700 text-white py-2 rounded-lg hover:bg-zinc-600 transition" onclick="closeSupportModal()">Close</button>
+            <div class="text-center px-4">
+                <h2 class="text-2xl font-bold text-white mb-2">Help Build the Square</h2>
+                <p class="text-emerald-400 mb-6">Stewardship is earned through real contribution to the community</p>
+                
+                <div class="space-y-3">
+                    <button onclick="startContribution('testimony')" 
+                            class="w-full bg-zinc-800 hover:bg-emerald-900 border border-emerald-600 text-white py-4 rounded-2xl transition-all">
+                        📝 Share Testimony in Citizen Talk
+                    </button>
+                    
+                    <button onclick="startContribution('forensic')" 
+                            class="w-full bg-zinc-800 hover:bg-emerald-900 border border-emerald-600 text-white py-4 rounded-2xl transition-all">
+                        🛡️ Upload Photo + Forensic Shield
+                    </button>
+                    
+                    <button onclick="startContribution('voice')" 
+                            class="w-full bg-zinc-800 hover:bg-emerald-900 border border-emerald-600 text-white py-4 rounded-2xl transition-all">
+                        🎤 Record Voice Testimony
+                    </button>
+                    
+                    <button onclick="startContribution('verify')" 
+                            class="w-full bg-amber-900 hover:bg-amber-800 border border-amber-500 text-amber-300 py-4 rounded-2xl transition-all">
+                        🔐 Advance in Witness Cycle (ZK Verification)
+                    </button>
+                </div>
+                
+                <p class="text-zinc-500 text-xs mt-8">
+                    Every contribution strengthens the True Witness Circle.<br>
+                    Stewards earn visible emblems and moderation rights.
+                </p>
+                
+                <button onclick="closeSupportModal()" class="mt-6 text-zinc-400 hover:text-white">
+                    Close
+                </button>
             </div>
         `;
+    }
+};
+
+window.startContribution = (type) => {
+    closeSupportModal();
+    
+    if (type === 'testimony') {
+        const input = document.getElementById('mainInput');
+        if (input) {
+            input.focus();
+            showToast("Share your raw testimony — this builds your reputation in the Witness Cycle", "success");
+        }
+    } 
+    else if (type === 'forensic' || type === 'voice') {
+        showToast(`Opening ${type} tools...`, "info");
+    } 
+    else if (type === 'verify') {
+        showToast("Starting ZK Verification path for Witness Circle advancement...", "success");
+        setTimeout(() => {
+            window.location.href = 'true-witness.html';
+        }, 800);
     }
 };
 
@@ -167,7 +219,6 @@ window.submitProposal = async () => {
 };
 
 window.castVote = async (direction, strength) => {
-    // TODO: Implement quadratic voting logic here
     showToast(`Voted ${direction} with strength ${strength}`, "success");
     window.closeVoteModal();
 };
@@ -265,13 +316,9 @@ function setupEventListeners() {
     document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
 }
 
-// Close more menu when clicking outside
-
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Initialize core system (Only once)
     bootstrap();
 
-    // 2. Register UI listeners
     const profileBtn = document.getElementById('profile-btn');
     if (profileBtn) {
         profileBtn.addEventListener('click', window.showProfile);
@@ -279,13 +326,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const forensicBtn = document.getElementById('forensic-btn');
     if (forensicBtn) {
-        // Use mediaModule.startForensicShield if it's imported, 
-        // or just the function name if it's in the same scope
         forensicBtn.addEventListener('click', mediaModule.startForensicShield);
     }
 
-    // 3. Register any other necessary UI listeners
     const moreMenu = document.getElementById('moreMenu');
-    // Ensure the menu starts hidden
     if (moreMenu) moreMenu.classList.add('hidden');
 });
