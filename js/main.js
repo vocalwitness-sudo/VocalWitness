@@ -64,30 +64,31 @@ function renderSupportModalContent() {
     content.innerHTML = `
         <div class="text-center px-6 py-4">
             <h2 class="text-2xl font-bold text-white mb-3">Build the Square Together</h2>
-            <p class="text-emerald-400 mb-6 text-sm">Stewardship is earned through contribution.<br><strong>No positions can be bought.</strong></p>
+            <p class="text-emerald-400 mb-6 text-sm">Every contribution helps strengthen our decentralized public square.<br>Stewardship is earned through honest participation.</p>
             
             <div class="space-y-3 text-left">
-                <button onclick="startContribution('testimony')" 
-                        class="w-full bg-zinc-800 hover:bg-emerald-900 border border-emerald-600 text-white py-4 px-5 rounded-2xl transition-all flex justify-between items-center">
+                <button onclick="startContribution('testimony')" class="w-full bg-zinc-800 hover:bg-emerald-900 border border-emerald-600 text-white py-4 px-5 rounded-2xl transition-all flex justify-between items-center">
                     <span>📝 Share Testimony in Citizen Talk</span>
                     <span class="text-xs text-emerald-400">+15 rep</span>
                 </button>
                 
-                <button onclick="startContribution('forensic')" 
-                        class="w-full bg-zinc-800 hover:bg-emerald-900 border border-emerald-600 text-white py-4 px-5 rounded-2xl transition-all flex justify-between items-center">
+                <button onclick="startContribution('forensic')" class="w-full bg-zinc-800 hover:bg-emerald-900 border border-emerald-600 text-white py-4 px-5 rounded-2xl transition-all flex justify-between items-center">
                     <span>🛡️ Photo + Forensic Shield</span>
                     <span class="text-xs text-emerald-400">+10 rep</span>
                 </button>
                 
-                <button onclick="startContribution('voice')" 
-                        class="w-full bg-zinc-800 hover:bg-emerald-900 border border-emerald-600 text-white py-4 px-5 rounded-2xl transition-all flex justify-between items-center">
+                <button onclick="startContribution('voice')" class="w-full bg-zinc-800 hover:bg-emerald-900 border border-emerald-600 text-white py-4 px-5 rounded-2xl transition-all flex justify-between items-center">
                     <span>🎤 Voice Testimony</span>
                     <span class="text-xs text-emerald-400">+12 rep</span>
                 </button>
                 
-                <button onclick="startContribution('zk')" 
-                        class="w-full bg-amber-900 hover:bg-amber-800 border border-amber-500 text-amber-300 py-4 px-5 rounded-2xl transition-all">
+                <button onclick="startContribution('zk')" class="w-full bg-amber-900 hover:bg-amber-800 border border-amber-500 text-amber-300 py-4 px-5 rounded-2xl transition-all">
                     🔐 Advance in Witness Circle (ZK Verification)
+                </button>
+                
+                <button onclick="startContribution('donate')" class="w-full bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 text-white py-4 px-5 rounded-2xl transition-all flex justify-between items-center">
+                    <span>💚 Voluntary Financial Support</span>
+                    <span class="text-xs text-emerald-400">Help sustain the Square</span>
                 </button>
             </div>
             
