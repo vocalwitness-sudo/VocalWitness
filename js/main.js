@@ -258,3 +258,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const moreMenu = document.getElementById('moreMenu');
     if (moreMenu) moreMenu.classList.add('hidden');
 });
+
+registerGlobalFunctions({
+    publishTestimony,
+    loadFeed,
+    showSupportModal
+    // etc...
+});
