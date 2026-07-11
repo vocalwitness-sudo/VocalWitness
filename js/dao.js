@@ -57,6 +57,20 @@ function getWitnessPosition(rep) {
   return null;
 }
 
+export async function checkAndGrantModeratorRole() {
+  const tier = await getCurrentUserTier();
+  const position = await getCurrentWitnessPosition();
+  
+  if (position && (position.name === 'Steward' || position.name === 'Elder Steward' || position.name === 'Architect')) {
+    // Grant moderator rights
+    const userRef = doc(db, "users", auth.currentUser.uid);
+    await updateDoc(userRef, { isModerator: true });
+    
+    showToast("🎖️ You are now a Steward Moderator. You can review escalated posts.", "success");
+  }
+}
+
+
 export async function recordTestimonyContribution() {
   return await updateReputation('testimony');
 }
