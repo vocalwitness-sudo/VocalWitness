@@ -111,9 +111,11 @@ window.startContribution = (type) => {
     } else if (type === 'zk') {
         showToast("Starting ZK Verification path...", "success");
         setTimeout(() => window.location.href = 'true-witness.html', 700);
+    } else if (type === 'donate') {
+        showToast("Thank you! Voluntary support link coming soon.", "success");
+        // You can replace with window.open("https://github.com/sponsors/...") later
     }
 };
-
 window.closeSupportModal = () => {
     const modal = document.getElementById('supportModal');
     if (modal) modal.classList.add('hidden');
