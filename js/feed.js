@@ -57,6 +57,7 @@ function renderPost(id, data) {
                 <button onclick="likePost('${id}')" class="flex items-center gap-1.5 hover:text-emerald-400">👍 <span>${data.likes || 0}</span></button>
                 <button onclick="commentOnPost('${id}')" class="flex items-center gap-1.5 hover:text-sky-400">💬 <span>${data.commentsCount || 0}</span></button>
                 ${isSteward ? `<button onclick="escalatePost('${id}')" class="flex items-center gap-1.5 text-amber-400">🔬 Moderate</button>` : ''}
+                ${canChallengeSteward ? `<button onclick="challengeStewardAction('${id}', 'disagree')" class="text-rose-400 text-xs">⚖️ Challenge</button>` : ''}
             </div>
             <button onclick="sharePost('${id}')" class="text-emerald-400">Share</button>
         </div>
