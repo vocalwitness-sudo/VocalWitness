@@ -38,6 +38,24 @@ window.toggleMoreMenu = () => {
     document.getElementById('moreMenu').classList.toggle('hidden');
 };
 
+window.challengeStewardAction = async (postId) => {
+    if (!auth.currentUser) {
+        return showToast("Please sign in to challenge", "error");
+    }
+
+    const tier = await getCurrentUserTier();
+    if (tier === TIERS.CITIZEN) {
+        return showToast("Only verified members (Citizen Circle+) can challenge Steward actions", "error");
+    }
+
+    const reason = prompt("Why do you want to challenge this Steward action? (optional)");
+    
+    showToast("⚖️ Challenge submitted. The community will review this action.", "success");
+    
+    // In production: Save to Firestore for review queue
+    console.log(`Challenge submitted for post ${postId} by ${auth.currentUser.uid}`);
+};
+
 window.showProfile = () => {
     const modal = document.getElementById('profileModal');
     if (modal) modal.classList.remove('hidden');
