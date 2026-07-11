@@ -33,6 +33,7 @@ export async function updateReputation(contributionType) {
     reputation: currentRep,
     lastContribution: new Date().toISOString()
   });
+ 
 
   const newPosition = getWitnessPosition(currentRep);
   
@@ -47,6 +48,11 @@ export async function updateReputation(contributionType) {
   }
 
   return currentRep;
+}
+
+export async function startStewardRecall(stewardId) {
+  // Community vote to remove Steward
+  showToast("Recall vote started against Steward. Verified members can vote.", "info");
 }
 
 function getWitnessPosition(rep) {
