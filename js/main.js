@@ -9,6 +9,7 @@ import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
 import { createStewardProposal, castQuadraticVote } from './dao.js';
 import { initGroups } from './group.js';
 import { uploadForensicMedia, resetMediaState, handleImageSelect, toggleVoiceRecording, startForensicShield } from './media.js';
+import { recordTestimonyContribution } from './dao.js';
 
 // ====================== GLOBAL STATE ======================
 let engineInstance = null;
@@ -234,6 +235,7 @@ window.closeVoteModal = () => {
 };
 
 // ====================== PUBLISH TESTIMONY ======================
+// ====================== PUBLISH TESTIMONY ======================
 window.publishTestimony = async () => {
     const textarea = document.getElementById('mainInput');
     const content = textarea?.value.trim() || "";
@@ -266,10 +268,15 @@ window.publishTestimony = async () => {
             feedVisibility: "citizen-talk"
         });
 
+        // === NEW: Earn Reputation Automatically ===
+        await recordTestimonyContribution();
+
         showToast("✅ Testimony published to the Square!", "success");
+        
         if (textarea) textarea.value = '';
         mediaModule.resetMediaState();
         window.loadFeed('citizen-talk');
+
     } catch (err) {
         console.error("Publish error:", err);
         showToast("Failed to publish testimony: " + (err.message || "Unknown error"), "error");
