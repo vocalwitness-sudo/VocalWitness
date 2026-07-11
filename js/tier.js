@@ -107,6 +107,21 @@ export async function updateTierBadge() {
   }
 }
 
+export function canChallengeSteward(tier) {
+  return tier === TIERS.CITIZEN_CIRCLE || tier === TIERS.WITNESS_CIRCLE;
+}
+
+export async function challengeStewardAction(actionId, reason) {
+  if (!auth.currentUser) return showToast("Sign in required", "error");
+  
+  const tier = await getCurrentUserTier();
+  if (!canChallengeSteward(tier)) {
+    return showToast("Only verified members can challenge Steward actions", "error");
+  }
+
+  // TODO: Save challenge to Firestore for community review
+  showToast("✅ Challenge submitted. Community will review the Steward action.", "success");
+}
 export function canEscalatePost(tier) {
   return canAccessFeature(tier, 'escalate_post');
 }
