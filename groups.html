@@ -29,6 +29,15 @@
 
         <div id="group-container" class="space-y-6"></div>
 
+        <div id="profileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+    <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-700 w-96 shadow-xl">
+        <h2 class="text-white text-xl font-bold mb-4">Your Profile</h2>
+        <div id="profileContent">
+            </div>
+        <button onclick="closeProfile()" class="mt-4 w-full bg-zinc-700 text-white py-2 rounded-lg hover:bg-zinc-600">Close</button>
+    </div>
+</div>
+
         <button onclick="window.showCreateModal()" class="mt-12 w-full max-w-md mx-auto block bg-emerald-500 text-black font-semibold py-5 rounded-3xl">
             ➕ Create New Group
         </button>
