@@ -79,6 +79,44 @@
             </div>
         </nav>
 
+        <!-- Phone Verification Modal -->
+<div id="phoneVerificationModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+  <div class="glass max-w-md w-full mx-4 rounded-3xl p-8">
+    <h2 class="text-2xl font-bold text-center mb-2">Phone Verification</h2>
+    <p class="text-zinc-400 text-center mb-8">Verify your number to unlock Citizen Circle</p>
+
+    <!-- Step 1: Enter Phone -->
+    <div id="phoneStep">
+      <input id="phoneInput" type="tel" placeholder="+234 801 234 5678" 
+             class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4 text-lg focus:outline-none focus:border-emerald-500 mb-6">
+      <button onclick="sendPhoneCode()" 
+              class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 rounded-2xl font-semibold text-lg">
+        Send Verification Code
+      </button>
+    </div>
+
+    <!-- Step 2: Enter OTP -->
+    <div id="otpStep" class="hidden">
+      <input id="otpInput" type="text" maxlength="6" placeholder="123456" 
+             class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4 text-3xl text-center tracking-widest focus:outline-none focus:border-emerald-500 mb-6">
+      <button onclick="verifyPhoneCode()" 
+              class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 rounded-2xl font-semibold text-lg">
+        Verify Code
+      </button>
+      <button onclick="restartPhoneVerification()" 
+              class="mt-4 w-full text-zinc-400 hover:text-white text-sm">
+        ← Send new code
+      </button>
+    </div>
+
+    <button onclick="closePhoneModal()" 
+            class="mt-6 text-zinc-400 hover:text-white text-sm w-full">
+      Cancel
+    </button>
+  </div>
+</div>
+        
+
         <!-- Post Creation -->
         <div class="glass rounded-3xl p-6 mb-8">
             <textarea id="mainInput" rows="3" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none" data-i18n="placeholder" placeholder="Share your testimony..."></textarea>
