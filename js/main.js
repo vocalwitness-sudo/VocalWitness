@@ -52,9 +52,6 @@ window.loadFeed = (feedType) => {
     initFeed(db, feedType || 'citizen-talk');
 };
 
-window.navigateToPage = (page) => {
-    window.location.href = page;
-};
 
 window.toggleMoreMenu = () => {
     const menu = document.getElementById('moreMenu');
@@ -160,6 +157,14 @@ function setupEventListeners() {
 
     document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
 }
+// Make navigation globally available
+window.navigateToPage = (page) => {
+    window.location.href = page;
+};
+
+window.loadFeed = (feedType) => {
+    initFeed(db, feedType || 'citizen-talk');
+};
 
 // ====================== INIT ======================
 document.addEventListener('DOMContentLoaded', bootstrap);
