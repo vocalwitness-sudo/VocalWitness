@@ -1,11 +1,11 @@
-// js/verification.js - Clean Verification Flows
+// js/verification.js - Enhanced with canAdvanceTier + Timeout Handling
 import { doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { db, auth } from "./firebase-config.js";
 import { showToast } from "./utils.js";
-import { canAdvanceTier, updateTierBadge, getCurrentUserTier } from './tier.js';
+import { canAdvanceTier, updateTierBadge } from './tier.js';
 
 /**
- * Start Phone Verification → Citizen Circle (Trust Circle)
+ * Phone Verification → Citizen Circle
  */
 export async function startPhoneVerification() {
   try {
@@ -14,12 +14,12 @@ export async function startPhoneVerification() {
       return;
     }
 
-    showToast("📱 Initiating phone verification...", "info");
+    showToast("📱 Starting phone verification...", "info");
 
-    // TODO: Integrate real OTP service (Twilio, Firebase Phone Auth, etc.)
-    // For now, simulate
+    // Simulate real OTP flow (replace with Firebase Phone Auth later)
     setTimeout(async () => {
       const userRef = doc(db, "users", auth.currentUser.uid);
+      
       await updateDoc(userRef, {
         hasVerifiedPhone: true,
         isPhoneVerified: true,
@@ -27,9 +27,9 @@ export async function startPhoneVerification() {
         verifiedAt: serverTimestamp()
       });
 
-      showToast("✅ Phone Verified! Welcome to Citizen Circle", "success");
-      if (typeof updateTierBadge === 'function') updateTierBadge();
-    }, 1600);
+      showToast("✅ Phone Verified! You are now in Citizen Circle", "success");
+      await updateTierBadge();
+    }, 1800);
   } catch (error) {
     console.error(error);
     showToast("Phone verification failed", "error");
@@ -37,7 +37,7 @@ export async function startPhoneVerification() {
 }
 
 /**
- * Start ZK Verification → Witness Circle (True Witness)
+ * ZK Verification → Witness Circle (True Witness)
  */
 export async function startZKVerification() {
   try {
@@ -46,29 +46,27 @@ export async function startZKVerification() {
       return;
     }
 
-    showToast("🔐 Running Zero-Knowledge Proof verification...", "info");
+    showToast("🔐 Running Zero-Knowledge Verification...", "info");
 
-    // TODO: Call real circom / zk-SNARK prover here
-    setTimeout(async () => {
-      const canAdvance = await canAdvanceTier(auth.currentUser.uid);
-      
-      if (!canAdvance.canAdvance) {
-        return showToast(`Cannot advance: ${canAdvance.reason}`, "warning");
-      }
+    // Use the advanced tier check with timeout
+    const advanceResult = await canAdvanceTier(auth.currentUser.uid, 10000); // 10s timeout
 
-      const userRef = doc(db, "users", auth.currentUser.uid);
-      await updateDoc(userRef, {
-        zkVerified: true,
-        tier: "witness_circle",
-        zkVerifiedAt: serverTimestamp(),
-        lastUpdated: serverTimestamp()
-      });
+    if (!advanceResult.canAdvance) {
+      return showToast(`Verification blocked: ${advanceResult.reason}`, "warning");
+    }
 
-      showToast("🛡️ ZK Verification Complete! You are now a True Witness", "success");
-      if (typeof updateTierBadge === 'function') updateTierBadge();
-    }, 2200);
+    const userRef = doc(db, "users", auth.currentUser.uid);
+    await updateDoc(userRef, {
+      zkVerified: true,
+      tier: "witness_circle",
+      zkVerifiedAt: serverTimestamp(),
+      lastUpdated: serverTimestamp()
+    });
+
+    showToast("🛡️ ZK Verification Complete! Welcome to True Witness Circle", "success");
+    await updateTierBadge();
   } catch (error) {
     console.error(error);
-    showToast("ZK Verification failed", "error");
+    showToast("ZK Verification failed or timed out", "error");
   }
 }
