@@ -39,13 +39,12 @@
         </header>
 
         <!-- Navigation -->
-        <nav class="flex gap-2 mb-10 overflow-x-auto pb-3" id="main-nav">
-            <button data-action="load-feed" data-type="citizen" class="nav-btn px-6 py-3 rounded-2xl bg-emerald-600 text-black">Citizen Talk</button>
-            <button onclick="navigateToPage('true-witness.html')" class="nav-btn px-6 py-3 rounded-2xl">True Witness</button>
-            <button onclick="navigateToPage('live-arena.html')" class="nav-btn px-6 py-3 rounded-2xl">Live Arena</button>
-            <button onclick="navigateToPage('groups.html')" class="nav-btn px-6 py-3 rounded-2xl">Groups</button>
-        </nav>
-
+<nav class="flex gap-2 mb-10 overflow-x-auto pb-3" id="main-nav">
+    <button onclick="loadFeed('citizen')" class="nav-btn px-6 py-3 rounded-2xl bg-emerald-600 text-black">Citizen Talk</button>
+    <button onclick="navigateToPage('true-witness.html')" class="nav-btn px-6 py-3 rounded-2xl">True Witness</button>
+    <button onclick="navigateToPage('live-arena.html')" class="nav-btn px-6 py-3 rounded-2xl">Live Arena</button>
+    <button onclick="navigateToPage('groups.html')" class="nav-btn px-6 py-3 rounded-2xl">Groups</button>
+</nav>
         <!-- Post Creation -->
         <div class="glass rounded-3xl p-8 mb-12">
             <textarea id="mainInput" rows="4" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-6 text-lg placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none" placeholder="What truth do you wish to share today..."></textarea>
