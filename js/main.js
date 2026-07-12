@@ -89,4 +89,9 @@ window.applyTierTheme = function() {
     console.log("Tier theme applied (stub)");
 };
 
+// UI Stubs for launch
+window.updateTierBadge = function() {
+    console.log("Tier badge updated (stub)");
+};
+
 document.addEventListener('DOMContentLoaded', bootstrap);
