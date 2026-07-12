@@ -1,10 +1,7 @@
-// js/feed.js - Clean + Moderation Integration
-import {
-    collection, query, orderBy, onSnapshot, where, limit
-} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { collection, query, orderBy, onSnapshot, where, limit } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { auth, db } from './firebase-config.js';
 import { showToast } from './utils.js';
-import { getCurrentUserTier, TIERS } from './tier.js';
+import { renderTierCircle } from './ui-components.js';
 
 let activeFeedListener = null;
 
@@ -37,20 +34,35 @@ export function initFeed(dbInstance, feedType = 'citizen-talk') {
 }
 
 function renderPost(id, data) {
-    // Skip removed content
     if (data.moderationStatus === "removed") return;
 
     const postEl = document.createElement('div');
     postEl.className = 'post-card glass rounded-3xl p-6 mb-6';
 
     const isSteward = data.authorTier === 'steward' || data.isModerator;
-    let statusHTML = '';
+    let statusHTML = data.moderationStatus === "needs_review" 
+        ? `<span class="inline-flex items-center gap-1 text-amber-400 text-xs">🔍 Under Review</span>` : '';
 
-    if (data.moderationStatus === "needs_review") {
-        statusHTML = `<span class="inline-flex items-center gap-1 text-amber-400 text-xs">🔍 Under Review</span>`;
-    }
+    // Build media section
+    let mediaHTML = '';
+    if (data.imageUrl) mediaHTML += `<img src="${data.imageUrl}" class="rounded-2xl mt-4 w-full object-cover max-h-96" alt="Evidence">`;
+    if (data.audioUrl) mediaHTML += `<audio controls class="w-full mt-4"><source src="${data.audioUrl}" type="audio/webm"></audio>`;
 
-    const actionBar = `
+    postEl.innerHTML = `
+        <div class="flex justify-between items-start">
+            <div class="flex items-center gap-3">
+                <div class="scale-50 -ml-4 -mr-4">
+                    ${renderTierCircle(data.authorTier || 'citizen', data.reputation || 0)}
+                </div>
+                <div>
+                    <p class="font-semibold">${data.author || 'Anonymous Witness'}</p>
+                    <p class="text-xs text-zinc-500">${new Date(data.timestamp?.toDate?.() || data.timestamp).toLocaleString()} ${statusHTML}</p>
+                </div>
+            </div>
+            <button onclick="showPostMenu('${id}', '${data.authorId}')" class="text-2xl text-zinc-400 hover:text-white">⋯</button>
+        </div>
+        ${data.content ? `<p class="my-4 text-zinc-100 leading-relaxed">${data.content}</p>` : ''}
+        ${mediaHTML}
         <div class="flex items-center justify-between mt-6 pt-4 border-t border-zinc-700 text-sm">
             <div class="flex gap-6">
                 <button onclick="likePost('${id}')" class="flex items-center gap-1.5 hover:text-emerald-400">👍 <span>${data.likes || 0}</span></button>
@@ -62,34 +74,12 @@ function renderPost(id, data) {
         </div>
     `;
 
-    let mediaHTML = '';
-    if (data.imageUrl) mediaHTML += `<img src="${data.imageUrl}" class="rounded-2xl mt-4 w-full object-cover max-h-96" alt="Evidence">`;
-    if (data.audioUrl) mediaHTML += `<audio controls class="w-full mt-4"><source src="${data.audioUrl}" type="audio/webm"></audio>`;
-
-    postEl.innerHTML = `
-        <div class="flex justify-between items-start">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-zinc-700 rounded-2xl flex items-center justify-center text-2xl">👤</div>
-                <div>
-                    <p class="font-semibold">${data.author || 'Anonymous Witness'}</p>
-                    <p class="text-xs text-zinc-500">${new Date(data.timestamp?.toDate?.() || data.timestamp).toLocaleString()} ${statusHTML}</p>
-                </div>
-            </div>
-            <button onclick="showPostMenu('${id}', '${data.authorId}')" class="text-2xl text-zinc-400 hover:text-white">⋯</button>
-        </div>
-        ${data.content ? `<p class="my-4 text-zinc-100 leading-relaxed">${data.content}</p>` : ''}
-        ${mediaHTML}
-        ${actionBar}
-    `;
-
     document.getElementById('feedContainer').appendChild(postEl);
 }
 
-// Global functions
+// Global scope helpers
 window.reportPost = (postId) => import('./moderation.js').then(m => m.reportContent(postId, "other"));
 window.escalatePost = (postId) => import('./moderation.js').then(m => m.moderatePost(postId, 'hide'));
-
-// Stub functions
 window.likePost = (id) => showToast("Liked!", "success");
 window.commentOnPost = (id) => showToast("Comments coming soon", "info");
 window.sharePost = (id) => {
