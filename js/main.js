@@ -5,10 +5,12 @@ import { showToast } from './utils.js';
 
 console.log("🚀 VocalWitness Production Engine Loading...");
 
-// --- Global Helpers ---
+// 1. Manually expose functions to the global scope
 window.navigateToPage = (page) => window.location.href = page;
-
 window.showSupportModal = () => document.getElementById('supportModal')?.classList.remove('hidden');
+window.switchDoor = (door) => { 
+    console.log("Switching to:", door);
+};
 
 window.switchDoor = async (door) => {
     // Logic to update user preference in Firestore and trigger feed refresh
