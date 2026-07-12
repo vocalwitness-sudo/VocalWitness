@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VocalWitness • Truth • Evidence</title>
+    <title>VocalWitness • Truth • Evidence • Public Square</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
@@ -22,40 +22,35 @@
     </div>
 
     <div class="max-w-2xl mx-auto">
-
-        
         <!-- Header -->
-        
-       <header class="flex items-center justify-between mb-10">
-    <div class="flex items-center gap-3">
-        <div class="w-11 h-11 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-3xl">🔊</div>
-        <div>
-            <h1 class="text-3xl font-bold tracking-tight text-white">VocalWitness</h1>
-            <p class="text-xs text-emerald-500">Truth • Evidence • Public Square</p>
-        </div>
-    </div> <div class="flex items-center gap-3">
-        <select id="languageSelector" class="bg-zinc-800 text-white px-4 py-3 rounded-2xl border border-zinc-700 outline-none cursor-pointer hover:border-emerald-500 transition">
-            </select>
-        
-        <button id="support-btn" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl transition">Support</button>
-        <button id="profile-btn" class="px-6 py-3 border border-zinc-700 hover:bg-zinc-800 rounded-2xl transition">Profile</button>
-    </div>
-</header>
+        <header class="flex items-center justify-between mb-10">
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-3xl">🔊</div>
+                <div>
+                    <h1 class="text-3xl font-bold tracking-tight text-white">VocalWitness</h1>
+                    <p class="text-xs text-emerald-500">Truth • Evidence • Public Square</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <select id="languageSelector" class="bg-zinc-800 text-white px-4 py-3 rounded-2xl border border-zinc-700 outline-none cursor-pointer hover:border-emerald-500 transition"></select>
+                <button id="support-btn" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl transition">Support</button>
+                <button id="profile-btn" class="px-6 py-3 border border-zinc-700 hover:bg-zinc-800 rounded-2xl transition">Profile</button>
+            </div>
+        </header>
 
         <!-- Navigation -->
-       <nav class="flex gap-2 mb-10 overflow-x-auto pb-3" id="main-nav">
-    <button data-action="load-feed" data-type="citizen" class="nav-btn px-6 py-3 rounded-2xl">Citizen Talk</button>
-    <button data-action="navigate" data-page="true-witness.html" class="nav-btn px-6 py-3 rounded-2xl">True Witness</button>
-    <button data-action="navigate" data-page="live-arena.html" class="nav-btn px-6 py-3 rounded-2xl">Live Arena</button>
-    <button data-action="navigate" data-page="groups.html" class="nav-btn px-6 py-3 rounded-2xl">Groups</button>
-</nav>
-
-<div id="door-indicator" class="fixed bottom-8 right-8 glass cursor-pointer ...">...</div>
+        <nav class="flex gap-2 mb-10 overflow-x-auto pb-3" id="main-nav">
+            <button data-action="load-feed" data-type="citizen" class="nav-btn px-6 py-3 rounded-2xl bg-emerald-600 text-black">Citizen Talk</button>
+            <button onclick="navigateToPage('true-witness.html')" class="nav-btn px-6 py-3 rounded-2xl">True Witness</button>
+            <button onclick="navigateToPage('live-arena.html')" class="nav-btn px-6 py-3 rounded-2xl">Live Arena</button>
+            <button onclick="navigateToPage('groups.html')" class="nav-btn px-6 py-3 rounded-2xl">Groups</button>
+        </nav>
 
         <!-- Post Creation -->
         <div class="glass rounded-3xl p-8 mb-12">
             <textarea id="mainInput" rows="4" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-6 text-lg placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none" placeholder="What truth do you wish to share today..."></textarea>
-            
+            <div id="preview-area" class="mt-6"></div>
+
             <div class="flex gap-4 mt-6">
                 <button id="btn-photo" class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl font-medium">📸 Forensic Photo</button>
                 <button id="btn-voice" class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl font-medium">🎤 Voice Testimony</button>
@@ -72,7 +67,8 @@
     </div>
 
     <!-- Floating Door -->
-    <div id="door-indicator" onclick="showDoorSwitcher()" class="fixed bottom-8 right-8 glass px-6 py-4 rounded-3xl flex items-center gap-4 shadow-2xl cursor-pointer hover:border-emerald-400 transition-all">
+    <div id="door-indicator" onclick="showDoorSwitcher()" 
+         class="fixed bottom-8 right-8 glass px-6 py-4 rounded-3xl flex items-center gap-4 shadow-2xl cursor-pointer hover:border-emerald-400 transition-all">
         <span class="text-xs uppercase tracking-widest text-emerald-400">Current Door</span>
         <span id="door-name" class="font-semibold text-lg">Public Square</span>
     </div>
