@@ -55,8 +55,16 @@ export function renderTierCircle(positionOrTier, reputation = 0) {
     `;
 }
 
-export function updateTierBadge(containerId = 'profile-tier-badge') {
+export function updateTierBadge(containerId, tier, reputation) {
     const container = document.getElementById(containerId);
     if (!container) return;
-    container.innerHTML = renderTierCircle('citizen_circle', 65); // Update dynamically as needed
+    
+    // Animate the update instead of a hard replace
+    container.style.opacity = 0;
+    container.innerHTML = renderTierCircle(tier, reputation);
+    
+    setTimeout(() => {
+        container.style.transition = "opacity 0.3s ease";
+        container.style.opacity = 1;
+    }, 50);
 }
