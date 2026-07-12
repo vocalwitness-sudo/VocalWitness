@@ -1,5 +1,4 @@
-// js/main.js - CLEANED
-import './firebase-config.js';           // ← Only once
+import './firebase-config.js';
 import { initAuth } from "./auth.js";
 import { initFeed } from './feed.js';
 import { db, auth, storage } from './firebase-config.js';
@@ -10,6 +9,34 @@ import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
 import { recordTestimonyContribution } from './dao.js';
 
 let engineInstance = null;
+
+// ====================== SAFE DOM SELECTOR ======================
+function safeGetElement(id) {
+    const el = document.getElementById(id);
+    if (!el) {
+        console.warn(`Missing element: #${id}`);
+        return null;
+    }
+    return el;
+}
+
+// ====================== INPUT VALIDATION ======================
+function sanitizeInput(str) {
+    return str ? str.replace(/<[^>]*>/g, '').trim() : '';
+}
+
+function validateTextInput(text, min = 3, max = 1500) {
+    const sanitized = sanitizeInput(text);
+    if (!sanitized) return { valid: false, error: "Content cannot be empty" };
+    if (sanitized.length < min) return { valid: false, error: `Minimum ${min} characters required` };
+    if (sanitized.length > max) return { valid: false, error: `Maximum ${max} characters allowed` };
+    return { valid: true, value: sanitized };
+}
+
+function validatePhoneNumber(phone) {
+    const cleaned = phone.replace(/\D/g, '');
+    return cleaned.length >= 10 && cleaned.length <= 15;
+}
 
 // ====================== GLOBAL WINDOW FUNCTIONS ======================
 window.loadFeed = (feedType) => {
@@ -35,7 +62,7 @@ window.navigateToPage = (page) => {
 };
 
 window.toggleMoreMenu = () => {
-    document.getElementById('moreMenu').classList.toggle('hidden');
+    document.getElementById('moreMenu')?.classList.toggle('hidden');
 };
 
 window.challengeStewardAction = async (postId) => {
@@ -43,32 +70,27 @@ window.challengeStewardAction = async (postId) => {
         return showToast("Please sign in to challenge", "error");
     }
 
-    const tier = await getCurrentUserTier();
-    if (tier === TIERS.CITIZEN) {
+    const tier = await getCurrentUserTier?.() || 'CITIZEN';
+    if (tier === 'CITIZEN') {
         return showToast("Only verified members (Citizen Circle+) can challenge Steward actions", "error");
     }
 
     const reason = prompt("Why do you want to challenge this Steward action? (optional)");
-    
     showToast("⚖️ Challenge submitted. The community will review this action.", "success");
-    
-    // In production: Save to Firestore for review queue
     console.log(`Challenge submitted for post ${postId} by ${auth.currentUser.uid}`);
 };
 
 window.showProfile = () => {
-    const modal = document.getElementById('profileModal');
-    if (modal) modal.classList.remove('hidden');
+    safeGetElement('profileModal')?.classList.remove('hidden');
 };
 
 window.closeProfile = () => {
-    const modal = document.getElementById('profileModal');
-    if (modal) modal.classList.add('hidden');
+    safeGetElement('profileModal')?.classList.add('hidden');
 };
 
-// ====================== SUPPORT MODAL - FINAL (No Buying) ======================
+// ====================== SUPPORT MODAL ======================
 window.showSupportModal = () => {
-    const modal = document.getElementById('supportModal');
+    const modal = safeGetElement('supportModal');
     if (!modal) return console.warn("Support modal not found");
     
     modal.classList.remove('hidden');
@@ -76,7 +98,7 @@ window.showSupportModal = () => {
 };
 
 function renderSupportModalContent() {
-    const content = document.getElementById('supportModalContent');
+    const content = safeGetElement('supportModalContent');
     if (!content) return;
 
     content.innerHTML = `
@@ -118,11 +140,10 @@ function renderSupportModalContent() {
 }
 
 window.startContribution = (type) => {
-    closeSupportModal();
+    window.closeSupportModal();
     
     if (type === 'testimony') {
-        const input = document.getElementById('mainInput');
-        if (input) input.focus();
+        safeGetElement('mainInput')?.focus();
         showToast("Share your testimony — this builds your Witness reputation", "success");
     } else if (type === 'forensic' || type === 'voice') {
         showToast(`Opening ${type} contribution...`, "info");
@@ -131,55 +152,67 @@ window.startContribution = (type) => {
         setTimeout(() => window.location.href = 'true-witness.html', 700);
     } else if (type === 'donate') {
         showToast("Thank you! Voluntary support link coming soon.", "success");
-        // You can replace with window.open("https://github.com/sponsors/...") later
     }
 };
+
 window.closeSupportModal = () => {
-    const modal = document.getElementById('supportModal');
-    if (modal) modal.classList.add('hidden');
+    safeGetElement('supportModal')?.classList.add('hidden');
 };
 
-// Link old function to new modal
 window.initiateStewardship = window.showSupportModal;
 
 // ====================== GROUP FUNCTIONS ======================
 window.showGroupModal = () => {
-    document.getElementById('groupModal').classList.remove('hidden');
+    safeGetElement('groupModal')?.classList.remove('hidden');
 };
 
 window.closeGroupModal = () => {
-    document.getElementById('groupModal').classList.add('hidden');
+    safeGetElement('groupModal')?.classList.add('hidden');
 };
 
 window.createGroup = async () => {
-    const name = document.getElementById('groupName').value.trim();
-    const desc = document.getElementById('groupDesc').value.trim();
+    const name = safeGetElement('groupName')?.value.trim() || '';
+    const desc = safeGetElement('groupDesc')?.value.trim() || '';
     
     if (!name) return showToast("Group name is required", "error");
 
     try {
         const { collection, addDoc } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
         await addDoc(collection(db, "groups"), {
-            name, description: desc || "", createdBy: auth.currentUser.uid,
-            createdAt: new Date().toISOString(), members: [auth.currentUser.uid], memberCount: 1
+            name,
+            description: desc,
+            createdBy: auth.currentUser?.uid,
+            createdAt: new Date().toISOString(),
+            members: [auth.currentUser?.uid],
+            memberCount: 1
         });
         showToast(`✅ Group "${name}" created!`, "success");
-        closeGroupModal();
+        window.closeGroupModal();
     } catch (err) {
+        console.error(err);
         showToast("Failed to create group", "error");
     }
 };
 
-// ====================== PUBLISH TESTIMONY ======================
+// ====================== PUBLISH TESTIMONY (Single Enhanced Version) ======================
 window.publishTestimony = async () => {
-    const textarea = document.getElementById('mainInput');
-    const content = textarea?.value.trim() || "";
+    const textarea = safeGetElement('mainInput');
+    if (!textarea) return showToast("Input field not found", "error");
+
+    const validation = validateTextInput(textarea.value);
+    if (!validation.valid) {
+        showToast(validation.error, "error");
+        return;
+    }
+    const content = validation.value;
 
     if (!content && !window.selectedImageFile && !engineInstance?.currentAudioBlob) {
         return showToast("Please add text, photo or voice testimony", "error");
     }
 
-    const postBtn = document.getElementById('postButton');
+    const postBtn = safeGetElement('postButton');
+    if (!postBtn) return showToast("Post button not found", "error");
+
     postBtn.disabled = true;
     postBtn.textContent = '🚀 Publishing...';
 
@@ -188,30 +221,62 @@ window.publishTestimony = async () => {
         if (!currentUser) return showToast("Please sign in to publish", "error");
 
         const mediaData = await mediaModule.uploadForensicMedia(currentUser.uid);
+
         const { collection, addDoc } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
 
         await addDoc(collection(db, "testimonies"), {
             authorId: currentUser.uid,
             author: currentUser.displayName || "Anonymous Witness",
-            content, imageUrl: mediaData.imageUrl || null,
-            audioUrl: mediaData.audioUrl || null,
+            content,
+            imageUrl: mediaData?.imageUrl || null,
+            audioUrl: mediaData?.audioUrl || null,
             timestamp: new Date().toISOString(),
             feedVisibility: "citizen-talk"
         });
 
-        await recordTestimonyContribution();   // Earn reputation
-
+        await recordTestimonyContribution();
         showToast("✅ Testimony published to the Square!", "success");
-        if (textarea) textarea.value = '';
+
+        textarea.value = '';
         mediaModule.resetMediaState();
         window.loadFeed('citizen-talk');
     } catch (err) {
-        console.error(err);
-        showToast("Failed to publish testimony", "error");
+        console.error("Publish error:", err);
+        showToast("Failed to publish. Please try again.", "error");
     } finally {
         postBtn.disabled = false;
         postBtn.textContent = '🚀 Publish Testimony to the Square';
     }
+};
+
+// ====================== PHONE VERIFICATION ======================
+window.sendPhoneCode = async () => {
+    const input = safeGetElement('phoneInput');
+    if (!input) return showToast("Phone input not found", "error");
+
+    const phone = input.value.trim();
+    if (!phone || !validatePhoneNumber(phone)) {
+        return showToast("Invalid phone number format", "error");
+    }
+
+    const success = await sendPhoneVerification?.(phone);
+    if (success) {
+        safeGetElement('phoneStep')?.classList.add('hidden');
+        safeGetElement('otpStep')?.classList.remove('hidden');
+    }
+};
+
+window.verifyPhoneCode = async () => {
+    const input = safeGetElement('otpInput');
+    if (!input) return showToast("OTP field not found", "error");
+
+    const code = input.value.trim();
+    if (!code || code.length !== 6 || !/^\d{6}$/.test(code)) {
+        return showToast("Enter a valid 6-digit code", "error");
+    }
+
+    const success = await verifyPhoneCode?.(code);
+    if (success) window.closePhoneModal?.();
 };
 
 // ====================== BOOTSTRAP ======================
@@ -219,6 +284,7 @@ async function bootstrap() {
     try {
         await initAuth();
         initLanguage();
+
         engineInstance = new CitizenTalkEngine(db, storage);
         window.engineInstance = engineInstance;
         mediaModule.setEngine(engineInstance);
@@ -234,34 +300,33 @@ async function bootstrap() {
 }
 
 function setupEventListeners() {
-    document.getElementById('btn-photo')?.addEventListener('click', () => {
+    safeGetElement('btn-photo')?.addEventListener('click', () => {
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = 'image/*';
-        input.onchange = (e) => mediaModule.handleImageSelect(e, document.getElementById('preview-area'));
+        input.onchange = (e) => mediaModule.handleImageSelect(e, safeGetElement('preview-area'));
         input.click();
     });
 
-    document.getElementById('btn-voice')?.addEventListener('click', (e) => {
+    safeGetElement('btn-voice')?.addEventListener('click', (e) => {
         mediaModule.toggleVoiceRecording(e.currentTarget);
     });
 
-    document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
+    safeGetElement('postButton')?.addEventListener('click', window.publishTestimony);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     bootstrap();
 
-    const profileBtn = document.getElementById('profile-btn');
+    const profileBtn = safeGetElement('profile-btn');
     if (profileBtn) profileBtn.addEventListener('click', window.showProfile);
 
-    const moreMenu = document.getElementById('moreMenu');
-    if (moreMenu) moreMenu.classList.add('hidden');
+    safeGetElement('moreMenu')?.classList.add('hidden');
 });
 
-registerGlobalFunctions({
-    publishTestimony,
-    loadFeed,
-    showSupportModal
-    // etc...
+// Optional helper
+window.registerGlobalFunctions?.({
+    publishTestimony: window.publishTestimony,
+    loadFeed: window.loadFeed,
+    showSupportModal: window.showSupportModal
 });
