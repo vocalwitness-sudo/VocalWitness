@@ -105,3 +105,9 @@ window.showDoorSwitcher = function() {
         window.loadFeed('citizen');
     }
 };
+registerGlobalFunctions({
+    publishTestimony,
+    loadFeed,
+    showSupportModal,
+    showDoorSwitcher,     // ← ADD THIS LINE
+});
