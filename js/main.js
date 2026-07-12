@@ -64,8 +64,10 @@ async function bootstrap() {
         initLanguage();
         engineInstance = new CitizenTalkEngine(db, storage);
         window.engineInstance = engineInstance;
+        
         setupEventListeners();
         setTimeout(() => loadFeed('citizen-talk'), 800);
+        
         console.log("✅ VocalWitness LIVE & READY FOR PUBLIC");
     } catch (e) {
         console.error("Bootstrap error:", e);
@@ -73,13 +75,18 @@ async function bootstrap() {
 }
 
 function setupEventListeners() {
+    // Forensic Photo
     document.getElementById('btn-photo')?.addEventListener('click', () => {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*';
-        input.click();
+        showToast("📸 Photo upload coming in next update", "info");
     });
+
+    // Publish Button
     document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
 }
+
+// Stub for tier theme
+window.applyTierTheme = function() {
+    console.log("Tier theme applied (stub)");
+};
 
 document.addEventListener('DOMContentLoaded', bootstrap);
