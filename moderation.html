@@ -1,155 +1,127 @@
-<!DOCTYPE html>
-<html lang="en-NG">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Moderation Dashboard - VocalWitness</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="style.css">
-    <link rel="icon" href="logo.png" type="image/png">
-</head>
-<body class="min-h-screen p-4 bg-[#0a0f1c]">
-    <div class="max-w-6xl mx-auto">
-        <div class="flex justify-between items-center mb-8">
-            <h1 class="text-4xl font-bold text-emerald-400">🛡️ Moderation Dashboard</h1>
-            <div class="text-sm text-zinc-400">
-                Logged in as <span id="mod-user" class="text-emerald-400">Steward</span>
-            </div>
-        </div>
+// js/moderation.js - Enhanced with Google Perspective API
+import { db, auth } from './firebase-config.js';
+import { showToast } from './utils.js';
+import { 
+    collection, addDoc, updateDoc, doc, query, where, getDocs, 
+    serverTimestamp, increment 
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { getCurrentUserTier, TIERS } from './tier.js';
 
-        <!-- Stats -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div class="glass rounded-3xl p-6 text-center">
-                <div class="text-3xl mb-2">⏳</div>
-                <div class="text-3xl font-bold text-amber-400" id="pending-count">0</div>
-                <div class="text-sm text-zinc-400">Pending Review</div>
-            </div>
-            <div class="glass rounded-3xl p-6 text-center">
-                <div class="text-3xl mb-2">🚩</div>
-                <div class="text-3xl font-bold text-red-400" id="flagged-count">0</div>
-                <div class="text-sm text-zinc-400">Auto-Flagged</div>
-            </div>
-            <div class="glass rounded-3xl p-6 text-center">
-                <div class="text-3xl mb-2">✅</div>
-                <div class="text-3xl font-bold text-emerald-400" id="resolved-count">0</div>
-                <div class="text-sm text-zinc-400">Resolved Today</div>
-            </div>
-            <div class="glass rounded-3xl p-6 text-center">
-                <div class="text-3xl mb-2">👥</div>
-                <div class="text-3xl font-bold text-sky-400" id="active-mods">3</div>
-                <div class="text-sm text-zinc-400">Active Stewards</div>
-            </div>
-        </div>
+// Your Perspective API Key (replace with your actual key)
+const PERSPECTIVE_API_KEY = "AIzaSyATxYekXgjdLP2SfR42FG8rEdajq_pIEb0"; // ← Use your real key
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Main Queue -->
-            <div class="lg:col-span-2 glass rounded-3xl p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold">Content Moderation Queue</h2>
-                    <input id="searchInput" type="text" 
-                           placeholder="Search content..." 
-                           class="bg-zinc-900 border border-zinc-700 rounded-2xl px-4 py-2 w-80 focus:outline-none focus:border-emerald-500">
-                </div>
-                <div id="modList" class="space-y-6 min-h-[400px]"></div>
-            </div>
+// ====================== PERSPECTIVE API TOXICITY SCAN ======================
+export async function scanForToxicity(content) {
+    if (!content || content.length < 5) {
+        return { score: 0, flagged: false, reasons: [] };
+    }
 
-            <!-- Sidebar: Log + Quick Actions -->
-            <div class="glass rounded-3xl p-6">
-                <h2 class="text-xl font-bold mb-6">Recent Activity</h2>
-                <div id="modLog" class="space-y-3 text-sm max-h-[600px] overflow-y-auto pr-2"></div>
-            </div>
-        </div>
-    </div>
+    try {
+        const response = await fetch(
+            `https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze?key=${PERSPECTIVE_API_KEY}`,
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    comment: { text: content },
+                    languages: ["en"],
+                    requestedAttributes: {
+                        TOXICITY: {},
+                        SEVERE_TOXICITY: {},
+                        IDENTITY_ATTACK: {},
+                        INSULT: {},
+                        PROFANITY: {},
+                        THREAT: {}
+                    }
+                })
+            }
+        );
 
-    <script type="module">
-        import { db, auth } from './js/firebase-config.js';
-        import { 
-            collection, query, where, onSnapshot, doc, updateDoc, deleteDoc, 
-            addDoc, serverTimestamp, orderBy, limit 
-        } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-        import { showToast } from './js/utils.js';
-        import { moderatePost, MODERATION_ACTIONS } from './js/moderation.js';
+        const data = await response.json();
 
-        let currentListener = null;
-
-        // Load Queue
-        async function loadModerationQueue() {
-            const container = document.getElementById('modList');
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-
-            container.innerHTML = '<p class="text-zinc-400 py-12 text-center">Loading queue...</p>';
-
-            const q = query(
-                collection(db, "testimonies"),
-                where("moderationStatus", "in", ["needs_review", "flagged"]),
-                orderBy("timestamp", "desc"),
-                limit(50)
-            );
-
-            if (currentListener) currentListener();
-
-            currentListener = onSnapshot(q, (snapshot) => {
-                container.innerHTML = '';
-                let count = 0;
-
-                snapshot.forEach(docSnap => {
-                    const data = docSnap.data();
-                    count++;
-
-                    if (searchTerm && !data.content?.toLowerCase().includes(searchTerm)) return;
-
-                    const item = document.createElement('div');
-                    item.className = 'bg-zinc-900 rounded-3xl p-6 border border-amber-500/30 hover:border-amber-500 transition-colors';
-                    item.innerHTML = `
-                        <div class="flex justify-between">
-                            <div>
-                                <p class="font-medium">${data.author || 'Anonymous'}</p>
-                                <p class="text-xs text-zinc-500">${new Date(data.timestamp?.toDate()).toLocaleString()}</p>
-                            </div>
-                            <span class="text-amber-400 text-xs px-3 py-1 bg-amber-900/50 rounded-full">Needs Review</span>
-                        </div>
-                        <p class="my-4 text-zinc-100 line-clamp-3">${data.content ? data.content.substring(0, 220) + '...' : '(Media only)'}</p>
-                        <div class="flex gap-3">
-                            <button onclick="handleModerate('${docSnap.id}', 'approve')" 
-                                    class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 rounded-2xl text-sm font-medium">✅ Approve</button>
-                            <button onclick="handleModerate('${docSnap.id}', 'hide')" 
-                                    class="flex-1 py-3 bg-amber-600 hover:bg-amber-700 rounded-2xl text-sm font-medium">🙈 Hide</button>
-                            <button onclick="handleModerate('${docSnap.id}', 'remove')" 
-                                    class="flex-1 py-3 bg-red-600 hover:bg-red-700 rounded-2xl text-sm font-medium">🗑️ Remove</button>
-                        </div>
-                    `;
-                    container.appendChild(item);
-                });
-
-                document.getElementById('pending-count').textContent = count;
-            });
+        if (data.error) {
+            console.warn("Perspective API error:", data.error);
+            return fallbackToxicityScan(content);
         }
 
-        // Global handlers
-        window.handleModerate = async (postId, action) => {
-            const success = await moderatePost(postId, action, `Moderator action: ${action}`);
-            if (success) {
-                showToast(`Action ${action} completed`, "success");
-                loadModerationQueue();
-            }
+        const attributes = data.attributeScores;
+        const toxicityScore = attributes.TOXICITY.summaryScore.value;
+        const severeScore = attributes.SEVERE_TOXICITY.summaryScore.value;
+
+        const reasons = [];
+        if (severeScore > 0.6) reasons.push("Severe Toxicity");
+        if (attributes.IDENTITY_ATTACK.summaryScore.value > 0.7) reasons.push("Identity Attack");
+        if (attributes.INSULT.summaryScore.value > 0.7) reasons.push("Insult");
+        if (attributes.THREAT.summaryScore.value > 0.6) reasons.push("Threat");
+
+        const finalScore = Math.max(toxicityScore, severeScore);
+
+        return {
+            score: finalScore,
+            flagged: finalScore > 0.65 || severeScore > 0.5,
+            reasons
         };
 
-        // Load log
-        function loadModLog() {
-            // You can expand this with real listener later
-            const logEl = document.getElementById('modLog');
-            logEl.innerHTML = `<div class="text-zinc-500 text-xs">Moderation log will appear here...</div>`;
+    } catch (err) {
+        console.warn("Perspective API failed, using fallback", err);
+        return fallbackToxicityScan(content);
+    }
+}
+
+// Fallback keyword scanner
+function fallbackToxicityScan(content) {
+    const lower = content.toLowerCase();
+    let score = 0;
+    const reasons = [];
+
+    const badWords = ["hate", "kill", "die", "retard", "fag", "nigger", "kike", "spic", "chink", "fuck", "shit", "cunt"];
+    badWords.forEach(word => {
+        if (lower.includes(word)) {
+            score += 0.25;
+            reasons.push(word);
         }
+    });
 
-        document.addEventListener('DOMContentLoaded', () => {
-            loadModerationQueue();
-            loadModLog();
+    return { score: Math.min(1, score), flagged: score > 0.5, reasons };
+}
 
-            // Live search
-            document.getElementById('searchInput').addEventListener('input', loadModerationQueue);
-        });
-    </script>
+// ====================== PUBLISH WITH PERSPECTIVE MODERATION ======================
+export async function publishWithModeration(content, mediaData, currentUser) {
+    const toxicity = await scanForToxicity(content);
+    const tier = await getCurrentUserTier();
 
-    <script type="module" src="js/main.js"></script>
-</body>
-</html>
+    let moderationStatus = "approved";
+
+    // Higher scrutiny for lower tiers
+    if (toxicity.flagged && tier === TIERS.CITIZEN) {
+        moderationStatus = "needs_review";
+        showToast("⚠️ Content flagged for steward review", "warning");
+    }
+
+    const postData = {
+        authorId: currentUser.uid,
+        author: currentUser.displayName || "Anonymous Witness",
+        content,
+        imageUrl: mediaData?.imageUrl || null,
+        audioUrl: mediaData?.audioUrl || null,
+        timestamp: serverTimestamp(),
+        feedVisibility: "citizen-talk",
+        moderationStatus,
+        toxicityScore: toxicity.score,
+        autoFlaggedReasons: toxicity.reasons,
+        authorTier: tier
+    };
+
+    const { collection, addDoc } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
+    const docRef = await addDoc(collection(db, "testimonies"), postData);
+
+    await recordTestimonyContribution?.();
+
+    return { success: true, postId: docRef.id, moderationStatus, toxicity };
+}
+
+// Keep your existing reportContent, moderatePost, etc. functions...
+export async function reportContent(postId, reason, details = '') {
+    if (!auth.currentUser) return false;
+    // ... (same as before)
+}
