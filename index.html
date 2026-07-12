@@ -9,7 +9,6 @@
     <title>VocalWitness • Truth • Evidence • Public Square</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <link rel="stylesheet" href="style.css">
     
     <style>
@@ -20,8 +19,8 @@
 <body class="min-h-screen pb-20 p-4 bg-[#0a0f1c]">
 
     <div class="max-w-2xl mx-auto bg-red-950/30 border border-red-500/20 rounded-3xl p-4 text-xs mb-6 text-center">
-        <strong data-i18n="legalLabel" class="text-red-400">Legal:</strong> 
-        <span data-i18n="privacyWarning">VocalWitness is a public square. We do not collect personal ID data. Your testimony is yours alone.</span>
+        <strong class="text-red-400">Legal:</strong> 
+        <span>VocalWitness is a public square for truth. Your Testimony Is Yours Alone.</span>
     </div>
 
     <div class="max-w-2xl mx-auto">
@@ -29,44 +28,43 @@
             <div class="flex items-center gap-3">
                 <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-3xl shadow-inner">🔊</div>
                 <div>
-                    <h1 data-i18n="appTitle" class="text-4xl font-bold tracking-tighter text-emerald-400">VocalWitness</h1>
-                    <p data-i18n="appSubtitle" class="text-xs text-emerald-500 -mt-1">Truth • Evidence • Public Square</p>
+                    <h1 class="text-4xl font-bold tracking-tighter text-emerald-400">VocalWitness</h1>
+                    <p class="text-xs text-emerald-500 -mt-1">Truth • Evidence • Public Square</p>
                 </div>
             </div>
             <div class="flex items-center gap-3">
                 <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white px-5 py-2.5 rounded-2xl text-sm focus:outline-none"></select>
                 <button onclick="showSupportModal()" class="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-semibold rounded-2xl text-sm">💚 Support</button>
-                <button id="profile-btn">Profile</button>
+                <button id="profile-btn" class="text-sm">View Profile</button>
             </div>
         </header>
 
-        <div class="glass rounded-3xl p-6 mb-8">
-            <textarea id="mainInput" rows="3" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 text-white placeholder-zinc-500 focus:border-emerald-500 resize-none"></textarea>
-            <div class="flex gap-3 mt-6">
-                <button id="btn-photo" class="flex-1 py-4 bg-zinc-800 rounded-2xl">📸 Photo</button>
-                <button id="btn-voice" class="flex-1 py-4 bg-zinc-800 rounded-2xl">🎤 Voice</button>
+        <nav class="flex items-center justify-between mb-6">
+            <div id="main-nav" class="flex gap-2 overflow-x-auto pb-2">
+                <button onclick="loadFeed('citizen')" class="nav-btn active px-5 py-2.5 rounded-2xl">Citizen Talk</button>
+                <button onclick="navigateToPage('true-witness.html')" class="nav-btn px-5 py-2.5 rounded-2xl">True Witness</button>
+                <button onclick="navigateToPage('live-arena.html')" class="nav-btn px-5 py-2.5 rounded-2xl">Live Arena</button>
             </div>
-            <div id="preview-area" class="mt-6"></div>
-            <button id="postButton" class="mt-8 w-full py-5 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold text-lg rounded-3xl">🚀 Publish</button>
+            <button onclick="toggleMoreMenu()" class="w-10 h-10 text-2xl hover:bg-zinc-800 rounded-2xl">☰</button>
+            <div id="moreMenu" class="hidden absolute right-4 mt-2 w-56 bg-zinc-900 border border-zinc-700 rounded-3xl z-50">
+                <a href="moderation.html" class="block px-6 py-3">🛡️ Moderation</a>
+                <a href="forensic-ledger.html" class="block px-6 py-3">📜 Forensic Ledger</a>
+            </div>
+        </nav>
+
+        <div class="glass rounded-3xl p-6 mb-8">
+            <textarea id="mainInput" rows="3" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 text-white" placeholder="Share your testimony..."></textarea>
+            <button id="postButton" class="mt-8 w-full py-5 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-bold rounded-3xl">🚀 Publish Testimony</button>
         </div>
 
         <main><div id="feedContainer" class="w-full"></div></main>
     </div>
 
     <div id="supportModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-        <div class="glass max-w-md w-full mx-4 rounded-3xl p-8"><div id="supportModalContent"></div></div>
+        <div class="glass max-w-md w-full mx-4 rounded-3xl p-8" id="supportModalContent"></div>
     </div>
 
-    <script type="module" src="js/utils.js"></script>
-    <script type="module" src="js/firebase-config.js"></script>
-    <script type="module" src="js/firebase-init.js"></script>
     <script type="module" src="js/main.js"></script>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log("✅ Application mounted correctly.");
-            // Your initialization logic
-        });
-    </script>
+    
 </body>
 </html>
