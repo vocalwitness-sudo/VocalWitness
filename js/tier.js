@@ -2,6 +2,7 @@
 import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { db, auth } from './firebase-config.js';
 import { showToast } from './utils.js';
+import { renderTierCircle } from './ui-components.js';
 
 export const ROLES = {
   USER: 'user',
@@ -87,23 +88,33 @@ export function applyTierTheme(tier) {
 }
 
 export async function updateTierBadge() {
-  const badge = document.getElementById('profile-tier-badge');
-  if (!badge) return;
+  const badgeContainer = document.getElementById('profile-tier-badge');
+  if (!badgeContainer) return;
 
   const tier = await getCurrentUserTier();
   const position = await getCurrentWitnessPosition();
 
-  badge.classList.remove('hidden');
-  
+  badgeContainer.classList.remove('hidden');
+
   if (position) {
-    badge.textContent = `${position.emblem} ${position.name}`;
-    badge.style.backgroundColor = position.color;
+    // Uses your new Circle UI for high-ranking positions
+    badgeContainer.innerHTML = renderTierCircle(position);
   } else if (tier === TIERS.CITIZEN_CIRCLE) {
-    badge.textContent = '🛡️ Citizen Circle';
-    badge.style.backgroundColor = '#34d399';
+    // Fallback for Citizen Circle
+    badgeContainer.innerHTML = `
+      <div class="flex flex-col items-center justify-center p-2 rounded-full border-2 border-emerald-400 bg-zinc-900 w-24 h-24">
+        <span class="text-3xl">🛡️</span>
+        <span class="text-[9px] text-emerald-400 font-bold uppercase mt-1">Citizen</span>
+      </div>
+    `;
   } else {
-    badge.textContent = '👤 Citizen';
-    badge.style.backgroundColor = '#6b7280';
+    // Default Citizen Badge
+    badgeContainer.innerHTML = `
+      <div class="flex flex-col items-center justify-center p-2 rounded-full border-2 border-zinc-600 bg-zinc-900 w-24 h-24">
+        <span class="text-3xl">👤</span>
+        <span class="text-[9px] text-zinc-400 font-bold uppercase mt-1">Citizen</span>
+      </div>
+    `;
   }
 }
 
