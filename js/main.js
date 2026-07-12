@@ -84,14 +84,16 @@ function setupEventListeners() {
     document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
 }
 
-// Stub for tier theme
+// Stubs
 window.applyTierTheme = function() {
     console.log("Tier theme applied (stub)");
 };
 
-// UI Stubs for launch
 window.updateTierBadge = function() {
     console.log("Tier badge updated (stub)");
 };
+
+// Door is already using inline onclick — no need for this line:
+// document.getElementById('door-switcher').addEventListener('click', showDoorSwitcher);
 
 document.addEventListener('DOMContentLoaded', bootstrap);
