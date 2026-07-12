@@ -70,3 +70,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     showToast("VocalWitness is Live", "success");
 });
+
+// DEBUG TRIGGER
+console.log("DEBUG: Main.js has finished parsing");
+document.addEventListener('click', (e) => {
+    console.log("DEBUG: Click detected on:", e.target.tagName, e.target.id);
+});
