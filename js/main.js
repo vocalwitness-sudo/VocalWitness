@@ -1,4 +1,5 @@
-// js/main.js - CLEAN & ORGANIZED FINAL VERSION
+// js/main.js - CLEANED
+import './firebase-config.js';           // ← Only once
 import { initAuth } from "./auth.js";
 import { initFeed } from './feed.js';
 import { db, auth, storage } from './firebase-config.js';
@@ -8,7 +9,6 @@ import * as mediaModule from './media.js';
 import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
 import { recordTestimonyContribution } from './dao.js';
 
-// ====================== GLOBAL STATE ======================
 let engineInstance = null;
 
 // ====================== GLOBAL WINDOW FUNCTIONS ======================
