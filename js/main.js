@@ -1,4 +1,4 @@
-// js/main.js - CLEAN FINAL FOR LAUNCH
+// js/main.js - FINAL CLEAN VERSION FOR PUBLIC LAUNCH
 import { initAuth } from "./auth.js";
 import { initFeed } from './feed.js';
 import { db, auth, storage } from './firebase-config.js';
@@ -24,16 +24,10 @@ window.showDoorSwitcher = function() {
 
 // NAVIGATION
 window.navigateToPage = (page) => window.location.href = page;
+window.loadFeed = (feedType) => initFeed(db, feedType || 'citizen-talk');
 
-window.loadFeed = (feedType) => {
-    console.log("Loading feed:", feedType);
-    initFeed(db, feedType || 'citizen-talk');
-};
-
-// STUB FOR REPUTATION
-window.recordTestimonyContribution = async () => {
-    console.log("✅ Testimony contribution recorded");
-};
+// STUB REPUTATION
+window.recordTestimonyContribution = async () => console.log("✅ Testimony recorded");
 
 // PUBLISH
 window.publishTestimony = async () => {
@@ -57,6 +51,14 @@ window.publishTestimony = async () => {
     }
 };
 
+// SETUP
+function setupEventListeners() {
+    document.getElementById('btn-photo')?.addEventListener('click', () => {
+        showToast("📸 Photo upload coming soon", "info");
+    });
+    document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
+}
+
 // BOOTSTRAP
 async function bootstrap() {
     try {
@@ -64,36 +66,12 @@ async function bootstrap() {
         initLanguage();
         engineInstance = new CitizenTalkEngine(db, storage);
         window.engineInstance = engineInstance;
-        
         setupEventListeners();
         setTimeout(() => loadFeed('citizen-talk'), 800);
-        
-        console.log("✅ VocalWitness LIVE & READY FOR PUBLIC");
+        console.log("✅ VocalWitness PUBLIC READY");
     } catch (e) {
         console.error("Bootstrap error:", e);
     }
 }
-
-function setupEventListeners() {
-    // Forensic Photo
-    document.getElementById('btn-photo')?.addEventListener('click', () => {
-        showToast("📸 Photo upload coming in next update", "info");
-    });
-
-    // Publish Button
-    document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
-}
-
-// Stubs
-window.applyTierTheme = function() {
-    console.log("Tier theme applied (stub)");
-};
-
-window.updateTierBadge = function() {
-    console.log("Tier badge updated (stub)");
-};
-
-// Door is already using inline onclick — no need for this line:
-// document.getElementById('door-switcher').addEventListener('click', showDoorSwitcher);
 
 document.addEventListener('DOMContentLoaded', bootstrap);
