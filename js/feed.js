@@ -1,4 +1,4 @@
-// js/feed.js - Clean (No Payment)
+// js/feed.js - Clean + Moderation Integration
 import {
     collection, query, orderBy, onSnapshot, where, limit
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
@@ -11,9 +11,8 @@ let activeFeedListener = null;
 export function initFeed(dbInstance, feedType = 'citizen-talk') {
     const feedContainer = document.getElementById('feedContainer');
     if (!feedContainer) return;
-
     if (activeFeedListener) activeFeedListener();
-    
+
     feedContainer.innerHTML = '<div class="text-center py-8 text-zinc-400">Loading testimonies...</div>';
 
     const effectiveFeed = (feedType === 'true-witness' || feedType === 'live') ? 'citizen-talk' : feedType;
@@ -37,22 +36,18 @@ export function initFeed(dbInstance, feedType = 'citizen-talk') {
     });
 }
 
-async function canChallengeSteward() {
-    const tier = await getCurrentUserTier();
-    return tier === TIERS.CITIZEN_CIRCLE || tier === TIERS.WITNESS_CIRCLE;
-}
-
 function renderPost(id, data) {
-    if (data.needsHumanReview === true && data.moderationSafe === false) return false;
+    // Skip removed content
+    if (data.moderationStatus === "removed") return;
 
     const postEl = document.createElement('div');
     postEl.className = 'post-card glass rounded-3xl p-6 mb-6';
 
-    const isSteward = data.isModerator || data.authorTier === 'steward';
+    const isSteward = data.authorTier === 'steward' || data.isModerator;
+    let statusHTML = '';
 
-    let authorBadge = '';
-    if (isSteward) {
-        authorBadge = `<span class="inline-flex items-center gap-1 text-amber-400 text-xs font-medium ml-2">🟡 Steward</span>`;
+    if (data.moderationStatus === "needs_review") {
+        statusHTML = `<span class="inline-flex items-center gap-1 text-amber-400 text-xs">🔍 Under Review</span>`;
     }
 
     const actionBar = `
@@ -61,6 +56,7 @@ function renderPost(id, data) {
                 <button onclick="likePost('${id}')" class="flex items-center gap-1.5 hover:text-emerald-400">👍 <span>${data.likes || 0}</span></button>
                 <button onclick="commentOnPost('${id}')" class="flex items-center gap-1.5 hover:text-sky-400">💬 <span>${data.commentsCount || 0}</span></button>
                 ${isSteward ? `<button onclick="escalatePost('${id}')" class="flex items-center gap-1.5 text-amber-400">🔬 Moderate</button>` : ''}
+                <button onclick="reportPost('${id}')" class="flex items-center gap-1.5 text-red-400 hover:text-red-500">🚩 Report</button>
             </div>
             <button onclick="sharePost('${id}')" class="text-emerald-400">Share</button>
         </div>
@@ -75,8 +71,8 @@ function renderPost(id, data) {
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 bg-zinc-700 rounded-2xl flex items-center justify-center text-2xl">👤</div>
                 <div>
-                    <p class="font-semibold">${data.author || 'Anonymous Witness'}${authorBadge}</p>
-                    <p class="text-xs text-zinc-500">${new Date(data.timestamp).toLocaleString()}</p>
+                    <p class="font-semibold">${data.author || 'Anonymous Witness'}</p>
+                    <p class="text-xs text-zinc-500">${new Date(data.timestamp?.toDate?.() || data.timestamp).toLocaleString()} ${statusHTML}</p>
                 </div>
             </div>
             <button onclick="showPostMenu('${id}', '${data.authorId}')" class="text-2xl text-zinc-400 hover:text-white">⋯</button>
@@ -89,28 +85,15 @@ function renderPost(id, data) {
     document.getElementById('feedContainer').appendChild(postEl);
 }
 
-// Challenge function (Community Oversight)
-window.challengeStewardAction = async (postId) => {
-    if (!auth.currentUser) {
-        return showToast("Please sign in to challenge", "error");
-    }
-
-    const tier = await getCurrentUserTier();
-    if (tier === TIERS.CITIZEN) {
-        return showToast("Only verified members can challenge Steward actions", "error");
-    }
-
-    const reason = prompt("Why do you challenge this action? (optional)");
-    showToast("⚖️ Challenge submitted. Community review started.", "success");
-    
-    console.log(`Challenge on post ${postId}`);
-};
-
 // Global functions
-window.showPostMenu = function(postId, authorId) { /* TODO: implement menu */ };
-window.likePost = function(id) { showToast("Liked!", "success"); };
-window.commentOnPost = function(id) { showToast("Comments coming soon", "info"); };
-window.sharePost = function(id) {
+window.reportPost = (postId) => import('./moderation.js').then(m => m.reportContent(postId, "other"));
+window.escalatePost = (postId) => import('./moderation.js').then(m => m.moderatePost(postId, 'hide'));
+
+// Stub functions
+window.likePost = (id) => showToast("Liked!", "success");
+window.commentOnPost = (id) => showToast("Comments coming soon", "info");
+window.sharePost = (id) => {
     navigator.clipboard.writeText(window.location.origin + "?post=" + id);
     showToast("Link copied!", "success");
 };
+window.showPostMenu = (postId, authorId) => showToast("Post menu coming soon", "info");
