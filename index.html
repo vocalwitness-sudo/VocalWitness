@@ -3,189 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#10b981">
-    <link rel="manifest" href="/manifest.json">
-    <link rel="icon" href="logo.png" type="image/png">
-    <title>VocalWitness • Truth • Evidence • Public Square</title>
+    <title>VocalWitness • Truth • Evidence</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <style>
-        body {
-            font-family: 'Inter', system-ui, sans-serif;
-            background: #0a0f1c;
-            color: white;
-        }
-        .glass {
-            background: rgba(17, 24, 39, 0.95);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(16, 185, 129, 0.25);
-        }
+        body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: #e2e8f0; }
+        .glass { background: rgba(15, 23, 42, 0.92); backdrop-filter: blur(24px); border: 1px solid rgba(148, 163, 184, 0.12); }
+        .nav-btn { transition: all 0.2s ease; }
     </style>
 </head>
-<body class="min-h-screen pb-20 p-4 bg-[#0a0f1c]">
-    <!-- Privacy Note -->
-    <div class="max-w-2xl mx-auto glass border border-emerald-500/20 rounded-3xl p-5 mb-8">
-        <div class="flex items-start gap-3 text-sm">
-            <div class="text-2xl mt-0.5 flex-shrink-0">🔒</div>
-            <div class="text-zinc-300">
-                <strong data-i18n="privacyTitle" class="text-emerald-400">Privacy First • Decentralized</strong><br>
-                <span data-i18n="privacyWarning">VocalWitness is a public square for truth and evidence. We never collect your ID cards, passports, or personal data.<strong>Your Testimony Is Yours Alone.</strong></span>
-            </div>
-        </div>
+<body class="min-h-screen pb-24 p-6 bg-[#0a0f1c]">
+
+    <!-- Privacy -->
+    <div class="max-w-2xl mx-auto glass rounded-3xl p-5 mb-10 text-sm">
+        <strong class="text-emerald-400">Privacy First • Decentralized</strong><br>
+        Your Testimony Is Yours Alone. No personal data collected.
     </div>
+
     <div class="max-w-2xl mx-auto">
-        <header class="flex items-center justify-between mb-8">
+        <!-- Header -->
+        <header class="flex items-center justify-between mb-10">
             <div class="flex items-center gap-3">
-                <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-3xl shadow-inner">🔊</div>
-                    <div>
-                        <h1 data-i18n="appTitle" class="text-4xl font-bold tracking-tighter text-emerald-400">VocalWitness</h1>
-                        <p data-i18n="appSubtitle" class="text-xs text-emerald-500 -mt-1">Truth • Evidence • Public Square</p>
-                    </div>
+                <div class="w-11 h-11 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-3xl">🔊</div>
+                <div>
+                    <h1 class="text-3xl font-bold tracking-tight text-white">VocalWitness</h1>
+                    <p class="text-xs text-emerald-500">Truth • Evidence • Public Square</p>
                 </div>
             </div>
             <div class="flex items-center gap-3">
-                <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white px-5 py-2.5 rounded-2xl text-sm focus:outline-none focus:border-emerald-500"></select>
-               
-                <button onclick="showSupportModal()" class="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-semibold rounded-2xl flex items-center gap-2 shadow-xl hover:scale-105 transition-all text-sm">
-                    💚 <span data-i18n="supportPlatform">Support the Square</span>
-                </button>
-               
-                <button id="profile-btn" class="px-5 py-2.5 border border-zinc-700 rounded-2xl hover:bg-zinc-800">View Profile</button>
+                <button onclick="showSupportModal()" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl transition">Support</button>
+                <button id="profile-btn" class="px-6 py-3 border border-zinc-700 hover:bg-zinc-800 rounded-2xl">Profile</button>
             </div>
         </header>
-        <nav class="flex items-center justify-between mb-6">
-            <div id="main-nav" class="flex gap-2 overflow-x-auto pb-2">
-                <button onclick="loadFeed('citizen')" class="nav-btn active px-5 py-2.5 rounded-2xl whitespace-nowrap" data-feed="citizen" data-i18n="citizenTalk">Citizen Talk</button>
-                <button onclick="navigateToPage('true-witness.html')" class="nav-btn px-5 py-2.5 rounded-2xl whitespace-nowrap" data-i18n="trueWitness">True Witness</button>
-                <button onclick="navigateToPage('live-arena.html')" class="nav-btn px-5 py-2.5 rounded-2xl whitespace-nowrap" data-i18n="liveArena">Live Arena</button>
-                <button onclick="navigateToPage('groups.html')" class="nav-btn px-5 py-2.5 rounded-2xl whitespace-nowrap">Groups</button>
-            </div>
-            <div class="door-switcher flex gap-2 mt-4">
-    <button onclick="switchDoor('public_square')" class="px-5 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-2xl">🌍 Public Square</button>
-    <button onclick="switchDoor('citizen_circle')" class="px-5 py-2 bg-emerald-900 hover:bg-emerald-800 rounded-2xl">🛡️ Citizen Circle</button>
-    <button onclick="switchDoor('witness_circle')" class="px-5 py-2 bg-purple-900 hover:bg-purple-800 rounded-2xl">🔐 Witness Circle</button>
-</div>
-            <div class="relative">
-                <button onclick="toggleMoreMenu()" class="w-10 h-10 flex items-center justify-center text-2xl hover:bg-zinc-800 rounded-2xl transition-all">☰</button>
-                <div id="moreMenu" class="hidden absolute right-0 mt-2 w-56 bg-zinc-900 border border-zinc-700 rounded-3xl shadow-2xl py-2 z-50">
-                    <a href="moderation.html" class="block px-6 py-3 hover:bg-zinc-800">🛡️ Moderation Dashboard</a>
-                    <a href="forensic-ledger.html" class="block px-6 py-3 hover:bg-zinc-800">📜 Forensic Ledger</a>
-                    <a href="my-testimonies.html" class="block px-6 py-3 hover:bg-zinc-800">📝 My Testimonies</a>
-                    <a href="about.html" class="block px-6 py-3 hover:bg-zinc-800">ℹ️ About</a>
-                    <a href="safety.html" class="block px-6 py-3 hover:bg-zinc-800">🛡️ Safety</a>
-                    <a href="privacy.html" class="block px-6 py-3 hover:bg-zinc-800">🔒 Privacy</a>
-                    <a href="terms.html" class="block px-6 py-3 hover:bg-zinc-800">📜 Terms</a>
-                </div>
-            </div>
+
+        <!-- Navigation -->
+        <nav class="flex gap-2 mb-10 overflow-x-auto pb-3">
+            <button onclick="loadFeed('citizen')" class="nav-btn active px-6 py-3 rounded-2xl whitespace-nowrap">Citizen Talk</button>
+            <button onclick="navigateToPage('true-witness.html')" class="nav-btn px-6 py-3 rounded-2xl whitespace-nowrap">True Witness</button>
+            <button onclick="navigateToPage('live-arena.html')" class="nav-btn px-6 py-3 rounded-2xl whitespace-nowrap">Live Arena</button>
         </nav>
-        <!-- Phone Verification Modal -->
-<div id="phoneVerificationModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-  <div class="glass max-w-md w-full mx-4 rounded-3xl p-8">
-    <h2 class="text-2xl font-bold text-center mb-2">Phone Verification</h2>
-    <p class="text-zinc-400 text-center mb-8">Verify your number to unlock Citizen Circle</p>
-    <!-- Step 1: Enter Phone -->
-    <div id="phoneStep">
-      <input id="phoneInput" type="tel" placeholder="+234 801 234 5678"
-             class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4 text-lg focus:outline-none focus:border-emerald-500 mb-6">
-      <button onclick="sendPhoneCode()"
-              class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 rounded-2xl font-semibold text-lg">
-        Send Verification Code
-      </button>
-    </div>
-    <!-- Step 2: Enter OTP -->
-    <div id="otpStep" class="hidden">
-      <input id="otpInput" type="text" maxlength="6" placeholder="123456"
-             class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4 text-3xl text-center tracking-widest focus:outline-none focus:border-emerald-500 mb-6">
-      <button onclick="verifyPhoneCode()"
-              class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 rounded-2xl font-semibold text-lg">
-        Verify Code
-      </button>
-      <button onclick="restartPhoneVerification()"
-              class="mt-4 w-full text-zinc-400 hover:text-white text-sm">
-        ← Send new code
-      </button>
-    </div>
-    <button onclick="closePhoneModal()"
-            class="mt-6 text-zinc-400 hover:text-white text-sm w-full">
-      Cancel
-    </button>
-  </div>
-</div>
-       
+
         <!-- Post Creation -->
-        <div class="glass rounded-3xl p-6 mb-8">
-            <textarea id="mainInput" rows="3" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none" data-i18n="placeholder" placeholder="Share your testimony..."></textarea>
-           
-            <div class="flex gap-3 mt-6">
-                <button id="btn-photo" class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl transition-all flex items-center justify-center gap-3 font-medium" data-i18n="photoForensic">
-                    📸 Photo + Forensic Shield
-                </button>
-                <button id="btn-voice" class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl transition-all flex items-center justify-center gap-3 font-medium" data-i18n="voiceTestimony">
-                    🎤 Voice Testimony
-                </button>
+        <div class="glass rounded-3xl p-8 mb-12">
+            <textarea id="mainInput" rows="4" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-6 text-lg placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none" placeholder="What truth do you wish to share today..."></textarea>
+            
+            <div class="flex gap-4 mt-6">
+                <button id="btn-photo" class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl font-medium">📸 Forensic Photo</button>
+                <button id="btn-voice" class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl font-medium">🎤 Voice Testimony</button>
             </div>
-           
-            <div id="preview-area" class="mt-6"></div>
-           
-            <button id="postButton" class="mt-8 w-full py-5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-black font-bold text-lg rounded-3xl transition-all active:scale-95 shadow-lg" data-i18n="postButton">
-                🚀 Publish Testimony to the Square
+
+            <button id="postButton" class="mt-10 w-full py-5 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-semibold text-lg rounded-3xl transition active:scale-[0.985]">
+                Publish Testimony to the Square
             </button>
         </div>
-       
-        <div id="profile-tier-badge" class="flex justify-center"></div>
+
         <main>
-            <div id="feedContainer" class="w-full"></div>
+            <div id="feedContainer" class="space-y-8"></div>
         </main>
     </div>
-    <!-- Persistent Door Indicator -->
-<div id="door-indicator" class="fixed bottom-6 right-6 bg-zinc-900/95 border border-emerald-500/30 rounded-3xl px-6 py-4 flex items-center gap-3 shadow-2xl z-50 backdrop-blur-xl transition-all duration-300 hover:scale-105 hover:border-emerald-400/50">
-    <div class="flex items-center gap-2">
-        <span class="text-xs font-medium text-emerald-400 tracking-widest uppercase">CURRENT DOOR</span>
-        <div onclick="showDoorSwitcher()" 
-             id="current-door-indicator"
-             class="flex items-center gap-3 bg-zinc-800 hover:bg-zinc-700 px-5 py-2.5 rounded-2xl cursor-pointer transition-all active:scale-95 border border-zinc-700 hover:border-emerald-500/50">
-            <span id="door-emblem" class="text-2xl transition-transform duration-300">🌍</span>
-            <span id="door-name" class="font-semibold text-sm text-white">Public Square</span>
-        </div>
+
+    <!-- Floating Door -->
+    <div id="door-indicator" onclick="showDoorSwitcher()" class="fixed bottom-8 right-8 glass px-6 py-4 rounded-3xl flex items-center gap-4 shadow-2xl cursor-pointer hover:border-emerald-400 transition-all">
+        <span class="text-xs uppercase tracking-widest text-emerald-400">Current Door</span>
+        <span id="door-name" class="font-semibold text-lg">Public Square</span>
     </div>
-    
-    <!-- Subtle pulse indicator -->
-    <div id="door-status-dot" class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-</div>
-    <footer class="max-w-2xl mx-auto mt-20 pt-8 border-t border-zinc-800 text-center text-xs text-zinc-500">
-        <div class="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-6">
-            <a href="about.html" class="hover:text-emerald-400 transition-colors" data-i18n="about">About</a>
-            <a href="safety.html" class="hover:text-emerald-400 transition-colors" data-i18n="safety">Safety</a>
-            <a href="privacy.html" class="hover:text-emerald-400 transition-colors" data-i18n="privacy">Privacy</a>
-            <a href="terms.html" class="hover:text-emerald-400 transition-colors" data-i18n="terms">Terms</a>
-        </div>
-        <p>© 2026 VocalWitness • Built for Truth &amp; Evidence</p>
-    </footer>
-    <!-- Support Modal -->
-    <div id="supportModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-        <div class="glass max-w-md w-full mx-4 rounded-3xl p-8">
-            <div id="supportModalContent"></div>
-        </div>
-    </div>
-    <script>
-        // Basic global UI helpers
-        function toggleMoreMenu() {
-            document.getElementById('moreMenu').classList.toggle('hidden');
-        }
-        function navigateToPage(page) {
-            window.location.href = page;
-        }
-    </script>
-   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
-<script src="js/utils.js" type="module"></script>
-<script type="module" src="js/main.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log("✅ VocalWitness UI loaded");
-            if (typeof initLanguageSelector === 'function') initLanguageSelector();
-        });
-    </script>
+
+    <script src="js/main.js"></script>
 </body>
 </html>
