@@ -2,6 +2,15 @@ import { auth, db } from './firebase-config.js';
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { initFeed } from './feed.js';
 import { showToast } from './utils.js';
+import { initLanguage } from './i18n.js'; // Add this import
+
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Initialize Localization
+    initLanguage(); 
+    
+    // 2. Initialize Feed
+    initFeed(db, 'public_square');
+});
 
 console.log("🚀 VocalWitness Production Engine Loading...");
 
