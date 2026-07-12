@@ -1,82 +1,59 @@
 <!DOCTYPE html>
 <html lang="en-NG">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#10b981">
-  
-  <title data-i18n="pageTitle">VocalWitness • Truth • Evidence • Public Square</title>
-
-  <link rel="manifest" href="/manifest.json">
-  <link rel="icon" href="logo.png" type="image/png">
-  <link rel="stylesheet" href="style.css">
-
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
-
-  <style>
-    body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: white; }
-    .glass { background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(16, 185, 129, 0.25); }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About VocalWitness • The Decentralized Public Square</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: #e4e4e7; }
+        .glass { background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(16, 185, 129, 0.25); }
+    </style>
 </head>
-<body class="min-h-screen pb-20 p-4 bg-[#0a0f1c]">
+<body class="min-h-screen p-6 md:p-12">
 
-  <!-- TRUST-FOCUSED DISCLAIMER -->
-  <div class="max-w-2xl mx-auto bg-zinc-900 border border-zinc-700 rounded-3xl p-5 mb-6 text-center">
-    <strong data-i18n="disclaimerTitle" class="text-zinc-300 block mb-1">A Venue for Truth</strong>
-    <p data-i18n="disclaimerDesc" class="text-xs text-zinc-500">
-      VocalWitness uses Zero-Knowledge (ZK) cryptography to protect your identity. We never collect your ID cards, passports, or personal data. Your testimony is yours alone, distributed through an un-manipulated, decentralized medium. Truth belongs to the community—we simply provide the tools for it to be heard.
-    </p>
-  </div>
+    <div class="max-w-3xl mx-auto">
+        <header class="mb-12">
+            <a href="index.html" class="text-emerald-400 hover:text-emerald-300 transition-colors mb-6 block">&larr; Back to Square</a>
+            <h1 class="text-5xl font-bold tracking-tighter text-white mb-4">About VocalWitness</h1>
+            <p class="text-xl text-zinc-400">Restoring trust through cryptographic truth and community stewardship.</p>
+        </header>
 
-  <div class="max-w-2xl mx-auto">
-    <!-- HEADER -->
-    <header class="flex items-center justify-between mb-8">
-      <div class="flex items-center gap-3">
-        <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-3xl shadow-inner">🔊</div>
-        <div>
-          <h1 class="text-4xl font-bold tracking-tighter text-emerald-400">VocalWitness</h1>
-          <p class="text-xs text-emerald-500 -mt-1">Truth • Evidence • Public Square</p>
-        </div>
-      </div>
+        <section class="glass rounded-3xl p-8 mb-8">
+            <h2 class="text-2xl font-bold text-emerald-400 mb-4">Our Mission</h2>
+            <p class="leading-relaxed mb-4">
+                In an era of deepfakes, misinformation, and centralized censorship, <strong>VocalWitness</strong> was built to provide a resilient, immutable public square. We believe that truth is not something to be dictated by platforms—it is something to be evidenced, witnessed, and verified by the people.
+            </p>
+            <p class="leading-relaxed">
+                We empower every citizen to become a witness, providing the tools to secure testimonies with forensic integrity and zero-knowledge privacy.
+            </p>
+        </section>
 
-      <div class="flex items-center gap-3">
-        <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white px-5 py-2.5 rounded-2xl text-sm focus:outline-none focus:border-emerald-500">
-          <!-- Options populated by i18n.js -->
-        </select>
-        <button onclick="showSupportModal()" data-i18n="supportPlatform" class="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-semibold rounded-2xl text-sm">💚 Support the Square</button>
-      </div>
-    </header>
+        <section class="grid md:grid-cols-2 gap-6 mb-12">
+            <div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-6">
+                <div class="text-3xl mb-3">🛡️</div>
+                <h3 class="font-bold text-white mb-2">Forensic Integrity</h3>
+                <p class="text-sm text-zinc-400">Every testimony is shielded by cryptographic proof, ensuring that evidence remains untampered and verifiable by the community.</p>
+            </div>
+            <div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-6">
+                <div class="text-3xl mb-3">⚖️</div>
+                <h3 class="font-bold text-white mb-2">Community Stewardship</h3>
+                <p class="text-sm text-zinc-400">No single moderator controls the narrative. Reputation is earned through honest, verified contributions to the square.</p>
+            </div>
+        </section>
 
-    <!-- NAVIGATION -->
-    <nav class="flex items-center justify-between mb-6">
-      <div id="main-nav" class="flex gap-2 overflow-x-auto pb-2">
-        <button onclick="loadFeed('citizen')" data-i18n="citizenTalk" class="nav-btn active px-5 py-2.5 rounded-2xl whitespace-nowrap">Citizen Talk</button>
-        <button onclick="navigateToPage('true-witness.html')" data-i18n="trueWitness" class="nav-btn px-5 py-2.5 rounded-2xl whitespace-nowrap">True Witness</button>
-        <button onclick="navigateToPage('live-arena.html')" data-i18n="liveArena" class="nav-btn px-5 py-2.5 rounded-2xl whitespace-nowrap">Live Arena</button>
-      </div>
-    </nav>
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-white mb-6">How We Build Trust</h2>
+            <p class="text-zinc-400 mb-8">
+                VocalWitness operates on a meritocratic model. By combining decentralized storage with ZK-proof verification, we ensure that while your identity remains private, your testimony gains the weight of cryptographic certainty.
+            </p>
+            
+        </section>
 
-    <!-- COMPOSER -->
-    <div class="glass rounded-3xl p-6 mb-8">
-      <textarea id="mainInput" data-i18n="placeholder" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 text-white placeholder-zinc-500" placeholder="Share your raw testimony..."></textarea>
-      <button id="postButton" data-i18n="postButton" class="mt-8 w-full py-5 bg-emerald-500 text-black font-bold text-lg rounded-3xl">🚀 Publish Testimony</button>
+        <footer class="text-center pt-8 border-t border-zinc-800">
+            <p class="text-zinc-500 text-sm">© 2026 VocalWitness. Built for Truth & Evidence.</p>
+        </footer>
     </div>
 
-    <!-- FEED -->
-    <main><div id="feedContainer" class="w-full"></div></main>
-  </div>
-
-  <!-- FOOTER -->
-  <footer class="max-w-2xl mx-auto mt-20 pt-8 border-t border-zinc-800 text-center text-xs text-zinc-500">
-    <div class="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-6">
-      <a href="about.html" data-i18n="about" class="hover:text-emerald-400">About</a>
-      <a href="privacy.html" data-i18n="privacy" class="hover:text-emerald-400">Privacy</a>
-      <a href="terms.html" data-i18n="terms" class="hover:text-emerald-400">Terms</a>
-    </div>
-    <p>© 2026 VocalWitness • Built for Truth &amp; Evidence</p>
-  </footer>
-
-  <script type="module" src="js/main.js"></script>
 </body>
 </html>
