@@ -67,3 +67,8 @@ document.addEventListener('DOMContentLoaded', () => {
     
     showToast("Welcome to VocalWitness 👋", "success");
 });
+
+window.showDoorSwitcher = () => {
+    showToast("Door switcher opened", "info");
+    // You can expand this later
+};
