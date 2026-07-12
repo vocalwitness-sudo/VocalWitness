@@ -25,6 +25,44 @@ export async function getCurrentUserTier() {
   }
 }
 
+// js/tier.js - Door/Key System
+export const DOORS = {
+    PUBLIC_SQUARE: 'public_square',     // Visible to everyone
+    CITIZEN_CIRCLE: 'citizen_circle',   // Phone verified only
+    WITNESS_CIRCLE: 'witness_circle'    // ZK verified only
+};
+
+export async function getUserDoors() {
+    if (!auth.currentUser) return [DOORS.PUBLIC_SQUARE];
+
+    const tier = await getCurrentUserTier();
+    const doors = [DOORS.PUBLIC_SQUARE];
+
+    if (tier === TIERS.CITIZEN_CIRCLE) doors.push(DOORS.CITIZEN_CIRCLE);
+    if (tier === TIERS.WITNESS_CIRCLE) doors.push(DOORS.WITNESS_CIRCLE);
+
+    return doors;
+}
+
+// Set user's preferred visibility door
+export async function setVisibilityDoor(door) {
+    if (!auth.currentUser) return false;
+
+    const userDoors = await getUserDoors();
+    if (!userDoors.includes(door)) {
+        showToast("You don't have the key to this door yet", "error");
+        return false;
+    }
+
+    await updateDoc(doc(db, "users", auth.currentUser.uid), {
+        currentVisibilityDoor: door,
+        lastDoorSwitch: serverTimestamp()
+    });
+
+    showToast(`🔑 Now walking through ${door.replace('_', ' ')}`, "success");
+    return true;
+}
+
 // Advanced Tier Advancement with Watchdog
 export async function canAdvanceTier(userId, timeoutMs = 8000) {
   const timeoutPromise = new Promise((_, reject) => 
