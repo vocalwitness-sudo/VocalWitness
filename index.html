@@ -3,52 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#10b981">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="logo.png" type="image/png">
     <title>VocalWitness • Truth • Evidence • Public Square</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <style>
-        body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: white; }
-        .glass { background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(16, 185, 129, 0.25); }
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: #0a0f1c;
+            color: white;
+        }
+        .glass {
+            background: rgba(17, 24, 39, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+        }
     </style>
 </head>
 <body class="min-h-screen pb-20 p-4 bg-[#0a0f1c]">
+    <!-- Your content here (privacy note, header, nav, main feed, etc.) -->
 
-    <div class="max-w-2xl mx-auto bg-red-950/30 border border-red-500/20 rounded-3xl p-4 text-xs mb-6 text-center">
-        <strong class="text-red-400">Legal:</strong> <span>VocalWitness is a public square for truth. Your Testimony Is Yours Alone.</span>
-    </div>
-
-    <div class="max-w-2xl mx-auto">
-        <header class="flex items-center justify-between mb-8">
-            <div class="flex items-center gap-3">
-                <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-3xl shadow-inner">🔊</div>
-                <div>
-                    <h1 class="text-4xl font-bold tracking-tighter text-emerald-400">VocalWitness</h1>
-                </div>
-            </div>
-            
-            <div id="profile-tier-badge" class="flex items-center justify-center">
-                </div>
-
-            <div class="flex items-center gap-3">
-                <button id="profile-btn" class="text-sm border border-zinc-700 px-4 py-2 rounded-xl hover:bg-zinc-800">View Profile</button>
-            </div>
-        </header>
-
-        <nav id="main-nav-container" class="flex items-center justify-between mb-6">
-            <div id="main-nav" class="flex gap-2 overflow-x-auto pb-2">
-                <button onclick="loadFeed('citizen')" class="nav-btn active px-5 py-2.5 rounded-2xl">Citizen Talk</button>
-                <button onclick="navigateToPage('true-witness.html')" class="nav-btn px-5 py-2.5 rounded-2xl">True Witness</button>
-            </div>
-            <button onclick="toggleMoreMenu()" class="w-10 h-10 text-2xl hover:bg-zinc-800 rounded-2xl">☰</button>
-        </nav>
-
-        <main id="feedContainer" class="w-full"></main>
-    </div>
-
+    <!-- SUPPORT MODAL -->
     <div id="supportModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-        <div class="glass max-w-md w-full mx-4 rounded-3xl p-8" id="supportModalContent"></div>
+        <div class="glass max-w-md w-full mx-4 rounded-3xl p-8">
+            <div id="supportModalContent"></div>
+        </div>
     </div>
 
+    <script src="js/utils.js" type="module"></script>
+    <script type="module" src="js/firebase-config.js"></script>
+    <script type="module" src="js/firebase-init.js"></script>
     <script type="module" src="js/main.js"></script>
+
+    <!-- Your inline scripts at the bottom -->
 </body>
 </html>
