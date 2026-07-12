@@ -81,23 +81,18 @@ function setupEventListeners() {
 
 document.addEventListener('DOMContentLoaded', bootstrap);
 
-// === GLOBAL EXPORTS FOR INLINE ONCLICK HANDLERS ===
+// GLOBAL EXPORTS FOR ONCLICK
+window.navigateToPage = (page) => { window.location.href = page; };
+window.loadFeed = (type = 'citizen-talk') => {
+    console.log("Loading feed:", type);
+    // initFeed(db, type); // enable when ready
+};
 window.showDoorSwitcher = window.showDoorSwitcher || function() {
     const door = document.getElementById('door-name');
     if (door) {
         const doors = ["Public Square","Citizen Talk","True Witness","Live Arena","Groups"];
-        let i = doors.indexOf(door.textContent) + 1;
-        door.textContent = doors[i % doors.length];
-        showToast(`🚪 ${door.textContent}`, "success");
+        let i = (doors.indexOf(door.textContent) + 1) % doors.length;
+        door.textContent = doors[i];
+        showToast(`🚪 ${doors[i]}`, "success");
     }
-};
-
-window.navigateToPage = window.navigateToPage || function(page) {
-    window.location.href = page;
-};
-
-window.loadFeed = window.loadFeed || function(type) {
-    // Call your feed loader
-    console.log("Loading feed:", type);
-    // initFeed(db, type); // uncomment when initFeed is ready
 };
