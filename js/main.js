@@ -70,3 +70,38 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+
+// ====================== DOOR SWITCHER (Public Square / Contexts) ======================
+window.showDoorSwitcher = function() {
+    console.log("🚪 Door Switcher activated");
+    
+    const doorEl = document.querySelector("#current-door, [data-current-door], .current-door");
+    if (!doorEl) {
+        showToast("Door system initializing...", "info");
+        return;
+    }
+
+    // Simple cycling for launch (you can expand later)
+    const availableDoors = [
+        "Public Square",
+        "Citizen Talk", 
+        "True Witness",
+        "Live Arena",
+        "Groups"
+    ];
+    
+    let current = doorEl.textContent.trim();
+    let currentIndex = availableDoors.indexOf(current);
+    let nextIndex = (currentIndex + 1) % availableDoors.length;
+    
+    doorEl.textContent = availableDoors[nextIndex];
+    doorEl.style.transition = "all 0.3s ease";
+    
+    showToast(`🚪 Switched to ${availableDoors[nextIndex]}`, "success");
+    
+    // Future: Load different feeds/contexts
+    if (availableDoors[nextIndex] === "Citizen Talk") {
+        window.loadFeed('citizen');
+    }
+};
