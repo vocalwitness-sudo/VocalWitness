@@ -10,152 +10,146 @@
 </head>
 <body class="min-h-screen p-4 bg-[#0a0f1c]">
     <div class="max-w-6xl mx-auto">
-        <h1 class="text-4xl font-bold text-emerald-400 mb-8">🛡️ Moderation Dashboard</h1>
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-4xl font-bold text-emerald-400">🛡️ Moderation Dashboard</h1>
+            <div class="text-sm text-zinc-400">
+                Logged in as <span id="mod-user" class="text-emerald-400">Steward</span>
+            </div>
+        </div>
 
         <!-- Stats -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <div class="glass rounded-3xl p-6 text-center">
                 <div class="text-3xl mb-2">⏳</div>
                 <div class="text-3xl font-bold text-amber-400" id="pending-count">0</div>
-                <div class="text-sm text-zinc-400">Pending</div>
+                <div class="text-sm text-zinc-400">Pending Review</div>
             </div>
             <div class="glass rounded-3xl p-6 text-center">
                 <div class="text-3xl mb-2">🚩</div>
                 <div class="text-3xl font-bold text-red-400" id="flagged-count">0</div>
-                <div class="text-sm text-zinc-400">Flagged</div>
+                <div class="text-sm text-zinc-400">Auto-Flagged</div>
             </div>
             <div class="glass rounded-3xl p-6 text-center">
                 <div class="text-3xl mb-2">✅</div>
                 <div class="text-3xl font-bold text-emerald-400" id="resolved-count">0</div>
-                <div class="text-sm text-zinc-400">Resolved</div>
+                <div class="text-sm text-zinc-400">Resolved Today</div>
             </div>
             <div class="glass rounded-3xl p-6 text-center">
-                <div class="text-3xl mb-2">🚫</div>
-                <div class="text-3xl font-bold text-red-500" id="banned-count">0</div>
-                <div class="text-sm text-zinc-400">Banned</div>
+                <div class="text-3xl mb-2">👥</div>
+                <div class="text-3xl font-bold text-sky-400" id="active-mods">3</div>
+                <div class="text-sm text-zinc-400">Active Stewards</div>
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Main Queue -->
             <div class="lg:col-span-2 glass rounded-3xl p-6">
-                <div class="flex justify-between mb-6">
-                    <h2 class="text-2xl font-bold">Content Queue</h2>
-                    <input id="searchInput" type="text" placeholder="Search..." class="bg-zinc-900 border border-zinc-700 rounded-2xl px-4 py-2 w-64">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">Content Moderation Queue</h2>
+                    <input id="searchInput" type="text" 
+                           placeholder="Search content..." 
+                           class="bg-zinc-900 border border-zinc-700 rounded-2xl px-4 py-2 w-80 focus:outline-none focus:border-emerald-500">
                 </div>
-                <div id="modList" class="space-y-6"></div>
+                <div id="modList" class="space-y-6 min-h-[400px]"></div>
             </div>
 
-            <!-- Moderation Log -->
+            <!-- Sidebar: Log + Quick Actions -->
             <div class="glass rounded-3xl p-6">
-                <h2 class="text-xl font-bold mb-6">Moderation Log</h2>
-                <div id="modLog" class="space-y-3 text-sm max-h-[600px] overflow-y-auto"></div>
+                <h2 class="text-xl font-bold mb-6">Recent Activity</h2>
+                <div id="modLog" class="space-y-3 text-sm max-h-[600px] overflow-y-auto pr-2"></div>
             </div>
         </div>
     </div>
 
     <script type="module">
-        import { db } from './js/firebase-config.js';
-        import { collection, query, where, onSnapshot, doc, updateDoc, deleteDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+        import { db, auth } from './js/firebase-config.js';
+        import { 
+            collection, query, where, onSnapshot, doc, updateDoc, deleteDoc, 
+            addDoc, serverTimestamp, orderBy, limit 
+        } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
         import { showToast } from './js/utils.js';
+        import { moderatePost, MODERATION_ACTIONS } from './js/moderation.js';
 
         let currentListener = null;
 
-        // Log action
-        async function logModeration(action, postId, userId, notes) {
-            try {
-                await addDoc(collection(db, "moderation_logs"), {
-                    action,
-                    postId,
-                    userId,
-                    moderator: "Current Mod", // Replace with auth.currentUser later
-                    notes: notes || "",
-                    timestamp: serverTimestamp()
-                });
-                addToLogUI(action, postId, notes);
-            } catch(e) {}
-        }
-
-        function addToLogUI(action, postId, notes) {
-            const logContainer = document.getElementById('modLog');
-            const entry = document.createElement('div');
-            entry.className = 'bg-zinc-900 p-3 rounded-2xl text-xs';
-            entry.innerHTML = `<strong>${action}</strong> #${postId.substring(0,8)} ${notes ? '- ' + notes : ''}`;
-            logContainer.prepend(entry);
-        }
-
-        async function loadFlaggedContent() {
+        // Load Queue
+        async function loadModerationQueue() {
             const container = document.getElementById('modList');
-            const search = document.getElementById('searchInput').value.toLowerCase();
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
 
-            container.innerHTML = '<p class="text-zinc-400 py-12 text-center">Loading...</p>';
+            container.innerHTML = '<p class="text-zinc-400 py-12 text-center">Loading queue...</p>';
 
-            try {
-                const q = query(collection(db, "testimonies"), where("flagged", "==", true));
-                if (currentListener) currentListener();
+            const q = query(
+                collection(db, "testimonies"),
+                where("moderationStatus", "in", ["needs_review", "flagged"]),
+                orderBy("timestamp", "desc"),
+                limit(50)
+            );
 
-                currentListener = onSnapshot(q, (snapshot) => {
-                    container.innerHTML = '';
-                    if (snapshot.empty) {
-                        container.innerHTML = '<p class="text-zinc-400 py-12 text-center">No flagged content.</p>';
-                        return;
-                    }
-                    snapshot.forEach(docSnap => {
-                        const data = docSnap.data();
-                        if (search && !data.content?.toLowerCase().includes(search)) return;
+            if (currentListener) currentListener();
 
-                        const item = document.createElement('div');
-                        item.className = 'bg-zinc-900 rounded-3xl p-6 border border-red-500/30';
-                        item.innerHTML = `
-                            <p class="text-zinc-300">${data.content ? data.content.substring(0, 150) + '...' : 'Media only'}</p>
-                            <div class="flex flex-wrap gap-2 mt-6">
-                                <button onclick="approvePost('${docSnap.id}', '${data.authorId}')" class="px-5 py-2 bg-emerald-600 rounded-2xl text-sm">✅ Approve</button>
-                                <button onclick="warnUser('${data.authorId}', '${docSnap.id}')" class="px-5 py-2 bg-amber-600 rounded-2xl text-sm">⚠️ Warn</button>
-                                <button onclick="removePost('${docSnap.id}')" class="px-5 py-2 bg-red-600 rounded-2xl text-sm">🗑️ Remove</button>
-                                <button onclick="banUser('${data.authorId}', '${docSnap.id}')" class="px-5 py-2 bg-red-700 rounded-2xl text-sm">🚫 Ban User</button>
+            currentListener = onSnapshot(q, (snapshot) => {
+                container.innerHTML = '';
+                let count = 0;
+
+                snapshot.forEach(docSnap => {
+                    const data = docSnap.data();
+                    count++;
+
+                    if (searchTerm && !data.content?.toLowerCase().includes(searchTerm)) return;
+
+                    const item = document.createElement('div');
+                    item.className = 'bg-zinc-900 rounded-3xl p-6 border border-amber-500/30 hover:border-amber-500 transition-colors';
+                    item.innerHTML = `
+                        <div class="flex justify-between">
+                            <div>
+                                <p class="font-medium">${data.author || 'Anonymous'}</p>
+                                <p class="text-xs text-zinc-500">${new Date(data.timestamp?.toDate()).toLocaleString()}</p>
                             </div>
-                        `;
-                        container.appendChild(item);
-                    });
+                            <span class="text-amber-400 text-xs px-3 py-1 bg-amber-900/50 rounded-full">Needs Review</span>
+                        </div>
+                        <p class="my-4 text-zinc-100 line-clamp-3">${data.content ? data.content.substring(0, 220) + '...' : '(Media only)'}</p>
+                        <div class="flex gap-3">
+                            <button onclick="handleModerate('${docSnap.id}', 'approve')" 
+                                    class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 rounded-2xl text-sm font-medium">✅ Approve</button>
+                            <button onclick="handleModerate('${docSnap.id}', 'hide')" 
+                                    class="flex-1 py-3 bg-amber-600 hover:bg-amber-700 rounded-2xl text-sm font-medium">🙈 Hide</button>
+                            <button onclick="handleModerate('${docSnap.id}', 'remove')" 
+                                    class="flex-1 py-3 bg-red-600 hover:bg-red-700 rounded-2xl text-sm font-medium">🗑️ Remove</button>
+                        </div>
+                    `;
+                    container.appendChild(item);
                 });
-            } catch(e) {
-                container.innerHTML = '<p class="text-red-400">Error loading queue</p>';
-            }
+
+                document.getElementById('pending-count').textContent = count;
+            });
         }
 
-        window.approvePost = async (postId, authorId) => {
-            await updateDoc(doc(db, "testimonies", postId), { flagged: false, moderationStatus: "approved" });
-            await logModeration("Approved", postId, authorId, "Content approved");
-            showToast("Approved", "success");
-            loadFlaggedContent();
-        };
-
-        window.removePost = async (postId) => {
-            if (confirm("Remove permanently?")) {
-                await deleteDoc(doc(db, "testimonies", postId));
-                await logModeration("Removed", postId, "unknown", "");
-                showToast("Removed", "success");
-                loadFlaggedContent();
+        // Global handlers
+        window.handleModerate = async (postId, action) => {
+            const success = await moderatePost(postId, action, `Moderator action: ${action}`);
+            if (success) {
+                showToast(`Action ${action} completed`, "success");
+                loadModerationQueue();
             }
         };
 
-        window.warnUser = async (userId, postId) => {
-            // TODO: Add warning count to user doc
-            await logModeration("Warning Issued", postId, userId, "First warning");
-            showToast("Warning sent to user", "warning");
-        };
+        // Load log
+        function loadModLog() {
+            // You can expand this with real listener later
+            const logEl = document.getElementById('modLog');
+            logEl.innerHTML = `<div class="text-zinc-500 text-xs">Moderation log will appear here...</div>`;
+        }
 
-        window.banUser = async (userId, postId) => {
-            if (confirm("Ban this user permanently?")) {
-                await updateDoc(doc(db, "users", userId), { banned: true, banReason: "Moderation violation" });
-                await logModeration("User Banned", postId, userId, "Permanent ban");
-                showToast("User banned", "error");
-            }
-        };
+        document.addEventListener('DOMContentLoaded', () => {
+            loadModerationQueue();
+            loadModLog();
 
-        document.addEventListener('DOMContentLoaded', loadFlaggedContent);
+            // Live search
+            document.getElementById('searchInput').addEventListener('input', loadModerationQueue);
+        });
     </script>
-    
+
     <script type="module" src="js/main.js"></script>
 </body>
 </html>
