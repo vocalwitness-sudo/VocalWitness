@@ -2,61 +2,35 @@ import { auth, db } from './firebase-config.js';
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { initFeed } from './feed.js';
 import { showToast } from './utils.js';
-import { initLanguage } from './i18n.js'; // Add this import
+import { initLanguage } from './i18n.js';
 
+// --- Single Source of Truth for Clicks ---
 document.addEventListener('click', (e) => {
-    // 1. Log the click to help us debug
-    console.log("DEBUG: Click detected on:", e.target.tagName, e.target.id || e.target.dataset.action);
+    const target = e.target;
+    
+    // Debug logging (Single instance)
+    console.log("DEBUG: Click detected on:", target.tagName, target.id || target.dataset.action);
 
-    // 2. Handle Navigation (e.g., True Witness, Groups)
-    const nav = e.target.closest('[data-action="navigate"]');
-    if (nav) {
-        window.location.href = nav.dataset.page;
-        return; // Stop here
-    }
+    // Navigation
+    const nav = target.closest('[data-action="navigate"]');
+    if (nav) window.location.href = nav.dataset.page;
 
-    // 3. Handle Feed Switching (Citizen Talk)
-    const feed = e.target.closest('[data-action="load-feed"]');
-    if (feed) {
-        initFeed(db, feed.dataset.type);
-        return;
-    }
+    // Feed Loading
+    const feed = target.closest('[data-action="load-feed"]');
+    if (feed) initFeed(db, feed.dataset.type);
 
-    // 4. Handle Specific Buttons
-    if (e.target.id === 'support-btn') {
+    // Profile Actions
+    if (target.id === 'profile-btn') showProfile();
+    if (target.id === 'close-profile-btn') closeProfile();
+    
+    // Support Modal
+    if (target.id === 'support-btn') {
         document.getElementById('supportModal')?.classList.remove('hidden');
-    } else if (e.target.id === 'profile-btn') {
-        showProfile();
-    } else if (e.target.id === 'door-indicator') {
-        // We know this works now!
-        showDoorSwitcher();
     }
 });
-// Add this separately outside the click listener
-const langSelector = document.getElementById('languageSelector');
-if (langSelector) {
-    langSelector.addEventListener('change', (e) => {
-        changeLanguage(e.target.value);
-    });
-}
 
-console.log("🚀 VocalWitness Production Engine Loading...");
-
-// 1. Manually expose functions to the global scope
-window.navigateToPage = (page) => window.location.href = page;
-window.showSupportModal = () => document.getElementById('supportModal')?.classList.remove('hidden');
-window.switchDoor = (door) => { 
-    console.log("Switching to:", door);
-};
-
-window.switchDoor = async (door) => {
-    // Logic to update user preference in Firestore and trigger feed refresh
-    showToast(`🔑 Switching to ${door.replace('_', ' ')}...`, "info");
-    initFeed(db, door);
-};
-
-// --- Live Profile Loader ---
-window.showProfile = async () => {
+// --- Modular UI Functions ---
+const showProfile = async () => {
     if (!auth.currentUser) return showToast("Please sign in first", "error");
     
     const userDoc = await getDoc(doc(db, "users", auth.currentUser.uid));
@@ -74,33 +48,25 @@ window.showProfile = async () => {
         <div class="glass max-w-sm w-full rounded-3xl p-6 border border-zinc-700">
             <h2 class="text-xl font-bold mb-4">${data.displayName || 'Witness'}</h2>
             <p class="text-emerald-400 text-sm mb-4">Reputation: ${data.credibilityScore || 0}</p>
-            <button onclick="closeProfile()" class="w-full py-3 bg-zinc-800 rounded-2xl">Close</button>
+            <button id="close-profile-btn" class="w-full py-3 bg-zinc-800 rounded-2xl hover:bg-zinc-700 transition">Close</button>
         </div>
     `;
     modal.classList.remove('hidden');
 };
 
-window.closeProfile = () => document.getElementById('profileModal')?.classList.add('hidden');
+const closeProfile = () => {
+    document.getElementById('profileModal')?.classList.add('hidden');
+};
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Initialize Feed with default door
     initFeed(db, 'public_square');
-
-    // 2. Auth Listener
+    initLanguage();
+    
     auth.onAuthStateChanged((user) => {
         if (user) {
-            console.log("✅ Authenticated as:", user.email);
             const btn = document.getElementById('profile-btn');
             if (btn) btn.innerText = "View Profile";
         }
     });
-
-    showToast("VocalWitness is Live", "success");
-});
-
-// DEBUG TRIGGER
-console.log("DEBUG: Main.js has finished parsing");
-document.addEventListener('click', (e) => {
-    console.log("DEBUG: Click detected on:", e.target.tagName, e.target.id);
 });
