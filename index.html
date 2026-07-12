@@ -22,6 +22,8 @@
     </div>
 
     <div class="max-w-2xl mx-auto">
+
+        
         <!-- Header -->
         <header class="flex items-center justify-between mb-10">
             <div class="flex items-center gap-3">
@@ -35,6 +37,8 @@
                 <button onclick="showSupportModal()" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl transition">Support</button>
                 <button id="profile-btn" class="px-6 py-3 border border-zinc-700 hover:bg-zinc-800 rounded-2xl">Profile</button>
             </div>
+            <select id="languageSelector" class="bg-zinc-800 text-white px-4 py-3 rounded-2xl border border-zinc-700 outline-none cursor-pointer">
+    </select>
         </header>
 
         <!-- Navigation -->
@@ -43,9 +47,6 @@
     <button data-action="navigate" data-page="true-witness.html" class="nav-btn px-6 py-3 rounded-2xl">True Witness</button>
     <button data-action="navigate" data-page="live-arena.html" class="nav-btn px-6 py-3 rounded-2xl">Live Arena</button>
 </nav>
-
-<button id="support-btn" class="px-6 py-3 bg-emerald-600 rounded-2xl">Support</button>
-<button id="profile-btn" class="px-6 py-3 border border-zinc-700 rounded-2xl">Profile</button>
 
 <div id="door-indicator" class="fixed bottom-8 right-8 glass cursor-pointer ...">...</div>
 
