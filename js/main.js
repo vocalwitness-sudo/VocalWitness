@@ -87,6 +87,11 @@ function renderSupportModalContent() {
     // Paste your full support modal HTML here if needed
 }
 
+window.switchDoor = async (door) => {
+    const success = await import('./tier.js').then(m => m.setVisibilityDoor(door));
+    if (success) window.loadFeed('citizen-talk'); // Refresh feed
+};
+
 window.startContribution = (type) => {
     window.closeSupportModal();
     if (type === 'testimony') {
