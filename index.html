@@ -24,7 +24,6 @@
     </style>
 </head>
 <body class="min-h-screen pb-20 p-4 bg-[#0a0f1c]">
-
     <!-- Privacy Note -->
     <div class="max-w-2xl mx-auto glass border border-emerald-500/20 rounded-3xl p-5 mb-8">
         <div class="flex items-start gap-3 text-sm">
@@ -35,7 +34,6 @@
             </div>
         </div>
     </div>
-
     <div class="max-w-2xl mx-auto">
         <header class="flex items-center justify-between mb-8">
             <div class="flex items-center gap-3">
@@ -49,15 +47,14 @@
             </div>
             <div class="flex items-center gap-3">
                 <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white px-5 py-2.5 rounded-2xl text-sm focus:outline-none focus:border-emerald-500"></select>
-                
+               
                 <button onclick="showSupportModal()" class="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-semibold rounded-2xl flex items-center gap-2 shadow-xl hover:scale-105 transition-all text-sm">
                     💚 <span data-i18n="supportPlatform">Support the Square</span>
                 </button>
-                
+               
                 <button id="profile-btn" class="px-5 py-2.5 border border-zinc-700 rounded-2xl hover:bg-zinc-800">View Profile</button>
             </div>
         </header>
-
         <nav class="flex items-center justify-between mb-6">
             <div id="main-nav" class="flex gap-2 overflow-x-auto pb-2">
                 <button onclick="loadFeed('citizen')" class="nav-btn active px-5 py-2.5 rounded-2xl whitespace-nowrap" data-feed="citizen" data-i18n="citizenTalk">Citizen Talk</button>
@@ -65,7 +62,6 @@
                 <button onclick="navigateToPage('live-arena.html')" class="nav-btn px-5 py-2.5 rounded-2xl whitespace-nowrap" data-i18n="liveArena">Live Arena</button>
                 <button onclick="navigateToPage('groups.html')" class="nav-btn px-5 py-2.5 rounded-2xl whitespace-nowrap">Groups</button>
             </div>
-
             <div class="door-switcher flex gap-2 mt-4">
     <button onclick="switchDoor('public_square')" class="px-5 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-2xl">🌍 Public Square</button>
     <button onclick="switchDoor('citizen_circle')" class="px-5 py-2 bg-emerald-900 hover:bg-emerald-800 rounded-2xl">🛡️ Citizen Circle</button>
@@ -84,49 +80,44 @@
                 </div>
             </div>
         </nav>
-
         <!-- Phone Verification Modal -->
 <div id="phoneVerificationModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50">
   <div class="glass max-w-md w-full mx-4 rounded-3xl p-8">
     <h2 class="text-2xl font-bold text-center mb-2">Phone Verification</h2>
     <p class="text-zinc-400 text-center mb-8">Verify your number to unlock Citizen Circle</p>
-
     <!-- Step 1: Enter Phone -->
     <div id="phoneStep">
-      <input id="phoneInput" type="tel" placeholder="+234 801 234 5678" 
+      <input id="phoneInput" type="tel" placeholder="+234 801 234 5678"
              class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4 text-lg focus:outline-none focus:border-emerald-500 mb-6">
-      <button onclick="sendPhoneCode()" 
+      <button onclick="sendPhoneCode()"
               class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 rounded-2xl font-semibold text-lg">
         Send Verification Code
       </button>
     </div>
-
     <!-- Step 2: Enter OTP -->
     <div id="otpStep" class="hidden">
-      <input id="otpInput" type="text" maxlength="6" placeholder="123456" 
+      <input id="otpInput" type="text" maxlength="6" placeholder="123456"
              class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4 text-3xl text-center tracking-widest focus:outline-none focus:border-emerald-500 mb-6">
-      <button onclick="verifyPhoneCode()" 
+      <button onclick="verifyPhoneCode()"
               class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 rounded-2xl font-semibold text-lg">
         Verify Code
       </button>
-      <button onclick="restartPhoneVerification()" 
+      <button onclick="restartPhoneVerification()"
               class="mt-4 w-full text-zinc-400 hover:text-white text-sm">
         ← Send new code
       </button>
     </div>
-
-    <button onclick="closePhoneModal()" 
+    <button onclick="closePhoneModal()"
             class="mt-6 text-zinc-400 hover:text-white text-sm w-full">
       Cancel
     </button>
   </div>
 </div>
-        
-
+       
         <!-- Post Creation -->
         <div class="glass rounded-3xl p-6 mb-8">
             <textarea id="mainInput" rows="3" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none" data-i18n="placeholder" placeholder="Share your testimony..."></textarea>
-            
+           
             <div class="flex gap-3 mt-6">
                 <button id="btn-photo" class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl transition-all flex items-center justify-center gap-3 font-medium" data-i18n="photoForensic">
                     📸 Photo + Forensic Shield
@@ -135,21 +126,34 @@
                     🎤 Voice Testimony
                 </button>
             </div>
-            
+           
             <div id="preview-area" class="mt-6"></div>
-            
+           
             <button id="postButton" class="mt-8 w-full py-5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-black font-bold text-lg rounded-3xl transition-all active:scale-95 shadow-lg" data-i18n="postButton">
                 🚀 Publish Testimony to the Square
             </button>
         </div>
-        
+       
         <div id="profile-tier-badge" class="flex justify-center"></div>
-
         <main>
             <div id="feedContainer" class="w-full"></div>
         </main>
     </div>
-
+    <!-- Persistent Door Indicator -->
+<div id="door-indicator" class="fixed bottom-6 right-6 bg-zinc-900/95 border border-emerald-500/30 rounded-3xl px-6 py-4 flex items-center gap-3 shadow-2xl z-50 backdrop-blur-xl transition-all duration-300 hover:scale-105 hover:border-emerald-400/50">
+    <div class="flex items-center gap-2">
+        <span class="text-xs font-medium text-emerald-400 tracking-widest uppercase">CURRENT DOOR</span>
+        <div onclick="showDoorSwitcher()" 
+             id="current-door-indicator"
+             class="flex items-center gap-3 bg-zinc-800 hover:bg-zinc-700 px-5 py-2.5 rounded-2xl cursor-pointer transition-all active:scale-95 border border-zinc-700 hover:border-emerald-500/50">
+            <span id="door-emblem" class="text-2xl transition-transform duration-300">🌍</span>
+            <span id="door-name" class="font-semibold text-sm text-white">Public Square</span>
+        </div>
+    </div>
+    
+    <!-- Subtle pulse indicator -->
+    <div id="door-status-dot" class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+</div>
     <footer class="max-w-2xl mx-auto mt-20 pt-8 border-t border-zinc-800 text-center text-xs text-zinc-500">
         <div class="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-6">
             <a href="about.html" class="hover:text-emerald-400 transition-colors" data-i18n="about">About</a>
@@ -159,14 +163,12 @@
         </div>
         <p>© 2026 VocalWitness • Built for Truth &amp; Evidence</p>
     </footer>
-
     <!-- Support Modal -->
     <div id="supportModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50">
         <div class="glass max-w-md w-full mx-4 rounded-3xl p-8">
             <div id="supportModalContent"></div>
         </div>
     </div>
-
     <script>
         // Basic global UI helpers
         function toggleMoreMenu() {
@@ -176,7 +178,6 @@
             window.location.href = page;
         }
     </script>
-
    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 <script src="js/utils.js" type="module"></script>
 <script type="module" src="js/main.js"></script>
