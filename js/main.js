@@ -4,13 +4,41 @@ import { initFeed } from './feed.js';
 import { showToast } from './utils.js';
 import { initLanguage } from './i18n.js'; // Add this import
 
-document.addEventListener('DOMContentLoaded', () => {
-    // 1. Initialize Localization
-    initLanguage(); 
-    
-    // 2. Initialize Feed
-    initFeed(db, 'public_square');
+document.addEventListener('click', (e) => {
+    // 1. Log the click to help us debug
+    console.log("DEBUG: Click detected on:", e.target.tagName, e.target.id || e.target.dataset.action);
+
+    // 2. Handle Navigation (e.g., True Witness, Groups)
+    const nav = e.target.closest('[data-action="navigate"]');
+    if (nav) {
+        window.location.href = nav.dataset.page;
+        return; // Stop here
+    }
+
+    // 3. Handle Feed Switching (Citizen Talk)
+    const feed = e.target.closest('[data-action="load-feed"]');
+    if (feed) {
+        initFeed(db, feed.dataset.type);
+        return;
+    }
+
+    // 4. Handle Specific Buttons
+    if (e.target.id === 'support-btn') {
+        document.getElementById('supportModal')?.classList.remove('hidden');
+    } else if (e.target.id === 'profile-btn') {
+        showProfile();
+    } else if (e.target.id === 'door-indicator') {
+        // We know this works now!
+        showDoorSwitcher();
+    }
 });
+// Add this separately outside the click listener
+const langSelector = document.getElementById('languageSelector');
+if (langSelector) {
+    langSelector.addEventListener('change', (e) => {
+        changeLanguage(e.target.value);
+    });
+}
 
 console.log("🚀 VocalWitness Production Engine Loading...");
 
