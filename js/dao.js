@@ -100,4 +100,24 @@ export async function updateReputation(contributionType) {
   if (!auth.currentUser) return;
   // ... your existing reputation logic ...
   console.log(`Reputation updated for ${contributionType}`);
+  // Record Testimony Contribution for Reputation
+export async function recordTestimonyContribution() {
+    if (!auth.currentUser) return;
+    
+    try {
+        const userRef = doc(db, "users", auth.currentUser.uid);
+        const userSnap = await getDoc(userRef);
+        
+        if (userSnap.exists()) {
+            const currentRep = userSnap.data().credibilityScore || 0;
+            await updateDoc(userRef, {
+                credibilityScore: currentRep + 15,
+                lastContribution: serverTimestamp()
+            });
+            console.log("✅ Reputation +15 for testimony");
+        }
+    } catch (e) {
+        console.warn("Could not update reputation:", e);
+    }
+}
 }
