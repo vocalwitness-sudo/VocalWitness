@@ -8,6 +8,11 @@ import * as mediaModule from './media.js';
 import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
 import { recordTestimonyContribution } from './dao.js';
 
+const recordTestimonyContribution = async () => {
+    console.log("✅ Testimony contribution recorded (stub)");
+    return true;
+};
+
 // GLOBAL STATE
 let engineInstance = null;
 
