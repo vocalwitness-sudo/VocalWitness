@@ -65,6 +65,12 @@
                 <button onclick="navigateToPage('live-arena.html')" class="nav-btn px-5 py-2.5 rounded-2xl whitespace-nowrap" data-i18n="liveArena">Live Arena</button>
                 <button onclick="navigateToPage('groups.html')" class="nav-btn px-5 py-2.5 rounded-2xl whitespace-nowrap">Groups</button>
             </div>
+
+            <div class="door-switcher flex gap-2 mt-4">
+    <button onclick="switchDoor('public_square')" class="px-5 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-2xl">🌍 Public Square</button>
+    <button onclick="switchDoor('citizen_circle')" class="px-5 py-2 bg-emerald-900 hover:bg-emerald-800 rounded-2xl">🛡️ Citizen Circle</button>
+    <button onclick="switchDoor('witness_circle')" class="px-5 py-2 bg-purple-900 hover:bg-purple-800 rounded-2xl">🔐 Witness Circle</button>
+</div>
             <div class="relative">
                 <button onclick="toggleMoreMenu()" class="w-10 h-10 flex items-center justify-center text-2xl hover:bg-zinc-800 rounded-2xl transition-all">☰</button>
                 <div id="moreMenu" class="hidden absolute right-0 mt-2 w-56 bg-zinc-900 border border-zinc-700 rounded-3xl shadow-2xl py-2 z-50">
