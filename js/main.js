@@ -1,75 +1,152 @@
-<!DOCTYPE html>
-<html lang="en-NG">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VocalWitness • The Living Square</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
-    <style>
-        body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: #e2e8f0; }
-        .glass { background: rgba(15, 23, 42, 0.92); backdrop-filter: blur(24px); border: 1px solid rgba(148, 163, 184, 0.12); }
-        .nav-tab { transition: all 0.2s ease; }
-        .nav-tab.active { background-color: #10b981; color: black; font-weight: 600; }
-    </style>
-</head>
-<body class="min-h-screen pb-24 bg-[#0a0f1c]">
-    <!-- Privacy Banner -->
-    <div class="max-w-2xl mx-auto glass rounded-3xl p-5 mb-8 text-sm text-center">
-        <strong class="text-emerald-400">Privacy First • No Personal Data Collected</strong>
-    </div>
+// js/main.js - Dynamic Living Square Version
+import { initAuth } from "./auth.js";
+import { initFeed } from './feed.js';
+import { db, auth } from './firebase-config.js';
+import { showToast } from './utils.js';
+import { initLanguage } from './i18n.js';
+import * as mediaModule from './media.js';
+import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
 
-    <div class="max-w-2xl mx-auto">
-        <!-- Header -->
-        <header class="flex items-center justify-between mb-8 sticky top-0 z-50 glass rounded-3xl p-4">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-2xl">🔊</div>
-                <div>
-                    <h1 class="text-2xl font-bold tracking-tight">VocalWitness</h1>
-                </div>
-            </div>
-            
-            <div class="flex items-center gap-4">
-                <select id="languageSelector" class="bg-zinc-800 text-white px-4 py-2 rounded-2xl border border-zinc-700"></select>
-                <button id="support-btn" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl">Support</button>
-                <button id="profile-btn" class="px-5 py-2 border border-zinc-700 hover:bg-zinc-800 rounded-2xl">Profile</button>
-            </div>
-        </header>
+// ====================== APP STATE ======================
+export let AppState = {
+    currentTab: 'square',
+    userTier: 'NONE',           // NONE, CITIZEN, WITNESS
+    currentMode: 'citizen',     // citizen or witness
+    isAuthenticated: false
+};
 
-        <!-- Main Navigation -->
-        <nav class="flex gap-2 mb-8 overflow-x-auto pb-3" id="main-nav">
-            <button data-tab="square" onclick="switchTab('square')" class="nav-tab active px-6 py-3 rounded-3xl">Square</button>
-            <button data-tab="ledger" onclick="switchTab('ledger')" class="nav-tab px-6 py-3 rounded-3xl">Ledger</button>
-            <button data-tab="arena" onclick="switchTab('arena')" class="nav-tab px-6 py-3 rounded-3xl">Arena</button>
-            <button data-tab="mycircle" onclick="switchTab('mycircle')" class="nav-tab px-6 py-3 rounded-3xl">My Circle</button>
-            <button data-tab="witness" onclick="switchTab('witness')" class="nav-tab px-6 py-3 rounded-3xl bg-amber-900 text-amber-300">Witness</button>
-        </nav>
+export function updateAppState(newState) {
+    Object.assign(AppState, newState);
+    window.dispatchEvent(new CustomEvent('appStateChanged', { detail: AppState }));
+}
 
-        <!-- Compact Creation Bar -->
-        <div class="glass rounded-3xl p-6 mb-10">
-            <textarea id="mainInput" rows="3" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-5 text-lg placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none" placeholder="What truth do you wish to share today..."></textarea>
-            
-            <div class="flex gap-3 mt-4">
-                <button id="btn-photo" class="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center justify-center gap-2">
-                    📸 Forensic Photo
-                </button>
-                <button id="btn-voice" class="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center justify-center gap-2">
-                    🎤 Voice Testimony
-                </button>
-            </div>
+// ====================== TAB SWITCHING (Dynamic Core) ======================
+window.switchTab = (tab) => {
+    // Update active UI
+    document.querySelectorAll('#main-nav button').forEach(btn => {
+        btn.classList.remove('active', 'bg-amber-900', 'text-amber-300');
+        if (btn.dataset.tab === tab) {
+            btn.classList.add('active');
+            if (tab === 'witness') btn.classList.add('bg-amber-900', 'text-amber-300');
+        }
+    });
 
-            <button id="postButton" class="mt-6 w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-semibold text-lg rounded-3xl">
-                Publish to the Square
-            </button>
-        </div>
+    AppState.currentTab = tab;
 
-        <!-- Dynamic Feed Area -->
-        <main id="main-content">
-            <div id="feedContainer" class="space-y-8"></div>
-        </main>
-    </div>
+    // Mode logic (Citizen vs Witness)
+    if (tab === 'witness') {
+        AppState.currentMode = 'witness';
+        showToast("🔐 Entering Witness Circle", "success");
+        // You can redirect or load special view
+        if (AppState.userTier !== 'WITNESS') {
+            showToast("Complete ZK verification to unlock full Witness features", "info");
+        }
+    } else {
+        AppState.currentMode = 'citizen';
+    }
 
-    <script type="module" src="js/main.js"></script>
-</body>
-</html>
+    // Load appropriate feed
+    loadDynamicFeed(tab);
+};
+
+// ====================== DYNAMIC FEED LOADER ======================
+function loadDynamicFeed(tab) {
+    const container = document.getElementById('feedContainer');
+    if (!container) return;
+
+    let feedType = 'citizen-talk';
+
+    switch(tab) {
+        case 'square':
+            feedType = 'citizen-talk';
+            break;
+        case 'ledger':
+            feedType = 'forensic-ledger';
+            break;
+        case 'arena':
+            feedType = 'live';
+            showToast("🏟️ Live Arena — Real-time coming soon", "info");
+            break;
+        case 'mycircle':
+            feedType = 'my-testimonies';
+            break;
+        case 'witness':
+            feedType = 'true-witness';
+            break;
+    }
+
+    initFeed(db, feedType);
+}
+
+// ====================== PUBLISH ======================
+window.publishTestimony = async () => {
+    const textarea = document.getElementById('mainInput');
+    const content = textarea?.value.trim() || "";
+
+    if (!content) {
+        return showToast("Please share something meaningful", "error");
+    }
+
+    const postBtn = document.getElementById('postButton');
+    postBtn.disabled = true;
+    postBtn.textContent = 'Publishing to the Square...';
+
+    try {
+        // TODO: Integrate full media + Firebase write
+        await window.recordTestimonyContribution?.();
+        showToast("✅ Testimony published successfully!", "success");
+        textarea.value = '';
+        // Refresh feed
+        loadDynamicFeed(AppState.currentTab);
+    } catch (err) {
+        console.error(err);
+        showToast("Failed to publish. Please try again.", "error");
+    } finally {
+        postBtn.disabled = false;
+        postBtn.textContent = 'Publish to the Square';
+    }
+};
+
+// ====================== MEDIA BUTTONS ======================
+function setupMediaButtons() {
+    document.getElementById('btn-photo')?.addEventListener('click', () => {
+        showToast("📸 Forensic Photo upload — opening...", "info");
+        // mediaModule.handleImageSelect...
+    });
+
+    document.getElementById('btn-voice')?.addEventListener('click', () => {
+        showToast("🎤 Voice Testimony — recording...", "info");
+        // mediaModule.toggleVoiceRecording...
+    });
+}
+
+// ====================== BOOTSTRAP ======================
+async function bootstrap() {
+    try {
+        await initAuth();
+        initLanguage();
+
+        const engineInstance = new CitizenTalkEngine(db, storage || null);
+        window.engineInstance = engineInstance;
+
+        // Setup listeners
+        setupMediaButtons();
+        document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
+
+        // Default load
+        setTimeout(() => {
+            window.switchTab('square');
+        }, 600);
+
+        console.log("✅ VocalWitness — The Living Square initialized");
+    } catch (e) {
+        console.error("Bootstrap error:", e);
+        showToast("Failed to initialize. Please refresh.", "error");
+    }
+}
+
+document.addEventListener('DOMContentLoaded', bootstrap);
+
+// Global stubs for backward compatibility
+window.loadFeed = (type) => window.switchTab(type || 'square');
+window.navigateToPage = (page) => window.location.href = page;
