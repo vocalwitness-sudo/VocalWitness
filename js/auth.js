@@ -8,7 +8,7 @@ import {
 import { db } from './firebase-config.js';
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { showToast } from './utils.js';
-import { refreshTierAndUI } from './tier.js';
+//import { refreshTierAndUI } from './tier.js';
 import { updateAppState } from './app-state.js';
 
 const auth = getAuth();
