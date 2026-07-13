@@ -53,14 +53,14 @@ function loadDynamicFeed(tab) {
 }
 
 window.showMoreMenu = () => {
-    // Remove any existing dropdown
+    // Remove existing dropdown if any
     const existing = document.getElementById('more-dropdown');
     if (existing) existing.remove();
 
     const dropdown = document.createElement('div');
     dropdown.id = 'more-dropdown';
     dropdown.className = 'fixed top-20 right-6 glass rounded-3xl shadow-2xl w-64 py-2 z-[150] border border-zinc-700';
-    
+   
     dropdown.innerHTML = `
         <div class="py-1">
             <a href="groups.html" class="flex items-center gap-3 px-6 py-3 hover:bg-zinc-800 text-white">
@@ -86,6 +86,17 @@ window.showMoreMenu = () => {
 
     document.body.appendChild(dropdown);
 
+    // Close when clicking outside
+    setTimeout(() => {
+        const closeHandler = (e) => {
+            if (!dropdown.contains(e.target)) {
+                dropdown.remove();
+                document.removeEventListener('click', closeHandler);
+            }
+        };
+        document.addEventListener('click', closeHandler);
+    }, 100);
+};
     // Close when clicking outside
     setTimeout(() => {
         document.addEventListener('click', function handler(e) {
@@ -146,7 +157,6 @@ window.publishTestimony = async () => {
     }
 };
 
-// ====================== BOOTSTRAP ======================
 // ====================== BOOTSTRAP ======================
 async function bootstrap() {
     try {
