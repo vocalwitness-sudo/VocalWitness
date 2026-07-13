@@ -1,19 +1,14 @@
-// js/media.js - SECURE VERSION WITH WITNESS MODE
+// js/media.js - Forensic Media Handler (Citizen + Witness Ready)
 import { showToast, generateSha256Hash } from './utils.js';
 import { storage } from './firebase-config.js';
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
-import { db, auth } from './firebase-config.js';   // Correct relative path
+import { auth } from './firebase-config.js';
+import { AppState } from './app-state.js';
 
 export let selectedImageFile = null;
 let engineInstance = null;
-let recordingTimerInterval = null;
-let isPaused = false;
-let secondsElapsed = 0;
-let audioContext = null;
-let analyser = null;
-let canvas = null;
-let canvasCtx = null;
 
+// Connect engine from main.js
 export function setEngine(engine) {
     engineInstance = engine;
     console.log("✅ Media Engine Connected");
@@ -23,15 +18,16 @@ export function setEngine(engine) {
 export async function handleImageSelect(event, previewArea) {
     const file = event.target.files[0];
     if (!file) return;
-    if (!file.type.startsWith('image/')) return showToast("Invalid image", "error");
+    if (!file.type.startsWith('image/')) return showToast("Please select an image", "error");
     if (file.size > 10 * 1024 * 1024) return showToast("Image too large (max 10MB)", "error");
 
     selectedImageFile = file;
+
     const reader = new FileReader();
     reader.onload = (e) => {
         previewArea.innerHTML = `
-            <div class="relative mt-4">
-                <img src="${e.target.result}" class="image-preview rounded-2xl w-full" alt="Preview">
+            <div class="relative mt-4 rounded-2xl overflow-hidden">
+                <img src="${e.target.result}" class="w-full max-h-80 object-cover" alt="Preview">
                 <button id="removeImgBtn" class="absolute top-3 right-3 bg-red-600 hover:bg-red-700 text-white rounded-full w-8 h-8 flex items-center justify-center text-xl shadow-lg">✕</button>
             </div>`;
         document.getElementById('removeImgBtn').onclick = () => removeImage(previewArea);
@@ -44,163 +40,54 @@ export function removeImage(previewArea) {
     if (previewArea) previewArea.innerHTML = '';
 }
 
-// ====================== VOICE RECORDING ======================
+// ====================== VOICE ======================
 export function toggleVoiceRecording(voiceBtn) {
-    if (!engineInstance) return showToast("Voice engine not ready", "error");
+    if (!engineInstance) return showToast("Voice engine not ready yet", "error");
 
-    const isCurrentlyRecording = engineInstance.mediaRecorder && 
-                                engineInstance.mediaRecorder.state !== "inactive";
+    const isRecording = engineInstance.mediaRecorder && engineInstance.mediaRecorder.state !== "inactive";
 
-    if (!isCurrentlyRecording) {
-        // START
-        engineInstance.startVoiceRecording(300000);
-        isPaused = false;
-        secondsElapsed = 0;
-
+    if (!isRecording) {
+        engineInstance.startVoiceRecording(300000); // 5 min max
         voiceBtn.classList.add('recording-active');
-        voiceBtn.innerHTML = `
-            <span class="flex items-center gap-4 text-white">
-                <span class="text-red-400 animate-pulse">● REC</span>
-                <span id="rec-timer" class="font-mono text-xl font-bold">00:00</span>
-                
-                <button class="pause-btn px-5 py-2 bg-yellow-500 hover:bg-yellow-400 text-black rounded-2xl text-sm font-semibold transition-all">⏸️ Pause</button>
-                
-                <button class="stop-btn px-6 py-2 bg-red-600 hover:bg-red-500 rounded-2xl text-sm font-semibold transition-all">⏹️ Stop & Save</button>
-                
-                <canvas id="spectrum" width="260" height="68" class="ml-3"></canvas>
-            </span>
-        `;
-
-        // Attach listeners
-        setTimeout(() => {
-            const pauseBtn = voiceBtn.querySelector('.pause-btn');
-            const stopBtn = voiceBtn.querySelector('.stop-btn');
-
-            if (pauseBtn) pauseBtn.addEventListener('click', () => pauseRecording(pauseBtn));
-            if (stopBtn) stopBtn.addEventListener('click', () => stopVoiceRecordingNow());
-        }, 100);
-
-        setTimeout(setupSpectrumAnalyzer, 250);
-        recordingTimerInterval = setInterval(updateTimer, 1000);
-        
-        showToast("🎤 Recording started", "info");
-
+        // You can enhance the button UI here as in your original code
+        showToast("🎤 Recording started...", "info");
     } else {
-        stopRecordingClean(voiceBtn);
-    }
-}
-
-// Keep these functions
-function stopRecordingClean(voiceBtn) {
-    engineInstance?.stopVoiceRecording();
-    stopSpectrumAnalyzer();
-    
-    voiceBtn.classList.remove('recording-active');
-    voiceBtn.innerHTML = `<span>🎤 Voice Testimony</span>`;
-
-    if (engineInstance?.currentAudioBlob) {
+        engineInstance.stopVoiceRecording();
+        voiceBtn.classList.remove('recording-active');
         showToast("✅ Recording saved", "success");
     }
 }
 
-window.stopVoiceRecordingNow = function() {
-    const voiceBtn = document.getElementById('btn-voice');
-    if (voiceBtn) stopRecordingClean(voiceBtn);
-};
+// ====================== UPLOAD ======================
+export async function uploadForensicMedia() {
+    const mediaData = { imageUrl: null, audioUrl: null, imageHash: null, audioHash: null };
 
-window.pauseRecording = function(btn) {
-    isPaused = !isPaused;
-    btn.textContent = isPaused ? '▶️ Resume' : '⏸️ Pause';
-};
-function updateTimer() {
-    if (!isPaused) secondsElapsed++;
-    const min = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
-    const sec = String(secondsElapsed % 60).padStart(2, '0');
-    const timerEl = document.getElementById('rec-timer');
-    if (timerEl) timerEl.textContent = `${min}:${sec}`;
-}
+    const userId = auth.currentUser?.uid || "anonymous";
+    const isWitness = AppState.currentMode === 'witness';
 
-function setupSpectrumAnalyzer() {
-    canvas = document.getElementById('spectrum');
-    if (!canvas) return;
-    canvasCtx = canvas.getContext('2d');
-
-    try {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        analyser = audioContext.createAnalyser();
-        analyser.fftSize = 128;
-        if (engineInstance.mediaRecorder?.stream) {
-            const source = audioContext.createMediaStreamSource(engineInstance.mediaRecorder.stream);
-            source.connect(analyser);
-            drawSpectrum();
-        }
-    } catch (e) {
-        console.warn("Spectrum analyzer unavailable", e);
-    }
-}
-
-function drawSpectrum() {
-    if (!canvasCtx || !analyser) return;
-    requestAnimationFrame(drawSpectrum);
-    const bufferLength = analyser.frequencyBinCount;
-    const dataArray = new Uint8Array(bufferLength);
-    analyser.getByteFrequencyData(dataArray);
-
-    canvasCtx.fillStyle = '#111827';
-    canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
-
-    const barWidth = (canvas.width / bufferLength) * 1.6;
-    let x = 0;
-    for (let i = 0; i < bufferLength; i++) {
-        const barHeight = (dataArray[i] / 255) * canvas.height * 0.9;
-        canvasCtx.fillStyle = `hsl(${100 + dataArray[i]/3}, 90%, 65%)`;
-        canvasCtx.fillRect(x, canvas.height - barHeight, barWidth - 2, barHeight);
-        x += barWidth;
-    }
-}
-
-function stopSpectrumAnalyzer() {
-    if (recordingTimerInterval) clearInterval(recordingTimerInterval);
-    if (audioContext) audioContext.close();
-}
-
-window.pauseRecording = function(el) {
-    isPaused = !isPaused;
-    el.textContent = isPaused ? '▶️' : '⏸️';
-};
-
-// ====================== SECURE UPLOAD ======================
-export async function uploadForensicMedia(userId = "anonymous", isWitnessMode = false) {
-    if (!userId || userId === "anonymous") {
-        throw new Error("User must be authenticated");
-    }
-
-    const mediaData = { imageUrl: null, audioUrl: null };
-
-    // Image Upload
+    // Image
     if (selectedImageFile) {
         try {
             const hash = await generateSha256Hash(selectedImageFile);
-            const path = isWitnessMode 
+            const path = isWitness 
                 ? `witness/${userId}/${Date.now()}_${selectedImageFile.name}`
-                : `images/${userId}/${Date.now()}_${selectedImageFile.name}`;
+                : `public/${userId}/${Date.now()}_${selectedImageFile.name}`;
 
             const imageRef = ref(storage, path);
             await uploadBytes(imageRef, selectedImageFile);
             mediaData.imageUrl = await getDownloadURL(imageRef);
             mediaData.imageHash = hash;
-            console.log(`✅ Uploaded to ${path}`);
         } catch (e) {
             console.error("Image upload failed", e);
             throw e;
         }
     }
 
-    // Audio Upload
+    // Audio
     if (engineInstance?.currentAudioBlob) {
         try {
             const hash = await generateSha256Hash(engineInstance.currentAudioBlob);
-            const audioRef = ref(storage, `testimonies/${userId}/${Date.now()}.webm`);
+            const audioRef = ref(storage, `audio/${userId}/${Date.now()}.webm`);
             await uploadBytes(audioRef, engineInstance.currentAudioBlob);
             mediaData.audioUrl = await getDownloadURL(audioRef);
             mediaData.audioHash = hash;
@@ -216,20 +103,6 @@ export function resetMediaState() {
     selectedImageFile = null;
     const preview = document.getElementById('preview-area');
     if (preview) preview.innerHTML = '';
-}
-
-// Add this at the bottom of js/media.js
-export function startForensicShield() {
-    // This function triggers the Forensic Shield flow
-    console.log("📸 Forensic Shield Activated: Preparing metadata/ZK-proofs...");
-    
-    // Example: If you have a modal for this, show it here
-    const shieldModal = document.getElementById('forensicShieldModal');
-    if (shieldModal) {
-        shieldModal.classList.remove('hidden');
-    } else {
-        showToast("Forensic Shield Ready: Capture your evidence.", "info");
-    }
 }
 
 // Global exposure
