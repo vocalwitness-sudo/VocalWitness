@@ -94,13 +94,15 @@ async function bootstrap() {
         mediaModule.setEngine(engineInstance);
 
         // Event listeners
-        document.getElementById('btn-photo')?.addEventListener('click', (e) => {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'image/*';
-            input.onchange = (ev) => mediaModule.handleImageSelect(ev, document.getElementById('preview-area'));
-            input.click();
-        });
+      document.getElementById('btn-photo')?.addEventListener('click', () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (ev) => {
+        mediaModule.handleImageSelect(ev, document.getElementById('preview-area'));
+    };
+    input.click();
+});
 
         document.getElementById('btn-voice')?.addEventListener('click', (e) => mediaModule.toggleVoiceRecording(e.currentTarget));
 
