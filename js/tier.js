@@ -149,6 +149,11 @@ export function isAtLeast(tierToCheck) {
   // Better to await when calling
 }
 
+export function refreshTierAndUI() {
+    if (typeof applyTierTheme === 'function') applyTierTheme();
+    if (typeof updateTierBadge === 'function') updateTierBadge();
+    console.log("✅ Tier UI refreshed");
+}
 // TODO: Add your escalatePost function here later
 export async function escalatePost(postId) {
     console.log("Escalate post called for ID:", postId);
