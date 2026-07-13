@@ -117,7 +117,6 @@ window.showMoreMenu = () => {
             }
         });
     }, 10);
-};
 
 // ====================== PUBLISH ======================
 window.publishTestimony = async () => {
@@ -204,9 +203,8 @@ function setupEventListeners() {
         input.accept = 'image/*';
         input.onchange = (ev) => {
             mediaModule.handleImageSelect(ev, document.getElementById('preview-area'));
-        };
+ 
         input.click();
-    });
 
     document.getElementById('btn-voice')?.addEventListener('click', (e) => 
         mediaModule.toggleVoiceRecording(e.currentTarget)
@@ -221,20 +219,17 @@ function setupEventListeners() {
             window.showProfile();
         } else {
             showToast("Opening Profile...", "info");
-        }
-    });
-
+       
     document.getElementById('support-btn')?.addEventListener('click', () => {
         showToast("Support & Help Center coming soon", "info");
-    });
+  
 
     // Language selector
     const langSelector = document.getElementById('languageSelector');
     if (langSelector) {
         langSelector.addEventListener('change', (e) => {
-            // You can expand this with your i18n system
+            
             showToast(`Language changed to ${e.target.value}`, "success");
-        });
     }
 }
 
