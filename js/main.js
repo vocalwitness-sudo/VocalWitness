@@ -60,22 +60,44 @@ window.publishTestimony = async () => {
     const textarea = document.getElementById('mainInput');
     const content = textarea?.value.trim() || "";
 
-    if (!content) return showToast("Please write something", "error");
+    if (!content && !mediaModule.selectedImageFile && !engineInstance?.currentAudioBlob) {
+        return showToast("Please add text, photo, or voice testimony", "error");
+    }
 
     const postBtn = document.getElementById('postButton');
     postBtn.disabled = true;
-    postBtn.textContent = 'Publishing...';
+    postBtn.textContent = 'Publishing to the Square...';
 
     try {
         const mediaData = await mediaModule.uploadForensicMedia();
+
+        const { collection, addDoc, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
+
+        await addDoc(collection(db, "testimonies"), {
+            authorId: auth.currentUser?.uid,
+            author: auth.currentUser?.displayName || "Anonymous Witness",
+            content: content,
+            imageUrl: mediaData.imageUrl,
+            audioUrl: mediaData.audioUrl,
+            imageHash: mediaData.imageHash,
+            audioHash: mediaData.audioHash,
+            timestamp: serverTimestamp(),
+            feedVisibility: AppState.currentMode === 'witness' ? "witness" : "citizen-talk",
+            status: AppState.currentMode === 'witness' ? "verified" : "public"
+        });
+
         await window.recordTestimonyContribution?.();
-        showToast("✅ Testimony published!", "success");
+
+        showToast("✅ Testimony published successfully!", "success");
+
+        // Reset
         textarea.value = '';
         mediaModule.resetMediaState();
         loadDynamicFeed(AppState.currentTab);
+
     } catch (err) {
-        console.error(err);
-        showToast("Publish failed", "error");
+        console.error("Publish error:", err);
+        showToast("Failed to publish. Please try again.", "error");
     } finally {
         postBtn.disabled = false;
         postBtn.textContent = 'Publish to the Square';
