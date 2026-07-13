@@ -1,4 +1,4 @@
-// js/main.js - Final Clean Version
+// js/main.js - Final Clean Version for Public Launch
 import './app-state.js';
 import { initAuth } from "./auth.js";
 import { initFeed } from './feed.js';
@@ -24,17 +24,21 @@ window.switchTab = (tab) => {
             if (tab === 'witness') btn.classList.add('bg-amber-900', 'text-amber-300');
         }
     });
+
     AppState.currentTab = tab;
+
     if (tab === 'witness') {
         AppState.currentMode = 'witness';
         showToast("🔐 Witness Circle Mode", "success");
     } else {
         AppState.currentMode = 'citizen';
     }
+
     if (tab === 'more') {
         showMoreMenu();
         return;
     }
+
     loadDynamicFeed(tab);
 };
 
@@ -44,6 +48,7 @@ function loadDynamicFeed(tab) {
     else if (tab === 'arena') feedType = 'live';
     else if (tab === 'mycircle') feedType = 'my-testimonies';
     else if (tab === 'witness') feedType = 'true-witness';
+
     initFeed(db, feedType);
 }
 
@@ -82,6 +87,7 @@ window.showMoreMenu = () => {
 window.publishTestimony = async () => {
     const textarea = document.getElementById('mainInput');
     const content = textarea?.value.trim() || "";
+
     if (!content && !mediaModule.selectedImageFile && !engineInstance?.currentAudioBlob) {
         return showToast("Please add text, photo, or voice testimony", "error");
     }
@@ -93,7 +99,7 @@ window.publishTestimony = async () => {
     try {
         const mediaData = await mediaModule.uploadForensicMedia();
         const { collection, addDoc, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
-        
+
         await addDoc(collection(db, "testimonies"), {
             authorId: auth.currentUser?.uid,
             author: auth.currentUser?.displayName || "Anonymous Witness",
@@ -111,7 +117,7 @@ window.publishTestimony = async () => {
         showToast("✅ Testimony published successfully!", "success");
 
         textarea.value = '';
-        mediaModule.resetMediaState();
+        mediaModule.resetMediaState?.();
         loadDynamicFeed(AppState.currentTab);
     } catch (err) {
         console.error("Publish error:", err);
@@ -128,15 +134,16 @@ async function bootstrap() {
         await initAuth();
         initLanguage();
         initProfile();
-       
+
         engineInstance = new CitizenTalkEngine(db, storage);
         window.engineInstance = engineInstance;
-        mediaModule.setEngine(engineInstance);
+        if (mediaModule.setEngine) mediaModule.setEngine(engineInstance);
 
         if (typeof applyTierTheme === 'function') applyTierTheme();
         if (typeof updateTierBadge === 'function') updateTierBadge();
 
         setupEventListeners();
+
         setTimeout(() => window.switchTab('square'), 600);
 
         console.log("✅ VocalWitness Live Ready");
@@ -147,18 +154,15 @@ async function bootstrap() {
 
 function setupEventListeners() {
     // Media buttons
-    const photoBtn = document.getElementById('btn-photo');
-    if (photoBtn) {
-        photoBtn.addEventListener('click', () => {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'image/*';
-            input.onchange = (ev) => {
-                mediaModule.handleImageSelect(ev, document.getElementById('preview-area'));
-            };
-            input.click();
-        });
-    }
+    document.getElementById('btn-photo')?.addEventListener('click', () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.onchange = (ev) => {
+            mediaModule.handleImageSelect(ev, document.getElementById('preview-area'));
+        };
+        input.click();
+    });
 
     document.getElementById('btn-voice')?.addEventListener('click', (e) => 
         mediaModule.toggleVoiceRecording(e.currentTarget)
@@ -189,5 +193,5 @@ function setupEventListeners() {
     }
 }
 
-// Initialize when DOM is ready
+// Start the app
 document.addEventListener('DOMContentLoaded', bootstrap);
