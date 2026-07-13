@@ -177,3 +177,8 @@ function setupEventListeners() {
 }
 
 document.addEventListener('DOMContentLoaded', bootstrap);
+
+// Temporary fallback
+window.showGroupCreationModal = () => {
+    showToast("Group creation is being set up...", "info");
+};
