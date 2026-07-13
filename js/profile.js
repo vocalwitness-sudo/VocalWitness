@@ -1,16 +1,23 @@
-// js/profile.js - Safe & Robust Version
+// js/profile.js - Integrated with AppState + Circles
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { auth, db } from './firebase-config.js';
 import { showToast } from './utils.js';
+import { AppState, updateAppState } from './app-state.js';
+import { refreshTierAndUI } from './tier.js';
 
 let currentUserData = null;
 
-onAuthStateChanged(auth, (user) => {
-    if (user) {
-        listenToUserProfile(user.uid);
-    }
-});
+export function initProfile() {
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            listenToUserProfile(user.uid);
+            updateAppState({ isAuthenticated: true, currentUser: user });
+        } else {
+            updateAppState({ isAuthenticated: false, currentUser: null });
+        }
+    });
+}
 
 function listenToUserProfile(userId) {
     const userRef = doc(db, "users", userId);
@@ -18,8 +25,7 @@ function listenToUserProfile(userId) {
         if (snapshot.exists()) {
             currentUserData = snapshot.data();
             renderProfileUI(currentUserData);
-        } else {
-            console.warn("User document not found");
+            refreshTierAndUI();
         }
     });
 }
@@ -27,29 +33,31 @@ function listenToUserProfile(userId) {
 function renderProfileUI(userData) {
     if (!userData) return;
 
-    // Use optional chaining + fallback to prevent crashes
-    const profileName = document.getElementById('profileName');
-    const profileUsername = document.getElementById('profileUsername');
-    const postCount = document.getElementById('post-count');
-    const reputationScore = document.getElementById('reputation-score');
-    const trustScore = document.getElementById('trust-score');
+    // Update elements if they exist in modal or profile page
+    const fields = {
+        profileName: userData.displayName || "Anonymous Witness",
+        profileUsername: `@${userData.username || 'user_' + (userData.uid || '').slice(0,6)}`,
+        postCount: userData.testimoniesCount || 0,
+        reputationScore: userData.credibilityScore || 50,
+        trustScore: userData.integrityScore || 60
+    };
 
-    if (profileName) profileName.textContent = userData.displayName || "Anonymous Witness";
-    if (profileUsername) profileUsername.textContent = `@${userData.username || 'user_' + (userData.uid || '').slice(0,6)}`;
-    
-    if (postCount) postCount.textContent = userData.testimoniesCount || 0;
-    if (reputationScore) reputationScore.textContent = userData.reputationScore || 50;
-    if (trustScore) trustScore.textContent = userData.trustScore || 60;
-
-    console.log("✅ Profile UI updated:", userData);
+    Object.keys(fields).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = fields[id];
+    });
 }
 
-// Global functions for modal
+// Modal Controls
 window.showProfile = () => {
     const modal = document.getElementById('profileModal');
-    if (modal) modal.classList.remove('hidden');
-    // Re-render when opening
-    if (currentUserData) renderProfileUI(currentUserData);
+    if (modal) {
+        modal.classList.remove('hidden');
+        if (currentUserData) renderProfileUI(currentUserData);
+    } else {
+        showToast("Opening My Identity...", "info");
+        // Future: navigate to dedicated profile page
+    }
 };
 
 window.closeProfile = () => {
@@ -57,24 +65,15 @@ window.closeProfile = () => {
     if (modal) modal.classList.add('hidden');
 };
 
-window.editProfile = () => {
-    showToast("✏️ Edit profile coming soon", "info");
-};
-
-window.downloadPassport = () => {
-    showToast("📄 PDF download coming soon", "info");
-};
-
-window.showSettings = () => {
-    showToast("⚙️ Settings & Privacy coming soon", "info");
-};
+window.editProfile = () => showToast("✏️ Edit Identity coming soon", "info");
+window.downloadPassport = () => showToast("📄 Digital Passport (PDF) coming soon", "info");
+window.showSettings = () => showToast("⚙️ Settings & Privacy", "info");
 
 window.logout = async () => {
     if (confirm("Sign out of VocalWitness?")) {
         try {
-            // You can add real auth signOut here later
-            showToast("✅ Signed out successfully", "success");
-            setTimeout(() => window.location.reload(), 800);
+            const { logout } = await import('./auth.js');
+            await logout();
         } catch (e) {
             console.error(e);
             window.location.reload();
