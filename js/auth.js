@@ -1,22 +1,22 @@
-// js/auth.js - Clean Auth with User Document Creation
+// js/auth.js - Clean Auth with Circle Integration
 import {
     getAuth,
     signInWithPopup,
     GoogleAuthProvider,
     signOut
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-
 import { db } from './firebase-config.js';
-import { doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { showToast } from './utils.js';
+import { refreshTierAndUI } from './tier.js';
+import { updateAppState } from './app-state.js';
 
 const auth = getAuth();
 const provider = new GoogleAuthProvider();
 
 export { auth };
 
-// Create or update user document
-async function createUserDocument(user) {
+async function createOrUpdateUser(user) {
     if (!user) return;
     try {
         const userRef = doc(db, "users", user.uid);
@@ -27,50 +27,46 @@ async function createUserDocument(user) {
                 uid: user.uid,
                 email: user.email,
                 displayName: user.displayName || "Anonymous Witness",
-                photoURL: user.photoURL || null,
+                photoURL: user.photoURL,
                 tier: "citizen",
                 isPhoneVerified: false,
                 zkVerified: false,
                 credibilityScore: 10,
-                integrityScore: 100,
-                createdAt: new Date().toISOString(),
-                lastActive: new Date().toISOString(),
-                joinDate: new Date().toISOString()
+                createdAt: serverTimestamp(),
+                lastActive: serverTimestamp()
             });
-            console.log("✅ New user document created");
-            showToast("Welcome to VocalWitness!", "success");
+            showToast("Welcome to the Square!", "success");
         } else {
-            await updateDoc(userRef, {
-                lastActive: new Date().toISOString()
-            });
+            await updateDoc(userRef, { lastActive: serverTimestamp() });
         }
-    } catch (error) {
-        console.error("User document error:", error);
+    } catch (e) {
+        console.error("User document error:", e);
     }
 }
 
-// Google Sign In
 export async function googleLogin() {
     try {
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
-       
-        await createUserDocument(user);
+
+        await createOrUpdateUser(user);
+        updateAppState({ isAuthenticated: true, currentUser: user });
+
+        await refreshTierAndUI();
+
         window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
-       
-        showToast(`Signed in as ${user.displayName || 'Witness'}`, "success");
         return user;
     } catch (error) {
-        console.error("Google login failed:", error);
-        showToast("Login failed. Try again.", "error");
+        console.error("Login error:", error);
+        showToast("Login failed. Please try again.", "error");
     }
 }
 
-// Logout
 export async function logout() {
     try {
         await signOut(auth);
-        showToast("Signed out successfully", "success");
+        updateAppState({ isAuthenticated: false, currentUser: null });
+        showToast("Signed out", "success");
         window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user: null } }));
     } catch (error) {
         console.error("Logout error:", error);
@@ -78,31 +74,21 @@ export async function logout() {
     }
 }
 
-// Refresh tier after login
-export function refreshUserTier() {
-    import('./tier.js').then(({ getCurrentUserTier, applyTierTheme, updateTierBadge }) => {
-        getCurrentUserTier().then(tier => {
-            applyTierTheme(tier);
-            if (updateTierBadge) updateTierBadge();
-        }).catch(console.warn);
-    }).catch(console.warn);
-}
-
-// Initialize Auth Listener
 export function initAuth() {
     auth.onAuthStateChanged(async (user) => {
         if (user) {
-            await createUserDocument(user);
-            window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
-            refreshUserTier(); // Refresh UI after login
+            await createOrUpdateUser(user);
+            updateAppState({ isAuthenticated: true, currentUser: user });
+            await refreshTierAndUI();
         } else {
-            window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user: null } }));
+            updateAppState({ isAuthenticated: false, currentUser: null });
         }
+        window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
     });
-   
-    console.log("🔐 Auth system initialized");
+
+    console.log("🔐 Auth initialized");
 }
 
-// Expose globally
+// Global exposure
 window.googleLogin = googleLogin;
 window.logout = logout;
