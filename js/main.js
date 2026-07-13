@@ -116,3 +116,28 @@ async function bootstrap() {
 }
 
 document.addEventListener('DOMContentLoaded', bootstrap);
+
+export async function handleImageSelect(event, previewArea) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) return showToast("Please select an image", "error");
+    if (file.size > 10 * 1024 * 1024) return showToast("Image too large (max 10MB)", "error");
+
+    selectedImageFile = file;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        if (!previewArea) {
+            console.warn("Preview area not found");
+            return;
+        }
+        previewArea.innerHTML = `
+            <div class="relative mt-4 rounded-2xl overflow-hidden">
+                <img src="${e.target.result}" class="w-full max-h-80 object-cover" alt="Preview">
+                <button id="removeImgBtn" class="absolute top-3 right-3 bg-red-600 hover:bg-red-700 text-white rounded-full w-8 h-8 flex items-center justify-center text-xl shadow-lg">✕</button>
+            </div>`;
+        document.getElementById('removeImgBtn').onclick = () => removeImage(previewArea);
+    };
+    reader.readAsDataURL(file);
+}
