@@ -84,6 +84,7 @@ window.showMoreMenu = () => {
 };
 
 // ====================== PUBLISH ======================
+// ====================== PUBLISH ======================
 window.publishTestimony = async () => {
     const textarea = document.getElementById('mainInput');
     const content = textarea?.value.trim() || "";
@@ -98,27 +99,38 @@ window.publishTestimony = async () => {
 
     try {
         const mediaData = await mediaModule.uploadForensicMedia();
+
         const { collection, addDoc, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
 
-        await addDoc(collection(db, "testimonies"), {
+        const testimonyData = {
             authorId: auth.currentUser?.uid,
             author: auth.currentUser?.displayName || "Anonymous Witness",
             content: content,
-            imageUrl: mediaData.imageUrl,
-            audioUrl: mediaData.audioUrl,
-            imageHash: mediaData.imageHash,
-            audioHash: mediaData.audioHash,
+            imageUrl: mediaData?.imageUrl || null,
+            audioUrl: mediaData?.audioUrl || null,
+            imageHash: mediaData?.imageHash || null,
+            audioHash: mediaData?.audioHash || null,
             timestamp: serverTimestamp(),
-            feedVisibility: AppState.currentMode === 'witness' ? "witness" : "citizen-talk",
-            status: AppState.currentMode === 'witness' ? "verified" : "public"
-        });
+            feedVisibility: AppState.currentMode || "citizen-talk",
+            moderationStatus: "approved",           // Important for rules
+            status: "public",
+            credibilityScore: 10,
+            createdAt: serverTimestamp()
+        };
+
+        await addDoc(collection(db, "testimonies"), testimonyData);
 
         await window.recordTestimonyContribution?.();
+
         showToast("✅ Testimony published successfully!", "success");
 
-        textarea.value = '';
-        mediaModule.resetMediaState?.();
-        loadDynamicFeed(AppState.currentTab);
+        // Reset form
+        if (textarea) textarea.value = '';
+        if (mediaModule.resetMediaState) mediaModule.resetMediaState();
+
+        // Refresh feed
+        loadDynamicFeed(AppState.currentTab || 'square');
+
     } catch (err) {
         console.error("Publish error:", err);
         showToast("Failed to publish. Please try again.", "error");
@@ -127,7 +139,6 @@ window.publishTestimony = async () => {
         postBtn.textContent = 'Publish to the Square';
     }
 };
-
 // ====================== BOOTSTRAP ======================
 async function bootstrap() {
     try {
