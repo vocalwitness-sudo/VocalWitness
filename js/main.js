@@ -8,6 +8,7 @@ import { initLanguage } from './i18n.js';
 import * as mediaModule from './media.js';
 import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
 import { initProfile } from './profile.js';
+import { db, auth, storage } from './firebase-config.js';
 
 // Global State (from app-state.js)
 import { AppState, updateAppState } from './app-state.js';
@@ -96,7 +97,7 @@ async function bootstrap() {
         window.engineInstance = engineInstance;
         mediaModule.setEngine(engineInstance);
 
-        // Setup buttons
+        // Setup event listeners
         document.getElementById('btn-photo')?.addEventListener('click', (e) => {
             const input = document.createElement('input');
             input.type = 'file';
@@ -111,7 +112,7 @@ async function bootstrap() {
 
         document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
 
-        // Default tab
+        // Load default tab
         setTimeout(() => window.switchTab('square'), 800);
 
         console.log("✅ VocalWitness Live Ready");
@@ -119,5 +120,3 @@ async function bootstrap() {
         console.error("Bootstrap failed:", e);
     }
 }
-
-document.addEventListener('DOMContentLoaded', bootstrap);
