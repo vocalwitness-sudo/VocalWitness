@@ -125,25 +125,24 @@ export function applyTierTheme() {
  * Update profile badge
  */
 export async function updateTierBadge() {
-  const badge = document.getElementById('profile-tier-badge');
-  if (!badge) return;
+    const badge = document.getElementById('profile-tier-badge');
+    if (!badge) return;
 
-  const tier = await getCurrentUserTier();
-  const position = await getCurrentWitnessPosition();
+    const tier = await getCurrentUserTier();
+    const position = await getCurrentWitnessPosition();
 
-  if (position) {
-    badge.innerHTML = `${position.emblem} ${position.name}`;
-    badge.style.backgroundColor = position.color;
-  } else if (tier === TIERS.CITIZEN_CIRCLE) {
-    badge.innerHTML = '🛡️ Citizen Circle';
-    badge.style.backgroundColor = '#34d399';
-  } else {
-    badge.innerHTML = '👤 Citizen';
-    badge.style.backgroundColor = '#6b7280';
-  }
-  badge.classList.remove('hidden');
+    if (position) {
+        badge.innerHTML = `${position.emblem} ${position.name}`;
+        badge.style.backgroundColor = position.color;
+    } else if (tier === TIERS.CITIZEN_CIRCLE) {
+        badge.innerHTML = '🛡️ Citizen Circle';
+        badge.style.backgroundColor = '#34d399';
+    } else {
+        badge.innerHTML = '👤 Citizen';
+        badge.style.backgroundColor = '#6b7280';
+    }
+    badge.classList.remove('hidden');
 }
-
 // Helper functions
 export function isAtLeast(tierToCheck) {
   const current = getCurrentUserTier(); // Note: this is async in real use
