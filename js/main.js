@@ -107,7 +107,7 @@ window.showMoreMenu = () => {
         };
         document.addEventListener('click', closeHandler);
     }, 100);
-};
+
     // Close when clicking outside
     setTimeout(() => {
         document.addEventListener('click', function handler(e) {
