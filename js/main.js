@@ -8,8 +8,9 @@ import { initLanguage } from './i18n.js';
 import * as mediaModule from './media.js';
 import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
 import { initProfile } from './profile.js';
-
-// Import state
+import { initOnboarding } from './onboarding.js';
+import { loadDynamicNavigation } from './navigation.js';
+import { applyTierTheme, updateTierBadge } from './tier.js';
 import { AppState } from './app-state.js';
 
 let engineInstance = null;
@@ -105,30 +106,24 @@ window.publishTestimony = async () => {
 };
 
 // ====================== BOOTSTRAP ======================
+// ====================== BOOTSTRAP ======================
 async function bootstrap() {
     try {
         await initAuth();
         initLanguage();
         initProfile();
-
+        
+        // Initialize core modules
         engineInstance = new CitizenTalkEngine(db, storage);
         window.engineInstance = engineInstance;
         mediaModule.setEngine(engineInstance);
 
+        // Apply tier styling
+        if (typeof applyTierTheme === 'function') applyTierTheme();
+        if (typeof updateTierBadge === 'function') updateTierBadge();
+
         // Event listeners
-      document.getElementById('btn-photo')?.addEventListener('click', () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.onchange = (ev) => {
-        mediaModule.handleImageSelect(ev, document.getElementById('preview-area'));
-    };
-    input.click();
-});
-
-        document.getElementById('btn-voice')?.addEventListener('click', (e) => mediaModule.toggleVoiceRecording(e.currentTarget));
-
-        document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
+        setupEventListeners();
 
         // Start with Citizen Square
         setTimeout(() => window.switchTab('square'), 600);
@@ -139,29 +134,46 @@ async function bootstrap() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', bootstrap);
+function setupEventListeners() {
+    // Media buttons
+    document.getElementById('btn-photo')?.addEventListener('click', () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.onchange = (ev) => {
+            mediaModule.handleImageSelect(ev, document.getElementById('preview-area'));
+        };
+        input.click();
+    });
 
-export async function handleImageSelect(event, previewArea) {
-    const file = event.target.files[0];
-    if (!file) return;
+    document.getElementById('btn-voice')?.addEventListener('click', (e) => 
+        mediaModule.toggleVoiceRecording(e.currentTarget)
+    );
 
-    if (!file.type.startsWith('image/')) return showToast("Please select an image", "error");
-    if (file.size > 10 * 1024 * 1024) return showToast("Image too large (max 10MB)", "error");
+    // Publish button
+    document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
 
-    selectedImageFile = file;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        if (!previewArea) {
-            console.warn("Preview area not found");
-            return;
+    // Top bar buttons
+    document.getElementById('profile-btn')?.addEventListener('click', () => {
+        if (typeof window.showProfile === 'function') {
+            window.showProfile();
+        } else {
+            showToast("Opening Profile...", "info");
         }
-        previewArea.innerHTML = `
-            <div class="relative mt-4 rounded-2xl overflow-hidden">
-                <img src="${e.target.result}" class="w-full max-h-80 object-cover" alt="Preview">
-                <button id="removeImgBtn" class="absolute top-3 right-3 bg-red-600 hover:bg-red-700 text-white rounded-full w-8 h-8 flex items-center justify-center text-xl shadow-lg">✕</button>
-            </div>`;
-        document.getElementById('removeImgBtn').onclick = () => removeImage(previewArea);
-    };
-    reader.readAsDataURL(file);
+    });
+
+    document.getElementById('support-btn')?.addEventListener('click', () => {
+        showToast("Support & Help Center coming soon", "info");
+    });
+
+    // Language selector
+    const langSelector = document.getElementById('languageSelector');
+    if (langSelector) {
+        langSelector.addEventListener('change', (e) => {
+            // You can expand this with your i18n system
+            showToast(`Language changed to ${e.target.value}`, "success");
+        });
+    }
 }
+
+document.addEventListener('DOMContentLoaded', bootstrap);
