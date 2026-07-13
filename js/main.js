@@ -99,6 +99,17 @@ window.showMoreMenu = () => {
 };
     // Close when clicking outside
     setTimeout(() => {
+        const closeHandler = (e) => {
+            if (!dropdown.contains(e.target)) {
+                dropdown.remove();
+                document.removeEventListener('click', closeHandler);
+            }
+        };
+        document.addEventListener('click', closeHandler);
+    }, 100);
+};
+    // Close when clicking outside
+    setTimeout(() => {
         document.addEventListener('click', function handler(e) {
             if (!dropdown.contains(e.target)) {
                 dropdown.remove();
