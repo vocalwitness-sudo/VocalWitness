@@ -225,12 +225,15 @@ function setupEventListeners() {
   
 
     // Language selector
-    const langSelector = document.getElementById('languageSelector');
-    if (langSelector) {
-        langSelector.addEventListener('change', (e) => {
-            
-            showToast(`Language changed to ${e.target.value}`, "success");
-    }
+const langSelector = document.getElementById('languageSelector');
+
+if (langSelector) {
+    langSelector.addEventListener('change', (e) => {
+        showToast(`Language changed to ${e.target.value}`, "success");
+    });
+}
+
+document.addEventListener('DOMContentLoaded', bootstrap);
 
 document.addEventListener('DOMContentLoaded', bootstrap);
 
