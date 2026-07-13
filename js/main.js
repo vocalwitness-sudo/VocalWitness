@@ -113,6 +113,9 @@ function setupMediaButtons() {
         showToast("📸 Forensic Photo upload — opening...", "info");
         // mediaModule.handleImageSelect...
     });
+    case 'square':
+    feedType = 'citizen-talk';
+    break;
 
     document.getElementById('btn-voice')?.addEventListener('click', () => {
         showToast("🎤 Voice Testimony — recording...", "info");
