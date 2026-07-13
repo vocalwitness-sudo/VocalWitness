@@ -11,40 +11,69 @@
     </style>
 </head>
 <body class="min-h-screen bg-[#0a0f1c] text-white p-4">
-
     <div class="max-w-4xl mx-auto">
         <header class="flex justify-between items-center mb-8">
             <h1 class="text-4xl font-bold text-emerald-400">Groups</h1>
-            <button data-action="navigate-back" class="px-5 py-2 text-sm border border-zinc-600 rounded-2xl">← Back</button>
+            <button onclick="window.history.back()" class="px-5 py-2 text-sm border border-zinc-600 rounded-2xl">← Back</button>
         </header>
 
         <div class="flex gap-2 mb-6 border-b border-zinc-700 pb-2">
-            <button data-action="switch-tab" data-tab-id="0" class="tab-btn active px-6 py-3 rounded-2xl font-medium" id="tab-discover">Discover</button>
-            <button data-action="switch-tab" data-tab-id="1" class="tab-btn px-6 py-3 rounded-2xl font-medium" id="tab-my">My Groups</button>
+            <button class="tab-btn active px-6 py-3 rounded-2xl font-medium">Discover</button>
+            <button class="tab-btn px-6 py-3 rounded-2xl font-medium">My Groups</button>
         </div>
 
-        <input type="text" id="searchInput" data-action="filter-groups"
+        <input type="text" id="searchInput" 
                class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4 mb-6"
                placeholder="Search groups...">
 
         <div id="group-container" class="space-y-6"></div>
 
-        <div id="profileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-            <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-700 w-96 shadow-xl">
-                <h2 class="text-white text-xl font-bold mb-4">Your Profile</h2>
-                <div id="profileContent"></div>
-                <button data-action="close-profile" class="mt-4 w-full bg-zinc-700 text-white py-2 rounded-lg hover:bg-zinc-600">Close</button>
-            </div>
-        </div>
-
-        <button data-action="show-create-modal" class="mt-12 w-full max-w-md mx-auto block bg-emerald-500 text-black font-semibold py-5 rounded-3xl">
+        <!-- Create Group Button -->
+        <button onclick="showGroupCreationModal()" 
+                class="mt-12 w-full max-w-md mx-auto block bg-emerald-500 text-black font-semibold py-5 rounded-3xl">
             ➕ Create New Group
         </button>
     </div>
 
+    <!-- Group Creation Modal -->
+    <div id="groupModal" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center z-[200]">
+        <div class="glass rounded-3xl max-w-md w-full mx-4 overflow-hidden">
+            <div class="p-6 border-b border-zinc-700">
+                <h2 class="text-2xl font-bold">Create New Group</h2>
+                <p class="text-zinc-400 text-sm">Build your community</p>
+            </div>
+            
+            <div class="p-6 space-y-5">
+                <div>
+                    <label class="block text-sm text-zinc-400 mb-1">Group Name *</label>
+                    <input id="groupName" type="text" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-3 focus:outline-none focus:border-emerald-500" placeholder="e.g. Lagos Truth Seekers">
+                </div>
+                
+                <div>
+                    <label class="block text-sm text-zinc-400 mb-1">Description</label>
+                    <textarea id="groupDesc" rows="3" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-3 focus:outline-none focus:border-emerald-500" placeholder="What is this group about?"></textarea>
+                </div>
+                
+                <div>
+                    <label class="block text-sm text-zinc-400 mb-1">Visibility</label>
+                    <select id="groupVisibility" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-3 focus:outline-none focus:border-emerald-500">
+                        <option value="public">Public</option>
+                        <option value="network">My Network Only</option>
+                        <option value="witness">Witness Circle Only</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="p-6 border-t border-zinc-700 flex gap-3">
+                <button onclick="closeGroupModal()" class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl">Cancel</button>
+                <button onclick="createGroup()" class="flex-1 py-4 bg-emerald-600 hover:bg-emerald-500 text-black font-semibold rounded-2xl">Create Group</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module" src="js/main.js"></script>
     <script type="module">
-        import { initGroups } from './js/group.js';
+        import { initGroups } from './js/groups.js';
         document.addEventListener('DOMContentLoaded', () => {
             initGroups('group-container');
         });
