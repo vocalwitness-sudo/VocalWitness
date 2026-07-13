@@ -1,4 +1,5 @@
-// js/main.js - Dynamic Living Square Version
+// js/main.js - Fixed & Integrated Version
+import './app-state.js';
 import { initAuth } from "./auth.js";
 import { initFeed } from './feed.js';
 import { db, auth } from './firebase-config.js';
@@ -6,23 +7,15 @@ import { showToast } from './utils.js';
 import { initLanguage } from './i18n.js';
 import * as mediaModule from './media.js';
 import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
+import { initProfile } from './profile.js';
 
-// ====================== APP STATE ======================
-export let AppState = {
-    currentTab: 'square',
-    userTier: 'NONE',           // NONE, CITIZEN, WITNESS
-    currentMode: 'citizen',     // citizen or witness
-    isAuthenticated: false
-};
+// Global State (from app-state.js)
+import { AppState, updateAppState } from './app-state.js';
 
-export function updateAppState(newState) {
-    Object.assign(AppState, newState);
-    window.dispatchEvent(new CustomEvent('appStateChanged', { detail: AppState }));
-}
+let engineInstance = null;
 
-// ====================== TAB SWITCHING (Dynamic Core) ======================
+// ====================== TAB SWITCHING ======================
 window.switchTab = (tab) => {
-    // Update active tab UI
     document.querySelectorAll('#main-nav button').forEach(btn => {
         btn.classList.remove('active', 'bg-amber-900', 'text-amber-300');
         if (btn.dataset.tab === tab) {
@@ -35,7 +28,7 @@ window.switchTab = (tab) => {
 
     if (tab === 'witness') {
         AppState.currentMode = 'witness';
-        showToast("🔐 Entering Witness Circle", "success");
+        showToast("🔐 Witness Circle Mode", "success");
     } else {
         AppState.currentMode = 'citizen';
     }
@@ -48,123 +41,83 @@ window.switchTab = (tab) => {
     loadDynamicFeed(tab);
 };
 
-window.showMoreMenu = () => {
-    showToast("More menu (Groups, About, Privacy, etc.) — coming in next update", "info");
-    // Future: Open a modal or dropdown with links to about.html, groups.html, etc.
-};
-
-
-// ====================== DYNAMIC FEED LOADER ======================
 function loadDynamicFeed(tab) {
-    const container = document.getElementById('feedContainer');
-    if (!container) return;
-
     let feedType = 'citizen-talk';
-
-    switch(tab) {
-        case 'square':
-            feedType = 'citizen-talk';
-            break;
-        case 'ledger':
-            feedType = 'forensic-ledger';
-            break;
-        case 'arena':
-            feedType = 'live';
-            showToast("🏟️ Live Arena — Real-time coming soon", "info");
-            break;
-        case 'mycircle':
-            feedType = 'my-testimonies';
-            break;
-        case 'witness':
-            feedType = 'true-witness';
-            break;
-    }
+    if (tab === 'ledger') feedType = 'ledger';
+    else if (tab === 'arena') feedType = 'live';
+    else if (tab === 'mycircle') feedType = 'my-testimonies';
+    else if (tab === 'witness') feedType = 'true-witness';
 
     initFeed(db, feedType);
 }
+
+window.showMoreMenu = () => {
+    showToast("More menu (Groups, About, Privacy...) — coming soon", "info");
+};
 
 // ====================== PUBLISH ======================
 window.publishTestimony = async () => {
     const textarea = document.getElementById('mainInput');
     const content = textarea?.value.trim() || "";
 
-    if (!content) {
-        return showToast("Please share something meaningful", "error");
+    if (!content && !mediaModule.selectedImageFile && !engineInstance?.currentAudioBlob) {
+        return showToast("Add text, photo, or voice", "error");
     }
 
     const postBtn = document.getElementById('postButton');
     postBtn.disabled = true;
-    postBtn.textContent = 'Publishing to the Square...';
+    postBtn.textContent = 'Publishing...';
 
     try {
-        // TODO: Integrate full media + Firebase write
+        const mediaData = await mediaModule.uploadForensicMedia();
+        // TODO: Add full Firestore write here later
         await window.recordTestimonyContribution?.();
-        showToast("✅ Testimony published successfully!", "success");
+        showToast("✅ Published to the Square!", "success");
         textarea.value = '';
-        // Refresh feed
+        mediaModule.resetMediaState();
         loadDynamicFeed(AppState.currentTab);
     } catch (err) {
         console.error(err);
-        showToast("Failed to publish. Please try again.", "error");
+        showToast("Publish failed", "error");
     } finally {
         postBtn.disabled = false;
         postBtn.textContent = 'Publish to the Square';
     }
 };
 
-// ====================== MEDIA BUTTONS ======================
-function setupMediaButtons() {
-    document.getElementById('btn-photo')?.addEventListener('click', () => {
-        showToast("📸 Forensic Photo upload — opening...", "info");
-        // mediaModule.handleImageSelect...
-    });
-    case 'square':
-    feedType = 'citizen-talk';
-    break;
-
-    document.getElementById('btn-voice')?.addEventListener('click', () => {
-        showToast("🎤 Voice Testimony — recording...", "info");
-        // mediaModule.toggleVoiceRecording...
-    });
-}
-
 // ====================== BOOTSTRAP ======================
 async function bootstrap() {
     try {
         await initAuth();
         initLanguage();
+        initProfile();
 
-        const engineInstance = new CitizenTalkEngine(db, storage || null);
+        engineInstance = new CitizenTalkEngine(db, storage);
         window.engineInstance = engineInstance;
+        mediaModule.setEngine(engineInstance);
 
-        // Setup listeners
-        setupMediaButtons();
+        // Setup buttons
+        document.getElementById('btn-photo')?.addEventListener('click', (e) => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = (ev) => mediaModule.handleImageSelect(ev, document.getElementById('preview-area'));
+            input.click();
+        });
+
+        document.getElementById('btn-voice')?.addEventListener('click', (e) => {
+            mediaModule.toggleVoiceRecording(e.currentTarget);
+        });
+
         document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
 
-        // Default load
-        setTimeout(() => {
-            window.switchTab('square');
-        }, 600);
+        // Default tab
+        setTimeout(() => window.switchTab('square'), 800);
 
-        console.log("✅ VocalWitness — The Living Square initialized");
+        console.log("✅ VocalWitness Live Ready");
     } catch (e) {
-        console.error("Bootstrap error:", e);
-        showToast("Failed to initialize. Please refresh.", "error");
+        console.error("Bootstrap failed:", e);
     }
 }
 
 document.addEventListener('DOMContentLoaded', bootstrap);
-
-// Global stubs for backward compatibility
-window.loadFeed = (type) => window.switchTab(type || 'square');
-window.navigateToPage = (page) => window.location.href = page;
-
-// Profile button
-const profileBtn = document.getElementById('profile-btn');
-if (profileBtn) {
-    profileBtn.addEventListener('click', window.showProfile);
-}
-import { initProfile } from './profile.js';
-
-// Inside bootstrap():
-initProfile();
