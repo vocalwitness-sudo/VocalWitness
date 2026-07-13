@@ -158,3 +158,13 @@ document.addEventListener('DOMContentLoaded', bootstrap);
 // Global stubs for backward compatibility
 window.loadFeed = (type) => window.switchTab(type || 'square');
 window.navigateToPage = (page) => window.location.href = page;
+
+// Profile button
+const profileBtn = document.getElementById('profile-btn');
+if (profileBtn) {
+    profileBtn.addEventListener('click', window.showProfile);
+}
+import { initProfile } from './profile.js';
+
+// Inside bootstrap():
+initProfile();
