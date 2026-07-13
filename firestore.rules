@@ -1,49 +1,45 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper functions for readability
+    
+    // Helper functions
     function isSignedIn() { return request.auth != null; }
     function isOwner(uid) { return isSignedIn() && request.auth.uid == uid; }
-    function isSteward() { 
-      return isSignedIn() && 
+
+    function isSteward() {
+      return isSignedIn() &&
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSteward == true;
     }
 
-    // Allow public read for MENU
+    // MENU (if you use it)
     match /MENU/{document} {
       allow read: if true;
       allow write: if false;
     }
 
-    // Users: Public can read profile info, but only owner updates
+    // Users
     match /users/{userId} {
       allow read: if true;
       allow create, update: if isOwner(userId);
     }
 
-    // Testimonies: Secure moderation and deletion
+    // Testimonies - Fixed for Create
     match /testimonies/{testimonyId} {
-      // Prevent reading if marked as removed by moderator
-      allow read: if resource.data.moderationStatus != "removed";
+      allow read: if resource == null || resource.data.moderationStatus != "removed";
+      
+      // Create: Any signed-in user
       allow create: if isSignedIn();
       
-      // Allow delete by author, or by a Steward for moderation
-      allow delete: if isOwner(resource.data.authorId) || isSteward();
-      
-      // Allow updates only if changing moderation status (Steward only) 
-      // or if owner is updating own content
-      allow update: if (isOwner(resource.data.authorId)) || 
-                       (isSteward() && request.resource.data.moderationStatus != resource.data.moderationStatus);
+      // Update/Delete: Owner or Steward
+      allow update, delete: if isOwner(resource.data.authorId) || isSteward();
     }
 
     // Groups
     match /groups/{groupId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow create: if isSignedIn();
-      allow update: if isSignedIn() && (resource.data.members.hasAny([request.auth.uid]) || resource.data.createdBy == request.auth.uid);
-      allow delete: if isSignedIn() && resource.data.createdBy == request.auth.uid;
+      allow update, delete: if isSignedIn() && 
+        (resource.data.members.hasAny([request.auth.uid]) || resource.data.createdBy == request.auth.uid);
     }
 
     // Default deny
