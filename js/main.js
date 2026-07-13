@@ -1,77 +1,75 @@
-// js/main.js - FINAL CLEAN VERSION FOR PUBLIC LAUNCH
-import { initAuth } from "./auth.js";
-import { initFeed } from './feed.js';
-import { db, auth, storage } from './firebase-config.js';
-import { showToast } from './utils.js';
-import { initLanguage } from './i18n.js';
-import * as mediaModule from './media.js';
-import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
+<!DOCTYPE html>
+<html lang="en-NG">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VocalWitness • The Living Square</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: #e2e8f0; }
+        .glass { background: rgba(15, 23, 42, 0.92); backdrop-filter: blur(24px); border: 1px solid rgba(148, 163, 184, 0.12); }
+        .nav-tab { transition: all 0.2s ease; }
+        .nav-tab.active { background-color: #10b981; color: black; font-weight: 600; }
+    </style>
+</head>
+<body class="min-h-screen pb-24 bg-[#0a0f1c]">
+    <!-- Privacy Banner -->
+    <div class="max-w-2xl mx-auto glass rounded-3xl p-5 mb-8 text-sm text-center">
+        <strong class="text-emerald-400">Privacy First • No Personal Data Collected</strong>
+    </div>
 
-// GLOBAL STATE
-let engineInstance = null;
+    <div class="max-w-2xl mx-auto">
+        <!-- Header -->
+        <header class="flex items-center justify-between mb-8 sticky top-0 z-50 glass rounded-3xl p-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-2xl">🔊</div>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight">VocalWitness</h1>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <select id="languageSelector" class="bg-zinc-800 text-white px-4 py-2 rounded-2xl border border-zinc-700"></select>
+                <button id="support-btn" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl">Support</button>
+                <button id="profile-btn" class="px-5 py-2 border border-zinc-700 hover:bg-zinc-800 rounded-2xl">Profile</button>
+            </div>
+        </header>
 
-// DOOR SWITCHER
-window.showDoorSwitcher = function() {
-    const doorEl = document.getElementById('door-name');
-    if (!doorEl) return;
-    const doors = ["Public Square", "Citizen Talk", "True Witness", "Live Arena", "Groups"];
-    let idx = doors.indexOf(doorEl.textContent.trim());
-    if (idx === -1) idx = 0;
-    const next = doors[(idx + 1) % doors.length];
-    doorEl.textContent = next;
-    showToast(`🚪 Switched to ${next}`, "success");
-};
+        <!-- Main Navigation -->
+        <nav class="flex gap-2 mb-8 overflow-x-auto pb-3" id="main-nav">
+            <button data-tab="square" onclick="switchTab('square')" class="nav-tab active px-6 py-3 rounded-3xl">Square</button>
+            <button data-tab="ledger" onclick="switchTab('ledger')" class="nav-tab px-6 py-3 rounded-3xl">Ledger</button>
+            <button data-tab="arena" onclick="switchTab('arena')" class="nav-tab px-6 py-3 rounded-3xl">Arena</button>
+            <button data-tab="mycircle" onclick="switchTab('mycircle')" class="nav-tab px-6 py-3 rounded-3xl">My Circle</button>
+            <button data-tab="witness" onclick="switchTab('witness')" class="nav-tab px-6 py-3 rounded-3xl bg-amber-900 text-amber-300">Witness</button>
+        </nav>
 
-// NAVIGATION
-window.navigateToPage = (page) => window.location.href = page;
-window.loadFeed = (feedType) => initFeed(db, feedType || 'citizen-talk');
+        <!-- Compact Creation Bar -->
+        <div class="glass rounded-3xl p-6 mb-10">
+            <textarea id="mainInput" rows="3" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-5 text-lg placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none" placeholder="What truth do you wish to share today..."></textarea>
+            
+            <div class="flex gap-3 mt-4">
+                <button id="btn-photo" class="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center justify-center gap-2">
+                    📸 Forensic Photo
+                </button>
+                <button id="btn-voice" class="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center justify-center gap-2">
+                    🎤 Voice Testimony
+                </button>
+            </div>
 
-// STUB REPUTATION
-window.recordTestimonyContribution = async () => console.log("✅ Testimony recorded");
+            <button id="postButton" class="mt-6 w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-semibold text-lg rounded-3xl">
+                Publish to the Square
+            </button>
+        </div>
 
-// PUBLISH
-window.publishTestimony = async () => {
-    const textarea = document.getElementById('mainInput');
-    const content = textarea?.value.trim() || "";
-    if (!content) return showToast("Please write something", "error");
+        <!-- Dynamic Feed Area -->
+        <main id="main-content">
+            <div id="feedContainer" class="space-y-8"></div>
+        </main>
+    </div>
 
-    const postBtn = document.getElementById('postButton');
-    postBtn.disabled = true;
-    postBtn.textContent = 'Publishing...';
-
-    try {
-        await window.recordTestimonyContribution();
-        showToast("✅ Testimony published!", "success");
-        textarea.value = '';
-    } catch (err) {
-        showToast("Failed to publish", "error");
-    } finally {
-        postBtn.disabled = false;
-        postBtn.textContent = 'Publish Testimony to the Square';
-    }
-};
-
-// SETUP
-function setupEventListeners() {
-    document.getElementById('btn-photo')?.addEventListener('click', () => {
-        showToast("📸 Photo upload coming soon", "info");
-    });
-    document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
-}
-
-// BOOTSTRAP
-async function bootstrap() {
-    try {
-        await initAuth();
-        initLanguage();
-        engineInstance = new CitizenTalkEngine(db, storage);
-        window.engineInstance = engineInstance;
-        setupEventListeners();
-        setTimeout(() => loadFeed('citizen-talk'), 800);
-        console.log("✅ VocalWitness PUBLIC READY");
-    } catch (e) {
-        console.error("Bootstrap error:", e);
-    }
-}
-
-document.addEventListener('DOMContentLoaded', bootstrap);
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
