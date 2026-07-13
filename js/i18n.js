@@ -1,49 +1,19 @@
-// js/i18n.js - Complete Version with RTL Support
-
+// js/i18n.js - Enhanced Version with Better UX
 let currentTranslations = {};
 let currentLang = 'en';
 
 const supportedLanguages = [
-    { code: 'en', name: 'English',       flag: '🇬🇧', native: 'English',      phoneCode: '+44', rtl: false },
-    { code: 'ha', name: 'Hausa',         flag: '🇳🇬', native: 'Hausa',        phoneCode: '+234', rtl: false },
-    { code: 'ig', name: 'Igbo',          flag: '🇳🇬', native: 'Igbo',         phoneCode: '+234', rtl: false },
-    { code: 'yo', name: 'Yorùbá',       flag: '🇳🇬', native: 'Yorùbá',      phoneCode: '+234', rtl: false },
-    { code: 'pcm', name: 'Naija Pidgin', flag: '🇳🇬', native: 'Pidgin',       phoneCode: '+234', rtl: false },
-    { code: 'sw', name: 'Kiswahili',     flag: '🇰🇪', native: 'Kiswahili',    phoneCode: '+254', rtl: false },
-    { code: 'fr', name: 'Français',      flag: '🇫🇷', native: 'Français',     phoneCode: '+33', rtl: false },
-    { code: 'pt', name: 'Português',     flag: '🇵🇹', native: 'Português',    phoneCode: '+351', rtl: false },
-    { code: 'es', name: 'Español',       flag: '🇪🇸', native: 'Español',      phoneCode: '+34', rtl: false },
-    { code: 'ar', name: 'العربية',      flag: '🇸🇦', native: 'العربية',     phoneCode: '+966', rtl: true }
+    { code: 'en', name: 'English', flag: '🇬🇧', native: 'English', rtl: false },
+    { code: 'ha', name: 'Hausa', flag: '🇳🇬', native: 'Hausa', rtl: false },
+    { code: 'ig', name: 'Igbo', flag: '🇳🇬', native: 'Igbo', rtl: false },
+    { code: 'yo', name: 'Yorùbá', flag: '🇳🇬', native: 'Yorùbá', rtl: false },
+    { code: 'pcm', name: 'Naija Pidgin', flag: '🇳🇬', native: 'Pidgin', rtl: false },
+    { code: 'sw', name: 'Kiswahili', flag: '🇰🇪', native: 'Kiswahili', rtl: false },
+    { code: 'fr', name: 'Français', flag: '🇫🇷', native: 'Français', rtl: false },
+    { code: 'pt', name: 'Português', flag: '🇵🇹', native: 'Português', rtl: false },
+    { code: 'es', name: 'Español', flag: '🇪🇸', native: 'Español', rtl: false },
+    { code: 'ar', name: 'العربية', flag: '🇸🇦', native: 'العربية', rtl: true }
 ];
-
-// Phone Country Selector (for verification forms)
-const phoneCountries = [
-    { code: '+234', name: 'Nigeria', flag: '🇳🇬' },
-    { code: '+1',   name: 'USA / Canada', flag: '🇺🇸' },
-    { code: '+44',  name: 'United Kingdom', flag: '🇬🇧' },
-    { code: '+33',  name: 'France', flag: '🇫🇷' },
-    { code: '+34',  name: 'Spain', flag: '🇪🇸' },
-    { code: '+55',  name: 'Brazil', flag: '🇧🇷' },
-    { code: '+27',  name: 'South Africa', flag: '🇿🇦' },
-    { code: '+254', name: 'Kenya', flag: '🇰🇪' },
-    { code: '+20',  name: 'Egypt', flag: '🇪🇬' },
-];
-
-export function initPhoneCountrySelector() {
-    const selector = document.getElementById('countryCodeSelector');
-    if (!selector) return;
-    
-    selector.innerHTML = phoneCountries.map(country => `
-        <option value="${country.code}">
-            ${country.flag} ${country.code} (${country.name})
-        </option>
-    `).join('');
-    
-    selector.value = '+234'; // Default to Nigeria
-}
-
-// Make available globally
-window.initPhoneCountrySelector = initPhoneCountrySelector;
 
 export async function loadTranslations(langCode = 'en') {
     try {
@@ -68,6 +38,12 @@ export async function loadTranslations(langCode = 'en') {
     localStorage.setItem('preferredLang', langCode);
     applyTranslations();
     applyTextDirection(langCode);
+    
+    // Show toast
+    const lang = supportedLanguages.find(l => l.code === langCode);
+    if (lang) {
+        showToast(`🌍 ${lang.native} (${lang.flag})`, "success");
+    }
 }
 
 function applyTextDirection(langCode) {
