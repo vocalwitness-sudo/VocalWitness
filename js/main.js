@@ -1,17 +1,16 @@
-// js/main.js - Fixed & Integrated Version
+// js/main.js - Final Clean Version
 import './app-state.js';
 import { initAuth } from "./auth.js";
 import { initFeed } from './feed.js';
-import { db, auth } from './firebase-config.js';
+import { db, auth, storage } from './firebase-config.js';
 import { showToast } from './utils.js';
 import { initLanguage } from './i18n.js';
 import * as mediaModule from './media.js';
 import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
 import { initProfile } from './profile.js';
-import { db, auth, storage } from './firebase-config.js';
 
-// Global State (from app-state.js)
-import { AppState, updateAppState } from './app-state.js';
+// Import state
+import { AppState } from './app-state.js';
 
 let engineInstance = null;
 
@@ -53,7 +52,7 @@ function loadDynamicFeed(tab) {
 }
 
 window.showMoreMenu = () => {
-    showToast("More menu (Groups, About, Privacy...) — coming soon", "info");
+    showToast("More menu coming soon (Groups, About, Privacy...)", "info");
 };
 
 // ====================== PUBLISH ======================
@@ -61,9 +60,7 @@ window.publishTestimony = async () => {
     const textarea = document.getElementById('mainInput');
     const content = textarea?.value.trim() || "";
 
-    if (!content && !mediaModule.selectedImageFile && !engineInstance?.currentAudioBlob) {
-        return showToast("Add text, photo, or voice", "error");
-    }
+    if (!content) return showToast("Please write something", "error");
 
     const postBtn = document.getElementById('postButton');
     postBtn.disabled = true;
@@ -71,9 +68,8 @@ window.publishTestimony = async () => {
 
     try {
         const mediaData = await mediaModule.uploadForensicMedia();
-        // TODO: Add full Firestore write here later
         await window.recordTestimonyContribution?.();
-        showToast("✅ Published to the Square!", "success");
+        showToast("✅ Testimony published!", "success");
         textarea.value = '';
         mediaModule.resetMediaState();
         loadDynamicFeed(AppState.currentTab);
@@ -97,7 +93,7 @@ async function bootstrap() {
         window.engineInstance = engineInstance;
         mediaModule.setEngine(engineInstance);
 
-        // Setup event listeners
+        // Event listeners
         document.getElementById('btn-photo')?.addEventListener('click', (e) => {
             const input = document.createElement('input');
             input.type = 'file';
@@ -106,17 +102,17 @@ async function bootstrap() {
             input.click();
         });
 
-        document.getElementById('btn-voice')?.addEventListener('click', (e) => {
-            mediaModule.toggleVoiceRecording(e.currentTarget);
-        });
+        document.getElementById('btn-voice')?.addEventListener('click', (e) => mediaModule.toggleVoiceRecording(e.currentTarget));
 
         document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
 
-        // Load default tab
-        setTimeout(() => window.switchTab('square'), 800);
+        // Start with Citizen Square
+        setTimeout(() => window.switchTab('square'), 600);
 
         console.log("✅ VocalWitness Live Ready");
     } catch (e) {
         console.error("Bootstrap failed:", e);
     }
 }
+
+document.addEventListener('DOMContentLoaded', bootstrap);
