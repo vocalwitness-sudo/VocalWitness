@@ -149,4 +149,8 @@ export function isAtLeast(tierToCheck) {
   // Better to await when calling
 }
 
-export async function escalatePost(postId) { ... } // keep your version
+// TODO: Add your escalatePost function here later
+export async function escalatePost(postId) {
+    console.log("Escalate post called for ID:", postId);
+    showToast("Escalation feature coming soon", "info");
+}
