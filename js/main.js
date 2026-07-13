@@ -22,7 +22,7 @@ export function updateAppState(newState) {
 
 // ====================== TAB SWITCHING (Dynamic Core) ======================
 window.switchTab = (tab) => {
-    // Update active UI
+    // Update active tab UI
     document.querySelectorAll('#main-nav button').forEach(btn => {
         btn.classList.remove('active', 'bg-amber-900', 'text-amber-300');
         if (btn.dataset.tab === tab) {
@@ -33,21 +33,26 @@ window.switchTab = (tab) => {
 
     AppState.currentTab = tab;
 
-    // Mode logic (Citizen vs Witness)
     if (tab === 'witness') {
         AppState.currentMode = 'witness';
         showToast("🔐 Entering Witness Circle", "success");
-        // You can redirect or load special view
-        if (AppState.userTier !== 'WITNESS') {
-            showToast("Complete ZK verification to unlock full Witness features", "info");
-        }
     } else {
         AppState.currentMode = 'citizen';
     }
 
-    // Load appropriate feed
+    if (tab === 'more') {
+        showMoreMenu();
+        return;
+    }
+
     loadDynamicFeed(tab);
 };
+
+window.showMoreMenu = () => {
+    showToast("More menu (Groups, About, Privacy, etc.) — coming in next update", "info");
+    // Future: Open a modal or dropdown with links to about.html, groups.html, etc.
+};
+
 
 // ====================== DYNAMIC FEED LOADER ======================
 function loadDynamicFeed(tab) {
