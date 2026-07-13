@@ -231,7 +231,6 @@ function setupEventListeners() {
             
             showToast(`Language changed to ${e.target.value}`, "success");
     }
-}
 
 document.addEventListener('DOMContentLoaded', bootstrap);
 
