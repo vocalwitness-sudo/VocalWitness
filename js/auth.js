@@ -5,23 +5,34 @@ import {
     GoogleAuthProvider,
     signOut
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+
 import { db } from './firebase-config.js';
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { showToast } from './utils.js';
-//import { refreshTierAndUI } from './tier.js';
 import { updateAppState } from './app-state.js';
+import { applyTierTheme, updateTierBadge } from './tier.js';
 
 const auth = getAuth();
 const provider = new GoogleAuthProvider();
 
 export { auth };
 
+// Safe Tier Refresh Helper
+function refreshTierUI() {
+    if (typeof refreshTierAndUI === 'function') {
+        refreshTierAndUI();
+    } else {
+        if (typeof applyTierTheme === 'function') applyTierTheme();
+        if (typeof updateTierBadge === 'function') updateTierBadge();
+        console.log("✅ Tier UI refreshed (fallback)");
+    }
+}
+
 async function createOrUpdateUser(user) {
     if (!user) return;
     try {
         const userRef = doc(db, "users", user.uid);
         const snap = await getDoc(userRef);
-
         if (!snap.exists()) {
             await setDoc(userRef, {
                 uid: user.uid,
@@ -48,12 +59,9 @@ export async function googleLogin() {
     try {
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
-
         await createOrUpdateUser(user);
         updateAppState({ isAuthenticated: true, currentUser: user });
-
-        await refreshTierAndUI();
-
+        refreshTierUI();                    // Safe call
         window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
         return user;
     } catch (error) {
@@ -79,13 +87,12 @@ export function initAuth() {
         if (user) {
             await createOrUpdateUser(user);
             updateAppState({ isAuthenticated: true, currentUser: user });
-            await refreshTierAndUI();
+            refreshTierUI();                // Safe call
         } else {
             updateAppState({ isAuthenticated: false, currentUser: null });
         }
         window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
     });
-
     console.log("🔐 Auth initialized");
 }
 
