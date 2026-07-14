@@ -4,12 +4,16 @@ let currentLang = 'en';
 
 const supportedLanguages = [
     { code: 'en',  name: 'English',       flag: '🇬🇧', native: 'English',      rtl: false },
+    { code: 'ar',  name: 'Arabic',        flag: '🇸🇦', native: 'العربية',     rtl: true },
+    { code: 'es',  name: 'Spanish',       flag: '🇪🇸', native: 'Español',      rtl: false },
+    { code: 'fr',  name: 'French',        flag: '🇫🇷', native: 'Français',     rtl: false },
     { code: 'ha',  name: 'Hausa',         flag: '🇳🇬', native: 'Hausa',        rtl: false },
     { code: 'ig',  name: 'Igbo',          flag: '🇳🇬', native: 'Igbo',         rtl: false },
-    { code: 'yo',  name: 'Yorùbá',       flag: '🇳🇬', native: 'Yorùbá',      rtl: false },
-    { code: 'pcm', name: 'Naija Pidgin',  flag: '🇳🇬', native: 'Pidgin',       rtl: false }
+    { code: 'pcm', name: 'Naija Pidgin',  flag: '🇳🇬', native: 'Pidgin',       rtl: false },
+    { code: 'pt',  name: 'Portuguese',    flag: '🇵🇹', native: 'Português',    rtl: false },
+    { code: 'yo',  name: 'Yorùbá',        flag: '🇳🇬', native: 'Yorùbá',       rtl: false },
+    { code: 'sw',  name: 'Swahili',       flag: '🇹🇿', native: 'Kiswahili',    rtl: false }
 ];
-
 function getLangName(code) {
     const lang = supportedLanguages.find(l => l.code === code);
     return lang ? lang.native : code;
