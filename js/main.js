@@ -185,22 +185,32 @@ function setupEventListeners() {
         });
     }
 
-// Support Button Handler
-const supportBtn = document.getElementById('support-btn');
-if (supportBtn) {
-    supportBtn.addEventListener('click', () => {
-        const modal = document.getElementById('supportModal');
-        if (modal) {
-            modal.classList.remove('hidden');
-            // Re-apply translations when modal opens
-            setTimeout(() => {
-                if (typeof applyTranslations === 'function') applyTranslations();
-            }, 50);
-        } else {
-            showToast("Support modal not found", "error");
-        }
-    });
+// ==================== SUPPORT BUTTON HANDLER ====================
+function initSupportButton() {
+    const supportBtn = document.getElementById('support-btn');
+    if (supportBtn) {
+        supportBtn.addEventListener('click', () => {
+            const modal = document.getElementById('supportModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                // Re-apply translations
+                setTimeout(() => {
+                    if (typeof applyTranslations === 'function') {
+                        applyTranslations();
+                    }
+                }, 100);
+            } else {
+                showToast("Support modal not found. Please refresh.", "error");
+            }
+        });
+    }
 }
+
+// Run after DOM is fully loaded
+document.addEventListener('DOMContentLoaded', initSupportButton);
+
+// Also run it in case the script loads late
+window.addEventListener('load', initSupportButton);
     // FIXED LANGUAGE SELECTOR
     const langSelector = document.getElementById('languageSelector');
     if (langSelector) {
