@@ -123,47 +123,67 @@
     </main>
 </div>
 
-<!-- ==================== SUPPORT MODAL (NEW) ==================== -->
+<!-- ==================== SUPPORT MODAL ==================== -->
 <div id="supportModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[60] p-4">
     <div class="glass rounded-3xl max-w-md w-full p-8 text-center animate-in fade-in duration-300">
         <div class="text-6xl mb-6">🌱</div>
-        
+       
         <h2 data-i18n="supportModal.title" class="text-3xl font-bold text-emerald-400 mb-2"></h2>
         <p data-i18n="supportModal.description" class="text-zinc-400 mb-8 text-sm"></p>
-       
+      
         <div class="bg-zinc-950 p-6 rounded-2xl border border-zinc-800 mb-6">
             <p data-i18n="supportModal.usdtLabel" class="text-xs text-zinc-500 uppercase tracking-widest mb-4"></p>
-            
+           
             <!-- QR Code -->
-            <<!-- Replace your current img tag with this -->
-<div class="flex justify-center my-6">
-    <img src="images/vocalwitness-qr.png" 
-         alt="VocalWitness QR Code - Scan to Join"
-         class="w-48 h-48 rounded-2xl border border-zinc-700 shadow-xl hover:scale-105 transition-transform">
-</div>
-
-            <code id="walletAddress" class="text-emerald-300 break-all font-mono text-sm block mb-4">
+            <div class="flex justify-center my-6">
+                <img src="images/vocalwitness-qr.png"
+                     alt="VocalWitness QR Code - Scan to Join"
+                     class="w-48 h-48 rounded-2xl border border-zinc-700 shadow-xl hover:scale-105 transition-transform">
+            </div>
+          
+            <code id="walletAddress" class="text-emerald-300 break-all font-mono text-sm block mb-4 select-all">
                 TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK
             </code>
-           
-            <button onclick="copyWalletAddress()" 
+          
+            <button onclick="copyWalletAddress()"
                     class="w-full py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2">
-                <span id="copyIcon">📋</span> 
+                <span id="copyIcon">📋</span>
                 <span id="copyText" data-i18n="supportModal.copyButton"></span>
             </button>
         </div>
-        
+       
         <p data-i18n="supportModal.warning" class="text-[10px] text-zinc-600 mb-8 uppercase italic"></p>
-        
-        <button onclick="document.getElementById('supportModal').classList.add('hidden')" 
+       
+        <button onclick="document.getElementById('supportModal').classList.add('hidden')"
                 data-i18n="supportModal.closeButton"
                 class="w-full py-3 text-zinc-400 hover:text-white transition-colors">
         </button>
     </div>
 </div>
 
-<script type="module" src="js/main.js"></script>
-
+<!-- Copy Wallet Script -->
+<script>
+    function copyWalletAddress() {
+        const address = document.getElementById('walletAddress').innerText.trim();
+        navigator.clipboard.writeText(address).then(() => {
+            const copyText = document.getElementById('copyText');
+            const copyIcon = document.getElementById('copyIcon');
+          
+            const originalText = copyText.innerText;
+            const originalIcon = copyIcon.innerText;
+          
+            copyText.innerText = "Copied!";
+            copyIcon.innerText = "✅";
+          
+            setTimeout(() => {
+                copyText.innerText = originalText;
+                copyIcon.innerText = originalIcon;
+            }, 2000);
+        }).catch(() => {
+            showToast("Failed to copy address", "error");
+        });
+    }
+</script>
 <!-- Copy Wallet Script -->
 <script>
     function copyWalletAddress() {
