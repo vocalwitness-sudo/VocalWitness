@@ -49,5 +49,14 @@
   "postFailed": "An kasa buga shaida",
   "login": "Shiga",
   "signup": "Yi Rajista",
-  "logout": "Fita"
+  "logout": "Fita",
+
+  "supportModal": {
+    "title": "Tallafa Dandali",
+    "description": "Taimaka kai tsaye ga litattafan gaskiya na VocalWitness. Tallafarka tana kiyaye ababen more rayuwa.",
+    "usdtLabel": "Adireshin USDT (TRC20)",
+    "copyButton": "Kwafi Adires",
+    "warning": "Kar a aiko da USDT sai a hanyar TRC20 kawai.",
+    "closeButton": "Rufe"
+  }
 }
