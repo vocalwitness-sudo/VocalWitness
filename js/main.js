@@ -185,17 +185,19 @@ function setupEventListeners() {
         });
     }
 
-  // Support Button Handler
+// Support Button Handler
 const supportBtn = document.getElementById('support-btn');
 if (supportBtn) {
     supportBtn.addEventListener('click', () => {
         const modal = document.getElementById('supportModal');
         if (modal) {
             modal.classList.remove('hidden');
-            // Optional: Re-apply translations when modal opens
-            setTimeout(() => applyTranslations(), 10);
+            // Re-apply translations when modal opens
+            setTimeout(() => {
+                if (typeof applyTranslations === 'function') applyTranslations();
+            }, 50);
         } else {
-            showToast("❤️ Support center is under construction", "info");
+            showToast("Support modal not found", "error");
         }
     });
 }
