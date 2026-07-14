@@ -218,21 +218,6 @@ window.addEventListener('load', initSupportButton);
         });
     }
 
-// Start the app
-// ... inside setupEventListeners function ...
-    // FIXED LANGUAGE SELECTOR
-    const langSelector = document.getElementById('languageSelector');
-    if (langSelector) {
-        langSelector.addEventListener('change', (e) => {
-            const newLang = e.target.value;
-            if (typeof window.changeLanguage === 'function') {
-                window.changeLanguage(newLang);
-            }
-            showToast(`🌍 Language switched to ${newLang.toUpperCase()}`, "success");
-        });
-    }
-} // <--- THIS CLOSES setupEventListeners()
-
 // Now start your app and other listeners
 document.addEventListener('DOMContentLoaded', bootstrap);
 
