@@ -219,16 +219,33 @@ window.addEventListener('load', initSupportButton);
     }
 
 // Start the app
+// ... inside setupEventListeners function ...
+    // FIXED LANGUAGE SELECTOR
+    const langSelector = document.getElementById('languageSelector');
+    if (langSelector) {
+        langSelector.addEventListener('change', (e) => {
+            const newLang = e.target.value;
+            if (typeof window.changeLanguage === 'function') {
+                window.changeLanguage(newLang);
+            }
+            showToast(`🌍 Language switched to ${newLang.toUpperCase()}`, "success");
+        });
+    }
+} // <--- THIS CLOSES setupEventListeners()
+
+// Now start your app and other listeners
 document.addEventListener('DOMContentLoaded', bootstrap);
+
 // Make Profile button work
 document.addEventListener('DOMContentLoaded', () => {
-    const profileBtn = document.getElementById('profile-btn');
-    if (profileBtn) {
-        profileBtn.addEventListener('click', () => {
-            if (typeof window.showProfile === 'function') {
-                window.showProfile();
-            } else {
-                showToast("Profile module not loaded", "error");
-            }
-        });
-  
+    const profileBtn = document.getElementById('profile-btn');
+    if (profileBtn) {
+        profileBtn.addEventListener('click', () => {
+            if (typeof window.showProfile === 'function') {
+                window.showProfile();
+            } else {
+                showToast("Profile module not loaded", "error");
+            }
+        });
+    }
+}); // <--- THIS CLOSES the DOMContentLoaded event listener
