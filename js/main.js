@@ -185,13 +185,20 @@ function setupEventListeners() {
         });
     }
 
-    const supportBtn = document.getElementById('support-btn');
-    if (supportBtn) {
-        supportBtn.addEventListener('click', () => {
-            showToast("❤️ Support & Help Center coming soon", "info");
-        });
-    }
-
+  // Support Button Handler
+const supportBtn = document.getElementById('support-btn');
+if (supportBtn) {
+    supportBtn.addEventListener('click', () => {
+        const modal = document.getElementById('supportModal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            // Optional: Re-apply translations when modal opens
+            setTimeout(() => applyTranslations(), 10);
+        } else {
+            showToast("❤️ Support center is under construction", "info");
+        }
+    });
+}
     // FIXED LANGUAGE SELECTOR
     const langSelector = document.getElementById('languageSelector');
     if (langSelector) {
