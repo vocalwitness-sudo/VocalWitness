@@ -44,22 +44,36 @@ function loadDynamicFeed(tab) {
     initFeed(db, feedType);
 }
 window.showMoreMenu = () => {
-    const existing = document.getElementById('more-dropdown');
-    if (existing) existing.remove();
-    const dropdown = document.createElement('div');
-    dropdown.id = 'more-dropdown';
-    dropdown.className = 'fixed top-20 right-6 glass rounded-3xl shadow-2xl w-64 py-2 z-[150] border border-zinc-700';
-    dropdown.innerHTML =  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<div class="py-1"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="groups.html" class="flex items-center gap-3 px-6 py-3 hover:bg-zinc-800 text-white">👥 Groups</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="my-testimonies.html" class="flex items-center gap-3 px-6 py-3 hover:bg-zinc-800 text-white">📜 My Testimonies</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="about.html" class="flex items-center gap-3 px-6 py-3 hover:bg-zinc-800 text-white">ℹ️ About Us</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="privacy.html" class="flex items-center gap-3 px-6 py-3 hover:bg-zinc-800 text-white">🔒 Privacy</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="safety.html" class="flex items-center gap-3 px-6 py-3 hover:bg-zinc-800 text-white">🛡️ Safety</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="terms.html" class="flex items-center gap-3 px-6 py-3 hover:bg-zinc-800 text-white">📄 Terms</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div> &nbsp;&nbsp;&nbsp;&nbsp;;
-    document.body.appendChild(dropdown);
-    setTimeout(() => {
-        const closeHandler = (e) => {
-            if (!dropdown.contains(e.target)) {
-                dropdown.remove();
-                document.removeEventListener('click', closeHandler);
-            }
-        };
-        document.addEventListener('click', closeHandler);
-    }, 100);
+    const existing = document.getElementById('more-dropdown');
+    if (existing) existing.remove();
+    
+    const dropdown = document.createElement('div');
+    dropdown.id = 'more-dropdown';
+    dropdown.className = 'fixed top-20 right-6 glass rounded-3xl shadow-2xl w-64 py-2 z-[150] border border-zinc-700';
+    
+    // Fixed: used backticks and clean HTML
+    dropdown.innerHTML = `
+        <div class="py-1">
+            <a href="groups.html" class="flex items-center gap-3 px-6 py-3 hover:bg-zinc-800 text-white">👥 Groups</a>
+            <a href="my-testimonies.html" class="flex items-center gap-3 px-6 py-3 hover:bg-zinc-800 text-white">📜 My Testimonies</a>
+            <a href="about.html" class="flex items-center gap-3 px-6 py-3 hover:bg-zinc-800 text-white">ℹ️ About Us</a>
+            <a href="privacy.html" class="flex items-center gap-3 px-6 py-3 hover:bg-zinc-800 text-white">🔒 Privacy</a>
+            <a href="safety.html" class="flex items-center gap-3 px-6 py-3 hover:bg-zinc-800 text-white">🛡️ Safety</a>
+            <a href="terms.html" class="flex items-center gap-3 px-6 py-3 hover:bg-zinc-800 text-white">📄 Terms</a>
+        </div>
+    `;
+    
+    document.body.appendChild(dropdown);
+    
+    setTimeout(() => {
+        const closeHandler = (e) => {
+            if (!dropdown.contains(e.target)) {
+                dropdown.remove();
+                document.removeEventListener('click', closeHandler);
+            }
+        };
+        document.addEventListener('click', closeHandler);
+    }, 100);
 };
 // ====================== PUBLISH ======================
 window.publishTestimony = async () => {
