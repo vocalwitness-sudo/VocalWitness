@@ -35,3 +35,13 @@
   "cancel": "Cancel",
   "pageTitle": "VocalWitness • Truth • Evidence • Public Square"
 }
+{
+  "witness_one": "1 Witness",
+  "witness_other": "{count} Witnesses",
+  "testimony_one": "1 Testimony",
+  "testimony_other": "{count} Testimonies",
+  "like_one": "1 like",
+  "like_other": "{count} likes",
+  "comment_one": "1 comment",
+  "comment_other": "{count} comments"
+}
