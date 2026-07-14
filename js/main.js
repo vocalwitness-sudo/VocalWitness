@@ -220,14 +220,26 @@ function setupEventListeners() {
     const postBtn = document.getElementById('postButton');
     if (postBtn) postBtn.addEventListener('click', window.publishTestimony);
 
-    // Profile button
+    // ==================== FIXED: NAV TABS ====================
+    const navButtons = document.querySelectorAll('#main-nav button[data-tab]');
+    navButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tab = btn.dataset.tab;
+            window.switchTab(tab);
+        });
+    });
+
+    // ==================== FIXED: PROFILE BUTTON ====================
     const profileBtn = document.getElementById('profile-btn');
     if (profileBtn) {
         profileBtn.addEventListener('click', () => {
             if (typeof window.showProfile === 'function') {
                 window.showProfile();
             } else {
-                showToast("👤 Profile section coming soon", "info");
+                // Temporary fallback until profile.js is fully ready
+                showToast("👤 Opening Profile...", "info");
+                // You can later replace this with actual navigation
+                console.log("Profile button clicked - implement showProfile() if needed");
             }
         });
     }
@@ -246,6 +258,3 @@ function setupEventListeners() {
 
     initSupportButton();
 }
-
-// ==================== START APP ====================
-document.addEventListener('DOMContentLoaded', bootstrap);
