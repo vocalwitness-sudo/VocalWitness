@@ -1,14 +1,13 @@
-// js/i18n.js - Fixed & Production Ready
-import i18n from 'i18next';
-import { initReactI18next } from 'react-i18next'; // remove if not using React
-
+// js/i18n.js - Clean & Production Ready
 let currentTranslations = {};
 let currentLang = 'en';
 
 const supportedLanguages = [
-    { code: 'en', name: 'English', flag: '🇬🇧', native: 'English', rtl: false },
-    { code: 'ha', name: 'Hausa', flag: '🇳🇬', native: 'Hausa', rtl: false },
-    // ... rest of your languages
+    { code: 'en',  name: 'English',       flag: '🇬🇧', native: 'English',      rtl: false },
+    { code: 'ha',  name: 'Hausa',         flag: '🇳🇬', native: 'Hausa',        rtl: false },
+    { code: 'ig',  name: 'Igbo',          flag: '🇳🇬', native: 'Igbo',         rtl: false },
+    { code: 'yo',  name: 'Yorùbá',       flag: '🇳🇬', native: 'Yorùbá',      rtl: false },
+    { code: 'pcm', name: 'Naija Pidgin',  flag: '🇳🇬', native: 'Pidgin',       rtl: false }
 ];
 
 function getLangName(code) {
@@ -27,12 +26,11 @@ export async function loadTranslations(langCode = 'en') {
             currentTranslations = await response.json();
             console.log(`✅ Loaded ${langCode} translations`);
         } else {
-            console.warn(`No translation file for ${langCode}, using fallback`);
+            console.warn(`No translation file for ${langCode}`);
             currentTranslations = {};
         }
     } catch (e) {
-        console.warn(`Failed to load ${langCode}, using English fallback`);
-        // Optional: load English as fallback
+        console.warn(`Failed to load ${langCode}, falling back to English`);
         try {
             const enRes = await fetch('translations/en.json');
             if (enRes.ok) currentTranslations = await enRes.json();
@@ -56,19 +54,18 @@ function applyTextDirection(langCode) {
 }
 
 export function t(key, params = {}) {
-    let text = currentTranslations[key] || key; // fallback to key
-
-    // Simple placeholder replacement
+    let text = currentTranslations[key] || key;
     Object.keys(params).forEach(param => {
         text = text.replace(new RegExp(`{${param}}`, 'g'), params[param]);
     });
-
     return text;
 }
 
 function applyTranslations() {
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
+        if (!key) return;
+        
         const text = t(key);
         
         if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
@@ -78,18 +75,15 @@ function applyTranslations() {
         }
     });
 
-    // Update document title if key exists
     if (currentTranslations.pageTitle) {
         document.title = currentTranslations.pageTitle;
     }
 }
 
-// Initialize
 export function initLanguage() {
     const savedLang = localStorage.getItem('preferredLang') || 'en';
     
-    // Initial apply with fallback
-    applyTranslations();
+    applyTranslations(); // Initial fallback
 
     const selector = document.getElementById('languageSelector');
     if (selector) {
@@ -100,7 +94,6 @@ export function initLanguage() {
         selector.addEventListener('change', (e) => loadTranslations(e.target.value));
     }
 
-    // Load translations (this will re-apply when ready)
     loadTranslations(savedLang);
 }
 
