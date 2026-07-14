@@ -1,11 +1,12 @@
 {
   "name": "VocalWitness",
   "short_name": "VocalWitness",
-  "description": "Truth • Evidence • Public Square",
-  "start_url": "/",
+  "description": "Privacy First • Truth • Evidence • Public Square",
+  "start_url": "/index.html",
   "display": "standalone",
   "background_color": "#0a0f1c",
   "theme_color": "#10b981",
+  "orientation": "portrait-primary",
   "icons": [
     {
       "src": "/logo.png",
