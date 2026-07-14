@@ -94,10 +94,10 @@ window.publishTestimony = async () => {
     }
 
     const postBtn = document.getElementById('postButton');
-    if (postBtn) {
-        postBtn.disabled = true;
-        postBtn.textContent = 'Publishing to the Square...';
-    }
+    if (!postBtn) return;
+
+    postBtn.disabled = true;
+    postBtn.textContent = 'Publishing to the Square...';
 
     try {
         const mediaData = await mediaModule.uploadForensicMedia();
@@ -132,10 +132,8 @@ window.publishTestimony = async () => {
         console.error("Publish error:", err);
         showToast("Failed to publish. Please try again.", "error");
     } finally {
-        if (postBtn) {
-            postBtn.disabled = false;
-            postBtn.textContent = 'Publish to the Square';
-        }
+        postBtn.disabled = false;
+        postBtn.textContent = 'Publish to the Square';
     }
 };
 
@@ -164,7 +162,7 @@ async function bootstrap() {
         await initAuth();
         initLanguage();
         initProfile();
-        initOnboarding?.();           // safe call
+        initOnboarding?.();           // safe call if optional
         loadDynamicNavigation?.();
 
         engineInstance = new CitizenTalkEngine(db, storage);
@@ -183,7 +181,7 @@ async function bootstrap() {
         console.log("✅ VocalWitness Live Ready");
     } catch (e) {
         console.error("Bootstrap failed:", e);
-        showToast("App failed to initialize. Please refresh.", "error");
+        showToast("Failed to initialize app. Please refresh.", "error");
     }
 }
 
@@ -245,18 +243,9 @@ function setupEventListeners() {
             showToast(`🌍 Language switched to ${newLang.toUpperCase()}`, "success");
         });
     }
+
+    initSupportButton();
 }
 
-// ==================== INITIALIZATION ====================
-document.addEventListener('DOMContentLoaded', () => {
-    bootstrap();
-    initSupportButton();
-
-    // Extra safety for profile button (in case DOM elements load late)
-    const profileBtn = document.getElementById('profile-btn');
-    if (profileBtn) {
-        profileBtn.addEventListener('click', () => {
-            window.showProfile?.() || showToast("Profile module not loaded", "error");
-        });
-    }
-});
+// ==================== START APP ====================
+document.addEventListener('DOMContentLoaded', bootstrap);
