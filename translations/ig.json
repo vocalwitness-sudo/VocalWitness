@@ -49,5 +49,14 @@
   "postFailed": "Enweghị ike bipụta akaebe",
   "login": "Banye",
   "signup": "Debanye aha",
-  "logout": "Pụọ"
+  "logout": "Pụọ",
+
+  "supportModal": {
+    "title": "Kwado Ogige",
+    "description": "Nyere aka ozugbo na akwụkwọ eziokwu nke VocalWitness. Nkwado gị na-akwado akụrụngwa anyị.",
+    "usdtLabel": "Adreesị USDT (TRC20)",
+    "copyButton": "Detuo Adreesị",
+    "warning": "Zịpụ naanị USDT na netwọk TRC20.",
+    "closeButton": "Mechie"
+  }
 }
