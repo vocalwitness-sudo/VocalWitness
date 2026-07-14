@@ -1,4 +1,4 @@
-// js/i18n.js - Enhanced Version with Better UX
+// js/i18n.js - Advanced with Pluralization & Placeholder Support
 let currentTranslations = {};
 let currentLang = 'en';
 
@@ -24,9 +24,8 @@ export async function loadTranslations(langCode = 'en') {
         
         if (response.ok) {
             currentTranslations = await response.json();
-            console.log(`✅ Loaded ${langCode} translations successfully`);
+            console.log(`✅ Loaded ${langCode} translations`);
         } else {
-            console.warn(`⚠️ ${langCode}.json not found, using English fallback`);
             currentTranslations = {};
         }
     } catch (e) {
@@ -38,37 +37,54 @@ export async function loadTranslations(langCode = 'en') {
     localStorage.setItem('preferredLang', langCode);
     applyTranslations();
     applyTextDirection(langCode);
-    
-    // Show toast
+
     const lang = supportedLanguages.find(l => l.code === langCode);
-    if (lang) {
-        showToast(`🌍 ${lang.native} (${lang.flag})`, "success");
-    }
+    showToast(`🌍 ${lang ? lang.native : langCode} activated`, "success");
 }
 
 function applyTextDirection(langCode) {
     const lang = supportedLanguages.find(l => l.code === langCode);
     const isRTL = lang ? lang.rtl : false;
-    
     document.documentElement.setAttribute('dir', isRTL ? 'rtl' : 'ltr');
     document.body.style.textAlign = isRTL ? 'right' : 'left';
+}
+
+// Advanced translation with pluralization and placeholders
+export function t(key, params = {}) {
+    let text = currentTranslations[key] || key;
+
+    // Replace placeholders like {name}, {count}
+    Object.keys(params).forEach(param => {
+        const regex = new RegExp(`{${param}}`, 'g');
+        text = text.replace(regex, params[param]);
+    });
+
+    // Simple pluralization (for English-style: count items)
+    if (params.count !== undefined && currentTranslations[`${key}_plural`]) {
+        const pluralKey = params.count === 1 ? key : `${key}_plural`;
+        text = currentTranslations[pluralKey] || text;
+    }
+
+    return text;
 }
 
 function applyTranslations() {
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
-        if (currentTranslations[key]) {
-            if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
-                el.placeholder = currentTranslations[key];
-            } else {
-                el.textContent = currentTranslations[key];
-            }
+        if (!key) return;
+
+        const text = t(key, {
+            count: el.dataset.count ? parseInt(el.dataset.count) : undefined
+        });
+
+        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+            el.placeholder = text;
+        } else {
+            el.textContent = text;
         }
     });
 
-    if (currentTranslations.pageTitle) {
-        document.title = currentTranslations.pageTitle;
-    }
+    if (currentTranslations.pageTitle) document.title = currentTranslations.pageTitle;
 }
 
 export function initLanguage() {
@@ -77,16 +93,11 @@ export function initLanguage() {
 
     if (selector) {
         selector.innerHTML = supportedLanguages.map(lang => `
-            <option value="${lang.code}">
-                ${lang.flag} ${lang.native}
-            </option>
+            <option value="${lang.code}">${lang.flag} ${lang.native}</option>
         `).join('');
-
         selector.value = savedLang;
-        
-        selector.addEventListener('change', (e) => {
-            loadTranslations(e.target.value);
-        });
+
+        selector.addEventListener('change', (e) => loadTranslations(e.target.value));
     }
 
     loadTranslations(savedLang);
@@ -96,6 +107,6 @@ export function changeLanguage(langCode) {
     loadTranslations(langCode);
 }
 
-// Global access
 window.initLanguage = initLanguage;
 window.changeLanguage = changeLanguage;
+window.t = t;  // Global translation helper
