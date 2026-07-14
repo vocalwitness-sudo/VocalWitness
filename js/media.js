@@ -1,4 +1,4 @@
-// js/media.js - Forensic Media Handler (Citizen + Witness Ready)
+// js/media.js - Forensic Media Handler (Fixed for Production)
 import { showToast, generateSha256Hash } from './utils.js';
 import { storage } from './firebase-config.js';
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
@@ -30,7 +30,8 @@ export async function handleImageSelect(event, previewArea) {
                 <img src="${e.target.result}" class="w-full max-h-80 object-cover" alt="Preview">
                 <button id="removeImgBtn" class="absolute top-3 right-3 bg-red-600 hover:bg-red-700 text-white rounded-full w-8 h-8 flex items-center justify-center text-xl shadow-lg">✕</button>
             </div>`;
-        document.getElementById('removeImgBtn').onclick = () => removeImage(previewArea);
+        const removeBtn = document.getElementById('removeImgBtn');
+        if (removeBtn) removeBtn.onclick = () => removeImage(previewArea);
     };
     reader.readAsDataURL(file);
 }
@@ -49,7 +50,6 @@ export function toggleVoiceRecording(voiceBtn) {
     if (!isRecording) {
         engineInstance.startVoiceRecording(300000); // 5 min max
         voiceBtn.classList.add('recording-active');
-        // You can enhance the button UI here as in your original code
         showToast("🎤 Recording started...", "info");
     } else {
         engineInstance.stopVoiceRecording();
@@ -61,38 +61,48 @@ export function toggleVoiceRecording(voiceBtn) {
 // ====================== UPLOAD ======================
 export async function uploadForensicMedia() {
     const mediaData = { imageUrl: null, audioUrl: null, imageHash: null, audioHash: null };
-
     const userId = auth.currentUser?.uid || "anonymous";
     const isWitness = AppState.currentMode === 'witness';
 
-    // Image
+    // === IMAGE UPLOAD ===
     if (selectedImageFile) {
         try {
             const hash = await generateSha256Hash(selectedImageFile);
+            const timestamp = Date.now();
+            const filename = `${timestamp}_${selectedImageFile.name}`;
+            
             const path = isWitness 
-                ? `witness/${userId}/${Date.now()}_${selectedImageFile.name}`
-                : `public/${userId}/${Date.now()}_${selectedImageFile.name}`;
+                ? `witness/${userId}/${filename}`
+                : `public/${userId}/${filename}`;
 
             const imageRef = ref(storage, path);
             await uploadBytes(imageRef, selectedImageFile);
+            
             mediaData.imageUrl = await getDownloadURL(imageRef);
             mediaData.imageHash = hash;
+            console.log(`✅ Image uploaded to ${path}`);
         } catch (e) {
             console.error("Image upload failed", e);
+            showToast("Failed to upload image", "error");
             throw e;
         }
     }
 
-    // Audio
+    // === AUDIO UPLOAD ===
     if (engineInstance?.currentAudioBlob) {
         try {
             const hash = await generateSha256Hash(engineInstance.currentAudioBlob);
-            const audioRef = ref(storage, `audio/${userId}/${Date.now()}.webm`);
+            const timestamp = Date.now();
+            const audioRef = ref(storage, `audio/${userId}/${timestamp}.webm`);
+
             await uploadBytes(audioRef, engineInstance.currentAudioBlob);
+            
             mediaData.audioUrl = await getDownloadURL(audioRef);
             mediaData.audioHash = hash;
+            console.log(`✅ Audio uploaded to audio/${userId}/...`);
         } catch (e) {
             console.error("Audio upload failed", e);
+            showToast("Failed to upload voice recording", "error");
         }
     }
 
@@ -105,7 +115,7 @@ export function resetMediaState() {
     if (preview) preview.innerHTML = '';
 }
 
-// Global exposure
+// Global exposure for inline HTML handlers
 window.handleImageSelect = handleImageSelect;
 window.toggleVoiceRecording = toggleVoiceRecording;
 window.resetMediaState = resetMediaState;
