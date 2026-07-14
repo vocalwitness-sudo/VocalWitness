@@ -1,17 +1,18 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
+   
     // Helper functions
     function isSignedIn() { return request.auth != null; }
-    function isOwner(uid) { return isSignedIn() && request.auth.uid == uid; }
-
+    function isOwner(uid) { 
+      return isSignedIn() && request.auth.uid == uid; 
+    }
     function isSteward() {
       return isSignedIn() &&
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSteward == true;
     }
 
-    // MENU (if you use it)
+    // MENU
     match /MENU/{document} {
       allow read: if true;
       allow write: if false;
@@ -23,22 +24,21 @@ service cloud.firestore {
       allow create, update: if isOwner(userId);
     }
 
-    // Testimonies - Fixed for Create
+    // Testimonies
     match /testimonies/{testimonyId} {
       allow read: if resource == null || resource.data.moderationStatus != "removed";
       
-      // Create: Any signed-in user
-      allow create: if isSignedIn();
-      
-      // Update/Delete: Owner or Steward
+      allow create: if isSignedIn()
+                    && request.resource.data.authorId == request.auth.uid;  // Prevent impersonation
+
       allow update, delete: if isOwner(resource.data.authorId) || isSteward();
     }
 
-    // Groups
+    // Groups (example)
     match /groups/{groupId} {
       allow read: if true;
       allow create: if isSignedIn();
-      allow update, delete: if isSignedIn() && 
+      allow update, delete: if isSignedIn() &&
         (resource.data.members.hasAny([request.auth.uid]) || resource.data.createdBy == request.auth.uid);
     }
 
