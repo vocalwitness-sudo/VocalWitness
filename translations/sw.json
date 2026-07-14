@@ -49,5 +49,14 @@
   "postFailed": "Imeshindwa kuchapisha ushuhuda",
   "login": "Ingia",
   "signup": "Jisajili",
-  "logout": "Toka"
+  "logout": "Toka",
+
+  "supportModal": {
+    "title": "Unga Mkono Mraba",
+    "description": "Changia moja kwa moja kwenye daftari la ukweli la VocalWitness. Msaada wako unasaidia kudumisha miundombinu yetu.",
+    "usdtLabel": "Anwani ya USDT (TRC20)",
+    "copyButton": "Nakili Anwani",
+    "warning": "Tuma USDT pekee kwenye mtandao wa TRC20.",
+    "closeButton": "Funga"
+  }
 }
