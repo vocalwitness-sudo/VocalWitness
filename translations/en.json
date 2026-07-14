@@ -1,47 +1,43 @@
-{
-  "appTitle": "VocalWitness",
-  "appSubtitle": "Truth • Evidence • Public Square",
-  "legalLabel": "Important Note:",
-  "privacyTitle": "Privacy First • Decentralized",
-  "privacyWarning": "VocalWitness is a public square for truth and evidence. We never collect your ID cards, passports, or personal data. Your testimony is yours alone.",
-  "placeholder": "Share your raw testimony... What did you witness?",
-  "postButton": "🚀 Publish Testimony to the Square",
-  "citizenTalk": "Citizen Talk",
-  "trueWitness": "True Witness",
-  "liveArena": "Live Arena",
-  "groups": "Groups",
-  "photoForensic": "📸 Photo + Forensic Shield",
-  "voiceTestimony": "🎤 Voice Testimony",
-  "supportPlatform": "Support the Square",
-  "about": "About",
-  "safety": "Safety",
-  "privacy": "Privacy",
-  "terms": "Terms",
-  "myDigitalPassport": "My Digital Passport",
-  "editProfile": "✏️ Edit Profile",
-  "changePassword": "🔑 Change Password",
-  "upgradeZK": "🔬 Upgrade to True Witness (ZK)",
-  "signOut": "Sign Out",
-  "createGroup": "Create New Group",
-  "createGroupBtn": "Create Group",
-  "cultivateSquare": "Cultivate the Public Square",
-  "protectSquare": "Protect the Public Square with enhanced responsibility & tools",
-  "forensicTools": "Forensic Shield + Advanced Tools",
-  "higherImpact": "Higher Witness Impact",
-  "arenaRights": "Arena Host & Moderation Rights",
-  "stewardship": "Stewardship & Custodian Roles",
-  "maybeLater": "Maybe later",
-  "becomeSteward": "🌱 Become a Square Steward",
-  "cancel": "Cancel",
-  "pageTitle": "VocalWitness • Truth • Evidence • Public Square"
-}
-{
-  "witness_one": "1 Witness",
-  "witness_other": "{count} Witnesses",
-  "testimony_one": "1 Testimony",
-  "testimony_other": "{count} Testimonies",
-  "like_one": "1 like",
-  "like_other": "{count} likes",
-  "comment_one": "1 comment",
-  "comment_other": "{count} comments"
+export async function loadTranslations(langCode = 'en') {
+    try {
+        const isSupported = supportedLanguages.some(l => l.code === langCode);
+        if (!isSupported) langCode = 'en';
+
+        console.log(`🔄 Trying to load translations/${langCode}.json`);
+
+        // Multiple fallback paths
+        const paths = [
+            `translations/${langCode}.json`,           // relative
+            `/translations/${langCode}.json`,          // root
+            `./translations/${langCode}.json`          // explicit
+        ];
+
+        let loaded = false;
+        for (let url of paths) {
+            try {
+                const response = await fetch(url, { cache: 'no-cache' });
+                if (response.ok) {
+                    currentTranslations = await response.json();
+                    console.log(`✅ Successfully loaded ${langCode} from: ${url}`);
+                    loaded = true;
+                    break;
+                }
+            } catch (err) {
+                console.log(`Failed path: ${url}`);
+            }
+        }
+
+        if (!loaded) {
+            console.warn(`⚠️ Could not load ${langCode}.json - using empty fallback`);
+            currentTranslations = {};
+        }
+    } catch (e) {
+        console.error(`Failed to load ${langCode}`, e);
+        currentTranslations = {};
+    }
+
+    currentLang = langCode;
+    localStorage.setItem('preferredLang', langCode);
+    applyTranslations();
+    applyTextDirection(langCode);
 }
