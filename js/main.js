@@ -84,7 +84,6 @@ window.showMoreMenu = () => {
 };
 
 // ====================== PUBLISH ======================
-// ====================== PUBLISH ======================
 window.publishTestimony = async () => {
     const textarea = document.getElementById('mainInput');
     const content = textarea?.value.trim() || "";
@@ -164,45 +163,73 @@ async function bootstrap() {
 }
 
 function setupEventListeners() {
-    // Media buttons
-    document.getElementById('btn-photo')?.addEventListener('click', () => {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*';
-        input.onchange = (ev) => {
-            mediaModule.handleImageSelect(ev, document.getElementById('preview-area'));
-        };
-        input.click();
-    });
+    // Media buttons - Forensic Photo
+    const photoBtn = document.getElementById('btn-photo');
+    if (photoBtn) {
+        photoBtn.addEventListener('click', () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = (ev) => {
+                if (typeof mediaModule.handleImageSelect === 'function') {
+                    mediaModule.handleImageSelect(ev, document.getElementById('preview-area'));
+                } else {
+                    showToast("📸 Media module not ready yet. Refresh page.", "error");
+                }
+            };
+            input.click();
+        });
+    }
 
-    document.getElementById('btn-voice')?.addEventListener('click', (e) => 
-        mediaModule.toggleVoiceRecording(e.currentTarget)
-    );
+    // Voice Testimony
+    const voiceBtn = document.getElementById('btn-voice');
+    if (voiceBtn) {
+        voiceBtn.addEventListener('click', (e) => {
+            if (typeof mediaModule.toggleVoiceRecording === 'function') {
+                mediaModule.toggleVoiceRecording(e.currentTarget);
+            } else {
+                showToast("🎤 Voice recording not available yet.", "error");
+            }
+        });
+    }
 
     // Publish button
-    document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
+    const postBtn = document.getElementById('postButton');
+    if (postBtn) {
+        postBtn.addEventListener('click', window.publishTestimony);
+    }
 
-    // Top bar buttons
-    document.getElementById('profile-btn')?.addEventListener('click', () => {
-        if (typeof window.showProfile === 'function') {
-            window.showProfile();
-        } else {
-            showToast("Opening Profile...", "info");
-        }
-    });
+    // Profile button
+    const profileBtn = document.getElementById('profile-btn');
+    if (profileBtn) {
+        profileBtn.addEventListener('click', () => {
+            if (typeof window.showProfile === 'function') {
+                window.showProfile();
+            } else {
+                showToast("👤 Profile section coming soon", "info");
+            }
+        });
+    }
 
-    document.getElementById('support-btn')?.addEventListener('click', () => {
-        showToast("Support & Help Center coming soon", "info");
-    });
+    // Support button
+    const supportBtn = document.getElementById('support-btn');
+    if (supportBtn) {
+        supportBtn.addEventListener('click', () => {
+            showToast("❤️ Support & Help Center coming soon", "info");
+        });
+    }
 
-    // Language selector
+    // === FIXED LANGUAGE SELECTOR ===
     const langSelector = document.getElementById('languageSelector');
     if (langSelector) {
         langSelector.addEventListener('change', (e) => {
-            showToast(`🌍 Language changed to ${e.target.value.toUpperCase()}`, "success");
+            const newLang = e.target.value;
+            if (typeof window.changeLanguage === 'function') {
+                window.changeLanguage(newLang);
+            } else {
+                console.error("changeLanguage function not found");
+            }
+            showToast(`🌍 Language switched to ${newLang.toUpperCase()}`, "success");
         });
     }
 }
-
-// Start the app
-document.addEventListener('DOMContentLoaded', bootstrap);
