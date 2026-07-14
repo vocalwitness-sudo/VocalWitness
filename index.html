@@ -3,15 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#10b981">
+    <meta name="description" content="VocalWitness - Privacy First Public Square for Truth and Evidence">
+    
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/logo.png" type="image/png">
+    
     <title>VocalWitness • Truth • Evidence • Public Square</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+    
     <style>
-        body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: #e2e8f0; }
-        .glass { background: rgba(15, 23, 42, 0.92); backdrop-filter: blur(24px); border: 1px solid rgba(148, 163, 184, 0.12); }
-        .nav-tab { transition: all 0.2s ease; }
-        .nav-tab.active { background-color: #10b981; color: black; font-weight: 600; }
+        body { 
+            font-family: 'Inter', system-ui, sans-serif; 
+            background: #0a0f1c; 
+            color: #e2e8f0; 
+        }
+        .glass { 
+            background: rgba(15, 23, 42, 0.92); 
+            backdrop-filter: blur(24px); 
+            border: 1px solid rgba(148, 163, 184, 0.12); 
+        }
+        .nav-tab { 
+            transition: all 0.2s ease; 
+        }
+        .nav-tab.active { 
+            background-color: #10b981; 
+            color: black; 
+            font-weight: 600; 
+        }
     </style>
 </head>
 <body class="min-h-screen pb-24 bg-[#0a0f1c]">
