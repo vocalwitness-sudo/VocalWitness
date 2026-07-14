@@ -1,4 +1,4 @@
-// js/i18n.js - Advanced with Pluralization & Placeholder Support
+// js/i18n.js - Production Ready with ICU Plural + Enhanced Selector
 let currentTranslations = {};
 let currentLang = 'en';
 
@@ -15,22 +15,23 @@ const supportedLanguages = [
     { code: 'ar', name: 'العربية', flag: '🇸🇦', native: 'العربية', rtl: true }
 ];
 
+function getLangName(code) {
+    const lang = supportedLanguages.find(l => l.code === code);
+    return lang ? lang.native : code;
+}
+
 export async function loadTranslations(langCode = 'en') {
     try {
         const isSupported = supportedLanguages.some(l => l.code === langCode);
         if (!isSupported) langCode = 'en';
 
         const response = await fetch(`translations/${langCode}.json`);
-        
         if (response.ok) {
             currentTranslations = await response.json();
             console.log(`✅ Loaded ${langCode} translations`);
-        } else {
-            currentTranslations = {};
         }
     } catch (e) {
         console.warn(`Failed to load ${langCode}`);
-        currentTranslations = {};
     }
 
     currentLang = langCode;
@@ -38,8 +39,7 @@ export async function loadTranslations(langCode = 'en') {
     applyTranslations();
     applyTextDirection(langCode);
 
-    const lang = supportedLanguages.find(l => l.code === langCode);
-    showToast(`🌍 ${lang ? lang.native : langCode} activated`, "success");
+    showToast(`🌍 ${getLangName(langCode)} activated`, "success");
 }
 
 function applyTextDirection(langCode) {
@@ -49,33 +49,39 @@ function applyTextDirection(langCode) {
     document.body.style.textAlign = isRTL ? 'right' : 'left';
 }
 
-// Advanced translation with pluralization and placeholders
+// ICU-style Plural + Placeholder Support
 export function t(key, params = {}) {
     let text = currentTranslations[key] || key;
 
-    // Replace placeholders like {name}, {count}
-    Object.keys(params).forEach(param => {
-        const regex = new RegExp(`{${param}}`, 'g');
-        text = text.replace(regex, params[param]);
-    });
-
-    // Simple pluralization (for English-style: count items)
-    if (params.count !== undefined && currentTranslations[`${key}_plural`]) {
-        const pluralKey = params.count === 1 ? key : `${key}_plural`;
-        text = currentTranslations[pluralKey] || text;
+    // Pluralization
+    if (params.count !== undefined) {
+        const pluralForm = getPluralForm(params.count, currentLang);
+        const pluralKey = `${key}_${pluralForm}`;
+        if (currentTranslations[pluralKey]) {
+            text = currentTranslations[pluralKey];
+        }
     }
 
+    // Replace {name}, {count}, etc.
+    Object.keys(params).forEach(param => {
+        text = text.replace(new RegExp(`{${param}}`, 'g'), params[param]);
+    });
+
     return text;
+}
+
+function getPluralForm(count, lang) {
+    if (count === 0) return 'zero';
+    if (count === 1) return 'one';
+    if (count === 2) return 'two';
+    return 'other';
 }
 
 function applyTranslations() {
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
-        if (!key) return;
-
-        const text = t(key, {
-            count: el.dataset.count ? parseInt(el.dataset.count) : undefined
-        });
+        const count = el.dataset.count ? parseInt(el.dataset.count) : undefined;
+        const text = t(key, { count });
 
         if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
             el.placeholder = text;
@@ -93,7 +99,9 @@ export function initLanguage() {
 
     if (selector) {
         selector.innerHTML = supportedLanguages.map(lang => `
-            <option value="${lang.code}">${lang.flag} ${lang.native}</option>
+            <option value="${lang.code}">
+                ${lang.flag} ${lang.native}
+            </option>
         `).join('');
         selector.value = savedLang;
 
@@ -109,4 +117,4 @@ export function changeLanguage(langCode) {
 
 window.initLanguage = initLanguage;
 window.changeLanguage = changeLanguage;
-window.t = t;  // Global translation helper
+window.t = t;
