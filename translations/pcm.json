@@ -49,5 +49,14 @@
   "postFailed": "Unable to publish testimony",
   "login": "Login",
   "signup": "Sign Up",
-  "logout": "Logout"
+  "logout": "Logout",
+
+  "supportModal": {
+    "title": "Support the Square",
+    "description": "Contribute directly to the VocalWitness truth ledger. Your support dey maintain our infrastructure.",
+    "usdtLabel": "USDT (TRC20) Address",
+    "copyButton": "Copy Address",
+    "warning": "Only send USDT on TRC20 network.",
+    "closeButton": "Close"
+  }
 }
