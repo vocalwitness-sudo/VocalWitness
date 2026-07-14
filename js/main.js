@@ -226,3 +226,17 @@ window.addEventListener('load', initSupportButton);
 
 // Start the app
 document.addEventListener('DOMContentLoaded', bootstrap);
+
+// Make Profile button work
+document.addEventListener('DOMContentLoaded', () => {
+    const profileBtn = document.getElementById('profile-btn');
+    if (profileBtn) {
+        profileBtn.addEventListener('click', () => {
+            if (typeof window.showProfile === 'function') {
+                window.showProfile();
+            } else {
+                showToast("Profile module not loaded", "error");
+            }
+        });
+    }
+});
