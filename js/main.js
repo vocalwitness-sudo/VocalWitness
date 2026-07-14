@@ -24,21 +24,17 @@ window.switchTab = (tab) => {
             if (tab === 'witness') btn.classList.add('bg-amber-900', 'text-amber-300');
         }
     });
-
     AppState.currentTab = tab;
-
     if (tab === 'witness') {
         AppState.currentMode = 'witness';
         showToast("🔐 Witness Circle Mode", "success");
     } else {
         AppState.currentMode = 'citizen';
     }
-
     if (tab === 'more') {
         showMoreMenu();
         return;
     }
-
     loadDynamicFeed(tab);
 };
 
@@ -48,18 +44,16 @@ function loadDynamicFeed(tab) {
     else if (tab === 'arena') feedType = 'live';
     else if (tab === 'mycircle') feedType = 'my-testimonies';
     else if (tab === 'witness') feedType = 'true-witness';
-
     initFeed(db, feedType);
 }
 
 window.showMoreMenu = () => {
     const existing = document.getElementById('more-dropdown');
     if (existing) existing.remove();
-
     const dropdown = document.createElement('div');
     dropdown.id = 'more-dropdown';
     dropdown.className = 'fixed top-20 right-6 glass rounded-3xl shadow-2xl w-64 py-2 z-[150] border border-zinc-700';
-  
+ 
     dropdown.innerHTML = `
         <div class="py-1">
             <a href="groups.html" class="flex items-center gap-3 px-6 py-3 hover:bg-zinc-800 text-white">👥 Groups</a>
@@ -71,7 +65,6 @@ window.showMoreMenu = () => {
         </div>
     `;
     document.body.appendChild(dropdown);
-
     setTimeout(() => {
         const closeHandler = (e) => {
             if (!dropdown.contains(e.target)) {
@@ -87,20 +80,15 @@ window.showMoreMenu = () => {
 window.publishTestimony = async () => {
     const textarea = document.getElementById('mainInput');
     const content = textarea?.value.trim() || "";
-
     if (!content && !mediaModule.selectedImageFile && !engineInstance?.currentAudioBlob) {
         return showToast("Please add text, photo, or voice testimony", "error");
     }
-
     const postBtn = document.getElementById('postButton');
     postBtn.disabled = true;
     postBtn.textContent = 'Publishing to the Square...';
-
     try {
         const mediaData = await mediaModule.uploadForensicMedia();
-
         const { collection, addDoc, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
-
         const testimonyData = {
             authorId: auth.currentUser?.uid,
             author: auth.currentUser?.displayName || "Anonymous Witness",
@@ -111,25 +99,18 @@ window.publishTestimony = async () => {
             audioHash: mediaData?.audioHash || null,
             timestamp: serverTimestamp(),
             feedVisibility: AppState.currentMode || "citizen-talk",
-            moderationStatus: "approved",           // Important for rules
+            moderationStatus: "approved",
             status: "public",
             credibilityScore: 10,
             createdAt: serverTimestamp()
         };
-
         await addDoc(collection(db, "testimonies"), testimonyData);
-
         await window.recordTestimonyContribution?.();
-
         showToast("✅ Testimony published successfully!", "success");
-
-        // Reset form
+        
         if (textarea) textarea.value = '';
         if (mediaModule.resetMediaState) mediaModule.resetMediaState();
-
-        // Refresh feed
         loadDynamicFeed(AppState.currentTab || 'square');
-
     } catch (err) {
         console.error("Publish error:", err);
         showToast("Failed to publish. Please try again.", "error");
@@ -138,24 +119,20 @@ window.publishTestimony = async () => {
         postBtn.textContent = 'Publish to the Square';
     }
 };
+
 // ====================== BOOTSTRAP ======================
 async function bootstrap() {
     try {
         await initAuth();
         initLanguage();
         initProfile();
-
         engineInstance = new CitizenTalkEngine(db, storage);
         window.engineInstance = engineInstance;
         if (mediaModule.setEngine) mediaModule.setEngine(engineInstance);
-
         if (typeof applyTierTheme === 'function') applyTierTheme();
         if (typeof updateTierBadge === 'function') updateTierBadge();
-
         setupEventListeners();
-
         setTimeout(() => window.switchTab('square'), 600);
-
         console.log("✅ VocalWitness Live Ready");
     } catch (e) {
         console.error("Bootstrap failed:", e);
@@ -163,7 +140,7 @@ async function bootstrap() {
 }
 
 function setupEventListeners() {
-    // Media buttons - Forensic Photo
+    // Media buttons
     const photoBtn = document.getElementById('btn-photo');
     if (photoBtn) {
         photoBtn.addEventListener('click', () => {
@@ -181,7 +158,6 @@ function setupEventListeners() {
         });
     }
 
-    // Voice Testimony
     const voiceBtn = document.getElementById('btn-voice');
     if (voiceBtn) {
         voiceBtn.addEventListener('click', (e) => {
@@ -195,11 +171,9 @@ function setupEventListeners() {
 
     // Publish button
     const postBtn = document.getElementById('postButton');
-    if (postBtn) {
-        postBtn.addEventListener('click', window.publishTestimony);
-    }
+    if (postBtn) postBtn.addEventListener('click', window.publishTestimony);
 
-    // Profile button
+    // Top bar buttons
     const profileBtn = document.getElementById('profile-btn');
     if (profileBtn) {
         profileBtn.addEventListener('click', () => {
@@ -211,7 +185,6 @@ function setupEventListeners() {
         });
     }
 
-    // Support button
     const supportBtn = document.getElementById('support-btn');
     if (supportBtn) {
         supportBtn.addEventListener('click', () => {
@@ -219,17 +192,18 @@ function setupEventListeners() {
         });
     }
 
-    // === FIXED LANGUAGE SELECTOR ===
+    // FIXED LANGUAGE SELECTOR
     const langSelector = document.getElementById('languageSelector');
     if (langSelector) {
         langSelector.addEventListener('change', (e) => {
             const newLang = e.target.value;
             if (typeof window.changeLanguage === 'function') {
                 window.changeLanguage(newLang);
-            } else {
-                console.error("changeLanguage function not found");
             }
             showToast(`🌍 Language switched to ${newLang.toUpperCase()}`, "success");
         });
     }
 }
+
+// Start the app
+document.addEventListener('DOMContentLoaded', bootstrap);
