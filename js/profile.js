@@ -1,9 +1,8 @@
-// js/profile.js - Integrated with AppState + Circles
+// js/profile.js
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import { doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { doc, onSnapshot, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { auth, db } from './firebase-config.js';
 import { showToast } from './utils.js';
-import { AppState, updateAppState } from './app-state.js';
 import { refreshTierAndUI } from './tier.js';
 
 let currentUserData = null;
@@ -12,9 +11,6 @@ export function initProfile() {
     onAuthStateChanged(auth, (user) => {
         if (user) {
             listenToUserProfile(user.uid);
-            updateAppState({ isAuthenticated: true, currentUser: user });
-        } else {
-            updateAppState({ isAuthenticated: false, currentUser: null });
         }
     });
 }
@@ -33,19 +29,33 @@ function listenToUserProfile(userId) {
 function renderProfileUI(userData) {
     if (!userData) return;
 
-    // Update elements if they exist in modal or profile page
-    const fields = {
-        profileName: userData.displayName || "Anonymous Witness",
-        profileUsername: `@${userData.username || 'user_' + (userData.uid || '').slice(0,6)}`,
-        postCount: userData.testimoniesCount || 0,
-        reputationScore: userData.credibilityScore || 50,
-        trustScore: userData.integrityScore || 60
-    };
-
-    Object.keys(fields).forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = fields[id];
-    });
+    const content = document.getElementById('profileContent');
+    if (content) {
+        content.innerHTML = `
+            <div class="text-center">
+                <div class="w-24 h-24 mx-auto bg-gradient-to-br from-emerald-500 to-teal-500 rounded-3xl flex items-center justify-center text-5xl mb-4">
+                    👤
+                </div>
+                <h3 id="profileName" class="text-2xl font-bold">${userData.displayName || "Anonymous Witness"}</h3>
+                <p id="profileUsername" class="text-emerald-400">@${userData.username || 'user_' + (userData.uid || '').slice(0,6)}</p>
+            </div>
+            
+            <div class="grid grid-cols-3 gap-4 text-center mt-8">
+                <div>
+                    <div class="text-2xl font-bold text-emerald-400">${userData.testimoniesCount || 0}</div>
+                    <div class="text-xs text-zinc-500">Testimonies</div>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold">${userData.credibilityScore || 50}</div>
+                    <div class="text-xs text-zinc-500">Credibility</div>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold">${userData.integrityScore || 60}</div>
+                    <div class="text-xs text-zinc-500">Integrity</div>
+                </div>
+            </div>
+        `;
+    }
 }
 
 // Modal Controls
@@ -54,20 +64,58 @@ window.showProfile = () => {
     if (modal) {
         modal.classList.remove('hidden');
         if (currentUserData) renderProfileUI(currentUserData);
-    } else {
-        showToast("Opening My Identity...", "info");
-        // Future: navigate to dedicated profile page
     }
 };
 
 window.closeProfile = () => {
-    const modal = document.getElementById('profileModal');
-    if (modal) modal.classList.add('hidden');
+    document.getElementById('profileModal').classList.add('hidden');
 };
 
-window.editProfile = () => showToast("✏️ Edit Identity coming soon", "info");
-window.downloadPassport = () => showToast("📄 Digital Passport (PDF) coming soon", "info");
-window.showSettings = () => showToast("⚙️ Settings & Privacy", "info");
+window.editProfile = () => {
+    const modal = document.getElementById('editProfileModal');
+    if (!modal || !currentUserData) {
+        showToast("Profile data not loaded", "error");
+        return;
+    }
+
+    document.getElementById('editDisplayName').value = currentUserData.displayName || "";
+    document.getElementById('editUsername').value = currentUserData.username || "";
+    document.getElementById('editBio').value = currentUserData.bio || "";
+
+    modal.classList.remove('hidden');
+};
+
+window.closeEditProfile = () => {
+    document.getElementById('editProfileModal').classList.add('hidden');
+};
+
+window.saveProfileChanges = async () => {
+    const user = auth.currentUser;
+    if (!user) {
+        showToast("You must be logged in", "error");
+        return;
+    }
+
+    const newDisplayName = document.getElementById('editDisplayName').value.trim();
+    const newUsername = document.getElementById('editUsername').value.trim().toLowerCase();
+    const newBio = document.getElementById('editBio').value.trim();
+
+    try {
+        const userRef = doc(db, "users", user.uid);
+        await updateDoc(userRef, {
+            displayName: newDisplayName || "Anonymous Witness",
+            username: newUsername || null,
+            bio: newBio || null,
+            updatedAt: serverTimestamp()
+        });
+
+        showToast("✅ Profile updated successfully", "success");
+        closeEditProfile();
+    } catch (error) {
+        console.error(error);
+        showToast("Failed to save changes", "error");
+    }
+};
 
 window.logout = async () => {
     if (confirm("Sign out of VocalWitness?")) {
