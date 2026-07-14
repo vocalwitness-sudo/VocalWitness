@@ -231,5 +231,4 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast("Profile module not loaded", "error");
             }
         });
-    }
-});
+  
