@@ -258,3 +258,8 @@ function setupEventListeners() {
 
     initSupportButton();
 }
+// Temporary Profile Handler
+window.showProfile = () => {
+    showToast("👤 Profile & Edit coming soon", "info");
+    // Future: window.location.href = 'profile.html' or open modal
+};
