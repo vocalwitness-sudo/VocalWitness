@@ -173,70 +173,37 @@ function setupEventListeners() {
     const postBtn = document.getElementById('postButton');
     if (postBtn) postBtn.addEventListener('click', window.publishTestimony);
 
-    // Top bar buttons
-    const profileBtn = document.getElementById('profile-btn');
-    if (profileBtn) {
-        profileBtn.addEventListener('click', () => {
-            if (typeof window.showProfile === 'function') {
-                window.showProfile();
-            } else {
-                showToast("👤 Profile section coming soon", "info");
-            }
-        });
-    }
-
-// ==================== SUPPORT BUTTON HANDLER ====================
-function initSupportButton() {
+    // Support Button
     const supportBtn = document.getElementById('support-btn');
     if (supportBtn) {
         supportBtn.addEventListener('click', () => {
             const modal = document.getElementById('supportModal');
-            if (modal) {
-                modal.classList.remove('hidden');
-                // Re-apply translations
-                setTimeout(() => {
-                    if (typeof applyTranslations === 'function') {
-                        applyTranslations();
-                    }
-                }, 100);
-            } else {
-                showToast("Support modal not found. Please refresh.", "error");
-            }
+            if (modal) modal.classList.remove('hidden');
         });
     }
-}
 
-// Run after DOM is fully loaded
-document.addEventListener('DOMContentLoaded', initSupportButton);
-
-// Also run it in case the script loads late
-window.addEventListener('load', initSupportButton);
-    // FIXED LANGUAGE SELECTOR
-    const langSelector = document.getElementById('languageSelector');
-    if (langSelector) {
-        langSelector.addEventListener('change', (e) => {
-            const newLang = e.target.value;
-            if (typeof window.changeLanguage === 'function') {
-                window.changeLanguage(newLang);
-            }
-            showToast(`🌍 Language switched to ${newLang.toUpperCase()}`, "success");
-        });
-    }
-}
-
-// Start the app
-document.addEventListener('DOMContentLoaded', bootstrap);
-
-// Make Profile button work
-document.addEventListener('DOMContentLoaded', () => {
+    // Profile Button - More robust version
     const profileBtn = document.getElementById('profile-btn');
     if (profileBtn) {
         profileBtn.addEventListener('click', () => {
-            if (typeof window.showProfile === 'function') {
-                window.showProfile();
-            } else {
-                showToast("Profile module not loaded", "error");
+            // Small delay to ensure profile.js has loaded
+            setTimeout(() => {
+                if (typeof window.showProfile === 'function') {
+                    window.showProfile();
+                } else {
+                    showToast("👤 Profile module is still loading... Try again in 2 seconds", "info");
+                }
+            }, 300);
+        });
+    }
+
+    // Language Selector
+    const langSelector = document.getElementById('languageSelector');
+    if (langSelector) {
+        langSelector.addEventListener('change', (e) => {
+            if (typeof window.changeLanguage === 'function') {
+                window.changeLanguage(e.target.value);
             }
         });
     }
-});
+}
