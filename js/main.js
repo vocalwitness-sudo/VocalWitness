@@ -205,17 +205,19 @@ initProfile();
 // Also run it in case the script loads late
 window.addEventListener('load', initSupportButton);
     // FIXED LANGUAGE SELECTOR
-    const langSelector = document.getElementById('languageSelector');
-    if (langSelector) {
-        langSelector.addEventListener('change', (e) => {
-            const newLang = e.target.value;
-            if (typeof window.changeLanguage === 'function') {
-                window.changeLanguage(newLang);
-            }
-            showToast(🌍 Language switched to ${newLang.toUpperCase()}, "success");
-        });
-    }
-}
+   // ... (previous code)
+    const langSelector = document.getElementById('languageSelector');
+    if (langSelector) {
+        langSelector.addEventListener('change', (e) => {
+            const newLang = e.target.value;
+            if (typeof window.changeLanguage === 'function') {
+                window.changeLanguage(newLang);
+            }
+            // FIXED: Used backticks (`) instead of quotes (')
+            showToast(`🌍 Language switched to ${newLang.toUpperCase()}`, "success");
+        });
+    }
+
 // Start the app
 document.addEventListener('DOMContentLoaded', bootstrap);
 // Make Profile button work
