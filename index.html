@@ -124,6 +124,7 @@
 </div>
 
 <!-- ==================== SUPPORT MODAL ==================== -->
+<!-- ==================== SUPPORT MODAL (NEW) ==================== -->
 <div id="supportModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[60] p-4">
     <div class="glass rounded-3xl max-w-md w-full p-8 text-center animate-in fade-in duration-300">
         <div class="text-6xl mb-6">🌱</div>
@@ -141,7 +142,7 @@
                      class="w-48 h-48 rounded-2xl border border-zinc-700 shadow-xl hover:scale-105 transition-transform">
             </div>
           
-            <code id="walletAddress" class="text-emerald-300 break-all font-mono text-sm block mb-4 select-all">
+            <code id="walletAddress" class="text-emerald-300 break-all font-mono text-sm block mb-4">
                 TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK
             </code>
           
@@ -161,29 +162,8 @@
     </div>
 </div>
 
-<!-- Copy Wallet Script -->
-<script>
-    function copyWalletAddress() {
-        const address = document.getElementById('walletAddress').innerText.trim();
-        navigator.clipboard.writeText(address).then(() => {
-            const copyText = document.getElementById('copyText');
-            const copyIcon = document.getElementById('copyIcon');
-          
-            const originalText = copyText.innerText;
-            const originalIcon = copyIcon.innerText;
-          
-            copyText.innerText = "Copied!";
-            copyIcon.innerText = "✅";
-          
-            setTimeout(() => {
-                copyText.innerText = originalText;
-                copyIcon.innerText = originalIcon;
-            }, 2000);
-        }).catch(() => {
-            showToast("Failed to copy address", "error");
-        });
-    }
-</script>
+<script type="module" src="js/main.js"></script>
+
 <!-- Copy Wallet Script -->
 <script>
     function copyWalletAddress() {
@@ -191,10 +171,10 @@
         navigator.clipboard.writeText(address).then(() => {
             const copyText = document.getElementById('copyText');
             const copyIcon = document.getElementById('copyIcon');
-           
+          
             copyText.innerText = "Copied!";
             copyIcon.innerText = "✅";
-           
+          
             setTimeout(() => {
                 copyText.innerText = "Copy Address";
                 copyIcon.innerText = "📋";
@@ -202,6 +182,5 @@
         });
     }
 </script>
-
 </body>
 </html>
