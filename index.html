@@ -140,13 +140,28 @@
             <h2 class="text-2xl font-bold text-emerald-400">My Profile</h2>
             <button onclick="closeProfile()" class="text-zinc-400 hover:text-white text-3xl leading-none">×</button>
         </div>
+        
         <div id="profileContent" class="min-h-[200px]"></div>
+        
+        <!-- Action Buttons -->
         <div class="flex gap-3 mt-8">
-            <button onclick="editProfile()" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl">✏️ Edit Profile</button>
-            <button onclick="logout()" class="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl">Logout</button>
+            <button onclick="editProfile()" 
+                    class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl">
+                ✏️ Edit Profile
+            </button>
+            <button onclick="openSettings()" 
+                    class="flex-1 py-3 bg-zinc-700 hover:bg-zinc-600 rounded-2xl">
+                ⚙️ Settings
+            </button>
         </div>
+        
+        <button onclick="logout()" 
+                class="w-full mt-3 py-3 bg-red-900/30 hover:bg-red-900/50 text-red-400 rounded-2xl font-medium">
+            Logout
+        </button>
     </div>
 </div>
+    
     <!-- ==================== EDIT PROFILE MODAL ==================== -->
 <div id="editProfileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[80] p-4">
     <div class="glass rounded-3xl max-w-md w-full p-6">
@@ -177,6 +192,51 @@
             <button onclick="closeEditProfile()" class="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl">Cancel</button>
             <button onclick="saveProfileChanges()" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl">Save Changes</button>
         </div>
+    </div>
+</div>
+
+    <!-- ==================== SETTINGS MODAL ==================== -->
+<div id="settingsModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[80] p-4">
+    <div class="glass rounded-3xl max-w-md w-full p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-emerald-400">Settings</h2>
+            <button onclick="closeSettings()" class="text-zinc-400 hover:text-white text-3xl leading-none">×</button>
+        </div>
+        
+        <div class="space-y-6">
+            <!-- Basic Settings Options -->
+            <div onclick="alert('Account & Security - coming soon')" 
+                 class="flex items-center justify-between p-4 bg-zinc-900 hover:bg-zinc-800 rounded-2xl cursor-pointer">
+                <div>
+                    <div class="font-medium">Account & Security</div>
+                    <div class="text-sm text-zinc-500">Password, Delete Account</div>
+                </div>
+                <span class="text-xl">→</span>
+            </div>
+
+            <div onclick="alert('Privacy Settings - coming soon')" 
+                 class="flex items-center justify-between p-4 bg-zinc-900 hover:bg-zinc-800 rounded-2xl cursor-pointer">
+                <div>
+                    <div class="font-medium">Privacy & Visibility</div>
+                    <div class="text-sm text-zinc-500">Who can see my testimonies</div>
+                </div>
+                <span class="text-xl">→</span>
+            </div>
+
+            <div onclick="alert('Notifications - coming soon')" 
+                 class="flex items-center justify-between p-4 bg-zinc-900 hover:bg-zinc-800 rounded-2xl cursor-pointer">
+                <div>
+                    <div class="font-medium">Notifications</div>
+                    <div class="text-sm text-zinc-500">Manage alerts</div>
+                </div>
+                <span class="text-xl">→</span>
+            </div>
+        </div>
+
+        <button onclick="closeSettings()" 
+                class="w-full mt-8 py-3 bg-zinc-700 hover:bg-zinc-600 rounded-2xl">
+            Close
+        </button>
     </div>
 </div>
 
