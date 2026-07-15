@@ -200,6 +200,21 @@ function setupEventListeners() {
         console.log("✅ Publish listener attached");
     }
 
+    // ====================== SETTINGS FUNCTIONS ======================
+window.openSettings = () => {
+    const modal = document.getElementById('settingsModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+    } else {
+        showToast("Settings modal not found. Please add the HTML first.", "error");
+    }
+};
+
+window.closeSettings = () => {
+    document.getElementById('settingsModal')?.classList.add('hidden');
+};
+    
+
     // ====================== MEDIA BUTTONS ======================
     const photoBtn = document.getElementById('btn-photo');
     if (photoBtn) {
