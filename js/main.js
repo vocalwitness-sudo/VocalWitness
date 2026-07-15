@@ -98,10 +98,9 @@ window.publishTestimony = async () => {
             content: content,
             createdAt: serverTimestamp(),
             timestamp: Date.now(),
-            isPublic: true
+            isPublic: true,
+            moderationStatus: "approved"
         };
-
-        console.log("📋 Attempting to write to collection: testimonies", testimonyData);
 
         await addDoc(collection(db, "testimonies"), testimonyData);
        
@@ -109,10 +108,8 @@ window.publishTestimony = async () => {
         if (textarea) textarea.value = '';
 
     } catch (err) {
-        console.error("❌ FULL Publish error:", err);
-        console.error("Error code:", err.code);
-        console.error("Error message:", err.message);
-        showToast("Failed to publish: " + (err.message || err), "error");
+        console.error("❌ Publish error:", err.code, "-", err.message);
+        showToast("Failed to publish. Please try again.", "error");
     } finally {
         if (postBtn) {
             postBtn.disabled = false;
@@ -120,7 +117,6 @@ window.publishTestimony = async () => {
         }
     }
 };
-
 // ====================== BOOTSTRAP ======================
 async function bootstrap() {
     try {
