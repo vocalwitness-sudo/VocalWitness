@@ -8,6 +8,7 @@ import { refreshTierAndUI } from './tier.js';
 let currentUserData = null;
 let userUnsubscribe = null;
 let currentProfileImageFile = null;
+window.currentUserData = null;
 
 export function initProfile() {
     if (userUnsubscribe) userUnsubscribe();
@@ -22,6 +23,7 @@ function listenToUserProfile(userId) {
     userUnsubscribe = onSnapshot(userRef, (snapshot) => {
         if (snapshot.exists()) {
             currentUserData = snapshot.data();
+            window.currentUserData = currentUserData;   // ← This makes it global
             renderProfileUI(currentUserData);
             refreshTierAndUI?.();
         }
@@ -30,7 +32,6 @@ function listenToUserProfile(userId) {
         showToast("Error loading profile", "error");
     });
 }
-
 function renderProfileUI(userData) {
     if (!userData) return;
     const content = document.getElementById('profileContent');
