@@ -69,6 +69,73 @@ window.logout = () => {
         alert("Logged out (add real logic)");
     }
 };
+// ====================== PUBLISH TESTIMONY ======================
+window.publishTestimony = async () => {
+    const textarea = document.getElementById('mainInput');
+    const content = textarea ? textarea.value.trim() : '';
+    
+    if (!content && !mediaModule.selectedImageFile && !window.engineInstance?.currentAudioBlob) {
+        showToast("Please write something or add media", "error");
+        return;
+    }
+
+    const postBtn = document.getElementById('postButton');
+    if (postBtn) {
+        postBtn.disabled = true;
+        postBtn.textContent = 'Publishing to the Square...';
+    }
+
+    try {
+        // Upload media first (photo + voice)
+        let mediaData = { imageUrl: null, audioUrl: null, imageHash: null, audioHash: null };
+        
+        if (mediaModule && typeof mediaModule.uploadForensicMedia === 'function') {
+            mediaData = await mediaModule.uploadForensicMedia();
+        }
+
+        // Save to Firestore
+        const { collection, addDoc, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
+        
+        const testimonyData = {
+            authorId: auth.currentUser?.uid || "anonymous",
+            author: auth.currentUser?.displayName || "Anonymous Witness",
+            content: content,
+            imageUrl: mediaData.imageUrl,
+            audioUrl: mediaData.audioUrl,
+            imageHash: mediaData.imageHash,
+            audioHash: mediaData.audioHash,
+            timestamp: serverTimestamp(),
+            feedVisibility: AppState.currentMode || "citizen",
+            status: "public",
+            createdAt: serverTimestamp()
+        };
+
+        await addDoc(collection(db, "testimonies"), testimonyData);
+
+        // Success
+        showToast("✅ Testimony published successfully to the Square!", "success");
+        
+        // Clear form
+        if (textarea) textarea.value = '';
+        if (mediaModule && typeof mediaModule.resetMediaState === 'function') {
+            mediaModule.resetMediaState();
+        }
+
+        // Refresh feed
+        if (typeof loadDynamicFeed === 'function') {
+            loadDynamicFeed(AppState.currentTab || 'square');
+        }
+
+    } catch (err) {
+        console.error("Publish error:", err);
+        showToast("Failed to publish. Please try again.", "error");
+    } finally {
+        if (postBtn) {
+            postBtn.disabled = false;
+            postBtn.textContent = 'Publish to the Square';
+        }
+    }
+};
 
 // ====================== BOOTSTRAP ======================
 async function bootstrap() {
