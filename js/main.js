@@ -268,3 +268,21 @@ function setupEventListeners() {
 
     initSupportButton();
 }
+<!-- Copy Wallet Script -->
+<script>
+    function copyWalletAddress() {
+        const address = document.getElementById('walletAddress').innerText;
+        navigator.clipboard.writeText(address).then(() => {
+            const copyText = document.getElementById('copyText');
+            const copyIcon = document.getElementById('copyIcon');
+          
+            copyText.innerText = "Copied!";
+            copyIcon.innerText = "✅";
+          
+            setTimeout(() => {
+                copyText.innerText = "Copy Address";
+                copyIcon.innerText = "📋";
+            }, 2000);
+        });
+    }
+</script>
