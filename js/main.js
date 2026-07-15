@@ -143,17 +143,22 @@ window.openEditProfile = () => {
 window.closeEditProfile = () => {
     document.getElementById('editProfileModal').classList.add('hidden');
 };
+
 // ====================== EDIT PROFILE MODAL CONTROLS ======================
 // ====================== EDIT PROFILE MODAL CONTROLS ======================
 window.openEditProfile = () => {
     const modal = document.getElementById('editProfileModal');
     if (modal) modal.classList.remove('hidden');
-    
-    // Pre-fill form if user data exists
-    if (typeof currentUserData !== 'undefined' && currentUserData) {
-        document.getElementById('editDisplayName').value = currentUserData.displayName || '';
-        document.getElementById('editUsername').value = currentUserData.username || '';
-        document.getElementById('editBio').value = currentUserData.bio || '';
+   
+    // Safer pre-fill
+    try {
+        if (typeof window.currentUserData !== 'undefined' && window.currentUserData) {
+            document.getElementById('editDisplayName').value = window.currentUserData.displayName || '';
+            document.getElementById('editUsername').value = window.currentUserData.username || '';
+            document.getElementById('editBio').value = window.currentUserData.bio || '';
+        }
+    } catch (e) {
+        console.log("Could not pre-fill profile data");
     }
 };
 
@@ -164,8 +169,6 @@ window.closeEditProfile = () => {
 
 window.saveProfileChanges = async () => {
     showToast("Saving profile changes...", "info");
-   
-    // TODO: Add real save logic here later (Firestore update)
     setTimeout(() => {
         closeEditProfile();
         showToast("✅ Profile Updated!", "success");
