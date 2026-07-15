@@ -99,17 +99,27 @@ window.publishTestimony = async () => {
             createdAt: serverTimestamp(),
             timestamp: Date.now(),
             isPublic: true,
-            moderationStatus: "approved"
+            moderationStatus: "approved",
+            feedVisibility: "citizen-talk"   // ← THIS WAS MISSING
         };
 
-        await addDoc(collection(db, "testimonies"), testimonyData);
-       
+        const docRef = await addDoc(collection(db, "testimonies"), testimonyData);
+        
+        console.log("✅ Saved with ID:", docRef.id);
+
         showToast("✅ Testimony published successfully!", "success");
         if (textarea) textarea.value = '';
 
+        // Refresh feed
+        setTimeout(() => {
+            if (typeof initFeed === 'function') {
+                initFeed(db, AppState?.currentTab === 'witness' ? 'true-witness' : 'citizen-talk');
+            }
+        }, 700);
+
     } catch (err) {
         console.error("❌ Publish error:", err.code, "-", err.message);
-        showToast("Failed to publish. Please try again.", "error");
+        showToast("Failed to publish. Try again.", "error");
     } finally {
         if (postBtn) {
             postBtn.disabled = false;
@@ -117,6 +127,7 @@ window.publishTestimony = async () => {
         }
     }
 };
+
 // ====================== BOOTSTRAP ======================
 async function bootstrap() {
     try {
