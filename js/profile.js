@@ -161,6 +161,29 @@ window.saveProfileChanges = async () => {
     }
 };
 
+// Profile Image Upload
+let currentProfileImageFile = null;
+
+window.handleProfileImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+        return showToast("Please upload an image file", "error");
+    }
+
+    currentProfileImageFile = file;
+
+    // Preview
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        const preview = document.getElementById('profileImagePreview');
+        if (preview) preview.innerHTML = `<img src="${ev.target.result}" class="w-full h-full object-cover rounded-3xl">`;
+    };
+    reader.readAsDataURL(file);
+
+    showToast("Image selected. It will upload when you save.", "success");
+};
 window.logout = async () => {
     if (!confirm("Sign out of VocalWitness?")) return;
 
