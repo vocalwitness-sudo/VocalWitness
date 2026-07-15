@@ -127,37 +127,43 @@ window.saveProfileChanges = async () => {
     const newDisplayName = document.getElementById('editDisplayName').value.trim();
     let newUsername = document.getElementById('editUsername').value.trim().toLowerCase();
     const newBio = document.getElementById('editBio').value.trim();
+    const isPublic = document.getElementById('privacyToggle').checked;
 
-    // Basic validation
+    // Validation...
     if (newUsername && (newUsername.length < 3 || newUsername.length > 20)) {
         return showToast("Username must be 3-20 characters", "error");
-    }
-    if (newUsername && !/^[a-z0-9_]+$/.test(newUsername)) {
-        return showToast("Username can only contain lowercase letters, numbers and _", "error");
     }
 
     try {
         const userRef = doc(db, "users", user.uid);
-        
         const updateData = {
             displayName: newDisplayName || "Anonymous Witness",
             bio: newBio || null,
+            isPublic: isPublic,
             updatedAt: serverTimestamp()
         };
 
         if (newUsername) updateData.username = newUsername;
 
-        await updateDoc(userRef, updateData);
+        // Upload image if selected
+        if (currentProfileImageFile) {
+            const { ref, uploadBytes, getDownloadURL } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js");
+            const { storage } = await import('./firebase-config.js');
+            
+            const imageRef = ref(storage, `profile-images/${user.uid}`);
+            await uploadBytes(imageRef, currentProfileImageFile);
+            const photoURL = await getDownloadURL(imageRef);
+            updateData.photoURL = photoURL;
+        }
 
+        await updateDoc(userRef, updateData);
+        
         showToast("✅ Profile updated successfully", "success");
         closeEditProfile();
+        currentProfileImageFile = null; // Reset
     } catch (error) {
         console.error("Profile update error:", error);
-        if (error.code === 'permission-denied') {
-            showToast("Permission denied. Please try again.", "error");
-        } else {
-            showToast("Failed to save changes", "error");
-        }
+        showToast("Failed to save changes", "error");
     }
 };
 
