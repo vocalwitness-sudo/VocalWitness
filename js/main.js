@@ -206,17 +206,17 @@ function setupEventListeners() {
         btn.addEventListener('click', () => window.switchTab(btn.dataset.tab));
     });
 
-    // Profile Button
-    const profileBtn = document.getElementById('profile-btn');
-    if (profileBtn) {
-        profileBtn.addEventListener('click', () => {
-            if (typeof window.showProfile === 'function') {
-                window.showProfile();
-            } else {
-                showToast("👤 Profile module loading...", "info");
-            }
-        });
-    }
+  // ==================== PROFILE BUTTON ====================
+const profileBtn = document.getElementById('profile-btn');
+if (profileBtn) {
+    profileBtn.addEventListener('click', () => {
+        if (typeof window.showProfile === 'function') {
+            window.showProfile();
+        } else {
+            showToast("👤 Profile module not ready. Refresh page.", "error");
+        }
+    });
+}
 
     // Language
     const langSelector = document.getElementById('languageSelector');
