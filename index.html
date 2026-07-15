@@ -5,19 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#10b981">
     <meta name="description" content="VocalWitness - Privacy First Public Square for Truth and Evidence">
-  
+ 
     <!-- PWA -->
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="/logo.png" type="image/png">
-  
+ 
     <title data-i18n="pageTitle">VocalWitness • Truth • Evidence • Public Square</title>
-  
+ 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-  
+ 
     <style>
         body {
             font-family: 'Inter', system-ui, sans-serif;
@@ -49,7 +49,7 @@
         Your Testimony Is Yours Alone.
     </p>
 </div>
-  
+ 
 <div class="max-w-2xl mx-auto">
     <!-- ==================== HEADER ==================== -->
     <header class="flex items-center justify-between mb-8 sticky top-0 z-50 glass rounded-3xl p-4">
@@ -60,22 +60,21 @@
                 <p class="text-sm text-emerald-400 tracking-widest" data-i18n="appSubtitle">Truth • Evidence • Public Square</p>
             </div>
         </div>
-       
+      
         <div class="flex items-center gap-4">
             <select id="languageSelector" class="bg-zinc-900 text-white px-4 py-3 rounded-2xl border border-zinc-700 outline-none cursor-pointer hover:border-emerald-500 transition-all text-sm font-medium">
                 <!-- Populated by JS -->
             </select>
-       
+      
             <button id="support-btn" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl transition flex items-center gap-2" data-i18n="supportPlatform">
                 Support
             </button>
-         
+        
             <button id="profile-btn" class="px-5 py-2.5 border border-zinc-700 hover:bg-zinc-800 rounded-2xl transition" data-i18n="editProfile">
                 Profile
             </button>
         </div>
     </header>
-
     <!-- ==================== MAIN NAVIGATION ==================== -->
     <nav class="flex gap-2 mb-8 overflow-x-auto pb-3" id="main-nav">
         <button data-tab="square" class="nav-tab active px-6 py-3 rounded-3xl whitespace-nowrap" data-i18n="citizenTalk">Citizen Square</button>
@@ -85,25 +84,23 @@
         <button data-tab="witness" class="nav-tab px-6 py-3 rounded-3xl whitespace-nowrap bg-amber-900 text-amber-300" data-i18n="trueWitness">Witness Circle</button>
         <button data-tab="more" onclick="showMoreMenu()" class="nav-tab px-6 py-3 rounded-3xl whitespace-nowrap" data-i18n="more">More</button>
     </nav>
-
     <!-- ==================== CREATION BAR ==================== -->
     <div class="glass rounded-3xl p-6 mb-10">
         <textarea id="mainInput" rows="3" data-i18n="placeholder"
                   class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-5 text-lg placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none"
                   placeholder="What truth do you wish to share today..."></textarea>
-      
+     
         <div class="flex gap-3 mt-4">
             <button id="btn-photo" class="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center justify-center gap-2 font-medium">📸 Forensic Photo</button>
             <button id="btn-voice" class="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center justify-center gap-2 font-medium">🎤 Voice Testimony</button>
         </div>
-      
+     
         <div id="preview-area" class="mt-6 min-h-[100px]"></div>
-      
+     
         <button id="postButton" class="mt-6 w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-semibold text-lg rounded-3xl transition active:scale-[0.985]">
             Publish to the Square
         </button>
     </div>
-
     <!-- ==================== DYNAMIC CONTENT ==================== -->
     <main id="main-content">
         <div id="feedContainer" class="space-y-8"></div>
@@ -116,7 +113,7 @@
         <div class="text-6xl mb-6">🌱</div>
         <h2 data-i18n="supportModal.title" class="text-3xl font-bold text-emerald-400 mb-2"></h2>
         <p data-i18n="supportModal.description" class="text-zinc-400 mb-8 text-sm"></p>
-     
+    
         <div class="bg-zinc-950 p-6 rounded-2xl border border-zinc-800 mb-6">
             <p data-i18n="supportModal.usdtLabel" class="text-xs text-zinc-500 uppercase tracking-widest mb-4"></p>
             <div class="flex justify-center my-6">
@@ -130,9 +127,9 @@
                 <span id="copyText" data-i18n="supportModal.copyButton"></span>
             </button>
         </div>
-      
+     
         <p data-i18n="supportModal.warning" class="text-[10px] text-zinc-600 mb-8 uppercase italic"></p>
-        <button onclick="document.getElementById('supportModal').classList.add('hidden')" class="w-full py-3 text-zinc-400 hover:text-white transition-colors" data-i18n="supportModal.closeButton"></button>
+        <button onclick="document.getElementById('supportModal').classList.add('hidden')" class="w-full py-3 text-zinc-400 hover:text-white transition-colors" data-i18n="supportModal.closeButton">Close</button>
     </div>
 </div>
 
@@ -147,52 +144,6 @@
         <div class="flex gap-3 mt-8">
             <button onclick="editProfile()" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl">✏️ Edit Profile</button>
             <button onclick="logout()" class="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl">Logout</button>
-        </div>
-    </div>
-</div>
-
-<!-- ==================== EDIT PROFILE MODAL ==================== -->
-<div id="editProfileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[80] p-4">
-    <div class="glass rounded-3xl max-w-md w-full p-6">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold">Edit Profile</h2>
-            <button onclick="closeEditProfile()" class="text-zinc-400 hover:text-white text-3xl leading-none">×</button>
-        </div>
-        <div class="space-y-6">
-            <div class="flex flex-col items-center">
-                <div id="profileImagePreview" class="w-24 h-24 rounded-3xl bg-zinc-700 flex items-center justify-center text-5xl mb-3 cursor-pointer border-2 border-dashed border-zinc-600 hover:border-emerald-500 transition-colors" onclick="document.getElementById('profileImageInput').click()">👤</div>
-                <input type="file" id="profileImageInput" accept="image/*" class="hidden" onchange="handleProfileImageUpload(event)">
-                <p class="text-xs text-zinc-500">Click to upload profile picture</p>
-            </div>
-
-            <div>
-                <label class="block text-sm text-zinc-400 mb-1">Display Name</label>
-                <input id="editDisplayName" type="text" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-4 py-3 focus:outline-none focus:border-emerald-500">
-            </div>
-            <div>
-                <label class="block text-sm text-zinc-400 mb-1">Username</label>
-                <input id="editUsername" type="text" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-4 py-3 focus:outline-none focus:border-emerald-500">
-            </div>
-            <div>
-                <label class="block text-sm text-zinc-400 mb-1">Bio</label>
-                <textarea id="editBio" rows="3" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-4 py-3 focus:outline-none focus:border-emerald-500 resize-none"></textarea>
-            </div>
-
-            <div class="flex items-center justify-between bg-zinc-900 p-4 rounded-2xl">
-                <div>
-                    <p class="font-medium">Make Profile Public</p>
-                    <p class="text-xs text-zinc-500">Allow others to see your profile</p>
-                </div>
-                <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" id="privacyToggle" class="sr-only peer">
-                    <div class="w-11 h-6 bg-zinc-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-emerald-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
-                </label>
-            </div>
-        </div>
-
-        <div class="flex gap-3 mt-8">
-            <button onclick="closeEditProfile()" class="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl">Cancel</button>
-            <button onclick="saveProfileChanges()" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl">Save Changes</button>
         </div>
     </div>
 </div>
