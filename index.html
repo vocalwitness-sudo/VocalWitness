@@ -123,7 +123,6 @@
     </main>
 </div>
 
-<!-- ==================== SUPPORT MODAL ==================== -->
 <!-- ==================== SUPPORT MODAL (NEW) ==================== -->
 <div id="supportModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[60] p-4">
     <div class="glass rounded-3xl max-w-md w-full p-8 text-center animate-in fade-in duration-300">
@@ -182,5 +181,30 @@
         });
     }
 </script>
+    <!-- ==================== PROFILE MODAL ==================== -->
+<div id="profileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[70] p-4">
+    <div class="glass rounded-3xl max-w-md w-full max-h-[90vh] overflow-auto p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-emerald-400">My Profile</h2>
+            <button onclick="closeProfile()" 
+                    class="text-zinc-400 hover:text-white text-3xl leading-none">×</button>
+        </div>
+        
+        <div id="profileContent" class="min-h-[200px]">
+            <!-- Populated by renderProfileUI() -->
+        </div>
+
+        <div class="flex gap-3 mt-8">
+            <button onclick="editProfile()" 
+                    class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl">
+                ✏️ Edit Profile
+            </button>
+            <button onclick="logout()" 
+                    class="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl">
+                Logout
+            </button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
