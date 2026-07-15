@@ -183,12 +183,11 @@ function setupEventListeners() {
         });
     }
 
-    // Post Button (basic)
+       // Post Button - Full Publish Logic
     const postBtn = document.getElementById('postButton');
     if (postBtn) {
-        postBtn.addEventListener('click', () => {
-            showToast("Publishing... (connect full logic)", "info");
-        });
+        postBtn.addEventListener('click', window.publishTestimony);
+        console.log("✅ Full Publish listener attached");
     }
 
     // ====================== MEDIA BUTTONS (Forensic Photo & Voice) ======================
