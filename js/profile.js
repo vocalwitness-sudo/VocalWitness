@@ -90,16 +90,25 @@ window.downloadMyDataPDF = async () => {
     }
 };
 
-// Modal Controls
+// ====================== MODAL CONTROLS ======================
 window.showProfile = () => {
     const modal = document.getElementById('profileModal');
     if (modal) {
         modal.classList.remove('hidden');
-        if (currentUserData) renderProfileUI(currentUserData);
+        if (currentUserData) {
+            renderProfileUI(currentUserData);
+        } else {
+            showToast("Loading your profile...", "info");
+        }
+    } else {
+        showToast("Profile modal not found. Please refresh the page.", "error");
     }
 };
 
-window.closeProfile = () => document.getElementById('profileModal')?.classList.add('hidden');
+window.closeProfile = () => {
+    const modal = document.getElementById('profileModal');
+    if (modal) modal.classList.add('hidden');
+};
 
 window.editProfile = () => {
     // Basic for now
