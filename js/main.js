@@ -88,7 +88,6 @@ window.publishTestimony = async () => {
     try {
         console.log("📤 Starting publish...");
 
-        // Dynamic import for Firestore functions
         const { collection, addDoc, serverTimestamp } = await import(
             "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js"
         );
@@ -97,10 +96,12 @@ window.publishTestimony = async () => {
             authorId: "anonymous",
             author: "Anonymous Witness",
             content: content,
-            createdAt: serverTimestamp(),     // ← Fixed here
+            createdAt: serverTimestamp(),
             timestamp: Date.now(),
             isPublic: true
         };
+
+        console.log("📋 Attempting to write to collection: testimonies", testimonyData);
 
         await addDoc(collection(db, "testimonies"), testimonyData);
        
@@ -108,7 +109,9 @@ window.publishTestimony = async () => {
         if (textarea) textarea.value = '';
 
     } catch (err) {
-        console.error("❌ Publish error details:", err);
+        console.error("❌ FULL Publish error:", err);
+        console.error("Error code:", err.code);
+        console.error("Error message:", err.message);
         showToast("Failed to publish: " + (err.message || err), "error");
     } finally {
         if (postBtn) {
@@ -117,6 +120,7 @@ window.publishTestimony = async () => {
         }
     }
 };
+
 // ====================== BOOTSTRAP ======================
 async function bootstrap() {
     try {
