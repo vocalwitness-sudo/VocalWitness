@@ -23,16 +23,15 @@ window.switchTab = (tab) => {
             if (tab === 'witness') btn.classList.add('bg-amber-900', 'text-amber-300');
         }
     });
+
     AppState.currentTab = tab;
-    if (tab === 'witness') {
-        AppState.currentMode = 'witness';
-    } else {
-        AppState.currentMode = 'citizen';
-    }
+    AppState.currentMode = tab === 'witness' ? 'witness' : 'citizen';
+
     if (tab === 'more') {
         showMoreMenu();
         return;
     }
+
     loadDynamicFeed(tab);
 };
 
@@ -42,6 +41,7 @@ function loadDynamicFeed(tab) {
     else if (tab === 'arena') feedType = 'live';
     else if (tab === 'mycircle') feedType = 'my-testimonies';
     else if (tab === 'witness') feedType = 'true-witness';
+
     initFeed(db, feedType);
 }
 
@@ -59,21 +59,20 @@ window.closeProfile = () => {
 };
 
 window.editProfile = () => {
-    // You can expand this later
     alert("Edit Profile opened - connect your edit modal here");
 };
 
 window.logout = () => {
-    // Add your logout logic
     if (confirm("Logout?")) {
         alert("Logged out (add real logic)");
     }
 };
-// ====================== PUBLISH TESTIMONY ======================
+
+// ====================== PUBLISH TESTIMONY (with media support) ======================
 window.publishTestimony = async () => {
     const textarea = document.getElementById('mainInput');
     const content = textarea ? textarea.value.trim() : '';
-    
+
     if (!content) {
         showToast("Please write a testimony", "error");
         return;
@@ -87,36 +86,42 @@ window.publishTestimony = async () => {
 
     try {
         console.log("📤 Starting publish...");
-
         const { collection, addDoc, serverTimestamp } = await import(
             "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js"
         );
-       
+
+        // Get pending media from engine
+        const mediaData = window.engineInstance?.getPendingMedia?.() || {};
+
         const testimonyData = {
             authorId: "anonymous",
             author: "Anonymous Witness",
-            content: content,
+            content,
             createdAt: serverTimestamp(),
             timestamp: Date.now(),
             isPublic: true,
             moderationStatus: "approved",
-            feedVisibility: "citizen-talk"   // ← THIS WAS MISSING
+            feedVisibility: "citizen-talk",
+            imageUrl: mediaData.imageUrl || null,
+            audioUrl: mediaData.audioUrl || null,
         };
 
         const docRef = await addDoc(collection(db, "testimonies"), testimonyData);
-        
-        console.log("✅ Saved with ID:", docRef.id);
 
+        console.log("✅ Saved with ID:", docRef.id);
         showToast("✅ Testimony published successfully!", "success");
+
+        // Clear form and media
         if (textarea) textarea.value = '';
+        if (window.engineInstance?.clearPendingMedia) {
+            window.engineInstance.clearPendingMedia();
+        }
 
         // Refresh feed
         setTimeout(() => {
-            if (typeof initFeed === 'function') {
-                initFeed(db, AppState?.currentTab === 'witness' ? 'true-witness' : 'citizen-talk');
-            }
+            const currentFeed = AppState.currentTab === 'witness' ? 'true-witness' : 'citizen-talk';
+            initFeed(db, currentFeed);
         }, 700);
-
     } catch (err) {
         console.error("❌ Publish error:", err.code, "-", err.message);
         showToast("Failed to publish. Try again.", "error");
@@ -136,18 +141,20 @@ async function bootstrap() {
         initProfile();
         initOnboarding?.();
         loadDynamicNavigation?.();
-        
+
         engineInstance = new CitizenTalkEngine(db, storage);
         window.engineInstance = engineInstance;
-        
+
         if (mediaModule.setEngine) mediaModule.setEngine(engineInstance);
+
         if (typeof applyTierTheme === 'function') applyTierTheme();
         if (typeof updateTierBadge === 'function') updateTierBadge();
-        
+
         setupEventListeners();
-        
+
+        // Initial tab
         setTimeout(() => window.switchTab('square'), 600);
-        
+
         console.log("✅ VocalWitness Live Ready");
     } catch (e) {
         console.error("Bootstrap failed:", e);
@@ -162,9 +169,7 @@ function setupEventListeners() {
 
     // Profile Button
     const profileBtn = document.getElementById('profile-btn');
-    if (profileBtn) {
-        profileBtn.addEventListener('click', window.showProfile);
-    }
+    if (profileBtn) profileBtn.addEventListener('click', window.showProfile);
 
     // Support Button
     const supportBtn = document.getElementById('support-btn');
@@ -174,14 +179,14 @@ function setupEventListeners() {
         });
     }
 
-       // Post Button - Full Publish Logic
+    // Post Button
     const postBtn = document.getElementById('postButton');
     if (postBtn) {
         postBtn.addEventListener('click', window.publishTestimony);
-        console.log("✅ Full Publish listener attached");
+        console.log("✅ Publish listener attached");
     }
 
-    // ====================== MEDIA BUTTONS (Forensic Photo & Voice) ======================
+    // ====================== MEDIA BUTTONS ======================
     const photoBtn = document.getElementById('btn-photo');
     if (photoBtn) {
         photoBtn.addEventListener('click', () => {
@@ -190,97 +195,27 @@ function setupEventListeners() {
             input.accept = 'image/*';
             input.onchange = (e) => {
                 const previewArea = document.getElementById('preview-area');
-                if (mediaModule && typeof mediaModule.handleImageSelect === 'function') {
+                if (typeof mediaModule.handleImageSelect === 'function') {
                     mediaModule.handleImageSelect(e, previewArea);
                 } else {
-                    showToast("📸 Media module not ready. Refresh page.", "error");
+                    showToast("📸 Media module not ready.", "error");
                 }
             };
             input.click();
         });
-        console.log("✅ Photo button listener attached");
     }
 
     const voiceBtn = document.getElementById('btn-voice');
     if (voiceBtn) {
         voiceBtn.addEventListener('click', (e) => {
-            if (mediaModule && typeof mediaModule.toggleVoiceRecording === 'function') {
+            if (typeof mediaModule.toggleVoiceRecording === 'function') {
                 mediaModule.toggleVoiceRecording(e.currentTarget);
             } else {
-                showToast("🎤 Voice module not ready. Refresh page.", "error");
+                showToast("🎤 Voice module not ready.", "error");
             }
         });
-        console.log("✅ Voice button listener attached");
     }
+}
 
-    // ====================== EDIT PROFILE MODAL CONTROLS ======================
-window.publishTestimony = async () => {
-    const textarea = document.getElementById('mainInput');
-    const content = textarea ? textarea.value.trim() : '';
-    
-    if (!content) {
-        showToast("Please write a testimony", "error");
-        return;
-    }
-
-    const postBtn = document.getElementById('postButton');
-    if (postBtn) {
-        postBtn.disabled = true;
-        postBtn.textContent = 'Publishing...';
-    }
-
-    try {
-        console.log("📤 Starting publish...");
-
-        const { collection, addDoc, serverTimestamp } = await import(
-            "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js"
-        );
-
-        // Get media from the engine
-        const mediaData = window.engineInstance ? window.engineInstance.getPendingMedia?.() || {} : {};
-
-        const testimonyData = {
-            authorId: "anonymous",
-            author: "Anonymous Witness",
-            content: content,
-            createdAt: serverTimestamp(),
-            timestamp: Date.now(),
-            isPublic: true,
-            moderationStatus: "approved",
-            feedVisibility: "citizen-talk",
-            imageUrl: mediaData.imageUrl || null,
-            audioUrl: mediaData.audioUrl || null
-        };
-
-        const docRef = await addDoc(collection(db, "testimonies"), testimonyData);
-        
-        console.log("✅ Saved with ID:", docRef.id);
-
-        showToast("✅ Testimony published successfully!", "success");
-        if (textarea) textarea.value = '';
-
-        // Clear media after publish
-        if (window.engineInstance && typeof window.engineInstance.clearPendingMedia === 'function') {
-            window.engineInstance.clearPendingMedia();
-        }
-
-        // Refresh feed
-        setTimeout(() => {
-            if (typeof initFeed === 'function') {
-                initFeed(db, 'citizen-talk');
-            }
-        }, 800);
-
-    } catch (err) {
-        console.error("❌ Publish error:", err.code, "-", err.message);
-        showToast("Failed to publish. Try again.", "error");
-    } finally {
-        if (postBtn) {
-            postBtn.disabled = false;
-            postBtn.textContent = 'Publish to the Square';
-        }
-    }
-};
-
-// ====================== BOOTSTRAP ======================
+// Start the app
 document.addEventListener('DOMContentLoaded', bootstrap);
