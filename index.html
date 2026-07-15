@@ -164,24 +164,60 @@
 
 <script type="module" src="js/main.js"></script>
 
-<!-- Copy Wallet Script -->
-<script>
-    function copyWalletAddress() {
-        const address = document.getElementById('walletAddress').innerText;
-        navigator.clipboard.writeText(address).then(() => {
-            const copyText = document.getElementById('copyText');
-            const copyIcon = document.getElementById('copyIcon');
-          
-            copyText.innerText = "Copied!";
-            copyIcon.innerText = "✅";
-          
-            setTimeout(() => {
-                copyText.innerText = "Copy Address";
-                copyIcon.innerText = "📋";
-            }, 2000);
-        });
-    }
-</script>
+    content.innerHTML = `
+        <div class="text-center">
+            <div id="profileImageLarge" 
+                 class="w-28 h-28 mx-auto bg-gradient-to-br from-emerald-500 to-teal-500 rounded-3xl flex items-center justify-center text-6xl mb-4 shadow-inner border-4 border-zinc-800 overflow-hidden">
+                ${userData.photoURL 
+                    ? `<img src="${userData.photoURL}" class="w-full h-full object-cover">` 
+                    : '👤'}
+            </div>
+            
+            <h3 id="profileName" class="text-2xl font-bold">${escapeHtml(userData.displayName || "Anonymous Witness")}</h3>
+            <p id="profileUsername" class="text-emerald-400">@${escapeHtml(userData.username || 'user_' + (userData.uid || '').slice(0,6))}</p>
+            
+            <!-- Tier & ZK Status -->
+            <div class="flex justify-center gap-3 mt-4">
+                <div class="px-4 py-1.5 bg-emerald-900/50 text-emerald-400 text-sm font-medium rounded-2xl flex items-center gap-1.5">
+                    <span>⭐</span> 
+                    <span>${tier} Tier</span>
+                </div>
+                
+                ${isZkVerified ? `
+                <div class="px-4 py-1.5 bg-amber-900/50 text-amber-400 text-sm font-medium rounded-2xl flex items-center gap-1.5">
+                    <span>🔐</span> 
+                    <span>ZK Verified</span>
+                </div>` : ''}
+            </div>
+
+            ${userData.bio ? `<p class="text-zinc-400 mt-5 text-sm max-w-xs mx-auto">${escapeHtml(userData.bio)}</p>` : ''}
+        </div>
+      
+        <!-- Stats -->
+        <div class="grid grid-cols-3 gap-4 text-center mt-8">
+            <div>
+                <div class="text-2xl font-bold text-emerald-400">${userData.testimoniesCount || 0}</div>
+                <div class="text-xs text-zinc-500">Testimonies</div>
+            </div>
+            <div>
+                <div class="text-2xl font-bold">${credibility}</div>
+                <div class="text-xs text-zinc-500">Credibility</div>
+            </div>
+            <div>
+                <div class="text-2xl font-bold">${userData.integrityScore || 60}</div>
+                <div class="text-xs text-zinc-500">Integrity</div>
+            </div>
+        </div>
+
+        <!-- Download Data Button -->
+        <button onclick="downloadMyDataPDF()" 
+                class="mt-8 w-full py-3 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 rounded-2xl flex items-center justify-center gap-2 text-sm font-medium">
+            📄 Download My Data as PDF
+        </button>
+    `;
+}
+
+
     <!-- ==================== PROFILE MODAL ==================== -->
 <div id="profileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[70] p-4">
     <div class="glass rounded-3xl max-w-md w-full max-h-[90vh] overflow-auto p-6">
