@@ -123,16 +123,20 @@ function setupEventListeners() {
             showToast("Publishing... (connect full logic)", "info");
         });
     }
-    // Edit Profile Modal Controls
+   // Edit Profile Modal Controls
 window.openEditProfile = () => {
     const modal = document.getElementById('editProfileModal');
     if (modal) modal.classList.remove('hidden');
-    
-    // Pre-fill data if available
-    if (typeof currentUserData !== 'undefined') {
-        document.getElementById('editDisplayName').value = currentUserData?.displayName || '';
-        document.getElementById('editUsername').value = currentUserData?.username || '';
-        document.getElementById('editBio').value = currentUserData?.bio || '';
+   
+    // Safer pre-fill (avoid scope error)
+    try {
+        if (typeof currentUserData !== 'undefined' && currentUserData) {
+            document.getElementById('editDisplayName').value = currentUserData.displayName || '';
+            document.getElementById('editUsername').value = currentUserData.username || '';
+            document.getElementById('editBio').value = currentUserData.bio || '';
+        }
+    } catch (e) {
+        console.log("Could not pre-fill profile data");
     }
 };
 
