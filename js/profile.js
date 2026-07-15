@@ -50,80 +50,113 @@ function renderProfileUI(userData) {
     const credibility = userData.credibilityScore || 50;
 
     // ==================== REAL PDF EXPORT ====================
+// ==================== FULL PDF EXPORT WITH TESTIMONIES ====================
 window.downloadMyDataPDF = async () => {
     const user = auth.currentUser;
     if (!user || !currentUserData) {
-        return showToast("Please wait for profile to load", "error");
+        return showToast("Profile data not loaded yet", "error");
     }
 
-    showToast("📄 Generating your Personal Data Export...", "info");
+    showToast("📄 Generating full data report...", "info");
 
     try {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         let y = 20;
 
-        // Header
-        doc.setFontSize(20);
+        // ==================== HEADER ====================
+        doc.setFontSize(22);
         doc.text("VocalWitness - Personal Data Export", 20, y);
-        y += 15;
+        y += 12;
 
-        doc.setFontSize(12);
-        doc.text(`Exported on: ${new Date().toLocaleString()}`, 20, y);
-        y += 10;
+        doc.setFontSize(11);
+        doc.text(`Generated on: ${new Date().toLocaleString()}`, 20, y);
+        doc.text(`User ID: ${user.uid}`, 20, y + 8);
+        y += 20;
 
-        // User Information
+        // ==================== PROFILE INFO ====================
         doc.setFontSize(16);
         doc.text("Profile Information", 20, y);
         y += 10;
 
         doc.setFontSize(11);
-        doc.text(`Display Name: ${currentUserData.displayName || "Anonymous Witness"}`, 20, y);
-        y += 8;
-        doc.text(`Username: @${currentUserData.username || 'N/A'}`, 20, y);
-        y += 8;
-        doc.text(`Tier: ${currentUserData.tier || 'Base'}`, 20, y);
-        y += 8;
-        doc.text(`ZK Verified: ${currentUserData.isZkVerified ? 'Yes' : 'No'}`, 20, y);
-        y += 8;
-        doc.text(`Credibility Score: ${currentUserData.credibilityScore || 50}`, 20, y);
-        y += 8;
-        if (currentUserData.bio) {
-            doc.text(`Bio: ${currentUserData.bio}`, 20, y);
+        const profileData = [
+            ["Display Name", currentUserData.displayName || "Anonymous Witness"],
+            ["Username", `@${currentUserData.username || 'N/A'}`],
+            ["Tier", currentUserData.tier || "Base"],
+            ["ZK Verified", currentUserData.isZkVerified ? "Yes 🔐" : "No"],
+            ["Credibility Score", currentUserData.credibilityScore || 50],
+            ["Integrity Score", currentUserData.integrityScore || 60],
+            ["Bio", currentUserData.bio || "—"]
+        ];
+
+        profileData.forEach(([label, value]) => {
+            doc.text(`${label}: ${value}`, 20, y);
             y += 8;
-        }
+        });
+
         y += 10;
 
-        // Testimonies Summary
+        // ==================== TESTIMONY HISTORY ====================
         doc.setFontSize(16);
-        doc.text("Activity Summary", 20, y);
-        y += 10;
+        doc.text("Testimony History", 20, y);
+        y += 12;
 
-        doc.setFontSize(11);
-        doc.text(`Total Testimonies: ${currentUserData.testimoniesCount || 0}`, 20, y);
-        y += 8;
-        doc.text(`Integrity Score: ${currentUserData.integrityScore || 60}`, 20, y);
-        y += 15;
+        // Fetch user's testimonies
+        const { collection, query, where, getDocs, orderBy } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
+        const testimoniesRef = collection(db, "testimonies");
+        const q = query(
+            testimoniesRef, 
+            where("authorId", "==", user.uid),
+            orderBy("createdAt", "desc")
+        );
 
-        // Footer / Privacy Note
+        const snapshot = await getDocs(q);
+        const testimonies = [];
+
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            testimonies.push([
+                new Date(data.createdAt?.toDate?.() || data.timestamp?.toDate?.() || Date.now()).toLocaleDateString(),
+                data.content ? data.content.substring(0, 60) + (data.content.length > 60 ? "..." : "") : "—",
+                data.moderationStatus || "approved"
+            ]);
+        });
+
+        if (testimonies.length > 0) {
+            doc.autoTable({
+                startY: y,
+                head: [['Date', 'Content Preview', 'Status']],
+                body: testimonies,
+                theme: 'grid',
+                styles: { fontSize: 9, cellPadding: 4 },
+                headStyles: { fillColor: [16, 185, 129] },
+                alternateRowStyles: { fillColor: [245, 245, 245] }
+            });
+        } else {
+            doc.setFontSize(11);
+            doc.text("No testimonies found.", 20, y + 10);
+        }
+
+        // ==================== FOOTER ====================
+        const pageCount = doc.internal.getNumberOfPages();
         doc.setFontSize(10);
-        doc.text("This document contains your personal data from VocalWitness.", 20, y);
-        y += 8;
-        doc.text("Generated for transparency and data portability.", 20, y);
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.text("Confidential - Generated by VocalWitness • Privacy First", 20, doc.internal.pageSize.height - 10);
+        }
 
-        // Save the PDF
-        const fileName = `vocalwitness-data-${user.uid.slice(0,8)}.pdf`;
+        // Save
+        const fileName = `vocalwitness-full-export-${new Date().toISOString().slice(0,10)}.pdf`;
         doc.save(fileName);
 
-        showToast("✅ Your data has been exported successfully!", "success");
+        showToast(`✅ Exported ${testimonies.length} testimonies successfully!`, "success");
 
     } catch (error) {
-        console.error("PDF generation error:", error);
-        showToast("Failed to generate PDF. Please try again.", "error");
+        console.error("PDF Export Error:", error);
+        showToast("Failed to generate PDF. Check console for details.", "error");
     }
 };
-    
-
     
 
 // ====================== MODAL CONTROLS ======================
