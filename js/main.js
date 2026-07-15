@@ -123,6 +123,74 @@ function setupEventListeners() {
             showToast("Publishing... (connect full logic)", "info");
         });
     }
-}
+    // Edit Profile Modal Controls
+window.openEditProfile = () => {
+    const modal = document.getElementById('editProfileModal');
+    if (modal) modal.classList.remove('hidden');
+    
+    // Pre-fill data if available
+    if (typeof currentUserData !== 'undefined') {
+        document.getElementById('editDisplayName').value = currentUserData?.displayName || '';
+        document.getElementById('editUsername').value = currentUserData?.username || '';
+        document.getElementById('editBio').value = currentUserData?.bio || '';
+    }
+};
 
+window.closeEditProfile = () => {
+    document.getElementById('editProfileModal').classList.add('hidden');
+};
+// ====================== EDIT PROFILE MODAL CONTROLS ======================
+window.openEditProfile = () => {
+    const modal = document.getElementById('editProfileModal');
+    if (modal) modal.classList.remove('hidden');
+    
+    // Pre-fill form if user data exists
+    if (typeof currentUserData !== 'undefined' && currentUserData) {
+        document.getElementById('editDisplayName').value = currentUserData.displayName || '';
+        document.getElementById('editUsername').value = currentUserData.username || '';
+        document.getElementById('editBio').value = currentUserData.bio || '';
+    }
+};
+
+window.closeEditProfile = () => {
+    const modal = document.getElementById('editProfileModal');
+    if (modal) modal.classList.add('hidden');
+};
+
+window.saveProfileChanges = async () => {
+    showToast("Saving profile changes...", "info");
+    
+    // TODO: Add real save logic here later (Firestore update)
+    setTimeout(() => {
+        closeEditProfile();
+        showToast("✅ Profile Updated!", "success");
+        // Refresh profile
+        if (typeof window.showProfile === 'function') {
+            // Optionally reopen profile to see changes
+        }
+    }, 800);
+};
+
+window.handleProfileImageUpload = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+        showToast("Please select an image file", "error");
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const preview = document.getElementById('profileImagePreview');
+        if (preview) {
+            preview.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover rounded-3xl">`;
+        }
+        currentProfileImageFile = file;   // Store for later upload
+        showToast("Image preview ready", "success");
+    };
+    reader.readAsDataURL(file);
+};
+
+// ====================== BOOTSTRAP ======================
 document.addEventListener('DOMContentLoaded', bootstrap);
