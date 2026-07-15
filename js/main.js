@@ -13,6 +13,16 @@ import { loadDynamicNavigation } from './navigation.js';
 import { applyTierTheme, updateTierBadge } from './tier.js';
 import { AppState } from './app-state.js';
 
+// In main.js - after imports
+window.showProfile = () => {
+    // Let profile.js handle it
+    if (typeof window.showProfile === 'function') {
+        window.showProfile();           // This calls the one defined in profile.js
+    } else {
+        showToast("👤 Profile module not loaded yet", "error");
+    }
+};
+
 let engineInstance = null;
 
 // ====================== TAB SWITCHING ======================
@@ -258,8 +268,3 @@ function setupEventListeners() {
 
     initSupportButton();
 }
-// Temporary Profile Handler
-window.showProfile = () => {
-    showToast("👤 Profile & Edit coming soon", "info");
-    // Future: window.location.href = 'profile.html' or open modal
-};
