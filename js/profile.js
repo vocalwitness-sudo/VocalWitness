@@ -39,7 +39,6 @@ function listenToUserProfile(userId) {
 }
 
 // ====================== RENDER ======================
-// ====================== RENDER ======================
 function renderProfileUI(userData) {
     if (!userData) return;
 
@@ -50,58 +49,82 @@ function renderProfileUI(userData) {
     const isZkVerified = userData.isZkVerified || false;
     const credibility = userData.credibilityScore || 50;
 
-    content.innerHTML = `
-        <div class="text-center">
-            <div id="profileImageLarge" 
-                 class="w-28 h-28 mx-auto bg-gradient-to-br from-emerald-500 to-teal-500 rounded-3xl flex items-center justify-center text-6xl mb-4 shadow-inner border-4 border-zinc-800 overflow-hidden">
-                ${userData.photoURL 
-                    ? `<img src="${userData.photoURL}" class="w-full h-full object-cover">` 
-                    : '👤'}
-            </div>
-            
-            <h3 id="profileName" class="text-2xl font-bold">${escapeHtml(userData.displayName || "Anonymous Witness")}</h3>
-            <p id="profileUsername" class="text-emerald-400">@${escapeHtml(userData.username || 'user_' + (userData.uid || '').slice(0,6))}</p>
-            
-            <!-- Tier & ZK Status -->
-            <div class="flex justify-center gap-3 mt-4">
-                <div class="px-4 py-1.5 bg-emerald-900/50 text-emerald-400 text-sm font-medium rounded-2xl flex items-center gap-1.5">
-                    <span>⭐</span> 
-                    <span>${tier} Tier</span>
-                </div>
-                
-                ${isZkVerified ? `
-                <div class="px-4 py-1.5 bg-amber-900/50 text-amber-400 text-sm font-medium rounded-2xl flex items-center gap-1.5">
-                    <span>🔐</span> 
-                    <span>ZK Verified</span>
-                </div>` : ''}
-            </div>
+    // ==================== REAL PDF EXPORT ====================
+window.downloadMyDataPDF = async () => {
+    const user = auth.currentUser;
+    if (!user || !currentUserData) {
+        return showToast("Please wait for profile to load", "error");
+    }
 
-            ${userData.bio ? `<p class="text-zinc-400 mt-5 text-sm max-w-xs mx-auto">${escapeHtml(userData.bio)}</p>` : ''}
-        </div>
-      
-        <!-- Stats -->
-        <div class="grid grid-cols-3 gap-4 text-center mt-8">
-            <div>
-                <div class="text-2xl font-bold text-emerald-400">${userData.testimoniesCount || 0}</div>
-                <div class="text-xs text-zinc-500">Testimonies</div>
-            </div>
-            <div>
-                <div class="text-2xl font-bold">${credibility}</div>
-                <div class="text-xs text-zinc-500">Credibility</div>
-            </div>
-            <div>
-                <div class="text-2xl font-bold">${userData.integrityScore || 60}</div>
-                <div class="text-xs text-zinc-500">Integrity</div>
-            </div>
-        </div>
+    showToast("📄 Generating your Personal Data Export...", "info");
 
-        <!-- Download Data Button -->
-        <button onclick="downloadMyDataPDF()" 
-                class="mt-8 w-full py-3 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 rounded-2xl flex items-center justify-center gap-2 text-sm font-medium">
-            📄 Download My Data as PDF
-        </button>
-    `;
-}
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        let y = 20;
+
+        // Header
+        doc.setFontSize(20);
+        doc.text("VocalWitness - Personal Data Export", 20, y);
+        y += 15;
+
+        doc.setFontSize(12);
+        doc.text(`Exported on: ${new Date().toLocaleString()}`, 20, y);
+        y += 10;
+
+        // User Information
+        doc.setFontSize(16);
+        doc.text("Profile Information", 20, y);
+        y += 10;
+
+        doc.setFontSize(11);
+        doc.text(`Display Name: ${currentUserData.displayName || "Anonymous Witness"}`, 20, y);
+        y += 8;
+        doc.text(`Username: @${currentUserData.username || 'N/A'}`, 20, y);
+        y += 8;
+        doc.text(`Tier: ${currentUserData.tier || 'Base'}`, 20, y);
+        y += 8;
+        doc.text(`ZK Verified: ${currentUserData.isZkVerified ? 'Yes' : 'No'}`, 20, y);
+        y += 8;
+        doc.text(`Credibility Score: ${currentUserData.credibilityScore || 50}`, 20, y);
+        y += 8;
+        if (currentUserData.bio) {
+            doc.text(`Bio: ${currentUserData.bio}`, 20, y);
+            y += 8;
+        }
+        y += 10;
+
+        // Testimonies Summary
+        doc.setFontSize(16);
+        doc.text("Activity Summary", 20, y);
+        y += 10;
+
+        doc.setFontSize(11);
+        doc.text(`Total Testimonies: ${currentUserData.testimoniesCount || 0}`, 20, y);
+        y += 8;
+        doc.text(`Integrity Score: ${currentUserData.integrityScore || 60}`, 20, y);
+        y += 15;
+
+        // Footer / Privacy Note
+        doc.setFontSize(10);
+        doc.text("This document contains your personal data from VocalWitness.", 20, y);
+        y += 8;
+        doc.text("Generated for transparency and data portability.", 20, y);
+
+        // Save the PDF
+        const fileName = `vocalwitness-data-${user.uid.slice(0,8)}.pdf`;
+        doc.save(fileName);
+
+        showToast("✅ Your data has been exported successfully!", "success");
+
+    } catch (error) {
+        console.error("PDF generation error:", error);
+        showToast("Failed to generate PDF. Please try again.", "error");
+    }
+};
+    
+
+    
 
 // ====================== MODAL CONTROLS ======================
 window.showProfile = () => {
