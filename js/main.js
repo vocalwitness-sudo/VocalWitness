@@ -123,77 +123,88 @@ function setupEventListeners() {
             showToast("Publishing... (connect full logic)", "info");
         });
     }
-   // Edit Profile Modal Controls
-window.openEditProfile = () => {
-    const modal = document.getElementById('editProfileModal');
-    if (modal) modal.classList.remove('hidden');
-   
-    // Safer pre-fill (avoid scope error)
-    try {
-        if (typeof currentUserData !== 'undefined' && currentUserData) {
-            document.getElementById('editDisplayName').value = currentUserData.displayName || '';
-            document.getElementById('editUsername').value = currentUserData.username || '';
-            document.getElementById('editBio').value = currentUserData.bio || '';
-        }
-    } catch (e) {
-        console.log("Could not pre-fill profile data");
+
+    // ====================== MEDIA BUTTONS (Forensic Photo & Voice) ======================
+    const photoBtn = document.getElementById('btn-photo');
+    if (photoBtn) {
+        photoBtn.addEventListener('click', () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = (e) => {
+                const previewArea = document.getElementById('preview-area');
+                if (mediaModule && typeof mediaModule.handleImageSelect === 'function') {
+                    mediaModule.handleImageSelect(e, previewArea);
+                } else {
+                    showToast("📸 Media module not ready. Refresh page.", "error");
+                }
+            };
+            input.click();
+        });
+        console.log("✅ Photo button listener attached");
     }
-};
 
-window.closeEditProfile = () => {
-    document.getElementById('editProfileModal').classList.add('hidden');
-};
-
-// ====================== EDIT PROFILE MODAL CONTROLS ======================
-// ====================== EDIT PROFILE MODAL CONTROLS ======================
-window.openEditProfile = () => {
-    const modal = document.getElementById('editProfileModal');
-    if (modal) modal.classList.remove('hidden');
-   
-    // Safer pre-fill
-    try {
-        if (typeof window.currentUserData !== 'undefined' && window.currentUserData) {
-            document.getElementById('editDisplayName').value = window.currentUserData.displayName || '';
-            document.getElementById('editUsername').value = window.currentUserData.username || '';
-            document.getElementById('editBio').value = window.currentUserData.bio || '';
-        }
-    } catch (e) {
-        console.log("Could not pre-fill profile data");
+    const voiceBtn = document.getElementById('btn-voice');
+    if (voiceBtn) {
+        voiceBtn.addEventListener('click', (e) => {
+            if (mediaModule && typeof mediaModule.toggleVoiceRecording === 'function') {
+                mediaModule.toggleVoiceRecording(e.currentTarget);
+            } else {
+                showToast("🎤 Voice module not ready. Refresh page.", "error");
+            }
+        });
+        console.log("✅ Voice button listener attached");
     }
-};
 
-window.closeEditProfile = () => {
-    const modal = document.getElementById('editProfileModal');
-    if (modal) modal.classList.add('hidden');
-};
-
-window.saveProfileChanges = async () => {
-    showToast("Saving profile changes...", "info");
-    setTimeout(() => {
-        closeEditProfile();
-        showToast("✅ Profile Updated!", "success");
-    }, 800);
-};
-
-window.handleProfileImageUpload = (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-    if (!file.type.startsWith('image/')) {
-        showToast("Please select an image file", "error");
-        return;
-    }
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const preview = document.getElementById('profileImagePreview');
-        if (preview) {
-            preview.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover rounded-3xl">`;
+    // ====================== EDIT PROFILE MODAL CONTROLS ======================
+    window.openEditProfile = () => {
+        const modal = document.getElementById('editProfileModal');
+        if (modal) modal.classList.remove('hidden');
+        
+        try {
+            if (typeof window.currentUserData !== 'undefined' && window.currentUserData) {
+                document.getElementById('editDisplayName').value = window.currentUserData.displayName || '';
+                document.getElementById('editUsername').value = window.currentUserData.username || '';
+                document.getElementById('editBio').value = window.currentUserData.bio || '';
+            }
+        } catch (e) {
+            console.log("Could not pre-fill profile data");
         }
-        currentProfileImageFile = file;
-        showToast("Image preview ready", "success");
     };
-    reader.readAsDataURL(file);
-};
+
+    window.closeEditProfile = () => {
+        const modal = document.getElementById('editProfileModal');
+        if (modal) modal.classList.add('hidden');
+    };
+
+    window.saveProfileChanges = async () => {
+        showToast("Saving profile changes...", "info");
+        setTimeout(() => {
+            closeEditProfile();
+            showToast("✅ Profile Updated!", "success");
+        }, 800);
+    };
+
+    window.handleProfileImageUpload = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            showToast("Please select an image file", "error");
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById('profileImagePreview');
+            if (preview) {
+                preview.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover rounded-3xl">`;
+            }
+            // Note: currentProfileImageFile should be declared globally if used elsewhere
+            window.currentProfileImageFile = file;
+            showToast("Image preview ready", "success");
+        };
+        reader.readAsDataURL(file);
+    };
+}
 
 // ====================== BOOTSTRAP ======================
 document.addEventListener('DOMContentLoaded', bootstrap);
-}
