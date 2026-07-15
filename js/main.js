@@ -88,17 +88,20 @@ window.publishTestimony = async () => {
     try {
         console.log("📤 Starting publish...");
 
+        // Dynamic import for Firestore functions
+        const { collection, addDoc, serverTimestamp } = await import(
+            "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js"
+        );
+       
         const testimonyData = {
-            authorId: "anonymous",           // or generate a temp ID
+            authorId: "anonymous",
             author: "Anonymous Witness",
             content: content,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            createdAt: serverTimestamp(),     // ← Fixed here
             timestamp: Date.now(),
             isPublic: true
         };
 
-        const { collection, addDoc } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
-       
         await addDoc(collection(db, "testimonies"), testimonyData);
        
         showToast("✅ Testimony published successfully!", "success");
