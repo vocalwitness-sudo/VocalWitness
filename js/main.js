@@ -123,6 +123,14 @@ window.publishTestimony = async () => {
             window.engineInstance.clearPendingMedia();
         }
 
+        window.openSettings = () => {
+    document.getElementById('settingsModal').classList.remove('hidden');
+};
+
+window.closeSettings = () => {
+    document.getElementById('settingsModal').classList.add('hidden');
+};
+
         // Refresh feed
         setTimeout(() => {
             const currentFeed = AppState.currentTab === 'witness' ? 'true-witness' : 'citizen-talk';
