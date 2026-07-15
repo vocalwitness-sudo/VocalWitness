@@ -59,8 +59,14 @@ window.closeProfile = () => {
 };
 
 window.editProfile = () => {
-    alert("Edit Profile opened - connect your edit modal here");
+    // Bridge to the function in profile.js
+    if (typeof window.openEditProfile === 'function') {
+        window.openEditProfile();
+    } else {
+        showToast("Edit profile is loading...", "info");
+    }
 };
+
 
 window.logout = () => {
     if (confirm("Logout?")) {
