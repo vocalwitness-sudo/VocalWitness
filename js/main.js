@@ -48,7 +48,6 @@ function loadDynamicFeed(tab) {
     else if (tab === 'arena') feedType = 'live';
     else if (tab === 'mycircle') feedType = 'my-testimonies';
     else if (tab === 'witness') feedType = 'true-witness';
-
     initFeed(db, feedType);
 }
 
@@ -84,10 +83,65 @@ window.showMoreMenu = () => {
 };
 
 // ====================== PUBLISH ======================
-window.publishTestimony = async () => { /* ... your existing code ... */ };
+window.publishTestimony = async () => {
+    const textarea = document.getElementById('mainInput');
+    const content = textarea?.value.trim() || "";
+    if (!content && !mediaModule.selectedImageFile && !engineInstance?.currentAudioBlob) {
+        return showToast("Please add text, photo, or voice testimony", "error");
+    }
+    const postBtn = document.getElementById('postButton');
+    if (!postBtn) return;
+    postBtn.disabled = true;
+    postBtn.textContent = 'Publishing to the Square...';
+    try {
+        const mediaData = await mediaModule.uploadForensicMedia();
+        const { collection, addDoc, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
+        const testimonyData = {
+            authorId: auth.currentUser?.uid,
+            author: auth.currentUser?.displayName || "Anonymous Witness",
+            content: content,
+            imageUrl: mediaData?.imageUrl || null,
+            audioUrl: mediaData?.audioUrl || null,
+            imageHash: mediaData?.imageHash || null,
+            audioHash: mediaData?.audioHash || null,
+            timestamp: serverTimestamp(),
+            feedVisibility: AppState.currentMode || "citizen-talk",
+            moderationStatus: "approved",
+            status: "public",
+            credibilityScore: 10,
+            createdAt: serverTimestamp()
+        };
+        await addDoc(collection(db, "testimonies"), testimonyData);
+        await window.recordTestimonyContribution?.();
+        showToast("✅ Testimony published successfully!", "success");
+        if (textarea) textarea.value = '';
+        if (mediaModule.resetMediaState) mediaModule.resetMediaState();
+        loadDynamicFeed(AppState.currentTab || 'square');
+    } catch (err) {
+        console.error("Publish error:", err);
+        showToast("Failed to publish. Please try again.", "error");
+    } finally {
+        postBtn.disabled = false;
+        postBtn.textContent = 'Publish to the Square';
+    }
+};
 
 // ====================== SUPPORT ======================
-function initSupportButton() { /* ... your existing code ... */ }
+function initSupportButton() {
+    const supportBtn = document.getElementById('support-btn');
+    if (!supportBtn) return;
+    supportBtn.addEventListener('click', () => {
+        const modal = document.getElementById('supportModal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                if (typeof applyTranslations === 'function') applyTranslations();
+            }, 100);
+        } else {
+            showToast("Support modal not found. Please refresh.", "error");
+        }
+    });
+}
 
 // ====================== BOOTSTRAP ======================
 async function bootstrap() {
@@ -116,8 +170,65 @@ async function bootstrap() {
 }
 
 function setupEventListeners() {
-    // Photo, Voice, Publish, Nav Tabs, Language, Support (your fixed version)
-    // ... (keep the version I gave you earlier)
+    // Photo
+    const photoBtn = document.getElementById('btn-photo');
+    if (photoBtn) {
+        photoBtn.addEventListener('click', () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = (ev) => {
+                if (typeof mediaModule.handleImageSelect === 'function') {
+                    mediaModule.handleImageSelect(ev, document.getElementById('preview-area'));
+                }
+            };
+            input.click();
+        });
+    }
+
+    // Voice
+    const voiceBtn = document.getElementById('btn-voice');
+    if (voiceBtn) {
+        voiceBtn.addEventListener('click', (e) => {
+            if (typeof mediaModule.toggleVoiceRecording === 'function') {
+                mediaModule.toggleVoiceRecording(e.currentTarget);
+            }
+        });
+    }
+
+    // Publish
+    const postBtn = document.getElementById('postButton');
+    if (postBtn) postBtn.addEventListener('click', window.publishTestimony);
+
+    // Nav Tabs
+    const navButtons = document.querySelectorAll('#main-nav button[data-tab]');
+    navButtons.forEach(btn => {
+        btn.addEventListener('click', () => window.switchTab(btn.dataset.tab));
+    });
+
+    // Profile Button
+    const profileBtn = document.getElementById('profile-btn');
+    if (profileBtn) {
+        profileBtn.addEventListener('click', () => {
+            if (typeof window.showProfile === 'function') {
+                window.showProfile();
+            } else {
+                showToast("👤 Profile module loading...", "info");
+            }
+        });
+    }
+
+    // Language
+    const langSelector = document.getElementById('languageSelector');
+    if (langSelector) {
+        langSelector.addEventListener('change', (e) => {
+            const newLang = e.target.value;
+            if (typeof window.changeLanguage === 'function') window.changeLanguage(newLang);
+            showToast(`🌍 Language switched to ${newLang.toUpperCase()}`, "success");
+        });
+    }
+
+    initSupportButton();
 }
 
 document.addEventListener('DOMContentLoaded', bootstrap);
