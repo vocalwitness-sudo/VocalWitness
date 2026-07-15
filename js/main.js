@@ -193,3 +193,4 @@ window.handleProfileImageUpload = (event) => {
 
 // ====================== BOOTSTRAP ======================
 document.addEventListener('DOMContentLoaded', bootstrap);
+}
