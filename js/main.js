@@ -73,7 +73,7 @@ window.logout = () => {
 window.publishTestimony = async () => {
     const textarea = document.getElementById('mainInput');
     const content = textarea ? textarea.value.trim() : '';
-
+    
     if (!content) {
         showToast("Please write a testimony", "error");
         return;
@@ -88,26 +88,30 @@ window.publishTestimony = async () => {
     try {
         console.log("📤 Starting publish...");
 
-        // Skip media for now to isolate Firestore
+        const user = auth.currentUser;
+        if (!user) {
+            showToast("Please sign in to publish", "error");
+            return;
+        }
+
         const testimonyData = {
-            authorId: "anonymous",
-            author: "Anonymous Witness",
+            authorId: user.uid,
+            author: user.displayName || "Witness",
             content: content,
-            timestamp: new Date(),
-            createdAt: new Date()
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(), // Better than new Date()
+            timestamp: Date.now()
         };
 
         const { collection, addDoc } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
-        
+       
         await addDoc(collection(db, "testimonies"), testimonyData);
-        
+       
         showToast("✅ Testimony published successfully!", "success");
-        
         if (textarea) textarea.value = '';
 
     } catch (err) {
         console.error("❌ Publish error details:", err);
-        showToast("Failed to publish: " + err.message, "error");
+        showToast("Failed to publish: " + (err.message || err), "error");
     } finally {
         if (postBtn) {
             postBtn.disabled = false;
