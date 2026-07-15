@@ -214,54 +214,73 @@ function setupEventListeners() {
     }
 
     // ====================== EDIT PROFILE MODAL CONTROLS ======================
-    window.openEditProfile = () => {
-        const modal = document.getElementById('editProfileModal');
-        if (modal) modal.classList.remove('hidden');
-        
-        try {
-            if (typeof window.currentUserData !== 'undefined' && window.currentUserData) {
-                document.getElementById('editDisplayName').value = window.currentUserData.displayName || '';
-                document.getElementById('editUsername').value = window.currentUserData.username || '';
-                document.getElementById('editBio').value = window.currentUserData.bio || '';
-            }
-        } catch (e) {
-            console.log("Could not pre-fill profile data");
-        }
-    };
+window.publishTestimony = async () => {
+    const textarea = document.getElementById('mainInput');
+    const content = textarea ? textarea.value.trim() : '';
+    
+    if (!content) {
+        showToast("Please write a testimony", "error");
+        return;
+    }
 
-    window.closeEditProfile = () => {
-        const modal = document.getElementById('editProfileModal');
-        if (modal) modal.classList.add('hidden');
-    };
+    const postBtn = document.getElementById('postButton');
+    if (postBtn) {
+        postBtn.disabled = true;
+        postBtn.textContent = 'Publishing...';
+    }
 
-    window.saveProfileChanges = async () => {
-        showToast("Saving profile changes...", "info");
-        setTimeout(() => {
-            closeEditProfile();
-            showToast("✅ Profile Updated!", "success");
-        }, 800);
-    };
+    try {
+        console.log("📤 Starting publish...");
 
-    window.handleProfileImageUpload = (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
-        if (!file.type.startsWith('image/')) {
-            showToast("Please select an image file", "error");
-            return;
-        }
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const preview = document.getElementById('profileImagePreview');
-            if (preview) {
-                preview.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover rounded-3xl">`;
-            }
-            // Note: currentProfileImageFile should be declared globally if used elsewhere
-            window.currentProfileImageFile = file;
-            showToast("Image preview ready", "success");
+        const { collection, addDoc, serverTimestamp } = await import(
+            "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js"
+        );
+
+        // Get media from the engine
+        const mediaData = window.engineInstance ? window.engineInstance.getPendingMedia?.() || {} : {};
+
+        const testimonyData = {
+            authorId: "anonymous",
+            author: "Anonymous Witness",
+            content: content,
+            createdAt: serverTimestamp(),
+            timestamp: Date.now(),
+            isPublic: true,
+            moderationStatus: "approved",
+            feedVisibility: "citizen-talk",
+            imageUrl: mediaData.imageUrl || null,
+            audioUrl: mediaData.audioUrl || null
         };
-        reader.readAsDataURL(file);
-    };
-}
+
+        const docRef = await addDoc(collection(db, "testimonies"), testimonyData);
+        
+        console.log("✅ Saved with ID:", docRef.id);
+
+        showToast("✅ Testimony published successfully!", "success");
+        if (textarea) textarea.value = '';
+
+        // Clear media after publish
+        if (window.engineInstance && typeof window.engineInstance.clearPendingMedia === 'function') {
+            window.engineInstance.clearPendingMedia();
+        }
+
+        // Refresh feed
+        setTimeout(() => {
+            if (typeof initFeed === 'function') {
+                initFeed(db, 'citizen-talk');
+            }
+        }, 800);
+
+    } catch (err) {
+        console.error("❌ Publish error:", err.code, "-", err.message);
+        showToast("Failed to publish. Try again.", "error");
+    } finally {
+        if (postBtn) {
+            postBtn.disabled = false;
+            postBtn.textContent = 'Publish to the Square';
+        }
+    }
+};
 
 // ====================== BOOTSTRAP ======================
 document.addEventListener('DOMContentLoaded', bootstrap);
