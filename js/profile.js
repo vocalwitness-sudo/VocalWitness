@@ -39,29 +39,54 @@ function listenToUserProfile(userId) {
 }
 
 // ====================== RENDER ======================
+// ====================== RENDER ======================
 function renderProfileUI(userData) {
     if (!userData) return;
 
     const content = document.getElementById('profileContent');
     if (!content) return;
 
+    const tier = userData.tier || 'Base';
+    const isZkVerified = userData.isZkVerified || false;
+    const credibility = userData.credibilityScore || 50;
+
     content.innerHTML = `
         <div class="text-center">
-            <div class="w-24 h-24 mx-auto bg-gradient-to-br from-emerald-500 to-teal-500 rounded-3xl flex items-center justify-center text-5xl mb-4 shadow-inner">
-                👤
+            <div id="profileImageLarge" 
+                 class="w-28 h-28 mx-auto bg-gradient-to-br from-emerald-500 to-teal-500 rounded-3xl flex items-center justify-center text-6xl mb-4 shadow-inner border-4 border-zinc-800 overflow-hidden">
+                ${userData.photoURL 
+                    ? `<img src="${userData.photoURL}" class="w-full h-full object-cover">` 
+                    : '👤'}
             </div>
+            
             <h3 id="profileName" class="text-2xl font-bold">${escapeHtml(userData.displayName || "Anonymous Witness")}</h3>
             <p id="profileUsername" class="text-emerald-400">@${escapeHtml(userData.username || 'user_' + (userData.uid || '').slice(0,6))}</p>
-            ${userData.bio ? `<p class="text-zinc-400 mt-3 text-sm max-w-xs mx-auto">${escapeHtml(userData.bio)}</p>` : ''}
+            
+            <!-- Tier & ZK Status -->
+            <div class="flex justify-center gap-3 mt-4">
+                <div class="px-4 py-1.5 bg-emerald-900/50 text-emerald-400 text-sm font-medium rounded-2xl flex items-center gap-1.5">
+                    <span>⭐</span> 
+                    <span>${tier} Tier</span>
+                </div>
+                
+                ${isZkVerified ? `
+                <div class="px-4 py-1.5 bg-amber-900/50 text-amber-400 text-sm font-medium rounded-2xl flex items-center gap-1.5">
+                    <span>🔐</span> 
+                    <span>ZK Verified</span>
+                </div>` : ''}
+            </div>
+
+            ${userData.bio ? `<p class="text-zinc-400 mt-5 text-sm max-w-xs mx-auto">${escapeHtml(userData.bio)}</p>` : ''}
         </div>
-       
+      
+        <!-- Stats -->
         <div class="grid grid-cols-3 gap-4 text-center mt-8">
             <div>
                 <div class="text-2xl font-bold text-emerald-400">${userData.testimoniesCount || 0}</div>
                 <div class="text-xs text-zinc-500">Testimonies</div>
             </div>
             <div>
-                <div class="text-2xl font-bold">${userData.credibilityScore || 50}</div>
+                <div class="text-2xl font-bold">${credibility}</div>
                 <div class="text-xs text-zinc-500">Credibility</div>
             </div>
             <div>
@@ -69,17 +94,13 @@ function renderProfileUI(userData) {
                 <div class="text-xs text-zinc-500">Integrity</div>
             </div>
         </div>
-    `;
-}
 
-// Simple HTML escape helper
-function escapeHtml(unsafe) {
-    return unsafe
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+        <!-- Download Data Button -->
+        <button onclick="downloadMyDataPDF()" 
+                class="mt-8 w-full py-3 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 rounded-2xl flex items-center justify-center gap-2 text-sm font-medium">
+            📄 Download My Data as PDF
+        </button>
+    `;
 }
 
 // ====================== MODAL CONTROLS ======================
