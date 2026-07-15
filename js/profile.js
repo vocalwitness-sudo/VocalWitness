@@ -173,3 +173,119 @@ window.saveProfileChanges = async () => {
         showToast("Failed to save profile. Try again.", "error");
     }
 };
+// ====================== SETTINGS FUNCTIONALITY ======================
+let currentSettingsUnsubscribe = null;
+
+window.openSettings = () => {
+    const modal = document.getElementById('settingsModal');
+    if (!modal) {
+        return showToast("Settings modal not found in HTML", "error");
+    }
+    
+    modal.classList.remove('hidden');
+    loadSettingsContent();
+};
+
+window.closeSettings = () => {
+    document.getElementById('settingsModal')?.classList.add('hidden');
+};
+
+function loadSettingsContent() {
+    const container = document.getElementById('settingsContent');
+    if (!container) return;
+
+    container.innerHTML = `
+        <div class="space-y-6">
+            <!-- Account & Security -->
+            <div class="p-5 bg-zinc-900 rounded-2xl">
+                <div class="font-medium text-lg mb-3">🔐 Account & Security</div>
+                <button onclick="deleteAccountConfirm()" 
+                        class="w-full py-3 bg-red-900/30 hover:bg-red-900/50 text-red-400 rounded-2xl text-sm font-medium">
+                    Delete My Account
+                </button>
+            </div>
+
+            <!-- Privacy -->
+            <div class="p-5 bg-zinc-900 rounded-2xl">
+                <div class="font-medium text-lg mb-3">🔒 Privacy & Visibility</div>
+                <div class="flex items-center justify-between py-3">
+                    <div>
+                        <div class="font-medium">Public Profile</div>
+                        <div class="text-sm text-zinc-500">Allow others to see my profile</div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="publicProfileToggle" onchange="togglePublicProfile(this)" 
+                               class="sr-only peer">
+                        <div class="w-11 h-6 bg-zinc-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-emerald-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Notifications -->
+            <div class="p-5 bg-zinc-900 rounded-2xl">
+                <div class="font-medium text-lg mb-3">🛎️ Notifications</div>
+                <div class="flex items-center justify-between py-3">
+                    <div>
+                        <div class="font-medium">Reply & Mention Alerts</div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="notifyToggle" onchange="toggleNotifications(this)" 
+                               class="sr-only peer">
+                        <div class="w-11 h-6 bg-zinc-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-emerald-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                    </label>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Load current user settings
+    loadCurrentUserSettings();
+}
+
+function loadCurrentUserSettings() {
+    if (!currentUserData) return;
+    
+    const publicToggle = document.getElementById('publicProfileToggle');
+    const notifyToggle = document.getElementById('notifyToggle');
+    
+    if (publicToggle) publicToggle.checked = currentUserData.isPublic !== false;
+    if (notifyToggle) notifyToggle.checked = currentUserData.notifyReplies !== false;
+}
+
+// Toggle functions
+window.togglePublicProfile = async (checkbox) => {
+    if (!auth.currentUser) return;
+    try {
+        await updateDoc(doc(db, "users", auth.currentUser.uid), {
+            isPublic: checkbox.checked,
+            updatedAt: serverTimestamp()
+        });
+        showToast("Privacy updated", "success");
+    } catch (e) {
+        showToast("Failed to update", "error");
+        checkbox.checked = !checkbox.checked;
+    }
+};
+
+window.toggleNotifications = async (checkbox) => {
+    if (!auth.currentUser) return;
+    try {
+        await updateDoc(doc(db, "users", auth.currentUser.uid), {
+            notifyReplies: checkbox.checked,
+            updatedAt: serverTimestamp()
+        });
+        showToast("Notification preference saved", "success");
+    } catch (e) {
+        showToast("Failed to update", "error");
+        checkbox.checked = !checkbox.checked;
+    }
+};
+
+window.deleteAccountConfirm = () => {
+    if (confirm("⚠️ This will permanently delete your account and all testimonies.\n\nAre you sure?")) {
+        if (confirm("FINAL WARNING: This action cannot be undone. Type 'DELETE' to confirm:")) {
+            // TODO: Implement actual delete logic later (Cloud Function recommended)
+            showToast("Account deletion - coming in next update", "info");
+        }
+    }
+};
