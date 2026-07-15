@@ -35,10 +35,10 @@ function renderProfileUI(userData) {
     if (!userData) return;
     const content = document.getElementById('profileContent');
     if (!content) return;
-    
+   
     const tier = userData.tier || 'Base';
     const isZkVerified = userData.isZkVerified || false;
-    
+   
     content.innerHTML = `
         <div class="text-center">
             <div class="w-28 h-28 mx-auto rounded-3xl overflow-hidden border-4 border-zinc-700 mb-4">
@@ -52,9 +52,12 @@ function renderProfileUI(userData) {
                 ${isZkVerified ? `<div class="px-4 py-1 bg-amber-900/60 text-amber-400 rounded-2xl text-sm">🔐 ZK Verified</div>` : ''}
             </div>
         </div>
-        <button onclick="downloadMyDataPDF()" class="mt-10 w-full py-4 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-3xl font-medium">
-            📄 Download My Full Data as PDF
-        </button>
+        
+        <!-- Buttons Section -->
+        <div class="flex gap-3 mt-8">
+            <button onclick="openEditProfile()" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl">✏️ Edit Profile</button>
+            <button onclick="downloadMyDataPDF()" class="flex-1 py-3 bg-zinc-700 hover:bg-zinc-600 rounded-2xl">📄 Download PDF</button>
+        </div>
     `;
 }
 
