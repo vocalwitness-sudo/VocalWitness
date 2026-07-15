@@ -224,6 +224,7 @@
 </div>
 
     <!-- ==================== SETTINGS MODAL ==================== -->
+    
 <div id="settingsModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[80] p-4">
     <div class="glass rounded-3xl max-w-md w-full p-6">
         <div class="flex justify-between items-center mb-6">
@@ -232,16 +233,15 @@
         </div>
         
         <div class="space-y-6" id="settingsContent">
-            <!-- Content will be loaded by JS -->
+            <!-- JS will load the content here -->
         </div>
 
-        <button onclick="closeSettings()" class="w-full mt-8 py-3 bg-zinc-700 hover:bg-zinc-600 rounded-2xl">
+        <button onclick="closeSettings()" 
+                class="w-full mt-8 py-3 bg-zinc-700 hover:bg-zinc-600 rounded-2xl">
             Close
         </button>
     </div>
 </div>
-<script type="module" src="js/main.js"></script>
-
 <!-- Copy Wallet Script -->
 <script>
     function copyWalletAddress() {
