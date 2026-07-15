@@ -73,62 +73,41 @@ window.logout = () => {
 window.publishTestimony = async () => {
     const textarea = document.getElementById('mainInput');
     const content = textarea ? textarea.value.trim() : '';
-    
-    if (!content && !mediaModule.selectedImageFile && !window.engineInstance?.currentAudioBlob) {
-        showToast("Please write something or add media", "error");
+
+    if (!content) {
+        showToast("Please write a testimony", "error");
         return;
     }
 
     const postBtn = document.getElementById('postButton');
     if (postBtn) {
         postBtn.disabled = true;
-        postBtn.textContent = 'Publishing to the Square...';
+        postBtn.textContent = 'Publishing...';
     }
 
     try {
-        // Upload media first (photo + voice)
-        let mediaData = { imageUrl: null, audioUrl: null, imageHash: null, audioHash: null };
-        
-        if (mediaModule && typeof mediaModule.uploadForensicMedia === 'function') {
-            mediaData = await mediaModule.uploadForensicMedia();
-        }
+        console.log("📤 Starting publish...");
 
-        // Save to Firestore
-        const { collection, addDoc, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
-        
+        // Skip media for now to isolate Firestore
         const testimonyData = {
-            authorId: auth.currentUser?.uid || "anonymous",
-            author: auth.currentUser?.displayName || "Anonymous Witness",
+            authorId: "anonymous",
+            author: "Anonymous Witness",
             content: content,
-            imageUrl: mediaData.imageUrl,
-            audioUrl: mediaData.audioUrl,
-            imageHash: mediaData.imageHash,
-            audioHash: mediaData.audioHash,
-            timestamp: serverTimestamp(),
-            feedVisibility: AppState.currentMode || "citizen",
-            status: "public",
-            createdAt: serverTimestamp()
+            timestamp: new Date(),
+            createdAt: new Date()
         };
 
-        await addDoc(collection(db, "testimonies"), testimonyData);
-
-        // Success
-        showToast("✅ Testimony published successfully to the Square!", "success");
+        const { collection, addDoc } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
         
-        // Clear form
+        await addDoc(collection(db, "testimonies"), testimonyData);
+        
+        showToast("✅ Testimony published successfully!", "success");
+        
         if (textarea) textarea.value = '';
-        if (mediaModule && typeof mediaModule.resetMediaState === 'function') {
-            mediaModule.resetMediaState();
-        }
-
-        // Refresh feed
-        if (typeof loadDynamicFeed === 'function') {
-            loadDynamicFeed(AppState.currentTab || 'square');
-        }
 
     } catch (err) {
-        console.error("Publish error:", err);
-        showToast("Failed to publish. Please try again.", "error");
+        console.error("❌ Publish error details:", err);
+        showToast("Failed to publish: " + err.message, "error");
     } finally {
         if (postBtn) {
             postBtn.disabled = false;
