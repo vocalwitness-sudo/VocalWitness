@@ -88,3 +88,88 @@ window.downloadMyDataPDF = async () => {
 };
 
 // You can add more functions here if needed (handleProfileImageUpload, saveProfileChanges, etc.)
+
+// ====================== EDIT PROFILE FUNCTIONS ======================
+
+window.openEditProfile = () => {
+    const modal = document.getElementById('editProfileModal');
+    if (!modal) return showToast("Edit modal not found", "error");
+
+    // Populate form with current data
+    if (currentUserData) {
+        document.getElementById('editDisplayName').value = currentUserData.displayName || '';
+        document.getElementById('editUsername').value = currentUserData.username || '';
+        document.getElementById('editBio').value = currentUserData.bio || '';
+        
+        // Show current photo if exists
+        const preview = document.getElementById('profileImagePreview');
+        if (currentUserData.photoURL && preview) {
+            preview.innerHTML = `<img src="${currentUserData.photoURL}" class="w-full h-full object-cover rounded-3xl">`;
+        }
+    }
+
+    modal.classList.remove('hidden');
+};
+
+window.closeEditProfile = () => {
+    document.getElementById('editProfileModal').classList.add('hidden');
+};
+
+window.handleProfileImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    if (file.size > 5 * 1024 * 1024) {
+        return showToast("Image must be smaller than 5MB", "error");
+    }
+    
+    currentProfileImageFile = file;
+    showToast("Image selected. It will upload when you save.", "info");
+    
+    const preview = document.getElementById('profileImagePreview');
+    if (preview) {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            preview.innerHTML = `<img src="${ev.target.result}" class="w-full h-full object-cover rounded-3xl">`;
+        };
+        reader.readAsDataURL(file);
+    }
+};
+
+window.saveProfileChanges = async () => {
+    if (!auth.currentUser) {
+        return showToast("You must be logged in", "error");
+    }
+
+    const displayName = document.getElementById('editDisplayName').value.trim();
+    const username = document.getElementById('editUsername').value.trim();
+    const bio = document.getElementById('editBio').value.trim();
+
+    if (!displayName) {
+        return showToast("Display name is required", "error");
+    }
+
+    try {
+        showToast("Saving changes...", "info");
+        
+        const userRef = doc(db, "users", auth.currentUser.uid);
+        
+        const updateData = {
+            displayName,
+            username: username || null,
+            bio: bio || null,
+            updatedAt: serverTimestamp()
+        };
+
+        await updateDoc(userRef, updateData);
+        
+        showToast("✅ Profile updated successfully!", "success");
+        closeEditProfile();
+        
+        if (typeof refreshTierAndUI === 'function') refreshTierAndUI();
+        
+    } catch (error) {
+        console.error("Save profile error:", error);
+        showToast("Failed to save profile. Try again.", "error");
+    }
+};
