@@ -23,20 +23,16 @@ window.switchTab = (tab) => {
             if (tab === 'witness') btn.classList.add('bg-amber-900', 'text-amber-300');
         }
     });
-
     AppState.currentTab = tab;
-
     if (tab === 'witness') {
         AppState.currentMode = 'witness';
     } else {
         AppState.currentMode = 'citizen';
     }
-
     if (tab === 'more') {
         showMoreMenu();
         return;
     }
-
     loadDynamicFeed(tab);
 };
 
@@ -46,12 +42,32 @@ function loadDynamicFeed(tab) {
     else if (tab === 'arena') feedType = 'live';
     else if (tab === 'mycircle') feedType = 'my-testimonies';
     else if (tab === 'witness') feedType = 'true-witness';
-
     initFeed(db, feedType);
 }
 
 window.showMoreMenu = () => {
     alert("More menu - coming soon");
+};
+
+// ====================== GLOBAL MODAL FUNCTIONS ======================
+window.showProfile = () => {
+    document.getElementById('profileModal').classList.remove('hidden');
+};
+
+window.closeProfile = () => {
+    document.getElementById('profileModal').classList.add('hidden');
+};
+
+window.editProfile = () => {
+    // You can expand this later
+    alert("Edit Profile opened - connect your edit modal here");
+};
+
+window.logout = () => {
+    // Add your logout logic
+    if (confirm("Logout?")) {
+        alert("Logged out (add real logic)");
+    }
 };
 
 // ====================== BOOTSTRAP ======================
@@ -62,17 +78,18 @@ async function bootstrap() {
         initProfile();
         initOnboarding?.();
         loadDynamicNavigation?.();
-
+        
         engineInstance = new CitizenTalkEngine(db, storage);
         window.engineInstance = engineInstance;
+        
         if (mediaModule.setEngine) mediaModule.setEngine(engineInstance);
-
         if (typeof applyTierTheme === 'function') applyTierTheme();
         if (typeof updateTierBadge === 'function') updateTierBadge();
-
+        
         setupEventListeners();
-
+        
         setTimeout(() => window.switchTab('square'), 600);
+        
         console.log("✅ VocalWitness Live Ready");
     } catch (e) {
         console.error("Bootstrap failed:", e);
@@ -80,21 +97,15 @@ async function bootstrap() {
 }
 
 function setupEventListeners() {
-    // Nav Tabs - Fixed
+    // Nav Tabs
     document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
         btn.addEventListener('click', () => window.switchTab(btn.dataset.tab));
     });
 
-    // Profile Button - Fixed
+    // Profile Button
     const profileBtn = document.getElementById('profile-btn');
     if (profileBtn) {
-        profileBtn.addEventListener('click', () => {
-            if (typeof window.showProfile === 'function') {
-                window.showProfile();
-            } else {
-                showToast("👤 Profile opening...", "info");
-            }
-        });
+        profileBtn.addEventListener('click', window.showProfile);
     }
 
     // Support Button
@@ -102,6 +113,14 @@ function setupEventListeners() {
     if (supportBtn) {
         supportBtn.addEventListener('click', () => {
             document.getElementById('supportModal')?.classList.remove('hidden');
+        });
+    }
+
+    // Post Button (basic)
+    const postBtn = document.getElementById('postButton');
+    if (postBtn) {
+        postBtn.addEventListener('click', () => {
+            showToast("Publishing... (connect full logic)", "info");
         });
     }
 }
