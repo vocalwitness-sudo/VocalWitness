@@ -88,18 +88,13 @@ window.publishTestimony = async () => {
     try {
         console.log("📤 Starting publish...");
 
-        const user = auth.currentUser;
-        if (!user) {
-            showToast("Please sign in to publish", "error");
-            return;
-        }
-
         const testimonyData = {
-            authorId: user.uid,
-            author: user.displayName || "Witness",
+            authorId: "anonymous",           // or generate a temp ID
+            author: "Anonymous Witness",
             content: content,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(), // Better than new Date()
-            timestamp: Date.now()
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            timestamp: Date.now(),
+            isPublic: true
         };
 
         const { collection, addDoc } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
@@ -119,7 +114,6 @@ window.publishTestimony = async () => {
         }
     }
 };
-
 // ====================== BOOTSTRAP ======================
 async function bootstrap() {
     try {
