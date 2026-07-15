@@ -1,48 +1,27 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-   
-    // Helper functions
-    function isSignedIn() { return request.auth != null; }
-    function isOwner(uid) { 
-      return isSignedIn() && request.auth.uid == uid; 
-    }
-    function isSteward() {
-      return isSignedIn() &&
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSteward == true;
+
+    // Testimonies - Fully Public
+    match /testimonies/{testimonyId} {
+      allow read: if true;                    // Anyone can read
+      allow create: if true;                  // Anyone can publish (Public Live)
+      allow update, delete: if false;         // No one can edit/delete (prevents abuse)
     }
 
-    // MENU
+    // Users (keep if you plan to add auth later)
+    match /users/{userId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // MENU (keep your existing)
     match /MENU/{document} {
       allow read: if true;
       allow write: if false;
     }
 
-    // Users
-    match /users/{userId} {
-      allow read: if true;
-      allow create, update: if isOwner(userId);
-    }
-
-    // Testimonies
-    match /testimonies/{testimonyId} {
-      allow read: if resource == null || resource.data.moderationStatus != "removed";
-      
-      allow create: if isSignedIn()
-                    && request.resource.data.authorId == request.auth.uid;  // Prevent impersonation
-
-      allow update, delete: if isOwner(resource.data.authorId) || isSteward();
-    }
-
-    // Groups (example)
-    match /groups/{groupId} {
-      allow read: if true;
-      allow create: if isSignedIn();
-      allow update, delete: if isSignedIn() &&
-        (resource.data.members.hasAny([request.auth.uid]) || resource.data.createdBy == request.auth.uid);
-    }
-
-    // Default deny
+    // Default deny everything else
     match /{document=**} {
       allow read, write: if false;
     }
