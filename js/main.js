@@ -235,51 +235,62 @@ function setupEventListeners() {
     if (postBtn) {
         postBtn.addEventListener('click', window.publishTestimony);
     }
-       // Forensic Photo Button - Real file picker + preview
-       // Forensic Photo Button - Real upload with hash
-    const photoBtn = document.getElementById('btn-photo');
-    if (photoBtn) {
-        photoBtn.addEventListener('click', () => {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'image/*';
-            input.onchange = async (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
+    
+   // Forensic Photo Button - Safe validation + clear errors (Phase 1)
+const photoBtn = document.getElementById('btn-photo');
+if (photoBtn) {
+    photoBtn.addEventListener('click', () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/jpeg, image/png, image/webp';
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
 
-                try {
-                    showToast("Processing forensic image...", "info");
+            // === Detailed Safe Validation ===
+            if (!file.type.startsWith('image/')) {
+                showToast("❌ Only image files allowed (JPEG, PNG, WebP)", "error");
+                return;
+            }
+            if (file.size > 10 * 1024 * 1024) {
+                showToast("❌ Image too large. Maximum 10MB for safety.", "error");
+                return;
+            }
 
-                    // Generate SHA256 hash for forensic integrity
-                    const hash = await generateSha256Hash(file);
-                    
-                    const reader = new FileReader();
-                    reader.onload = (ev) => {
-                        const previewArea = document.getElementById('preview-area');
-                        if (previewArea) {
-                            previewArea.innerHTML = `
-                                <div class="relative mt-4 rounded-2xl overflow-hidden border border-emerald-500/50">
-                                    <img src="${ev.target.result}" class="w-full max-h-64 object-cover" alt="Forensic Preview">
-                                    <div class="absolute bottom-2 left-2 bg-black/70 text-[10px] px-2 py-1 rounded font-mono">${hash.substring(0,16)}...</div>
-                                </div>`;
-                        }
-                    };
-                    reader.readAsDataURL(file);
+            try {
+                showToast("✅ Processing forensic image...", "info");
 
-                    // Store for later publish
-                    if (window.engineInstance) {
-                        window.engineInstance.setPendingImage(file, hash);
+                const hash = await generateSha256Hash(file);
+                
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    const previewArea = document.getElementById('preview-area');
+                    if (previewArea) {
+                        previewArea.innerHTML = `
+                            <div class="relative mt-4 rounded-2xl overflow-hidden border border-emerald-500/50">
+                                <img src="${ev.target.result}" class="w-full max-h-64 object-cover" alt="Forensic Preview">
+                                <div class="absolute bottom-2 left-2 bg-black/70 text-[10px] px-2 py-1 rounded font-mono text-emerald-400">
+                                    ${hash.substring(0, 16)}...
+                                </div>
+                            </div>`;
                     }
+                };
+                reader.readAsDataURL(file);
 
-                    showToast("✅ Forensic image ready", "success");
-                } catch (err) {
-                    showToast("Failed to process image", "error");
-                    console.error(err);
+                // Store safely for publish
+                if (window.engineInstance) {
+                    window.engineInstance.setPendingImage?.(file, hash);
                 }
-            };
-            input.click();
-        });
-    }
+
+                showToast("✅ Forensic image ready (validated)", "success");
+            } catch (err) {
+                console.error(err);
+                showToast("❌ Failed to process image. Please try again.", "error");
+            }
+        };
+        input.click();
+    });
+}
          // Voice Testimony Button - Real recording
     const voiceBtn = document.getElementById('btn-voice');
     if (voiceBtn) {
