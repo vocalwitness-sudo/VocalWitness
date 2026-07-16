@@ -235,8 +235,7 @@ function setupEventListeners() {
     if (postBtn) {
         postBtn.addEventListener('click', window.publishTestimony);
     }
-
-          // Forensic Photo Button - Opens file picker
+       // Forensic Photo Button - Real file picker + preview
     const photoBtn = document.getElementById('btn-photo');
     if (photoBtn) {
         photoBtn.addEventListener('click', () => {
@@ -244,22 +243,39 @@ function setupEventListeners() {
             input.type = 'file';
             input.accept = 'image/*';
             input.onchange = (e) => {
-                if (e.target.files[0]) {
-                    showToast("✅ Image selected - Ready for upload", "success");
-                    // TODO: Pass to media module
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        const previewArea = document.getElementById('preview-area');
+                        if (previewArea) {
+                            previewArea.innerHTML = `
+                                <div class="relative mt-4 rounded-2xl overflow-hidden border border-emerald-500/30">
+                                    <img src="${ev.target.result}" class="w-full max-h-64 object-cover" alt="Preview">
+                                    <button onclick="this.parentElement.remove()" 
+                                            class="absolute top-2 right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs">✕</button>
+                                </div>`;
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                    showToast(`✅ ${file.name} selected`, "success");
                 }
             };
             input.click();
         });
     }
-
-    // Voice Testimony Button
-    const voiceBtn = document.getElementById('btn-voice');
+      //voice
+      const voiceBtn = document.getElementById('btn-voice');
     if (voiceBtn) {
         voiceBtn.addEventListener('click', () => {
-            showToast("🎤 Voice recording started (max 5 min)", "info");
-            // TODO: Connect to CitizenTalkEngine for real recording
-            console.log("Voice recording initiated");
+            voiceBtn.style.backgroundColor = '#10b981';
+            voiceBtn.textContent = '🎤 Recording... (click again to stop)';
+            
+            setTimeout(() => {
+                showToast("✅ Voice recorded (demo mode)", "success");
+                voiceBtn.style.backgroundColor = '';
+                voiceBtn.textContent = '🎤 Voice Testimony';
+            }, 2500);
         });
     }
 
