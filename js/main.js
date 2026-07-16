@@ -11,7 +11,6 @@ import { initOnboarding } from './onboarding.js';
 import { loadDynamicNavigation } from './navigation.js';
 import { applyTierTheme, updateTierBadge } from './tier.js';
 import { AppState } from './app-state.js';
-
 // Import ledger (you can add more later)
 import * as ledgerModule from './forensic-ledger.js';
 
@@ -43,11 +42,19 @@ window.switchTab = async (tab) => {
             container.innerHTML = `<div id="feedContainer" class="space-y-8"></div>`;
             initFeed(db, 'citizen-talk');
 
-        } else if (tab === 'ledger') {
-            container.innerHTML = `<div id="ledgerContainer" class="space-y-4 min-h-[400px]"></div>`;
-            if (typeof ledgerModule.loadForensicLedger === 'function') {
-                ledgerModule.loadForensicLedger();
-            }
+       } else if (tab === 'ledger') {
+    container.innerHTML = `<div id="ledgerContainer" class="space-y-4 min-h-[400px]"></div>`;
+    
+    // Force load after DOM update
+    setTimeout(() => {
+        if (typeof ledgerModule.loadForensicLedger === 'function') {
+            ledgerModule.loadForensicLedger();
+            console.log("✅ Ledger module loaded");
+        } else {
+            console.error("Ledger module not found");
+        }
+    }, 100);
+}
 
         } else if (tab === 'witness') {
             container.innerHTML = `<div id="trueWitnessContainer" class="space-y-6 p-8 text-center">
