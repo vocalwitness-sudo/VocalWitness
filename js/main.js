@@ -15,6 +15,7 @@ import { AppState } from './app-state.js';
 let engineInstance = null;
 
 // ====================== TAB SWITCHING (Dynamic + Safe) ======================
+// ====================== TAB SWITCHING (Dynamic + Safe) ======================
 window.switchTab = async (tab) => {
     // Update active button styles
     document.querySelectorAll('#main-nav button').forEach(btn => {
@@ -33,14 +34,17 @@ window.switchTab = async (tab) => {
         return;
     }
 
-    const container = document.getElementById('dynamicContainer') || document.getElementById('feedContainer');
+    const container = document.getElementById('dynamicContainer');
     if (!container) {
-        console.warn("Dynamic container not found, falling back...");
-        loadDynamicFeed(tab);
+        console.error("dynamicContainer not found!");
         return;
     }
 
-    container.innerHTML = `<div class="text-center py-20"><div class="animate-spin w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full mx-auto"></div><p class="mt-4 text-zinc-400">Loading ${tab}...</p></div>`;
+    container.innerHTML = `
+        <div class="text-center py-20">
+            <div class="animate-spin w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full mx-auto"></div>
+            <p class="mt-4 text-zinc-400">Loading ${tab}...</p>
+        </div>`;
 
     try {
         if (tab === 'square' || tab === 'citizen') {
@@ -48,27 +52,23 @@ window.switchTab = async (tab) => {
             initFeed(db, 'citizen-talk');
         } 
         else if (tab === 'ledger') {
-            // Load ledger content (we can improve later)
-            container.innerHTML = `<div id="ledgerContainer" class="space-y-4"></div>`;
-            // You can call logic from forensic-ledger.html here later
-            showToast("Broadcast Ledger loaded (dynamic)", "success");
+            container.innerHTML = `<div id="ledgerContainer" class="space-y-4 min-h-[400px]"></div>`;
+            showToast("📜 Broadcast Ledger", "success");
         } 
         else if (tab === 'arena') {
-            container.innerHTML = `<h2 class="text-2xl font-bold text-center py-20">🔴 Live Arena - Coming Soon</h2>`;
+            container.innerHTML = `<h2 class="text-2xl font-bold text-center py-32 text-sky-400">🔴 Live Arena - Coming Soon</h2>`;
         } 
         else if (tab === 'mycircle') {
-            container.innerHTML = `<h2 class="text-2xl font-bold text-center py-20">🌐 My Network & Testimonies</h2>`;
+            container.innerHTML = `<h2 class="text-2xl font-bold text-center py-32">🌐 My Network & Testimonies</h2>`;
         } 
         else if (tab === 'witness') {
-            container.innerHTML = `<h2 class="text-2xl font-bold text-amber-400 text-center py-20">🛡️ Witness Circle (ZK Mode)</h2>`;
-            // Later: switch to TruthWitnessEngine
+            container.innerHTML = `<h2 class="text-2xl font-bold text-amber-400 text-center py-32">🛡️ Witness Circle (ZK Protected)</h2>`;
         }
     } catch (e) {
-        console.error(e);
-        container.innerHTML = `<p class="text-red-400 text-center py-20">Failed to load. Please refresh.</p>`;
+        console.error("SwitchTab error:", e);
+        container.innerHTML = `<p class="text-red-400 text-center py-20">Error loading content. Please refresh.</p>`;
     }
 };
-
 // ====================== MORE MENU ======================
 window.showMoreMenu = () => {
     let menu = document.getElementById('moreDropdown');
