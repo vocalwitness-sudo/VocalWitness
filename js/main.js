@@ -236,14 +236,24 @@ function setupEventListeners() {
         postBtn.addEventListener('click', window.publishTestimony);
     }
 
+       // Photo Button
     const photoBtn = document.getElementById('btn-photo');
     if (photoBtn) {
-        photoBtn.addEventListener('click', () => showToast("📸 Forensic Photo clicked", "info"));
+        photoBtn.addEventListener('click', () => {
+            console.log("📸 Forensic Photo clicked");
+            showToast("📸 Select forensic image", "info");
+            // TODO: Connect to media.js handleImageSelect
+        });
     }
 
+    // Voice Button
     const voiceBtn = document.getElementById('btn-voice');
     if (voiceBtn) {
-        voiceBtn.addEventListener('click', () => showToast("🎤 Voice Testimony clicked", "info"));
+        voiceBtn.addEventListener('click', () => {
+            console.log("🎤 Voice Testimony clicked");
+            showToast("🎤 Voice recording started (demo)", "info");
+            // TODO: Connect to mediaModule.toggleVoiceRecording
+        });
     }
 
     console.log("✅ All major event listeners attached successfully");
