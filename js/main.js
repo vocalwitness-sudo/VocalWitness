@@ -165,11 +165,10 @@ async function bootstrap() {
         console.log("✅ Event listeners should be attached now");
     }
 }
-
-function setupEventListeners() {
-    document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
-        btn.addEventListener('click', () => window.switchTab(btn.dataset.tab));
-    });
+        setupEventListeners();
+        setTimeout(() => window.switchTab('square'), 600);
+        console.log("✅ Event listeners should be attached now");
+        console.log("✅ VocalWitness Live Ready");
 
     const profileBtn = document.getElementById('profile-btn');
     if (profileBtn) profileBtn.addEventListener('click', window.showProfile);
