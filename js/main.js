@@ -236,7 +236,7 @@ function setupEventListeners() {
         postBtn.addEventListener('click', window.publishTestimony);
     }
     
-  // Forensic Photo Button - Safe validation + EXIF for verified users (Phase 2)
+// Forensic Photo Button - Safe validation + EXIF for verified users (Phase 2 Fixed)
 const photoBtn = document.getElementById('btn-photo');
 if (photoBtn) {
     photoBtn.addEventListener('click', () => {
@@ -270,7 +270,7 @@ if (photoBtn) {
                     let exifBadge = '';
                     let exifSummary = null;
 
-                    // === Phase 2: Light EXIF only for verified users ===
+                    // Light EXIF only for verified users
                     if (AppState.isWitnessVerified || auth.currentUser) {
                         try {
                             exifSummary = await getLightExif(file);
@@ -292,29 +292,12 @@ if (photoBtn) {
                             </div>
                         </div>`;
 
-                    // Store for later (safe)
                     if (window.engineInstance) {
                         window.engineInstance.setPendingImage?.(file, hash, exifSummary);
                     }
                 };
                 reader.readAsDataURL(file);
 
-            } catch (err) {
-                console.error(err);
-                showToast("❌ Failed to process image. Please try again.", "error");
-            }
-        };
-        input.click();
-    });
-}
-                reader.readAsDataURL(file);
-
-                // Store safely for publish
-                if (window.engineInstance) {
-                    window.engineInstance.setPendingImage?.(file, hash);
-                }
-
-                showToast("✅ Forensic image ready (validated)", "success");
             } catch (err) {
                 console.error(err);
                 showToast("❌ Failed to process image. Please try again.", "error");
