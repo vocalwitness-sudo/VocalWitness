@@ -14,10 +14,8 @@ import { AppState } from './app-state.js';
 
 let engineInstance = null;
 
-// ====================== TAB SWITCHING (Dynamic + Safe) ======================
-// ====================== TAB SWITCHING (Dynamic + Safe) ======================
+// ====================== TAB SWITCHING ======================
 window.switchTab = async (tab) => {
-    // Update active button styles
     document.querySelectorAll('#main-nav button').forEach(btn => {
         btn.classList.remove('active', 'bg-amber-900', 'text-amber-300');
         if (btn.dataset.tab === tab) {
@@ -50,129 +48,70 @@ window.switchTab = async (tab) => {
         if (tab === 'square' || tab === 'citizen') {
             container.innerHTML = `<div id="feedContainer" class="space-y-8"></div>`;
             initFeed(db, 'citizen-talk');
-        } 
-        else if (tab === 'ledger') {
+        } else if (tab === 'ledger') {
             container.innerHTML = `<div id="ledgerContainer" class="space-y-4 min-h-[400px]"></div>`;
             showToast("📜 Broadcast Ledger", "success");
-        } 
-        else if (tab === 'arena') {
+        } else if (tab === 'arena') {
             container.innerHTML = `<h2 class="text-2xl font-bold text-center py-32 text-sky-400">🔴 Live Arena - Coming Soon</h2>`;
-        } 
-        else if (tab === 'mycircle') {
+        } else if (tab === 'mycircle') {
             container.innerHTML = `<h2 class="text-2xl font-bold text-center py-32">🌐 My Network & Testimonies</h2>`;
-        } 
-        else if (tab === 'witness') {
+        } else if (tab === 'witness') {
             container.innerHTML = `<h2 class="text-2xl font-bold text-amber-400 text-center py-32">🛡️ Witness Circle (ZK Protected)</h2>`;
         }
     } catch (e) {
         console.error("SwitchTab error:", e);
-        container.innerHTML = `<p class="text-red-400 text-center py-20">Error loading content. Please refresh.</p>`;
+        container.innerHTML = `<p class="text-red-400 text-center py-20">Error loading content.</p>`;
     }
 };
+
 // ====================== MORE MENU ======================
 window.showMoreMenu = () => {
     let menu = document.getElementById('moreDropdown');
-
     if (!menu) {
         menu = document.createElement('div');
         menu.id = 'moreDropdown';
         menu.className = 'fixed top-20 right-6 glass rounded-3xl p-5 w-64 shadow-2xl z-[100] border border-zinc-700';
         menu.innerHTML = `
             <div class="flex flex-col gap-2 text-sm font-medium">
-                <a href="about.html" class="flex items-center gap-3 px-4 py-3 hover:bg-zinc-800 rounded-2xl transition-colors">
-                    ℹ️ About VocalWitness
-                </a>
-                <a href="safety.html" class="flex items-center gap-3 px-4 py-3 hover:bg-zinc-800 rounded-2xl transition-colors">
-                    🛡️ Safety Center
-                </a>
-                <a href="terms.html" class="flex items-center gap-3 px-4 py-3 hover:bg-zinc-800 rounded-2xl transition-colors">
-                    📜 Terms of Service
-                </a>
-                <a href="privacy.html" class="flex items-center gap-3 px-4 py-3 hover:bg-zinc-800 rounded-2xl transition-colors">
-                    🔒 Privacy Policy
-                </a>
-                <a href="moderation.html" class="flex items-center gap-3 px-4 py-3 hover:bg-zinc-800 rounded-2xl transition-colors">
-                    ⚖️ Moderation
-                </a>
-                <a href="admin.html" class="flex items-center gap-3 px-4 py-3 hover:bg-zinc-800 rounded-2xl transition-colors">
-                    🛠️ Admin Panel
-                </a>
+                <a href="about.html" class="flex items-center gap-3 px-4 py-3 hover:bg-zinc-800 rounded-2xl transition-colors">ℹ️ About VocalWitness</a>
+                <a href="safety.html" class="flex items-center gap-3 px-4 py-3 hover:bg-zinc-800 rounded-2xl transition-colors">🛡️ Safety Center</a>
+                <a href="terms.html" class="flex items-center gap-3 px-4 py-3 hover:bg-zinc-800 rounded-2xl transition-colors">📜 Terms</a>
+                <a href="privacy.html" class="flex items-center gap-3 px-4 py-3 hover:bg-zinc-800 rounded-2xl transition-colors">🔒 Privacy</a>
+                <a href="moderation.html" class="flex items-center gap-3 px-4 py-3 hover:bg-zinc-800 rounded-2xl transition-colors">⚖️ Moderation</a>
+                <a href="admin.html" class="flex items-center gap-3 px-4 py-3 hover:bg-zinc-800 rounded-2xl transition-colors">🛠️ Admin</a>
                 <hr class="my-2 border-zinc-700">
-                <button onclick="logout()" 
-                        class="flex items-center gap-3 px-4 py-3 hover:bg-red-900/50 text-red-400 rounded-2xl transition-colors text-left w-full">
-                    ⬅️ Logout
-                </button>
+                <button onclick="logout()" class="flex items-center gap-3 px-4 py-3 hover:bg-red-900/50 text-red-400 rounded-2xl transition-colors text-left w-full">⬅️ Logout</button>
             </div>
         `;
         document.body.appendChild(menu);
     }
-
     menu.classList.toggle('hidden');
-
-    // Auto close when clicking outside
-    setTimeout(() => {
-        const closeHandler = (e) => {
-            if (!menu.contains(e.target)) {
-                menu.classList.add('hidden');
-                document.removeEventListener('click', closeHandler);
-            }
-        };
-        document.addEventListener('click', closeHandler);
-    }, 50);
 };
-
-
 
 // ====================== GLOBAL MODAL FUNCTIONS ======================
-window.showProfile = () => {
-    document.getElementById('profileModal').classList.remove('hidden');
-};
-
-window.closeProfile = () => {
-    document.getElementById('profileModal').classList.add('hidden');
-};
-
-window.editProfile = () => {
-    // Bridge to the function in profile.js
-    if (typeof window.openEditProfile === 'function') {
-        window.openEditProfile();
-    } else {
-        showToast("Edit profile is loading...", "info");
-    }
-};
-
+window.showProfile = () => document.getElementById('profileModal').classList.remove('hidden');
+window.closeProfile = () => document.getElementById('profileModal').classList.add('hidden');
 
 window.logout = () => {
-    if (confirm("Logout?")) {
-        alert("Logged out (add real logic)");
-    }
+    if (confirm("Logout?")) alert("Logged out (add real logic)");
 };
 
-// ====================== PUBLISH TESTIMONY (with media support) ======================
+// ====================== PUBLISH TESTIMONY ======================
 window.publishTestimony = async () => {
     const textarea = document.getElementById('mainInput');
     const content = textarea ? textarea.value.trim() : '';
-
     if (!content) {
         showToast("Please write a testimony", "error");
         return;
     }
-
     const postBtn = document.getElementById('postButton');
     if (postBtn) {
         postBtn.disabled = true;
         postBtn.textContent = 'Publishing...';
     }
-
     try {
-        console.log("📤 Starting publish...");
-        const { collection, addDoc, serverTimestamp } = await import(
-            "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js"
-        );
-
-        // Get pending media from engine
+        const { collection, addDoc, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
         const mediaData = window.engineInstance?.getPendingMedia?.() || {};
-
         const testimonyData = {
             authorId: "anonymous",
             author: "Anonymous Witness",
@@ -185,34 +124,14 @@ window.publishTestimony = async () => {
             imageUrl: mediaData.imageUrl || null,
             audioUrl: mediaData.audioUrl || null,
         };
-
         const docRef = await addDoc(collection(db, "testimonies"), testimonyData);
-
-        console.log("✅ Saved with ID:", docRef.id);
-        showToast("✅ Testimony published successfully!", "success");
-
-        // Clear form and media
+        showToast("✅ Testimony published!", "success");
         if (textarea) textarea.value = '';
-        if (window.engineInstance?.clearPendingMedia) {
-            window.engineInstance.clearPendingMedia();
-        }
-
-        window.openSettings = () => {
-    document.getElementById('settingsModal').classList.remove('hidden');
-};
-
-window.closeSettings = () => {
-    document.getElementById('settingsModal').classList.add('hidden');
-};
-
-        // Refresh feed
-        setTimeout(() => {
-            const currentFeed = AppState.currentTab === 'witness' ? 'true-witness' : 'citizen-talk';
-            initFeed(db, currentFeed);
-        }, 700);
+        if (window.engineInstance?.clearPendingMedia) window.engineInstance.clearPendingMedia();
+        setTimeout(() => initFeed(db, 'citizen-talk'), 700);
     } catch (err) {
-        console.error("❌ Publish error:", err.code, "-", err.message);
-        showToast("Failed to publish. Try again.", "error");
+        console.error(err);
+        showToast("Failed to publish.", "error");
     } finally {
         if (postBtn) {
             postBtn.disabled = false;
@@ -232,7 +151,6 @@ async function bootstrap() {
 
         engineInstance = new CitizenTalkEngine(db, storage);
         window.engineInstance = engineInstance;
-
         if (mediaModule.setEngine) mediaModule.setEngine(engineInstance);
 
         if (typeof applyTierTheme === 'function') applyTierTheme();
@@ -240,9 +158,7 @@ async function bootstrap() {
 
         setupEventListeners();
 
-        // Initial tab
         setTimeout(() => window.switchTab('square'), 600);
-
         console.log("✅ VocalWitness Live Ready");
     } catch (e) {
         console.error("Bootstrap failed:", e);
@@ -250,75 +166,19 @@ async function bootstrap() {
 }
 
 function setupEventListeners() {
-    // Nav Tabs
     document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
         btn.addEventListener('click', () => window.switchTab(btn.dataset.tab));
     });
 
-    // Profile Button
     const profileBtn = document.getElementById('profile-btn');
     if (profileBtn) profileBtn.addEventListener('click', window.showProfile);
 
-    // Support Button
     const supportBtn = document.getElementById('support-btn');
-    if (supportBtn) {
-        supportBtn.addEventListener('click', () => {
-            document.getElementById('supportModal')?.classList.remove('hidden');
-        });
-    }
+    if (supportBtn) supportBtn.addEventListener('click', () => document.getElementById('supportModal')?.classList.remove('hidden'));
 
-    // Post Button
     const postBtn = document.getElementById('postButton');
-    if (postBtn) {
-        postBtn.addEventListener('click', window.publishTestimony);
-        console.log("✅ Publish listener attached");
-    }
-
-    // ====================== SETTINGS FUNCTIONS ======================
-window.openSettings = () => {
-    const modal = document.getElementById('settingsModal');
-    if (modal) {
-        modal.classList.remove('hidden');
-    } else {
-        showToast("Settings modal not found. Please add the HTML first.", "error");
-    }
-};
-
-window.closeSettings = () => {
-    document.getElementById('settingsModal')?.classList.add('hidden');
-};
-    
-
-    // ====================== MEDIA BUTTONS ======================
-    const photoBtn = document.getElementById('btn-photo');
-    if (photoBtn) {
-        photoBtn.addEventListener('click', () => {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'image/*';
-            input.onchange = (e) => {
-                const previewArea = document.getElementById('preview-area');
-                if (typeof mediaModule.handleImageSelect === 'function') {
-                    mediaModule.handleImageSelect(e, previewArea);
-                } else {
-                    showToast("📸 Media module not ready.", "error");
-                }
-            };
-            input.click();
-        });
-    }
-
-    const voiceBtn = document.getElementById('btn-voice');
-    if (voiceBtn) {
-        voiceBtn.addEventListener('click', (e) => {
-            if (typeof mediaModule.toggleVoiceRecording === 'function') {
-                mediaModule.toggleVoiceRecording(e.currentTarget);
-            } else {
-                showToast("🎤 Voice module not ready.", "error");
-            }
-        });
-    }
+    if (postBtn) postBtn.addEventListener('click', window.publishTestimony);
 }
 
-// Start the app
+// Start
 document.addEventListener('DOMContentLoaded', bootstrap);
