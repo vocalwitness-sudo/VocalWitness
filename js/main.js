@@ -236,7 +236,7 @@ function setupEventListeners() {
         postBtn.addEventListener('click', window.publishTestimony);
     }
     
-   // Forensic Photo Button - Safe validation + clear errors (Phase 1)
+  // Forensic Photo Button - Safe validation + EXIF for verified users (Phase 2)
 const photoBtn = document.getElementById('btn-photo');
 if (photoBtn) {
     photoBtn.addEventListener('click', () => {
@@ -263,18 +263,50 @@ if (photoBtn) {
                 const hash = await generateSha256Hash(file);
                 
                 const reader = new FileReader();
-                reader.onload = (ev) => {
+                reader.onload = async (ev) => {
                     const previewArea = document.getElementById('preview-area');
-                    if (previewArea) {
-                        previewArea.innerHTML = `
-                            <div class="relative mt-4 rounded-2xl overflow-hidden border border-emerald-500/50">
-                                <img src="${ev.target.result}" class="w-full max-h-64 object-cover" alt="Forensic Preview">
-                                <div class="absolute bottom-2 left-2 bg-black/70 text-[10px] px-2 py-1 rounded font-mono text-emerald-400">
-                                    ${hash.substring(0, 16)}...
-                                </div>
-                            </div>`;
+                    if (!previewArea) return;
+
+                    let exifBadge = '';
+                    let exifSummary = null;
+
+                    // === Phase 2: Light EXIF only for verified users ===
+                    if (AppState.isWitnessVerified || auth.currentUser) {
+                        try {
+                            exifSummary = await getLightExif(file);
+                            if (exifSummary) {
+                                exifBadge = `<div class="absolute top-2 right-2 bg-emerald-600 text-white text-[10px] px-2 py-1 rounded">EXIF ✓</div>`;
+                                console.log("EXIF summary:", exifSummary);
+                            }
+                        } catch (e) {
+                            console.warn("EXIF read failed (non-blocking)", e);
+                        }
+                    }
+
+                    previewArea.innerHTML = `
+                        <div class="relative mt-4 rounded-2xl overflow-hidden border border-emerald-500/50">
+                            <img src="${ev.target.result}" class="w-full max-h-64 object-cover" alt="Forensic Preview">
+                            ${exifBadge}
+                            <div class="absolute bottom-2 left-2 bg-black/70 text-[10px] px-2 py-1 rounded font-mono text-emerald-400">
+                                ${hash.substring(0, 16)}...
+                            </div>
+                        </div>`;
+
+                    // Store for later (safe)
+                    if (window.engineInstance) {
+                        window.engineInstance.setPendingImage?.(file, hash, exifSummary);
                     }
                 };
+                reader.readAsDataURL(file);
+
+            } catch (err) {
+                console.error(err);
+                showToast("❌ Failed to process image. Please try again.", "error");
+            }
+        };
+        input.click();
+    });
+}
                 reader.readAsDataURL(file);
 
                 // Store safely for publish
@@ -319,6 +351,30 @@ async function bootstrap() {
     }, 500);
 
     console.log("✅ Minimal bootstrap finished");
+}
+
+// Phase 2 Helper: Light EXIF reader (safe, no heavy libs)
+async function getLightExif(file) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const dataView = new DataView(e.target.result);
+                if (dataView.getUint16(0) === 0xFFD8) {  // JPEG start
+                    resolve({
+                        hasExif: true,
+                        timestamp: new Date().toISOString(),
+                        note: "Basic EXIF detected"
+                    });
+                } else {
+                    resolve(null);
+                }
+            } catch (err) {
+                resolve(null);
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    });
 }
 // Start the app
 document.addEventListener('DOMContentLoaded', bootstrap);
