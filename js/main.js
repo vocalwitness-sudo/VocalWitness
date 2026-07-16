@@ -236,34 +236,18 @@ function setupEventListeners() {
 }
 // ====================== BOOTSTRAP ======================
 async function bootstrap() {
-    try {
-        console.log("🚀 Bootstrap started");
+    console.log("🚀 Bootstrap started - MINIMAL");
 
-        // Attach listeners as early as possible
-        setupEventListeners();
+    // Force attach listeners immediately
+    setupEventListeners();
 
-        await initAuth();
-        initLanguage();
-        initProfile();
-        initOnboarding?.();
-        loadDynamicNavigation?.();
+    // Minimal initial load
+    setTimeout(() => {
+        console.log("Loading initial tab...");
+        window.switchTab('square');
+    }, 500);
 
-        engineInstance = new CitizenTalkEngine(db, storage);
-        window.engineInstance = engineInstance;
-        if (mediaModule.setEngine) mediaModule.setEngine(engineInstance);
-
-        if (typeof applyTierTheme === 'function') applyTierTheme();
-        if (typeof updateTierBadge === 'function') updateTierBadge();
-
-        // Initial tab load
-        setTimeout(() => {
-            window.switchTab('square');
-        }, 800);
-
-        console.log("✅ VocalWitness Live Ready");
-    } catch (e) {
-        console.error("Bootstrap failed:", e);
-    }
+    console.log("✅ Minimal bootstrap finished");
 }
 // Start the app
 document.addEventListener('DOMContentLoaded', bootstrap);
