@@ -162,6 +162,7 @@ async function bootstrap() {
         console.log("✅ VocalWitness Live Ready");
     } catch (e) {
         console.error("Bootstrap failed:", e);
+        console.log("✅ Event listeners should be attached now");
     }
 }
 
