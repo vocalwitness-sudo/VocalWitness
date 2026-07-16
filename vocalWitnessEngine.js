@@ -9,12 +9,15 @@ export class BaseEngine {
         this.audioChunks = [];
         this.currentAudioBlob = null;
         this.stream = null;
+        this.pendingImage = null;
+        this.pendingImageHash = null;
+        this.pendingExif = null;
     }
 
-    async startVoiceRecording(durationLimit = 300000) {  // 5 minutes max
+    async startVoiceRecording(durationLimit = 300000) {
         try {
             this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            this.mediaRecorder = new MediaRecorder(this.stream);
+            this.mediaRecorder = new MediaRecorder(this.stream, { mimeType: 'audio/webm' });
             this.audioChunks = [];
 
             this.mediaRecorder.ondataavailable = (event) => {
@@ -43,35 +46,56 @@ export class BaseEngine {
         }
     }
 
+    // New: Toggle for easier use from main.js
+    toggleVoiceRecording(btn) {
+        const isRecording = this.mediaRecorder && this.mediaRecorder.state === "recording";
+        if (!isRecording) {
+            this.startVoiceRecording();
+        } else {
+            this.stopVoiceRecording();
+        }
+    }
+
+    // New: Safe pending media storage
+    setPendingImage(file, hash, exif = null) {
+        this.pendingImage = file;
+        this.pendingImageHash = hash;
+        this.pendingExif = exif;
+    }
+
+    getPendingMedia() {
+        return {
+            imageUrl: null, // will be set during upload
+            audioUrl: null,
+            imageHash: this.pendingImageHash,
+            audioHash: null,
+            exif: this.pendingExif
+        };
+    }
+
+    clearPendingMedia() {
+        this.pendingImage = null;
+        this.pendingImageHash = null;
+        this.pendingExif = null;
+        this.currentAudioBlob = null;
+    }
+
     async generateAudioHash(blob) {
         if (!blob) return null;
-        // Simple hash for now (you can replace with real SHA-256 later)
         return "audio_hash_" + Date.now();
     }
 }
 
-// Citizen Talk Engine (Open Access)
+// Citizen Talk Engine
 export class CitizenTalkEngine extends BaseEngine {
     constructor(db, storage) {
         super(db, storage);
     }
-
-    async packageAndUploadTestimony(userId, lang = 'en') {
-        console.log("📢 Publishing to Open Citizen Square...");
-        // Add any citizen-specific logic here
-        return { success: true, mode: 'citizen-talk' };
-    }
 }
 
-// Truth Witness Engine (High Integrity)
+// Truth Witness Engine
 export class TruthWitnessEngine extends BaseEngine {
     constructor(db, storage) {
         super(db, storage);
-    }
-
-    async packageAndUploadTestimony(userId, lang = 'en') {
-        console.log("🔒 Applying Forensic Shield...");
-        // Add ZK / advanced verification here in the future
-        return { success: true, mode: 'truth-witness' };
     }
 }
