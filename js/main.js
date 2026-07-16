@@ -182,7 +182,6 @@ window.publishTestimony = async () => {
 };
 
 // ====================== SETUP EVENT LISTENERS ======================
-// ====================== SETUP EVENT LISTENERS ======================
 function setupEventListeners() {
     console.log("Setting up all event listeners...");
 
@@ -236,8 +235,11 @@ function setupEventListeners() {
     console.log("✅ All major event listeners attached successfully");
 }
 // ====================== BOOTSTRAP ======================
-async function bootstrap() {
-    try {
+function setupEventListeners() {
+    console.log("🔗 Attaching event listeners now...");
+
+        setupEventListeners();
+
         await initAuth();
         initLanguage();
         initProfile();
@@ -246,22 +248,20 @@ async function bootstrap() {
 
         engineInstance = new CitizenTalkEngine(db, storage);
         window.engineInstance = engineInstance;
-
         if (mediaModule.setEngine) mediaModule.setEngine(engineInstance);
 
         if (typeof applyTierTheme === 'function') applyTierTheme();
         if (typeof updateTierBadge === 'function') updateTierBadge();
 
-        setupEventListeners();
-
         // Initial tab
-        setTimeout(() => window.switchTab('square'), 600);
+        setTimeout(() => {
+            window.switchTab('square');
+        }, 800);
 
         console.log("✅ VocalWitness Live Ready");
     } catch (e) {
         console.error("Bootstrap failed:", e);
     }
 }
-
 // Start the app
 document.addEventListener('DOMContentLoaded', bootstrap);
