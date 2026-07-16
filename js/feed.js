@@ -36,9 +36,12 @@ export function initFeed(dbInstance, feedType = 'citizen-talk') {
 function renderPost(id, data) {
     if (data.moderationStatus === "removed") return;
 
+    const feedContainer = document.getElementById('feedContainer');
+    if (!feedContainer) return;   // ← Add this safety check
+
     const postEl = document.createElement('div');
     postEl.className = 'post-card glass rounded-3xl p-6 mb-6';
-
+    
     const isSteward = data.authorTier === 'steward' || data.isModerator;
     let statusHTML = data.moderationStatus === "needs_review" 
         ? `<span class="inline-flex items-center gap-1 text-amber-400 text-xs">🔍 Under Review</span>` : '';
