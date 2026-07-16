@@ -61,24 +61,34 @@
         <div class="flex items-center gap-4">
     
 <!-- Full Language Selector -->
-<select id="languageSelector" 
-        class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500">
-</select>
-      <button id="support-btn" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl transition flex items-center gap-2" data-i18n="supportPlatform">
-    Support
-</button>
+<div class="flex items-center gap-4">
+    <!-- Language Selector -->
+    <select id="languageSelector" 
+            class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-4 py-2 text-sm focus:outline-none focus:border-emerald-500">
+        <!-- Options go here -->
+    </select>
 
-<!-- Privacy Link -->
-<a href="privacy.html" 
-   class="flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 transition-colors text-sm font-medium">
-    <span>🔒</span>
-    <span>Privacy First</span>
-</a>
+    <!-- Privacy Link -->
+    <a href="privacy.html" 
+       class="flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 transition-colors text-sm font-medium">
+        <span>🔒</span>
+        <span>Privacy First</span>
+    </a>
 
-<button id="profile-btn" class="px-5 py-2.5 border border-zinc-700 hover:bg-zinc-800 rounded-2xl transition" data-i18n="Profile">
-    Profile
-</button>
-        </div>
+    <!-- Support Button -->
+    <button id="support-btn" 
+            class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl transition flex items-center gap-2" 
+            data-i18n="supportPlatform">
+        Support The Square.
+    </button>
+
+    <!-- Profile Button -->
+    <button id="profile-btn" 
+            class="px-5 py-2.5 border border-zinc-700 hover:bg-zinc-800 rounded-2xl transition" 
+            data-i18n="Profile">
+        Profile
+    </button>
+</div>
     </header>
     <!-- ==================== MAIN NAVIGATION ==================== -->
     <nav class="flex gap-2 mb-8 overflow-x-auto pb-3" id="main-nav">
