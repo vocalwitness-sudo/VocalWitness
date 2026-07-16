@@ -44,25 +44,10 @@
     
 <!-- ==================== PRIVACY BANNER ==================== -->
     
-<div class="privacy-banner glass rounded-3xl p-6 text-center max-w-lg mx-auto my-10 border border-emerald-500/20">
-    <div class="flex items-center justify-center gap-3 mb-4">
-        <div class="text-3xl">🔒</div>
-        <h3 class="font-semibold text-lg text-white">Privacy First • No Personal Data Collected</h3>
-    </div>
-    
-    <p class="text-zinc-300 text-[15px]">
-        VocalWitness uses <strong class="text-emerald-400">Zero-Knowledge (ZK) cryptography</strong> to protect your identity.<br>
-        We never collect your national ID, passport, or any personal data.<br>
-        <strong>Your Testimony Is Yours Alone.</strong>
-    </p>
-
-    <button onclick="showPrivacyModal()" 
-            class="mt-4 text-sm text-emerald-400 hover:text-emerald-300 transition-colors underline">
-        How ZK Protection Works →
-    </button>
+<div class="mt-12 pt-8 border-t border-zinc-700 text-center text-sm text-zinc-400">
+    <p>You are part of a growing community that believes truth matters.</p>
+    <p class="mt-1">Together, we protect the public square.</p>
 </div>
- 
-<div class="max-w-2xl mx-auto">
     <!-- ==================== HEADER ==================== -->
     <header class="flex items-center justify-between mb-8 sticky top-0 z-50 glass rounded-3xl p-4">
         <div class="flex items-center gap-3">
@@ -77,14 +62,20 @@
             <select id="languageSelector" class="bg-zinc-900 text-white px-4 py-3 rounded-2xl border border-zinc-700 outline-none cursor-pointer hover:border-emerald-500 transition-all text-sm font-medium">
                 <!-- Populated by JS -->
             </select>
-      
-            <button id="support-btn" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl transition flex items-center gap-2" data-i18n="supportPlatform">
-                Support
-            </button>
-        
-            <button id="profile-btn" class="px-5 py-2.5 border border-zinc-700 hover:bg-zinc-800 rounded-2xl transition" data-i18n="Profile">
-                Profile
-            </button>
+      <button id="support-btn" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl transition flex items-center gap-2" data-i18n="supportPlatform">
+    Support
+</button>
+
+<!-- Privacy Link -->
+<a href="privacy.html" 
+   class="flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 transition-colors text-sm font-medium">
+    <span>🔒</span>
+    <span>Privacy First</span>
+</a>
+
+<button id="profile-btn" class="px-5 py-2.5 border border-zinc-700 hover:bg-zinc-800 rounded-2xl transition" data-i18n="Profile">
+    Profile
+</button>
         </div>
     </header>
     <!-- ==================== MAIN NAVIGATION ==================== -->
