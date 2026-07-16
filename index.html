@@ -127,13 +127,14 @@
                 <span id="copyText" data-i18n="supportModal.copyButton"></span>
             </button>
         </div>
-     
+    
         <p data-i18n="supportModal.warning" class="text-[10px] text-zinc-600 mb-8 uppercase italic"></p>
         <button onclick="document.getElementById('supportModal').classList.add('hidden')" class="w-full py-3 text-zinc-400 hover:text-white transition-colors" data-i18n="supportModal.closeButton">Close</button>
     </div>
 </div>
 
 <!-- ==================== PROFILE MODAL ==================== -->
+<div id="profileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[70] p-4">
     <div class="glass rounded-3xl max-w-md w-full max-h-[90vh] overflow-auto p-6">
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-2xl font-bold text-emerald-400">My Profile</h2>
@@ -160,8 +161,8 @@
         </button>
     </div>
 </div>
-    
-    <!-- ==================== EDIT PROFILE MODAL ==================== -->
+
+<!-- ==================== EDIT PROFILE MODAL ==================== -->
 <div id="editProfileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[80] p-4">
     <div class="glass rounded-3xl max-w-md w-full p-6">
         <div class="flex justify-between items-center mb-6">
@@ -193,37 +194,8 @@
         </div>
     </div>
 </div>
-<!-- ==================== PROFILE MODAL ==================== -->
-<div id="profileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[70] p-4">
-    <div class="glass rounded-3xl max-w-md w-full max-h-[90vh] overflow-auto p-6">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold text-emerald-400">My Profile</h2>
-            <button onclick="closeProfile()" class="text-zinc-400 hover:text-white text-3xl leading-none">×</button>
-        </div>
-        
-        <div id="profileContent" class="min-h-[200px]"></div>
-        
-        <!-- Action Buttons -->
-        <div class="flex gap-3 mt-8">
-            <button onclick="editProfile()" 
-                    class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl">
-                ✏️ Edit Profile
-            </button>
-            <button onclick="openSettings()" 
-                    class="flex-1 py-3 bg-zinc-700 hover:bg-zinc-600 rounded-2xl">
-                ⚙️ Settings
-            </button>
-        </div>
-        
-        <button onclick="logout()" 
-                class="w-full mt-3 py-3 bg-red-900/30 hover:bg-red-900/50 text-red-400 rounded-2xl font-medium">
-            Logout
-        </button>
-    </div>
-</div>
 
-    <!-- ==================== SETTINGS MODAL ==================== -->
-    
+<!-- ==================== SETTINGS MODAL ==================== -->
 <div id="settingsModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[80] p-4">
     <div class="glass rounded-3xl max-w-md w-full p-6">
         <div class="flex justify-between items-center mb-6">
@@ -234,15 +206,12 @@
         <div class="space-y-6" id="settingsContent">
             <!-- JS will load the content here -->
         </div>
-
         <button onclick="closeSettings()" 
                 class="w-full mt-8 py-3 bg-zinc-700 hover:bg-zinc-600 rounded-2xl">
             Close
         </button>
     </div>
 </div>
-<!-- Copy Wallet Script -->
-<script>
     function copyWalletAddress() {
         const address = document.getElementById('walletAddress').innerText;
         navigator.clipboard.writeText(address).then(() => {
