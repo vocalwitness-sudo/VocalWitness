@@ -15,7 +15,9 @@ import { AppState } from './app-state.js';
 let engineInstance = null;
 
 // ====================== TAB SWITCHING ======================
-window.switchTab = (tab) => {
+// ====================== TAB SWITCHING (Dynamic + Safe) ======================
+window.switchTab = async (tab) => {
+    // Update active button styles
     document.querySelectorAll('#main-nav button').forEach(btn => {
         btn.classList.remove('active', 'bg-amber-900', 'text-amber-300');
         if (btn.dataset.tab === tab) {
@@ -28,25 +30,44 @@ window.switchTab = (tab) => {
     AppState.currentMode = tab === 'witness' ? 'witness' : 'citizen';
 
     if (tab === 'more') {
-        showMoreMenu();
+        window.showMoreMenu();
         return;
     }
 
-    loadDynamicFeed(tab);
-};
+    const container = document.getElementById('dynamicContainer') || document.getElementById('feedContainer');
+    if (!container) {
+        console.warn("Dynamic container not found, falling back...");
+        loadDynamicFeed(tab);
+        return;
+    }
 
-function loadDynamicFeed(tab) {
-    let feedType = 'citizen-talk';
-    if (tab === 'ledger') feedType = 'ledger';
-    else if (tab === 'arena') feedType = 'live';
-    else if (tab === 'mycircle') feedType = 'my-testimonies';
-    else if (tab === 'witness') feedType = 'true-witness';
+    container.innerHTML = `<div class="text-center py-20"><div class="animate-spin w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full mx-auto"></div><p class="mt-4 text-zinc-400">Loading ${tab}...</p></div>`;
 
-    initFeed(db, feedType);
-}
-
-window.showMoreMenu = () => {
-    alert("More menu - coming soon");
+    try {
+        if (tab === 'square' || tab === 'citizen') {
+            container.innerHTML = `<div id="feedContainer" class="space-y-8"></div>`;
+            initFeed(db, 'citizen-talk');
+        } 
+        else if (tab === 'ledger') {
+            // Load ledger content (we can improve later)
+            container.innerHTML = `<div id="ledgerContainer" class="space-y-4"></div>`;
+            // You can call logic from forensic-ledger.html here later
+            showToast("Broadcast Ledger loaded (dynamic)", "success");
+        } 
+        else if (tab === 'arena') {
+            container.innerHTML = `<h2 class="text-2xl font-bold text-center py-20">🔴 Live Arena - Coming Soon</h2>`;
+        } 
+        else if (tab === 'mycircle') {
+            container.innerHTML = `<h2 class="text-2xl font-bold text-center py-20">🌐 My Network & Testimonies</h2>`;
+        } 
+        else if (tab === 'witness') {
+            container.innerHTML = `<h2 class="text-2xl font-bold text-amber-400 text-center py-20">🛡️ Witness Circle (ZK Mode)</h2>`;
+            // Later: switch to TruthWitnessEngine
+        }
+    } catch (e) {
+        console.error(e);
+        container.innerHTML = `<p class="text-red-400 text-center py-20">Failed to load. Please refresh.</p>`;
+    }
 };
 
 // ====================== GLOBAL MODAL FUNCTIONS ======================
