@@ -2,7 +2,6 @@ import './app-state.js';
 import { initAuth } from "./auth.js";
 import { initFeed } from './feed.js';
 import { db, auth, storage } from './firebase-config.js';
-import { showToast } from './utils.js';
 import { initLanguage } from './i18n.js';
 import * as mediaModule from './media.js';
 import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
@@ -13,6 +12,7 @@ import { applyTierTheme, updateTierBadge } from './tier.js';
 import { AppState } from './app-state.js';
 // Import ledger (you can add more later)
 import * as ledgerModule from './forensic-ledger.js';
+import { showToast, generateSha256Hash } from './utils.js';
 
 let engineInstance = null;
 
