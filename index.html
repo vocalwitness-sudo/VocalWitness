@@ -40,14 +40,26 @@
     </style>
 </head>
 <body class="min-h-screen pb-24 bg-[#0a0f1c]">
+
+    
 <!-- ==================== PRIVACY BANNER ==================== -->
-<div class="max-w-2xl mx-auto glass rounded-3xl p-5 mb-8 text-sm text-center">
-    <strong class="text-emerald-400" data-i18n="privacyTitle">Privacy First • No Personal Data Collected</strong>
-    <p class="mt-2 text-zinc-400 text-xs leading-relaxed" data-i18n="privacyWarning">
-        VocalWitness uses Zero-Knowledge (ZK) cryptography to protect your identity.<br>
-        We never collect your national ID, passport, or personal data.<br>
-        Your Testimony Is Yours Alone.
+    
+<div class="privacy-banner glass rounded-3xl p-6 text-center max-w-lg mx-auto my-10 border border-emerald-500/20">
+    <div class="flex items-center justify-center gap-3 mb-4">
+        <div class="text-3xl">🔒</div>
+        <h3 class="font-semibold text-lg text-white">Privacy First • No Personal Data Collected</h3>
+    </div>
+    
+    <p class="text-zinc-300 text-[15px]">
+        VocalWitness uses <strong class="text-emerald-400">Zero-Knowledge (ZK) cryptography</strong> to protect your identity.<br>
+        We never collect your national ID, passport, or any personal data.<br>
+        <strong>Your Testimony Is Yours Alone.</strong>
     </p>
+
+    <button onclick="showPrivacyModal()" 
+            class="mt-4 text-sm text-emerald-400 hover:text-emerald-300 transition-colors underline">
+        How ZK Protection Works →
+    </button>
 </div>
  
 <div class="max-w-2xl mx-auto">
