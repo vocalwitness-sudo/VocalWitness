@@ -14,7 +14,6 @@ import { AppState } from './app-state.js';
 
 let engineInstance = null;
 
-// ====================== TAB SWITCHING ======================
 // ====================== TAB SWITCHING (Dynamic + Safe) ======================
 window.switchTab = async (tab) => {
     // Update active button styles
@@ -69,6 +68,60 @@ window.switchTab = async (tab) => {
         container.innerHTML = `<p class="text-red-400 text-center py-20">Failed to load. Please refresh.</p>`;
     }
 };
+
+// ====================== MORE MENU ======================
+window.showMoreMenu = () => {
+    let menu = document.getElementById('moreDropdown');
+
+    if (!menu) {
+        menu = document.createElement('div');
+        menu.id = 'moreDropdown';
+        menu.className = 'fixed top-20 right-6 glass rounded-3xl p-5 w-64 shadow-2xl z-[100] border border-zinc-700';
+        menu.innerHTML = `
+            <div class="flex flex-col gap-2 text-sm font-medium">
+                <a href="about.html" class="flex items-center gap-3 px-4 py-3 hover:bg-zinc-800 rounded-2xl transition-colors">
+                    ℹ️ About VocalWitness
+                </a>
+                <a href="safety.html" class="flex items-center gap-3 px-4 py-3 hover:bg-zinc-800 rounded-2xl transition-colors">
+                    🛡️ Safety Center
+                </a>
+                <a href="terms.html" class="flex items-center gap-3 px-4 py-3 hover:bg-zinc-800 rounded-2xl transition-colors">
+                    📜 Terms of Service
+                </a>
+                <a href="privacy.html" class="flex items-center gap-3 px-4 py-3 hover:bg-zinc-800 rounded-2xl transition-colors">
+                    🔒 Privacy Policy
+                </a>
+                <a href="moderation.html" class="flex items-center gap-3 px-4 py-3 hover:bg-zinc-800 rounded-2xl transition-colors">
+                    ⚖️ Moderation
+                </a>
+                <a href="admin.html" class="flex items-center gap-3 px-4 py-3 hover:bg-zinc-800 rounded-2xl transition-colors">
+                    🛠️ Admin Panel
+                </a>
+                <hr class="my-2 border-zinc-700">
+                <button onclick="logout()" 
+                        class="flex items-center gap-3 px-4 py-3 hover:bg-red-900/50 text-red-400 rounded-2xl transition-colors text-left w-full">
+                    ⬅️ Logout
+                </button>
+            </div>
+        `;
+        document.body.appendChild(menu);
+    }
+
+    menu.classList.toggle('hidden');
+
+    // Auto close when clicking outside
+    setTimeout(() => {
+        const closeHandler = (e) => {
+            if (!menu.contains(e.target)) {
+                menu.classList.add('hidden');
+                document.removeEventListener('click', closeHandler);
+            }
+        };
+        document.addEventListener('click', closeHandler);
+    }, 50);
+};
+
+
 
 // ====================== GLOBAL MODAL FUNCTIONS ======================
 window.showProfile = () => {
