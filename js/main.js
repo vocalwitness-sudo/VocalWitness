@@ -236,7 +236,7 @@ function setupEventListeners() {
         postBtn.addEventListener('click', window.publishTestimony);
     }
 
-       // Photo Button
+         // Photo Button
     const photoBtn = document.getElementById('btn-photo');
     if (photoBtn) {
         photoBtn.addEventListener('click', () => {
