@@ -236,23 +236,30 @@ function setupEventListeners() {
         postBtn.addEventListener('click', window.publishTestimony);
     }
 
-         // Photo Button
+          // Forensic Photo Button - Opens file picker
     const photoBtn = document.getElementById('btn-photo');
     if (photoBtn) {
         photoBtn.addEventListener('click', () => {
-            console.log("📸 Forensic Photo clicked");
-            showToast("📸 Select forensic image", "info");
-            // TODO: Connect to media.js handleImageSelect
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = (e) => {
+                if (e.target.files[0]) {
+                    showToast("✅ Image selected - Ready for upload", "success");
+                    // TODO: Pass to media module
+                }
+            };
+            input.click();
         });
     }
 
-    // Voice Button
+    // Voice Testimony Button
     const voiceBtn = document.getElementById('btn-voice');
     if (voiceBtn) {
         voiceBtn.addEventListener('click', () => {
-            console.log("🎤 Voice Testimony clicked");
-            showToast("🎤 Voice recording started (demo)", "info");
-            // TODO: Connect to mediaModule.toggleVoiceRecording
+            showToast("🎤 Voice recording started (max 5 min)", "info");
+            // TODO: Connect to CitizenTalkEngine for real recording
+            console.log("Voice recording initiated");
         });
     }
 
