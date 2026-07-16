@@ -15,7 +15,9 @@ import { AppState } from './app-state.js';
 let engineInstance = null;
 
 // ====================== TAB SWITCHING ======================
+// js/main.js - Improved switchTab
 window.switchTab = async (tab) => {
+    // Update active tab styles
     document.querySelectorAll('#main-nav button').forEach(btn => {
         btn.classList.remove('active', 'bg-amber-900', 'text-amber-300');
         if (btn.dataset.tab === tab) {
@@ -27,40 +29,40 @@ window.switchTab = async (tab) => {
     AppState.currentTab = tab;
     AppState.currentMode = tab === 'witness' ? 'witness' : 'citizen';
 
-    if (tab === 'more') {
-        window.showMoreMenu();
-        return;
-    }
-
     const container = document.getElementById('dynamicContainer');
-    if (!container) {
-        console.error("dynamicContainer not found!");
-        return;
-    }
+    if (!container) return;
 
-    container.innerHTML = `
-        <div class="text-center py-20">
-            <div class="animate-spin w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full mx-auto"></div>
-            <p class="mt-4 text-zinc-400">Loading ${tab}...</p>
-        </div>`;
+    container.innerHTML = `<div class="text-center py-20 text-zinc-400">Loading ${tab}...</div>`;
 
     try {
         if (tab === 'square' || tab === 'citizen') {
             container.innerHTML = `<div id="feedContainer" class="space-y-8"></div>`;
             initFeed(db, 'citizen-talk');
+
         } else if (tab === 'ledger') {
-            container.innerHTML = `<div id="ledgerContainer" class="space-y-4 min-h-[400px]"></div>`;
-            showToast("📜 Broadcast Ledger", "success");
+            // Load Forensic Ledger content
+            container.innerHTML = `
+                <div id="ledgerContainer" class="space-y-4 min-h-[400px]"></div>
+            `;
+            // Trigger ledger logic (we'll move it to a function)
+            if (typeof window.loadForensicLedger === 'function') {
+                window.loadForensicLedger();
+            } else {
+                showToast("Ledger module loading...", "info");
+            }
+
+        } else if (tab === 'witness') {
+            container.innerHTML = `<div id="trueWitnessContainer" class="space-y-6"></div>`;
+            showToast("🛡️ True Witness (ZK) - Loading...", "success");
+
         } else if (tab === 'arena') {
             container.innerHTML = `<h2 class="text-2xl font-bold text-center py-32 text-sky-400">🔴 Live Arena - Coming Soon</h2>`;
         } else if (tab === 'mycircle') {
-            container.innerHTML = `<h2 class="text-2xl font-bold text-center py-32">🌐 My Network & Testimonies</h2>`;
-        } else if (tab === 'witness') {
-            container.innerHTML = `<h2 class="text-2xl font-bold text-amber-400 text-center py-32">🛡️ Witness Circle (ZK Protected)</h2>`;
+            container.innerHTML = `<h2 class="text-2xl font-bold text-center py-32">📜 My Testimonies & Network</h2>`;
         }
     } catch (e) {
-        console.error("SwitchTab error:", e);
-        container.innerHTML = `<p class="text-red-400 text-center py-20">Error loading content.</p>`;
+        console.error(e);
+        container.innerHTML = `<p class="text-red-400 text-center py-20">Failed to load tab.</p>`;
     }
 };
 
