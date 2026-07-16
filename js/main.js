@@ -235,9 +235,11 @@ function setupEventListeners() {
     console.log("✅ All major event listeners attached successfully");
 }
 // ====================== BOOTSTRAP ======================
-function setupEventListeners() {
-    console.log("🔗 Attaching event listeners now...");
+async function bootstrap() {
+    try {
+        console.log("🚀 Bootstrap started");
 
+        // Attach listeners as early as possible
         setupEventListeners();
 
         await initAuth();
@@ -253,7 +255,7 @@ function setupEventListeners() {
         if (typeof applyTierTheme === 'function') applyTierTheme();
         if (typeof updateTierBadge === 'function') updateTierBadge();
 
-        // Initial tab
+        // Initial tab load
         setTimeout(() => {
             window.switchTab('square');
         }, 800);
