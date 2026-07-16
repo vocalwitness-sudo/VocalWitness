@@ -95,6 +95,39 @@ window.logout = () => {
     }
 };
 
+// ====================== PROFILE & SETTINGS FUNCTIONS ======================
+window.editProfile = () => {
+    const editModal = document.getElementById('editProfileModal');
+    const profileModal = document.getElementById('profileModal');
+    
+    if (profileModal) profileModal.classList.add('hidden');
+    if (editModal) editModal.classList.remove('hidden');
+    
+    // TODO: Load current user data here later
+};
+
+window.openSettings = () => {
+    const settingsModal = document.getElementById('settingsModal');
+    const profileModal = document.getElementById('profileModal');
+    
+    if (profileModal) profileModal.classList.add('hidden');
+    if (settingsModal) settingsModal.classList.remove('hidden');
+};
+
+window.closeEditProfile = () => {
+    document.getElementById('editProfileModal')?.classList.add('hidden');
+};
+
+window.closeSettings = () => {
+    document.getElementById('settingsModal')?.classList.add('hidden');
+};
+
+window.saveProfileChanges = () => {
+    showToast("Profile changes saved (demo)", "success");
+    window.closeEditProfile();
+};
+
+
 // ====================== PUBLISH TESTIMONY ======================
 window.publishTestimony = async () => {
     const textarea = document.getElementById('mainInput');
@@ -149,14 +182,25 @@ window.publishTestimony = async () => {
 };
 
 // ====================== SETUP EVENT LISTENERS ======================
+// ====================== SETUP EVENT LISTENERS ======================
 function setupEventListeners() {
-    // Profile Button
+    console.log("Setting up all event listeners...");
+
+    // ==================== MAIN NAV TABS ====================
+    document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tab = btn.dataset.tab;
+            console.log(`Tab clicked: ${tab}`);
+            window.switchTab(tab);
+        });
+    });
+
+    // ==================== TOP RIGHT BUTTONS ====================
     const profileBtn = document.getElementById('profile-btn');
     if (profileBtn) {
         profileBtn.addEventListener('click', window.showProfile);
     }
 
-    // Support Button
     const supportBtn = document.getElementById('support-btn');
     if (supportBtn) {
         supportBtn.addEventListener('click', () => {
@@ -164,30 +208,33 @@ function setupEventListeners() {
         });
     }
 
-    // Publish Button
+    // Language Selector (if you have logic)
+    const languageSelector = document.getElementById('languageSelector');
+    if (languageSelector) {
+        languageSelector.addEventListener('change', (e) => {
+            console.log("Language changed to:", e.target.value);
+            // Call your i18n function here later
+        });
+    }
+
+    // ==================== COMPOSER BUTTONS ====================
     const postBtn = document.getElementById('postButton');
     if (postBtn) {
         postBtn.addEventListener('click', window.publishTestimony);
     }
 
-    // Photo & Voice Buttons (media module)
     const photoBtn = document.getElementById('btn-photo');
     if (photoBtn) {
-        photoBtn.addEventListener('click', () => {
-            // Your existing photo logic or mediaModule
-            console.log("Photo button clicked");
-        });
+        photoBtn.addEventListener('click', () => showToast("📸 Forensic Photo clicked", "info"));
     }
 
     const voiceBtn = document.getElementById('btn-voice');
     if (voiceBtn) {
-        voiceBtn.addEventListener('click', () => {
-            // Your voice recording logic
-            console.log("Voice button clicked");
-        });
+        voiceBtn.addEventListener('click', () => showToast("🎤 Voice Testimony clicked", "info"));
     }
-}
 
+    console.log("✅ All major event listeners attached successfully");
+}
 // ====================== BOOTSTRAP ======================
 async function bootstrap() {
     try {
