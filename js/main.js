@@ -19,7 +19,9 @@ let engineInstance = null;
 
 // ====================== TAB SWITCHING ======================
 window.switchTab = async (tab) => {
-    // Update active tab styles
+    console.log(`Switching to tab: ${tab}`);
+
+    // Update active styles
     document.querySelectorAll('#main-nav button').forEach(btn => {
         btn.classList.remove('active', 'bg-amber-900', 'text-amber-300');
         if (btn.dataset.tab === tab) {
@@ -43,18 +45,24 @@ window.switchTab = async (tab) => {
 
         } else if (tab === 'ledger') {
             container.innerHTML = `<div id="ledgerContainer" class="space-y-4 min-h-[400px]"></div>`;
-            ledgerModule.loadForensicLedger();
+            if (typeof ledgerModule.loadForensicLedger === 'function') {
+                ledgerModule.loadForensicLedger();
+            }
 
         } else if (tab === 'witness') {
-            container.innerHTML = `<div id="trueWitnessContainer" class="space-y-6"></div>`;
-            showToast("🛡️ True Witness (ZK) - Loading...", "success");
-            // TODO: Load true witness logic here later
+            container.innerHTML = `<div id="trueWitnessContainer" class="space-y-6 p-8 text-center">
+                <h2 class="text-3xl font-bold text-amber-400">🛡️ Witness Circle</h2>
+                <p class="text-zinc-400 mt-4">ZK-Verified Testimonies - Coming Soon</p>
+            </div>`;
 
         } else if (tab === 'arena') {
             container.innerHTML = `<h2 class="text-2xl font-bold text-center py-32 text-sky-400">🔴 Live Arena - Coming Soon</h2>`;
 
         } else if (tab === 'mycircle') {
-            container.innerHTML = `<h2 class="text-2xl font-bold text-center py-32">📜 My Testimonies & Network</h2>`;
+            container.innerHTML = `<h2 class="text-2xl font-bold text-center py-32">📜 My Network & Testimonies</h2>`;
+        } else if (tab === 'more') {
+            window.showMoreMenu();
+            return;
         }
     } catch (e) {
         console.error("SwitchTab error:", e);
