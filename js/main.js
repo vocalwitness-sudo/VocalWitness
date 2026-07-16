@@ -54,7 +54,6 @@ window.switchTab = async (tab) => {
             console.error("Ledger module not found");
         }
     }, 100);
-}
 
         } else if (tab === 'witness') {
             container.innerHTML = `<div id="trueWitnessContainer" class="space-y-6 p-8 text-center">
