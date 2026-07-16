@@ -236,46 +236,59 @@ function setupEventListeners() {
         postBtn.addEventListener('click', window.publishTestimony);
     }
        // Forensic Photo Button - Real file picker + preview
+       // Forensic Photo Button - Real upload with hash
     const photoBtn = document.getElementById('btn-photo');
     if (photoBtn) {
         photoBtn.addEventListener('click', () => {
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = 'image/*';
-            input.onchange = (e) => {
+            input.onchange = async (e) => {
                 const file = e.target.files[0];
-                if (file) {
+                if (!file) return;
+
+                try {
+                    showToast("Processing forensic image...", "info");
+
+                    // Generate SHA256 hash for forensic integrity
+                    const hash = await generateSha256Hash(file);
+                    
                     const reader = new FileReader();
                     reader.onload = (ev) => {
                         const previewArea = document.getElementById('preview-area');
                         if (previewArea) {
                             previewArea.innerHTML = `
-                                <div class="relative mt-4 rounded-2xl overflow-hidden border border-emerald-500/30">
-                                    <img src="${ev.target.result}" class="w-full max-h-64 object-cover" alt="Preview">
-                                    <button onclick="this.parentElement.remove()" 
-                                            class="absolute top-2 right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs">✕</button>
+                                <div class="relative mt-4 rounded-2xl overflow-hidden border border-emerald-500/50">
+                                    <img src="${ev.target.result}" class="w-full max-h-64 object-cover" alt="Forensic Preview">
+                                    <div class="absolute bottom-2 left-2 bg-black/70 text-[10px] px-2 py-1 rounded font-mono">${hash.substring(0,16)}...</div>
                                 </div>`;
                         }
                     };
                     reader.readAsDataURL(file);
-                    showToast(`✅ ${file.name} selected`, "success");
+
+                    // Store for later publish
+                    if (window.engineInstance) {
+                        window.engineInstance.setPendingImage(file, hash);
+                    }
+
+                    showToast("✅ Forensic image ready", "success");
+                } catch (err) {
+                    showToast("Failed to process image", "error");
+                    console.error(err);
                 }
             };
             input.click();
         });
     }
-      //voice
-      const voiceBtn = document.getElementById('btn-voice');
+         // Voice Testimony Button - Real recording
+    const voiceBtn = document.getElementById('btn-voice');
     if (voiceBtn) {
         voiceBtn.addEventListener('click', () => {
-            voiceBtn.style.backgroundColor = '#10b981';
-            voiceBtn.textContent = '🎤 Recording... (click again to stop)';
-            
-            setTimeout(() => {
-                showToast("✅ Voice recorded (demo mode)", "success");
-                voiceBtn.style.backgroundColor = '';
-                voiceBtn.textContent = '🎤 Voice Testimony';
-            }, 2500);
+            if (window.engineInstance && typeof window.engineInstance.toggleVoiceRecording === 'function') {
+                window.engineInstance.toggleVoiceRecording(voiceBtn);
+            } else {
+                showToast("Voice engine not ready yet", "error");
+            }
         });
     }
 
