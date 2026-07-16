@@ -323,17 +323,36 @@ if (photoBtn) {
         input.click();
     });
 }
-         // Voice Testimony Button - Real recording
-    const voiceBtn = document.getElementById('btn-voice');
-    if (voiceBtn) {
-        voiceBtn.addEventListener('click', () => {
-            if (window.engineInstance && typeof window.engineInstance.toggleVoiceRecording === 'function') {
-                window.engineInstance.toggleVoiceRecording(voiceBtn);
+        // Voice Testimony Button - Fixed + basic tools
+const voiceBtn = document.getElementById('btn-voice');
+if (voiceBtn) {
+    voiceBtn.addEventListener('click', async () => {
+        if (!window.engineInstance) {
+            showToast("Voice engine not ready yet. Please refresh page.", "error");
+            return;
+        }
+
+        try {
+            const isRecording = window.engineInstance.mediaRecorder && 
+                               window.engineInstance.mediaRecorder.state === "recording";
+
+            if (!isRecording) {
+                await window.engineInstance.startVoiceRecording(300000); // 5 min max
+                voiceBtn.classList.add('recording-active', 'animate-pulse');
+                voiceBtn.textContent = '⏹️ Stop Recording';
+                showToast("🎤 Recording started... Speak now", "info");
             } else {
-                showToast("Voice engine not ready yet", "error");
+                window.engineInstance.stopVoiceRecording();
+                voiceBtn.classList.remove('recording-active', 'animate-pulse');
+                voiceBtn.textContent = '🎤 Voice Testimony';
+                showToast("✅ Recording saved. Ready for upload.", "success");
             }
-        });
-    }
+        } catch (err) {
+            console.error("Voice error:", err);
+            showToast("Microphone access denied or error occurred.", "error");
+        }
+    });
+}
 
     console.log("✅ All major event listeners attached successfully");
 }
