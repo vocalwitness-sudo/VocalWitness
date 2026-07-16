@@ -341,18 +341,28 @@ if (voiceBtn) {
 }
 // ====================== BOOTSTRAP ======================
 async function bootstrap() {
-    console.log("🚀 Bootstrap started - MINIMAL");
+    console.log("🚀 Bootstrap started");
 
-    // Force attach listeners immediately
-    setupEventListeners();
+    try {
+        // Force attach listeners
+        setupEventListeners();
 
-    // Minimal initial load
-    setTimeout(() => {
-        console.log("Loading initial tab...");
-        window.switchTab('square');
-    }, 500);
+        // === IMPORTANT: Initialize Engine ===
+        engineInstance = new CitizenTalkEngine(db, storage);
+        window.engineInstance = engineInstance;
 
-    console.log("✅ Minimal bootstrap finished");
+        console.log("✅ Engine created successfully");
+
+        // Minimal initial load
+        setTimeout(() => {
+            console.log("Loading initial tab...");
+            window.switchTab('square');
+        }, 500);
+
+        console.log("✅ Bootstrap finished successfully");
+    } catch (e) {
+        console.error("Bootstrap error:", e);
+    }
 }
 
 // Phase 2 Helper: Light EXIF reader (safe, no heavy libs)
@@ -362,7 +372,7 @@ async function getLightExif(file) {
         reader.onload = (e) => {
             try {
                 const dataView = new DataView(e.target.result);
-                if (dataView.getUint16(0) === 0xFFD8) {  // JPEG start
+                if (dataView.getUint16(0) === 0xFFD8) { // JPEG start
                     resolve({
                         hasExif: true,
                         timestamp: new Date().toISOString(),
@@ -378,5 +388,6 @@ async function getLightExif(file) {
         reader.readAsArrayBuffer(file);
     });
 }
+
 // Start the app
 document.addEventListener('DOMContentLoaded', bootstrap);
