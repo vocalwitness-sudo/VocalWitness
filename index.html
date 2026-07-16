@@ -194,7 +194,6 @@
         </div>
     </div>
 </div>
-
 <!-- ==================== SETTINGS MODAL ==================== -->
 <div id="settingsModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[80] p-4">
     <div class="glass rounded-3xl max-w-md w-full p-6">
@@ -202,7 +201,7 @@
             <h2 class="text-2xl font-bold text-emerald-400">Settings</h2>
             <button onclick="closeSettings()" class="text-zinc-400 hover:text-white text-3xl leading-none">×</button>
         </div>
-        
+       
         <div class="space-y-6" id="settingsContent">
             <!-- JS will load the content here -->
         </div>
@@ -212,6 +211,9 @@
         </button>
     </div>
 </div>
+
+<!-- Copy Wallet Script -->
+<script>
     function copyWalletAddress() {
         const address = document.getElementById('walletAddress').innerText;
         navigator.clipboard.writeText(address).then(() => {
@@ -226,5 +228,10 @@
         });
     }
 </script>
+
+<!-- Main App Script -->
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
 </body>
 </html>
