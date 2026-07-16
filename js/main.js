@@ -160,8 +160,8 @@ window.publishTestimony = async () => {
     try {
         const { collection, addDoc, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
         
-        const mediaData = window.engineInstance?.getPendingMedia?.() || {};
-
+               const mediaData = window.engineInstance?.getPendingMedia?.() || {};
+        
         const testimonyData = {
             authorId: "anonymous",
             author: "Anonymous Witness",
@@ -173,6 +173,11 @@ window.publishTestimony = async () => {
             feedVisibility: "citizen-talk",
             imageUrl: mediaData.imageUrl || null,
             audioUrl: mediaData.audioUrl || null,
+            
+            // Forensic Data (Phase 3)
+            imageHash: mediaData.imageHash || null,
+            exif: mediaData.exif || null,
+            hasForensic: !!(mediaData.imageHash || mediaData.exif)
         };
 
         const docRef = await addDoc(collection(db, "testimonies"), testimonyData);
@@ -237,6 +242,7 @@ function setupEventListeners() {
     }
     
 // Forensic Photo Button - Safe validation + EXIF for verified users (Phase 2 Fixed)
+    
 const photoBtn = document.getElementById('btn-photo');
 if (photoBtn) {
     photoBtn.addEventListener('click', () => {
@@ -306,6 +312,20 @@ if (photoBtn) {
         input.click();
     });
 }
+
+    // Forensic Upload Helper
+window.uploadForensicMedia = async () => {
+    if (!window.engineInstance) return { imageHash: null, exif: null };
+
+    const media = {
+        imageHash: window.engineInstance.pendingImageHash,
+        exif: window.engineInstance.pendingExif,
+        hasForensic: !!(window.engineInstance.pendingImageHash || window.engineInstance.pendingExif)
+    };
+
+    return media;
+};
+    
         // Voice Testimony Button - Fixed + basic tools
 const voiceBtn = document.getElementById('btn-voice');
 if (voiceBtn) {
