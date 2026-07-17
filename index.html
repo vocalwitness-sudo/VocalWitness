@@ -90,15 +90,37 @@
     </button>
 </div>
     </header>
-    <!-- ==================== MAIN NAVIGATION ==================== -->
-    <nav class="flex gap-2 mb-8 overflow-x-auto pb-3" id="main-nav">
-        <button data-tab="square" class="nav-tab active px-6 py-3 rounded-3xl whitespace-nowrap" data-i18n="citizenTalk">Citizen Square</button>
-        <button data-tab="ledger" class="nav-tab px-6 py-3 rounded-3xl whitespace-nowrap" data-i18n="broadcastLedger">Broadcast Ledger</button>
-        <button data-tab="arena" class="nav-tab px-6 py-3 rounded-3xl whitespace-nowrap" data-i18n="liveArena">Live Arena</button>
-        <button data-tab="mycircle" class="nav-tab px-6 py-3 rounded-3xl whitespace-nowrap" data-i18n="myNetwork">My Network</button>
-        <button data-tab="witness" class="nav-tab px-6 py-3 rounded-3xl whitespace-nowrap bg-amber-900 text-amber-300" data-i18n="trueWitness">Witness Circle</button>
-        <button data-tab="more" class="nav-tab px-6 py-3 rounded-3xl whitespace-nowrap" data-i18n="more">More</button>
-    </nav>
+   <!-- ==================== MAIN NAVIGATION ==================== -->
+<nav class="flex gap-2 mb-8 overflow-x-auto pb-3" id="main-nav">
+    <button data-tab="square" class="nav-tab active px-6 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center">
+        <span>Public Square</span>
+        <span class="text-xs text-zinc-400">Share what you witnessed</span>
+    </button>
+    
+    <button data-tab="ledger" class="nav-tab px-6 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center">
+        <span>Evidence Ledger</span>
+        <span class="text-xs text-zinc-400">Permanent records</span>
+    </button>
+    
+    <button data-tab="arena" class="nav-tab px-6 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center">
+        <span>Live Debate</span>
+        <span class="text-xs text-zinc-400">Real-time discussions</span>
+    </button>
+    
+    <button data-tab="mycircle" class="nav-tab px-6 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center">
+        <span>My Circle</span>
+        <span class="text-xs text-zinc-400">Your network & posts</span>
+    </button>
+    
+    <button data-tab="witness" class="nav-tab px-6 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center bg-amber-900 text-amber-300">
+        <span>Verified Witnesses</span>
+        <span class="text-xs text-amber-200">Trusted elite circle</span>
+    </button>
+    
+    <button data-tab="more" class="nav-tab px-6 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center">
+        <span>More</span>
+    </button>
+</nav>
     <!-- ==================== CREATION BAR ==================== -->
     <div class="glass rounded-3xl p-6 mb-10">
         <textarea id="mainInput" rows="3" data-i18n="placeholder"
