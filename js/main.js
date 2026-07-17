@@ -19,6 +19,7 @@ let isInitialized = false;
 // ====================== TAB SWITCHING ======================
 window.switchTab = async (tab) => {
     console.log(`Switching to tab: ${tab}`);
+    
     document.querySelectorAll('#main-nav button').forEach(btn => {
         btn.classList.remove('active', 'bg-amber-900', 'text-amber-300');
         if (btn.dataset.tab === tab) {
