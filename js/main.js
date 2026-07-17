@@ -226,12 +226,14 @@ function setupEventListeners() {
         });
     }
 
-    // Language Selector (if you have logic)
+    // Language Selector 
     const languageSelector = document.getElementById('languageSelector');
     if (languageSelector) {
         languageSelector.addEventListener('change', (e) => {
             console.log("Language changed to:", e.target.value);
-            // Call your i18n function here later
+            if (typeof changeLanguage === 'function') {
+                changeLanguage(e.target.value);   // ← Add this line
+            }
         });
     }
 
