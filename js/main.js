@@ -360,8 +360,22 @@ if (voiceBtn) {
     console.log("✅ All major event listeners attached successfully");
 }
 // ====================== BOOTSTRAP ======================
+// ====================== BOOTSTRAP ======================
 async function bootstrap() {
     console.log("🚀 Bootstrap started");
+    try {
+        // Force attach listeners
+        setupEventListeners();
+
+        // === MINIMAL LANGUAGE FIX (ADD THESE 3 LINES) ===
+        if (typeof initLanguage === 'function') {
+            initLanguage();
+        }
+
+        // === IMPORTANT: Initialize Engine ===
+        engineInstance = new CitizenTalkEngine(db, storage);
+        window.engineInstance = engineInstance;
+        console.log("✅ Engine created successfully");
 
     try {
         // Force attach listeners
