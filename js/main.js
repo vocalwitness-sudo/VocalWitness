@@ -399,7 +399,7 @@ async function bootstrap() {
     } catch (e) {
         console.error("Bootstrap error:", e);
     }
-}
+
 
 // Phase 2 Helper: Light EXIF reader (safe, no heavy libs)
 async function getLightExif(file) {
