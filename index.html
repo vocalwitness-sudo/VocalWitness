@@ -287,6 +287,23 @@
 
 <!-- Main App Script -->
 <script type="module" src="js/main.js"></script>
+
+    <script>
+// More Dropdown Toggle
+const moreBtn = document.getElementById('more-btn');
+const moreMenu = document.getElementById('more-menu');
+
+moreBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    moreMenu.classList.toggle('hidden');
+});
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function() {
+    moreMenu.classList.add('hidden');
+});
+</script>
+    
 </body>
 </html>
 </body>
