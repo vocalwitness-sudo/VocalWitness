@@ -287,22 +287,25 @@
 <!-- Main App Script -->
 <script type="module" src="js/main.js"></script>
 
-    <script>
-// More Dropdown Toggle
+// More menu Dropdown Toggle
+<script>
 const moreBtn = document.getElementById('more-btn');
 const moreMenu = document.getElementById('more-menu');
+const moreContainer = document.getElementById('more-container');
 
 moreBtn.addEventListener('click', function(e) {
-    e.stopPropagation();
+    e.stopImmediatePropagation();
     moreMenu.classList.toggle('hidden');
 });
 
-// Close dropdown when clicking outside
-document.addEventListener('click', function() {
-    moreMenu.classList.add('hidden');
+// Close when clicking outside
+document.addEventListener('click', function(e) {
+    if (!moreContainer.contains(e.target)) {
+        moreMenu.classList.add('hidden');
+    }
 });
 </script>
-
+    
     <!-- ==================== FOOTER ==================== -->
 <footer class="bg-zinc-950 border-t border-zinc-800 pt-12 pb-8">
     <div class="max-w-6xl mx-auto px-6">
