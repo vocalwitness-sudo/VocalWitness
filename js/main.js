@@ -40,10 +40,12 @@ window.switchTab = async (tab) => {
         if (tab === 'square' || tab === 'citizen') {
             container.innerHTML = `<div id="feedContainer" class="space-y-8"></div>`;
             initFeed(db, 'citizen-talk');
-        } else if (tab === 'ledger') {
-            // New Evidence Ledger
-            container.innerHTML = `<div id="ledgerContainer" class="space-y-6"></div>`;
-            loadEvidenceLedger();
+      } else if (tab === 'ledger') {
+    container.innerHTML = `
+        <div id="ledgerContainer" class="space-y-6 min-h-[400px]">
+            <!-- Loaded by loadEvidenceLedger() -->
+        </div>`;
+    loadEvidenceLedger();
         } else if (tab === 'witness') {
             container.innerHTML = `<div id="trueWitnessContainer" class="space-y-6 p-8 text-center">
                 <h2 class="text-3xl font-bold text-amber-400">🛡️ Verified Witnesses</h2>
@@ -238,6 +240,32 @@ async function bootstrap() {
         console.log("✅ Bootstrap finished");
     } catch (e) {
         console.error("Bootstrap error:", e);
+        // ====================== EVIDENCE LEDGER ======================
+async function loadEvidenceLedger() {
+    const container = document.getElementById('ledgerContainer');
+    if (!container) return;
+
+    // Tier check for posting
+    const tier = await getCurrentUserTier ? await getCurrentUserTier() : 'citizen';
+    const canPostDirectly = tier === 'witness_circle';
+
+    container.innerHTML = `
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-emerald-400">Evidence Ledger</h2>
+            ${canPostDirectly ? `
+            <button onclick="postToLedger()" 
+                    class="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl">
+                + Post to Ledger
+            </button>` : ''}
+        </div>
+        <div id="ledgerEntries" class="space-y-4"></div>
+    `;
+
+    // Load data (we'll improve this next)
+    if (typeof loadForensicLedger === 'function') {
+        loadForensicLedger();
+    }
+}
     }
 }
 
