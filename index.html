@@ -89,6 +89,11 @@
         Profile
     </button>
 </div>
+            <!-- Add this near the Profile button in the header -->
+<button id="auth-btn" 
+        class="px-5 py-2.5 bg-white text-black font-medium rounded-2xl hover:bg-emerald-100 transition">
+    Sign In / Sign Up
+</button>
     </header>
     
 <!-- ==================== MAIN NAVIGATION ==================== -->
@@ -329,6 +334,13 @@ document.addEventListener('click', function(e) {
     if (!moreContainer.contains(e.target)) {
         moreMenu.classList.add('hidden');
     }
+});
+</script>
+
+    <script>
+document.getElementById('auth-btn')?.addEventListener('click', () => {
+    // This will trigger your auth modal or redirect
+    window.showAuthModal?.() || alert("Sign In page coming soon - Check auth.js");
 });
 </script>
     
