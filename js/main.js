@@ -126,7 +126,26 @@ async function getLightExif(file) {
         reader.readAsArrayBuffer(file);
     });
 }
+// ====================== EVIDENCE LEDGER ======================
+async function loadEvidenceLedger() {
+    const container = document.getElementById('ledgerContainer');
+    if (!container) return;
 
+    container.innerHTML = `
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-emerald-400">Evidence Ledger</h2>
+            <button onclick="refreshLedger()" 
+                    class="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-sm flex items-center gap-2">
+                🔄 Refresh
+            </button>
+        </div>
+        <div id="ledgerEntries" class="space-y-4 min-h-[300px]"></div>
+    `;
+
+    if (typeof loadForensicLedger === 'function') {
+        loadForensicLedger();
+    }
+}
 // ====================== SETUP EVENT LISTENERS ======================
 function setupEventListeners() {
     if (isInitialized) return;
@@ -240,33 +259,9 @@ async function bootstrap() {
         console.log("✅ Bootstrap finished");
     } catch (e) {
         console.error("Bootstrap error:", e);
-        // ====================== EVIDENCE LEDGER ======================
-async function loadEvidenceLedger() {
-    const container = document.getElementById('ledgerContainer');
-    if (!container) return;
-
-    // Tier check for posting
-    const tier = await getCurrentUserTier ? await getCurrentUserTier() : 'citizen';
-    const canPostDirectly = tier === 'witness_circle';
-
-    container.innerHTML = `
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold text-emerald-400">Evidence Ledger</h2>
-            ${canPostDirectly ? `
-            <button onclick="postToLedger()" 
-                    class="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl">
-                + Post to Ledger
-            </button>` : ''}
-        </div>
-        <div id="ledgerEntries" class="space-y-4"></div>
-    `;
-
-    // Load data (we'll improve this next)
-    if (typeof loadForensicLedger === 'function') {
-        loadForensicLedger();
-    }
-}
     }
 }
 
 document.addEventListener('DOMContentLoaded', bootstrap);
+
+     
