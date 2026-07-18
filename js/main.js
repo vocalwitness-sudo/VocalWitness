@@ -1,4 +1,4 @@
-// js/main.js - Hybrid Model (Browse Free, Post Requires Login)
+// js/main.js - COMPLETE FIXED VERSION (Hybrid Model)
 import './app-state.js';
 import { initAuth } from "./auth.js";
 import { initFeed } from './feed.js';
@@ -34,27 +34,35 @@ window.switchTab = async (tab) => {
 
     container.innerHTML = `<div class="text-center py-20 text-zinc-400">Loading ${tab}...</div>`;
 
-    if (tab === 'square' || tab === 'citizen') {
-        container.innerHTML = `<div id="feedContainer" class="space-y-8"></div>`;
-        initFeed(db, 'citizen-talk');
-    } else if (tab === 'ledger') {
-        container.innerHTML = `<div id="ledgerContainer" class="space-y-6"></div>`;
-        if (typeof loadEvidenceLedger === 'function') loadEvidenceLedger();
+    try {
+        if (tab === 'square' || tab === 'citizen') {
+            container.innerHTML = `<div id="feedContainer" class="space-y-8"></div>`;
+            initFeed(db, 'citizen-talk');
+        } else if (tab === 'ledger') {
+            container.innerHTML = `<div id="ledgerContainer" class="space-y-6"></div>`;
+            if (typeof loadEvidenceLedger === 'function') loadEvidenceLedger();
+        } else if (tab === 'witness') {
+            container.innerHTML = `
+                <div class="space-y-6 p-8 text-center">
+                    <h2 class="text-3xl font-bold text-amber-400">🛡️ Verified Witnesses</h2>
+                    <p class="text-zinc-400">ZK-Verified Testimonies</p>
+                </div>`;
+        }
+    } catch (e) {
+        console.error("Tab switch error:", e);
     }
 };
 
-// ====================== SHOW WELCOME NOTE FOR NEW USERS ======================
+// ====================== WELCOME NOTE ======================
 function showWelcomeNote() {
     if (!auth.currentUser) return;
+    if (localStorage.getItem('hasSeenWelcome')) return;
     
-    const hasSeenWelcome = localStorage.getItem('hasSeenWelcome');
-    if (hasSeenWelcome) return;
-
-    showToast("🎉 Welcome to VocalWitness! Your voice matters.", "success");
+    showToast("🎉 Welcome to VocalWitness! Your voice matters in the Public Square.", "success");
     localStorage.setItem('hasSeenWelcome', 'true');
 }
 
-// ====================== PUBLISH TESTIMONY (Requires Login) ======================
+// ====================== PUBLISH TESTIMONY ======================
 window.publishTestimony = async () => {
     if (!auth.currentUser) {
         showToast("Please sign in to share your testimony", "info");
@@ -98,7 +106,7 @@ window.publishTestimony = async () => {
         };
 
         await addDoc(collection(db, "testimonies"), testimonyData);
-        showToast("✅ Testimony published to the Public Square!", "success");
+        showToast("✅ Testimony published successfully!", "success");
         
         if (textarea) textarea.value = '';
         mediaModule.resetMediaState();
@@ -115,6 +123,24 @@ window.publishTestimony = async () => {
     }
 };
 
+// ====================== EVIDENCE LEDGER ======================
+async function loadEvidenceLedger() {
+    const container = document.getElementById('ledgerContainer');
+    if (!container) return;
+
+    container.innerHTML = `
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-emerald-400">📊 Evidence Ledger</h2>
+            <button onclick="refreshLedger()" class="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-sm flex items-center gap-2">🔄 Refresh</button>
+        </div>
+        <div id="ledgerEntries" class="space-y-4"></div>
+    `;
+
+    if (typeof loadForensicLedger === 'function') loadForensicLedger();
+}
+
+window.refreshLedger = loadEvidenceLedger;
+
 // ====================== PROFILE ======================
 window.showProfile = () => {
     if (!auth.currentUser) {
@@ -127,10 +153,55 @@ window.showProfile = () => {
 
 window.closeProfile = () => document.getElementById('profileModal')?.classList.add('hidden');
 
+// ====================== SETUP EVENT LISTENERS ======================
+function setupEventListeners() {
+    if (isInitialized) return;
+    isInitialized = true;
+    console.log("✅ Setting up all buttons...");
+
+    // Tabs
+    document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
+        btn.addEventListener('click', () => window.switchTab(btn.dataset.tab));
+    });
+
+    // Profile & Support
+    document.getElementById('profile-btn')?.addEventListener('click', window.showProfile);
+    document.getElementById('support-btn')?.addEventListener('click', () => {
+        document.getElementById('supportModal')?.classList.remove('hidden');
+    });
+
+    // Publish
+    document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
+
+    // Photo
+    const photoBtn = document.getElementById('btn-photo');
+    if (photoBtn) {
+        photoBtn.addEventListener('click', () => {
+            if (!auth.currentUser) return showToast("Please sign in to upload photo", "info");
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/jpeg,image/png,image/webp';
+            input.onchange = (e) => mediaModule.handleImageSelect(e, document.getElementById('preview-area'));
+            input.click();
+        });
+    }
+
+    // Voice
+    const voiceBtn = document.getElementById('btn-voice');
+    if (voiceBtn) {
+        voiceBtn.addEventListener('click', () => {
+            if (!auth.currentUser) return showToast("Please sign in to record voice", "info");
+            mediaModule.toggleVoiceRecording(voiceBtn);
+        });
+    }
+
+    console.log("✅ All buttons initialized");
+}
+
 // ====================== BOOTSTRAP ======================
 async function bootstrap() {
     if (isInitialized) return;
-    console.log("🚀 VocalWitness starting...");
+    console.log("🚀 VocalWitness Bootstrap started");
 
     try {
         await initAuth();
@@ -142,11 +213,9 @@ async function bootstrap() {
 
         loadDynamicNavigation();
         setTimeout(() => window.switchTab('square'), 600);
-
-        // Show welcome for new logged-in users
         setTimeout(showWelcomeNote, 1500);
 
-        console.log("✅ App initialized");
+        console.log("✅ Bootstrap finished");
     } catch (e) {
         console.error("Bootstrap error:", e);
     }
