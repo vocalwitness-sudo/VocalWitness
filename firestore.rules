@@ -2,26 +2,31 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Testimonies - Fully Public
+    // === TESTIMONIES - Public Square ===
     match /testimonies/{testimonyId} {
-      allow read: if true;                    // Anyone can read
-      allow create: if true;                  // Anyone can publish (Public Live)
-      allow update, delete: if false;         // No one can edit/delete (prevents abuse)
+      allow read: if true;                    // Everyone can read
+      allow create: if true;                  // Anyone can publish (even anonymous)
+      allow update, delete: if false;         // No editing or deleting (immutable)
     }
 
-    // Users (keep if you plan to add auth later)
+    // === USERS (for future authenticated features) ===
     match /users/{userId} {
       allow read: if true;
-      allow write: if false;
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null && request.auth.uid == userId;
+      allow delete: if false;
     }
 
-    // MENU (keep your existing)
+    // === MENU / Config ===
     match /MENU/{document} {
       allow read: if true;
       allow write: if false;
     }
 
-    // Default deny everything else
+    // === Optional: Add later for groups or moderation ===
+    // match /groups/{groupId} { ... }
+
+    // Default deny (Safety net)
     match /{document=**} {
       allow read, write: if false;
     }
