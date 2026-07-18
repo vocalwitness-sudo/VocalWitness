@@ -92,7 +92,7 @@
     </header>
     
 <!-- ==================== MAIN NAVIGATION ==================== -->
-<nav class="flex gap-2 mb-8 overflow-x-auto pb-3 relative z-20" id="main-nav">
+<nav class="flex gap-2 mb-8 overflow-x-auto pb-3 relative z-30" id="main-nav">
     
     <button data-tab="square" class="nav-tab active px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative" title="Share what you witnessed">
         <span class="font-semibold">Public Square</span>
@@ -119,27 +119,26 @@
         <span class="text-xs text-amber-200 hidden md:block">Trusted Elite Circle</span>
     </button>
 
-    <!-- More Dropdown -->
-    <div class="relative" id="more-dropdown">
-        <button id="more-btn" class="nav-tab px-6 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit hover:bg-zinc-800 bg-emerald-600 text-white font-semibold">
+    <!-- More Dropdown - Strong Version -->
+    <div class="relative z-50" id="more-container">
+        <button id="more-btn" 
+                class="nav-tab px-7 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit hover:bg-zinc-800 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition-colors">
             <span>More</span>
         </button>
         
-        <!-- Dropdown Menu -->
-        <div id="more-menu" class="hidden absolute right-0 mt-2 w-56 bg-zinc-900 border border-zinc-700 rounded-3xl shadow-2xl py-2 z-50">
-            <a href="my-testimonies.html" class="block px-6 py-3 hover:bg-zinc-800 text-sm">My Testimonies</a>
-            <a href="groups.html" class="block px-6 py-3 hover:bg-zinc-800 text-sm">Groups</a>
-            <a href="true-witness.html" class="block px-6 py-3 hover:bg-zinc-800 text-sm">True Witness</a>
-            <div class="border-t border-zinc-700 my-1"></div>
-            <a href="about.html" class="block px-6 py-3 hover:bg-zinc-800 text-sm">About Us</a>
-            <a href="privacy.html" class="block px-6 py-3 hover:bg-zinc-800 text-sm">Privacy</a>
-            <a href="terms.html" class="block px-6 py-3 hover:bg-zinc-800 text-sm">Terms of Service</a>
-            <a href="safety.html" class="block px-6 py-3 hover:bg-zinc-800 text-sm">Safety Guidelines</a>
+        <div id="more-menu" class="hidden absolute right-0 mt-3 w-60 bg-zinc-900 border border-zinc-700 rounded-3xl shadow-2xl py-3 z-[100]">
+            <a href="my-testimonies.html" class="block px-6 py-3 hover:bg-zinc-800">My Testimonies</a>
+            <a href="groups.html" class="block px-6 py-3 hover:bg-zinc-800">Groups</a>
+            <a href="true-witness.html" class="block px-6 py-3 hover:bg-zinc-800">True Witness</a>
+            <div class="h-px bg-zinc-700 mx-4 my-2"></div>
+            <a href="about.html" class="block px-6 py-3 hover:bg-zinc-800">About Us</a>
+            <a href="privacy.html" class="block px-6 py-3 hover:bg-zinc-800">Privacy Policy</a>
+            <a href="terms.html" class="block px-6 py-3 hover:bg-zinc-800">Terms of Service</a>
+            <a href="safety.html" class="block px-6 py-3 hover:bg-zinc-800">Safety Guidelines</a>
         </div>
     </div>
 
 </nav>
-    
     <!-- ==================== CREATION BAR ==================== -->
     <div class="glass rounded-3xl p-6 mb-10">
         <textarea id="mainInput" rows="3" data-i18n="placeholder"
