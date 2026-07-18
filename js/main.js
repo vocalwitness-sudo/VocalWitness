@@ -1,8 +1,8 @@
-// js/main.js - Full Expanded Version (Mandatory Login + Profile Fix)
+// js/main.js - Final Fixed Version
 import './app-state.js';
 import { initAuth } from "./auth.js";
 import { initFeed } from './feed.js';
-import { db, auth } from './firebase-config.js';
+import { db, auth, storage } from './firebase-config.js';   // ← Fixed: Added storage
 import { initLanguage } from './i18n.js';
 import * as mediaModule from './media.js';
 import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
@@ -56,7 +56,7 @@ window.switchTab = async (tab) => {
 // ====================== PUBLISH TESTIMONY ======================
 window.publishTestimony = async () => {
     if (!auth.currentUser) {
-        showToast("Please sign in to publish a testimony", "error");
+        showToast("Please sign in to publish", "error");
         return;
     }
 
@@ -97,7 +97,6 @@ window.publishTestimony = async () => {
         };
 
         await addDoc(collection(db, "testimonies"), testimonyData);
-        
         showToast("✅ Testimony published successfully!", "success");
         
         if (textarea) textarea.value = '';
@@ -106,7 +105,7 @@ window.publishTestimony = async () => {
 
     } catch (err) {
         console.error("Publish error:", err);
-        showToast("Failed to publish. Please try again.", "error");
+        showToast("Failed to publish.", "error");
     } finally {
         if (postBtn) {
             postBtn.disabled = false;
@@ -114,26 +113,6 @@ window.publishTestimony = async () => {
         }
     }
 };
-
-// ====================== LIGHT EXIF ======================
-async function getLightExif(file) {
-    return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const dataView = new DataView(e.target.result);
-                if (dataView.getUint16(0) === 0xFFD8) {
-                    resolve({ hasExif: true, timestamp: new Date().toISOString() });
-                } else {
-                    resolve(null);
-                }
-            } catch (err) {
-                resolve(null);
-            }
-        };
-        reader.readAsArrayBuffer(file);
-    });
-}
 
 // ====================== EVIDENCE LEDGER ======================
 async function loadEvidenceLedger() {
@@ -156,7 +135,7 @@ window.refreshLedger = loadEvidenceLedger;
 // ====================== PROFILE ======================
 window.showProfile = () => {
     if (!auth.currentUser) {
-        showToast("Please sign in to view profile", "info");
+        showToast("Please sign in first", "info");
         return;
     }
     initProfile();
@@ -171,67 +150,35 @@ function setupEventListeners() {
     isInitialized = true;
     console.log("✅ Setting up all buttons...");
 
-    // Navigation
     document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
         btn.addEventListener('click', () => window.switchTab(btn.dataset.tab));
     });
 
-    // Profile & Support
     document.getElementById('profile-btn')?.addEventListener('click', window.showProfile);
     document.getElementById('support-btn')?.addEventListener('click', () => {
         document.getElementById('supportModal')?.classList.remove('hidden');
     });
 
-    // Publish
     document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
 
     // Forensic Photo
     const photoBtn = document.getElementById('btn-photo');
     if (photoBtn) {
         photoBtn.addEventListener('click', () => {
-            if (!auth.currentUser) {
-                showToast("Please sign in to upload forensic photo", "info");
-                return;
-            }
+            if (!auth.currentUser) return showToast("Please sign in to upload photo", "info");
             const input = document.createElement('input');
             input.type = 'file';
-            input.accept = 'image/jpeg, image/png, image/webp';
-            input.onchange = async (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                try {
-                    const hash = await generateSha256Hash(file);
-                    const reader = new FileReader();
-                    reader.onload = async (ev) => {
-                        const previewArea = document.getElementById('preview-area');
-                        if (!previewArea) return;
-                        previewArea.innerHTML = `
-                            <div class="relative mt-4 rounded-2xl overflow-hidden border border-emerald-500/50">
-                                <img src="${ev.target.result}" class="w-full max-h-64 object-cover" alt="Preview">
-                                <div class="absolute bottom-2 left-2 bg-black/70 text-[10px] px-2 py-1 rounded font-mono text-emerald-400">
-                                    ${hash.substring(0, 16)}...
-                                </div>
-                            </div>`;
-                        if (window.engineInstance) window.engineInstance.setPendingImage?.(file, hash);
-                    };
-                    reader.readAsDataURL(file);
-                } catch (err) {
-                    showToast("Failed to process image", "error");
-                }
-            };
+            input.accept = 'image/jpeg,image/png,image/webp';
+            input.onchange = (e) => mediaModule.handleImageSelect(e, document.getElementById('preview-area'));
             input.click();
         });
     }
 
-    // Voice Testimony
+    // Voice
     const voiceBtn = document.getElementById('btn-voice');
     if (voiceBtn) {
         voiceBtn.addEventListener('click', () => {
-            if (!auth.currentUser) {
-                showToast("Please sign in to record voice testimony", "info");
-                return;
-            }
-            if (!window.engineInstance) return showToast("Engine not ready", "error");
+            if (!auth.currentUser) return showToast("Please sign in to record voice", "info");
             mediaModule.toggleVoiceRecording(voiceBtn);
         });
     }
@@ -245,7 +192,7 @@ async function bootstrap() {
     console.log("🚀 VocalWitness Bootstrap started");
 
     try {
-        await initAuth();                    // Important: Init auth first
+        await initAuth();
         setupEventListeners();
         if (typeof initLanguage === 'function') initLanguage();
         
@@ -255,7 +202,7 @@ async function bootstrap() {
         loadDynamicNavigation();
         setTimeout(() => window.switchTab('square'), 500);
 
-        console.log("✅ Bootstrap finished - Please sign in");
+        console.log("✅ Bootstrap finished successfully");
     } catch (e) {
         console.error("Bootstrap error:", e);
     }
