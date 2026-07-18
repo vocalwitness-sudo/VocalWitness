@@ -27,29 +27,33 @@ window.switchTab = async (tab) => {
             if (tab === 'witness') btn.classList.add('bg-amber-900', 'text-amber-300');
         }
     });
+
     AppState.currentTab = tab;
     AppState.currentMode = tab === 'witness' ? 'witness' : 'citizen';
+
     const container = document.getElementById('dynamicContainer');
     if (!container) return;
+
     container.innerHTML = `<div class="text-center py-20 text-zinc-400">Loading ${tab}...</div>`;
+
     try {
         if (tab === 'square' || tab === 'citizen') {
             container.innerHTML = `<div id="feedContainer" class="space-y-8"></div>`;
             initFeed(db, 'citizen-talk');
         } else if (tab === 'ledger') {
-            container.innerHTML = `<div id="ledgerContainer" class="space-y-4 min-h-[400px]"></div>`;
-            setTimeout(() => ledgerModule.loadForensicLedger?.(), 100);
+            // New Evidence Ledger
+            container.innerHTML = `<div id="ledgerContainer" class="space-y-6"></div>`;
+            loadEvidenceLedger();
         } else if (tab === 'witness') {
             container.innerHTML = `<div id="trueWitnessContainer" class="space-y-6 p-8 text-center">
-                <h2 class="text-3xl font-bold text-amber-400">🛡️ Witness Circle</h2>
-                <p class="text-zinc-400 mt-4">ZK-Verified Testimonies - Coming Soon</p>
+                <h2 class="text-3xl font-bold text-amber-400">🛡️ Verified Witnesses</h2>
+                <p class="text-zinc-400 mt-4">ZK-Verified Testimonies</p>
             </div>`;
         }
     } catch (e) {
         console.error("SwitchTab error:", e);
     }
 };
-
 // ====================== GLOBAL HELPERS ======================
 window.showProfile = () => document.getElementById('profileModal')?.classList.remove('hidden');
 window.closeProfile = () => document.getElementById('profileModal')?.classList.add('hidden');
