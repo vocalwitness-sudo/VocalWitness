@@ -90,61 +90,61 @@
     </button>
 </div>
     </header>
-   <!-- ==================== MAIN NAVIGATION ==================== -->
+    
 <!-- ==================== MAIN NAVIGATION ==================== -->
-<nav class="flex gap-2 mb-8 overflow-x-auto pb-3" id="main-nav">
+<nav class="flex gap-2 mb-8 overflow-x-auto pb-3 relative z-10" id="main-nav">
     
     <!-- Public Square -->
-    <button data-tab="square" class="nav-tab active px-6 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit">
+    <button data-tab="square" class="nav-tab active px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative" title="Share what you witnessed">
         <span class="font-semibold">Public Square</span>
-        <span class="text-xs text-zinc-400">Citizen Talk • Share Testimony</span>
+        <span class="text-xs text-zinc-400 hidden md:block">Citizen Talk • Share Testimony</span>
     </button>
 
-    <!-- Forensic Ledger -->
-    <button data-tab="ledger" class="nav-tab px-6 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit">
+    <!-- Evidence Ledger -->
+    <button data-tab="ledger" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative" title="Permanent records">
         <span class="font-semibold">Evidence Ledger</span>
-        <span class="text-xs text-zinc-400">Permanent Records</span>
+        <span class="text-xs text-zinc-400 hidden md:block">Permanent Records</span>
     </button>
 
     <!-- Live Arena -->
-    <button data-tab="arena" class="nav-tab px-6 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit">
+    <button data-tab="arena" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative" title="Real-time discussions">
         <span class="font-semibold">Live Arena</span>
-        <span class="text-xs text-zinc-400">Real-time Discussions</span>
+        <span class="text-xs text-zinc-400 hidden md:block">Real-time Discussions</span>
     </button>
 
     <!-- My Circle -->
-    <button data-tab="mycircle" class="nav-tab px-6 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit">
+    <button data-tab="mycircle" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative" title="Your network & posts">
         <span class="font-semibold">My Circle</span>
-        <span class="text-xs text-zinc-400">Network & Trusted Posts</span>
+        <span class="text-xs text-zinc-400 hidden md:block">Network & Trusted Posts</span>
     </button>
 
     <!-- Verified Witnesses -->
-    <button data-tab="witness" class="nav-tab px-6 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit bg-amber-900/70 hover:bg-amber-900 text-amber-300 border border-amber-700">
+    <button data-tab="witness" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative bg-amber-900/70 hover:bg-amber-900 text-amber-300 border border-amber-700" title="Trusted elite circle">
         <span class="font-semibold">Verified Witnesses</span>
-        <span class="text-xs text-amber-200">Trusted Elite Circle</span>
+        <span class="text-xs text-amber-200 hidden md:block">Trusted Elite Circle</span>
     </button>
 
     <!-- More Dropdown -->
-    <div class="relative group">
-        <button data-tab="more" class="nav-tab px-6 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit hover:bg-zinc-800">
+    <div class="relative group z-50">
+        <button data-tab="more" class="nav-tab px-6 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit hover:bg-zinc-800" title="More options">
             <span class="font-semibold">More</span>
         </button>
         
         <!-- Dropdown Menu -->
         <div class="absolute hidden group-hover:block right-0 mt-2 w-56 bg-zinc-900 border border-zinc-700 rounded-3xl shadow-2xl py-2 z-50">
-            <a href="my-testimonies.html" class="block px-6 py-3 hover:bg-zinc-800">My Testimonies</a>
-            <a href="groups.html" class="block px-6 py-3 hover:bg-zinc-800">Groups</a>
-            <a href="true-witness.html" class="block px-6 py-3 hover:bg-zinc-800">True Witness</a>
+            <a href="my-testimonies.html" class="block px-6 py-3 hover:bg-zinc-800 text-sm">My Testimonies</a>
+            <a href="groups.html" class="block px-6 py-3 hover:bg-zinc-800 text-sm">Groups</a>
+            <a href="true-witness.html" class="block px-6 py-3 hover:bg-zinc-800 text-sm">True Witness</a>
             <div class="border-t border-zinc-700 my-1"></div>
-            <a href="about.html" class="block px-6 py-3 hover:bg-zinc-800">About Us</a>
-            <a href="privacy.html" class="block px-6 py-3 hover:bg-zinc-800">Privacy</a>
-            <a href="terms.html" class="block px-6 py-3 hover:bg-zinc-800">Terms</a>
-            <a href="safety.html" class="block px-6 py-3 hover:bg-zinc-800">Safety Guidelines</a>
-            <a href="#" id="profile-link" class="block px-6 py-3 hover:bg-zinc-800">Profile & Settings</a>
+            <a href="about.html" class="block px-6 py-3 hover:bg-zinc-800 text-sm">About Us</a>
+            <a href="privacy.html" class="block px-6 py-3 hover:bg-zinc-800 text-sm">Privacy</a>
+            <a href="terms.html" class="block px-6 py-3 hover:bg-zinc-800 text-sm">Terms of Service</a>
+            <a href="safety.html" class="block px-6 py-3 hover:bg-zinc-800 text-sm">Safety Guidelines</a>
         </div>
     </div>
 
 </nav>
+    
     <!-- ==================== CREATION BAR ==================== -->
     <div class="glass rounded-3xl p-6 mb-10">
         <textarea id="mainInput" rows="3" data-i18n="placeholder"
