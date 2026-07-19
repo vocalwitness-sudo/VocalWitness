@@ -3,84 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#10b981">
-
-    <link rel="manifest" href="/manifest.json">
-    <link rel="icon" href="/logo.png" type="image/png">
     <title>My Testimonies • VocalWitness</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="style.css">
     
     <style>
-        body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: white; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: #e2e8f0; }
         .glass { background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(16, 185, 129, 0.25); }
     </style>
 </head>
-<body class="min-h-screen pb-20 p-4 bg-[#0a0f1c]">
+<body class="min-h-screen bg-[#0a0f1c]">
 
-    <div class="max-w-2xl mx-auto">
-        <header class="flex items-center justify-between mb-8">
+    <div class="max-w-3xl mx-auto p-6">
+        <header class="flex items-center justify-between mb-10">
             <div class="flex items-center gap-3">
-                <button onclick="window.goBack()" 
-                        class="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center gap-2 text-sm">
-                    ← Back
-                </button>
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-2xl">📝</div>
+                <a href="index.html" class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-2xl">🔊</div>
                     <div>
-                        <h1 class="text-3xl font-bold tracking-tighter text-emerald-400">My Testimonies</h1>
-                        <p class="text-xs text-emerald-500">Your Voice in the Square</p>
+                        <h1 class="text-2xl font-bold">VocalWitness</h1>
                     </div>
-                </div>
+                </a>
             </div>
+            <a href="index.html" class="text-emerald-400 hover:text-emerald-300">← Back to Square</a>
         </header>
 
-        <div class="glass rounded-3xl p-6">
-            <h2 class="text-xl font-semibold mb-4">Published Testimonies</h2>
-            <div id="myTestimoniesContainer" class="space-y-4">
-                </div>
+        <div class="glass rounded-3xl p-8">
+            <h1 class="text-3xl font-bold mb-2">My Testimonies</h1>
+            <p class="text-zinc-400 mb-8">Permanent records of your voice in the Public Square</p>
+            
+            <div id="myTestimoniesContainer" class="space-y-6 min-h-[400px]">
+                <!-- JS will load here -->
+            </div>
         </div>
     </div>
 
-    <script src="../js/utils.js" type="module"></script>
-    <script type="module" src="../js/main.js"></script>
-    <script type="module">
-    import { initMyTestimonies } from './js/my-testimonies.js';
-    
-    document.addEventListener('DOMContentLoaded', () => {
-        initMyTestimonies('myTestimoniesContainer');
-    });
-</script>
+    <script type="module" src="js/main.js"></script>
+    <script type="module" src="js/my-testimonies.js"></script>
 
     <script>
-        // UI Helper Functions
-        window.goBack = window.goBack || function() {
-            if (window.history.length > 1) window.history.back();
-            else window.location.href = 'index.html';
-        };
-
-        function editProfile() { alert("Edit profile coming soon"); }
-        function changePassword() { alert("Password change coming soon"); }
-        function showZKUpgrade() { alert("ZK Verification path coming soon"); }
-        function uploadProfilePicture() { alert("Profile picture upload coming soon"); }
-        function closeGroupModal() { document.getElementById('groupModal')?.classList.add('hidden'); }
-        function createGroup() { alert("Group creation coming soon"); }
-        function changeLanguage(lang) { console.log("Language changed to:", lang); }
-        function logout() { alert("Logged out"); window.location.reload(); }
-        function closeVoteModal() { document.getElementById('voteModal')?.classList.add('hidden'); }
-
-        // Close more menu when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.relative')) {
-                const menu = document.getElementById('moreMenu');
-                if (menu) menu.classList.add('hidden');
-            }
-        });
-
         document.addEventListener('DOMContentLoaded', () => {
-            console.log("My Testimonies page loaded");
-            // TODO: Load user's testimonies from Firestore
+            if (typeof initMyTestimonies === 'function') {
+                initMyTestimonies('myTestimoniesContainer');
+            }
         });
     </script>
 </body>
