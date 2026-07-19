@@ -124,7 +124,6 @@ window.publishTestimony = async () => {
 };
 
 // ====================== EVIDENCE LEDGER ======================
-// ====================== EVIDENCE LEDGER ======================
 async function loadEvidenceLedger() {
     const container = document.getElementById('ledgerContainer');
     if (!container) return;
