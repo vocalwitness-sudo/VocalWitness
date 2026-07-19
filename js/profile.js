@@ -257,48 +257,80 @@ window.closeSettings = () => {
 function loadSettingsContent() {
     const container = document.getElementById('settingsContent');
     if (!container) return;
+
     container.innerHTML = `
-        <div class="space-y-6">
-            <!-- Account & Security -->
-            <div class="p-5 bg-zinc-900 rounded-2xl">
-                <div class="font-medium text-lg mb-3">🔐 Account & Security</div>
-                <button onclick="deleteAccountConfirm()"
-                        class="w-full py-3 bg-red-900/30 hover:bg-red-900/50 text-red-400 rounded-2xl text-sm font-medium">
-                    Delete My Account
-                </button>
+        <div class="space-y-8">
+            
+            <!-- Security Section -->
+            <div class="bg-zinc-900 rounded-3xl p-6">
+                <h4 class="font-semibold text-lg mb-5 flex items-center gap-2">
+                    🛡️ Security & Authentication
+                </h4>
+                <div class="space-y-5">
+                    <div class="flex justify-between items-center py-3 border-b border-zinc-700">
+                        <div>
+                            <div class="font-medium">Two-Factor Authentication</div>
+                            <div class="text-sm text-zinc-500">Add extra protection to your account</div>
+                        </div>
+                        <button onclick="toggle2FA()" 
+                                class="px-5 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-sm">Enable 2FA</button>
+                    </div>
+                    
+                    <div class="flex justify-between items-center py-3 border-b border-zinc-700">
+                        <div>
+                            <div class="font-medium">Login History</div>
+                            <div class="text-sm text-zinc-500">Review recent sign-ins</div>
+                        </div>
+                        <button onclick="viewLoginHistory()" 
+                                class="px-5 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-sm">View History</button>
+                    </div>
+                </div>
             </div>
+
             <!-- Privacy -->
-            <div class="p-5 bg-zinc-900 rounded-2xl">
-                <div class="font-medium text-lg mb-3">🔒 Privacy & Visibility</div>
-                <div class="flex items-center justify-between py-3">
-                    <div>
-                        <div class="font-medium">Public Profile</div>
-                        <div class="text-sm text-zinc-500">Allow others to see my profile</div>
+            <div class="bg-zinc-900 rounded-3xl p-6">
+                <h4 class="font-semibold text-lg mb-5">🔒 Privacy Controls</h4>
+                <div class="space-y-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="font-medium">Make Profile Public</div>
+                            <div class="text-sm text-zinc-500">Allow others to find and view my profile</div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="publicProfileToggle" onchange="togglePublicProfile(this)" class="sr-only peer">
+                            <div class="w-11 h-6 bg-zinc-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-emerald-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                        </label>
                     </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="publicProfileToggle" onchange="togglePublicProfile(this)"
-                               class="sr-only peer">
-                        <div class="w-11 h-6 bg-zinc-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-emerald-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
-                    </label>
                 </div>
             </div>
+
             <!-- Notifications -->
-            <div class="p-5 bg-zinc-900 rounded-2xl">
-                <div class="font-medium text-lg mb-3">🛎️ Notifications</div>
-                <div class="flex items-center justify-between py-3">
-                    <div>
-                        <div class="font-medium">Reply & Mention Alerts</div>
+            <div class="bg-zinc-900 rounded-3xl p-6">
+                <h4 class="font-semibold text-lg mb-5">🛎️ Notifications</h4>
+                <div class="space-y-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="font-medium">Reply & Mention Alerts</div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="notifyToggle" onchange="toggleNotifications(this)" class="sr-only peer">
+                            <div class="w-11 h-6 bg-zinc-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-emerald-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                        </label>
                     </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="notifyToggle" onchange="toggleNotifications(this)"
-                               class="sr-only peer">
-                        <div class="w-11 h-6 bg-zinc-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-emerald-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
-                    </label>
                 </div>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="bg-red-950/30 border border-red-900/50 rounded-3xl p-6">
+                <h4 class="font-semibold text-red-400 mb-4">⚠️ Danger Zone</h4>
+                <button onclick="deleteAccountConfirm()" 
+                        class="w-full py-4 bg-red-900/50 hover:bg-red-900 text-red-300 font-medium rounded-2xl transition">
+                    Permanently Delete Account
+                </button>
             </div>
         </div>
     `;
-    // Load current user settings
+
     loadCurrentUserSettings();
 }
 
