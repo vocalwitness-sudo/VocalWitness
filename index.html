@@ -89,11 +89,6 @@
         Profile
     </button>
 </div>
-            <!-- Add this near the Profile button in the header -->
-<button id="auth-btn" 
-        class="px-5 py-2.5 bg-white text-black font-medium rounded-2xl hover:bg-emerald-100 transition">
-    Sign In / Sign Up
-</button>
     </header>
     
 <!-- ==================== MAIN NAVIGATION ==================== -->
@@ -336,12 +331,76 @@ document.addEventListener('click', function(e) {
     }
 });
 </script>
+<!-- Sign In / Sign Up Modal -->
+<div id="authModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[100] p-4">
+    <div class="glass rounded-3xl max-w-md w-full p-8">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-emerald-400" id="authTitle">Sign In</h2>
+            <button onclick="closeAuthModal()" class="text-3xl text-zinc-400 hover:text-white">×</button>
+        </div>
+
+        <div id="authContent">
+            <!-- JS will fill this -->
+        </div>
+
+        <div class="mt-6 text-center text-sm text-zinc-400">
+            <span id="authToggleText">Don't have an account?</span>
+            <button onclick="toggleAuthMode()" class="text-emerald-400 hover:text-emerald-300 ml-1 font-medium">Sign Up</button>
+        </div>
+    </div>
+</div>
 
     <script>
-document.getElementById('auth-btn')?.addEventListener('click', () => {
-    // This will trigger your auth modal or redirect
-    window.showAuthModal?.() || alert("Sign In page coming soon - Check auth.js");
-});
+let isLoginMode = true;
+
+function showAuthModal() {
+    document.getElementById('authModal').classList.remove('hidden');
+    renderAuthForm();
+}
+
+function closeAuthModal() {
+    document.getElementById('authModal').classList.add('hidden');
+}
+
+function toggleAuthMode() {
+    isLoginMode = !isLoginMode;
+    renderAuthForm();
+}
+
+function renderAuthForm() {
+    const title = document.getElementById('authTitle');
+    const content = document.getElementById('authContent');
+    const toggleText = document.getElementById('authToggleText');
+
+    if (isLoginMode) {
+        title.textContent = "Sign In";
+        toggleText.textContent = "Don't have an account?";
+        content.innerHTML = `
+            <button onclick="googleSignIn()" class="w-full py-3 bg-white text-black rounded-2xl font-medium mb-4 flex items-center justify-center gap-3">
+                <span>🌐</span> Continue with Google
+            </button>
+            <div class="text-center text-zinc-500 my-4">or</div>
+            <input id="email" type="email" placeholder="Email" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-3 mb-3">
+            <input id="password" type="password" placeholder="Password" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-3 mb-6">
+            <button onclick="emailSignIn()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-black font-semibold rounded-2xl">Sign In</button>
+        `;
+    } else {
+        title.textContent = "Create Account";
+        toggleText.textContent = "Already have an account?";
+        content.innerHTML = `
+            <button onclick="googleSignIn()" class="w-full py-3 bg-white text-black rounded-2xl font-medium mb-4 flex items-center justify-center gap-3">
+                <span>🌐</span> Continue with Google
+            </button>
+            <input id="email" type="email" placeholder="Email" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-3 mb-3">
+            <input id="password" type="password" placeholder="Password" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-3 mb-6">
+            <button onclick="emailSignUp()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-black font-semibold rounded-2xl">Create Account</button>
+        `;
+    }
+}
+
+window.showAuthModal = showAuthModal;
+window.closeAuthModal = closeAuthModal;
+window.toggleAuthMode = toggleAuthMode;
 </script>
     
     <!-- ==================== FOOTER ==================== -->
