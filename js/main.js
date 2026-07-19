@@ -72,7 +72,7 @@ window.publishTestimony = async () => {
     const textarea = document.getElementById('mainInput');
     const content = textarea ? textarea.value.trim() : '';
     if (!content) {
-        showToast("Please write a testimony", "error");
+        showToast("Please write something before publishing", "error");
         return;
     }
 
@@ -144,15 +144,17 @@ window.refreshLedger = loadEvidenceLedger;
 // ====================== PROFILE ======================
 window.showProfile = () => {
     if (!auth.currentUser) {
-        showToast("Please sign in to view profile", "info");
+        showToast("Please sign in to access your Profile", "info");
+        // TODO: Later open sign-in modal instead of just toast
         return;
     }
     initProfile();
     document.getElementById('profileModal')?.classList.remove('hidden');
 };
 
-window.closeProfile = () => document.getElementById('profileModal')?.classList.add('hidden');
-
+window.closeProfile = () => {
+    document.getElementById('profileModal')?.classList.add('hidden');
+};
 // ====================== SETUP EVENT LISTENERS ======================
 function setupEventListeners() {
     if (isInitialized) return;
@@ -172,29 +174,35 @@ function setupEventListeners() {
 
     // Publish
     document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
-
+    
     // Photo
-    const photoBtn = document.getElementById('btn-photo');
-    if (photoBtn) {
-        photoBtn.addEventListener('click', () => {
-            if (!auth.currentUser) return showToast("Please sign in to upload photo", "info");
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'image/jpeg,image/png,image/webp';
-            input.onchange = (e) => mediaModule.handleImageSelect(e, document.getElementById('preview-area'));
-            input.click();
-        });
-    }
+  const photoBtn = document.getElementById('btn-photo');
+if (photoBtn) {
+    photoBtn.addEventListener('click', () => {
+        if (!auth.currentUser) {
+            showToast("Sign in to upload Forensic Photo", "info");
+            // Optional: You can open sign-in modal here later
+            return;
+        }
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/jpeg,image/png,image/webp';
+        input.onchange = (e) => mediaModule.handleImageSelect(e, document.getElementById('preview-area'));
+        input.click();
+    });
+}
 
     // Voice
     const voiceBtn = document.getElementById('btn-voice');
-    if (voiceBtn) {
-        voiceBtn.addEventListener('click', () => {
-            if (!auth.currentUser) return showToast("Please sign in to record voice", "info");
-            mediaModule.toggleVoiceRecording(voiceBtn);
-        });
-    }
-
+if (voiceBtn) {
+    voiceBtn.addEventListener('click', () => {
+        if (!auth.currentUser) {
+            showToast("Sign in to record Voice Testimony", "info");
+            return;
+        }
+        mediaModule.toggleVoiceRecording(voiceBtn);
+    });
+}
     console.log("✅ All buttons initialized");
 }
 
