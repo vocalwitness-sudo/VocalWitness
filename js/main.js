@@ -124,6 +124,7 @@ window.publishTestimony = async () => {
 };
 
 // ====================== EVIDENCE LEDGER ======================
+// ====================== EVIDENCE LEDGER ======================
 async function loadEvidenceLedger() {
     const container = document.getElementById('ledgerContainer');
     if (!container) return;
@@ -140,7 +141,6 @@ async function loadEvidenceLedger() {
 }
 
 window.refreshLedger = loadEvidenceLedger;
-
 // ====================== PROFILE ======================
 window.showProfile = () => {
     if (!auth.currentUser) {
