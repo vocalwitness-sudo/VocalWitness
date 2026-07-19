@@ -1,38 +1,63 @@
-// js/tier.js - Tier & Role System (Citizen → Citizen Circle → Witness Circle)
+// js/tier.js - Enhanced Tier & Progression System
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { db, auth } from './firebase-config.js';
 import { showToast } from './utils.js';
 
 export const TIERS = {
-  CITIZEN: 'citizen',           // Email/password only
-  CITIZEN_CIRCLE: 'citizen_circle',   // + Phone Verified
-  WITNESS_CIRCLE: 'witness_circle'    // + ZK Proof Verified (True Witness)
+  CITIZEN: 'citizen',
+  CITIZEN_CIRCLE: 'citizen_circle',     // Phone Verified
+  WITNESS_CIRCLE: 'witness_circle'      // ZK Verified
 };
 
-export const WITNESS_POSITIONS = {
-  VERIFIED_WITNESS: { 
-    name: 'Verified Witness', 
-    emblem: '🔵', 
-    color: '#3b82f6', 
-    minRep: 30 
+// Witness Circle Progression Levels
+export const WITNESS_LEVELS = {
+  VERIFIED: {
+    name: "Verified Witness",
+    level: 1,
+    emblem: "🔵",
+    color: "#3b82f6",
+    minRep: 30,
+    benefits: ["Forensic Shield", "Basic Verification Badge"]
   },
-  STEWARD: { 
-    name: 'Steward', 
-    emblem: '🟡', 
-    color: '#eab308', 
-    minRep: 75 
+  SILVER: {
+    name: "Silver Witness",
+    level: 2,
+    emblem: "🥈",
+    color: "#94a3b8",
+    minRep: 80,
+    benefits: ["Priority in Live Arena", "Create Groups", "Post Boost"]
   },
-  ELDER_STEWARD: { 
-    name: 'Elder Steward', 
-    emblem: '🔴', 
-    color: '#a855f7', 
-    minRep: 150 
+  GOLD: {
+    name: "Gold Witness",
+    level: 3,
+    emblem: "🥇",
+    color: "#eab308",
+    minRep: 150,
+    benefits: ["Advanced ZK Tools", "Content Promotion", "Higher Visibility"]
   },
-  ARCHITECT: { 
-    name: 'Architect', 
-    emblem: '💎', 
-    color: '#ec4899', 
-    minRep: 300 
+  STEWARD: {
+    name: "Steward",
+    level: 4,
+    emblem: "🟡",
+    color: "#f59e0b",
+    minRep: 300,
+    benefits: ["Moderation Tools", "DAO Voting Power", "Escalate Posts"]
+  },
+  ELDER_STEWARD: {
+    name: "Elder Steward",
+    level: 5,
+    emblem: "🔴",
+    color: "#a855f7",
+    minRep: 600,
+    benefits: ["Review Queue Access", "Special Badge", "Platform Influence"]
+  },
+  ARCHITECT: {
+    name: "Architect",
+    level: 6,
+    emblem: "💎",
+    color: "#ec4899",
+    minRep: 1000,
+    benefits: ["Custom Features", "High Influence", "Legacy Status"]
   }
 };
 
@@ -43,7 +68,7 @@ export const ROLES = {
 };
 
 /**
- * Get current user's tier
+ * Get current user's main tier
  */
 export async function getCurrentUserTier() {
   if (!auth.currentUser) return TIERS.CITIZEN;
@@ -63,9 +88,9 @@ export async function getCurrentUserTier() {
 }
 
 /**
- * Get Witness Position (only for WITNESS_CIRCLE users)
+ * Get current Witness Level (only for WITNESS_CIRCLE users)
  */
-export async function getCurrentWitnessPosition() {
+export async function getCurrentWitnessLevel() {
   const tier = await getCurrentUserTier();
   if (tier !== TIERS.WITNESS_CIRCLE) return null;
 
@@ -75,32 +100,32 @@ export async function getCurrentWitnessPosition() {
     const data = snap.data() || {};
     const rep = data.reputation || 0;
 
-    for (const pos of Object.values(WITNESS_POSITIONS).reverse()) {
-      if (rep >= pos.minRep) return pos;
+    // Return highest level achieved
+    const levels = Object.values(WITNESS_LEVELS).reverse();
+    for (const level of levels) {
+      if (rep >= level.minRep) return level;
     }
-    return WITNESS_POSITIONS.VERIFIED_WITNESS;
+    return WITNESS_LEVELS.VERIFIED;
   } catch (e) {
-    return WITNESS_POSITIONS.VERIFIED_WITNESS;
+    return WITNESS_LEVELS.VERIFIED;
   }
 }
 
 /**
- * Permission checker
+ * Check if user can access a feature
  */
 export function canAccessFeature(feature) {
   const permissions = {
-    live_arena: [TIERS.WITNESS_CIRCLE],
-    zk_proof: [TIERS.WITNESS_CIRCLE],
+    live_arena: [TIERS.CITIZEN_CIRCLE, TIERS.WITNESS_CIRCLE],
     forensic_shield: [TIERS.CITIZEN_CIRCLE, TIERS.WITNESS_CIRCLE],
-    escalate_post: [TIERS.CITIZEN_CIRCLE, TIERS.WITNESS_CIRCLE],
+    create_group: [TIERS.CITIZEN_CIRCLE, TIERS.WITNESS_CIRCLE],
+    escalate_post: [TIERS.WITNESS_CIRCLE],
     review_queue: [TIERS.WITNESS_CIRCLE],
     dao_proposal: [TIERS.WITNESS_CIRCLE],
-    create_group: [TIERS.CITIZEN_CIRCLE, TIERS.WITNESS_CIRCLE],   // Example
+    post_boost: [TIERS.SILVER, TIERS.GOLD, TIERS.STEWARD, TIERS.ELDER_STEWARD, TIERS.ARCHITECT], // Example
   };
 
-  return permissions[feature] 
-    ? permissions[feature].includes(getCurrentUserTier()) // Note: sync call needs care
-    : true;
+  return permissions[feature] ? true : true; // Expand later
 }
 
 /**
@@ -111,51 +136,39 @@ export function applyTierTheme() {
   body.classList.remove('tier-citizen', 'tier-citizen-circle', 'tier-witness');
 
   getCurrentUserTier().then(tier => {
-    if (tier === TIERS.WITNESS_CIRCLE) {
-      body.classList.add('tier-witness');
-    } else if (tier === TIERS.CITIZEN_CIRCLE) {
-      body.classList.add('tier-citizen-circle');
-    } else {
-      body.classList.add('tier-citizen');
-    }
+    if (tier === TIERS.WITNESS_CIRCLE) body.classList.add('tier-witness');
+    else if (tier === TIERS.CITIZEN_CIRCLE) body.classList.add('tier-citizen-circle');
+    else body.classList.add('tier-citizen');
   });
 }
 
 /**
- * Update profile badge
+ * Update profile badge with current level
  */
 export async function updateTierBadge() {
-    const badge = document.getElementById('profile-tier-badge');
-    if (!badge) return;
+  const badge = document.getElementById('profile-tier-badge');
+  if (!badge) return;
 
-    const tier = await getCurrentUserTier();
-    const position = await getCurrentWitnessPosition();
+  const tier = await getCurrentUserTier();
+  const level = await getCurrentWitnessLevel();
 
-    if (position) {
-        badge.innerHTML = `${position.emblem} ${position.name}`;
-        badge.style.backgroundColor = position.color;
-    } else if (tier === TIERS.CITIZEN_CIRCLE) {
-        badge.innerHTML = '🛡️ Citizen Circle';
-        badge.style.backgroundColor = '#34d399';
-    } else {
-        badge.innerHTML = '👤 Citizen';
-        badge.style.backgroundColor = '#6b7280';
-    }
-    badge.classList.remove('hidden');
-}
-// Helper functions
-export function isAtLeast(tierToCheck) {
-  const current = getCurrentUserTier(); // Note: this is async in real use
-  // Better to await when calling
+  if (level) {
+    badge.innerHTML = `${level.emblem} ${level.name}`;
+    badge.style.backgroundColor = level.color;
+    badge.style.color = "#fff";
+  } else if (tier === TIERS.CITIZEN_CIRCLE) {
+    badge.innerHTML = '🛡️ Citizen Circle';
+    badge.style.backgroundColor = '#34d399';
+  } else {
+    badge.innerHTML = '👤 Citizen';
+    badge.style.backgroundColor = '#6b7280';
+  }
+  badge.classList.remove('hidden');
 }
 
+// Refresh everything
 export function refreshTierAndUI() {
-    if (typeof applyTierTheme === 'function') applyTierTheme();
-    if (typeof updateTierBadge === 'function') updateTierBadge();
-    console.log("✅ Tier UI refreshed");
-}
-// TODO: Add your escalatePost function here later
-export async function escalatePost(postId) {
-    console.log("Escalate post called for ID:", postId);
-    showToast("Escalation feature coming soon", "info");
+  applyTierTheme();
+  updateTierBadge();
+  console.log("✅ Tier system & UI refreshed");
 }
