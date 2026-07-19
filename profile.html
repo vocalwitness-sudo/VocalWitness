@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile | VocalWitness</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+</head>
+<body class="min-h-screen bg-[#0a0f1c] text-zinc-200">
+
+    <!-- Simple Header -->
+    <header class="glass sticky top-0 z-50 p-4">
+        <div class="max-w-4xl mx-auto flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-2xl">🔊</div>
+                <span class="font-bold text-xl">VocalWitness</span>
+            </a>
+            <a href="index.html" class="text-emerald-400 hover:text-emerald-300">← Back to Square</a>
+        </div>
+    </header>
+
+    <div class="max-w-4xl mx-auto p-6">
+        <div class="glass rounded-3xl overflow-hidden">
+            <!-- Header -->
+            <div class="p-8 border-b border-zinc-700">
+                <h1 class="text-3xl font-bold">My Profile</h1>
+            </div>
+
+            <!-- Content -->
+            <div id="profileContent" class="p-8 min-h-[500px]">
+                <!-- JS will fill this -->
+                <div class="text-center py-20 text-zinc-400">Loading your profile...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include the same Edit & Settings Modals here (copy from previous response) -->
+    <!-- ... paste the two modals: editProfileModal and settingsModal ... -->
+
+    <!-- Scripts -->
+    <script type="module" src="js/main.js"></script>
+    <script type="module" src="js/profile.js"></script>
+
+    <script>
+        // Auto load profile when page opens
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof initProfile === 'function') {
+                initProfile();
+            }
+            // Show the profile immediately
+            setTimeout(() => {
+                if (typeof renderProfileUI === 'function' && window.currentUserData) {
+                    renderProfileUI(window.currentUserData);
+                }
+            }, 800);
+        });
+    </script>
+</body>
+</html>
