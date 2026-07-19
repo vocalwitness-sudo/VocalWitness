@@ -140,20 +140,36 @@ async function loadEvidenceLedger() {
 }
 
 window.refreshLedger = loadEvidenceLedger;
+
 // ====================== PROFILE ======================
 window.showProfile = () => {
     if (!auth.currentUser) {
         showToast("Please sign in to access your Profile", "info");
-        // TODO: Later open sign-in modal instead of just toast
+        // TODO: Open sign-in modal later
         return;
     }
-    initProfile();
-    document.getElementById('profileModal')?.classList.remove('hidden');
+
+    const modal = document.getElementById('profileModal');
+    if (!modal) {
+        showToast("Profile modal not found. Try refreshing.", "error");
+        return;
+    }
+
+    modal.classList.remove('hidden');
+    initProfile();           // Load real-time data
 };
 
+// Close function
 window.closeProfile = () => {
     document.getElementById('profileModal')?.classList.add('hidden');
 };
+
+// Optional: Close when clicking outside (nice UX)
+document.getElementById('profileModal')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+        window.closeProfile();
+    }
+});
 // ====================== SETUP EVENT LISTENERS ======================
 function setupEventListeners() {
     if (isInitialized) return;
