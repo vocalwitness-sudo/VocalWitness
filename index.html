@@ -103,23 +103,25 @@
         <span class="text-xs text-amber-200 hidden md:block">Trusted Elite Circle</span>
     </button>
 
-    <!-- More Dropdown -->
-    <div class="relative z-50" id="more-container">
-        <button id="more-btn" class="nav-tab px-7 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit hover:bg-zinc-800 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition-colors">
-            <span>More</span>
-        </button>
-        
-        <div id="more-menu" class="hidden absolute right-0 mt-3 w-60 bg-zinc-900 border border-zinc-700 rounded-3xl shadow-2xl py-3 z-[100]">
-            <a href="my-testimonies.html" class="block px-6 py-3 hover:bg-zinc-800">My Testimonies</a>
-            <a href="groups.html" class="block px-6 py-3 hover:bg-zinc-800">Groups</a>
-            <a href="true-witness.html" class="block px-6 py-3 hover:bg-zinc-800">True Witness</a>
-            <div class="h-px bg-zinc-700 mx-4 my-2"></div>
-            <a href="about.html" class="block px-6 py-3 hover:bg-zinc-800">About Us</a>
-            <a href="privacy.html" class="block px-6 py-3 hover:bg-zinc-800">Privacy Policy</a>
-            <a href="terms.html" class="block px-6 py-3 hover:bg-zinc-800">Terms of Service</a>
-            <a href="safety.html" class="block px-6 py-3 hover:bg-zinc-800">Safety Guidelines</a>
-        </div>
+    <!-- More Dropdown - FIXED -->
+<div class="relative z-[200]" id="more-container">   <!-- Higher z-index -->
+    <button id="more-btn" 
+            class="nav-tab px-7 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit hover:bg-zinc-800 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition-colors">
+        <span>More</span>
+    </button>
+    
+    <div id="more-menu" 
+         class="hidden absolute right-0 mt-3 w-60 bg-zinc-900 border border-zinc-700 rounded-3xl shadow-2xl py-3 z-[300] max-h-[70vh] overflow-auto">
+        <a href="my-testimonies.html" class="block px-6 py-3 hover:bg-zinc-800">My Testimonies</a>
+        <a href="groups.html" class="block px-6 py-3 hover:bg-zinc-800">Groups</a>
+        <a href="true-witness.html" class="block px-6 py-3 hover:bg-zinc-800">True Witness</a>
+        <div class="h-px bg-zinc-700 mx-4 my-2"></div>
+        <a href="about.html" class="block px-6 py-3 hover:bg-zinc-800">About Us</a>
+        <a href="privacy.html" class="block px-6 py-3 hover:bg-zinc-800">Privacy Policy</a>
+        <a href="terms.html" class="block px-6 py-3 hover:bg-zinc-800">Terms of Service</a>
+        <a href="safety.html" class="block px-6 py-3 hover:bg-zinc-800">Safety Guidelines</a>
     </div>
+</div>
 </nav>
 
 <!-- Improved Testimony Composer -->
@@ -182,22 +184,119 @@
 <!-- Main Script -->
 <script type="module" src="js/main.js"></script>
 
-<!-- More Dropdown Script -->
+<!-- More Dropdown Script - Improved -->
 <script>
 const moreBtn = document.getElementById('more-btn');
 const moreMenu = document.getElementById('more-menu');
 const moreContainer = document.getElementById('more-container');
 
-moreBtn.addEventListener('click', function(e) {
-    e.stopImmediatePropagation();
-    moreMenu.classList.toggle('hidden');
-});
+if (moreBtn && moreMenu && moreContainer) {
+    moreBtn.addEventListener('click', function(e) {
+        e.stopImmediatePropagation();
+        e.preventDefault();
+        moreMenu.classList.toggle('hidden');
+    });
 
-document.addEventListener('click', function(e) {
-    if (!moreContainer.contains(e.target)) {
-        moreMenu.classList.add('hidden');
-    }
-});
+    // Close when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!moreContainer.contains(e.target)) {
+            moreMenu.classList.add('hidden');
+        }
+    });
+
+    // Close when pressing Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === "Escape") {
+            moreMenu.classList.add('hidden');
+        }
+    });
+}
+
+    <!-- ==================== PROFESSIONAL FOOTER ==================== -->
+<footer class="bg-zinc-950 border-t border-zinc-800 pt-16 pb-12 mt-20">
+    <div class="max-w-6xl mx-auto px-6">
+        
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-10">
+            
+            <!-- Brand Column -->
+            <div class="col-span-2 md:col-span-1">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-11 h-11 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-3xl shadow-inner">🔊</div>
+                    <div>
+                        <h3 class="text-2xl font-bold tracking-tight text-white">VocalWitness</h3>
+                        <p class="text-emerald-500 text-sm">Truth • Evidence • Public Square</p>
+                    </div>
+                </div>
+                <p class="text-zinc-400 text-sm leading-relaxed max-w-xs">
+                    A decentralized platform empowering citizens to share verified testimonies and protect the public square.
+                </p>
+            </div>
+
+            <!-- Platform -->
+            <div>
+                <h4 class="font-semibold text-white mb-5">Platform</h4>
+                <ul class="space-y-3 text-sm text-zinc-400">
+                    <li><a href="#" class="hover:text-white transition-colors">Public Square</a></li>
+                    <li><a href="#" class="hover:text-white transition-colors">Evidence Ledger</a></li>
+                    <li><a href="#" class="hover:text-white transition-colors">Live Arena</a></li>
+                    <li><a href="#" class="hover:text-white transition-colors">My Circle</a></li>
+                    <li><a href="#" class="hover:text-white transition-colors">Verified Witnesses</a></li>
+                </ul>
+            </div>
+
+            <!-- Community -->
+            <div>
+                <h4 class="font-semibold text-white mb-5">Community</h4>
+                <ul class="space-y-3 text-sm text-zinc-400">
+                    <li><a href="groups.html" class="hover:text-white transition-colors">Groups</a></li>
+                    <li><a href="my-testimonies.html" class="hover:text-white transition-colors">My Testimonies</a></li>
+                    <li><a href="true-witness.html" class="hover:text-white transition-colors">True Witness Program</a></li>
+                    <li><a href="#" class="hover:text-white transition-colors">Support the Square</a></li>
+                </ul>
+            </div>
+
+            <!-- Company -->
+            <div>
+                <h4 class="font-semibold text-white mb-5">Company</h4>
+                <ul class="space-y-3 text-sm text-zinc-400">
+                    <li><a href="about.html" class="hover:text-white transition-colors">About Us</a></li>
+                    <li><a href="safety.html" class="hover:text-white transition-colors">Safety & Moderation</a></li>
+                    <li><a href="privacy.html" class="hover:text-white transition-colors">Privacy Policy</a></li>
+                    <li><a href="terms.html" class="hover:text-white transition-colors">Terms of Service</a></li>
+                </ul>
+            </div>
+
+            <!-- Legal & Trust -->
+            <div>
+                <h4 class="font-semibold text-white mb-5">Trust & Transparency</h4>
+                <ul class="space-y-3 text-sm text-zinc-400">
+                    <li><a href="#" class="hover:text-white transition-colors">Forensic Integrity</a></li>
+                    <li><a href="#" class="hover:text-white transition-colors">ZK Verification</a></li>
+                    <li><a href="#" class="hover:text-white transition-colors">Report Abuse</a></li>
+                    <li><a href="#" class="hover:text-white transition-colors">Transparency Report</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Bottom Bar -->
+        <div class="mt-16 pt-8 border-t border-zinc-800 flex flex-col md:flex-row items-center justify-between gap-6 text-xs text-zinc-500">
+            <div>
+                © 2026 VocalWitness • All Rights Reserved.<br>
+                <span class="text-emerald-600">Protecting the Public Square with Integrity</span>
+            </div>
+            
+            <div class="flex gap-6">
+                <a href="#" class="hover:text-zinc-300">Legal</a>
+                <a href="#" class="hover:text-zinc-300">Ethics</a>
+                <a href="#" class="hover:text-zinc-300">Contact</a>
+            </div>
+            
+            <div class="text-center md:text-right">
+                Built for Truth • Powered by Citizens
+            </div>
+        </div>
+    </div>
+</footer>
 </script>
 
 </body>
