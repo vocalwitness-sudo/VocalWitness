@@ -5,19 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#10b981">
     <meta name="description" content="VocalWitness - Privacy First Public Square for Truth and Evidence">
- 
     <!-- PWA -->
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="/logo.png" type="image/png">
- 
     <title data-i18n="pageTitle">VocalWitness • Truth • Evidence • Public Square</title>
- 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
- 
     <style>
         body {
             font-family: 'Inter', system-ui, sans-serif;
@@ -40,10 +36,9 @@
     </style>
 </head>
 <body class="min-h-screen pb-24 bg-[#0a0f1c]">
-
-    
+   
 <!-- ==================== PRIVACY BANNER ==================== -->
-    
+   
 <div class="mt-12 pt-8 border-t border-zinc-700 text-center text-sm text-zinc-400">
     <p>You are part of a growing community that believes truth matters.</p>
     <p class="mt-1"><strong>Together, we protect the public square.</strong></p>
@@ -57,83 +52,75 @@
                 <p class="text-sm text-emerald-400 tracking-widest" data-i18n="appSubtitle">Truth • Evidence • Public Square</p>
             </div>
         </div>
-      
+     
         <div class="flex items-center gap-4">
-    
+   
 <!-- Full Language Selector -->
 <div class="flex items-center gap-4">
     <!-- Language Selector -->
-    <select id="languageSelector" 
+    <select id="languageSelector"
             class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-4 py-2 text-sm focus:outline-none focus:border-emerald-500">
         <!-- Options go here -->
     </select>
-
     <!-- Privacy Link -->
-    <a href="privacy.html" 
+    <a href="privacy.html"
        class="flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 transition-colors text-sm font-medium">
         <span>🔒</span>
         <span>Privacy First</span>
     </a>
-
     <!-- Support Button -->
-    <button id="support-btn" 
-            class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl transition flex items-center gap-2" 
+    <button id="support-btn"
+            class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl transition flex items-center gap-2"
             data-i18n="supportPlatform">
         Support The Square.
     </button>
-
     <!-- Profile Button -->
-    <button id="profile-btn" 
-            class="px-5 py-2.5 border border-zinc-700 hover:bg-zinc-800 rounded-2xl transition" 
+    <button id="profile-btn"
+            class="px-5 py-2.5 border border-zinc-700 hover:bg-zinc-800 rounded-2xl transition"
             data-i18n="Profile">
         Profile
     </button>
-    <button onclick="googleLogin()" 
+    <button onclick="googleLogin()"
         class="px-5 py-2.5 bg-white text-black font-medium rounded-2xl hover:bg-emerald-100">
     🔑 Developer Login (Google)
 </button>
-    <button id="auth-btn" 
+    <button id="auth-btn"
         class="px-6 py-2.5 bg-white hover:bg-emerald-100 text-black font-semibold rounded-2xl transition-all">
     Sign In / Sign Up
 </button>
 </div>
     </header>
-    
+   
 <!-- ==================== MAIN NAVIGATION ==================== -->
 <nav class="flex gap-2 mb-8 overflow-x-auto pb-3 relative z-30" id="main-nav">
-    
+   
     <button data-tab="square" class="nav-tab active px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative" title="Share what you witnessed">
         <span class="font-semibold">Public Square</span>
         <span class="text-xs text-zinc-400 hidden md:block">Citizen Talk • Share Testimony</span>
     </button>
-
     <button data-tab="ledger" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative" title="Permanent records">
         <span class="font-semibold">Evidence Ledger</span>
         <span class="text-xs text-zinc-400 hidden md:block">Permanent Records</span>
     </button>
-
     <button data-tab="arena" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative" title="Real-time discussions">
         <span class="font-semibold">Live Arena</span>
         <span class="text-xs text-zinc-400 hidden md:block">Real-time Discussions</span>
     </button>
-
     <button data-tab="mycircle" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative" title="Your network & posts">
         <span class="font-semibold">My Circle</span>
         <span class="text-xs text-zinc-400 hidden md:block">Network & Trusted Posts</span>
     </button>
-
     <button data-tab="witness" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative bg-amber-900/70 hover:bg-amber-900 text-amber-300 border border-amber-700" title="Trusted elite circle">
         <span class="font-semibold">Verified Witnesses</span>
         <span class="text-xs text-amber-200 hidden md:block">Trusted Elite Circle</span>
     </button>
-
     <!-- More Dropdown - Strong Version -->
     <div class="relative z-50" id="more-container">
-        <button id="more-btn" 
+        <button id="more-btn"
                 class="nav-tab px-7 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit hover:bg-zinc-800 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition-colors">
             <span>More</span>
         </button>
-        
+       
         <div id="more-menu" class="hidden absolute right-0 mt-3 w-60 bg-zinc-900 border border-zinc-700 rounded-3xl shadow-2xl py-3 z-[100]">
             <a href="my-testimonies.html" class="block px-6 py-3 hover:bg-zinc-800">My Testimonies</a>
             <a href="groups.html" class="block px-6 py-3 hover:bg-zinc-800">Groups</a>
@@ -145,12 +132,11 @@
             <a href="safety.html" class="block px-6 py-3 hover:bg-zinc-800">Safety Guidelines</a>
         </div>
     </div>
-
 </nav>
-    
+   
 <!-- ==================== CREATION BAR (Improved) ==================== -->
 <div class="glass rounded-3xl p-6 mb-10">
-    
+   
     <!-- Header -->
     <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold text-white flex items-center gap-2">
@@ -159,51 +145,46 @@
         </h2>
         <span class="text-xs text-zinc-500">Public Square</span>
     </div>
-
     <!-- Textarea -->
-    <textarea id="mainInput" rows="4" 
+    <textarea id="mainInput" rows="4"
               class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-5 text-lg placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none"
               placeholder="Share your raw testimony... What did you witness?"></textarea>
-    
+   
     <!-- Media Buttons -->
     <div class="flex gap-3 mt-5">
-        <button id="btn-photo" 
+        <button id="btn-photo"
                 class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 hover:border-emerald-500 rounded-2xl flex items-center justify-center gap-3 font-medium transition-all active:scale-95">
             📸 Forensic Photo
         </button>
-        
-        <button id="btn-voice" 
+       
+        <button id="btn-voice"
                 class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 hover:border-emerald-500 rounded-2xl flex items-center justify-center gap-3 font-medium transition-all active:scale-95">
             🎤 Voice Testimony
         </button>
     </div>
-
     <!-- Preview Area -->
     <div id="preview-area" class="mt-6 min-h-[120px] border border-dashed border-zinc-700 rounded-2xl p-4 flex items-center justify-center text-zinc-500 text-sm">
         Preview will appear here...
     </div>
-
     <!-- Publish Button -->
-    <button id="postButton" 
+    <button id="postButton"
             class="mt-8 w-full py-5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-black font-semibold text-lg rounded-3xl transition-all active:scale-[0.985] shadow-lg shadow-emerald-500/30">
         🚀 Publish to the Square
     </button>
-
 </div>
-    
-  
+   
+ 
    <!-- ==================== DYNAMIC CONTENT ==================== -->
 <main id="main-content">
     <div id="dynamicContainer" class="space-y-8"></div>
 </main>
-
 <!-- ==================== SUPPORT MODAL ==================== -->
 <div id="supportModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[60] p-4">
     <div class="glass rounded-3xl max-w-md w-full p-8 text-center animate-in fade-in duration-300">
         <div class="text-6xl mb-6">🌱</div>
         <h2 data-i18n="supportModal.title" class="text-3xl font-bold text-emerald-400 mb-2"></h2>
         <p data-i18n="supportModal.description" class="text-zinc-400 mb-8 text-sm"></p>
-    
+   
         <div class="bg-zinc-950 p-6 rounded-2xl border border-zinc-800 mb-6">
             <p data-i18n="supportModal.usdtLabel" class="text-xs text-zinc-500 uppercase tracking-widest mb-4"></p>
             <div class="flex justify-center my-6">
@@ -217,12 +198,11 @@
                 <span id="copyText" data-i18n="supportModal.copyButton"></span>
             </button>
         </div>
-    
+   
         <p data-i18n="supportModal.warning" class="text-[10px] text-zinc-600 mb-8 uppercase italic"></p>
         <button onclick="document.getElementById('supportModal').classList.add('hidden')" class="w-full py-3 text-zinc-400 hover:text-white transition-colors" data-i18n="supportModal.closeButton">Close</button>
     </div>
 </div>
-
 <!-- ==================== PROFILE MODAL ==================== -->
 <div id="profileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[70] p-4">
     <div class="glass rounded-3xl max-w-md w-full max-h-[90vh] overflow-auto p-6">
@@ -230,28 +210,27 @@
             <h2 class="text-2xl font-bold text-emerald-400">My Profile</h2>
             <button onclick="closeProfile()" class="text-zinc-400 hover:text-white text-3xl leading-none">×</button>
         </div>
-        
+       
         <div id="profileContent" class="min-h-[200px]"></div>
-        
+       
         <!-- Action Buttons -->
         <div class="flex gap-3 mt-8">
-            <button onclick="editProfile()" 
+            <button onclick="editProfile()"
                     class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl">
                 ✏️ Edit Profile
             </button>
-            <button onclick="openSettings()" 
+            <button onclick="openSettings()"
                     class="flex-1 py-3 bg-zinc-700 hover:bg-zinc-600 rounded-2xl">
                 ⚙️ Settings
             </button>
         </div>
-        
-        <button onclick="logout()" 
+       
+        <button onclick="logout()"
                 class="w-full mt-3 py-3 bg-red-900/30 hover:bg-red-900/50 text-red-400 rounded-2xl font-medium">
             Logout
         </button>
     </div>
 </div>
-
 <!-- ==================== EDIT PROFILE MODAL ==================== -->
 <div id="editProfileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[80] p-4">
     <div class="glass rounded-3xl max-w-md w-full p-6">
@@ -291,17 +270,16 @@
             <h2 class="text-2xl font-bold text-emerald-400">Settings</h2>
             <button onclick="closeSettings()" class="text-zinc-400 hover:text-white text-3xl leading-none">×</button>
         </div>
-       
+      
         <div class="space-y-6" id="settingsContent">
             <!-- JS will load the content here -->
         </div>
-        <button onclick="closeSettings()" 
+        <button onclick="closeSettings()"
                 class="w-full mt-8 py-3 bg-zinc-700 hover:bg-zinc-600 rounded-2xl">
             Close
         </button>
     </div>
 </div>
-
 <!-- Copy Wallet Script -->
 <script>
     function copyWalletAddress() {
@@ -318,20 +296,16 @@
         });
     }
 </script>
-
 <!-- Main App Script -->
 <script type="module" src="js/main.js"></script>
-
 <script>
 const moreBtn = document.getElementById('more-btn');
 const moreMenu = document.getElementById('more-menu');
 const moreContainer = document.getElementById('more-container');
-
 moreBtn.addEventListener('click', function(e) {
     e.stopImmediatePropagation();
     moreMenu.classList.toggle('hidden');
 });
-
 // Close when clicking outside
 document.addEventListener('click', function(e) {
     if (!moreContainer.contains(e.target)) {
@@ -346,40 +320,32 @@ document.addEventListener('click', function(e) {
             <h2 class="text-2xl font-bold text-emerald-400" id="authTitle">Sign In</h2>
             <button onclick="closeAuthModal()" class="text-3xl text-zinc-400 hover:text-white">×</button>
         </div>
-
         <div id="authContent">
             <!-- JS will fill this -->
         </div>
-
         <div class="mt-6 text-center text-sm text-zinc-400">
             <span id="authToggleText">Don't have an account?</span>
             <button onclick="toggleAuthMode()" class="text-emerald-400 hover:text-emerald-300 ml-1 font-medium">Sign Up</button>
         </div>
     </div>
 </div>
-
     <script>
 let isLoginMode = true;
-
 function showAuthModal() {
     document.getElementById('authModal').classList.remove('hidden');
     renderAuthForm();
 }
-
 function closeAuthModal() {
     document.getElementById('authModal').classList.add('hidden');
 }
-
 function toggleAuthMode() {
     isLoginMode = !isLoginMode;
     renderAuthForm();
 }
-
 function renderAuthForm() {
     const title = document.getElementById('authTitle');
     const content = document.getElementById('authContent');
     const toggleText = document.getElementById('authToggleText');
-
     if (isLoginMode) {
         title.textContent = "Sign In";
         toggleText.textContent = "Don't have an account?";
@@ -405,18 +371,17 @@ function renderAuthForm() {
         `;
     }
 }
-
 window.showAuthModal = showAuthModal;
 window.closeAuthModal = closeAuthModal;
 window.toggleAuthMode = toggleAuthMode;
 </script>
-    
+   
     <!-- ==================== FOOTER ==================== -->
 <footer class="bg-zinc-950 border-t border-zinc-800 pt-12 pb-8">
     <div class="max-w-6xl mx-auto px-6">
-        
+       
         <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
-            
+           
             <!-- Column 1: Brand -->
             <div>
                 <div class="flex items-center gap-3 mb-4">
@@ -430,7 +395,6 @@ window.toggleAuthMode = toggleAuthMode;
                     A citizen-powered platform for sharing testimonies with integrity and protecting the public square.
                 </p>
             </div>
-
             <!-- Column 2: Platform -->
             <div>
                 <h4 class="text-white font-semibold mb-4">Platform</h4>
@@ -442,7 +406,6 @@ window.toggleAuthMode = toggleAuthMode;
                     <li><a href="#" class="text-zinc-400 hover:text-white transition-colors">Verified Witnesses</a></li>
                 </ul>
             </div>
-
             <!-- Column 3: Company -->
             <div>
                 <h4 class="text-white font-semibold mb-4">Company</h4>
@@ -454,7 +417,6 @@ window.toggleAuthMode = toggleAuthMode;
                     <li><a href="terms.html" class="text-zinc-400 hover:text-white transition-colors">Terms of Service</a></li>
                 </ul>
             </div>
-
             <!-- Column 4: Community -->
             <div>
                 <h4 class="text-white font-semibold mb-4">Community</h4>
@@ -466,28 +428,25 @@ window.toggleAuthMode = toggleAuthMode;
                 </ul>
             </div>
         </div>
-
         <!-- Bottom Bar -->
         <div class="mt-12 pt-8 border-t border-zinc-800 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-zinc-500">
             <div>
                 © 2026 VocalWitness. All rights reserved.<br>
                 <span class="text-emerald-600">Protecting the Public Square</span>
             </div>
-            
+           
             <div class="flex gap-6">
                 <a href="#" class="hover:text-zinc-300 transition-colors">Legal</a>
                 <a href="#" class="hover:text-zinc-300 transition-colors">Ethics</a>
                 <a href="#" class="hover:text-zinc-300 transition-colors">Transparency</a>
             </div>
-            
+           
             <div class="text-center md:text-right">
                 Built with integrity for truth-seekers worldwide.
             </div>
         </div>
     </div>
 </footer>
-    
-</body>
-</html>
+   
 </body>
 </html>
