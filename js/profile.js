@@ -35,32 +35,108 @@ function listenToUserProfile(userId) {
 
 function renderProfileUI(userData) {
     if (!userData) return;
+    
     const content = document.getElementById('profileContent');
     if (!content) return;
-  
-    const tier = userData.tier || 'Base';
-    const isZkVerified = userData.isZkVerified || false;
-  
-    content.innerHTML = `
-        <div class="text-center">
-            <div class="w-28 h-28 mx-auto rounded-3xl overflow-hidden border-4 border-zinc-700 mb-4">
-                ${userData.photoURL ? `<img src="${userData.photoURL}" class="w-full h-full object-cover">` : '👤'}
+
+    getCurrentWitnessLevel().then(level => {
+        const isWitness = level !== null;
+        
+        content.innerHTML = `
+            <div class="space-y-8">
+                <!-- Profile Header -->
+                <div class="flex flex-col items-center text-center">
+                    <div class="relative">
+                        <div class="w-32 h-32 mx-auto rounded-3xl overflow-hidden border-4 border-zinc-700 shadow-2xl">
+                            ${userData.photoURL ? 
+                                `<img src="${userData.photoURL}" class="w-full h-full object-cover">` : 
+                                `<div class="w-full h-full bg-gradient-to-br from-zinc-700 to-zinc-800 flex items-center justify-center text-7xl">👤</div>`
+                            }
+                        </div>
+                        ${isWitness ? `<div class="absolute -bottom-1 -right-1 text-3xl">🔐</div>` : ''}
+                    </div>
+                    
+                    <h2 class="text-3xl font-bold mt-5">${userData.displayName || "Anonymous Witness"}</h2>
+                    <p class="text-emerald-400">@${userData.username || 'anonymous'}</p>
+                    
+                    <!-- Tier Badge -->
+                    <div class="mt-6">
+                        ${level ? `
+                            <div class="inline-flex items-center gap-3 px-6 py-3 bg-zinc-900 border border-zinc-700 rounded-3xl">
+                                <span class="text-4xl">${level.emblem}</span>
+                                <div class="text-left">
+                                    <div class="font-bold text-lg text-white">${level.name}</div>
+                                    <div class="text-xs text-zinc-400">Level ${level.level} • ${userData.reputation || 0} REP</div>
+                                </div>
+                            </div>
+                        ` : `
+                            <div class="px-6 py-3 bg-zinc-800 rounded-3xl text-sm">👤 Citizen</div>
+                        `}
+                    </div>
+                </div>
+
+                <!-- Bio -->
+                ${userData.bio ? `
+                    <div class="bg-zinc-900/70 border border-zinc-700 rounded-3xl p-6 text-zinc-300">
+                        ${userData.bio}
+                    </div>
+                ` : ''}
+
+                <!-- Stats -->
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="bg-zinc-900 rounded-3xl p-5 text-center">
+                        <div class="text-3xl font-bold text-emerald-400">${userData.reputation || 0}</div>
+                        <div class="text-xs text-zinc-500 mt-1">Reputation</div>
+                    </div>
+                    <div class="bg-zinc-900 rounded-3xl p-5 text-center">
+                        <div class="text-3xl font-bold">${userData.testimoniesCount || 0}</div>
+                        <div class="text-xs text-zinc-500 mt-1">Testimonies</div>
+                    </div>
+                    <div class="bg-zinc-900 rounded-3xl p-5 text-center">
+                        <div class="text-3xl font-bold text-amber-400">${userData.verifications || 0}</div>
+                        <div class="text-xs text-zinc-500 mt-1">Verifications</div>
+                    </div>
+                </div>
+
+                <!-- Security Status -->
+                <div class="bg-zinc-900 rounded-3xl p-6">
+                    <h4 class="font-semibold mb-4 flex items-center gap-2">
+                        <span>🛡️</span> Security Status
+                    </h4>
+                    <div class="space-y-4 text-sm">
+                        <div class="flex justify-between items-center">
+                            <span>Phone Verification</span>
+                            <span class="${userData.isPhoneVerified ? 'text-emerald-400' : 'text-zinc-500'}">
+                                ${userData.isPhoneVerified ? '✓ Verified' : 'Not Verified'}
+                            </span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span>ZK Proof</span>
+                            <span class="${userData.zkVerified ? 'text-amber-400' : 'text-zinc-500'}">
+                                ${userData.zkVerified ? '✓ Verified' : 'Not Verified'}
+                            </span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span>Account Created</span>
+                            <span class="text-zinc-400">${userData.createdAt ? new Date(userData.createdAt.toDate()).toLocaleDateString() : 'Recent'}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="flex gap-3">
+                    <button onclick="openEditProfile()" 
+                            class="flex-1 py-4 bg-emerald-600 hover:bg-emerald-500 text-black font-semibold rounded-3xl transition">
+                        ✏️ Edit Profile
+                    </button>
+                    <button onclick="downloadMyDataPDF()" 
+                            class="flex-1 py-4 bg-zinc-700 hover:bg-zinc-600 font-semibold rounded-3xl transition">
+                        📄 Export Data
+                    </button>
+                </div>
             </div>
-            <h3 class="text-2xl font-bold">${userData.displayName || "Anonymous Witness"}</h3>
-            <p class="text-emerald-400">@${userData.username || 'anonymous'}</p>
-          
-            <div class="flex justify-center gap-3 mt-4">
-                <div class="px-4 py-1 bg-emerald-900/60 text-emerald-400 rounded-2xl text-sm">⭐ ${tier} Tier</div>
-                ${isZkVerified ? `<div class="px-4 py-1 bg-amber-900/60 text-amber-400 rounded-2xl text-sm">🔐 ZK Verified</div>` : ''}
-            </div>
-        </div>
-       
-        <!-- Buttons Section -->
-        <div class="flex gap-3 mt-8">
-            <button onclick="openEditProfile()" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl">✏️ Edit Profile</button>
-            <button onclick="downloadMyDataPDF()" class="flex-1 py-3 bg-zinc-700 hover:bg-zinc-600 rounded-2xl">📄 Download PDF</button>
-        </div>
-    `;
+        `;
+    }).catch(console.error);
 }
 
 // PDF Export
