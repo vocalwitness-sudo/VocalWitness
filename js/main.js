@@ -145,7 +145,6 @@ window.refreshLedger = loadEvidenceLedger;
 window.showProfile = () => {
     if (!auth.currentUser) {
         showToast("Please sign in to access your Profile", "info");
-        // TODO: Open sign-in modal later
         return;
     }
 
@@ -156,20 +155,23 @@ window.showProfile = () => {
     }
 
     modal.classList.remove('hidden');
-    initProfile();           // Load real-time data
+    initProfile(); 
 };
 
-// Close function
 window.closeProfile = () => {
-    document.getElementById('profileModal')?.classList.add('hidden');
+    const modal = document.getElementById('profileModal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
 };
 
-// Optional: Close when clicking outside (nice UX)
+// Event listener for clicking outside the modal
 document.getElementById('profileModal')?.addEventListener('click', function(e) {
     if (e.target === this) {
         window.closeProfile();
     }
 });
+
 // ====================== SETUP EVENT LISTENERS ======================
 function setupEventListeners() {
     if (isInitialized) return;
