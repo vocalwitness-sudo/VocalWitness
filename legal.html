@@ -4,47 +4,46 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Legal Information | VocalWitness</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
 </head>
-<body>
+<body class="min-h-screen bg-[#0a0f1c] text-zinc-200">
 
-    <!-- Header / Navigation -->
-    <header>
-        <nav id="navbar">
-            <a href="index.html">Home</a>
-            <a href="about.html">About</a>
-            <a href="legal.html" class="active">Legal</a>
-            <a href="privacy.html">Privacy</a>
-        </nav>
-    </header>
+    <!-- Reuse Header or simple back link -->
+    <div class="max-w-4xl mx-auto p-6">
+        <a href="index.html" class="inline-flex items-center gap-2 text-emerald-400 hover:text-emerald-300 mb-8">
+            ← Back to Public Square
+        </a>
 
-    <main class="container">
-        <h1>Legal Disclaimer</h1>
-        
-        <section>
-            <h2>Terms of Use</h2>
-            <p>By using VocalWitness, you agree to comply with our community guidelines and terms of service. Please review the <a href="terms.html">full Terms of Service here</a>.</p>
-        </section>
+        <div class="glass rounded-3xl p-10">
+            <h1 class="text-4xl font-bold text-white mb-8">Legal Information</h1>
+            
+            <section class="mb-12">
+                <h2 class="text-2xl font-semibold text-emerald-400 mb-4">Platform Disclaimer</h2>
+                <p class="leading-relaxed">VocalWitness functions strictly as an <strong>un-manipulated decentralized distribution medium</strong>. We do not verify the absolute truth of every testimony — that responsibility lies with the community.</p>
+            </section>
 
-        <section>
-            <h2>Disclaimers</h2>
-            <p>VocalWitness provides a platform for verified testimony. We do not guarantee the absolute accuracy of user-submitted content. All information is provided for informational purposes only.</p>
-        </section>
+            <section class="mb-12">
+                <h2 class="text-2xl font-semibold text-emerald-400 mb-4">Terms of Use</h2>
+                <p>By using VocalWitness, you agree to our <a href="terms.html" class="text-emerald-400 hover:underline">Terms of Service</a> and <a href="safety.html" class="text-emerald-400 hover:underline">Safety Guidelines</a>.</p>
+            </section>
 
-        <section>
-            <h2>Liability</h2>
-            <p>The developers of VocalWitness assume no liability for the accuracy, completeness, or usefulness of any information available through this platform.</p>
-        </section>
-    </main>
+            <section class="mb-12">
+                <h2 class="text-2xl font-semibold text-emerald-400 mb-4">Liability</h2>
+                <p>We assume no liability for the accuracy, completeness, or consequences of user-generated content.</p>
+            </section>
 
-    <!-- Footer -->
-    <footer>
-        <p>&copy; 2026 VocalWitness Project</p>
-    </footer>
+            <section>
+                <h2 class="text-2xl font-semibold text-emerald-400 mb-4">Transparency</h2>
+                <p>All testimonies are immutable once published. Forensic tools help users verify authenticity.</p>
+            </section>
+        </div>
+    </div>
 
-    <!-- Scripts -->
-    <script src="js/firebase-init.js" type="module"></script>
+    <!-- Reuse your professional footer here (copy from index.html) -->
+    <!-- ... paste footer ... -->
+
     <script src="js/navigation.js" type="module"></script>
 </body>
 </html>
