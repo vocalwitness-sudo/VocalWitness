@@ -274,6 +274,78 @@ if (moreBtn && moreMenu) {
         if (e.key === "Escape") moreMenu.classList.add('hidden');
     });
 }
+
+    <!-- Support Donation Modal -->
+<div id="supportModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[10000] p-4">
+    <div class="glass rounded-3xl p-8 max-w-md w-full">
+        <div class="flex justify-between items-start mb-6">
+            <div>
+                <h2 class="text-2xl font-bold text-white">Support The Square</h2>
+                <p class="text-emerald-400 text-sm">Help keep truth &amp; evidence free</p>
+            </div>
+            <button onclick="closeSupportModal()" class="text-4xl leading-none text-zinc-400 hover:text-white">×</button>
+        </div>
+
+        <div class="text-center mb-8">
+            <p class="text-zinc-300 mb-4">Scan or send USDT (TRC20)</p>
+            
+            <!-- QR Code -->
+            <div class="inline-block bg-white p-4 rounded-2xl mb-6">
+                <img src="95756.jpg" alt="USDT Donation QR Code" class="w-48 h-48 mx-auto">
+            </div>
+            
+            <!-- Address -->
+            <div class="bg-zinc-900 rounded-2xl p-5">
+                <p class="text-xs text-zinc-400 mb-1">USDT Address (TRC20)</p>
+                <p onclick="copyAddress()" id="usdtAddress" 
+                   class="font-mono text-sm break-all cursor-pointer hover:text-emerald-400 transition-colors">
+                    TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK
+                </p>
+                <p class="text-[10px] text-zinc-500 mt-2">Click to copy</p>
+            </div>
+        </div>
+
+        <div class="flex flex-col gap-3">
+            <button onclick="closeSupportModal()" 
+                    class="py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl font-medium">
+                Close
+            </button>
+            
+            <a href="https://github.com/vocalwitness-sudo/VocalWitness" target="_blank"
+               class="py-4 border border-emerald-500 text-emerald-400 hover:bg-emerald-500/10 rounded-2xl font-medium text-center">
+                ⭐ Also support by starring on GitHub
+            </a>
+        </div>
+
+        <p class="text-center text-xs text-zinc-500 mt-8">
+            Every contribution protects the public square. Thank you ❤️
+        </p>
+    </div>
+</div>
+
+<script>
+// Support Modal Controls
+function supportModal() {
+    document.getElementById('supportModal').classList.remove('hidden');
+}
+
+function closeSupportModal() {
+    document.getElementById('supportModal').classList.add('hidden');
+}
+
+function copyAddress() {
+    const address = "TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK";
+    navigator.clipboard.writeText(address).then(() => {
+        const el = document.getElementById('usdtAddress');
+        const original = el.textContent;
+        el.textContent = "✅ Copied to clipboard!";
+        setTimeout(() => el.textContent = original, 2500);
+    });
+}
+
+// Attach button
+document.getElementById('support-btn').addEventListener('click', supportModal);
+
 </script>
 
 </body>
