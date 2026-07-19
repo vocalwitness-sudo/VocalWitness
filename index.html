@@ -36,6 +36,24 @@
             color: black;
             font-weight: 600;
         }
+        /* Profile Enhancements */
+#profileContent {
+    animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Better Badge Style */
+#profile-tier-badge {
+    font-size: 0.95rem;
+    padding: 6px 16px;
+    border-radius: 9999px;
+    font-weight: 600;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
     </style>
 </head>
 <body class="min-h-screen pb-24 bg-[#0a0f1c]">
