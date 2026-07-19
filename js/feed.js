@@ -36,48 +36,52 @@ export function initFeed(dbInstance, feedType = 'citizen-talk') {
 function renderPost(id, data) {
     if (data.moderationStatus === "removed") return;
 
-    const feedContainer = document.getElementById('feedContainer');
-    if (!feedContainer) return;   // ← Add this safety check
-
     const postEl = document.createElement('div');
-    postEl.className = 'post-card glass rounded-3xl p-6 mb-6';
-    
-    const isSteward = data.authorTier === 'steward' || data.isModerator;
-    let statusHTML = data.moderationStatus === "needs_review" 
-        ? `<span class="inline-flex items-center gap-1 text-amber-400 text-xs">🔍 Under Review</span>` : '';
+    postEl.className = 'glass rounded-3xl p-6 mb-6 hover:border-emerald-500/30 transition-all duration-200';
 
-    // Build media section
-    let mediaHTML = '';
-    if (data.imageUrl) mediaHTML += `<img src="${data.imageUrl}" class="rounded-2xl mt-4 w-full object-cover max-h-96" alt="Evidence">`;
-    if (data.audioUrl) mediaHTML += `<audio controls class="w-full mt-4"><source src="${data.audioUrl}" type="audio/webm"></audio>`;
+    const mediaHTML = data.imageUrl ? 
+        `<img src="${data.imageUrl}" class="mt-5 rounded-2xl w-full max-h-96 object-cover" alt="Evidence">` : '';
+
+    const audioHTML = data.audioUrl ? 
+        `<div class="mt-5 bg-zinc-900 rounded-2xl p-4">
+            <audio controls class="w-full"><source src="${data.audioUrl}" type="audio/webm"></audio>
+         </div>` : '';
 
     postEl.innerHTML = `
         <div class="flex justify-between items-start">
             <div class="flex items-center gap-3">
-                <div class="scale-50 -ml-4 -mr-4">
-                    ${renderTierCircle(data.authorTier || 'citizen', data.reputation || 0)}
-                </div>
+                ${renderTierCircle ? renderTierCircle(data.authorTier || 'citizen', data.reputation || 0) : '👤'}
                 <div>
                     <p class="font-semibold">${data.author || 'Anonymous Witness'}</p>
-                    <p class="text-xs text-zinc-500">${new Date(data.timestamp?.toDate?.() || data.timestamp).toLocaleString()} ${statusHTML}</p>
+                    <p class="text-xs text-zinc-500">${new Date(data.timestamp?.toDate?.() || data.timestamp).toLocaleString()}</p>
                 </div>
             </div>
-            <button onclick="showPostMenu('${id}', '${data.authorId}')" class="text-2xl text-zinc-400 hover:text-white">⋯</button>
+            <button onclick="showPostMenu('${id}', '${data.authorId}')" class="text-zinc-400 hover:text-white text-2xl">⋯</button>
         </div>
-        ${data.content ? `<p class="my-4 text-zinc-100 leading-relaxed">${data.content}</p>` : ''}
+
+        ${data.content ? `<p class="mt-5 mb-4 text-zinc-100 leading-relaxed">${data.content}</p>` : ''}
+
         ${mediaHTML}
-        <div class="flex items-center justify-between mt-6 pt-4 border-t border-zinc-700 text-sm">
+        ${audioHTML}
+
+        <div class="flex items-center justify-between mt-6 pt-5 border-t border-zinc-700 text-sm">
             <div class="flex gap-6">
-                <button onclick="likePost('${id}')" class="flex items-center gap-1.5 hover:text-emerald-400">👍 <span>${data.likes || 0}</span></button>
-                <button onclick="commentOnPost('${id}')" class="flex items-center gap-1.5 hover:text-sky-400">💬 <span>${data.commentsCount || 0}</span></button>
-                ${isSteward ? `<button onclick="escalatePost('${id}')" class="flex items-center gap-1.5 text-amber-400">🔬 Moderate</button>` : ''}
-                <button onclick="reportPost('${id}')" class="flex items-center gap-1.5 text-red-400 hover:text-red-500">🚩 Report</button>
+                <button onclick="likePost('${id}')" class="flex items-center gap-1.5 hover:text-emerald-400 transition">
+                    👍 <span>${data.likes || 0}</span>
+                </button>
+                <button onclick="commentOnPost('${id}')" class="flex items-center gap-1.5 hover:text-sky-400 transition">
+                    💬 <span>${data.commentsCount || 0}</span>
+                </button>
             </div>
-            <button onclick="sharePost('${id}')" class="text-emerald-400">Share</button>
+            <div class="flex gap-4">
+                <button onclick="reportPost('${id}')" class="text-red-400 hover:text-red-500 transition">Report</button>
+                <button onclick="sharePost('${id}')" class="text-emerald-400 hover:text-emerald-500 transition">Share</button>
+            </div>
         </div>
     `;
 
-    document.getElementById('feedContainer').appendChild(postEl);
+    const container = document.getElementById('feedContainer');
+    if (container) container.appendChild(postEl);
 }
 
 // Global scope helpers
