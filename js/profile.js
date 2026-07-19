@@ -381,3 +381,30 @@ window.deleteAccountConfirm = () => {
         }
     }
 };
+
+// ====================== ADDITIONAL PROFESSIONAL FEATURES ======================
+
+// Show Login History (Demo)
+window.viewLoginHistory = () => {
+    showToast("🔍 Login history coming in next update.\n\nLast login: Just now from Windows 7", "info");
+};
+
+// Toggle 2FA (Demo)
+window.toggle2FA = () => {
+    showToast("🛡️ Two-Factor Authentication setup coming soon.\n\nThis will add strong security.", "info");
+};
+
+// Performance: Auto refresh tier when profile opens
+document.getElementById('profile-btn')?.addEventListener('click', () => {
+    setTimeout(() => {
+        refreshTierAndUI();
+    }, 300);
+});
+
+// Keyboard shortcut for Profile (Optional but professional)
+document.addEventListener('keydown', (e) => {
+    if (e.key === "p" && e.ctrlKey) {
+        e.preventDefault();
+        window.showProfile();
+    }
+});
