@@ -5,7 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#10b981">
     <meta name="description" content="VocalWitness - Privacy First Public Square for Truth and Evidence">
- <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://www.gstatic.com https://apis.google.com https://accounts.google.com; connect-src 'self' https://apis.google.com https://accounts.google.com https://*.googleapis.com; frame-src 'self' https://accounts.google.com;">
+    <<meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self' 'unsafe-inline' 'unsafe-eval' https:;
+    style-src 'self' 'unsafe-inline' https:;
+    img-src 'self' data: https: blob:;
+    media-src 'self' https: blob:;
+    connect-src 'self' https: wss:;
+    frame-src 'self' https: https://*.flutterwave.com https://checkout-v3.flutterwave.com;
+">
+
     <title data-i18n="pageTitle">VocalWitness • Truth • Evidence • Public Square</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
