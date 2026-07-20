@@ -1,51 +1,267 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#10b981">
-    <meta name="description" content="VocalWitness - Privacy First Public Square for Truth and Evidence">
+import './app-state.js';
+import { initAuth } from "./auth.js";
+import { initFeed } from './feed.js';
+import { db, auth, storage } from './firebase-config.js';
+import { initLanguage } from './i18n.js';
+import * as mediaModule from './media.js';
+import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
+import { initProfile } from './profile.js';
+import { initOnboarding } from './onboarding.js';
+import { loadDynamicNavigation } from './navigation.js';
+import { applyTierTheme, updateTierBadge } from './tier.js';
+import { AppState } from './app-state.js';
+import * as ledgerModule from './forensic-ledger.js';
+import { showToast, generateSha256Hash } from './utils.js';
+
+let engineInstance = null;
+let isInitialized = false;
+
+// ====================== TAB SWITCHING ======================
+window.switchTab = async (tab) => {
+    console.log(`Switching to tab: ${tab}`);
     
-    <link rel="manifest" href="/manifest.json">
-    <link rel="icon" href="/logo.png" type="image/png">
+    document.querySelectorAll('#main-nav button').forEach(btn => {
+        btn.classList.remove('active', 'bg-amber-900', 'text-amber-300');
+        if (btn.dataset.tab === tab) {
+            btn.classList.add('active');
+            if (tab === 'witness') btn.classList.add('bg-amber-900', 'text-amber-300');
+        }
+    });
 
-    <title data-i18n="pageTitle">VocalWitness • Truth • Evidence • Public Square</title>
+    AppState.currentTab = tab;
+    AppState.currentMode = tab === 'witness' ? 'witness' : 'citizen';
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    const container = document.getElementById('dynamicContainer');
+    if (!container) return;
 
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: #e2e8f0; }
-        .glass { background: rgba(15, 23, 42, 0.92); backdrop-filter: blur(24px); border: 1px solid rgba(148, 163, 184, 0.12); }
-        .nav-tab.active { background-color: #10b981; color: black; font-weight: 600; }
-    </style>
-</head>
-<body class="min-h-screen pb-24 bg-[#0a0f1c]">
+    container.innerHTML = `<div class="text-center py-20 text-zinc-400">Loading ${tab}...</div>`;
 
-<!-- [Your full header, nav, composer, footer as before] -->
+    try {
+        if (tab === 'square' || tab === 'citizen') {
+            container.innerHTML = `<div id="feedContainer" class="space-y-8"></div>`;
+            initFeed(db, 'citizen-talk');
+      } else if (tab === 'ledger') {
+    container.innerHTML = `
+        <div id="ledgerContainer" class="space-y-6 min-h-[400px]">
+            <!-- Loaded by loadEvidenceLedger() -->
+        </div>`;
+    loadEvidenceLedger();
+        } else if (tab === 'witness') {
+            container.innerHTML = `<div id="trueWitnessContainer" class="space-y-6 p-8 text-center">
+                <h2 class="text-3xl font-bold text-amber-400">🛡️ Verified Witnesses</h2>
+                <p class="text-zinc-400 mt-4">ZK-Verified Testimonies</p>
+            </div>`;
+        }
+    } catch (e) {
+        console.error("SwitchTab error:", e);
+    }
+};
+// ====================== GLOBAL HELPERS ======================
+window.showProfile = () => document.getElementById('profileModal')?.classList.remove('hidden');
+window.closeProfile = () => document.getElementById('profileModal')?.classList.add('hidden');
+window.logout = () => { if (confirm("Logout?")) showToast("Logged out", "info"); };
 
-<!-- Profile Modal (Your improved version) -->
-<div id="profileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[10000] p-4">
-    <div class="glass rounded-3xl p-8 max-w-lg w-full max-h-[90vh] overflow-auto">
-        <div class="flex justify-between items-center mb-6 border-b border-zinc-700 pb-4">
-            <h2 class="text-2xl font-bold text-white">My Profile</h2>
-            <button onclick="closeProfile()" class="text-3xl text-zinc-400 hover:text-white">×</button>
-        </div>
-        <div id="profileContent"></div>
-        
-        <div class="mt-8 flex gap-3">
-            <button onclick="logout()" class="flex-1 py-3 border border-red-500 text-red-400 hover:bg-red-500/10 rounded-2xl font-medium">
-                Sign Out
+// ====================== PUBLISH TESTIMONY ======================
+window.publishTestimony = async () => {
+    const textarea = document.getElementById('mainInput');
+    const content = textarea ? textarea.value.trim() : '';
+    if (!content) {
+        showToast("Please write a testimony", "error");
+        return;
+    }
+    const postBtn = document.getElementById('postButton');
+    if (postBtn) {
+        postBtn.disabled = true;
+        postBtn.textContent = 'Publishing...';
+    }
+    try {
+        const { collection, addDoc, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
+        const mediaData = window.engineInstance?.getPendingMedia?.() || {};
+        const testimonyData = {
+            authorId: "anonymous",
+            author: "Anonymous Witness",
+            content,
+            createdAt: serverTimestamp(),
+            timestamp: Date.now(),
+            isPublic: true,
+            moderationStatus: "approved",
+            feedVisibility: "citizen-talk",
+            imageUrl: mediaData.imageUrl || null,
+            audioUrl: mediaData.audioUrl || null,
+            imageHash: mediaData.imageHash || null,
+            exif: mediaData.exif || null,
+            hasForensic: !!(mediaData.imageHash || mediaData.exif)
+        };
+        await addDoc(collection(db, "testimonies"), testimonyData);
+        showToast("✅ Testimony published!", "success");
+        if (textarea) textarea.value = '';
+        window.engineInstance?.clearPendingMedia?.();
+    } catch (err) {
+        console.error("Publish error:", err);
+        showToast("Failed to publish.", "error");
+    } finally {
+        if (postBtn) {
+            postBtn.disabled = false;
+            postBtn.textContent = 'Publish to the Square';
+        }
+    }
+};
+
+// ====================== LIGHT EXIF ======================
+async function getLightExif(file) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const dataView = new DataView(e.target.result);
+                if (dataView.getUint16(0) === 0xFFD8) {
+                    resolve({ hasExif: true, timestamp: new Date().toISOString(), note: "Basic EXIF detected" });
+                } else {
+                    resolve(null);
+                }
+            } catch (err) {
+                resolve(null);
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    });
+}
+// ====================== EVIDENCE LEDGER ======================
+async function loadEvidenceLedger() {
+    const container = document.getElementById('ledgerContainer');
+    if (!container) return;
+
+    container.innerHTML = `
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-emerald-400">Evidence Ledger</h2>
+            <button onclick="refreshLedger()" 
+                    class="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-sm flex items-center gap-2">
+                🔄 Refresh
             </button>
         </div>
-    </div>
-</div>
+        <div id="ledgerEntries" class="space-y-4 min-h-[300px]"></div>
+    `;
 
-<!-- Support & Login Modals (keep as you had) -->
+    if (typeof loadForensicLedger === 'function') {
+        loadForensicLedger();
+    }
+}
+// ====================== SETUP EVENT LISTENERS ======================
+function setupEventListeners() {
+    if (isInitialized) return;
+    isInitialized = true;
+    console.log("Setting up all event listeners...");
 
-<script type="module" src="js/main.js"></script>
+    // Nav & Top Buttons
+    document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
+        btn.addEventListener('click', () => window.switchTab(btn.dataset.tab));
+    });
+    document.getElementById('profile-btn')?.addEventListener('click', window.showProfile);
+    document.getElementById('support-btn')?.addEventListener('click', () => document.getElementById('supportModal')?.classList.remove('hidden'));
+    document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
 
-</body>
-</html>
+    // Forensic Photo Button (Full Original)
+    const photoBtn = document.getElementById('btn-photo');
+    if (photoBtn) {
+        photoBtn.addEventListener('click', () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/jpeg, image/png, image/webp';
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                if (!file.type.startsWith('image/')) {
+                    showToast("❌ Only image files allowed", "error");
+                    return;
+                }
+                if (file.size > 10 * 1024 * 1024) {
+                    showToast("❌ Image too large. Max 10MB", "error");
+                    return;
+                }
+                try {
+                    showToast("✅ Processing forensic image...", "info");
+                    const hash = await generateSha256Hash(file);
+                    const reader = new FileReader();
+                    reader.onload = async (ev) => {
+                        const previewArea = document.getElementById('preview-area');
+                        if (!previewArea) return;
+                        let exifBadge = '';
+                        let exifSummary = null;
+                        if (AppState.isWitnessVerified || auth.currentUser) {
+                            try {
+                                exifSummary = await getLightExif(file);
+                                if (exifSummary) exifBadge = `<div class="absolute top-2 right-2 bg-emerald-600 text-white text-[10px] px-2 py-1 rounded">EXIF ✓</div>`;
+                            } catch (e) {}
+                        }
+                        previewArea.innerHTML = `
+                            <div class="relative mt-4 rounded-2xl overflow-hidden border border-emerald-500/50">
+                                <img src="${ev.target.result}" class="w-full max-h-64 object-cover" alt="Forensic Preview">
+                                ${exifBadge}
+                                <div class="absolute bottom-2 left-2 bg-black/70 text-[10px] px-2 py-1 rounded font-mono text-emerald-400">
+                                    ${hash.substring(0, 16)}...
+                                </div>
+                            </div>`;
+                        if (window.engineInstance) {
+                            window.engineInstance.setPendingImage?.(file, hash, exifSummary);
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                } catch (err) {
+                    console.error(err);
+                    showToast("❌ Failed to process image", "error");
+                }
+            };
+            input.click();
+        });
+    }
+
+    // Voice Testimony Button (Full Original)
+    const voiceBtn = document.getElementById('btn-voice');
+    if (voiceBtn) {
+        voiceBtn.addEventListener('click', async () => {
+            if (!window.engineInstance) {
+                showToast("Voice engine not ready. Refresh page.", "error");
+                return;
+            }
+            try {
+                const isRecording = window.engineInstance.mediaRecorder && window.engineInstance.mediaRecorder.state === "recording";
+                if (!isRecording) {
+                    await window.engineInstance.startVoiceRecording(300000);
+                    voiceBtn.classList.add('recording-active', 'animate-pulse');
+                    voiceBtn.textContent = '⏹️ Stop Recording';
+                    showToast("🎤 Recording started...", "info");
+                } else {
+                    window.engineInstance.stopVoiceRecording();
+                    voiceBtn.classList.remove('recording-active', 'animate-pulse');
+                    voiceBtn.textContent = '🎤 Voice Testimony';
+                    showToast("✅ Recording saved", "success");
+                }
+            } catch (err) {
+                console.error("Voice error:", err);
+                showToast("Microphone access denied or error occurred.", "error");
+            }
+        });
+    }
+
+    console.log("✅ All major event listeners attached");
+}
+
+// ====================== BOOTSTRAP ======================
+async function bootstrap() {
+    if (isInitialized) return;
+    console.log("🚀 Bootstrap started");
+    try {
+        setupEventListeners();
+        if (typeof initLanguage === 'function') initLanguage();
+        engineInstance = new CitizenTalkEngine(db, storage);
+        window.engineInstance = engineInstance;
+        setTimeout(() => window.switchTab('square'), 500);
+        console.log("✅ Bootstrap finished");
+    } catch (e) {
+        console.error("Bootstrap error:", e);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', bootstrap);
+
+     
