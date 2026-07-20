@@ -17,12 +17,13 @@
     <title data-i18n="pageTitle">VocalWitness • Truth • Evidence • Public Square</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
         body {
             font-family: 'Inter', system-ui, sans-serif;
             background: #0a0f1c;
@@ -41,23 +42,26 @@
             color: black;
             font-weight: 600;
         }
-        /* Profile Enhancements */
         #profileContent {
             animation: fadeIn 0.4s ease;
         }
-
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-
-        /* Better Badge Style */
         #profile-tier-badge {
             font-size: 0.95rem;
             padding: 6px 16px;
             border-radius: 9999px;
             font-weight: 600;
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        .modal {
+            animation: modalPop 0.3s ease;
+        }
+        @keyframes modalPop {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
         }
     </style>
 </head>
@@ -68,7 +72,6 @@
     <p>You are part of a growing community that believes truth matters.</p>
     <p class="mt-1"><strong>Together, we protect the public square.</strong></p>
 </div>
-
 
 <!-- Header -->
 <header class="flex items-center justify-between mb-8 sticky top-0 z-50 glass rounded-3xl p-4">
@@ -83,7 +86,10 @@
     <div class="flex items-center gap-3 md:gap-4">
         <!-- Language -->
         <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-4 py-2 text-sm focus:outline-none focus:border-emerald-500 hidden sm:block">
-            <!-- populated by JS -->
+            <option value="en">🇬🇧 English</option>
+            <option value="es">🇪🇸 Español</option>
+            <option value="fr">🇫🇷 Français</option>
+            <option value="de">🇩🇪 Deutsch</option>
         </select>
 
         <a href="privacy.html" class="flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 transition-colors text-sm font-medium px-3 py-2">
@@ -94,14 +100,14 @@
             Support The Square
         </button>
 
-        <!-- Sign In Button (Visible when not logged in) -->
+        <!-- Sign In Button -->
         <button id="signin-btn" 
                 class="px-5 py-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm">
             <img src="https://www.google.com/favicon.ico" class="w-4 h-4" alt="Google">
             <span class="hidden sm:inline">Sign in</span>
         </button>
 
-        <!-- Profile Button (Visible when logged in) -->
+        <!-- Profile Button -->
         <button id="profile-btn" 
                 class="px-5 py-2.5 border border-zinc-700 hover:bg-zinc-800 rounded-2xl transition flex items-center gap-2 hidden">
             👤 <span class="hidden sm:inline">Profile</span>
@@ -144,7 +150,7 @@
     </div>
 </nav>
 
-<!-- More Menu (Outside nav) -->
+<!-- More Menu -->
 <div id="more-menu" class="hidden fixed top-[165px] right-6 w-64 bg-zinc-900 border border-zinc-700 rounded-3xl shadow-2xl py-3 z-[9999]">
     <a href="my-testimonies.html" class="block px-6 py-3 hover:bg-zinc-800">My Testimonies</a>
     <a href="groups.html" class="block px-6 py-3 hover:bg-zinc-800">Groups</a>
@@ -156,7 +162,7 @@
     <a href="safety.html" class="block px-6 py-3 hover:bg-zinc-800">Safety Guidelines</a>
 </div>
 
-<!-- Improved Testimony Composer -->
+<!-- Testimony Composer -->
 <div class="glass rounded-3xl p-6 mb-10">
     <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold text-white flex items-center gap-2">
@@ -186,7 +192,7 @@
     <div id="dynamicContainer" class="space-y-8"></div>
 </main>
 
-<!-- Professional Footer -->
+<!-- Footer -->
 <footer class="bg-zinc-950 border-t border-zinc-800 pt-16 pb-12 mt-20">
     <div class="max-w-6xl mx-auto px-6">
         <div class="grid grid-cols-2 md:grid-cols-5 gap-10">
@@ -265,55 +271,37 @@
     </div>
 </footer>
 
-<!-- Main Script -->
-    <script type="module" src="js/main.js"></script>
+<!-- Modals -->
 
-   <!-- More Dropdown Script -->
-    <script>
-        const moreBtn = document.getElementById('more-btn');
-        const moreMenu = document.getElementById('more-menu');
-
-        if (moreBtn && moreMenu) {
-            moreBtn.addEventListener('click', function(e) {
-                e.stopImmediatePropagation();
-                e.preventDefault();
-                moreMenu.classList.toggle('hidden');
-            });
-
-            document.addEventListener('click', function(e) {
-                if (!moreBtn.contains(e.target) && !moreMenu.contains(e.target)) {
-                    moreMenu.classList.add('hidden');
-                }
-            });
-        }
-    </script>
-
-    <!-- ==================== MODALS ==================== -->
-    
-    <!-- Support Donation Modal -->
-    <div id="supportModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[10000] p-4">
-        <div class="glass rounded-3xl p-8 max-w-md w-full">
-            <div class="flex justify-between items-start mb-6">
-                <div>
-                    <h2 class="text-2xl font-bold text-white">Support The Square</h2>
-                    <p class="text-emerald-400 text-sm">Help keep truth & evidence free</p>
-                </div>
-                <button onclick="closeSupportModal()" class="text-4xl text-zinc-400 hover:text-white">×</button>
+<!-- Support Modal -->
+<div id="supportModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[10000] p-4">
+    <div class="glass rounded-3xl p-8 max-w-md w-full modal">
+        <div class="flex justify-between items-start mb-6">
+            <div>
+                <h2 class="text-2xl font-bold text-white">Support The Square</h2>
+                <p class="text-emerald-400 text-sm">Help keep truth & evidence free</p>
             </div>
-            <!-- Add your QR/Address content here -->
+            <button onclick="closeSupportModal()" class="text-4xl text-zinc-400 hover:text-white">×</button>
+        </div>
+        <div class="text-center py-8">
+            <p class="text-zinc-400 mb-6">Scan or send to this address</p>
+            <div class="bg-zinc-900 p-6 rounded-2xl font-mono text-sm break-all mb-4">
+                0x742d35Cc6634C0532925a3b844Bc454e4438f44e
+            </div>
+            <button onclick="copyAddress()" class="text-emerald-400 hover:text-emerald-300 text-sm font-medium">📋 Copy Address</button>
         </div>
     </div>
+</div>
 
-   <!-- Login Modal -->
+<!-- Login Modal -->
 <div id="loginModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[10000] p-4">
-    <div class="glass rounded-3xl p-8 max-w-md w-full">
+    <div class="glass rounded-3xl p-8 max-w-md w-full modal">
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-2xl font-bold text-white">Welcome to the Square</h2>
             <button onclick="closeLoginModal()" class="text-3xl text-zinc-400 hover:text-white">×</button>
         </div>
         
         <div class="space-y-4">
-            <!-- Google Login -->
             <button onclick="googleLogin()" 
                     class="w-full py-4 bg-white text-black font-semibold rounded-2xl flex items-center justify-center gap-3 hover:bg-zinc-100 transition">
                 <img src="https://www.google.com/favicon.ico" class="w-5 h-5" alt="Google">
@@ -322,27 +310,27 @@
 
             <div class="text-center text-zinc-500 text-sm py-2">or</div>
 
-            <!-- Phone Login (safer version) -->
             <button onclick="showToast('Phone sign-in coming soon', 'info')" 
                     class="w-full py-4 border border-zinc-600 hover:border-emerald-500 rounded-2xl font-medium transition">
                 📱 Sign in with Phone
             </button>
         </div>
 
-        <p class="text-center text
-        </div>
+        <p class="text-center text-zinc-500 text-xs mt-8">
+            By signing in you agree to our <a href="terms.html" class="text-emerald-400">Terms</a> and <a href="privacy.html" class="text-emerald-400">Privacy Policy</a>
+        </p>
     </div>
+</div>
 
-    <!-- Profile Modal -->
+<!-- Profile Modal -->
 <div id="profileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[10000] p-4">
-    <div class="glass rounded-3xl p-8 max-w-lg w-full max-h-[90vh] overflow-auto">
+    <div class="glass rounded-3xl p-8 max-w-lg w-full max-h-[90vh] overflow-auto modal">
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-2xl font-bold">My Profile</h2>
             <button onclick="closeProfile()" class="text-3xl text-zinc-400 hover:text-white">×</button>
         </div>
         
         <div id="profileContent">
-            <!-- Content loaded by JS (initProfile) -->
             <div class="text-center py-12 text-zinc-400">Loading profile...</div>
         </div>
         
@@ -355,40 +343,116 @@
     </div>
 </div>
 
-    // Update header buttons based on login state
-function updateHeaderButtons(user) {
-    const signinBtn = document.getElementById('signin-btn');
-    const profileBtn = document.getElementById('profile-btn');
-    
-    if (user) {
-        signinBtn?.classList.add('hidden');
-        profileBtn?.classList.remove('hidden');
-    } else {
-        signinBtn?.classList.remove('hidden');
-        profileBtn?.classList.add('hidden');
+<script>
+    // Tailwind script already loaded via CDN
+
+    // More menu
+    const moreBtn = document.getElementById('more-btn');
+    const moreMenu = document.getElementById('more-menu');
+
+    if (moreBtn && moreMenu) {
+        moreBtn.addEventListener('click', function(e) {
+            e.stopImmediatePropagation();
+            moreMenu.classList.toggle('hidden');
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!moreBtn.contains(e.target) && !moreMenu.contains(e.target)) {
+                moreMenu.classList.add('hidden');
+            }
+        });
     }
-}
 
-// Listen for auth changes
-window.addEventListener('auth-changed', (e) => updateHeaderButtons(e.detail.user));
-    
-    <!-- Modal Logic -->
-    <script>
-        // Support
-        function supportModal() { document.getElementById('supportModal').classList.remove('hidden'); }
-        function closeSupportModal() { document.getElementById('supportModal').classList.add('hidden'); }
+    // Modal functions
+    function supportModal() {
+        document.getElementById('supportModal').classList.remove('hidden');
+    }
+    function closeSupportModal() {
+        document.getElementById('supportModal').classList.add('hidden');
+    }
+
+    window.showLoginModal = () => {
+        document.getElementById('loginModal').classList.remove('hidden');
+    };
+    window.closeLoginModal = () => {
+        document.getElementById('loginModal').classList.add('hidden');
+    };
+
+    function closeProfile() {
+        document.getElementById('profileModal').classList.add('hidden');
+    }
+
+    function googleLogin() {
+        showToast('Signed in with Google (demo)', 'success');
+        closeLoginModal();
+        updateHeaderButtons({ loggedIn: true });
+    }
+
+    function logout() {
+        showToast('Signed out', 'info');
+        closeProfile();
+        updateHeaderButtons(null);
+    }
+
+    function copyAddress() {
+        navigator.clipboard.writeText('0x742d35Cc6634C0532925a3b844Bc454e4438f44e');
+        showToast('Address copied to clipboard', 'success');
+    }
+
+    // Toast notification
+    function showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-2xl text-sm font-medium shadow-2xl z-[11000] flex items-center gap-2 ${
+            type === 'success' ? 'bg-emerald-600 text-white' : 
+            type === 'error' ? 'bg-red-600 text-white' : 'bg-zinc-800 text-white'
+        }`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
         
-        // Login
-        window.showLoginModal = () => document.getElementById('loginModal').classList.remove('hidden');
-        window.closeLoginModal = () => document.getElementById('loginModal').classList.add('hidden');
+        setTimeout(() => {
+            toast.style.transition = 'all 0.3s ease';
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
 
+    // Header buttons
+    function updateHeaderButtons(user) {
+        const signinBtn = document.getElementById('signin-btn');
+        const profileBtn = document.getElementById('profile-btn');
+        
+        if (user && user.loggedIn) {
+            signinBtn?.classList.add('hidden');
+            profileBtn?.classList.remove('hidden');
+        } else {
+            signinBtn?.classList.remove('hidden');
+            profileBtn?.classList.add('hidden');
+        }
+    }
 
-        // Close functions
-        function closeProfile() { document.getElementById('profileModal')?.classList.add('hidden'); }
-        function closeEditProfile() { document.getElementById('editProfileModal')?.classList.add('hidden'); }
-        function closeSettings() { document.getElementById('settingsModal')?.classList.add('hidden'); }
+    // Event listeners
+    document.getElementById('support-btn').addEventListener('click', supportModal);
+    document.getElementById('signin-btn').addEventListener('click', showLoginModal);
+    document.getElementById('profile-btn').addEventListener('click', () => {
+        document.getElementById('profileModal').classList.remove('hidden');
+    });
 
-        document.getElementById('support-btn')?.addEventListener('click', supportModal);
-    </script>
+    // Demo post button
+    document.getElementById('postButton').addEventListener('click', () => {
+        const input = document.getElementById('mainInput');
+        if (input.value.trim()) {
+            showToast('Testimony published to the Public Square!', 'success');
+            input.value = '';
+        } else {
+            showToast('Please write a testimony first', 'error');
+        }
+    });
+
+    // Keyboard shortcut hint
+    console.log('%cVocalWitness ready. Press Ctrl/Cmd + K for quick actions (demo)', 'color:#10b981; font-size:13px');
+
+    // Initial state
+    updateHeaderButtons(null);
+</script>
 </body>
 </html>
