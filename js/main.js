@@ -148,18 +148,23 @@ window.closeProfile = () => {
 function setupEventListeners() {
     if (isInitialized) return;
     isInitialized = true;
-
     console.log("✅ Setting up all buttons...");
 
+    // Navigation tabs
     document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
-        btn.addEventListener('click', () => window.switchTab(btn.dataset.tab));
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.switchTab(btn.dataset.tab);
+        });
     });
 
+    // Profile, Support
     document.getElementById('profile-btn')?.addEventListener('click', window.showProfile);
     document.getElementById('support-btn')?.addEventListener('click', () => {
         document.getElementById('supportModal')?.classList.remove('hidden');
     });
 
+    // Forensic Photo
     const photoBtn = document.getElementById('btn-photo');
     if (photoBtn) {
         photoBtn.addEventListener('click', () => {
@@ -167,11 +172,15 @@ function setupEventListeners() {
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = 'image/jpeg,image/png,image/webp';
-            input.onchange = (e) => mediaModule.handleImageSelect(e, document.getElementById('preview-area'));
+            input.onchange = (e) => {
+                const previewArea = document.getElementById('preview-area');
+                if (previewArea) mediaModule.handleImageSelect(e, previewArea);
+            };
             input.click();
         });
     }
 
+    // Voice Testimony
     const voiceBtn = document.getElementById('btn-voice');
     if (voiceBtn) {
         voiceBtn.addEventListener('click', () => {
@@ -179,6 +188,15 @@ function setupEventListeners() {
             mediaModule.toggleVoiceRecording(voiceBtn);
         });
     }
+
+    // Publish button (already exposed as window.publishTestimony)
+    const postBtn = document.getElementById('postButton');
+    if (postBtn) {
+        postBtn.addEventListener('click', window.publishTestimony);
+    }
+
+    console.log("✅ All major buttons wired");
+}
 } // <--- Added missing closing brace
 
 // ====================== BOOTSTRAP ======================
