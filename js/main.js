@@ -200,6 +200,9 @@ function setupEventListeners() {
 } // <--- Added missing closing brace
 
 // ====================== BOOTSTRAP ======================
+// Make sure media module can access engine later
+mediaModule.setEngine(engineInstance);
+
 async function bootstrap() {
     if (isInitialized) return;
     console.log("🚀 VocalWitness Bootstrap started");
