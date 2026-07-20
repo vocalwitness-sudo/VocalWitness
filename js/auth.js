@@ -84,7 +84,9 @@ export async function logout() {
 export function requireAuth(message = "Please sign in to continue.") {
     if (!auth.currentUser) {
         showToast(message, "warning");
-        showLoginModal();           // ← This line is key
+        // Open login modal
+        const loginModal = document.getElementById('loginModal');
+        if (loginModal) loginModal.classList.remove('hidden');
         return false;
     }
     return true;
