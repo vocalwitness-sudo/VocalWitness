@@ -164,31 +164,45 @@ function setupEventListeners() {
         document.getElementById('supportModal')?.classList.remove('hidden');
     });
 
-    // Forensic Photo
-    const photoBtn = document.getElementById('btn-photo');
-    if (photoBtn) {
-        photoBtn.addEventListener('click', () => {
+  // Forensic Photo
+const photoBtn = document.getElementById('btn-photo');
+if (photoBtn) {
+    photoBtn.addEventListener('click', () => {
+        try {
             if (!requireAuth("Sign in to upload Forensic Photo")) return;
+            
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = 'image/jpeg,image/png,image/webp';
             input.onchange = (e) => {
                 const previewArea = document.getElementById('preview-area');
-                if (previewArea) mediaModule.handleImageSelect(e, previewArea);
+                if (previewArea) {
+                    mediaModule.handleImageSelect(e, previewArea);
+                } else {
+                    console.warn("Preview area not found");
+                }
             };
             input.click();
-        });
-    }
+        } catch (err) {
+            console.error("Photo button error:", err);
+            showToast("Photo feature error - check console", "error");
+        }
+    });
+}
 
-    // Voice Testimony
-    const voiceBtn = document.getElementById('btn-voice');
-    if (voiceBtn) {
-        voiceBtn.addEventListener('click', () => {
+// Same pattern for voiceBtn
+const voiceBtn = document.getElementById('btn-voice');
+if (voiceBtn) {
+    voiceBtn.addEventListener('click', () => {
+        try {
             if (!requireAuth("Sign in to record Voice Testimony")) return;
             mediaModule.toggleVoiceRecording(voiceBtn);
-        });
-    }
-
+        } catch (err) {
+            console.error("Voice button error:", err);
+            showToast("Voice feature error - check console", "error");
+        }
+    });
+}
     // Publish button (already exposed as window.publishTestimony)
     const postBtn = document.getElementById('postButton');
     if (postBtn) {
