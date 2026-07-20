@@ -318,15 +318,6 @@
         window.showLoginModal = () => document.getElementById('loginModal').classList.remove('hidden');
         window.closeLoginModal = () => document.getElementById('loginModal').classList.add('hidden');
 
-        // Override/Extend Auth
-        window.requireAuth = function(message = "Please sign in to continue.") {
-            if (!auth?.currentUser) {
-                showToast(message, "warning");
-                window.showLoginModal();
-                return false;
-            }
-            return true;
-        };
 
         // Close functions
         function closeProfile() { document.getElementById('profileModal')?.classList.add('hidden'); }
