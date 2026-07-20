@@ -323,7 +323,6 @@
 </div>
 
 <!-- Profile Modal -->
-<!-- Profile Modal -->
 <div id="profileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[10000] p-4">
     <div class="glass rounded-3xl p-8 max-w-lg w-full max-h-[90vh] overflow-auto">
         <div class="flex justify-between items-center mb-6 border-b border-zinc-700 pb-4">
@@ -331,9 +330,8 @@
             <button onclick="closeProfile()" class="text-3xl text-zinc-400 hover:text-white">×</button>
         </div>
         
-        <div id="profileContent">
-            <!-- Populated by JS -->
-            <div class="text-center py-12 text-zinc-400">Loading your profile...</div>
+        <div id="profileContent" class="space-y-8">
+            <!-- Will be filled by JS -->
         </div>
 
         <div class="mt-8 flex gap-3">
@@ -399,6 +397,41 @@
         navigator.clipboard.writeText('0x742d35Cc6634C0532925a3b844Bc454e4438f44e');
         showToast('Address copied to clipboard', 'success');
     }
+    function loadProfileContent() {
+    const content = $('profileContent');
+    if (!content) return;
+
+    content.innerHTML = `
+        <div class="flex flex-col items-center text-center">
+            <div class="w-24 h-24 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-3xl flex items-center justify-center text-6xl mb-6">👤</div>
+            <h3 class="text-2xl font-bold">Your Name</h3>
+            <p class="text-emerald-400">@username</p>
+            
+            <div class="mt-8 grid grid-cols-3 gap-6 w-full">
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-emerald-400">14</div>
+                    <div class="text-xs text-zinc-500">Testimonies</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold">Trust Circle</div>
+                    <div class="text-xs text-emerald-400">Verified</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-amber-400">87</div>
+                    <div class="text-xs text-zinc-500">Reputation</div>
+                </div>
+            </div>
+
+            <button onclick="startPhoneVerificationDemo()" class="mt-10 w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-black font-semibold rounded-2xl">
+                📱 Verify Phone & Upgrade Tier
+            </button>
+        </div>
+    `;
+}
+
+function startPhoneVerificationDemo() {
+    showToast("Phone verification started (check console for OTP)", "info");
+}
 
     // Toast notification
     function showToast(message, type = 'info') {
@@ -431,24 +464,44 @@
         }
     }
 
-    // Event listeners
-    document.getElementById('support-btn').addEventListener('click', supportModal);
-    document.getElementById('signin-btn').addEventListener('click', showLoginModal);
-    document.getElementById('profile-btn').addEventListener('click', () => {
-        document.getElementById('profileModal').classList.remove('hidden');
-    });
+ // =============== EVENT LISTENERS (Clean Version) ===============
+const $ = (id) => document.getElementById(id);  // Short helper
 
-    // Demo post button
-    document.getElementById('postButton').addEventListener('click', () => {
-        const input = document.getElementById('mainInput');
-        if (input.value.trim()) {
-            showToast('Testimony published to the Public Square!', 'success');
-            input.value = '';
-        } else {
-            showToast('Please write a testimony first', 'error');
-        }
-    });
+// Support Modal
+$('support-btn')?.addEventListener('click', () => {
+    $('supportModal').classList.remove('hidden');
+});
 
+// Sign In
+$('signin-btn')?.addEventListener('click', showLoginModal);
+
+
+// Profile Click Handler + Content
+document.getElementById('profile-btn').addEventListener('click', () => {
+    const modal = document.getElementById('profileModal');
+    modal.classList.remove('hidden');
+    
+    // Simple demo profile content
+    document.getElementById('profileContent').innerHTML = `
+        <div class="flex flex-col items-center text-center">
+            <div class="w-24 h-24 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-3xl flex items-center justify-center text-5xl mb-4">
+                👤
+            </div>
+            <h3 class="text-2xl font-bold">Citizen Witness</h3>
+            <p class="text-emerald-400">@demo_user</p>
+            
+            <div class="mt-6 bg-zinc-900...
+
+// Publish Button
+$('postButton')?.addEventListener('click', () => {
+    const input = $('mainInput');
+    if (input && input.value.trim()) {
+        showToast('✅ Testimony published to the Public Square!', 'success');
+        input.value = '';
+    } else {
+        showToast('Please write something first', 'error');
+    }
+});
     // Keyboard shortcut hint
     console.log('%cVocalWitness ready. Press Ctrl/Cmd + K for quick actions (demo)', 'color:#10b981; font-size:13px');
 
