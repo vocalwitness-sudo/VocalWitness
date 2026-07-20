@@ -1,4 +1,4 @@
-// js/main.js - COMPLETE FIXED VERSION (Hybrid Model)
+// js/main.js - Polished Main Entry Point
 import './app-state.js';
 import { initAuth } from "./auth.js";
 import { initFeed } from './feed.js';
@@ -9,7 +9,7 @@ import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
 import { initProfile } from './profile.js';
 import { loadDynamicNavigation } from './navigation.js';
 import { AppState } from './app-state.js';
-import { showToast, generateSha256Hash } from './utils.js';
+import { showToast } from './utils.js';
 
 let engineInstance = null;
 let isInitialized = false;
@@ -18,6 +18,7 @@ let isInitialized = false;
 window.switchTab = async (tab) => {
     console.log(`Switching to tab: ${tab}`);
     
+    // Update active tab styling
     document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
         btn.classList.remove('active', 'bg-amber-900', 'text-amber-300');
         if (btn.dataset.tab === tab) {
@@ -50,13 +51,13 @@ window.switchTab = async (tab) => {
         }
     } catch (e) {
         console.error("Tab switch error:", e);
+        container.innerHTML = `<div class="text-red-400 text-center py-8">Failed to load tab.</div>`;
     }
 };
 
 // ====================== WELCOME NOTE ======================
 function showWelcomeNote() {
-    if (!auth.currentUser) return;
-    if (localStorage.getItem('hasSeenWelcome')) return;
+    if (!auth.currentUser || localStorage.getItem('hasSeenWelcome')) return;
     
     showToast("🎉 Welcome to VocalWitness! Your voice matters in the Public Square.", "success");
     localStorage.setItem('hasSeenWelcome', 'true');
@@ -71,6 +72,7 @@ window.publishTestimony = async () => {
 
     const textarea = document.getElementById('mainInput');
     const content = textarea ? textarea.value.trim() : '';
+    
     if (!content) {
         showToast("Please write something before publishing", "error");
         return;
@@ -106,15 +108,18 @@ window.publishTestimony = async () => {
         };
 
         await addDoc(collection(db, "testimonies"), testimonyData);
+        
         showToast("✅ Testimony published successfully!", "success");
         
         if (textarea) textarea.value = '';
         mediaModule.resetMediaState();
-        if (window.engineInstance) window.engineInstance.clearPendingMedia?.();
+        
+        // Refresh feed
+        initFeed(db, 'citizen-talk');
 
     } catch (err) {
         console.error("Publish error:", err);
-        showToast("Failed to publish.", "error");
+        showToast("Failed to publish. Please try again.", "error");
     } finally {
         if (postBtn) {
             postBtn.disabled = false;
@@ -123,62 +128,41 @@ window.publishTestimony = async () => {
     }
 };
 
-// ====================== EVIDENCE LEDGER ======================
+// ====================== OTHER HELPERS ======================
 async function loadEvidenceLedger() {
     const container = document.getElementById('ledgerContainer');
     if (!container) return;
-
-    container.innerHTML = `
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold text-emerald-400">📊 Evidence Ledger</h2>
-            <button onclick="refreshLedger()" class="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-sm flex items-center gap-2">🔄 Refresh</button>
-        </div>
-        <div id="ledgerEntries" class="space-y-4"></div>
-    `;
-
-    if (typeof loadForensicLedger === 'function') loadForensicLedger();
+    // Placeholder - expand later
+    container.innerHTML = `<div class="text-center py-12 text-zinc-400">Evidence Ledger coming soon...</div>`;
 }
 
 window.refreshLedger = loadEvidenceLedger;
 
-// ====================== PROFILE ======================
 window.showProfile = () => {
     if (!auth.currentUser) {
         showToast("Please sign in to access your Profile", "info");
         return;
     }
-
     const modal = document.getElementById('profileModal');
-    if (!modal) {
-        showToast("Profile modal not found. Try refreshing.", "error");
-        return;
+    if (modal) {
+        modal.classList.remove('hidden');
+        initProfile();
     }
-
-    modal.classList.remove('hidden');
-    initProfile(); 
 };
 
 window.closeProfile = () => {
     const modal = document.getElementById('profileModal');
-    if (modal) {
-        modal.classList.add('hidden');
-    }
+    if (modal) modal.classList.add('hidden');
 };
 
-// Event listener for clicking outside the modal
-document.getElementById('profileModal')?.addEventListener('click', function(e) {
-    if (e.target === this) {
-        window.closeProfile();
-    }
-});
-
-// ====================== SETUP EVENT LISTENERS ======================
+// ====================== SETUP ======================
 function setupEventListeners() {
     if (isInitialized) return;
     isInitialized = true;
+
     console.log("✅ Setting up all buttons...");
 
-    // Tabs
+    // Navigation Tabs
     document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
         btn.addEventListener('click', () => window.switchTab(btn.dataset.tab));
     });
@@ -189,37 +173,37 @@ function setupEventListeners() {
         document.getElementById('supportModal')?.classList.remove('hidden');
     });
 
-    // Publish
+    // Publish Button
     document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
-    
-    // Photo
-  const photoBtn = document.getElementById('btn-photo');
-if (photoBtn) {
-    photoBtn.addEventListener('click', () => {
-        if (!auth.currentUser) {
-            showToast("Sign in to upload Forensic Photo", "info");
-            // Optional: You can open sign-in modal here later
-            return;
-        }
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/jpeg,image/png,image/webp';
-        input.onchange = (e) => mediaModule.handleImageSelect(e, document.getElementById('preview-area'));
-        input.click();
-    });
-}
 
-    // Voice
+    // Photo Button
+    const photoBtn = document.getElementById('btn-photo');
+    if (photoBtn) {
+        photoBtn.addEventListener('click', () => {
+            if (!auth.currentUser) {
+                showToast("Sign in to upload Forensic Photo", "info");
+                return;
+            }
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/jpeg,image/png,image/webp';
+            input.onchange = (e) => mediaModule.handleImageSelect(e, document.getElementById('preview-area'));
+            input.click();
+        });
+    }
+
+    // Voice Button
     const voiceBtn = document.getElementById('btn-voice');
-if (voiceBtn) {
-    voiceBtn.addEventListener('click', () => {
-        if (!auth.currentUser) {
-            showToast("Sign in to record Voice Testimony", "info");
-            return;
-        }
-        mediaModule.toggleVoiceRecording(voiceBtn);
-    });
-}
+    if (voiceBtn) {
+        voiceBtn.addEventListener('click', () => {
+            if (!auth.currentUser) {
+                showToast("Sign in to record Voice Testimony", "info");
+                return;
+            }
+            mediaModule.toggleVoiceRecording(voiceBtn);
+        });
+    }
+
     console.log("✅ All buttons initialized");
 }
 
@@ -237,8 +221,8 @@ async function bootstrap() {
         window.engineInstance = engineInstance;
 
         loadDynamicNavigation();
-        setTimeout(() => window.switchTab('square'), 600);
-        setTimeout(showWelcomeNote, 1500);
+        setTimeout(() => window.switchTab('square'), 400);
+        setTimeout(showWelcomeNote, 1200);
 
         console.log("✅ Bootstrap finished");
     } catch (e) {
