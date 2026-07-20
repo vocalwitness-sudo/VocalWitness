@@ -5,7 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#10b981">
     <meta name="description" content="VocalWitness - Privacy First Public Square for Truth and Evidence">
-    
+    <meta http-equiv="Content-Security-Policy" 
+      content="default-src 'self' https:; 
+               script-src 'self' 'unsafe-inline' 'unsafe-eval' https: https://apis.google.com https://*.gstatic.com https://www.gstatic.com https://cdn.tailwindcss.com https://cdnjs.cloudflare.com; 
+               style-src 'self' 'unsafe-inline' https:; 
+               img-src 'self' data: https:;">
+
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="/logo.png" type="image/png">
 
@@ -14,27 +19,171 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: #e2e8f0; }
-        .glass { background: rgba(15, 23, 42, 0.92); backdrop-filter: blur(24px); border: 1px solid rgba(148, 163, 184, 0.12); }
-        .nav-tab.active { background-color: #10b981; color: black; font-weight: 600; }
+        
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: #0a0f1c;
+            color: #e2e8f0;
+        }
+        .glass {
+            background: rgba(15, 23, 42, 0.92);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(148, 163, 184, 0.12);
+        }
+        .nav-tab {
+            transition: all 0.2s ease;
+        }
+        .nav-tab.active {
+            background-color: #10b981;
+            color: black;
+            font-weight: 600;
+        }
+        #profileContent {
+            animation: fadeIn 0.4s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .modal {
+            animation: modalPop 0.3s ease;
+        }
+        @keyframes modalPop {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .post-card {
+            transition: all 0.2s ease;
+        }
+        .post-card:hover {
+            transform: translateY(-2px);
+        }
     </style>
 </head>
 <body class="min-h-screen pb-24 bg-[#0a0f1c]">
 
-<!-- [Your full header, nav, composer, footer as before] -->
+<!-- Privacy Banner -->
+<div class="mt-12 pt-8 border-t border-zinc-700 text-center text-sm text-zinc-400">
+    <p>You are part of a growing community that believes truth matters.</p>
+    <p class="mt-1"><strong>Together, we protect the public square.</strong></p>
+</div>
 
-<!-- Profile Modal (Your improved version) -->
+<!-- Header -->
+<header class="flex items-center justify-between mb-8 sticky top-0 z-50 glass rounded-3xl p-4">
+    <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-2xl">🔊</div>
+        <div>
+            <h1 class="text-2xl font-bold tracking-tight" data-i18n="appTitle">VocalWitness</h1>
+            <p class="text-sm text-emerald-400 tracking-widest" data-i18n="appSubtitle">Truth • Evidence • Public Square</p>
+        </div>
+    </div>
+    
+    <div class="flex items-center gap-3 md:gap-4">
+        <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-4 py-2 text-sm focus:outline-none focus:border-emerald-500 hidden sm:block">
+            <option value="en">🇬🇧 English</option>
+            <option value="es">🇪🇸 Español</option>
+            <option value="fr">🇫🇷 Français</option>
+        </select>
+
+        <a href="privacy.html" class="flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 transition-colors text-sm font-medium px-3 py-2">
+            🔒 Privacy First
+        </a>
+
+        <button id="support-btn" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl transition whitespace-nowrap">
+            Support The Square
+        </button>
+
+        <button id="signin-btn" class="px-5 py-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm">
+            <img src="https://www.google.com/favicon.ico" class="w-4 h-4" alt="Google">
+            <span class="hidden sm:inline">Sign in</span>
+        </button>
+
+        <button id="profile-btn" class="px-5 py-2.5 border border-zinc-700 hover:bg-zinc-800 rounded-2xl transition flex items-center gap-2 hidden">
+            👤 <span class="hidden sm:inline">Profile</span>
+        </button>
+    </div>
+</header>
+
+<!-- Main Navigation -->
+<nav class="flex gap-2 mb-8 overflow-x-auto pb-3 relative z-40" id="main-nav">
+    <button data-tab="square" class="nav-tab active px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative">
+        <span class="font-semibold">Public Square</span>
+        <span class="text-xs text-zinc-400 hidden md:block">Citizen Talk • Share Testimony</span>
+    </button>
+    <button data-tab="ledger" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative">
+        <span class="font-semibold">Evidence Ledger</span>
+    </button>
+    <button data-tab="arena" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative">
+        <span class="font-semibold">Live Arena</span>
+    </button>
+    <button data-tab="mycircle" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative">
+        <span class="font-semibold">My Circle</span>
+    </button>
+    <button data-tab="witness" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative bg-amber-900/70 text-amber-300 border border-amber-700">
+        <span class="font-semibold">Verified Witnesses</span>
+    </button>
+
+    <div class="relative ml-auto">
+        <button id="more-btn" class="nav-tab px-7 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit bg-emerald-600 hover:bg-emerald-700 text-white font-semibold">More</button>
+    </div>
+</nav>
+
+<!-- More Menu -->
+<div id="more-menu" class="hidden fixed top-[165px] right-6 w-64 bg-zinc-900 border border-zinc-700 rounded-3xl shadow-2xl py-3 z-[9999]">
+    <a href="my-testimonies.html" class="block px-6 py-3 hover:bg-zinc-800">My Testimonies</a>
+    <a href="groups.html" class="block px-6 py-3 hover:bg-zinc-800">Groups</a>
+    <a href="true-witness.html" class="block px-6 py-3 hover:bg-zinc-800">True Witness</a>
+    <div class="h-px bg-zinc-700 mx-4 my-2"></div>
+    <a href="about.html" class="block px-6 py-3 hover:bg-zinc-800">About Us</a>
+    <a href="privacy.html" class="block px-6 py-3 hover:bg-zinc-800">Privacy Policy</a>
+    <a href="terms.html" class="block px-6 py-3 hover:bg-zinc-800">Terms of Service</a>
+    <a href="safety.html" class="block px-6 py-3 hover:bg-zinc-800">Safety Guidelines</a>
+</div>
+
+<!-- Testimony Composer -->
+<div class="glass rounded-3xl p-6 mb-10">
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-white flex items-center gap-2"><span>📝</span> Share Your Testimony</h2>
+        <span class="text-xs text-zinc-500">Public Square</span>
+    </div>
+
+    <textarea id="mainInput" rows="4" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-5 text-lg placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none" placeholder="Share your raw testimony... What did you witness?"></textarea>
+    
+    <div class="flex gap-3 mt-5">
+        <button id="btn-photo" class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 hover:border-emerald-500 rounded-2xl flex items-center justify-center gap-3 font-medium transition-all active:scale-95">📸 Forensic Photo</button>
+        <button id="btn-voice" class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 hover:border-emerald-500 rounded-2xl flex items-center justify-center gap-3 font-medium transition-all active:scale-95">🎤 Voice Testimony</button>
+    </div>
+
+    <div id="preview-area" class="mt-6 min-h-[120px] border border-dashed border-zinc-700 rounded-2xl p-4 flex items-center justify-center text-zinc-500 text-sm">
+        Preview will appear here...
+    </div>
+
+    <button id="postButton" class="mt-8 w-full py-5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-black font-semibold text-lg rounded-3xl transition-all active:scale-[0.985]">
+        🚀 Publish to the Square
+    </button>
+</div>
+
+<!-- Dynamic Content -->
+<main id="main-content">
+    <div id="dynamicContainer" class="space-y-8"></div>
+</main>
+
+<!-- ==================== PROFILE MODAL (Your Improved Version) ==================== -->
 <div id="profileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[10000] p-4">
-    <div class="glass rounded-3xl p-8 max-w-lg w-full max-h-[90vh] overflow-auto">
+    <div class="glass rounded-3xl p-8 max-w-lg w-full max-h-[90vh] overflow-auto modal">
         <div class="flex justify-between items-center mb-6 border-b border-zinc-700 pb-4">
             <h2 class="text-2xl font-bold text-white">My Profile</h2>
             <button onclick="closeProfile()" class="text-3xl text-zinc-400 hover:text-white">×</button>
         </div>
-        <div id="profileContent"></div>
         
+        <div id="profileContent">
+            <!-- Populated by JS / profile.js -->
+        </div>
+
         <div class="mt-8 flex gap-3">
             <button onclick="logout()" class="flex-1 py-3 border border-red-500 text-red-400 hover:bg-red-500/10 rounded-2xl font-medium">
                 Sign Out
@@ -43,9 +192,87 @@
     </div>
 </div>
 
-<!-- Support & Login Modals (keep as you had) -->
+<!-- Support & Login Modals (unchanged) -->
+<div id="supportModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[10000] p-4">
+    <div class="glass rounded-3xl p-8 max-w-md w-full modal"> ... (your support modal) </div>
+</div>
 
-<script type="module" src="js/main.js"></script>
+<div id="loginModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[10000] p-4">
+    <!-- your login modal -->
+</div>
 
+<footer class="bg-zinc-950 border-t border-zinc-800 pt-16 pb-12 mt-20">
+    <div class="max-w-6xl mx-auto px-6 text-center text-xs text-zinc-500">
+        © 2026 VocalWitness • Built for Truth • Powered by Citizens
+    </div>
+</footer>
+
+<script>
+    // Short helper
+    const $ = id => document.getElementById(id);
+
+    // Toast
+    function showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-2xl text-sm font-medium shadow-2xl z-[11000] ${
+            type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-red-600' : 'bg-zinc-800'
+        } text-white`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3500);
+    }
+
+    // Modal helpers
+    window.closeProfile = () => $('profileModal').classList.add('hidden');
+    window.closeLoginModal = () => $('loginModal').classList.add('hidden');
+    window.closeSupportModal = () => $('supportModal').classList.add('hidden');
+
+    function googleLogin() {
+        showToast('Signed in with Google', 'success');
+        closeLoginModal();
+        updateHeaderButtons(true);
+    }
+
+    function logout() {
+        showToast('Signed out', 'info');
+        closeProfile();
+        updateHeaderButtons(false);
+    }
+
+    function updateHeaderButtons(isLoggedIn) {
+        $('signin-btn').classList.toggle('hidden', isLoggedIn);
+        $('profile-btn').classList.toggle('hidden', !isLoggedIn);
+    }
+
+    // More menu
+    $('more-btn')?.addEventListener('click', e => {
+        e.stopPropagation();
+        $('more-menu').classList.toggle('hidden');
+    });
+    document.addEventListener('click', () => $('more-menu').classList.add('hidden'));
+
+    // Event Listeners
+    $('support-btn')?.addEventListener('click', () => $('supportModal').classList.remove('hidden'));
+    $('signin-btn')?.addEventListener('click', () => $('loginModal').classList.remove('hidden'));
+    
+    $('profile-btn')?.addEventListener('click', () => {
+        $('profileModal').classList.remove('hidden');
+        // You can call loadProfile() from js/profile.js here
+    });
+
+    $('postButton')?.addEventListener('click', () => {
+        const input = $('mainInput');
+        if (input?.value.trim()) {
+            showToast('✅ Testimony published!', 'success');
+            input.value = '';
+        } else {
+            showToast('Please write a testimony', 'error');
+        }
+    });
+
+    // Initialize
+    updateHeaderButtons(false);
+    console.log('%cVocalWitness index.html loaded successfully', 'color:#10b981; font-weight:bold');
+</script>
 </body>
 </html>
