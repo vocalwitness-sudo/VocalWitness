@@ -324,6 +324,24 @@
                 el.textContent = "✅ Copied to clipboard!";
                 setTimeout(() => el.textContent = original, 2500);
             });
+            function showLoginModal() {
+    document.getElementById('loginModal').classList.remove('hidden');
+}
+
+function closeLoginModal() {
+    document.getElementById('loginModal').classList.add('hidden');
+}
+
+// Improve requireAuth to open modal
+// Update this in auth.js or override here
+window.requireAuth = function(message = "Please sign in to continue.") {
+    if (!auth.currentUser) {
+        showToast(message, "warning");
+        showLoginModal();
+        return false;
+    }
+    return true;
+};
         }
         document.getElementById('support-btn').addEventListener('click', supportModal);
 
@@ -332,6 +350,35 @@
         function closeEditProfile() { document.getElementById('editProfileModal').classList.add('hidden'); }
         function closeSettings() { document.getElementById('settingsModal').classList.add('hidden'); }
     </script>
+    <!-- Login Modal -->
+<div id="loginModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[10000] p-4">
+    <div class="glass rounded-3xl p-8 max-w-md w-full">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold">Welcome to the Square</h2>
+            <button onclick="closeLoginModal()" class="text-3xl text-zinc-400 hover:text-white">×</button>
+        </div>
+        
+        <div class="space-y-4">
+            <button onclick="googleLogin()" 
+                    class="w-full py-4 bg-white text-black font-semibold rounded-2xl flex items-center justify-center gap-3 hover:bg-zinc-100">
+                <img src="https://www.google.com/favicon.ico" class="w-5 h-5" alt="Google">
+                Continue with Google
+            </button>
+            
+            <div class="text-center text-zinc-500 text-sm">or</div>
+            
+            <!-- Future: Email/Password or Phone -->
+            <button onclick="startPhoneLoginFlow()" 
+                    class="w-full py-4 border border-zinc-600 hover:border-emerald-500 rounded-2xl font-medium">
+                📱 Sign in with Phone
+            </button>
+        </div>
+        
+        <p class="text-center text-xs text-zinc-500 mt-6">
+            By signing in, you agree to our <a href="terms.html" class="underline">Terms</a>
+        </p>
+    </div>
+</div>
 
 </body>
 </html>
