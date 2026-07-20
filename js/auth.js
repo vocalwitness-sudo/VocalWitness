@@ -1,5 +1,4 @@
-js/auth.js
-// js/auth.js - Clean Auth with Circle Integration
+/ js/auth.js - Clean Auth with Circle Integration
 import {
     signInWithPopup,
     signOut
