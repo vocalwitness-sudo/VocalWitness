@@ -5,12 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#10b981">
     <meta name="description" content="VocalWitness - Privacy First Public Square for Truth and Evidence">
-   <meta http-equiv="Content-Security-Policy" 
-  content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob: wss:;
-           script-src * 'unsafe-inline' 'unsafe-eval';
-           style-src * 'unsafe-inline';
-           img-src * data: blob:;
-           connect-src *;">
+  <meta http-equiv="Content-Security-Policy" 
+  content="default-src 'self'; 
+           script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://apis.google.com https://www.gstatic.com; 
+           style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; 
+           font-src 'self' https://fonts.gstatic.com; 
+           img-src * data: blob: https://www.google.com; 
+           connect-src 'self' https://apis.google.com https://www.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com wss:;">
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="/logo.png" type="image/png">
 
