@@ -193,12 +193,31 @@
 </div>
 
 <!-- Support & Login Modals (unchanged) -->
+<!-- Support & Login Modals -->
 <div id="supportModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[10000] p-4">
-    <div class="glass rounded-3xl p-8 max-w-md w-full modal"> ... (your support modal) </div>
+    <div class="glass rounded-3xl p-8 max-w-md w-full modal">
+        <h2 class="text-2xl font-bold mb-6">Support The Square</h2>
+        <p class="text-zinc-400 mb-8">Thank you for believing in truth and evidence.</p>
+        <button onclick="closeSupportModal()" 
+                class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-black rounded-2xl font-medium">
+            Close
+        </button>
+    </div>
 </div>
 
 <div id="loginModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[10000] p-4">
-    <!-- your login modal -->
+    <div class="glass rounded-3xl p-8 max-w-md w-full modal">
+        <h2 class="text-2xl font-bold mb-6">Sign In</h2>
+        <button onclick="googleLogin()" 
+                class="w-full py-4 bg-white text-black rounded-2xl font-medium flex items-center justify-center gap-3">
+            <img src="https://www.google.com/favicon.ico" class="w-5 h-5" alt="Google">
+            Continue with Google
+        </button>
+        <button onclick="closeLoginModal()" 
+                class="w-full mt-3 py-3 text-zinc-400 hover:text-white">
+            Cancel
+        </button>
+    </div>
 </div>
 
 <footer class="bg-zinc-950 border-t border-zinc-800 pt-16 pb-12 mt-20">
@@ -211,7 +230,7 @@
     // Short helper
     const $ = id => document.getElementById(id);
 
-    // Toast
+    // Toast (keep only if not using the one from utils.js)
     function showToast(message, type = 'info') {
         const toast = document.createElement('div');
         toast.className = `fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-2xl text-sm font-medium shadow-2xl z-[11000] ${
@@ -227,53 +246,11 @@
     window.closeLoginModal = () => $('loginModal').classList.add('hidden');
     window.closeSupportModal = () => $('supportModal').classList.add('hidden');
 
-    function googleLogin() {
-        showToast('Signed in with Google', 'success');
-        closeLoginModal();
-        updateHeaderButtons(true);
-    }
-
-    function logout() {
-        showToast('Signed out', 'info');
-        closeProfile();
-        updateHeaderButtons(false);
-    }
-
-    function updateHeaderButtons(isLoggedIn) {
-        $('signin-btn').classList.toggle('hidden', isLoggedIn);
-        $('profile-btn').classList.toggle('hidden', !isLoggedIn);
-    }
-
-    // More menu
-    $('more-btn')?.addEventListener('click', e => {
-        e.stopPropagation();
-        $('more-menu').classList.toggle('hidden');
-    });
-    document.addEventListener('click', () => $('more-menu').classList.add('hidden'));
-
-    // Event Listeners
-    $('support-btn')?.addEventListener('click', () => $('supportModal').classList.remove('hidden'));
-    $('signin-btn')?.addEventListener('click', () => $('loginModal').classList.remove('hidden'));
-    
-    $('profile-btn')?.addEventListener('click', () => {
-        $('profileModal').classList.remove('hidden');
-        // You can call loadProfile() from js/profile.js here
-    });
-
-    $('postButton')?.addEventListener('click', () => {
-        const input = $('mainInput');
-        if (input?.value.trim()) {
-            showToast('✅ Testimony published!', 'success');
-            input.value = '';
-        } else {
-            showToast('Please write a testimony', 'error');
-        }
-    });
-
     // Initialize
     updateHeaderButtons(false);
     console.log('%cVocalWitness index.html loaded successfully', 'color:#10b981; font-weight:bold');
 </script>
-    <script type="module" src="js/main.js"></script>
+
+<script type="module" src="js/main.js"></script>
 </body>
 </html>
