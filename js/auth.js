@@ -4,7 +4,7 @@ import {
     signOut
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 
-import { auth, provider } from './firebase-config.js';   // Import from single source
+import { auth, provider } from './firebase-config.js';
 import { db } from './firebase-config.js';
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { showToast } from './utils.js';
@@ -77,6 +77,20 @@ export async function logout() {
     }
 }
 
+/**
+ * Require Authentication Helper
+ * Used before protected actions (posting, uploading media, etc.)
+ */
+export function requireAuth(message = "Please sign in to continue.") {
+    if (!auth.currentUser) {
+        showToast(message, "warning");
+        // TODO: Optionally open login modal automatically
+        // document.getElementById('loginModal')?.classList.remove('hidden');
+        return false;
+    }
+    return true;
+}
+
 export function initAuth() {
     auth.onAuthStateChanged(async (user) => {
         if (user) {
@@ -94,4 +108,4 @@ export function initAuth() {
 // Global exposure
 window.googleLogin = googleLogin;
 window.logout = logout;
-window.requireAuth = requireAuth;   // ← This line must exist
+window.requireAuth = requireAuth;
