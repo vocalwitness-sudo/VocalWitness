@@ -5,7 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#10b981">
     <meta name="description" content="VocalWitness - Privacy First Public Square for Truth and Evidence">
-   <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' 'unsafe-eval' https: *;">
+   <meta http-equiv="Content-Security-Policy" 
+  content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob: wss:;
+           script-src * 'unsafe-inline' 'unsafe-eval';
+           style-src * 'unsafe-inline';
+           img-src * data: blob:;
+           connect-src *;">
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="/logo.png" type="image/png">
 
