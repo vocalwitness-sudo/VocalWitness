@@ -240,6 +240,10 @@ async function bootstrap() {
         await initAuth();
         setupEventListeners();
         if (typeof initLanguage === 'function') initLanguage();
+
+        engineInstance = new CitizenTalkEngine(db, storage);
+window.engineInstance = engineInstance;
+mediaModule.setEngine(engineInstance);   // ← Make sure this line exists
         
         //engineInstance = new CitizenTalkEngine(db, storage);
         //window.engineInstance = engineInstance;
