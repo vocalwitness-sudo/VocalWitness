@@ -4,7 +4,13 @@
   "description": "VocalWitness - Truth • Evidence • Public Square",
   "private": true,
   "scripts": {
-    "build": "echo 'VocalWitness - Static site - No build required'",
-    "deploy": "firebase deploy --only hosting"
+    "deploy": "firebase deploy",
+    "deploy:hosting": "firebase deploy --only hosting",
+    "deploy:functions": "firebase deploy --only functions",
+    "serve": "firebase emulators:start",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "20"
   }
 }
