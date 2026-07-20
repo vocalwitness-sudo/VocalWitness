@@ -64,9 +64,9 @@ function showWelcomeNote() {
 }
 
 // ====================== PUBLISH TESTIMONY ======================
+// ====================== PUBLISH TESTIMONY ======================
 window.publishTestimony = async () => {
-    if (!auth.currentUser) {
-        showToast("Please sign in to share your testimony", "info");
+    if (!requireAuth("Please sign in to share your testimony in the Public Square.")) {
         return;
     }
 
@@ -113,9 +113,7 @@ window.publishTestimony = async () => {
         
         if (textarea) textarea.value = '';
         mediaModule.resetMediaState();
-        
-        // Refresh feed
-        initFeed(db, 'citizen-talk');
+        initFeed(db, 'citizen-talk');   // Refresh feed
 
     } catch (err) {
         console.error("Publish error:", err);
@@ -127,7 +125,6 @@ window.publishTestimony = async () => {
         }
     }
 };
-
 // ====================== OTHER HELPERS ======================
 async function loadEvidenceLedger() {
     const container = document.getElementById('ledgerContainer');
@@ -173,17 +170,12 @@ function setupEventListeners() {
         document.getElementById('supportModal')?.classList.remove('hidden');
     });
 
-    // Publish Button
-    document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
-
-    // Photo Button
+     // Photo Button
     const photoBtn = document.getElementById('btn-photo');
     if (photoBtn) {
         photoBtn.addEventListener('click', () => {
-            if (!auth.currentUser) {
-                showToast("Sign in to upload Forensic Photo", "info");
-                return;
-            }
+            if (!requireAuth("Sign in to upload Forensic Photo")) return;
+            
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = 'image/jpeg,image/png,image/webp';
@@ -196,16 +188,10 @@ function setupEventListeners() {
     const voiceBtn = document.getElementById('btn-voice');
     if (voiceBtn) {
         voiceBtn.addEventListener('click', () => {
-            if (!auth.currentUser) {
-                showToast("Sign in to record Voice Testimony", "info");
-                return;
-            }
+            if (!requireAuth("Sign in to record Voice Testimony")) return;
             mediaModule.toggleVoiceRecording(voiceBtn);
         });
     }
-
-    console.log("✅ All buttons initialized");
-}
 
 // ====================== BOOTSTRAP ======================
 async function bootstrap() {
