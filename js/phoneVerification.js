@@ -1,29 +1,23 @@
-// js/phoneVerification.js - Real Firebase Phone Auth Ready
+// js/phoneVerification.js - Connected to Tiers
 import { db, auth } from './firebase-config.js';
 import { doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { showToast } from "./utils.js";
 import { upgradeToTrustCircle } from './tier.js';
 
-let confirmationResult = null;
+let currentVerificationCode = null;
 
 export async function sendPhoneVerification(phoneNumber) {
     if (!phoneNumber || !phoneNumber.startsWith('+')) {
-        showToast("Use international format: +234...", "error");
+        showToast("Use international format, e.g. +2348012345678", "error");
         return false;
     }
 
     try {
-        // TODO: Import from firebase-auth when ready
-        // const { RecaptchaVerifier, signInWithPhoneNumber } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js");
+        currentVerificationCode = Math.floor(100000 + Math.random() * 900000).toString();
         
-        showToast("📲 Sending OTP...", "info");
-        
-        // Simulated for now (replace with real Firebase Phone Auth)
-        confirmationResult = { /* mock */ };
-        const code = Math.floor(100000 + Math.random() * 900000).toString();
-        console.log(`%c🔑 Simulated OTP for ${phoneNumber}: ${code}`, "color: lime; font-size: 16px");
-        
-        showToast(`✅ OTP sent to ${phoneNumber} (Check console for demo)`, "success");
+        console.log(`%c🔑 DEMO OTP for ${phoneNumber}: ${currentVerificationCode}`, "color: lime; font-size: 15px; font-weight: bold");
+
+        showToast(`✅ OTP sent to ${phoneNumber} (Demo - check console)`, "success");
         return true;
     } catch (e) {
         showToast("Failed to send OTP", "error");
@@ -31,28 +25,37 @@ export async function sendPhoneVerification(phoneNumber) {
     }
 }
 
-export async function verifyPhoneCode(enteredCode, userId) {
-    if (enteredCode.length !== 6) {
+export async function verifyPhoneCode(enteredCode) {
+    if (!enteredCode || enteredCode.length !== 6) {
         showToast("Enter 6-digit code", "error");
         return false;
     }
 
-    // Simulate success
-    try {
-        const userRef = doc(db, "users", userId);
-        await updateDoc(userRef, {
-            isPhoneVerified: true,
-            phoneVerifiedAt: serverTimestamp(),
-            tier: "trust_circle"
-        });
+    if (enteredCode === currentVerificationCode) {
+        try {
+            const userRef = doc(db, "users", auth.currentUser.uid);
+            await updateDoc(userRef, {
+                isPhoneVerified: true,
+                phoneVerifiedAt: serverTimestamp(),
+                tier: "trust_circle",
+                credibilityScore: 60
+            });
 
-        await upgradeToTrustCircle(userId);
-        
-        showToast("✅ Phone Verified Successfully!", "success");
-        document.getElementById('phoneVerificationModal')?.classList.add('hidden');
-        return true;
-    } catch (e) {
-        showToast("Verification failed", "error");
+            await upgradeToTrustCircle(auth.currentUser.uid);
+            
+            showToast("🎉 Phone Verified! You are now Trust Circle Tier", "success");
+            
+            // Close any open verification modal
+            document.getElementById('phoneVerificationModal')?.classList.add('hidden');
+            
+            return true;
+        } catch (e) {
+            console.error(e);
+            showToast("Failed to update profile", "error");
+            return false;
+        }
+    } else {
+        showToast("❌ Incorrect code. Try again.", "error");
         return false;
     }
 }
