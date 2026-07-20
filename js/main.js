@@ -226,8 +226,8 @@ async function bootstrap() {
         setupEventListeners();
         if (typeof initLanguage === 'function') initLanguage();
         
-        engineInstance = new CitizenTalkEngine(db, storage);
-        window.engineInstance = engineInstance;
+        //engineInstance = new CitizenTalkEngine(db, storage);
+        //window.engineInstance = engineInstance;
 
         loadDynamicNavigation();
         setTimeout(() => window.switchTab('square'), 400);
