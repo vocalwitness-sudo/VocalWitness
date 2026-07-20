@@ -64,7 +64,7 @@
     <p class="mt-1"><strong>Together, we protect the public square.</strong></p>
 </div>
 
-<!-- Header -->
+
 <!-- Header -->
 <header class="flex items-center justify-between mb-8 sticky top-0 z-50 glass rounded-3xl p-4">
     <div class="flex items-center gap-3">
@@ -337,6 +337,24 @@
         </div>
     </div>
 </div>
+
+    // Update header buttons based on login state
+function updateHeaderButtons(user) {
+    const signinBtn = document.getElementById('signin-btn');
+    const profileBtn = document.getElementById('profile-btn');
+    
+    if (user) {
+        signinBtn?.classList.add('hidden');
+        profileBtn?.classList.remove('hidden');
+    } else {
+        signinBtn?.classList.remove('hidden');
+        profileBtn?.classList.add('hidden');
+    }
+}
+
+// Listen for auth changes
+window.addEventListener('auth-changed', (e) => updateHeaderButtons(e.detail.user));
+    
     <!-- Modal Logic -->
     <script>
         // Support
