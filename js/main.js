@@ -1,207 +1,51 @@
-// js/main.js - Polished Main Entry Point
-import './app-state.js';
-import { initAuth, requireAuth } from "./auth.js"; // Ensure requireAuth is imported
-import { initFeed } from './feed.js';
-import { db, auth, storage } from './firebase-config.js';
-import { initLanguage } from './i18n.js';
-import * as mediaModule from './media.js';
-import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
-import { initProfile } from './profile.js';
-import { loadDynamicNavigation } from './navigation.js';
-import { AppState } from './app-state.js';
-import { showToast } from './utils.js';
-
-let engineInstance = null;
-let isInitialized = false;
-
-// ====================== TAB SWITCHING ======================
-window.switchTab = async (tab) => {
-    console.log(`Switching to tab: ${tab}`);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#10b981">
+    <meta name="description" content="VocalWitness - Privacy First Public Square for Truth and Evidence">
     
-    document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
-        btn.classList.remove('active', 'bg-amber-900', 'text-amber-300');
-        if (btn.dataset.tab === tab) {
-            btn.classList.add('active');
-            if (tab === 'witness') btn.classList.add('bg-amber-900', 'text-amber-300');
-        }
-    });
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/logo.png" type="image/png">
 
-    AppState.currentTab = tab;
-    AppState.currentMode = tab === 'witness' ? 'witness' : 'citizen';
+    <title data-i18n="pageTitle">VocalWitness • Truth • Evidence • Public Square</title>
 
-    const container = document.getElementById('dynamicContainer');
-    if (!container) return;
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-    container.innerHTML = `<div class="text-center py-20 text-zinc-400">Loading ${tab}...</div>`;
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: #e2e8f0; }
+        .glass { background: rgba(15, 23, 42, 0.92); backdrop-filter: blur(24px); border: 1px solid rgba(148, 163, 184, 0.12); }
+        .nav-tab.active { background-color: #10b981; color: black; font-weight: 600; }
+    </style>
+</head>
+<body class="min-h-screen pb-24 bg-[#0a0f1c]">
 
-    try {
-        if (tab === 'square' || tab === 'citizen') {
-            container.innerHTML = `<div id="feedContainer" class="space-y-8"></div>`;
-            initFeed(db, 'citizen-talk');
-        } else if (tab === 'ledger') {
-            container.innerHTML = `<div id="ledgerContainer" class="space-y-6"></div>`;
-            if (typeof loadEvidenceLedger === 'function') loadEvidenceLedger();
-        } else if (tab === 'witness') {
-            container.innerHTML = `
-                <div class="space-y-6 p-8 text-center">
-                    <h2 class="text-3xl font-bold text-amber-400">🛡️ Verified Witnesses</h2>
-                    <p class="text-zinc-400">ZK-Verified Testimonies</p>
-                </div>`;
-        }
-    } catch (e) {
-        console.error("Tab switch error:", e);
-        container.innerHTML = `<div class="text-red-400 text-center py-8">Failed to load tab.</div>`;
-    }
-};
+<!-- [Your full header, nav, composer, footer as before] -->
 
-// ====================== WELCOME NOTE ======================
-function showWelcomeNote() {
-    if (!auth.currentUser || localStorage.getItem('hasSeenWelcome')) return;
-    showToast("🎉 Welcome to VocalWitness! Your voice matters in the Public Square.", "success");
-    localStorage.setItem('hasSeenWelcome', 'true');
-}
-
-// ====================== PUBLISH TESTIMONY ======================
-window.publishTestimony = async () => {
-    if (!requireAuth("Please sign in to share your testimony in the Public Square.")) return;
-
-    const textarea = document.getElementById('mainInput');
-    const content = textarea ? textarea.value.trim() : '';
-    
-    if (!content) {
-        showToast("Please write something before publishing", "error");
-        return;
-    }
-
-    const postBtn = document.getElementById('postButton');
-    const originalText = postBtn ? postBtn.textContent : '🚀 Publish to the Square';
-
-    if (postBtn) {
-        postBtn.disabled = true;
-        postBtn.textContent = 'Publishing...';
-    }
-
-    try {
-        const { collection, addDoc, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
-        const mediaData = await mediaModule.uploadForensicMedia();
+<!-- Profile Modal (Your improved version) -->
+<div id="profileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[10000] p-4">
+    <div class="glass rounded-3xl p-8 max-w-lg w-full max-h-[90vh] overflow-auto">
+        <div class="flex justify-between items-center mb-6 border-b border-zinc-700 pb-4">
+            <h2 class="text-2xl font-bold text-white">My Profile</h2>
+            <button onclick="closeProfile()" class="text-3xl text-zinc-400 hover:text-white">×</button>
+        </div>
+        <div id="profileContent"></div>
         
-        const testimonyData = {
-            authorId: auth.currentUser.uid,
-            author: auth.currentUser.displayName || "Registered Witness",
-            content,
-            createdAt: serverTimestamp(),
-            timestamp: Date.now(),
-            isPublic: true,
-            moderationStatus: "approved",
-            feedVisibility: "citizen-talk",
-            imageUrl: mediaData.imageUrl || null,
-            audioUrl: mediaData.audioUrl || null,
-            imageHash: mediaData.imageHash || null,
-            audioHash: mediaData.audioHash || null,
-            hasForensic: !!(mediaData.imageHash || mediaData.audioHash)
-        };
+        <div class="mt-8 flex gap-3">
+            <button onclick="logout()" class="flex-1 py-3 border border-red-500 text-red-400 hover:bg-red-500/10 rounded-2xl font-medium">
+                Sign Out
+            </button>
+        </div>
+    </div>
+</div>
 
-        await addDoc(collection(db, "testimonies"), testimonyData);
-        showToast("✅ Testimony published successfully!", "success");
-        
-        if (textarea) textarea.value = '';
-        mediaModule.resetMediaState();
-        initFeed(db, 'citizen-talk');
-    } catch (err) {
-        console.error("Publish error:", err);
-        showToast("Failed to publish. Please try again.", "error");
-    } finally {
-        if (postBtn) {
-            postBtn.disabled = false;
-            postBtn.textContent = originalText;
-        }
-    }
-};
+<!-- Support & Login Modals (keep as you had) -->
 
-// ====================== OTHER HELPERS ======================
-async function loadEvidenceLedger() {
-    const container = document.getElementById('ledgerContainer');
-    if (!container) return;
-    container.innerHTML = `<div class="text-center py-12 text-zinc-400">Evidence Ledger coming soon...</div>`;
-}
+<script type="module" src="js/main.js"></script>
 
-window.refreshLedger = loadEvidenceLedger;
-
-window.showProfile = () => {
-    if (!auth.currentUser) {
-        showToast("Please sign in to access your Profile", "info");
-        return;
-    }
-    const modal = document.getElementById('profileModal');
-    if (modal) {
-        modal.classList.remove('hidden');
-        initProfile();
-    }
-};
-
-window.closeProfile = () => {
-    const modal = document.getElementById('profileModal');
-    if (modal) modal.classList.add('hidden');
-};
-
-// ====================== SETUP ======================
-function setupEventListeners() {
-    if (isInitialized) return;
-    isInitialized = true;
-
-    console.log("✅ Setting up all buttons...");
-
-    document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
-        btn.addEventListener('click', () => window.switchTab(btn.dataset.tab));
-    });
-
-    document.getElementById('profile-btn')?.addEventListener('click', window.showProfile);
-    document.getElementById('support-btn')?.addEventListener('click', () => {
-        document.getElementById('supportModal')?.classList.remove('hidden');
-    });
-
-    const photoBtn = document.getElementById('btn-photo');
-    if (photoBtn) {
-        photoBtn.addEventListener('click', () => {
-            if (!requireAuth("Sign in to upload Forensic Photo")) return;
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'image/jpeg,image/png,image/webp';
-            input.onchange = (e) => mediaModule.handleImageSelect(e, document.getElementById('preview-area'));
-            input.click();
-        });
-    }
-
-    const voiceBtn = document.getElementById('btn-voice');
-    if (voiceBtn) {
-        voiceBtn.addEventListener('click', () => {
-            if (!requireAuth("Sign in to record Voice Testimony")) return;
-            mediaModule.toggleVoiceRecording(voiceBtn);
-        });
-    }
-} // <--- Added missing closing brace
-
-// ====================== BOOTSTRAP ======================
-async function bootstrap() {
-    if (isInitialized) return;
-    console.log("🚀 VocalWitness Bootstrap started");
-
-    try {
-        await initAuth();
-        setupEventListeners();
-        if (typeof initLanguage === 'function') initLanguage();
-        
-        engineInstance = new CitizenTalkEngine(db, storage);
-        window.engineInstance = engineInstance;
-
-        loadDynamicNavigation();
-        setTimeout(() => window.switchTab('square'), 400);
-        setTimeout(showWelcomeNote, 1200);
-
-        console.log("✅ Bootstrap finished");
-    } catch (e) {
-        console.error("Bootstrap error:", e);
-    }
-} // <--- Added missing closing brace
-
-document.addEventListener('DOMContentLoaded', bootstrap);
+</body>
+</html>
