@@ -84,8 +84,7 @@ export async function logout() {
 export function requireAuth(message = "Please sign in to continue.") {
     if (!auth.currentUser) {
         showToast(message, "warning");
-        // TODO: Optionally open login modal automatically
-        // document.getElementById('loginModal')?.classList.remove('hidden');
+        showLoginModal();           // ← This line is key
         return false;
     }
     return true;
