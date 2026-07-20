@@ -6,14 +6,14 @@
     <meta name="theme-color" content="#10b981">
     <meta name="description" content="VocalWitness - Privacy First Public Square for Truth and Evidence">
    <meta http-equiv="Content-Security-Policy" content="
-    default-src 'self';
-    script-src 'self' 'unsafe-inline' 'unsafe-eval' https:;
-    style-src 'self' 'unsafe-inline' https:;
-    img-src 'self' data: https: blob:;
-    media-src 'self' https: blob:;
-    connect-src 'self' https: wss:;
-    frame-src 'self' https:;">
-
+    default-src * 'unsafe-inline' 'unsafe-eval' data: blob: https: wss:;
+    script-src * 'unsafe-inline' 'unsafe-eval' https:;
+    style-src * 'unsafe-inline' https:;
+    img-src * data: https: blob:;
+    media-src * data: https: blob:;
+    connect-src * https: wss:;
+    frame-src * https:;
+">
     <title data-i18n="pageTitle">VocalWitness • Truth • Evidence • Public Square</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
