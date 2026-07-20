@@ -94,3 +94,4 @@ export function initAuth() {
 // Global exposure
 window.googleLogin = googleLogin;
 window.logout = logout;
+window.requireAuth = requireAuth;   // ← This line must exist
