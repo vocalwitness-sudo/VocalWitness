@@ -8,13 +8,15 @@
         "headers": [
           {
             "key": "Content-Security-Policy",
-            "value": "default-src 'self' https: wss: blob: data:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https: data:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com wss://*.firebaseio.com; img-src 'self' https: data: blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none';"
+            "value": "default-src 'self' https: data: blob: wss:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https: https://apis.google.com https://*.gstatic.com https://www.gstatic.com https://cdn.tailwindcss.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https:; img-src 'self' https: data: blob:; connect-src 'self' https: wss: https://*.googleapis.com https://*.firebaseio.com https://identitytoolkit.googleapis.com; frame-src https://accounts.google.com;"
           }
         ]
       },
       {
         "source": "**/*.js",
-        "headers": [{ "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }]
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+        ]
       }
     ]
   }
