@@ -197,7 +197,7 @@ function setupEventListeners() {
 
     console.log("✅ All major buttons wired");
 }
-} // <--- Added missing closing brace
+ // <--- Added missing closing brace
 
 // ====================== BOOTSTRAP ======================
 // Make sure media module can access engine later
