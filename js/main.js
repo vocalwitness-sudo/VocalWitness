@@ -1,6 +1,6 @@
 // js/main.js - Polished Main Entry Point
 import './app-state.js';
-import { initAuth } from "./auth.js";
+import { initAuth, requireAuth } from "./auth.js"; // Ensure requireAuth is imported
 import { initFeed } from './feed.js';
 import { db, auth, storage } from './firebase-config.js';
 import { initLanguage } from './i18n.js';
@@ -18,7 +18,6 @@ let isInitialized = false;
 window.switchTab = async (tab) => {
     console.log(`Switching to tab: ${tab}`);
     
-    // Update active tab styling
     document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
         btn.classList.remove('active', 'bg-amber-900', 'text-amber-300');
         if (btn.dataset.tab === tab) {
@@ -58,17 +57,13 @@ window.switchTab = async (tab) => {
 // ====================== WELCOME NOTE ======================
 function showWelcomeNote() {
     if (!auth.currentUser || localStorage.getItem('hasSeenWelcome')) return;
-    
     showToast("🎉 Welcome to VocalWitness! Your voice matters in the Public Square.", "success");
     localStorage.setItem('hasSeenWelcome', 'true');
 }
 
 // ====================== PUBLISH TESTIMONY ======================
-// ====================== PUBLISH TESTIMONY ======================
 window.publishTestimony = async () => {
-    if (!requireAuth("Please sign in to share your testimony in the Public Square.")) {
-        return;
-    }
+    if (!requireAuth("Please sign in to share your testimony in the Public Square.")) return;
 
     const textarea = document.getElementById('mainInput');
     const content = textarea ? textarea.value.trim() : '';
@@ -88,7 +83,6 @@ window.publishTestimony = async () => {
 
     try {
         const { collection, addDoc, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
-        
         const mediaData = await mediaModule.uploadForensicMedia();
         
         const testimonyData = {
@@ -108,13 +102,11 @@ window.publishTestimony = async () => {
         };
 
         await addDoc(collection(db, "testimonies"), testimonyData);
-        
         showToast("✅ Testimony published successfully!", "success");
         
         if (textarea) textarea.value = '';
         mediaModule.resetMediaState();
-        initFeed(db, 'citizen-talk');   // Refresh feed
-
+        initFeed(db, 'citizen-talk');
     } catch (err) {
         console.error("Publish error:", err);
         showToast("Failed to publish. Please try again.", "error");
@@ -125,11 +117,11 @@ window.publishTestimony = async () => {
         }
     }
 };
+
 // ====================== OTHER HELPERS ======================
 async function loadEvidenceLedger() {
     const container = document.getElementById('ledgerContainer');
     if (!container) return;
-    // Placeholder - expand later
     container.innerHTML = `<div class="text-center py-12 text-zinc-400">Evidence Ledger coming soon...</div>`;
 }
 
@@ -159,23 +151,19 @@ function setupEventListeners() {
 
     console.log("✅ Setting up all buttons...");
 
-    // Navigation Tabs
     document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
         btn.addEventListener('click', () => window.switchTab(btn.dataset.tab));
     });
 
-    // Profile & Support
     document.getElementById('profile-btn')?.addEventListener('click', window.showProfile);
     document.getElementById('support-btn')?.addEventListener('click', () => {
         document.getElementById('supportModal')?.classList.remove('hidden');
     });
 
-     // Photo Button
     const photoBtn = document.getElementById('btn-photo');
     if (photoBtn) {
         photoBtn.addEventListener('click', () => {
             if (!requireAuth("Sign in to upload Forensic Photo")) return;
-            
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = 'image/jpeg,image/png,image/webp';
@@ -184,7 +172,6 @@ function setupEventListeners() {
         });
     }
 
-    // Voice Button
     const voiceBtn = document.getElementById('btn-voice');
     if (voiceBtn) {
         voiceBtn.addEventListener('click', () => {
@@ -192,6 +179,7 @@ function setupEventListeners() {
             mediaModule.toggleVoiceRecording(voiceBtn);
         });
     }
+} // <--- Added missing closing brace
 
 // ====================== BOOTSTRAP ======================
 async function bootstrap() {
@@ -214,6 +202,6 @@ async function bootstrap() {
     } catch (e) {
         console.error("Bootstrap error:", e);
     }
-}
+} // <--- Added missing closing brace
 
 document.addEventListener('DOMContentLoaded', bootstrap);
