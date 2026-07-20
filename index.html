@@ -74,23 +74,24 @@
         </div>
     </div>
     
-    <div class="flex items-center gap-4">
-        <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-4 py-2 text-sm focus:outline-none focus:border-emerald-500">
-            <!-- populated by JS -->
-        </select>
+   <div class="flex items-center gap-4">
+    <select id="languageSelector" ...>...</select>
 
-        <a href="privacy.html" class="flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 transition-colors text-sm font-medium">
-            <span>🔒</span> Privacy First
-        </a>
+    <a href="privacy.html" class="...">🔒 Privacy First</a>
 
-        <button id="support-btn" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl transition">
-            Support The Square
-        </button>
+    <button id="support-btn" class="...">Support The Square</button>
 
-        <button id="profile-btn" class="px-5 py-2.5 border border-zinc-700 hover:bg-zinc-800 rounded-2xl transition">
-            Profile
-        </button>
-    </div>
+    <!-- New Sign In Button -->
+    <button id="signin-btn" 
+            class="px-5 py-2.5 bg-white text-black font-medium rounded-2xl hover:bg-zinc-100 transition flex items-center gap-2">
+        <img src="https://www.google.com/favicon.ico" class="w-4 h-4" alt="G">
+        Sign in
+    </button>
+
+    <button id="profile-btn" class="px-5 py-2.5 border border-zinc-700 hover:bg-zinc-800 rounded-2xl transition hidden">
+        Profile
+    </button>
+</div>
 </header>
 
 <!-- Main Navigation -->
