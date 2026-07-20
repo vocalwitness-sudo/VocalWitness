@@ -18,6 +18,7 @@ let isInitialized = false;
 window.switchTab = async (tab) => {
     console.log(`Switching to tab: ${tab}`);
     
+    // Update active tab UI
     document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
         btn.classList.remove('active', 'bg-amber-900', 'text-amber-300');
         if (btn.dataset.tab === tab) {
@@ -37,20 +38,34 @@ window.switchTab = async (tab) => {
     try {
         if (tab === 'square' || tab === 'citizen') {
             container.innerHTML = `<div id="feedContainer" class="space-y-8"></div>`;
-            initFeed(db, 'citizen-talk');
-        } else if (tab === 'ledger') {
+            // Safe call
+            if (typeof initFeed === 'function') {
+                initFeed(db, 'citizen-talk');
+            } else {
+                container.innerHTML = `<div class="p-8 text-center text-amber-400">Public Square feed coming soon...</div>`;
+            }
+        } 
+        else if (tab === 'ledger') {
             container.innerHTML = `<div id="ledgerContainer" class="space-y-6"></div>`;
-            if (typeof loadEvidenceLedger === 'function') loadEvidenceLedger();
-        } else if (tab === 'witness') {
+            if (typeof loadEvidenceLedger === 'function') {
+                loadEvidenceLedger();
+            } else {
+                container.innerHTML = `<div class="p-8 text-center text-zinc-400">Evidence Ledger coming soon...</div>`;
+            }
+        } 
+        else if (tab === 'witness') {
             container.innerHTML = `
                 <div class="space-y-6 p-8 text-center">
                     <h2 class="text-3xl font-bold text-amber-400">🛡️ Verified Witnesses</h2>
                     <p class="text-zinc-400">ZK-Verified Testimonies</p>
                 </div>`;
+        } 
+        else if (tab === 'arena' || tab === 'mycircle') {
+            container.innerHTML = `<div class="p-8 text-center text-zinc-400">This section is under construction</div>`;
         }
     } catch (e) {
         console.error("Tab switch error:", e);
-        container.innerHTML = `<div class="text-red-400 text-center py-8">Failed to load tab.</div>`;
+        container.innerHTML = `<div class="text-red-400 text-center py-8">Failed to load tab. Check console.</div>`;
     }
 };
 
