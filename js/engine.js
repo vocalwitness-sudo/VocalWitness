@@ -3,14 +3,15 @@
  */
 import { generateSha256Hash } from './utils.js';
 import { db, auth } from './firebase-config.js';   
+import { 
     ref,
     uploadBytes,
-    getDownloadURL
+    getDownloadURL 
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
 
 export class VocalWitnessEngine {
-    constructor(db) {
-        this.db = db;                    // Only need db for now
+    constructor(dbInstance) {
+        this.db = dbInstance;            // Only need db for now
         this.storage = null;             // Will be set if needed
         this.mediaRecorder = null;
         this.audioChunks = [];
