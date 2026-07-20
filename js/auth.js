@@ -54,10 +54,23 @@ export async function googleLogin() {
     try {
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
+        
         await createOrUpdateUser(user);
         updateAppState({ isAuthenticated: true, currentUser: user });
         refreshTierUI();
+        
+        // Update header buttons
+        if (typeof window.updateHeaderButtons === 'function') {
+            window.updateHeaderButtons(true);
+        }
+        
         window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
+        
+        showToast("✅ Signed in successfully!", "success");
+        // Close login modal if open
+        const loginModal = document.getElementById('loginModal');
+        if (loginModal) loginModal.classList.add('hidden');
+        
         return user;
     } catch (error) {
         console.error("Login error:", error);
