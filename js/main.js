@@ -159,7 +159,7 @@ window.closeProfile = () => {
     if (modal) modal.classList.add('hidden');
 };
 
-// ====================== SETUP ======================
+// ====================== SETUP Event Listener ======================
 function setupEventListeners() {
     if (isInitialized) return;
     isInitialized = true;
@@ -173,52 +173,91 @@ function setupEventListeners() {
         });
     });
 
-    // Profile, Support
+    // Profile
     document.getElementById('profile-btn')?.addEventListener('click', window.showProfile);
-    document.getElementById('support-btn')?.addEventListener('click', () => {
-        document.getElementById('supportModal')?.classList.remove('hidden');
-    });
 
-  // Forensic Photo
-const photoBtn = document.getElementById('btn-photo');
-if (photoBtn) {
-    photoBtn.addEventListener('click', () => {
-        try {
-            if (!requireAuth("Sign in to upload Forensic Photo")) return;
-            
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'image/jpeg,image/png,image/webp';
-            input.onchange = (e) => {
-                const previewArea = document.getElementById('preview-area');
-                if (previewArea) {
-                    mediaModule.handleImageSelect(e, previewArea);
+    // === SAFE SUPPORT BUTTON ===
+    const supportBtn = document.getElementById('support-btn');
+    if (supportBtn) {
+        supportBtn.addEventListener('click', () => {
+            try {
+                const modal = document.getElementById('supportModal');
+                if (modal) {
+                    modal.classList.remove('hidden');
                 } else {
-                    console.warn("Preview area not found");
+                    showToast("Support page coming soon", "info");
                 }
-            };
-            input.click();
-        } catch (err) {
-            console.error("Photo button error:", err);
-            showToast("Photo feature error - check console", "error");
-        }
-    });
-}
+            } catch (e) {
+                console.error("Support button error:", e);
+                showToast("Support feature coming soon", "info");
+            }
+        });
+    }
 
-// Same pattern for voiceBtn
-const voiceBtn = document.getElementById('btn-voice');
-if (voiceBtn) {
-    voiceBtn.addEventListener('click', () => {
-        try {
-            if (!requireAuth("Sign in to record Voice Testimony")) return;
-            mediaModule.toggleVoiceRecording(voiceBtn);
-        } catch (err) {
-            console.error("Voice button error:", err);
-            showToast("Voice feature error - check console", "error");
-        }
-    });
-}
-    // Publish button (already exposed as window.publishTestimony)
+    // === SAFE SIGN IN BUTTON ===
+    const signinBtn = document.getElementById('signin-btn');
+    if (signinBtn) {
+        signinBtn.addEventListener('click', () => {
+            try {
+                const modal = document.getElementById('loginModal');
+                if (modal) {
+                    modal.classList.remove('hidden');
+                } else {
+                    // Direct fallback
+                    if (typeof googleLogin === 'function') {
+                        googleLogin();
+                    } else {
+                        showToast("Sign in coming soon", "info");
+                    }
+                }
+            } catch (e) {
+                console.error("Sign-in button error:", e);
+                showToast("Login feature coming soon", "info");
+            }
+        });
+    }
+
+    // Forensic Photo (your current version is good)
+    const photoBtn = document.getElementById('btn-photo');
+    if (photoBtn) {
+        photoBtn.addEventListener('click', () => {
+            try {
+                if (!requireAuth("Sign in to upload Forensic Photo")) return;
+                
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/jpeg,image/png,image/webp';
+                input.onchange = (e) => {
+                    const previewArea = document.getElementById('preview-area');
+                    if (previewArea) {
+                        mediaModule.handleImageSelect(e, previewArea);
+                    }
+                };
+                input.click();
+            } catch (err) {
+                console.error("Photo button error:", err);
+                showToast("Photo feature error - check console", "error");
+            }
+        });
+    }
+
+    // Voice Testimony
+    const voiceBtn = document.getElementById('btn-voice');
+    if (voiceBtn) {
+        voiceBtn.addEventListener('click', () => {
+            try {
+                if (!requireAuth("Sign in to record Voice Testimony")) return;
+                if (typeof mediaModule.toggleVoiceRecording === 'function') {
+                    mediaModule.toggleVoiceRecording(voiceBtn);
+                }
+            } catch (err) {
+                console.error("Voice button error:", err);
+                showToast("Voice feature error - check console", "error");
+            }
+        });
+    }
+
+    // Publish button
     const postBtn = document.getElementById('postButton');
     if (postBtn) {
         postBtn.addEventListener('click', window.publishTestimony);
@@ -226,7 +265,6 @@ if (voiceBtn) {
 
     console.log("✅ All major buttons wired");
 }
- // <--- Added missing closing brace
 
 // ====================== BOOTSTRAP ======================
 // Make sure media module can access engine later
