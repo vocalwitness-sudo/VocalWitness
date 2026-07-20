@@ -1,10 +1,17 @@
 // js/db.js
-// js/db.js
-import { db } from './firebase-init.js';
+import { db } from './firebase-config.js';
 import {
-  doc, getDoc, updateDoc, deleteDoc, collection, query, where, getDocs,
+  doc, 
+  getDoc, 
+  updateDoc, 
+  deleteDoc, 
+  collection, 
+  query, 
+  where, 
+  getDocs,
   serverTimestamp
-} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js"; // Updated version
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
 import { showToast } from './utils.js';
 
 // ==================== USER PROFILE ====================
@@ -102,17 +109,14 @@ export const getUserPosts = (userId) => {
 
 /**
  * Handles peer verification/dispute
-/**
- * Handles peer verification/dispute
  */
 export const submitPeerVote = async (postId, type) => {
     const postRef = doc(db, "posts", postId);
     
     try {
         // TODO: Better to use FieldValue.increment() for atomic updates
-        // For now, simple placeholder
         await updateDoc(postRef, {
-            [`votes.${type}`]: 1,  // Replace with real increment logic later
+            [`votes.${type}`]: 1,
             lastUpdated: serverTimestamp()
         });
         
