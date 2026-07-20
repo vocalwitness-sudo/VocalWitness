@@ -1,21 +1,15 @@
 // js/auth.js - Clean Auth with Circle Integration
 import {
-    getAuth,
     signInWithPopup,
-    GoogleAuthProvider,
     signOut
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 
+import { auth, provider } from './firebase-config.js';   // Import from single source
 import { db } from './firebase-config.js';
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { showToast } from './utils.js';
 import { updateAppState } from './app-state.js';
 import { applyTierTheme, updateTierBadge } from './tier.js';
-
-const auth = getAuth();
-const provider = new GoogleAuthProvider();
-
-export { auth };
 
 // Safe Tier Refresh Helper
 function refreshTierUI() {
@@ -33,6 +27,7 @@ async function createOrUpdateUser(user) {
     try {
         const userRef = doc(db, "users", user.uid);
         const snap = await getDoc(userRef);
+        
         if (!snap.exists()) {
             await setDoc(userRef, {
                 uid: user.uid,
@@ -61,7 +56,7 @@ export async function googleLogin() {
         const user = result.user;
         await createOrUpdateUser(user);
         updateAppState({ isAuthenticated: true, currentUser: user });
-        refreshTierUI();                    // Safe call
+        refreshTierUI();
         window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
         return user;
     } catch (error) {
@@ -87,7 +82,7 @@ export function initAuth() {
         if (user) {
             await createOrUpdateUser(user);
             updateAppState({ isAuthenticated: true, currentUser: user });
-            refreshTierUI();                // Safe call
+            refreshTierUI();
         } else {
             updateAppState({ isAuthenticated: false, currentUser: null });
         }
