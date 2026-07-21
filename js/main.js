@@ -1,6 +1,6 @@
-// js/main.js - Polished Main Entry Point
+// js/main.js - Polished & Robust Main Entry Point
 import './app-state.js';
-import { initAuth, requireAuth } from "./auth.js"; // Ensure requireAuth is imported
+import { initAuth, requireAuth } from "./auth.js";
 import { initFeed } from './feed.js';
 import { db, auth, storage } from './firebase-config.js';
 import { initLanguage } from './i18n.js';
@@ -17,7 +17,7 @@ let isInitialized = false;
 // ====================== TAB SWITCHING ======================
 window.switchTab = async (tab) => {
     console.log(`Switching to tab: ${tab}`);
-    
+
     // Update active tab UI
     document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
         btn.classList.remove('active', 'bg-amber-900', 'text-amber-300');
@@ -33,12 +33,12 @@ window.switchTab = async (tab) => {
     const container = document.getElementById('dynamicContainer');
     if (!container) return;
 
+    // Show loading state
     container.innerHTML = `<div class="text-center py-20 text-zinc-400">Loading ${tab}...</div>`;
 
     try {
         if (tab === 'square' || tab === 'citizen') {
             container.innerHTML = `<div id="feedContainer" class="space-y-8"></div>`;
-            // Safe call
             if (typeof initFeed === 'function') {
                 initFeed(db, 'citizen-talk');
             } else {
@@ -65,7 +65,7 @@ window.switchTab = async (tab) => {
         }
     } catch (e) {
         console.error("Tab switch error:", e);
-        container.innerHTML = `<div class="text-red-400 text-center py-8">Failed to load tab. Check console.</div>`;
+        container.innerHTML = `<div class="text-red-400 text-center py-8">Failed to load tab. Please try again.</div>`;
     }
 };
 
@@ -98,6 +98,7 @@ window.publishTestimony = async () => {
 
     try {
         const { collection, addDoc, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
+        
         const mediaData = await mediaModule.uploadForensicMedia();
         
         const testimonyData = {
@@ -117,11 +118,14 @@ window.publishTestimony = async () => {
         };
 
         await addDoc(collection(db, "testimonies"), testimonyData);
+        
         showToast("✅ Testimony published successfully!", "success");
         
         if (textarea) textarea.value = '';
         mediaModule.resetMediaState();
-        initFeed(db, 'citizen-talk');
+        
+        // Refresh feed
+        if (typeof initFeed === 'function') initFeed(db, 'citizen-talk');
     } catch (err) {
         console.error("Publish error:", err);
         showToast("Failed to publish. Please try again.", "error");
@@ -133,7 +137,7 @@ window.publishTestimony = async () => {
     }
 };
 
-// ====================== OTHER HELPERS ======================
+// ====================== HELPERS ======================
 async function loadEvidenceLedger() {
     const container = document.getElementById('ledgerContainer');
     if (!container) return;
@@ -150,7 +154,7 @@ window.showProfile = () => {
     const modal = document.getElementById('profileModal');
     if (modal) {
         modal.classList.remove('hidden');
-        initProfile();
+        if (typeof initProfile === 'function') initProfile();
     }
 };
 
@@ -159,10 +163,11 @@ window.closeProfile = () => {
     if (modal) modal.classList.add('hidden');
 };
 
-// ====================== SETUP Event Listener ======================
+// ====================== SETUP EVENT LISTENERS ======================
 function setupEventListeners() {
     if (isInitialized) return;
     isInitialized = true;
+
     console.log("✅ Setting up all buttons...");
 
     // Navigation tabs
@@ -173,103 +178,52 @@ function setupEventListeners() {
         });
     });
 
-    // Profile
+    // Profile button
     document.getElementById('profile-btn')?.addEventListener('click', window.showProfile);
 
-    // === SAFE SUPPORT BUTTON ===
-    const supportBtn = document.getElementById('support-btn');
-    if (supportBtn) {
-        supportBtn.addEventListener('click', () => {
-            try {
-                const modal = document.getElementById('supportModal');
-                if (modal) {
-                    modal.classList.remove('hidden');
-                } else {
-                    showToast("Support page coming soon", "info");
-                }
-            } catch (e) {
-                console.error("Support button error:", e);
-                showToast("Support feature coming soon", "info");
-            }
-        });
-    }
+    // Support button
+    document.getElementById('support-btn')?.addEventListener('click', () => {
+        const modal = document.getElementById('supportModal');
+        if (modal) modal.classList.remove('hidden');
+        else showToast("Support page coming soon", "info");
+    });
 
-    // === SAFE SIGN IN BUTTON ===
-    const signinBtn = document.getElementById('signin-btn');
-    if (signinBtn) {
-        signinBtn.addEventListener('click', () => {
-            try {
-                const modal = document.getElementById('loginModal');
-                if (modal) {
-                    modal.classList.remove('hidden');
-                } else {
-                    // Direct fallback
-                    if (typeof googleLogin === 'function') {
-                        googleLogin();
-                    } else {
-                        showToast("Sign in coming soon", "info");
-                    }
-                }
-            } catch (e) {
-                console.error("Sign-in button error:", e);
-                showToast("Login feature coming soon", "info");
-            }
-        });
-    }
+    // Sign-in button
+    document.getElementById('signin-btn')?.addEventListener('click', () => {
+        const modal = document.getElementById('loginModal');
+        if (modal) modal.classList.remove('hidden');
+    });
 
-    // Forensic Photo (your current version is good)
-    const photoBtn = document.getElementById('btn-photo');
-    if (photoBtn) {
-        photoBtn.addEventListener('click', () => {
-            try {
-                if (!requireAuth("Sign in to upload Forensic Photo")) return;
-                
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.accept = 'image/jpeg,image/png,image/webp';
-                input.onchange = (e) => {
-                    const previewArea = document.getElementById('preview-area');
-                    if (previewArea) {
-                        mediaModule.handleImageSelect(e, previewArea);
-                    }
-                };
-                input.click();
-            } catch (err) {
-                console.error("Photo button error:", err);
-                showToast("Photo feature error - check console", "error");
+    // Forensic Photo
+    document.getElementById('btn-photo')?.addEventListener('click', () => {
+        if (!requireAuth("Sign in to upload Forensic Photo")) return;
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/jpeg,image/png,image/webp';
+        input.onchange = (e) => {
+            const previewArea = document.getElementById('preview-area');
+            if (previewArea && typeof mediaModule.handleImageSelect === 'function') {
+                mediaModule.handleImageSelect(e, previewArea);
             }
-        });
-    }
+        };
+        input.click();
+    });
 
     // Voice Testimony
-    const voiceBtn = document.getElementById('btn-voice');
-    if (voiceBtn) {
-        voiceBtn.addEventListener('click', () => {
-            try {
-                if (!requireAuth("Sign in to record Voice Testimony")) return;
-                if (typeof mediaModule.toggleVoiceRecording === 'function') {
-                    mediaModule.toggleVoiceRecording(voiceBtn);
-                }
-            } catch (err) {
-                console.error("Voice button error:", err);
-                showToast("Voice feature error - check console", "error");
-            }
-        });
-    }
+    document.getElementById('btn-voice')?.addEventListener('click', () => {
+        if (!requireAuth("Sign in to record Voice Testimony")) return;
+        if (typeof mediaModule.toggleVoiceRecording === 'function') {
+            mediaModule.toggleVoiceRecording(document.getElementById('btn-voice'));
+        }
+    });
 
     // Publish button
-    const postBtn = document.getElementById('postButton');
-    if (postBtn) {
-        postBtn.addEventListener('click', window.publishTestimony);
-    }
+    document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
 
-    console.log("✅ All major buttons wired");
+    console.log("✅ All major buttons wired successfully");
 }
 
 // ====================== BOOTSTRAP ======================
-// Make sure media module can access engine later
-mediaModule.setEngine(engineInstance);
-
 async function bootstrap() {
     if (isInitialized) return;
     console.log("🚀 VocalWitness Bootstrap started");
@@ -277,23 +231,25 @@ async function bootstrap() {
     try {
         await initAuth();
         setupEventListeners();
+        
         if (typeof initLanguage === 'function') initLanguage();
 
+        // Initialize Engine
         engineInstance = new CitizenTalkEngine(db, storage);
-window.engineInstance = engineInstance;
-mediaModule.setEngine(engineInstance);   // ← Make sure this line exists
-        
-        //engineInstance = new CitizenTalkEngine(db, storage);
-        //window.engineInstance = engineInstance;
+        window.engineInstance = engineInstance;
+        mediaModule.setEngine(engineInstance);
 
         loadDynamicNavigation();
-        setTimeout(() => window.switchTab('square'), 400);
+        
+        // Default to Public Square
+        setTimeout(() => window.switchTab('square'), 300);
         setTimeout(showWelcomeNote, 1200);
 
-        console.log("✅ Bootstrap finished");
+        console.log("✅ Bootstrap finished successfully");
     } catch (e) {
         console.error("Bootstrap error:", e);
+        showToast("Failed to initialize app. Please refresh.", "error");
     }
-} // <--- Added missing closing brace
+}
 
 document.addEventListener('DOMContentLoaded', bootstrap);
