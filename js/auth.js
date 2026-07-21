@@ -153,6 +153,7 @@ export function initAuth() {
         window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
         updateUIForAuthState();   // Keep UI in sync
     });
+    updateUIForAuthState();   // Add this
 
     console.log("🔐 Auth initialized");
 }
