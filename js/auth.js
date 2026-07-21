@@ -94,8 +94,15 @@ export async function googleLogin() {
             showToast("Sign-in was cancelled. Please try again.", "warning");
         } 
         else if (error.code === 'auth/popup-blocked') {
-            showToast("Popup was blocked by your browser. Please allow popups for this site.", "
-                      
+            showToast("Popup was blocked by your browser. Please allow popups for this site.", "error");
+        } else {
+            showToast("Sign-in failed. Please try again.", "error");
+        }
+    } finally {
+        popupInProgress = false;
+    }
+}
+                    
 export async function logout() {
     try {
         await signOut(auth);
