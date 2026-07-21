@@ -28,7 +28,7 @@ export function initMyTestimonies(containerId) {
 function loadUserTestimonies(userId, container) {
     const q = query(
         collection(db, "testimonies"),
-        where("authorId", "==", userId),
+        where("author.uid", "==", userId), // Updated to match the denormalized author object structure
         orderBy("createdAt", "desc")
     );
 
@@ -56,6 +56,7 @@ function renderTestimonies(snapshot, container) {
     snapshot.forEach((docSnap) => {
         const data = docSnap.data();
         const testimonyId = docSnap.id;
+        const textContent = data.text || data.content || ''; // Support both 'text' and legacy 'content' fields
         const dateStr = data.createdAt ? new Date(data.createdAt.toDate()).toLocaleString() : 'N/A';
 
         const div = document.createElement('div');
@@ -64,7 +65,7 @@ function renderTestimonies(snapshot, container) {
         div.innerHTML = `
             <div class="flex justify-between items-start gap-4">
                 <div class="flex-1">
-                    <p class="text-zinc-100 leading-relaxed" id="content-${testimonyId}">${data.content || ''}</p>
+                    <p class="text-zinc-100 leading-relaxed" id="content-${testimonyId}">${textContent}</p>
                     <div class="flex items-center gap-3 mt-4 text-xs">
                         <span class="text-emerald-500">${dateStr}</span>
                         ${data.hasForensic ? `<span class="text-emerald-400">🔬 Forensic Proof</span>` : ''}
@@ -99,7 +100,7 @@ window.editTestimony = async (testimonyId) => {
 
     try {
         await updateDoc(doc(db, 'testimonies', testimonyId), { 
-            content: newText,
+            text: newText,
             updatedAt: new Date()
         });
         showToast("✅ Updated successfully", "success");
@@ -116,7 +117,6 @@ window.deleteTestimony = async (testimonyId) => {
     const testimonyEl = document.getElementById(`testimony-${testimonyId}`);
     if (!testimonyEl) return;
 
-    const originalDisplay = testimonyEl.style.display;
     testimonyEl.style.opacity = '0.4';
     testimonyEl.style.pointerEvents = 'none';
 
@@ -129,3 +129,5 @@ window.deleteTestimony = async (testimonyId) => {
         testimonyEl.style.opacity = '1';
         testimonyEl.style.pointerEvents = 'auto';
         showToast("Failed to delete testimony", "error");
+    }
+};
