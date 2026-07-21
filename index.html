@@ -4,15 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#10b981">
-    <meta name="description" content="VocalWitness - Privacy First Public Square for Truth and Evidence">
-   <meta http-equiv="Content-Security-Policy" content="
-    default-src * 'unsafe-inline' 'unsafe-eval' data: blob: https: wss:;
-    script-src * 'unsafe-inline' 'unsafe-eval' https:;
-    style-src * 'unsafe-inline' https:;
-    img-src * data: https: blob:;
-    media-src * data: https: blob:;
-    connect-src * https: wss:;
-    frame-src * https:;
+    <<meta http-equiv="Content-Security-Policy" content="
+    default-src 'self' https:;
+    script-src 'self' https://www.gstatic.com https://cdnjs.cloudflare.com 'unsafe-inline';
+    style-src 'self' 'unsafe-inline' https:;
+    img-src 'self' data: https: blob:;
+    media-src 'self' https: blob:;
+    connect-src 'self' https://www.gstatic.com https: wss:;
+    font-src 'self' https:;
+    object-src 'none';
+    base-uri 'self';
+    frame-ancestors 'none';
+">
 ">
     <title data-i18n="pageTitle">VocalWitness • Truth • Evidence • Public Square</title>
 
