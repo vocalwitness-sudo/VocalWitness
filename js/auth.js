@@ -119,16 +119,19 @@ export async function logout() {
  * Require Authentication Helper
  * Used before protected actions (posting, uploading media, etc.)
  */
-export function requireAuth(message = "Please sign in to continue.") {
+export function requireAuth(message = "Please sign in to participate in the Public Square.") {
     if (!auth.currentUser) {
-        showToast(message, "warning");
-        // Open login modal
+        showToast(message, "info");
+        
+        // Open login modal automatically
         const loginModal = document.getElementById('loginModal');
         if (loginModal) loginModal.classList.remove('hidden');
+        
         return false;
     }
     return true;
 }
+
 
 export function initAuth() {
     auth.onAuthStateChanged(async (user) => {
@@ -141,6 +144,47 @@ export function initAuth() {
         }
         window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
     });
+    console.log("🔐 Auth initialized");
+}
+
+// ====================== UI SYNC FOR HYBRID MODEL ======================
+export function updateUIForAuthState() {
+    const isLoggedIn = !!auth.currentUser;
+
+    // Update header buttons
+    if (typeof window.updateHeaderButtons === 'function') {
+        window.updateHeaderButtons(isLoggedIn);
+    }
+
+    // Optional: Disable/enable action buttons globally
+    const actionButtons = document.querySelectorAll('#postButton, #btn-photo, #btn-voice');
+    actionButtons.forEach(btn => {
+        if (isLoggedIn) {
+            btn.style.opacity = '1';
+            btn.style.pointerEvents = 'all';
+        } else {
+            btn.style.opacity = '0.7';
+        }
+    });
+}
+
+// Call this whenever auth state changes
+export function initAuth() {
+    auth.onAuthStateChanged(async (user) => {
+        if (user) {
+            await createOrUpdateUser(user);
+            updateAppState({ isAuthenticated: true, currentUser: user });
+            refreshTierUI();
+        } else {
+            updateAppState({ isAuthenticated: false, currentUser: null });
+        }
+        
+        window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
+        
+        // Update UI for hybrid model
+        updateUIForAuthState();
+    });
+    
     console.log("🔐 Auth initialized");
 }
 
