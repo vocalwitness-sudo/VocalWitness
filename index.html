@@ -74,27 +74,37 @@
     </div>
 </header>
 
-<!-- Main Navigation -->
+<!-- Main Navigation --><!-- Main Navigation -->
 <nav class="flex gap-2 mb-8 overflow-x-auto pb-3 relative z-40" id="main-nav">
     <button data-tab="square" class="nav-tab active px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative">
-        <span class="font-semibold">Public Square</span>
-        <span class="text-xs text-zinc-400 hidden md:block">Citizen Talk • Share Testimony</span>
+        <span class="font-semibold">🗣️ Public Square</span>
+        <span class="text-xs text-zinc-400 hidden md:block">Share stories & evidence</span>
     </button>
+    
     <button data-tab="ledger" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative">
-        <span class="font-semibold">Evidence Ledger</span>
+        <span class="font-semibold">📜 Evidence Ledger</span>
+        <span class="text-xs text-zinc-400 hidden md:block">Permanent record</span>
     </button>
+    
     <button data-tab="arena" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative">
-        <span class="font-semibold">Live Arena</span>
+        <span class="font-semibold">🎥 Live Arena</span>
+        <span class="text-xs text-zinc-400 hidden md:block">Watch & join live</span>
     </button>
+    
     <button data-tab="mycircle" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative">
-        <span class="font-semibold">My Circle</span>
+        <span class="font-semibold">👥 My Circle</span>
+        <span class="text-xs text-zinc-400 hidden md:block">Trusted people</span>
     </button>
+    
     <button data-tab="witness" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative bg-amber-900/70 text-amber-300 border border-amber-700">
-        <span class="font-semibold">Verified Witnesses</span>
+        <span class="font-semibold">✅ Verified Witnesses</span>
+        <span class="text-xs text-amber-400 hidden md:block">Trusted voices</span>
     </button>
 
     <div class="relative ml-auto">
-        <button id="more-btn" class="nav-tab px-7 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit bg-emerald-600 hover:bg-emerald-700 text-white font-semibold">More</button>
+        <button id="more-btn" class="nav-tab px-7 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit bg-emerald-600 hover:bg-emerald-700 text-white font-semibold">
+            More Options
+        </button>
     </div>
 </nav>
 
@@ -113,26 +123,43 @@
 <!-- Testimony Composer -->
 <div class="glass rounded-3xl p-6 mb-10">
     <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-semibold text-white flex items-center gap-2"><span>📝</span> Share Your Testimony</h2>
+        <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+            <span>📝</span> Share Your Testimony
+        </h2>
         <span class="text-xs text-zinc-500">Public Square</span>
     </div>
 
-    <textarea id="mainInput" rows="4" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-5 text-lg placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none" placeholder="Share your raw testimony... What did you witness?"></textarea>
+    <textarea id="mainInput" rows="4" 
+              class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-5 text-lg placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none" 
+              placeholder="Share your raw testimony... What did you witness?"></textarea>
     
     <div class="flex gap-3 mt-5">
-        <button id="btn-photo" class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 hover:border-emerald-500 rounded-2xl flex items-center justify-center gap-3 font-medium transition-all active:scale-95">📸 Forensic Photo</button>
-        <button id="btn-voice" class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 hover:border-emerald-500 rounded-2xl flex items-center justify-center gap-3 font-medium transition-all active:scale-95">🎤 Voice Testimony</button>
+        <!-- Photo Button -->
+        <button id="btn-photo" 
+                class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 hover:border-emerald-500 rounded-2xl flex items-center justify-center gap-3 font-medium transition-all active:scale-95"
+                title="Take a photo or upload an image as evidence">
+            📸 <span class="hidden sm:inline">Add Photo Evidence</span>
+        </button>
+
+        <!-- Voice Button -->
+        <button id="btn-voice" 
+                class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 hover:border-emerald-500 rounded-2xl flex items-center justify-center gap-3 font-medium transition-all active:scale-95"
+                title="Record your voice telling what you saw or heard">
+            🎤 <span class="hidden sm:inline">Record Voice Message</span>
+        </button>
     </div>
 
     <div id="preview-area" class="mt-6 min-h-[120px] border border-dashed border-zinc-700 rounded-2xl p-4 flex items-center justify-center text-zinc-500 text-sm">
         Preview will appear here...
     </div>
 
-    <button id="postButton" class="mt-8 w-full py-5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-black font-semibold text-lg rounded-3xl transition-all active:scale-[0.985]">
-        🚀 Publish to the Square
+    <!-- Publish Button -->
+    <button id="postButton" 
+            class="mt-8 w-full py-5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-black font-semibold text-lg rounded-3xl transition-all active:scale-[0.985]"
+            title="Publish your testimony so everyone in the Public Square can see it">
+        🚀 Publish My Testimony
     </button>
 </div>
-
 <!-- Dynamic Content -->
 <main id="main-content">
     <div id="dynamicContainer" class="space-y-8"></div>
