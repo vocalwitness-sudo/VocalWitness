@@ -15,46 +15,66 @@ body {
     background: rgba(17, 24, 39, 0.95);
     backdrop-filter: blur(20px);
     border: 1px solid rgba(16, 185, 129, 0.25);
-    contain: layout style paint; /* Performance boost */
+    contain: layout style paint;
 }
 
-/* Reduce layout shift */
-#feedContainer {
-    min-height: 500px;
+/* ====================== BUTTON IMPROVEMENTS ====================== */
+
+/* General button tooltip support */
+button[title],
+a[title] {
+    position: relative;
 }
 
-.nav-btn {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+button[title]:hover::after,
+a[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 110%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1f2937;
+    color: #e5e7eb;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    white-space: nowrap;
+    z-index: 10000;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.2s ease;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
 }
 
-.nav-btn.active {
-    background-color: #10b981 !important;
-    color: #111827 !important;
-    font-weight: 700;
-    box-shadow: 0 10px 15px -3px rgb(16 185 129 / 0.4);
+button[title]:hover::after,
+a[title]:hover::after {
+    opacity: 1;
+    bottom: 115%;
 }
 
-/* Buttons */
-.guardian-btn,
-.supporter-btn {
-    background: linear-gradient(90deg, #10b981, #34d399);
-    color: black;
-    font-weight: 700;
-    transition: all 0.3s ease;
+/* Mobile tooltip adjustment */
+@media (max-width: 640px) {
+    button[title]:hover::after,
+    a[title]:hover::after {
+        display: none; /* Long press still works via native title */
+    }
 }
 
-.guardian-btn:hover,
-.supporter-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 20px -5px rgb(16 185 129 / 0.6);
-}
-
-/* Voice Recording */
+/* Testimony Composer Buttons */
+#btn-photo,
 #btn-voice {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    min-height: 56px;
+    min-height: 64px;
+    font-size: 1.05rem;
 }
 
+#btn-photo:hover,
+#btn-voice:hover {
+    border-color: #10b981;
+    transform: translateY(-2px);
+}
+
+/* Voice Recording State */
 #btn-voice.recording-active {
     background-color: #ef4444 !important;
     color: white !important;
@@ -68,6 +88,53 @@ body {
     font-weight: 700;
     letter-spacing: 2px;
     color: #fee2e2;
+}
+
+/* Publish Button */
+#postButton {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#postButton:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 25px -5px rgb(16 185 129 / 0.5);
+}
+
+/* Navigation Tabs */
+.nav-tab {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-tab:hover {
+    background-color: rgba(16, 185, 129, 0.1);
+    transform: translateY(-1px);
+}
+
+.nav-tab.active {
+    background-color: #10b981 !important;
+    color: #111827 !important;
+    font-weight: 700;
+    box-shadow: 0 10px 15px -3px rgb(16 185 129 / 0.4);
+}
+
+/* ====================== EXISTING STYLES (kept + organized) ====================== */
+
+#feedContainer {
+    min-height: 500px;
+}
+
+.guardian-btn,
+.supporter-btn {
+    background: linear-gradient(90deg, #10b981, #34d399);
+    color: black;
+    font-weight: 700;
+    transition: all 0.3s ease;
+}
+
+.guardian-btn:hover,
+.supporter-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px -5px rgb(16 185 129 / 0.6);
 }
 
 /* Tier Themes */
