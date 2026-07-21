@@ -9,18 +9,20 @@ body {
     color: white;
     min-height: 100vh;
     overflow-x: hidden;
+    background: radial-gradient(circle at 50% 20%, rgba(16, 185, 129, 0.08), transparent 70%);
 }
 
 .glass {
-    background: rgba(17, 24, 39, 0.95);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(16, 185, 129, 0.25);
+    background: rgba(17, 24, 39, 0.92);
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(16, 185, 129, 0.22);
+    box-shadow: 0 8px 32px -12px rgb(0 0 0 / 0.5);
     contain: layout style paint;
 }
 
-/* ====================== BUTTON IMPROVEMENTS ====================== */
+/* ====================== BUTTON IMPROVEMENTS & ACTIVE STATES ====================== */
 
-/* General button tooltip support */
+/* General Tooltip */
 button[title],
 a[title] {
     position: relative;
@@ -52,35 +54,72 @@ a[title]:hover::after {
     bottom: 115%;
 }
 
-/* Mobile tooltip adjustment */
 @media (max-width: 640px) {
     button[title]:hover::after,
     a[title]:hover::after {
-        display: none; /* Long press still works via native title */
+        display: none;
     }
 }
 
 /* Testimony Composer Buttons */
 #btn-photo,
 #btn-voice {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    min-height: 64px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    min-height: 68px;
     font-size: 1.05rem;
+    position: relative;
+    overflow: hidden;
 }
 
 #btn-photo:hover,
 #btn-voice:hover {
-    border-color: #10b981;
-    transform: translateY(-2px);
+    border-color: #34d399;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px -5px rgb(52 211 153 / 0.3);
 }
 
-/* Voice Recording State */
+/* ACTIVE / SELECTED STATE */
+#btn-photo.active,
+#btn-voice.active {
+    background-color: #10b981 !important;
+    color: #111827 !important;
+    border-color: #34d399;
+    transform: scale(1.03);
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.25),
+                0 15px 30px -8px rgb(16 185 129 / 0.4);
+}
+
+#btn-photo.active::before,
+#btn-voice.active::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 40%;
+    height: 300%;
+    background: linear-gradient(120deg, transparent, rgba(255,255,255,0.35), transparent);
+    transform: skewX(-25deg);
+    animation: shine 4s infinite;
+}
+
+@keyframes shine {
+    0%   { transform: translateX(-150%) skewX(-25deg); }
+    20%  { transform: translateX(300%) skewX(-25deg); }
+    100% { transform: translateX(300%) skewX(-25deg); }
+}
+
+/* Voice Recording */
 #btn-voice.recording-active {
     background-color: #ef4444 !important;
     color: white !important;
-    transform: scale(1.02);
-    box-shadow: 0 0 35px rgba(239, 68, 68, 0.65);
-    border: 2px solid rgba(255, 255, 255, 0.25);
+    transform: scale(1.05);
+    box-shadow: 0 0 40px rgba(239, 68, 68, 0.7);
+    animation: pulse-rec 1.5s infinite;
+}
+
+@keyframes pulse-rec {
+    0%, 100% { box-shadow: 0 0 40px rgba(239, 68, 68, 0.7); }
+    50% { box-shadow: 0 0 55px rgba(239, 68, 68, 0.9); }
 }
 
 #rec-timer {
@@ -92,22 +131,31 @@ a[title]:hover::after {
 
 /* Publish Button */
 #postButton {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 #postButton:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 20px 25px -5px rgb(16 185 129 / 0.5);
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 20px 35px -10px rgb(16 185 129 / 0.5);
 }
 
-/* Navigation Tabs */
+#postButton:active {
+    transform: scale(0.96);
+}
+
+/* ====================== NAVIGATION & OTHER ELEMENTS ====================== */
+
 .nav-tab {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .nav-tab:hover {
     background-color: rgba(16, 185, 129, 0.1);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
 }
 
 .nav-tab.active {
@@ -117,12 +165,31 @@ a[title]:hover::after {
     box-shadow: 0 10px 15px -3px rgb(16 185 129 / 0.4);
 }
 
-/* ====================== EXISTING STYLES (kept + organized) ====================== */
-
-#feedContainer {
-    min-height: 500px;
+/* Input Polish */
+#mainInput {
+    transition: all 0.3s ease;
+    min-height: 120px;
 }
 
+#mainInput:focus {
+    border-color: #34d399;
+    box-shadow: 0 0 0 4px rgba(52, 211, 153, 0.15);
+    background-color: rgba(15, 23, 42, 0.95);
+}
+
+/* Preview Area */
+#preview-area {
+    transition: all 0.4s ease;
+    background: rgba(15, 23, 42, 0.6);
+}
+
+#preview-area.has-content {
+    border-style: solid;
+    border-color: #34d399;
+    background: rgba(16, 185, 129, 0.08);
+}
+
+/* General Polish */
 .guardian-btn,
 .supporter-btn {
     background: linear-gradient(90deg, #10b981, #34d399);
@@ -137,22 +204,25 @@ a[title]:hover::after {
     box-shadow: 0 10px 20px -5px rgb(16 185 129 / 0.6);
 }
 
-/* Tier Themes */
-.tier-witness {
-    --accent-color: #eab308;
-    --bg-glass: rgba(234, 179, 8, 0.15);
+.glass:hover {
+    box-shadow: 0 20px 40px -15px rgb(16 185 129 / 0.25);
 }
 
-body.tier-witness {
-    background: linear-gradient(180deg, #0a0f1c, #1a1f2e);
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(52, 211, 153, 0.4);
+    border-radius: 20px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(52, 211, 153, 0.6);
 }
 
-body.tier-witness .glass {
-    background: var(--bg-glass);
-    border-color: var(--accent-color);
-}
+/* ====================== ANIMATIONS ====================== */
 
-/* Animations */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
