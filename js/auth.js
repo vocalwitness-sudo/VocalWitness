@@ -1,4 +1,4 @@
-// js/auth.js - Clean Auth with Circle Integration
+// js/auth.js - Clean Auth with Circle Integration + Hybrid UI Support
 import {
     signInWithPopup,
     signOut
@@ -11,6 +11,8 @@ import { showToast } from './utils.js';
 import { updateAppState } from './app-state.js';
 import { applyTierTheme, updateTierBadge } from './tier.js';
 
+let popupInProgress = false;
+
 // Safe Tier Refresh Helper
 function refreshTierUI() {
     if (typeof refreshTierAndUI === 'function') {
@@ -18,7 +20,6 @@ function refreshTierUI() {
     } else {
         if (typeof applyTierTheme === 'function') applyTierTheme();
         if (typeof updateTierBadge === 'function') updateTierBadge();
-        console.log("✅ Tier UI refreshed (fallback)");
     }
 }
 
@@ -41,7 +42,7 @@ async function createOrUpdateUser(user) {
                 createdAt: serverTimestamp(),
                 lastActive: serverTimestamp()
             });
-            showToast("Welcome to the Square!", "success");
+            showToast("Welcome to the Square! 🎉", "success");
         } else {
             await updateDoc(userRef, { lastActive: serverTimestamp() });
         }
@@ -50,9 +51,7 @@ async function createOrUpdateUser(user) {
     }
 }
 
-// js/auth.js - Improved googleLogin
-let popupInProgress = false;
-
+// ====================== IMPROVED GOOGLE LOGIN ======================
 export async function googleLogin() {
     if (popupInProgress) {
         showToast("Sign-in already in progress...", "info");
@@ -71,16 +70,15 @@ export async function googleLogin() {
         updateAppState({ isAuthenticated: true, currentUser: user });
         refreshTierUI();
         
-        // Update header buttons
         if (typeof window.updateHeaderButtons === 'function') {
             window.updateHeaderButtons(true);
         }
         
         window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
-        
+        updateUIForAuthState();   // ← Important for hybrid model
+
         showToast("✅ Signed in successfully! Welcome to the Square.", "success");
         
-        // Close login modal if open
         const loginModal = document.getElementById('loginModal');
         if (loginModal) loginModal.classList.add('hidden');
 
@@ -89,12 +87,10 @@ export async function googleLogin() {
     } catch (error) {
         console.error("Login error:", error);
 
-        // Better user-facing messages
         if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
             showToast("Sign-in was cancelled. Please try again.", "warning");
-        } 
-        else if (error.code === 'auth/popup-blocked') {
-            showToast("Popup was blocked by your browser. Please allow popups for this site.", "error");
+        } else if (error.code === 'auth/popup-blocked') {
+            showToast("Popup was blocked. Please allow popups for this site.", "error");
         } else {
             showToast("Sign-in failed. Please try again.", "error");
         }
@@ -102,52 +98,33 @@ export async function googleLogin() {
         popupInProgress = false;
     }
 }
-                    
+
+// ====================== LOGOUT ======================
 export async function logout() {
     try {
         await signOut(auth);
         updateAppState({ isAuthenticated: false, currentUser: null });
-        showToast("Signed out", "success");
+        showToast("Signed out successfully", "success");
         window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user: null } }));
+        updateUIForAuthState();
     } catch (error) {
         console.error("Logout error:", error);
         showToast("Logout failed", "error");
     }
 }
 
-/**
- * Require Authentication Helper
- * Used before protected actions (posting, uploading media, etc.)
- */
+// ====================== REQUIRE AUTH (Hybrid Friendly) ======================
 export function requireAuth(message = "Please sign in to participate in the Public Square.") {
     if (!auth.currentUser) {
         showToast(message, "info");
-        
-        // Open login modal automatically
         const loginModal = document.getElementById('loginModal');
         if (loginModal) loginModal.classList.remove('hidden');
-        
         return false;
     }
     return true;
 }
 
-
-export function initAuth() {
-    auth.onAuthStateChanged(async (user) => {
-        if (user) {
-            await createOrUpdateUser(user);
-            updateAppState({ isAuthenticated: true, currentUser: user });
-            refreshTierUI();
-        } else {
-            updateAppState({ isAuthenticated: false, currentUser: null });
-        }
-        window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
-    });
-    console.log("🔐 Auth initialized");
-}
-
-// ====================== UI SYNC FOR HYBRID MODEL ======================
+// ====================== UI SYNC FOR HYBRID READ/WRITE MODEL ======================
 export function updateUIForAuthState() {
     const isLoggedIn = !!auth.currentUser;
 
@@ -156,19 +133,13 @@ export function updateUIForAuthState() {
         window.updateHeaderButtons(isLoggedIn);
     }
 
-    // Optional: Disable/enable action buttons globally
-    const actionButtons = document.querySelectorAll('#postButton, #btn-photo, #btn-voice');
-    actionButtons.forEach(btn => {
-        if (isLoggedIn) {
-            btn.style.opacity = '1';
-            btn.style.pointerEvents = 'all';
-        } else {
-            btn.style.opacity = '0.7';
-        }
+    // Optional: Visual feedback on action buttons
+    document.querySelectorAll('#postButton, #btn-photo, #btn-voice').forEach(btn => {
+        btn.style.opacity = isLoggedIn ? '1' : '0.75';
     });
 }
 
-// Call this whenever auth state changes
+// ====================== INIT AUTH ======================
 export function initAuth() {
     auth.onAuthStateChanged(async (user) => {
         if (user) {
@@ -180,11 +151,9 @@ export function initAuth() {
         }
         
         window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
-        
-        // Update UI for hybrid model
-        updateUIForAuthState();
+        updateUIForAuthState();   // Keep UI in sync
     });
-    
+
     console.log("🔐 Auth initialized");
 }
 
@@ -192,3 +161,4 @@ export function initAuth() {
 window.googleLogin = googleLogin;
 window.logout = logout;
 window.requireAuth = requireAuth;
+window.updateUIForAuthState = updateUIForAuthState;
