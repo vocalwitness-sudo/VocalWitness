@@ -50,8 +50,20 @@ async function createOrUpdateUser(user) {
     }
 }
 
+// js/auth.js - Improved googleLogin
+let popupInProgress = false;
+
 export async function googleLogin() {
+    if (popupInProgress) {
+        showToast("Sign-in already in progress...", "info");
+        return;
+    }
+
+    popupInProgress = true;
+
     try {
+        showToast("Opening Google Sign-In...", "info");
+
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
         
@@ -66,18 +78,24 @@ export async function googleLogin() {
         
         window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
         
-        showToast("✅ Signed in successfully!", "success");
+        showToast("✅ Signed in successfully! Welcome to the Square.", "success");
+        
         // Close login modal if open
         const loginModal = document.getElementById('loginModal');
         if (loginModal) loginModal.classList.add('hidden');
-        
+
         return user;
+
     } catch (error) {
         console.error("Login error:", error);
-        showToast("Login failed. Please try again.", "error");
-    }
-}
 
+        // Better user-facing messages
+        if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
+            showToast("Sign-in was cancelled. Please try again.", "warning");
+        } 
+        else if (error.code === 'auth/popup-blocked') {
+            showToast("Popup was blocked by your browser. Please allow popups for this site.", "
+                      
 export async function logout() {
     try {
         await signOut(auth);
