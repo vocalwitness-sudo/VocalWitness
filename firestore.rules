@@ -2,8 +2,8 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /posts/{postId} {
-      allow read: if true; // Temporarily force public read access here
-      allow create: if request.auth != null; // Or keep your secure write rules
+      allow read: if true;
+      allow create: if request.auth != null;
     }
   }
 }
