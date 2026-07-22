@@ -1,23 +1,32 @@
-// js/zk-crypto.js - Fixed & Production Ready
+// js/zk-crypto.js - Rigorous Signature & Verification Engine
 import { showToast } from './utils.js';
 
 export async function generateRigorousProof(testimonyData) {
     try {
-        if (!window.ethers) {
+        const ethersLib = window.ethers;
+        if (!ethersLib) {
             throw new Error("Ethers library not loaded");
         }
 
-        // Get location (optional)
+        // Get location (optional with timeout guard)
         let location = { error: "Location skipped" };
         if (navigator.geolocation) {
             location = await new Promise((resolve) => {
+                const timer = setTimeout(() => resolve({ error: "Location timeout" }), 4000);
                 navigator.geolocation.getCurrentPosition(
-                    (pos) => resolve({
-                        lat: pos.coords.latitude,
-                        lng: pos.coords.longitude,
-                        acc: pos.coords.accuracy
-                    }),
-                    () => resolve({ error: "Location denied" })
+                    (pos) => {
+                        clearTimeout(timer);
+                        resolve({
+                            lat: pos.coords.latitude,
+                            lng: pos.coords.longitude,
+                            acc: pos.coords.accuracy
+                        });
+                    },
+                    () => {
+                        clearTimeout(timer);
+                        resolve({ error: "Location denied" });
+                    },
+                    { timeout: 4000 }
                 );
             });
         }
@@ -37,8 +46,11 @@ export async function generateRigorousProof(testimonyData) {
             .map(b => b.toString(16).padStart(2, '0'))
             .join('');
 
-        // Sign with wallet
-        const provider = new window.ethers.BrowserProvider(window.ethereum);
+        if (!window.ethereum) {
+            throw new Error("No Web3 wallet detected (e.g. MetaMask)");
+        }
+
+        const provider = new ethersLib.BrowserProvider(window.ethereum);
         const signer = await provider.getSigner();
         const signature = await signer.signMessage(hashHex);
         const signerAddress = await signer.getAddress();
@@ -52,18 +64,20 @@ export async function generateRigorousProof(testimonyData) {
 
     } catch (error) {
         console.error("Proof generation failed:", error);
-        showToast("Proof failed — wallet connection issue", "error");
+        showToast(error.message || "Proof failed — wallet connection issue", "error");
         throw error;
     }
 }
 
 export async function verifyProof(proof) {
     try {
-        const message = proof.bundle 
-            ? JSON.stringify(proof.bundle) 
-            : proof.hash;
+        const ethersLib = window.ethers;
+        if (!ethersLib || !proof || !proof.signature || !proof.hash) {
+            return false;
+        }
 
-        const recovered = window.ethers.verifyMessage(message, proof.signature);
+        // Recover address specifically from the hashHex message that was signed
+        const recovered = ethersLib.verifyMessage(proof.hash, proof.signature);
         return recovered.toLowerCase() === proof.signer.toLowerCase();
     } catch (e) {
         console.error("Verification failed:", e);
