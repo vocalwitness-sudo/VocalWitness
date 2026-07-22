@@ -2,23 +2,22 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Posts Collection (Matches composer.js & feed.js)
+    // Posts Collection - Used by feed.js and composer.js
     match /posts/{postId} {
-      allow read: if true;
+      allow read: if true;                    // Public read for feed
       
-      // User must be authenticated and setting their own authorId
       allow create: if request.auth != null 
                     && request.resource.data.authorId == request.auth.uid
-                    && request.resource.data.content.size() <= 5000;
+                    && (request.resource.data.content.size() <= 5000 || 
+                        request.resource.data.content == "");
 
-      // Allow updates only for liking/commenting counters (or prevent editing post content)
       allow update: if request.auth != null 
                     && request.resource.data.authorId == resource.data.authorId;
 
-      allow delete: if false; // Immutability
+      allow delete: if false;
     }
 
-    // Legacy Testimonies match (kept for backwards compatibility)
+    // Legacy / Alternative collection
     match /testimonies/{testimonyId} {
       allow read: if true;
       allow create: if request.auth != null;
@@ -32,13 +31,13 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // MENU / Config
+    // Config / Menu
     match /MENU/{document} {
       allow read: if true;
       allow write: if false;
     }
 
-    // Default deny
+    // Default deny everything else
     match /{document=**} {
       allow read, write: if false;
     }
