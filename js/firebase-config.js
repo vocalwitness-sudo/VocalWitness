@@ -1,7 +1,7 @@
 // js/firebase-config.js - SINGLE SOURCE OF TRUTH
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { getFirestore, clearIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { getStorage } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
 
 const firebaseConfig = {
@@ -18,8 +18,14 @@ export const provider = new GoogleAuthProvider();
 provider.setCustomParameters({ prompt: 'select_account' });
 
 export const auth = getAuth(app);
-
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+
+// Force clear stale IndexedDB persistence cache on load to fix permission loops
+clearIndexedDbPersistence(db).then(() => {
+    console.log("🧹 Firestore local persistence cache cleared successfully.");
+}).catch((err) => {
+    console.warn("Persistence clear failed (normal if multiple tabs are open):", err);
+});
 
 console.log("✅ Firebase Config Loaded Successfully");
