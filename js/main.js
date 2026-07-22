@@ -10,7 +10,7 @@ import { initProfile } from './profile.js';
 import { loadDynamicNavigation } from './navigation.js';
 import { AppState } from './app-state.js';
 import { showToast } from './utils.js';
-import './compose.js';
+import './composer.js';
 
 let engineInstance = null;
 let isInitialized = false;
