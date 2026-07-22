@@ -1,147 +1,65 @@
-<script type="module">
-    import { compressImage } from './js/media-compression.js';
+// js/media-compression.js
 
-    // ==================== ELEMENTS ====================
-    const btnPhoto = document.getElementById('btn-photo');
-    const btnVoice = document.getElementById('btn-voice');
-    const mainInput = document.getElementById('mainInput');
-    const previewArea = document.getElementById('preview-area');
-    const postButton = document.getElementById('postButton');
-
-    let mediaRecorder;
-    let audioChunks = [];
-    let recordedAudioUrl = null;
-    let selectedFile = null;
-
-    // ==================== ACTIVE STATE TOGGLE ====================
-    function toggleActive(button) {
-        if (button === btnPhoto) btnVoice.classList.remove('active');
-        if (button === btnVoice) btnPhoto.classList.remove('active');
-        button.classList.toggle('active');
+/**
+ * Compresses an image file before upload.
+ * @param {File} file - The original image file
+ * @param {number} maxWidth - Maximum width in pixels (default 1200)
+ * @param {number} quality - JPEG quality between 0 and 1 (default 0.82)
+ * @returns {Promise<File>} - Returns a new compressed File object
+ */
+export async function compressImage(file, maxWidth = 1200, quality = 0.82) {
+    if (!file.type.startsWith('image/')) {
+        return file; // Return original if not an image
     }
 
-    // ==================== PHOTO WITH COMPRESSION ====================
-    btnPhoto.addEventListener('click', async () => {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*';
-
-        input.onchange = async (e) => {
-            let file = e.target.files[0];
-            if (!file) return;
-
-            showToast('Compressing image...', 'info');
-
-            try {
-                const compressedFile = await compressImage(file, 1200, 0.82);
-                selectedFile = compressedFile;
-
-                toggleActive(btnPhoto);
-
-                // Preview
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    previewArea.innerHTML = `
-                        <img src="${ev.target.result}" 
-                           class="max-h-[300px] max-w-full rounded-2xl object-contain shadow-lg" 
-                           alt="Preview">
-                        <p class="text-xs text-emerald-400 mt-2">
-                            ${compressedFile.name} • ${(compressedFile.size / (1024*1024)).toFixed(2)} MB
-                        </p>
-                    `;
-                    previewArea.classList.add('has-content');
-                };
-                reader.readAsDataURL(compressedFile);
-
-                showToast('Image ready (compressed)', 'success');
-
-            } catch (err) {
-                console.error(err);
-                showToast('Image compression failed', 'error');
-            }
-        };
-        input.click();
-    });
-
-    // ==================== VOICE RECORDING ====================
-    let isRecording = false;
-
-    btnVoice.addEventListener('click', async () => {
-        if (!isRecording) {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream);
-                audioChunks = [];
-
-                mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-                mediaRecorder.onstop = () => {
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                    recordedAudioUrl = URL.createObjectURL(audioBlob);
-                    
-                    previewArea.innerHTML = `
-                        <div class="flex flex-col items-center gap-3">
-                            <p class="text-emerald-400">🎤 Voice recorded</p>
-                            <audio controls src="${recordedAudioUrl}" class="w-full max-w-md"></audio>
-                        </div>
-                    `;
-                    previewArea.classList.add('has-content');
-                };
-
-                mediaRecorder.start();
-                isRecording = true;
-                btnVoice.classList.add('recording-active');
-                btnVoice.textContent = '⏹️ Stop Recording';
-                toggleActive(btnVoice);
-
-            } catch (err) {
-                showToast('Microphone access denied', 'error');
-            }
-        } else {
-            mediaRecorder.stop();
-            mediaRecorder.stream.getTracks().forEach(track => track.stop());
-            isRecording = false;
-            btnVoice.classList.remove('recording-active');
-            btnVoice.textContent = '🎤 Voice Testimony';
-        }
-    });
-
-    // ==================== PUBLISH & RESET ====================
-    postButton.addEventListener('click', () => {
-        const text = mainInput.value.trim();
-
-        if (!text && !selectedFile && !recordedAudioUrl) {
-            showToast('Please add text or media before publishing', 'error');
-            return;
-        }
-
-        showToast('✅ Testimony published to the Public Square!', 'success');
-        setTimeout(resetComposer, 800);
-    });
-
-    function resetComposer() {
-        mainInput.value = '';
-        previewArea.innerHTML = 'Preview will appear here...';
-        previewArea.classList.remove('has-content');
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
         
-        btnPhoto.classList.remove('active');
-        btnVoice.classList.remove('active', 'recording-active');
-        btnVoice.textContent = '🎤 Voice Testimony';
+        reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target.result;
 
-        selectedFile = null;
-        recordedAudioUrl = null;
-        audioChunks = [];
-    }
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
 
-    // ==================== TOAST ====================
-    function showToast(message, type = 'info') {
-        const toast = document.createElement('div');
-        toast.className = `fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-2xl text-sm font-medium shadow-2xl z-[11000] ${
-            type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-red-600' : 'bg-zinc-800'
-        } text-white`;
-        toast.textContent = message;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3200);
-    }
+                // Resize while maintaining aspect ratio
+                if (width > maxWidth) {
+                    height = Math.round((height * maxWidth) / width);
+                    width = maxWidth;
+                }
 
-    console.log('%cVocalWitness media system loaded with compression', 'color:#10b981; font-weight:bold');
-</script>
+                canvas.width = width;
+                canvas.height = height;
+
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // Convert canvas to compressed blob
+                canvas.toBlob(
+                    (blob) => {
+                        if (!blob) {
+                            reject(new Error('Canvas toBlob failed'));
+                            return;
+                        }
+
+                        const compressedFile = new File([blob], file.name, {
+                            type: 'image/jpeg',
+                            lastModified: Date.now()
+                        });
+
+                        resolve(compressedFile);
+                    },
+                    'image/jpeg',
+                    quality
+                );
+            };
+
+            img.onerror = () => reject(new Error('Failed to load image'));
+        };
+
+        reader.onerror = () => reject(new Error('Failed to read file'));
+        reader.readAsDataURL(file);
+    });
+}
