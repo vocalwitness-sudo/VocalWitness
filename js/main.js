@@ -90,11 +90,16 @@ window.publishTestimony = async () => {
     }
 
     const postBtn = document.getElementById('postButton');
-    const originalText = postBtn ? postBtn.textContent : '🚀 Publish to the Square';
 
     if (postBtn) {
         postBtn.disabled = true;
-        postBtn.textContent = 'Publishing...';
+        postBtn.classList.add('publishing');
+        postBtn.innerHTML = `
+            <span class="flex items-center justify-center gap-3">
+                <span class="animate-spin h-5 w-5 border-2 border-black border-t-transparent rounded-full"></span>
+                Publishing to the Square...
+            </span>
+        `;
     }
 
     try {
@@ -133,7 +138,8 @@ window.publishTestimony = async () => {
     } finally {
         if (postBtn) {
             postBtn.disabled = false;
-            postBtn.textContent = originalText;
+            postBtn.classList.remove('publishing');
+            postBtn.innerHTML = '🚀 Publish to the Square';
         }
     }
 };
@@ -166,9 +172,6 @@ window.closeProfile = () => {
 
 // ====================== SETUP EVENT LISTENERS ======================
 function setupEventListeners() {
-    if (isInitialized) return;
-    isInitialized = true;
-
     console.log("✅ Setting up all buttons...");
 
     // Navigation tabs
@@ -227,6 +230,7 @@ function setupEventListeners() {
 // ====================== BOOTSTRAP ======================
 async function bootstrap() {
     if (isInitialized) return;
+    isInitialized = true;
     console.log("🚀 VocalWitness Bootstrap started");
 
     try {
