@@ -156,10 +156,17 @@
     </div>
 
     <!-- Publish Button -->
-    <button id="postButton" 
-        class="mt-8 w-full py-5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-black font-semibold text-lg rounded-3xl transition-all active:scale-[0.985]"
-        title="Publish your testimony to the Public Square">
-    🚀 Publish Testimony
+   <button id="postButton" 
+        class="mt-8 w-full py-6 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500 
+               hover:from-emerald-600 hover:via-teal-600 hover:to-emerald-600 
+               text-black font-bold text-xl rounded-3xl transition-all active:scale-[0.97] relative overflow-hidden group">
+    <span class="relative z-10 flex items-center justify-center gap-3">
+        🚀 Publish to the Square
+    </span>
+    
+    <!-- Shine / Glow Layer -->
+    <span class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent 
+                 -skew-x-12 -translate-x-full group-active:translate-x-full transition-transform duration-700"></span>
 </button>
 </div>
 <!-- Dynamic Content -->
