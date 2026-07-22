@@ -114,7 +114,10 @@ export async function getCurrentWitnessLevel() {
 /**
  * Check if user can access a feature
  */
-export function canAccessFeature(feature) {
+export async function canAccessFeature(feature) {
+  const userTier = await getCurrentUserTier();
+  const userLevel = await getCurrentWitnessLevel();
+
   const permissions = {
     live_arena: [TIERS.CITIZEN_CIRCLE, TIERS.WITNESS_CIRCLE],
     forensic_shield: [TIERS.CITIZEN_CIRCLE, TIERS.WITNESS_CIRCLE],
@@ -122,10 +125,17 @@ export function canAccessFeature(feature) {
     escalate_post: [TIERS.WITNESS_CIRCLE],
     review_queue: [TIERS.WITNESS_CIRCLE],
     dao_proposal: [TIERS.WITNESS_CIRCLE],
-    post_boost: [TIERS.SILVER, TIERS.GOLD, TIERS.STEWARD, TIERS.ELDER_STEWARD, TIERS.ARCHITECT], // Example
   };
 
-  return permissions[feature] ? true : true; // Expand later
+  const allowedTiers = permissions[feature];
+  if (!allowedTiers) return true; // Default allow unlisted features
+
+  // Level-based check for post_boost (requires SILVER or higher)
+  if (feature === 'post_boost') {
+    return userLevel && userLevel.level >= WITNESS_LEVELS.SILVER.level;
+  }
+
+  return allowedTiers.includes(userTier);
 }
 
 /**
@@ -159,9 +169,11 @@ export async function updateTierBadge() {
   } else if (tier === TIERS.CITIZEN_CIRCLE) {
     badge.innerHTML = '🛡️ Citizen Circle';
     badge.style.backgroundColor = '#34d399';
+    badge.style.color = "#000";
   } else {
     badge.innerHTML = '👤 Citizen';
     badge.style.backgroundColor = '#6b7280';
+    badge.style.color = "#fff";
   }
   badge.classList.remove('hidden');
 }
