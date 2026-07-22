@@ -1,9 +1,9 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // TEMPORARY WIDE OPEN TEST RULES
-    match /{document=**} {
-      allow read, write: if true;
+    match /posts/{postId} {
+      allow read: if true; // Temporarily force public read access here
+      allow create: if request.auth != null; // Or keep your secure write rules
     }
   }
 }
