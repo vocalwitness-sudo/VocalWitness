@@ -2,23 +2,21 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Testimonies collection (matches main.js write operations)
+    // Allows writing to testimonies for authenticated users
     match /testimonies/{testimonyId} {
       allow read: if true;
       allow create: if request.auth != null;
       allow update, delete: if request.auth != null && request.auth.uid == resource.data.authorId;
     }
 
-    // Public posts: anyone can read, authenticated users can create
     match /posts/{postId} {
       allow read: if true;
       allow create: if request.auth != null;
       allow update, delete: if request.auth != null && request.auth.uid == resource.data.authorId;
     }
     
-    // User profiles (matches auth.js and tier.js: /users/{userId})
     match /users/{userId} {
-      allow read: if true; // Allows tier checking and profile loading
+      allow read: if true;
       allow create, update: if request.auth != null && request.auth.uid == userId;
     }
   }
