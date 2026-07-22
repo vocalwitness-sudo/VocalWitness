@@ -5,11 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#10b981">
 
-
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="/logo.png" type="image/png">
-    <title>VocalWitness • Truth • Evidence • Public Square</title>
-  
+    <title>VocalWitness • Evidence Verification Portal</title>
+   
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
@@ -29,11 +28,74 @@
         <strong class="text-red-400">Legal:</strong> VocalWitness is an un-manipulated decentralized distribution medium.
     </div>
 
-    <div class="max-w-2xl mx-auto">
+    <main class="max-w-2xl mx-auto">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-emerald-400 mb-2">🔍 Evidence Verifier</h1>
+            <p class="text-zinc-400 text-sm">Verify the cryptographic signature and forensic integrity of any testimony.</p>
         </div>
 
-    <script>
-        // Keep your existing JS functions here
+        <div class="glass rounded-3xl p-6 mb-6">
+            <label class="block text-sm font-medium text-zinc-300 mb-2">Paste Proof Payload (JSON):</label>
+            <textarea id="proofInput" rows="6" 
+                class="w-full bg-zinc-900/80 border border-zinc-700 rounded-2xl p-4 text-xs font-mono text-emerald-300 focus:outline-none focus:border-emerald-500"
+                placeholder='{"hash": "...", "signature": "...", "signer": "0x...", "bundle": {...}}'></textarea>
+            
+            <button id="btnVerify" 
+                class="w-full mt-4 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 px-6 rounded-2xl transition shadow-lg shadow-emerald-900/30">
+                Verify Signature
+            </button>
+        </div>
+
+        <!-- Verification Result Container -->
+        <div id="resultBox" class="hidden glass rounded-3xl p-6 border transition-all">
+            <div id="resultHeader" class="text-lg font-bold mb-2"></div>
+            <div id="resultDetails" class="text-xs font-mono space-y-2 text-zinc-300"></div>
+        </div>
+    </main>
+
+    <script type="module">
+        import { verifyProof } from './js/zk-crypto.js';
+
+        document.getElementById('btnVerify')?.addEventListener('click', async () => {
+            const rawText = document.getElementById('proofInput').value.trim();
+            const resultBox = document.getElementById('resultBox');
+            const resultHeader = document.getElementById('resultHeader');
+            const resultDetails = document.getElementById('resultDetails');
+
+            if (!rawText) {
+                alert('Please paste a JSON proof payload to verify.');
+                return;
+            }
+
+            try {
+                const proofObj = JSON.parse(rawText);
+                const isValid = await verifyProof(proofObj);
+
+                resultBox.classList.remove('hidden', 'border-red-500/50', 'border-emerald-500/50');
+                
+                if (isValid) {
+                    resultBox.classList.add('border-emerald-500/50', 'bg-emerald-950/20');
+                    resultHeader.className = 'text-lg font-bold text-emerald-400 flex items-center gap-2';
+                    resultHeader.innerHTML = '✅ Authentic & Valid Signature';
+                    resultDetails.innerHTML = `
+                        <p><strong class="text-zinc-400">Signer Address:</strong> ${proofObj.signer}</p>
+                        <p><strong class="text-zinc-400">Payload Hash:</strong> ${proofObj.hash}</p>
+                        <p><strong class="text-zinc-400">Timestamp:</strong> ${proofObj.bundle?.timestamp ? new Date(proofObj.bundle.timestamp).toLocaleString() : 'N/A'}</p>
+                    `;
+                } else {
+                    resultBox.classList.add('border-red-500/50', 'bg-red-950/20');
+                    resultHeader.className = 'text-lg font-bold text-red-400 flex items-center gap-2';
+                    resultHeader.innerHTML = '❌ Invalid or Tampered Signature';
+                    resultDetails.innerHTML = `<p class="text-zinc-400">The signature does not match the provided signer or payload content.</p>`;
+                }
+            } catch (err) {
+                resultBox.classList.remove('hidden');
+                resultBox.classList.add('border-red-500/50', 'bg-red-950/20');
+                resultHeader.className = 'text-lg font-bold text-red-400';
+                resultHeader.innerHTML = '⚠️ Invalid JSON Structure';
+                resultDetails.innerHTML = `<p class="text-zinc-400">Could not parse JSON. Make sure you pasted a valid proof object.</p>`;
+            }
+        });
     </script>
     <script type="module" src="js/main.js"></script>
 </body>
