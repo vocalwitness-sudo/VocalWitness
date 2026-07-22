@@ -79,7 +79,7 @@ export async function uploadForensicMedia() {
         try {
             const hash = await generateSha256Hash(selectedImageFile);
             const timestamp = Date.now();
-            const path = `public/${userId}/${timestamp}_${selectedImageFile.name}`;
+           const path = `uploads/${userId}/${timestamp}_${selectedImageFile.name}`;
             
             const imageRef = ref(storage, path);
             await uploadBytes(imageRef, selectedImageFile);
