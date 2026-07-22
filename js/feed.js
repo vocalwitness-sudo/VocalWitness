@@ -3,14 +3,17 @@ import { collection, query, onSnapshot, limit } from "https://www.gstatic.com/fi
 import { db } from './firebase-config.js';
 import { showToast } from './utils.js';
 import { renderTierCircle } from './ui-components.js';
+import { getAuth } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 
 let activeFeedListener = null;
 
 export function initFeed(dbInstance = db) {
+    const auth = getAuth();
+    console.log("Current Auth User:", auth.currentUser);
+
     const feedContainer = document.getElementById('feedContainer');
     if (!feedContainer) return;
 
-    // Clean up old listener to avoid memory leaks
     if (activeFeedListener) activeFeedListener();
 
     feedContainer.innerHTML = `
@@ -18,7 +21,6 @@ export function initFeed(dbInstance = db) {
             <div class="animate-pulse text-zinc-400">Loading testimonies from the Square...</div>
         </div>`;
 
-    // Query posts with limit only (no orderBy to prevent index/permission crashes)
     const q = query(
         collection(dbInstance, "posts"),
         limit(30)
@@ -37,7 +39,6 @@ export function initFeed(dbInstance = db) {
             return;
         }
 
-        // Map and sort documents locally in memory
         const posts = [];
         snapshot.forEach((docSnap) => {
             posts.push({ id: docSnap.id, ...docSnap.data() });
@@ -46,7 +47,7 @@ export function initFeed(dbInstance = db) {
         posts.sort((a, b) => {
             const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : new Date(a.createdAt || 0).getTime();
             const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : new Date(b.createdAt || 0).getTime();
-            return timeB - timeA; // Descending order (newest first)
+            return timeB - timeA;
         });
 
         posts.forEach((post) => renderPost(post.id, post));
@@ -122,7 +123,6 @@ function renderPost(id, data) {
     if (container) container.appendChild(postEl);
 }
 
-// Global actions for onclick triggers in template strings
 window.reportPost = (postId) => {
     import('./moderation.js').then(m => m.reportContent(postId, "other")).catch(() => {
         showToast("Moderation module loading...", "info");
@@ -136,7 +136,6 @@ window.sharePost = (id) => {
 };
 window.showPostMenu = (postId, authorId) => showToast("Post options coming soon", "info");
 
-// Auto-initialize feed on load if feedContainer exists
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => initFeed());
 } else {
