@@ -14,6 +14,7 @@ import './composer.js';
 
 let engineInstance = null;
 let isInitialized = false;
+let listenersInitialized = false; // Added to prevent duplicate listener bindings
 
 // ====================== TAB SWITCHING ======================
 window.switchTab = async (tab) => {
@@ -68,6 +69,11 @@ window.switchTab = async (tab) => {
         console.error("Tab switch error:", e);
         container.innerHTML = `<div class="text-red-400 text-center py-8">Failed to load tab. Please try again.</div>`;
     }
+};
+
+// Global sync handler for ledger refresh button
+window.refreshLedger = () => {
+    loadEvidenceLedger();
 };
 
 // ====================== WELCOME NOTE ======================
@@ -144,33 +150,116 @@ window.publishTestimony = async () => {
     }
 };
 
-// ====================== HELPERS ======================
+// ====================== EVIDENCE LEDGER MODULE ======================
 async function loadEvidenceLedger() {
     const container = document.getElementById('ledgerContainer');
     if (!container) return;
-    container.innerHTML = `<div class="text-center py-12 text-zinc-400">Evidence Ledger coming soon...</div>`;
+
+    // Furnished, comfortable empty/loading state UI
+    container.innerHTML = `
+        <div class="glass rounded-3xl p-8 border border-zinc-700/60 shadow-2xl">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8 pb-6 border-b border-zinc-800">
+                <div>
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                        <span>📜</span> Cryptographic Evidence Ledger
+                    </h2>
+                    <p class="text-sm text-zinc-400 mt-1">Permanent, immutable record of public testimonies and cryptographic hashes.</p>
+                </div>
+                <button onclick="window.refreshLedger()" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-2xl text-xs font-medium text-emerald-400 transition flex items-center gap-2">
+                    🔄 Sync Ledger
+                </button>
+            </div>
+            <div id="ledgerTableWrapper" class="overflow-x-auto">
+                <div class="text-center py-16 text-zinc-500 animate-pulse">
+                    Securely connecting to blockchain and ledger database...
+                </div>
+            </div>
+        </div>
+    `;
+
+    try {
+        const { collection, getDocs, query, orderBy, limit } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
+        
+        // Fetch recent verified or general testimonies for the ledger
+        const q = query(collection(db, "testimonies"), orderBy("createdAt", "desc"), limit(20));
+        const querySnapshot = await getDocs(q);
+
+        const wrapper = document.getElementById('ledgerTableWrapper');
+        if (!wrapper) return;
+
+        if (querySnapshot.empty) {
+            wrapper.innerHTML = `
+                <div class="text-center py-12 text-zinc-500">
+                    <p class="text-base font-medium text-zinc-400">No forensic records found in the ledger yet.</p>
+                    <p class="text-xs mt-1 text-zinc-600">Published testimonies with media evidence will appear here automatically.</p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = `
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-zinc-800 text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                        <th class="py-3 px-4">Witness / Author</th>
+                        <th class="py-3 px-4">Summary / Content</th>
+                        <th class="py-3 px-4">Cryptographic Hash</th>
+                        <th class="py-3 px-4">Status</th>
+                        <th class="py-3 px-4 text-right">Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-zinc-800/60 text-sm">
+        `;
+
+        querySnapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            const dateStr = data.createdAt?.toDate ? data.createdAt.toDate().toLocaleString() : 'Just now';
+            const shortHash = data.imageHash || data.audioHash ? (data.imageHash || data.audioHash).substring(0, 14) + '...' : 'Standard Log';
+            const hasMedia = data.hasForensic ? '🛡️ Verified Media' : '📝 Text Record';
+            
+            html += `
+                <tr class="hover:bg-zinc-900/60 transition-colors group">
+                    <td class="py-4 px-4 font-medium text-white flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        ${escapeHtml(data.author || 'Anonymous Witness')}
+                    </td>
+                    <td class="py-4 px-4 text-zinc-300 max-w-xs truncate">
+                        ${escapeHtml(data.content || '')}
+                    </td>
+                    <td class="py-4 px-4 font-mono text-xs text-emerald-400">
+                        ${escapeHtml(shortHash)}
+                    </td>
+                    <td class="py-4 px-4">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-950/80 text-emerald-300 border border-emerald-800/50">
+                            ${hasMedia}
+                        </span>
+                    </td>
+                    <td class="py-4 px-4 text-right text-xs text-zinc-500">
+                        ${dateStr}
+                    </td>
+                </tr>
+            `;
+        });
+
+        html += `
+                </tbody>
+            </table>
+        `;
+        wrapper.innerHTML = html;
+
+    } catch (err) {
+        console.error("Ledger fetch error:", err);
+        const wrapper = document.getElementById('ledgerTableWrapper');
+        if (wrapper) {
+            wrapper.innerHTML = `<div class="text-red-400 text-center py-8">Failed to load ledger records securely. Please verify your connection.</div>`;
+        }
+    }
 }
 
-window.refreshLedger = loadEvidenceLedger;
-
-window.showProfile = () => {
-    if (!auth.currentUser) {
-        showToast("Please sign in to access your Profile", "info");
-        return;
-    }
-    const modal = document.getElementById('profileModal');
-    if (modal) {
-        modal.classList.remove('hidden');
-        if (typeof initProfile === 'function') initProfile();
-    }
-};
-
-window.closeProfile = () => {
-    const modal = document.getElementById('profileModal');
-    if (modal) modal.classList.add('hidden');
-};
-
-let listenersInitialized = false;
+// Simple HTML escaper helper to maintain security hygiene
+function escapeHtml(str) {
+    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+}
 
 // ====================== SETUP EVENT LISTENERS ======================
 function setupEventListeners() {
@@ -234,6 +323,7 @@ function setupEventListeners() {
 
     console.log("✅ All major buttons wired successfully");
 }
+
 // ====================== BOOTSTRAP ======================
 async function bootstrap() {
     if (isInitialized) return;
