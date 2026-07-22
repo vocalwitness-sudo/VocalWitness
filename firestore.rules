@@ -2,11 +2,13 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Testimonies
+    // Testimonies (Immutable + Author Validation)
     match /testimonies/{testimonyId} {
       allow read: if true;
-      allow create: if request.auth != null;   // Must be logged in
-      allow update, delete: if false;          // Immutable
+      allow create: if request.auth != null 
+                    && request.resource.data.author.uid == request.auth.uid
+                    && request.resource.data.content.size() <= 5000; // Cap text length
+      allow update, delete: if false; // Strict Immutability
     }
 
     // Users
