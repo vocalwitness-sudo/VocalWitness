@@ -1,5 +1,5 @@
 // js/feed.js - Polished Public Square Feed
-import { collection, query, orderBy, onSnapshot, limit } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { collection, query, onSnapshot, limit } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { db } from './firebase-config.js';
 import { showToast } from './utils.js';
 import { renderTierCircle } from './ui-components.js';
@@ -18,10 +18,9 @@ export function initFeed(dbInstance = db) {
             <div class="animate-pulse text-zinc-400">Loading testimonies from the Square...</div>
         </div>`;
 
-    // Query posts ordered by creation date
+    // Query posts with limit only (no orderBy to prevent index/permission crashes)
     const q = query(
         collection(dbInstance, "posts"),
-        orderBy("createdAt", "desc"),
         limit(30)
     );
 
@@ -38,12 +37,22 @@ export function initFeed(dbInstance = db) {
             return;
         }
 
+        // Map and sort documents locally in memory
+        const posts = [];
         snapshot.forEach((docSnap) => {
-            renderPost(docSnap.id, docSnap.data());
+            posts.push({ id: docSnap.id, ...docSnap.data() });
         });
+
+        posts.sort((a, b) => {
+            const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : new Date(a.createdAt || 0).getTime();
+            const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : new Date(b.createdAt || 0).getTime();
+            return timeB - timeA; // Descending order (newest first)
+        });
+
+        posts.forEach((post) => renderPost(post.id, post));
     }, (error) => {
         console.error("Feed error:", error);
-        feedContainer.innerHTML = `<div class="text-red-400 text-center py-8">Failed to load feed. Check your connection or Firestore indexes.</div>`;
+        feedContainer.innerHTML = `<div class="text-red-400 text-center py-8">Failed to load feed. Check your connection or Firestore rules.</div>`;
     });
 }
 
@@ -66,7 +75,6 @@ function renderPost(id, data) {
             🔒 Hash: ${data.forensicHash}
          </div>` : '';
 
-    // Safe timestamp handling (Firebase serverTimestamp can take a moment to resolve locally)
     let formattedDate = "Just now";
     if (data.createdAt?.toDate) {
         formattedDate = data.createdAt.toDate().toLocaleString();
