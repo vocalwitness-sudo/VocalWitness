@@ -27,25 +27,17 @@ async function createOrUpdateUser(user) {
     if (!user) return;
     try {
         const userRef = doc(db, "users", user.uid);
-        const snap = await getDoc(userRef);
         
-        if (!snap.exists()) {
-            await setDoc(userRef, {
-                uid: user.uid,
-                email: user.email,
-                displayName: user.displayName || "Anonymous Witness",
-                photoURL: user.photoURL,
-                tier: "citizen",
-                isPhoneVerified: false,
-                zkVerified: false,
-                credibilityScore: 10,
-                createdAt: serverTimestamp(),
-                lastActive: serverTimestamp()
-            });
-            showToast("Welcome to the Square! 🎉", "success");
-        } else {
-            await updateDoc(userRef, { lastActive: serverTimestamp() });
-        }
+        // Use setDoc with merge: true so it initializes missing fields or updates lastActive safely
+        await setDoc(userRef, {
+            uid: user.uid,
+            email: user.email || "",
+            displayName: user.displayName || "Anonymous Witness",
+            photoURL: user.photoURL || "",
+            tier: "citizen",
+            lastActive: serverTimestamp()
+        }, { merge: true });
+
     } catch (e) {
         console.error("User document error:", e);
     }
