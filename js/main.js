@@ -170,8 +170,16 @@ window.closeProfile = () => {
     if (modal) modal.classList.add('hidden');
 };
 
+let listenersInitialized = false;
+
 // ====================== SETUP EVENT LISTENERS ======================
 function setupEventListeners() {
+    if (listenersInitialized) {
+        console.log("⚠️ Event listeners already set up, skipping duplicate binding.");
+        return;
+    }
+    listenersInitialized = true;
+
     console.log("✅ Setting up all buttons...");
 
     // Navigation tabs
@@ -226,7 +234,6 @@ function setupEventListeners() {
 
     console.log("✅ All major buttons wired successfully");
 }
-
 // ====================== BOOTSTRAP ======================
 async function bootstrap() {
     if (isInitialized) return;
