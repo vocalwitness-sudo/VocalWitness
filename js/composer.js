@@ -114,6 +114,11 @@ postButton?.addEventListener('click', async () => {
         return;
     }
 
+    if (!auth.currentUser) {
+        showToast('You must be logged in to publish testimony', 'error');
+        return;
+    }
+
     postButton.disabled = true;
     postButton.textContent = 'Publishing...';
 
@@ -121,10 +126,11 @@ postButton?.addEventListener('click', async () => {
         let imageUrl = null;
         let audioUrl = null;
         let imageHash = null;
+        const userId = auth.currentUser.uid;
 
         // 1. Upload compressed image if attached
         if (selectedFile) {
-            const fileRef = ref(storage, `evidence/images/${Date.now()}_${selectedFile.name}`);
+            const fileRef = ref(storage, `evidence/${userId}/${Date.now()}_${selectedFile.name}`);
             await uploadBytes(fileRef, selectedFile);
             imageUrl = await getDownloadURL(fileRef);
             imageHash = await generateSha256Hash(selectedFile);
@@ -132,7 +138,7 @@ postButton?.addEventListener('click', async () => {
 
         // 2. Upload voice recording if attached
         if (recordedAudioBlob) {
-            const audioRef = ref(storage, `evidence/audio/${Date.now()}_voice.webm`);
+            const audioRef = ref(storage, `evidence/${userId}/${Date.now()}_voice.webm`);
             await uploadBytes(audioRef, recordedAudioBlob);
             audioUrl = await getDownloadURL(audioRef);
         }
@@ -147,7 +153,7 @@ postButton?.addEventListener('click', async () => {
             imageUrl: imageUrl,
             audioUrl: audioUrl,
             forensicHash: imageHash,
-            authorId: auth.currentUser ? auth.currentUser.uid : 'anonymous',
+            authorId: userId,
             authorTier: userTier,
             authorWitnessLevel: userWitnessLevel ? userWitnessLevel.name : null,
             createdAt: serverTimestamp()
@@ -173,7 +179,7 @@ postButton?.addEventListener('click', async () => {
 
     } catch (err) {
         console.error("Publish Error:", err);
-        showToast('Failed to publish post. Check connection.', 'error');
+        showToast(err.message || 'Failed to publish post. Check connection.', 'error');
     } finally {
         postButton.disabled = false;
         postButton.textContent = 'Publish';
