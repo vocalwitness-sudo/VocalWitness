@@ -1,4 +1,4 @@
-// js/tier.js - Enhanced Tier & Progression System
+// js/tier.js - Enhanced Tier, Progression & Governance System
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { db, auth } from './firebase-config.js';
 import { showToast } from './utils.js';
@@ -41,7 +41,7 @@ export const WITNESS_LEVELS = {
     emblem: "🟡",
     color: "#f59e0b",
     minRep: 300,
-    benefits: ["Moderation Tools", "DAO Voting Power", "Escalate Posts"]
+    benefits: ["Moderation Tools", "DAO Voting Power", "Escalate Posts", "Steward Apartment Access"]
   },
   ELDER_STEWARD: {
     name: "Elder Steward",
@@ -49,7 +49,7 @@ export const WITNESS_LEVELS = {
     emblem: "🔴",
     color: "#a855f7",
     minRep: 600,
-    benefits: ["Review Queue Access", "Special Badge", "Platform Influence"]
+    benefits: ["Review Queue Access", "Special Badge", "Platform Influence", "Final Dispute Arbitration"]
   },
   ARCHITECT: {
     name: "Architect",
@@ -57,7 +57,7 @@ export const WITNESS_LEVELS = {
     emblem: "💎",
     color: "#ec4899",
     minRep: 1000,
-    benefits: ["Custom Features", "High Influence", "Legacy Status"]
+    benefits: ["Custom Features", "High Influence", "Legacy Status", "System-Wide Governance"]
   }
 };
 
@@ -112,6 +112,37 @@ export async function getCurrentWitnessLevel() {
 }
 
 /**
+ * Check if the user has Steward-level privileges (Steward, Elder Steward, or Architect)
+ */
+export async function hasStewardAccess() {
+  const level = await getCurrentWitnessLevel();
+  if (!level) return false;
+  return level.level >= WITNESS_LEVELS.STEWARD.level;
+}
+
+/**
+ * Calculate voting weight for DAO proposals based on reputation & tier
+ */
+export async function getUserVotingWeight() {
+  try {
+    const tier = await getCurrentUserTier();
+    if (tier === TIERS.CITIZEN) return 1; // Base citizen voice
+
+    const userRef = doc(db, "users", auth.currentUser.uid);
+    const snap = await getDoc(userRef);
+    const data = snap.data() || {};
+    const rep = data.reputation || 30;
+
+    if (tier === TIERS.CITIZEN_CIRCLE) return 2; // Phone verified weight
+    
+    // Witness circle scaled by reputation (e.g., MinRep 30 = 3 votes, 1000 = 10+ votes)
+    return Math.max(3, Math.floor(rep / 50));
+  } catch (e) {
+    return 1;
+  }
+}
+
+/**
  * Check if user can access a feature
  */
 export async function canAccessFeature(feature) {
@@ -123,17 +154,23 @@ export async function canAccessFeature(feature) {
     forensic_shield: [TIERS.CITIZEN_CIRCLE, TIERS.WITNESS_CIRCLE],
     create_group: [TIERS.CITIZEN_CIRCLE, TIERS.WITNESS_CIRCLE],
     escalate_post: [TIERS.WITNESS_CIRCLE],
-    review_queue: [TIERS.WITNESS_CIRCLE],
+    review_queue: [TIERS.WITNESS_CIRCLE], // Will also check steward level below
     dao_proposal: [TIERS.WITNESS_CIRCLE],
+    steward_apartment: [TIERS.WITNESS_CIRCLE]
   };
 
-  const allowedTiers = permissions[feature];
-  if (!allowedTiers) return true; // Default allow unlisted features
+  // Special checks for Steward-exclusive features
+  if (feature === 'review_queue' || feature === 'steward_apartment') {
+    return await hasStewardAccess();
+  }
 
   // Level-based check for post_boost (requires SILVER or higher)
   if (feature === 'post_boost') {
     return userLevel && userLevel.level >= WITNESS_LEVELS.SILVER.level;
   }
+
+  const allowedTiers = permissions[feature];
+  if (!allowedTiers) return true; // Default allow unlisted features
 
   return allowedTiers.includes(userTier);
 }
@@ -182,5 +219,5 @@ export async function updateTierBadge() {
 export function refreshTierAndUI() {
   applyTierTheme();
   updateTierBadge();
-  console.log("✅ Tier system & UI refreshed");
+  console.log("✅ Tier system & Governance UI refreshed");
 }
