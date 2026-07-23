@@ -43,6 +43,25 @@ async function createOrUpdateUser(user) {
     }
 }
 
+// ====================== FIREBASE AUTH ERROR MAPPER ======================
+function handleAuthError(error) {
+    switch (error.code) {
+        case 'auth/too-many-requests':
+            return "Too many attempts. For security, please wait a few minutes before trying again.";
+        case 'auth/invalid-phone-number':
+            return "The phone number format is invalid. Please include your correct country code.";
+        case 'auth/quota-exceeded':
+            return "SMS service temporarily busy. Please try an alternate verification path.";
+        case 'auth/popup-closed-by-user':
+        case 'auth/cancelled-popup-request':
+            return "Sign-in was cancelled. Please try again.";
+        case 'auth/popup-blocked':
+            return "Popup was blocked. Please allow popups for this site.";
+        default:
+            return error.message || "Authentication failed. Please check your connection.";
+    }
+}
+
 // ====================== IMPROVED GOOGLE LOGIN ======================
 export async function googleLogin() {
     if (popupInProgress) {
@@ -78,14 +97,8 @@ export async function googleLogin() {
 
     } catch (error) {
         console.error("Login error:", error);
-
-        if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
-            showToast("Sign-in was cancelled. Please try again.", "warning");
-        } else if (error.code === 'auth/popup-blocked') {
-            showToast("Popup was blocked. Please allow popups for this site.", "error");
-        } else {
-            showToast("Sign-in failed. Please try again.", "error");
-        }
+        const errorMessage = handleAuthError(error);
+        showToast(errorMessage, error.code?.includes('cancelled') ? "warning" : "error");
     } finally {
         popupInProgress = false;
     }
