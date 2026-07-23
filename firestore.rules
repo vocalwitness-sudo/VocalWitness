@@ -2,16 +2,23 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Testimonies (Ledger)
+    // Testimonies / Evidence Ledger
     match /testimonies/{testimonyId} {
-      allow read: if true;                    // Public read
+      allow read: if true;                                    // Public read for ledger & feed
       allow create: if request.auth != null 
                    && request.auth.uid == request.resource.data.authorId;
       allow update, delete: if request.auth != null 
                             && request.auth.uid == resource.data.authorId;
     }
 
-    // Posts (if used)
+    // Groups Collection
+    match /groups/{groupId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+    }
+
+    // Posts Collection
     match /posts/{postId} {
       allow read: if true;
       allow create: if request.auth != null;
@@ -19,17 +26,10 @@ service cloud.firestore {
                             && request.auth.uid == resource.data.authorId;
     }
 
-    // Users
+    // Users Collection (Crucial for tier.js & profile checks)
     match /users/{userId} {
       allow read: if true;
       allow create, update: if request.auth != null && request.auth.uid == userId;
-    }
-
-    // 👉 ADD THIS NEW BLOCK FOR GROUPS
-    match /groups/{groupId} {
-      allow read: if true;                                    // Anyone can view the group list
-      allow create: if request.auth != null;                  // Authenticated users can create groups
-      allow update: if request.auth != null;                  // Authenticated users can join/update member lists
     }
   }
 }
