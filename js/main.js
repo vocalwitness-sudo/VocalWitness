@@ -82,12 +82,6 @@ function showWelcomeNote() {
     localStorage.setItem('hasSeenWelcome', 'true');
 }
 
-function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>'"]/g, 
-        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
-    );
-}
 
 // ====================== PUBLISH TESTIMONY ======================
 window.publishTestimony = async () => {
@@ -164,6 +158,23 @@ window.publishTestimony = async () => {
         }
     }
 };
+
+
+// ====================== UTILITIES ======================
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+// ====================== EVIDENCE LEDGER MODULE ======================
+async function loadEvidenceLedger() {
+    // ... rest of your ledger code ...
+}
 // ====================== EVIDENCE LEDGER MODULE ======================
 async function loadEvidenceLedger() {
     const container = document.getElementById('ledgerContainer');
