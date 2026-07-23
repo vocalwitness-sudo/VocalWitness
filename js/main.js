@@ -83,20 +83,21 @@ function showWelcomeNote() {
 }
 
 // ====================== PUBLISH TESTIMONY ======================
+// ====================== PUBLISH TESTIMONY ======================
 window.publishTestimony = async () => {
     if (!requireAuth("Please sign in to share your testimony in the Public Square.")) return;
 
     const textarea = document.getElementById('mainInput');
     const content = textarea ? textarea.value.trim() : '';
-    
+   
     if (!content) {
         showToast("Please write something before publishing", "error");
         return;
     }
 
     const postBtn = document.getElementById('postButton');
-
     if (postBtn) {
+        if (postBtn.disabled) return; // ← Prevent double-click
         postBtn.disabled = true;
         postBtn.classList.add('publishing');
         postBtn.innerHTML = `
@@ -109,9 +110,10 @@ window.publishTestimony = async () => {
 
     try {
         const { collection, addDoc, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
-        
+       
+        // Upload media ONLY ONCE
         const mediaData = await mediaModule.uploadForensicMedia();
-        
+       
         const testimonyData = {
             authorId: auth.currentUser.uid,
             author: auth.currentUser.displayName || "Registered Witness",
@@ -129,18 +131,20 @@ window.publishTestimony = async () => {
         };
 
         await addDoc(collection(db, "testimonies"), testimonyData);
-        
+       
         showToast("✅ Testimony published successfully!", "success");
-        
+       
+        // Clear form
         if (textarea) textarea.value = '';
-        mediaModule.resetMediaState();
-        
+        if (typeof mediaModule.resetMediaState === 'function') {
+            mediaModule.resetMediaState();
+        }
+
         // Refresh feed
         if (typeof initFeed === 'function') initFeed(db, 'citizen-talk');
+
     } catch (err) {
         console.error("Publish error:", err);
-        
-        // Target friendly error guidance for Firebase permissions issue
         if (err.code === 'permission-denied') {
             showToast("⚠️ Permission denied. Please check your Firestore security rules.", "error");
         } else {
@@ -269,10 +273,11 @@ function setupEventListeners() {
         console.log("⚠️ Event listeners already set up, skipping duplicate binding.");
         return;
     }
+    
     listenersInitialized = true;
-
     console.log("✅ Setting up all buttons...");
 
+    // Navigation buttons
     document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -280,41 +285,66 @@ function setupEventListeners() {
         });
     });
 
-    document.getElementById('profile-btn')?.addEventListener('click', window.showProfile);
-
-    document.getElementById('support-btn')?.addEventListener('click', () => {
-        const modal = document.getElementById('supportModal');
-        if (modal) modal.classList.remove('hidden');
-        else showToast("Support page coming soon", "info");
+    // Profile button
+    document.getElementById('profile-btn')?.addEventListener('click', () => {
+        if (typeof window.showProfile === 'function') {
+            window.showProfile();
+        }
     });
 
+    // Support button
+    document.getElementById('support-btn')?.addEventListener('click', () => {
+        const modal = document.getElementById('supportModal');
+        if (modal) {
+            modal.classList.remove('hidden');
+        } else {
+            showToast("Support page coming soon", "info");
+        }
+    });
+
+    // Sign in button
     document.getElementById('signin-btn')?.addEventListener('click', () => {
         const modal = document.getElementById('loginModal');
         if (modal) modal.classList.remove('hidden');
     });
 
-    document.getElementById('btn-photo')?.addEventListener('click', () => {
-        if (!requireAuth("Sign in to upload Forensic Photo")) return;
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/jpeg,image/png,image/webp';
-        input.onchange = (e) => {
-            const previewArea = document.getElementById('preview-area');
-            if (previewArea && typeof mediaModule.handleImageSelect === 'function') {
-                mediaModule.handleImageSelect(e, previewArea);
+    // Photo upload button
+    const photoBtn = document.getElementById('btn-photo');
+    if (photoBtn) {
+        photoBtn.addEventListener('click', () => {
+            if (!requireAuth("Sign in to upload Forensic Photo")) return;
+            
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/jpeg,image/png,image/webp';
+            input.onchange = (e) => {
+                const previewArea = document.getElementById('preview-area');
+                if (previewArea && typeof mediaModule.handleImageSelect === 'function') {
+                    mediaModule.handleImageSelect(e, previewArea);
+                }
+            };
+            input.click();
+        });
+    }
+
+    // Voice recording button
+    const voiceBtn = document.getElementById('btn-voice');
+    if (voiceBtn) {
+        voiceBtn.addEventListener('click', () => {
+            if (!requireAuth("Sign in to record Voice Testimony")) return;
+            if (typeof mediaModule.toggleVoiceRecording === 'function') {
+                mediaModule.toggleVoiceRecording(voiceBtn);
             }
-        };
-        input.click();
-    });
+        });
+    }
 
-    document.getElementById('btn-voice')?.addEventListener('click', () => {
-        if (!requireAuth("Sign in to record Voice Testimony")) return;
-        if (typeof mediaModule.toggleVoiceRecording === 'function') {
-            mediaModule.toggleVoiceRecording(document.getElementById('btn-voice'));
-        }
-    });
-
-    document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
+    // Publish button - with protection against double clicks
+    const postButton = document.getElementById('postButton');
+    if (postButton) {
+        // Remove any existing listeners first (extra safety)
+        postButton.removeEventListener('click', window.publishTestimony);
+        postButton.addEventListener('click', window.publishTestimony);
+    }
 
     console.log("✅ All major buttons wired successfully");
 }
