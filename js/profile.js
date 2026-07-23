@@ -3,7 +3,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/fi
 import { doc, onSnapshot, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { auth, db } from './firebase-config.js';
 import { showToast } from './utils.js';
-import { refreshTierAndUI } from './tier.js';
+import { refreshTierAndUI, getCurrentWitnessLevel } from './tier.js'; // ← Added getCurrentWitnessLevel here
 
 let currentUserData = null;
 let userUnsubscribe = null;
