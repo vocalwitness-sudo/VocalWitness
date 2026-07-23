@@ -321,10 +321,14 @@ function setupEventListeners() {
         if (modal) modal.classList.remove('hidden');
     });
 
-    // Photo upload button
+  // Photo upload button
     const photoBtn = document.getElementById('btn-photo');
     if (photoBtn) {
-        photoBtn.addEventListener('click', () => {
+        // Prevent duplicate listener attachments
+        const newPhotoBtn = photoBtn.cloneNode(true);
+        photoBtn.parentNode.replaceChild(newPhotoBtn, photoBtn);
+
+        newPhotoBtn.addEventListener('click', () => {
             if (!requireAuth("Sign in to upload Forensic Photo")) return;
             
             const input = document.createElement('input');
@@ -339,7 +343,6 @@ function setupEventListeners() {
             input.click();
         });
     }
-
     // Voice recording button
     const voiceBtn = document.getElementById('btn-voice');
     if (voiceBtn) {
