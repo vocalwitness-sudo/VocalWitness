@@ -154,7 +154,6 @@ window.publishTestimony = async () => {
         }
     }
 };
-
 // ====================== EVIDENCE LEDGER MODULE ======================
 async function loadEvidenceLedger() {
     const container = document.getElementById('ledgerContainer');
@@ -175,20 +174,20 @@ async function loadEvidenceLedger() {
             </div>
             <div id="ledgerTableWrapper" class="overflow-x-auto">
                 <div class="text-center py-16 text-zinc-500 animate-pulse">
-                    Securely connecting to blockchain and ledger database...
+                    Loading ledger records...
                 </div>
             </div>
         </div>
     `;
 
-    try {
-        const { collection, getDocs, query, orderBy, limit } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
-        
-        const q = query(collection(db, "testimonies"), orderBy("createdAt", "desc"), limit(20));
-        const querySnapshot = await getDocs(q);
+    const wrapper = document.getElementById('ledgerTableWrapper');
 
-        const wrapper = document.getElementById('ledgerTableWrapper');
-        if (!wrapper) return;
+    try {
+        const { collection, getDocs, query, limit } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
+       
+        // Simplified query - no orderBy for now (to avoid index errors)
+        const q = query(collection(db, "testimonies"), limit(20));
+        const querySnapshot = await getDocs(q);
 
         if (querySnapshot.empty) {
             wrapper.innerHTML = `
@@ -217,9 +216,9 @@ async function loadEvidenceLedger() {
         querySnapshot.forEach((docSnap) => {
             const data = docSnap.data();
             const dateStr = data.createdAt?.toDate ? data.createdAt.toDate().toLocaleString() : 'Just now';
-            const shortHash = data.imageHash || data.audioHash ? (data.imageHash || data.audioHash).substring(0, 14) + '...' : 'Standard Log';
+            const shortHash = (data.imageHash || data.audioHash || 'No hash').substring(0, 14) + '...';
             const hasMedia = data.hasForensic ? '🛡️ Verified Media' : '📝 Text Record';
-            
+           
             html += `
                 <tr class="hover:bg-zinc-900/60 transition-colors group">
                     <td class="py-4 px-4 font-medium text-white flex items-center gap-2">
@@ -227,7 +226,7 @@ async function loadEvidenceLedger() {
                         ${escapeHtml(data.author || 'Anonymous Witness')}
                     </td>
                     <td class="py-4 px-4 text-zinc-300 max-w-xs truncate">
-                        ${escapeHtml(data.content || '')}
+                        ${escapeHtml((data.content || '').substring(0, 110))}...
                     </td>
                     <td class="py-4 px-4 font-mono text-xs text-emerald-400">
                         ${escapeHtml(shortHash)}
@@ -244,25 +243,26 @@ async function loadEvidenceLedger() {
             `;
         });
 
-        html += `
-                </tbody>
-            </table>
-        `;
+        html += `</tbody></table>`;
         wrapper.innerHTML = html;
 
     } catch (err) {
         console.error("Ledger fetch error:", err);
-        const wrapper = document.getElementById('ledgerTableWrapper');
         if (wrapper) {
-            wrapper.innerHTML = `<div class="text-red-400 text-center py-8">Failed to load ledger records securely. Please verify your connection.</div>`;
+            let userMsg = "Failed to load ledger records.";
+            if (err.code === 'permission-denied') {
+                userMsg = "⚠️ Permission denied. Double-check that your Security Rules are published.";
+            } else if (err.code === 'failed-precondition') {
+                userMsg = "Missing Firestore index. Go to Firestore Console → Indexes and create one for 'createdAt'.";
+            }
+            wrapper.innerHTML = `
+                <div class="text-red-400 text-center py-12 px-4">
+                    <p class="font-medium">${userMsg}</p>
+                    <p class="text-xs mt-3 text-zinc-500 break-all">${err.message}</p>
+                </div>`;
         }
     }
 }
-
-function escapeHtml(str) {
-    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-}
-
 // ====================== SETUP EVENT LISTENERS ======================
 function setupEventListeners() {
     if (listenersInitialized) {
