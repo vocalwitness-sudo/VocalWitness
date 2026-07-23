@@ -14,7 +14,7 @@ import './composer.js';
 
 let engineInstance = null;
 let isInitialized = false;
-let listenersInitialized = false; // Added to prevent duplicate listener bindings
+let listenersInitialized = false;
 
 // ====================== TAB SWITCHING ======================
 window.switchTab = async (tab) => {
@@ -71,7 +71,6 @@ window.switchTab = async (tab) => {
     }
 };
 
-// Global sync handler for ledger refresh button
 window.refreshLedger = () => {
     loadEvidenceLedger();
 };
@@ -140,7 +139,13 @@ window.publishTestimony = async () => {
         if (typeof initFeed === 'function') initFeed(db, 'citizen-talk');
     } catch (err) {
         console.error("Publish error:", err);
-        showToast("Failed to publish. Please try again.", "error");
+        
+        // Target friendly error guidance for Firebase permissions issue
+        if (err.code === 'permission-denied') {
+            showToast("⚠️ Permission denied. Please check your Firestore security rules.", "error");
+        } else {
+            showToast("Failed to publish. Please try again.", "error");
+        }
     } finally {
         if (postBtn) {
             postBtn.disabled = false;
@@ -155,7 +160,6 @@ async function loadEvidenceLedger() {
     const container = document.getElementById('ledgerContainer');
     if (!container) return;
 
-    // Furnished, comfortable empty/loading state UI
     container.innerHTML = `
         <div class="glass rounded-3xl p-8 border border-zinc-700/60 shadow-2xl">
             <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8 pb-6 border-b border-zinc-800">
@@ -180,7 +184,6 @@ async function loadEvidenceLedger() {
     try {
         const { collection, getDocs, query, orderBy, limit } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
         
-        // Fetch recent verified or general testimonies for the ledger
         const q = query(collection(db, "testimonies"), orderBy("createdAt", "desc"), limit(20));
         const querySnapshot = await getDocs(q);
 
@@ -256,7 +259,6 @@ async function loadEvidenceLedger() {
     }
 }
 
-// Simple HTML escaper helper to maintain security hygiene
 function escapeHtml(str) {
     return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
@@ -271,7 +273,6 @@ function setupEventListeners() {
 
     console.log("✅ Setting up all buttons...");
 
-    // Navigation tabs
     document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -279,23 +280,19 @@ function setupEventListeners() {
         });
     });
 
-    // Profile button
     document.getElementById('profile-btn')?.addEventListener('click', window.showProfile);
 
-    // Support button
     document.getElementById('support-btn')?.addEventListener('click', () => {
         const modal = document.getElementById('supportModal');
         if (modal) modal.classList.remove('hidden');
         else showToast("Support page coming soon", "info");
     });
 
-    // Sign-in button
     document.getElementById('signin-btn')?.addEventListener('click', () => {
         const modal = document.getElementById('loginModal');
         if (modal) modal.classList.remove('hidden');
     });
 
-    // Forensic Photo
     document.getElementById('btn-photo')?.addEventListener('click', () => {
         if (!requireAuth("Sign in to upload Forensic Photo")) return;
         const input = document.createElement('input');
@@ -310,7 +307,6 @@ function setupEventListeners() {
         input.click();
     });
 
-    // Voice Testimony
     document.getElementById('btn-voice')?.addEventListener('click', () => {
         if (!requireAuth("Sign in to record Voice Testimony")) return;
         if (typeof mediaModule.toggleVoiceRecording === 'function') {
@@ -318,7 +314,6 @@ function setupEventListeners() {
         }
     });
 
-    // Publish button
     document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
 
     console.log("✅ All major buttons wired successfully");
@@ -336,14 +331,12 @@ async function bootstrap() {
         
         if (typeof initLanguage === 'function') initLanguage();
 
-        // Initialize Engine
         engineInstance = new CitizenTalkEngine(db, storage);
         window.engineInstance = engineInstance;
         mediaModule.setEngine(engineInstance);
 
         loadDynamicNavigation();
         
-        // Default to Public Square
         setTimeout(() => window.switchTab('square'), 300);
         setTimeout(showWelcomeNote, 1200);
 
