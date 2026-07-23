@@ -104,17 +104,40 @@ export async function createNewGroup(name, description, visibility) {
     }
 }
 
-// Expose the group creation handler globally for HTML inline event listeners
+// Expose group modal controls globally for inline HTML event attributes
 window.showGroupCreationModal = function() {
-    // If you have a modal element, show it here. For example:
-    const modal = document.getElementById('groupCreationModal');
+    const modal = document.getElementById('groupModal');
     if (modal) {
         modal.classList.remove('hidden');
-    } else {
-        // Alternatively, if you want it to trigger your prompt/creation logic directly:
-        const name = prompt("Enter Group Name:");
-        if (!name) return;
-        const description = prompt("Enter Group Description:") || "";
-        createNewGroup(name, description, "public");
+    }
+};
+
+window.closeGroupModal = function() {
+    const modal = document.getElementById('groupModal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+};
+
+window.createGroup = async function() {
+    const nameInput = document.getElementById('groupName');
+    const descInput = document.getElementById('groupDesc');
+    const visibilityInput = document.getElementById('groupVisibility');
+
+    if (!nameInput || !nameInput.value.trim()) {
+        showToast("Group Name is required", "error");
+        return;
+    }
+
+    const success = await createNewGroup(
+        nameInput.value.trim(),
+        descInput ? descInput.value.trim() : "",
+        visibilityInput ? visibilityInput.value : "public"
+    );
+
+    if (success) {
+        nameInput.value = '';
+        if (descInput) descInput.value = '';
+        window.closeGroupModal();
     }
 };
