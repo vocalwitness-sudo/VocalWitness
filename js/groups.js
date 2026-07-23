@@ -103,3 +103,18 @@ export async function createNewGroup(name, description, visibility) {
         return false;
     }
 }
+
+// Expose the group creation handler globally for HTML inline event listeners
+window.showGroupCreationModal = function() {
+    // If you have a modal element, show it here. For example:
+    const modal = document.getElementById('groupCreationModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+    } else {
+        // Alternatively, if you want it to trigger your prompt/creation logic directly:
+        const name = prompt("Enter Group Name:");
+        if (!name) return;
+        const description = prompt("Enter Group Description:") || "";
+        createNewGroup(name, description, "public");
+    }
+};
