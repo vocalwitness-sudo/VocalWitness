@@ -173,10 +173,6 @@ function escapeHtml(str) {
 
 // ====================== EVIDENCE LEDGER MODULE ======================
 async function loadEvidenceLedger() {
-    // ... rest of your ledger code ...
-}
-// ====================== EVIDENCE LEDGER MODULE ======================
-async function loadEvidenceLedger() {
     const container = document.getElementById('ledgerContainer');
     if (!container) return;
 
