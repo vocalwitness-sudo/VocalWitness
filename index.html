@@ -7,20 +7,19 @@
     <meta name="description" content="VocalWitness - Privacy First Public Square for Truth and Evidence">
     
     <!-- Content Security Policy -->
-    <!-- Content Security Policy -->
-<meta http-equiv="Content-Security-Policy" content="
-    default-src 'self' https: wss: blob: data:;
-    script-src 'self' https://www.gstatic.com https://cdnjs.cloudflare.com https://cdn.tailwindcss.com https://apis.google.com https://*.paystack.co 'unsafe-inline';
-    style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com;
-    font-src 'self' https://fonts.gstatic.com https: data:;
-    connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.paystack.co https://*.paystack.com wss://*.firebaseio.com;
-    img-src 'self' https: data: blob:;
-    media-src 'self' https: blob:;
-    frame-src 'self' https://accounts.google.com https://vocalwitness-3affa.web.app https://vocalwitness-3affa.firebaseapp.com https://*.firebaseapp.com https://*.paystack.com https://*.paystack.co;
-    object-src 'none';
-    base-uri 'self';
-    upgrade-insecure-requests;
-">
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self' https: wss: blob: data:;
+        script-src 'self' https://www.gstatic.com https://cdnjs.cloudflare.com https://cdn.tailwindcss.com https://apis.google.com https://*.paystack.co 'unsafe-inline';
+        style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com;
+        font-src 'self' https://fonts.gstatic.com https: data:;
+        connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.paystack.co https://*.paystack.com wss://*.firebaseio.com;
+        img-src 'self' https: data: blob:;
+        media-src 'self' https: blob:;
+        frame-src 'self' https://accounts.google.com https://vocalwitness-3affa.web.app https://vocalwitness-3affa.firebaseapp.com https://*.firebaseapp.com https://*.paystack.com https://*.paystack.co;
+        object-src 'none';
+        base-uri 'self';
+        upgrade-insecure-requests;
+    ">
 
     <title data-i18n="pageTitle">VocalWitness • Truth • Evidence • Public Square</title>
 
@@ -33,12 +32,6 @@
     <link rel="icon" href="/logo.png" type="image/png">
 </head>
 <body class="min-h-screen pb-24 bg-[#0a0f1c]">
-
-<!-- Privacy Banner -->
-<div class="mt-12 pt-8 border-t border-zinc-700 text-center text-sm text-zinc-400">
-    <p>You are part of a growing community that believes truth matters.</p>
-    <p class="mt-1"><strong>Together, we protect the public square.</strong></p>
-</div>
 
 <!-- Header -->
 <header class="flex items-center justify-between mb-8 sticky top-0 z-50 glass rounded-3xl p-4">
@@ -201,7 +194,7 @@
 
         <div class="space-y-4">
             <div>
-                <label class="block text-xs text-zinc-400 mb-2">Select Contribution Amount (USD)</label>
+                <label class="block text-xs text-zinc-400 mb-2">Select Contribution Amount (USD / NGN)</label>
                 <div class="grid grid-cols-3 gap-2">
                     <button type="button" class="support-tier-btn py-2 bg-zinc-800 hover:bg-emerald-600/30 border border-zinc-700 rounded-xl text-sm font-medium transition-all" data-amount="5">$5</button>
                     <button type="button" class="support-tier-btn py-2 bg-zinc-800 hover:bg-emerald-600/30 border border-emerald-500 bg-emerald-600/20 rounded-xl text-sm font-medium transition-all" data-amount="15">$15</button>
@@ -214,6 +207,12 @@
                 <input type="number" id="customSupportAmount" placeholder="Enter amount" min="1" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500" value="15">
             </div>
 
+            <!-- Fiat / Paystack Option -->
+            <button id="paystackPayBtn" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-sm transition-all shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
+                <span>💳 Pay with Card / Bank (Paystack)</span>
+            </button>
+
+            <!-- Crypto Option -->
             <button id="proceedCryptoBtn" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-black font-semibold rounded-xl text-sm transition-all shadow-lg shadow-emerald-600/20">
                 Proceed with Crypto (NOWPayments) ⚡
             </button>
@@ -238,28 +237,6 @@
 
         <p class="text-[10px] text-zinc-500 text-center mt-4">Powered by non-custodial rails. No tracking, no intrusive data collection.</p>
     </div>
-</div>
-
-    <!-- Inside your Support Modal options -->
-<div class="space-y-4">
-    <div>
-        <label class="block text-xs text-zinc-400 mb-2">Select Contribution Amount (USD / NGN)</label>
-        <div class="grid grid-cols-3 gap-2">
-            <button type="button" class="support-tier-btn py-2 bg-zinc-800 hover:bg-emerald-600/30 border border-zinc-700 rounded-xl text-sm font-medium transition-all" data-amount="5">$5</button>
-            <button type="button" class="support-tier-btn py-2 bg-zinc-800 hover:bg-emerald-600/30 border border-emerald-500 bg-emerald-600/20 rounded-xl text-sm font-medium transition-all" data-amount="15">$15</button>
-            <button type="button" class="support-tier-btn py-2 bg-zinc-800 hover:bg-emerald-600/30 border border-zinc-700 rounded-xl text-sm font-medium transition-all" data-amount="50">$50</button>
-        </div>
-    </div>
-
-    <!-- Fiat / Paystack Option for Non-Crypto Users -->
-    <button id="paystackPayBtn" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-sm transition-all shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
-        <span>💳 Pay with Card / Bank (Paystack)</span>
-    </button>
-
-    <!-- Crypto Option -->
-    <button id="proceedCryptoBtn" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-black font-semibold rounded-xl text-sm transition-all shadow-lg shadow-emerald-600/20">
-        Proceed with Crypto (NOWPayments) ⚡
-    </button>
 </div>
 
 <!-- Login Modal -->
