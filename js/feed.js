@@ -1,6 +1,6 @@
 // js/feed.js - Polished Public Square Feed
 import { collection, query, onSnapshot, limit } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-import { db } from './firebase-config.js';
+import { db, app } from './firebase-config.js';
 import { showToast } from './utils.js';
 import { renderTierCircle } from './ui-components.js';
 import { getAuth } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
@@ -8,14 +8,17 @@ import { getAuth } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth
 let activeFeedListener = null;
 
 export function initFeed(dbInstance = db) {
-    const auth = getAuth();
+    // Pass `app` explicitly to prevent any [DEFAULT] lookup issues
+    const auth = getAuth(app);
     console.log("Current Auth User:", auth.currentUser);
 
     const feedContainer = document.getElementById('feedContainer');
     if (!feedContainer) return;
 
     if (activeFeedListener) activeFeedListener();
-
+    
+    // Rest of your feed code...
+}
     feedContainer.innerHTML = `
         <div class="text-center py-12">
             <div class="animate-pulse text-zinc-400">Loading testimonies from the Square...</div>
