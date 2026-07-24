@@ -8,25 +8,25 @@ import { getAuth } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth
 let activeFeedListener = null;
 
 export function initFeed(dbInstance = db) {
-    // Pass `app` explicitly to prevent any [DEFAULT] lookup issues
     const auth = getAuth(app);
     console.log("Current Auth User:", auth.currentUser);
 
     const feedContainer = document.getElementById('feedContainer');
-    if (!feedContainer) return;
+    if (!feedContainer) {
+        console.warn("Feed container element not found in DOM.");
+        return;
+    }
 
     if (activeFeedListener) activeFeedListener();
     
-    // Rest of your feed code...
-}
     feedContainer.innerHTML = `
         <div class="text-center py-12">
             <div class="animate-pulse text-zinc-400">Loading testimonies from the Square...</div>
         </div>`;
     
     const q = query(
-    collection(dbInstance, "testimonies"), // Updated from "posts" to match main.js
-    limit(30)
+        collection(dbInstance, "testimonies"),
+        limit(30)
     );
     
     activeFeedListener = onSnapshot(q, (snapshot) => {
@@ -58,6 +58,7 @@ export function initFeed(dbInstance = db) {
         console.error("Feed error:", error);
         feedContainer.innerHTML = `<div class="text-red-400 text-center py-8">Failed to load feed. Check your connection or Firestore rules.</div>`;
     });
+}
 
 function renderPost(id, data) {
     if (data.moderationStatus === "removed") return;
