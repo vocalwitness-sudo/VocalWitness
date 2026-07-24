@@ -20,12 +20,12 @@ export function initFeed(dbInstance = db) {
         <div class="text-center py-12">
             <div class="animate-pulse text-zinc-400">Loading testimonies from the Square...</div>
         </div>`;
-
+    
     const q = query(
-        collection(dbInstance, "posts"),
-        limit(30)
+    collection(dbInstance, "testimonies"), // Updated from "posts" to match main.js
+    limit(30)
     );
-
+    
     activeFeedListener = onSnapshot(q, (snapshot) => {
         feedContainer.innerHTML = '';
 
