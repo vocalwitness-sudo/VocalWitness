@@ -9,7 +9,7 @@
     <!-- Content Security Policy -->
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self' https: wss: blob: data:;
-        script-src 'self' https://www.gstatic.com https://cdnjs.cloudflare.com https://cdn.tailwindcss.com https://apis.google.com 'unsafe-inline';
+        script-src 'self' https://www.gstatic.com https://cdnjs.cloudflare.com https://cdn.tailwindcss.com https://apis.google.com https://js.paystack.co 'unsafe-inline';
         style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com;
         font-src 'self' https://fonts.gstatic.com https: data:;
         connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com wss://*.firebaseio.com;
@@ -27,6 +27,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://js.paystack.co/v1/inline.js"></script>
     <link rel="stylesheet" href="style.css">
     <link rel="icon" href="/logo.png" type="image/png">
 </head>
@@ -63,17 +64,6 @@
                 title="Help keep the platform running">
             Support The Square
         </button>
-        <script src="https://js.paystack.co/v1/inline.js"></script>
-        <div class="mt-4 pt-4 border-t border-zinc-800">
-    <p class="text-xs text-zinc-400 mb-2 font-medium">Or send directly via Web3 / Wallet Transfer:</p>
-    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex items-center justify-between gap-2">
-        <span class="text-xs text-emerald-400 font-mono truncate select-all">0xYourWalletAddressHere...</span>
-        <button type="button" onclick="navigator.clipboard.writeText('0xYourWalletAddressHere'); showToast('Wallet address copied!', 'success');" class="text-xs bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 rounded-lg text-white font-medium transition-all shrink-0">
-            Copy
-        </button>
-    </div>
-    <p class="text-[10px] text-zinc-500 mt-1 text-center">Accepted: USDT / USDC (Polygon, Base, Ethereum)</p>
-</div>
 
         <button id="signin-btn" class="px-5 py-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm">
             <img src="https://www.google.com/favicon.ico" class="w-4 h-4" alt="Google">
@@ -147,14 +137,12 @@
               placeholder="Share your raw testimony... What did you witness?"></textarea>
     
     <div class="flex gap-3 mt-5">
-        <!-- Photo Button -->
         <button id="btn-photo" 
                 class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 hover:border-emerald-500 rounded-2xl flex items-center justify-center gap-3 font-medium transition-all active:scale-95"
                 title="Take a photo or upload an image as evidence">
             📸 <span class="hidden sm:inline">Add Photo Evidence</span>
         </button>
 
-        <!-- Voice Button -->
         <button id="btn-voice" 
                 class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 hover:border-emerald-500 rounded-2xl flex items-center justify-center gap-3 font-medium transition-all active:scale-95"
                 title="Record your voice telling what you saw or heard">
@@ -166,7 +154,6 @@
         Preview will appear here...
     </div>
 
-    <!-- Publish Button -->
     <button id="postButton" 
             class="mt-8 w-full py-6 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500 
                    hover:from-emerald-600 hover:via-teal-600 hover:to-emerald-600 
@@ -174,8 +161,6 @@
         <span class="relative z-10 flex items-center justify-center gap-3">
             🚀 Publish to the Square
         </span>
-        
-        <!-- Shine / Glow Layer -->
         <span class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent 
                      -skew-x-12 -translate-x-full group-active:translate-x-full transition-transform duration-700"></span>
     </button>
@@ -214,7 +199,6 @@
         </div>
 
         <div class="space-y-4">
-            <!-- Automated Crypto Checkout Option -->
             <div>
                 <label class="block text-xs text-zinc-400 mb-2">Select Contribution Amount (USD)</label>
                 <div class="grid grid-cols-3 gap-2">
@@ -238,12 +222,10 @@
         <div class="mt-5 pt-4 border-t border-zinc-800">
             <p class="text-xs text-zinc-400 mb-2 font-medium text-center">Or scan / copy to send USDT directly:</p>
             
-            <!-- QR Code Display -->
             <div class="bg-white p-3 rounded-2xl w-36 h-36 mx-auto mb-3 flex items-center justify-center shadow-md">
                 <img src="95756.jpg" alt="USDT QR Code" class="w-full h-full object-contain">
             </div>
 
-            <!-- Address Box -->
             <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex items-center justify-between gap-2">
                 <span class="text-[11px] text-emerald-400 font-mono truncate select-all">TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK</span>
                 <button type="button" onclick="navigator.clipboard.writeText('TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK'); showToast('TRC-20 address copied!', 'success');" class="text-xs bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 rounded-lg text-white font-medium transition-all shrink-0">
@@ -300,7 +282,6 @@
         $('profile-btn')?.classList.toggle('hidden', !isLoggedIn);
     };
 
-    // Toggle Dropdown Menu
     $('more-btn')?.addEventListener('click', (e) => {
         e.stopPropagation();
         $('more-menu')?.classList.toggle('hidden');
