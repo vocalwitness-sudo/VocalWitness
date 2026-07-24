@@ -5,21 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#10b981">
     <meta name="description" content="VocalWitness - Privacy First Public Square for Truth and Evidence">
-
-<!-- Content Security Policy -->
-<meta http-equiv="Content-Security-Policy" content="
-    default-src 'self' https: wss: blob: data:;
-    script-src 'self' https://www.gstatic.com https://cdnjs.cloudflare.com https://cdn.tailwindcss.com https://apis.google.com https://js.paystack.co 'unsafe-inline';
-    style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com;
-    font-src 'self' https://fonts.gstatic.com https: data:;
-    connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://api.paystack.co https://*.paystack.co https://*.paystack.com wss://*.firebaseio.com;
-    img-src 'self' https: data: blob:;
-    media-src 'self' https: blob:;
-    frame-src 'self' https://accounts.google.com https://*.paystack.co https://*.paystack.com;
-    object-src 'none';
-    base-uri 'self';
-    upgrade-insecure-requests;
-">
+    
+    <!-- Improved Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self' https: wss: blob: data:;
+        script-src 'self' https://www.gstatic.com https://cdnjs.cloudflare.com https://cdn.tailwindcss.com https://apis.google.com https://js.paystack.co 'unsafe-inline';
+        style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com;
+        font-src 'self' https://fonts.gstatic.com https: data:;
+        connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://api.paystack.co https://*.paystack.co https://*.paystack.com wss://*.firebaseio.com;
+        img-src 'self' https: data: blob:;
+        media-src 'self' https: blob:;
+        frame-src 'self' https://accounts.google.com https://*.paystack.co https://*.paystack.com;
+        object-src 'none';
+        base-uri 'self';
+        upgrade-insecure-requests;
+    ">
 
     <title data-i18n="pageTitle">VocalWitness • Truth • Evidence • Public Square</title>
 
@@ -27,7 +27,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    
+    <!-- Paystack Script - Must be loaded before your custom script -->
     <script src="https://js.paystack.co/v1/inline.js"></script>
+
     <link rel="stylesheet" href="style.css">
     <link rel="icon" href="/logo.png" type="image/png">
 </head>
@@ -222,9 +225,9 @@
         <div class="mt-5 pt-4 border-t border-zinc-800">
             <p class="text-xs text-zinc-400 mb-2 font-medium text-center">Or scan / copy to send USDT directly:</p>
             
-            <div class="bg-white p-3 rounded-2xl w-36 h-36 mx-auto mb-3 flex items-center justify-center shadow-md">
-                <img src="95756.jpg" alt="USDT QR Code" class="w-full h-full object-contain">
-            </div>
+            <<div class="bg-white p-3 rounded-2xl w-36 h-36 mx-auto mb-3 flex items-center justify-center shadow-md">
+    <img src="/95756.jpg" alt="USDT QR Code" class="w-full h-full object-contain">
+</div>
 
             <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex items-center justify-between gap-2">
                 <span class="text-[11px] text-emerald-400 font-mono truncate select-all">TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK</span>
@@ -260,6 +263,7 @@
 </footer>
 
 <!-- Global UI Helper Script -->
+<!-- Global UI Helper Script -->
 <script>
     const $ = id => document.getElementById(id);
 
@@ -286,25 +290,21 @@
         supportModal.classList.remove('flex');
     }
 
-    // Close button
     $('closeSupportModal')?.addEventListener('click', closeSupportModal);
 
-    // Click outside to close
     supportModal.addEventListener('click', (e) => {
         if (e.target === supportModal) closeSupportModal();
     });
 
-    // Escape key
     document.addEventListener('keydown', (e) => {
         if (e.key === "Escape" && !supportModal.classList.contains('hidden')) {
             closeSupportModal();
         }
     });
 
-    // Open modal
     $('support-btn')?.addEventListener('click', openSupportModal);
 
-    // Amount tier buttons
+    // Tier buttons
     document.querySelectorAll('.support-tier-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.support-tier-btn').forEach(b => 
@@ -318,7 +318,6 @@
     // Paystack Payment
     $('paystackPayBtn')?.addEventListener('click', () => {
         const amount = parseFloat($('customSupportAmount').value) || 15;
-
         if (amount < 1) {
             showToast("Minimum amount is $1", "error");
             return;
@@ -335,20 +334,17 @@
                 closeSupportModal();
             },
             onClose: function() {
-                showToast("Payment window closed", "info");
+                showToast("Transaction cancelled", "info");
             }
         });
-
         handler.openIframe();
     });
 
-    // Crypto
     $('proceedCryptoBtn')?.addEventListener('click', () => {
         showToast("Opening NOWPayments...", "info");
-        // Add redirect logic here later
     });
 
-    // Other global functions
+    // Other functions
     window.closeProfile = () => $('profileModal')?.classList.add('hidden');
     window.closeLoginModal = () => $('loginModal')?.classList.add('hidden');
     window.closeSupportModal = closeSupportModal;
