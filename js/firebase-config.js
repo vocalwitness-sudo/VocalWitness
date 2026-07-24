@@ -33,3 +33,6 @@ isSupported().then((supported) => {
 });
 
 export { app, auth, db, storage, analytics };
+
+export const provider = new GoogleAuthProvider();
+provider.setCustomParameters({ prompt: 'select_account' });
