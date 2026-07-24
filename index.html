@@ -264,7 +264,7 @@
 
     window.closeProfile = () => $('profileModal')?.classList.add('hidden');
     window.closeLoginModal = () => $('loginModal')?.classList.add('hidden');
-    window.closeSupportModal = () => $('supportModal')?.classList.add('hidden');
+    window.closeSupportModal = () => document.getElementById('supportModal')?.classList.add('hidden');
 
     window.updateHeaderButtons = function(isLoggedIn) {
         $('signin-btn')?.classList.toggle('hidden', isLoggedIn);
