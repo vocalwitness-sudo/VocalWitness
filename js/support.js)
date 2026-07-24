@@ -95,3 +95,25 @@ document.addEventListener('DOMContentLoaded', () => {
     initSupportModal();
     console.log('%cSupport module loaded successfully', 'color:#10b981; font-weight:bold');
 });
+
+
+document.getElementById('paystackPayBtn')?.addEventListener('click', () => {
+    const amountVal = document.getElementById('customSupportAmount').value || 15;
+    // Convert to kobo/cents or handle currency matching your Paystack dashboard config
+    const amountInKobo = amountVal * 1500 * 100; // Example conversion if charging in local currency equivalent
+
+    let handler = PaystackPop.setup({
+        key: 'pk_live_your_actual_paystack_key_here', // Replace with your public Paystack key
+        email: 'supporter@vocalwitness.org', // Can pull from logged-in user state if available
+        amount: amountInKobo,
+        currency: 'NGN', // Or your preferred fiat currency supported by Paystack
+        callback: function(response) {
+            showToast('Thank you for supporting the Public Square via Paystack!', 'success');
+            closeSupportModal();
+        },
+        onClose: function() {
+            showToast('Support transaction cancelled.', 'info');
+        }
+    });
+    handler.openIframe();
+});
