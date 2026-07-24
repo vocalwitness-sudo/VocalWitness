@@ -1,10 +1,8 @@
-// js/support.js - Support & Crypto Contribution Workflow
+// js/support.js - Support & NOWPayments Crypto Contribution Workflow
 import { showToast } from './utils.js';
 
 export function initSupportModal() {
-    const supportTrigger = document.querySelector('[data-action="support-square"], .support-square-btn, #supportSquareBtn');
-    
-    // Build or hook into the existing modal
+    // Inject the support modal HTML structure into the DOM if it doesn't already exist
     const modalHtml = `
         <div id="supportModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
             <div class="glass max-w-md w-full rounded-3xl p-6 border border-emerald-500/30 text-white relative">
@@ -13,7 +11,7 @@ export function initSupportModal() {
                 <div class="text-center mb-6">
                     <div class="w-12 h-12 bg-emerald-500/20 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl">🛡️</div>
                     <h3 class="text-xl font-bold text-white">Sustain the Public Square</h3>
-                    <p class="text-xs text-emerald-300 mt-1">VocalWitness stays free and un-manipulated through voluntary community backing.</p>
+                    <p class="text-xs text-emerald-300 mt-1">VocalWitness stays free, independent, and un-manipulated through voluntary community backing.</p>
                 </div>
 
                 <div class="space-y-4">
@@ -21,14 +19,14 @@ export function initSupportModal() {
                         <label class="block text-xs text-zinc-400 mb-2">Select Contribution Amount (USD)</label>
                         <div class="grid grid-cols-3 gap-2">
                             <button type="button" class="support-tier-btn py-2 bg-zinc-800 hover:bg-emerald-600/30 border border-zinc-700 rounded-xl text-sm font-medium transition-all" data-amount="5">$5</button>
-                            <button type="button" class="support-tier-btn py-2 bg-zinc-800 hover:bg-emerald-600/30 border border-zinc-700 rounded-xl text-sm font-medium transition-all" data-amount="15">$15</button>
+                            <button type="button" class="support-tier-btn py-2 bg-zinc-800 hover:bg-emerald-600/30 border border-emerald-500 bg-emerald-600/20 rounded-xl text-sm font-medium transition-all" data-amount="15">$15</button>
                             <button type="button" class="support-tier-btn py-2 bg-zinc-800 hover:bg-emerald-600/30 border border-zinc-700 rounded-xl text-sm font-medium transition-all" data-amount="50">$50</button>
                         </div>
                     </div>
 
                     <div>
                         <label class="block text-xs text-zinc-400 mb-1">Custom Amount ($ USD)</label>
-                        <input type="number" id="customSupportAmount" placeholder="Enter amount" min="1" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500" value="10">
+                        <input type="number" id="customSupportAmount" placeholder="Enter amount" min="1" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500" value="15">
                     </div>
 
                     <button id="proceedCryptoBtn" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-medium text-sm transition-all shadow-lg shadow-emerald-600/20">
@@ -36,12 +34,11 @@ export function initSupportModal() {
                     </button>
                 </div>
 
-                <p class="text-[10px] text-zinc-500 text-center mt-4">Powered by non-custodial crypto rails. No tracking, no intrusive data collection.</p>
+                <p class="text-[10px] text-zinc-500 text-center mt-4">Powered by non-custodial crypto rails (USDT/USDC/BTC). No tracking, no intrusive data collection.</p>
             </div>
         </div>
     `;
 
-    // Append modal to body if not already present
     if (!document.getElementById('supportModal')) {
         document.body.insertAdjacentHTML('beforeend', modalHtml);
     }
@@ -49,10 +46,13 @@ export function initSupportModal() {
     const modal = document.getElementById('supportModal');
     const closeBtn = document.getElementById('closeSupportModal');
     const proceedBtn = document.getElementById('proceedCryptoBtn');
+    const customInput = document.getElementById('customSupportAmount');
 
-    // Toggle Modal Visibility via global triggers or button hooks
+    // Open modal event delegation for any button with support triggers
     document.addEventListener('click', (e) => {
-        if (e.target.closest('#supportTheSquareBtn') || e.target.closest('.support-trigger')) {
+        if (e.target.closest('#supportTheSquareBtn') || e.target.closest('.support-trigger') || e.target.closest('a[href*="support"]')) {
+            // Prevent default link action if it's an anchor tag placeholder
+            if (e.target.tagName === 'A') e.preventDefault();
             modal.classList.remove('hidden');
         }
     });
@@ -62,28 +62,36 @@ export function initSupportModal() {
         if (e.target === modal) modal.classList.add('hidden');
     });
 
-    // Tier button selectors
+    // Preset amount button handling
     document.querySelectorAll('.support-tier-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
-            document.querySelectorAll('.support-tier-btn').forEach(b => b.classList.remove('border-emerald-500', 'bg-emerald-600/20'));
+            document.querySelectorAll('.support-tier-btn').forEach(b => {
+                b.classList.remove('border-emerald-500', 'bg-emerald-600/20');
+                b.classList.add('border-zinc-700', 'bg-zinc-800');
+            });
+            e.target.classList.remove('border-zinc-700', 'bg-zinc-800');
             e.target.classList.add('border-emerald-500', 'bg-emerald-600/20');
-            document.getElementById('customSupportAmount').value = e.target.getAttribute('data-amount');
+            if (customInput) customInput.value = e.target.getAttribute('data-amount');
         });
     });
 
-    // Handle NOWPayments Redirect / Invoice Generation Trigger
+    // Handle NOWPayments Redirect
     proceedBtn?.addEventListener('click', () => {
-        const amount = document.getElementById('customSupportAmount').value || 10;
+        const amount = customInput?.value || 15;
         
-        // You can link directly to your NOWPayments donation link or invoke their API invoice generation URL here:
-        // Example: const NOWPAYMENTS_DONATION_URL = "https://nowpayments.io/donation/?api_key=YOUR_API_KEY";
-        // Or construct a dynamic invoice redirect
-        showToast(`Preparing $${amount} secure crypto invoice...`, "info");
+        showToast(`Preparing $${amount} secure crypto invoice via NOWPayments...`, "info");
         
-        // Placeholder redirect behavior to NOWPayments gateway/widget
+        // Opens official NOWPayments donation/payment link with dynamic amount
         setTimeout(() => {
+            // Replace or configure with your custom NOWPayments merchant link or API checkout window
             window.open(`https://nowpayments.io/payment?price_amount=${amount}&price_currency=usd`, '_blank');
             modal.classList.add('hidden');
-        }, 1000);
+        }, 800);
     });
 }
+
+// Auto-initialize support module listeners on load
+document.addEventListener('DOMContentLoaded', () => {
+    initSupportModal();
+    console.log('%cSupport module loaded successfully', 'color:#10b981; font-weight:bold');
+});
