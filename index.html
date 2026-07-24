@@ -203,16 +203,17 @@
 
 <!-- Support Modal -->
 <div id="supportModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[10000] flex items-center justify-center p-4 hidden">
-    <div class="glass max-w-md w-full rounded-3xl p-6 border border-emerald-500/30 text-white relative modal">
+    <div class="glass max-w-md w-full rounded-3xl p-6 border border-emerald-500/30 text-white relative modal max-h-[90vh] overflow-y-auto">
         <button id="closeSupportModal" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl">✕</button>
         
-        <div class="text-center mb-6">
+        <div class="text-center mb-5">
             <div class="w-12 h-12 bg-emerald-500/20 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl">🛡️</div>
             <h3 class="text-xl font-bold text-white">Sustain the Public Square</h3>
             <p class="text-xs text-emerald-300 mt-1">VocalWitness stays free, independent, and un-manipulated through voluntary community backing.</p>
         </div>
 
         <div class="space-y-4">
+            <!-- Automated Crypto Checkout Option -->
             <div>
                 <label class="block text-xs text-zinc-400 mb-2">Select Contribution Amount (USD)</label>
                 <div class="grid grid-cols-3 gap-2">
@@ -232,9 +233,27 @@
             </button>
         </div>
 
-        <p class="text-[10px] text-zinc-500 text-center mt-4">Powered by non-custodial crypto rails (USDT/USDC/BTC). No tracking, no intrusive data collection.</p>
+        <!-- Direct TRC-20 Wallet Transfer Option -->
+        <div class="mt-5 pt-4 border-t border-zinc-800">
+            <p class="text-xs text-zinc-400 mb-2 font-medium text-center">Or scan / copy to send USDT directly:</p>
+            
+            <!-- QR Code Display -->
+            <div class="bg-white p-3 rounded-2xl w-36 h-36 mx-auto mb-3 flex items-center justify-center shadow-md">
+                <img src="95756.jpg" alt="USDT QR Code" class="w-full h-full object-contain">
+            </div>
+
+            <!-- Address Box -->
+            <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex items-center justify-between gap-2">
+                <span class="text-[11px] text-emerald-400 font-mono truncate select-all">TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK</span>
+                <button type="button" onclick="navigator.clipboard.writeText('TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK'); showToast('TRC-20 address copied!', 'success');" class="text-xs bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 rounded-lg text-white font-medium transition-all shrink-0">
+                    Copy
+                </button>
+            </div>
+            <p class="text-[10px] text-zinc-500 mt-1.5 text-center">Network: <strong class="text-zinc-400">Tron (TRC-20)</strong> • Send USDT only</p>
+        </div>
+
+        <p class="text-[10px] text-zinc-500 text-center mt-4">Powered by non-custodial rails. No tracking, no intrusive data collection.</p>
     </div>
-</div>
 </div>
 
 <!-- Login Modal -->
