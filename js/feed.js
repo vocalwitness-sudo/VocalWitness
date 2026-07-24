@@ -58,7 +58,6 @@ export function initFeed(dbInstance = db) {
         console.error("Feed error:", error);
         feedContainer.innerHTML = `<div class="text-red-400 text-center py-8">Failed to load feed. Check your connection or Firestore rules.</div>`;
     });
-}
 
 function renderPost(id, data) {
     if (data.moderationStatus === "removed") return;
