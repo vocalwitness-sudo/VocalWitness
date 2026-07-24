@@ -239,6 +239,28 @@
     </div>
 </div>
 
+    <!-- Inside your Support Modal options -->
+<div class="space-y-4">
+    <div>
+        <label class="block text-xs text-zinc-400 mb-2">Select Contribution Amount (USD / NGN)</label>
+        <div class="grid grid-cols-3 gap-2">
+            <button type="button" class="support-tier-btn py-2 bg-zinc-800 hover:bg-emerald-600/30 border border-zinc-700 rounded-xl text-sm font-medium transition-all" data-amount="5">$5</button>
+            <button type="button" class="support-tier-btn py-2 bg-zinc-800 hover:bg-emerald-600/30 border border-emerald-500 bg-emerald-600/20 rounded-xl text-sm font-medium transition-all" data-amount="15">$15</button>
+            <button type="button" class="support-tier-btn py-2 bg-zinc-800 hover:bg-emerald-600/30 border border-zinc-700 rounded-xl text-sm font-medium transition-all" data-amount="50">$50</button>
+        </div>
+    </div>
+
+    <!-- Fiat / Paystack Option for Non-Crypto Users -->
+    <button id="paystackPayBtn" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-sm transition-all shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
+        <span>💳 Pay with Card / Bank (Paystack)</span>
+    </button>
+
+    <!-- Crypto Option -->
+    <button id="proceedCryptoBtn" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-black font-semibold rounded-xl text-sm transition-all shadow-lg shadow-emerald-600/20">
+        Proceed with Crypto (NOWPayments) ⚡
+    </button>
+</div>
+
 <!-- Login Modal -->
 <div id="loginModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[10000] p-4">
     <div class="glass rounded-3xl p-8 max-w-md w-full modal">
