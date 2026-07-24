@@ -145,9 +145,6 @@ export async function getUserVotingWeight() {
 /**
  * Check if user can access a feature
  */
-/**
- * Check if user can access a feature
- */
 export async function canAccessFeature(feature) {
   const userTier = await getCurrentUserTier();
   const userLevel = await getCurrentWitnessLevel();
@@ -177,23 +174,6 @@ export async function canAccessFeature(feature) {
 
   return allowedTiers.includes(userTier);
 }
-
-  // Special checks for Steward-exclusive features
-  if (feature === 'review_queue' || feature === 'steward_apartment') {
-    return await hasStewardAccess();
-  }
-
-  // Level-based check for post_boost (requires SILVER or higher)
-  if (feature === 'post_boost') {
-    return userLevel && userLevel.level >= WITNESS_LEVELS.SILVER.level;
-  }
-
-  const allowedTiers = permissions[feature];
-  if (!allowedTiers) return true; // Default allow unlisted features
-
-  return allowedTiers.includes(userTier);
-}
-
 /**
  * Apply visual theme based on tier
  */
