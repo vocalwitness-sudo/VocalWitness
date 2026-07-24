@@ -130,9 +130,11 @@ export function initSupportModal() {
     });
 
     // Handle Paystack Fiat Payment
+   // Handle Paystack Fiat Payment
     paystackBtn?.addEventListener('click', () => {
         const amountVal = customInput?.value || 15;
-        const amountInKobo = amountVal * 1500 * 100; 
+        // Converts USD to NGN (using estimated rate) and multiplies by 100 for Kobo
+        const amountInKobo = Math.round(amountVal * 1500 * 100); 
 
         if (typeof PaystackPop === 'undefined') {
             showToast('Paystack script is still loading. Please try again in a moment.', 'error');
@@ -140,7 +142,7 @@ export function initSupportModal() {
         }
 
         let handler = PaystackPop.setup({
-            key: 'pk_live_your_actual_paystack_key_here',
+            key: 'pk_live_5d13a6db326f02375127aae9d0fb03678ed1d923', // Your actual live key inserted here
             email: 'supporter@vocalwitness.org', 
             amount: amountInKobo,
             currency: 'NGN',
@@ -154,7 +156,6 @@ export function initSupportModal() {
         });
         handler.openIframe();
     });
-
     // Handle Copy TRC-20 Address
     copyTrxBtn?.addEventListener('click', () => {
         navigator.clipboard.writeText('TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK');
