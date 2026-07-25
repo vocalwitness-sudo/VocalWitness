@@ -184,7 +184,6 @@
     </div>
 </div>
 
-<!-- Support Modal -->
 <!-- Support Modal - Improved Framing & Transparency -->
 <div id="supportModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[10000] flex items-center justify-center p-4 hidden">
     <div class="glass max-w-md w-full rounded-3xl p-6 border border-emerald-500/30 text-white relative modal max-h-[90vh] overflow-y-auto">
@@ -328,53 +327,61 @@
         });
     });
 
-// Paystack 
-    
+// ==================== PAYSTACK FIAT PAYMENT ====================
 $('paystackPayBtn')?.addEventListener('click', () => {
     const amountUsd = parseFloat($('customSupportAmount').value) || 15;
+    
     if (amountUsd < 1) {
         showToast("Minimum amount is $1", "error");
         return;
     }
 
-    // Convert USD to NGN (Approx 1650 rate) and convert to kobo (* 100)
-    const amountInNgnKobo = Math.round(amountUsd * 1650 * 100);
+    // Use real user email if available
+    const userEmail = window.currentUser?.email || "supporter@vocalwitness.app";
+
+    const amountInNgnKobo = Math.round(amountUsd * 1650 * 100);   // Update rate when needed
 
     const handler = PaystackPop.setup({
-        key: "pk_live_5d13a6db326f02375127aae9d0fb03678ed1d923",
-        email: "donor@vocalwitness.app",
+        key: "pk_live_5d13a6db326f02375127aae9d0fb03678ed1d923",   // ← Your live key
+        email: userEmail,
         amount: amountInNgnKobo,
         currency: "NGN",
         ref: 'VW_' + Date.now() + Math.floor(Math.random() * 10000),
+        metadata: {
+            source: "support_modal",
+            amount_usd: amountUsd
+        },
         callback: function(response) {
             showToast(`Thank you! Payment successful (Ref: ${response.reference}) ✅`, "success");
             closeSupportModal();
+            
+            // Future improvement: Verify transaction on backend here
+            console.log("Payment Reference:", response.reference);
         },
         onClose: function() {
-            showToast("Transaction cancelled", "info");
+            showToast("Transaction was cancelled", "info");
         }
     });
 
-    // Use openPopup() instead of openIframe() to avoid X-Frame-Options blocks
-    handler.openPopup();
+    handler.openIframe();     // ← Correct method (this fixes the error)
 });
 
-    // NOWPayments Crypto Checkout Handler
-    $('proceedCryptoBtn')?.addEventListener('click', () => {
-        const amountUsd = parseFloat($('customSupportAmount').value) || 15;
-        if (amountUsd < 1) {
-            showToast("Minimum amount is $1", "error");
-            return;
-        }
-        
-        showToast(`Preparing $${amountUsd} secure crypto invoice via NOWPayments...`, "info");
-        
-        setTimeout(() => {
-            window.open(`https://nowpayments.io/payment?price_amount=${amountUsd}&price_currency=usd`, '_blank');
-            closeSupportModal();
-        }, 800);
-    });
+// ==================== NOWPAYMENTS CRYPTO ====================
+$('proceedCryptoBtn')?.addEventListener('click', () => {
+    const amountUsd = parseFloat($('customSupportAmount').value) || 15;
     
+    if (amountUsd < 1) {
+        showToast("Minimum amount is $1", "error");
+        return;
+    }
+    
+    showToast(`Preparing $${amountUsd} secure crypto invoice...`, "info");
+    
+    setTimeout(() => {
+        window.open(`https://nowpayments.io/payment?price_amount=${amountUsd}&price_currency=usd`, '_blank');
+        closeSupportModal();
+    }, 800);
+});
 
     // Other functions
     window.closeProfile = () => $('profileModal')?.classList.add('hidden');
