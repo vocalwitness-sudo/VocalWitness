@@ -129,33 +129,42 @@ export function initSupportModal() {
         }, 800);
     });
 
-    // Handle Paystack Fiat Payment
    // Handle Paystack Fiat Payment
-    paystackBtn?.addEventListener('click', () => {
-        const amountVal = customInput?.value || 15;
-        // Converts USD to NGN (using estimated rate) and multiplies by 100 for Kobo
-        const amountInKobo = Math.round(amountVal * 1500 * 100); 
 
-        if (typeof PaystackPop === 'undefined') {
-            showToast('Paystack script is still loading. Please try again in a moment.', 'error');
-            return;
-        }
+paystackBtn?.addEventListener('click', async () => {
+    const amountVal = parseFloat(customInput?.value) || 15;
+    if (amountVal < 1) {
+        showToast('Please enter a valid amount', 'error');
+        return;
+    }
 
-        let handler = PaystackPop.setup({
-            key: 'pk_live_5d13a6db326f02375127aae9d0fb03678ed1d923', // Your actual live key inserted here
-            email: 'supporter@vocalwitness.org', 
-            amount: amountInKobo,
-            currency: 'NGN',
-            callback: function(response) {
-                showToast('Thank you for supporting the Public Square via Paystack!', 'success');
-                window.closeSupportModal();
-            },
-            onClose: function() {
-                showToast('Support transaction cancelled.', 'info');
+    showToast('Initializing secure payment...', 'info');
+
+    try {
+        // Call your backend Cloud Function (recommended)
+        const initialize = httpsCallable(functions, 'initializePaystack'); // Import from firebase
+        const result = await initialize({
+            email: 'supporter@vocalwitness.org', // or collect from user
+            amount: Math.round(amountVal * 1650 * 100), // Better USD→NGN rate (update as needed)
+            reference: `vw_support_${Date.now()}`,
+            metadata: {
+                source: 'support_modal',
+                amount_usd: amountVal
             }
         });
-        handler.openIframe();
-    });
+
+        const { access_code } = result.data;
+
+        // Modern InlineJS
+        const popup = new Paystack();   // Make sure you loaded https://js.paystack.co/v2/inline.js
+
+        popup.resumeTransaction(access_code);
+
+    } catch (error) {
+        console.error(error);
+        showToast('Payment initialization failed. Please try again.', 'error');
+    }
+});
     // Handle Copy TRC-20 Address
     copyTrxBtn?.addEventListener('click', () => {
         navigator.clipboard.writeText('TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK');
