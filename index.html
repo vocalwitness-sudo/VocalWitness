@@ -313,19 +313,22 @@
         });
     });
 
-    // Paystack Payment
+// Paystack Payment (Converted to NGN for seamless gateway processing)
     $('paystackPayBtn')?.addEventListener('click', () => {
-        const amount = parseFloat($('customSupportAmount').value) || 15;
-        if (amount < 1) {
+        const amountUsd = parseFloat($('customSupportAmount').value) || 15;
+        if (amountUsd < 1) {
             showToast("Minimum amount is $1", "error");
             return;
         }
 
+        // Convert USD to NGN (Approx 1650 rate) and convert to kobo (* 100)
+        const amountInNgnKobo = Math.round(amountUsd * 1650 * 100);
+
         const handler = PaystackPop.setup({
             key: "pk_live_5d13a6db326f02375127aae9d0fb03678ed1d923",
             email: "donor@vocalwitness.app",
-            amount: Math.round(amount * 100),
-            currency: "USD",
+            amount: amountInNgnKobo,
+            currency: "NGN",
             ref: 'VW_' + Date.now() + Math.floor(Math.random() * 10000),
             callback: function(response) {
                 showToast(`Thank you! Payment successful (Ref: ${response.reference}) ✅`, "success");
@@ -338,9 +341,22 @@
         handler.openIframe();
     });
 
+    // NOWPayments Crypto Checkout Handler
     $('proceedCryptoBtn')?.addEventListener('click', () => {
-        showToast("Opening NOWPayments...", "info");
+        const amountUsd = parseFloat($('customSupportAmount').value) || 15;
+        if (amountUsd < 1) {
+            showToast("Minimum amount is $1", "error");
+            return;
+        }
+        
+        showToast(`Preparing $${amountUsd} secure crypto invoice via NOWPayments...`, "info");
+        
+        setTimeout(() => {
+            window.open(`https://nowpayments.io/payment?price_amount=${amountUsd}&price_currency=usd`, '_blank');
+            closeSupportModal();
+        }, 800);
     });
+    
 
     // Other functions
     window.closeProfile = () => $('profileModal')?.classList.add('hidden');
