@@ -1,5 +1,9 @@
 // js/support.js - Support, NOWPayments Crypto, & Paystack Fiat Contribution Workflow
 import { showToast } from './utils.js';
+import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
+import { app } from './firebase.js'; // Adjust path to your firebase config initialization if needed
+
+const functions = getFunctions(app);
 
 export function initSupportModal() {
     const modalHtml = `
@@ -72,12 +76,10 @@ export function initSupportModal() {
     const customInput = document.getElementById('customSupportAmount');
     const copyTrxBtn = document.getElementById('copyTrxBtn');
 
-    // Global helper to close modal securely
     window.closeSupportModal = () => {
         modal?.classList.add('hidden');
     };
 
-    // Open modal event delegation for any button triggers
     document.addEventListener('click', (e) => {
         if (e.target.closest('#support-btn') || e.target.closest('#supportTheSquareBtn') || e.target.closest('.support-trigger') || e.target.closest('a[href*="support"]')) {
             if (e.target.tagName === 'A') e.preventDefault();
@@ -85,27 +87,23 @@ export function initSupportModal() {
         }
     });
 
-    // Close button handler
     closeBtn?.addEventListener('click', (e) => {
         e.stopPropagation();
         window.closeSupportModal();
     });
 
-    // Close when clicking directly on the dark backdrop wrapper area
     modal?.addEventListener('click', (e) => {
         if (e.target === modal) {
             window.closeSupportModal();
         }
     });
 
-    // Close modal on pressing the 'Escape' key
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && modal && !modal.classList.contains('hidden')) {
             window.closeSupportModal();
         }
     });
 
-    // Preset amount button handling
     document.querySelectorAll('.support-tier-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             document.querySelectorAll('.support-tier-btn').forEach(b => {
@@ -118,7 +116,6 @@ export function initSupportModal() {
         });
     });
 
-    // Handle NOWPayments Redirect
     proceedCryptoBtn?.addEventListener('click', () => {
         const amount = customInput?.value || 15;
         showToast(`Preparing $${amount} secure crypto invoice via NOWPayments...`, "info");
@@ -129,43 +126,42 @@ export function initSupportModal() {
         }, 800);
     });
 
-   // Handle Paystack Fiat Payment
+    // Handle Paystack Fiat Payment using official Paystack Popups
+    paystackBtn?.addEventListener('click', async () => {
+        const amountVal = parseFloat(customInput?.value) || 15;
+        if (amountVal < 1) {
+            showToast('Please enter a valid amount', 'error');
+            return;
+        }
 
-paystackBtn?.addEventListener('click', async () => {
-    const amountVal = parseFloat(customInput?.value) || 15;
-    if (amountVal < 1) {
-        showToast('Please enter a valid amount', 'error');
-        return;
-    }
+        showToast('Initializing secure payment...', 'info');
 
-    showToast('Initializing secure payment...', 'info');
+        try {
+            const initialize = httpsCallable(functions, 'initializePaystack');
+            const result = await initialize({
+                email: 'supporter@vocalwitness.org',
+                amount: Math.round(amountVal * 1650 * 100), 
+                reference: `vw_support_${Date.now()}`,
+                metadata: {
+                    source: 'support_modal',
+                    amount_usd: amountVal
+                }
+            });
 
-    try {
-        // Call your backend Cloud Function (recommended)
-        const initialize = httpsCallable(functions, 'initializePaystack'); // Import from firebase
-        const result = await initialize({
-            email: 'supporter@vocalwitness.org', // or collect from user
-            amount: Math.round(amountVal * 1650 * 100), // Better USD→NGN rate (update as needed)
-            reference: `vw_support_${Date.now()}`,
-            metadata: {
-                source: 'support_modal',
-                amount_usd: amountVal
+            const { authorization_url } = result.data;
+            
+            if (authorization_url) {
+                window.location.href = authorization_url; // Safely redirect to Paystack checkout page
+            } else {
+                throw new Error('No authorization URL returned from server.');
             }
-        });
 
-        const { access_code } = result.data;
+        } catch (error) {
+            console.error(error);
+            showToast('Payment initialization failed. Please try again.', 'error');
+        }
+    });
 
-        // Modern InlineJS
-        const popup = new Paystack();   // Make sure you loaded https://js.paystack.co/v2/inline.js
-
-        popup.resumeTransaction(access_code);
-
-    } catch (error) {
-        console.error(error);
-        showToast('Payment initialization failed. Please try again.', 'error');
-    }
-});
-    // Handle Copy TRC-20 Address
     copyTrxBtn?.addEventListener('click', () => {
         navigator.clipboard.writeText('TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK');
         showToast('TRC-20 address copied!', 'success');
