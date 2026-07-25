@@ -164,4 +164,65 @@ exports.paystackWebhook = functions.https.onRequest(async (req, res) => {
   res.sendStatus(200);
 });
 
+// ====================== SAFE RATE LIMITING HELPER ======================
+
+/**
+ * Simple Firestore-based rate limiter
+ * Usage: await checkRateLimit(userId, "create_testimony", 5, 60)
+ *        → max 5 testimonies per 60 minutes
+ */
+async function checkRateLimit(userId, action, maxCalls = 5, windowMinutes = 60) {
+  if (!userId) return false;
+
+  const now = admin.firestore.Timestamp.now();
+  const windowStart = new Date(Date.now() - windowMinutes * 60 * 1000);
+  
+  const rateDocRef = db.collection('rateLimits').doc(`${userId}_${action}`);
+  
+  try {
+    const doc = await rateDocRef.get();
+    
+    if (!doc.exists) {
+      await rateDocRef.set({
+        count: 1,
+        firstRequest: now,
+        lastRequest: now
+      });
+      return true;
+    }
+
+    const data = doc.data();
+    
+    // Reset window if expired
+    if (data.lastRequest.toDate() < windowStart) {
+      await rateDocRef.set({
+        count: 1,
+        firstRequest: now,
+        lastRequest: now
+      });
+      return true;
+    }
+
+    // Check limit
+    if (data.count >= maxCalls) {
+      return false; // Rate limited
+    }
+
+    // Increment counter
+    await rateDocRef.update({
+      count: admin.firestore.FieldValue.increment(1),
+      lastRequest: now
+    });
+
+    return true;
+
+  } catch (error) {
+    console.error("Rate limit check failed:", error);
+    return true; // Fail open (allow the action) to avoid blocking users
+  }
+}
+
+// Export it so other functions can use it
+exports.checkRateLimit = checkRateLimit;
+
 console.log("🚀 VocalWitness Cloud Functions Ready");
