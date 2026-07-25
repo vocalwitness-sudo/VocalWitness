@@ -119,6 +119,26 @@ postButton?.addEventListener('click', async () => {
         return;
     }
 
+    // ====================== NEW: RATE LIMIT CHECK ======================
+    try {
+        const rateLimitCheck = await firebase.functions().httpsCallable('checkRateLimit');
+        const canPost = await rateLimitCheck({
+            userId: auth.currentUser.uid,
+            action: "create_testimony",
+            maxCalls: 6,
+            windowMinutes: 60
+        });
+
+        if (!canPost.data) {
+            showToast("You've reached your posting limit for now. Please try again later.", "error");
+            return;
+        }
+    } catch (rateError) {
+        console.warn("Rate limit check failed, allowing post:", rateError);
+        // Fail open - don't block user if rate limiter has issue
+    }
+    // ===================================================================
+
     postButton.disabled = true;
     postButton.textContent = 'Publishing...';
 
