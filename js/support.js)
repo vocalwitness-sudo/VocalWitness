@@ -1,7 +1,8 @@
-// js/support.js - Improved Support Modal with Mission-First Framing
+// js/support.js - Upgraded Support Module
 import { showToast } from './utils.js';
 import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
 import { app } from './firebase.js';
+import { auth } from './firebase-config.js';   // Make sure this import works in your setup
 
 const functions = getFunctions(app);
 
@@ -15,8 +16,8 @@ export function initSupportModal() {
                     <div class="w-14 h-14 bg-emerald-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">🛡️</div>
                     <h3 class="text-2xl font-bold text-white">Sustain the Public Square</h3>
                     <p class="text-sm text-emerald-300 mt-2 leading-relaxed">
-                        VocalWitness remains completely free and independent. 
-                        No ads. No corporate control. We survive only through voluntary community support.
+                        VocalWitness remains completely free and independent.<br>
+                        No ads. No corporate control. Only voluntary community support keeps it alive.
                     </p>
                 </div>
 
@@ -36,13 +37,11 @@ export function initSupportModal() {
                                class="w-full bg-zinc-900 border border-zinc-800 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500" value="15">
                     </div>
 
-                    <!-- Fiat -->
                     <button id="paystackPayBtn" type="button" 
                             class="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-2xl text-base transition-all shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
                         💳 Pay with Card or Bank Transfer (Paystack)
                     </button>
 
-                    <!-- Crypto -->
                     <button id="proceedCryptoBtn" type="button" 
                             class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-black font-semibold rounded-2xl text-base transition-all shadow-lg shadow-emerald-600/20">
                         ⚡ Pay with Crypto (NOWPayments)
@@ -52,37 +51,31 @@ export function initSupportModal() {
                 <!-- Direct Wallet -->
                 <div class="mt-6 pt-5 border-t border-zinc-800">
                     <p class="text-xs text-zinc-400 mb-3 text-center">Or send USDT directly</p>
-                    
                     <div class="bg-white p-3 rounded-2xl w-40 h-40 mx-auto mb-4 flex items-center justify-center shadow-inner">
                         <img src="95756.jpg" alt="USDT QR Code" class="w-full h-full object-contain">
                     </div>
-
                     <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex items-center justify-between gap-3">
                         <span class="text-[13px] text-emerald-400 font-mono break-all select-all">TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK</span>
-                        <button type="button" id="copyTrxBtn" 
-                                class="text-xs bg-zinc-800 hover:bg-zinc-700 px-4 py-2 rounded-xl text-white font-medium transition-all shrink-0">
-                            Copy
-                        </button>
+                        <button type="button" id="copyTrxBtn" class="text-xs bg-zinc-800 hover:bg-zinc-700 px-4 py-2 rounded-xl text-white font-medium transition-all shrink-0">Copy</button>
                     </div>
                     <p class="text-[10px] text-zinc-500 mt-2 text-center">Tron (TRC-20) • USDT only</p>
                 </div>
 
-                <!-- Transparency & Trust -->
+                <!-- Transparency -->
                 <div class="mt-6 text-center">
                     <p class="text-[10px] text-zinc-500">
-                        Every contribution is used for servers, security, and platform independence.<br>
-                        <a href="/transparency" class="text-emerald-400 hover:underline">View Transparency Report →</a>
+                        Every contribution supports servers, security &amp; independence.<br>
+                        <a href="transparency.html" class="text-emerald-400 hover:underline">View Transparency Report →</a>
                     </p>
                 </div>
 
                 <p class="text-[10px] text-zinc-500 text-center mt-4">
-                    Non-custodial • No tracking • Your support protects free speech
+                    Non-custodial • No tracking • Protects free speech
                 </p>
             </div>
         </div>
     `;
 
-    // Insert modal if not present
     if (!document.getElementById('supportModal')) {
         document.body.insertAdjacentHTML('beforeend', modalHtml);
     }
@@ -94,10 +87,9 @@ export function initSupportModal() {
     const customInput = document.getElementById('customSupportAmount');
     const copyTrxBtn = document.getElementById('copyTrxBtn');
 
-    // Close functions
     window.closeSupportModal = () => modal?.classList.add('hidden');
 
-    // Open modal from anywhere
+    // Open from anywhere
     document.addEventListener('click', (e) => {
         if (e.target.closest('#support-btn, #supportTheSquareBtn, .support-trigger, a[href*="support"]')) {
             if (e.target.tagName === 'A') e.preventDefault();
@@ -120,7 +112,7 @@ export function initSupportModal() {
         }
     });
 
-    // Tier buttons
+    // Amount buttons
     document.querySelectorAll('.support-tier-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             document.querySelectorAll('.support-tier-btn').forEach(b => {
@@ -136,28 +128,23 @@ export function initSupportModal() {
     proceedCryptoBtn?.addEventListener('click', () => {
         const amount = parseFloat(customInput?.value) || 15;
         showToast(`Preparing $${amount} crypto payment...`, "info");
-        
         setTimeout(() => {
             window.open(`https://nowpayments.io/payment?price_amount=${amount}&price_currency=usd`, '_blank');
             window.closeSupportModal();
         }, 700);
     });
 
-    // Paystack
+    // Paystack - Improved
     paystackBtn?.addEventListener('click', async () => {
         const amountVal = parseFloat(customInput?.value) || 15;
-        if (amountVal < 1) {
-            return showToast('Please enter a valid amount', 'error');
-        }
+        if (amountVal < 1) return showToast('Please enter a valid amount', 'error');
 
         showToast('Connecting to secure payment...', 'info');
 
         try {
             const initialize = httpsCallable(functions, 'initializePaystack');
             const result = await initialize({
-                email: auth.currentUser?.email || 'supporter@vocalwitness.org',
-                amount: Math.round(amountVal * 1650 * 100), // Update rate dynamically later
-                reference: `vw_sustain_${Date.now()}`,
+                amount: Math.round(amountVal * 1650 * 100),
                 metadata: {
                     source: 'support_modal',
                     amount_usd: amountVal,
@@ -165,11 +152,10 @@ export function initSupportModal() {
                 }
             });
 
-            const { authorization_url } = result.data;
-            if (authorization_url) {
-                window.location.href = authorization_url;
+            if (result.data.authorization_url) {
+                window.location.href = result.data.authorization_url;
             } else {
-                throw new Error('No checkout URL received');
+                throw new Error('No authorization URL');
             }
         } catch (error) {
             console.error(error);
@@ -177,14 +163,13 @@ export function initSupportModal() {
         }
     });
 
-    // Copy wallet address
     copyTrxBtn?.addEventListener('click', () => {
         navigator.clipboard.writeText('TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK');
         showToast('TRC-20 address copied!', 'success');
     });
 }
 
-// Auto-initialize
+// Auto init
 document.addEventListener('DOMContentLoaded', () => {
     initSupportModal();
     console.log('%cSupport module loaded successfully ✓', 'color:#10b981; font-weight:bold');
