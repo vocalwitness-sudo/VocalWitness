@@ -185,61 +185,76 @@
 </div>
 
 <!-- Support Modal -->
+<!-- Support Modal - Improved Framing & Transparency -->
 <div id="supportModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[10000] flex items-center justify-center p-4 hidden">
     <div class="glass max-w-md w-full rounded-3xl p-6 border border-emerald-500/30 text-white relative modal max-h-[90vh] overflow-y-auto">
         <button id="closeSupportModal" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl">✕</button>
         
-        <div class="text-center mb-5">
-            <div class="w-12 h-12 bg-emerald-500/20 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl">🛡️</div>
-            <h3 class="text-xl font-bold text-white">Sustain the Public Square</h3>
-            <p class="text-xs text-emerald-300 mt-1">VocalWitness stays free, independent, and un-manipulated through voluntary community backing.</p>
+        <div class="text-center mb-6">
+            <div class="w-14 h-14 bg-emerald-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">🛡️</div>
+            <h3 class="text-2xl font-bold text-white">Sustain the Public Square</h3>
+            <p class="text-sm text-emerald-300 mt-2">
+                VocalWitness stays completely free and independent.<br>
+                No ads. No corporate sponsors. Only community support keeps it alive.
+            </p>
         </div>
 
-        <div class="space-y-4">
+        <div class="space-y-5">
             <div>
-                <label class="block text-xs text-zinc-400 mb-2">Select Contribution Amount (USD / NGN)</label>
+                <label class="block text-xs text-zinc-400 mb-2">Choose Contribution Amount</label>
                 <div class="grid grid-cols-3 gap-2">
-                    <button type="button" class="support-tier-btn py-2 bg-zinc-800 hover:bg-emerald-600/30 border border-zinc-700 rounded-xl text-sm font-medium transition-all" data-amount="5">$5</button>
-                    <button type="button" class="support-tier-btn py-2 bg-zinc-800 hover:bg-emerald-600/30 border border-emerald-500 bg-emerald-600/20 rounded-xl text-sm font-medium transition-all" data-amount="15">$15</button>
-                    <button type="button" class="support-tier-btn py-2 bg-zinc-800 hover:bg-emerald-600/30 border border-zinc-700 rounded-xl text-sm font-medium transition-all" data-amount="50">$50</button>
+                    <button type="button" class="support-tier-btn py-3 bg-zinc-800 hover:bg-emerald-600/30 border border-zinc-700 rounded-2xl text-sm font-medium transition-all" data-amount="5">$5</button>
+                    <button type="button" class="support-tier-btn py-3 bg-zinc-800 hover:bg-emerald-600/30 border border-emerald-500 bg-emerald-600/20 rounded-2xl text-sm font-medium transition-all" data-amount="15">$15</button>
+                    <button type="button" class="support-tier-btn py-3 bg-zinc-800 hover:bg-emerald-600/30 border border-zinc-700 rounded-2xl text-sm font-medium transition-all" data-amount="50">$50</button>
                 </div>
             </div>
 
             <div>
-                <label class="block text-xs text-zinc-400 mb-1">Custom Amount ($ USD)</label>
-                <input type="number" id="customSupportAmount" placeholder="Enter amount" min="1" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500" value="15">
+                <label class="block text-xs text-zinc-400 mb-1">Custom Amount (USD)</label>
+                <input type="number" id="customSupportAmount" placeholder="Enter amount" min="1" 
+                       class="w-full bg-zinc-900 border border-zinc-800 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500" value="15">
             </div>
 
-            <button id="paystackPayBtn" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-sm transition-all shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
-                <span>💳 Pay with Card / Bank (Paystack)</span>
+            <button id="paystackPayBtn" class="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-2xl text-base transition-all shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
+                💳 Pay with Card or Bank (Paystack)
             </button>
 
-            <button id="proceedCryptoBtn" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-black font-semibold rounded-xl text-sm transition-all shadow-lg shadow-emerald-600/20">
-                Proceed with Crypto (NOWPayments) ⚡
+            <button id="proceedCryptoBtn" class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-black font-semibold rounded-2xl text-base transition-all shadow-lg shadow-emerald-600/20">
+                ⚡ Pay with Crypto (NOWPayments)
             </button>
         </div>
 
-        <div class="mt-5 pt-4 border-t border-zinc-800">
-            <p class="text-xs text-zinc-400 mb-2 font-medium text-center">Or scan / copy to send USDT directly:</p>
+        <!-- Direct Wallet -->
+        <div class="mt-6 pt-5 border-t border-zinc-800">
+            <p class="text-xs text-zinc-400 mb-3 text-center">Or send USDT directly</p>
             
-            <div class="bg-white p-3 rounded-2xl w-36 h-36 mx-auto mb-3 flex items-center justify-center shadow-md">
+            <div class="bg-white p-3 rounded-2xl w-40 h-40 mx-auto mb-4 flex items-center justify-center shadow-inner">
                 <img src="/image/95756.jpg" alt="USDT QR Code" class="w-full h-full object-contain">
             </div>
 
-            <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex items-center justify-between gap-2">
-                <span class="text-[11px] text-emerald-400 font-mono truncate select-all">TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK</span>
-                <button type="button" onclick="navigator.clipboard.writeText('TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK'); showToast('TRC-20 address copied!', 'success');" class="text-xs bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 rounded-lg text-white font-medium transition-all shrink-0">
+            <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex items-center justify-between gap-3">
+                <span class="text-[13px] text-emerald-400 font-mono break-all select-all">TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK</span>
+                <button type="button" onclick="navigator.clipboard.writeText('TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK'); showToast('TRC-20 address copied!', 'success');" 
+                        class="text-xs bg-zinc-800 hover:bg-zinc-700 px-4 py-2 rounded-xl text-white font-medium transition-all shrink-0">
                     Copy
                 </button>
             </div>
-            <p class="text-[10px] text-zinc-500 mt-1.5 text-center">Network: <strong class="text-zinc-400">Tron (TRC-20)</strong> • Send USDT only</p>
+            <p class="text-[10px] text-zinc-500 mt-2 text-center">Tron (TRC-20) • USDT only</p>
         </div>
 
-        <p class="text-[10px] text-zinc-500 text-center mt-4">Powered by non-custodial rails. No tracking, no intrusive data collection.</p>
+        <!-- Transparency Note -->
+        <div class="mt-6 text-center text-xs">
+            <p class="text-zinc-500">
+                Every contribution supports servers, security & independence.<br>
+                <span class="text-emerald-400 hover:underline cursor-pointer" onclick="showToast('Full transparency report coming soon', 'info')">View how funds are used →</span>
+            </p>
+        </div>
+
+        <p class="text-[10px] text-zinc-500 text-center mt-5">
+            Non-custodial • No tracking • Protects free speech
+        </p>
     </div>
 </div>
-
-
 
 <!-- Login Modal -->
 <div id="loginModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[10000] p-4">
