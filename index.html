@@ -335,36 +335,37 @@ $('paystackPayBtn')?.addEventListener('click', () => {
         showToast("Minimum amount is $1", "error");
         return;
     }
+/* ==================== OLD PAYSTACK CODE (TEMPORARILY DISABLED) ====================
+$('paystackPayBtn')?.addEventListener('click', () => {
+    const amountUsd = parseFloat($('customSupportAmount').value) || 15;
+    
+    if (amountUsd < 1) {
+        showToast("Minimum amount is $1", "error");
+        return;
+    }
 
     // Use real user email if available
     const userEmail = window.currentUser?.email || "supporter@vocalwitness.app";
 
-    const amountInNgnKobo = Math.round(amountUsd * 1650 * 100);   // Update rate when needed
+    const amountInNgnKobo = Math.round(amountUsd * 1650 * 100);
 
     const handler = PaystackPop.setup({
-        key: "pk_live_5d13a6db326f02375127aae9d0fb03678ed1d923",   // ← Your live key
+        key: "pk_live_5d13a6db326f02375127aae9d0fb03678ed1d923",
         email: userEmail,
         amount: amountInNgnKobo,
         currency: "NGN",
         ref: 'VW_' + Date.now() + Math.floor(Math.random() * 10000),
-        metadata: {
-            source: "support_modal",
-            amount_usd: amountUsd
-        },
-        callback: function(response) {
-            showToast(`Thank you! Payment successful (Ref: ${response.reference}) ✅`, "success");
-            closeSupportModal();
-            
-            // Future improvement: Verify transaction on backend here
-            console.log("Payment Reference:", response.reference);
-        },
-        onClose: function() {
-            showToast("Transaction was cancelled", "info");
-        }
+        metadata: { ... },
+        callback: function(response) { ... },
+        onClose: function() { ... }
     });
 
-    handler.openIframe();     // ← Correct method (this fixes the error)
+    handler.openIframe();
 });
+*/
+// ==================== END OF OLD CODE ====================
+
+
 
 // ==================== NOWPAYMENTS CRYPTO ====================
 $('proceedCryptoBtn')?.addEventListener('click', () => {
@@ -410,6 +411,7 @@ $('proceedCryptoBtn')?.addEventListener('click', () => {
 </script>
 <!-- App Module Entry Point -->
 <script type="module" src="js/main.js"></script>
+<script type="module" src="js/support.js"></script>
 
 </body>
 </html>
