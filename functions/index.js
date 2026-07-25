@@ -1,10 +1,11 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
-admin.initializeApp();
+const paystack = require('paystack-api')(functions.config().paystack.secret_key);
 
+admin.initializeApp();
 const db = admin.firestore();
 
-// ====================== USER PROFILE INITIALIZER ======================
+// ====================== EXISTING CODE (Unchanged) ======================
 exports.initializeCitizenProfile = functions.auth.user().onCreate(async (user) => {
   const userId = user.uid;
   const defaultUsername = `citizen_${Math.floor(1000 + Math.random() * 9000)}`;
@@ -45,7 +46,7 @@ exports.initializeCitizenProfile = functions.auth.user().onCreate(async (user) =
   }
 });
 
-// ====================== GENTLE MODERATION ======================
+// Gentle Moderation
 async function gentleModerationCheck(content = "") {
   if (!content || content.length < 5) return { safe: true, note: "" };
 
@@ -88,5 +89,79 @@ exports.moderateNewTestimony = functions.firestore
       console.error("Moderation error for", postId, err);
     }
   });
+
+// ====================== NEW: PAYSTACK PAYMENT FUNCTIONS ======================
+
+/** Initialize Paystack Checkout */
+exports.initializePaystack = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Must be logged in to make payment");
+  }
+
+  const { amount, metadata } = data;   // amount in kobo
+
+  if (!amount || amount < 1000) {
+    throw new functions.https.HttpsError("invalid-argument", "Amount too small");
+  }
+
+  try {
+    const transaction = await paystack.transaction.initialize({
+      amount: amount,
+      email: context.auth.token.email || "supporter@vocalwitness.app",
+      reference: `VW_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
+      metadata: { ...metadata, userId: context.auth.uid }
+    });
+
+    return {
+      authorization_url: transaction.data.authorization_url,
+      reference: transaction.data.reference
+    };
+  } catch (error) {
+    console.error("Paystack Error:", error);
+    throw new functions.https.HttpsError("internal", "Payment initialization failed");
+  }
+});
+
+/** Paystack Webhook */
+exports.paystackWebhook = functions.https.onRequest(async (req, res) => {
+  const secret = functions.config().paystack.secret_key;
+  const hash = req.headers["x-paystack-signature"];
+
+  const crypto = require("crypto");
+  const expectedHash = crypto.createHmac("sha512", secret)
+    .update(JSON.stringify(req.body))
+    .digest("hex");
+
+  if (hash !== expectedHash) {
+    console.error("Invalid webhook signature");
+    return res.status(400).send("Invalid signature");
+  }
+
+  const event = req.body;
+
+  if (event.event === "charge.success") {
+    const { metadata } = event.data;
+    const userId = metadata.userId;
+
+    if (userId) {
+      try {
+        await db.collection("users").doc(userId).update({
+          supporterTier: "supporter",
+          isPremium: true,
+          supporterSince: admin.firestore.FieldValue.serverTimestamp(),
+          totalContributed: admin.firestore.FieldValue.increment(event.data.amount / 100)
+        });
+
+        await admin.auth().setCustomUserClaims(userId, { supporter: true });
+
+        console.log(`✅ Supporter status granted to user: ${userId}`);
+      } catch (err) {
+        console.error("Failed to update supporter status:", err);
+      }
+    }
+  }
+
+  res.sendStatus(200);
+});
 
 console.log("🚀 VocalWitness Cloud Functions Ready");
