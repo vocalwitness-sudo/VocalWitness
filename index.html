@@ -313,33 +313,36 @@
         });
     });
 
-// Paystack Payment (Converted to NGN for seamless gateway processing)
-    $('paystackPayBtn')?.addEventListener('click', () => {
-        const amountUsd = parseFloat($('customSupportAmount').value) || 15;
-        if (amountUsd < 1) {
-            showToast("Minimum amount is $1", "error");
-            return;
+// Paystack 
+    
+$('paystackPayBtn')?.addEventListener('click', () => {
+    const amountUsd = parseFloat($('customSupportAmount').value) || 15;
+    if (amountUsd < 1) {
+        showToast("Minimum amount is $1", "error");
+        return;
+    }
+
+    // Convert USD to NGN (Approx 1650 rate) and convert to kobo (* 100)
+    const amountInNgnKobo = Math.round(amountUsd * 1650 * 100);
+
+    const handler = PaystackPop.setup({
+        key: "pk_live_5d13a6db326f02375127aae9d0fb03678ed1d923",
+        email: "donor@vocalwitness.app",
+        amount: amountInNgnKobo,
+        currency: "NGN",
+        ref: 'VW_' + Date.now() + Math.floor(Math.random() * 10000),
+        callback: function(response) {
+            showToast(`Thank you! Payment successful (Ref: ${response.reference}) ✅`, "success");
+            closeSupportModal();
+        },
+        onClose: function() {
+            showToast("Transaction cancelled", "info");
         }
-
-        // Convert USD to NGN (Approx 1650 rate) and convert to kobo (* 100)
-        const amountInNgnKobo = Math.round(amountUsd * 1650 * 100);
-
-        const handler = PaystackPop.setup({
-            key: "pk_live_5d13a6db326f02375127aae9d0fb03678ed1d923",
-            email: "donor@vocalwitness.app",
-            amount: amountInNgnKobo,
-            currency: "NGN",
-            ref: 'VW_' + Date.now() + Math.floor(Math.random() * 10000),
-            callback: function(response) {
-                showToast(`Thank you! Payment successful (Ref: ${response.reference}) ✅`, "success");
-                closeSupportModal();
-            },
-            onClose: function() {
-                showToast("Transaction cancelled", "info");
-            }
-        });
-        handler.openIframe();
     });
+
+    // Use openPopup() instead of openIframe() to avoid X-Frame-Options blocks
+    handler.openPopup();
+});
 
     // NOWPayments Crypto Checkout Handler
     $('proceedCryptoBtn')?.addEventListener('click', () => {
