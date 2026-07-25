@@ -11,6 +11,7 @@ import { loadDynamicNavigation } from './navigation.js';
 import { AppState } from './app-state.js';
 import { showToast } from './utils.js';
 import './composer.js';
+import { initSupportModal } from './support.js';
 
 let engineInstance = null;
 let isInitialized = false;
@@ -374,6 +375,7 @@ async function bootstrap() {
     try {
         await initAuth();
         setupEventListeners();
+        initSupportModal(); // <--- Injects and wires up the support modal on load
         
         if (typeof initLanguage === 'function') initLanguage();
 
