@@ -331,13 +331,11 @@
 // ==================== PAYSTACK INLINE POPUP PAYMENT ====================
 $('paystackPayBtn')?.addEventListener('click', () => {
     const amountUsd = parseFloat($('customSupportAmount').value) || 15;
-    
-    if (amountUsd < 1) {
-        showToast("Minimum amount is $1", "error");
+    if (amountUsd < 1 || amountUsd > 10000) {
+        showToast("Please enter a valid amount between $1 and $10,000", "error");
         return;
-    }
+    } // 👈 Added this missing closing brace
 
-    // Use logged-in user email if available, fallback to default supporter email
     const userEmail = (window.auth && window.auth.currentUser && window.auth.currentUser.email) 
         ? window.auth.currentUser.email 
         : "supporter@vocalwitness.app";
@@ -371,7 +369,6 @@ $('paystackPayBtn')?.addEventListener('click', () => {
 
     handler.openIframe();
 });
-
     // ==================== NOWPAYMENTS CRYPTO ====================
     $('proceedCryptoBtn')?.addEventListener('click', () => {
         const amountUsd = parseFloat($('customSupportAmount').value) || 15;
