@@ -1,9 +1,10 @@
-// js/profile.js - Enhanced Version
+// js/profile.js - Enhanced Version with Resource Meter Integration
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { auth, db } from './firebase-config.js';
 import { showToast } from './utils.js';
 import { generateAndDownloadPDF } from './pdf.js';
+import { renderResourceMeterUI } from './resource-meter.js';
 
 let currentUserData = null;
 
@@ -52,6 +53,9 @@ function renderProfileUI(userData) {
             </div>
         `;
     }
+
+    // Render Resource Meter UI inside profile modal (assumes a container div with id 'resource-meter-container' exists in your HTML)
+    renderResourceMeterUI('resource-meter-container');
 }
 
 window.showProfile = () => {
@@ -72,11 +76,15 @@ window.editProfile = () => {
 };
 
 window.downloadPassport = () => {
-    if (currentUserData) {
+    if (currentUserData && auth.currentUser) {
         generateAndDownloadPDF({ uid: auth.currentUser.uid, displayName: currentUserData.displayName }, db);
     } else {
         showToast("Please wait for profile to load", "error");
     }
+};
+
+window.openSupportPackagesModal = () => {
+    showToast("Support packages modal coming soon", "info");
 };
 
 window.showSettings = () => {
@@ -97,3 +105,4 @@ window.showSettings = showSettings;
 window.closeProfile = closeProfile;
 window.showProfile = showProfile;
 window.logout = logout;
+window.openSupportPackagesModal = openSupportPackagesModal;
