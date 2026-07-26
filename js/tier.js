@@ -220,3 +220,24 @@ export function refreshTierAndUI() {
   updateTierBadge();
   console.log("✅ Tier system & Governance UI refreshed");
 }
+
+// Record Testimony Contribution (used in publishTestimony)
+export async function recordTestimonyContribution() {
+    if (!auth.currentUser) return;
+
+    try {
+        const userRef = doc(db, "users", auth.currentUser.uid);
+        const snap = await getDoc(userRef);
+
+        if (snap.exists()) {
+            const currentRep = snap.data().reputation || 0;
+            await updateDoc(userRef, {
+                reputation: currentRep + 15,
+                lastContribution: serverTimestamp()
+            });
+            console.log("✅ +15 Reputation for testimony");
+        }
+    } catch (e) {
+        console.warn("Reputation update failed:", e);
+    }
+}
