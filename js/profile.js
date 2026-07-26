@@ -4,6 +4,7 @@ import { doc, onSnapshot, updateDoc, serverTimestamp } from "https://www.gstatic
 import { auth, db } from './firebase-config.js';
 import { showToast } from './utils.js';
 import { refreshTierAndUI, getCurrentWitnessLevel } from './tier.js'; // ← Added getCurrentWitnessLevel here
+import { startWitnessCycle } from './witnessCycle.js';
 
 let currentUserData = null;
 let userUnsubscribe = null;
