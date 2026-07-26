@@ -5,6 +5,7 @@ import { getCurrentUserTier, getCurrentWitnessLevel } from './tier.js';
 import { db, auth, storage } from './firebase-config.js';
 import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
 
 let mediaRecorder;
 let audioChunks = [];
@@ -119,25 +120,24 @@ postButton?.addEventListener('click', async () => {
         return;
     }
 
-    // ====================== NEW: RATE LIMIT CHECK ======================
+    // Rate Limit Check with Modular Firebase Functions
     try {
-        const rateLimitCheck = await firebase.functions().httpsCallable('checkRateLimit');
-        const canPost = await rateLimitCheck({
+        const functions = getFunctions();
+        const checkRateLimitFn = httpsCallable(functions, 'checkRateLimit');
+        const rateLimitCheck = await checkRateLimitFn({
             userId: auth.currentUser.uid,
             action: "create_testimony",
             maxCalls: 6,
             windowMinutes: 60
         });
 
-        if (!canPost.data) {
+        if (!rateLimitCheck.data) {
             showToast("You've reached your posting limit for now. Please try again later.", "error");
             return;
         }
     } catch (rateError) {
-        console.warn("Rate limit check failed, allowing post:", rateError);
-        // Fail open - don't block user if rate limiter has issue
+        console.warn("Rate limit check failed, allowing post (fail-open):", rateError);
     }
-    // ===================================================================
 
     postButton.disabled = true;
     postButton.textContent = 'Publishing...';
@@ -168,7 +168,7 @@ postButton?.addEventListener('click', async () => {
         const userWitnessLevel = await getCurrentWitnessLevel();
 
         // 4. Save to Firestore
-        await addDoc(collection(db, "posts"), {
+        await addDoc(collection(db, "testimonies"), {
             content: text || "",
             imageUrl: imageUrl,
             audioUrl: audioUrl,
@@ -181,7 +181,7 @@ postButton?.addEventListener('click', async () => {
 
         showToast('✅ Testimony published to the Public Square!', 'success');
 
-        // Reset UI
+        // Reset UI State
         if (mainInput) mainInput.value = '';
         if (previewArea) {
             previewArea.innerHTML = 'Preview will appear here...';
@@ -196,6 +196,9 @@ postButton?.addEventListener('click', async () => {
         recordedAudioBlob = null;
         recordedAudioUrl = null;
         audioChunks = [];
+
+        // Dispatch a custom event to notify feeds or profiles to update state
+        window.dispatchEvent(new CustomEvent('vocalWitness:posted'));
 
     } catch (err) {
         console.error("Publish Error:", err);
