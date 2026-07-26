@@ -94,19 +94,21 @@ export async function googleLogin() {
         if (loginModal) loginModal.classList.add('hidden');
 
         return user;
-       
 
     } catch (error) {
         console.error("Login error:", error);
+        
+        // Handle popup closed gracefully without redundant red error toasts
+        if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
+            console.log("Sign-in cancelled by user.");
+            return;
+        }
+
         const errorMessage = handleAuthError(error);
-        showToast(errorMessage, error.code?.includes('cancelled') ? "warning" : "error");
+        showToast(errorMessage, "error");
     } finally {
         popupInProgress = false;
     }
-     if (error.code === 'auth/popup-closed-by-user') {
-    // Safe to ignore or show a gentle notice
-    return; 
-}
 }
 
 // ====================== LOGOUT ======================
