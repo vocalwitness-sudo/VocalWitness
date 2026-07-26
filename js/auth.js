@@ -94,6 +94,7 @@ export async function googleLogin() {
         if (loginModal) loginModal.classList.add('hidden');
 
         return user;
+       
 
     } catch (error) {
         console.error("Login error:", error);
@@ -102,6 +103,10 @@ export async function googleLogin() {
     } finally {
         popupInProgress = false;
     }
+     if (error.code === 'auth/popup-closed-by-user') {
+    // Safe to ignore or show a gentle notice
+    return; 
+}
 }
 
 // ====================== LOGOUT ======================
