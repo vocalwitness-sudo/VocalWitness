@@ -328,35 +328,49 @@
         });
     });
 
-    // ==================== PAYSTACK FIAT PAYMENT ====================
-    $('paystackPayBtn')?.addEventListener('click', () => {
-        const amountUsd = parseFloat($('customSupportAmount').value) || 15;
-        
-        if (amountUsd < 1) {
-            showToast("Minimum amount is $1", "error");
-            return;
+// ==================== PAYSTACK INLINE POPUP PAYMENT ====================
+$('paystackPayBtn')?.addEventListener('click', () => {
+    const amountUsd = parseFloat($('customSupportAmount').value) || 15;
+    
+    if (amountUsd < 1) {
+        showToast("Minimum amount is $1", "error");
+        return;
+    }
+
+    // Use logged-in user email if available, fallback to default supporter email
+    const userEmail = (window.auth && window.auth.currentUser && window.auth.currentUser.email) 
+        ? window.auth.currentUser.email 
+        : "supporter@vocalwitness.app";
+
+    // Convert USD to NGN Kobo (approximate multiplier used in your app)
+    const amountInNgnKobo = Math.round(amountUsd * 1650 * 100);
+
+    const handler = PaystackPop.setup({
+        key: 'pk_live_5d13a6db326f02375127aae9d0fb03678ed1d923',
+        email: userEmail,
+        amount: amountInNgnKobo,
+        currency: "NGN",
+        ref: 'VW_' + Date.now() + Math.floor(Math.random() * 10000),
+        metadata: {
+            custom_fields: [
+                {
+                    display_name: "Source",
+                    variable_name: "source",
+                    value: "VocalWitness Support Modal"
+                }
+            ]
+        },
+        callback: function(response) {
+            showToast('✅ Thank you! Payment successful. Ref: ' + response.reference, 'success');
+            closeSupportModal();
+        },
+        onClose: function() {
+            showToast('Payment window closed.', 'info');
         }
-
-        const userEmail = window.currentUser?.email || "supporter@vocalwitness.app";
-        const amountInNgnKobo = Math.round(amountUsd * 1650 * 100);
-
-        const handler = PaystackPop.setup({
-            key: "pk_live_5d13a6db326f02375127aae9d0fb03678ed1d923",
-            email: userEmail,
-            amount: amountInNgnKobo,
-            currency: "NGN",
-            ref: 'VW_' + Date.now() + Math.floor(Math.random() * 10000),
-            callback: function(response) {
-                showToast("Payment successful! Thank you for supporting the square.", "success");
-                closeSupportModal();
-            },
-            onClose: function() {
-                showToast("Payment window closed.", "info");
-            }
-        });
-
-        handler.openIframe();
     });
+
+    handler.openIframe();
+});
 
     // ==================== NOWPAYMENTS CRYPTO ====================
     $('proceedCryptoBtn')?.addEventListener('click', () => {
