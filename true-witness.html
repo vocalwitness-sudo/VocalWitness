@@ -45,8 +45,9 @@
         </div>
     </div>
 
-    <!-- Scripts -->
-   <script type="module" src="../js/utils.js"></script>
+
+ <!-- Scripts -->
+    <script type="module" src="../js/utils.js"></script>
     <script>
         window.goBack = window.goBack || function() {
             if (window.history.length > 1) window.history.back();
@@ -55,10 +56,11 @@
     </script>
     <script type="module" src="../js/main.js"></script>
 
-    <script>
+    <script type="module">
+        import { initTrueWitness } from '../js/true-witness.js';
         document.addEventListener('DOMContentLoaded', () => {
             console.log("True Witness page loaded");
-            // TODO: Load ZK-verified testimonies
+            initTrueWitness('trueWitnessContainer');
         });
     </script>
 </body>
