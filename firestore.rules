@@ -4,7 +4,7 @@ service cloud.firestore {
     
     // Testimonies / Evidence Ledger
     match /testimonies/{testimonyId} {
-      allow read: if true;                                    // Public read for ledger & feed
+      allow read: if true;
       allow create: if request.auth != null 
                     && request.auth.uid == request.resource.data.authorId;
       allow update, delete: if request.auth != null 
@@ -14,19 +14,22 @@ service cloud.firestore {
     // Groups Collection
     match /groups/{groupId} {
       allow read: if true;
-      allow create: if request.auth != null;
-      allow update: if request.auth != null;
+      allow create: if request.auth != null 
+                    && request.auth.uid == request.resource.data.ownerId;
+      allow update, delete: if request.auth != null 
+                            && request.auth.uid == resource.data.ownerId;
     }
 
     // Posts Collection
     match /posts/{postId} {
       allow read: if true;
-      allow create: if request.auth != null;
+      allow create: if request.auth != null 
+                    && request.auth.uid == request.resource.data.authorId;
       allow update, delete: if request.auth != null 
                             && request.auth.uid == resource.data.authorId;
     }
 
-    // Users Collection (Crucial for tier.js & profile checks)
+    // Users Collection
     match /users/{userId} {
       allow read: if true;
       allow create, update: if request.auth != null && request.auth.uid == userId;
@@ -41,7 +44,7 @@ service cloud.firestore {
 
     // Moderation & Reports Collection
     match /reports/{reportId} {
-      allow read: if request.auth != null;
+      allow read: if request.auth != null && request.auth.uid == resource.data.reporterId;
       allow create: if request.auth != null 
                     && request.auth.uid == request.resource.data.reporterId;
     }
