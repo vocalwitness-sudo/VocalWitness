@@ -1,6 +1,7 @@
-// js/auth.js - Clean Auth with Circle Integration + Hybrid UI Support
+// js/auth.js - Clean Auth with Circle Integration + Hybrid UI Support (Redirect Mode)
 import {
-    signInWithPopup,
+    signInWithRedirect,
+    getRedirectResult,
     signOut
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 
@@ -11,7 +12,7 @@ import { showToast } from './utils.js';
 import { updateAppState } from './app-state.js';
 import { applyTierTheme, updateTierBadge } from './tier.js';
 
-let popupInProgress = false;
+let redirectInProgress = false;
 
 // Safe Tier Refresh Helper
 function refreshTierUI() {
@@ -62,52 +63,23 @@ function handleAuthError(error) {
     }
 }
 
-// ====================== IMPROVED GOOGLE LOGIN ======================
+// ====================== REDIRECT GOOGLE LOGIN ======================
 export async function googleLogin() {
-    if (popupInProgress) {
+    if (redirectInProgress) {
         showToast("Sign-in already in progress...", "info");
         return;
     }
 
-    popupInProgress = true;
+    redirectInProgress = true;
 
     try {
-        showToast("Opening Google Sign-In...", "info");
-
-        const result = await signInWithPopup(auth, provider);
-        const user = result.user;
-        
-        await createOrUpdateUser(user);
-        updateAppState({ isAuthenticated: true, currentUser: user });
-        refreshTierUI();
-        
-        if (typeof window.updateHeaderButtons === 'function') {
-            window.updateHeaderButtons(true);
-        }
-        
-        window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
-        updateUIForAuthState();   // ← Important for hybrid model
-
-        showToast("✅ Signed in successfully! Welcome to the Square.", "success");
-        
-        const loginModal = document.getElementById('loginModal');
-        if (loginModal) loginModal.classList.add('hidden');
-
-        return user;
-
+        showToast("Redirecting to Google Sign-In...", "info");
+        await signInWithRedirect(auth, provider);
     } catch (error) {
-        console.error("Login error:", error);
-        
-        // Handle popup closed gracefully without redundant red error toasts
-        if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
-            console.log("Sign-in cancelled by user.");
-            return;
-        }
-
+        console.error("Login redirect error:", error);
         const errorMessage = handleAuthError(error);
         showToast(errorMessage, "error");
-    } finally {
-        popupInProgress = false;
+        redirectInProgress = false;
     }
 }
 
@@ -153,6 +125,34 @@ export function updateUIForAuthState() {
 
 // ====================== INIT AUTH ======================
 export function initAuth() {
+    // Handle the result when the user returns from Google's redirect page
+    getRedirectResult(auth)
+        .then(async (result) => {
+            if (result && result.user) {
+                const user = result.user;
+                await createOrUpdateUser(user);
+                updateAppState({ isAuthenticated: true, currentUser: user });
+                refreshTierUI();
+                
+                if (typeof window.updateHeaderButtons === 'function') {
+                    window.updateHeaderButtons(true);
+                }
+                
+                window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
+                updateUIForAuthState();
+
+                showToast("✅ Signed in successfully! Welcome to the Square.", "success");
+                
+                const loginModal = document.getElementById('loginModal');
+                if (loginModal) loginModal.classList.add('hidden');
+            }
+        })
+        .catch((error) => {
+            console.error("Redirect result error:", error);
+            const errorMessage = handleAuthError(error);
+            showToast(errorMessage, "error");
+        });
+
     auth.onAuthStateChanged(async (user) => {
         if (user) {
             await createOrUpdateUser(user);
@@ -165,9 +165,10 @@ export function initAuth() {
         window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
         updateUIForAuthState();   // Keep UI in sync
     });
-    updateUIForAuthState();   // Add this
+    
+    updateUIForAuthState();   // Keep UI in sync on load
 
-    console.log("🔐 Auth initialized");
+    console.log("🔐 Auth initialized (Redirect Mode)");
 }
 
 // Global exposure
