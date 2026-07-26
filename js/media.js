@@ -114,8 +114,14 @@ export async function uploadForensicMedia() {
 
 export function resetMediaState() {
     selectedImageFile = null;
+    if (engineInstance) {
+        engineInstance.currentAudioBlob = null;
+    }
     const preview = document.getElementById('preview-area');
-    if (preview) preview.innerHTML = 'Preview will appear here...';
+    if (preview) {
+        preview.innerHTML = 'Preview will appear here...';
+        preview.classList.remove('has-content');
+    }
 }
 
 // Global exposure
