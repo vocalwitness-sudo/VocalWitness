@@ -1,416 +1,208 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#10b981">
-    <meta name="description" content="VocalWitness - Privacy First Public Square for Truth and Evidence">
+import { compressImage } from './media-compression.js';
+import { showToast, generateSha256Hash } from './utils.js';
+import { getCurrentUserTier, getCurrentWitnessLevel } from './tier.js';
+import { db, auth, storage } from './firebase-config.js';
+import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
+
+let mediaRecorder;
+let audioChunks = [];
+let recordedAudioBlob = null;
+let recordedAudioUrl = null;
+let selectedFile = null;
+let isRecording = false;
+
+const btnPhoto = document.getElementById('btn-photo');
+const btnVoice = document.getElementById('btn-voice');
+const mainInput = document.getElementById('mainInput');
+const previewArea = document.getElementById('preview-area');
+const postButton = document.getElementById('postButton');
+
+// ==================== ACTIVE STATE TOGGLE ====================
+function toggleActive(button) {
+    if (button === btnPhoto) btnVoice?.classList.remove('active');
+    if (button === btnVoice) btnPhoto?.classList.remove('active');
+    button?.classList.toggle('active');
+}
+
+// ==================== PHOTO UPLOAD WITH COMPRESSION ====================
+btnPhoto?.addEventListener('click', async () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
     
-    <!-- Improved Content Security Policy -->
-   <meta http-equiv="Content-Security-Policy" content="
-  default-src 'self' https: wss: blob: data:;
-  script-src 'self' https://www.gstatic.com https://cdnjs.cloudflare.com https://cdn.tailwindcss.com https://apis.google.com https://js.paystack.co https://*.paystack.co 'unsafe-inline';
-  style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com https://paystack.com https://*.paystack.com;
-  font-src 'self' https://fonts.gstatic.com https: data:;
-  connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://api.paystack.co https://*.paystack.co https://*.paystack.com wss://*.firebaseio.com;
-  img-src 'self' https: data: blob:;
-  media-src 'self' https: blob:;
-  frame-src 'self' https://accounts.google.com https://*.paystack.co https://*.paystack.com;
-  object-src 'none';
-  base-uri 'self';
-  upgrade-insecure-requests;
-">
+    input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
 
-    <title data-i18n="pageTitle">VocalWitness • Truth • Evidence • Public Square</title>
+        try {
+            const compressedFile = await compressImage(file, 1200, 0.82);
+            selectedFile = compressedFile;
+            toggleActive(btnPhoto);
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-    
-    <!-- Paystack Script - Must be loaded before your custom script -->
-    <script src="https://js.paystack.co/v1/inline.js"></script>
-
-    <link rel="stylesheet" href="style.css">
-    <link rel="icon" href="/logo.png" type="image/png">
-</head>
-<body class="min-h-screen pb-24 bg-[#0a0f1c]">
-
-<!-- Header -->
-<header class="flex items-center justify-between mb-8 sticky top-0 z-50 glass rounded-3xl p-4">
-    <div class="flex items-center gap-3">
-        <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-2xl">🔊</div>
-        <div>
-            <h1 class="text-2xl font-bold tracking-tight" data-i18n="appTitle">VocalWitness</h1>
-            <p class="text-sm text-emerald-400 tracking-widest" data-i18n="appSubtitle">Truth • Evidence • Public Square</p>
-        </div>
-    </div>
-    
-    <div class="flex items-center gap-3 md:gap-4">
-        <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-4 py-2 text-sm focus:outline-none focus:border-emerald-500 hidden sm:block">
-            <option value="en">🇬🇧 English</option>
-            <option value="es">🇪🇸 Español</option>
-            <option value="fr">🇫🇷 Français</option>
-        </select>
-
-        <a href="privacy.html" class="flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 transition-colors text-sm font-medium px-3 py-2">
-            🔒 Privacy First
-        </a>
-
-        <button id="support-btn" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl transition whitespace-nowrap"
-                title="Help keep the platform running">
-            Support The Square
-        </button>
-
-        <button id="signin-btn" class="px-5 py-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm">
-            <img src="https://www.google.com/favicon.ico" class="w-4 h-4" alt="Google">
-            <span class="hidden sm:inline">Sign in</span>
-        </button>
-
-        <button id="profile-btn" class="px-5 py-2.5 border border-zinc-700 hover:bg-zinc-800 rounded-2xl transition flex items-center gap-2 hidden"
-                title="View your profile and settings">
-            👤 Profile
-        </button>
-    </div>
-</header>
-
-<!-- Main Navigation -->
-<nav class="flex gap-2 mb-8 overflow-x-auto pb-3 relative z-40" id="main-nav">
-    <button data-tab="square" class="nav-tab active px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative">
-        <span class="font-semibold">🗣️ Public Square</span>
-        <span class="text-xs text-zinc-400 hidden md:block">Share stories & evidence</span>
-    </button>
-    
-    <button data-tab="ledger" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative">
-        <span class="font-semibold">📜 Evidence Ledger</span>
-        <span class="text-xs text-zinc-400 hidden md:block">Permanent record</span>
-    </button>
-    
-    <button data-tab="arena" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative">
-        <span class="font-semibold">🎥 Live Arena</span>
-        <span class="text-xs text-zinc-400 hidden md:block">Watch & join live</span>
-    </button>
-    
-    <button data-tab="mycircle" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative">
-        <span class="font-semibold">👥 My Circle</span>
-        <span class="text-xs text-zinc-400 hidden md:block">Trusted people</span>
-    </button>
-    
-    <button data-tab="witness" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative bg-amber-900/70 text-amber-300 border border-amber-700">
-        <span class="font-semibold">✅ Verified Witnesses</span>
-        <span class="text-xs text-amber-400 hidden md:block">Trusted voices</span>
-    </button>
-
-    <div class="relative ml-auto">
-        <button id="more-btn" class="nav-tab px-7 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit bg-emerald-600 hover:bg-emerald-700 text-white font-semibold">
-            More Options
-        </button>
-    </div>
-</nav>
-
-<!-- More Menu -->
-<div id="more-menu" class="hidden fixed top-[165px] right-6 w-64 bg-zinc-900 border border-zinc-700 rounded-3xl shadow-2xl py-3 z-[9999]">
-    <a href="my-testimonies.html" class="block px-6 py-3 hover:bg-zinc-800">My Testimonies</a>
-    <a href="groups.html" class="block px-6 py-3 hover:bg-zinc-800">Groups</a>
-    <a href="true-witness.html" class="block px-6 py-3 hover:bg-zinc-800">True Witness</a>
-    <div class="h-px bg-zinc-700 mx-4 my-2"></div>
-    <a href="about.html" class="block px-6 py-3 hover:bg-zinc-800">About Us</a>
-    <a href="privacy.html" class="block px-6 py-3 hover:bg-zinc-800">Privacy Policy</a>
-    <a href="terms.html" class="block px-6 py-3 hover:bg-zinc-800">Terms of Service</a>
-    <a href="safety.html" class="block px-6 py-3 hover:bg-zinc-800">Safety Guidelines</a>
-</div>
-
-<!-- Testimony Composer -->
-<div class="glass rounded-3xl p-6 mb-10">
-    <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-semibold text-white flex items-center gap-2">
-            <span>📝</span> Share Your Testimony
-        </h2>
-        <span class="text-xs text-zinc-500">Public Square</span>
-    </div>
-
-    <textarea id="mainInput" rows="4" 
-              class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-5 text-lg placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none" 
-              placeholder="Share your raw testimony... What did you witness?"></textarea>
-    
-    <div class="flex gap-3 mt-5">
-        <button id="btn-photo" 
-                class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 hover:border-emerald-500 rounded-2xl flex items-center justify-center gap-3 font-medium transition-all active:scale-95"
-                title="Take a photo or upload an image as evidence">
-            📸 <span class="hidden sm:inline">Add Photo Evidence</span>
-        </button>
-
-        <button id="btn-voice" 
-                class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 hover:border-emerald-500 rounded-2xl flex items-center justify-center gap-3 font-medium transition-all active:scale-95"
-                title="Record your voice telling what you saw or heard">
-            🎤 <span class="hidden sm:inline">Record Voice Message</span>
-        </button>
-    </div>
-
-    <div id="preview-area" class="mt-6 min-h-[120px] border border-dashed border-zinc-700 rounded-2xl p-4 flex items-center justify-center text-zinc-500 text-sm">
-        Preview will appear here...
-    </div>
-
-    <button id="postButton" 
-            class="mt-8 w-full py-6 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500 
-                   hover:from-emerald-600 hover:via-teal-600 hover:to-emerald-600 
-                   text-black font-bold text-xl rounded-3xl transition-all active:scale-[0.97] relative overflow-hidden group">
-        <span class="relative z-10 flex items-center justify-center gap-3">
-            🚀 Publish to the Square
-        </span>
-        <span class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent 
-                     -skew-x-12 -translate-x-full group-active:translate-x-full transition-transform duration-700"></span>
-    </button>
-</div>
-
-<!-- Dynamic Content -->
-<main id="main-content">
-    <div id="feedContainer" class="space-y-8"></div>
-</main>
-    
-<!-- Profile Modal -->
-<div id="profileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[10000] p-4">
-    <div class="glass rounded-3xl p-8 max-w-lg w-full max-h-[90vh] overflow-auto modal">
-        <div class="flex justify-between items-center mb-6 border-b border-zinc-700 pb-4">
-            <h2 class="text-2xl font-bold text-white">My Profile</h2>
-            <button onclick="closeProfile()" class="text-3xl text-zinc-400 hover:text-white">×</button>
-        </div>
-        <div id="profileContent"></div>
-        <div class="mt-8 flex gap-3">
-            <button onclick="logout()" class="flex-1 py-3 border border-red-500 text-red-400 hover:bg-red-500/10 rounded-2xl font-medium">
-                Sign Out
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- Support Modal - Improved Framing & Transparency -->
-<div id="supportModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[10000] flex items-center justify-center p-4 hidden">
-    <div class="glass max-w-md w-full rounded-3xl p-6 border border-emerald-500/30 text-white relative modal max-h-[90vh] overflow-y-auto">
-        <button id="closeSupportModal" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl">✕</button>
-        
-        <div class="text-center mb-6">
-            <div class="w-14 h-14 bg-emerald-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">🛡️</div>
-            <h3 class="text-2xl font-bold text-white">Sustain the Public Square</h3>
-            <p class="text-sm text-emerald-300 mt-2">
-                VocalWitness stays completely free and independent.<br>
-                No ads. No corporate sponsors. Only community support keeps it alive.
-            </p>
-        </div>
-
-        <div class="space-y-5">
-            <div>
-                <label class="block text-xs text-zinc-400 mb-2">Choose Contribution Amount</label>
-                <div class="grid grid-cols-3 gap-2">
-                    <button type="button" class="support-tier-btn py-3 bg-zinc-800 hover:bg-emerald-600/30 border border-zinc-700 rounded-2xl text-sm font-medium transition-all" data-amount="5">$5</button>
-                    <button type="button" class="support-tier-btn py-3 bg-zinc-800 hover:bg-emerald-600/30 border border-emerald-500 bg-emerald-600/20 rounded-2xl text-sm font-medium transition-all" data-amount="15">$15</button>
-                    <button type="button" class="support-tier-btn py-3 bg-zinc-800 hover:bg-emerald-600/30 border border-zinc-700 rounded-2xl text-sm font-medium transition-all" data-amount="50">$50</button>
-                </div>
-            </div>
-
-            <div>
-                <label class="block text-xs text-zinc-400 mb-1">Custom Amount (USD)</label>
-                <input type="number" id="customSupportAmount" placeholder="Enter amount" min="1" 
-                       class="w-full bg-zinc-900 border border-zinc-800 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500" value="15">
-            </div>
-
-            <button id="paystackPayBtn" class="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-2xl text-base transition-all shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
-                💳 Pay with Card or Bank (Paystack)
-            </button>
-
-            <button id="proceedCryptoBtn" class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-black font-semibold rounded-2xl text-base transition-all shadow-lg shadow-emerald-600/20">
-                ⚡ Pay with Crypto (NOWPayments)
-            </button>
-        </div>
-
-        <!-- Direct Wallet -->
-        <div class="mt-6 pt-5 border-t border-zinc-800">
-            <p class="text-xs text-zinc-400 mb-3 text-center">Or send USDT directly</p>
-            
-            <div class="bg-white p-3 rounded-2xl w-40 h-40 mx-auto mb-4 flex items-center justify-center shadow-inner">
-                <img src="/image/95756.jpg" alt="USDT QR Code" class="w-full h-full object-contain">
-            </div>
-
-            <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex items-center justify-between gap-3">
-                <span class="text-[13px] text-emerald-400 font-mono break-all select-all">TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK</span>
-                <button type="button" onclick="navigator.clipboard.writeText('TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK'); showToast('TRC-20 address copied!', 'success');" 
-                        class="text-xs bg-zinc-800 hover:bg-zinc-700 px-4 py-2 rounded-xl text-white font-medium transition-all shrink-0">
-                    Copy
-                </button>
-            </div>
-            <p class="text-[10px] text-zinc-500 mt-2 text-center">Tron (TRC-20) • USDT only</p>
-        </div>
-
-        <!-- Transparency Note -->
-        <div class="mt-6 text-center text-xs">
-            <p class="text-zinc-500">
-                Every contribution supports servers, security & independence.<br>
-                <span class="text-emerald-400 hover:underline cursor-pointer" onclick="showToast('Full transparency report coming soon', 'info')">View how funds are used →</span>
-            </p>
-        </div>
-
-        <p class="text-[10px] text-zinc-500 text-center mt-5">
-            Non-custodial • No tracking • Protects free speech
-        </p>
-    </div>
-</div>
-
-<!-- Login Modal -->
-<div id="loginModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[10000] p-4">
-    <div class="glass rounded-3xl p-8 max-w-md w-full modal">
-        <h2 class="text-2xl font-bold mb-6">Sign In</h2>
-        <button onclick="googleLogin()" class="w-full py-4 bg-white text-black rounded-2xl font-medium flex items-center justify-center gap-3">
-            <img src="https://www.google.com/favicon.ico" class="w-5 h-5" alt="Google">
-            Continue with Google
-        </button>
-        <button onclick="closeLoginModal()" class="w-full mt-3 py-3 text-zinc-400 hover:text-white">
-            Cancel
-        </button>
-    </div>
-</div>
-
-<footer class="bg-zinc-950 border-t border-zinc-800 pt-16 pb-12 mt-20">
-    <div class="max-w-6xl mx-auto px-6 text-center text-xs text-zinc-500">
-        © 2026 VocalWitness • Built for Truth • Powered by Citizens
-    </div>
-</footer>
-
-<!-- Global UI Helper Script -->
-<script>
-    const $ = id => document.getElementById(id);
-
-    function showToast(message, type = 'info') {
-        const toast = document.createElement('div');
-        toast.className = `fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-2xl text-sm font-medium shadow-2xl z-[11000] ${
-            type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-red-600' : 'bg-zinc-800'
-        } text-white`;
-        toast.textContent = message;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3500);
-    }
-
-    // ==================== SUPPORT MODAL ====================
-    const supportModal = $('supportModal');
-
-    function openSupportModal() {
-        supportModal.classList.remove('hidden');
-        supportModal.classList.add('flex');
-    }
-
-    function closeSupportModal() {
-        supportModal.classList.add('hidden');
-        supportModal.classList.remove('flex');
-    }
-
-    $('closeSupportModal')?.addEventListener('click', closeSupportModal);
-
-    supportModal.addEventListener('click', (e) => {
-        if (e.target === supportModal) closeSupportModal();
-    });
-
-    document.addEventListener('keydown', (e) => {
-        if (e.key === "Escape" && !supportModal.classList.contains('hidden')) {
-            closeSupportModal();
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                if (!previewArea) return;
+                previewArea.innerHTML = `
+                    <img src="${ev.target.result}" 
+                         class="max-h-[300px] max-w-full rounded-2xl object-contain shadow-lg" 
+                         alt="Preview">
+                    <p class="text-xs text-emerald-400 mt-2">
+                        ${compressedFile.name} • ${(compressedFile.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                `;
+                previewArea.classList.add('has-content');
+            };
+            reader.readAsDataURL(compressedFile);
+        } catch (err) {
+            console.error(err);
+            showToast('Failed to compress image', 'error');
         }
-    });
-
-    $('support-btn')?.addEventListener('click', openSupportModal);
-
-    // Tier buttons
-    document.querySelectorAll('.support-tier-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.support-tier-btn').forEach(b => 
-                b.classList.remove('bg-emerald-600/20', 'border-emerald-500')
-            );
-            btn.classList.add('bg-emerald-600/20', 'border-emerald-500');
-            $('customSupportAmount').value = btn.dataset.amount;
-        });
-    });
-
-// ==================== PAYSTACK FIAT PAYMENT ====================
-$('paystackPayBtn')?.addEventListener('click', () => {
-    const amountUsd = parseFloat($('customSupportAmount').value) || 15;
-    
-    if (amountUsd < 1) {
-        showToast("Minimum amount is $1", "error");
-        return;
-    }
-/* ==================== OLD PAYSTACK CODE (TEMPORARILY DISABLED) ====================
-$('paystackPayBtn')?.addEventListener('click', () => {
-    const amountUsd = parseFloat($('customSupportAmount').value) || 15;
-    
-    if (amountUsd < 1) {
-        showToast("Minimum amount is $1", "error");
-        return;
-    }
-
-    // Use real user email if available
-    const userEmail = window.currentUser?.email || "supporter@vocalwitness.app";
-
-    const amountInNgnKobo = Math.round(amountUsd * 1650 * 100);
-
-    const handler = PaystackPop.setup({
-        key: "pk_live_5d13a6db326f02375127aae9d0fb03678ed1d923",
-        email: userEmail,
-        amount: amountInNgnKobo,
-        currency: "NGN",
-        ref: 'VW_' + Date.now() + Math.floor(Math.random() * 10000),
-        metadata: { ... },
-        callback: function(response) { ... },
-        onClose: function() { ... }
-    });
-
-    handler.openIframe();
-});
-*/
-// ==================== END OF OLD CODE ====================
-
-
-
-// ==================== NOWPAYMENTS CRYPTO ====================
-$('proceedCryptoBtn')?.addEventListener('click', () => {
-    const amountUsd = parseFloat($('customSupportAmount').value) || 15;
-    
-    if (amountUsd < 1) {
-        showToast("Minimum amount is $1", "error");
-        return;
-    }
-    
-    showToast(`Preparing $${amountUsd} secure crypto invoice...`, "info");
-    
-    setTimeout(() => {
-        window.open(`https://nowpayments.io/payment?price_amount=${amountUsd}&price_currency=usd`, '_blank');
-        closeSupportModal();
-    }, 800);
-});
-
-    // Other functions
-    window.closeProfile = () => $('profileModal')?.classList.add('hidden');
-    window.closeLoginModal = () => $('loginModal')?.classList.add('hidden');
-    window.closeSupportModal = closeSupportModal;
-
-    window.updateHeaderButtons = function(isLoggedIn) {
-        $('signin-btn')?.classList.toggle('hidden', isLoggedIn);
-        $('profile-btn')?.classList.toggle('hidden', !isLoggedIn);
     };
+    input.click();
+});
 
-    // More menu
-    $('more-btn')?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        $('more-menu')?.classList.toggle('hidden');
-    });
+// ==================== VOICE RECORDING ====================
+btnVoice?.addEventListener('click', async () => {
+    if (!isRecording) {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
 
-    document.addEventListener('click', (e) => {
-        if (!$('more-menu')?.contains(e.target) && e.target !== $('more-btn')) {
-            $('more-menu')?.classList.add('hidden');
+            mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+            mediaRecorder.onstop = () => {
+                recordedAudioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                recordedAudioUrl = URL.createObjectURL(recordedAudioBlob);
+                
+                if (previewArea) {
+                    previewArea.innerHTML = `
+                        <div class="flex flex-col items-center">
+                            <p class="text-emerald-400 mb-2">🎤 Voice recorded</p>
+                            <audio controls src="${recordedAudioUrl}" class="w-full max-w-md"></audio>
+                        </div>
+                    `;
+                    previewArea.classList.add('has-content');
+                }
+            };
+
+            mediaRecorder.start();
+            isRecording = true;
+            btnVoice.classList.add('recording-active');
+            btnVoice.textContent = '⏹️ Stop Recording';
+            toggleActive(btnVoice);
+
+        } catch (err) {
+            showToast('Microphone access denied or not available', 'error');
         }
-    });
+    } else {
+        mediaRecorder.stop();
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        isRecording = false;
+        btnVoice.classList.remove('recording-active');
+        btnVoice.textContent = '🎤 Voice Testimony';
+    }
+});
 
-    updateHeaderButtons(false);
-    console.log('%cVocalWitness index.html loaded successfully', 'color:#10b981; font-weight:bold');
-    
-<!-- App Module Entry Point -->
-<script type="module" src="js/main.js"></script>
+// ==================== PUBLISH BUTTON ====================
+postButton?.addEventListener('click', async () => {
+    const text = mainInput?.value.trim();
 
-</body>
-</html>
+    if (!text && !selectedFile && !recordedAudioBlob) {
+        showToast('Please write something or add media', 'error');
+        return;
+    }
+
+    if (!auth.currentUser) {
+        showToast('You must be logged in to publish testimony', 'error');
+        return;
+    }
+
+    // ====================== RATE LIMIT CHECK ======================
+    try {
+        const rateLimitCheck = firebase.functions().httpsCallable('checkRateLimit');
+        const canPost = await rateLimitCheck({
+            userId: auth.currentUser.uid,
+            action: "create_testimony",
+            maxCalls: 6,      // adjust as needed
+            windowMinutes: 60
+        });
+
+        if (!canPost.data) {
+            showToast("You've reached your posting limit for now. Please try again later.", "error");
+            return;
+        }
+    } catch (rateError) {
+        console.warn("Rate limit check failed, allowing post:", rateError);
+        // Fail open - don't block user if rate limiter has issue
+    }
+    // ==============================================================
+
+    postButton.disabled = true;
+    postButton.textContent = 'Publishing...';
+
+    try {
+        let imageUrl = null;
+        let audioUrl = null;
+        let imageHash = null;
+        const userId = auth.currentUser.uid;
+
+        // 1. Upload compressed image if attached
+        if (selectedFile) {
+            const fileRef = ref(storage, `evidence/${userId}/${Date.now()}_${selectedFile.name}`);
+            await uploadBytes(fileRef, selectedFile);
+            imageUrl = await getDownloadURL(fileRef);
+            imageHash = await generateSha256Hash(selectedFile);
+        }
+
+        // 2. Upload voice recording if attached
+        if (recordedAudioBlob) {
+            const audioRef = ref(storage, `evidence/${userId}/${Date.now()}_voice.webm`);
+            await uploadBytes(audioRef, recordedAudioBlob);
+            audioUrl = await getDownloadURL(audioRef);
+        }
+
+        // 3. Fetch user tier metadata
+        const userTier = await getCurrentUserTier();
+        const userWitnessLevel = await getCurrentWitnessLevel();
+
+        // 4. Save to Firestore
+        await addDoc(collection(db, "posts"), {
+            content: text || "",
+            imageUrl: imageUrl,
+            audioUrl: audioUrl,
+            forensicHash: imageHash,
+            authorId: userId,
+            authorTier: userTier,
+            authorWitnessLevel: userWitnessLevel ? userWitnessLevel.name : null,
+            createdAt: serverTimestamp()
+        });
+
+        showToast('✅ Testimony published to the Public Square!', 'success');
+
+        // Reset UI
+        if (mainInput) mainInput.value = '';
+        if (previewArea) {
+            previewArea.innerHTML = 'Preview will appear here...';
+            previewArea.classList.remove('has-content');
+        }
+        
+        btnPhoto?.classList.remove('active');
+        btnVoice?.classList.remove('active', 'recording-active');
+        if (btnVoice) btnVoice.textContent = '🎤 Voice Testimony';
+
+        selectedFile = null;
+        recordedAudioBlob = null;
+        recordedAudioUrl = null;
+        audioChunks = [];
+
+    } catch (err) {
+        console.error("Publish Error:", err);
+        showToast(err.message || 'Failed to publish post. Check connection.', 'error');
+    } finally {
+        postButton.disabled = false;
+        postButton.textContent = 'Publish';
+    }
+});
+
+console.log('%cComposer module loaded successfully', 'color:#10b981; font-weight:bold');
