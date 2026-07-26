@@ -1,13 +1,15 @@
-// sw.js - Stable Service Worker for VocalWitness
-const CACHE_NAME = 'vocalwitness-v10';
+// sw.js - Stable Service Worker for VocalWitness (Hardened)
+const CACHE_NAME = 'vocalwitness-v11';
 const STATIC_ASSETS = [
     '/',
     '/index.html',
+    '/true-witness.html',
+    '/forensic-ledger.html',
+    '/my-testimonies.html',
     '/manifest.json',
     '/logo.png',
     '/style.css',
     '/sw.js'
-    // Add more critical files if needed
 ];
 
 // Install Event
@@ -33,15 +35,16 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// Fetch Event - Cache-first with network fallback
+// Fetch Event - Cache-first with network fallback & multi-page offline routing
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
 
-    // Skip Firebase, Google, external APIs
+    // Skip Firebase, Google, external APIs, and non-GET requests
     if (url.origin.includes('firebase') || 
         url.origin.includes('gstatic.com') || 
         url.origin.includes('googleapis.com') ||
-        url.origin.includes('paystack')) {
+        url.origin.includes('paystack') ||
+        event.request.method !== 'GET') {
         return;
     }
 
@@ -59,11 +62,11 @@ self.addEventListener('fetch', (event) => {
                 return networkResponse;
             });
         }).catch(() => {
-            // Offline fallback for HTML pages
+            // Offline fallback for HTML document requests
             if (event.request.destination === 'document') {
                 return caches.match('/index.html');
             }
-            return new Response('Offline', { status: 503 });
+            return new Response('Offline resource unavailable', { status: 503, statusText: 'Service Unavailable' });
         })
     );
 });
