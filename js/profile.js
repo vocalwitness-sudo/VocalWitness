@@ -75,6 +75,31 @@ function renderProfileUI(userData) {
                     </div>
                 </div>
 
+                <!-- Witness Cycle Control Card -->
+                <div class="bg-zinc-900 rounded-3xl p-6 border border-amber-500/20">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h4 class="font-semibold text-lg text-amber-400 flex items-center gap-2">
+                                <span>🔄</span> Witness Cycle
+                            </h4>
+                            <p class="text-xs text-zinc-400 mt-1">Manage your active attestation status in the public square.</p>
+                        </div>
+                        <span class="px-3 py-1 bg-amber-500/10 text-amber-400 text-xs font-mono rounded-full border border-amber-500/30">
+                            ${userData.activeWitnessCycle ? 'Active' : 'Inactive'}
+                        </span>
+                    </div>
+
+                    <div class="bg-zinc-950 rounded-2xl p-4 mb-4 flex items-center justify-between text-sm">
+                        <span class="text-zinc-400">Current Cycle State</span>
+                        <span class="font-medium text-white">${userData.activeWitnessCycle ? 'Attesting in Square' : 'Not Attesting'}</span>
+                    </div>
+
+                    <button onclick="handleProfileStartCycle()" 
+                            class="w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-black font-semibold rounded-2xl transition flex items-center justify-center gap-2 shadow-lg shadow-amber-500/10">
+                        <span>🔄</span> Start Witness Cycle
+                    </button>
+                </div>
+
                 <!-- Bio -->
                 ${userData.bio ? `
                     <div class="bg-zinc-900/70 border border-zinc-700 rounded-3xl p-6 text-zinc-300">
