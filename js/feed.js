@@ -24,6 +24,26 @@ export function initFeed(dbInstance = db) {
             <div class="animate-pulse text-zinc-400">Loading testimonies from the Square...</div>
         </div>`;
     
+    // ==================== EVENT DELEGATION LISTENER ====================
+    feedContainer.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-action]');
+        if (!btn) return;
+        
+        const action = btn.getAttribute('data-action');
+        const id = btn.getAttribute('data-id');
+
+        if (action === 'like') {
+            showToast("Liked! Thank you for supporting truth.", "success");
+        } else if (action === 'report') {
+            import('./moderation.js').then(m => m.reportContent(id, "other")).catch(() => {
+                showToast("Moderation module loading...", "info");
+            });
+        } else if (action === 'share') {
+            navigator.clipboard.writeText(`${window.location.origin}?post=${id}`);
+            showToast("Link copied to clipboard", "success");
+        }
+    });
+
     const q = query(
         collection(dbInstance, "testimonies"),
         limit(30)
@@ -108,7 +128,7 @@ function renderPost(id, data) {
 
         <div class="flex items-center justify-between mt-6 pt-5 border-t border-zinc-800 text-sm">
             <div class="flex gap-6">
-                <button onclick="likePost('${id}')" class="flex items-center gap-1.5 hover:text-emerald-400 transition text-zinc-400">
+                <button data-action="like" data-id="${id}" class="flex items-center gap-1.5 hover:text-emerald-400 transition text-zinc-400">
                     👍 <span>${data.likes || 0}</span>
                 </button>
                 <button onclick="commentOnPost('${id}')" class="flex items-center gap-1.5 hover:text-sky-400 transition text-zinc-400">
@@ -116,8 +136,8 @@ function renderPost(id, data) {
                 </button>
             </div>
             <div class="flex gap-4">
-                <button onclick="reportPost('${id}')" class="text-red-400 hover:text-red-500 transition text-xs">Report</button>
-                <button onclick="sharePost('${id}')" class="text-emerald-400 hover:text-emerald-500 transition text-xs">Share</button>
+                <button data-action="report" data-id="${id}" class="text-red-400 hover:text-red-500 transition text-xs">Report</button>
+                <button data-action="share" data-id="${id}" class="text-emerald-400 hover:text-emerald-500 transition text-xs">Share</button>
             </div>
         </div>
     `;
@@ -126,17 +146,7 @@ function renderPost(id, data) {
     if (container) container.appendChild(postEl);
 }
 
-window.reportPost = (postId) => {
-    import('./moderation.js').then(m => m.reportContent(postId, "other")).catch(() => {
-        showToast("Moderation module loading...", "info");
-    });
-};
-window.likePost = (id) => showToast("Liked! Thank you for supporting truth.", "success");
 window.commentOnPost = (id) => showToast("Comments coming soon – stay tuned", "info");
-window.sharePost = (id) => {
-    navigator.clipboard.writeText(`${window.location.origin}?post=${id}`);
-    showToast("Link copied to clipboard", "success");
-};
 window.showPostMenu = (postId, authorId) => showToast("Post options coming soon", "info");
 
 if (document.readyState === 'loading') {
