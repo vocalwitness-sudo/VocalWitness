@@ -290,6 +290,11 @@ window.openSettings = () => {
 window.closeSettings = () => {
     document.getElementById('settingsModal')?.classList.add('hidden');
 };
+
+function handleProfileStartCycle() {
+    console.log("Profile start cycle initiated.");
+    // Add your cycle logic here
+}
 window.handleProfileStartCycle = handleProfileStartCycle;
 
 function loadSettingsContent() {
@@ -311,6 +316,8 @@ function loadCurrentUserSettings() {
 document.addEventListener('keydown', (e) => {
     if (e.key === "p" && e.ctrlKey) {
         e.preventDefault();
-        window.showProfile();
+        if (typeof window.showProfile === 'function') {
+            window.showProfile();
+        }
     }
 });
