@@ -33,7 +33,7 @@
     <link rel="stylesheet" href="style.css">
     <link rel="icon" href="/logo.png" type="image/png">
 </head>
-<body class="min-h-screen pb-24 bg-[#0a0f1c]">
+<body class="min-h-screen pb-24 bg-[#0a0f1c] text-white">
 
 <!-- Header -->
 <header class="flex items-center justify-between mb-8 sticky top-0 z-50 glass rounded-3xl p-4">
@@ -179,13 +179,12 @@
             <button onclick="logout()" class="flex-1 py-3 border border-red-500 text-red-400 hover:bg-red-500/10 rounded-2xl font-medium">
                 Sign Out
             </button>
-            <!-- Inside your profileModal layout -->
             <div id="resource-meter-container" class="mt-6"></div>
         </div>
     </div>
 </div>
 
-<!-- Support Modal - Improved Framing & Transparency -->
+<!-- Support Modal -->
 <div id="supportModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[10000] flex items-center justify-center p-4 hidden">
     <div class="glass max-w-md w-full rounded-3xl p-6 border border-emerald-500/30 text-white relative modal max-h-[90vh] overflow-y-auto">
         <button id="closeSupportModal" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl">✕</button>
@@ -328,47 +327,47 @@
         });
     });
 
-// ==================== PAYSTACK INLINE POPUP PAYMENT ====================
-$('paystackPayBtn')?.addEventListener('click', () => {
-    const amountUsd = parseFloat($('customSupportAmount').value) || 15;
-    if (amountUsd < 1 || amountUsd > 10000) {
-        showToast("Please enter a valid amount between $1 and $10,000", "error");
-        return;
-    } // 👈 Added this missing closing brace
-
-    const userEmail = (window.auth && window.auth.currentUser && window.auth.currentUser.email) 
-        ? window.auth.currentUser.email 
-        : "supporter@vocalwitness.app";
-
-    // Convert USD to NGN Kobo (approximate multiplier used in your app)
-    const amountInNgnKobo = Math.round(amountUsd * 1650 * 100);
-
-    const handler = PaystackPop.setup({
-        key: 'pk_live_5d13a6db326f02375127aae9d0fb03678ed1d923',
-        email: userEmail,
-        amount: amountInNgnKobo,
-        currency: "NGN",
-        ref: 'VW_' + Date.now() + Math.floor(Math.random() * 10000),
-        metadata: {
-            custom_fields: [
-                {
-                    display_name: "Source",
-                    variable_name: "source",
-                    value: "VocalWitness Support Modal"
-                }
-            ]
-        },
-        callback: function(response) {
-            showToast('✅ Thank you! Payment successful. Ref: ' + response.reference, 'success');
-            closeSupportModal();
-        },
-        onClose: function() {
-            showToast('Payment window closed.', 'info');
+    // ==================== PAYSTACK INLINE POPUP PAYMENT ====================
+    $('paystackPayBtn')?.addEventListener('click', () => {
+        const amountUsd = parseFloat($('customSupportAmount').value) || 15;
+        if (amountUsd < 1 || amountUsd > 10000) {
+            showToast("Please enter a valid amount between $1 and $10,000", "error");
+            return;
         }
+
+        const userEmail = (window.auth && window.auth.currentUser && window.auth.currentUser.email) 
+            ? window.auth.currentUser.email 
+            : "supporter@vocalwitness.app";
+
+        const amountInNgnKobo = Math.round(amountUsd * 1650 * 100);
+
+        const handler = PaystackPop.setup({
+            key: 'pk_live_5d13a6db326f02375127aae9d0fb03678ed1d923',
+            email: userEmail,
+            amount: amountInNgnKobo,
+            currency: "NGN",
+            ref: 'VW_' + Date.now() + Math.floor(Math.random() * 10000),
+            metadata: {
+                custom_fields: [
+                    {
+                        display_name: "Source",
+                        variable_name: "source",
+                        value: "VocalWitness Support Modal"
+                    }
+                ]
+            },
+            callback: function(response) {
+                showToast('✅ Thank you! Payment successful. Ref: ' + response.reference, 'success');
+                closeSupportModal();
+            },
+            onClose: function() {
+                showToast('Payment window closed.', 'info');
+            }
+        });
+
+        handler.openIframe();
     });
 
-    handler.openIframe();
-});
     // ==================== NOWPAYMENTS CRYPTO ====================
     $('proceedCryptoBtn')?.addEventListener('click', () => {
         const amountUsd = parseFloat($('customSupportAmount').value) || 15;
