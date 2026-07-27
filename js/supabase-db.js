@@ -3,17 +3,19 @@ import { supabase } from './supabase-config.js';
 
 /**
  * Creates a new testimony record in the database.
- * @param {Object} testimonyData - Object containing user_id, content, media_url
+ * @param {string} userId - The user's ID
+ * @param {string} content - The testimony text content
+ * @param {string} mediaUrl - Optional media URL
  */
-export async function createTestimony(testimonyData) {
+export async function createTestimony(userId, content, mediaUrl = null) {
   try {
     const { data, error } = await supabase
       .from('testimonies')
       .insert([
         {
-          user_id: testimonyData.user_id,
-          content: testimonyData.content,
-          media_url: testimonyData.media_url || null
+          user_id: userId,
+          content: content,
+          media_url: mediaUrl
         }
       ]);
 
