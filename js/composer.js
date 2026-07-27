@@ -6,19 +6,6 @@ import { db, auth, storage } from './firebase-config.js';
 import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
-import { createTestimony } from './supabase-db.js';
-
-export async function handlePostSubmit(userId, contentText) {
-    if (!contentText.trim()) return;
-
-    const result = await createTestimony(userId, contentText);
-    if (result) {
-        alert('Testimony published successfully to Supabase!');
-        // Refresh your feed or clear input here
-    } else {
-        alert('Failed to publish testimony. Please try again.');
-    }
-}
 
 let mediaRecorder;
 let audioChunks = [];
@@ -180,7 +167,7 @@ postButton?.addEventListener('click', async () => {
         const userTier = await getCurrentUserTier();
         const userWitnessLevel = await getCurrentWitnessLevel();
 
-        // 4. Save to Firestore and Supabase dual-sync or migrate
+        // 4. Save to Firestore (Pure Firebase)
         await addDoc(collection(db, "testimonies"), {
             content: text || "",
             imageUrl: imageUrl,
@@ -191,9 +178,6 @@ postButton?.addEventListener('click', async () => {
             authorWitnessLevel: userWitnessLevel ? userWitnessLevel.name : null,
             createdAt: serverTimestamp()
         });
-
-        // Also save through Supabase integration function
-        await createTestimony(userId, text || "", imageUrl || audioUrl);
 
         showToast('✅ Testimony published to the Public Square!', 'success');
 
