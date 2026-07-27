@@ -37,25 +37,16 @@
     </div>
 
     <!-- Include the same Edit & Settings Modals here (copy from previous response) -->
-    <!-- ... paste the two modals: editProfileModal and settingsModal ... -->
+   <!-- Scripts -->
+    <script type="module">
+        import { initProfile } from './js/profile.js';
 
-    <!-- Scripts -->
-    <script type="module" src="js/main.js"></script>
-    <script type="module" src="js/profile.js"></script>
-
-    <script>
         // Auto load profile when page opens
         document.addEventListener('DOMContentLoaded', () => {
-            if (typeof initProfile === 'function') {
-                initProfile();
-            }
-            // Show the profile immediately
-            setTimeout(() => {
-                if (typeof renderProfileUI === 'function' && window.currentUserData) {
-                    renderProfileUI(window.currentUserData);
-                }
-            }, 800);
+            initProfile();
         });
     </script>
+    <script type="module" src="js/main.js"></script>
+
 </body>
 </html>
