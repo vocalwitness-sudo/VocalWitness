@@ -4,33 +4,6 @@ import { db, app } from './firebase-config.js';
 import { showToast } from './utils.js';
 import { renderTierCircle } from './ui-components.js';
 import { getAuth } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import { fetchTestimonies } from './supabase-db.js';
-
-// Load testimonies when the feed page loads using Supabase
-export async function loadFeed() {
-    const feedContainer = document.getElementById('feed-container'); 
-    if (!feedContainer) return;
-
-    feedContainer.innerHTML = '<p>Loading live testimonies...</p>';
-    
-    const testimonies = await fetchTestimonies();
-    
-    if (testimonies.length === 0) {
-        feedContainer.innerHTML = '<p>No testimonies found yet. Be the first to share!</p>';
-        return;
-    }
-
-    feedContainer.innerHTML = ''; 
-    testimonies.forEach(item => {
-        const postElement = document.createElement('div');
-        postElement.className = 'testimony-card glass rounded-3xl p-6 mb-6 border border-zinc-800 bg-zinc-900/50';
-        postElement.innerHTML = `
-            <p class="text-zinc-100 leading-relaxed">${item.content}</p>
-            <small class="text-zinc-500 mt-3 block">Posted on: ${new Date(item.created_at).toLocaleString()}</small>
-        `;
-        feedContainer.appendChild(postElement);
-    });
-}
 
 let activeFeedListener = null;
 
