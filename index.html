@@ -92,9 +92,10 @@
             Support The Square
         </button>
 
-        <button id="signin-btn" class="px-5 py-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm">
+        <button id="guest-action-btn" 
+                class="px-5 py-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm">
             <img src="https://www.google.com/favicon.ico" class="w-4 h-4" alt="Google">
-            <span class="hidden sm:inline">Sign in</span>
+            <span class="hidden sm:inline" id="guest-btn-text">Join VocalWitness</span>
         </button>
 
         <button id="profile-btn" class="px-5 py-2.5 border border-zinc-700 hover:bg-zinc-800 rounded-2xl transition flex items-center gap-2 hidden"
@@ -103,7 +104,6 @@
         </button>
     </div>
 </header>
-
 <!-- Main Navigation -->
 <nav class="flex gap-2 mb-8 overflow-x-auto pb-3 relative z-40" id="main-nav">
     <button data-tab="square" class="nav-tab active px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative">
@@ -295,6 +295,25 @@
             Continue with Google
         </button>
         <button onclick="closeLoginModal()" class="w-full mt-3 py-3 text-zinc-400 hover:text-white">
+            Cancel
+        </button>
+    </div>
+</div>
+
+    <!-- Create Account Modal -->
+<div id="createAccountModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[10000] p-4">
+    <div class="glass rounded-3xl p-8 max-w-md w-full">
+        <h2 class="text-2xl font-bold mb-2">Join the Public Square</h2>
+        <p class="text-zinc-400 mb-6">Create your account to share testimonies and evidence.</p>
+        
+        <button onclick="googleLogin()" 
+                class="w-full py-4 bg-white text-black rounded-2xl font-medium flex items-center justify-center gap-3 mb-4">
+            <img src="https://www.google.com/favicon.ico" class="w-5 h-5" alt="Google">
+            Continue with Google
+        </button>
+        
+        <button onclick="closeCreateAccountModal()" 
+                class="w-full py-3 text-zinc-400 hover:text-white">
             Cancel
         </button>
     </div>
