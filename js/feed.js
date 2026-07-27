@@ -4,6 +4,33 @@ import { db, app } from './firebase-config.js';
 import { showToast } from './utils.js';
 import { renderTierCircle } from './ui-components.js';
 import { getAuth } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { fetchTestimonies } from './supabase-db.js';
+
+// Load testimonies when the feed page loads
+export async function loadFeed() {
+    const feedContainer = document.getElementById('feed-container'); // Change to your actual container ID
+    if (!feedContainer) return;
+
+    feedContainer.innerHTML = '<p>Loading live testimonies...</p>';
+    
+    const testimonies = await fetchTestimonies();
+    
+    if (testimonies.length === 0) {
+        feedContainer.innerHTML = '<p>No testimonies found yet. Be the first to share!</p>';
+        return;
+    }
+
+    feedContainer.innerHTML = ''; // Clear loading text
+    testimonies.forEach(item => {
+        const postElement = document.createElement('div');
+        postElement.className = 'testimony-card';
+        postElement.innerHTML = `
+            <p>${item.content}</p>
+            <small>Posted on: ${new Date(item.created_at).toLocaleString()}</small>
+        `;
+        feedContainer.appendChild(postElement);
+    });
+}
 
 let activeFeedListener = null;
 
