@@ -188,7 +188,7 @@
         <span class="relative z-10 flex items-center justify-center gap-3">
             🚀 Publish to the Square
         </span>
-        <span class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent 
+        <span class="absolute inset-0 bg-gradient-to-r from-transparent via-white/35 to-transparent 
                      -skew-x-12 -translate-x-full group-active:translate-x-full transition-transform duration-700"></span>
     </button>
 </div>
@@ -206,12 +206,12 @@
             <button onclick="closeProfile()" class="text-3xl text-zinc-400 hover:text-white">×</button>
         </div>
         <div id="profileContent"></div>
-        <div class="mt-8 flex gap-3">
+        <div class="mt-8 flex gap-3 items-center">
             <button onclick="logout()" class="flex-1 py-3 border border-red-500 text-red-400 hover:bg-red-500/10 rounded-2xl font-medium">
                 Sign Out
             </button>
-            <div id="resource-meter-container" class="mt-6"></div>
         </div>
+        <div id="resource-meter-container" class="mt-6"></div>
     </div>
 </div>
 
@@ -443,23 +443,23 @@
 </script>
 
 <!-- Place the Interceptor script right here -->
-    <script>
-        // Intercept and prevent Paystack's legacy button.min.css request completely
-        const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                mutation.addedNodes.forEach((node) => {
-                    if (node.tagName === 'LINK' && node.href && node.href.includes('button.min.css')) {
-                        node.remove();
-                    }
-                });
+<script>
+    // Intercept and prevent Paystack's legacy button.min.css request completely
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            mutation.addedNodes.forEach((node) => {
+                if (node.tagName === 'LINK' && node.href && node.href.includes('button.min.css')) {
+                    node.remove();
+                }
             });
         });
-        observer.observe(document.head, { childList: true });
-    </script>
-    
-    <script src="https://js.paystack.co/v1/inline.js"></script>
-    <script type="module" src="js/main.js"></script>
-    <script>
+    });
+    observer.observe(document.head, { childList: true });
+</script>
+
+<script src="https://js.paystack.co/v1/inline.js"></script>
+<script type="module" src="js/main.js"></script>
+<script>
     // Global toggle definition for the profile modal
     window.showProfile = function() {
         const modal = document.getElementById('profileModal');
@@ -490,9 +490,5 @@
         }
     });
 </script>
-
-</body>
-</html>
-
 </body>
 </html>
