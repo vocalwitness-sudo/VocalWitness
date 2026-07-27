@@ -180,7 +180,7 @@ postButton?.addEventListener('click', async () => {
         const userTier = await getCurrentUserTier();
         const userWitnessLevel = await getCurrentWitnessLevel();
 
-        // 4. Save to Firestore
+        // 4. Save to Firestore and Supabase dual-sync or migrate
         await addDoc(collection(db, "testimonies"), {
             content: text || "",
             imageUrl: imageUrl,
@@ -191,6 +191,9 @@ postButton?.addEventListener('click', async () => {
             authorWitnessLevel: userWitnessLevel ? userWitnessLevel.name : null,
             createdAt: serverTimestamp()
         });
+
+        // Also save through Supabase integration function
+        await createTestimony(userId, text || "", imageUrl || audioUrl);
 
         showToast('✅ Testimony published to the Public Square!', 'success');
 
