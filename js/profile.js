@@ -194,10 +194,13 @@ window.downloadMyDataPDF = async () => {
     }
 };
 
-// ====================== EDIT PROFILE FUNCTIONS (Unchanged) ======================
+// ====================== EDIT PROFILE & MODAL HELPERS ======================
 window.openEditProfile = () => {
     const modal = document.getElementById('editProfileModal');
-    if (!modal) return showToast("Edit modal not found", "error");
+    if (!modal) {
+        showToast("Edit modal not found. Please refresh.", "error");
+        return;
+    }
     
     if (currentUserData) {
         document.getElementById('editDisplayName').value = currentUserData.displayName || '';
@@ -213,7 +216,12 @@ window.openEditProfile = () => {
 };
 
 window.closeEditProfile = () => {
-    document.getElementById('editProfileModal').classList.add('hidden');
+    document.getElementById('editProfileModal')?.classList.add('hidden');
+};
+
+window.closeProfile = function() {
+    const modal = document.getElementById('profileModal');
+    if (modal) modal.classList.add('hidden');
 };
 
 window.handleProfileImageUpload = async (e) => {
@@ -225,7 +233,7 @@ window.handleProfileImageUpload = async (e) => {
     }
    
     currentProfileImageFile = file;
-    showToast("Image selected. It will upload when you save.", "info");
+    showToast("Image selected. Save to upload.", "info");
    
     const preview = document.getElementById('profileImagePreview');
     if (preview) {
@@ -238,35 +246,31 @@ window.handleProfileImageUpload = async (e) => {
 };
 
 window.saveProfileChanges = async () => {
-    if (!auth.currentUser) {
-        return showToast("You must be logged in", "error");
-    }
+    if (!auth.currentUser) return showToast("You must be logged in", "error");
+
     const displayName = document.getElementById('editDisplayName').value.trim();
     const username = document.getElementById('editUsername').value.trim();
     const bio = document.getElementById('editBio').value.trim();
-    if (!displayName) {
-        return showToast("Display name is required", "error");
-    }
+
+    if (!displayName) return showToast("Display name is required", "error");
+
     try {
         showToast("Saving changes...", "info");
-       
+        
         const userRef = doc(db, "users", auth.currentUser.uid);
-       
-        const updateData = {
+        await updateDoc(userRef, {
             displayName,
             username: username || null,
             bio: bio || null,
             updatedAt: serverTimestamp()
-        };
-        await updateDoc(userRef, updateData);
-       
+        });
+
         showToast("✅ Profile updated successfully!", "success");
         closeEditProfile();
         refreshTierAndUI?.();
-       
     } catch (error) {
-        console.error("Save profile error:", error);
-        showToast("Failed to save profile. Try again.", "error");
+        console.error(error);
+        showToast("Failed to save profile", "error");
     }
 };
 
