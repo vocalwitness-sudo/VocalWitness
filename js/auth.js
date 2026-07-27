@@ -111,16 +111,25 @@ export function requireAuth(message = "Please sign in to participate in the Publ
 // ====================== UI SYNC FOR HYBRID READ/WRITE MODEL ======================
 export function updateUIForAuthState() {
     const isLoggedIn = !!auth.currentUser;
+    const guestBtn = document.getElementById('guest-action-btn');
+    const profileBtn = document.getElementById('profile-btn');
 
-    // Update header buttons
+    if (guestBtn) {
+        guestBtn.classList.toggle('hidden', isLoggedIn);
+        const guestBtnText = document.getElementById('guest-btn-text');
+        if (guestBtnText) guestBtnText.textContent = isLoggedIn ? '' : 'Join VocalWitness';
+    }
+    if (profileBtn) profileBtn.classList.toggle('hidden', !isLoggedIn);
+
+    // Disable composer for guests
+    document.querySelectorAll('#postButton, #btn-photo, #btn-voice').forEach(btn => {
+        if (btn) btn.style.opacity = isLoggedIn ? '1' : '0.6';
+    });
+
+    // Update header buttons if helper exists
     if (typeof window.updateHeaderButtons === 'function') {
         window.updateHeaderButtons(isLoggedIn);
     }
-
-    // Optional: Visual feedback on action buttons
-    document.querySelectorAll('#postButton, #btn-photo, #btn-voice').forEach(btn => {
-        btn.style.opacity = isLoggedIn ? '1' : '0.75';
-    });
 }
 
 // ====================== INIT AUTH ======================
@@ -176,3 +185,19 @@ window.googleLogin = googleLogin;
 window.logout = logout;
 window.requireAuth = requireAuth;
 window.updateUIForAuthState = updateUIForAuthState;
+
+// New: Show appropriate modal based on state
+window.showAuthModal = function() {
+    if (auth.currentUser) {
+        window.showProfile();
+    } else {
+        const createModal = document.getElementById('createAccountModal');
+        if (createModal) createModal.classList.remove('hidden');
+        else document.getElementById('loginModal')?.classList.remove('hidden');
+    }
+};
+
+// Close create modal
+window.closeCreateAccountModal = function() {
+    document.getElementById('createAccountModal')?.classList.add('hidden');
+};
