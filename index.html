@@ -26,10 +26,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-    
-    <!-- Paystack Script - Must be loaded before your custom script -->
-    <script src="https://js.paystack.co/v1/inline.js"></script>
-
+  
     <link rel="stylesheet" href="style.css">
     <link rel="icon" href="/logo.png" type="image/png">
 </head>
@@ -411,8 +408,26 @@
     console.log('%cVocalWitness index.html loaded successfully', 'color:#10b981; font-weight:bold');
 </script>
 
-<!-- App Module Entry Point -->
-<script type="module" src="js/main.js"></script>
+<!-- Place the Interceptor script right here -->
+    <script>
+        // Intercept and prevent Paystack's legacy button.min.css request completely
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.tagName === 'LINK' && node.href && node.href.includes('button.min.css')) {
+                        node.remove();
+                    }
+                });
+            });
+        });
+        observer.observe(document.head, { childList: true });
+    </script>
+    <script src="https://js.paystack.co/v1/inline.js"></script>
+
+    <script type="module" src="js/main.js"></script>
+
+</body>
+</html>
 
 </body>
 </html>
