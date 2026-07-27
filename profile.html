@@ -6,12 +6,11 @@
     <title>My Profile | VocalWitness</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 </head>
 <body class="min-h-screen bg-[#0a0f1c] text-zinc-200">
 
-    <!-- Simple Header -->
-    <header class="glass sticky top-0 z-50 p-4">
+    <!-- Header -->
+    <header class="glass sticky top-0 z-50 p-4 border-b border-zinc-700">
         <div class="max-w-4xl mx-auto flex items-center justify-between">
             <a href="index.html" class="flex items-center gap-3">
                 <div class="w-9 h-9 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-2xl">🔊</div>
@@ -22,31 +21,30 @@
     </header>
 
     <div class="max-w-4xl mx-auto p-6">
-        <div class="glass rounded-3xl overflow-hidden">
-            <!-- Header -->
-            <div class="p-8 border-b border-zinc-700">
-                <h1 class="text-3xl font-bold">My Profile</h1>
-            </div>
-
-            <!-- Content -->
-            <div id="profileContent" class="p-8 min-h-[500px]">
-                <!-- JS will fill this -->
+        <div id="profileContainer" class="glass rounded-3xl overflow-hidden min-h-[600px] flex flex-col">
+            <!-- Dynamic Content -->
+            <div id="profileContent" class="flex-1 p-8 overflow-y-auto custom-scroll">
                 <div class="text-center py-20 text-zinc-400">Loading your profile...</div>
             </div>
         </div>
     </div>
 
-    <!-- Include the same Edit & Settings Modals here (copy from previous response) -->
-   <!-- Scripts -->
+    <!-- Edit Profile Modal (copy from earlier) -->
+    <!-- Paste the Edit Profile Modal HTML here -->
+
     <script type="module">
         import { initProfile } from './js/profile.js';
+        import { showToast } from './js/utils.js';   // if needed
 
-        // Auto load profile when page opens
         document.addEventListener('DOMContentLoaded', () => {
             initProfile();
         });
-    </script>
-    <script type="module" src="js/main.js"></script>
 
+        // Global helpers for this page
+        window.closeProfile = () => window.history.back(); // or close modal
+        window.showToast = showToast || function(msg) { alert(msg); };
+    </script>
+
+    <script src="js/main.js"></script>   <!-- This brings in many helpers -->
 </body>
 </html>
