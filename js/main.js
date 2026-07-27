@@ -257,20 +257,26 @@ function setupEventListeners() {
         });
     });
 
-    // Profile, Support, Signin buttons
+    // === AUTH BUTTONS (Updated for Guest → Join flow) ===
+    const guestActionBtn = document.getElementById('guest-action-btn');
+    if (guestActionBtn) {
+        guestActionBtn.addEventListener('click', () => {
+            window.showAuthModal();   // New function from auth.js
+        });
+    }
+
     document.getElementById('profile-btn')?.addEventListener('click', window.showProfile);
+
     document.getElementById('support-btn')?.addEventListener('click', () => {
         document.getElementById('supportModal')?.classList.remove('hidden');
     });
-    document.getElementById('signin-btn')?.addEventListener('click', () => {
-        document.getElementById('loginModal')?.classList.remove('hidden');
-    });
 
-    // Photo & Voice buttons (with safety)
+    // Photo & Voice buttons (protected)
     const photoBtn = document.getElementById('btn-photo');
     if (photoBtn) {
         const newBtn = photoBtn.cloneNode(true);
         photoBtn.parentNode.replaceChild(newBtn, photoBtn);
+        
         newBtn.addEventListener('click', () => {
             if (!requireAuth("Sign in to upload Forensic Photo")) return;
             const input = document.createElement('input');
@@ -287,7 +293,7 @@ function setupEventListeners() {
         mediaModule.toggleVoiceRecording?.(voiceBtn);
     });
 
-    // Publish button
+    // Publish button (protected)
     const postButton = document.getElementById('postButton');
     if (postButton) {
         postButton.addEventListener('click', window.publishTestimony);
@@ -295,7 +301,6 @@ function setupEventListeners() {
 
     console.log("✅ All major buttons wired successfully");
 }
-
 // ====================== BOOTSTRAP ======================
 async function bootstrap() {
     if (isInitialized) return;
@@ -304,6 +309,7 @@ async function bootstrap() {
 
     try {
         await initAuth();
+        updateUIForAuthState();
         setupEventListeners();
         
         initLanguage?.();
@@ -322,6 +328,7 @@ async function bootstrap() {
     } catch (e) {
         console.error("Bootstrap error:", e);
         showToast("Failed to initialize app. Please refresh.", "error");
+       
     }
 }
 
