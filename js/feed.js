@@ -6,9 +6,9 @@ import { renderTierCircle } from './ui-components.js';
 import { getAuth } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { fetchTestimonies } from './supabase-db.js';
 
-// Load testimonies when the feed page loads
+// Load testimonies when the feed page loads using Supabase
 export async function loadFeed() {
-    const feedContainer = document.getElementById('feed-container'); // Change to your actual container ID
+    const feedContainer = document.getElementById('feed-container'); 
     if (!feedContainer) return;
 
     feedContainer.innerHTML = '<p>Loading live testimonies...</p>';
@@ -20,13 +20,13 @@ export async function loadFeed() {
         return;
     }
 
-    feedContainer.innerHTML = ''; // Clear loading text
+    feedContainer.innerHTML = ''; 
     testimonies.forEach(item => {
         const postElement = document.createElement('div');
-        postElement.className = 'testimony-card';
+        postElement.className = 'testimony-card glass rounded-3xl p-6 mb-6 border border-zinc-800 bg-zinc-900/50';
         postElement.innerHTML = `
-            <p>${item.content}</p>
-            <small>Posted on: ${new Date(item.created_at).toLocaleString()}</small>
+            <p class="text-zinc-100 leading-relaxed">${item.content}</p>
+            <small class="text-zinc-500 mt-3 block">Posted on: ${new Date(item.created_at).toLocaleString()}</small>
         `;
         feedContainer.appendChild(postElement);
     });
@@ -111,7 +111,7 @@ function renderPost(id, data) {
     if (data.moderationStatus === "removed") return;
 
     const postEl = document.createElement('div');
-    postEl.className = 'glass rounded-3xl p-6 mb-6 hover:border-emerald-500/30 transition-all duration-300 border border-zinc-800 bg-zinc-900/50';
+    postEl.className = 'glass rounded-3xl p-6 mb-6 hover:border-emerald-500/35 transition-all duration-300 border border-zinc-800 bg-zinc-900/50';
 
     const mediaHTML = data.imageUrl ? 
         `<img src="${data.imageUrl}" class="mt-5 rounded-2xl w-full max-h-96 object-cover border border-zinc-700" alt="Evidence">` : '';
