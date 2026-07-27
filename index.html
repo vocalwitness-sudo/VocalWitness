@@ -422,9 +422,40 @@
         });
         observer.observe(document.head, { childList: true });
     </script>
+    
     <script src="https://js.paystack.co/v1/inline.js"></script>
-
     <script type="module" src="js/main.js"></script>
+    <script>
+    // Global toggle definition for the profile modal
+    window.showProfile = function() {
+        const modal = document.getElementById('profileModal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            if (typeof refreshTierAndUI === 'function') {
+                refreshTierAndUI();
+            }
+        } else {
+            console.error("profileModal element not found in DOM");
+        }
+    };
+
+    window.closeProfile = function() {
+        const modal = document.getElementById('profileModal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    };
+
+    // Wire up the profile button listener directly on load
+    document.addEventListener('DOMContentLoaded', () => {
+        const profileBtn = document.getElementById('profile-btn');
+        if (profileBtn) {
+            profileBtn.addEventListener('click', () => {
+                window.showProfile();
+            });
+        }
+    });
+</script>
 
 </body>
 </html>
