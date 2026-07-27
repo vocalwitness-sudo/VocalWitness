@@ -290,6 +290,7 @@ window.openSettings = () => {
 window.closeSettings = () => {
     document.getElementById('settingsModal')?.classList.add('hidden');
 };
+window.handleProfileStartCycle = handleProfileStartCycle;
 
 function loadSettingsContent() {
     // ... (your full original settings HTML remains unchanged)
@@ -305,8 +306,6 @@ function loadCurrentUserSettings() {
     if (publicToggle) publicToggle.checked = currentUserData.isPublic !== false;
     if (notifyToggle) notifyToggle.checked = currentUserData.notifyReplies !== false;
 }
-
-// All your toggle functions, deleteAccountConfirm, viewLoginHistory, toggle2FA remain unchanged...
 
 // Keyboard shortcut
 document.addEventListener('keydown', (e) => {
