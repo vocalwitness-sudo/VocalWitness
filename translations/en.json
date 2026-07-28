@@ -50,6 +50,11 @@
   "login": "Sign In",
   "signup": "Create Account",
   "logout": "Sign Out",
+  "privacyLink": "🔒 Privacy First",
+  "supportBtn": "Support The Square",
+  "joinBtn": "Join VocalWitness",
+  "profileBtn": "👤 Profile",
+  "toggleTheme": "Toggle theme",
   "supportModal": {
     "title": "Sustain the Public Square",
     "description": "Contribute directly to VocalWitness's truth ledger. Your support helps keep our infrastructure alive.",
@@ -66,9 +71,7 @@
   "verifiedBy": "Verified by",
   "trustScore": "Trust Score",
   "forensicProof": "Forensic Proof",
-  "viewFullTestimony": "View Full Testimony"
-}
-{
+  "viewFullTestimony": "View Full Testimony",
   "myProfileTitle": "My Profile | VocalWitness",
   "myProfile": "My Profile",
   "backToSquare": "← Back to Square",
