@@ -376,6 +376,27 @@
         $('profile-btn')?.classList.toggle('hidden', !isLoggedIn);
     };
 
+    window.toggleDataSaver = function() {
+    const isDataSaverActive = localStorage.getItem('vocal_data_saver') === 'true';
+    const newState = !isDataSaverActive;
+    localStorage.setItem('vocal_data_saver', newState);
+    
+    const statusEl = document.getElementById('data-saver-status');
+    if (statusEl) {
+        statusEl.textContent = newState ? 'On' : 'Off';
+    }
+    showToast(newState ? "Data Saver Enabled (Media restricted)" : "Data Saver Disabled", "info");
+};
+
+// Initialize state on load
+document.addEventListener('DOMContentLoaded', () => {
+    const isDataSaverActive = localStorage.getItem('vocal_data_saver') === 'true';
+    const statusEl = document.getElementById('data-saver-status');
+    if (statusEl) {
+        statusEl.textContent = isDataSaverActive ? 'On' : 'Off';
+    }
+});
+
     // More menu
     $('more-btn')?.addEventListener('click', (e) => {
         e.stopPropagation();
