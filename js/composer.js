@@ -122,7 +122,7 @@ postButton?.addEventListener('click', async () => {
 
     // Rate Limit Check with Modular Firebase Functions
     try {
-        const functions = getFunctions();
+        const functions = getFunctions(undefined, 'us-central1');
         const checkRateLimitFn = httpsCallable(functions, 'checkRateLimit');
         const rateLimitCheck = await checkRateLimitFn({
             userId: auth.currentUser.uid,
