@@ -50,6 +50,11 @@
   "login": "Wọlé",
   "signup": "Forúkọ Sílẹ̀",
   "logout": "Jáde",
+  "privacyLink": "🔒 Aṣírí",
+  "supportBtn": "Tẹ̀lé Pẹpẹ",
+  "joinBtn": "Darapọ̀ mọ́ VocalWitness",
+  "profileBtn": "👤 Profaili",
+  "toggleTheme": "Yi àwọ̀ ojú-iwe pada",
   "supportModal": {
     "title": "Tẹ̀lé Pẹpẹ",
     "description": "Fi owó ránṣẹ́ tààrà sí iwe òtítọ́ VocalWitness. Ìrànlọ́wọ́ rẹ ń ṣe ìtọ́jú ètò abẹ́ ilẹ̀ wa.",
@@ -66,12 +71,10 @@
   "verifiedBy": "Tìjẹ́rì pẹ̀lú",
   "trustScore": "Dígí Ìgbẹ́kẹ̀lé",
   "forensicProof": "Ẹ̀rí Forensiki",
-  "viewFullTestimony": "Wo Ẹ̀rí Kikun"
-}
-{
-  "myProfileTitle": "My Profile | VocalWitness",
-  "myProfile": "My Profile",
-  "backToSquare": "← Back to Square",
-  "loadingProfile": "Loading your profile...",
-  "settings": "Settings"
+  "viewFullTestimony": "Wo Ẹ̀rí Kikun",
+  "myProfileTitle": "Profaili Mi | VocalWitness",
+  "myProfile": "Profaili Mi",
+  "backToSquare": "← Padà sí Pápá",
+  "loadingProfile": "Ń gbe profaili rẹ...",
+  "settings": "Àwọn Ètò"
 }
