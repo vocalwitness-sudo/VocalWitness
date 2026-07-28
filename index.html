@@ -464,20 +464,6 @@
     console.log('%cVocalWitness index.html loaded successfully', 'color:#10b981; font-weight:bold');
 </script>
 
-<!-- Place the Interceptor script right here -->
-<script>
-    // Intercept and prevent Paystack's legacy button.min.css request completely
-    const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-            mutation.addedNodes.forEach((node) => {
-                if (node.tagName === 'LINK' && node.href && node.href.includes('button.min.css')) {
-                    node.remove();
-                }
-            });
-        });
-    });
-    observer.observe(document.head, { childList: true });
-</script>
 <script src="https://js.paystack.co/v1/inline.js" crossorigin="anonymous"></script>
 <script type="module" src="js/main.js"></script>
 <script>
