@@ -114,3 +114,6 @@ export function hasProposalPassed(proposal) {
     if (total === 0) return false;
     return (proposal.totalVotesFor / total) > 0.65 && total >= (proposal.quorum || 12);
 }
+window.addEventListener('languageChanged', () => {
+    if (typeof initDAO === 'function') initDAO();
+});
