@@ -3,18 +3,36 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Terms of Service - VocalWitness</title>
+  <title data-i18n="terms">Terms of Service • VocalWitness</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { background-color: #0a0f1c; color: white; font-family: 'Inter', system-ui, sans-serif; }
     .glass { background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(16, 185, 129, 0.25); }
   </style>
 </head>
-<body class="min-h-screen p-8">
+<body class="min-h-screen p-6 md:p-12 pb-24">
   <div class="max-w-3xl mx-auto">
-    <div class="flex items-center gap-4 mb-10">
+    
+    <!-- Header with Language Selector & Back to Home -->
+    <div class="flex items-center justify-between mb-10 glass rounded-3xl p-4">
+      <div class="flex items-center gap-3">
+        <a href="index.html" class="w-10 h-10 bg-emerald-500/20 rounded-2xl flex items-center justify-center text-xl hover:bg-emerald-500/30 transition">⬅️</a>
+        <h1 class="text-2xl font-bold tracking-tight">VocalWitness</h1>
+      </div>
+      <div class="flex items-center gap-3">
+        <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-4 py-2 text-sm focus:outline-none focus:border-emerald-500">
+            <option value="en">🇬🇧 English</option>
+            <option value="ar">🇸🇦 العربية</option>
+            <option value="es">🇪🇸 Español</option>
+            <option value="fr">🇫🇷 Français</option>
+            <option value="sw">🇹🇿 Kiswahili</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-4 mb-6">
       <div class="w-12 h-12 bg-emerald-500/20 rounded-3xl flex items-center justify-center text-4xl">📜</div>
-      <h1 class="text-4xl font-bold tracking-tight">Terms of Service</h1>
+      <h1 class="text-4xl font-bold tracking-tight" data-i18n="terms">Terms of Service</h1>
     </div>
 
     <p class="text-zinc-400 mb-10">Last updated: July 19, 2026</p>
@@ -43,7 +61,7 @@
         <p>We use a layered trust model to strengthen the quality of discourse:</p>
         <ul class="list-disc pl-6 space-y-2 mt-4">
           <li><strong>Citizen Talk</strong> — Open to all users (basic signup).</li>
-          <li><strong>Trust Circle</strong> — Unlocked via phone verification.</li>
+          <li><strong>Trust Circle</strong> — Unlocked via verification.</li>
           <li><strong>True Witness</strong> — Highest tier, earned through consistent participation and advanced verification (including Zero-Knowledge proofs where implemented).</li>
         </ul>
         <p class="mt-4 text-sm text-zinc-400">Higher tiers unlock greater responsibilities and capabilities (e.g., group creation, higher visibility).</p>
@@ -71,4 +89,35 @@
 
       <div>
         <h2 class="text-2xl font-semibold text-white mb-4">7. Donations & Sponsorship</h2>
-        <p>VocalWitness is sustained entirely through voluntary donations and
+        <p>VocalWitness is sustained entirely through voluntary community donations, transparent support funds, and direct non-custodial cryptographic contributions. Donations are non-refundable and do not grant special governance privileges or ownership over the platform.</p>
+      </div>
+
+      <div>
+        <h2 class="text-2xl font-semibold text-white mb-4">8. Limitation of Liability</h2>
+        <p>The platform is provided on an "as-is" and "as-available" basis without warranties of any kind. VocalWitness, its developers, and its stewards shall not be held liable for any indirect, incidental, or consequential damages arising from the use or inability to use the platform.</p>
+      </div>
+
+      <div>
+        <h2 class="text-2xl font-semibold text-white mb-4">9. Changes to Terms</h2>
+        <p>We may modify these Terms from time to time to reflect changes in our infrastructure or legal obligations. Continued use of the platform after updates constitutes your acceptance of the revised terms.</p>
+      </div>
+
+    </div>
+
+    <!-- Footer Action -->
+    <div class="mt-16 pt-8 border-t border-zinc-800 flex justify-between items-center text-sm text-zinc-500">
+      <a href="index.html" class="text-emerald-400 hover:underline">← Back to Public Square</a>
+      <span>© 2026 VocalWitness</span>
+    </div>
+
+  </div>
+
+  <!-- Enable Localization on this page -->
+  <script type="module">
+      import { initLanguage } from './js/i18n.js';
+      document.addEventListener('DOMContentLoaded', () => {
+          initLanguage();
+      });
+  </script>
+</body>
+</html>
