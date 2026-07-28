@@ -97,7 +97,7 @@ export function initLanguage() {
     }
 
     // Load translations
-    loadTranslations(savedLang);
+   loadTranslations('en');
 }
 
 export function t(key) {
