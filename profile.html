@@ -72,5 +72,11 @@
     </script>
 
     <script src="js/main.js"></script>   <!-- This brings in many helpers -->
+    <script type="module">
+    import { initLanguage } from './js/i18n.js';
+    document.addEventListener('DOMContentLoaded', () => {
+        initLanguage();
+    });
+</script>
 </body>
 </html>
