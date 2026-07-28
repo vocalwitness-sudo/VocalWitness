@@ -113,15 +113,29 @@ export function updateUIForAuthState() {
     const isLoggedIn = !!auth.currentUser;
     const guestBtn = document.getElementById('guest-action-btn');
     const profileBtn = document.getElementById('profile-btn');
+    const signInBtn = document.getElementById('signin-btn');
+    const privateElements = document.querySelectorAll('.requires-auth');
 
     if (guestBtn) {
         guestBtn.classList.toggle('hidden', isLoggedIn);
         const guestBtnText = document.getElementById('guest-btn-text');
         if (guestBtnText) guestBtnText.textContent = isLoggedIn ? '' : 'Join VocalWitness';
     }
-    if (profileBtn) profileBtn.classList.toggle('hidden', !isLoggedIn);
 
-    // Disable composer for guests
+    // Header buttons & profile toggle matching requirement
+    if (signInBtn) {
+        signInBtn.classList.toggle('hidden', isLoggedIn);
+    }
+    if (profileBtn) {
+        profileBtn.classList.toggle('hidden', !isLoggedIn);
+    }
+
+    // Toggle public vs private sensitive data blocks across pages
+    privateElements.forEach(el => {
+        el.classList.toggle('hidden', !isLoggedIn);
+    });
+
+    // Disable composer/interactive buttons for guests
     document.querySelectorAll('#postButton, #btn-photo, #btn-voice').forEach(btn => {
         if (btn) btn.style.opacity = isLoggedIn ? '1' : '0.6';
     });
@@ -186,7 +200,7 @@ window.logout = logout;
 window.requireAuth = requireAuth;
 window.updateUIForAuthState = updateUIForAuthState;
 
-// New: Show appropriate modal based on state
+// Show appropriate modal based on state
 window.showAuthModal = function() {
     if (auth.currentUser) {
         window.showProfile();
