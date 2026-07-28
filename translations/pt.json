@@ -50,6 +50,11 @@
   "login": "Entrar",
   "signup": "Criar Conta",
   "logout": "Sair",
+  "privacyLink": "🔒 Privacidade",
+  "supportBtn": "Apoiar a Praça",
+  "joinBtn": "Entrar no VocalWitness",
+  "profileBtn": "👤 Perfil",
+  "toggleTheme": "Alternar tema",
   "supportModal": {
     "title": "Sustentar a Praça Pública",
     "description": "Contribua diretamente para o registo da verdade do VocalWitness. O seu apoio ajuda a manter a nossa infraestrutura viva.",
@@ -66,12 +71,10 @@
   "verifiedBy": "Verificado por",
   "trustScore": "Pontuação de Confiança",
   "forensicProof": "Prova Forense",
-  "viewFullTestimony": "Ver Testemunho Completo"
-}
-{
-  "myProfileTitle": "My Profile | VocalWitness",
-  "myProfile": "My Profile",
-  "backToSquare": "← Back to Square",
-  "loadingProfile": "Loading your profile...",
-  "settings": "Settings"
+  "viewFullTestimony": "Ver Testemunho Completo",
+  "myProfileTitle": "Meu Perfil | VocalWitness",
+  "myProfile": "Meu Perfil",
+  "backToSquare": "← Voltar à Praça",
+  "loadingProfile": "A carregar o seu perfil...",
+  "settings": "Configurações"
 }
