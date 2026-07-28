@@ -2,7 +2,7 @@
   "appTitle": "VocalWitness",
   "appSubtitle": "Eziokwu • Ihe Akaebe • Ogige Ọha",
   "legalLabel": "Ihe Dị Mkpa:",
-  "privacyWarning": "VocalWitness na-arụ ọrụ naanị dị ka ebe a na-ekesa ihe na-enweghị mgbanwe. Anyị anaghị anakọta kaadị ID, paspọtì, ma ọ bụ data nkeonwe gị.",
+  "privacyWarning": "VocalWitness na-arụ ọrụ dị ka ebe a na-ekesa ihe na-enweghị mgbanwe. Anyị anaghị anakọta kaadị ID, paspọtì, ma ọ bụ data nkeonwe gị.",
   "placeholder": "Kekọrịta akaebe gị... Gịnị ka ị hụrụ?",
   "postButton": "🚀 Bipụta Akaebe na Ogige Ọha",
   "citizenTalk": "Okwu Ụmụafọ",
@@ -19,7 +19,7 @@
   "myDigitalPassport": "Paspọt Dijital M",
   "editProfile": "✏️ Dezie Profailụ",
   "changePassword": "🔑 Gbanwee Okwuntughe",
-  "upgradeZK": "🔬 kwalite gaa na Akaebe Eziokwu (ZK)",
+  "upgradeZK": "🔬 Kwalite gaa na Akaebe Eziokwu (ZK)",
   "signOut": "Pụọ",
   "createGroup": "Mepụta Otu Ọhụrụ",
   "createGroupBtn": "Mepụta Otu",
@@ -50,7 +50,6 @@
   "login": "Banye",
   "signup": "Debanye aha",
   "logout": "Pụọ",
-
   "supportModal": {
     "title": "Kwado Ogige",
     "description": "Nyere aka ozugbo na akwụkwọ eziokwu nke VocalWitness. Nkwado gị na-akwado akụrụngwa anyị.",
@@ -58,5 +57,14 @@
     "copyButton": "Detuo Adreesị",
     "warning": "Zịpụ naanị USDT na netwọk TRC20.",
     "closeButton": "Mechie"
-  }
+  },
+  "trueWitnessTitle": "Akaebe Eziokwu • VocalWitness",
+  "trueWitnessSubtitle": "Ekwuchitere na ZK • Ntụkwasị Obi Dị Elu",
+  "zkVerifiedTestimonies": "Akaebe ndị Ekwuchitere na ZK",
+  "backButton": "← Laghachi",
+  "noVerifiedTestimonies": "Ọnweghị akaebe ekwuchitere na ZK ugbu a",
+  "verifiedBy": "Ekwuchitere ya site na",
+  "trustScore": "Akara Ntụkwasị Obi",
+  "forensicProof": "Ihe Akaebe Forensik",
+  "viewFullTestimony": "Hụ Akaebe zuru ezu"
 }
