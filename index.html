@@ -100,14 +100,11 @@
                 Support The Square
             </button>
 
-<!-- ERROR 1 FOUND: ID mismatch causes the button text-flipping bug -->
-<!-- OLD (Buggy): id="guest-action-btn" referenced in JS via non-existent functions, and conflicts with signin-btn logic -->
-<!-- NEW (Fixed): Add id="signin-btn" so updateHeaderButtons() can target it correctly -->
-            <button id="guest-action-btn" id="signin-btn"
-                    class="px-4 sm:px-5 py-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm text-sm sm:text-base">
-                <img src="https://www.google.com/favicon.ico" class="w-4 h-4" alt="Google">
-                <span class="hidden sm:inline" id="guest-btn-text" data-i18n="joinBtn">Join VocalWitness</span>
-            </button>
+<button id="guest-action-btn" 
+        class="px-4 sm:px-5 py-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm text-sm sm:text-base">
+    <img src="https://www.google.com/favicon.ico" class="w-4 h-4" alt="Google">
+    <span class="hidden sm:inline" id="guest-btn-text" data-i18n="joinBtn">Join VocalWitness</span>
+</button>
 
             <button id="profile-btn" class="px-4 sm:px-5 py-2.5 border border-zinc-700 hover:bg-zinc-800 rounded-2xl transition flex items-center gap-2 hidden text-sm sm:text-base"
                     title="View your profile and settings" data-i18n="profileBtn">
