@@ -1,5 +1,5 @@
 // js/feed.js - Polished Public Square Feed with Search, Filtering & Interactivity
-import { collection, query, onSnapshot, limit, doc, updateDoc, increment, addDoc, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { collection, query, onSnapshot, limit, doc, updateDoc, increment, addDoc, getDocs, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { db, app } from './firebase-config.js';
 import { showToast } from './utils.js';
 import { renderTierCircle } from './ui-components.js';
@@ -39,6 +39,9 @@ export function initFeed(dbInstance = db) {
 
         if (action === 'like') {
             await handleUpvote(id);
+        } else if (action === 'react') {
+            const reactionType = btn.getAttribute('data-reaction');
+            await handleReaction(id, reactionType);
         } else if (action === 'comment') {
             openCommentModal(id);
         } else if (action === 'report') {
@@ -186,6 +189,8 @@ function renderSinglePostDOM(id, data, container) {
     postEl.className = 'post-card glass rounded-3xl p-6 mb-6 hover:border-emerald-500/35 transition-all duration-300 border border-zinc-800 bg-zinc-900/50 relative';
 
     const pinnedBadge = data.isPinned ? `<span class="bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px] px-2.5 py-0.5 rounded-full font-medium flex items-center gap-1">📌 Pinned Testimony</span>` : '';
+    const authorBadgeHTML = renderUserBadgeHTML(data.reputation || 0, data.zkVerified || false);
+    const reactions = data.reactions || { respect: 0, truth: 0, concern: 0, impact: 0 };
 
     const mediaHTML = data.imageUrl ? 
         `<img src="${data.imageUrl}" class="mt-5 rounded-2xl w-full max-h-96 object-cover border border-zinc-700" alt="Evidence">` : '';
@@ -214,8 +219,9 @@ function renderSinglePostDOM(id, data, container) {
             <div class="flex items-center gap-3">
                 ${renderTierCircle ? renderTierCircle(data.authorTier || 'citizen', data.reputation || 0) : '<span class="text-2xl">👤</span>'}
                 <div>
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2 flex-wrap">
                         <p class="font-semibold text-zinc-100">${authorDisplayName}</p>
+                        ${authorBadgeHTML}
                         ${pinnedBadge}
                     </div>
                     <p class="text-xs text-zinc-500">${formattedDate}</p>
@@ -233,18 +239,27 @@ function renderSinglePostDOM(id, data, container) {
         ${audioHTML}
         ${hashHTML}
 
-        <div class="flex items-center justify-between mt-6 pt-5 border-t border-zinc-800 text-sm">
-            <div class="flex gap-6">
-                <button data-action="like" data-id="${id}" class="flex items-center gap-1.5 hover:text-emerald-400 transition text-zinc-400">
-                    👍 <span>${data.likes || 0}</span>
+        <div class="flex items-center justify-between mt-6 pt-5 border-t border-zinc-800 text-xs flex-wrap gap-3">
+            <div class="flex gap-2 sm:gap-3 flex-wrap">
+                <button data-action="react" data-id="${id}" data-reaction="respect" class="flex items-center gap-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 px-3 py-1.5 rounded-xl text-zinc-300 transition">
+                    👍 <span>${reactions.respect || 0}</span>
                 </button>
-                <button data-action="comment" data-id="${id}" class="flex items-center gap-1.5 hover:text-sky-400 transition text-zinc-400">
+                <button data-action="react" data-id="${id}" data-reaction="truth" class="flex items-center gap-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 px-3 py-1.5 rounded-xl text-zinc-300 transition">
+                    💡 <span>${reactions.truth || 0}</span>
+                </button>
+                <button data-action="react" data-id="${id}" data-reaction="concern" class="flex items-center gap-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 px-3 py-1.5 rounded-xl text-zinc-300 transition">
+                    ⚠️ <span>${reactions.concern || 0}</span>
+                </button>
+                <button data-action="react" data-id="${id}" data-reaction="impact" class="flex items-center gap-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 px-3 py-1.5 rounded-xl text-zinc-300 transition">
+                    🔥 <span>${reactions.impact || 0}</span>
+                </button>
+                <button data-action="comment" data-id="${id}" class="flex items-center gap-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 px-3 py-1.5 rounded-xl text-zinc-300 transition">
                     💬 <span>${data.commentsCount || 0}</span>
                 </button>
             </div>
             <div class="flex gap-4">
-                <button data-action="report" data-id="${id}" class="text-red-400 hover:text-red-500 transition text-xs">Report</button>
-                <button data-action="share" data-id="${id}" class="text-emerald-400 hover:text-emerald-500 transition text-xs">Share</button>
+                <button data-action="report" data-id="${id}" class="text-red-400 hover:text-red-500 transition">Report</button>
+                <button data-action="share" data-id="${id}" class="text-emerald-400 hover:text-emerald-500 transition">Share</button>
             </div>
         </div>
     `;
