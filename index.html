@@ -321,6 +321,7 @@
     });
 
     // Paystack v2 Integration
+// Paystack v2 Integration
     $('paystackPayBtn')?.addEventListener('click', () => {
         const amountUsd = parseFloat($('customSupportAmount').value) || 15;
         if (amountUsd < 1) {
@@ -354,7 +355,6 @@
             showToast("Could not launch payment gateway", "error");
         }
     });
-
         handler.openPopup();
     
 
