@@ -57,5 +57,14 @@
     "copyButton": "Copy Address",
     "warning": "Send only USDT on the TRC20 network.",
     "closeButton": "Close"
-  }
+  },
+  "trueWitnessTitle": "True Witness • VocalWitness",
+  "trueWitnessSubtitle": "ZK Verified • High Trust",
+  "zkVerifiedTestimonies": "ZK-Verified Testimonies",
+  "backButton": "← Back",
+  "noVerifiedTestimonies": "No ZK-verified testimonies yet",
+  "verifiedBy": "Verified by",
+  "trustScore": "Trust Score",
+  "forensicProof": "Forensic Proof",
+  "viewFullTestimony": "View Full Testimony"
 }
