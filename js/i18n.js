@@ -3,17 +3,18 @@ let currentTranslations = {};
 let currentLang = 'en';
 
 const supportedLanguages = [
-    { code: 'en',  name: 'English',       flag: '🇬🇧', native: 'English',      rtl: false },
+    { code: 'en',  name: 'English',       flag: '🇬🇧', native: 'English',     rtl: false },
     { code: 'ar',  name: 'Arabic',        flag: '🇸🇦', native: 'العربية',     rtl: true },
-    { code: 'es',  name: 'Spanish',       flag: '🇪🇸', native: 'Español',      rtl: false },
-    { code: 'fr',  name: 'French',        flag: '🇫🇷', native: 'Français',     rtl: false },
-    { code: 'ha',  name: 'Hausa',         flag: '🇳🇬', native: 'Hausa',        rtl: false },
-    { code: 'ig',  name: 'Igbo',          flag: '🇳🇬', native: 'Igbo',         rtl: false },
-    { code: 'pcm', name: 'Naija Pidgin',  flag: '🇳🇬', native: 'Pidgin',       rtl: false },
-    { code: 'pt',  name: 'Portuguese',    flag: '🇵🇹', native: 'Português',    rtl: false },
-    { code: 'yo',  name: 'Yorùbá',        flag: '🇳🇬', native: 'Yorùbá',       rtl: false },
-    { code: 'sw',  name: 'Swahili',       flag: '🇹🇿', native: 'Kiswahili',    rtl: false }
+    { code: 'es',  name: 'Spanish',       flag: '🇪🇸', native: 'Español',     rtl: false },
+    { code: 'fr',  name: 'French',        flag: '🇫🇷', native: 'Français',    rtl: false },
+    { code: 'ha',  name: 'Hausa',         flag: '🇳🇬', native: 'Hausa',       rtl: false },
+    { code: 'ig',  name: 'Igbo',          flag: '🇳🇬', native: 'Igbo',        rtl: false },
+    { code: 'pcm', name: 'Naija Pidgin',  flag: '🇳🇬', native: 'Pidgin',      rtl: false },
+    { code: 'pt',  name: 'Portuguese',    flag: '🇵🇹', native: 'Português',   rtl: false },
+    { code: 'yo',  name: 'Yorùbá',        flag: '🇳🇬', native: 'Yorùbá',      rtl: false },
+    { code: 'sw',  name: 'Swahili',       flag: '🇹🇿', native: 'Kiswahili',   rtl: false }
 ];
+
 function getLangName(code) {
     const lang = supportedLanguages.find(l => l.code === code);
     return lang ? lang.native : code;
@@ -28,17 +29,19 @@ export async function loadTranslations(langCode = 'en') {
         
         if (response.ok) {
             currentTranslations = await response.json();
-            console.log(`✅ Loaded ${langCode} translations`);
         } else {
-            console.warn(`No translation file for ${langCode}`);
-            currentTranslations = {};
+            console.warn(`No translation file for ${langCode}, falling back to English`);
+            const enRes = await fetch('translations/en.json');
+            if (enRes.ok) currentTranslations = await enRes.json();
         }
     } catch (e) {
         console.warn(`Failed to load ${langCode}, falling back to English`);
         try {
             const enRes = await fetch('translations/en.json');
             if (enRes.ok) currentTranslations = await enRes.json();
-        } catch {}
+        } catch (err) {
+            currentTranslations = {};
+        }
     }
 
     currentLang = langCode;
@@ -47,7 +50,9 @@ export async function loadTranslations(langCode = 'en') {
     applyTranslations();
     applyTextDirection(langCode);
     
-    showToast(`🌍 ${getLangName(langCode)} activated`, "success");
+    if (typeof showToast === 'function') {
+        showToast(`🌍 ${getLangName(langCode)} activated`, "success");
+    }
 }
 
 function applyTextDirection(langCode) {
@@ -95,7 +100,9 @@ export function initLanguage() {
             <option value="${lang.code}">${lang.flag} ${lang.native}</option>
         `).join('');
         selector.value = savedLang;
-        selector.addEventListener('change', (e) => loadTranslations(e.target.value));
+        
+        // Prevent stacking duplicate listeners
+        selector.onchange = (e) => loadTranslations(e.target.value);
     }
 
     loadTranslations(savedLang);
@@ -105,7 +112,7 @@ export function changeLanguage(langCode) {
     loadTranslations(langCode);
 }
 
-// Make available globally
+// Bind globally for non-module script access
 window.initLanguage = initLanguage;
 window.changeLanguage = changeLanguage;
 window.t = t;
