@@ -273,6 +273,9 @@ window.saveProfileChanges = async () => {
         showToast("Failed to save profile", "error");
     }
 };
+window.addEventListener('languageChanged', () => {
+    if (typeof initProfile === 'function') initProfile();
+});
 
 // ====================== SETTINGS FUNCTIONALITY (Kept fully) ======================
 let currentSettingsUnsubscribe = null;
