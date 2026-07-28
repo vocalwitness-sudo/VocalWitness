@@ -50,6 +50,11 @@
   "login": "Banye",
   "signup": "Debanye aha",
   "logout": "Pụọ",
+  "privacyLink": "🔒 Nzuzo",
+  "supportBtn": "Kwado Ogige",
+  "joinBtn": "Sonye na VocalWitness",
+  "profileBtn": "👤 Profailụ",
+  "toggleTheme": "Gbanwee Usoro",
   "supportModal": {
     "title": "Kwado Ogige",
     "description": "Nyere aka ozugbo na akwụkwọ eziokwu nke VocalWitness. Nkwado gị na-akwado akụrụngwa anyị.",
@@ -66,12 +71,10 @@
   "verifiedBy": "Ekwuchitere ya site na",
   "trustScore": "Akara Ntụkwasị Obi",
   "forensicProof": "Ihe Akaebe Forensik",
-  "viewFullTestimony": "Hụ Akaebe zuru ezu"
-}
-{
-  "myProfileTitle": "My Profile | VocalWitness",
-  "myProfile": "My Profile",
-  "backToSquare": "← Back to Square",
-  "loadingProfile": "Loading your profile...",
-  "settings": "Settings"
+  "viewFullTestimony": "Hụ Akaebe zuru ezu",
+  "myProfileTitle": "Profailụ M | VocalWitness",
+  "myProfile": "Profailụ M",
+  "backToSquare": "← Laghachi na Ogige",
+  "loadingProfile": "Na-ebido profailụ gị...",
+  "settings": "Ntọala"
 }
