@@ -5,6 +5,8 @@ import { showToast } from './utils.js';
 import { renderTierCircle } from './ui-components.js';
 import { hasStewardAccess } from './tier.js';
 import { getAuth } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { handleReaction } from './reactions.js';
+import { renderUserBadgeHTML } from './badges.js';
 
 let activeFeedListener = null;
 let allPostsCache = []; // Local cache for instant search and filtering
