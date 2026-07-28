@@ -141,3 +141,7 @@ window.createGroup = async function() {
         window.closeGroupModal();
     }
 };
+
+window.addEventListener('languageChanged', () => {
+    if (typeof initGroups === 'function') initGroups();
+});
