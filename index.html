@@ -283,8 +283,7 @@
     }
 
     
-
-    // ==================== SUPPORT MODAL ====================
+// ==================== SUPPORT MODAL ====================
     const supportModal = $('supportModal');
 
     function openSupportModal() {
@@ -322,7 +321,7 @@
         });
     });
 
-    // Paystack 
+    // Paystack v2 Integration
     $('paystackPayBtn')?.addEventListener('click', () => {
         const amountUsd = parseFloat($('customSupportAmount').value) || 15;
         if (amountUsd < 1) {
@@ -332,20 +331,30 @@
 
         const amountInNgnKobo = Math.round(amountUsd * 1650 * 100);
 
-        const handler = PaystackPop.setup({
-            key: "pk_live_5d13a6db326f02375127aae9d0fb03678ed1d923",
-            email: "donor@vocalwitness.app",
-            amount: amountInNgnKobo,
-            currency: "NGN",
-            ref: 'VW_' + Date.now() + Math.floor(Math.random() * 10000),
-            callback: function(response) {
-                showToast(`Thank you! Payment successful (Ref: ${response.reference}) `, "success");
-                closeSupportModal();
-            },
-            onClose: function() {
-                showToast("Transaction cancelled", "info");
-            }
-        });
+        try {
+            const paystack = new PaystackPop();
+            paystack.newTransaction({
+                key: "pk_live_5d13a6db326f02375127aae9d0fb03678ed1d923",
+                email: "donor@vocalwitness.app",
+                amount: amountInNgnKobo,
+                currency: "NGN",
+                ref: 'VW_' + Date.now() + Math.floor(Math.random() * 10000),
+                onSuccess: function(response) {
+                    showToast(`Thank you! Payment successful (Ref: ${response.reference})`, "success");
+                    closeSupportModal();
+                },
+                onCancel: function() {
+                    showToast("Transaction cancelled", "info");
+                },
+                onError: function(error) {
+                    showToast("Payment error: " + (error.message || "Unknown error"), "error");
+                }
+            });
+        } catch (err) {
+            console.error("Paystack v2 initialization error:", err);
+            showToast("Could not launch payment gateway", "error");
+        }
+    });
 
         handler.openPopup();
     });
