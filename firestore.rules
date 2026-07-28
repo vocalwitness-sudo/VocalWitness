@@ -2,13 +2,19 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Testimonies / Evidence Ledger
+    // Testimonies / Evidence Ledger (Includes User Reactions subcollection)
     match /testimonies/{testimonyId} {
       allow read: if true;
       allow create: if request.auth != null 
                     && request.auth.uid == request.resource.data.authorId;
       allow update, delete: if request.auth != null 
-                            && request.auth.uid == resource.data.authorId;
+                            && (request.auth.uid == resource.data.authorId || request.auth.token.admin == true);
+      
+      // Multi-Reactions Subcollection
+      match /userReactions/{userId} {
+        allow read: if true;
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
     }
 
     // Groups Collection
@@ -44,9 +50,24 @@ service cloud.firestore {
 
     // Moderation & Reports Collection
     match /reports/{reportId} {
-      allow read: if request.auth != null && request.auth.uid == resource.data.reporterId;
+      allow read: if request.auth != null; // Allow stewards/authenticated users to read queue
       allow create: if request.auth != null 
-                    && request.auth.uid == request.resource.data.reporterId;
+                    && request.auth.uid == request.resource.data.reportedBy;
+      allow update: if request.auth != null; // Allow stewards to update status
+    }
+
+    // Immutable Audit Logs (Append-only by authenticated users, no updates or deletes)
+    match /audit_logs/{logId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      allow update, delete: if false;
+    }
+
+    // DAO Proposals & Quadratic Voting
+    match /dao_proposals/{proposalId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null; // Allows casting quadratic votes & updating tallies
     }
   }
 }
