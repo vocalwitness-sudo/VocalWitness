@@ -113,49 +113,49 @@
         </div>
     </header>
 
-    <!-- Main Navigation & Relative More Menu Container -->
+ <!-- Main Navigation & Relative More Menu Container -->
     <div class="relative z-40 mb-8">
         <nav class="flex gap-2 overflow-x-auto pb-2" id="main-nav">
             <button data-tab="square" class="nav-tab active px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative">
-                <span class="font-semibold">🗣️ Public Square</span>
-                <span class="text-xs text-zinc-400 hidden md:block">Share stories & evidence</span>
+                <span class="font-semibold" data-i18n="publicSquareTab">🗣️ Public Square</span>
+                <span class="text-xs text-zinc-400 hidden md:block" data-i18n="publicSquareDesc">Share stories & evidence</span>
             </button>
             
             <button data-tab="ledger" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative">
-                <span class="font-semibold">📜 Evidence Ledger</span>
-                <span class="text-xs text-zinc-400 hidden md:block">Permanent record</span>
+                <span class="font-semibold" data-i18n="evidenceLedgerTab">📜 Evidence Ledger</span>
+                <span class="text-xs text-zinc-400 hidden md:block" data-i18n="evidenceLedgerDesc">Permanent record</span>
             </button>
             
             <button data-tab="arena" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative">
-                <span class="font-semibold">🎥 Live Arena</span>
-                <span class="text-xs text-zinc-400 hidden md:block">Watch & join live</span>
+                <span class="font-semibold" data-i18n="liveArenaTab">🎥 Live Arena</span>
+                <span class="text-xs text-zinc-400 hidden md:block" data-i18n="liveArenaDesc">Watch & join live</span>
             </button>
             
             <button data-tab="mycircle" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative">
-                <span class="font-semibold">👥 My Circle</span>
-                <span class="text-xs text-zinc-400 hidden md:block">Trusted people</span>
+                <span class="font-semibold" data-i18n="myCircleTab">👥 My Circle</span>
+                <span class="text-xs text-zinc-400 hidden md:block" data-i18n="myCircleDesc">Trusted people</span>
             </button>
             
             <button data-tab="witness" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative bg-amber-900/70 text-amber-300 border border-amber-700">
-                <span class="font-semibold">✅ Verified Witnesses</span>
-                <span class="text-xs text-amber-400 hidden md:block">Trusted voices</span>
+                <span class="font-semibold" data-i18n="verifiedWitnessesTab">✅ Verified Witnesses</span>
+                <span class="text-xs text-amber-400 hidden md:block" data-i18n="verifiedWitnessesDesc">Trusted voices</span>
             </button>
 
             <div class="dropdown-container ml-auto">
-                <button id="more-btn" class="nav-tab px-6 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-md">
+                <button id="more-btn" class="nav-tab px-6 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-md" data-i18n="moreOptionsBtn">
                     More Options
                 </button>
 
                 <!-- More Menu (Tethered inside parent relative context) -->
                 <div id="more-menu" class="hidden bg-zinc-900 border border-zinc-700 rounded-3xl shadow-2xl py-3">
-                    <a href="my-testimonies.html" class="block px-6 py-3 hover:bg-zinc-800 text-sm">My Testimonies</a>
-                    <a href="groups.html" class="block px-6 py-3 hover:bg-zinc-800 text-sm">Groups</a>
-                    <a href="true-witness.html" class="block px-6 py-3 hover:bg-zinc-800 text-sm">True Witness</a>
+                    <a href="my-testimonies.html" class="block px-6 py-3 hover:bg-zinc-800 text-sm" data-i18n="myTestimoniesMenu">My Testimonies</a>
+                    <a href="groups.html" class="block px-6 py-3 hover:bg-zinc-800 text-sm" data-i18n="groupsMenu">Groups</a>
+                    <a href="true-witness.html" class="block px-6 py-3 hover:bg-zinc-800 text-sm" data-i18n="trueWitnessMenu">True Witness</a>
                     <div class="h-px bg-zinc-700 mx-4 my-2"></div>
-                    <a href="about.html" class="block px-6 py-3 hover:bg-zinc-800 text-sm">About Us</a>
-                    <a href="privacy.html" class="block px-6 py-3 hover:bg-zinc-800 text-sm">Privacy Policy</a>
-                    <a href="terms.html" class="block px-6 py-3 hover:bg-zinc-800 text-sm">Terms of Service</a>
-                    <a href="safety.html" class="block px-6 py-3 hover:bg-zinc-800 text-sm">Safety Guidelines</a>
+                    <a href="about.html" class="block px-6 py-3 hover:bg-zinc-800 text-sm" data-i18n="aboutMenu">About Us</a>
+                    <a href="privacy.html" class="block px-6 py-3 hover:bg-zinc-800 text-sm" data-i18n="privacyPolicyMenu">Privacy Policy</a>
+                    <a href="terms.html" class="block px-6 py-3 hover:bg-zinc-800 text-sm" data-i18n="termsOfServiceMenu">Terms of Service</a>
+                    <a href="safety.html" class="block px-6 py-3 hover:bg-zinc-800 text-sm" data-i18n="safetyGuidelinesMenu">Safety Guidelines</a>
                 </div>
             </div>
         </nav>
@@ -165,30 +165,30 @@
     <div class="glass rounded-3xl p-5 sm:p-8 mb-10 shadow-xl">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-lg font-semibold text-white flex items-center gap-2">
-                <span>📝</span> Share Your Testimony
+                <span>📝</span> <span data-i18n="shareTestimonyTitle">Share Your Testimony</span>
             </h2>
-            <span class="text-xs text-zinc-500">Public Square</span>
+            <span class="text-xs text-zinc-500" data-i18n="publicSquareSubtitle">Public Square</span>
         </div>
 
         <textarea id="mainInput" rows="4" 
-                  class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 sm:p-5 text-base sm:text-lg placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none" 
-                  placeholder="Share your raw testimony... What did you witness?"></textarea>
+                class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 sm:p-5 text-base sm:text-lg placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none" 
+                placeholder="Share your raw testimony... What did you witness?" data-i18n-placeholder="placeholder"></textarea>
         
         <div class="flex flex-col sm:flex-row gap-3 mt-5">
             <button id="btn-photo" 
                     class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 hover:border-emerald-500 rounded-2xl flex items-center justify-center gap-3 font-medium transition-all active:scale-95"
-                    title="Take a photo or upload an image as evidence">
-                📸 <span class="inline">Add Photo Evidence</span>
+                    title="Take a photo or upload an image as evidence" data-i18n-title="photoEvidenceTitle">
+                📸 <span class="inline" data-i18n="addPhotoEvidence">Add Photo Evidence</span>
             </button>
 
             <button id="btn-voice" 
                     class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 hover:border-emerald-500 rounded-2xl flex items-center justify-center gap-3 font-medium transition-all active:scale-95"
-                    title="Record your voice telling what you saw or heard">
-                🎤 <span class="inline">Record Voice Message</span>
+                    title="Record your voice telling what you saw or heard" data-i18n-title="voiceMessageTitle">
+                🎤 <span class="inline" data-i18n="recordVoiceMessage">Record Voice Message</span>
             </button>
         </div>
 
-        <div id="preview-area" class="mt-6 min-h-[120px] border border-dashed border-zinc-700 rounded-2xl p-4 flex items-center justify-center text-zinc-500 text-sm">
+        <div id="preview-area" class="mt-6 min-h-[120px] border border-dashed border-zinc-700 rounded-2xl p-4 flex items-center justify-center text-zinc-500 text-sm" data-i18n="previewAreaText">
             Preview will appear here...
         </div>
 
@@ -196,7 +196,7 @@
                 class="mt-8 w-full py-5 sm:py-6 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500 
                        hover:from-emerald-600 hover:via-teal-600 hover:to-emerald-600 
                        text-black font-bold text-lg sm:text-xl rounded-3xl transition-all active:scale-[0.97] relative overflow-hidden group shadow-lg">
-            <span class="relative z-10 flex items-center justify-center gap-3">
+            <span class="relative z-10 flex items-center justify-center gap-3" data-i18n="postButton">
                 🚀 Publish to the Square
             </span>
             <span class="absolute inset-0 bg-gradient-to-r from-transparent via-white/35 to-transparent 
@@ -296,7 +296,6 @@
             </p>
         </div>
     </div>
-
     <!-- Login Modal -->
     <div id="loginModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[10000] p-4">
         <div class="glass rounded-3xl p-6 sm:p-8 max-w-md w-full modal shadow-2xl">
