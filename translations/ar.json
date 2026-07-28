@@ -6,7 +6,7 @@
   "placeholder": "شارك شهادتك الخام... ماذا شاهدت؟",
   "postButton": "🚀 نشر الشهادة في الساحة",
   "citizenTalk": "حديث المواطن",
-  "trueWitness": "الشهادة الحقيقية",
+  "trueWitness": "الشاهد الحقيقي",
   "liveArena": "الساحة المباشرة",
   "groups": "المجموعات",
   "photoForensic": "📸 صورة + درع الطب الشرعي",
@@ -50,6 +50,11 @@
   "login": "تسجيل الدخول",
   "signup": "إنشاء حساب",
   "logout": "تسجيل الخروج",
+  "privacyLink": "🔒 الخصوصية",
+  "supportBtn": "دعم الساحة",
+  "joinBtn": "انضم إلى VocalWitness",
+  "profileBtn": "👤 الملف الشخصي",
+  "toggleTheme": "تبديل المظهر",
   "supportModal": {
     "title": "دعم الساحة العامة",
     "description": "ساهم مباشرة في سجل الحقيقة الخاص بـ VocalWitness. دعمك يساعد في الحفاظ على بنيتنا التحتية.",
@@ -66,12 +71,10 @@
   "verifiedBy": "تم التحقق بواسطة",
   "trustScore": "درجة الثقة",
   "forensicProof": "دليل شرعي",
-  "viewFullTestimony": "عرض الشهادة الكاملة"
-}
-{
-  "myProfileTitle": "My Profile | VocalWitness",
-  "myProfile": "My Profile",
-  "backToSquare": "← Back to Square",
-  "loadingProfile": "Loading your profile...",
-  "settings": "Settings"
+  "viewFullTestimony": "عرض الشهادة الكاملة",
+  "myProfileTitle": "ملفي الشخصي | VocalWitness",
+  "myProfile": "ملفي الشخصي",
+  "backToSquare": "← العودة إلى الساحة",
+  "loadingProfile": "جاري تحميل ملفك الشخصي...",
+  "settings": "الإعدادات"
 }
