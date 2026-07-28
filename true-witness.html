@@ -7,7 +7,7 @@
     
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="/logo.png" type="image/png">
-    <title>True Witness • VocalWitness</title>
+    <title data-i18n="trueWitnessTitle">True Witness • VocalWitness</title>
    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="../style.css">
@@ -24,29 +24,35 @@
         <header class="flex items-center justify-between mb-8">
             <div class="flex items-center gap-3">
                 <button onclick="window.goBack()" 
-                        class="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center gap-2 text-sm">
+                        class="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center gap-2 text-sm"
+                        data-i18n="backButton">
                     ← Back
                 </button>
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-2xl flex items-center justify-center text-2xl">🔬</div>
                     <div>
-                        <h1 class="text-3xl font-bold tracking-tighter text-amber-400">True Witness</h1>
-                        <p class="text-xs text-amber-500">ZK Verified • High Trust</p>
+                        <h1 class="text-3xl font-bold tracking-tighter text-amber-400" data-i18n="trueWitness">True Witness</h1>
+                        <p class="text-xs text-amber-500" data-i18n="trueWitnessSubtitle">ZK Verified • High Trust</p>
                     </div>
                 </div>
             </div>
+
+            <!-- Language Selector -->
+            <select id="languageSelector" 
+                    class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-4 py-2 text-sm focus:outline-none focus:border-emerald-500">
+                <!-- Populated by i18n.js -->
+            </select>
         </header>
 
         <div class="glass rounded-3xl p-6">
-            <h2 class="text-xl font-semibold mb-6">ZK-Verified Testimonies</h2>
+            <h2 class="text-xl font-semibold mb-6" data-i18n="zkVerifiedTestimonies">ZK-Verified Testimonies</h2>
             <div id="trueWitnessContainer" class="space-y-6">
                 <!-- Populated by JS -->
             </div>
         </div>
     </div>
 
-
- <!-- Scripts -->
+    <!-- Scripts -->
     <script type="module" src="../js/utils.js"></script>
     <script>
         window.goBack = window.goBack || function() {
@@ -56,6 +62,7 @@
     </script>
     <script type="module" src="../js/main.js"></script>
 
+    <!-- True Witness Logic -->
     <script type="module">
         import { initTrueWitness } from '../js/true-witness.js';
         document.addEventListener('DOMContentLoaded', () => {
@@ -63,11 +70,13 @@
             initTrueWitness('trueWitnessContainer');
         });
     </script>
+
+    <!-- Language System -->
     <script type="module">
-    import { initLanguage } from './js/i18n.js';
-    document.addEventListener('DOMContentLoaded', () => {
-        initLanguage();
-    });
-</script>
+        import { initLanguage } from '../js/i18n.js';
+        document.addEventListener('DOMContentLoaded', () => {
+            initLanguage();
+        });
+    </script>
 </body>
 </html>
