@@ -466,6 +466,7 @@
 
 <script src="https://js.paystack.co/v2/inline.js" crossorigin="anonymous"></script>
 <script type="module" src="js/main.js"></script>
+    
 <script>
     // Global toggle definition for the profile modal
     window.showProfile = function() {
@@ -495,6 +496,12 @@
                 window.showProfile();
             });
         }
+    });
+</script>
+    <script type="module">
+    import { initLanguage } from './js/i18n.js';
+    document.addEventListener('DOMContentLoaded', () => {
+        initLanguage();
     });
 </script>
 </body>
