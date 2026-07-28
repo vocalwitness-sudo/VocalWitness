@@ -78,3 +78,31 @@
   "loadingProfile": "Loading your profile...",
   "settings": "Settings"
 }
+
+{
+  "publicSquareTab": "Public Square",
+  "publicSquareDesc": "Share stories & evidence",
+  "evidenceLedgerTab": "Evidence Ledger",
+  "evidenceLedgerDesc": "Permanent record",
+  "liveArenaTab": "Live Arena",
+  "liveArenaDesc": "Watch & join live",
+  "myCircleTab": "My Circle",
+  "myCircleDesc": "Trusted people",
+  "verifiedWitnessesTab": "Verified Witnesses",
+  "verifiedWitnessesDesc": "Trusted voices",
+  "moreOptionsBtn": "More Options",
+  "myTestimoniesMenu": "My Testimonies",
+  "groupsMenu": "Groups",
+  "trueWitnessMenu": "True Witness",
+  "aboutMenu": "About Us",
+  "privacyPolicyMenu": "Privacy Policy",
+  "termsOfServiceMenu": "Terms of Service",
+  "safetyGuidelinesMenu": "Safety Guidelines",
+  "shareTestimonyTitle": "Share Your Testimony",
+  "publicSquareSubtitle": "Public Square",
+  "mainInputPlaceholder": "Share your raw testimony... What did you witness?",
+  "addPhotoEvidence": "Add Photo Evidence",
+  "recordVoiceMessage": "Record Voice Message",
+  "previewAreaText": "Preview will appear here...",
+  "postButton": "🚀 Publish to the Square"
+}
