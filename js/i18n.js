@@ -116,3 +116,42 @@ export function changeLanguage(langCode) {
 window.initLanguage = initLanguage;
 window.changeLanguage = changeLanguage;
 window.t = t;
+
+export async function loadTranslations(langCode = 'en') {
+    try {
+        const isSupported = supportedLanguages.some(l => l.code === langCode);
+        if (!isSupported) langCode = 'en';
+
+        const response = await fetch(`translations/${langCode}.json`);
+        
+        if (response.ok) {
+            currentTranslations = await response.json();
+        } else {
+            console.warn(`No translation file for ${langCode}, falling back to English`);
+            const enRes = await fetch('translations/en.json');
+            if (enRes.ok) currentTranslations = await enRes.json();
+        }
+    } catch (e) {
+        console.warn(`Failed to load ${langCode}, falling back to English`);
+        try {
+            const enRes = await fetch('translations/en.json');
+            if (enRes.ok) currentTranslations = await enRes.json();
+        } catch (err) {
+            currentTranslations = {};
+        }
+    }
+
+    currentLang = langCode;
+    localStorage.setItem('preferredLang', langCode);
+    
+    // Apply translations to all static [data-i18n] elements
+    applyTranslations();
+    applyTextDirection(langCode);
+    
+    // 🔥 NEW: Broadcast an event so dynamic components (feeds, modals) re-render
+    window.dispatchEvent(new CustomEvent('languageChanged', { detail: { lang: langCode } }));
+
+    if (typeof showToast === 'function') {
+        showToast(`🌍 ${getLangName(langCode)} activated`, "success");
+    }
+}
