@@ -208,5 +208,12 @@ postButton?.addEventListener('click', async () => {
         postButton.textContent = 'Publish';
     }
 });
+window.addEventListener('languageChanged', () => {
+    // Update dynamic composer placeholders or buttons if needed
+    const composerInput = document.getElementById('testimonyInput');
+    if (composerInput && window.t) {
+        composerInput.placeholder = window.t('placeholder');
+    }
+});
 
 console.log('%cComposer module loaded successfully', 'color:#10b981; font-weight:bold');
