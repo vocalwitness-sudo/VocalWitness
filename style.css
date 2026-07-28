@@ -3,29 +3,35 @@
     box-sizing: border-box;
 }
 
+@font-face {
+    font-family: 'Inter';
+    src: url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    font-display: swap;   /* ← Critical fix */
+}
+
 body {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
     background: #0a0f1c;
     color: white;
     min-height: 100vh;
     overflow-x: hidden;
     background: radial-gradient(circle at 50% 20%, rgba(16, 185, 129, 0.08), transparent 70%);
+    font-feature-settings: 'kern' 1, 'liga' 1;
 }
 
+/* Glass Effect */
 .glass {
     background: rgba(17, 24, 39, 0.92);
     backdrop-filter: blur(24px);
     border: 1px solid rgba(16, 185, 129, 0.22);
     box-shadow: 0 8px 32px -12px rgb(0 0 0 / 0.5);
-    contain: layout style paint;
+    contain: layout style paint;   /* Good */
 }
 
-/* ====================== BUTTON IMPROVEMENTS & ACTIVE STATES ====================== */
+/* ====================== BUTTONS & INTERACTIVE ====================== */
 
-/* General Tooltip */
-button[title],
-a[title] {
-    position: relative;
+button, a {
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); /* Reduced duration */
 }
 
 button[title]:hover::after,
@@ -44,7 +50,6 @@ a[title]:hover::after {
     z-index: 10000;
     opacity: 0;
     pointer-events: none;
-    transition: all 0.2s ease;
     box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
 }
 
@@ -64,7 +69,6 @@ a[title]:hover::after {
 /* Testimony Composer Buttons */
 #btn-photo,
 #btn-voice {
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     min-height: 68px;
     font-size: 1.05rem;
     position: relative;
@@ -74,194 +78,55 @@ a[title]:hover::after {
 #btn-photo:hover,
 #btn-voice:hover {
     border-color: #34d399;
-    transform: translateY(-3px);
+    transform: translateY(-2px);
     box-shadow: 0 10px 25px -5px rgb(52 211 153 / 0.3);
 }
 
-/* ACTIVE / SELECTED STATE */
+/* Active States */
 #btn-photo.active,
 #btn-voice.active {
     background-color: #10b981 !important;
     color: #111827 !important;
     border-color: #34d399;
-    transform: scale(1.03);
-    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.25),
-                0 15px 30px -8px rgb(16 185 129 / 0.4);
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.25);
 }
 
-#btn-photo.active::before,
-#btn-voice.active::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 40%;
-    height: 300%;
-    background: linear-gradient(120deg, transparent, rgba(255,255,255,0.35), transparent);
-    transform: skewX(-25deg);
-    animation: shine 4s infinite;
-}
-
-@keyframes shine {
-    0%   { transform: translateX(-150%) skewX(-25deg); }
-    20%  { transform: translateX(300%) skewX(-25deg); }
-    100% { transform: translateX(300%) skewX(-25deg); }
-}
-
-/* Voice Recording */
-#btn-voice.recording-active {
-    background-color: #ef4444 !important;
-    color: white !important;
-    transform: scale(1.05);
-    box-shadow: 0 0 40px rgba(239, 68, 68, 0.7);
-    animation: pulse-rec 1.5s infinite;
-}
-
-@keyframes pulse-rec {
-    0%, 100% { box-shadow: 0 0 40px rgba(239, 68, 68, 0.7); }
-    50% { box-shadow: 0 0 55px rgba(239, 68, 68, 0.9); }
-}
-
-#rec-timer {
-    font-family: 'Space Grotesk', monospace;
-    font-weight: 700;
-    letter-spacing: 2px;
-    color: #fee2e2;
-}
-
-/* ====================== PUBLISH BUTTON (ENHANCED) ====================== */
-
+/* Publish Button */
 #postButton {
     position: relative;
     overflow: hidden;
     font-weight: 700;
-    letter-spacing: -0.025em;
     box-shadow: 0 10px 30px -10px rgb(16 185 129 / 0.5);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 #postButton:hover {
-    transform: translateY(-5px) scale(1.02);
-    box-shadow: 0 20px 40px -10px rgb(16 185 129 / 0.6);
+    transform: translateY(-4px) scale(1.02);
 }
 
-#postButton:active {
-    transform: scale(0.96);
-}
-
-/* Success / Publishing State */
-#postButton.publishing {
-    background: linear-gradient(90deg, #10b981, #34d399) !important;
-    animation: publishPulse 1.8s infinite;
-}
-
-@keyframes publishPulse {
-    0%, 100% { box-shadow: 0 0 25px rgb(16 185 129 / 0.6); }
-    50% { box-shadow: 0 0 45px rgb(16 185 129 / 0.9); }
-}
-
-/* ====================== NAVIGATION & OTHER ELEMENTS ====================== */
-
+/* Navigation */
 .nav-tab {
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .nav-tab:hover {
     background-color: rgba(16, 185, 129, 0.1);
-    transform: translateY(-2px);
+    transform: translateY(-1px);
 }
 
 .nav-tab.active {
     background-color: #10b981 !important;
     color: #111827 !important;
-    font-weight: 700;
     box-shadow: 0 10px 15px -3px rgb(16 185 129 / 0.4);
 }
 
-/* Input Polish */
-#mainInput {
-    transition: all 0.3s ease;
-    min-height: 120px;
+/* Prevent layout shift on text change */
+[data-i18n] {
+    transition: color 0.2s ease;
 }
 
-#mainInput:focus {
-    border-color: #34d399;
-    box-shadow: 0 0 0 4px rgba(52, 211, 153, 0.15);
-    background-color: rgba(15, 23, 42, 0.95);
-}
-
-/* Preview Area */
-#preview-area {
-    transition: all 0.4s ease;
-    background: rgba(15, 23, 42, 0.6);
-}
-
-#preview-area.has-content {
-    border-style: solid;
-    border-color: #34d399;
-    background: rgba(16, 185, 129, 0.08);
-}
-
-/* General Polish */
-.guardian-btn,
-.supporter-btn {
-    background: linear-gradient(90deg, #10b981, #34d399);
-    color: black;
-    font-weight: 700;
-    transition: all 0.3s ease;
-}
-
-.guardian-btn:hover,
-.supporter-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 20px -5px rgb(16 185 129 / 0.6);
-}
-
-.glass:hover {
-    box-shadow: 0 20px 40px -15px rgb(16 185 129 / 0.25);
-}
-
-/* Scrollbar */
-::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
-::-webkit-scrollbar-thumb {
-    background: rgba(52, 211, 153, 0.4);
-    border-radius: 20px;
-}
-::-webkit-scrollbar-thumb:hover {
-    background: rgba(52, 211, 153, 0.6);
-}
-
-/* ====================== ANIMATIONS ====================== */
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.6; }
-}
-
-.success-burst {
-    animation: publishSuccess 0.6s ease-out forwards;
-}
-
-@keyframes publishSuccess {
-    0% { transform: scale(0.8); opacity: 0; }
-    50% { transform: scale(1.15); }
-    100% { transform: scale(1); }
-}
-
-#more-menu {
-    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.5);
-}
-/* ====================== RESPONSIVE CONTAINER & ROOT FIXES ====================== */
+/* Container */
 .app-container {
-    max-width: 72rem; /* equivalent to max-w-6xl */
+    max-width: 72rem;
     margin-left: auto;
     margin-right: auto;
     width: 100%;
@@ -276,30 +141,21 @@ a[title]:hover::after {
     }
 }
 
-/* Prevent horizontal body blowout on mobile viewports */
+/* Scroll & Performance */
 body {
     overflow-x: hidden;
-    width: 100vw;
-    max-width: 100%;
+    width: 100%;
 }
 
-/* Navigation Scrollbar cleanup for smooth mobile touch scrolling */
 #main-nav {
     -webkit-overflow-scrolling: touch;
-    scrollbar-width: none; /* Firefox */
+    scrollbar-width: none;
 }
 #main-nav::-webkit-scrollbar {
-    display: none; /* Safari and Chrome */
+    display: none;
 }
 
-/* Tethered Dropdown Menu Fix (Replacing rigid viewport offsets) */
-.dropdown-container {
-    position: relative;
-}
-/* Ensure the navigation container area is dark */
-.relative.z-40.mb-8 {
-    background-color: #0a0f1c;
-}
+/* More Menu */
 #more-menu {
     position: absolute;
     top: calc(100% + 8px);
@@ -308,7 +164,7 @@ body {
     z-index: 9999;
 }
 
-/* Modal responsive boundary constraint */
+/* Modals */
 .modal-content-wrapper {
     max-height: 85vh;
     overflow-y: auto;
