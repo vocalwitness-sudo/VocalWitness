@@ -50,6 +50,11 @@
   "login": "Ingia",
   "signup": "Jisajili",
   "logout": "Toka",
+  "privacyLink": "🔒 Faragha",
+  "supportBtn": "Unga Mkono Uwanja",
+  "joinBtn": "Jiunge na VocalWitness",
+  "profileBtn": "👤 Wasifu",
+  "toggleTheme": "Badilisha mtindo",
   "supportModal": {
     "title": "Unga Mkono Uwanja",
     "description": "Changia moja kwa moja kwenye daftari la ukweli la VocalWitness. Msaada wako unasaidia kudumisha miundombinu yetu.",
@@ -66,12 +71,10 @@
   "verifiedBy": "Uliothibitishwa na",
   "trustScore": "Kiwango cha Uaminifu",
   "forensicProof": "Uthibitisho wa Uchunguzi",
-  "viewFullTestimony": "Angalia Ushuhuda Kamili"
-}
-{
-  "myProfileTitle": "My Profile | VocalWitness",
-  "myProfile": "My Profile",
-  "backToSquare": "← Back to Square",
-  "loadingProfile": "Loading your profile...",
-  "settings": "Settings"
+  "viewFullTestimony": "Angalia Ushuhuda Kamili",
+  "myProfileTitle": "Wasifu Wangu | VocalWitness",
+  "myProfile": "Wasifu Wangu",
+  "backToSquare": "← Rudi kwenye Uwanja",
+  "loadingProfile": "Inapakia wasifu wako...",
+  "settings": "Mipangilio"
 }
