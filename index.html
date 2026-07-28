@@ -7,55 +7,55 @@
     <meta name="description" content="VocalWitness - Privacy First Public Square for Truth and Evidence">
 
 <meta http-equiv="Content-Security-Policy" content="
-  default-src 'self' https: wss: blob: data:;
-  script-src 'self' 
-    https://cdn.jsdelivr.net
-    https://www.gstatic.com 
-    https://cdnjs.cloudflare.com 
-    https://cdn.tailwindcss.com 
-    https://apis.google.com 
-    https://js.paystack.co 
-    https://*.paystack.co 
-    'unsafe-inline';
+    default-src 'self' https: wss: blob: data:;
+    script-src 'self' 
+        https://cdn.jsdelivr.net
+        https://www.gstatic.com 
+        https://cdnjs.cloudflare.com 
+        https://cdn.tailwindcss.com 
+        https://apis.google.com 
+        https://js.paystack.co 
+        https://*.paystack.co 
+        'unsafe-inline';
   
-  style-src 'self' 'unsafe-inline' 
-    https://cdn.tailwindcss.com 
-    https://fonts.googleapis.com 
-    https://paystack.com 
-    https://*.paystack.com 
-    https://*.paystack.co 
-    https://*.paystack.net 
-    https://js.paystack.co;
+    style-src 'self' 'unsafe-inline' 
+        https://cdn.tailwindcss.com 
+        https://fonts.googleapis.com 
+        https://paystack.com 
+        https://*.paystack.com 
+        https://*.paystack.co 
+        https://*.paystack.net 
+        https://js.paystack.co;
   
-  font-src 'self' https://fonts.gstatic.com https: data:;
+    font-src 'self' https://fonts.gstatic.com https: data:;
   
-  connect-src 'self' 
-    https://*.googleapis.com 
-    https://*.firebaseio.com 
-    https://firestore.googleapis.com 
-    https://identitytoolkit.googleapis.com 
-    https://securetoken.googleapis.com 
-    https://api.paystack.co 
-    https://*.paystack.co 
-    https://*.paystack.com 
-    https://*.supabase.co 
-    https://*.cloudfunctions.net 
-    wss://*.firebaseio.com;
+    connect-src 'self' 
+        https://*.googleapis.com 
+        https://*.firebaseio.com 
+        https://firestore.googleapis.com 
+        https://identitytoolkit.googleapis.com 
+        https://securetoken.googleapis.com 
+        https://api.paystack.co 
+        https://*.paystack.co 
+        https://*.paystack.com 
+        https://*.supabase.co 
+        https://*.cloudfunctions.net 
+        wss://*.firebaseio.com;
   
-  img-src 'self' https: data: blob:;
-  media-src 'self' https: blob:;
+    img-src 'self' https: data: blob:;
+    media-src 'self' https: blob:;
   
-  frame-src 'self' 
-    https://accounts.google.com 
-    https://*.firebaseapp.com 
-    https://standard.paystack.co 
-    https://checkout.paystack.com 
-    https://*.paystack.co 
-    https://*.paystack.com;
+    frame-src 'self' 
+        https://accounts.google.com 
+        https://*.firebaseapp.com 
+        https://standard.paystack.co 
+        https://checkout.paystack.com 
+        https://*.paystack.co 
+        https://*.paystack.com;
   
-  object-src 'none';
-  base-uri 'self';
-  upgrade-insecure-requests;
+    object-src 'none';
+    base-uri 'self';
+    upgrade-insecure-requests;
 ">
     <title data-i18n="pageTitle">VocalWitness • Truth • Evidence • Public Square</title>
 
@@ -100,7 +100,10 @@
                 Support The Square
             </button>
 
-            <button id="guest-action-btn" 
+<!-- ERROR 1 FOUND: ID mismatch causes the button text-flipping bug -->
+<!-- OLD (Buggy): id="guest-action-btn" referenced in JS via non-existent functions, and conflicts with signin-btn logic -->
+<!-- NEW (Fixed): Add id="signin-btn" so updateHeaderButtons() can target it correctly -->
+            <button id="guest-action-btn" id="signin-btn"
                     class="px-4 sm:px-5 py-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm text-sm sm:text-base">
                 <img src="https://www.google.com/favicon.ico" class="w-4 h-4" alt="Google">
                 <span class="hidden sm:inline" id="guest-btn-text" data-i18n="joinBtn">Join VocalWitness</span>
