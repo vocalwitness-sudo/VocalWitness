@@ -259,3 +259,54 @@ a[title]:hover::after {
 #more-menu {
     box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.5);
 }
+/* ====================== RESPONSIVE CONTAINER & ROOT FIXES ====================== */
+.app-container {
+    max-width: 72rem; /* equivalent to max-w-6xl */
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+    .app-container {
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+    }
+}
+
+/* Prevent horizontal body blowout on mobile viewports */
+body {
+    overflow-x: hidden;
+    width: 100vw;
+    max-width: 100%;
+}
+
+/* Navigation Scrollbar cleanup for smooth mobile touch scrolling */
+#main-nav {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+}
+#main-nav::-webkit-scrollbar {
+    display: none; /* Safari and Chrome */
+}
+
+/* Tethered Dropdown Menu Fix (Replacing rigid viewport offsets) */
+.dropdown-container {
+    position: relative;
+}
+
+#more-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 16rem;
+    z-index: 9999;
+}
+
+/* Modal responsive boundary constraint */
+.modal-content-wrapper {
+    max-height: 85vh;
+    overflow-y: auto;
+}
