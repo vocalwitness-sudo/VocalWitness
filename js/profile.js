@@ -315,6 +315,26 @@ function loadCurrentUserSettings() {
     if (notifyToggle) notifyToggle.checked = currentUserData.notifyReplies !== false;
 }
 
+window.openProfile = function() {
+    const modal = document.getElementById('profileModal');
+    if (!modal) {
+        showToast("Profile modal not found in HTML", "error");
+        return;
+    }
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    if (currentUserData) {
+        renderProfileUI(currentUserData);
+    }
+};
+
+window.closeProfile = function() {
+    const modal = document.getElementById('profileModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+};
 // Keyboard shortcut
 document.addEventListener('keydown', (e) => {
     if (e.key === "p" && e.ctrlKey) {
