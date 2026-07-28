@@ -1,4 +1,4 @@
-// js/i18n.js - Clean & Production Ready
+// js/i18n.js - Improved for minimal layout shift
 let currentTranslations = {};
 let currentLang = 'en';
 
@@ -15,93 +15,67 @@ const supportedLanguages = [
     { code: 'sw',  name: 'Swahili',        flag: '🇹🇿', native: 'Kiswahili',   rtl: false }
 ];
 
-function getLangName(code) {
-    const lang = supportedLanguages.find(l => l.code === code);
-    return lang ? lang.native : code;
-}
-
 export async function loadTranslations(langCode = 'en') {
     try {
         const isSupported = supportedLanguages.some(l => l.code === langCode);
         if (!isSupported) langCode = 'en';
 
         const response = await fetch(`translations/${langCode}.json`);
-        
-        if (response.ok) {
-            currentTranslations = await response.json();
-        } else {
-            console.warn(`No translation file for ${langCode}, falling back to English`);
-            const enRes = await fetch('translations/en.json');
-            if (enRes.ok) currentTranslations = await enRes.json();
-        }
+        currentTranslations = response.ok 
+            ? await response.json() 
+            : (await fetch('translations/en.json')).json();
     } catch (e) {
-        console.warn(`Failed to load ${langCode}, falling back to English`);
+        console.warn(`Translation load failed for ${langCode}, using English`);
         try {
-            const enRes = await fetch('translations/en.json');
-            if (enRes.ok) currentTranslations = await enRes.json();
-        } catch (err) {
+            currentTranslations = await (await fetch('translations/en.json')).json();
+        } catch (_) {
             currentTranslations = {};
         }
     }
 
     currentLang = langCode;
     localStorage.setItem('preferredLang', langCode);
-    
-    applyTranslations();
-    applyTextDirection(langCode);
-    
-    window.dispatchEvent(new CustomEvent('languageChanged', { detail: { lang: langCode } }));
 
-    if (typeof showToast === 'function') {
-        showToast(`🌍 ${getLangName(langCode)} activated`, "success");
-    }
+    // Apply changes
+    applyTextDirection(langCode);
+    applyTranslations();
+
+    window.dispatchEvent(new CustomEvent('languageChanged', { detail: { lang: langCode } }));
 }
 
 function applyTextDirection(langCode) {
     const lang = supportedLanguages.find(l => l.code === langCode);
     const isRTL = lang?.rtl || false;
+    
     document.documentElement.setAttribute('dir', isRTL ? 'rtl' : 'ltr');
     document.body.style.textAlign = isRTL ? 'right' : 'left';
-}
-
-export function t(key, params = {}) {
-    let text = currentTranslations[key] || key;
-    Object.keys(params).forEach(param => {
-        text = text.replace(new RegExp(`{${param}}`, 'g'), params[param]);
-    });
-    return text;
 }
 
 function applyTranslations() {
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
         if (!key) return;
-        
-        const text = t(key);
-        
+
+        const translatedText = currentTranslations[key] || key;
+
         if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
-            el.placeholder = text;
-        } else if (el.tagName === 'SELECT') {
-            // Do nothing for language selector itself
-        } else {
-            const targetSpan = el.querySelector('.i18n-text');
-            if (targetSpan) {
-                targetSpan.textContent = text;
+            el.placeholder = translatedText;
+        } 
+        else if (el.tagName === 'BUTTON' || el.tagName === 'A' || el.tagName === 'H1' || el.tagName === 'H2') {
+            // For elements that commonly cause layout shift, we try to preserve structure
+            const textNode = Array.from(el.childNodes).find(node => 
+                node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== ''
+            );
+
+            if (textNode) {
+                textNode.textContent = translatedText;
             } else if (el.children.length === 0) {
-                // Only safe to overwrite textContent if there are zero child elements (like icons or nested spans)
-                el.textContent = text;
-            } else {
-                // If it has children (like icons), look for a text node inside without wiping out layout
-                let textUpdated = false;
-                for (let node of el.childNodes) {
-                    if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '') {
-                        node.textContent = text;
-                        textUpdated = true;
-                        break;
-                    }
-                }
-                // If no text node was found and it contains complex layout/icons, we leave child elements untouched to prevent hiding buttons
+                el.textContent = translatedText;
             }
+            // If it has icons + text, we only update text node to avoid breaking layout
+        } 
+        else {
+            el.textContent = translatedText;
         }
     });
 
@@ -119,17 +93,18 @@ export function initLanguage() {
             <option value="${lang.code}">${lang.flag} ${lang.native}</option>
         `).join('');
         selector.value = savedLang;
-        
         selector.onchange = (e) => loadTranslations(e.target.value);
     }
 
+    // Load translations
     loadTranslations(savedLang);
 }
 
-export function changeLanguage(langCode) {
-    loadTranslations(langCode);
+export function t(key) {
+    return currentTranslations[key] || key;
 }
 
+// Expose to window
 window.initLanguage = initLanguage;
-window.changeLanguage = changeLanguage;
+window.changeLanguage = loadTranslations;
 window.t = t;
