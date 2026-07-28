@@ -296,7 +296,10 @@ body {
 .dropdown-container {
     position: relative;
 }
-
+/* Ensure the navigation container area is dark */
+.relative.z-40.mb-8 {
+    background-color: #0a0f1c;
+}
 #more-menu {
     position: absolute;
     top: calc(100% + 8px);
