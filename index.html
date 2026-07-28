@@ -86,10 +86,14 @@
     <div class="flex items-center gap-3 md:gap-4">
 
         <!-- ✅ Clean Language Selector (All 10 languages will appear) -->
+     
         <select id="languageSelector" 
                 class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-4 py-2 text-sm focus:outline-none focus:border-emerald-500 hidden sm:block">
             <!-- Options populated automatically by js/i18n.js -->
         </select>
+           <button onclick="toggleDarkMode()" class="p-3 rounded-2xl hover:bg-zinc-800 transition">
+    <span id="theme-icon">🌙</span>
+</button>
 
         <a href="privacy.html" class="flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 transition-colors text-sm font-medium px-3 py-2">
             🔒 Privacy First
