@@ -6,7 +6,7 @@
 @font-face {
     font-family: 'Inter';
     src: url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-    font-display: swap;   /* ← Critical fix */
+    font-display: swap;
 }
 
 body {
@@ -25,13 +25,13 @@ body {
     backdrop-filter: blur(24px);
     border: 1px solid rgba(16, 185, 129, 0.22);
     box-shadow: 0 8px 32px -12px rgb(0 0 0 / 0.5);
-    contain: layout style paint;   /* Good */
+    contain: layout style paint;
 }
 
 /* ====================== BUTTONS & INTERACTIVE ====================== */
 
 button, a {
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); /* Reduced duration */
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 button[title]:hover::after,
@@ -119,9 +119,39 @@ a[title]:hover::after {
     box-shadow: 0 10px 15px -3px rgb(16 185 129 / 0.4);
 }
 
-/* Prevent layout shift on text change */
+/* Prevent layout shift from translations */
 [data-i18n] {
     transition: color 0.2s ease;
+}
+
+/* ====================== ANTI-LAYOUT-SHIFT FIXES ====================== */
+
+#guest-action-btn {
+    min-width: 185px;
+}
+
+#support-btn {
+    min-width: 175px;
+}
+
+#postButton {
+    min-width: 300px;
+}
+
+.nav-tab {
+    min-width: 145px;           /* Increased for Spanish & longer languages */
+    text-align: center;
+    white-space: nowrap;
+}
+
+.nav-tab span:last-child {
+    display: inline-block;
+}
+
+/* Extra safety for dynamic text */
+button[data-i18n],
+a[data-i18n] {
+    white-space: nowrap;
 }
 
 /* Container */
@@ -168,12 +198,4 @@ body {
 .modal-content-wrapper {
     max-height: 85vh;
     overflow-y: auto;
-}
-
-#guest-action-btn {
-    min-width: 170px;   /* or higher */
-}
-
-.nav-tab {
-    min-width: 140px;   /* adjust as needed */
 }
