@@ -50,7 +50,11 @@
   "login": "Login",
   "signup": "Sign Up",
   "logout": "Logout",
-
+  "privacyLink": "🔒 Privacy First",
+  "supportBtn": "Support The Square",
+  "joinBtn": "Join VocalWitness",
+  "profileBtn": "👤 Profile",
+  "toggleTheme": "Toggle theme",
   "supportModal": {
     "title": "Support the Square",
     "description": "Contribute directly to the VocalWitness truth ledger. Your support dey maintain our infrastructure.",
@@ -58,9 +62,7 @@
     "copyButton": "Copy Address",
     "warning": "Only send USDT on TRC20 network.",
     "closeButton": "Close"
-  }
-}
-{
+  },
   "myProfileTitle": "My Profile | VocalWitness",
   "myProfile": "My Profile",
   "backToSquare": "← Back to Square",
