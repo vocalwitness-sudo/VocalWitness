@@ -1,7 +1,5 @@
 /* ====================== BASE STYLES ====================== */
-* {
-    box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 @font-face {
     font-family: 'Inter';
@@ -15,8 +13,6 @@ body {
     color: white;
     min-height: 100vh;
     overflow-x: hidden;
-    background: radial-gradient(circle at 50% 20%, rgba(16, 185, 129, 0.08), transparent 70%);
-    font-feature-settings: 'kern' 1, 'liga' 1;
 }
 
 /* Glass Effect */
@@ -24,178 +20,38 @@ body {
     background: rgba(17, 24, 39, 0.92);
     backdrop-filter: blur(24px);
     border: 1px solid rgba(16, 185, 129, 0.22);
-    box-shadow: 0 8px 32px -12px rgb(0 0 0 / 0.5);
     contain: layout style paint;
 }
 
-/* ====================== BUTTONS & INTERACTIVE ====================== */
+/* ====================== ANTI-SHIFT FIXES ====================== */
 
-button, a {
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
+#guest-action-btn { min-width: 185px; }
+#support-btn { min-width: 175px; }
+#postButton { min-width: 300px; }
 
-button[title]:hover::after,
-a[title]:hover::after {
-    content: attr(title);
-    position: absolute;
-    bottom: 110%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #1f2937;
-    color: #e5e7eb;
-    padding: 8px 14px;
-    border-radius: 8px;
-    font-size: 13px;
+/* Navigation Tabs - Most problematic area */
+.nav-tab {
+    min-width: 160px !important;     /* Increased for longer languages */
+    text-align: center;
     white-space: nowrap;
-    z-index: 10000;
-    opacity: 0;
-    pointer-events: none;
-    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
+    padding-left: 16px;
+    padding-right: 16px;
 }
 
-button[title]:hover::after,
-a[title]:hover::after {
-    opacity: 1;
-    bottom: 115%;
-}
-
-@media (max-width: 640px) {
-    button[title]:hover::after,
-    a[title]:hover::after {
-        display: none;
-    }
-}
-
-/* Testimony Composer Buttons */
+/* Testimony Composer Area */
 #btn-photo,
 #btn-voice {
     min-height: 68px;
-    font-size: 1.05rem;
-    position: relative;
-    overflow: hidden;
+    min-width: 260px;               /* Very important */
+    white-space: nowrap;
 }
 
-#btn-photo:hover,
-#btn-voice:hover {
-    border-color: #34d399;
-    transform: translateY(-2px);
-    box-shadow: 0 10px 25px -5px rgb(52 211 153 / 0.3);
-}
-
-/* Active States */
-#btn-photo.active,
-#btn-voice.active {
-    background-color: #10b981 !important;
-    color: #111827 !important;
-    border-color: #34d399;
-    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.25);
-}
-
-/* Publish Button */
-#postButton {
-    position: relative;
-    overflow: hidden;
-    font-weight: 700;
-    box-shadow: 0 10px 30px -10px rgb(16 185 129 / 0.5);
-}
-
-#postButton:hover {
-    transform: translateY(-4px) scale(1.02);
-}
-
-/* Navigation */
-.nav-tab {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.nav-tab:hover {
-    background-color: rgba(16, 185, 129, 0.1);
-    transform: translateY(-1px);
-}
-
-.nav-tab.active {
-    background-color: #10b981 !important;
-    color: #111827 !important;
-    box-shadow: 0 10px 15px -3px rgb(16 185 129 / 0.4);
-}
-
-/* Prevent layout shift from translations */
+/* General protection */
 [data-i18n] {
     transition: color 0.2s ease;
 }
 
-/* ====================== ANTI-LAYOUT-SHIFT FIXES ====================== */
-
-#guest-action-btn {
-    min-width: 185px;
-}
-
-#support-btn {
-    min-width: 175px;
-}
-
-#postButton {
-    min-width: 300px;
-}
-
-.nav-tab {
-    min-width: 145px;           /* Increased for Spanish & longer languages */
-    text-align: center;
-    white-space: nowrap;
-}
-
-.nav-tab span:last-child {
-    display: inline-block;
-}
-
-/* Extra safety for dynamic text */
 button[data-i18n],
-a[data-i18n] {
+.nav-tab {
     white-space: nowrap;
-}
-
-/* Container */
-.app-container {
-    max-width: 72rem;
-    margin-left: auto;
-    margin-right: auto;
-    width: 100%;
-    padding-left: 1rem;
-    padding-right: 1rem;
-}
-
-@media (min-width: 640px) {
-    .app-container {
-        padding-left: 1.5rem;
-        padding-right: 1.5rem;
-    }
-}
-
-/* Scroll & Performance */
-body {
-    overflow-x: hidden;
-    width: 100%;
-}
-
-#main-nav {
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-}
-#main-nav::-webkit-scrollbar {
-    display: none;
-}
-
-/* More Menu */
-#more-menu {
-    position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
-    width: 16rem;
-    z-index: 9999;
-}
-
-/* Modals */
-.modal-content-wrapper {
-    max-height: 85vh;
-    overflow-y: auto;
 }
