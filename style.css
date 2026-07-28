@@ -259,8 +259,3 @@ a[title]:hover::after {
 #more-menu {
     box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.5);
 }
-[data-theme="light"] {
-    --bg: #f8fafc;
-    --text: #0f172a;
-    /* Add more light mode variables as needed */
-}
