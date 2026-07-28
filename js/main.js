@@ -286,6 +286,31 @@ function setupEventListeners() {
             input.click();
         });
     }
+    // ==================== NAVIGATION TAB ACTIVE HIGHLIGHT ====================
+document.addEventListener('DOMContentLoaded', () => {
+    const navButtons = document.querySelectorAll('.nav-tab-btn'); // Make sure your buttons have this class, or adjust selector
+
+    navButtons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            // Remove active classes from all nav buttons
+            navButtons.forEach(b => {
+                b.classList.remove('bg-emerald-600/20', 'border-emerald-500', 'text-white');
+                b.classList.add('text-zinc-400'); // inactive text color
+            });
+
+            // Add active classes to the clicked button
+            btn.classList.add('bg-emerald-600/20', 'border-emerald-500', 'text-white');
+            btn.classList.remove('text-zinc-400');
+        });
+    });
+
+    // Ensure Public Square is set as default active on load if none selected
+    const defaultBtn = document.querySelector('[data-tab="square"]') || navButtons[0];
+    if (defaultBtn && !document.querySelector('.nav-tab-btn.bg-emerald-600\\/20')) {
+        defaultBtn.classList.add('bg-emerald-600/20', 'border-emerald-500', 'text-white');
+        defaultBtn.classList.remove('text-zinc-400');
+    }
+});
 
     const voiceBtn = document.getElementById('btn-voice');
     voiceBtn?.addEventListener('click', () => {
