@@ -47,11 +47,9 @@ export async function loadTranslations(langCode = 'en') {
     currentLang = langCode;
     localStorage.setItem('preferredLang', langCode);
     
-    // Apply translations to all static [data-i18n] elements
     applyTranslations();
     applyTextDirection(langCode);
     
-    // Broadcast an event so dynamic components (feeds, profiles, modals) re-render
     window.dispatchEvent(new CustomEvent('languageChanged', { detail: { lang: langCode } }));
 
     if (typeof showToast === 'function') {
@@ -83,6 +81,8 @@ function applyTranslations() {
         
         if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
             el.placeholder = text;
+        } else if (el.tagName === 'SELECT') {
+            // Do nothing for language selector itself
         } else {
             el.textContent = text;
         }
@@ -96,8 +96,6 @@ function applyTranslations() {
 export function initLanguage() {
     const savedLang = localStorage.getItem('preferredLang') || 'en';
     
-    applyTranslations(); // Initial fallback
-
     const selector = document.getElementById('languageSelector');
     if (selector) {
         selector.innerHTML = supportedLanguages.map(lang => `
@@ -105,7 +103,7 @@ export function initLanguage() {
         `).join('');
         selector.value = savedLang;
         
-        // Prevent stacking duplicate listeners
+        // Clean event listener
         selector.onchange = (e) => loadTranslations(e.target.value);
     }
 
@@ -116,7 +114,7 @@ export function changeLanguage(langCode) {
     loadTranslations(langCode);
 }
 
-// Bind globally for non-module script access
+// Global bindings
 window.initLanguage = initLanguage;
 window.changeLanguage = changeLanguage;
 window.t = t;
