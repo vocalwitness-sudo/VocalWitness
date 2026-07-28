@@ -383,40 +383,42 @@ async function openCommentModal(postId) {
     }
 
     // Submit comment handler
-    document.getElementById('submitCommentBtn').onclick = async () => {
-        const inputField = document.getElementById('commentInputText');
-        const text = inputField ? inputField.value.trim() : "";
-        if (!text) return;
+  // Submit comment handler
+        document.getElementById('submitCommentBtn').onclick = async () => {
+            const inputField = document.getElementById('commentInputText');
+            const text = inputField ? inputField.value.trim() : "";
+            if (!text) return;
 
-        if (!auth.currentUser) {
-            showToast("You must be logged in to comment.", "error");
-            return;
-        }
+            if (!auth.currentUser) {
+                showToast("You must be logged in to comment.", "error");
+                return;
+            }
 
-        try {
-            // Add comment to sub-collection
-            await addDoc(collection(db, "testimonies", postId, "comments"), {
-                content: text,
-                authorId: auth.currentUser.uid,
-                authorName: auth.currentUser.displayName || `Witness (${auth.currentUser.uid.substring(0, 5)})`,
-                createdAt: serverTimestamp()
-            });
+            try {
+                // Add comment to sub-collection
+                await addDoc(collection(db, "testimonies", postId, "comments"), {
+                    content: text,
+                    authorId: auth.currentUser.uid,
+                    authorName: auth.currentUser.displayName || `Witness (${auth.currentUser.uid.substring(0, 5)})`,
+                    createdAt: serverTimestamp()
+                });
 
-            // Increment comments count on main testimony document
-            const postRef = doc(db, "testimonies", postId);
-            await updateDoc(postRef, {
-                commentsCount: increment(1)
-            });
+                // Increment comments count on main testimony document
+                const postRef = doc(db, "testimonies", postId);
+                await updateDoc(postRef, {
+                    commentsCount: increment(1)
+                });
 
-            showToast("Comment posted!", "success");
-            inputField.value = '';
-            openCommentModal(postId); // Refresh comment window
-        } catch (e) {
-            console.error("Failed to post comment:", e);
-            showToast("Failed to post comment.", "error");
-        }
-    };
-}
+                showToast("Comment posted!", "success");
+                inputField.value = '';
+                openCommentModal(postId); // Refresh comment window
+            } catch (e) {
+                console.error("Failed to post comment:", e);
+                showToast("Failed to post comment.", "error");
+            }
+        };
+    } // <-- This correctly closes async function openCommentModal(postId)
+}     // <-- This correctly closes initFeed()
 
 window.showPostMenu = (postId, authorId) => showToast("Post options available", "info");
 
