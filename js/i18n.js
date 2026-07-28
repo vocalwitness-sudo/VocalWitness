@@ -3,16 +3,16 @@ let currentTranslations = {};
 let currentLang = 'en';
 
 const supportedLanguages = [
-    { code: 'en',  name: 'English',       flag: '🇬🇧', native: 'English',     rtl: false },
-    { code: 'ar',  name: 'Arabic',        flag: '🇸🇦', native: 'العربية',     rtl: true },
-    { code: 'es',  name: 'Spanish',       flag: '🇪🇸', native: 'Español',     rtl: false },
-    { code: 'fr',  name: 'French',        flag: '🇫🇷', native: 'Français',    rtl: false },
-    { code: 'ha',  name: 'Hausa',         flag: '🇳🇬', native: 'Hausa',       rtl: false },
-    { code: 'ig',  name: 'Igbo',          flag: '🇳🇬', native: 'Igbo',        rtl: false },
-    { code: 'pcm', name: 'Naija Pidgin',  flag: '🇳🇬', native: 'Pidgin',      rtl: false },
-    { code: 'pt',  name: 'Portuguese',    flag: '🇵🇹', native: 'Português',   rtl: false },
-    { code: 'yo',  name: 'Yorùbá',        flag: '🇳🇬', native: 'Yorùbá',      rtl: false },
-    { code: 'sw',  name: 'Swahili',       flag: '🇹🇿', native: 'Kiswahili',   rtl: false }
+    { code: 'en',  name: 'English',        flag: '🇬🇧', native: 'English',     rtl: false },
+    { code: 'ar',  name: 'Arabic',         flag: '🇸🇦', native: 'العربية',     rtl: true },
+    { code: 'es',  name: 'Spanish',        flag: '🇪🇸', native: 'Español',     rtl: false },
+    { code: 'fr',  name: 'French',         flag: '🇫🇷', native: 'Français',    rtl: false },
+    { code: 'ha',  name: 'Hausa',          flag: '🇳🇬', native: 'Hausa',       rtl: false },
+    { code: 'ig',  name: 'Igbo',           flag: '🇳🇬', native: 'Igbo',        rtl: false },
+    { code: 'pcm', name: 'Naija Pidgin',   flag: '🇳🇬', native: 'Pidgin',      rtl: false },
+    { code: 'pt',  name: 'Portuguese',     flag: '🇵🇹', native: 'Português',   rtl: false },
+    { code: 'yo',  name: 'Yorùbá',         flag: '🇳🇬', native: 'Yorùbá',      rtl: false },
+    { code: 'sw',  name: 'Swahili',        flag: '🇹🇿', native: 'Kiswahili',   rtl: false }
 ];
 
 function getLangName(code) {
@@ -84,7 +84,24 @@ function applyTranslations() {
         } else if (el.tagName === 'SELECT') {
             // Do nothing for language selector itself
         } else {
-            el.textContent = text;
+            const targetSpan = el.querySelector('.i18n-text');
+            if (targetSpan) {
+                targetSpan.textContent = text;
+            } else if (el.children.length === 0) {
+                // Only safe to overwrite textContent if there are zero child elements (like icons or nested spans)
+                el.textContent = text;
+            } else {
+                // If it has children (like icons), look for a text node inside without wiping out layout
+                let textUpdated = false;
+                for (let node of el.childNodes) {
+                    if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '') {
+                        node.textContent = text;
+                        textUpdated = true;
+                        break;
+                    }
+                }
+                // If no text node was found and it contains complex layout/icons, we leave child elements untouched to prevent hiding buttons
+            }
         }
     });
 
@@ -103,7 +120,6 @@ export function initLanguage() {
         `).join('');
         selector.value = savedLang;
         
-        // Clean event listener
         selector.onchange = (e) => loadTranslations(e.target.value);
     }
 
@@ -114,7 +130,6 @@ export function changeLanguage(langCode) {
     loadTranslations(langCode);
 }
 
-// Global bindings
 window.initLanguage = initLanguage;
 window.changeLanguage = changeLanguage;
 window.t = t;
