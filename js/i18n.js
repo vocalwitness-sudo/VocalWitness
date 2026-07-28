@@ -43,46 +43,6 @@ export async function loadTranslations(langCode = 'en') {
     window.dispatchEvent(new CustomEvent('languageChanged', { detail: { lang: langCode } }));
 }
 
-function applyTextDirection(langCode) {
-    const lang = supportedLanguages.find(l => l.code === langCode);
-    const isRTL = lang?.rtl || false;
-    
-    document.documentElement.setAttribute('dir', isRTL ? 'rtl' : 'ltr');
-    document.body.style.textAlign = isRTL ? 'right' : 'left';
-}
-
-function applyTranslations() {
-    document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.getAttribute('data-i18n');
-        if (!key) return;
-
-        const translatedText = currentTranslations[key] || key;
-
-        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
-            el.placeholder = translatedText;
-        } 
-        else if (el.tagName === 'BUTTON' || el.tagName === 'A' || el.tagName === 'H1' || el.tagName === 'H2') {
-            // For elements that commonly cause layout shift, we try to preserve structure
-            const textNode = Array.from(el.childNodes).find(node => 
-                node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== ''
-            );
-
-            if (textNode) {
-                textNode.textContent = translatedText;
-            } else if (el.children.length === 0) {
-                el.textContent = translatedText;
-            }
-            // If it has icons + text, we only update text node to avoid breaking layout
-        } 
-        else {
-            el.textContent = translatedText;
-        }
-    });
-
-    if (currentTranslations.pageTitle) {
-        document.title = currentTranslations.pageTitle;
-    }
-}
 
 export function initLanguage() {
     const savedLang = localStorage.getItem('preferredLang') || 'en';
