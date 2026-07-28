@@ -76,10 +76,7 @@
   "myProfile": "My Profile",
   "backToSquare": "← Back to Square",
   "loadingProfile": "Loading your profile...",
-  "settings": "Settings"
-}
-
-{
+  "settings": "Settings",
   "publicSquareTab": "Public Square",
   "publicSquareDesc": "Share stories & evidence",
   "evidenceLedgerTab": "Evidence Ledger",
@@ -93,7 +90,7 @@
   "moreOptionsBtn": "More Options",
   "myTestimoniesMenu": "My Testimonies",
   "groupsMenu": "Groups",
-  "trueWitnessMenu": "True Witness",
+  "trueWitnessMenu": "Witness Voice",
   "aboutMenu": "About Us",
   "privacyPolicyMenu": "Privacy Policy",
   "termsOfServiceMenu": "Terms of Service",
@@ -103,6 +100,5 @@
   "mainInputPlaceholder": "Share your raw testimony... What did you witness?",
   "addPhotoEvidence": "Add Photo Evidence",
   "recordVoiceMessage": "Record Voice Message",
-  "previewAreaText": "Preview will appear here...",
-  "postButton": "🚀 Publish to the Square"
+  "previewAreaText": "Preview will appear here..."
 }
