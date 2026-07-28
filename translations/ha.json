@@ -50,6 +50,11 @@
   "login": "Shiga",
   "signup": "Yi Rajista",
   "logout": "Fita",
+  "privacyLink": "🔒 Sirri",
+  "supportBtn": "Tallafa Dandali",
+  "joinBtn": "Shiga VocalWitness",
+  "profileBtn": "👤 Bayanin Mai Amfani",
+  "toggleTheme": "Canza Salo",
   "supportModal": {
     "title": "Tallafa Dandali",
     "description": "Taimaka kai tsaye ga litattafan gaskiya na VocalWitness. Tallafarka tana kiyaye ababen more rayuwa.",
@@ -66,12 +71,10 @@
   "verifiedBy": "An tabbatar da shi da",
   "trustScore": "Makin Aminci",
   "forensicProof": "Shaida na Forensic",
-  "viewFullTestimony": "Duba Cikakken Shaida"
-}
-{
-  "myProfileTitle": "My Profile | VocalWitness",
-  "myProfile": "My Profile",
-  "backToSquare": "← Back to Square",
-  "loadingProfile": "Loading your profile...",
-  "settings": "Settings"
+  "viewFullTestimony": "Duba Cikakken Shaida",
+  "myProfileTitle": "Bayanin Mai Amfani | VocalWitness",
+  "myProfile": "Bayanin Mai Amfani",
+  "backToSquare": "← Komawa Dandalin",
+  "loadingProfile": "Ana lodi bayaninka...",
+  "settings": "Saituna"
 }
