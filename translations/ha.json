@@ -3,7 +3,7 @@
   "appSubtitle": "Gaskiya • Shaida • Dandalin Jama'a",
   "legalLabel": "Muhimman Bayani:",
   "privacyWarning": "VocalWitness yana aiki ne kawai a matsayin hanyar rarraba ba tare da canzawa ba. Ba mu tattara katin shaida, fasfo, ko bayanan sirri ba.",
-  "placeholder": "Raba shaida naka... Me ka gani?",
+  "placeholder": "Raba shaida naka a tsari... Me ka gani?",
   "postButton": "🚀 Buga Shaida a Dandalin Jama'a",
   "citizenTalk": "Maganganun 'Yan ƙasa",
   "trueWitness": "Shaida na Gaske",
@@ -25,8 +25,8 @@
   "createGroupBtn": "Ƙirƙiri Ƙungiya",
   "cultivateSquare": "Noma Dandalin Jama'a",
   "protectSquare": "Kare Dandalin Jama'a tare da ƙarin alhaki",
-  "forensicTools": "Forensic Shield + Kayan aiki na ci gaba",
-  "higherImpact": "Mafi girman Tasiri na Shaida",
+  "forensicTools": "Kari na Forensic + Kayan Aiki na Ci Gaba",
+  "higherImpact": "Mafi girman tasirin shaida",
   "arenaRights": "Mai Amintaccen Arena & Hakkin Kulawa",
   "stewardship": "Gudummawa & Matsayin Mai Kulawa",
   "maybeLater": "Wani lokaci",
@@ -50,7 +50,6 @@
   "login": "Shiga",
   "signup": "Yi Rajista",
   "logout": "Fita",
-
   "supportModal": {
     "title": "Tallafa Dandali",
     "description": "Taimaka kai tsaye ga litattafan gaskiya na VocalWitness. Tallafarka tana kiyaye ababen more rayuwa.",
@@ -58,5 +57,14 @@
     "copyButton": "Kwafi Adires",
     "warning": "Kar a aiko da USDT sai a hanyar TRC20 kawai.",
     "closeButton": "Rufe"
-  }
+  },
+  "trueWitnessTitle": "Shaida na Gaske • VocalWitness",
+  "trueWitnessSubtitle": "Tabbatar da ZK • Aminci Mai Girma",
+  "zkVerifiedTestimonies": "Shaido da aka Tabbatar da ZK",
+  "backButton": "← Baya",
+  "noVerifiedTestimonies": "Har yanzu babu shaido da aka tabbatar da ZK",
+  "verifiedBy": "An tabbatar da shi da",
+  "trustScore": "Makin Aminci",
+  "forensicProof": "Shaida na Forensic",
+  "viewFullTestimony": "Duba Cikakken Shaida"
 }
