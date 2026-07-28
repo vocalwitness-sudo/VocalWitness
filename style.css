@@ -169,3 +169,11 @@ body {
     max-height: 85vh;
     overflow-y: auto;
 }
+
+#guest-action-btn {
+    min-width: 170px;   /* or higher */
+}
+
+.nav-tab {
+    min-width: 140px;   /* adjust as needed */
+}
