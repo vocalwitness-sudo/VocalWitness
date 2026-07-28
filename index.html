@@ -67,268 +67,274 @@
     <link rel="stylesheet" href="style.css">
     <link rel="icon" href="/logo.png" type="image/png">
 </head>
+<body class="bg-[#0a0f1c] text-white min-h-screen">
 
-<!-- Header -->
-<header class="flex items-center justify-between mb-8 sticky top-0 z-50 glass rounded-3xl p-4">
-    <div class="flex items-center gap-3">
-        <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-2xl">🔊</div>
-        <div>
-            <h1 class="text-2xl font-bold tracking-tight" data-i18n="appTitle">VocalWitness</h1>
-            <p class="text-sm text-emerald-400 tracking-widest" data-i18n="appSubtitle">Truth • Evidence • Public Square</p>
+<div class="app-container py-6">
+    <!-- Header -->
+    <header class="flex items-center justify-between mb-8 sticky top-4 z-50 glass rounded-3xl p-4 shadow-xl">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-2xl shadow-md">🔊</div>
+            <div>
+                <h1 class="text-xl sm:text-2xl font-bold tracking-tight" data-i18n="appTitle">VocalWitness</h1>
+                <p class="text-xs sm:text-sm text-emerald-400 tracking-widest" data-i18n="appSubtitle">Truth • Evidence • Public Square</p>
+            </div>
         </div>
-    </div>
-    
-    <div class="flex items-center gap-3 md:gap-4">
-        <select id="languageSelector" 
-                class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-4 py-2 text-sm focus:outline-none focus:border-emerald-500 hidden sm:block">
-            <!-- Options populated automatically by js/i18n.js -->
-        </select>
-            
-        <button onclick="toggleDarkMode()" class="p-3 rounded-2xl hover:bg-zinc-800 transition" title="Toggle theme" data-i18n-title="toggleTheme">
-            <span id="theme-icon">🌙</span>
-        </button>
+        
+        <div class="flex items-center gap-2 sm:gap-4">
+            <select id="languageSelector" 
+                    class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500 hidden md:block">
+                <!-- Options populated automatically by js/i18n.js -->
+            </select>
+                
+            <button onclick="toggleDarkMode()" class="p-2.5 sm:p-3 rounded-2xl hover:bg-zinc-800 transition" title="Toggle theme" data-i18n-title="toggleTheme">
+                <span id="theme-icon">🌙</span>
+            </button>
 
-        <a href="privacy.html" class="flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 transition-colors text-sm font-medium px-3 py-2" data-i18n="privacyLink">
-            🔒 Privacy First
-        </a>
+            <a href="privacy.html" class="hidden lg:flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 transition-colors text-sm font-medium px-3 py-2" data-i18n="privacyLink">
+                🔒 Privacy First
+            </a>
 
-        <button id="support-btn" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl transition whitespace-nowrap"
-                title="Help keep the platform running" data-i18n="supportBtn">
-            Support The Square
-        </button>
+            <button id="support-btn" class="px-4 sm:px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl transition whitespace-nowrap text-sm sm:text-base shadow-sm"
+                    title="Help keep the platform running" data-i18n="supportBtn">
+                Support The Square
+            </button>
 
-        <button id="guest-action-btn" 
-                class="px-5 py-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm">
-            <img src="https://www.google.com/favicon.ico" class="w-4 h-4" alt="Google">
-            <span class="hidden sm:inline" id="guest-btn-text" data-i18n="joinBtn">Join VocalWitness</span>
-        </button>
+            <button id="guest-action-btn" 
+                    class="px-4 sm:px-5 py-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm text-sm sm:text-base">
+                <img src="https://www.google.com/favicon.ico" class="w-4 h-4" alt="Google">
+                <span class="hidden sm:inline" id="guest-btn-text" data-i18n="joinBtn">Join VocalWitness</span>
+            </button>
 
-        <button id="profile-btn" class="px-5 py-2.5 border border-zinc-700 hover:bg-zinc-800 rounded-2xl transition flex items-center gap-2 hidden"
-                title="View your profile and settings" data-i18n="profileBtn">
-            👤 Profile
-        </button>
-    </div>
-</header>
-<!-- Main Navigation -->
-<nav class="flex gap-2 mb-8 overflow-x-auto pb-3 relative z-40" id="main-nav">
-    <button data-tab="square" class="nav-tab active px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative">
-        <span class="font-semibold">🗣️ Public Square</span>
-        <span class="text-xs text-zinc-400 hidden md:block">Share stories & evidence</span>
-    </button>
-    
-    <button data-tab="ledger" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative">
-        <span class="font-semibold">📜 Evidence Ledger</span>
-        <span class="text-xs text-zinc-400 hidden md:block">Permanent record</span>
-    </button>
-    
-    <button data-tab="arena" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative">
-        <span class="font-semibold">🎥 Live Arena</span>
-        <span class="text-xs text-zinc-400 hidden md:block">Watch & join live</span>
-    </button>
-    
-    <button data-tab="mycircle" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative">
-        <span class="font-semibold">👥 My Circle</span>
-        <span class="text-xs text-zinc-400 hidden md:block">Trusted people</span>
-    </button>
-    
-    <button data-tab="witness" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative bg-amber-900/70 text-amber-300 border border-amber-700">
-        <span class="font-semibold">✅ Verified Witnesses</span>
-        <span class="text-xs text-amber-400 hidden md:block">Trusted voices</span>
-    </button>
-
-    <div class="relative ml-auto">
-        <button id="more-btn" class="nav-tab px-7 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit bg-emerald-600 hover:bg-emerald-700 text-white font-semibold">
-            More Options
-        </button>
-    </div>
-</nav>
-
-<!-- More Menu -->
-<div id="more-menu" class="hidden fixed top-[165px] right-6 w-64 bg-zinc-900 border border-zinc-700 rounded-3xl shadow-2xl py-3 z-[9999]">
-    <a href="my-testimonies.html" class="block px-6 py-3 hover:bg-zinc-800">My Testimonies</a>
-    <a href="groups.html" class="block px-6 py-3 hover:bg-zinc-800">Groups</a>
-    <a href="true-witness.html" class="block px-6 py-3 hover:bg-zinc-800">True Witness</a>
-    <div class="h-px bg-zinc-700 mx-4 my-2"></div>
-    <a href="about.html" class="block px-6 py-3 hover:bg-zinc-800">About Us</a>
-    <a href="privacy.html" class="block px-6 py-3 hover:bg-zinc-800">Privacy Policy</a>
-    <a href="terms.html" class="block px-6 py-3 hover:bg-zinc-800">Terms of Service</a>
-    <a href="safety.html" class="block px-6 py-3 hover:bg-zinc-800">Safety Guidelines</a>
-</div>
-
-<!-- Testimony Composer -->
-<div class="glass rounded-3xl p-6 mb-10">
-    <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-semibold text-white flex items-center gap-2">
-            <span>📝</span> Share Your Testimony
-        </h2>
-        <span class="text-xs text-zinc-500">Public Square</span>
-    </div>
-
-    <textarea id="mainInput" rows="4" 
-              class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-5 text-lg placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none" 
-              placeholder="Share your raw testimony... What did you witness?"></textarea>
-    
-    <div class="flex gap-3 mt-5">
-        <button id="btn-photo" 
-                class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 hover:border-emerald-500 rounded-2xl flex items-center justify-center gap-3 font-medium transition-all active:scale-95"
-                title="Take a photo or upload an image as evidence">
-            📸 <span class="hidden sm:inline">Add Photo Evidence</span>
-        </button>
-
-        <button id="btn-voice" 
-                class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 hover:border-emerald-500 rounded-2xl flex items-center justify-center gap-3 font-medium transition-all active:scale-95"
-                title="Record your voice telling what you saw or heard">
-            🎤 <span class="hidden sm:inline">Record Voice Message</span>
-        </button>
-    </div>
-
-    <div id="preview-area" class="mt-6 min-h-[120px] border border-dashed border-zinc-700 rounded-2xl p-4 flex items-center justify-center text-zinc-500 text-sm">
-        Preview will appear here...
-    </div>
-
-    <button id="postButton" 
-            class="mt-8 w-full py-6 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500 
-                   hover:from-emerald-600 hover:via-teal-600 hover:to-emerald-600 
-                   text-black font-bold text-xl rounded-3xl transition-all active:scale-[0.97] relative overflow-hidden group">
-        <span class="relative z-10 flex items-center justify-center gap-3">
-            🚀 Publish to the Square
-        </span>
-        <span class="absolute inset-0 bg-gradient-to-r from-transparent via-white/35 to-transparent 
-                     -skew-x-12 -translate-x-full group-active:translate-x-full transition-transform duration-700"></span>
-    </button>
-</div>
-
-<!-- Dynamic Content -->
-<main id="main-content">
-    <div id="feedContainer" class="space-y-8"></div>
-</main>
-    
-<!-- Profile Modal -->
-<div id="profileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[10000] p-4">
-    <div class="glass rounded-3xl p-8 max-w-lg w-full max-h-[90vh] overflow-auto modal">
-        <div class="flex justify-between items-center mb-6 border-b border-zinc-700 pb-4">
-            <h2 class="text-2xl font-bold text-white">My Profile</h2>
-            <button onclick="closeProfile()" class="text-3xl text-zinc-400 hover:text-white">×</button>
-        </div>
-        <div id="profileContent"></div>
-        <div class="mt-8 flex gap-3 items-center">
-            <button onclick="logout()" class="flex-1 py-3 border border-red-500 text-red-400 hover:bg-red-500/10 rounded-2xl font-medium">
-                Sign Out
+            <button id="profile-btn" class="px-4 sm:px-5 py-2.5 border border-zinc-700 hover:bg-zinc-800 rounded-2xl transition flex items-center gap-2 hidden text-sm sm:text-base"
+                    title="View your profile and settings" data-i18n="profileBtn">
+                👤 Profile
             </button>
         </div>
-        <div id="resource-meter-container" class="mt-6"></div>
-    </div>
-</div>
+    </header>
 
-<!-- Support Modal -->
-<div id="supportModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[10000] flex items-center justify-center p-4 hidden">
-    <div class="glass max-w-md w-full rounded-3xl p-6 border border-emerald-500/30 text-white relative modal max-h-[90vh] overflow-y-auto">
-        <button id="closeSupportModal" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl">✕</button>
-        
-        <div class="text-center mb-6">
-            <div class="w-14 h-14 bg-emerald-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">🛡️</div>
-            <h3 class="text-2xl font-bold text-white">Sustain the Public Square</h3>
-            <p class="text-sm text-emerald-300 mt-2">
-                VocalWitness stays completely free and independent.<br>
-                No ads. No corporate sponsors. Only community support keeps it alive.
-            </p>
-        </div>
+    <!-- Main Navigation & Relative More Menu Container -->
+    <div class="relative z-40 mb-8">
+        <nav class="flex gap-2 overflow-x-auto pb-2" id="main-nav">
+            <button data-tab="square" class="nav-tab active px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative">
+                <span class="font-semibold">🗣️ Public Square</span>
+                <span class="text-xs text-zinc-400 hidden md:block">Share stories & evidence</span>
+            </button>
+            
+            <button data-tab="ledger" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative">
+                <span class="font-semibold">📜 Evidence Ledger</span>
+                <span class="text-xs text-zinc-400 hidden md:block">Permanent record</span>
+            </button>
+            
+            <button data-tab="arena" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative">
+                <span class="font-semibold">🎥 Live Arena</span>
+                <span class="text-xs text-zinc-400 hidden md:block">Watch & join live</span>
+            </button>
+            
+            <button data-tab="mycircle" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative">
+                <span class="font-semibold">👥 My Circle</span>
+                <span class="text-xs text-zinc-400 hidden md:block">Trusted people</span>
+            </button>
+            
+            <button data-tab="witness" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit group relative bg-amber-900/70 text-amber-300 border border-amber-700">
+                <span class="font-semibold">✅ Verified Witnesses</span>
+                <span class="text-xs text-amber-400 hidden md:block">Trusted voices</span>
+            </button>
 
-        <div class="space-y-5">
-            <div>
-                <label class="block text-xs text-zinc-400 mb-2">Choose Contribution Amount</label>
-                <div class="grid grid-cols-3 gap-2">
-                    <button type="button" class="support-tier-btn py-3 bg-zinc-800 hover:bg-emerald-600/30 border border-zinc-700 rounded-2xl text-sm font-medium transition-all" data-amount="5">$5</button>
-                    <button type="button" class="support-tier-btn py-3 bg-zinc-800 hover:bg-emerald-600/30 border border-emerald-500 bg-emerald-600/20 rounded-2xl text-sm font-medium transition-all" data-amount="15">$15</button>
-                    <button type="button" class="support-tier-btn py-3 bg-zinc-800 hover:bg-emerald-600/30 border border-zinc-700 rounded-2xl text-sm font-medium transition-all" data-amount="50">$50</button>
+            <div class="dropdown-container ml-auto">
+                <button id="more-btn" class="nav-tab px-6 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-fit bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-md">
+                    More Options
+                </button>
+
+                <!-- More Menu (Tethered inside parent relative context) -->
+                <div id="more-menu" class="hidden bg-zinc-900 border border-zinc-700 rounded-3xl shadow-2xl py-3">
+                    <a href="my-testimonies.html" class="block px-6 py-3 hover:bg-zinc-800 text-sm">My Testimonies</a>
+                    <a href="groups.html" class="block px-6 py-3 hover:bg-zinc-800 text-sm">Groups</a>
+                    <a href="true-witness.html" class="block px-6 py-3 hover:bg-zinc-800 text-sm">True Witness</a>
+                    <div class="h-px bg-zinc-700 mx-4 my-2"></div>
+                    <a href="about.html" class="block px-6 py-3 hover:bg-zinc-800 text-sm">About Us</a>
+                    <a href="privacy.html" class="block px-6 py-3 hover:bg-zinc-800 text-sm">Privacy Policy</a>
+                    <a href="terms.html" class="block px-6 py-3 hover:bg-zinc-800 text-sm">Terms of Service</a>
+                    <a href="safety.html" class="block px-6 py-3 hover:bg-zinc-800 text-sm">Safety Guidelines</a>
                 </div>
             </div>
+        </nav>
+    </div>
 
-            <div>
-                <label class="block text-xs text-zinc-400 mb-1">Custom Amount (USD)</label>
-                <input type="number" id="customSupportAmount" placeholder="Enter amount" min="1" 
-                       class="w-full bg-zinc-900 border border-zinc-800 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500" value="15">
-            </div>
+    <!-- Testimony Composer -->
+    <div class="glass rounded-3xl p-5 sm:p-8 mb-10 shadow-xl">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                <span>📝</span> Share Your Testimony
+            </h2>
+            <span class="text-xs text-zinc-500">Public Square</span>
+        </div>
 
-            <button id="paystackPayBtn" class="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-2xl text-base transition-all shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
-                💳 Pay with Card or Bank (Paystack)
+        <textarea id="mainInput" rows="4" 
+                  class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 sm:p-5 text-base sm:text-lg placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none" 
+                  placeholder="Share your raw testimony... What did you witness?"></textarea>
+        
+        <div class="flex flex-col sm:flex-row gap-3 mt-5">
+            <button id="btn-photo" 
+                    class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 hover:border-emerald-500 rounded-2xl flex items-center justify-center gap-3 font-medium transition-all active:scale-95"
+                    title="Take a photo or upload an image as evidence">
+                📸 <span class="inline">Add Photo Evidence</span>
             </button>
 
-            <button id="proceedCryptoBtn" class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-black font-semibold rounded-2xl text-base transition-all shadow-lg shadow-emerald-600/20">
-                ⚡ Pay with Crypto (NOWPayments)
+            <button id="btn-voice" 
+                    class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 hover:border-emerald-500 rounded-2xl flex items-center justify-center gap-3 font-medium transition-all active:scale-95"
+                    title="Record your voice telling what you saw or heard">
+                🎤 <span class="inline">Record Voice Message</span>
             </button>
         </div>
 
-        <!-- Direct Wallet -->
-        <div class="mt-6 pt-5 border-t border-zinc-800">
-            <p class="text-xs text-zinc-400 mb-3 text-center">Or send USDT directly</p>
-            
-            <div class="bg-white p-3 rounded-2xl w-40 h-40 mx-auto mb-4 flex items-center justify-center shadow-inner">
-                <img src="/image/95756.jpg" alt="USDT QR Code" class="w-full h-full object-contain">
-            </div>
+        <div id="preview-area" class="mt-6 min-h-[120px] border border-dashed border-zinc-700 rounded-2xl p-4 flex items-center justify-center text-zinc-500 text-sm">
+            Preview will appear here...
+        </div>
 
-            <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex items-center justify-between gap-3">
-                <span class="text-[13px] text-emerald-400 font-mono break-all select-all">TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK</span>
-                <button type="button" onclick="navigator.clipboard.writeText('TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK'); showToast('TRC-20 address copied!', 'success');" 
-                        class="text-xs bg-zinc-800 hover:bg-zinc-700 px-4 py-2 rounded-xl text-white font-medium transition-all shrink-0">
-                    Copy
+        <button id="postButton" 
+                class="mt-8 w-full py-5 sm:py-6 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500 
+                       hover:from-emerald-600 hover:via-teal-600 hover:to-emerald-600 
+                       text-black font-bold text-lg sm:text-xl rounded-3xl transition-all active:scale-[0.97] relative overflow-hidden group shadow-lg">
+            <span class="relative z-10 flex items-center justify-center gap-3">
+                🚀 Publish to the Square
+            </span>
+            <span class="absolute inset-0 bg-gradient-to-r from-transparent via-white/35 to-transparent 
+                         -skew-x-12 -translate-x-full group-active:translate-x-full transition-transform duration-700"></span>
+        </button>
+    </div>
+
+    <!-- Dynamic Content -->
+    <main id="main-content" class="mb-12">
+        <div id="feedContainer" class="space-y-8"></div>
+    </main>
+        
+    <!-- Profile Modal -->
+    <div id="profileModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[10000] p-4">
+        <div class="glass rounded-3xl p-6 sm:p-8 max-w-lg w-full modal-content-wrapper modal shadow-2xl">
+            <div class="flex justify-between items-center mb-6 border-b border-zinc-700 pb-4">
+                <h2 class="text-2xl font-bold text-white">My Profile</h2>
+                <button onclick="closeProfile()" class="text-3xl text-zinc-400 hover:text-white">×</button>
+            </div>
+            <div id="profileContent"></div>
+            <div class="mt-8 flex gap-3 items-center">
+                <button onclick="logout()" class="flex-1 py-3 border border-red-500 text-red-400 hover:bg-red-500/10 rounded-2xl font-medium">
+                    Sign Out
                 </button>
             </div>
-            <p class="text-[10px] text-zinc-500 mt-2 text-center">Tron (TRC-20) • USDT only</p>
+            <div id="resource-meter-container" class="mt-6"></div>
         </div>
+    </div>
 
-        <!-- Transparency Note -->
-        <div class="mt-6 text-center text-xs">
-            <p class="text-zinc-500">
-                Every contribution supports servers, security & independence.<br>
-                <span class="text-emerald-400 hover:underline cursor-pointer" onclick="showToast('Full transparency report coming soon', 'info')">View how funds are used →</span>
+    <!-- Support Modal -->
+    <div id="supportModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[10000] flex items-center justify-center p-4 hidden">
+        <div class="glass max-w-md w-full rounded-3xl p-6 sm:p-8 border border-emerald-500/30 text-white relative modal modal-content-wrapper shadow-2xl">
+            <button id="closeSupportModal" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl">✕</button>
+            
+            <div class="text-center mb-6">
+                <div class="w-14 h-14 bg-emerald-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">🛡️</div>
+                <h3 class="text-2xl font-bold text-white">Sustain the Public Square</h3>
+                <p class="text-sm text-emerald-300 mt-2">
+                    VocalWitness stays completely free and independent.<br>
+                    No ads. No corporate sponsors. Only community support keeps it alive.
+                </p>
+            </div>
+
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-xs text-zinc-400 mb-2">Choose Contribution Amount</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button type="button" class="support-tier-btn py-3 bg-zinc-800 hover:bg-emerald-600/30 border border-zinc-700 rounded-2xl text-sm font-medium transition-all" data-amount="5">$5</button>
+                        <button type="button" class="support-tier-btn py-3 bg-zinc-800 hover:bg-emerald-600/30 border border-emerald-500 bg-emerald-600/20 rounded-2xl text-sm font-medium transition-all" data-amount="15">$15</button>
+                        <button type="button" class="support-tier-btn py-3 bg-zinc-800 hover:bg-emerald-600/30 border border-zinc-700 rounded-2xl text-sm font-medium transition-all" data-amount="50">$50</button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-zinc-400 mb-1">Custom Amount (USD)</label>
+                    <input type="number" id="customSupportAmount" placeholder="Enter amount" min="1" 
+                           class="w-full bg-zinc-900 border border-zinc-800 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500" value="15">
+                </div>
+
+                <button id="paystackPayBtn" class="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-2xl text-base transition-all shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
+                    💳 Pay with Card or Bank (Paystack)
+                </button>
+
+                <button id="proceedCryptoBtn" class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-black font-semibold rounded-2xl text-base transition-all shadow-lg shadow-emerald-600/20">
+                    ⚡ Pay with Crypto (NOWPayments)
+                </button>
+            </div>
+
+            <!-- Direct Wallet -->
+            <div class="mt-6 pt-5 border-t border-zinc-800">
+                <p class="text-xs text-zinc-400 mb-3 text-center">Or send USDT directly</p>
+                
+                <div class="bg-white p-3 rounded-2xl w-36 h-36 mx-auto mb-4 flex items-center justify-center shadow-inner">
+                    <img src="/image/95756.jpg" alt="USDT QR Code" class="w-full h-full object-contain">
+                </div>
+
+                <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-3 flex items-center justify-between gap-2">
+                    <span class="text-[11px] text-emerald-400 font-mono break-all select-all">TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK</span>
+                    <button type="button" onclick="navigator.clipboard.writeText('TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK'); showToast('TRC-20 address copied!', 'success');" 
+                            class="text-xs bg-zinc-800 hover:bg-zinc-700 px-3 py-2 rounded-xl text-white font-medium transition-all shrink-0">
+                        Copy
+                    </button>
+                </div>
+                <p class="text-[10px] text-zinc-500 mt-2 text-center">Tron (TRC-20) • USDT only</p>
+            </div>
+
+            <!-- Transparency Note -->
+            <div class="mt-6 text-center text-xs">
+                <p class="text-zinc-500">
+                    Every contribution supports servers, security & independence.<br>
+                    <span class="text-emerald-400 hover:underline cursor-pointer" onclick="showToast('Full transparency report coming soon', 'info')">View how funds are used →</span>
+                </p>
+            </div>
+
+            <p class="text-[10px] text-zinc-500 text-center mt-5">
+                Non-custodial • No tracking • Protects free speech
             </p>
         </div>
-
-        <p class="text-[10px] text-zinc-500 text-center mt-5">
-            Non-custodial • No tracking • Protects free speech
-        </p>
     </div>
-</div>
 
-<!-- Login Modal -->
-<div id="loginModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[10000] p-4">
-    <div class="glass rounded-3xl p-8 max-w-md w-full modal">
-        <h2 class="text-2xl font-bold mb-6">Sign In</h2>
-        <button onclick="googleLogin()" class="w-full py-4 bg-white text-black rounded-2xl font-medium flex items-center justify-center gap-3">
-            <img src="https://www.google.com/favicon.ico" class="w-5 h-5" alt="Google">
-            Continue with Google
-        </button>
-        <button onclick="closeLoginModal()" class="w-full mt-3 py-3 text-zinc-400 hover:text-white">
-            Cancel
-        </button>
+    <!-- Login Modal -->
+    <div id="loginModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[10000] p-4">
+        <div class="glass rounded-3xl p-6 sm:p-8 max-w-md w-full modal shadow-2xl">
+            <h2 class="text-2xl font-bold mb-6">Sign In</h2>
+            <button onclick="googleLogin()" class="w-full py-4 bg-white text-black rounded-2xl font-medium flex items-center justify-center gap-3">
+                <img src="https://www.google.com/favicon.ico" class="w-5 h-5" alt="Google">
+                Continue with Google
+            </button>
+            <button onclick="closeLoginModal()" class="w-full mt-3 py-3 text-zinc-400 hover:text-white">
+                Cancel
+            </button>
+        </div>
     </div>
-</div>
 
     <!-- Create Account Modal -->
-<div id="createAccountModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[10000] p-4">
-    <div class="glass rounded-3xl p-8 max-w-md w-full">
-        <h2 class="text-2xl font-bold mb-2">Join the Public Square</h2>
-        <p class="text-zinc-400 mb-6">Create your account to share testimonies and evidence.</p>
-        
-        <button onclick="googleLogin()" 
-                class="w-full py-4 bg-white text-black rounded-2xl font-medium flex items-center justify-center gap-3 mb-4">
-            <img src="https://www.google.com/favicon.ico" class="w-5 h-5" alt="Google">
-            Continue with Google
-        </button>
-        
-        <button onclick="closeCreateAccountModal()" 
-                class="w-full py-3 text-zinc-400 hover:text-white">
-            Cancel
-        </button>
+    <div id="createAccountModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[10000] p-4">
+        <div class="glass rounded-3xl p-6 sm:p-8 max-w-md w-full modal shadow-2xl">
+            <h2 class="text-2xl font-bold mb-2">Join the Public Square</h2>
+            <p class="text-zinc-400 mb-6">Create your account to share testimonies and evidence.</p>
+            
+            <button onclick="googleLogin()" 
+                    class="w-full py-4 bg-white text-black rounded-2xl font-medium flex items-center justify-center gap-3 mb-4">
+                <img src="https://www.google.com/favicon.ico" class="w-5 h-5" alt="Google">
+                Continue with Google
+            </button>
+            
+            <button onclick="closeCreateAccountModal()" 
+                    class="w-full py-3 text-zinc-400 hover:text-white">
+                Cancel
+            </button>
+        </div>
     </div>
-</div>
 
-<footer class="bg-zinc-950 border-t border-zinc-800 pt-16 pb-12 mt-20">
-    <div class="max-w-6xl mx-auto px-6 text-center text-xs text-zinc-500">
-        © 2026 VocalWitness • Built for Truth • Powered by Citizens
-    </div>
-</footer>
+    <footer class="bg-zinc-950 border-t border-zinc-800 pt-16 pb-12 mt-20 rounded-3xl">
+        <div class="max-w-6xl mx-auto px-6 text-center text-xs text-zinc-500">
+            © 2026 VocalWitness • Built for Truth • Powered by Citizens
+        </div>
+    </footer>
+</div>
 
 <!-- Global UI Helper Script -->
 <script>
@@ -470,7 +476,6 @@
 <script type="module" src="js/main.js"></script>
     
 <script>
-    // Global toggle definition for the profile modal
     window.showProfile = function() {
         const modal = document.getElementById('profileModal');
         if (modal) {
@@ -490,7 +495,6 @@
         }
     };
 
-    // Wire up the profile button listener directly on load
     document.addEventListener('DOMContentLoaded', () => {
         const profileBtn = document.getElementById('profile-btn');
         if (profileBtn) {
@@ -500,7 +504,7 @@
         }
     });
 </script>
-    <script type="module">
+<script type="module">
     import { initLanguage } from './js/i18n.js';
     document.addEventListener('DOMContentLoaded', () => {
         initLanguage();
