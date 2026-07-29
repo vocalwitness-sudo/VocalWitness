@@ -79,10 +79,11 @@ export async function uploadForensicMedia() {
         try {
             const hash = await generateSha256Hash(selectedImageFile);
             const timestamp = Date.now();
-           const path = `uploads/${userId}/${timestamp}_${selectedImageFile.name}`;
+            const path = `uploads/${userId}/${timestamp}_${selectedImageFile.name}`;
             
             const imageRef = ref(storage, path);
-            await uploadBytes(imageRef, selectedImageFile);
+            const imageMetadata = { contentType: selectedImageFile.type || 'image/jpeg' };
+            await uploadBytes(imageRef, selectedImageFile, imageMetadata);
             
             mediaData.imageUrl = await getDownloadURL(imageRef);
             mediaData.imageHash = hash;
@@ -92,7 +93,7 @@ export async function uploadForensicMedia() {
         }
     }
 
- // Audio Upload
+    // Audio Upload
     if (engineInstance?.currentAudioBlob) {
         try {
             const hash = await generateSha256Hash(engineInstance.currentAudioBlob);
@@ -100,7 +101,7 @@ export async function uploadForensicMedia() {
             const audioRef = ref(storage, `audio/${userId}/${timestamp}.webm`);
 
             const metadata = {
-                contentType: 'audio/webm'
+                contentType: engineInstance.currentAudioBlob.type || 'audio/webm'
             };
 
             await uploadBytes(audioRef, engineInstance.currentAudioBlob, metadata);
@@ -114,6 +115,9 @@ export async function uploadForensicMedia() {
             showToast("Voice upload failed", "error");
         }
     }
+
+    return mediaData;
+}
 
     return mediaData;
 }
