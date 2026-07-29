@@ -7,10 +7,9 @@ self.onmessage = async (e) => {
     try {
         console.log("🧠 Worker: Processing ZK Proof Request...");
 
-        // If circuit files aren't deployed yet or mock mode is requested
         if (useMock) {
             console.warn("⚠️ Using Mock ZK Proof (Circuit files pending deployment)");
-            await new Promise(r => setTimeout(r, 1000)); // Simulate work
+            await new Promise(r => setTimeout(r, 1000));
             self.postMessage({
                 success: true,
                 proof: { pi_a: ["mock_a"], pi_b: [["mock_b"]], pi_c: ["mock_c"], protocol: "groth16" },
@@ -41,7 +40,6 @@ self.onmessage = async (e) => {
     } catch (error) {
         console.error("Worker Error (Falling back to mock for dev):", error);
         
-        // Graceful fallback for development environments where .wasm/.zkey aren't present yet
         self.postMessage({ 
             success: true, 
             proof: { pi_a: ["dev_fallback"], pi_b: [["dev_fallback"]], pi_c: ["dev_fallback"], protocol: "groth16" },
