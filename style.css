@@ -55,3 +55,28 @@ button[data-i18n],
 .nav-tab {
     white-space: nowrap;
 }
+/* Standardize button selection indicator */
+button.selected, 
+button.active, 
+.tab-btn[aria-selected="true"],
+.filter-chip.active {
+    background-color: var(--primary-color, #2563eb);
+    color: #ffffff;
+    border-color: var(--primary-dark, #1d4ed8);
+    position: relative;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
+}
+
+/* Clear visual indicator dot or underline for selected state */
+button.selected::after,
+.filter-chip.active::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px;
+    height: 6px;
+    background-color: currentColor;
+    border-radius: 50%;
+}
