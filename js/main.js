@@ -175,35 +175,35 @@ window.publishTestimony = async () => {
         }
     }
 };
-
 // ====================== EVIDENCE LEDGER ======================
 async function loadEvidenceLedger() {
     const container = document.getElementById('ledgerContainer');
     if (!container) return;
 
-    const wrapper = document.getElementById('ledgerTableWrapper') || 
-                  (() => {
-                      const div = document.createElement('div');
-                      div.id = 'ledgerTableWrapper';
-                      container.innerHTML = `
-                          <div class="glass rounded-3xl p-8 border border-zinc-700/60 shadow-2xl">
-                              <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8 pb-6 border-b border-zinc-800">
-                                  <div>
-                                      <h2 class="text-2xl font-bold text-white flex items-center gap-2">
-                                          <span>📜</span> Cryptographic Evidence Ledger
-                                      </h2>
-                                      <p class="text-sm text-zinc-400 mt-1">Permanent, immutable record of public testimonies.</p>
-                                  </div>
-                                  <button onclick="window.refreshLedger()" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-2xl text-xs font-medium text-emerald-400 transition flex items-center gap-2">
-                                      🔄 Sync Ledger
-                                  </button>
-                              </div>
-                              <div id="ledgerTableInnerWrapper" class="overflow-x-auto"></div>
-                          </div>`;
-                      return div;
-                  })();
+    let wrapper = document.getElementById('ledgerTableWrapper');
+    if (!wrapper) {
+        wrapper = document.createElement('div');
+        wrapper.id = 'ledgerTableWrapper';
+        container.innerHTML = `
+            <div class="glass rounded-3xl p-8 border border-zinc-700/60 shadow-2xl">
+                <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8 pb-6 border-b border-zinc-800">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                            <span>📜</span> Cryptographic Evidence Ledger
+                        </h2>
+                        <p class="text-sm text-zinc-400 mt-1">Permanent, immutable record of public testimonies.</p>
+                    </div>
+                    <button onclick="window.refreshLedger()" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-2xl text-xs font-medium text-emerald-400 transition flex items-center gap-2">
+                        🔄 Sync Ledger
+                    </button>
+                </div>
+                <div id="ledgerTableInnerWrapper" class="overflow-x-auto"></div>
+            </div>`;
+    }
 
-    const innerWrapper = document.getElementById('ledgerTableInnerWrapper') || wrapper;
+    const innerWrapper = document.getElementById('ledgerTableInnerWrapper');
+    if (!innerWrapper) return;
+
     innerWrapper.innerHTML = `<div class="text-center py-16 text-zinc-500 animate-pulse">Loading ledger records...</div>`;
 
     try {
@@ -218,12 +218,39 @@ async function loadEvidenceLedger() {
             return;
         }
 
-        let html = `<table class="w-full text-left border-collapse">...</table>`; 
+        let html = `
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-zinc-800 text-xs text-zinc-400 uppercase tracking-wider">
+                        <th class="py-3 px-4">Witness</th>
+                        <th class="py-3 px-4">Content Summary</th>
+                        <th class="py-3 px-4">Forensic Hash</th>
+                        <th class="py-3 px-4">Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-zinc-800/60 text-sm text-zinc-300">`;
+
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            const dateStr = data.timestamp ? new Date(data.timestamp).toLocaleString() : 'N/A';
+            const hasHash = data.imageHash || data.audioHash || data.hasForensic;
+            const hashDisplay = hasHash ? '<span class="text-emerald-400 flex items-center gap-1">🔒 Verified</span>' : '<span class="text-zinc-500">Standard</span>';
+            
+            html += `
+                <tr class="hover:bg-zinc-800/40 transition">
+                    <td class="py-4 px-4 font-medium text-white">${escapeHtml(data.author || 'Anonymous')}</td>
+                    <td class="py-4 px-4 truncate max-w-xs text-zinc-300">${escapeHtml(data.content)}</td>
+                    <td class="py-4 px-4 font-mono text-xs">${hashDisplay}</td>
+                    <td class="py-4 px-4 text-zinc-500 text-xs">${dateStr}</td>
+                </tr>`;
+        });
+
+        html += `</tbody></table>`;
         innerWrapper.innerHTML = html;
 
     } catch (err) {
         console.error("Ledger fetch error:", err);
-        innerWrapper.innerHTML = `<div class="text-red-400 text-center py-8">Failed to load ledger records.</div>`;
+        innerWrapper.innerHTML = `<div class="text-red-400 text-center py-8">Failed to load ledger records. Please check permissions.</div>`;
     }
 }
 
