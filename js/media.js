@@ -98,6 +98,8 @@ export async function uploadForensicMedia() {
             const hash = await generateSha256Hash(engineInstance.currentAudioBlob);
             const timestamp = Date.now();
             const audioRef = ref(storage, `audio/${userId}/${timestamp}.webm`);
+            const media = await uploadForensicMedia();
+console.log(media.audioUrl);
 
             await uploadBytes(audioRef, engineInstance.currentAudioBlob);
             
