@@ -1,7 +1,7 @@
 // ====================== IMPORTS ======================
 import {
-    signInWithRedirect,
-    getRedirectResult,
+    signInWithPopup,
+    GoogleAuthProvider,
     signOut,
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword
@@ -14,7 +14,7 @@ import { showToast } from './utils.js';
 import { updateAppState } from './app-state.js';
 import { applyTierTheme, updateTierBadge } from './tier.js';
 
-let redirectInProgress = false;
+let authActionInProgress = false;
 
 // ====================== TIER & USER HELPERS ======================
 function refreshTierUI() {
@@ -95,22 +95,46 @@ function handleAuthError(error) {
 
 // ====================== AUTH METHODS ======================
 export async function googleLogin() {
-    if (redirectInProgress) {
+    if (authActionInProgress) {
         showToast("Sign-in already in progress...", "info");
         return;
     }
 
-    redirectInProgress = true;
+    authActionInProgress = true;
 
     try {
         savePendingDraft();
-        showToast("Redirecting to Google Sign-In...", "info");
-        await signInWithRedirect(auth, provider);
+        showToast("Opening Google Sign-In...", "info");
+        
+        const result = await signInWithPopup(auth, provider);
+        if (result && result.user) {
+            const user = result.user;
+            await createOrUpdateUser(user);
+            updateAppState({ isAuthenticated: true, currentUser: user });
+            refreshTierUI();
+            
+            if (typeof window.updateHeaderButtons === 'function') {
+                window.updateHeaderButtons(true);
+            }
+            
+            window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
+            updateUIForAuthState();
+
+            showToast("✅ Signed in successfully! Welcome to the Square.", "success");
+            
+            const loginModal = document.getElementById('loginModal');
+            if (loginModal) loginModal.classList.add('hidden');
+            const createModal = document.getElementById('createAccountModal');
+            if (createModal) createModal.classList.add('hidden');
+            
+            restorePendingDraft();
+        }
     } catch (error) {
-        console.error("Login redirect error:", error);
+        console.error("Google popup sign-in error:", error);
         const errorMessage = handleAuthError(error);
         showToast(errorMessage, "error");
-        redirectInProgress = false;
+    } finally {
+        authActionInProgress = false;
     }
 }
 
@@ -224,34 +248,6 @@ export function updateUIForAuthState() {
 
 // ====================== INIT AUTH ======================
 export function initAuth() {
-    getRedirectResult(auth)
-        .then(async (result) => {
-            if (result && result.user) {
-                const user = result.user;
-                await createOrUpdateUser(user);
-                updateAppState({ isAuthenticated: true, currentUser: user });
-                refreshTierUI();
-                
-                if (typeof window.updateHeaderButtons === 'function') {
-                    window.updateHeaderButtons(true);
-                }
-                
-                window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
-                updateUIForAuthState();
-
-                showToast("✅ Signed in successfully! Welcome to the Square.", "success");
-                
-                const loginModal = document.getElementById('loginModal');
-                if (loginModal) loginModal.classList.add('hidden');
-                restorePendingDraft();
-            }
-        })
-        .catch((error) => {
-            console.error("Redirect result error:", error);
-            const errorMessage = handleAuthError(error);
-            showToast(errorMessage, "error");
-        });
-
     auth.onAuthStateChanged(async (user) => {
         if (user) {
             await createOrUpdateUser(user);
@@ -267,7 +263,7 @@ export function initAuth() {
     
     updateUIForAuthState();
 
-    console.log("🔐 Auth initialized (Redirect Mode + Email Support)");
+    console.log("🔐 Auth initialized (Popup Mode + Email Support)");
 }
 
 // ====================== MODAL & GLOBAL EXPOSURES ======================
