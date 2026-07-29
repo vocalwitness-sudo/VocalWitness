@@ -1,4 +1,4 @@
-// js/auth.js - Clean Auth with Circle Integration + Hybrid UI Support (Redirect Mode) + Email Auth
+// ====================== IMPORTS ======================
 import {
     signInWithRedirect,
     getRedirectResult,
@@ -16,7 +16,7 @@ import { applyTierTheme, updateTierBadge } from './tier.js';
 
 let redirectInProgress = false;
 
-// Safe Tier Refresh Helper
+// ====================== TIER & USER HELPERS ======================
 function refreshTierUI() {
     if (typeof refreshTierAndUI === 'function') {
         refreshTierAndUI();
@@ -30,8 +30,6 @@ async function createOrUpdateUser(user) {
     if (!user) return;
     try {
         const userRef = doc(db, "users", user.uid);
-        
-        // Use setDoc with merge: true so it initializes missing fields or updates lastActive safely
         await setDoc(userRef, {
             uid: user.uid,
             email: user.email || "",
@@ -40,7 +38,6 @@ async function createOrUpdateUser(user) {
             tier: "citizen",
             lastActive: serverTimestamp()
         }, { merge: true });
-
     } catch (e) {
         console.error("User document error:", e);
     }
@@ -96,7 +93,7 @@ function handleAuthError(error) {
     }
 }
 
-// ====================== REDIRECT GOOGLE LOGIN ======================
+// ====================== AUTH METHODS ======================
 export async function googleLogin() {
     if (redirectInProgress) {
         showToast("Sign-in already in progress...", "info");
@@ -117,7 +114,6 @@ export async function googleLogin() {
     }
 }
 
-// ====================== EMAIL / PASSWORD AUTH ======================
 export async function handleEmailAuth(event) {
     event.preventDefault();
     const email = document.getElementById('authEmail')?.value;
@@ -163,7 +159,6 @@ export async function handleEmailSignUp(event) {
     }
 }
 
-// ====================== LOGOUT ======================
 export async function logout() {
     try {
         await signOut(auth);
@@ -177,26 +172,27 @@ export async function logout() {
     }
 }
 
-// ====================== REQUIRE AUTH (Hybrid Friendly) ======================
+// ====================== REQUIRE AUTH ======================
 export function requireAuth(message = "Please sign in to participate in the Public Square.") {
     if (!auth.currentUser) {
-        savePendingDraft(); // Save any active composer text before prompting
+        savePendingDraft();
         showToast(message, "info");
         
         const loginModal = document.getElementById('loginModal');
         const modalMsg = document.getElementById('loginModalMessage');
-        if (modalMsg) modalMsg.textContent = message; // Display contextual reason
+        if (modalMsg) modalMsg.textContent = message;
         if (loginModal) loginModal.classList.remove('hidden');
         return false;
     }
     return true;
 }
-// ====================== UI SYNC FOR HYBRID READ/WRITE MODEL ======================
+
 // ====================== UI SYNC FOR HYBRID READ/WRITE MODEL ======================
 export function updateUIForAuthState() {
     const isLoggedIn = !!auth.currentUser;
     const guestBtn = document.getElementById('guest-action-btn');
     const profileBtn = document.getElementById('profile-btn');
+    const signInElement = document.getElementById('signin-btn');
     const privateElements = document.querySelectorAll('.requires-auth');
 
     if (guestBtn) {
@@ -205,59 +201,29 @@ export function updateUIForAuthState() {
         if (guestBtnText) guestBtnText.textContent = isLoggedIn ? '' : 'Join VocalWitness';
     }
 
-    // Safely check and toggle sign-in button directly without unassigned variables
-    const signInElement = document.getElementById('signin-btn');
     if (signInElement) {
         signInElement.classList.toggle('hidden', isLoggedIn);
     }
-
+    
     if (profileBtn) {
         profileBtn.classList.toggle('hidden', !isLoggedIn);
     }
 
-    // Toggle public vs private sensitive data blocks across pages
     privateElements.forEach(el => {
         el.classList.toggle('hidden', !isLoggedIn);
     });
 
-    // Adjust composer/interactive buttons opacity for guests
     document.querySelectorAll('#postButton, #btn-photo, #btn-voice').forEach(btn => {
         if (btn) btn.style.opacity = isLoggedIn ? '1' : '0.6';
     });
 
-    // Update header buttons if helper exists
     if (typeof window.updateHeaderButtons === 'function') {
         window.updateHeaderButtons(isLoggedIn);
     }
 }
 
-    // Header buttons & profile toggle matching requirement
-    if (signInBtn) {
-        signInBtn.classList.toggle('hidden', isLoggedIn);
-    }
-    if (profileBtn) {
-        profileBtn.classList.toggle('hidden', !isLoggedIn);
-    }
-
-    // Toggle public vs private sensitive data blocks across pages
-    privateElements.forEach(el => {
-        el.classList.toggle('hidden', !isLoggedIn);
-    });
-
-    // Disable composer/interactive buttons for guests
-    document.querySelectorAll('#postButton, #btn-photo, #btn-voice').forEach(btn => {
-        if (btn) btn.style.opacity = isLoggedIn ? '1' : '0.6';
-    });
-
-    // Update header buttons if helper exists
-    if (typeof window.updateHeaderButtons === 'function') {
-        window.updateHeaderButtons(isLoggedIn);
-    }
-
-
 // ====================== INIT AUTH ======================
 export function initAuth() {
-    // Handle the result when the user returns from Google's redirect page
     getRedirectResult(auth)
         .then(async (result) => {
             if (result && result.user) {
@@ -296,10 +262,10 @@ export function initAuth() {
         }
         
         window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
-        updateUIForAuthState();   // Keep UI in sync
+        updateUIForAuthState();
     });
     
-    updateUIForAuthState();   // Keep UI in sync on load
+    updateUIForAuthState();
 
     console.log("🔐 Auth initialized (Redirect Mode + Email Support)");
 }
@@ -323,6 +289,16 @@ export function showAuthModal() {
     }
 }
 
+export function closeLoginModal() {
+    const loginModal = document.getElementById('loginModal');
+    if (loginModal) loginModal.classList.add('hidden');
+}
+
+export function closeCreateAccountModal() {
+    const createModal = document.getElementById('createAccountModal');
+    if (createModal) createModal.classList.add('hidden');
+}
+
 // Global exposures
 window.googleLogin = googleLogin;
 window.handleEmailAuth = handleEmailAuth;
@@ -331,24 +307,5 @@ window.logout = logout;
 window.requireAuth = requireAuth;
 window.updateUIForAuthState = updateUIForAuthState;
 window.showAuthModal = showAuthModal;
-
-window.closeLoginModal = function() {
-    const loginModal = document.getElementById('loginModal');
-    if (loginModal) loginModal.classList.add('hidden');
-};
-
-window.closeCreateAccountModal = function() {
-    const createModal = document.getElementById('createAccountModal');
-    if (createModal) createModal.classList.add('hidden');
-};
-
-// Close modals
-window.closeLoginModal = function() {
-    const loginModal = document.getElementById('loginModal');
-    if (loginModal) loginModal.classList.add('hidden');
-};
-
-window.closeCreateAccountModal = function() {
-    const createModal = document.getElementById('createAccountModal');
-    if (createModal) createModal.classList.add('hidden');
-};
+window.closeLoginModal = closeLoginModal;
+window.closeCreateAccountModal = closeCreateAccountModal;
