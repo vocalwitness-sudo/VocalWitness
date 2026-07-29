@@ -30,8 +30,11 @@
     <!-- Paystack Script v2 -->
     <script src="https://js.paystack.co/v2/inline.js"></script>
 
-    <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css">
     <link rel="icon" href="/logo.png" type="image/png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body class="min-h-screen pb-24 bg-[#0a0f1c] text-white antialiased">
 
@@ -67,14 +70,15 @@
             Support The Square
         </button>
 
-        <button id="signin-btn" class="px-4 sm:px-5 py-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm text-sm sm:text-base">
+        <!-- Added onclick="showAuthModal()" so clicking it opens your login/signup modal -->
+        <button id="signin-btn" onclick="showAuthModal()" class="px-4 sm:px-5 py-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm text-sm sm:text-base">
             <img src="https://www.google.com/favicon.ico" class="w-4 h-4" alt="Google">
             <span class="hidden sm:inline" data-i18n="joinBtn">Sign in</span>
         </button>
 
         <button id="profile-btn" onclick="openProfile()" class="px-4 sm:px-5 py-2.5 border border-zinc-700 hover:bg-zinc-800 rounded-2xl transition flex items-center gap-2 hidden text-sm sm:text-base" title="View your profile and settings">
-    Profile
-</button>
+            Profile
+        </button>
     </div>
 </header>
   
