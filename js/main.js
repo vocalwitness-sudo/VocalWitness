@@ -1,6 +1,6 @@
 // js/main.js - Polished & Robust Main Entry Point
 import './app-state.js';
-import { initAuth, requireAuth } from "./auth.js";
+import { initAuth, requireAuth, updateUIForAuthState } from "./auth.js";
 import { initFeed } from './feed.js';
 import { db, auth, storage } from './firebase-config.js';
 import { initLanguage } from './i18n.js';
@@ -78,9 +78,9 @@ window.initiatePayment = function(amount, email = null, metadata = {}) {
     if (!requireAuth("Sign in to support VocalWitness")) return;
 
     const handler = PaystackPop.setup({
-        key: 'pk_test_xxxxxxxxxxxxxxxxxxxxxxxx', // ← Replace with your key (use env in production)
+        key: 'pk_test_xxxxxxxxxxxxxxxxxxxxxxxx', 
         email: email || auth.currentUser?.email || '',
-        amount: amount * 100, // Convert to kobo
+        amount: amount * 100, 
         currency: "NGN",
         metadata: { 
             source: "VocalWitness",
@@ -89,7 +89,6 @@ window.initiatePayment = function(amount, email = null, metadata = {}) {
         },
         onSuccess: (transaction) => {
             showToast(`✅ Payment successful! Ref: ${transaction.reference}`, "success");
-            // TODO: Optionally save transaction record to Firestore
         },
         onCancel: () => showToast("Payment was cancelled", "info")
     });
@@ -157,11 +156,9 @@ window.publishTestimony = async () => {
 
         showToast("✅ Testimony published successfully!", "success");
 
-        // Clear form
         if (textarea) textarea.value = '';
         mediaModule.resetMediaState?.();
 
-        // Refresh feed
         initFeed?.(db, 'citizen-talk');
 
     } catch (err) {
@@ -185,49 +182,48 @@ async function loadEvidenceLedger() {
     if (!container) return;
 
     const wrapper = document.getElementById('ledgerTableWrapper') || 
-                   (() => {
-                       const div = document.createElement('div');
-                       div.id = 'ledgerTableWrapper';
-                       container.innerHTML = `
-                           <div class="glass rounded-3xl p-8 border border-zinc-700/60 shadow-2xl">
-                               <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8 pb-6 border-b border-zinc-800">
-                                   <div>
-                                       <h2 class="text-2xl font-bold text-white flex items-center gap-2">
-                                           <span>📜</span> Cryptographic Evidence Ledger
-                                       </h2>
-                                       <p class="text-sm text-zinc-400 mt-1">Permanent, immutable record of public testimonies.</p>
-                                   </div>
-                                   <button onclick="window.refreshLedger()" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-2xl text-xs font-medium text-emerald-400 transition flex items-center gap-2">
-                                       🔄 Sync Ledger
-                                   </button>
-                               </div>
-                               <div id="ledgerTableWrapper" class="overflow-x-auto"></div>
-                           </div>`;
-                       return div;
-                   })();
+                  (() => {
+                      const div = document.createElement('div');
+                      div.id = 'ledgerTableWrapper';
+                      container.innerHTML = `
+                          <div class="glass rounded-3xl p-8 border border-zinc-700/60 shadow-2xl">
+                              <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8 pb-6 border-b border-zinc-800">
+                                  <div>
+                                      <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                                          <span>📜</span> Cryptographic Evidence Ledger
+                                      </h2>
+                                      <p class="text-sm text-zinc-400 mt-1">Permanent, immutable record of public testimonies.</p>
+                                  </div>
+                                  <button onclick="window.refreshLedger()" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-2xl text-xs font-medium text-emerald-400 transition flex items-center gap-2">
+                                      🔄 Sync Ledger
+                                  </button>
+                              </div>
+                              <div id="ledgerTableInnerWrapper" class="overflow-x-auto"></div>
+                          </div>`;
+                      return div;
+                  })();
 
-    wrapper.innerHTML = `<div class="text-center py-16 text-zinc-500 animate-pulse">Loading ledger records...</div>`;
+    const innerWrapper = document.getElementById('ledgerTableInnerWrapper') || wrapper;
+    innerWrapper.innerHTML = `<div class="text-center py-16 text-zinc-500 animate-pulse">Loading ledger records...</div>`;
 
     try {
         const q = query(collection(db, "testimonies"), limit(20));
         const querySnapshot = await getDocs(q);
 
         if (querySnapshot.empty) {
-            wrapper.innerHTML = `
+            innerWrapper.innerHTML = `
                 <div class="text-center py-12 text-zinc-500">
                     <p class="text-base font-medium text-zinc-400">No forensic records found yet.</p>
                 </div>`;
             return;
         }
 
-        let html = `<table class="w-full text-left border-collapse">...`; // (your table code remains the same)
-        // ... [Keep your existing table generation logic here] ...
-
-        wrapper.innerHTML = html;
+        let html = `<table class="w-full text-left border-collapse">...</table>`; 
+        innerWrapper.innerHTML = html;
 
     } catch (err) {
         console.error("Ledger fetch error:", err);
-        // Your existing error handling...
+        innerWrapper.innerHTML = `<div class="text-red-400 text-center py-8">Failed to load ledger records.</div>`;
     }
 }
 
@@ -257,11 +253,11 @@ function setupEventListeners() {
         });
     });
 
-    // === AUTH BUTTONS (Updated for Guest → Join flow) ===
+    // === AUTH BUTTONS ===
     const guestActionBtn = document.getElementById('guest-action-btn');
     if (guestActionBtn) {
         guestActionBtn.addEventListener('click', () => {
-            window.showAuthModal();   // New function from auth.js
+            window.showAuthModal(); 
         });
     }
 
@@ -286,31 +282,25 @@ function setupEventListeners() {
             input.click();
         });
     }
-    // ==================== NAVIGATION TAB ACTIVE HIGHLIGHT ====================
-document.addEventListener('DOMContentLoaded', () => {
-    const navButtons = document.querySelectorAll('.nav-tab-btn'); // Make sure your buttons have this class, or adjust selector
 
+    // Navigation Tab Active Highlight Logic
+    const navButtons = document.querySelectorAll('.nav-tab-btn');
     navButtons.forEach(btn => {
         btn.addEventListener('click', (e) => {
-            // Remove active classes from all nav buttons
             navButtons.forEach(b => {
                 b.classList.remove('bg-emerald-600/20', 'border-emerald-500', 'text-white');
-                b.classList.add('text-zinc-400'); // inactive text color
+                b.classList.add('text-zinc-400');
             });
-
-            // Add active classes to the clicked button
             btn.classList.add('bg-emerald-600/20', 'border-emerald-500', 'text-white');
             btn.classList.remove('text-zinc-400');
         });
     });
 
-    // Ensure Public Square is set as default active on load if none selected
     const defaultBtn = document.querySelector('[data-tab="square"]') || navButtons[0];
     if (defaultBtn && !document.querySelector('.nav-tab-btn.bg-emerald-600\\/20')) {
         defaultBtn.classList.add('bg-emerald-600/20', 'border-emerald-500', 'text-white');
         defaultBtn.classList.remove('text-zinc-400');
     }
-});
 
     const voiceBtn = document.getElementById('btn-voice');
     voiceBtn?.addEventListener('click', () => {
@@ -326,6 +316,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     console.log("✅ All major buttons wired successfully");
 }
+
 // ====================== BOOTSTRAP ======================
 async function bootstrap() {
     if (isInitialized) return;
@@ -353,7 +344,6 @@ async function bootstrap() {
     } catch (e) {
         console.error("Bootstrap error:", e);
         showToast("Failed to initialize app. Please refresh.", "error");
-       
     }
 }
 
