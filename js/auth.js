@@ -304,23 +304,42 @@ export function initAuth() {
     console.log("🔐 Auth initialized (Redirect Mode + Email Support)");
 }
 
-// Global exposure
+// ====================== MODAL & GLOBAL EXPOSURES ======================
+export function showAuthModal() {
+    if (auth.currentUser) {
+        if (typeof window.showProfile === 'function') {
+            window.showProfile();
+        } else {
+            console.warn("showProfile function not defined yet.");
+        }
+    } else {
+        const createModal = document.getElementById('createAccountModal');
+        if (createModal) {
+            createModal.classList.remove('hidden');
+        } else {
+            const loginModal = document.getElementById('loginModal');
+            if (loginModal) loginModal.classList.remove('hidden');
+        }
+    }
+}
+
+// Global exposures
 window.googleLogin = googleLogin;
 window.handleEmailAuth = handleEmailAuth;
 window.handleEmailSignUp = handleEmailSignUp;
 window.logout = logout;
 window.requireAuth = requireAuth;
 window.updateUIForAuthState = updateUIForAuthState;
+window.showAuthModal = showAuthModal;
 
-// Show appropriate modal based on state
-window.showAuthModal = function() {
-    if (auth.currentUser) {
-        window.showProfile();
-    } else {
-        const createModal = document.getElementById('createAccountModal');
-        if (createModal) createModal.classList.remove('hidden');
-        else document.getElementById('loginModal')?.classList.remove('hidden');
-    }
+window.closeLoginModal = function() {
+    const loginModal = document.getElementById('loginModal');
+    if (loginModal) loginModal.classList.add('hidden');
+};
+
+window.closeCreateAccountModal = function() {
+    const createModal = document.getElementById('createAccountModal');
+    if (createModal) createModal.classList.add('hidden');
 };
 
 // Close modals
