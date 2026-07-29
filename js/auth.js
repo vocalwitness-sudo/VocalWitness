@@ -194,16 +194,21 @@ export function requireAuth(message = "Please sign in to participate in the Publ
 // ====================== UI SYNC FOR HYBRID READ/WRITE MODEL ======================
 export function updateUIForAuthState() {
     const isLoggedIn = !!auth.currentUser;
-    const signInBtn = document.getElementById('signin-btn');
+    const guestBtn = document.getElementById('guest-action-btn');
     const profileBtn = document.getElementById('profile-btn');
+    const signInBtn = document.getElementById('signin-btn'); // Safe check added
     const privateElements = document.querySelectorAll('.requires-auth');
 
-    // Toggle Sign In Button visibility and text based on auth state
+    if (guestBtn) {
+        guestBtn.classList.toggle('hidden', isLoggedIn);
+        const guestBtnText = document.getElementById('guest-btn-text');
+        if (guestBtnText) guestBtnText.textContent = isLoggedIn ? '' : 'Join VocalWitness';
+    }
+
+    // Safely toggle sign-in / profile buttons if present in DOM
     if (signInBtn) {
         signInBtn.classList.toggle('hidden', isLoggedIn);
     }
-
-    // Toggle Profile Button visibility
     if (profileBtn) {
         profileBtn.classList.toggle('hidden', !isLoggedIn);
     }
@@ -213,7 +218,7 @@ export function updateUIForAuthState() {
         el.classList.toggle('hidden', !isLoggedIn);
     });
 
-    // Disable composer/interactive buttons for guests
+    // Adjust composer/interactive buttons opacity for guests
     document.querySelectorAll('#postButton, #btn-photo, #btn-voice').forEach(btn => {
         if (btn) btn.style.opacity = isLoggedIn ? '1' : '0.6';
     });
