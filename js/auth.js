@@ -192,11 +192,11 @@ export function requireAuth(message = "Please sign in to participate in the Publ
     return true;
 }
 // ====================== UI SYNC FOR HYBRID READ/WRITE MODEL ======================
+// ====================== UI SYNC FOR HYBRID READ/WRITE MODEL ======================
 export function updateUIForAuthState() {
     const isLoggedIn = !!auth.currentUser;
     const guestBtn = document.getElementById('guest-action-btn');
     const profileBtn = document.getElementById('profile-btn');
-    const signInBtn = document.getElementById('signin-btn'); // Safe check added
     const privateElements = document.querySelectorAll('.requires-auth');
 
     if (guestBtn) {
@@ -205,10 +205,12 @@ export function updateUIForAuthState() {
         if (guestBtnText) guestBtnText.textContent = isLoggedIn ? '' : 'Join VocalWitness';
     }
 
-    // Safely toggle sign-in / profile buttons if present in DOM
-    if (signInBtn) {
-        signInBtn.classList.toggle('hidden', isLoggedIn);
+    // Safely check and toggle sign-in button directly without unassigned variables
+    const signInElement = document.getElementById('signin-btn');
+    if (signInElement) {
+        signInElement.classList.toggle('hidden', isLoggedIn);
     }
+
     if (profileBtn) {
         profileBtn.classList.toggle('hidden', !isLoggedIn);
     }
