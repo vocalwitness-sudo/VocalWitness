@@ -246,7 +246,7 @@ export function updateUIForAuthState() {
     if (typeof window.updateHeaderButtons === 'function') {
         window.updateHeaderButtons(isLoggedIn);
     }
-}
+
 
 // ====================== INIT AUTH ======================
 export function initAuth() {
