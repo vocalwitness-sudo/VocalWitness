@@ -1,10 +1,6 @@
 /* ====================== BASE STYLES ====================== */
-* { box-sizing: border-box; }
-
-@font-face {
-    font-family: 'Inter';
-    src: url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-    font-display: swap;
+* {
+    box-sizing: border-box;
 }
 
 body {
@@ -24,14 +20,21 @@ body {
 }
 
 /* ====================== ANTI-SHIFT FIXES ====================== */
+#guest-action-btn {
+    min-width: 185px;
+}
 
-#guest-action-btn { min-width: 185px; }
-#support-btn { min-width: 175px; }
-#postButton { min-width: 300px; }
+#support-btn {
+    min-width: 175px;
+}
+
+#postButton {
+    min-width: 300px;
+}
 
 /* Navigation Tabs - Most problematic area */
 .nav-tab {
-    min-width: 160px !important;     /* Increased for longer languages */
+    min-width: 160px !important; /* Increased for longer languages */
     text-align: center;
     white-space: nowrap;
     padding-left: 16px;
@@ -42,7 +45,7 @@ body {
 #btn-photo,
 #btn-voice {
     min-height: 68px;
-    min-width: 260px;               /* Very important */
+    min-width: 260px; /* Very important */
     white-space: nowrap;
 }
 
@@ -55,9 +58,10 @@ button[data-i18n],
 .nav-tab {
     white-space: nowrap;
 }
+
 /* Standardize button selection indicator */
-button.selected, 
-button.active, 
+button.selected,
+button.active,
 .tab-btn[aria-selected="true"],
 .filter-chip.active {
     background-color: var(--primary-color, #2563eb);
