@@ -42,22 +42,32 @@ export function removeImage(previewArea) {
 }
 
 // ====================== VOICE ======================
-export function toggleVoiceRecording(voiceBtn) {
+export async function toggleVoiceRecording(voiceBtn) {
     if (!engineInstance) {
         return showToast("Voice engine not ready yet", "error");
     }
 
     const isRecording = engineInstance.mediaRecorder &&
-                       engineInstance.mediaRecorder.state !== "inactive";
+                       engineInstance.mediaRecorder.state === "recording";
 
     if (!isRecording) {
-        engineInstance.startVoiceRecording(300000); // 5 minutes max
-        voiceBtn.classList.add('recording-active', 'animate-pulse');
-        showToast("🎤 Recording started... Speak clearly", "info");
+        try {
+            await engineInstance.startVoiceRecording(300000);
+            voiceBtn.classList.add('recording-active', 'animate-pulse');
+            showToast("🎤 Recording started... Speak clearly", "info");
+        } catch (err) {
+            showToast("Microphone access denied or unavailable", "error");
+        }
     } else {
-        engineInstance.stopVoiceRecording();
+        // Wait until the blob is fully ready
+        const blob = await engineInstance.stopVoiceRecording();
         voiceBtn.classList.remove('recording-active', 'animate-pulse');
-        showToast("✅ Recording saved. Ready to publish.", "success");
+
+        if (!blob || blob.size === 0) {
+            showToast("Recording is empty. Please try again.", "error");
+        } else {
+            showToast("✅ Recording saved. Ready to publish.", "success");
+        }
     }
 }
 
