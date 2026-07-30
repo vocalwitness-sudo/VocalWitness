@@ -176,6 +176,37 @@
                          -skew-x-12 -translate-x-full group-active:translate-x-full transition-transform duration-700"></span>
         </button>
     </div>
+
+        <!-- Voice Recording Control Bar -->
+<div id="voice-recorder-bar" class="hidden mt-4 glass rounded-2xl p-4 border border-emerald-500/30">
+    <div class="flex items-center gap-3 flex-wrap">
+        <!-- Timer -->
+        <div class="flex items-center gap-2 min-w-[70px]">
+            <span id="rec-indicator" class="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></span>
+            <span id="rec-timer" class="font-mono text-sm text-emerald-400">00:00</span>
+        </div>
+
+        <!-- Waveform canvas -->
+        <canvas id="rec-waveform" width="180" height="36" class="flex-1 max-w-[200px] rounded bg-zinc-900/80"></canvas>
+
+        <!-- Controls -->
+        <div class="flex items-center gap-2 ml-auto">
+            <button id="rec-pause-btn" class="px-3 py-1.5 text-xs rounded-xl bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white transition">
+                ⏸ Pause
+            </button>
+            <button id="rec-stop-btn" class="px-3 py-1.5 text-xs rounded-xl bg-red-600/80 hover:bg-red-600 text-white transition">
+                ⏹ Stop
+            </button>
+            <button id="rec-replay-btn" class="px-3 py-1.5 text-xs rounded-xl bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white transition hidden">
+                ↻ Replay
+            </button>
+        </div>
+    </div>
+
+    <!-- Hidden audio element for replay -->
+    <audio id="rec-replay-audio" class="hidden"></audio>
+</div>
+        
     <!-- Dynamic Content -->
     <main id="main-content">
         <div id="feedContainer" class="space-y-8"></div>
