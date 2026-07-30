@@ -9,6 +9,13 @@ let engineInstance = null;
 export function setEngine(engine) {
     engineInstance = engine;
     console.log("✅ Media Engine Connected");
+
+    // Wire pause / stop / replay buttons after engine is ready
+    setTimeout(() => {
+        if (typeof initVoiceControls === 'function') {
+            initVoiceControls();
+        }
+    }, 300);
 }
 
 // ====================== PHOTO ======================
@@ -41,7 +48,7 @@ export function removeImage(previewArea) {
     if (previewArea) previewArea.innerHTML = 'Preview will appear here...';
 }
 
-// ====================== VOICE ======================
+
 // ====================== VOICE (with Pause / Wave / Replay) ======================
 
 let waveAnimationId = null;
@@ -217,13 +224,6 @@ export function initVoiceControls() {
     }
 }
 
-// Call this after engine is set
-export function setEngine(engine) {
-    engineInstance = engine;
-    console.log("✅ Media Engine Connected");
-    // slight delay so DOM is ready
-    setTimeout(initVoiceControls, 300);
-}
 // ====================== UPLOAD (Hardened) ======================
 export async function uploadForensicMedia() {
     const mediaData = {
