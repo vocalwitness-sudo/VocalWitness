@@ -18,6 +18,13 @@ export function setEngine(engine) {
     }, 300);
 }
 
+// ====================== HELPER SANITIZER ======================
+function sanitizeUrl(rawUrl) {
+    if (!rawUrl) return null;
+    // Cleans up any duplicate alt=media query strings attached to Firebase URLs
+    return rawUrl.replace(/(&alt=media)+$/g, '&alt=media');
+}
+
 // ====================== PHOTO ======================
 export async function handleImageSelect(event, previewArea) {
     const file = event.target.files[0];
@@ -37,7 +44,7 @@ export async function handleImageSelect(event, previewArea) {
                     ✕
                 </button>
             </div>`;
-       
+        
         document.getElementById('removeImgBtn').onclick = () => removeImage(previewArea);
     };
     reader.readAsDataURL(file);
@@ -48,9 +55,7 @@ export function removeImage(previewArea) {
     if (previewArea) previewArea.innerHTML = 'Preview will appear here...';
 }
 
-
 // ====================== VOICE (with Pause / Wave / Replay) ======================
-
 let waveAnimationId = null;
 let replayUrl = null;
 
@@ -170,7 +175,7 @@ export async function toggleVoiceRecording(voiceBtn) {
             return;
         }
 
-        // Enable replay
+        // Enable replay safely
         if (replayUrl) URL.revokeObjectURL(replayUrl);
         replayUrl = URL.createObjectURL(blob);
         const audioEl = document.getElementById('rec-replay-audio');
@@ -256,7 +261,8 @@ export async function uploadForensicMedia() {
             };
 
             await uploadBytes(imageRef, selectedImageFile, imageMetadata);
-            mediaData.imageUrl = await getDownloadURL(imageRef);
+            const rawImageUrl = await getDownloadURL(imageRef);
+            mediaData.imageUrl = sanitizeUrl(rawImageUrl);
             mediaData.imageHash = hash;
 
             console.log("✅ Image uploaded:", mediaData.imageUrl, `(${selectedImageFile.size} bytes)`);
@@ -271,19 +277,17 @@ export async function uploadForensicMedia() {
         try {
             const blob = engineInstance.currentAudioBlob;
 
-            // Critical check – prevents 0-byte / corrupt files
             if (!blob || blob.size === 0) {
                 console.warn("Audio blob is empty – skipping upload");
                 showToast("Recording is empty. Please record again.", "error");
             } else {
                 const hash = await generateSha256Hash(blob);
                 const timestamp = Date.now();
-                // Consistent path that matches previous error pattern
                 const path = `evidence/${userId}/${timestamp}_voice.webm`;
 
                 const audioRef = ref(storage, path);
                 const metadata = {
-                    contentType: blob.type || 'audio/webm',
+                    contentType: 'audio/webm;codecs=opus', // Explicit container spec
                     customMetadata: {
                         uploadedBy: userId,
                         durationHint: 'voice'
@@ -291,7 +295,8 @@ export async function uploadForensicMedia() {
                 };
 
                 await uploadBytes(audioRef, blob, metadata);
-                mediaData.audioUrl = await getDownloadURL(audioRef);
+                const rawAudioUrl = await getDownloadURL(audioRef);
+                mediaData.audioUrl = sanitizeUrl(rawAudioUrl);
                 mediaData.audioHash = hash;
 
                 console.log("✅ Audio uploaded:", mediaData.audioUrl, `(${blob.size} bytes)`);
@@ -309,6 +314,10 @@ export function resetMediaState() {
     selectedImageFile = null;
     if (engineInstance) {
         engineInstance.currentAudioBlob = null;
+    }
+    if (replayUrl) {
+        URL.revokeObjectURL(replayUrl);
+        replayUrl = null;
     }
     const preview = document.getElementById('preview-area');
     if (preview) {
