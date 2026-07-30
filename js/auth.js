@@ -1,6 +1,7 @@
 // ====================== IMPORTS ======================
 import {
-    signInWithPopup,
+    signInWithRedirect,
+    getRedirectResult,
     GoogleAuthProvider,
     signOut,
     signInWithEmailAndPassword,
@@ -96,7 +97,7 @@ function handleAuthError(error) {
     }
 }
 
-// ====================== AUTH METHODS -GOOGLE LOGin======================
+// ====================== AUTH METHODS - GOOGLE REDIRECT LOGIC ======================
 export async function googleLogin() {
     if (authActionInProgress) {
         showToast("Sign-in already in progress...", "info");
@@ -106,12 +107,20 @@ export async function googleLogin() {
     authActionInProgress = true;
 
     try {
-        // 1. Save draft FIRST synchronously
         savePendingDraft();
+        showToast("Redirecting to Google...", "info");
+        await signInWithRedirect(auth, provider);
+    } catch (error) {
+        console.error("Google redirect sign-in error:", error);
+        showToast(handleAuthError(error), "error");
+        authActionInProgress = false;
+    }
+}
 
-        // 2. Open Popup IMMEDIATELY (must happen before async ops/toasts to preserve user gesture context)
-        const result = await signInWithPopup(auth, provider);
-
+export async function handleGoogleRedirectResult() {
+    try {
+        const result = await getRedirectResult(auth);
+        
         if (result && result.user) {
             const user = result.user;
             await createOrUpdateUser(user);
@@ -133,18 +142,15 @@ export async function googleLogin() {
             restorePendingDraft();
         }
     } catch (error) {
-        console.error("Google popup sign-in error:", error);
-        const errorMessage = handleAuthError(error);
-        showToast(errorMessage, "error");
-    } finally {
-        authActionInProgress = false;
+        console.error("Redirect resolution error:", error);
+        showToast(handleAuthError(error), "error");
     }
 }
 
+// ====================== EMAIL SIGN-IN & SIGN-UP ======================
 export async function handleEmailAuth(event) {
     if (event) event.preventDefault();
 
-    // 1. Flexible DOM lookup (checks login modal first, falls back to signup inputs if present)
     const email = (
         document.getElementById('authEmail')?.value || 
         document.getElementById('signInEmail')?.value || 
@@ -168,14 +174,12 @@ export async function handleEmailAuth(event) {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        // 2. Handle unverified email status cleanly
         if (!user.emailVerified) {
             showToast("⚠️ Email unverified. A link was sent to your inbox. Please verify before proceeding.", "warning");
             await signOut(auth);
             return;
         }
 
-        // 3. Update app state and UI on successful login
         await createOrUpdateUser(user);
         updateAppState({ isAuthenticated: true, currentUser: user });
         refreshTierUI();
@@ -187,7 +191,6 @@ export async function handleEmailAuth(event) {
         window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
         updateUIForAuthState();
 
-        // 4. Feedback & Modal Cleanup
         showToast("✅ Signed in successfully!", "success");
         closeLoginModal();
         closeCreateAccountModal();
@@ -199,29 +202,6 @@ export async function handleEmailAuth(event) {
     }
 }
 
-        // 3. Update app state and UI on successful login
-        await createOrUpdateUser(user);
-        updateAppState({ isAuthenticated: true, currentUser: user });
-        refreshTierUI();
-        
-        if (typeof window.updateHeaderButtons === 'function') {
-            window.updateHeaderButtons(true);
-        }
-
-        window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
-        updateUIForAuthState();
-
-        // 4. Feedback & Modal Cleanup
-        showToast("✅ Signed in successfully!", "success");
-        closeLoginModal();
-        closeCreateAccountModal();
-        restorePendingDraft();
-
-    } catch (error) {
-        console.error("Email sign-in error:", error);
-        showToast(handleAuthError(error), "error");
-    }
-}
 export async function handleEmailSignUp(event) {
     if (event) event.preventDefault();
     const email = document.getElementById('authEmail')?.value?.trim() || document.getElementById('signUpEmail')?.value?.trim();
@@ -240,14 +220,10 @@ export async function handleEmailSignUp(event) {
     try {
         savePendingDraft();
         
-        // 1. Create account in Firebase Auth
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
         
-        // 2. Write initial Firestore User Doc
         await createOrUpdateUser(user);
-
-        // 3. Send Verifiable Token Email
         await sendEmailVerification(user);
 
         showToast("🎉 Account created! A verification link has been sent to your email.", "success");
@@ -255,7 +231,6 @@ export async function handleEmailSignUp(event) {
         closeLoginModal();
         closeCreateAccountModal();
         
-        // Sign out temporarily until they click the token link in their email
         await signOut(auth);
     } catch (error) {
         console.error("Email sign-up error:", error);
@@ -276,7 +251,6 @@ export async function logout() {
     }
 }
 
-// Helper function to toggle password field visibility
 export function togglePasswordVisibility(inputId, btnElement) {
     const input = document.getElementById(inputId);
     if (!input) return;
@@ -339,6 +313,10 @@ export function updateUIForAuthState() {
 
 // ====================== INIT AUTH ======================
 export function initAuth() {
+    // 1. Process Google sign-in redirect result if returning from Google
+    handleGoogleRedirectResult();
+
+    // 2. Main Firebase Auth State Listener
     auth.onAuthStateChanged(async (user) => {
         if (user) {
             await createOrUpdateUser(user);
@@ -362,7 +340,7 @@ export function initAuth() {
 
     updateUIForAuthState();
 
-    console.log("🔐 Auth initialized (Popup Mode + Email Verification Support)");
+    console.log("🔐 Auth initialized (Redirect Mode + Email Verification Support)");
 }
 
 // ====================== MODAL & GLOBAL EXPOSURES ======================
