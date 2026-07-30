@@ -190,36 +190,59 @@ function renderFilteredPosts(posts) {
 
     posts.forEach(post => renderSinglePostDOM(post.id, post, feedContainer));
 }
-
 function renderSinglePostDOM(id, data, container) {
     const postEl = document.createElement('div');
     postEl.className = 'post-card glass rounded-3xl p-6 mb-6 hover:border-emerald-500/35 transition-all duration-300 border border-zinc-800 bg-zinc-900/50 relative';
 
-    const pinnedBadge = data.isPinned ? `<span class="bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px] px-2.5 py-0.5 rounded-full font-medium flex items-center gap-1">📌 Pinned Testimony</span>` : '';
+    const pinnedBadge = data.isPinned
+        ? `<span class="bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px] px-2.5 py-0.5 rounded-full font-medium flex items-center gap-1">📌 Pinned Testimony</span>`
+        : '';
+
     const authorBadgeHTML = renderUserBadgeHTML(data.reputation || 0, data.zkVerified || false);
     const reactions = data.reactions || { respect: 0, truth: 0, concern: 0, impact: 0 };
 
-    const mediaHTML = data.imageUrl ? 
-        `<img src="${data.imageUrl}" class="mt-5 rounded-2xl w-full max-h-96 object-cover border border-zinc-700" alt="Evidence">` : '';
+    // Image
+    const mediaHTML = data.imageUrl
+        ? `<img src="${data.imageUrl}" class="mt-5 rounded-2xl w-full max-h-96 object-cover border border-zinc-700" alt="Evidence" loading="lazy">`
+        : '';
 
-    const audioHTML = data.audioUrl ? 
-        `<div class="mt-5 bg-zinc-900 rounded-2xl p-4 border border-zinc-700">
-            <audio controls class="w-full"><source src="${data.audioUrl}" type="audio/webm"></audio>
-         </div>` : '';
+    // ===== HARDENED AUDIO (fixes 416) =====
+    let audioHTML = '';
+    if (data.audioUrl) {
+        // Force the browser to treat it as a full download instead of range request
+        const safeAudioUrl = data.audioUrl.includes('?')
+            ? data.audioUrl + '&alt=media'
+            : data.audioUrl + '?alt=media';
 
-    const hashHTML = data.forensicHash ?
-        `<div class="mt-3 text-[10px] font-mono text-zinc-500 truncate" title="SHA-256 Hash: ${data.forensicHash}">
-            🔒 Hash: ${data.forensicHash}
-         </div>` : '';
+        audioHTML = `
+            <div class="mt-5 bg-zinc-900 rounded-2xl p-4 border border-zinc-700">
+                <audio controls preload="metadata" class="w-full" crossorigin="anonymous">
+                    <source src="${safeAudioUrl}" type="audio/webm">
+                    <source src="${safeAudioUrl}" type="audio/ogg">
+                    Your browser does not support the audio element.
+                </audio>
+            </div>`;
+    }
 
+    // Forensic hash
+    const hashHTML = data.forensicHash || data.imageHash || data.audioHash
+        ? `<div class="mt-3 text-[10px] font-mono text-zinc-500 truncate" title="SHA-256 Hash">
+               🔒 Hash: ${data.forensicHash || data.imageHash || data.audioHash}
+           </div>`
+        : '';
+
+    // Date
     let formattedDate = "Just now";
     if (data.createdAt?.toDate) {
         formattedDate = data.createdAt.toDate().toLocaleString();
     } else if (data.createdAt) {
         formattedDate = new Date(data.createdAt).toLocaleString();
+    } else if (data.timestamp) {
+        formattedDate = new Date(data.timestamp).toLocaleString();
     }
 
-    const authorDisplayName = data.author || (data.authorId ? `Witness (${data.authorId.substring(0, 6)}...)` : 'Anonymous Witness');
+    const authorDisplayName = data.author
+        || (data.authorId ? `Witness (${data.authorId.substring(0, 6)}...)` : 'Anonymous Witness');
 
     postEl.innerHTML = `
         <div class="flex justify-between items-start">
@@ -236,12 +259,11 @@ function renderSinglePostDOM(id, data, container) {
             </div>
             <div class="flex items-center gap-2">
                 <button data-action="pin" data-id="${id}" title="Pin Post" class="text-zinc-500 hover:text-amber-400 text-xs transition">📌</button>
-                <button onclick="showPostMenu('${id}', '${data.authorId}')" class="text-zinc-400 hover:text-white text-2xl transition">⋯</button>
+                <button onclick="showPostMenu('${id}', '${data.authorId || ''}')" class="text-zinc-400 hover:text-white text-2xl transition">⋯</button>
             </div>
         </div>
 
         ${data.content ? `<p class="mt-5 mb-4 text-zinc-100 leading-relaxed">${data.content}</p>` : ''}
-
         ${mediaHTML}
         ${audioHTML}
         ${hashHTML}
