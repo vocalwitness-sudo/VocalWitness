@@ -13,13 +13,13 @@ import { showToast } from './utils.js';
 import './composer.js';
 
 // Firebase imports (moved to top level - better performance)
-import { 
-    collection, 
-    addDoc, 
-    serverTimestamp, 
-    query, 
-    getDocs, 
-    limit 
+import {
+    collection,
+    addDoc,
+    serverTimestamp,
+    query,
+    getDocs,
+    limit
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 let engineInstance = null;
@@ -29,7 +29,6 @@ let listenersInitialized = false;
 // ====================== TAB SWITCHING ======================
 window.switchTab = async (tab) => {
     console.log(`Switching to tab: ${tab}`);
-
     document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
         btn.classList.remove('active', 'bg-amber-900', 'text-amber-300');
         if (btn.dataset.tab === tab) {
@@ -37,31 +36,27 @@ window.switchTab = async (tab) => {
             if (tab === 'witness') btn.classList.add('bg-amber-900', 'text-amber-300');
         }
     });
-
     AppState.currentTab = tab;
     AppState.currentMode = tab === 'witness' ? 'witness' : 'citizen';
-
     const container = document.getElementById('dynamicContainer');
     if (!container) return;
-
     container.innerHTML = `<div class="text-center py-20 text-zinc-400">Loading ${tab}...</div>`;
-
     try {
         if (tab === 'square' || tab === 'citizen') {
             container.innerHTML = `<div id="feedContainer" class="space-y-8"></div>`;
             initFeed?.(db, 'citizen-talk');
-        } 
+        }
         else if (tab === 'ledger') {
             container.innerHTML = `<div id="ledgerContainer" class="space-y-6"></div>`;
             loadEvidenceLedger();
-        } 
+        }
         else if (tab === 'witness') {
             container.innerHTML = `
                 <div class="space-y-6 p-8 text-center">
                     <h2 class="text-3xl font-bold text-amber-400">🛡️ Verified Witnesses</h2>
                     <p class="text-zinc-400">ZK-Verified Testimonies</p>
                 </div>`;
-        } 
+        }
         else if (tab === 'arena' || tab === 'mycircle') {
             container.innerHTML = `<div class="p-8 text-center text-zinc-400">This section is under construction</div>`;
         }
@@ -76,16 +71,15 @@ window.refreshLedger = () => loadEvidenceLedger();
 // ====================== PAYSTACK INTEGRATION ======================
 window.initiatePayment = function(amount, email = null, metadata = {}) {
     if (!requireAuth("Sign in to support VocalWitness")) return;
-
     const handler = PaystackPop.setup({
-        key: 'pk_test_xxxxxxxxxxxxxxxxxxxxxxxx', 
+        key: 'pk_live_5d13a6db326f02375127aae9d0fb03678ed1d923', // public key
         email: email || auth.currentUser?.email || '',
-        amount: amount * 100, 
+        amount: amount * 100,
         currency: "NGN",
-        metadata: { 
+        metadata: {
             source: "VocalWitness",
             userId: auth.currentUser?.uid,
-            ...metadata 
+            ...metadata
         },
         onSuccess: (transaction) => {
             showToast(`✅ Payment successful! Ref: ${transaction.reference}`, "success");
@@ -98,7 +92,7 @@ window.initiatePayment = function(amount, email = null, metadata = {}) {
 // ====================== WELCOME NOTE ======================
 function showWelcomeNote() {
     if (!auth.currentUser || localStorage.getItem('hasSeenWelcome')) return;
-    
+   
     showToast("🎉 Welcome to VocalWitness! Your voice matters in the Public Square.", "success");
     localStorage.setItem('hasSeenWelcome', 'true');
 }
@@ -106,20 +100,16 @@ function showWelcomeNote() {
 // ====================== PUBLISH TESTIMONY ======================
 window.publishTestimony = async () => {
     if (!requireAuth("Please sign in to share your testimony in the Public Square.")) return;
-
     const textarea = document.getElementById('mainInput');
     const content = textarea ? textarea.value.trim() : '';
-
     if (!content) {
         showToast("Please write something before publishing", "error");
         return;
     }
-
     if (content.length > 2000) {
         showToast("Testimony is too long (max 2000 characters)", "error");
         return;
     }
-
     const postBtn = document.getElementById('postButton');
     if (postBtn) {
         if (postBtn.disabled) return;
@@ -132,10 +122,8 @@ window.publishTestimony = async () => {
             </span>
         `;
     }
-
     try {
         const mediaData = await mediaModule.uploadForensicMedia();
-
         const testimonyData = {
             authorId: auth.currentUser.uid,
             author: auth.currentUser.displayName || "Registered Witness",
@@ -151,20 +139,15 @@ window.publishTestimony = async () => {
             audioHash: mediaData.audioHash || null,
             hasForensic: !!(mediaData.imageHash || mediaData.audioHash)
         };
-
         await addDoc(collection(db, "testimonies"), testimonyData);
-
         showToast("✅ Testimony published successfully!", "success");
-
         if (textarea) textarea.value = '';
         mediaModule.resetMediaState?.();
-
         initFeed?.(db, 'citizen-talk');
-
     } catch (err) {
         console.error("Publish error:", err);
-        const msg = err.code === 'permission-denied' 
-            ? "⚠️ Permission denied. Please check your Firestore security rules." 
+        const msg = err.code === 'permission-denied'
+            ? "⚠️ Permission denied. Please check your Firestore security rules."
             : "Failed to publish. Please try again.";
         showToast(msg, "error");
     } finally {
@@ -175,11 +158,11 @@ window.publishTestimony = async () => {
         }
     }
 };
+
 // ====================== EVIDENCE LEDGER ======================
 async function loadEvidenceLedger() {
     const container = document.getElementById('ledgerContainer');
     if (!container) return;
-
     let wrapper = document.getElementById('ledgerTableWrapper');
     if (!wrapper) {
         wrapper = document.createElement('div');
@@ -200,16 +183,12 @@ async function loadEvidenceLedger() {
                 <div id="ledgerTableInnerWrapper" class="overflow-x-auto"></div>
             </div>`;
     }
-
     const innerWrapper = document.getElementById('ledgerTableInnerWrapper');
     if (!innerWrapper) return;
-
     innerWrapper.innerHTML = `<div class="text-center py-16 text-zinc-500 animate-pulse">Loading ledger records...</div>`;
-
     try {
         const q = query(collection(db, "testimonies"), limit(20));
         const querySnapshot = await getDocs(q);
-
         if (querySnapshot.empty) {
             innerWrapper.innerHTML = `
                 <div class="text-center py-12 text-zinc-500">
@@ -217,7 +196,6 @@ async function loadEvidenceLedger() {
                 </div>`;
             return;
         }
-
         let html = `
             <table class="w-full text-left border-collapse">
                 <thead>
@@ -229,13 +207,12 @@ async function loadEvidenceLedger() {
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-zinc-800/60 text-sm text-zinc-300">`;
-
         querySnapshot.forEach((doc) => {
             const data = doc.data();
             const dateStr = data.timestamp ? new Date(data.timestamp).toLocaleString() : 'N/A';
             const hasHash = data.imageHash || data.audioHash || data.hasForensic;
             const hashDisplay = hasHash ? '<span class="text-emerald-400 flex items-center gap-1">🔒 Verified</span>' : '<span class="text-zinc-500">Standard</span>';
-            
+           
             html += `
                 <tr class="hover:bg-zinc-800/40 transition">
                     <td class="py-4 px-4 font-medium text-white">${escapeHtml(data.author || 'Anonymous')}</td>
@@ -244,10 +221,8 @@ async function loadEvidenceLedger() {
                     <td class="py-4 px-4 text-zinc-500 text-xs">${dateStr}</td>
                 </tr>`;
         });
-
         html += `</tbody></table>`;
         innerWrapper.innerHTML = html;
-
     } catch (err) {
         console.error("Ledger fetch error:", err);
         innerWrapper.innerHTML = `<div class="text-red-400 text-center py-8">Failed to load ledger records. Please check permissions.</div>`;
@@ -269,9 +244,7 @@ function escapeHtml(str) {
 function setupEventListeners() {
     if (listenersInitialized) return;
     listenersInitialized = true;
-
     console.log("✅ Setting up all buttons...");
-
     // Navigation
     document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -279,27 +252,23 @@ function setupEventListeners() {
             window.switchTab(btn.dataset.tab);
         });
     });
-
     // === AUTH BUTTONS ===
     const guestActionBtn = document.getElementById('guest-action-btn');
     if (guestActionBtn) {
         guestActionBtn.addEventListener('click', () => {
-            window.showAuthModal(); 
+            window.showAuthModal();
         });
     }
-
     document.getElementById('profile-btn')?.addEventListener('click', window.showProfile);
-
     document.getElementById('support-btn')?.addEventListener('click', () => {
         document.getElementById('supportModal')?.classList.remove('hidden');
     });
-
     // Photo & Voice buttons (protected)
     const photoBtn = document.getElementById('btn-photo');
     if (photoBtn) {
         const newBtn = photoBtn.cloneNode(true);
         photoBtn.parentNode.replaceChild(newBtn, photoBtn);
-        
+       
         newBtn.addEventListener('click', () => {
             if (!requireAuth("Sign in to upload Forensic Photo")) return;
             const input = document.createElement('input');
@@ -309,7 +278,6 @@ function setupEventListeners() {
             input.click();
         });
     }
-
     // Navigation Tab Active Highlight Logic
     const navButtons = document.querySelectorAll('.nav-tab-btn');
     navButtons.forEach(btn => {
@@ -322,25 +290,21 @@ function setupEventListeners() {
             btn.classList.remove('text-zinc-400');
         });
     });
-
     const defaultBtn = document.querySelector('[data-tab="square"]') || navButtons[0];
     if (defaultBtn && !document.querySelector('.nav-tab-btn.bg-emerald-600\\/20')) {
         defaultBtn.classList.add('bg-emerald-600/20', 'border-emerald-500', 'text-white');
         defaultBtn.classList.remove('text-zinc-400');
     }
-
     const voiceBtn = document.getElementById('btn-voice');
     voiceBtn?.addEventListener('click', () => {
         if (!requireAuth("Sign in to record Voice Testimony")) return;
         mediaModule.toggleVoiceRecording?.(voiceBtn);
     });
-
     // Publish button (protected)
     const postButton = document.getElementById('postButton');
     if (postButton) {
         postButton.addEventListener('click', window.publishTestimony);
     }
-
     console.log("✅ All major buttons wired successfully");
 }
 
@@ -349,24 +313,20 @@ async function bootstrap() {
     if (isInitialized) return;
     isInitialized = true;
     console.log("🚀 VocalWitness Bootstrap started");
-
     try {
         await initAuth();
         updateUIForAuthState();
         setupEventListeners();
-        
+       
         initLanguage?.();
         initProfile?.();
-
         engineInstance = new CitizenTalkEngine(db, storage);
         window.engineInstance = engineInstance;
         mediaModule.setEngine(engineInstance);
-
         loadDynamicNavigation();
-        
+       
         setTimeout(() => window.switchTab('square'), 300);
         setTimeout(showWelcomeNote, 1200);
-
         console.log("✅ Bootstrap finished successfully");
     } catch (e) {
         console.error("Bootstrap error:", e);
