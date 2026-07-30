@@ -198,6 +198,30 @@ export async function handleEmailAuth(event) {
         showToast(handleAuthError(error), "error");
     }
 }
+
+        // 3. Update app state and UI on successful login
+        await createOrUpdateUser(user);
+        updateAppState({ isAuthenticated: true, currentUser: user });
+        refreshTierUI();
+        
+        if (typeof window.updateHeaderButtons === 'function') {
+            window.updateHeaderButtons(true);
+        }
+
+        window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
+        updateUIForAuthState();
+
+        // 4. Feedback & Modal Cleanup
+        showToast("✅ Signed in successfully!", "success");
+        closeLoginModal();
+        closeCreateAccountModal();
+        restorePendingDraft();
+
+    } catch (error) {
+        console.error("Email sign-in error:", error);
+        showToast(handleAuthError(error), "error");
+    }
+}
 export async function handleEmailSignUp(event) {
     if (event) event.preventDefault();
     const email = document.getElementById('authEmail')?.value?.trim() || document.getElementById('signUpEmail')?.value?.trim();
