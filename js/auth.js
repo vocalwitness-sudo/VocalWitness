@@ -4,7 +4,8 @@ import {
     GoogleAuthProvider,
     signOut,
     signInWithEmailAndPassword,
-    createUserWithEmailAndPassword
+    createUserWithEmailAndPassword,
+    sendEmailVerification
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 
 import { auth, provider } from './firebase-config.js';
@@ -67,6 +68,8 @@ function restorePendingDraft() {
 // ====================== FIREBASE AUTH ERROR MAPPER ======================
 function handleAuthError(error) {
     switch (error.code) {
+        case 'auth/invalid-credential':
+            return "Invalid email or password. If you just created an account, please check your email for the verification link first.";
         case 'auth/too-many-requests':
             return "Too many attempts. For security, please wait a few minutes before trying again.";
         case 'auth/invalid-phone-number':
@@ -122,10 +125,8 @@ export async function googleLogin() {
 
             showToast("✅ Signed in successfully! Welcome to the Square.", "success");
             
-            const loginModal = document.getElementById('loginModal');
-            if (loginModal) loginModal.classList.add('hidden');
-            const createModal = document.getElementById('createAccountModal');
-            if (createModal) createModal.classList.add('hidden');
+            closeLoginModal();
+            closeCreateAccountModal();
             
             restorePendingDraft();
         }
@@ -139,15 +140,27 @@ export async function googleLogin() {
 }
 
 export async function handleEmailAuth(event) {
-    event.preventDefault();
-    const email = document.getElementById('authEmail')?.value;
+    if (event) event.preventDefault();
+    const email = document.getElementById('authEmail')?.value?.trim();
     const password = document.getElementById('authPassword')?.value;
 
-    if (!email || !password) return;
+    if (!email || !password) {
+        showToast("Please enter both email and password.", "error");
+        return;
+    }
 
     try {
         savePendingDraft();
-        await signInWithEmailAndPassword(auth, email, password);
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        // Check Email Verification Token Status
+        if (!user.emailVerified) {
+            showToast("⚠️ Email unverified. A link was sent to your inbox. Please verify before proceeding.", "warning");
+            await signOut(auth);
+            return;
+        }
+
         showToast("✅ Signed in successfully!", "success");
         closeLoginModal();
         restorePendingDraft();
@@ -158,11 +171,14 @@ export async function handleEmailAuth(event) {
 }
 
 export async function handleEmailSignUp(event) {
-    event.preventDefault();
-    const email = document.getElementById('authEmail')?.value;
-    const password = document.getElementById('authPassword')?.value;
+    if (event) event.preventDefault();
+    const email = document.getElementById('authEmail')?.value?.trim() || document.getElementById('signUpEmail')?.value?.trim();
+    const password = document.getElementById('authPassword')?.value || document.getElementById('signUpPassword')?.value;
 
-    if (!email || !password) return;
+    if (!email || !password) {
+        showToast("Please enter both email and password.", "error");
+        return;
+    }
 
     if (password.length < 6) {
         showToast("Password must be at least 6 characters long.", "error");
@@ -171,12 +187,24 @@ export async function handleEmailSignUp(event) {
 
     try {
         savePendingDraft();
+        
+        // 1. Create account in Firebase Auth
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        await createOrUpdateUser(userCredential.user);
-        showToast("🎉 Account created successfully!", "success");
+        const user = userCredential.user;
+        
+        // 2. Write initial Firestore User Doc
+        await createOrUpdateUser(user);
+
+        // 3. Send Verifiable Token Email
+        await sendEmailVerification(user);
+
+        showToast("🎉 Account created! A verification link has been sent to your email.", "success");
+        
         closeLoginModal();
         closeCreateAccountModal();
-        restorePendingDraft();
+        
+        // Sign out temporarily until they click the token link in their email
+        await signOut(auth);
     } catch (error) {
         console.error("Email sign-up error:", error);
         showToast(handleAuthError(error), "error");
@@ -193,6 +221,17 @@ export async function logout() {
     } catch (error) {
         console.error("Logout error:", error);
         showToast("Logout failed", "error");
+    }
+}
+
+// Helper function to toggle password field visibility
+export function togglePasswordVisibility(inputId, btnElement) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    const isPassword = input.type === 'password';
+    input.type = isPassword ? 'text' : 'password';
+    if (btnElement) {
+        btnElement.textContent = isPassword ? 'Hide' : 'Show';
     }
 }
 
@@ -261,9 +300,17 @@ export function initAuth() {
         updateUIForAuthState();
     });
     
+    // Automatic binding for logout elements across the DOM
+    document.addEventListener('click', (e) => {
+        if (e.target.matches('#logoutBtn, .btn-logout, [data-action="logout"]')) {
+            e.preventDefault();
+            logout();
+        }
+    });
+
     updateUIForAuthState();
 
-    console.log("🔐 Auth initialized (Popup Mode + Email Support)");
+    console.log("🔐 Auth initialized (Popup Mode + Email Verification Support)");
 }
 
 // ====================== MODAL & GLOBAL EXPOSURES ======================
@@ -300,6 +347,7 @@ window.googleLogin = googleLogin;
 window.handleEmailAuth = handleEmailAuth;
 window.handleEmailSignUp = handleEmailSignUp;
 window.logout = logout;
+window.togglePasswordVisibility = togglePasswordVisibility;
 window.requireAuth = requireAuth;
 window.updateUIForAuthState = updateUIForAuthState;
 window.showAuthModal = showAuthModal;
