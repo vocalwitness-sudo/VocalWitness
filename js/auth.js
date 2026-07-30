@@ -143,8 +143,19 @@ export async function googleLogin() {
 
 export async function handleEmailAuth(event) {
     if (event) event.preventDefault();
-    const email = document.getElementById('authEmail')?.value?.trim();
-    const password = document.getElementById('authPassword')?.value;
+
+    // 1. Flexible DOM lookup (checks login modal first, falls back to signup inputs if present)
+    const email = (
+        document.getElementById('authEmail')?.value || 
+        document.getElementById('signInEmail')?.value || 
+        document.getElementById('signUpEmail')?.value
+    )?.trim();
+
+    const password = (
+        document.getElementById('authPassword')?.value || 
+        document.getElementById('signInPassword')?.value || 
+        document.getElementById('signUpPassword')?.value
+    );
 
     if (!email || !password) {
         showToast("Please enter both email and password.", "error");
@@ -153,25 +164,40 @@ export async function handleEmailAuth(event) {
 
     try {
         savePendingDraft();
+        
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        // Check Email Verification Token Status
+        // 2. Handle unverified email status cleanly
         if (!user.emailVerified) {
             showToast("⚠️ Email unverified. A link was sent to your inbox. Please verify before proceeding.", "warning");
             await signOut(auth);
             return;
         }
 
+        // 3. Update app state and UI on successful login
+        await createOrUpdateUser(user);
+        updateAppState({ isAuthenticated: true, currentUser: user });
+        refreshTierUI();
+        
+        if (typeof window.updateHeaderButtons === 'function') {
+            window.updateHeaderButtons(true);
+        }
+
+        window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
+        updateUIForAuthState();
+
+        // 4. Feedback & Modal Cleanup
         showToast("✅ Signed in successfully!", "success");
         closeLoginModal();
+        closeCreateAccountModal();
         restorePendingDraft();
+
     } catch (error) {
         console.error("Email sign-in error:", error);
         showToast(handleAuthError(error), "error");
     }
 }
-
 export async function handleEmailSignUp(event) {
     if (event) event.preventDefault();
     const email = document.getElementById('authEmail')?.value?.trim() || document.getElementById('signUpEmail')?.value?.trim();
