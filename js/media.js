@@ -42,35 +42,188 @@ export function removeImage(previewArea) {
 }
 
 // ====================== VOICE ======================
+// ====================== VOICE (with Pause / Wave / Replay) ======================
+
+let waveAnimationId = null;
+let replayUrl = null;
+
+function formatTime(ms) {
+    const totalSec = Math.floor(ms / 1000);
+    const m = String(Math.floor(totalSec / 60)).padStart(2, '0');
+    const s = String(totalSec % 60).padStart(2, '0');
+    return `${m}:${s}`;
+}
+
+function showRecorderBar(show = true) {
+    const bar = document.getElementById('voice-recorder-bar');
+    if (bar) bar.classList.toggle('hidden', !show);
+}
+
+function updateTimer() {
+    if (!engineInstance) return;
+    const timerEl = document.getElementById('rec-timer');
+    if (timerEl) {
+        timerEl.textContent = formatTime(engineInstance.getElapsedMs());
+    }
+}
+
+function drawWaveform() {
+    const canvas = document.getElementById('rec-waveform');
+    if (!canvas || !engineInstance) return;
+
+    const ctx = canvas.getContext('2d');
+    const data = engineInstance.getWaveformData();
+
+    ctx.fillStyle = '#0a0f1c';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    if (!data) {
+        waveAnimationId = requestAnimationFrame(drawWaveform);
+        return;
+    }
+
+    const barWidth = 3;
+    const gap = 2;
+    const bars = Math.floor(canvas.width / (barWidth + gap));
+    const step = Math.floor(data.length / bars);
+
+    ctx.fillStyle = '#10b981';
+
+    for (let i = 0; i < bars; i++) {
+        const value = data[i * step] || 0;
+        const h = Math.max(2, (value / 255) * canvas.height * 0.85);
+        const x = i * (barWidth + gap);
+        const y = (canvas.height - h) / 2;
+        ctx.fillRect(x, y, barWidth, h);
+    }
+
+    waveAnimationId = requestAnimationFrame(drawWaveform);
+}
+
+function startWaveAndTimer() {
+    stopWaveAndTimer();
+    updateTimer();
+    waveAnimationId = requestAnimationFrame(function tick() {
+        updateTimer();
+        drawWaveform();
+    });
+}
+
+function stopWaveAndTimer() {
+    if (waveAnimationId) {
+        cancelAnimationFrame(waveAnimationId);
+        waveAnimationId = null;
+    }
+}
+
 export async function toggleVoiceRecording(voiceBtn) {
     if (!engineInstance) {
         return showToast("Voice engine not ready yet", "error");
     }
 
-    const isRecording = engineInstance.mediaRecorder &&
-                       engineInstance.mediaRecorder.state === "recording";
+    const isActive = engineInstance.mediaRecorder &&
+                     (engineInstance.mediaRecorder.state === "recording" ||
+                      engineInstance.mediaRecorder.state === "paused");
 
-    if (!isRecording) {
+    if (!isActive) {
+        // ===== START =====
         try {
             await engineInstance.startVoiceRecording(300000);
-            voiceBtn.classList.add('recording-active', 'animate-pulse');
+            voiceBtn?.classList.add('recording-active', 'animate-pulse');
+            showRecorderBar(true);
+
+            // Reset UI state
+            document.getElementById('rec-pause-btn').textContent = '⏸ Pause';
+            document.getElementById('rec-pause-btn').classList.remove('hidden');
+            document.getElementById('rec-stop-btn').classList.remove('hidden');
+            document.getElementById('rec-replay-btn').classList.add('hidden');
+            document.getElementById('rec-indicator').classList.add('animate-pulse', 'bg-red-500');
+            document.getElementById('rec-indicator').classList.remove('bg-emerald-500');
+
+            startWaveAndTimer();
             showToast("🎤 Recording started... Speak clearly", "info");
         } catch (err) {
+            console.error(err);
             showToast("Microphone access denied or unavailable", "error");
         }
     } else {
-        // Wait until the blob is fully ready
+        // ===== STOP =====
         const blob = await engineInstance.stopVoiceRecording();
-        voiceBtn.classList.remove('recording-active', 'animate-pulse');
+        voiceBtn?.classList.remove('recording-active', 'animate-pulse');
+        stopWaveAndTimer();
+
+        document.getElementById('rec-indicator').classList.remove('animate-pulse', 'bg-red-500');
+        document.getElementById('rec-indicator').classList.add('bg-emerald-500');
+        document.getElementById('rec-pause-btn').classList.add('hidden');
+        document.getElementById('rec-stop-btn').classList.add('hidden');
 
         if (!blob || blob.size === 0) {
             showToast("Recording is empty. Please try again.", "error");
-        } else {
-            showToast("✅ Recording saved. Ready to publish.", "success");
+            showRecorderBar(false);
+            return;
         }
+
+        // Enable replay
+        if (replayUrl) URL.revokeObjectURL(replayUrl);
+        replayUrl = URL.createObjectURL(blob);
+        const audioEl = document.getElementById('rec-replay-audio');
+        if (audioEl) audioEl.src = replayUrl;
+
+        document.getElementById('rec-replay-btn').classList.remove('hidden');
+        showToast("✅ Recording saved. You can replay or publish.", "success");
     }
 }
 
+// Wire the control buttons once
+export function initVoiceControls() {
+    const pauseBtn = document.getElementById('rec-pause-btn');
+    const stopBtn = document.getElementById('rec-stop-btn');
+    const replayBtn = document.getElementById('rec-replay-btn');
+
+    if (pauseBtn) {
+        pauseBtn.onclick = () => {
+            if (!engineInstance) return;
+
+            if (engineInstance.isPaused) {
+                engineInstance.resumeVoiceRecording();
+                pauseBtn.textContent = '⏸ Pause';
+                document.getElementById('rec-indicator').classList.add('animate-pulse', 'bg-red-500');
+                startWaveAndTimer();
+            } else {
+                engineInstance.pauseVoiceRecording();
+                pauseBtn.textContent = '▶️ Resume';
+                document.getElementById('rec-indicator').classList.remove('animate-pulse');
+                stopWaveAndTimer();
+                updateTimer(); // freeze display
+            }
+        };
+    }
+
+    if (stopBtn) {
+        stopBtn.onclick = () => {
+            const voiceBtn = document.getElementById('btn-voice');
+            toggleVoiceRecording(voiceBtn);
+        };
+    }
+
+    if (replayBtn) {
+        replayBtn.onclick = () => {
+            const audioEl = document.getElementById('rec-replay-audio');
+            if (audioEl && audioEl.src) {
+                audioEl.currentTime = 0;
+                audioEl.play();
+            }
+        };
+    }
+}
+
+// Call this after engine is set
+export function setEngine(engine) {
+    engineInstance = engine;
+    console.log("✅ Media Engine Connected");
+    // slight delay so DOM is ready
+    setTimeout(initVoiceControls, 300);
+}
 // ====================== UPLOAD (Hardened) ======================
 export async function uploadForensicMedia() {
     const mediaData = {
