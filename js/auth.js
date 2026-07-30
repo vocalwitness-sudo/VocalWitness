@@ -96,7 +96,7 @@ function handleAuthError(error) {
     }
 }
 
-// ====================== AUTH METHODS ======================
+// ====================== AUTH METHODS -GOOGLE LOGin======================
 export async function googleLogin() {
     if (authActionInProgress) {
         showToast("Sign-in already in progress...", "info");
@@ -106,10 +106,12 @@ export async function googleLogin() {
     authActionInProgress = true;
 
     try {
+        // 1. Save draft FIRST synchronously
         savePendingDraft();
-        showToast("Opening Google Sign-In...", "info");
-        
+
+        // 2. Open Popup IMMEDIATELY (must happen before async ops/toasts to preserve user gesture context)
         const result = await signInWithPopup(auth, provider);
+
         if (result && result.user) {
             const user = result.user;
             await createOrUpdateUser(user);
