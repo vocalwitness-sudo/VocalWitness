@@ -1,4 +1,4 @@
-// js/profile.js - Integrated & Refactored Version
+// js/profile.js - Integrated, Refactored & Fully Localized Version
 import { 
     onAuthStateChanged, 
     sendPasswordResetEmail,
@@ -15,6 +15,7 @@ import { auth, db } from './firebase-config.js';
 import { showToast } from './utils.js';
 import { refreshTierAndUI, getCurrentWitnessLevel } from './tier.js';
 import { startWitnessCycle } from './witnessCycle.js';
+import { t } from './i18n.js'; // Ensure t() helper is imported
 
 let currentUserData = null;
 let userUnsubscribe = null;
@@ -56,7 +57,7 @@ function listenToUserProfile(userId) {
         }
     }, (error) => {
         console.error("Profile Firestore Error:", error);
-        showToast("Error loading profile data", "error");
+        showToast(t("profile.error_loading", "Error loading profile data"), "error");
     });
 }
 
@@ -87,10 +88,10 @@ function renderProfileUI(userData) {
                                 `<div class="w-full h-full bg-gradient-to-br from-zinc-700 to-zinc-800 flex items-center justify-center text-7xl">👤</div>`
                             }
                         </div>
-                        ${isWitness ? `<div class="absolute -bottom-1 -right-1 text-3xl" title="Active Witness">🔐</div>` : ''}
+                        ${isWitness ? `<div class="absolute -bottom-1 -right-1 text-3xl" title="${t("profile.active_witness", "Active Witness")}">🔐</div>` : ''}
                     </div>
                     
-                    <h2 class="text-3xl font-bold mt-5 text-white">${userData.displayName || "Anonymous Witness"}</h2>
+                    <h2 class="text-3xl font-bold mt-5 text-white">${userData.displayName || t("profile.anonymous_witness", "Anonymous Witness")}</h2>
                     <p class="text-emerald-400">@${userData.username || 'anonymous'}</p>
                     ${userData.region ? `<p class="text-xs text-zinc-400 mt-1">📍 ${userData.region}</p>` : ''}
                     
@@ -101,11 +102,11 @@ function renderProfileUI(userData) {
                                 <span class="text-4xl">${level.emblem}</span>
                                 <div class="text-left">
                                     <div class="font-bold text-lg text-white">${level.name}</div>
-                                    <div class="text-xs text-zinc-400">Level ${level.level} • ${userData.reputation || 0} REP</div>
+                                    <div class="text-xs text-zinc-400">${t("profile.level", "Level")} ${level.level} • ${userData.reputation || 0} REP</div>
                                 </div>
                             </div>
                         ` : `
-                            <div class="px-6 py-3 bg-zinc-800 rounded-3xl text-sm text-zinc-300">👤 Citizen</div>
+                            <div class="px-6 py-3 bg-zinc-800 rounded-3xl text-sm text-zinc-300">👤 ${t("profile.citizen", "Citizen")}</div>
                         `}
                     </div>
                 </div>
@@ -115,23 +116,23 @@ function renderProfileUI(userData) {
                     <div class="flex justify-between items-start mb-4">
                         <div>
                             <h4 class="font-semibold text-lg text-amber-400 flex items-center gap-2">
-                                <span>🔄</span> Witness Cycle
+                                <span>🔄</span> ${t("profile.witness_cycle", "Witness Cycle")}
                             </h4>
-                            <p class="text-xs text-zinc-400 mt-1">Manage active attestation status in the public square.</p>
+                            <p class="text-xs text-zinc-400 mt-1">${t("profile.witness_cycle_desc", "Manage active attestation status in the public square.")}</p>
                         </div>
                         <span class="px-3 py-1 bg-amber-500/10 text-amber-400 text-xs font-mono rounded-full border border-amber-500/30">
-                            ${userData.activeWitnessCycle ? 'Active' : 'Inactive'}
+                            ${userData.activeWitnessCycle ? t("common.active", "Active") : t("common.inactive", "Inactive")}
                         </span>
                     </div>
 
                     <div class="bg-zinc-950 rounded-2xl p-4 mb-4 flex items-center justify-between text-sm">
-                        <span class="text-zinc-400">Current Cycle State</span>
-                        <span class="font-medium text-white">${userData.activeWitnessCycle ? 'Attesting in Square' : 'Not Attesting'}</span>
+                        <span class="text-zinc-400">${t("profile.current_cycle_state", "Current Cycle State")}</span>
+                        <span class="font-medium text-white">${userData.activeWitnessCycle ? t("profile.attesting", "Attesting in Square") : t("profile.not_attesting", "Not Attesting")}</span>
                     </div>
 
                     <button onclick="handleProfileStartCycle()" 
                             class="w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-black font-semibold rounded-2xl transition flex items-center justify-center gap-2 shadow-lg shadow-amber-500/10">
-                        <span>🔄</span> ${userData.activeWitnessCycle ? 'End Witness Cycle' : 'Start Witness Cycle'}
+                        <span>🔄</span> ${userData.activeWitnessCycle ? t("profile.end_cycle", "End Witness Cycle") : t("profile.start_cycle", "Start Witness Cycle")}
                     </button>
                 </div>
 
@@ -146,39 +147,39 @@ function renderProfileUI(userData) {
                 <div class="grid grid-cols-3 gap-4">
                     <div class="bg-zinc-900 rounded-3xl p-5 text-center">
                         <div class="text-3xl font-bold text-emerald-400">${userData.reputation || 0}</div>
-                        <div class="text-xs text-zinc-500 mt-1">Reputation</div>
+                        <div class="text-xs text-zinc-500 mt-1">${t("profile.reputation", "Reputation")}</div>
                     </div>
                     <div class="bg-zinc-900 rounded-3xl p-5 text-center">
                         <div class="text-3xl font-bold text-white">${userData.testimoniesCount || 0}</div>
-                        <div class="text-xs text-zinc-500 mt-1">Testimonies</div>
+                        <div class="text-xs text-zinc-500 mt-1">${t("profile.testimonies", "Testimonies")}</div>
                     </div>
                     <div class="bg-zinc-900 rounded-3xl p-5 text-center">
                         <div class="text-3xl font-bold text-amber-400">${userData.verifications || 0}</div>
-                        <div class="text-xs text-zinc-500 mt-1">Verifications</div>
+                        <div class="text-xs text-zinc-500 mt-1">${t("profile.verifications", "Verifications")}</div>
                     </div>
                 </div>
 
                 <!-- Security Status -->
                 <div class="bg-zinc-900 rounded-3xl p-6">
                     <h4 class="font-semibold mb-4 flex items-center gap-2 text-white">
-                        <span>🛡️</span> Security Status
+                        <span>🛡️</span> ${t("profile.security_status", "Security Status")}
                     </h4>
                     <div class="space-y-4 text-sm">
                         <div class="flex justify-between items-center">
-                            <span class="text-zinc-400">Phone Verification</span>
+                            <span class="text-zinc-400">${t("profile.phone_verification", "Phone Verification")}</span>
                             <span class="${userData.isPhoneVerified ? 'text-emerald-400' : 'text-zinc-500'}">
-                                ${userData.isPhoneVerified ? '✓ Verified' : 'Not Verified'}
+                                ${userData.isPhoneVerified ? '✓ ' + t("common.verified", "Verified") : t("common.not_verified", "Not Verified")}
                             </span>
                         </div>
                         <div class="flex justify-between items-center">
-                            <span class="text-zinc-400">ZK Proof</span>
+                            <span class="text-zinc-400">${t("profile.zk_proof", "ZK Proof")}</span>
                             <span class="${userData.zkVerified ? 'text-amber-400' : 'text-zinc-500'}">
-                                ${userData.zkVerified ? '✓ Verified' : 'Not Verified'}
+                                ${userData.zkVerified ? '✓ ' + t("common.verified", "Verified") : t("common.not_verified", "Not Verified")}
                             </span>
                         </div>
                         <div class="flex justify-between items-center">
-                            <span class="text-zinc-400">Account Created</span>
-                            <span class="text-zinc-400">${userData.createdAt ? new Date(userData.createdAt.toDate()).toLocaleDateString() : 'Recent'}</span>
+                            <span class="text-zinc-400">${t("profile.account_created", "Account Created")}</span>
+                            <span class="text-zinc-400">${userData.createdAt ? new Date(userData.createdAt.toDate()).toLocaleDateString() : t("common.recent", "Recent")}</span>
                         </div>
                     </div>
                 </div>
@@ -188,18 +189,18 @@ function renderProfileUI(userData) {
                     <div class="flex gap-3">
                         <button onclick="openEditProfile()" 
                                 class="flex-1 py-4 bg-emerald-600 hover:bg-emerald-500 text-black font-semibold rounded-3xl transition">
-                            ✏️ Edit Profile
+                            ✏️ ${t("profile.edit_profile", "Edit Profile")}
                         </button>
                         <button onclick="exportUserDataPDF()" 
                                 class="flex-1 py-4 bg-zinc-700 hover:bg-zinc-600 text-white font-semibold rounded-3xl transition">
-                            📄 Export Data
+                            📄 ${t("profile.export_data", "Export Data")}
                         </button>
                     </div>
 
                     <!-- Sign Out Button -->
                     <button onclick="handleSignOut()" 
                             class="w-full py-3.5 bg-red-950/40 hover:bg-red-900/60 border border-red-500/40 text-red-400 hover:text-red-300 font-semibold rounded-2xl transition flex items-center justify-center gap-2">
-                        <span>🚪</span> Sign Out
+                        <span>🚪</span> ${t("auth.sign_out", "Sign Out")}
                     </button>
                 </div>
             </div>
@@ -217,7 +218,7 @@ function renderProfileUI(userData) {
 // ====================== SIGN OUT HANDLER ======================
 window.handleSignOut = async () => {
     try {
-        showToast("Signing out...", "info");
+        showToast(t("auth.signing_out", "Signing out..."), "info");
         
         // 1. Immediately close active modals
         document.getElementById('profileModal')?.classList.add('hidden');
@@ -237,14 +238,14 @@ window.handleSignOut = async () => {
         // 4. Perform Firebase Auth Sign Out
         await signOut(auth);
 
-        showToast("Signed out successfully", "success");
+        showToast(t("auth.signed_out_success", "Signed out successfully"), "success");
 
         // 5. Reload to return to public landing state
         window.location.reload();
 
     } catch (error) {
         console.error("Sign out error:", error);
-        showToast("Error signing out", "error");
+        showToast(t("auth.sign_out_error", "Error signing out"), "error");
     }
 };
 
@@ -253,14 +254,14 @@ window.handleProfileStartCycle = async () => {
     if (typeof startWitnessCycle === 'function') {
         await startWitnessCycle();
     } else {
-        showToast("Witness cycle module unavailable", "error");
+        showToast(t("profile.cycle_module_unavailable", "Witness cycle module unavailable"), "error");
     }
 };
 
 // ====================== EDIT PROFILE MODAL ======================
 window.openEditProfile = () => {
     const modal = document.getElementById('editProfileModal');
-    if (!modal) return showToast("Edit modal not found", "error");
+    if (!modal) return showToast(t("profile.edit_modal_not_found", "Edit modal not found"), "error");
 
     if (currentUserData) {
         const displayNameInput = document.getElementById('editDisplayName');
@@ -286,17 +287,17 @@ window.handleSaveProfile = async (event) => {
 };
 
 window.saveProfileChanges = async () => {
-    if (!auth.currentUser) return showToast("You must be logged in", "error");
+    if (!auth.currentUser) return showToast(t("auth.must_be_logged_in", "You must be logged in"), "error");
 
     const displayName = document.getElementById('editDisplayName')?.value.trim();
     const username = document.getElementById('editUsername')?.value.trim();
     const region = document.getElementById('editRegion')?.value.trim();
     const bio = document.getElementById('editBio')?.value.trim();
 
-    if (!displayName) return showToast("Display name is required", "error");
+    if (!displayName) return showToast(t("profile.display_name_required", "Display name is required"), "error");
 
     try {
-        showToast("Saving changes...", "info");
+        showToast(t("common.saving", "Saving changes..."), "info");
         const userRef = doc(db, "users", auth.currentUser.uid);
         
         await updateDoc(userRef, {
@@ -307,19 +308,19 @@ window.saveProfileChanges = async () => {
             updatedAt: serverTimestamp()
         });
 
-        showToast("✅ Profile updated successfully!", "success");
+        showToast("✅ " + t("profile.updated_success", "Profile updated successfully!"), "success");
         window.closeEditProfile();
         refreshTierAndUI?.();
     } catch (error) {
         console.error("Save profile error:", error);
-        showToast("Failed to save profile", "error");
+        showToast(t("profile.failed_to_save", "Failed to save profile"), "error");
     }
 };
 
 // ====================== SETTINGS & SECURITY ======================
 window.openSettings = () => {
     const modal = document.getElementById('settingsModal');
-    if (!modal) return showToast("Settings modal not found", "error");
+    if (!modal) return showToast(t("profile.settings_modal_not_found", "Settings modal not found"), "error");
     
     if (currentUserData) {
         const toggle2FA = document.getElementById('toggle2FA');
@@ -338,14 +339,14 @@ window.closeSettings = () => {
 
 window.triggerPasswordReset = async () => {
     if (!auth.currentUser || !auth.currentUser.email) {
-        return showToast("No active user email found", "error");
+        return showToast(t("auth.no_email_found", "No active user email found"), "error");
     }
     try {
         await sendPasswordResetEmail(auth, auth.currentUser.email);
-        showToast("📧 Password reset email sent!", "success");
+        showToast("📧 " + t("auth.reset_email_sent", "Password reset email sent!"), "success");
     } catch (error) {
         console.error("Password reset error:", error);
-        showToast("Failed to send reset email", "error");
+        showToast(t("auth.reset_email_failed", "Failed to send reset email"), "error");
     }
 };
 
@@ -359,10 +360,10 @@ window.handle2FAToggle = async (e) => {
             enable2FA: isEnabled,
             updatedAt: serverTimestamp()
         });
-        showToast(isEnabled ? "🔒 2FA Enabled" : "🔓 2FA Disabled", "info");
+        showToast(isEnabled ? "🔒 " + t("profile.2fa_enabled", "2FA Enabled") : "🔓 " + t("profile.2fa_disabled", "2FA Disabled"), "info");
     } catch (error) {
         console.error("2FA toggle error:", error);
-        showToast("Failed to update 2FA preference", "error");
+        showToast(t("profile.2fa_update_failed", "Failed to update 2FA preference"), "error");
     }
 };
 
@@ -376,17 +377,17 @@ window.updateDefaultDoor = async (doorValue) => {
         });
         
         const formattedName = doorValue.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-        showToast(`Default door updated to ${formattedName}`, "success");
+        showToast(`${t("profile.default_door_updated", "Default door updated to")} ${formattedName}`, "success");
     } catch (error) {
         console.error("Default door update error:", error);
-        showToast("Failed to save default door preference", "error");
+        showToast(t("profile.default_door_failed", "Failed to save default door preference"), "error");
     }
 };
 
 // ====================== PDF EXPORT ======================
 window.exportUserDataPDF = async () => {
-    if (!currentUserData) return showToast("Profile data not loaded", "error");
-    showToast("Generating identity PDF...", "info");
+    if (!currentUserData) return showToast(t("profile.data_not_loaded", "Profile data not loaded"), "error");
+    showToast(t("profile.generating_pdf", "Generating identity PDF..."), "info");
     
     try {
         if (!window.jspdf) throw new Error("jsPDF library not loaded");
@@ -407,10 +408,10 @@ window.exportUserDataPDF = async () => {
         pdf.text(`ZK Verified: ${currentUserData.zkVerified ? 'Yes' : 'No'}`, 20, 84);
         
         pdf.save(`vocalwitness-identity-${auth.currentUser?.uid || 'user'}.pdf`);
-        showToast("✅ Identity PDF Exported!", "success");
+        showToast("✅ " + t("profile.pdf_exported", "Identity PDF Exported!"), "success");
     } catch (e) {
         console.error("Export error:", e);
-        showToast("PDF generation requires jsPDF script inclusion", "error");
+        showToast(t("profile.jspdf_required", "PDF generation requires jsPDF script inclusion"), "error");
     }
 };
 
@@ -420,7 +421,7 @@ window.downloadMyDataPDF = window.exportUserDataPDF;
 // ====================== MODAL CONTROL ALIASES ======================
 window.openProfile = function() {
     const modal = document.getElementById('profileModal');
-    if (!modal) return showToast("Profile modal not found", "error");
+    if (!modal) return showToast(t("profile.modal_not_found", "Profile modal not found"), "error");
     modal.classList.remove('hidden');
     if (currentUserData) renderProfileUI(currentUserData);
 };
