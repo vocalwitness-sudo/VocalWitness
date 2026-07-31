@@ -1,3 +1,14 @@
+/* ====================== ROOT VARIABLES ====================== */
+:root {
+    --bg-dark: #0a0f1c;
+    --glass-bg: rgba(17, 24, 39, 0.92);
+    --glass-border: rgba(16, 185, 129, 0.22);
+    --primary-color: #10b981; /* Emerald theme matching your platform */
+    --primary-dark: #059669;
+    --accent-blue: #2563eb;
+    --accent-red: #ef4444;
+}
+
 /* ====================== BASE STYLES ====================== */
 * {
     box-sizing: border-box;
@@ -5,17 +16,18 @@
 
 body {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    background: #0a0f1c;
-    color: white;
+    background: var(--bg-dark);
+    color: #ffffff;
     min-height: 100vh;
     overflow-x: hidden;
 }
 
 /* Glass Effect */
 .glass {
-    background: rgba(17, 24, 39, 0.92);
+    background: var(--glass-bg);
     backdrop-filter: blur(24px);
-    border: 1px solid rgba(16, 185, 129, 0.22);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid var(--glass-border);
     contain: layout style paint;
 }
 
@@ -32,9 +44,9 @@ body {
     min-width: 300px;
 }
 
-/* Navigation Tabs - Most problematic area */
+/* Navigation Tabs - Prevent layout shifts during i18n translation */
 .nav-tab {
-    min-width: 160px !important; /* Increased for longer languages */
+    min-width: 160px !important;
     text-align: center;
     white-space: nowrap;
     padding-left: 16px;
@@ -45,11 +57,11 @@ body {
 #btn-photo,
 #btn-voice {
     min-height: 68px;
-    min-width: 260px; /* Very important */
+    min-width: 260px;
     white-space: nowrap;
 }
 
-/* General protection */
+/* General Protection */
 [data-i18n] {
     transition: color 0.2s ease;
 }
@@ -64,23 +76,24 @@ button.selected,
 button.active,
 .tab-btn[aria-selected="true"],
 .filter-chip.active {
-    background-color: var(--primary-color, #2563eb);
-    color: #ffffff;
-    border-color: var(--primary-dark, #1d4ed8);
+    background-color: var(--primary-color);
+    color: #000000;
+    font-weight: 600;
+    border-color: var(--primary-dark);
     position: relative;
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.3);
 }
 
-/* Clear visual indicator dot or underline for selected state */
+/* Clear visual indicator dot for selected state */
 button.selected::after,
 .filter-chip.active::after {
     content: '';
     position: absolute;
-    bottom: -4px;
+    bottom: 3px;
     left: 50%;
     transform: translateX(-50%);
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
     background-color: currentColor;
     border-radius: 50%;
 }
@@ -95,6 +108,6 @@ button.selected::after,
 }
 
 .recording-active {
-    border-color: #ef4444 !important;
+    border-color: var(--accent-red) !important;
     box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3);
 }
