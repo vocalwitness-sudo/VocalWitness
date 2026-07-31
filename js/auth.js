@@ -1,7 +1,6 @@
 // ====================== IMPORTS ======================
 import {
-    signInWithRedirect,
-    getRedirectResult,
+    signInWithPopup,
     GoogleAuthProvider,
     signOut,
     signInWithEmailAndPassword,
@@ -78,9 +77,9 @@ function handleAuthError(error) {
             return "SMS service temporarily busy. Please try an alternate verification path.";
         case 'auth/popup-closed-by-user':
         case 'auth/cancelled-popup-request':
-            return "Sign-in was cancelled. Please try again.";
+            return "Sign-in was cancelled.";
         case 'auth/popup-blocked':
-            return "Popup was blocked. Please allow popups for this site.";
+            return "Popup was blocked by browser. Please allow popups for this site.";
         case 'auth/invalid-email':
             return "The email address format is invalid.";
         case 'auth/user-not-found':
@@ -96,7 +95,7 @@ function handleAuthError(error) {
     }
 }
 
-// ====================== AUTH METHODS - GOOGLE REDIRECT LOGIC ======================
+// ====================== AUTH METHODS - GOOGLE POPUP LOGIC ======================
 export async function googleLogin() {
     if (authActionInProgress) {
         showToast("Sign-in already in progress...", "info");
@@ -107,18 +106,10 @@ export async function googleLogin() {
 
     try {
         savePendingDraft();
-        showToast("Redirecting to Google...", "info");
-        await signInWithRedirect(auth, provider);
-    } catch (error) {
-        console.error("Google redirect sign-in error:", error);
-        showToast(handleAuthError(error), "error");
-        authActionInProgress = false;
-    }
-}
-
-export async function handleGoogleRedirectResult() {
-    try {
-        const result = await getRedirectResult(auth);
+        showToast("Opening Google Sign-In...", "info");
+        
+        // Popup authentication avoids cross-origin storage partitioning issues
+        const result = await signInWithPopup(auth, provider);
         
         if (result && result.user) {
             const user = result.user;
@@ -141,7 +132,7 @@ export async function handleGoogleRedirectResult() {
             restorePendingDraft();
         }
     } catch (error) {
-        console.error("Redirect resolution error:", error);
+        console.error("Google popup sign-in error:", error);
         showToast(handleAuthError(error), "error");
     } finally {
         authActionInProgress = false;
@@ -314,10 +305,7 @@ export function updateUIForAuthState() {
 
 // ====================== INIT AUTH ======================
 export function initAuth() {
-    // 1. Process Google sign-in redirect result if returning from Google
-    handleGoogleRedirectResult();
-
-    // 2. Main Firebase Auth State Listener
+    // Main Firebase Auth State Listener
     auth.onAuthStateChanged(async (user) => {
         if (user) {
             await createOrUpdateUser(user);
@@ -341,7 +329,7 @@ export function initAuth() {
 
     updateUIForAuthState();
 
-    console.log("🔐 Auth initialized (Redirect Mode + Email Verification Support)");
+    console.log("🔐 Auth initialized (Popup Mode)");
 }
 
 // ====================== MODAL & GLOBAL EXPOSURES ======================
