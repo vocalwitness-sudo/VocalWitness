@@ -1,5 +1,6 @@
 // js/main.js - Polished & Robust Main Entry Point
-// js/main.js - Polished & Robust Main Entry Point
+
+// 1. Static Module Imports (Must remain at the top level)
 import './app-state.js';
 import { initAuth, requireAuth, updateAuthUI } from "./auth.js";
 import { initFeed } from './feed.js';
@@ -13,27 +14,6 @@ import { AppState } from './app-state.js';
 import { showToast } from './utils.js';
 import './composer.js';
 
-document.addEventListener('DOMContentLoaded', async () => {
-    try {
-        // 1. Initialize Localization / i18n
-        if (typeof initLanguage === 'function') await initLanguage();
-
-        // 2. Load UI Navigation & Profile listeners
-        if (typeof loadDynamicNavigation === 'function') loadDynamicNavigation();
-        if (typeof initProfile === 'function') initProfile();
-
-        // 3. Initialize Firebase Auth Listeners
-        initAuth();
-
-        // 4. Initialize Feed / Witness Engine
-        if (typeof initFeed === 'function') initFeed();
-
-    } catch (error) {
-        console.error("Initialization error in main.js:", error);
-        showToast?.("Error initializing application modules.", "error");
-    }
-});
-
 // Firebase Firestore Imports
 import {
     collection,
@@ -44,6 +24,7 @@ import {
     limit
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
+// Global Module State
 let engineInstance = null;
 let isInitialized = false;
 let listenersInitialized = false;
@@ -385,7 +366,12 @@ async function bootstrap() {
 
     try {
         await initAuth();
-        updateUIForAuthState();
+        
+        // Match function imported at top of file
+        if (typeof updateAuthUI === 'function') {
+            updateAuthUI(auth.currentUser);
+        }
+
         setupEventListeners();
 
         initLanguage?.();
@@ -405,7 +391,7 @@ async function bootstrap() {
         console.log("✅ Bootstrap finished successfully");
     } catch (e) {
         console.error("Bootstrap error:", e);
-        showToast("Failed to initialize app. Please refresh.", "error");
+        showToast?.("Failed to initialize app. Please refresh.", "error");
     }
 }
 
