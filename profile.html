@@ -45,7 +45,208 @@
             <div id="modalProfileContent" class="flex-1 overflow-y-auto pr-2 custom-scroll">
                 <!-- JS will fill this -->
             </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="myProfileTitle">My Profile | VocalWitness</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="min-h-screen bg-[#0a0f1c] text-zinc-200">
 
+    <!-- Header -->
+    <header class="glass sticky top-0 z-50 p-4 border-b border-zinc-700">
+        <div class="max-w-4xl mx-auto flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-2xl">🔊</div>
+                <span class="font-bold text-xl" data-i18n="appTitle">VocalWitness</span>
+            </a>
+            
+            <div class="flex items-center gap-4">
+                <a href="index.html" class="text-emerald-400 hover:text-emerald-300" data-i18n="backToSquare">← Back to Square</a>
+                <button onclick="toggleDarkMode()" class="p-3 rounded-2xl hover:bg-zinc-800 transition-colors">
+                    🌙
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-4xl mx-auto p-6">
+        <div class="glass rounded-3xl overflow-hidden min-h-[600px] flex flex-col">
+            <div id="mainProfileContent" class="flex-1 p-8 overflow-y-auto custom-scroll">
+                <div class="text-center py-20 text-zinc-400" data-i18n="loadingProfile">Loading your profile...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Profile View Modal -->
+    <div id="profileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[10000] p-4">
+        <div class="glass rounded-3xl p-8 max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div class="flex justify-between items-center mb-6 border-b border-zinc-700 pb-4 flex-shrink-0">
+                <h2 class="text-2xl font-bold text-white" data-i18n="myProfile">My Profile</h2>
+                <button onclick="closeProfile()" class="text-4xl text-zinc-400 hover:text-white leading-none">×</button>
+            </div>
+            
+            <div id="modalProfileContent" class="flex-1 overflow-y-auto pr-2 custom-scroll">
+                <!-- JS will fill this -->
+            </div>
+
+            <div class="mt-8 flex gap-3 flex-shrink-0">
+                <button onclick="logout()" 
+                        class="flex-1 py-3 border border-red-500/50 text-red-400 hover:bg-red-500/10 rounded-2xl font-medium transition"
+                        data-i18n="signOut">
+                    Sign Out
+                </button>
+                <button onclick="openSettings()" 
+                        class="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl font-medium transition">
+                    ⚙️ <span data-i18n="settings">Settings</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div id="editProfileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[10001] p-4">
+        <div class="glass rounded-3xl p-6 max-w-md w-full space-y-4">
+            <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
+                <h3 class="text-xl font-bold text-white" data-i18n="editProfile">Edit Profile</h3>
+                <button onclick="closeEditProfile()" class="text-2xl text-zinc-400 hover:text-white">×</button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="text-xs text-zinc-400" data-i18n="displayName">Display Name</label>
+                    <input type="text" id="editDisplayName" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div>
+                    <label class="text-xs text-zinc-400" data-i18n="username">Username</label>
+                    <input type="text" id="editUsername" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div>
+                    <label class="text-xs text-zinc-400" data-i18n="bio">Bio</label>
+                    <textarea id="editBio" rows="3" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white focus:outline-none focus:border-emerald-500"></textarea>
+                </div>
+            </div>
+
+            <div class="flex gap-3 pt-2">
+                <button onclick="saveProfileChanges()" class="flex-1 py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition" data-i18n="save">
+                    Save
+                </button>
+                <button onclick="closeEditProfile()" class="py-3 px-4 bg-zinc-800 text-zinc-300 font-semibold rounded-xl hover:bg-zinc-700 transition" data-i18n="cancel">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings & Security Modal -->
+    <div id="settingsModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[10001] p-4">
+        <div class="glass rounded-3xl p-6 max-w-lg w-full max-h-[85vh] overflow-y-auto custom-scroll space-y-6">
+            <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
+                <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                    ⚙️ <span data-i18n="accountSettings">Account Settings</span>
+                </h3>
+                <button onclick="closeSettings()" class="text-2xl text-zinc-400 hover:text-white">×</button>
+            </div>
+
+            <!-- Security & Auth -->
+            <div class="space-y-3">
+                <h4 class="text-sm font-semibold text-emerald-400 uppercase tracking-wider" data-i18n="securityHeader">Security & Access</h4>
+                
+                <div class="bg-zinc-900/60 p-4 rounded-2xl border border-zinc-800 flex justify-between items-center">
+                    <div>
+                        <div class="font-medium text-white" data-i18n="passwordLabel">Password</div>
+                        <div class="text-xs text-zinc-400" data-i18n="passwordSub">Send password reset email</div>
+                    </div>
+                    <button onclick="triggerPasswordReset()" class="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200 rounded-xl transition" data-i18n="resetBtn">
+                        Reset
+                    </button>
+                </div>
+
+                <div class="bg-zinc-900/60 p-4 rounded-2xl border border-zinc-800 flex justify-between items-center">
+                    <div>
+                        <div class="font-medium text-white" data-i18n="2faLabel">Two-Factor Auth (2FA)</div>
+                        <div class="text-xs text-zinc-400" data-i18n="2faSub">Require phone verification on sign-in</div>
+                    </div>
+                    <input type="checkbox" id="toggle2FA" onchange="handle2FAToggle(event)" class="w-5 h-5 accent-emerald-500 rounded cursor-pointer">
+                </div>
+            </div>
+
+            <!-- Door Preferences -->
+            <div class="space-y-3">
+                <h4 class="text-sm font-semibold text-emerald-400 uppercase tracking-wider" data-i18n="preferencesHeader">Preferences</h4>
+                
+                <div class="bg-zinc-900/60 p-4 rounded-2xl border border-zinc-800 space-y-2">
+                    <label class="text-xs text-zinc-400 block" data-i18n="defaultDoorLabel">Default Entrance Door</label>
+                    <select id="defaultDoorSelect" onchange="updateDefaultDoor(this.value)" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+                        <option value="public_square">Public Square</option>
+                        <option value="citizen_circle">Citizen Circle</option>
+                        <option value="witness_circle">Witness Circle</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Danger Zone / Export -->
+            <div class="space-y-3 pt-2">
+                <h4 class="text-sm font-semibold text-red-400 uppercase tracking-wider" data-i18n="dangerZoneHeader">Data & Identity</h4>
+                
+                <div class="bg-zinc-900/60 p-4 rounded-2xl border border-zinc-800/80 flex justify-between items-center">
+                    <div>
+                        <div class="font-medium text-white" data-i18n="exportLabel">Export Profile Record</div>
+                        <div class="text-xs text-zinc-400" data-i18n="exportSub">Download encrypted identity summary</div>
+                    </div>
+                    <button onclick="exportUserDataPDF()" class="px-3 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 text-xs font-semibold rounded-xl transition" data-i18n="exportBtn">
+                        Download PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module">
+        import { initProfile } from './js/profile.js';
+        import { initLanguage } from './js/i18n.js';
+        import { initDarkMode } from './js/utils.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initProfile();
+            initLanguage();
+            initDarkMode();
+        });
+    </script>
+
+    <script>
+        window.closeProfile = () => {
+            document.getElementById('profileModal')?.classList.add('hidden');
+        };
+
+        window.openSettings = () => {
+            document.getElementById('settingsModal')?.classList.remove('hidden');
+        };
+
+        window.closeSettings = () => {
+            document.getElementById('settingsModal')?.classList.add('hidden');
+        };
+
+        window.closeEditProfile = () => {
+            document.getElementById('editProfileModal')?.classList.add('hidden');
+        };
+
+        window.toggleDarkMode = () => {
+            const current = document.documentElement.getAttribute('data-theme') || 'dark';
+            const next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+            if (window.showToast) window.showToast(next === 'dark' ? '🌙 Dark Mode' : '☀️ Light Mode');
+        };
+    </script>
+</body>
+</html>
             <div class="mt-8 flex gap-3 flex-shrink-0">
                 <button onclick="logout()" 
                         class="flex-1 py-3 border border-red-500 text-red-400 hover:bg-red-500/10 rounded-2xl font-medium transition"
