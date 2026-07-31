@@ -88,6 +88,7 @@ function renderProfileUI(userData) {
                     
                     <h2 class="text-3xl font-bold mt-5 text-white">${userData.displayName || "Anonymous Witness"}</h2>
                     <p class="text-emerald-400">@${userData.username || 'anonymous'}</p>
+                    ${userData.region ? `<p class="text-xs text-zinc-400 mt-1">📍 ${userData.region}</p>` : ''}
                     
                     <!-- Tier Badge -->
                     <div class="mt-6">
@@ -218,10 +219,12 @@ window.openEditProfile = () => {
     if (currentUserData) {
         const displayNameInput = document.getElementById('editDisplayName');
         const usernameInput = document.getElementById('editUsername');
+        const regionInput = document.getElementById('editRegion');
         const bioInput = document.getElementById('editBio');
 
         if (displayNameInput) displayNameInput.value = currentUserData.displayName || '';
         if (usernameInput) usernameInput.value = currentUserData.username || '';
+        if (regionInput) regionInput.value = currentUserData.region || '';
         if (bioInput) bioInput.value = currentUserData.bio || '';
     }
     modal.classList.remove('hidden');
@@ -241,6 +244,7 @@ window.saveProfileChanges = async () => {
 
     const displayName = document.getElementById('editDisplayName')?.value.trim();
     const username = document.getElementById('editUsername')?.value.trim();
+    const region = document.getElementById('editRegion')?.value.trim();
     const bio = document.getElementById('editBio')?.value.trim();
 
     if (!displayName) return showToast("Display name is required", "error");
@@ -252,6 +256,7 @@ window.saveProfileChanges = async () => {
         await updateDoc(userRef, {
             displayName,
             username: username || null,
+            region: region || null,
             bio: bio || null,
             updatedAt: serverTimestamp()
         });
@@ -351,9 +356,10 @@ window.exportUserDataPDF = async () => {
         pdf.text(`Generated: ${new Date().toLocaleString()}`, 20, 32);
         pdf.text(`Display Name: ${currentUserData.displayName || 'N/A'}`, 20, 44);
         pdf.text(`Username: @${currentUserData.username || 'anonymous'}`, 20, 52);
-        pdf.text(`Reputation: ${currentUserData.reputation || 0} REP`, 20, 60);
-        pdf.text(`Phone Verified: ${currentUserData.isPhoneVerified ? 'Yes' : 'No'}`, 20, 68);
-        pdf.text(`ZK Verified: ${currentUserData.zkVerified ? 'Yes' : 'No'}`, 20, 76);
+        pdf.text(`Region: ${currentUserData.region || 'N/A'}`, 20, 60);
+        pdf.text(`Reputation: ${currentUserData.reputation || 0} REP`, 20, 68);
+        pdf.text(`Phone Verified: ${currentUserData.isPhoneVerified ? 'Yes' : 'No'}`, 20, 76);
+        pdf.text(`ZK Verified: ${currentUserData.zkVerified ? 'Yes' : 'No'}`, 20, 84);
         
         pdf.save(`vocalwitness-identity-${auth.currentUser?.uid || 'user'}.pdf`);
         showToast("✅ Identity PDF Exported!", "success");
