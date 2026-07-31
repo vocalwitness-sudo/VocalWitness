@@ -63,6 +63,22 @@
     "warning": "Send only USDT on the TRC-20 network.",
     "closeButton": "Close"
   },
+  "authModal": {
+    "title": "Enter The Square",
+    "subtitle": "Establish your node identity on VocalWitness to report, verify, and publish evidence.",
+    "googleBtn": "Continue with Google",
+    "anonymousBtn": "Continue as Anonymous Node",
+    "cancelBtn": "Cancel & Continue Browsing"
+  },
+  "toast": {
+    "nodeConnected": "Node Link Established: Google OAuth",
+    "anonymousInit": "Anonymous Identity Node Initialized",
+    "nodeDisconnected": "Identity Node Disconnected",
+    "authFailed": "Authentication failed.",
+    "popupBlocked": "Popup blocked! Please allow popups for this site.",
+    "signInCancelled": "Sign-in cancelled.",
+    "requireAuth": "Please sign in to continue."
+  },
   "trueWitnessTitle": "Witness Voice • VocalWitness",
   "trueWitnessSubtitle": "ZK Verified • High Trust",
   "zkVerifiedTestimonies": "ZK Verified Testimonies",
