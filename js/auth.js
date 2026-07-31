@@ -9,7 +9,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 
 import { auth, provider, db } from './firebase-config.js';
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { showToast } from './utils.js';
 import { updateAppState } from './app-state.js';
 import { applyTierTheme, updateTierBadge } from './tier.js';
@@ -30,14 +30,28 @@ async function createOrUpdateUser(user) {
     if (!user) return;
     try {
         const userRef = doc(db, "users", user.uid);
-        await setDoc(userRef, {
-            uid: user.uid,
-            email: user.email || "",
-            displayName: user.displayName || "Anonymous Witness",
-            photoURL: user.photoURL || "",
-            tier: "citizen",
-            lastActive: serverTimestamp()
-        }, { merge: true });
+        const snap = await getDoc(userRef);
+
+        if (!snap.exists()) {
+            // First-time user setup
+            await setDoc(userRef, {
+                uid: user.uid,
+                email: user.email || "",
+                displayName: user.displayName || "Anonymous Witness",
+                photoURL: user.photoURL || "",
+                tier: "citizen",
+                createdAt: serverTimestamp(),
+                lastActive: serverTimestamp()
+            });
+        } else {
+            // Existing user: preserve tier, update activity timestamp
+            await setDoc(userRef, {
+                email: user.email || snap.data().email || "",
+                displayName: user.displayName || snap.data().displayName || "Anonymous Witness",
+                photoURL: user.photoURL || snap.data().photoURL || "",
+                lastActive: serverTimestamp()
+            }, { merge: true });
+        }
     } catch (e) {
         console.error("User document error:", e);
     }
@@ -55,12 +69,14 @@ export function savePendingDraft() {
 export function restorePendingDraft() {
     const draft = sessionStorage.getItem('vocal_pending_draft');
     if (draft) {
-        const mainInput = document.getElementById('mainInput');
-        if (mainInput) {
-            mainInput.value = draft;
-            showToast("✅ Your testimony draft has been restored!", "success");
-        }
-        sessionStorage.removeItem('vocal_pending_draft');
+        setTimeout(() => {
+            const mainInput = document.getElementById('mainInput');
+            if (mainInput) {
+                mainInput.value = draft;
+                showToast("✅ Your testimony draft has been restored!", "success");
+            }
+            sessionStorage.removeItem('vocal_pending_draft');
+        }, 100);
     }
 }
 
@@ -107,28 +123,26 @@ export async function googleLogin() {
     try {
         savePendingDraft();
         showToast("Opening Google Sign-In...", "info");
-        
-        // Popup authentication avoids cross-origin storage partitioning issues
+
         const result = await signInWithPopup(auth, provider);
-        
+
         if (result && result.user) {
             const user = result.user;
             await createOrUpdateUser(user);
             updateAppState({ isAuthenticated: true, currentUser: user });
             refreshTierUI();
-            
+
             if (typeof window.updateHeaderButtons === 'function') {
                 window.updateHeaderButtons(true);
             }
-            
+
             window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
             updateUIForAuthState();
 
-            showToast("✅ Signed in successfully! Welcome to the Square.", "success");
-            
+            showToast("✅ Signed in successfully!", "success");
+
             closeLoginModal();
             closeCreateAccountModal();
-            
             restorePendingDraft();
         }
     } catch (error) {
@@ -144,14 +158,14 @@ export async function handleEmailAuth(event) {
     if (event) event.preventDefault();
 
     const email = (
-        document.getElementById('authEmail')?.value || 
-        document.getElementById('signInEmail')?.value || 
+        document.getElementById('authEmail')?.value ||
+        document.getElementById('signInEmail')?.value ||
         document.getElementById('signUpEmail')?.value
     )?.trim();
 
     const password = (
-        document.getElementById('authPassword')?.value || 
-        document.getElementById('signInPassword')?.value || 
+        document.getElementById('authPassword')?.value ||
+        document.getElementById('signInPassword')?.value ||
         document.getElementById('signUpPassword')?.value
     );
 
@@ -162,12 +176,12 @@ export async function handleEmailAuth(event) {
 
     try {
         savePendingDraft();
-        
+
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
         if (!user.emailVerified) {
-            showToast("⚠️ Email unverified. A link was sent to your inbox. Please verify before proceeding.", "warning");
+            showToast("⚠️ Email unverified. Please check your inbox for the verification link.", "warning");
             await signOut(auth);
             return;
         }
@@ -175,7 +189,7 @@ export async function handleEmailAuth(event) {
         await createOrUpdateUser(user);
         updateAppState({ isAuthenticated: true, currentUser: user });
         refreshTierUI();
-        
+
         if (typeof window.updateHeaderButtons === 'function') {
             window.updateHeaderButtons(true);
         }
@@ -196,7 +210,7 @@ export async function handleEmailAuth(event) {
 
 export async function handleEmailSignUp(event) {
     if (event) event.preventDefault();
-    const email = document.getElementById('authEmail')?.value?.trim() || document.getElementById('signUpEmail')?.value?.trim();
+    const email = (document.getElementById('authEmail')?.value || document.getElementById('signUpEmail')?.value)?.trim();
     const password = document.getElementById('authPassword')?.value || document.getElementById('signUpPassword')?.value;
 
     if (!email || !password) {
@@ -211,19 +225,17 @@ export async function handleEmailSignUp(event) {
 
     try {
         savePendingDraft();
-        
+
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
-        
-        await createOrUpdateUser(user);
+
         await sendEmailVerification(user);
+        await signOut(auth); // Sign out immediately to enforce email verification flow
 
         showToast("🎉 Account created! A verification link has been sent to your email.", "success");
-        
+
         closeLoginModal();
         closeCreateAccountModal();
-        
-        await signOut(auth);
     } catch (error) {
         console.error("Email sign-up error:", error);
         showToast(handleAuthError(error), "error");
@@ -254,11 +266,11 @@ export function togglePasswordVisibility(inputId, btnElement) {
 }
 
 // ====================== REQUIRE AUTH ======================
-export function requireAuth(message = "Please sign in to participate in the Public Square.") {
+export function requireAuth(message = "Please sign in to proceed.") {
     if (!auth.currentUser) {
         savePendingDraft();
         showToast(message, "info");
-        
+
         const loginModal = document.getElementById('loginModal');
         const modalMsg = document.getElementById('loginModalMessage');
         if (modalMsg) modalMsg.textContent = message;
@@ -278,14 +290,12 @@ export function updateUIForAuthState() {
 
     if (guestBtn) {
         guestBtn.classList.toggle('hidden', isLoggedIn);
-        const guestBtnText = document.getElementById('guest-btn-text');
-        if (guestBtnText) guestBtnText.textContent = isLoggedIn ? '' : 'Join VocalWitness';
     }
 
     if (signInElement) {
         signInElement.classList.toggle('hidden', isLoggedIn);
     }
-    
+
     if (profileBtn) {
         profileBtn.classList.toggle('hidden', !isLoggedIn);
     }
@@ -305,21 +315,19 @@ export function updateUIForAuthState() {
 
 // ====================== INIT AUTH ======================
 export function initAuth() {
-    // Main Firebase Auth State Listener
     auth.onAuthStateChanged(async (user) => {
-        if (user) {
+        if (user && user.emailVerified) {
             await createOrUpdateUser(user);
             updateAppState({ isAuthenticated: true, currentUser: user });
             refreshTierUI();
         } else {
             updateAppState({ isAuthenticated: false, currentUser: null });
         }
-        
-        window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
+
+        window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user: (user && user.emailVerified) ? user : null } }));
         updateUIForAuthState();
     });
-    
-    // Automatic binding for logout elements across the DOM
+
     document.addEventListener('click', (e) => {
         if (e.target.matches('#logoutBtn, .btn-logout, [data-action="logout"]')) {
             e.preventDefault();
@@ -328,7 +336,6 @@ export function initAuth() {
     });
 
     updateUIForAuthState();
-
     console.log("🔐 Auth initialized (Popup Mode)");
 }
 
