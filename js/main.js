@@ -1,4 +1,5 @@
 // js/main.js - Polished & Robust Main Entry Point
+// js/main.js - Polished & Robust Main Entry Point
 import './app-state.js';
 import { initAuth, requireAuth, updateAuthUI } from "./auth.js";
 import { initFeed } from './feed.js';
@@ -12,9 +13,25 @@ import { AppState } from './app-state.js';
 import { showToast } from './utils.js';
 import './composer.js';
 
-document.addEventListener('DOMContentLoaded', () => {
-    // Initialize Auth listeners and UI bindings
-    initAuth();
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        // 1. Initialize Localization / i18n
+        if (typeof initLanguage === 'function') await initLanguage();
+
+        // 2. Load UI Navigation & Profile listeners
+        if (typeof loadDynamicNavigation === 'function') loadDynamicNavigation();
+        if (typeof initProfile === 'function') initProfile();
+
+        // 3. Initialize Firebase Auth Listeners
+        initAuth();
+
+        // 4. Initialize Feed / Witness Engine
+        if (typeof initFeed === 'function') initFeed();
+
+    } catch (error) {
+        console.error("Initialization error in main.js:", error);
+        showToast?.("Error initializing application modules.", "error");
+    }
 });
 
 // Firebase Firestore Imports
