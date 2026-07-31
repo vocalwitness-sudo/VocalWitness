@@ -12,6 +12,11 @@ import { AppState } from './app-state.js';
 import { showToast } from './utils.js';
 import './composer.js';
 
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize Auth listeners and UI bindings
+    initAuth();
+});
+
 // Firebase Firestore Imports
 import {
     collection,
