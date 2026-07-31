@@ -36,8 +36,7 @@
     
 <body class="min-h-screen pb-24 bg-[#0a0f1c] text-white antialiased">
     <div class="app-container py-6 px-4 max-w-6xl mx-auto">
-    
-        <!-- Header -->
+    <!-- Header -->
         <header class="flex items-center justify-between mb-8 sticky top-4 z-50 glass rounded-3xl p-4 shadow-xl">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-2xl shadow-md font-bold text-black">VW</div>
@@ -63,8 +62,8 @@
                 <button id="support-btn" class="px-4 sm:px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl transition whitespace-nowrap text-sm sm:text-base shadow-sm min-w-[155px]" title="Help keep the platform running">
                     Support The Square
                 </button>
-                <!-- Main Sign In Button -->
-                <button id="signin-btn" onclick="showAuthModal()" class="px-4 sm:px-5 py-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm text-sm sm:text-base">
+                <!-- Main Sign In Button (Protected against double clicks) -->
+                <button id="signin-btn" onclick="this.disabled=true; showAuthModal(); setTimeout(() => this.disabled=false, 1000);" class="px-4 sm:px-5 py-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed">
                     <img src="https://www.google.com/favicon.ico" class="w-4 h-4" alt="Google">
                     <span class="hidden sm:inline" data-i18n="joinBtn">Sign in</span>
                 </button>
@@ -213,8 +212,7 @@
             <div id="feedContainer" class="space-y-8"></div>
         </main>
     </div>
-
-    <!-- Profile Modal -->
+    
     <!-- Profile Modal -->
 <div id="profileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[10000] p-4">
     <div class="glass rounded-3xl p-8 max-w-lg w-full max-h-[90vh] overflow-auto modal">
