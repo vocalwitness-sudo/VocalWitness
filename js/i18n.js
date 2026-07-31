@@ -1,5 +1,6 @@
-// js/i18n.js - Final Fixed Version (Minimal Layout Shift)
+// js/i18n.js - Final Production Version (Nested Keys + Input Support)
 let currentTranslations = {};
+let fallbackTranslations = {};
 let currentLang = 'en';
 
 const supportedLanguages = [
@@ -15,10 +16,41 @@ const supportedLanguages = [
     { code: 'sw',  name: 'Swahili',        flag: '🇹🇿', native: 'Kiswahili',   rtl: false }
 ];
 
+/**
+ * Safely resolves nested keys using dot-notation (e.g., 'supportModal.title')
+ */
+function getNestedTranslation(obj, path) {
+    if (!obj || !path) return null;
+    return path.split('.').reduce((acc, part) => (acc && acc[part] !== undefined ? acc[part] : null), obj);
+}
+
+/**
+ * Main function to lookup translation strings with fallback
+ */
+export function t(key) {
+    const val = getNestedTranslation(currentTranslations, key);
+    if (val !== null) return val;
+
+    // Fallback to English if key is missing in active language
+    const fallbackVal = getNestedTranslation(fallbackTranslations, key);
+    if (fallbackVal !== null) return fallbackVal;
+
+    // Last resort: return key string
+    return key;
+}
+
 export async function loadTranslations(langCode = 'en') {
     try {
         const isSupported = supportedLanguages.some(l => l.code === langCode);
         if (!isSupported) langCode = 'en';
+
+        // Load English as fallback base if not already loaded
+        if (Object.keys(fallbackTranslations).length === 0 && langCode !== 'en') {
+            try {
+                const fallbackRes = await fetch('translations/en.json');
+                if (fallbackRes.ok) fallbackTranslations = await fallbackRes.json();
+            } catch (_) {}
+        }
 
         const response = await fetch(`translations/${langCode}.json`);
         
@@ -30,7 +62,7 @@ export async function loadTranslations(langCode = 'en') {
             currentTranslations = enRes.ok ? await enRes.json() : {};
         }
     } catch (e) {
-        console.warn(`Translation failed, using English`);
+        console.warn(`Translation load failed for ${langCode}, falling back to English`);
         try {
             const enRes = await fetch('translations/en.json');
             currentTranslations = enRes.ok ? await enRes.json() : {};
@@ -60,9 +92,16 @@ function applyTranslations() {
         const key = el.getAttribute('data-i18n');
         if (!key) return;
 
-        const text = currentTranslations[key] || key;
+        const text = t(key);
+        if (text === key && !getNestedTranslation(currentTranslations, key)) return;
 
-        // Safe text replacement to avoid layout shift
+        // Handle Form Inputs & Textareas (placeholders)
+        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+            el.placeholder = text;
+            return;
+        }
+
+        // Safe text replacement to preserve inner HTML/icons and avoid layout shift
         let textUpdated = false;
         for (let node of el.childNodes) {
             if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '') {
@@ -73,14 +112,16 @@ function applyTranslations() {
         }
 
         if (!textUpdated) {
-            if (el.children.length === 0 || el.tagName === 'BUTTON' || el.tagName === 'H2' || el.tagName === 'SPAN') {
+            if (el.children.length === 0 || el.tagName === 'BUTTON' || el.tagName === 'H2' || el.tagName === 'SPAN' || el.tagName === 'P') {
                 el.textContent = text;
             }
         }
     });
 
-    if (currentTranslations.pageTitle) {
-        document.title = currentTranslations.pageTitle;
+    // Update Page Document Title if available
+    const pageTitle = t('pageTitle');
+    if (pageTitle && pageTitle !== 'pageTitle') {
+        document.title = pageTitle;
     }
 }
 
@@ -99,11 +140,7 @@ export function initLanguage() {
     loadTranslations(savedLang);
 }
 
-export function t(key) {
-    return currentTranslations[key] || key;
-}
-
-// Expose
+// Global Exports
 window.initLanguage = initLanguage;
 window.changeLanguage = loadTranslations;
 window.t = t;
