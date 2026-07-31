@@ -1,4 +1,4 @@
-// js/profile.js - Integrated Version
+// js/profile.js - Integrated & Refactored Version
 import { 
     onAuthStateChanged, 
     sendPasswordResetEmail 
@@ -17,9 +17,11 @@ import { startWitnessCycle } from './witnessCycle.js';
 
 let currentUserData = null;
 let userUnsubscribe = null;
-let currentProfileImageFile = null;
 window.currentUserData = null;
 
+/**
+ * Initialize Profile Listener & State
+ */
 export function initProfile() {
     if (userUnsubscribe) userUnsubscribe();
     
@@ -29,10 +31,14 @@ export function initProfile() {
         } else {
             currentUserData = null;
             window.currentUserData = null;
+            userUnsubscribe = null;
         }
     });
 }
 
+/**
+ * Real-time Firestore user document listener
+ */
 function listenToUserProfile(userId) {
     const userRef = doc(db, "users", userId);
     userUnsubscribe = onSnapshot(userRef, (snapshot) => {
@@ -41,10 +47,12 @@ function listenToUserProfile(userId) {
             window.currentUserData = currentUserData;
             renderProfileUI(currentUserData);
             refreshTierAndUI?.();
+        } else {
+            console.warn("User profile document does not exist yet.");
         }
     }, (error) => {
-        console.error("Profile error:", error);
-        showToast("Error loading profile", "error");
+        console.error("Profile Firestore Error:", error);
+        showToast("Error loading profile data", "error");
     });
 }
 
@@ -52,7 +60,7 @@ function listenToUserProfile(userId) {
 function renderProfileUI(userData) {
     if (!userData) return;
     
-    // Supports both inline profile page and overlay modal
+    // Target containers across embedded page views and overlay modals
     const targets = [
         document.getElementById('mainProfileContent'),
         document.getElementById('modalProfileContent'),
@@ -71,11 +79,11 @@ function renderProfileUI(userData) {
                     <div class="relative">
                         <div class="w-32 h-32 mx-auto rounded-3xl overflow-hidden border-4 border-zinc-700 shadow-2xl">
                             ${userData.photoURL ? 
-                                `<img src="${userData.photoURL}" class="w-full h-full object-cover">` : 
+                                `<img src="${userData.photoURL}" class="w-full h-full object-cover" alt="Profile Photo">` : 
                                 `<div class="w-full h-full bg-gradient-to-br from-zinc-700 to-zinc-800 flex items-center justify-center text-7xl">👤</div>`
                             }
                         </div>
-                        ${isWitness ? `<div class="absolute -bottom-1 -right-1 text-3xl">🔐</div>` : ''}
+                        ${isWitness ? `<div class="absolute -bottom-1 -right-1 text-3xl" title="Active Witness">🔐</div>` : ''}
                     </div>
                     
                     <h2 class="text-3xl font-bold mt-5 text-white">${userData.displayName || "Anonymous Witness"}</h2>
@@ -188,7 +196,9 @@ function renderProfileUI(userData) {
             container.innerHTML = html;
         });
 
-    }).catch(console.error);
+    }).catch(err => {
+        console.error("Error computing witness level:", err);
+    });
 }
 
 // ====================== WITNESS CYCLE CONTROL ======================
@@ -221,6 +231,11 @@ window.closeEditProfile = () => {
     document.getElementById('editProfileModal')?.classList.add('hidden');
 };
 
+window.handleSaveProfile = async (event) => {
+    if (event) event.preventDefault();
+    await window.saveProfileChanges();
+};
+
 window.saveProfileChanges = async () => {
     if (!auth.currentUser) return showToast("You must be logged in", "error");
 
@@ -242,10 +257,10 @@ window.saveProfileChanges = async () => {
         });
 
         showToast("✅ Profile updated successfully!", "success");
-        closeEditProfile();
+        window.closeEditProfile();
         refreshTierAndUI?.();
     } catch (error) {
-        console.error(error);
+        console.error("Save profile error:", error);
         showToast("Failed to save profile", "error");
     }
 };
@@ -255,7 +270,6 @@ window.openSettings = () => {
     const modal = document.getElementById('settingsModal');
     if (!modal) return showToast("Settings modal not found", "error");
     
-    // Sync UI with current settings state
     if (currentUserData) {
         const toggle2FA = document.getElementById('toggle2FA');
         const defaultDoor = document.getElementById('defaultDoorSelect');
@@ -296,7 +310,7 @@ window.handle2FAToggle = async (e) => {
         });
         showToast(isEnabled ? "🔒 2FA Enabled" : "🔓 2FA Disabled", "info");
     } catch (error) {
-        console.error("2FA error:", error);
+        console.error("2FA toggle error:", error);
         showToast("Failed to update 2FA preference", "error");
     }
 };
@@ -309,10 +323,13 @@ window.updateDefaultDoor = async (doorValue) => {
             defaultDoor: doorValue,
             updatedAt: serverTimestamp()
         });
-        showToast(`Default door updated to ${doorValue.replace('_', ' ')}`, "success");
+        
+        // Format name for toast presentation
+        const formattedName = doorValue.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        showToast(`Default door updated to ${formattedName}`, "success");
     } catch (error) {
-        console.error("Default door error:", error);
-        showToast("Failed to save default door", "error");
+        console.error("Default door update error:", error);
+        showToast("Failed to save default door preference", "error");
     }
 };
 
