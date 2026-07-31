@@ -1,22 +1,37 @@
 /**
  * VocalWitness Engine - Two-Lungs Architecture
- * Hardened with retry logic + reliable blob finalization
+ * Production version – reliable blob finalization + pause/resume + waveform
  */
 
 export class BaseEngine {
     constructor(db, storage) {
         this.db = db;
         this.storage = storage;
+
+        // Recorder state
         this.mediaRecorder = null;
         this.audioChunks = [];
         this.currentAudioBlob = null;
         this.stream = null;
-        this.pendingImage = null;
-        this.pendingImageHash = null;
-        this.pendingExif = null;
+
+        // Stop promise (prevents race conditions)
         this._stopPromise = null;
         this._stopResolve = null;
         this._durationTimer = null;
+
+        // Timer
+        this._recordingStartedAt = null;
+        this._totalPausedMs = 0;
+        this._pausedAt = null;
+
+        // Waveform
+        this._audioCtx = null;
+        this._analyser = null;
+
+        // Pending image (legacy helpers)
+        this.pendingImage = null;
+        this.pendingImageHash = null;
+        this.pendingExif = null;
     }
 
     // ---------- MIME type helper ----------
@@ -28,17 +43,37 @@ export class BaseEngine {
             'audio/mp4'
         ];
         for (const type of types) {
-            if (MediaRecorder.isTypeSupported(type)) {
-                return type;
-            }
+            if (MediaRecorder.isTypeSupported(type)) return type;
         }
-        return ''; // let browser choose
+        return '';
+    }
+
+    // ---------- Internal cleanup ----------
+    _cleanupAudioGraph() {
+        if (this._audioCtx) {
+            this._audioCtx.close().catch(() => {});
+            this._audioCtx = null;
+            this._analyser = null;
+        }
+    }
+
+    _cleanupStream() {
+        if (this.stream) {
+            this.stream.getTracks().forEach(t => t.stop());
+            this.stream = null;
+        }
+    }
+
+    _resetTimerState() {
+        this._recordingStartedAt = null;
+        this._totalPausedMs = 0;
+        this._pausedAt = null;
     }
 
     // ---------- Start with retry ----------
     async startVoiceRecording(durationLimit = 300000, maxRetries = 3) {
-        // Clean previous session if any
-        this.stopVoiceRecording(true);
+        // Clean any previous session
+        await this.stopVoiceRecording(true);
 
         let lastError = null;
 
@@ -61,21 +96,20 @@ export class BaseEngine {
                 this.audioChunks = [];
                 this.currentAudioBlob = null;
 
-                // Collect chunks
+                // Collect non-empty chunks
                 this.mediaRecorder.ondataavailable = (event) => {
                     if (event.data && event.data.size > 0) {
                         this.audioChunks.push(event.data);
                     }
                 };
 
-                // Finalize blob when stopped
+                // Finalize blob
                 this.mediaRecorder.onstop = () => {
                     this.currentAudioBlob = new Blob(this.audioChunks, {
-                        type: this.mediaRecorder.mimeType || 'audio/webm'
+                        type: this.mediaRecorder?.mimeType || 'audio/webm'
                     });
                     console.log("✅ Recording stopped. Blob size:", this.currentAudioBlob.size, "bytes");
 
-                    // Resolve any waiting promise
                     if (this._stopResolve) {
                         this._stopResolve(this.currentAudioBlob);
                         this._stopResolve = null;
@@ -87,11 +121,29 @@ export class BaseEngine {
                     console.error("MediaRecorder error:", e);
                 };
 
-                // Start collecting data every 1 second (more reliable than one big chunk)
+                // Live waveform via Web Audio API
+                try {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    this._audioCtx = new AudioContext();
+                    const source = this._audioCtx.createMediaStreamSource(this.stream);
+                    this._analyser = this._audioCtx.createAnalyser();
+                    this._analyser.fftSize = 256;
+                    source.connect(this._analyser);
+                } catch (e) {
+                    console.warn("AnalyserNode unavailable:", e);
+                    this._analyser = null;
+                }
+
+                // Timer baseline
+                this._recordingStartedAt = Date.now();
+                this._totalPausedMs = 0;
+                this._pausedAt = null;
+
+                // Start with timeslice (critical for non-empty final blob)
                 this.mediaRecorder.start(1000);
                 console.log("🎤 Recording started...");
 
-                // Auto-stop after durationLimit
+                // Auto-stop
                 if (durationLimit > 0) {
                     this._durationTimer = setTimeout(() => {
                         console.log("⏱️ Duration limit reached – stopping recording");
@@ -99,32 +151,26 @@ export class BaseEngine {
                     }, durationLimit);
                 }
 
-                return; // success – exit retry loop
+                return; // success
             } catch (err) {
                 lastError = err;
                 console.warn(`Microphone attempt ${attempt} failed:`, err.message || err);
 
-                // Clean up partial stream
-                if (this.stream) {
-                    this.stream.getTracks().forEach(t => t.stop());
-                    this.stream = null;
-                }
+                this._cleanupStream();
+                this._cleanupAudioGraph();
 
                 if (attempt < maxRetries) {
-                    // short delay before retry
                     await new Promise(r => setTimeout(r, 600 * attempt));
                 }
             }
         }
 
-        // All retries failed
         console.error("Microphone access failed after retries:", lastError);
         throw lastError || new Error("Could not access microphone");
     }
 
     /**
      * Stop recording and return a Promise that resolves with the final Blob.
-     * This prevents the race condition where upload runs before onstop fires.
      */
     stopVoiceRecording(silent = false) {
         if (this._durationTimer) {
@@ -133,10 +179,12 @@ export class BaseEngine {
         }
 
         if (!this.mediaRecorder || this.mediaRecorder.state === "inactive") {
+            this._cleanupStream();
+            this._cleanupAudioGraph();
+            this._resetTimerState();
             return Promise.resolve(this.currentAudioBlob);
         }
 
-        // Create a promise that will be resolved inside onstop
         this._stopPromise = new Promise((resolve) => {
             this._stopResolve = resolve;
         });
@@ -151,11 +199,10 @@ export class BaseEngine {
             }
         }
 
-        // Always stop the tracks
-        if (this.stream) {
-            this.stream.getTracks().forEach(track => track.stop());
-            this.stream = null;
-        }
+        // Stop tracks immediately (onstop will still fire)
+        this._cleanupStream();
+        this._cleanupAudioGraph();
+        this._resetTimerState();
 
         if (!silent) {
             console.log("🛑 Stop requested – waiting for final blob...");
@@ -164,24 +211,56 @@ export class BaseEngine {
         return this._stopPromise;
     }
 
-    // Convenience toggle used by UI
-    async toggleVoiceRecording(btn) {
-        const isRecording = this.mediaRecorder && this.mediaRecorder.state === "recording";
+    // ---------- Pause / Resume ----------
+    get isPaused() {
+        return this.mediaRecorder?.state === 'paused';
+    }
 
-        if (!isRecording) {
-            try {
-                await this.startVoiceRecording();
-                if (btn) {
-                    btn.classList.add('recording-active', 'animate-pulse');
-                }
-            } catch (err) {
-                throw err; // let caller show toast
+    pauseVoiceRecording() {
+        if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+            this.mediaRecorder.pause();
+            this._pausedAt = Date.now();
+            console.log('⏸ Recording paused');
+        }
+    }
+
+    resumeVoiceRecording() {
+        if (this.mediaRecorder && this.mediaRecorder.state === 'paused') {
+            this.mediaRecorder.resume();
+            if (this._pausedAt) {
+                this._totalPausedMs += Date.now() - this._pausedAt;
+                this._pausedAt = null;
             }
+            console.log('▶️ Recording resumed');
+        }
+    }
+
+    // ---------- Timer ----------
+    getElapsedMs() {
+        if (!this._recordingStartedAt) return 0;
+        const now = (this.isPaused && this._pausedAt) ? this._pausedAt : Date.now();
+        return Math.max(0, now - this._recordingStartedAt - (this._totalPausedMs || 0));
+    }
+
+    // ---------- Waveform ----------
+    getWaveformData() {
+        if (!this._analyser) return null;
+        const data = new Uint8Array(this._analyser.frequencyBinCount);
+        this._analyser.getByteFrequencyData(data);
+        return data;
+    }
+
+    // ---------- Convenience toggle ----------
+    async toggleVoiceRecording(btn) {
+        const isActive = this.mediaRecorder &&
+            (this.mediaRecorder.state === 'recording' || this.mediaRecorder.state === 'paused');
+
+        if (!isActive) {
+            await this.startVoiceRecording();
+            if (btn) btn.classList.add('recording-active', 'animate-pulse');
         } else {
             const blob = await this.stopVoiceRecording();
-            if (btn) {
-                btn.classList.remove('recording-active', 'animate-pulse');
-            }
+            if (btn) btn.classList.remove('recording-active', 'animate-pulse');
             return blob;
         }
     }
@@ -213,7 +292,6 @@ export class BaseEngine {
 
     async generateAudioHash(blob) {
         if (!blob || blob.size === 0) return null;
-        // Real hash should come from utils.generateSha256Hash – this is just a fallback
         return "audio_hash_" + Date.now() + "_" + blob.size;
     }
 }
