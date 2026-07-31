@@ -39,26 +39,16 @@ export function initProfile() {
             }
         }
     });
-}
 
-/**
- * Real-time Firestore user document listener
- */
-function listenToUserProfile(userId) {
-    const userRef = doc(db, "users", userId);
-    userUnsubscribe = onSnapshot(userRef, (snapshot) => {
-        if (snapshot.exists()) {
-            currentUserData = snapshot.data();
-            window.currentUserData = currentUserData;
-            renderProfileUI(currentUserData);
-            refreshTierAndUI?.();
-        } else {
-            console.warn("User profile document does not exist yet.");
-        }
-    }, (error) => {
-        console.error("Profile Firestore Error:", error);
-        showToast(t("profile.error_loading", "Error loading profile data"), "error");
-    });
+    // Helper function to sanitize untrusted strings before innerHTML injection
+function sanitize(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 // ====================== RENDER UI ======================
@@ -77,6 +67,11 @@ function renderProfileUI(userData) {
     getCurrentWitnessLevel().then(level => {
         const isWitness = level !== null;
         
+        // Safely format Firestore timestamp or handle pending serverTimestamp / raw strings
+        const formattedDate = (userData.createdAt && typeof userData.createdAt.toDate === 'function')
+            ? new Date(userData.createdAt.toDate()).toLocaleDateString()
+            : t("common.recent", "Recent");
+
         const html = `
             <div class="space-y-8">
                 <!-- Profile Header -->
@@ -84,16 +79,16 @@ function renderProfileUI(userData) {
                     <div class="relative">
                         <div class="w-32 h-32 mx-auto rounded-3xl overflow-hidden border-4 border-zinc-700 shadow-2xl">
                             ${userData.photoURL ? 
-                                `<img src="${userData.photoURL}" class="w-full h-full object-cover" alt="Profile Photo">` : 
+                                `<img src="${sanitize(userData.photoURL)}" class="w-full h-full object-cover" alt="Profile Photo">` : 
                                 `<div class="w-full h-full bg-gradient-to-br from-zinc-700 to-zinc-800 flex items-center justify-center text-7xl">👤</div>`
                             }
                         </div>
                         ${isWitness ? `<div class="absolute -bottom-1 -right-1 text-3xl" title="${t("profile.active_witness", "Active Witness")}">🔐</div>` : ''}
                     </div>
                     
-                    <h2 class="text-3xl font-bold mt-5 text-white">${userData.displayName || t("profile.anonymous_witness", "Anonymous Witness")}</h2>
-                    <p class="text-emerald-400">@${userData.username || 'anonymous'}</p>
-                    ${userData.region ? `<p class="text-xs text-zinc-400 mt-1">📍 ${userData.region}</p>` : ''}
+                    <h2 class="text-3xl font-bold mt-5 text-white">${sanitize(userData.displayName) || t("profile.anonymous_witness", "Anonymous Witness")}</h2>
+                    <p class="text-emerald-400">@${sanitize(userData.username) || 'anonymous'}</p>
+                    ${userData.region ? `<p class="text-xs text-zinc-400 mt-1">📍 ${sanitize(userData.region)}</p>` : ''}
                     
                     <!-- Tier Badge -->
                     <div class="mt-6">
@@ -101,7 +96,7 @@ function renderProfileUI(userData) {
                             <div class="inline-flex items-center gap-3 px-6 py-3 bg-zinc-900 border border-zinc-700 rounded-3xl">
                                 <span class="text-4xl">${level.emblem}</span>
                                 <div class="text-left">
-                                    <div class="font-bold text-lg text-white">${level.name}</div>
+                                    <div class="font-bold text-lg text-white">${sanitize(level.name)}</div>
                                     <div class="text-xs text-zinc-400">${t("profile.level", "Level")} ${level.level} • ${userData.reputation || 0} REP</div>
                                 </div>
                             </div>
@@ -139,7 +134,7 @@ function renderProfileUI(userData) {
                 <!-- Bio -->
                 ${userData.bio ? `
                     <div class="bg-zinc-900/70 border border-zinc-700 rounded-3xl p-6 text-zinc-300">
-                        ${userData.bio}
+                        ${sanitize(userData.bio)}
                     </div>
                 ` : ''}
 
@@ -179,7 +174,7 @@ function renderProfileUI(userData) {
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-zinc-400">${t("profile.account_created", "Account Created")}</span>
-                            <span class="text-zinc-400">${userData.createdAt ? new Date(userData.createdAt.toDate()).toLocaleDateString() : t("common.recent", "Recent")}</span>
+                            <span class="text-zinc-400">${formattedDate}</span>
                         </div>
                     </div>
                 </div>
@@ -215,6 +210,27 @@ function renderProfileUI(userData) {
     });
 }
 
+/**
+ * Real-time Firestore user document listener
+ */
+function listenToUserProfile(userId) {
+    const userRef = doc(db, "users", userId);
+    userUnsubscribe = onSnapshot(userRef, (snapshot) => {
+        if (snapshot.exists()) {
+            currentUserData = snapshot.data();
+            window.currentUserData = currentUserData;
+            renderProfileUI(currentUserData);
+            refreshTierAndUI?.();
+        } else {
+            console.warn("User profile document does not exist yet.");
+        }
+    }, (error) => {
+        console.error("Profile Firestore Error:", error);
+        showToast(t("profile.error_loading", "Error loading profile data"), "error");
+    });
+}
+
+}
 // ====================== SIGN OUT HANDLER ======================
 window.handleSignOut = async () => {
     try {
