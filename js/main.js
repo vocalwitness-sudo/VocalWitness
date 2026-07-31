@@ -2,7 +2,7 @@
 
 // 1. Static Module Imports (Must remain at the top level)
 import './app-state.js';
-import { initAuth, requireAuth, updateAuthUI } from "./auth.js";
+import { initAuth, requireAuth, updateUIForAuthState } from "./auth.js";
 import { initFeed } from './feed.js';
 import { db, auth, storage } from './firebase-config.js';
 import { initLanguage } from './i18n.js';
