@@ -1,11 +1,13 @@
-// js/profile.js - Stable & Upgraded Version
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+// js/profile.js - Integrated Version
+import { 
+    onAuthStateChanged, 
+    sendPasswordResetEmail 
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { 
     doc, 
     onSnapshot, 
     updateDoc, 
-    serverTimestamp,
-    getDoc 
+    serverTimestamp 
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 import { auth, db } from './firebase-config.js';
@@ -22,8 +24,12 @@ export function initProfile() {
     if (userUnsubscribe) userUnsubscribe();
     
     onAuthStateChanged(auth, (user) => {
-        if (user) listenToUserProfile(user.uid);
-        else currentUserData = null;
+        if (user) {
+            listenToUserProfile(user.uid);
+        } else {
+            currentUserData = null;
+            window.currentUserData = null;
+        }
     });
 }
 
@@ -42,17 +48,23 @@ function listenToUserProfile(userId) {
     });
 }
 
-// ====================== RENDER (Kept your logic, minor cleanup) ======================
+// ====================== RENDER UI ======================
 function renderProfileUI(userData) {
     if (!userData) return;
     
-    const content = document.getElementById('profileContent');
-    if (!content) return;
+    // Supports both inline profile page and overlay modal
+    const targets = [
+        document.getElementById('mainProfileContent'),
+        document.getElementById('modalProfileContent'),
+        document.getElementById('profileContent')
+    ].filter(Boolean);
+
+    if (targets.length === 0) return;
 
     getCurrentWitnessLevel().then(level => {
         const isWitness = level !== null;
         
-        content.innerHTML = `
+        const html = `
             <div class="space-y-8">
                 <!-- Profile Header -->
                 <div class="flex flex-col items-center text-center">
@@ -66,7 +78,7 @@ function renderProfileUI(userData) {
                         ${isWitness ? `<div class="absolute -bottom-1 -right-1 text-3xl">🔐</div>` : ''}
                     </div>
                     
-                    <h2 class="text-3xl font-bold mt-5">${userData.displayName || "Anonymous Witness"}</h2>
+                    <h2 class="text-3xl font-bold mt-5 text-white">${userData.displayName || "Anonymous Witness"}</h2>
                     <p class="text-emerald-400">@${userData.username || 'anonymous'}</p>
                     
                     <!-- Tier Badge -->
@@ -80,7 +92,7 @@ function renderProfileUI(userData) {
                                 </div>
                             </div>
                         ` : `
-                            <div class="px-6 py-3 bg-zinc-800 rounded-3xl text-sm">👤 Citizen</div>
+                            <div class="px-6 py-3 bg-zinc-800 rounded-3xl text-sm text-zinc-300">👤 Citizen</div>
                         `}
                     </div>
                 </div>
@@ -92,7 +104,7 @@ function renderProfileUI(userData) {
                             <h4 class="font-semibold text-lg text-amber-400 flex items-center gap-2">
                                 <span>🔄</span> Witness Cycle
                             </h4>
-                            <p class="text-xs text-zinc-400 mt-1">Manage your active attestation status in the public square.</p>
+                            <p class="text-xs text-zinc-400 mt-1">Manage active attestation status in the public square.</p>
                         </div>
                         <span class="px-3 py-1 bg-amber-500/10 text-amber-400 text-xs font-mono rounded-full border border-amber-500/30">
                             ${userData.activeWitnessCycle ? 'Active' : 'Inactive'}
@@ -124,7 +136,7 @@ function renderProfileUI(userData) {
                         <div class="text-xs text-zinc-500 mt-1">Reputation</div>
                     </div>
                     <div class="bg-zinc-900 rounded-3xl p-5 text-center">
-                        <div class="text-3xl font-bold">${userData.testimoniesCount || 0}</div>
+                        <div class="text-3xl font-bold text-white">${userData.testimoniesCount || 0}</div>
                         <div class="text-xs text-zinc-500 mt-1">Testimonies</div>
                     </div>
                     <div class="bg-zinc-900 rounded-3xl p-5 text-center">
@@ -135,24 +147,24 @@ function renderProfileUI(userData) {
 
                 <!-- Security Status -->
                 <div class="bg-zinc-900 rounded-3xl p-6">
-                    <h4 class="font-semibold mb-4 flex items-center gap-2">
+                    <h4 class="font-semibold mb-4 flex items-center gap-2 text-white">
                         <span>🛡️</span> Security Status
                     </h4>
                     <div class="space-y-4 text-sm">
                         <div class="flex justify-between items-center">
-                            <span>Phone Verification</span>
+                            <span class="text-zinc-400">Phone Verification</span>
                             <span class="${userData.isPhoneVerified ? 'text-emerald-400' : 'text-zinc-500'}">
                                 ${userData.isPhoneVerified ? '✓ Verified' : 'Not Verified'}
                             </span>
                         </div>
                         <div class="flex justify-between items-center">
-                            <span>ZK Proof</span>
+                            <span class="text-zinc-400">ZK Proof</span>
                             <span class="${userData.zkVerified ? 'text-amber-400' : 'text-zinc-500'}">
                                 ${userData.zkVerified ? '✓ Verified' : 'Not Verified'}
                             </span>
                         </div>
                         <div class="flex justify-between items-center">
-                            <span>Account Created</span>
+                            <span class="text-zinc-400">Account Created</span>
                             <span class="text-zinc-400">${userData.createdAt ? new Date(userData.createdAt.toDate()).toLocaleDateString() : 'Recent'}</span>
                         </div>
                     </div>
@@ -164,53 +176,43 @@ function renderProfileUI(userData) {
                             class="flex-1 py-4 bg-emerald-600 hover:bg-emerald-500 text-black font-semibold rounded-3xl transition">
                         ✏️ Edit Profile
                     </button>
-                    <button onclick="downloadMyDataPDF()" 
-                            class="flex-1 py-4 bg-zinc-700 hover:bg-zinc-600 font-semibold rounded-3xl transition">
+                    <button onclick="exportUserDataPDF()" 
+                            class="flex-1 py-4 bg-zinc-700 hover:bg-zinc-600 text-white font-semibold rounded-3xl transition">
                         📄 Export Data
                     </button>
                 </div>
             </div>
         `;
+
+        targets.forEach(container => {
+            container.innerHTML = html;
+        });
+
     }).catch(console.error);
 }
 
-// ====================== PDF EXPORT ======================
-window.downloadMyDataPDF = async () => {
-    if (!currentUserData) return showToast("Profile not loaded", "error");
-    showToast("Generating PDF...", "info");
-    try {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        doc.setFontSize(20);
-        doc.text("VocalWitness Personal Data", 20, 20);
-        doc.setFontSize(12);
-        doc.text(`Date: ${new Date().toLocaleString()}`, 20, 35);
-        // Add more content as needed...
-        doc.save(`vocalwitness-data-${Date.now()}.pdf`);
-        showToast("✅ PDF Downloaded!", "success");
-    } catch (e) {
-        console.error(e);
-        showToast("PDF generation failed", "error");
+// ====================== WITNESS CYCLE CONTROL ======================
+window.handleProfileStartCycle = async () => {
+    if (typeof startWitnessCycle === 'function') {
+        await startWitnessCycle();
+    } else {
+        showToast("Witness cycle module unavailable", "error");
     }
 };
 
-// ====================== EDIT PROFILE & MODAL HELPERS ======================
+// ====================== EDIT PROFILE MODAL ======================
 window.openEditProfile = () => {
     const modal = document.getElementById('editProfileModal');
-    if (!modal) {
-        showToast("Edit modal not found. Please refresh.", "error");
-        return;
-    }
-    
+    if (!modal) return showToast("Edit modal not found", "error");
+
     if (currentUserData) {
-        document.getElementById('editDisplayName').value = currentUserData.displayName || '';
-        document.getElementById('editUsername').value = currentUserData.username || '';
-        document.getElementById('editBio').value = currentUserData.bio || '';
-       
-        const preview = document.getElementById('profileImagePreview');
-        if (currentUserData.photoURL && preview) {
-            preview.innerHTML = `<img src="${currentUserData.photoURL}" class="w-full h-full object-cover rounded-3xl">`;
-        }
+        const displayNameInput = document.getElementById('editDisplayName');
+        const usernameInput = document.getElementById('editUsername');
+        const bioInput = document.getElementById('editBio');
+
+        if (displayNameInput) displayNameInput.value = currentUserData.displayName || '';
+        if (usernameInput) usernameInput.value = currentUserData.username || '';
+        if (bioInput) bioInput.value = currentUserData.bio || '';
     }
     modal.classList.remove('hidden');
 };
@@ -219,45 +221,19 @@ window.closeEditProfile = () => {
     document.getElementById('editProfileModal')?.classList.add('hidden');
 };
 
-window.closeProfile = function() {
-    const modal = document.getElementById('profileModal');
-    if (modal) modal.classList.add('hidden');
-};
-
-window.handleProfileImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-   
-    if (file.size > 5 * 1024 * 1024) {
-        return showToast("Image must be smaller than 5MB", "error");
-    }
-   
-    currentProfileImageFile = file;
-    showToast("Image selected. Save to upload.", "info");
-   
-    const preview = document.getElementById('profileImagePreview');
-    if (preview) {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            preview.innerHTML = `<img src="${ev.target.result}" class="w-full h-full object-cover rounded-3xl">`;
-        };
-        reader.readAsDataURL(file);
-    }
-};
-
 window.saveProfileChanges = async () => {
     if (!auth.currentUser) return showToast("You must be logged in", "error");
 
-    const displayName = document.getElementById('editDisplayName').value.trim();
-    const username = document.getElementById('editUsername').value.trim();
-    const bio = document.getElementById('editBio').value.trim();
+    const displayName = document.getElementById('editDisplayName')?.value.trim();
+    const username = document.getElementById('editUsername')?.value.trim();
+    const bio = document.getElementById('editBio')?.value.trim();
 
     if (!displayName) return showToast("Display name is required", "error");
 
     try {
         showToast("Saving changes...", "info");
-        
         const userRef = doc(db, "users", auth.currentUser.uid);
+        
         await updateDoc(userRef, {
             displayName,
             username: username || null,
@@ -273,74 +249,119 @@ window.saveProfileChanges = async () => {
         showToast("Failed to save profile", "error");
     }
 };
-window.addEventListener('languageChanged', () => {
-    if (typeof initProfile === 'function') initProfile();
-});
 
-// ====================== SETTINGS FUNCTIONALITY (Kept fully) ======================
-let currentSettingsUnsubscribe = null;
-
+// ====================== SETTINGS & SECURITY ======================
 window.openSettings = () => {
     const modal = document.getElementById('settingsModal');
-    if (!modal) {
-        return showToast("Settings modal not found in HTML", "error");
+    if (!modal) return showToast("Settings modal not found", "error");
+    
+    // Sync UI with current settings state
+    if (currentUserData) {
+        const toggle2FA = document.getElementById('toggle2FA');
+        const defaultDoor = document.getElementById('defaultDoorSelect');
+        
+        if (toggle2FA) toggle2FA.checked = currentUserData.enable2FA === true;
+        if (defaultDoor) defaultDoor.value = currentUserData.defaultDoor || 'public_square';
     }
-   
+    
     modal.classList.remove('hidden');
-    loadSettingsContent();
 };
 
 window.closeSettings = () => {
     document.getElementById('settingsModal')?.classList.add('hidden');
 };
 
-function handleProfileStartCycle() {
-    console.log("Profile start cycle initiated.");
-    // Add your cycle logic here
-}
-window.handleProfileStartCycle = handleProfileStartCycle;
+window.triggerPasswordReset = async () => {
+    if (!auth.currentUser || !auth.currentUser.email) {
+        return showToast("No active user email found", "error");
+    }
+    try {
+        await sendPasswordResetEmail(auth, auth.currentUser.email);
+        showToast("📧 Password reset email sent!", "success");
+    } catch (error) {
+        console.error("Password reset error:", error);
+        showToast("Failed to send reset email", "error");
+    }
+};
 
-function loadSettingsContent() {
-    // ... (your full original settings HTML remains unchanged)
-    // I kept it exactly as you had it
-}
+window.handle2FAToggle = async (e) => {
+    if (!auth.currentUser) return;
+    const isEnabled = e.target.checked;
+    
+    try {
+        const userRef = doc(db, "users", auth.currentUser.uid);
+        await updateDoc(userRef, {
+            enable2FA: isEnabled,
+            updatedAt: serverTimestamp()
+        });
+        showToast(isEnabled ? "🔒 2FA Enabled" : "🔓 2FA Disabled", "info");
+    } catch (error) {
+        console.error("2FA error:", error);
+        showToast("Failed to update 2FA preference", "error");
+    }
+};
 
-function loadCurrentUserSettings() {
-    if (!currentUserData) return;
-   
-    const publicToggle = document.getElementById('publicProfileToggle');
-    const notifyToggle = document.getElementById('notifyToggle');
-   
-    if (publicToggle) publicToggle.checked = currentUserData.isPublic !== false;
-    if (notifyToggle) notifyToggle.checked = currentUserData.notifyReplies !== false;
-}
+window.updateDefaultDoor = async (doorValue) => {
+    if (!auth.currentUser) return;
+    try {
+        const userRef = doc(db, "users", auth.currentUser.uid);
+        await updateDoc(userRef, {
+            defaultDoor: doorValue,
+            updatedAt: serverTimestamp()
+        });
+        showToast(`Default door updated to ${doorValue.replace('_', ' ')}`, "success");
+    } catch (error) {
+        console.error("Default door error:", error);
+        showToast("Failed to save default door", "error");
+    }
+};
 
+// ====================== PDF EXPORT ======================
+window.exportUserDataPDF = async () => {
+    if (!currentUserData) return showToast("Profile data not loaded", "error");
+    showToast("Generating identity PDF...", "info");
+    
+    try {
+        if (!window.jspdf) throw new Error("jsPDF library not loaded");
+        
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF();
+        
+        pdf.setFontSize(20);
+        pdf.text("VocalWitness Identity & Profile Record", 20, 20);
+        
+        pdf.setFontSize(12);
+        pdf.text(`Generated: ${new Date().toLocaleString()}`, 20, 32);
+        pdf.text(`Display Name: ${currentUserData.displayName || 'N/A'}`, 20, 44);
+        pdf.text(`Username: @${currentUserData.username || 'anonymous'}`, 20, 52);
+        pdf.text(`Reputation: ${currentUserData.reputation || 0} REP`, 20, 60);
+        pdf.text(`Phone Verified: ${currentUserData.isPhoneVerified ? 'Yes' : 'No'}`, 20, 68);
+        pdf.text(`ZK Verified: ${currentUserData.zkVerified ? 'Yes' : 'No'}`, 20, 76);
+        
+        pdf.save(`vocalwitness-identity-${auth.currentUser?.uid || 'user'}.pdf`);
+        showToast("✅ Identity PDF Exported!", "success");
+    } catch (e) {
+        console.error("Export error:", e);
+        showToast("PDF generation requires jsPDF script inclusion", "error");
+    }
+};
+
+// Backwards compatibility alias
+window.downloadMyDataPDF = window.exportUserDataPDF;
+
+// ====================== MODAL CONTROL ALIASES ======================
 window.openProfile = function() {
     const modal = document.getElementById('profileModal');
-    if (!modal) {
-        showToast("Profile modal not found in HTML", "error");
-        return;
-    }
+    if (!modal) return showToast("Profile modal not found", "error");
     modal.classList.remove('hidden');
-    modal.classList.add('flex');
-    if (currentUserData) {
-        renderProfileUI(currentUserData);
-    }
+    if (currentUserData) renderProfileUI(currentUserData);
 };
 
 window.closeProfile = function() {
-    const modal = document.getElementById('profileModal');
-    if (modal) {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-    }
+    document.getElementById('profileModal')?.classList.add('hidden');
 };
-// Keyboard shortcut
-document.addEventListener('keydown', (e) => {
-    if (e.key === "p" && e.ctrlKey) {
-        e.preventDefault();
-        if (typeof window.showProfile === 'function') {
-            window.showProfile();
-        }
-    }
+
+// Listening for language switches across views
+window.addEventListener('languageChanged', () => {
+    if (currentUserData) renderProfileUI(currentUserData);
 });
