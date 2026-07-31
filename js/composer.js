@@ -1,14 +1,11 @@
 // js/composer.js
 import { compressImage } from './media-compression.js';
-import { showToast, generateSha256Hash } from './utils.js';
+import { showToast } from './utils.js';
 import { getCurrentUserTier, getCurrentWitnessLevel } from './tier.js';
-import { db, auth, storage } from './firebase-config.js';
+import { db, auth } from './firebase-config.js';
 import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
-import { uploadForensicMedia, resetMediaState } from './media.js';
-
-let selectedFile = null;
+import { uploadForensicMedia, resetMediaState, handleImageSelect } from './media.js';
 
 const btnPhoto = document.getElementById('btn-photo');
 const mainInput = document.getElementById('mainInput');
@@ -33,23 +30,12 @@ btnPhoto?.addEventListener('click', async () => {
 
         try {
             const compressedFile = await compressImage(file, 1200, 0.82);
-            selectedFile = compressedFile;
+            
+            // Pass the compressed file through handleImageSelect so media.js sets selectedImageFile
+            const syntheticEvent = { target: { files: [compressedFile] } };
+            await handleImageSelect(syntheticEvent, previewArea);
+            
             toggleActive(btnPhoto);
-
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                if (!previewArea) return;
-                previewArea.innerHTML = `
-                    <img src="${ev.target.result}"
-                         class="max-h-[300px] max-w-full rounded-2xl object-contain shadow-lg"
-                         alt="Preview">
-                    <p class="text-xs text-emerald-400 mt-2">
-                        ${compressedFile.name} • ${(compressedFile.size / 1024 / 1024).toFixed(2)} MB
-                    </p>
-                `;
-                previewArea.classList.add('has-content');
-            };
-            reader.readAsDataURL(compressedFile);
         } catch (err) {
             console.error(err);
             showToast('Failed to compress image', 'error');
@@ -62,18 +48,12 @@ btnPhoto?.addEventListener('click', async () => {
 postButton?.addEventListener('click', async () => {
     const text = mainInput?.value.trim();
 
-    // media.js owns the voice blob – we only check selectedFile here
-    if (!text && !selectedFile) {
-        // Allow pure-voice posts (engine may have a recording)
-        // The real emptiness check happens inside uploadForensicMedia
-    }
-
     if (!auth.currentUser) {
         showToast('You must be logged in to publish testimony', 'error');
         return;
     }
 
-    // Rate limit
+    // Rate limit check
     try {
         const functions = getFunctions(undefined, 'us-central1');
         const checkRateLimitFn = httpsCallable(functions, 'checkRateLimit');
@@ -98,12 +78,10 @@ postButton?.addEventListener('click', async () => {
         // Single source of truth for all media (image + voice)
         const mediaData = await uploadForensicMedia();
 
-        // If the user selected an image via this composer, make sure it is included
-        // (uploadForensicMedia already handles selectedImageFile from media.js)
-        // We keep selectedFile only for local preview state.
-
         if (!text && !mediaData.imageUrl && !mediaData.audioUrl) {
             showToast('Please write something or add media', 'error');
+            postButton.disabled = false;
+            postButton.textContent = 'Publish';
             return;
         }
 
@@ -126,14 +104,9 @@ postButton?.addEventListener('click', async () => {
 
         showToast('✅ Testimony published to the Public Square!', 'success');
 
-        // Reset
+        // Reset composer UI and media state
         if (mainInput) mainInput.value = '';
-        if (previewArea) {
-            previewArea.innerHTML = 'Preview will appear here...';
-            previewArea.classList.remove('has-content');
-        }
         btnPhoto?.classList.remove('active');
-        selectedFile = null;
 
         resetMediaState();
 
@@ -155,4 +128,4 @@ window.addEventListener('languageChanged', () => {
     }
 });
 
-console.log('%cComposer module loaded (photo + publish only)', 'color:#10b981; font-weight:bold');
+console.log('%cComposer module loaded (photo + publish connected)', 'color:#10b981; font-weight:bold');
