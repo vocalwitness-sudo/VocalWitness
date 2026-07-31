@@ -1,8 +1,8 @@
-// js/phoneVerification.js - Connected to Tiers
+// js/phoneVerification.js - Connected to Tiers & Firebase
 import { db, auth } from './firebase-config.js';
 import { doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { showToast } from "./utils.js";
-import { upgradeToTrustCircle } from './tier.js';
+import { TIERS, updateTierBadge } from './tier.js';
 
 let currentVerificationCode = null;
 
@@ -26,6 +26,11 @@ export async function sendPhoneVerification(phoneNumber) {
 }
 
 export async function verifyPhoneCode(enteredCode) {
+    if (!auth.currentUser) {
+        showToast("Please log in first", "error");
+        return false;
+    }
+
     if (!enteredCode || enteredCode.length !== 6) {
         showToast("Enter 6-digit code", "error");
         return false;
@@ -37,13 +42,13 @@ export async function verifyPhoneCode(enteredCode) {
             await updateDoc(userRef, {
                 isPhoneVerified: true,
                 phoneVerifiedAt: serverTimestamp(),
-                tier: "trust_circle",
+                tier: TIERS.CITIZEN_CIRCLE,
                 credibilityScore: 60
             });
 
-            await upgradeToTrustCircle(auth.currentUser.uid);
+            await updateTierBadge();
             
-            showToast("🎉 Phone Verified! You are now Trust Circle Tier", "success");
+            showToast("🎉 Phone Verified! You are now in Citizen Circle", "success");
             
             // Close any open verification modal
             document.getElementById('phoneVerificationModal')?.classList.add('hidden');
