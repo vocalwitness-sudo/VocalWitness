@@ -31,7 +31,7 @@ function showToast(message, type = 'info') {
                 : type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-emerald-200' 
                 : 'bg-zinc-900/90 border-zinc-700 text-zinc-200';
 
-  toast.className = `fixed bottom-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl border text-xs font-bold shadow-2xl backdrop-blur-md transition-all duration-300 ${bgClass}`;
+  toast.className = `fixed bottom-20 left-1/2 -translate-x-1/2 z-[11000] px-4 py-2.5 rounded-2xl border text-xs font-bold shadow-2xl backdrop-blur-md transition-all duration-300 ${bgClass}`;
   toast.innerText = message;
   document.body.appendChild(toast);
 
@@ -42,23 +42,23 @@ function showToast(message, type = 'info') {
 }
 
 /**
- * Modal Visibility Controllers
+ * Modal Visibility Controllers (Updated to target #loginModal)
  */
 export function showAuthModal() {
-  const authSection = document.getElementById('authSection');
-  if (authSection) {
-    authSection.classList.remove('hidden');
-    authSection.classList.add('flex');
+  const loginModal = document.getElementById('loginModal');
+  if (loginModal) {
+    loginModal.classList.remove('hidden');
+    loginModal.classList.add('flex');
   } else {
-    console.warn("authSection element not found in DOM");
+    console.warn("loginModal element not found in DOM");
   }
 }
 
 export function hideAuthModal() {
-  const authSection = document.getElementById('authSection');
-  if (authSection) {
-    authSection.classList.add('hidden');
-    authSection.classList.remove('flex');
+  const loginModal = document.getElementById('loginModal');
+  if (loginModal) {
+    loginModal.classList.add('hidden');
+    loginModal.classList.remove('flex');
   }
 }
 
@@ -174,12 +174,18 @@ export async function logout() {
  * Update HUD and Header User Interface details
  */
 export function updateAuthUI(user, userData = null) {
-  const authSection = document.getElementById('authSection');
+  const loginModal = document.getElementById('loginModal');
   const mainApp = document.getElementById('mainApp');
+  const signInBtn = document.getElementById('signin-btn');
+  const profileBtn = document.getElementById('profile-btn');
   
   if (user) {
-    if (authSection) authSection.classList.add('hidden');
+    if (loginModal) loginModal.classList.add('hidden');
     if (mainApp) mainApp.classList.remove('hidden');
+
+    // Toggle Header Buttons
+    if (signInBtn) signInBtn.classList.add('hidden');
+    if (profileBtn) profileBtn.classList.remove('hidden');
 
     const name = userData?.displayName || user.displayName || `Node-${user.uid.slice(0, 5)}`;
     const avatarChar = name.charAt(0).toUpperCase();
@@ -203,7 +209,9 @@ export function updateAuthUI(user, userData = null) {
     if (profileTierTextEl) profileTierTextEl.innerText = userData?.tierName || 'Level 1 Witness';
 
   } else {
-    showAuthModal();
+    // Unauthenticated state: show Sign In button, hide Profile button
+    if (signInBtn) signInBtn.classList.remove('hidden');
+    if (profileBtn) profileBtn.classList.add('hidden');
   }
 }
 
@@ -232,6 +240,7 @@ export function initAuth(onUserResolved) {
 // Global Window Bindings (for HTML inline event handlers e.g. onclick="showAuthModal()")
 window.showAuthModal = showAuthModal;
 window.hideAuthModal = hideAuthModal;
+window.closeLoginModal = hideAuthModal; // Alias for HTML close buttons
 window.requireAuth = requireAuth;
 window.googleLogin = googleLogin;
 window.anonymousLogin = anonymousLogin;
