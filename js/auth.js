@@ -1,376 +1,435 @@
-// ====================== IMPORTS ======================
-import {
-    signInWithPopup,
-    GoogleAuthProvider,
-    signOut,
-    signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
-    sendEmailVerification
+// js/profile.js - Integrated & Refactored Version
+import { 
+    onAuthStateChanged, 
+    sendPasswordResetEmail,
+    signOut 
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { 
+    doc, 
+    onSnapshot, 
+    updateDoc, 
+    serverTimestamp 
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
-import { auth, provider, db } from './firebase-config.js';
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { auth, db } from './firebase-config.js';
 import { showToast } from './utils.js';
-import { updateAppState } from './app-state.js';
-import { applyTierTheme, updateTierBadge } from './tier.js';
+import { refreshTierAndUI, getCurrentWitnessLevel } from './tier.js';
+import { startWitnessCycle } from './witnessCycle.js';
 
-let authActionInProgress = false;
+let currentUserData = null;
+let userUnsubscribe = null;
+window.currentUserData = null;
 
-// ====================== TIER & USER HELPERS ======================
-function refreshTierUI() {
-    if (typeof window.refreshTierAndUI === 'function') {
-        window.refreshTierAndUI();
-    } else {
-        if (typeof applyTierTheme === 'function') applyTierTheme();
-        if (typeof updateTierBadge === 'function') updateTierBadge();
-    }
-}
-
-async function createOrUpdateUser(user) {
-    if (!user) return;
-    try {
-        const userRef = doc(db, "users", user.uid);
-        await setDoc(userRef, {
-            uid: user.uid,
-            email: user.email || "",
-            displayName: user.displayName || "Anonymous Witness",
-            photoURL: user.photoURL || "",
-            tier: "citizen",
-            lastActive: serverTimestamp()
-        }, { merge: true });
-    } catch (e) {
-        console.error("User document error:", e);
-    }
-}
-
-// ====================== DRAFT & STATE PRESERVATION ======================
-export function savePendingDraft() {
-    const mainInput = document.getElementById('mainInput');
-    if (mainInput && mainInput.value.trim() !== '') {
-        sessionStorage.setItem('vocal_pending_draft', mainInput.value);
-        showToast("Draft saved. We'll restore it after sign-in.", "info");
-    }
-}
-
-export function restorePendingDraft() {
-    const draft = sessionStorage.getItem('vocal_pending_draft');
-    if (draft) {
-        const mainInput = document.getElementById('mainInput');
-        if (mainInput) {
-            mainInput.value = draft;
-            showToast("✅ Your testimony draft has been restored!", "success");
-        }
-        sessionStorage.removeItem('vocal_pending_draft');
-    }
-}
-
-// ====================== FIREBASE AUTH ERROR MAPPER ======================
-function handleAuthError(error) {
-    switch (error?.code) {
-        case 'auth/invalid-credential':
-            return "Invalid email or password. If you just created an account, please check your email for the verification link first.";
-        case 'auth/too-many-requests':
-            return "Too many attempts. For security, please wait a few minutes before trying again.";
-        case 'auth/invalid-phone-number':
-            return "The phone number format is invalid. Please include your correct country code.";
-        case 'auth/quota-exceeded':
-            return "SMS service temporarily busy. Please try an alternate verification path.";
-        case 'auth/popup-closed-by-user':
-        case 'auth/cancelled-popup-request':
-            return "Sign-in was cancelled.";
-        case 'auth/popup-blocked':
-            return "Popup was blocked by browser. Please allow popups for this site.";
-        case 'auth/invalid-email':
-            return "The email address format is invalid.";
-        case 'auth/user-not-found':
-            return "No account found with this email address. Please check or sign up.";
-        case 'auth/wrong-password':
-            return "Incorrect password. Please try again.";
-        case 'auth/email-already-in-use':
-            return "An account with this email already exists. Try signing in instead.";
-        case 'auth/weak-password':
-            return "Password should be at least 6 characters long.";
-        default:
-            return error?.message || "Authentication failed. Please check your connection.";
-    }
-}
-
-// ====================== AUTH METHODS - GOOGLE POPUP LOGIC ======================
-export async function googleLogin() {
-    if (authActionInProgress) {
-        showToast("Sign-in already in progress...", "info");
-        return;
-    }
-
-    authActionInProgress = true;
-
-    try {
-        savePendingDraft();
-        showToast("Opening Google Sign-In...", "info");
-        
-        // Popup authentication avoids cross-origin storage partitioning issues
-        const result = await signInWithPopup(auth, provider);
-        
-        if (result && result.user) {
-            const user = result.user;
-            await createOrUpdateUser(user);
-            updateAppState({ isAuthenticated: true, currentUser: user });
-            refreshTierUI();
-            
-            if (typeof window.updateHeaderButtons === 'function') {
-                window.updateHeaderButtons(true);
-            }
-            
-            window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
-            updateUIForAuthState();
-
-            showToast("✅ Signed in successfully! Welcome to the Square.", "success");
-            
-            closeLoginModal();
-            closeCreateAccountModal();
-            
-            restorePendingDraft();
-        }
-    } catch (error) {
-        console.error("Google popup sign-in error:", error);
-        showToast(handleAuthError(error), "error");
-    } finally {
-        authActionInProgress = false;
-    }
-}
-
-// ====================== EMAIL SIGN-IN & SIGN-UP ======================
-export async function handleEmailAuth(event) {
-    if (event) event.preventDefault();
-
-    const email = (
-        document.getElementById('authEmail')?.value || 
-        document.getElementById('signInEmail')?.value || 
-        document.getElementById('signUpEmail')?.value
-    )?.trim();
-
-    const password = (
-        document.getElementById('authPassword')?.value || 
-        document.getElementById('signInPassword')?.value || 
-        document.getElementById('signUpPassword')?.value
-    );
-
-    if (!email || !password) {
-        showToast("Please enter both email and password.", "error");
-        return;
-    }
-
-    try {
-        savePendingDraft();
-        
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-
-        if (!user.emailVerified) {
-            showToast("⚠️ Email unverified. A link was sent to your inbox. Please verify before proceeding.", "warning");
-            await signOut(auth);
-            return;
-        }
-
-        await createOrUpdateUser(user);
-        updateAppState({ isAuthenticated: true, currentUser: user });
-        refreshTierUI();
-        
-        if (typeof window.updateHeaderButtons === 'function') {
-            window.updateHeaderButtons(true);
-        }
-
-        window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
-        updateUIForAuthState();
-
-        showToast("✅ Signed in successfully!", "success");
-        closeLoginModal();
-        closeCreateAccountModal();
-        restorePendingDraft();
-
-    } catch (error) {
-        console.error("Email sign-in error:", error);
-        showToast(handleAuthError(error), "error");
-    }
-}
-
-export async function handleEmailSignUp(event) {
-    if (event) event.preventDefault();
-    const email = document.getElementById('authEmail')?.value?.trim() || document.getElementById('signUpEmail')?.value?.trim();
-    const password = document.getElementById('authPassword')?.value || document.getElementById('signUpPassword')?.value;
-
-    if (!email || !password) {
-        showToast("Please enter both email and password.", "error");
-        return;
-    }
-
-    if (password.length < 6) {
-        showToast("Password must be at least 6 characters long.", "error");
-        return;
-    }
-
-    try {
-        savePendingDraft();
-        
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-        
-        await createOrUpdateUser(user);
-        await sendEmailVerification(user);
-
-        showToast("🎉 Account created! A verification link has been sent to your email.", "success");
-        
-        closeLoginModal();
-        closeCreateAccountModal();
-        
-        await signOut(auth);
-    } catch (error) {
-        console.error("Email sign-up error:", error);
-        showToast(handleAuthError(error), "error");
-    }
-}
-
-export async function logout() {
-    try {
-        await signOut(auth);
-        updateAppState({ isAuthenticated: false, currentUser: null });
-        showToast("Signed out successfully", "success");
-        window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user: null } }));
-        updateUIForAuthState();
-    } catch (error) {
-        console.error("Logout error:", error);
-        showToast("Logout failed", "error");
-    }
-}
-
-export function togglePasswordVisibility(inputId, btnElement) {
-    const input = document.getElementById(inputId);
-    if (!input) return;
-    const isPassword = input.type === 'password';
-    input.type = isPassword ? 'text' : 'password';
-    if (btnElement) {
-        btnElement.textContent = isPassword ? 'Hide' : 'Show';
-    }
-}
-
-// ====================== REQUIRE AUTH ======================
-export function requireAuth(message = "Please sign in to participate in the Public Square.") {
-    if (!auth.currentUser) {
-        savePendingDraft();
-        showToast(message, "info");
-        
-        const loginModal = document.getElementById('loginModal');
-        const modalMsg = document.getElementById('loginModalMessage');
-        if (modalMsg) modalMsg.textContent = message;
-        if (loginModal) loginModal.classList.remove('hidden');
-        return false;
-    }
-    return true;
-}
-
-// ====================== UI SYNC FOR HYBRID READ/WRITE MODEL ======================
-export function updateUIForAuthState() {
-    const isLoggedIn = !!auth.currentUser;
-    const guestBtn = document.getElementById('guest-action-btn');
-    const profileBtn = document.getElementById('profile-btn');
-    const signInElement = document.getElementById('signin-btn');
-    const privateElements = document.querySelectorAll('.requires-auth');
-
-    if (guestBtn) {
-        guestBtn.classList.toggle('hidden', isLoggedIn);
-        const guestBtnText = document.getElementById('guest-btn-text');
-        if (guestBtnText) guestBtnText.textContent = isLoggedIn ? '' : 'Join VocalWitness';
-    }
-
-    if (signInElement) {
-        signInElement.classList.toggle('hidden', isLoggedIn);
-    }
+/**
+ * Initialize Profile Listener & State
+ */
+export function initProfile() {
+    if (userUnsubscribe) userUnsubscribe();
     
-    if (profileBtn) {
-        profileBtn.classList.toggle('hidden', !isLoggedIn);
-    }
-
-    privateElements.forEach(el => {
-        el.classList.toggle('hidden', !isLoggedIn);
-    });
-
-    document.querySelectorAll('#postButton, #btn-photo, #btn-voice').forEach(btn => {
-        if (btn) btn.style.opacity = isLoggedIn ? '1' : '0.6';
-    });
-
-    if (typeof window.updateHeaderButtons === 'function') {
-        window.updateHeaderButtons(isLoggedIn);
-    }
-}
-
-// ====================== INIT AUTH ======================
-export function initAuth() {
-    // Main Firebase Auth State Listener
-    auth.onAuthStateChanged(async (user) => {
+    onAuthStateChanged(auth, (user) => {
         if (user) {
-            await createOrUpdateUser(user);
-            updateAppState({ isAuthenticated: true, currentUser: user });
-            refreshTierUI();
+            listenToUserProfile(user.uid);
         } else {
-            updateAppState({ isAuthenticated: false, currentUser: null });
+            currentUserData = null;
+            window.currentUserData = null;
+            if (userUnsubscribe) {
+                userUnsubscribe();
+                userUnsubscribe = null;
+            }
         }
-        
-        window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
-        updateUIForAuthState();
     });
+}
+
+/**
+ * Real-time Firestore user document listener
+ */
+function listenToUserProfile(userId) {
+    const userRef = doc(db, "users", userId);
+    userUnsubscribe = onSnapshot(userRef, (snapshot) => {
+        if (snapshot.exists()) {
+            currentUserData = snapshot.data();
+            window.currentUserData = currentUserData;
+            renderProfileUI(currentUserData);
+            refreshTierAndUI?.();
+        } else {
+            console.warn("User profile document does not exist yet.");
+        }
+    }, (error) => {
+        console.error("Profile Firestore Error:", error);
+        showToast("Error loading profile data", "error");
+    });
+}
+
+// ====================== RENDER UI ======================
+function renderProfileUI(userData) {
+    if (!userData) return;
     
-    // Automatic binding for logout elements across the DOM
-    document.addEventListener('click', (e) => {
-        if (e.target.matches('#logoutBtn, .btn-logout, [data-action="logout"]')) {
-            e.preventDefault();
-            logout();
-        }
+    // Target containers across embedded page views and overlay modals
+    const targets = [
+        document.getElementById('mainProfileContent'),
+        document.getElementById('modalProfileContent'),
+        document.getElementById('profileContent')
+    ].filter(Boolean);
+
+    if (targets.length === 0) return;
+
+    getCurrentWitnessLevel().then(level => {
+        const isWitness = level !== null;
+        
+        const html = `
+            <div class="space-y-8">
+                <!-- Profile Header -->
+                <div class="flex flex-col items-center text-center">
+                    <div class="relative">
+                        <div class="w-32 h-32 mx-auto rounded-3xl overflow-hidden border-4 border-zinc-700 shadow-2xl">
+                            ${userData.photoURL ? 
+                                `<img src="${userData.photoURL}" class="w-full h-full object-cover" alt="Profile Photo">` : 
+                                `<div class="w-full h-full bg-gradient-to-br from-zinc-700 to-zinc-800 flex items-center justify-center text-7xl">👤</div>`
+                            }
+                        </div>
+                        ${isWitness ? `<div class="absolute -bottom-1 -right-1 text-3xl" title="Active Witness">🔐</div>` : ''}
+                    </div>
+                    
+                    <h2 class="text-3xl font-bold mt-5 text-white">${userData.displayName || "Anonymous Witness"}</h2>
+                    <p class="text-emerald-400">@${userData.username || 'anonymous'}</p>
+                    ${userData.region ? `<p class="text-xs text-zinc-400 mt-1">📍 ${userData.region}</p>` : ''}
+                    
+                    <!-- Tier Badge -->
+                    <div class="mt-6">
+                        ${level ? `
+                            <div class="inline-flex items-center gap-3 px-6 py-3 bg-zinc-900 border border-zinc-700 rounded-3xl">
+                                <span class="text-4xl">${level.emblem}</span>
+                                <div class="text-left">
+                                    <div class="font-bold text-lg text-white">${level.name}</div>
+                                    <div class="text-xs text-zinc-400">Level ${level.level} • ${userData.reputation || 0} REP</div>
+                                </div>
+                            </div>
+                        ` : `
+                            <div class="px-6 py-3 bg-zinc-800 rounded-3xl text-sm text-zinc-300">👤 Citizen</div>
+                        `}
+                    </div>
+                </div>
+
+                <!-- Witness Cycle Control Card -->
+                <div class="bg-zinc-900 rounded-3xl p-6 border border-amber-500/20">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h4 class="font-semibold text-lg text-amber-400 flex items-center gap-2">
+                                <span>🔄</span> Witness Cycle
+                            </h4>
+                            <p class="text-xs text-zinc-400 mt-1">Manage active attestation status in the public square.</p>
+                        </div>
+                        <span class="px-3 py-1 bg-amber-500/10 text-amber-400 text-xs font-mono rounded-full border border-amber-500/30">
+                            ${userData.activeWitnessCycle ? 'Active' : 'Inactive'}
+                        </span>
+                    </div>
+
+                    <div class="bg-zinc-950 rounded-2xl p-4 mb-4 flex items-center justify-between text-sm">
+                        <span class="text-zinc-400">Current Cycle State</span>
+                        <span class="font-medium text-white">${userData.activeWitnessCycle ? 'Attesting in Square' : 'Not Attesting'}</span>
+                    </div>
+
+                    <button onclick="handleProfileStartCycle()" 
+                            class="w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-black font-semibold rounded-2xl transition flex items-center justify-center gap-2 shadow-lg shadow-amber-500/10">
+                        <span>🔄</span> ${userData.activeWitnessCycle ? 'End Witness Cycle' : 'Start Witness Cycle'}
+                    </button>
+                </div>
+
+                <!-- Bio -->
+                ${userData.bio ? `
+                    <div class="bg-zinc-900/70 border border-zinc-700 rounded-3xl p-6 text-zinc-300">
+                        ${userData.bio}
+                    </div>
+                ` : ''}
+
+                <!-- Stats -->
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="bg-zinc-900 rounded-3xl p-5 text-center">
+                        <div class="text-3xl font-bold text-emerald-400">${userData.reputation || 0}</div>
+                        <div class="text-xs text-zinc-500 mt-1">Reputation</div>
+                    </div>
+                    <div class="bg-zinc-900 rounded-3xl p-5 text-center">
+                        <div class="text-3xl font-bold text-white">${userData.testimoniesCount || 0}</div>
+                        <div class="text-xs text-zinc-500 mt-1">Testimonies</div>
+                    </div>
+                    <div class="bg-zinc-900 rounded-3xl p-5 text-center">
+                        <div class="text-3xl font-bold text-amber-400">${userData.verifications || 0}</div>
+                        <div class="text-xs text-zinc-500 mt-1">Verifications</div>
+                    </div>
+                </div>
+
+                <!-- Security Status -->
+                <div class="bg-zinc-900 rounded-3xl p-6">
+                    <h4 class="font-semibold mb-4 flex items-center gap-2 text-white">
+                        <span>🛡️</span> Security Status
+                    </h4>
+                    <div class="space-y-4 text-sm">
+                        <div class="flex justify-between items-center">
+                            <span class="text-zinc-400">Phone Verification</span>
+                            <span class="${userData.isPhoneVerified ? 'text-emerald-400' : 'text-zinc-500'}">
+                                ${userData.isPhoneVerified ? '✓ Verified' : 'Not Verified'}
+                            </span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-zinc-400">ZK Proof</span>
+                            <span class="${userData.zkVerified ? 'text-amber-400' : 'text-zinc-500'}">
+                                ${userData.zkVerified ? '✓ Verified' : 'Not Verified'}
+                            </span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-zinc-400">Account Created</span>
+                            <span class="text-zinc-400">${userData.createdAt ? new Date(userData.createdAt.toDate()).toLocaleDateString() : 'Recent'}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Controls -->
+                <div class="space-y-3">
+                    <div class="flex gap-3">
+                        <button onclick="openEditProfile()" 
+                                class="flex-1 py-4 bg-emerald-600 hover:bg-emerald-500 text-black font-semibold rounded-3xl transition">
+                            ✏️ Edit Profile
+                        </button>
+                        <button onclick="exportUserDataPDF()" 
+                                class="flex-1 py-4 bg-zinc-700 hover:bg-zinc-600 text-white font-semibold rounded-3xl transition">
+                            📄 Export Data
+                        </button>
+                    </div>
+
+                    <!-- Sign Out Button -->
+                    <button onclick="handleSignOut()" 
+                            class="w-full py-3.5 bg-red-950/40 hover:bg-red-900/60 border border-red-500/40 text-red-400 hover:text-red-300 font-semibold rounded-2xl transition flex items-center justify-center gap-2">
+                        <span>🚪</span> Sign Out
+                    </button>
+                </div>
+            </div>
+        `;
+
+        targets.forEach(container => {
+            container.innerHTML = html;
+        });
+
+    }).catch(err => {
+        console.error("Error computing witness level:", err);
     });
-
-    updateUIForAuthState();
-
-    console.log("🔐 Auth initialized (Popup Mode)");
 }
 
-// ====================== MODAL & GLOBAL EXPOSURES ======================
-export function showAuthModal() {
-    if (auth.currentUser) {
-        if (typeof window.showProfile === 'function') {
-            window.showProfile();
-        } else if (typeof window.openProfile === 'function') {
-            window.openProfile();
-        } else {
-            console.warn("Profile opener function not defined yet.");
+// ====================== SIGN OUT HANDLER ======================
+window.handleSignOut = async () => {
+    try {
+        showToast("Signing out...", "info");
+        
+        // 1. Immediately close active modals
+        document.getElementById('profileModal')?.classList.add('hidden');
+        document.getElementById('editProfileModal')?.classList.add('hidden');
+        document.getElementById('settingsModal')?.classList.add('hidden');
+
+        // 2. Clear listener subscription
+        if (userUnsubscribe) {
+            userUnsubscribe();
+            userUnsubscribe = null;
         }
-    } else {
-        const createModal = document.getElementById('createAccountModal');
-        if (createModal) {
-            createModal.classList.remove('hidden');
-        } else {
-            const loginModal = document.getElementById('loginModal');
-            if (loginModal) loginModal.classList.remove('hidden');
-        }
+
+        // 3. Clear memory state
+        currentUserData = null;
+        window.currentUserData = null;
+
+        // 4. Perform Firebase Auth Sign Out
+        await signOut(auth);
+
+        showToast("Signed out successfully", "success");
+
+        // 5. Reload to return to public landing state
+        window.location.reload();
+
+    } catch (error) {
+        console.error("Sign out error:", error);
+        showToast("Error signing out", "error");
     }
-}
+};
 
-export function closeLoginModal() {
-    const loginModal = document.getElementById('loginModal');
-    if (loginModal) loginModal.classList.add('hidden');
-}
+// ====================== WITNESS CYCLE CONTROL ======================
+window.handleProfileStartCycle = async () => {
+    if (typeof startWitnessCycle === 'function') {
+        await startWitnessCycle();
+    } else {
+        showToast("Witness cycle module unavailable", "error");
+    }
+};
 
-export function closeCreateAccountModal() {
-    const createModal = document.getElementById('createAccountModal');
-    if (createModal) createModal.classList.add('hidden');
-}
+// ====================== EDIT PROFILE MODAL ======================
+window.openEditProfile = () => {
+    const modal = document.getElementById('editProfileModal');
+    if (!modal) return showToast("Edit modal not found", "error");
 
-// Global exposures for inline HTML handlers
-window.googleLogin = googleLogin;
-window.handleEmailAuth = handleEmailAuth;
-window.handleEmailSignUp = handleEmailSignUp;
-window.logout = logout;
-window.togglePasswordVisibility = togglePasswordVisibility;
-window.requireAuth = requireAuth;
-window.updateUIForAuthState = updateUIForAuthState;
-window.showAuthModal = showAuthModal;
-window.closeLoginModal = closeLoginModal;
-window.closeCreateAccountModal = closeCreateAccountModal;
+    if (currentUserData) {
+        const displayNameInput = document.getElementById('editDisplayName');
+        const usernameInput = document.getElementById('editUsername');
+        const regionInput = document.getElementById('editRegion');
+        const bioInput = document.getElementById('editBio');
+
+        if (displayNameInput) displayNameInput.value = currentUserData.displayName || '';
+        if (usernameInput) usernameInput.value = currentUserData.username || '';
+        if (regionInput) regionInput.value = currentUserData.region || '';
+        if (bioInput) bioInput.value = currentUserData.bio || '';
+    }
+    modal.classList.remove('hidden');
+};
+
+window.closeEditProfile = () => {
+    document.getElementById('editProfileModal')?.classList.add('hidden');
+};
+
+window.handleSaveProfile = async (event) => {
+    if (event) event.preventDefault();
+    await window.saveProfileChanges();
+};
+
+window.saveProfileChanges = async () => {
+    if (!auth.currentUser) return showToast("You must be logged in", "error");
+
+    const displayName = document.getElementById('editDisplayName')?.value.trim();
+    const username = document.getElementById('editUsername')?.value.trim();
+    const region = document.getElementById('editRegion')?.value.trim();
+    const bio = document.getElementById('editBio')?.value.trim();
+
+    if (!displayName) return showToast("Display name is required", "error");
+
+    try {
+        showToast("Saving changes...", "info");
+        const userRef = doc(db, "users", auth.currentUser.uid);
+        
+        await updateDoc(userRef, {
+            displayName,
+            username: username || null,
+            region: region || null,
+            bio: bio || null,
+            updatedAt: serverTimestamp()
+        });
+
+        showToast("✅ Profile updated successfully!", "success");
+        window.closeEditProfile();
+        refreshTierAndUI?.();
+    } catch (error) {
+        console.error("Save profile error:", error);
+        showToast("Failed to save profile", "error");
+    }
+};
+
+// ====================== SETTINGS & SECURITY ======================
+window.openSettings = () => {
+    const modal = document.getElementById('settingsModal');
+    if (!modal) return showToast("Settings modal not found", "error");
+    
+    if (currentUserData) {
+        const toggle2FA = document.getElementById('toggle2FA');
+        const defaultDoor = document.getElementById('defaultDoorSelect');
+        
+        if (toggle2FA) toggle2FA.checked = currentUserData.enable2FA === true;
+        if (defaultDoor) defaultDoor.value = currentUserData.defaultDoor || 'public_square';
+    }
+    
+    modal.classList.remove('hidden');
+};
+
+window.closeSettings = () => {
+    document.getElementById('settingsModal')?.classList.add('hidden');
+};
+
+window.triggerPasswordReset = async () => {
+    if (!auth.currentUser || !auth.currentUser.email) {
+        return showToast("No active user email found", "error");
+    }
+    try {
+        await sendPasswordResetEmail(auth, auth.currentUser.email);
+        showToast("📧 Password reset email sent!", "success");
+    } catch (error) {
+        console.error("Password reset error:", error);
+        showToast("Failed to send reset email", "error");
+    }
+};
+
+window.handle2FAToggle = async (e) => {
+    if (!auth.currentUser) return;
+    const isEnabled = e.target.checked;
+    
+    try {
+        const userRef = doc(db, "users", auth.currentUser.uid);
+        await updateDoc(userRef, {
+            enable2FA: isEnabled,
+            updatedAt: serverTimestamp()
+        });
+        showToast(isEnabled ? "🔒 2FA Enabled" : "🔓 2FA Disabled", "info");
+    } catch (error) {
+        console.error("2FA toggle error:", error);
+        showToast("Failed to update 2FA preference", "error");
+    }
+};
+
+window.updateDefaultDoor = async (doorValue) => {
+    if (!auth.currentUser) return;
+    try {
+        const userRef = doc(db, "users", auth.currentUser.uid);
+        await updateDoc(userRef, {
+            defaultDoor: doorValue,
+            updatedAt: serverTimestamp()
+        });
+        
+        const formattedName = doorValue.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        showToast(`Default door updated to ${formattedName}`, "success");
+    } catch (error) {
+        console.error("Default door update error:", error);
+        showToast("Failed to save default door preference", "error");
+    }
+};
+
+// ====================== PDF EXPORT ======================
+window.exportUserDataPDF = async () => {
+    if (!currentUserData) return showToast("Profile data not loaded", "error");
+    showToast("Generating identity PDF...", "info");
+    
+    try {
+        if (!window.jspdf) throw new Error("jsPDF library not loaded");
+        
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF();
+        
+        pdf.setFontSize(20);
+        pdf.text("VocalWitness Identity & Profile Record", 20, 20);
+        
+        pdf.setFontSize(12);
+        pdf.text(`Generated: ${new Date().toLocaleString()}`, 20, 32);
+        pdf.text(`Display Name: ${currentUserData.displayName || 'N/A'}`, 20, 44);
+        pdf.text(`Username: @${currentUserData.username || 'anonymous'}`, 20, 52);
+        pdf.text(`Region: ${currentUserData.region || 'N/A'}`, 20, 60);
+        pdf.text(`Reputation: ${currentUserData.reputation || 0} REP`, 20, 68);
+        pdf.text(`Phone Verified: ${currentUserData.isPhoneVerified ? 'Yes' : 'No'}`, 20, 76);
+        pdf.text(`ZK Verified: ${currentUserData.zkVerified ? 'Yes' : 'No'}`, 20, 84);
+        
+        pdf.save(`vocalwitness-identity-${auth.currentUser?.uid || 'user'}.pdf`);
+        showToast("✅ Identity PDF Exported!", "success");
+    } catch (e) {
+        console.error("Export error:", e);
+        showToast("PDF generation requires jsPDF script inclusion", "error");
+    }
+};
+
+// Backwards compatibility alias
+window.downloadMyDataPDF = window.exportUserDataPDF;
+
+// ====================== MODAL CONTROL ALIASES ======================
+window.openProfile = function() {
+    const modal = document.getElementById('profileModal');
+    if (!modal) return showToast("Profile modal not found", "error");
+    modal.classList.remove('hidden');
+    if (currentUserData) renderProfileUI(currentUserData);
+};
+
+window.closeProfile = function() {
+    document.getElementById('profileModal')?.classList.add('hidden');
+};
+
+// Listening for language switches across views
+window.addEventListener('languageChanged', () => {
+    if (currentUserData) renderProfileUI(currentUserData);
+});
