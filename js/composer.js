@@ -7,7 +7,8 @@ import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/fir
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
 
-let mediaRecorder;
+let mediaRecorder = null;
+let mediaStream = null;
 let audioChunks = [];
 let recordedAudioBlob = null;
 let recordedAudioUrl = null;
@@ -32,7 +33,7 @@ btnPhoto?.addEventListener('click', async () => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
-    
+
     input.onchange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -46,8 +47,8 @@ btnPhoto?.addEventListener('click', async () => {
             reader.onload = (ev) => {
                 if (!previewArea) return;
                 previewArea.innerHTML = `
-                    <img src="${ev.target.result}" 
-                         class="max-h-[300px] max-w-full rounded-2xl object-contain shadow-lg" 
+                    <img src="${ev.target.result}"
+                         class="max-h-[300px] max-w-full rounded-2xl object-contain shadow-lg"
                          alt="Preview">
                     <p class="text-xs text-emerald-400 mt-2">
                         ${compressedFile.name} • ${(compressedFile.size / 1024 / 1024).toFixed(2)} MB
@@ -64,42 +65,101 @@ btnPhoto?.addEventListener('click', async () => {
     input.click();
 });
 
-// ==================== VOICE RECORDING ====================
+// ==================== VOICE RECORDING (hardened) ====================
+function getSupportedMimeType() {
+    const types = [
+        'audio/webm;codecs=opus',
+        'audio/webm',
+        'audio/ogg;codecs=opus',
+        'audio/mp4'
+    ];
+    for (const type of types) {
+        if (MediaRecorder.isTypeSupported(type)) return type;
+    }
+    return ''; // let browser decide
+}
+
+function cleanupStream() {
+    if (mediaStream) {
+        mediaStream.getTracks().forEach(t => t.stop());
+        mediaStream = null;
+    }
+}
+
 btnVoice?.addEventListener('click', async () => {
     if (!isRecording) {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(stream);
-            audioChunks = [];
+            mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const mimeType = getSupportedMimeType();
+            const options = mimeType ? { mimeType } : {};
 
-            mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+            mediaRecorder = new MediaRecorder(mediaStream, options);
+            audioChunks = [];
+            recordedAudioBlob = null;
+
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data && e.data.size > 0) {
+                    audioChunks.push(e.data);
+                }
+            };
+
             mediaRecorder.onstop = () => {
-                recordedAudioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                recordedAudioBlob = new Blob(audioChunks, {
+                    type: mediaRecorder.mimeType || 'audio/webm'
+                });
+
+                console.log('🎙️ Recording finished. Blob size:', recordedAudioBlob.size, 'bytes');
+
+                if (!recordedAudioBlob || recordedAudioBlob.size === 0) {
+                    showToast('Recording is empty. Please try again.', 'error');
+                    cleanupStream();
+                    return;
+                }
+
+                // Revoke previous object URL to avoid memory leaks
+                if (recordedAudioUrl) URL.revokeObjectURL(recordedAudioUrl);
                 recordedAudioUrl = URL.createObjectURL(recordedAudioBlob);
-                
+
                 if (previewArea) {
                     previewArea.innerHTML = `
                         <div class="flex flex-col items-center">
-                            <p class="text-emerald-400 mb-2">🎤 Voice recorded</p>
+                            <p class="text-emerald-400 mb-2">🎤 Voice recorded (${(recordedAudioBlob.size / 1024).toFixed(1)} KB)</p>
                             <audio controls src="${recordedAudioUrl}" class="w-full max-w-md"></audio>
                         </div>
                     `;
                     previewArea.classList.add('has-content');
                 }
+
+                cleanupStream();
             };
 
-            mediaRecorder.start();
+            mediaRecorder.onerror = (e) => {
+                console.error('MediaRecorder error:', e);
+                showToast('Recording error occurred', 'error');
+                cleanupStream();
+                isRecording = false;
+                btnVoice?.classList.remove('recording-active');
+                if (btnVoice) btnVoice.textContent = '🎤 Voice Testimony';
+            };
+
+            // Critical: request data every second so we never get a single empty final chunk
+            mediaRecorder.start(1000);
+
             isRecording = true;
             btnVoice.classList.add('recording-active');
             btnVoice.textContent = '⏹️ Stop Recording';
             toggleActive(btnVoice);
 
         } catch (err) {
+            console.error(err);
             showToast('Microphone access denied or not available', 'error');
+            cleanupStream();
         }
     } else {
-        mediaRecorder.stop();
-        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        // STOP
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            mediaRecorder.stop();
+        }
         isRecording = false;
         btnVoice.classList.remove('recording-active');
         btnVoice.textContent = '🎤 Voice Testimony';
@@ -120,7 +180,13 @@ postButton?.addEventListener('click', async () => {
         return;
     }
 
-    // Rate Limit Check with Modular Firebase Functions
+    // Extra safety – never upload an empty audio blob
+    if (recordedAudioBlob && recordedAudioBlob.size === 0) {
+        showToast('Recording is empty. Please record again.', 'error');
+        return;
+    }
+
+    // Rate Limit Check
     try {
         const functions = getFunctions(undefined, 'us-central1');
         const checkRateLimitFn = httpsCallable(functions, 'checkRateLimit');
@@ -148,30 +214,38 @@ postButton?.addEventListener('click', async () => {
         let imageHash = null;
         const userId = auth.currentUser.uid;
 
-        // 1. Upload compressed image if attached
+        // 1. Upload compressed image
         if (selectedFile) {
+            if (selectedFile.size === 0) {
+                throw new Error('Selected image is empty');
+            }
             const fileRef = ref(storage, `evidence/${userId}/${Date.now()}_${selectedFile.name}`);
-            await uploadBytes(fileRef, selectedFile);
+            await uploadBytes(fileRef, selectedFile, {
+                contentType: selectedFile.type || 'image/jpeg'
+            });
             imageUrl = await getDownloadURL(fileRef);
             imageHash = await generateSha256Hash(selectedFile);
         }
 
-        // 2. Upload voice recording if attached
-        if (recordedAudioBlob) {
+        // 2. Upload voice (only if non-empty)
+        if (recordedAudioBlob && recordedAudioBlob.size > 0) {
             const audioRef = ref(storage, `evidence/${userId}/${Date.now()}_voice.webm`);
-            await uploadBytes(audioRef, recordedAudioBlob);
+            await uploadBytes(audioRef, recordedAudioBlob, {
+                contentType: recordedAudioBlob.type || 'audio/webm'
+            });
             audioUrl = await getDownloadURL(audioRef);
+            console.log('✅ Audio uploaded:', audioUrl, `(${recordedAudioBlob.size} bytes)`);
         }
 
-        // 3. Fetch user tier metadata
+        // 3. User tier metadata
         const userTier = await getCurrentUserTier();
         const userWitnessLevel = await getCurrentWitnessLevel();
 
-        // 4. Save to Firestore (Pure Firebase)
+        // 4. Save to Firestore
         await addDoc(collection(db, "testimonies"), {
             content: text || "",
-            imageUrl: imageUrl,
-            audioUrl: audioUrl,
+            imageUrl,
+            audioUrl,
             forensicHash: imageHash,
             authorId: userId,
             authorTier: userTier,
@@ -181,23 +255,25 @@ postButton?.addEventListener('click', async () => {
 
         showToast('✅ Testimony published to the Public Square!', 'success');
 
-        // Reset UI State
+        // Reset UI
         if (mainInput) mainInput.value = '';
         if (previewArea) {
             previewArea.innerHTML = 'Preview will appear here...';
             previewArea.classList.remove('has-content');
         }
-        
+
         btnPhoto?.classList.remove('active');
         btnVoice?.classList.remove('active', 'recording-active');
         if (btnVoice) btnVoice.textContent = '🎤 Voice Testimony';
 
         selectedFile = null;
         recordedAudioBlob = null;
-        recordedAudioUrl = null;
+        if (recordedAudioUrl) {
+            URL.revokeObjectURL(recordedAudioUrl);
+            recordedAudioUrl = null;
+        }
         audioChunks = [];
 
-        // Dispatch a custom event to notify feeds or profiles to update state
         window.dispatchEvent(new CustomEvent('vocalWitness:posted'));
 
     } catch (err) {
@@ -208,8 +284,8 @@ postButton?.addEventListener('click', async () => {
         postButton.textContent = 'Publish';
     }
 });
+
 window.addEventListener('languageChanged', () => {
-    // Update dynamic composer placeholders or buttons if needed
     const composerInput = document.getElementById('testimonyInput');
     if (composerInput && window.t) {
         composerInput.placeholder = window.t('placeholder');
