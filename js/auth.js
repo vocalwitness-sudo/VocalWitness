@@ -198,6 +198,26 @@ export function initAuth(onUserResolved) {
   });
 }
 
+/**
+ * Guard function to enforce authentication before sensitive actions
+ */
+export function requireAuth(message = "Please sign in to continue") {
+  if (!auth.currentUser) {
+    showToast(message, "error");
+    if (typeof window.showAuthModal === 'function') {
+      window.showAuthModal();
+    } else {
+      const authSection = document.getElementById('authSection');
+      if (authSection) authSection.classList.remove('hidden');
+    }
+    return false;
+  }
+  return true;
+}
+
+// Bind requireAuth globally as well
+window.requireAuth = requireAuth;
+
 // Bind methods globally to window for inline onclick handlers in HTML
 window.googleLogin = googleLogin;
 window.anonymousLogin = anonymousLogin;
