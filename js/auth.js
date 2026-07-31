@@ -1,280 +1,376 @@
-/**
- * VocalWitness - Authentication & Identity Module (auth.js)
- * Handles Google OAuth, Anonymous node auth, user record creation,
- * identity state listeners, and profile/HUD UI synchronization.
- */
+// ====================== IMPORTS ======================
+import {
+    signInWithPopup,
+    GoogleAuthProvider,
+    signOut,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    sendEmailVerification
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 
-import { auth, db } from './firebase-config.js';
-import { 
-  GoogleAuthProvider, 
-  signInWithPopup, 
-  signInWithRedirect,
-  getRedirectResult,
-  signInAnonymously, 
-  signOut, 
-  onAuthStateChanged 
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { 
-  doc, 
-  getDoc, 
-  setDoc, 
-  serverTimestamp 
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { auth, provider, db } from './firebase-config.js';
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { showToast } from './utils.js';
+import { updateAppState } from './app-state.js';
+import { applyTierTheme, updateTierBadge } from './tier.js';
 
-// Global current user reference
-export let currentUser = null;
+let authActionInProgress = false;
 
-/**
- * Helper to display temporary toast notifications in UI
- */
-function showToast(message, type = 'info') {
-  const toast = document.createElement('div');
-  const bgClass = type === 'error' ? 'bg-red-900/90 border-red-500 text-red-200' 
-                : type === 'success' ? 'bg-emerald-900/90 border-emerald-500 text-emerald-200' 
-                : 'bg-zinc-900/90 border-zinc-700 text-zinc-200';
-
-  toast.className = `fixed bottom-20 left-1/2 -translate-x-1/2 z-[11000] px-4 py-2.5 rounded-2xl border text-xs font-bold shadow-2xl backdrop-blur-md transition-all duration-300 ${bgClass}`;
-  toast.innerText = message;
-  document.body.appendChild(toast);
-
-  setTimeout(() => {
-    toast.style.opacity = '0';
-    setTimeout(() => toast.remove(), 300);
-  }, 3000);
+// ====================== TIER & USER HELPERS ======================
+function refreshTierUI() {
+    if (typeof window.refreshTierAndUI === 'function') {
+        window.refreshTierAndUI();
+    } else {
+        if (typeof applyTierTheme === 'function') applyTierTheme();
+        if (typeof updateTierBadge === 'function') updateTierBadge();
+    }
 }
 
-/**
- * Modal Visibility Controllers (Option B: Target #loginModal)
- */
-export function showAuthModal() {
-  const loginModal = document.getElementById('loginModal');
-  if (loginModal) {
-    loginModal.classList.remove('hidden');
-    loginModal.classList.add('flex');
-  } else {
-    console.warn("loginModal element not found in DOM");
-  }
+async function createOrUpdateUser(user) {
+    if (!user) return;
+    try {
+        const userRef = doc(db, "users", user.uid);
+        await setDoc(userRef, {
+            uid: user.uid,
+            email: user.email || "",
+            displayName: user.displayName || "Anonymous Witness",
+            photoURL: user.photoURL || "",
+            tier: "citizen",
+            lastActive: serverTimestamp()
+        }, { merge: true });
+    } catch (e) {
+        console.error("User document error:", e);
+    }
 }
 
-export function hideAuthModal() {
-  const loginModal = document.getElementById('loginModal');
-  if (loginModal) {
-    loginModal.classList.add('hidden');
-    loginModal.classList.remove('flex');
-  }
+// ====================== DRAFT & STATE PRESERVATION ======================
+export function savePendingDraft() {
+    const mainInput = document.getElementById('mainInput');
+    if (mainInput && mainInput.value.trim() !== '') {
+        sessionStorage.setItem('vocal_pending_draft', mainInput.value);
+        showToast("Draft saved. We'll restore it after sign-in.", "info");
+    }
 }
 
-/**
- * Guard function to enforce authentication before sensitive actions
- */
-export function requireAuth(message = "Please sign in to continue") {
-  if (!auth.currentUser) {
-    showToast(message, "error");
-    showAuthModal();
-    return false;
-  }
-  return true;
-}
-
-/**
- * Initializes or syncs user document in Firestore 'users' collection
- */
-export async function syncUserProfile(user) {
-  if (!user) return null;
-
-  const userRef = doc(db, 'users', user.uid);
-  try {
-    const docSnap = await getDoc(userRef);
-
-    if (!docSnap.exists()) {
-      // Setup initial data structure for new Node identity
-      const newUserData = {
-        uid: user.uid,
-        displayName: user.displayName || `Witness-${user.uid.slice(0, 6)}`,
-        email: user.email || null,
-        photoURL: user.photoURL || null,
-        isAnonymous: user.isAnonymous || false,
-        humanityScore: user.isAnonymous ? 30 : 50,
-        tierLevel: 1,
-        tierName: 'Level 1 Witness',
-        createdAt: serverTimestamp(),
-        lastActiveAt: serverTimestamp(),
-        bio: 'Verified Human Reporter on VocalWitness Ledger',
-        settings: {
-          notifications: true,
-          publicVisibility: true
+export function restorePendingDraft() {
+    const draft = sessionStorage.getItem('vocal_pending_draft');
+    if (draft) {
+        const mainInput = document.getElementById('mainInput');
+        if (mainInput) {
+            mainInput.value = draft;
+            showToast("✅ Your testimony draft has been restored!", "success");
         }
-      };
-
-      await setDoc(userRef, newUserData);
-      return newUserData;
-    } else {
-      // Existing user: retrieve data
-      return docSnap.data();
+        sessionStorage.removeItem('vocal_pending_draft');
     }
-  } catch (error) {
-    console.error("Error syncing user document:", error);
-    return null;
-  }
 }
 
-/**
- * Authenticate via Google OAuth Popup with automatic Redirect Fallback
- */
+// ====================== FIREBASE AUTH ERROR MAPPER ======================
+function handleAuthError(error) {
+    switch (error?.code) {
+        case 'auth/invalid-credential':
+            return "Invalid email or password. If you just created an account, please check your email for the verification link first.";
+        case 'auth/too-many-requests':
+            return "Too many attempts. For security, please wait a few minutes before trying again.";
+        case 'auth/invalid-phone-number':
+            return "The phone number format is invalid. Please include your correct country code.";
+        case 'auth/quota-exceeded':
+            return "SMS service temporarily busy. Please try an alternate verification path.";
+        case 'auth/popup-closed-by-user':
+        case 'auth/cancelled-popup-request':
+            return "Sign-in was cancelled.";
+        case 'auth/popup-blocked':
+            return "Popup was blocked by browser. Please allow popups for this site.";
+        case 'auth/invalid-email':
+            return "The email address format is invalid.";
+        case 'auth/user-not-found':
+            return "No account found with this email address. Please check or sign up.";
+        case 'auth/wrong-password':
+            return "Incorrect password. Please try again.";
+        case 'auth/email-already-in-use':
+            return "An account with this email already exists. Try signing in instead.";
+        case 'auth/weak-password':
+            return "Password should be at least 6 characters long.";
+        default:
+            return error?.message || "Authentication failed. Please check your connection.";
+    }
+}
+
+// ====================== AUTH METHODS - GOOGLE POPUP LOGIC ======================
 export async function googleLogin() {
-  const provider = new GoogleAuthProvider();
-  try {
-    const result = await signInWithPopup(auth, provider);
-    const user = result.user;
-    await syncUserProfile(user);
-    hideAuthModal();
-    showToast("Node Link Established: Google OAuth", "success");
-    return user;
-  } catch (error) {
-    console.warn("Google Auth Issue:", error.code);
-
-    // Fallback trigger for Safari/Mobile/Cross-Origin popup blocks
-    if (error.code === 'auth/popup-blocked' || error.code === 'auth/operation-not-supported-in-this-environment') {
-      showToast("Popup blocked. Redirecting to Google Sign-In...", "info");
-      try {
-        await signInWithRedirect(auth, provider);
-      } catch (redirectError) {
-        console.error("Redirect Auth Error:", redirectError);
-        showToast("Authentication failed.", "error");
-      }
-      return null;
-    } 
-    
-    if (error.code === 'auth/cancelled-popup-request' || error.code === 'auth/popup-closed-by-user') {
-      showToast("Sign-in cancelled.", "info");
-    } else {
-      showToast(`Auth Failed: ${error.message}`, "error");
+    if (authActionInProgress) {
+        showToast("Sign-in already in progress...", "info");
+        return;
     }
 
-    return null;
-  }
+    authActionInProgress = true;
+
+    try {
+        savePendingDraft();
+        showToast("Opening Google Sign-In...", "info");
+        
+        // Popup authentication avoids cross-origin storage partitioning issues
+        const result = await signInWithPopup(auth, provider);
+        
+        if (result && result.user) {
+            const user = result.user;
+            await createOrUpdateUser(user);
+            updateAppState({ isAuthenticated: true, currentUser: user });
+            refreshTierUI();
+            
+            if (typeof window.updateHeaderButtons === 'function') {
+                window.updateHeaderButtons(true);
+            }
+            
+            window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
+            updateUIForAuthState();
+
+            showToast("✅ Signed in successfully! Welcome to the Square.", "success");
+            
+            closeLoginModal();
+            closeCreateAccountModal();
+            
+            restorePendingDraft();
+        }
+    } catch (error) {
+        console.error("Google popup sign-in error:", error);
+        showToast(handleAuthError(error), "error");
+    } finally {
+        authActionInProgress = false;
+    }
 }
 
-/**
- * Authenticate as an Anonymous Reporter Node
- */
-export async function anonymousLogin() {
-  try {
-    const result = await signInAnonymously(auth);
-    const user = result.user;
-    await syncUserProfile(user);
-    hideAuthModal();
-    showToast("Anonymous Identity Node Initialized", "info");
-    return user;
-  } catch (error) {
-    console.error("Anonymous Auth Error:", error);
-    showToast("Failed to initialize anonymous node.", "error");
-    return null;
-  }
+// ====================== EMAIL SIGN-IN & SIGN-UP ======================
+export async function handleEmailAuth(event) {
+    if (event) event.preventDefault();
+
+    const email = (
+        document.getElementById('authEmail')?.value || 
+        document.getElementById('signInEmail')?.value || 
+        document.getElementById('signUpEmail')?.value
+    )?.trim();
+
+    const password = (
+        document.getElementById('authPassword')?.value || 
+        document.getElementById('signInPassword')?.value || 
+        document.getElementById('signUpPassword')?.value
+    );
+
+    if (!email || !password) {
+        showToast("Please enter both email and password.", "error");
+        return;
+    }
+
+    try {
+        savePendingDraft();
+        
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        if (!user.emailVerified) {
+            showToast("⚠️ Email unverified. A link was sent to your inbox. Please verify before proceeding.", "warning");
+            await signOut(auth);
+            return;
+        }
+
+        await createOrUpdateUser(user);
+        updateAppState({ isAuthenticated: true, currentUser: user });
+        refreshTierUI();
+        
+        if (typeof window.updateHeaderButtons === 'function') {
+            window.updateHeaderButtons(true);
+        }
+
+        window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
+        updateUIForAuthState();
+
+        showToast("✅ Signed in successfully!", "success");
+        closeLoginModal();
+        closeCreateAccountModal();
+        restorePendingDraft();
+
+    } catch (error) {
+        console.error("Email sign-in error:", error);
+        showToast(handleAuthError(error), "error");
+    }
 }
 
-/**
- * Sign out and reset interface state
- */
+export async function handleEmailSignUp(event) {
+    if (event) event.preventDefault();
+    const email = document.getElementById('authEmail')?.value?.trim() || document.getElementById('signUpEmail')?.value?.trim();
+    const password = document.getElementById('authPassword')?.value || document.getElementById('signUpPassword')?.value;
+
+    if (!email || !password) {
+        showToast("Please enter both email and password.", "error");
+        return;
+    }
+
+    if (password.length < 6) {
+        showToast("Password must be at least 6 characters long.", "error");
+        return;
+    }
+
+    try {
+        savePendingDraft();
+        
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        
+        await createOrUpdateUser(user);
+        await sendEmailVerification(user);
+
+        showToast("🎉 Account created! A verification link has been sent to your email.", "success");
+        
+        closeLoginModal();
+        closeCreateAccountModal();
+        
+        await signOut(auth);
+    } catch (error) {
+        console.error("Email sign-up error:", error);
+        showToast(handleAuthError(error), "error");
+    }
+}
+
 export async function logout() {
-  try {
-    await signOut(auth);
-    currentUser = null;
-    showToast("Identity Node Disconnected", "info");
+    try {
+        await signOut(auth);
+        updateAppState({ isAuthenticated: false, currentUser: null });
+        showToast("Signed out successfully", "success");
+        window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user: null } }));
+        updateUIForAuthState();
+    } catch (error) {
+        console.error("Logout error:", error);
+        showToast("Logout failed", "error");
+    }
+}
+
+export function togglePasswordVisibility(inputId, btnElement) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    const isPassword = input.type === 'password';
+    input.type = isPassword ? 'text' : 'password';
+    if (btnElement) {
+        btnElement.textContent = isPassword ? 'Hide' : 'Show';
+    }
+}
+
+// ====================== REQUIRE AUTH ======================
+export function requireAuth(message = "Please sign in to participate in the Public Square.") {
+    if (!auth.currentUser) {
+        savePendingDraft();
+        showToast(message, "info");
+        
+        const loginModal = document.getElementById('loginModal');
+        const modalMsg = document.getElementById('loginModalMessage');
+        if (modalMsg) modalMsg.textContent = message;
+        if (loginModal) loginModal.classList.remove('hidden');
+        return false;
+    }
+    return true;
+}
+
+// ====================== UI SYNC FOR HYBRID READ/WRITE MODEL ======================
+export function updateUIForAuthState() {
+    const isLoggedIn = !!auth.currentUser;
+    const guestBtn = document.getElementById('guest-action-btn');
+    const profileBtn = document.getElementById('profile-btn');
+    const signInElement = document.getElementById('signin-btn');
+    const privateElements = document.querySelectorAll('.requires-auth');
+
+    if (guestBtn) {
+        guestBtn.classList.toggle('hidden', isLoggedIn);
+        const guestBtnText = document.getElementById('guest-btn-text');
+        if (guestBtnText) guestBtnText.textContent = isLoggedIn ? '' : 'Join VocalWitness';
+    }
+
+    if (signInElement) {
+        signInElement.classList.toggle('hidden', isLoggedIn);
+    }
     
-    // Toggle UI views back to auth screen
-    showAuthModal();
-  } catch (error) {
-    console.error("Sign-out error:", error);
-    showToast("Failed to disconnect node.", "error");
-  }
-}
+    if (profileBtn) {
+        profileBtn.classList.toggle('hidden', !isLoggedIn);
+    }
 
-/**
- * Update HUD and Header User Interface details
- */
-export function updateAuthUI(user, userData = null) {
-  const loginModal = document.getElementById('loginModal');
-  const mainApp = document.getElementById('mainApp');
-  const signInBtn = document.getElementById('signin-btn');
-  const profileBtn = document.getElementById('profile-btn');
-  
-  if (user) {
-    if (loginModal) loginModal.classList.add('hidden');
-    if (mainApp) mainApp.classList.remove('hidden');
-
-    // Toggle Header Buttons
-    if (signInBtn) signInBtn.classList.add('hidden');
-    if (profileBtn) profileBtn.classList.remove('hidden');
-
-    const name = userData?.displayName || user.displayName || `Node-${user.uid.slice(0, 5)}`;
-    const avatarChar = name.charAt(0).toUpperCase();
-
-    // Update Header HUD Elements
-    const userNameEl = document.getElementById('userName');
-    const userAvatarEl = document.getElementById('userAvatar');
-    const humanityScoreEl = document.getElementById('humanityScore');
-
-    if (userNameEl) userNameEl.innerText = name;
-    if (userAvatarEl) userAvatarEl.innerText = avatarChar;
-    if (humanityScoreEl) humanityScoreEl.innerText = userData?.humanityScore ?? 50;
-
-    // Update Standalone Profile Tab Elements if present
-    const profileNameEl = document.getElementById('profileName');
-    const profileBigAvatarEl = document.getElementById('profileBigAvatar');
-    const profileTierTextEl = document.getElementById('profileTierText');
-
-    if (profileNameEl) profileNameEl.innerText = name;
-    if (profileBigAvatarEl) profileBigAvatarEl.innerText = avatarChar;
-    if (profileTierTextEl) profileTierTextEl.innerText = userData?.tierName || 'Level 1 Witness';
-
-  } else {
-    // Unauthenticated state: show Sign In button, hide Profile button
-    if (signInBtn) signInBtn.classList.remove('hidden');
-    if (profileBtn) profileBtn.classList.add('hidden');
-  }
-}
-
-/**
- * Main Auth Initialization Listener
- * Includes listener for completed redirects when returning back to page
- */
-export function initAuth(onUserResolved) {
-  // Check for redirect return status first
-  getRedirectResult(auth)
-    .then(async (result) => {
-      if (result?.user) {
-        await syncUserProfile(result.user);
-        showToast("Node Link Established", "success");
-      }
-    })
-    .catch((error) => {
-      console.error("Error processing redirect result:", error);
+    privateElements.forEach(el => {
+        el.classList.toggle('hidden', !isLoggedIn);
     });
 
-  // Track standard Auth State
-  onAuthStateChanged(auth, async (user) => {
-    currentUser = user;
-    if (user) {
-      const userData = await syncUserProfile(user);
-      updateAuthUI(user, userData);
-      if (typeof onUserResolved === 'function') {
-        onUserResolved(user, userData);
-      }
-    } else {
-      updateAuthUI(null);
-      if (typeof onUserResolved === 'function') {
-        onUserResolved(null, null);
-      }
+    document.querySelectorAll('#postButton, #btn-photo, #btn-voice').forEach(btn => {
+        if (btn) btn.style.opacity = isLoggedIn ? '1' : '0.6';
+    });
+
+    if (typeof window.updateHeaderButtons === 'function') {
+        window.updateHeaderButtons(isLoggedIn);
     }
-  });
 }
 
-// Global Window Bindings (for HTML inline event handlers e.g. onclick="showAuthModal()")
-window.showAuthModal = showAuthModal;
-window.hideAuthModal = hideAuthModal;
-window.closeLoginModal = hideAuthModal; // Alias for HTML close buttons
-window.requireAuth = requireAuth;
+// ====================== INIT AUTH ======================
+export function initAuth() {
+    // Main Firebase Auth State Listener
+    auth.onAuthStateChanged(async (user) => {
+        if (user) {
+            await createOrUpdateUser(user);
+            updateAppState({ isAuthenticated: true, currentUser: user });
+            refreshTierUI();
+        } else {
+            updateAppState({ isAuthenticated: false, currentUser: null });
+        }
+        
+        window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
+        updateUIForAuthState();
+    });
+    
+    // Automatic binding for logout elements across the DOM
+    document.addEventListener('click', (e) => {
+        if (e.target.matches('#logoutBtn, .btn-logout, [data-action="logout"]')) {
+            e.preventDefault();
+            logout();
+        }
+    });
+
+    updateUIForAuthState();
+
+    console.log("🔐 Auth initialized (Popup Mode)");
+}
+
+// ====================== MODAL & GLOBAL EXPOSURES ======================
+export function showAuthModal() {
+    if (auth.currentUser) {
+        if (typeof window.showProfile === 'function') {
+            window.showProfile();
+        } else if (typeof window.openProfile === 'function') {
+            window.openProfile();
+        } else {
+            console.warn("Profile opener function not defined yet.");
+        }
+    } else {
+        const createModal = document.getElementById('createAccountModal');
+        if (createModal) {
+            createModal.classList.remove('hidden');
+        } else {
+            const loginModal = document.getElementById('loginModal');
+            if (loginModal) loginModal.classList.remove('hidden');
+        }
+    }
+}
+
+export function closeLoginModal() {
+    const loginModal = document.getElementById('loginModal');
+    if (loginModal) loginModal.classList.add('hidden');
+}
+
+export function closeCreateAccountModal() {
+    const createModal = document.getElementById('createAccountModal');
+    if (createModal) createModal.classList.add('hidden');
+}
+
+// Global exposures for inline HTML handlers
 window.googleLogin = googleLogin;
-window.anonymousLogin = anonymousLogin;
+window.handleEmailAuth = handleEmailAuth;
+window.handleEmailSignUp = handleEmailSignUp;
 window.logout = logout;
+window.togglePasswordVisibility = togglePasswordVisibility;
+window.requireAuth = requireAuth;
+window.updateUIForAuthState = updateUIForAuthState;
+window.showAuthModal = showAuthModal;
+window.closeLoginModal = closeLoginModal;
+window.closeCreateAccountModal = closeCreateAccountModal;
