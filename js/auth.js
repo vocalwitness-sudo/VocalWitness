@@ -8,6 +8,8 @@ import { auth, db } from './firebase-config.js';
 import { 
   GoogleAuthProvider, 
   signInWithPopup, 
+  signInWithRedirect,
+  getRedirectResult,
   signInAnonymously, 
   signOut, 
   onAuthStateChanged 
@@ -42,7 +44,7 @@ function showToast(message, type = 'info') {
 }
 
 /**
- * Modal Visibility Controllers (Updated to target #loginModal)
+ * Modal Visibility Controllers (Option B: Target #loginModal)
  */
 export function showAuthModal() {
   const loginModal = document.getElementById('loginModal');
@@ -117,10 +119,7 @@ export async function syncUserProfile(user) {
 }
 
 /**
- * Authenticate via Google OAuth Popup
- */
-/**
- * Authenticate via Google OAuth Popup
+ * Authenticate via Google OAuth Popup with automatic Redirect Fallback
  */
 export async function googleLogin() {
   const provider = new GoogleAuthProvider();
@@ -132,18 +131,26 @@ export async function googleLogin() {
     showToast("Node Link Established: Google OAuth", "success");
     return user;
   } catch (error) {
-    console.error("Google Auth Error:", error);
+    console.warn("Google Auth Issue:", error.code);
 
-    // Handle user-facing popup errors gracefully without throwing uncaught promises
-    if (error.code === 'auth/popup-blocked') {
-      showToast("Popup blocked! Please allow popups for this site.", "error");
-    } else if (error.code === 'auth/cancelled-popup-request' || error.code === 'auth/popup-closed-by-user') {
+    // Fallback trigger for Safari/Mobile/Cross-Origin popup blocks
+    if (error.code === 'auth/popup-blocked' || error.code === 'auth/operation-not-supported-in-this-environment') {
+      showToast("Popup blocked. Redirecting to Google Sign-In...", "info");
+      try {
+        await signInWithRedirect(auth, provider);
+      } catch (redirectError) {
+        console.error("Redirect Auth Error:", redirectError);
+        showToast("Authentication failed.", "error");
+      }
+      return null;
+    } 
+    
+    if (error.code === 'auth/cancelled-popup-request' || error.code === 'auth/popup-closed-by-user') {
       showToast("Sign-in cancelled.", "info");
     } else {
       showToast(`Auth Failed: ${error.message}`, "error");
     }
-    
-    // Return null instead of re-throwing so inline onclick handlers don't crash
+
     return null;
   }
 }
@@ -162,7 +169,7 @@ export async function anonymousLogin() {
   } catch (error) {
     console.error("Anonymous Auth Error:", error);
     showToast("Failed to initialize anonymous node.", "error");
-    throw error;
+    return null;
   }
 }
 
@@ -230,9 +237,22 @@ export function updateAuthUI(user, userData = null) {
 
 /**
  * Main Auth Initialization Listener
- * Callback receives (user, userData) upon state resolution
+ * Includes listener for completed redirects when returning back to page
  */
 export function initAuth(onUserResolved) {
+  // Check for redirect return status first
+  getRedirectResult(auth)
+    .then(async (result) => {
+      if (result?.user) {
+        await syncUserProfile(result.user);
+        showToast("Node Link Established", "success");
+      }
+    })
+    .catch((error) => {
+      console.error("Error processing redirect result:", error);
+    });
+
+  // Track standard Auth State
   onAuthStateChanged(auth, async (user) => {
     currentUser = user;
     if (user) {
