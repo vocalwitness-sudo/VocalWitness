@@ -1,6 +1,6 @@
 // js/main.js - Polished & Robust Main Entry Point
 
-// 1. Static Module Imports (Must remain at the top level)
+// 1. Static Module Imports
 import './app-state.js';
 import { initAuth, requireAuth, updateUIForAuthState } from "./auth.js";
 import { initFeed } from './feed.js';
@@ -45,7 +45,7 @@ window.switchTab = async (tab) => {
     AppState.currentTab = tab;
     AppState.currentMode = tab === 'witness' ? 'witness' : 'citizen';
     
-    // Target either dynamicContainer or main feed container
+    // Target main container
     const container = document.getElementById('dynamicContainer') || document.getElementById('main-content');
     if (!container) return;
 
@@ -58,7 +58,7 @@ window.switchTab = async (tab) => {
         }
         else if (tab === 'ledger') {
             container.innerHTML = `<div id="ledgerContainer" class="space-y-6"></div>`;
-            loadEvidenceLedger();
+            await loadEvidenceLedger();
         }
         else if (tab === 'witness') {
             container.innerHTML = `
@@ -201,30 +201,26 @@ async function loadEvidenceLedger() {
     const container = document.getElementById('ledgerContainer');
     if (!container) return;
 
-    let wrapper = document.getElementById('ledgerTableWrapper');
-    if (!wrapper) {
-        wrapper = document.createElement('div');
-        wrapper.id = 'ledgerTableWrapper';
-        container.innerHTML = `
-            <div class="glass rounded-3xl p-8 border border-zinc-700/60 shadow-2xl">
-                <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8 pb-6 border-b border-zinc-800">
-                    <div>
-                        <h2 class="text-2xl font-bold text-white flex items-center gap-2">
-                            <span>📜</span> Cryptographic Evidence Ledger
-                        </h2>
-                        <p class="text-sm text-zinc-400 mt-1">Permanent, immutable record of public testimonies.</p>
-                    </div>
-                    <button onclick="window.refreshLedger()" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-2xl text-xs font-medium text-emerald-400 transition flex items-center gap-2">
-                        🔄 Sync Ledger
-                    </button>
+    // Render outer skeleton
+    container.innerHTML = `
+        <div class="glass rounded-3xl p-8 border border-zinc-700/60 shadow-2xl">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8 pb-6 border-b border-zinc-800">
+                <div>
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                        <span>📜</span> Cryptographic Evidence Ledger
+                    </h2>
+                    <p class="text-sm text-zinc-400 mt-1">Permanent, immutable record of public testimonies.</p>
                 </div>
-                <div id="ledgerTableInnerWrapper" class="overflow-x-auto"></div>
-            </div>`;
-    }
+                <button onclick="window.refreshLedger()" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-2xl text-xs font-medium text-emerald-400 transition flex items-center gap-2">
+                    🔄 Sync Ledger
+                </button>
+            </div>
+            <div id="ledgerTableInnerWrapper" class="overflow-x-auto">
+                <div class="text-center py-16 text-zinc-500 animate-pulse">Loading ledger records...</div>
+            </div>
+        </div>`;
 
     const innerWrapper = document.getElementById('ledgerTableInnerWrapper');
-    if (!innerWrapper) return;
-    innerWrapper.innerHTML = `<div class="text-center py-16 text-zinc-500 animate-pulse">Loading ledger records...</div>`;
 
     try {
         const q = query(collection(db, "testimonies"), limit(20));
@@ -302,12 +298,9 @@ function setupEventListeners() {
     });
 
     // Auth Buttons
-    const guestActionBtn = document.getElementById('guest-action-btn');
-    if (guestActionBtn) {
-        guestActionBtn.addEventListener('click', () => {
-            window.showAuthModal?.();
-        });
-    }
+    document.getElementById('guest-action-btn')?.addEventListener('click', () => {
+        window.showAuthModal?.();
+    });
 
     document.getElementById('profile-btn')?.addEventListener('click', () => {
         if (typeof window.openProfile === 'function') {
@@ -325,21 +318,15 @@ function setupEventListeners() {
         }
     });
 
-    // Media Controls (Protected)
-    const photoBtn = document.getElementById('btn-photo');
-    if (photoBtn) {
-        const newBtn = photoBtn.cloneNode(true);
-        photoBtn.parentNode.replaceChild(newBtn, photoBtn);
-
-        newBtn.addEventListener('click', () => {
-            if (!requireAuth("Sign in to upload Forensic Photo")) return;
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'image/jpeg,image/png,image/webp';
-            input.onchange = (e) => mediaModule.handleImageSelect?.(e, document.getElementById('preview-area'));
-            input.click();
-        });
-    }
+    // Media Controls
+    document.getElementById('btn-photo')?.addEventListener('click', () => {
+        if (!requireAuth("Sign in to upload Forensic Photo")) return;
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/jpeg,image/png,image/webp';
+        input.onchange = (e) => mediaModule.handleImageSelect?.(e, document.getElementById('preview-area'));
+        input.click();
+    });
 
     const voiceBtn = document.getElementById('btn-voice');
     if (voiceBtn) {
@@ -350,10 +337,7 @@ function setupEventListeners() {
     }
 
     // Publish Button
-    const postButton = document.getElementById('postButton');
-    if (postButton) {
-        postButton.addEventListener('click', window.publishTestimony);
-    }
+    document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
 
     console.log("✅ Application listeners active");
 }
@@ -367,7 +351,6 @@ async function bootstrap() {
     try {
         await initAuth();
         
-        // Match function imported at top of file
         if (typeof updateUIForAuthState === 'function') {
             updateUIForAuthState(auth.currentUser);
         }
