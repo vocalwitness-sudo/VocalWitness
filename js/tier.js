@@ -1,7 +1,6 @@
 // js/tier.js - Enhanced Tier, Progression & Governance System
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { doc, getDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { db, auth } from './firebase-config.js';
-import { showToast } from './utils.js';
 
 export const TIERS = {
   CITIZEN: 'citizen',
@@ -78,8 +77,8 @@ export async function getCurrentUserTier() {
     const snap = await getDoc(userRef);
     const data = snap.data() || {};
 
-    if (data.zkVerified === true) return TIERS.WITNESS_CIRCLE;
-    if (data.isPhoneVerified === true) return TIERS.CITIZEN_CIRCLE;
+    if (data.zkVerified === true || data.tier === TIERS.WITNESS_CIRCLE) return TIERS.WITNESS_CIRCLE;
+    if (data.isPhoneVerified === true || data.tier === TIERS.CITIZEN_CIRCLE) return TIERS.CITIZEN_CIRCLE;
     return TIERS.CITIZEN;
   } catch (e) {
     console.warn("Tier fetch failed, defaulting to CITIZEN", e);
@@ -112,7 +111,26 @@ export async function getCurrentWitnessLevel() {
 }
 
 /**
- * Check if the user has Steward-level privileges (Steward, Elder Steward, or Architect)
+ * Helper to check if user can advance tier
+ */
+export async function canAdvanceTier(uid) {
+  if (!uid) return { canAdvance: false, reason: "Not authenticated" };
+  try {
+    const userRef = doc(db, "users", uid);
+    const snap = await getDoc(userRef);
+    const data = snap.data() || {};
+
+    if (!data.isPhoneVerified) {
+      return { canAdvance: false, reason: "Phone verification required first" };
+    }
+    return { canAdvance: true };
+  } catch (e) {
+    return { canAdvance: false, reason: "Failed to verify user status" };
+  }
+}
+
+/**
+ * Check if the user has Steward-level privileges
  */
 export async function hasStewardAccess() {
   const level = await getCurrentWitnessLevel();
@@ -126,16 +144,14 @@ export async function hasStewardAccess() {
 export async function getUserVotingWeight() {
   try {
     const tier = await getCurrentUserTier();
-    if (tier === TIERS.CITIZEN) return 1; // Base citizen voice
+    if (tier === TIERS.CITIZEN) return 1;
 
     const userRef = doc(db, "users", auth.currentUser.uid);
     const snap = await getDoc(userRef);
     const data = snap.data() || {};
     const rep = data.reputation || 30;
 
-    if (tier === TIERS.CITIZEN_CIRCLE) return 2; // Phone verified weight
-    
-    // Witness circle scaled by reputation (e.g., MinRep 30 = 3 votes, 1000 = 10+ votes)
+    if (tier === TIERS.CITIZEN_CIRCLE) return 2;
     return Math.max(3, Math.floor(rep / 50));
   } catch (e) {
     return 1;
@@ -149,12 +165,10 @@ export async function canAccessFeature(feature) {
   const userTier = await getCurrentUserTier();
   const userLevel = await getCurrentWitnessLevel();
 
-  // Special checks for Steward-exclusive features
   if (feature === 'review_queue' || feature === 'steward_apartment') {
     return await hasStewardAccess();
   }
 
-  // Level-based check for post_boost (requires SILVER or higher)
   if (feature === 'post_boost') {
     return userLevel && userLevel.level >= WITNESS_LEVELS.SILVER.level;
   }
@@ -170,10 +184,11 @@ export async function canAccessFeature(feature) {
   };
 
   const allowedTiers = permissions[feature];
-  if (!allowedTiers) return true; // Default allow unlisted features
+  if (!allowedTiers) return true;
 
   return allowedTiers.includes(userTier);
 }
+
 /**
  * Apply visual theme based on tier
  */
@@ -214,30 +229,28 @@ export async function updateTierBadge() {
   badge.classList.remove('hidden');
 }
 
-// Refresh everything
 export function refreshTierAndUI() {
   applyTierTheme();
   updateTierBadge();
   console.log("✅ Tier system & Governance UI refreshed");
 }
 
-// Record Testimony Contribution (used in publishTestimony)
 export async function recordTestimonyContribution() {
-    if (!auth.currentUser) return;
+  if (!auth.currentUser) return;
 
-    try {
-        const userRef = doc(db, "users", auth.currentUser.uid);
-        const snap = await getDoc(userRef);
+  try {
+    const userRef = doc(db, "users", auth.currentUser.uid);
+    const snap = await getDoc(userRef);
 
-        if (snap.exists()) {
-            const currentRep = snap.data().reputation || 0;
-            await updateDoc(userRef, {
-                reputation: currentRep + 15,
-                lastContribution: serverTimestamp()
-            });
-            console.log("✅ +15 Reputation for testimony");
-        }
-    } catch (e) {
-        console.warn("Reputation update failed:", e);
+    if (snap.exists()) {
+      const currentRep = snap.data().reputation || 0;
+      await updateDoc(userRef, {
+        reputation: currentRep + 15,
+        lastContribution: serverTimestamp()
+      });
+      console.log("✅ +15 Reputation for testimony");
     }
+  } catch (e) {
+    console.warn("Reputation update failed:", e);
+  }
 }
