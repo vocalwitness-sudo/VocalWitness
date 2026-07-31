@@ -9,8 +9,7 @@ import {
     sendEmailVerification
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 
-import { auth, provider } from './firebase-config.js';
-import { db } from './firebase-config.js';
+import { auth, provider, db } from './firebase-config.js';
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { showToast } from './utils.js';
 import { updateAppState } from './app-state.js';
@@ -20,8 +19,8 @@ let authActionInProgress = false;
 
 // ====================== TIER & USER HELPERS ======================
 function refreshTierUI() {
-    if (typeof refreshTierAndUI === 'function') {
-        refreshTierAndUI();
+    if (typeof window.refreshTierAndUI === 'function') {
+        window.refreshTierAndUI();
     } else {
         if (typeof applyTierTheme === 'function') applyTierTheme();
         if (typeof updateTierBadge === 'function') updateTierBadge();
@@ -46,7 +45,7 @@ async function createOrUpdateUser(user) {
 }
 
 // ====================== DRAFT & STATE PRESERVATION ======================
-function savePendingDraft() {
+export function savePendingDraft() {
     const mainInput = document.getElementById('mainInput');
     if (mainInput && mainInput.value.trim() !== '') {
         sessionStorage.setItem('vocal_pending_draft', mainInput.value);
@@ -54,7 +53,7 @@ function savePendingDraft() {
     }
 }
 
-function restorePendingDraft() {
+export function restorePendingDraft() {
     const draft = sessionStorage.getItem('vocal_pending_draft');
     if (draft) {
         const mainInput = document.getElementById('mainInput');
@@ -68,7 +67,7 @@ function restorePendingDraft() {
 
 // ====================== FIREBASE AUTH ERROR MAPPER ======================
 function handleAuthError(error) {
-    switch (error.code) {
+    switch (error?.code) {
         case 'auth/invalid-credential':
             return "Invalid email or password. If you just created an account, please check your email for the verification link first.";
         case 'auth/too-many-requests':
@@ -93,7 +92,7 @@ function handleAuthError(error) {
         case 'auth/weak-password':
             return "Password should be at least 6 characters long.";
         default:
-            return error.message || "Authentication failed. Please check your connection.";
+            return error?.message || "Authentication failed. Please check your connection.";
     }
 }
 
@@ -144,6 +143,8 @@ export async function handleGoogleRedirectResult() {
     } catch (error) {
         console.error("Redirect resolution error:", error);
         showToast(handleAuthError(error), "error");
+    } finally {
+        authActionInProgress = false;
     }
 }
 
@@ -348,8 +349,10 @@ export function showAuthModal() {
     if (auth.currentUser) {
         if (typeof window.showProfile === 'function') {
             window.showProfile();
+        } else if (typeof window.openProfile === 'function') {
+            window.openProfile();
         } else {
-            console.warn("showProfile function not defined yet.");
+            console.warn("Profile opener function not defined yet.");
         }
     } else {
         const createModal = document.getElementById('createAccountModal');
@@ -372,7 +375,7 @@ export function closeCreateAccountModal() {
     if (createModal) createModal.classList.add('hidden');
 }
 
-// Global exposures
+// Global exposures for inline HTML handlers
 window.googleLogin = googleLogin;
 window.handleEmailAuth = handleEmailAuth;
 window.handleEmailSignUp = handleEmailSignUp;
