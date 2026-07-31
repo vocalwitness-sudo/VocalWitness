@@ -42,6 +42,39 @@ function showToast(message, type = 'info') {
 }
 
 /**
+ * Modal Visibility Controllers
+ */
+export function showAuthModal() {
+  const authSection = document.getElementById('authSection');
+  if (authSection) {
+    authSection.classList.remove('hidden');
+    authSection.classList.add('flex');
+  } else {
+    console.warn("authSection element not found in DOM");
+  }
+}
+
+export function hideAuthModal() {
+  const authSection = document.getElementById('authSection');
+  if (authSection) {
+    authSection.classList.add('hidden');
+    authSection.classList.remove('flex');
+  }
+}
+
+/**
+ * Guard function to enforce authentication before sensitive actions
+ */
+export function requireAuth(message = "Please sign in to continue") {
+  if (!auth.currentUser) {
+    showToast(message, "error");
+    showAuthModal();
+    return false;
+  }
+  return true;
+}
+
+/**
  * Initializes or syncs user document in Firestore 'users' collection
  */
 export async function syncUserProfile(user) {
@@ -92,6 +125,7 @@ export async function googleLogin() {
     const result = await signInWithPopup(auth, provider);
     const user = result.user;
     await syncUserProfile(user);
+    hideAuthModal();
     showToast("Node Link Established: Google OAuth", "success");
     return user;
   } catch (error) {
@@ -109,6 +143,7 @@ export async function anonymousLogin() {
     const result = await signInAnonymously(auth);
     const user = result.user;
     await syncUserProfile(user);
+    hideAuthModal();
     showToast("Anonymous Identity Node Initialized", "info");
     return user;
   } catch (error) {
@@ -128,10 +163,7 @@ export async function logout() {
     showToast("Identity Node Disconnected", "info");
     
     // Toggle UI views back to auth screen
-    const authSection = document.getElementById('authSection');
-    const mainApp = document.getElementById('mainApp');
-    if (authSection) authSection.classList.remove('hidden');
-    if (mainApp) mainApp.classList.add('hidden');
+    showAuthModal();
   } catch (error) {
     console.error("Sign-out error:", error);
     showToast("Failed to disconnect node.", "error");
@@ -171,8 +203,7 @@ export function updateAuthUI(user, userData = null) {
     if (profileTierTextEl) profileTierTextEl.innerText = userData?.tierName || 'Level 1 Witness';
 
   } else {
-    if (authSection) authSection.classList.remove('hidden');
-    if (mainApp) mainApp.classList.add('hidden');
+    showAuthModal();
   }
 }
 
@@ -198,27 +229,10 @@ export function initAuth(onUserResolved) {
   });
 }
 
-/**
- * Guard function to enforce authentication before sensitive actions
- */
-export function requireAuth(message = "Please sign in to continue") {
-  if (!auth.currentUser) {
-    showToast(message, "error");
-    if (typeof window.showAuthModal === 'function') {
-      window.showAuthModal();
-    } else {
-      const authSection = document.getElementById('authSection');
-      if (authSection) authSection.classList.remove('hidden');
-    }
-    return false;
-  }
-  return true;
-}
-
-// Bind requireAuth globally as well
+// Global Window Bindings (for HTML inline event handlers e.g. onclick="showAuthModal()")
+window.showAuthModal = showAuthModal;
+window.hideAuthModal = hideAuthModal;
 window.requireAuth = requireAuth;
-
-// Bind methods globally to window for inline onclick handlers in HTML
 window.googleLogin = googleLogin;
 window.anonymousLogin = anonymousLogin;
 window.logout = logout;
