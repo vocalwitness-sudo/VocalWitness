@@ -1,7 +1,8 @@
 // js/profile.js - Integrated & Refactored Version
 import { 
     onAuthStateChanged, 
-    sendPasswordResetEmail 
+    sendPasswordResetEmail,
+    signOut 
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { 
     doc, 
@@ -31,7 +32,10 @@ export function initProfile() {
         } else {
             currentUserData = null;
             window.currentUserData = null;
-            userUnsubscribe = null;
+            if (userUnsubscribe) {
+                userUnsubscribe();
+                userUnsubscribe = null;
+            }
         }
     });
 }
@@ -179,15 +183,23 @@ function renderProfileUI(userData) {
                     </div>
                 </div>
 
-                <!-- Quick Actions -->
-                <div class="flex gap-3">
-                    <button onclick="openEditProfile()" 
-                            class="flex-1 py-4 bg-emerald-600 hover:bg-emerald-500 text-black font-semibold rounded-3xl transition">
-                        ✏️ Edit Profile
-                    </button>
-                    <button onclick="exportUserDataPDF()" 
-                            class="flex-1 py-4 bg-zinc-700 hover:bg-zinc-600 text-white font-semibold rounded-3xl transition">
-                        📄 Export Data
+                <!-- Action Controls -->
+                <div class="space-y-3">
+                    <div class="flex gap-3">
+                        <button onclick="openEditProfile()" 
+                                class="flex-1 py-4 bg-emerald-600 hover:bg-emerald-500 text-black font-semibold rounded-3xl transition">
+                            ✏️ Edit Profile
+                        </button>
+                        <button onclick="exportUserDataPDF()" 
+                                class="flex-1 py-4 bg-zinc-700 hover:bg-zinc-600 text-white font-semibold rounded-3xl transition">
+                            📄 Export Data
+                        </button>
+                    </div>
+
+                    <!-- Sign Out Button -->
+                    <button onclick="handleSignOut()" 
+                            class="w-full py-3.5 bg-red-950/40 hover:bg-red-900/60 border border-red-500/40 text-red-400 hover:text-red-300 font-semibold rounded-2xl transition flex items-center justify-center gap-2">
+                        <span>🚪</span> Sign Out
                     </button>
                 </div>
             </div>
@@ -201,6 +213,40 @@ function renderProfileUI(userData) {
         console.error("Error computing witness level:", err);
     });
 }
+
+// ====================== SIGN OUT HANDLER ======================
+window.handleSignOut = async () => {
+    try {
+        showToast("Signing out...", "info");
+        
+        // 1. Immediately close active modals
+        document.getElementById('profileModal')?.classList.add('hidden');
+        document.getElementById('editProfileModal')?.classList.add('hidden');
+        document.getElementById('settingsModal')?.classList.add('hidden');
+
+        // 2. Clear listener subscription
+        if (userUnsubscribe) {
+            userUnsubscribe();
+            userUnsubscribe = null;
+        }
+
+        // 3. Clear memory state
+        currentUserData = null;
+        window.currentUserData = null;
+
+        // 4. Perform Firebase Auth Sign Out
+        await signOut(auth);
+
+        showToast("Signed out successfully", "success");
+
+        // 5. Reload to return to public landing state
+        window.location.reload();
+
+    } catch (error) {
+        console.error("Sign out error:", error);
+        showToast("Error signing out", "error");
+    }
+};
 
 // ====================== WITNESS CYCLE CONTROL ======================
 window.handleProfileStartCycle = async () => {
@@ -329,7 +375,6 @@ window.updateDefaultDoor = async (doorValue) => {
             updatedAt: serverTimestamp()
         });
         
-        // Format name for toast presentation
         const formattedName = doorValue.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
         showToast(`Default door updated to ${formattedName}`, "success");
     } catch (error) {
