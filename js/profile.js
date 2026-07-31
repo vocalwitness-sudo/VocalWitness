@@ -15,11 +15,22 @@ import { auth, db } from './firebase-config.js';
 import { showToast } from './utils.js';
 import { refreshTierAndUI, getCurrentWitnessLevel } from './tier.js';
 import { startWitnessCycle } from './witnessCycle.js';
-import { t } from './i18n.js'; // Ensure t() helper is imported
+import { t } from './i18n.js';
 
 let currentUserData = null;
 let userUnsubscribe = null;
 window.currentUserData = null;
+
+// Helper function to sanitize untrusted strings before innerHTML injection
+function sanitize(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
 
 /**
  * Initialize Profile Listener & State
@@ -39,20 +50,10 @@ export function initProfile() {
             }
         }
     });
-
-    // Helper function to sanitize untrusted strings before innerHTML injection
-function sanitize(str) {
-    if (!str) return '';
-    return String(str)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
 }
 
 // ====================== RENDER UI ======================
-function renderProfileUI(userData) {
+export function renderProfileUI(userData) {
     if (!userData) return;
     
     // Target containers across embedded page views and overlay modals
@@ -210,6 +211,9 @@ function renderProfileUI(userData) {
     });
 }
 
+// Global window binding
+window.renderProfileUI = renderProfileUI;
+
 /**
  * Real-time Firestore user document listener
  */
@@ -230,7 +234,6 @@ function listenToUserProfile(userId) {
     });
 }
 
-}
 // ====================== SIGN OUT HANDLER ======================
 window.handleSignOut = async () => {
     try {
