@@ -368,8 +368,8 @@ async function bootstrap() {
         await initAuth();
         
         // Match function imported at top of file
-        if (typeof updateAuthUI === 'function') {
-            updateAuthUI(auth.currentUser);
+        if (typeof updateUIForAuthState === 'function') {
+            updateUIForAuthState(auth.currentUser);
         }
 
         setupEventListeners();
