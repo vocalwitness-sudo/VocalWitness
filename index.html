@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#10b981">
     <meta name="description" content="VocalWitness - Privacy First Public Square for Truth and Evidence">
-   
+    
     <!-- Content Security Policy -->
-   <meta http-equiv="Content-Security-Policy" content="
+    <meta http-equiv="Content-Security-Policy" content="
   default-src 'self' https: wss: blob: data:;
   script-src 'self' https://www.gstatic.com https://cdnjs.cloudflare.com https://cdn.tailwindcss.com https://apis.google.com https://js.paystack.co https://*.paystack.co 'unsafe-inline';
   style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com https://paystack.com https://*.paystack.com;
@@ -32,482 +32,486 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-   
 </head>
-   
+    
 <body class="min-h-screen pb-24 bg-[#0a0f1c] text-white antialiased">
     <div class="app-container py-6 px-4 max-w-6xl mx-auto">
-   
- <!-- Header -->
-    <header class="flex items-center justify-between mb-8 sticky top-4 z-50 glass rounded-3xl p-4 shadow-xl">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-2xl shadow-md font-bold text-black">VW</div>
-            <div>
-                <h1 class="text-xl sm:text-2xl font-bold tracking-tight" data-i18n="appTitle">VocalWitness</h1>
-                <p class="text-xs sm:text-sm text-emerald-400 tracking-widest" data-i18n="appSubtitle">Truth • Evidence • Public Square</p>
-            </div>
-        </div>
-       
-        <div class="flex items-center gap-2 sm:gap-4">
-            <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500 hidden md:block">
-                <option value="en">English</option>
-                <option value="es">Español</option>
-                <option value="fr">Français</option>
-            </select>
-            <!-- Data Saver Toggle Button -->
-            <button id="data-saver-btn" onclick="toggleDataSaver()" class="px-3 py-2.5 rounded-2xl hover:bg-zinc-800 transition text-xs font-medium flex items-center gap-1.5 border border-zinc-700 text-zinc-300" title="Toggle Data Saving Mode">
-                ⚡ <span class="hidden md:inline">Data Saver: <strong id="data-saver-status" class="text-emerald-400">Off</strong></span>
-            </button>
-            <a href="privacy.html" class="hidden lg:flex items-center text-emerald-400 hover:text-emerald-300 transition-colors text-sm font-medium px-3 py-2" data-i18n="privacyLink">
-                Privacy First
-            </a>
-            <button id="support-btn" class="px-4 sm:px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl transition whitespace-nowrap text-sm sm:text-base shadow-sm min-w-[155px]" title="Help keep the platform running">
-                Support The Square
-            </button>
-            <!-- Main Sign In Button -->
-            <button id="signin-btn" onclick="showAuthModal()" class="px-4 sm:px-5 py-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm text-sm sm:text-base">
-                <img src="https://www.google.com/favicon.ico" class="w-4 h-4" alt="Google">
-                <span class="hidden sm:inline" data-i18n="joinBtn">Sign in</span>
-            </button>
-            <!-- Profile Button (Hidden by default when logged out) -->
-            <button id="profile-btn" onclick="openProfile()" class="px-4 sm:px-5 py-2.5 border border-zinc-700 hover:bg-zinc-800 rounded-2xl transition flex items-center gap-2 hidden text-sm sm:text-base" title="View your profile and settings">
-                Profile
-            </button>
-        </div>
-    </header>
-   
-    <div class="relative w-full max-w-md mx-auto my-4">
-    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-400">
-        🔍
-    </div>
-    <input
-        type="text"
-        id="squareSearchInput"
-        placeholder="Search testimonies, witnesses, or topics..."
-        class="w-full pl-11 pr-4 py-3 bg-zinc-900 border border-zinc-700 rounded-2xl text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500 transition text-sm sm:text-base shadow-inner"
-    >
-    <button
-        id="clearSearchBtn"
-        class="absolute inset-y-0 right-0 pr-4 flex items-center text-zinc-500 hover:text-white hidden"
-        title="Clear search"
-    >
-        ✕
-    </button>
-</div>
-    <!-- Main Navigation -->
-    <div class="relative z-40 mb-8">
-        <nav class="flex gap-2 overflow-x-auto pb-3" id="main-nav">
-            <button data-tab="square" class="nav-tab active px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-[155px] group relative">
-                <span class="font-semibold" data-i18n="publicSquareTab">Public Square</span>
-                <span class="text-xs text-zinc-400 hidden md:block" data-i18n="publicSquareDesc">Share stories & evidence</span>
-            </button>
-           
-            <button data-tab="ledger" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-[155px] group relative">
-                <span class="font-semibold" data-i18n="evidenceLedgerTab">Evidence Ledger</span>
-                <span class="text-xs text-zinc-400 hidden md:block" data-i18n="evidenceLedgerDesc">Permanent record</span>
-            </button>
-            <button data-tab="arena" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-[155px] group relative">
-                <span class="font-semibold" data-i18n="liveArenaTab">Live Arena</span>
-                <span class="text-xs text-zinc-400 hidden md:block" data-i18n="liveArenaDesc">Watch & join live</span>
-            </button>
-            <button data-tab="mycircle" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-[155px] group relative">
-                <span class="font-semibold" data-i18n="myCircleTab">My Circle</span>
-                <span class="text-xs text-zinc-400 hidden md:block" data-i18n="myCircleDesc">Trusted people</span>
-            </button>
-            <button data-tab="witness" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-[155px] group relative bg-amber-900/70 text-amber-300 border border-amber-700">
-                <span class="font-semibold" data-i18n="verifiedWitnessesTab">Verified Witnesses</span>
-                <span class="text-xs text-amber-400 hidden md:block" data-i18n="verifiedWitnessesDesc">Trusted voices</span>
-            </button>
-            <div class="dropdown-container ml-auto relative">
-                <button id="more-btn" class="nav-tab px-6 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-[145px] bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-md" data-i18n="moreOptionsBtn">
-                    More Options
-                </button>
-            </div>
-        </nav>
-    </div>
-    <!-- More Menu -->
-    <div id="more-menu" class="hidden fixed top-[165px] right-6 w-64 bg-zinc-900 border border-zinc-700 rounded-3xl shadow-2xl py-3 z-[9999]">
-        <a href="my-testimonies.html" class="block px-6 py-3 hover:bg-zinc-800">My Testimonies</a>
-        <a href="groups.html" class="block px-6 py-3 hover:bg-zinc-800">Groups</a>
-        <a href="true-witness.html" class="block px-6 py-3 hover:bg-zinc-800">Witness Voice</a>
-        <div class="h-px bg-zinc-700 mx-4 my-2"></div>
-        <a href="about.html" class="block px-6 py-3 hover:bg-zinc-800">About Us</a>
-        <a href="privacy.html" class="block px-6 py-3 hover:bg-zinc-800">Privacy Policy</a>
-        <a href="terms.html" class="block px-6 py-3 hover:bg-zinc-800">Terms of Service</a>
-        <a href="safety.html" class="block px-6 py-3 hover:bg-zinc-800">Safety Guidelines</a>
-    </div>
-    <!-- Testimony Composer -->
-    <div class="glass rounded-3xl p-6 sm:p-8 mb-10 shadow-xl">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-semibold text-white flex items-center gap-2" data-i18n="shareTestimonyTitle">
-                Share Your Testimony
-            </h2>
-            <span class="text-xs text-zinc-500" data-i18n="publicSquareSubtitle">Public Square</span>
-        </div>
-        <textarea id="mainInput" rows="4"
-                  class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-5 text-lg placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none"
-                  data-i18n-placeholder="mainInputPlaceholder"
-                  placeholder="Share your raw testimony... What did you witness?"></textarea>
-        <div class="flex flex-col sm:flex-row gap-3 mt-5">
-            <button id="btn-photo"
-                    class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 hover:border-emerald-500 rounded-2xl flex items-center justify-center gap-3 font-medium transition-all active:scale-95"
-                    title="Take a photo or upload an image as evidence">
-                <span data-i18n="addPhotoEvidence">Add Photo Evidence</span>
-            </button>
-            <button id="btn-voice"
-                    class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 hover:border-emerald-500 rounded-2xl flex items-center justify-center gap-3 font-medium transition-all active:scale-95"
-                    title="Record your voice telling what you saw or heard">
-                <span data-i18n="recordVoiceMessage">Record Voice Message</span>
-            </button>
-        </div>
-      
-        <div id="preview-area" class="mt-6 min-h-[120px] border border-dashed border-zinc-700 rounded-2xl p-4 flex items-center justify-center text-zinc-500 text-sm" data-i18n="previewAreaText">
-            Preview will appear here...
-        </div>
-        <button id="postButton"
-                class="mt-8 w-full py-6 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500
-                       hover:from-emerald-600 hover:via-teal-600 hover:to-emerald-600
-                       text-black font-bold text-xl rounded-3xl transition-all active:scale-[0.97] relative overflow-hidden group">
-            <span class="relative z-10 flex items-center justify-center gap-3" data-i18n="postButton">
-                Publish to the Square
-            </span>
-            <span class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent
-                         -skew-x-12 -translate-x-full group-active:translate-x-full transition-transform duration-700"></span>
-        </button>
-    </div>
-
-        <!-- Voice Recording Control Bar -->
-<div id="voice-recorder-bar" class="hidden mt-4 glass rounded-2xl p-4 border border-emerald-500/30">
-    <div class="flex items-center gap-3 flex-wrap">
-        <!-- Timer -->
-        <div class="flex items-center gap-2 min-w-[70px]">
-            <span id="rec-indicator" class="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></span>
-            <span id="rec-timer" class="font-mono text-sm text-emerald-400">00:00</span>
-        </div>
-
-        <!-- Waveform canvas -->
-        <canvas id="rec-waveform" width="180" height="36" class="flex-1 max-w-[200px] rounded bg-zinc-900/80"></canvas>
-
-        <!-- Controls -->
-        <div class="flex items-center gap-2 ml-auto">
-            <button id="rec-pause-btn" class="px-3 py-1.5 text-xs rounded-xl bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white transition">
-                ⏸ Pause
-            </button>
-            <button id="rec-stop-btn" class="px-3 py-1.5 text-xs rounded-xl bg-red-600/80 hover:bg-red-600 text-white transition">
-                ⏹ Stop
-            </button>
-            <button id="rec-replay-btn" class="px-3 py-1.5 text-xs rounded-xl bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white transition hidden">
-                ↻ Replay
-            </button>
-        </div>
-    </div>
-
-    <!-- Hidden audio element for replay -->
-    <audio id="rec-replay-audio" class="hidden"></audio>
-</div>
-        
-    <!-- Dynamic Content -->
-    <main id="main-content">
-        <div id="feedContainer" class="space-y-8"></div>
-    </main>
-</div>
-<!-- Profile Modal -->
-<div id="profileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[10000] p-4">
-    <div class="glass rounded-3xl p-8 max-w-lg w-full max-h-[90vh] overflow-auto modal">
-        <div class="flex justify-between items-center mb-6 border-b border-zinc-700 pb-4">
-            <h2 class="text-2xl font-bold text-white">My Profile</h2>
-            <button onclick="closeProfile()" class="text-3xl text-zinc-400 hover:text-white">×</button>
-        </div>
-        <div id="profileContent"></div>
-        <div class="mt-8 flex gap-3">
-            <button onclick="logout()" class="flex-1 py-3 border border-red-500 text-red-400 hover:bg-red-500/10 rounded-2xl font-medium">
-                Sign Out
-            </button>
-        </div>
-    </div>
-</div>
-    <!-- Public Content (Visible to everyone) -->
-<div id="publicSquareFeed">
-    <!-- Public posts / square view -->
-</div>
-<!-- Private / Authenticated Content (Hidden from passersby until signed in) -->
-<div class="requires-auth hidden">
-    <!-- Protected interactive tools, user dashboards, composer components -->
-</div>
-   
-<!-- Support Modal -->
-<div id="supportModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[10000] flex items-center justify-center p-4 hidden">
-    <div class="glass max-w-md w-full rounded-3xl p-6 border border-emerald-500/30 text-white relative modal max-h-[90vh] overflow-y-auto">
-        <button id="closeSupportModal" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl">✕</button>
-       
-        <div class="text-center mb-5">
-            <div class="w-12 h-12 bg-emerald-500/20 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl font-bold text-emerald-400">♥</div>
-            <h3 class="text-xl font-bold text-white">Sustain the Public Square</h3>
-            <p class="text-xs text-emerald-300 mt-1">VocalWitness stays free, independent, and un-manipulated through voluntary community backing.</p>
-        </div>
-        <div class="space-y-4">
-            <div>
-                <label class="block text-xs text-zinc-400 mb-2">Select Contribution Amount (USD / NGN)</label>
-                <div class="grid grid-cols-3 gap-2">
-                    <button type="button" class="support-tier-btn py-2 bg-zinc-800 hover:bg-emerald-600/30 border border-zinc-700 rounded-xl text-sm font-medium transition-all" data-amount="5">$5</button>
-                    <button type="button" class="support-tier-btn py-2 bg-zinc-800 hover:bg-emerald-600/30 border border-emerald-500 bg-emerald-600/20 rounded-xl text-sm font-medium transition-all" data-amount="15">$15</button>
-                    <button type="button" class="support-tier-btn py-2 bg-zinc-800 hover:bg-emerald-600/30 border border-zinc-700 rounded-xl text-sm font-medium transition-all" data-amount="50">$50</button>
+    
+        <!-- Header -->
+        <header class="flex items-center justify-between mb-8 sticky top-4 z-50 glass rounded-3xl p-4 shadow-xl">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-2xl shadow-md font-bold text-black">VW</div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-bold tracking-tight" data-i18n="appTitle">VocalWitness</h1>
+                    <p class="text-xs sm:text-sm text-emerald-400 tracking-widest" data-i18n="appSubtitle">Truth • Evidence • Public Square</p>
                 </div>
             </div>
-            <div>
-                <label class="block text-xs text-zinc-400 mb-1">Custom Amount ($ USD)</label>
-                <input type="number" id="customSupportAmount" placeholder="Enter amount" min="1" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500" value="15">
-            </div>
-            <button id="paystackPayBtn" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-sm transition-all shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
-                <span>Pay with Card / Bank (Paystack)</span>
-            </button>
-            <button id="proceedCryptoBtn" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-black font-semibold rounded-xl text-sm transition-all shadow-lg shadow-emerald-600/20">
-                Proceed with Crypto (NOWPayments)
-            </button>
-        </div>
-        <div class="mt-5 pt-4 border-t border-zinc-800">
-            <p class="text-xs text-zinc-400 mb-2 font-medium text-center">Or scan / copy to send USDT directly:</p>
-           
-            <div class="bg-white p-3 rounded-2xl w-36 h-36 mx-auto mb-3 flex items-center justify-center shadow-md">
-                <img src="/image/95756.jpg" alt="USDT QR Code" class="w-full h-full object-contain">
-            </div>
-            <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex items-center justify-between gap-2">
-                <span class="text-[11px] text-emerald-400 font-mono truncate select-all">TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK</span>
-                <button type="button" onclick="navigator.clipboard.writeText('TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK'); showToast('TRC-20 address copied!', 'success');" class="text-xs bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 rounded-lg text-white font-medium transition-all shrink-0">
-                    Copy
+            
+            <div class="flex items-center gap-2 sm:gap-4">
+                <select id="languageSelector" aria-label="Select Language" class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500 hidden md:block">
+                    <option value="en">English</option>
+                    <option value="es">Español</option>
+                    <option value="fr">Français</option>
+                </select>
+                <!-- Data Saver Toggle Button -->
+                <button id="data-saver-btn" onclick="toggleDataSaver()" class="px-3 py-2.5 rounded-2xl hover:bg-zinc-800 transition text-xs font-medium flex items-center gap-1.5 border border-zinc-700 text-zinc-300" title="Toggle Data Saving Mode">
+                    ⚡ <span class="hidden md:inline">Data Saver: <strong id="data-saver-status" class="text-emerald-400">Off</strong></span>
+                </button>
+                <a href="privacy.html" class="hidden lg:flex items-center text-emerald-400 hover:text-emerald-300 transition-colors text-sm font-medium px-3 py-2" data-i18n="privacyLink">
+                    Privacy First
+                </a>
+                <button id="support-btn" class="px-4 sm:px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl transition whitespace-nowrap text-sm sm:text-base shadow-sm min-w-[155px]" title="Help keep the platform running">
+                    Support The Square
+                </button>
+                <!-- Main Sign In Button -->
+                <button id="signin-btn" onclick="showAuthModal()" class="px-4 sm:px-5 py-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm text-sm sm:text-base">
+                    <img src="https://www.google.com/favicon.ico" class="w-4 h-4" alt="Google">
+                    <span class="hidden sm:inline" data-i18n="joinBtn">Sign in</span>
+                </button>
+                <!-- Profile Button (Hidden by default when logged out) -->
+                <button id="profile-btn" onclick="openProfile()" class="px-4 sm:px-5 py-2.5 border border-zinc-700 hover:bg-zinc-800 rounded-2xl transition flex items-center gap-2 hidden text-sm sm:text-base" title="View your profile and settings">
+                    Profile
                 </button>
             </div>
-            <p class="text-[10px] text-zinc-500 mt-1.5 text-center">Network: <strong class="text-zinc-400">Tron (TRC-20)</strong> • Send USDT only</p>
-        </div>
-        <p class="text-[10px] text-zinc-500 text-center mt-4">Powered by non-custodial rails. No tracking, no intrusive data collection.</p>
-    </div>
-</div>
-<!-- Login Modal (Supports Google + Email/Password + Context Messaging) -->
-<div id="loginModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[10000] p-4">
-    <div class="glass rounded-3xl p-6 sm:p-8 max-w-md w-full modal relative max-h-[90vh] overflow-y-auto border border-emerald-500/30">
-        <button onclick="closeLoginModal()" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl">✕</button>
-       
-        <div class="text-center mb-6">
-            <h2 class="text-2xl font-bold text-white mb-1">Join the Public Square</h2>
-            <!-- Context message when soft-gated -->
-            <p id="loginModalMessage" class="text-xs text-emerald-400">Sign in or create an account to participate.</p>
-        </div>
-<!-- Login Modal (Google + Email/Password) -->
-<div id="loginModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[10000] p-4">
-    <div class="glass rounded-3xl p-6 sm:p-8 max-w-md w-full modal relative max-h-[90vh] overflow-y-auto border border-emerald-500/30">
-        <button onclick="closeLoginModal()" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl">✕</button>
-
-        <div class="text-center mb-6">
-            <h2 class="text-2xl font-bold text-white mb-1">Join the Public Square</h2>
-            <p id="loginModalMessage" class="text-xs text-emerald-400">Sign in or create an account to participate.</p>
-        </div>
-
-        <!-- Google -->
-        <button onclick="googleLogin()" class="w-full py-3.5 bg-white hover:bg-zinc-100 text-black rounded-2xl font-semibold flex items-center justify-center gap-3 transition shadow-sm mb-4">
-            <img src="https://www.google.com/favicon.ico" class="w-5 h-5" alt="Google">
-            Continue with Google
-        </button>
-
-        <div class="flex items-center my-4">
-            <div class="flex-grow border-t border-zinc-800"></div>
-            <span class="px-3 text-xs text-zinc-500 uppercase tracking-widest">Or email</span>
-            <div class="flex-grow border-t border-zinc-800"></div>
-        </div>
-
-        <!-- Email form -->
-        <form id="emailAuthForm" onsubmit="handleEmailAuth(event)" class="space-y-4">
-            <div>
-                <label class="block text-xs text-zinc-400 mb-1">Email Address</label>
-                <input type="email" id="authEmail" required
-                       placeholder="witness@example.com"
-                       class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500">
+        </header>
+        
+        <div class="relative w-full max-w-md mx-auto my-4">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-400">
+                🔍
             </div>
-            <div>
-                <label class="block text-xs text-zinc-400 mb-1">Password</label>
-                <div class="relative">
-                    <input type="password" id="authPassword" required
-                           placeholder="At least 6 characters"
-                           class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 pr-16 text-sm text-white focus:outline-none focus:border-emerald-500">
-                    <button type="button"
-                            id="togglePasswordBtn"
-                            onclick="togglePasswordVisibility('authPassword', this)"
-                            class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-400 hover:text-emerald-400 font-medium px-2 py-1 rounded">
-                        Show
+            <input
+                type="text"
+                id="squareSearchInput"
+                placeholder="Search testimonies, witnesses, or topics..."
+                class="w-full pl-11 pr-4 py-3 bg-zinc-900 border border-zinc-700 rounded-2xl text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500 transition text-sm sm:text-base shadow-inner"
+            >
+            <button
+                id="clearSearchBtn"
+                class="absolute inset-y-0 right-0 pr-4 flex items-center text-zinc-500 hover:text-white hidden"
+                title="Clear search"
+            >
+                ✕
+            </button>
+        </div>
+
+        <!-- Main Navigation -->
+        <div class="relative z-40 mb-8">
+            <nav class="flex gap-2 overflow-x-auto pb-3" id="main-nav">
+                <button data-tab="square" class="nav-tab active px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-[155px] group relative">
+                    <span class="font-semibold" data-i18n="publicSquareTab">Public Square</span>
+                    <span class="text-xs text-zinc-400 hidden md:block" data-i18n="publicSquareDesc">Share stories & evidence</span>
+                </button>
+                
+                <button data-tab="ledger" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-[155px] group relative">
+                    <span class="font-semibold" data-i18n="evidenceLedgerTab">Evidence Ledger</span>
+                    <span class="text-xs text-zinc-400 hidden md:block" data-i18n="evidenceLedgerDesc">Permanent record</span>
+                </button>
+                <button data-tab="arena" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-[155px] group relative">
+                    <span class="font-semibold" data-i18n="liveArenaTab">Live Arena</span>
+                    <span class="text-xs text-zinc-400 hidden md:block" data-i18n="liveArenaDesc">Watch & join live</span>
+                </button>
+                <button data-tab="mycircle" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-[155px] group relative">
+                    <span class="font-semibold" data-i18n="myCircleTab">My Circle</span>
+                    <span class="text-xs text-zinc-400 hidden md:block" data-i18n="myCircleDesc">Trusted people</span>
+                </button>
+                <button data-tab="witness" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-[155px] group relative bg-amber-900/70 text-amber-300 border border-amber-700">
+                    <span class="font-semibold" data-i18n="verifiedWitnessesTab">Verified Witnesses</span>
+                    <span class="text-xs text-amber-400 hidden md:block" data-i18n="verifiedWitnessesDesc">Trusted voices</span>
+                </button>
+                <div class="dropdown-container ml-auto relative">
+                    <button id="more-btn" class="nav-tab px-6 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-[145px] bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-md" data-i18n="moreOptionsBtn">
+                        More Options
+                    </button>
+                </div>
+            </nav>
+        </div>
+
+        <!-- More Menu -->
+        <div id="more-menu" class="hidden fixed top-[165px] right-6 w-64 bg-zinc-900 border border-zinc-700 rounded-3xl shadow-2xl py-3 z-[9999]">
+            <a href="my-testimonies.html" class="block px-6 py-3 hover:bg-zinc-800">My Testimonies</a>
+            <a href="groups.html" class="block px-6 py-3 hover:bg-zinc-800">Groups</a>
+            <a href="true-witness.html" class="block px-6 py-3 hover:bg-zinc-800">Witness Voice</a>
+            <div class="h-px bg-zinc-700 mx-4 my-2"></div>
+            <a href="about.html" class="block px-6 py-3 hover:bg-zinc-800">About Us</a>
+            <a href="privacy.html" class="block px-6 py-3 hover:bg-zinc-800">Privacy Policy</a>
+            <a href="terms.html" class="block px-6 py-3 hover:bg-zinc-800">Terms of Service</a>
+            <a href="safety.html" class="block px-6 py-3 hover:bg-zinc-800">Safety Guidelines</a>
+        </div>
+
+        <!-- Testimony Composer -->
+        <div class="glass rounded-3xl p-6 sm:p-8 mb-10 shadow-xl">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-white flex items-center gap-2" data-i18n="shareTestimonyTitle">
+                    Share Your Testimony
+                </h2>
+                <span class="text-xs text-zinc-500" data-i18n="publicSquareSubtitle">Public Square</span>
+            </div>
+            <textarea id="mainInput" rows="4"
+                      class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-5 text-lg placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none"
+                      data-i18n-placeholder="mainInputPlaceholder"
+                      placeholder="Share your raw testimony... What did you witness?"></textarea>
+            <div class="flex flex-col sm:flex-row gap-3 mt-5">
+                <button id="btn-photo"
+                        class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 hover:border-emerald-500 rounded-2xl flex items-center justify-center gap-3 font-medium transition-all active:scale-95"
+                        title="Take a photo or upload an image as evidence">
+                    <span data-i18n="addPhotoEvidence">Add Photo Evidence</span>
+                </button>
+                <button id="btn-voice"
+                        class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 hover:border-emerald-500 rounded-2xl flex items-center justify-center gap-3 font-medium transition-all active:scale-95"
+                        title="Record your voice telling what you saw or heard">
+                    <span data-i18n="recordVoiceMessage">Record Voice Message</span>
+                </button>
+            </div>
+            
+            <div id="preview-area" class="mt-6 min-h-[120px] border border-dashed border-zinc-700 rounded-2xl p-4 flex items-center justify-center text-zinc-500 text-sm" data-i18n="previewAreaText">
+                Preview will appear here...
+            </div>
+            <button id="postButton"
+                    class="mt-8 w-full py-6 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500
+                           hover:from-emerald-600 hover:via-teal-600 hover:to-emerald-600
+                           text-black font-bold text-xl rounded-3xl transition-all active:scale-[0.97] relative overflow-hidden group">
+                <span class="relative z-10 flex items-center justify-center gap-3" data-i18n="postButton">
+                    Publish to the Square
+                </span>
+                <span class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent
+                             -skew-x-12 -translate-x-full group-active:translate-x-full transition-transform duration-700"></span>
+            </button>
+        </div>
+
+        <!-- Voice Recording Control Bar -->
+        <div id="voice-recorder-bar" class="hidden mt-4 glass rounded-2xl p-4 border border-emerald-500/30">
+            <div class="flex items-center gap-3 flex-wrap">
+                <!-- Timer -->
+                <div class="flex items-center gap-2 min-w-[70px]">
+                    <span id="rec-indicator" class="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></span>
+                    <span id="rec-timer" class="font-mono text-sm text-emerald-400">00:00</span>
+                </div>
+
+                <!-- Waveform canvas -->
+                <canvas id="rec-waveform" width="180" height="36" class="flex-1 max-w-[200px] rounded bg-zinc-900/80"></canvas>
+
+                <!-- Controls -->
+                <div class="flex items-center gap-2 ml-auto">
+                    <button id="rec-pause-btn" class="px-3 py-1.5 text-xs rounded-xl bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white transition">
+                        ⏸ Pause
+                    </button>
+                    <button id="rec-stop-btn" class="px-3 py-1.5 text-xs rounded-xl bg-red-600/80 hover:bg-red-600 text-white transition">
+                        ⏹ Stop
+                    </button>
+                    <button id="rec-replay-btn" class="px-3 py-1.5 text-xs rounded-xl bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white transition hidden">
+                        ↻ Replay
                     </button>
                 </div>
             </div>
-            <div class="flex gap-2 pt-2">
-                <button type="submit" id="emailSignInBtn"
-                        class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-black font-semibold rounded-xl text-sm transition">
-                    Sign In
-                </button>
-                <button type="button" onclick="handleEmailSignUp(event)"
-                        class="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white font-semibold rounded-xl text-sm transition">
-                    Create Account
+
+            <!-- Hidden audio element for replay -->
+            <audio id="rec-replay-audio" class="hidden"></audio>
+        </div>
+            
+        <!-- Dynamic Content -->
+        <main id="main-content">
+            <div id="feedContainer" class="space-y-8"></div>
+        </main>
+    </div>
+
+    <!-- Profile Modal -->
+    <div id="profileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[10000] p-4">
+        <div class="glass rounded-3xl p-8 max-w-lg w-full max-h-[90vh] overflow-auto modal">
+            <div class="flex justify-between items-center mb-6 border-b border-zinc-700 pb-4">
+                <h2 class="text-2xl font-bold text-white">My Profile</h2>
+                <button onclick="closeProfile()" class="text-3xl text-zinc-400 hover:text-white">×</button>
+            </div>
+            <div id="profileContent"></div>
+            <div class="mt-8 flex gap-3">
+                <button onclick="logout()" class="flex-1 py-3 border border-red-500 text-red-400 hover:bg-red-500/10 rounded-2xl font-medium">
+                    Sign Out
                 </button>
             </div>
-        </form>
-
-        <button onclick="closeLoginModal()" class="w-full mt-4 py-2 text-xs text-zinc-500 hover:text-zinc-300 transition">
-            Cancel & Continue Browsing
-        </button>
+        </div>
     </div>
-</div>
-<footer class="bg-zinc-950 border-t border-zinc-800 pt-16 pb-12 mt-20">
-    <div class="max-w-6xl mx-auto px-6 text-center text-xs text-zinc-500">
-        © 2026 VocalWitness • Built for Truth • Powered by Citizens
+
+    <!-- Public Content (Visible to everyone) -->
+    <div id="publicSquareFeed">
+        <!-- Public posts / square view -->
     </div>
-</footer>
-<!-- Global UI Helper Script -->
-<script>
-    const $ = id => document.getElementById(id);
 
-    function showToast(message, type = 'info') {
-        const toast = document.createElement('div');
-        toast.className = `fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-2xl text-sm font-medium shadow-2xl z-[11000] ${
-            type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-red-600' : 'bg-zinc-800'
-        } text-white`;
-        toast.textContent = message;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3500);
-    }
+    <!-- Private / Authenticated Content (Hidden from passersby until signed in) -->
+    <div class="requires-auth hidden">
+        <!-- Protected interactive tools, user dashboards, composer components -->
+    </div>
+        
+    <!-- Support Modal -->
+    <div id="supportModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[10000] flex items-center justify-center p-4 hidden">
+        <div class="glass max-w-md w-full rounded-3xl p-6 border border-emerald-500/30 text-white relative modal max-h-[90vh] overflow-y-auto">
+            <button id="closeSupportModal" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl">✕</button>
+            
+            <div class="text-center mb-5">
+                <div class="w-12 h-12 bg-emerald-500/20 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl font-bold text-emerald-400">♥</div>
+                <h3 class="text-xl font-bold text-white">Sustain the Public Square</h3>
+                <p class="text-xs text-emerald-300 mt-1">VocalWitness stays free, independent, and un-manipulated through voluntary community backing.</p>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs text-zinc-400 mb-2">Select Contribution Amount (USD / NGN)</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button type="button" class="support-tier-btn py-2 bg-zinc-800 hover:bg-emerald-600/30 border border-zinc-700 rounded-xl text-sm font-medium transition-all" data-amount="5">$5</button>
+                        <button type="button" class="support-tier-btn py-2 bg-zinc-800 hover:bg-emerald-600/30 border border-emerald-500 bg-emerald-600/20 rounded-xl text-sm font-medium transition-all" data-amount="15">$15</button>
+                        <button type="button" class="support-tier-btn py-2 bg-zinc-800 hover:bg-emerald-600/30 border border-zinc-700 rounded-xl text-sm font-medium transition-all" data-amount="50">$50</button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs text-zinc-400 mb-1">Custom Amount ($ USD)</label>
+                    <input type="number" id="customSupportAmount" placeholder="Enter amount" min="1" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500" value="15">
+                </div>
+                <button id="paystackPayBtn" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-sm transition-all shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
+                    <span>Pay with Card / Bank (Paystack)</span>
+                </button>
+                <button id="proceedCryptoBtn" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-black font-semibold rounded-xl text-sm transition-all shadow-lg shadow-emerald-600/20">
+                    Proceed with Crypto (NOWPayments)
+                </button>
+            </div>
+            <div class="mt-5 pt-4 border-t border-zinc-800">
+                <p class="text-xs text-zinc-400 mb-2 font-medium text-center">Or scan / copy to send USDT directly:</p>
+                
+                <div class="bg-white p-3 rounded-2xl w-36 h-36 mx-auto mb-3 flex items-center justify-center shadow-md">
+                    <img src="/image/95756.jpg" alt="USDT QR Code" class="w-full h-full object-contain">
+                </div>
+                <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex items-center justify-between gap-2">
+                    <span class="text-[11px] text-emerald-400 font-mono truncate select-all">TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK</span>
+                    <button type="button" onclick="navigator.clipboard.writeText('TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK'); showToast('TRC-20 address copied!', 'success');" class="text-xs bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 rounded-lg text-white font-medium transition-all shrink-0">
+                        Copy
+                    </button>
+                </div>
+                <p class="text-[10px] text-zinc-500 mt-1.5 text-center">Network: <strong class="text-zinc-400">Tron (TRC-20)</strong> • Send USDT only</p>
+            </div>
+            <p class="text-[10px] text-zinc-500 text-center mt-4">Powered by non-custodial rails. No tracking, no intrusive data collection.</p>
+        </div>
+    </div>
 
-    // Password visibility toggle (login modal only)
-    function togglePasswordVisibility() {
-        const input = document.getElementById('authPassword');
-        const btn = document.getElementById('togglePasswordBtn');
-        if (!input || !btn) return;
-        if (input.type === 'password') {
-            input.type = 'text';
-            btn.textContent = 'Hide';
-        } else {
-            input.type = 'password';
-            btn.textContent = 'Show';
+    <!-- Single Login Modal (Google + Email/Password) -->
+    <div id="loginModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[10000] p-4">
+        <div class="glass rounded-3xl p-6 sm:p-8 max-w-md w-full modal relative max-h-[90vh] overflow-y-auto border border-emerald-500/30">
+            <button onclick="closeLoginModal()" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl">✕</button>
+
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-bold text-white mb-1">Join the Public Square</h2>
+                <p id="loginModalMessage" class="text-xs text-emerald-400">Sign in or create an account to participate.</p>
+            </div>
+
+            <!-- Google -->
+            <button onclick="googleLogin()" class="w-full py-3.5 bg-white hover:bg-zinc-100 text-black rounded-2xl font-semibold flex items-center justify-center gap-3 transition shadow-sm mb-4">
+                <img src="https://www.google.com/favicon.ico" class="w-5 h-5" alt="Google">
+                Continue with Google
+            </button>
+
+            <div class="flex items-center my-4">
+                <div class="flex-grow border-t border-zinc-800"></div>
+                <span class="px-3 text-xs text-zinc-500 uppercase tracking-widest">Or email</span>
+                <div class="flex-grow border-t border-zinc-800"></div>
+            </div>
+
+            <!-- Email form -->
+            <form id="emailAuthForm" onsubmit="handleEmailAuth(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs text-zinc-400 mb-1" for="authEmail">Email Address</label>
+                    <input type="email" id="authEmail" required
+                           placeholder="witness@example.com"
+                           class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-xs text-zinc-400 mb-1" for="authPassword">Password</label>
+                    <div class="relative">
+                        <input type="password" id="authPassword" required
+                               placeholder="At least 6 characters"
+                               class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 pr-16 text-sm text-white focus:outline-none focus:border-emerald-500">
+                        <button type="button"
+                                id="togglePasswordBtn"
+                                onclick="togglePasswordVisibility('authPassword', this)"
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-400 hover:text-emerald-400 font-medium px-2 py-1 rounded">
+                            Show
+                        </button>
+                    </div>
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="submit" id="emailSignInBtn"
+                            class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-black font-semibold rounded-xl text-sm transition">
+                        Sign In
+                    </button>
+                    <button type="button" onclick="handleEmailSignUp(event)"
+                            class="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white font-semibold rounded-xl text-sm transition">
+                        Create Account
+                    </button>
+                </div>
+            </form>
+
+            <button onclick="closeLoginModal()" class="w-full mt-4 py-2 text-xs text-zinc-500 hover:text-zinc-300 transition">
+                Cancel & Continue Browsing
+            </button>
+        </div>
+    </div>
+
+    <footer class="bg-zinc-950 border-t border-zinc-800 pt-16 pb-12 mt-20">
+        <div class="max-w-6xl mx-auto px-6 text-center text-xs text-zinc-500">
+            © 2026 VocalWitness • Built for Truth • Powered by Citizens
+        </div>
+    </footer>
+
+    <!-- Global UI Helper Script -->
+    <script>
+        const $ = id => document.getElementById(id);
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-2xl text-sm font-medium shadow-2xl z-[11000] ${
+                type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-red-600' : 'bg-zinc-800'
+            } text-white`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3500);
         }
-    }
-   
-// ==================== SUPPORT MODAL ====================
-    const supportModal = $('supportModal');
-    function openSupportModal() {
-        supportModal.classList.remove('hidden');
-        supportModal.classList.add('flex');
-    }
-    function closeSupportModal() {
-        supportModal.classList.add('hidden');
-        supportModal.classList.remove('flex');
-    }
-    $('closeSupportModal')?.addEventListener('click', closeSupportModal);
-    supportModal.addEventListener('click', (e) => {
-        if (e.target === supportModal) closeSupportModal();
-    });
-    document.addEventListener('keydown', (e) => {
-        if (e.key === "Escape" && !supportModal.classList.contains('hidden')) {
-            closeSupportModal();
+
+        // Password visibility toggle (login modal only)
+        function togglePasswordVisibility() {
+            const input = document.getElementById('authPassword');
+            const btn = document.getElementById('togglePasswordBtn');
+            if (!input || !btn) return;
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.textContent = 'Hide';
+            } else {
+                input.type = 'password';
+                btn.textContent = 'Show';
+            }
         }
-    });
-    $('support-btn')?.addEventListener('click', openSupportModal);
-    // Tier buttons
-    document.querySelectorAll('.support-tier-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.support-tier-btn').forEach(b =>
-                b.classList.remove('bg-emerald-600/20', 'border-emerald-500')
-            );
-            btn.classList.add('bg-emerald-600/20', 'border-emerald-500');
-            $('customSupportAmount').value = btn.dataset.amount;
+        
+        // ==================== SUPPORT MODAL ====================
+        const supportModal = $('supportModal');
+        function openSupportModal() {
+            supportModal.classList.remove('hidden');
+            supportModal.classList.add('flex');
+        }
+        function closeSupportModal() {
+            supportModal.classList.add('hidden');
+            supportModal.classList.remove('flex');
+        }
+        $('closeSupportModal')?.addEventListener('click', closeSupportModal);
+        supportModal.addEventListener('click', (e) => {
+            if (e.target === supportModal) closeSupportModal();
         });
-    });
-// Paystack v2 Integration
-    $('paystackPayBtn')?.addEventListener('click', () => {
-        const amountUsd = parseFloat($('customSupportAmount').value) || 15;
-        if (amountUsd < 1) {
-            showToast("Minimum amount is $1", "error");
-            return;
-        }
-        const amountInNgnKobo = Math.round(amountUsd * 1650 * 100);
-        try {
-            const paystack = new PaystackPop();
-            paystack.newTransaction({
-                key: "pk_live_5d13a6db326f02375127aae9d0fb03678ed1d923",
-                email: "donor@vocalwitness.app",
-                amount: amountInNgnKobo,
-                currency: "NGN",
-                ref: 'VW_' + Date.now() + Math.floor(Math.random() * 10000),
-                onSuccess: function(response) {
-                    showToast(`Thank you! Payment successful (Ref: ${response.reference})`, "success");
-                    closeSupportModal();
-                },
-                onCancel: function() {
-                    showToast("Transaction cancelled", "info");
-                },
-                onError: function(error) {
-                    showToast("Payment error: " + (error.message || "Unknown error"), "error");
-                }
+        document.addEventListener('keydown', (e) => {
+            if (e.key === "Escape" && !supportModal.classList.contains('hidden')) {
+                closeSupportModal();
+            }
+        });
+        $('support-btn')?.addEventListener('click', openSupportModal);
+
+        // Tier buttons
+        document.querySelectorAll('.support-tier-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.support-tier-btn').forEach(b =>
+                    b.classList.remove('bg-emerald-600/20', 'border-emerald-500')
+                );
+                btn.classList.add('bg-emerald-600/20', 'border-emerald-500');
+                $('customSupportAmount').value = btn.dataset.amount;
             });
-        } catch (err) {
-            console.error("Paystack v2 initialization error:", err);
-            showToast("Could not launch payment gateway", "error");
-        }
-    });
-    // NOWPayments Crypto Checkout Handler
-    $('proceedCryptoBtn')?.addEventListener('click', () => {
-        const amountUsd = parseFloat($('customSupportAmount').value) || 15;
-        if (amountUsd < 1) {
-            showToast("Minimum amount is $1", "error");
-            return;
-        }
-       
-        showToast(`Preparing $${amountUsd} secure crypto invoice via NOWPayments...`, "info");
-       
-        setTimeout(() => {
-            window.open(`https://nowpayments.io/payment?price_amount=${amountUsd}&price_currency=usd`, '_blank');
-            closeSupportModal();
-        }, 800);
-    });
-    // Other functions
-    window.closeProfile = () => $('profileModal')?.classList.add('hidden');
-    window.closeLoginModal = () => $('loginModal')?.classList.add('hidden');
-    window.closeSupportModal = closeSupportModal;
-    window.updateHeaderButtons = function(isLoggedIn) {
-        $('signin-btn')?.classList.toggle('hidden', isLoggedIn);
-        $('profile-btn')?.classList.toggle('hidden', !isLoggedIn);
-    };
-    window.toggleDataSaver = function() {
-    const isDataSaverActive = localStorage.getItem('vocal_data_saver') === 'true';
-    const newState = !isDataSaverActive;
-    localStorage.setItem('vocal_data_saver', newState);
-   
-    const statusEl = document.getElementById('data-saver-status');
-    if (statusEl) {
-        statusEl.textContent = newState ? 'On' : 'Off';
-    }
-    showToast(newState ? "Data Saver Enabled (Media restricted)" : "Data Saver Disabled", "info");
-};
-// Initialize state on load
-document.addEventListener('DOMContentLoaded', () => {
-    const isDataSaverActive = localStorage.getItem('vocal_data_saver') === 'true';
-    const statusEl = document.getElementById('data-saver-status');
-    if (statusEl) {
-        statusEl.textContent = isDataSaverActive ? 'On' : 'Off';
-    }
-});
-    // More menu
-    $('more-btn')?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        $('more-menu')?.classList.toggle('hidden');
-    });
-    document.addEventListener('click', (e) => {
-        if (!$('more-menu')?.contains(e.target) && e.target !== $('more-btn')) {
-            $('more-menu')?.classList.add('hidden');
-        }
-    });
-    updateHeaderButtons(false);
-    console.log('%cVocalWitness index.html loaded successfully', 'color:#10b981; font-weight:bold');
-</script>
-<!-- App Module Entry Point -->
-<script type="module" src="js/main.js"></script>
-<script type="module">
-    import { initLanguage } from './js/i18n.js';
-    document.addEventListener('DOMContentLoaded', () => initLanguage());
-</script>
+        });
+
+        // Paystack v2 Integration
+        $('paystackPayBtn')?.addEventListener('click', () => {
+            const amountUsd = parseFloat($('customSupportAmount').value) || 15;
+            if (amountUsd < 1) {
+                showToast("Minimum amount is $1", "error");
+                return;
+            }
+            const amountInNgnKobo = Math.round(amountUsd * 1650 * 100);
+            try {
+                const paystack = new PaystackPop();
+                paystack.newTransaction({
+                    key: "pk_live_5d13a6db326f02375127aae9d0fb03678ed1d923",
+                    email: "donor@vocalwitness.app",
+                    amount: amountInNgnKobo,
+                    currency: "NGN",
+                    ref: 'VW_' + Date.now() + Math.floor(Math.random() * 10000),
+                    onSuccess: function(response) {
+                        showToast(`Thank you! Payment successful (Ref: ${response.reference})`, "success");
+                        closeSupportModal();
+                    },
+                    onCancel: function() {
+                        showToast("Transaction cancelled", "info");
+                    },
+                    onError: function(error) {
+                        showToast("Payment error: " + (error.message || "Unknown error"), "error");
+                    }
+                });
+            } catch (err) {
+                console.error("Paystack v2 initialization error:", err);
+                showToast("Could not launch payment gateway", "error");
+            }
+        });
+
+        // NOWPayments Crypto Checkout Handler
+        $('proceedCryptoBtn')?.addEventListener('click', () => {
+            const amountUsd = parseFloat($('customSupportAmount').value) || 15;
+            if (amountUsd < 1) {
+                showToast("Minimum amount is $1", "error");
+                return;
+            }
+            
+            showToast(`Preparing $${amountUsd} secure crypto invoice via NOWPayments...`, "info");
+            
+            setTimeout(() => {
+                window.open(`https://nowpayments.io/payment?price_amount=${amountUsd}&price_currency=usd`, '_blank');
+                closeSupportModal();
+            }, 800);
+        });
+
+        // Other functions
+        window.closeProfile = () => $('profileModal')?.classList.add('hidden');
+        window.closeLoginModal = () => $('loginModal')?.classList.add('hidden');
+        window.closeSupportModal = closeSupportModal;
+        window.updateHeaderButtons = function(isLoggedIn) {
+            $('signin-btn')?.classList.toggle('hidden', isLoggedIn);
+            $('profile-btn')?.classList.toggle('hidden', !isLoggedIn);
+        };
+        window.toggleDataSaver = function() {
+            const isDataSaverActive = localStorage.getItem('vocal_data_saver') === 'true';
+            const newState = !isDataSaverActive;
+            localStorage.setItem('vocal_data_saver', newState);
+            
+            const statusEl = document.getElementById('data-saver-status');
+            if (statusEl) {
+                statusEl.textContent = newState ? 'On' : 'Off';
+            }
+            showToast(newState ? "Data Saver Enabled (Media restricted)" : "Data Saver Disabled", "info");
+        };
+
+        // Initialize state on load
+        document.addEventListener('DOMContentLoaded', () => {
+            const isDataSaverActive = localStorage.getItem('vocal_data_saver') === 'true';
+            const statusEl = document.getElementById('data-saver-status');
+            if (statusEl) {
+                statusEl.textContent = isDataSaverActive ? 'On' : 'Off';
+            }
+        });
+
+        // More menu
+        $('more-btn')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            $('more-menu')?.classList.toggle('hidden');
+        });
+        document.addEventListener('click', (e) => {
+            if (!$('more-menu')?.contains(e.target) && e.target !== $('more-btn')) {
+                $('more-menu')?.classList.add('hidden');
+            }
+        });
+        updateHeaderButtons(false);
+        console.log('%cVocalWitness index.html loaded successfully', 'color:#10b981; font-weight:bold');
+    </script>
+    <!-- App Module Entry Point -->
+    <script type="module" src="js/main.js"></script>
+    <script type="module">
+        import { initLanguage } from './js/i18n.js';
+        document.addEventListener('DOMContentLoaded', () => initLanguage());
+    </script>
 </body>
 </html>
