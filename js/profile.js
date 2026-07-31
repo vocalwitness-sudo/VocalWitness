@@ -465,6 +465,9 @@ window.exportUserDataPDF = async () => {
     }
 };
 
+// Ensure renderProfileUI is accessible globally for inline handlers and cross-module calls
+window.renderProfileUI = renderProfileUI;
+
 // Backwards compatibility alias
 window.downloadMyDataPDF = window.exportUserDataPDF;
 
