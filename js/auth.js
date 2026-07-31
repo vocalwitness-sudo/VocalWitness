@@ -119,6 +119,9 @@ export async function syncUserProfile(user) {
 /**
  * Authenticate via Google OAuth Popup
  */
+/**
+ * Authenticate via Google OAuth Popup
+ */
 export async function googleLogin() {
   const provider = new GoogleAuthProvider();
   try {
@@ -130,8 +133,18 @@ export async function googleLogin() {
     return user;
   } catch (error) {
     console.error("Google Auth Error:", error);
-    showToast(`Auth Failed: ${error.message}`, "error");
-    throw error;
+
+    // Handle user-facing popup errors gracefully without throwing uncaught promises
+    if (error.code === 'auth/popup-blocked') {
+      showToast("Popup blocked! Please allow popups for this site.", "error");
+    } else if (error.code === 'auth/cancelled-popup-request' || error.code === 'auth/popup-closed-by-user') {
+      showToast("Sign-in cancelled.", "info");
+    } else {
+      showToast(`Auth Failed: ${error.message}`, "error");
+    }
+    
+    // Return null instead of re-throwing so inline onclick handlers don't crash
+    return null;
   }
 }
 
