@@ -266,7 +266,7 @@ window.handleSignOut = async () => {
         document.getElementById('settingsModal')?.classList.add('hidden');
 
         // 2. Clear listener subscription
-        if (userUnsubscribe) {
+        if (typeof userUnsubscribe === 'function') {
             userUnsubscribe();
             userUnsubscribe = null;
         }
@@ -280,8 +280,10 @@ window.handleSignOut = async () => {
 
         showToast(t("auth.signed_out_success", "Signed out successfully"), "success");
 
-        // 5. Reload to return to public landing state
-        window.location.reload();
+        // 5. Brief delay so the user registers the success toast before refresh
+        setTimeout(() => {
+            window.location.reload();
+        }, 300);
 
     } catch (error) {
         console.error("Sign out error:", error);
