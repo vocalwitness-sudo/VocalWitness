@@ -65,14 +65,35 @@ export function renderProfileUI(userData) {
 
     if (targets.length === 0) return;
 
-    getCurrentWitnessLevel().then(level => {
-        const isWitness = level !== null;
+    // Helper to safely format dates across Firestore Timestamps, JS Date objects, & Strings
+    const formatCreatedDate = (createdAt) => {
+        if (!createdAt) return t("common.recent", "Recent");
         
-        // Safely format Firestore timestamp or handle pending serverTimestamp / raw strings
-        const formattedDate = (userData.createdAt && typeof userData.createdAt.toDate === 'function')
-            ? new Date(userData.createdAt.toDate()).toLocaleDateString()
-            : t("common.recent", "Recent");
+        // Firestore Timestamp instance
+        if (typeof createdAt.toDate === 'function') {
+            return createdAt.toDate().toLocaleDateString();
+        }
+        // Native JS Date instance
+        if (createdAt instanceof Date) {
+            return createdAt.toLocaleDateString();
+        }
+        // ISO string or epoch timestamp
+        const parsed = new Date(createdAt);
+        return !isNaN(parsed.getTime()) ? parsed.toLocaleDateString() : t("common.recent", "Recent");
+    };
 
+    const formattedDate = formatCreatedDate(userData.createdAt);
+
+    getCurrentWitnessLevel()
+        .then(level => {
+            const isWitness = level !== null;
+            
+            // ... Rest of your template rendering logic ...
+        })
+        .catch(err => {
+            console.error("Failed to render witness level in profile UI:", err);
+        });
+}
         const html = `
             <div class="space-y-8">
                 <!-- Profile Header -->
@@ -280,20 +301,28 @@ window.handleProfileStartCycle = async () => {
 // ====================== EDIT PROFILE MODAL ======================
 window.openEditProfile = () => {
     const modal = document.getElementById('editProfileModal');
-    if (!modal) return showToast(t("profile.edit_modal_not_found", "Edit modal not found"), "error");
+    if (!modal) {
+        return showToast(t("profile.edit_modal_not_found", "Edit modal not found"), "error");
+    }
 
-    if (currentUserData) {
+    // Fallback to window.currentUserData if local variable is null
+    const data = currentUserData || window.currentUserData;
+
+    if (data) {
         const displayNameInput = document.getElementById('editDisplayName');
         const usernameInput = document.getElementById('editUsername');
         const regionInput = document.getElementById('editRegion');
         const bioInput = document.getElementById('editBio');
 
-        if (displayNameInput) displayNameInput.value = currentUserData.displayName || '';
-        if (usernameInput) usernameInput.value = currentUserData.username || '';
-        if (regionInput) regionInput.value = currentUserData.region || '';
-        if (bioInput) bioInput.value = currentUserData.bio || '';
+        if (displayNameInput) displayNameInput.value = data.displayName || '';
+        if (usernameInput) usernameInput.value = data.username || '';
+        if (regionInput) regionInput.value = data.region || '';
+        if (bioInput) bioInput.value = data.bio || '';
     }
+
+    // Unhide modal
     modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
 };
 
 window.closeEditProfile = () => {
