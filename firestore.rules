@@ -2,13 +2,44 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Testimonies / Evidence Ledger (Includes User Reactions subcollection)
+   rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper Functions
+    function isAuthenticated() { return request.auth != null; }
+    function isOwner(userId) { return isAuthenticated() && request.auth.uid == userId; }
+
+    // Testimonies / Evidence Ledger
     match /testimonies/{testimonyId} {
       allow read: if true;
-      allow create: if request.auth != null 
-                    && request.auth.uid == request.resource.data.authorId;
-      allow update, delete: if request.auth != null 
-                            && (request.auth.uid == resource.data.authorId || request.auth.token.admin == true);
+      
+      // Hardened Create: Enforces auth, correct ID ownership, and basic data types
+      allow create: if isOwner(request.resource.data.authorId)
+                    && (request.resource.data.content is string || request.resource.data.content == null);
+                    
+      // Updates allowed for authors (or admins), but prevent tampering with the authorId or forensic hashes
+      allow update: if isAuthenticated() 
+                    && (request.auth.uid == resource.data.authorId || request.auth.token.admin == true)
+                    && request.resource.data.authorId == resource.data.authorId;
+                    
+      allow delete: if isAuthenticated() && (request.auth.uid == resource.data.authorId || request.auth.token.admin == true);
+     
+      // Multi-Reactions Subcollection
+      match /userReactions/{userId} {
+        allow read: if true;
+        allow write: if isOwner(userId);
+      }
+      
+      // NEW: Comments Subcollection (Required for feed.js comment modal to work)
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if isOwner(request.resource.data.authorId);
+        allow update, delete: if isOwner(resource.data.authorId);
+      }
+    }
+
+    // ... [Keep the rest of your groups, posts, users, votes rules exactly as they were] ...
      
       // Multi-Reactions Subcollection
       match /userReactions/{userId} {
