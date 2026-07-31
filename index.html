@@ -36,7 +36,7 @@
     
 <body class="min-h-screen pb-24 bg-[#0a0f1c] text-white antialiased">
     <div class="app-container py-6 px-4 max-w-6xl mx-auto">
-    <!-- Header -->
+        <!-- Header -->
         <header class="flex items-center justify-between mb-8 sticky top-4 z-50 glass rounded-3xl p-4 shadow-xl">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-2xl shadow-md font-bold text-black">VW</div>
@@ -62,12 +62,12 @@
                 <button id="support-btn" class="px-4 sm:px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl transition whitespace-nowrap text-sm sm:text-base shadow-sm min-w-[155px]" title="Help keep the platform running">
                     Support The Square
                 </button>
-                <!-- Main Sign In Button (Protected against double clicks) -->
+                <!-- Main Sign In Button -->
                 <button id="signin-btn" onclick="this.disabled=true; showAuthModal(); setTimeout(() => this.disabled=false, 1000);" class="px-4 sm:px-5 py-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed">
                     <img src="https://www.google.com/favicon.ico" class="w-4 h-4" alt="Google">
                     <span class="hidden sm:inline" data-i18n="joinBtn">Sign in</span>
                 </button>
-                <!-- Profile Button (Hidden by default when logged out) -->
+                <!-- Profile Button -->
                 <button id="profile-btn" onclick="openProfile()" class="px-4 sm:px-5 py-2.5 border border-zinc-700 hover:bg-zinc-800 rounded-2xl transition flex items-center gap-2 hidden text-sm sm:text-base" title="View your profile and settings">
                     Profile
                 </button>
@@ -180,16 +180,13 @@
         <!-- Voice Recording Control Bar -->
         <div id="voice-recorder-bar" class="hidden mt-4 glass rounded-2xl p-4 border border-emerald-500/30">
             <div class="flex items-center gap-3 flex-wrap">
-                <!-- Timer -->
                 <div class="flex items-center gap-2 min-w-[70px]">
                     <span id="rec-indicator" class="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></span>
                     <span id="rec-timer" class="font-mono text-sm text-emerald-400">00:00</span>
                 </div>
 
-                <!-- Waveform canvas -->
                 <canvas id="rec-waveform" width="180" height="36" class="flex-1 max-w-[200px] rounded bg-zinc-900/80"></canvas>
 
-                <!-- Controls -->
                 <div class="flex items-center gap-2 ml-auto">
                     <button id="rec-pause-btn" class="px-3 py-1.5 text-xs rounded-xl bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white transition">
                         ⏸ Pause
@@ -203,7 +200,6 @@
                 </div>
             </div>
 
-            <!-- Hidden audio element for replay -->
             <audio id="rec-replay-audio" class="hidden"></audio>
         </div>
             
@@ -280,15 +276,11 @@
         </div>
     </div>
 
-    <!-- Public Content (Visible to everyone) -->
-    <div id="publicSquareFeed">
-        <!-- Public posts / square view -->
-    </div>
+    <!-- Public Content -->
+    <div id="publicSquareFeed"></div>
 
-    <!-- Private / Authenticated Content (Hidden from passersby until signed in) -->
-    <div class="requires-auth hidden">
-        <!-- Protected interactive tools, user dashboards, composer components -->
-    </div>
+    <!-- Private / Authenticated Content -->
+    <div class="requires-auth hidden"></div>
         
     <!-- Support Modal -->
     <div id="supportModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[10000] flex items-center justify-center p-4 hidden">
@@ -338,7 +330,7 @@
         </div>
     </div>
 
-    <!-- Single Login Modal (Google + Email/Password) -->
+    <!-- Single Login Modal -->
     <div id="loginModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[10000] p-4">
         <div class="glass rounded-3xl p-6 sm:p-8 max-w-md w-full modal relative max-h-[90vh] overflow-y-auto border border-emerald-500/30">
             <button onclick="closeLoginModal()" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl">✕</button>
@@ -472,7 +464,7 @@
             }
         }
 
-        // Authentication Placeholders (Handled by main auth logic module)
+        // Authentication Placeholders
         function googleLogin() {
             showToast("Redirecting to Google Sign-In...", "info");
         }
@@ -494,7 +486,7 @@
             closeProfile();
         }
 
-        // ==================== SUPPORT MODAL ====================
+        // Support Modal Logic
         const supportModal = $('supportModal');
         function openSupportModal() {
             supportModal.classList.remove('hidden');
@@ -505,73 +497,31 @@
             supportModal.classList.remove('flex');
         }
         $('closeSupportModal')?.addEventListener('click', closeSupportModal);
-        supportModal.addEventListener('click', (e) => {
+        supportModal?.addEventListener('click', (e) => {
             if (e.target === supportModal) closeSupportModal();
         });
         document.addEventListener('keydown', (e) => {
-            if (e.key === "Escape" && !supportModal.classList.contains('hidden')) {
+            if (e.key === "Escape" && supportModal && !supportModal.classList.contains('hidden')) {
                 closeSupportModal();
             }
         });
         $('support-btn')?.addEventListener('click', openSupportModal);
 
-        // Tier buttons
+        // Tier selection logic
         document.querySelectorAll('.support-tier-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                document.querySelectorAll('.support-tier-btn').forEach(b =>
-                    b.classList.remove('bg-emerald-600/20', 'border-emerald-500')
-                );
-                btn.classList.add('bg-emerald-600/20', 'border-emerald-500');
-                $('customSupportAmount').value = btn.dataset.amount;
-            });
-        });
-
-        // Paystack v2 Integration
-        $('paystackPayBtn')?.addEventListener('click', () => {
-            const amountUsd = parseFloat($('customSupportAmount').value) || 15;
-            if (amountUsd < 1) {
-                showToast("Minimum amount is $1", "error");
-                return;
-            }
-            const amountInNgnKobo = Math.round(amountUsd * 1650 * 100);
-            try {
-                const paystack = new PaystackPop();
-                paystack.newTransaction({
-                    key: "pk_live_5d13a6db326f02375127aae9d0fb03678ed1d923",
-                    email: "donor@vocalwitness.app",
-                    amount: amountInNgnKobo,
-                    currency: "NGN",
-                    ref: 'VW_' + Date.now() + Math.floor(Math.random() * 10000),
-                    onSuccess: function(response) {
-                        showToast(`Thank you! Payment successful (Ref: ${response.reference})`, "success");
-                        closeSupportModal();
-                    },
-                    onCancel: function() {
-                        showToast("Transaction cancelled", "info");
-                    },
-                    onError: function(error) {
-                        showToast("Payment error: " + (error.message || "Unknown error"), "error");
-                    }
+                document.querySelectorAll('.support-tier-btn').forEach(b => {
+                    b.classList.remove('bg-emerald-600/20', 'border-emerald-500');
+                    b.classList.add('bg-zinc-800', 'border-zinc-700');
                 });
-            } catch (err) {
-                console.error("Paystack v2 initialization error:", err);
-                showToast("Could not launch payment gateway", "error");
-            }
-        });
-
-        // NOWPayments Crypto Checkout Handler
-        $('proceedCryptoBtn')?.addEventListener('click', () => {
-            const amountUsd = parseFloat($('customSupportAmount').value) || 15;
-            if (amountUsd < 1) {
-                showToast("Minimum amount is $1", "error");
-                return;
-            }
-            
-            showToast(`Preparing $${amountUsd} secure crypto invoice via NOWPayments...`, "info");
-            
-            setTimeout(() => {
-                window.open(`https://nowpayments.io/payment?price_amount=${amountUsd}&price_currency=usd`, '_blank');
-            }, 1000);
+                btn.classList.remove('bg-zinc-800', 'border-zinc-700');
+                btn.classList.add('bg-emerald-600/20', 'border-emerald-500');
+                
+                const amountInput = $('customSupportAmount');
+                if (amountInput) {
+                    amountInput.value = btn.getAttribute('data-amount');
+                }
+            });
         });
     </script>
 </body>
