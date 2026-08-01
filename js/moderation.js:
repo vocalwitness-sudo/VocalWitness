@@ -46,14 +46,14 @@ export async function scanForToxicity(content) {
         }
 
         const attributes = data.attributeScores;
-        const toxicityScore = attributes.TOXICITY?.summaryScore?.value || 0;
-        const severeScore = attributes.SEVERE_TOXICITY?.summaryScore?.value || 0;
+        const toxicityScore = attributes?.TOXICITY?.summaryScore?.value || 0;
+        const severeScore = attributes?.SEVERE_TOXICITY?.summaryScore?.value || 0;
 
         const reasons = [];
         if (severeScore > 0.6) reasons.push("Severe Toxicity");
-        if (attributes.IDENTITY_ATTACK?.summaryScore?.value > 0.7) reasons.push("Identity Attack");
-        if (attributes.INSULT?.summaryScore?.value > 0.7) reasons.push("Insult");
-        if (attributes.THREAT?.summaryScore?.value > 0.6) reasons.push("Threat");
+        if (attributes?.IDENTITY_ATTACK?.summaryScore?.value > 0.7) reasons.push("Identity Attack");
+        if (attributes?.INSULT?.summaryScore?.value > 0.7) reasons.push("Insult");
+        if (attributes?.THREAT?.summaryScore?.value > 0.6) reasons.push("Threat");
 
         const finalScore = Math.max(toxicityScore, severeScore);
 
@@ -84,6 +84,38 @@ function fallbackToxicityScan(content) {
     });
 
     return { score: Math.min(1, score), flagged: score > 0.5, reasons };
+}
+
+// ====================== PUBLISH WITH MODERATION ======================
+export async function publishWithModeration(content, mediaData, currentUser) {
+    const toxicity = await scanForToxicity(content);
+    const tier = await getCurrentUserTier();
+
+    let moderationStatus = "approved";
+
+    // Higher scrutiny for lower tiers
+    if (toxicity.flagged && tier === TIERS.CITIZEN) {
+        moderationStatus = "needs_review";
+        showToast("⚠️ Content flagged for steward review", "warning");
+    }
+
+    const postData = {
+        authorId: currentUser.uid,
+        author: currentUser.displayName || "Anonymous Witness",
+        content,
+        imageUrl: mediaData?.imageUrl || null,
+        audioUrl: mediaData?.audioUrl || null,
+        timestamp: serverTimestamp(),
+        feedVisibility: "citizen-talk",
+        moderationStatus,
+        toxicityScore: toxicity.score,
+        autoFlaggedReasons: toxicity.reasons,
+        authorTier: tier
+    };
+
+    const docRef = await addDoc(collection(db, "testimonies"), postData);
+
+    return { success: true, postId: docRef.id, moderationStatus, toxicity };
 }
 
 // ====================== REPORT CONTENT ======================
@@ -183,4 +215,11 @@ export async function fetchReviewQueue() {
         console.error("Failed to fetch review queue:", e);
         return [];
     }
+}
+
+// ====================== INITIALIZE MODERATION PAGE ======================
+export async function initModeration() {
+    const queue = await fetchReviewQueue();
+    // Render queue items to the DOM here if applicable
+    console.log("Moderation queue initialized:", queue);
 }
