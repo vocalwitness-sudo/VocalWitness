@@ -3,7 +3,6 @@ pragma circom 2.1.6;
 include "circomlib/circuits/poseidon.circom";
 include "circomlib/circuits/comparators.circom";
 
-// Clean Merkle Proof (depth 8 is fast and practical for now)
 template MerkleProof(levels) {
     signal input leaf;
     signal input pathElements[levels];
@@ -16,7 +15,7 @@ template MerkleProof(levels) {
     component hashers[levels];
 
     for (var i = 0; i < levels; i++) {
-        // Force pathIndices to be 0 or 1
+        // Force binary
         pathIndices[i] * (pathIndices[i] - 1) === 0;
 
         signal left;
@@ -35,7 +34,6 @@ template MerkleProof(levels) {
 }
 
 template VocalWitness(levels) {
-    // Private inputs
     signal input secret;
     signal input nullifier;
     signal input trustScore;
@@ -43,27 +41,25 @@ template VocalWitness(levels) {
     signal input pathElements[levels];
     signal input pathIndices[levels];
 
-    // Public inputs
     signal input merkleRoot;
     signal input minTrustScore;
     signal input minPosts;
 
-    // Public outputs
     signal output nullifierHash;
     signal output commitment;
 
-    // 1. Commitment = Poseidon(secret, nullifier)
+    // Commitment
     component commitHash = Poseidon(2);
     commitHash.inputs[0] <== secret;
     commitHash.inputs[1] <== nullifier;
     commitment <== commitHash.out;
 
-    // 2. Nullifier Hash (prevents reuse)
+    // Nullifier hash
     component nullHash = Poseidon(1);
     nullHash.inputs[0] <== nullifier;
     nullifierHash <== nullHash.out;
 
-    // 3. Merkle membership
+    // Merkle proof
     component merkle = MerkleProof(levels);
     merkle.leaf <== commitment;
     for (var i = 0; i < levels; i++) {
@@ -72,7 +68,7 @@ template VocalWitness(levels) {
     }
     merkle.root === merkleRoot;
 
-    // 4. Trust & post count checks
+    // Threshold checks
     component trustCheck = GreaterEqThan(32);
     trustCheck.in[0] <== trustScore;
     trustCheck.in[1] <== minTrustScore;
@@ -84,5 +80,4 @@ template VocalWitness(levels) {
     postsCheck.out === 1;
 }
 
-// Depth 8 is very safe for GitHub Actions (fast compile)
 component main {public [merkleRoot, minTrustScore, minPosts]} = VocalWitness(8);
