@@ -40,66 +40,42 @@
     <div class="app-container py-6 px-4 max-w-6xl mx-auto">
 
         
-<!-- Header -->
-<header class="flex items-center justify-between mb-8 sticky top-4 z-50 glass rounded-3xl p-4 shadow-xl">
-    
-    <!-- Left: Logo -->
-    <div class="flex items-center gap-3">
-        <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-2xl shadow-md font-bold text-black">VW</div>
-        <div>
-            <h1 class="text-xl sm:text-2xl font-bold tracking-tight" data-i18n="appTitle">VocalWitness</h1>
-            <p class="text-xs sm:text-sm text-emerald-400 tracking-widest" data-i18n="appSubtitle">Truth • Evidence • Public Square</p>
-        </div>
-    </div>
-
-    <!-- Right Side -->
-    <div class="flex items-center gap-2 sm:gap-4">
-        
-        <!-- Support Button - Always visible -->
-        <button id="support-btn" class="px-4 sm:px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl transition whitespace-nowrap text-sm sm:text-base shadow-sm">
-            Support The Square
-        </button>
-
-        <!-- Hamburger Menu Button (Mobile) -->
-        <button id="mobile-menu-btn" 
-                class="md:hidden p-2.5 rounded-2xl hover:bg-zinc-800 transition">
-            <span class="text-2xl">☰</span>
-        </button>
-
-        <!-- Desktop Items -->
-        <div class="hidden md:flex items-center gap-2 sm:gap-4">
-            
-            <select id="languageSelector" aria-label="Select Language" 
-                    class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
+ <!-- Header -->
+        <header class="flex items-center justify-between mb-8 sticky top-4 z-50 glass rounded-3xl p-4 shadow-xl">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-2xl shadow-md font-bold text-black">VW</div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-bold tracking-tight" data-i18n="appTitle">VocalWitness</h1>
+                    <p class="text-xs sm:text-sm text-emerald-400 tracking-widest" data-i18n="appSubtitle">Truth • Evidence • Public Square</p>
+                </div>
+            </div>        <div class="flex items-center gap-2 sm:gap-4">
+            <select id="languageSelector" aria-label="Select Language" class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500 hidden md:block">
                 <option value="en">English</option>
                 <option value="es">Español</option>
                 <option value="fr">Français</option>
             </select>
-
-            <button id="data-saver-btn" onclick="toggleDataSaver()" 
-                    class="px-3 py-2.5 rounded-2xl hover:bg-zinc-800 transition text-xs font-medium flex items-center gap-1.5 border border-zinc-700 text-zinc-300">
-                ⚡ <span class="hidden lg:inline">Data Saver: <strong id="data-saver-status" class="text-emerald-400">Off</strong></span>
+            <!-- Data Saver Toggle Button -->
+            <button id="data-saver-btn" onclick="toggleDataSaver()" class="px-3 py-2.5 rounded-2xl hover:bg-zinc-800 transition text-xs font-medium flex items-center gap-1.5 border border-zinc-700 text-zinc-300" title="Toggle Data Saving Mode">
+                 <span class="hidden md:inline">Data Saver: <strong id="data-saver-status" class="text-emerald-400">Off</strong></span>
             </button>
-
-            <a href="privacy.html" class="hidden lg:flex items-center text-emerald-400 hover:text-emerald-300 transition-colors text-sm font-medium px-3 py-2">
+            <a href="privacy.html" class="hidden lg:flex items-center text-emerald-400 hover:text-emerald-300 transition-colors text-sm font-medium px-3 py-2" data-i18n="privacyLink">
                 Privacy First
             </a>
-
-            <!-- Sign In Button -->
-            <button id="signin-btn" type="button" onclick="showAuthModal()" 
-                    class="px-4 sm:px-5 py-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm text-sm sm:text-base cursor-pointer">
-                <img src="https://www.google.com/favicon.ico" class="w-4 h-4 pointer-events-none" alt="Google">
-                <span class="hidden sm:inline pointer-events-none" data-i18n="joinBtn">Sign in</span>
+            <button id="support-btn" class="px-4 sm:px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl transition whitespace-nowrap text-sm sm:text-base shadow-sm min-w-[155px]" title="Help keep the platform running">
+                Support The Square
             </button>
+            <!-- Main Sign In Button -->
+            <button id="signin-btn" type="button" onclick="showAuthModal()" class="px-4 sm:px-5 py-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm text-sm sm:text-base cursor-pointer">
+<img src="https://www.google.com/favicon.ico" class="w-4 h-4 pointer-events-none" alt="Google">
+<span class="hidden sm:inline pointer-events-none" data-i18n="joinBtn">Sign in</span></button>
+                <!-- Profile Button -->
+                <button id="profile-btn" onclick="openProfile()" class="px-4 sm:px-5 py-2.5 border border-zinc-700 hover:bg-zinc-800 rounded-2xl transition flex items-center gap-2 hidden text-sm sm:text-base" title="View your profile and settings">
+                    Profile
+                </button>
+            </div>
+        </header>
 
-            <!-- Profile Button -->
-            <button id="profile-btn" onclick="openProfile()" 
-                    class="px-4 sm:px-5 py-2.5 border border-zinc-700 hover:bg-zinc-800 rounded-2xl transition flex items-center gap-2 hidden text-sm sm:text-base">
-                Profile
-            </button>
-        </div>
-    </div>
-</header>
+
         
        <!-- SEARCH BAR - Improved size + better click handling -->
 <div class="relative w-full max-w-lg mx-auto my-6">   <!-- Wider + more spacing -->
