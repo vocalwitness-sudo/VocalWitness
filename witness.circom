@@ -1,71 +1,78 @@
-pragma circom 2.1.0;
+pragma circom 2.1.6;
 
 include "circomlib/circuits/poseidon.circom";
 include "circomlib/circuits/comparators.circom";
-include "circomlib/circuits/mux1.circom";
 include "circomlib/circuits/bitify.circom";
-include "circomlib/circuits/pedersen.circom";
 
+// Simple binary Merkle proof (depth 10 is enough for start)
 template MerkleProof(levels) {
     signal input leaf;
     signal input pathElements[levels];
-    signal input pathIndices[levels];
+    signal input pathIndices[levels];   // 0 or 1
     signal output root;
 
-    signal nodes[levels + 1];
-    nodes[0] <== leaf;
+    signal hashes[levels + 1];
+    hashes[0] <== leaf;
 
     component hashers[levels];
-    component muxes[levels];
+    component mux[levels];
 
     for (var i = 0; i < levels; i++) {
+        // Force pathIndices to be binary
         pathIndices[i] * (1 - pathIndices[i]) === 0;
 
-        muxes[i] = MultiMux1(2);
-        muxes[i].c[0][0] <== nodes[i];
-        muxes[i].c[0][1] <== pathElements[i];
-        muxes[i].c[1][0] <== pathElements[i];
-        muxes[i].c[1][1] <== nodes[i];
-        muxes[i].s <== pathIndices[i];
+        // Select left / right
+        mux[i] = MultiMux1(1);          // we only need 1 selector
+        mux[i].c[0][0] <== hashes[i];
+        mux[i].c[0][1] <== pathElements[i];
+        mux[i].s <== pathIndices[i];
+
+        // Actually we need both orders for Poseidon
+        // Better explicit way:
+        signal left;
+        signal right;
+        left  <== (1 - pathIndices[i]) * hashes[i] + pathIndices[i] * pathElements[i];
+        right <== pathIndices[i] * hashes[i] + (1 - pathIndices[i]) * pathElements[i];
 
         hashers[i] = Poseidon(2);
-        hashers[i].inputs[0] <== muxes[i].out[0];
-        hashers[i].inputs[1] <== muxes[i].out[1];
-        nodes[i + 1] <== hashers[i].out;
+        hashers[i].inputs[0] <== left;
+        hashers[i].inputs[1] <== right;
+        hashes[i + 1] <== hashers[i].out;
     }
-    root <== nodes[levels];
+
+    root <== hashes[levels];
 }
 
-template VocalWitnessRegistry(levels) {
-    signal input secret;
-    signal input nullifier;
+template VocalWitness(levels) {
+    // ===== Private inputs =====
+    signal input secret;          // user's private identity secret
+    signal input nullifier;       // random value used only once
     signal input trustScore;
     signal input postCount;
     signal input pathElements[levels];
     signal input pathIndices[levels];
 
-    signal input isValidWitness;
+    // ===== Public inputs =====
     signal input merkleRoot;
     signal input minTrustScore;
     signal input minPosts;
-    signal input commitment;
 
-    signal output nullifierHash;
-    signal output valid;
+    // ===== Public outputs =====
+    signal output nullifierHash;  // this is what we store / check against double-spend
+    signal output commitment;     // public commitment of the witness
 
-    component pedersen = Pedersen(2);
-    component secretBits = Num2Bits(254);
-    component nullBits = Num2Bits(254);
-    
-    secretBits.in <== secret;
-    nullBits.in <== nullifier;
+    // 1. Commitment = Poseidon(secret, nullifier)
+    component commitmentHasher = Poseidon(2);
+    commitmentHasher.inputs[0] <== secret;
+    commitmentHasher.inputs[1] <== nullifier;
+    commitment <== commitmentHasher.out;
 
-    for (var i = 0; i < 254; i++) {
-        pedersen.in[0][i] <== secretBits.out[i];
-        pedersen.in[1][i] <== nullBits.out[i];
-    }
-    pedersen.out[0] === commitment;
+    // 2. Nullifier Hash = Poseidon(nullifier)  ← prevents reuse
+    component nullifierHasher = Poseidon(1);
+    nullifierHasher.inputs[0] <== nullifier;
+    nullifierHash <== nullifierHasher.out;
 
+    // 3. Merkle membership proof of the commitment
     component merkle = MerkleProof(levels);
     merkle.leaf <== commitment;
     for (var i = 0; i < levels; i++) {
@@ -74,31 +81,17 @@ template VocalWitnessRegistry(levels) {
     }
     merkle.root === merkleRoot;
 
-    component trustGte = GreaterEqThan(8);
-    trustGte.in[0] <== trustScore;
-    trustGte.in[1] <== minTrustScore;
-    trustGte.out === 1;
+    // 4. Selective disclosure (trust & posts)
+    component trustCheck = GreaterEqThan(32);
+    trustCheck.in[0] <== trustScore;
+    trustCheck.in[1] <== minTrustScore;
+    trustCheck.out === 1;
 
-    component postsGte = GreaterEqThan(32);
-    postsGte.in[0] <== postCount;
-    postsGte.in[1] <== minPosts;
-    postsGte.out === 1;
-
-    component nullHasher = Pedersen(1);
-    component nBits = Num2Bits(254);
-    nBits.in <== nullifier;
-    for (var i = 0; i < 254; i++) {
-        nullHasher.in[0][i] <== nBits.out[i];
-    }
-    nullifierHash <== nullHasher.out[0];
-
-    valid <== isValidWitness;
+    component postsCheck = GreaterEqThan(32);
+    postsCheck.in[0] <== postCount;
+    postsCheck.in[1] <== minPosts;
+    postsCheck.out === 1;
 }
 
-component main {public [
-    isValidWitness, 
-    merkleRoot, 
-    minTrustScore, 
-    minPosts, 
-    commitment
-]} = VocalWitnessRegistry(20);
+// Depth 10 is a good starting point (fast compile + enough capacity)
+component main {public [merkleRoot, minTrustScore, minPosts]} = VocalWitness(10);
