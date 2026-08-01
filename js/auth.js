@@ -353,17 +353,11 @@ export function initAuth() {
 // ====================== MODAL & GLOBAL EXPOSURES ======================
 export function showAuthModal() {
     if (auth.currentUser) {
-        if (typeof window.showProfile === 'function') {
-            window.showProfile();
-        } else if (typeof window.openProfile === 'function') {
-            window.openProfile();
-        } else {
-            console.warn("Profile opener function not defined yet.");
-        }
+        // ...
     } else {
         const createModal = document.getElementById('createAccountModal');
         if (createModal) {
-            createModal.classList.remove('hidden');
+            createModal.classList.remove('hidden'); // <--- IT IS STOPPING HERE!
         } else {
             const loginModal = document.getElementById('loginModal');
             if (loginModal) loginModal.classList.remove('hidden');
