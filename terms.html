@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title data-i18n="terms">Terms of Service • VocalWitness</title>
+  <title data-i18n="termsPageTitle">Terms of Service • VocalWitness</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { background-color: #0a0f1c; color: white; font-family: 'Inter', system-ui, sans-serif; }
@@ -17,7 +17,7 @@
     <div class="flex items-center justify-between mb-10 glass rounded-3xl p-4">
       <div class="flex items-center gap-3">
         <a href="index.html" class="w-10 h-10 bg-emerald-500/20 rounded-2xl flex items-center justify-center text-xl hover:bg-emerald-500/30 transition">⬅️</a>
-        <h1 class="text-2xl font-bold tracking-tight">VocalWitness</h1>
+        <h1 class="text-2xl font-bold tracking-tight" data-i18n="appTitle">VocalWitness</h1>
       </div>
       <div class="flex items-center gap-3">
         <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-4 py-2 text-sm focus:outline-none focus:border-emerald-500">
@@ -32,13 +32,13 @@
 
     <div class="flex items-center gap-4 mb-6">
       <div class="w-12 h-12 bg-emerald-500/20 rounded-3xl flex items-center justify-center text-4xl">📜</div>
-      <h1 class="text-4xl font-bold tracking-tight" data-i18n="terms">Terms of Service</h1>
+      <h1 class="text-4xl font-bold tracking-tight" data-i18n="termsTitle">Terms of Service</h1>
     </div>
 
-    <p class="text-zinc-400 mb-10">Last updated: July 19, 2026</p>
+    <p class="text-zinc-400 mb-10" data-i18n="termsLastUpdated">Last updated: July 19, 2026</p>
 
     <div class="glass rounded-3xl p-8 mb-10">
-      <p class="text-emerald-300 leading-relaxed">
+      <p class="text-emerald-300 leading-relaxed" data-i18n="termsIntro">
         Welcome to VocalWitness — a citizen-powered public square for truth, evidence, and testimony. 
         By using our platform, you agree to these Terms of Service.
       </p>
@@ -47,67 +47,67 @@
     <div class="space-y-12 text-zinc-300">
       
       <div>
-        <h2 class="text-2xl font-semibold text-white mb-4">1. Acceptance of Terms</h2>
-        <p>By accessing or using VocalWitness, you agree to be legally bound by these Terms. If you disagree, you must not use the platform.</p>
+        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="termsSection1Title">1. Acceptance of Terms</h2>
+        <p data-i18n="termsSection1Text">By accessing or using VocalWitness, you agree to be legally bound by these Terms. If you disagree, you must not use the platform.</p>
       </div>
 
       <div>
-        <h2 class="text-2xl font-semibold text-white mb-4">2. Our Mission & Role</h2>
-        <p>VocalWitness operates as an <strong>un-manipulated distribution medium</strong> — a public square where citizens can share testimonies and evidence. We are not a publisher, we do not endorse content, and we do not act as a court of law.</p>
+        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="termsSection2Title">2. Our Mission & Role</h2>
+        <p data-i18n="termsSection2Text">VocalWitness operates as an <strong>un-manipulated distribution medium</strong> — a public square where citizens can share testimonies and evidence. We are not a publisher, we do not endorse content, and we do not act as a court of law.</p>
       </div>
 
       <div>
-        <h2 class="text-2xl font-semibold text-white mb-4">3. Trust & Verification Tiers</h2>
-        <p>We use a layered trust model to strengthen the quality of discourse:</p>
+        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="termsSection3Title">3. Trust & Verification Tiers</h2>
+        <p data-i18n="termsSection3Intro">We use a layered trust model to strengthen the quality of discourse:</p>
         <ul class="list-disc pl-6 space-y-2 mt-4">
-          <li><strong>Citizen Talk</strong> — Open to all users (basic signup).</li>
-          <li><strong>Trust Circle</strong> — Unlocked via verification.</li>
-          <li><strong>True Witness</strong> — Highest tier, earned through consistent participation and advanced verification (including Zero-Knowledge proofs where implemented).</li>
+          <li data-i18n="termsTier1"><strong>Citizen Talk</strong> — Open to all users (basic signup).</li>
+          <li data-i18n="termsTier2"><strong>Trust Circle</strong> — Unlocked via verification.</li>
+          <li data-i18n="termsTier3"><strong>True Witness</strong> — Highest tier, earned through consistent participation and advanced verification (including Zero-Knowledge proofs where implemented).</li>
         </ul>
-        <p class="mt-4 text-sm text-zinc-400">Higher tiers unlock greater responsibilities and capabilities (e.g., group creation, higher visibility).</p>
+        <p class="mt-4 text-sm text-zinc-400" data-i18n="termsTierNote">Higher tiers unlock greater responsibilities and capabilities (e.g., group creation, higher visibility).</p>
       </div>
 
       <div>
-        <h2 class="text-2xl font-semibold text-white mb-4">4. User Responsibilities & Conduct</h2>
+        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="termsSection4Title">4. User Responsibilities & Conduct</h2>
         <ul class="space-y-4">
-          <li class="flex gap-3"><span class="text-emerald-400">✅</span> You are solely responsible for all content you post.</li>
-          <li class="flex gap-3"><span class="text-emerald-400">✅</span> You must share content you genuinely believe to be true and act in good faith.</li>
-          <li class="flex gap-3"><span class="text-red-400">❌</span> You must not post illegal, defamatory, harassing, violent, hateful, or sexually exploitative content.</li>
-          <li class="flex gap-3"><span class="text-red-400">❌</span> You must not manipulate evidence or impersonate others.</li>
+          <li class="flex gap-3"><span class="text-emerald-400">✅</span> <span data-i18n="termsConduct1">You are solely responsible for all content you post.</span></li>
+          <li class="flex gap-3"><span class="text-emerald-400">✅</span> <span data-i18n="termsConduct2">You must share content you genuinely believe to be true and act in good faith.</span></li>
+          <li class="flex gap-3"><span class="text-red-400">❌</span> <span data-i18n="termsConduct3">You must not post illegal, defamatory, harassing, violent, hateful, or sexually exploitative content.</span></li>
+          <li class="flex gap-3"><span class="text-red-400">❌</span> <span data-i18n="termsConduct4">You must not manipulate evidence or impersonate others.</span></li>
         </ul>
       </div>
 
       <div>
-        <h2 class="text-2xl font-semibold text-white mb-4">5. Content Ownership & License</h2>
-        <p>You retain full ownership of your content. By posting on VocalWitness, you grant us a worldwide, non-exclusive, royalty-free, perpetual license to host, display, distribute, and archive your content on the platform and its mirrors.</p>
+        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="termsSection5Title">5. Content Ownership & License</h2>
+        <p data-i18n="termsSection5Text">You retain full ownership of your content. By posting on VocalWitness, you grant us a worldwide, non-exclusive, royalty-free, perpetual license to host, display, distribute, and archive your content on the platform and its mirrors.</p>
       </div>
 
       <div>
-        <h2 class="text-2xl font-semibold text-white mb-4">6. Groups, Circles & My Network</h2>
-        <p>Users may create or join Groups and personal networks subject to their trust tier. Group creators and moderators are responsible for enforcing community standards within their spaces. VocalWitness reserves the right to intervene in cases of serious violations.</p>
+        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="termsSection6Title">6. Groups, Circles & My Network</h2>
+        <p data-i18n="termsSection6Text">Users may create or join Groups and personal networks subject to their trust tier. Group creators and moderators are responsible for enforcing community standards within their spaces. VocalWitness reserves the right to intervene in cases of serious violations.</p>
       </div>
 
       <div>
-        <h2 class="text-2xl font-semibold text-white mb-4">7. Donations & Sponsorship</h2>
-        <p>VocalWitness is sustained entirely through voluntary community donations, transparent support funds, and direct non-custodial cryptographic contributions. Donations are non-refundable and do not grant special governance privileges or ownership over the platform.</p>
+        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="termsSection7Title">7. Donations & Sponsorship</h2>
+        <p data-i18n="termsSection7Text">VocalWitness is sustained entirely through voluntary community donations, transparent support funds, and direct non-custodial cryptographic contributions. Donations are non-refundable and do not grant special governance privileges or ownership over the platform.</p>
       </div>
 
       <div>
-        <h2 class="text-2xl font-semibold text-white mb-4">8. Limitation of Liability</h2>
-        <p>The platform is provided on an "as-is" and "as-available" basis without warranties of any kind. VocalWitness, its developers, and its stewards shall not be held liable for any indirect, incidental, or consequential damages arising from the use or inability to use the platform.</p>
+        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="termsSection8Title">8. Limitation of Liability</h2>
+        <p data-i18n="termsSection8Text">The platform is provided on an "as-is" and "as-available" basis without warranties of any kind. VocalWitness, its developers, and its stewards shall not be held liable for any indirect, incidental, or consequential damages arising from the use or inability to use the platform.</p>
       </div>
 
       <div>
-        <h2 class="text-2xl font-semibold text-white mb-4">9. Changes to Terms</h2>
-        <p>We may modify these Terms from time to time to reflect changes in our infrastructure or legal obligations. Continued use of the platform after updates constitutes your acceptance of the revised terms.</p>
+        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="termsSection9Title">9. Changes to Terms</h2>
+        <p data-i18n="termsSection9Text">We may modify these Terms from time to time to reflect changes in our infrastructure or legal obligations. Continued use of the platform after updates constitutes your acceptance of the revised terms.</p>
       </div>
 
     </div>
 
     <!-- Footer Action -->
     <div class="mt-16 pt-8 border-t border-zinc-800 flex justify-between items-center text-sm text-zinc-500">
-      <a href="index.html" class="text-emerald-400 hover:underline">← Back to Public Square</a>
-      <span>© 2026 VocalWitness</span>
+      <a href="index.html" class="text-emerald-400 hover:underline" data-i18n="backToSquare">← Back to Public Square</a>
+      <span data-i18n="footerCopyrightShort">© 2026 VocalWitness</span>
     </div>
 
   </div>
