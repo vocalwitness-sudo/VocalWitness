@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#10b981">
     
-  <title>VocalWitness • Truth • Evidence • Public Square</title>
+  <title data-i18n="adminPageTitle">Admin Dashboard • VocalWitness</title>
 
   <link rel="manifest" href="/manifest.json">
   <link rel="icon" href="logo.png" type="image/png">
@@ -46,17 +46,17 @@
 
   <!-- LEGAL NOTICE -->
   <div class="max-w-2xl mx-auto bg-red-950/30 border border-red-500/20 rounded-3xl p-4 text-xs mb-6 text-center">
-    <strong class="text-red-400">Legal:</strong> VocalWitness is an un-manipulated decentralized distribution medium.
+    <strong class="text-red-400" data-i18n="legalLabel">Legal:</strong> 
+    <span data-i18n="legalNotice">VocalWitness is an un-manipulated decentralized distribution medium.</span>
   </div>
 
   <div class="max-w-2xl mx-auto">
-    <!-- HEADER, NAV, COMPOSER, FEED, FOOTER here... (same as before) -->
-    <!-- I omitted the long repeated part for brevity. Paste your main content here. -->
+    <!-- Your main HEADER, NAV, COMPOSER, FEED content goes here -->
   </div>
 
   <!-- ==================== ADMIN DASHBOARD ==================== -->
   <!-- Admin Link -->
-  <button id="admin-link" class="hidden fixed bottom-4 right-4 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-2xl text-sm font-medium shadow-xl z-50">
+  <button id="admin-link" class="hidden fixed bottom-4 right-4 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-2xl text-sm font-medium shadow-xl z-50" data-i18n="adminDashboardBtn">
     ⚙️ Admin Dashboard
   </button>
 
@@ -64,15 +64,15 @@
   <div id="admin-dashboard" class="admin-modal">
     <div class="modal-content">
       <div class="flex justify-between items-center mb-6">
-        <h2 class="text-2xl font-bold">🔧 System Command Center (Owner/Admin)</h2>
+        <h2 class="text-2xl font-bold" data-i18n="adminCommandCenter">🔧 System Command Center (Owner/Admin)</h2>
         <button onclick="closeAdminDashboard()" class="text-3xl text-zinc-400 hover:text-white">×</button>
       </div>
 
       <p id="admin-status" class="mb-6"></p>
 
       <div class="dashboard-tabs flex gap-2 mb-6 border-b border-zinc-700">
-        <button onclick="showTab(0)" class="tab-btn active px-6 py-2">Users Management</button>
-        <button onclick="showTab(1)" class="tab-btn px-6 py-2">System Stats</button>
+        <button onclick="showTab(0)" class="tab-btn active px-6 py-2" data-i18n="usersManagementTab">Users Management</button>
+        <button onclick="showTab(1)" class="tab-btn px-6 py-2" data-i18n="systemStatsTab">System Stats</button>
       </div>
 
       <!-- Users Tab -->
@@ -80,11 +80,11 @@
         <table id="admin-user-table" class="w-full">
           <thead>
             <tr class="border-b border-zinc-700">
-              <th class="text-left py-3">Avatar</th>
-              <th class="text-left py-3">Name</th>
-              <th class="text-left py-3">Email</th>
-              <th class="text-left py-3">Role</th>
-              <th class="text-left py-3">Actions</th>
+              <th class="text-left py-3" data-i18n="avatarCol">Avatar</th>
+              <th class="text-left py-3" data-i18n="nameCol">Name</th>
+              <th class="text-left py-3" data-i18n="emailCol">Email</th>
+              <th class="text-left py-3" data-i18n="roleCol">Role</th>
+              <th class="text-left py-3" data-i18n="actionsCol">Actions</th>
             </tr>
           </thead>
           <tbody id="admin-user-list"></tbody>
@@ -93,7 +93,7 @@
 
       <!-- Stats Tab -->
       <div id="tab-1" class="hidden">
-        <h3 class="text-xl font-semibold mb-4">Platform Statistics</h3>
+        <h3 class="text-xl font-semibold mb-4" data-i18n="platformStatistics">Platform Statistics</h3>
         <div id="system-stats"></div>
       </div>
     </div>
@@ -114,15 +114,14 @@
       document.getElementById('tab-0').classList.toggle('hidden', n !== 0);
       document.getElementById('tab-1').classList.toggle('hidden', n !== 1);
     }
-
-    // Show admin button for testing (remove or secure in production)
-    // document.getElementById('admin-link').classList.remove('hidden');
-
-    // Existing functions...
-    function toggleMoreMenu() { ... }
-    // ... your other functions
   </script>
 
   <script type="module" src="js/main.js"></script>
+  <script type="module">
+    import { initLanguage } from './js/i18n.js';
+    document.addEventListener('DOMContentLoaded', () => {
+      initLanguage();
+    });
+  </script>
 </body>
 </html>
