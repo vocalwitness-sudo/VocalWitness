@@ -273,4 +273,22 @@
   "moderationFooter": "© VocalWitness — Secure Steward Moderation Module",
   "purgePost": "Purge Post",
   "approvePublish": "Approve & Publish"
+
+
+    "groupsPageTitle": "Groups - VocalWitness",
+  "groupsTitle": "Groups",
+  "discoverTab": "Discover",
+  "myGroupsTab": "My Groups",
+  "searchGroupsPlaceholder": "Search groups...",
+  "createNewGroupBtn": "➕ Create New Group",
+  "createGroupTitle": "Create New Group",
+  "createGroupSubtitle": "Build your community",
+  "groupNameLabel": "Group Name *",
+  "groupNamePlaceholder": "e.g. Lagos Truth Seekers",
+  "groupDescLabel": "Description",
+  "groupDescPlaceholder": "What is this group about?",
+  "visibilityLabel": "Visibility",
+  "visibilityPublic": "Public",
+  "visibilityNetwork": "My Network Only",
+  "visibilityWitness": "Witness Circle Only"
 }
