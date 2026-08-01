@@ -235,4 +235,42 @@
   "safetySection5Text": "If you see content that violates these guidelines, please use the in-app report feature. We review reports seriously. If your content is moderated, you will receive a notification and have the opportunity to appeal in good faith.",
   "safetyGoalTitle": "Our Goal:",
   "safetyGoalText": "A healthier public square where truth can be spoken safely, evidence can be preserved, and every good-faith witness feels protected."
+
+
+    "displayName": "Display Name",
+  "username": "Username",
+  "bio": "Bio",
+  "save": "Save",
+  "accountSettings": "Account Settings",
+  "securityHeader": "Security & Access",
+  "passwordLabel": "Password",
+  "passwordSub": "Send password reset email",
+  "resetBtn": "Reset",
+  "2faLabel": "Two-Factor Auth (2FA)",
+  "2faSub": "Require phone verification on sign-in",
+  "preferencesHeader": "Preferences",
+  "defaultDoorLabel": "Default Entrance Door",
+  "doorPublicSquare": "Public Square",
+  "doorCitizenTalk": "Citizen Talk",
+  "doorWitnessVoice": "Witness Voice",
+  "dangerZoneHeader": "Data & Identity",
+  "exportLabel": "Export Profile Record",
+  "exportSub": "Download encrypted identity summary",
+  "exportBtn": "Download PDF"
+
+
+    "moderationPageTitle": "Steward Moderation Queue | VocalWitness",
+  "moderationTitle": "Steward Moderation Center",
+  "backToApp": "← Back to App",
+  "pendingReviewQueue": "Pending Review Queue",
+  "pendingReviewDesc": "Review testimonies flagged by AI Toxicity scans or Citizen reports.",
+  "refreshQueue": "Refresh Queue",
+  "stewardAccessRequired": "Steward Access Required",
+  "stewardAccessDesc": "You do not have the required Steward tier privileges to view or perform actions in the moderation queue.",
+  "loadingFlagged": "Loading flagged testimonies...",
+  "allClear": "All clear!",
+  "noPending": "There are no pending testimonies requiring review right now.",
+  "moderationFooter": "© VocalWitness — Secure Steward Moderation Module",
+  "purgePost": "Purge Post",
+  "approvePublish": "Approve & Publish"
 }
