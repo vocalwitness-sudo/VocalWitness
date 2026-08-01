@@ -2,77 +2,68 @@ pragma circom 2.1.6;
 
 include "circomlib/circuits/poseidon.circom";
 include "circomlib/circuits/comparators.circom";
-include "circomlib/circuits/bitify.circom";
 
-// Simple binary Merkle proof (depth 10 is enough for start)
+// Clean Merkle Proof (depth 8 is fast and practical for now)
 template MerkleProof(levels) {
     signal input leaf;
     signal input pathElements[levels];
-    signal input pathIndices[levels];   // 0 or 1
+    signal input pathIndices[levels];
     signal output root;
 
-    signal hashes[levels + 1];
-    hashes[0] <== leaf;
+    signal cur[levels + 1];
+    cur[0] <== leaf;
 
     component hashers[levels];
-    component mux[levels];
 
     for (var i = 0; i < levels; i++) {
-        // Force pathIndices to be binary
-        pathIndices[i] * (1 - pathIndices[i]) === 0;
+        // Force pathIndices to be 0 or 1
+        pathIndices[i] * (pathIndices[i] - 1) === 0;
 
-        // Select left / right
-        mux[i] = MultiMux1(1);          // we only need 1 selector
-        mux[i].c[0][0] <== hashes[i];
-        mux[i].c[0][1] <== pathElements[i];
-        mux[i].s <== pathIndices[i];
-
-        // Actually we need both orders for Poseidon
-        // Better explicit way:
         signal left;
         signal right;
-        left  <== (1 - pathIndices[i]) * hashes[i] + pathIndices[i] * pathElements[i];
-        right <== pathIndices[i] * hashes[i] + (1 - pathIndices[i]) * pathElements[i];
+
+        left  <== (1 - pathIndices[i]) * cur[i] + pathIndices[i] * pathElements[i];
+        right <== pathIndices[i] * cur[i] + (1 - pathIndices[i]) * pathElements[i];
 
         hashers[i] = Poseidon(2);
         hashers[i].inputs[0] <== left;
         hashers[i].inputs[1] <== right;
-        hashes[i + 1] <== hashers[i].out;
+        cur[i + 1] <== hashers[i].out;
     }
 
-    root <== hashes[levels];
+    root <== cur[levels];
 }
 
 template VocalWitness(levels) {
-    // ===== Private inputs =====
-    signal input secret;          // user's private identity secret
-    signal input nullifier;       // random value used only once
+    // Private inputs
+    signal input secret;
+    signal input nullifier;
     signal input trustScore;
     signal input postCount;
     signal input pathElements[levels];
     signal input pathIndices[levels];
 
-    // ===== Public inputs =====
+    // Public inputs
     signal input merkleRoot;
     signal input minTrustScore;
     signal input minPosts;
 
-    // ===== Public outputs =====
-    signal output nullifierHash;  // this is what we store / check against double-spend
-    signal output commitment;     // public commitment of the witness
+    // Public outputs
+    signal output nullifierHash;
+    signal output commitment;
 
     // 1. Commitment = Poseidon(secret, nullifier)
-    component commitmentHasher = Poseidon(2);
-    commitmentHasher.inputs[0] <== secret;
-    commitmentHasher.inputs[1] <== nullifier;
-    commitment <== commitmentHasher.out;
+    component commitHash = Poseidon(2);
+    commitHash.inputs[0] <== secret;
+    commitHash.inputs[1] <== nullifier;
+    commitment <== commitHash.out;
 
-    // 2. Nullifier Hash = Poseidon(nullifier)  ← prevents reuse
-    component nullifierHasher = Poseidon(1);
-    nullifierHasher.inputs[0] <== nullifier;
-    nullifierHash <== nullifierHasher.out;
+    // 2. Nullifier Hash (prevents reuse)
+    component nullHash = Poseidon(1);
+    nullHash.inputs[0] <== nullifier;
+    nullifierHash <== nullHash.out;
 
-    // 3. Merkle membership proof of the commitment
+    // 3. Merkle membership
     component merkle = MerkleProof(levels);
     merkle.leaf <== commitment;
     for (var i = 0; i < levels; i++) {
@@ -81,7 +72,7 @@ template VocalWitness(levels) {
     }
     merkle.root === merkleRoot;
 
-    // 4. Selective disclosure (trust & posts)
+    // 4. Trust & post count checks
     component trustCheck = GreaterEqThan(32);
     trustCheck.in[0] <== trustScore;
     trustCheck.in[1] <== minTrustScore;
@@ -93,5 +84,5 @@ template VocalWitness(levels) {
     postsCheck.out === 1;
 }
 
-// Depth 10 is a good starting point (fast compile + enough capacity)
-component main {public [merkleRoot, minTrustScore, minPosts]} = VocalWitness(10);
+// Depth 8 is very safe for GitHub Actions (fast compile)
+component main {public [merkleRoot, minTrustScore, minPosts]} = VocalWitness(8);
