@@ -58,10 +58,26 @@
   "supportModal": {
     "title": "Sostener la Plaza Pública",
     "description": "Contribuye directamente al registro de verdad de VocalWitness. Tu apoyo ayuda a mantener viva nuestra infraestructura.",
-    "usdtLabel": "Dirección USDT (TRC20)",
+    "usdtLabel": "Dirección USDT (TRC-20)",
     "copyButton": "Copiar Dirección",
-    "warning": "Envía solo USDT en la red TRC20.",
+    "warning": "Envía solo USDT en la red TRC-20.",
     "closeButton": "Cerrar"
+  },
+  "authModal": {
+    "title": "Entrar a la Plaza",
+    "subtitle": "Establece tu identidad de nodo en VocalWitness para reportar, verificar y publicar evidencia.",
+    "googleBtn": "Continuar con Google",
+    "anonymousBtn": "Continuar como Nodo Anónimo",
+    "cancelBtn": "Cancelar y Seguir Navegando"
+  },
+  "toast": {
+    "nodeConnected": "Enlace de Nodo Establecido: Google OAuth",
+    "anonymousInit": "Nodo de Identidad Anónima Inicializado",
+    "nodeDisconnected": "Nodo de Identidad Desconectado",
+    "authFailed": "Falló la autenticación.",
+    "popupBlocked": "¡Ventana emergente bloqueada! Por favor permite ventanas emergentes en este sitio.",
+    "signInCancelled": "Inicio de sesión cancelado.",
+    "requireAuth": "Por favor inicia sesión para continuar."
   },
   "trueWitnessTitle": "Testigo Verdadero • VocalWitness",
   "trueWitnessSubtitle": "Verificado con ZK • Alta Confianza",
@@ -76,17 +92,16 @@
   "myProfile": "Mi Perfil",
   "backToSquare": "← Volver a la Plaza",
   "loadingProfile": "Cargando tu perfil...",
-  "settings": "Configuración"
-}
-"publicSquareTab": "🗣️ Plaza Pública",
+  "settings": "Configuración",
+  "publicSquareTab": "Plaza Pública",
   "publicSquareDesc": "Comparte historias y evidencia",
-  "evidenceLedgerTab": "📜 Registro de Evidencia",
+  "evidenceLedgerTab": "Registro de Evidencia",
   "evidenceLedgerDesc": "Registro permanente",
-  "liveArenaTab": "🎥 Arena en Vivo",
+  "liveArenaTab": "Arena en Vivo",
   "liveArenaDesc": "Ver y unirse en vivo",
-  "myCircleTab": "👥 Mi Círculo",
+  "myCircleTab": "Mi Círculo",
   "myCircleDesc": "Personas de confianza",
-  "verifiedWitnessesTab": "✅ Testigos Verificados",
+  "verifiedWitnessesTab": "Testigos Verificados",
   "verifiedWitnessesDesc": "Voces de confianza",
   "moreOptionsBtn": "Más Opciones",
   "myTestimoniesMenu": "Mis Testimonios",
@@ -98,6 +113,8 @@
   "safetyGuidelinesMenu": "Pautas de Seguridad",
   "shareTestimonyTitle": "Comparte tu Testimonio",
   "publicSquareSubtitle": "Plaza Pública",
+  "mainInputPlaceholder": "Comparte tu testimonio en bruto... ¿Qué presenciaste?",
   "addPhotoEvidence": "Añadir Evidencia Fotográfica",
   "recordVoiceMessage": "Grabar Mensaje de Voz",
   "previewAreaText": "La vista previa aparecerá aquí..."
+}
