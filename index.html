@@ -79,6 +79,38 @@
             </div>
         </header>
 
+        <!-- Mobile Menu Dropdown -->
+<div id="mobile-menu" class="hidden md:hidden fixed top-[92px] left-4 right-4 glass rounded-3xl p-5 shadow-2xl z-[100] border border-zinc-700">
+    <div class="flex flex-col gap-4">
+        
+        <select id="languageSelector-mobile" aria-label="Select Language" 
+                class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-4 py-3 text-base">
+            <option value="en">English</option>
+            <option value="es">Español</option>
+            <option value="fr">Français</option>
+        </select>
+
+        <button id="data-saver-btn-mobile" onclick="toggleDataSaver()" 
+                class="w-full text-left px-4 py-3 rounded-2xl hover:bg-zinc-800 transition flex items-center gap-3 text-base">
+            ⚡ Data Saver: <strong id="data-saver-status-mobile" class="text-emerald-400">Off</strong>
+        </button>
+
+        <a href="privacy.html" class="px-4 py-3 rounded-2xl hover:bg-zinc-800 transition block text-emerald-400">
+            Privacy First
+        </a>
+
+        <button id="signin-btn-mobile" onclick="showAuthModal()" 
+                class="w-full py-3 bg-white text-black font-semibold rounded-2xl">
+            Sign in
+        </button>
+
+        <button id="profile-btn-mobile" onclick="openProfile()" 
+                class="w-full py-3 border border-zinc-700 hover:bg-zinc-800 rounded-2xl hidden">
+            Profile
+        </button>
+    </div>
+</div>
+
 
         
        <!-- SEARCH BAR - Improved size + better click handling -->
