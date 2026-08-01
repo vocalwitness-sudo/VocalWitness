@@ -116,3 +116,57 @@ button.selected::after,
 #clearSearchBtn {
     pointer-events: auto !important;
 }
+
+/* ====================== URGENT CLICK FIX (Aug 2026) ====================== */
+/* Target only problematic areas - Safe & Specific */
+
+header {
+    z-index: 60 !important;
+}
+
+#main-nav {
+    position: relative;
+    z-index: 55 !important;
+}
+
+.nav-tab {
+    position: relative;
+    z-index: 50 !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+/* Exclude More Options button from forced active state */
+#nav-tab.more-options,
+button#more-btn {
+    pointer-events: auto !important;
+}
+
+/* Search bar must stay behind */
+.relative.w-full.max-w-lg,
+.relative.w-full.max-w-md {
+    z-index: 15 !important;
+}
+
+#squareSearchInput,
+#clearSearchBtn {
+    pointer-events: auto !important;
+    z-index: 20 !important;
+}
+
+/* Main action buttons */
+#btn-photo,
+#btn-voice,
+#postButton,
+#signin-btn,
+#support-btn,
+#profile-btn {
+    position: relative;
+    z-index: 40 !important;
+    pointer-events: auto !important;
+}
+
+/* General protection */
+button, [role="button"] {
+    pointer-events: auto !important;
+}
