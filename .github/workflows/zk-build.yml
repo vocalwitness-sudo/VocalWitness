@@ -11,10 +11,12 @@ jobs:
   build-zk:
     runs-on: ubuntu-latest
     permissions:
-      contents: write          # ← This is required so the bot can push the circuits/ folder
+      contents: write # Grants push permissions to GITHUB_TOKEN
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
