@@ -111,3 +111,8 @@ button.selected::after,
     border-color: var(--accent-red) !important;
     box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3);
 }
+/* Search bar click safety */
+#squareSearchInput,
+#clearSearchBtn {
+    pointer-events: auto !important;
+}
