@@ -1,127 +1,306 @@
 <!DOCTYPE html>
-<html lang="en-NG">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#10b981">
-    
-  <title data-i18n="adminPageTitle">Admin Dashboard • VocalWitness</title>
+  <title>VocalWitness • System Command Center</title>
 
-  <link rel="manifest" href="/manifest.json">
   <link rel="icon" href="logo.png" type="image/png">
-  <link rel="stylesheet" href="style.css">
-
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
-
-  <style>
-    body { 
-      font-family: 'Inter', system-ui, sans-serif; 
-      background: #0a0f1c; 
-      color: white; 
-    }
-    .glass {
-      background: rgba(17, 24, 39, 0.95);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(16, 185, 129, 0.25);
-    }
-    .admin-modal {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.9);
-      z-index: 1000;
-      display: none;
-    }
-    .modal-content {
-      background: #111827;
-      margin: 5% auto;
-      padding: 2rem;
-      max-width: 1000px;
-      border-radius: 16px;
-      border: 1px solid #10b981;
-    }
-  </style>
+  <link rel="stylesheet" href="./css/styles.css">
 </head>
-<body class="min-h-screen pb-20 p-4 bg-[#0a0f1c]">
+<body class="bg-[#0a0f1c] text-slate-100 min-h-screen font-sans flex flex-col">
 
-  <!-- LEGAL NOTICE -->
-  <div class="max-w-2xl mx-auto bg-red-950/30 border border-red-500/20 rounded-3xl p-4 text-xs mb-6 text-center">
-    <strong class="text-red-400" data-i18n="legalLabel">Legal:</strong> 
-    <span data-i18n="legalNotice">VocalWitness is an un-manipulated decentralized distribution medium.</span>
-  </div>
-
-  <div class="max-w-2xl mx-auto">
-    <!-- Your main HEADER, NAV, COMPOSER, FEED content goes here -->
-  </div>
-
-  <!-- ==================== ADMIN DASHBOARD ==================== -->
-  <!-- Admin Link -->
-  <button id="admin-link" class="hidden fixed bottom-4 right-4 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-2xl text-sm font-medium shadow-xl z-50" data-i18n="adminDashboardBtn">
-    ⚙️ Admin Dashboard
-  </button>
-
-  <!-- Admin Dashboard Modal -->
-  <div id="admin-dashboard" class="admin-modal">
-    <div class="modal-content">
-      <div class="flex justify-between items-center mb-6">
-        <h2 class="text-2xl font-bold" data-i18n="adminCommandCenter">🔧 System Command Center (Owner/Admin)</h2>
-        <button onclick="closeAdminDashboard()" class="text-3xl text-zinc-400 hover:text-white">×</button>
+  <!-- Top Navigation Header -->
+  <header class="border-b border-slate-800 bg-slate-950/80 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <span class="text-2xl">⚙️</span>
+        <div>
+          <h1 class="text-xl font-bold text-white tracking-wide">VocalWitness Executive Office</h1>
+          <p class="text-xs text-emerald-400 font-medium">System Command & Role Management Center</p>
+        </div>
       </div>
-
-      <p id="admin-status" class="mb-6"></p>
-
-      <div class="dashboard-tabs flex gap-2 mb-6 border-b border-zinc-700">
-        <button onclick="showTab(0)" class="tab-btn active px-6 py-2" data-i18n="usersManagementTab">Users Management</button>
-        <button onclick="showTab(1)" class="tab-btn px-6 py-2" data-i18n="systemStatsTab">System Stats</button>
-      </div>
-
-      <!-- Users Tab -->
-      <div id="tab-0">
-        <table id="admin-user-table" class="w-full">
-          <thead>
-            <tr class="border-b border-zinc-700">
-              <th class="text-left py-3" data-i18n="avatarCol">Avatar</th>
-              <th class="text-left py-3" data-i18n="nameCol">Name</th>
-              <th class="text-left py-3" data-i18n="emailCol">Email</th>
-              <th class="text-left py-3" data-i18n="roleCol">Role</th>
-              <th class="text-left py-3" data-i18n="actionsCol">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="admin-user-list"></tbody>
-        </table>
-      </div>
-
-      <!-- Stats Tab -->
-      <div id="tab-1" class="hidden">
-        <h3 class="text-xl font-semibold mb-4" data-i18n="platformStatistics">Platform Statistics</h3>
-        <div id="system-stats"></div>
+      <div class="flex items-center space-x-4">
+        <span id="admin-user-badge" class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs px-3 py-1 rounded-full font-mono">
+          Authenticating...
+        </span>
+        <a href="./index.html" class="text-sm text-slate-400 hover:text-white transition flex items-center gap-1">
+          ← Exit to Platform
+        </a>
       </div>
     </div>
+  </header>
+
+  <!-- Unauthorized Guard Notice -->
+  <div id="access-denied" class="hidden max-w-lg mx-auto my-20 p-8 bg-rose-950/30 border border-rose-500/30 rounded-2xl text-center">
+    <div class="text-5xl mb-4">🚫</div>
+    <h2 class="text-xl font-bold text-rose-400 mb-2">Restricted Access</h2>
+    <p class="text-sm text-slate-400 mb-6">You must be signed in with an Owner or Admin account to access this system dashboard.</p>
+    <a href="./index.html" class="inline-block bg-slate-800 hover:bg-slate-700 text-slate-200 px-5 py-2.5 rounded-xl text-sm font-medium transition">
+      Return to Home
+    </a>
   </div>
 
-  <!-- Your other modals (Support, Profile, etc.) go here -->
+  <!-- Main Executive Interface -->
+  <main id="admin-main-content" class="flex-grow max-w-7xl mx-auto w-full px-6 py-8">
+    
+    <!-- System Metrics Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 backdrop-blur">
+        <div class="flex items-center justify-between text-slate-400 mb-2">
+          <span class="text-xs uppercase tracking-wider font-semibold">Total Registered Users</span>
+          <span class="text-lg">👥</span>
+        </div>
+        <div id="stat-total-users" class="text-3xl font-bold text-white font-mono">--</div>
+      </div>
 
-  <script>
-    // Admin functions
-    function closeAdminDashboard() {
-      document.getElementById('admin-dashboard').style.display = 'none';
-    }
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 backdrop-blur">
+        <div class="flex items-center justify-between text-slate-400 mb-2">
+          <span class="text-xs uppercase tracking-wider font-semibold">Total Testimonies</span>
+          <span class="text-lg">📜</span>
+        </div>
+        <div id="stat-total-testimonies" class="text-3xl font-bold text-emerald-400 font-mono">--</div>
+      </div>
 
-    function showTab(n) {
-      document.querySelectorAll('.tab-btn').forEach((btn, i) => {
-        btn.classList.toggle('active', i === n);
-      });
-      document.getElementById('tab-0').classList.toggle('hidden', n !== 0);
-      document.getElementById('tab-1').classList.toggle('hidden', n !== 1);
-    }
-  </script>
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 backdrop-blur">
+        <div class="flex items-center justify-between text-slate-400 mb-2">
+          <span class="text-xs uppercase tracking-wider font-semibold">Pending Steward Reviews</span>
+          <span class="text-lg">🛡️</span>
+        </div>
+        <div id="stat-pending-reviews" class="text-3xl font-bold text-amber-400 font-mono">--</div>
+      </div>
 
-  <script type="module" src="js/main.js"></script>
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 backdrop-blur">
+        <div class="flex items-center justify-between text-slate-400 mb-2">
+          <span class="text-xs uppercase tracking-wider font-semibold">Active Stewards</span>
+          <span class="text-lg">👑</span>
+        </div>
+        <div id="stat-total-stewards" class="text-3xl font-bold text-blue-400 font-mono">--</div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="flex border-b border-slate-800 mb-6 gap-6">
+      <button id="tab-btn-users" onclick="switchAdminTab('users')" class="pb-3 border-b-2 border-emerald-500 font-medium text-emerald-400 text-sm flex items-center gap-2">
+        <span>👥 User & Role Management</span>
+      </button>
+      <button id="tab-btn-audit" onclick="switchAdminTab('audit')" class="pb-3 border-b-2 border-transparent font-medium text-slate-400 hover:text-slate-200 text-sm flex items-center gap-2">
+        <span>🛡️ Security Audit Logs</span>
+      </button>
+    </div>
+
+    <!-- TAB 1: User & Role Management Table -->
+    <section id="tab-content-users" class="space-y-4">
+      <div class="flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-900/50 p-4 border border-slate-800 rounded-xl">
+        <input type="text" id="user-search-input" placeholder="Search by name, email, or UID..." 
+               class="bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-sm w-full sm:w-80 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500">
+        <button id="refresh-users-btn" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-2 rounded-lg text-sm font-medium transition border border-slate-700">
+          🔄 Refresh User List
+        </button>
+      </div>
+
+      <div class="overflow-x-auto border border-slate-800 rounded-xl bg-slate-950/60">
+        <table class="w-full text-left text-sm text-slate-300">
+          <thead class="bg-slate-900/90 text-xs uppercase tracking-wider text-slate-400 border-b border-slate-800">
+            <tr>
+              <th class="px-6 py-4">User</th>
+              <th class="px-6 py-4">Email / Identity</th>
+              <th class="px-6 py-4">Current Tier</th>
+              <th class="px-6 py-4">Change Role</th>
+              <th class="px-6 py-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="admin-user-table-body" class="divide-y divide-slate-800/60">
+            <tr>
+              <td colspan="5" class="px-6 py-12 text-center text-slate-500">
+                <div class="inline-block animate-spin rounded-full h-6 w-6 border-2 border-slate-700 border-t-emerald-500 mb-2"></div>
+                <p>Fetching registered accounts...</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- TAB 2: Audit Logs Container -->
+    <section id="tab-content-audit" class="hidden space-y-4">
+      <div class="border border-slate-800 rounded-xl bg-slate-950/60 p-6">
+        <h3 class="text-base font-semibold text-white mb-4">Security & Moderation Activity</h3>
+        <div id="audit-logs-container" class="space-y-3 font-mono text-xs">
+          <p class="text-slate-500">Loading platform audit history...</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Script Wiring -->
   <script type="module">
-    import { initLanguage } from './js/i18n.js';
-    document.addEventListener('DOMContentLoaded', () => {
-      initLanguage();
-    });
+    import { db, auth } from './js/firebase-config.js';
+    import { collection, getDocs, doc, updateDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+    import { hasStewardAccess, TIERS } from './js/tier.js';
+    import { showToast } from './js/utils.js';
+
+    const adminMain = document.getElementById('admin-main-content');
+    const accessDenied = document.getElementById('access-denied');
+    const adminUserBadge = document.getElementById('admin-user-badge');
+    const userTableBody = document.getElementById('admin-user-table-body');
+
+    // Tab switcher logic
+    window.switchAdminTab = function(tabName) {
+      const usersTab = document.getElementById('tab-content-users');
+      const auditTab = document.getElementById('tab-content-audit');
+      const btnUsers = document.getElementById('tab-btn-users');
+      const btnAudit = document.getElementById('tab-btn-audit');
+
+      if (tabName === 'users') {
+        usersTab.classList.remove('hidden');
+        auditTab.classList.add('hidden');
+        btnUsers.className = "pb-3 border-b-2 border-emerald-500 font-medium text-emerald-400 text-sm flex items-center gap-2";
+        btnAudit.className = "pb-3 border-b-2 border-transparent font-medium text-slate-400 hover:text-slate-200 text-sm flex items-center gap-2";
+      } else {
+        usersTab.classList.add('hidden');
+        auditTab.classList.remove('hidden');
+        btnAudit.className = "pb-3 border-b-2 border-emerald-500 font-medium text-emerald-400 text-sm flex items-center gap-2";
+        btnUsers.className = "pb-3 border-b-2 border-transparent font-medium text-slate-400 hover:text-slate-200 text-sm flex items-center gap-2";
+        loadAuditLogs();
+      }
+    };
+
+    // Load Metrics & User List
+    async function initAdminDashboard() {
+      // Security Guard Check
+      const isSteward = await hasStewardAccess();
+      if (!isSteward) {
+        adminMain.classList.add('hidden');
+        accessDenied.classList.remove('hidden');
+        return;
+      }
+
+      adminUserBadge.textContent = `Admin: ${auth.currentUser?.email || 'Authenticated'}`;
+
+      try {
+        // Fetch Users
+        const usersSnap = await getDocs(collection(db, "users"));
+        const testimoniesSnap = await getDocs(collection(db, "testimonies"));
+        
+        document.getElementById('stat-total-users').textContent = usersSnap.size || 0;
+        document.getElementById('stat-total-testimonies').textContent = testimoniesSnap.size || 0;
+
+        let stewardCount = 0;
+        let pendingCount = 0;
+
+        testimoniesSnap.forEach(d => {
+          if (d.data().moderationStatus === 'needs_review') pendingCount++;
+        });
+
+        userTableBody.innerHTML = '';
+
+        usersSnap.forEach(docSnap => {
+          const userData = docSnap.data();
+          const userId = docSnap.id;
+          const currentTier = userData.tier || 'CITIZEN';
+
+          if (currentTier === 'STEWARD' || currentTier === 'ADMIN') stewardCount++;
+
+          const row = document.createElement('tr');
+          row.className = "hover:bg-slate-900/50 transition";
+          row.innerHTML = `
+            <td class="px-6 py-4 flex items-center gap-3">
+              <div class="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-bold text-emerald-400">
+                ${(userData.displayName || 'U')[0].toUpperCase()}
+              </div>
+              <div>
+                <div class="font-medium text-white">${userData.displayName || 'Anonymous'}</div>
+                <div class="text-xs text-slate-500 font-mono">${userId.slice(0, 8)}...</div>
+              </div>
+            </td>
+            <td class="px-6 py-4 text-slate-400">${userData.email || 'N/A'}</td>
+            <td class="px-6 py-4">
+              <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${
+                currentTier === 'ADMIN' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/30' :
+                currentTier === 'STEWARD' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/30' :
+                'bg-slate-800 text-slate-400'
+              }">
+                ${currentTier}
+              </span>
+            </td>
+            <td class="px-6 py-4">
+              <select data-uid="${userId}" class="tier-select bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-slate-300 focus:border-emerald-500">
+                <option value="CITIZEN" ${currentTier === 'CITIZEN' ? 'selected' : ''}>Citizen</option>
+                <option value="STEWARD" ${currentTier === 'STEWARD' ? 'selected' : ''}>Steward</option>
+                <option value="ADMIN" ${currentTier === 'ADMIN' ? 'selected' : ''}>Admin</option>
+              </select>
+            </td>
+            <td class="px-6 py-4 text-right">
+              <button data-uid="${userId}" class="save-role-btn text-xs bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg transition font-medium">
+                Save Role
+              </button>
+            </td>
+          `;
+          userTableBody.appendChild(row);
+        });
+
+        document.getElementById('stat-pending-reviews').textContent = pendingCount;
+        document.getElementById('stat-total-stewards').textContent = stewardCount;
+
+        // Attach event handlers for role updates
+        document.querySelectorAll('.save-role-btn').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            const uid = e.target.getAttribute('data-uid');
+            const selectEl = document.querySelector(`.tier-select[data-uid="${uid}"]`);
+            const newTier = selectEl.value;
+
+            try {
+              await updateDoc(doc(db, "users", uid), { tier: newTier });
+              showToast(`Updated user tier to ${newTier}`, "success");
+            } catch (err) {
+              console.error(err);
+              showToast("Failed to update user tier", "error");
+            }
+          });
+        });
+
+      } catch (err) {
+        console.error("Failed to load admin dashboard:", err);
+      }
+    }
+
+    // Load Audit Logs
+    async function loadAuditLogs() {
+      const auditContainer = document.getElementById('audit-logs-container');
+      try {
+        const q = query(collection(db, "audit_logs"), orderBy("timestamp", "desc"), limit(20));
+        const snap = await getDocs(q);
+        
+        if (snap.empty) {
+          auditContainer.innerHTML = `<p class="text-slate-500">No security audit events recorded yet.</p>`;
+          return;
+        }
+
+        auditContainer.innerHTML = '';
+        snap.forEach(d => {
+          const log = d.data();
+          const item = document.createElement('div');
+          item.className = "p-3 bg-slate-900 border border-slate-800 rounded-lg flex justify-between items-center";
+          item.innerHTML = `
+            <div>
+              <span class="text-emerald-400 font-bold">[${log.action || 'EVENT'}]</span> 
+              <span class="text-slate-300 ml-2">Target ID: ${log.targetId || 'N/A'}</span>
+            </div>
+            <span class="text-slate-500 text-[10px]">${log.timestamp?.toDate ? log.timestamp.toDate().toLocaleString() : 'Recent'}</span>
+          `;
+          auditContainer.appendChild(item);
+        });
+      } catch (e) {
+        auditContainer.innerHTML = `<p class="text-rose-400">Unable to load audit logs.</p>`;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', initAdminDashboard);
+    document.getElementById('refresh-users-btn')?.addEventListener('click', initAdminDashboard);
   </script>
 </body>
 </html>
