@@ -291,4 +291,12 @@
   "visibilityPublic": "Public",
   "visibilityNetwork": "My Network Only",
   "visibilityWitness": "Witness Circle Only"
+
+    "liveArenaPageTitle": "Live Arena • VocalWitness",
+  "liveArenaTitle": "Live Arena",
+  "liveArenaSubtitle": "Real-time Public Debate",
+  "liveArenaComingSoon": "Real-time discussions, debates, and public testimonies are coming soon.",
+  "underConstruction": "🚧 Under Construction",
+  "arenaOpenWhen": "The Arena will open when we reach 500 verified witnesses",
+  "notifyMeBtn": "🔔 Notify Me When Arena Goes Live"
 }
