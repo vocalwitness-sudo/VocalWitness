@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Steward Moderation Queue | VocalWitness</title>
-    <!-- Base styles and Tailwind CSS CDN for quick, clean UI -->
+    <title data-i18n="moderationPageTitle">Steward Moderation Queue | VocalWitness</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="./css/styles.css">
 </head>
@@ -15,10 +14,10 @@
         <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
             <div class="flex items-center space-x-3">
                 <span class="text-2xl">🛡️</span>
-                <h1 class="text-xl font-bold tracking-tight text-white">Steward Moderation Center</h1>
+                <h1 class="text-xl font-bold tracking-tight text-white" data-i18n="moderationTitle">Steward Moderation Center</h1>
             </div>
             <div class="flex items-center space-x-4 text-sm">
-                <a href="./index.html" class="text-slate-400 hover:text-white transition">← Back to App</a>
+                <a href="./index.html" class="text-slate-400 hover:text-white transition" data-i18n="backToApp">← Back to App</a>
             </div>
         </div>
     </header>
@@ -29,20 +28,20 @@
         <!-- Dashboard Header & Actions -->
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <div>
-                <h2 class="text-2xl font-bold text-white">Pending Review Queue</h2>
-                <p class="text-slate-400 text-sm">Review testimonies flagged by AI Toxicity scans or Citizen reports.</p>
+                <h2 class="text-2xl font-bold text-white" data-i18n="pendingReviewQueue">Pending Review Queue</h2>
+                <p class="text-slate-400 text-sm" data-i18n="pendingReviewDesc">Review testimonies flagged by AI Toxicity scans or Citizen reports.</p>
             </div>
             <button id="refreshQueueBtn" class="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-2 rounded-lg border border-slate-700 text-sm font-medium transition">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                Refresh Queue
+                <span data-i18n="refreshQueue">Refresh Queue</span>
             </button>
         </div>
 
         <!-- Access Guard Warning (Hidden by default) -->
         <div id="unauthorizedWarning" class="hidden bg-amber-500/10 border border-amber-500/30 rounded-xl p-6 text-center max-w-xl mx-auto my-12">
             <div class="text-4xl mb-3">🔒</div>
-            <h3 class="text-lg font-semibold text-amber-400 mb-1">Steward Access Required</h3>
-            <p class="text-slate-400 text-sm">You do not have the required Steward tier privileges to view or perform actions in the moderation queue.</p>
+            <h3 class="text-lg font-semibold text-amber-400 mb-1" data-i18n="stewardAccessRequired">Steward Access Required</h3>
+            <p class="text-slate-400 text-sm" data-i18n="stewardAccessDesc">You do not have the required Steward tier privileges to view or perform actions in the moderation queue.</p>
         </div>
 
         <!-- Queue Cards List -->
@@ -50,28 +49,29 @@
             <!-- Loading Skeleton State -->
             <div id="queueLoading" class="text-center py-16 text-slate-500">
                 <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-slate-700 border-t-blue-500 mb-3"></div>
-                <p>Loading flagged testimonies...</p>
+                <p data-i18n="loadingFlagged">Loading flagged testimonies...</p>
             </div>
         </div>
 
         <!-- Empty State (Hidden by default) -->
         <div id="emptyQueue" class="hidden text-center py-16 bg-slate-950/40 border border-slate-800/80 rounded-2xl">
             <div class="text-4xl mb-3">🎉</div>
-            <h3 class="text-lg font-semibold text-slate-300">All clear!</h3>
-            <p class="text-slate-500 text-sm">There are no pending testimonies requiring review right now.</p>
+            <h3 class="text-lg font-semibold text-slate-300" data-i18n="allClear">All clear!</h3>
+            <p class="text-slate-500 text-sm" data-i18n="noPending">There are no pending testimonies requiring review right now.</p>
         </div>
 
     </main>
 
     <!-- Footer -->
     <footer class="border-t border-slate-800/60 py-6 text-center text-xs text-slate-500">
-        <p>© VocalWitness — Secure Steward Moderation Module</p>
+        <p data-i18n="moderationFooter">© VocalWitness — Secure Steward Moderation Module</p>
     </footer>
 
     <!-- Modular Script Initialization -->
     <script type="module">
         import { fetchReviewQueue, stewardReviewAction } from './js/moderation.js';
         import { hasStewardAccess } from './js/tier.js';
+        import { initLanguage } from './js/i18n.js';
 
         const queueContainer = document.getElementById('queueContainer');
         const queueLoading = document.getElementById('queueLoading');
@@ -133,10 +133,10 @@
 
                     <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-800/60">
                         <button data-action="purge" data-id="${item.id}" class="action-btn border border-rose-500/30 text-rose-400 hover:bg-rose-500/10 px-4 py-2 rounded-lg text-sm font-medium transition">
-                            🗑️ Purge Post
+                            🗑️ <span data-i18n="purgePost">Purge Post</span>
                         </button>
                         <button data-action="approve" data-id="${item.id}" class="action-btn bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm">
-                            ✅ Approve & Publish
+                            ✅ <span data-i18n="approvePublish">Approve & Publish</span>
                         </button>
                     </div>
                 `;
@@ -170,7 +170,10 @@
         }
 
         // Initialize on Load
-        document.addEventListener('DOMContentLoaded', renderModerationDashboard);
+        document.addEventListener('DOMContentLoaded', () => {
+            initLanguage();
+            renderModerationDashboard();
+        });
         refreshQueueBtn.addEventListener('click', renderModerationDashboard);
         window.addEventListener('languageChanged', renderModerationDashboard);
     </script>
