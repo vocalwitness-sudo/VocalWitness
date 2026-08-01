@@ -5,7 +5,7 @@ on:
     paths:
       - 'witness.circom'
       - '.github/workflows/zk-build.yml'
-  workflow_dispatch:   # allows manual trigger
+  workflow_dispatch:
 
 jobs:
   build-zk:
@@ -20,14 +20,13 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install Circom & Dependencies
+      - name: Install Circom + Dependencies
         run: |
-          # Install Circom
+          # Fast Circom binary
           curl -L https://github.com/iden3/circom/releases/download/v2.1.9/circom-linux-amd64 -o circom
           chmod +x circom
           sudo mv circom /usr/local/bin/
 
-          # Install snarkjs + circomlib
           npm install -g snarkjs
           npm install circomlib
 
@@ -36,39 +35,26 @@ jobs:
           mkdir -p build circuits
           circom witness.circom --r1cs --wasm --sym -o build/ -l node_modules
 
-      - name: Powers of Tau + zkey
+      - name: Generate Keys
         run: |
           cd build
-          # Download a safe Powers of Tau (level 14 is comfortable)
           wget -q https://storage.googleapis.com/zkevm/ptau/powersOfTau28_hez_final_14.ptau
-          
           snarkjs groth16 setup witness.r1cs powersOfTau28_hez_final_14.ptau witness_0000.zkey
-          snarkjs zkey contribute witness_0000.zkey witness_final.zkey --name="VocalWitness CI" -v -e="$(openssl rand -hex 32)"
+          snarkjs zkey contribute witness_0000.zkey witness_final.zkey --name="VocalWitness" -v -e="$(openssl rand -hex 32)"
           snarkjs zkey export verificationkey witness_final.zkey verification_key.json
 
-      - name: Organize Final Artifacts
+      - name: Place Artifacts
         run: |
-          # Put files where the frontend expects them
           cp build/witness_js/witness.wasm circuits/
           cp build/witness_final.zkey circuits/
           cp build/verification_key.json circuits/
-          
-          # Also copy verification key for Cloud Functions
           mkdir -p functions
           cp build/verification_key.json functions/
 
-      - name: Commit Artifacts Back to Repo
+      - name: Commit Artifacts
         run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           git add circuits/ functions/verification_key.json
-          git commit -m "ci: add ZK artifacts (wasm, zkey, vkey)" || echo "No changes"
+          git commit -m "ci: add ZK circuit artifacts" || echo "No changes to commit"
           git push
-
-      - name: Upload Artifacts (backup)
-        uses: actions/upload-artifact@v4
-        with:
-          name: zk-build-assets
-          path: |
-            circuits/
-            functions/verification_key.json
