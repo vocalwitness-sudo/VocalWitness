@@ -10,23 +10,22 @@ on:
 jobs:
   build-zk:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Install Circom + Dependencies
+      - name: Install Circom + snarkjs + circomlib
         run: |
-          # Fast Circom binary
           curl -L https://github.com/iden3/circom/releases/download/v2.1.9/circom-linux-amd64 -o circom
           chmod +x circom
           sudo mv circom /usr/local/bin/
-
           npm install -g snarkjs
           npm install circomlib
 
@@ -45,7 +44,12 @@ jobs:
 
       - name: Place Artifacts
         run: |
-          cp build/witness_js/witness.wasm circuits/
+          # Handle both possible wasm locations
+          if [ -f build/witness_js/witness.wasm ]; then
+            cp build/witness_js/witness.wasm circuits/
+          else
+            cp build/witness.wasm circuits/
+          fi
           cp build/witness_final.zkey circuits/
           cp build/verification_key.json circuits/
           mkdir -p functions
@@ -56,5 +60,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add circuits/ functions/verification_key.json
-          git commit -m "ci: add ZK circuit artifacts" || echo "No changes to commit"
+          git commit -m "ci: add ZK circuit artifacts" || echo "No changes"
           git push
