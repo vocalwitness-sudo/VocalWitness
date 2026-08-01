@@ -11,7 +11,7 @@ jobs:
   build-zk:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write          # ← This is required so the bot can push the circuits/ folder
 
     steps:
       - uses: actions/checkout@v4
@@ -21,7 +21,7 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install Circom + snarkjs + circomlib
+      - name: Install Circom + Dependencies
         run: |
           curl -L https://github.com/iden3/circom/releases/download/v2.1.9/circom-linux-amd64 -o circom
           chmod +x circom
@@ -44,7 +44,6 @@ jobs:
 
       - name: Place Artifacts
         run: |
-          # Handle both possible wasm locations
           if [ -f build/witness_js/witness.wasm ]; then
             cp build/witness_js/witness.wasm circuits/
           else
