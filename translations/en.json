@@ -118,4 +118,28 @@
   "addPhotoEvidence": "Add Photo Evidence",
   "recordVoiceMessage": "Record Voice Message",
   "previewAreaText": "Preview will appear here..."
+
+    "aboutPageTitle": "About VocalWitness • Truth • Evidence • Public Square",
+  "aboutTitle": "About VocalWitness",
+  "aboutSubtitle": "Your Voice. Your Truth. Shared with Integrity.",
+  "ourMission": "Our Mission",
+  "missionPara1": "In an era of deepfakes, misinformation, and centralized control, VocalWitness restores the public square. We believe truth is not dictated by algorithms or gatekeepers — it is evidenced, witnessed, and verified by the people.",
+  "missionPara2": "We empower every citizen to share raw testimonies, forensic media, and lived experiences with cryptographic integrity tools, while protecting privacy and resisting manipulation.",
+  "forensicIntegrityTitle": "Forensic Integrity",
+  "forensicIntegrityDesc": "Photos and voice recordings receive cryptographic hashing. Advanced verification (including Zero-Knowledge proofs in development) helps establish authenticity without revealing your identity.",
+  "privacyFirstTitle": "Privacy First",
+  "privacyFirstDesc": "Your identity remains protected. We use phone verification, reputation systems, and privacy-preserving technology so you can speak boldly while staying safe.",
+  "communityStewardshipTitle": "Community Stewardship",
+  "communityStewardshipDesc": "No single entity controls the narrative. Trust is earned through honest participation. Verified Witnesses and reputation mechanics reward integrity.",
+  "communitySupportedTitle": "Community Supported",
+  "communitySupportedDesc": "Fully funded by voluntary sponsorships and willing donations from people who believe in a healthier information ecosystem. No paywalls. No premium features locked behind payments.",
+  "howWeBuildTrust": "How We Build Trust",
+  "trustStep1Title": "1. Citizen Talk → True Witness",
+  "trustStep1Desc": "Start as a Citizen and earn higher trust levels through phone verification and consistent honest contributions. True Witness mode offers the strongest cryptographic guarantees.",
+  "trustStep2Title": "2. Forensic Ledger",
+  "trustStep2Desc": "All media is timestamped and hashed. The Evidence Ledger preserves permanent, verifiable records of what was shared.",
+  "trustStep3Title": "3. Un-manipulated Distribution",
+  "trustStep3Desc": "We function strictly as a neutral public square and distribution medium. We do not edit, boost, or suppress content except to enforce basic safety and legal requirements.",
+  "aboutQuote": "\"In the age of noise, the clearest voice is the one that can prove it was never altered.\"",
+  "footerCopyright": "© 2026 VocalWitness • Built for Truth • Evidence • Public Square"
 }
