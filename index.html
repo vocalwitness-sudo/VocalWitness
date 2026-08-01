@@ -61,7 +61,7 @@
         </button>
 
         <!-- Support Button -->
-        <button id="support-btn" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl transition whitespace-nowrap text-sm shadow-sm">
+        <button id="support-btn" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl transition whitespace-nowrap text-sm shadow-sm" data-i18n="supportBtn">
             Support The Square
         </button>
 
@@ -77,7 +77,7 @@
                 ⚡ <span class="hidden lg:inline">Data Saver: <strong id="data-saver-status" class="text-emerald-400">Off</strong></span>
             </button>
 
-            <a href="privacy.html" class="hidden lg:flex items-center text-emerald-400 hover:text-emerald-300 transition-colors text-sm font-medium px-3 py-2">
+            <a href="privacy.html" class="hidden lg:flex items-center text-emerald-400 hover:text-emerald-300 transition-colors text-sm font-medium px-3 py-2" data-i18n="privacyLink">
                 Privacy First
             </a>
 
@@ -86,7 +86,7 @@
                 <span class="hidden sm:inline" data-i18n="joinBtn">Sign in</span>
             </button>
 
-            <button id="profile-btn" onclick="openProfile()" class="px-4 py-2.5 border border-zinc-700 hover:bg-zinc-800 rounded-2xl transition flex items-center gap-2 hidden text-sm">
+            <button id="profile-btn" onclick="openProfile()" class="px-4 py-2.5 border border-zinc-700 hover:bg-zinc-800 rounded-2xl transition flex items-center gap-2 hidden text-sm" data-i18n="profileBtn">
                 Profile
             </button>
         </div>
@@ -108,17 +108,17 @@
             ⚡ Data Saver: <strong id="data-saver-status-mobile" class="text-emerald-400">Off</strong>
         </button>
 
-        <a href="privacy.html" class="px-4 py-3 rounded-2xl hover:bg-zinc-800 transition block text-emerald-400">
+        <a href="privacy.html" class="px-4 py-3 rounded-2xl hover:bg-zinc-800 transition block text-emerald-400" data-i18n="privacyLink">
             Privacy First
         </a>
 
         <button id="signin-btn-mobile" onclick="showAuthModal()" 
-                class="w-full py-3 bg-white text-black font-semibold rounded-2xl">
+                class="w-full py-3 bg-white text-black font-semibold rounded-2xl" data-i18n="joinBtn">
             Sign in
         </button>
 
         <button id="profile-btn-mobile" onclick="openProfile()" 
-                class="w-full py-3 border border-zinc-700 hover:bg-zinc-800 rounded-2xl hidden">
+                class="w-full py-3 border border-zinc-700 hover:bg-zinc-800 rounded-2xl hidden" data-i18n="profileBtn">
             Profile
         </button>
     </div>
@@ -135,6 +135,7 @@
     <input
         type="text"
         id="squareSearchInput"
+        data-i18n-placeholder="searchPlaceholder"
         placeholder="Search testimonies, witnesses, or topics..."
         class="w-full pl-11 pr-12 py-3.5 bg-zinc-900 border border-zinc-700 rounded-2xl 
                text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500 
@@ -184,14 +185,14 @@
 
         <!-- More Menu -->
         <div id="more-menu" class="hidden fixed top-[165px] right-6 w-64 bg-zinc-900 border border-zinc-700 rounded-3xl shadow-2xl py-3 z-[9999]">
-            <a href="my-testimonies.html" class="block px-6 py-3 hover:bg-zinc-800">My Testimonies</a>
-            <a href="groups.html" class="block px-6 py-3 hover:bg-zinc-800">Groups</a>
-            <a href="true-witness.html" class="block px-6 py-3 hover:bg-zinc-800">Witness Voice</a>
+            <a href="my-testimonies.html" class="block px-6 py-3 hover:bg-zinc-800" data-i18n="myTestimoniesMenu">My Testimonies</a>
+            <a href="groups.html" class="block px-6 py-3 hover:bg-zinc-800" data-i18n="groupsMenu">Groups</a>
+            <a href="true-witness.html" class="block px-6 py-3 hover:bg-zinc-800" data-i18n="trueWitnessMenu">Witness Voice</a>
             <div class="h-px bg-zinc-700 mx-4 my-2"></div>
-            <a href="about.html" class="block px-6 py-3 hover:bg-zinc-800">About Us</a>
-            <a href="privacy.html" class="block px-6 py-3 hover:bg-zinc-800">Privacy Policy</a>
-            <a href="terms.html" class="block px-6 py-3 hover:bg-zinc-800">Terms of Service</a>
-            <a href="safety.html" class="block px-6 py-3 hover:bg-zinc-800">Safety Guidelines</a>
+            <a href="about.html" class="block px-6 py-3 hover:bg-zinc-800" data-i18n="aboutMenu">About Us</a>
+            <a href="privacy.html" class="block px-6 py-3 hover:bg-zinc-800" data-i18n="privacyPolicyMenu">Privacy Policy</a>
+            <a href="terms.html" class="block px-6 py-3 hover:bg-zinc-800" data-i18n="termsOfServiceMenu">Terms of Service</a>
+            <a href="safety.html" class="block px-6 py-3 hover:bg-zinc-800" data-i18n="safetyGuidelinesMenu">Safety Guidelines</a>
         </div>
 
         <!-- Testimony Composer -->
