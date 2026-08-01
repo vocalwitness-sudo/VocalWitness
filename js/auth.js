@@ -316,7 +316,13 @@ export function updateUIForAuthState() {
 // ====================== INIT AUTH ======================
 export function initAuth() {
     auth.onAuthStateChanged(async (user) => {
-        if (user && user.emailVerified) {
+        // Google / Provider accounts are pre-verified. Email/Password users check emailVerified.
+        const isOAuthUser = user?.providerData?.some(
+            (p) => p.providerId === 'google.com' || p.providerId === GoogleAuthProvider.PROVIDER_ID
+        );
+        const isVerified = user && (isOAuthUser || user.emailVerified);
+
+        if (isVerified) {
             await createOrUpdateUser(user);
             updateAppState({ isAuthenticated: true, currentUser: user });
             refreshTierUI();
@@ -324,12 +330,18 @@ export function initAuth() {
             updateAppState({ isAuthenticated: false, currentUser: null });
         }
 
-        window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user: (user && user.emailVerified) ? user : null } }));
+        window.dispatchEvent(
+            new CustomEvent('auth-changed', {
+                detail: { user: isVerified ? user : null }
+            })
+        );
         updateUIForAuthState();
     });
 
+    // Event delegation: closest() handles clicks on nested icons/spans inside logout buttons
     document.addEventListener('click', (e) => {
-        if (e.target.matches('#logoutBtn, .btn-logout, [data-action="logout"]')) {
+        const logoutTarget = e.target.closest('#logoutBtn, .btn-logout, [data-action="logout"]');
+        if (logoutTarget) {
             e.preventDefault();
             logout();
         }
@@ -338,7 +350,6 @@ export function initAuth() {
     updateUIForAuthState();
     console.log("🔐 Auth initialized (Popup Mode)");
 }
-
 // ====================== MODAL & GLOBAL EXPOSURES ======================
 export function showAuthModal() {
     if (auth.currentUser) {
