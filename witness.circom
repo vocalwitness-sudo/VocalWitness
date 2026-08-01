@@ -6,9 +6,7 @@ include "circomlib/circuits/mux1.circom";
 include "circomlib/circuits/bitify.circom";
 include "circomlib/circuits/pedersen.circom";
 
-// ======================================================
 // Merkle Proof Template
-// ======================================================
 template MerkleProof(levels) {
     signal input leaf;
     signal input pathElements[levels];
@@ -22,7 +20,6 @@ template MerkleProof(levels) {
     component muxes[levels];
 
     for (var i = 0; i < levels; i++) {
-        // force pathIndices to be 0 or 1
         pathIndices[i] * (1 - pathIndices[i]) === 0;
 
         muxes[i] = MultiMux1(2);
@@ -40,30 +37,28 @@ template MerkleProof(levels) {
     root <== nodes[levels];
 }
 
-// ======================================================
-// Main VocalWitness Registry Circuit
-// ======================================================
+// Advanced VocalWitness Registry Circuit
 template VocalWitnessRegistry(levels) {
-    // ---------- Private inputs ----------
+    // Private inputs
     signal input secret;
     signal input nullifier;
-    signal input trustScore;           // Hidden
-    signal input postCount;            // Hidden
-    signal input pathElements[levels]; // Merkle path
-    signal input pathIndices[levels];  // Merkle path direction bits
+    signal input trustScore;
+    signal input postCount;
+    signal input pathElements[levels];
+    signal input pathIndices[levels];
 
-    // ---------- Public inputs ----------
+    // Public inputs
     signal input isValidWitness;
     signal input merkleRoot;
-    signal input minTrustScore;        // e.g. 60
-    signal input minPosts;             // e.g. 5
-    signal input commitment;           // Pedersen commitment
+    signal input minTrustScore;
+    signal input minPosts;
+    signal input commitment;
 
-    // ---------- Outputs ----------
+    // Outputs
     signal output nullifierHash;
     signal output valid;
 
-    // ====================== 1. Pedersen Commitment ======================
+    // 1. Pedersen Commitment
     component pedersen = Pedersen(2);
     component secretBits = Num2Bits(254);
     component nullBits = Num2Bits(254);
@@ -75,10 +70,9 @@ template VocalWitnessRegistry(levels) {
         pedersen.in[0][i] <== secretBits.out[i];
         pedersen.in[1][i] <== nullBits.out[i];
     }
-    // Enforce that the commitment matches
     pedersen.out[0] === commitment;
 
-    // ====================== 2. Merkle Proof ======================
+    // 2. Merkle Proof
     component merkle = MerkleProof(levels);
     merkle.leaf <== commitment;
     for (var i = 0; i < levels; i++) {
@@ -87,20 +81,18 @@ template VocalWitnessRegistry(levels) {
     }
     merkle.root === merkleRoot;
 
-    // ====================== 3. Selective Disclosure ======================
-    // Trust Score >= minTrustScore
+    // 3. Selective disclosures
     component trustGte = GreaterEqThan(8);
     trustGte.in[0] <== trustScore;
     trustGte.in[1] <== minTrustScore;
     trustGte.out === 1;
 
-    // Post Count >= minPosts
     component postsGte = GreaterEqThan(32);
     postsGte.in[0] <== postCount;
     postsGte.in[1] <== minPosts;
     postsGte.out === 1;
 
-    // ====================== 4. Nullifier ======================
+    // 4. Nullifier
     component nullHasher = Pedersen(1);
     component nBits = Num2Bits(254);
     nBits.in <== nullifier;
@@ -109,13 +101,9 @@ template VocalWitnessRegistry(levels) {
     }
     nullifierHash <== nullHasher.out[0];
 
-    // Final validity flag
     valid <== isValidWitness;
 }
 
-// ======================================================
-// Main component (public signals)
-// ======================================================
 component main {public [
     isValidWitness, 
     merkleRoot, 
