@@ -1,11 +1,14 @@
 pragma circom 2.1.0;
 
-include "node_modules/circomlib/circuits/pedersen.circom";
-include "node_modules/circomlib/circuits/comparators.circom";
-include "node_modules/circomlib/circuits/mux1.circom";
-include "node_modules/circomlib/circuits/bitify.circom";
+include "circomlib/circuits/poseidon.circom";
+include "circomlib/circuits/comparators.circom";
+include "circomlib/circuits/mux1.circom";
+include "circomlib/circuits/bitify.circom";
+include "circomlib/circuits/pedersen.circom";
 
+// ======================================================
 // Merkle Proof Template
+// ======================================================
 template MerkleProof(levels) {
     signal input leaf;
     signal input pathElements[levels];
@@ -19,6 +22,7 @@ template MerkleProof(levels) {
     component muxes[levels];
 
     for (var i = 0; i < levels; i++) {
+        // force pathIndices to be 0 or 1
         pathIndices[i] * (1 - pathIndices[i]) === 0;
 
         muxes[i] = MultiMux1(2);
@@ -36,26 +40,30 @@ template MerkleProof(levels) {
     root <== nodes[levels];
 }
 
-// Advanced VocalWitness Registry Circuit
+// ======================================================
+// Main VocalWitness Registry Circuit
+// ======================================================
 template VocalWitnessRegistry(levels) {
-    // Private
+    // ---------- Private inputs ----------
     signal input secret;
     signal input nullifier;
     signal input trustScore;           // Hidden
-    signal input postCount;            // Hidden number of posts
+    signal input postCount;            // Hidden
+    signal input pathElements[levels]; // Merkle path
+    signal input pathIndices[levels];  // Merkle path direction bits
 
-    // Public
+    // ---------- Public inputs ----------
     signal input isValidWitness;
     signal input merkleRoot;
     signal input minTrustScore;        // e.g. 60
     signal input minPosts;             // e.g. 5
     signal input commitment;           // Pedersen commitment
 
-    // Outputs
+    // ---------- Outputs ----------
     signal output nullifierHash;
     signal output valid;
 
-    // ====================== PEDERSEN COMMITMENT ======================
+    // ====================== 1. Pedersen Commitment ======================
     component pedersen = Pedersen(2);
     component secretBits = Num2Bits(254);
     component nullBits = Num2Bits(254);
@@ -67,29 +75,32 @@ template VocalWitnessRegistry(levels) {
         pedersen.in[0][i] <== secretBits.out[i];
         pedersen.in[1][i] <== nullBits.out[i];
     }
+    // Enforce that the commitment matches
     pedersen.out[0] === commitment;
 
-    // ====================== MERKLE PROOF (Registry Membership) ======================
+    // ====================== 2. Merkle Proof ======================
     component merkle = MerkleProof(levels);
     merkle.leaf <== commitment;
-    // pathElements and pathIndices provided by prover (from off-chain tree)
-
+    for (var i = 0; i < levels; i++) {
+        merkle.pathElements[i] <== pathElements[i];
+        merkle.pathIndices[i] <== pathIndices[i];
+    }
     merkle.root === merkleRoot;
 
-    // ====================== SELECTIVE DISCLOSURES ======================
-    // 1. Trust Score >= minTrustScore
+    // ====================== 3. Selective Disclosure ======================
+    // Trust Score >= minTrustScore
     component trustGte = GreaterEqThan(8);
     trustGte.in[0] <== trustScore;
     trustGte.in[1] <== minTrustScore;
     trustGte.out === 1;
 
-    // 2. Post Count >= minPosts
+    // Post Count >= minPosts
     component postsGte = GreaterEqThan(32);
     postsGte.in[0] <== postCount;
     postsGte.in[1] <== minPosts;
     postsGte.out === 1;
 
-    // ====================== NULLIFIER & VALIDITY ======================
+    // ====================== 4. Nullifier ======================
     component nullHasher = Pedersen(1);
     component nBits = Num2Bits(254);
     nBits.in <== nullifier;
@@ -98,9 +109,13 @@ template VocalWitnessRegistry(levels) {
     }
     nullifierHash <== nullHasher.out[0];
 
+    // Final validity flag
     valid <== isValidWitness;
 }
 
+// ======================================================
+// Main component (public signals)
+// ======================================================
 component main {public [
     isValidWitness, 
     merkleRoot, 
