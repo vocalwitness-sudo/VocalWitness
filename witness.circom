@@ -15,7 +15,7 @@ template MerkleProof(levels) {
     component hashers[levels];
 
     for (var i = 0; i < levels; i++) {
-        // Force binary
+        // Force pathIndices to be 0 or 1
         pathIndices[i] * (pathIndices[i] - 1) === 0;
 
         signal left;
@@ -34,6 +34,7 @@ template MerkleProof(levels) {
 }
 
 template VocalWitness(levels) {
+    // Private inputs
     signal input secret;
     signal input nullifier;
     signal input trustScore;
@@ -41,25 +42,27 @@ template VocalWitness(levels) {
     signal input pathElements[levels];
     signal input pathIndices[levels];
 
+    // Public inputs
     signal input merkleRoot;
     signal input minTrustScore;
     signal input minPosts;
 
+    // Public outputs
     signal output nullifierHash;
     signal output commitment;
 
-    // Commitment
+    // 1. Commitment
     component commitHash = Poseidon(2);
     commitHash.inputs[0] <== secret;
     commitHash.inputs[1] <== nullifier;
     commitment <== commitHash.out;
 
-    // Nullifier hash
+    // 2. Nullifier Hash
     component nullHash = Poseidon(1);
     nullHash.inputs[0] <== nullifier;
     nullifierHash <== nullHash.out;
 
-    // Merkle proof
+    // 3. Merkle membership
     component merkle = MerkleProof(levels);
     merkle.leaf <== commitment;
     for (var i = 0; i < levels; i++) {
@@ -68,7 +71,7 @@ template VocalWitness(levels) {
     }
     merkle.root === merkleRoot;
 
-    // Threshold checks
+    // 4. Threshold checks
     component trustCheck = GreaterEqThan(32);
     trustCheck.in[0] <== trustScore;
     trustCheck.in[1] <== minTrustScore;
@@ -80,4 +83,5 @@ template VocalWitness(levels) {
     postsCheck.out === 1;
 }
 
+// Depth 8 is safe and fast
 component main {public [merkleRoot, minTrustScore, minPosts]} = VocalWitness(8);
