@@ -13,6 +13,7 @@ import { loadDynamicNavigation } from './navigation.js';
 import { AppState } from './app-state.js';
 import { showToast } from './utils.js';
 import './composer.js';
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 
 // Firebase Firestore Imports
 import {
@@ -349,14 +350,9 @@ async function bootstrap() {
     console.log("🚀 VocalWitness Bootstrap started");
 
     try {
+        // 1. Initialize static module setups first
         await initAuth();
-        
-        if (typeof updateUIForAuthState === 'function') {
-            updateUIForAuthState(auth.currentUser);
-        }
-
         setupEventListeners();
-
         initLanguage?.();
         initProfile?.();
 
@@ -368,8 +364,21 @@ async function bootstrap() {
 
         loadDynamicNavigation?.();
 
-        setTimeout(() => window.switchTab('square'), 200);
-        setTimeout(showWelcomeNote, 1000);
+        // 2. Wait for Firebase Auth state to resolve before firing database queries
+        import("https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js").then(({ onAuthStateChanged }) => {
+            onAuthStateChanged(auth, (user) => {
+                console.log("🔐 Auth state confirmed:", user ? `Logged in as ${user.uid}` : "Guest session");
+
+                // Update UI based on confirmed state
+                if (typeof updateUIForAuthState === 'function') {
+                    updateUIForAuthState(user);
+                }
+
+                // Initial tab switch ONLY after Auth state is solid
+                window.switchTab('square');
+                showWelcomeNote();
+            });
+        });
 
         console.log("✅ Bootstrap finished successfully");
     } catch (e) {
