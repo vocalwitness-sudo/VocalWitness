@@ -235,6 +235,7 @@ export function refreshTierAndUI() {
   console.log("✅ Tier system & Governance UI refreshed");
 }
 
+// Replace this function at the bottom of js/tier.js
 export async function recordTestimonyContribution() {
   if (!auth.currentUser) return;
 
@@ -242,14 +243,15 @@ export async function recordTestimonyContribution() {
     const userRef = doc(db, "users", auth.currentUser.uid);
     const snap = await getDoc(userRef);
 
-    if (snap.exists()) {
-      const currentRep = snap.data().reputation || 0;
-      await updateDoc(userRef, {
-        reputation: currentRep + 15,
-        lastContribution: serverTimestamp()
-      });
-      console.log("✅ +15 Reputation for testimony");
-    }
+    const currentRep = snap.exists() ? (snap.data().reputation || 0) : 0;
+
+    // Use setDoc with { merge: true } instead of updateDoc
+    await setDoc(userRef, {
+      reputation: currentRep + 15,
+      lastContribution: serverTimestamp()
+    }, { merge: true });
+
+    console.log("✅ +15 Reputation for testimony");
   } catch (e) {
     console.warn("Reputation update failed:", e);
   }
