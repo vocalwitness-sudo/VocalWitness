@@ -1,4 +1,4 @@
-// ====================== IMPORTS ======================
+// js/auth.js - Auth Handler with Profile Cache Sync
 import {
     signInWithPopup,
     GoogleAuthProvider,
@@ -12,12 +12,13 @@ import { auth, provider, db } from './firebase-config.js';
 import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { showToast } from './utils.js';
 import { updateAppState } from './app-state.js';
-import { applyTierTheme, updateTierBadge } from './tier.js';
+import { applyTierTheme, updateTierBadge, clearProfileCache } from './tier.js';
 
 let authActionInProgress = false;
 
 // ====================== TIER & USER HELPERS ======================
 function refreshTierUI() {
+    clearProfileCache();
     if (typeof window.refreshTierAndUI === 'function') {
         window.refreshTierAndUI();
     } else {
@@ -33,7 +34,6 @@ async function createOrUpdateUser(user) {
         const snap = await getDoc(userRef);
 
         if (!snap.exists()) {
-            // First-time user setup
             await setDoc(userRef, {
                 uid: user.uid,
                 email: user.email || "",
@@ -44,7 +44,6 @@ async function createOrUpdateUser(user) {
                 lastActive: serverTimestamp()
             });
         } else {
-            // Existing user: preserve tier, update activity timestamp
             await setDoc(userRef, {
                 email: user.email || snap.data().email || "",
                 displayName: user.displayName || snap.data().displayName || "Anonymous Witness",
@@ -57,7 +56,6 @@ async function createOrUpdateUser(user) {
     }
 }
 
-// ====================== DRAFT & STATE PRESERVATION ======================
 export function savePendingDraft() {
     const mainInput = document.getElementById('mainInput');
     if (mainInput && mainInput.value.trim() !== '') {
@@ -80,7 +78,6 @@ export function restorePendingDraft() {
     }
 }
 
-// ====================== FIREBASE AUTH ERROR MAPPER ======================
 function handleAuthError(error) {
     switch (error?.code) {
         case 'auth/invalid-credential':
@@ -111,7 +108,6 @@ function handleAuthError(error) {
     }
 }
 
-// ====================== AUTH METHODS - GOOGLE POPUP LOGIC ======================
 export async function googleLogin() {
     if (authActionInProgress) {
         showToast("Sign-in already in progress...", "info");
@@ -153,7 +149,6 @@ export async function googleLogin() {
     }
 }
 
-// ====================== EMAIL SIGN-IN & SIGN-UP ======================
 export async function handleEmailAuth(event) {
     if (event) event.preventDefault();
 
@@ -230,7 +225,7 @@ export async function handleEmailSignUp(event) {
         const user = userCredential.user;
 
         await sendEmailVerification(user);
-        await signOut(auth); // Sign out immediately to enforce email verification flow
+        await signOut(auth);
 
         showToast("🎉 Account created! A verification link has been sent to your email.", "success");
 
@@ -244,6 +239,7 @@ export async function handleEmailSignUp(event) {
 
 export async function logout() {
     try {
+        clearProfileCache();
         await signOut(auth);
         updateAppState({ isAuthenticated: false, currentUser: null });
         showToast("Signed out successfully", "success");
@@ -265,7 +261,6 @@ export function togglePasswordVisibility(inputId, btnElement) {
     }
 }
 
-// ====================== REQUIRE AUTH ======================
 export function requireAuth(message = "Please sign in to proceed.") {
     if (!auth.currentUser) {
         savePendingDraft();
@@ -280,7 +275,6 @@ export function requireAuth(message = "Please sign in to proceed.") {
     return true;
 }
 
-// ====================== UI SYNC FOR HYBRID READ/WRITE MODEL ======================
 export function updateUIForAuthState() {
     const isLoggedIn = !!auth.currentUser;
     const guestBtn = document.getElementById('guest-action-btn');
@@ -288,17 +282,9 @@ export function updateUIForAuthState() {
     const signInElement = document.getElementById('signin-btn');
     const privateElements = document.querySelectorAll('.requires-auth');
 
-    if (guestBtn) {
-        guestBtn.classList.toggle('hidden', isLoggedIn);
-    }
-
-    if (signInElement) {
-        signInElement.classList.toggle('hidden', isLoggedIn);
-    }
-
-    if (profileBtn) {
-        profileBtn.classList.toggle('hidden', !isLoggedIn);
-    }
+    if (guestBtn) guestBtn.classList.toggle('hidden', isLoggedIn);
+    if (signInElement) signInElement.classList.toggle('hidden', isLoggedIn);
+    if (profileBtn) profileBtn.classList.toggle('hidden', !isLoggedIn);
 
     privateElements.forEach(el => {
         el.classList.toggle('hidden', !isLoggedIn);
@@ -313,10 +299,8 @@ export function updateUIForAuthState() {
     }
 }
 
-// ====================== INIT AUTH ======================
 export function initAuth() {
     auth.onAuthStateChanged(async (user) => {
-        // Google / Provider accounts are pre-verified. Email/Password users check emailVerified.
         const isOAuthUser = user?.providerData?.some(
             (p) => p.providerId === 'google.com' || p.providerId === GoogleAuthProvider.PROVIDER_ID
         );
@@ -327,6 +311,7 @@ export function initAuth() {
             updateAppState({ isAuthenticated: true, currentUser: user });
             refreshTierUI();
         } else {
+            clearProfileCache();
             updateAppState({ isAuthenticated: false, currentUser: null });
         }
 
@@ -338,7 +323,6 @@ export function initAuth() {
         updateUIForAuthState();
     });
 
-    // Event delegation: closest() handles clicks on nested icons/spans inside logout buttons
     document.addEventListener('click', (e) => {
         const logoutTarget = e.target.closest('#logoutBtn, .btn-logout, [data-action="logout"]');
         if (logoutTarget) {
@@ -350,14 +334,12 @@ export function initAuth() {
     updateUIForAuthState();
     console.log("🔐 Auth initialized (Popup Mode)");
 }
-// ====================== MODAL & GLOBAL EXPOSURES ======================
+
 export function showAuthModal() {
-    if (auth.currentUser) {
-        // ...
-    } else {
+    if (!auth.currentUser) {
         const createModal = document.getElementById('createAccountModal');
         if (createModal) {
-            createModal.classList.remove('hidden'); // <--- IT IS STOPPING HERE!
+            createModal.classList.remove('hidden');
         } else {
             const loginModal = document.getElementById('loginModal');
             if (loginModal) loginModal.classList.remove('hidden');
@@ -375,7 +357,7 @@ export function closeCreateAccountModal() {
     if (createModal) createModal.classList.add('hidden');
 }
 
-// Global exposures for inline HTML handlers
+// Global exposures
 window.googleLogin = googleLogin;
 window.handleEmailAuth = handleEmailAuth;
 window.handleEmailSignUp = handleEmailSignUp;
