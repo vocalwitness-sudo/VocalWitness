@@ -158,3 +158,56 @@ button, [role="button"] {
     -ms-overflow-style: none;
     scrollbar-width: none;
 }
+
+/* ====================== WINDOWS 7 / OLD BROWSER FORCE COLORS ====================== */
+
+/* Force Public Square active */
+#main-nav button[data-tab="square"].active,
+#main-nav button.nav-tab.active {
+    background-color: #10b981 !important;
+    color: #000000 !important;
+    border: 1px solid #059669 !important;
+}
+
+/* Force Evidence Ledger */
+#main-nav button[data-tab="ledger"] {
+    background-color: #1e293b !important;
+    color: #e2e8f0 !important;
+    border: 1px solid #334155 !important;
+}
+
+/* Force Live Arena */
+#main-nav button[data-tab="arena"] {
+    background-color: #0c4a6e !important;
+    color: #7dd3fc !important;
+    border: 1px solid #0369a1 !important;
+}
+
+/* Force My Circle */
+#main-nav button[data-tab="mycircle"] {
+    background-color: #1e293b !important;
+    color: #e2e8f0 !important;
+    border: 1px solid #334155 !important;
+}
+
+/* Force Verified Witnesses */
+#main-nav button[data-tab="witness"] {
+    background-color: #78350f !important;
+    color: #fcd34d !important;
+    border: 1px solid #b45309 !important;
+}
+
+/* Force Support button */
+#support-btn {
+    background-color: #10b981 !important;
+    color: #000000 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Stronger glass fallback for old browsers */
+.glass {
+    background-color: #111827 !important;
+    background: #111827 !important;
+    border: 1px solid #10b98155 !important;
+}
