@@ -33,19 +33,25 @@ let listenersInitialized = false;
 // ====================== TAB SWITCHING ======================
 window.switchTab = async (tab) => {
     console.log(`Switching to tab: ${tab}`);
-    
-    // Update active UI tab states
+
+    // Cleanly update active UI tab states
     document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
-        btn.classList.remove('active', 'bg-amber-900', 'text-amber-300');
+        // Remove every possible active / accent class so nothing fights the CSS
+        btn.classList.remove(
+            'active',
+            'bg-emerald-600', 'bg-emerald-500',
+            'bg-sky-900/70', 'text-sky-300', 'border-sky-700',
+            'bg-amber-900/70', 'bg-amber-900', 'text-amber-300', 'border-amber-700'
+        );
+
         if (btn.dataset.tab === tab) {
-            btn.classList.add('active');
-            if (tab === 'witness') btn.classList.add('bg-amber-900', 'text-amber-300');
+            btn.classList.add('active');   // CSS will force the strong emerald look
         }
     });
 
     AppState.currentTab = tab;
     AppState.currentMode = tab === 'witness' ? 'witness' : 'citizen';
-    
+
     // Target main container
     const container = document.getElementById('dynamicContainer') || document.getElementById('main-content');
     if (!container) return;
