@@ -45,7 +45,7 @@ async function generateFallbackSignature(inputs) {
 
 export function generateZKProofAsync(inputs) {
     return new Promise(async (resolve, reject) => {
-        // 1. Hardware & Memory Guard Pre-Check
+        // 1. Hardware & Memory Guard Pre-Check (<2GB RAM)
         if (navigator.deviceMemory && navigator.deviceMemory < 2) {
             console.warn("Low memory environment detected (<2GB). Bypassing ZK WASM to prevent OOM crash.");
             try {
