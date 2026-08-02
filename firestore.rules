@@ -9,30 +9,40 @@ service cloud.firestore {
     // Testimonies / Evidence Ledger
     match /testimonies/{testimonyId} {
       allow read: if true;
-      
-      // Hardened Create: Enforces auth, correct ID ownership, and basic data types
       allow create: if isOwner(request.resource.data.authorId)
                     && (request.resource.data.content is string || request.resource.data.content == null);
-                    
-      // Updates allowed for authors (or admins), but prevent tampering with authorId
       allow update: if isAuthenticated() 
                     && (request.auth.uid == resource.data.authorId || request.auth.token.admin == true)
                     && request.resource.data.authorId == resource.data.authorId;
-                    
       allow delete: if isAuthenticated() && (request.auth.uid == resource.data.authorId || request.auth.token.admin == true);
      
-      // Multi-Reactions Subcollection
       match /userReactions/{userId} {
         allow read: if true;
         allow write: if isOwner(userId);
       }
       
-      // Comments Subcollection
       match /comments/{commentId} {
         allow read: if true;
         allow create: if isOwner(request.resource.data.authorId);
         allow update, delete: if isOwner(resource.data.authorId);
       }
+    }
+
+    // Witness Cycles & Attestations (ADDED TO FIX YOUR ERROR)
+    match /witness_cycles/{cycleId} {
+      allow read: if true;
+      allow create, update: if isAuthenticated();
+    }
+
+    match /attestations/{attestationId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if false; // Attestations are immutable
+    }
+
+    // Phone Verification Collection (ADDED)
+    match /phone_verifications/{userId} {
+      allow read, write: if isOwner(userId);
     }
 
     // Groups Collection
@@ -75,10 +85,11 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // DAO Proposals & Quadratic Voting
+    // DAO Proposals & Quadratic Voting (HARDENED)
     match /dao_proposals/{proposalId} {
       allow read: if true;
-      allow create, update: if isAuthenticated(); 
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (resource.data.authorId == request.auth.uid || request.auth.token.admin == true);
     }
 
   }
