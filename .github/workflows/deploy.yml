@@ -17,10 +17,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
 
-      - name: Compile Tailwind CSS
+      - name: Compile Tailwind CSS v4
         run: |
-          npm install tailwindcss @tailwindcss/cli
+          npm install -D tailwindcss @tailwindcss/cli
           npx @tailwindcss/cli -i ./input.css -o ./style.css --minify
 
       - name: Deploy to Firebase Hosting
