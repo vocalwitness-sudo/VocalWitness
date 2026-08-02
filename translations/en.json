@@ -299,4 +299,19 @@
   "underConstruction": "🚧 Under Construction",
   "arenaOpenWhen": "The Arena will open when we reach 500 verified witnesses",
   "notifyMeBtn": "🔔 Notify Me When Arena Goes Live"
+
+
+  {
+  "profile": {
+    "witness_cycle": "Witness Cycle",
+    "witness_cycle_desc": "Participate in active testimony attestation cycles.",
+    "current_cycle_state": "Current Status",
+    "not_attesting": "Not Attesting",
+    "start_cycle": "Start Witness Cycle",
+    "citizen": "Citizen Witness"
+  },
+  "common": {
+    "inactive": "Inactive"
+  }
+}
 }
