@@ -2,97 +2,147 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Helper Functions
-    function isAuthenticated() { return request.auth != null; }
-    function isOwner(userId) { return isAuthenticated() && request.auth.uid == userId; }
-
-    // Users Collection (Allows merge / setDoc creation seamlessly)
-    match /users/{userId} {
-      allow read: if true;
-      allow create: if isAuthenticated() && request.auth.uid == userId;
-      allow update: if isAuthenticated() && request.auth.uid == userId;
+    // ==========================================
+    // HELPER FUNCTIONS
+    // ==========================================
+    function isAuthenticated() { 
+      return request.auth != null; 
+    }
+    
+    function isOwner(userId) { 
+      return isAuthenticated() && request.auth.uid == userId; 
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && request.auth.token.admin == true;
     }
 
-    // Witness Cycles Collection
+    // ==========================================
+    // USERS COLLECTION
+    // ==========================================
+    match /users/{userId} {
+      allow read: if true;
+      // Covers create and update seamlessly (including setDoc with merge: true)
+      allow write: if isOwner(userId);
+    }
+
+    // ==========================================
+    // FEEDS COLLECTION (Citizen Talk & Witness Voice)
+    // ==========================================
+    match /feeds/{feedId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && request.resource.data.authorId == request.auth.uid;
+      allow update, delete: if isAuthenticated() && (resource.data.authorId == request.auth.uid || isAdmin());
+    }
+
+    // ==========================================
+    // WITNESS CYCLES COLLECTION
+    // ==========================================
     match /witnessCycles/{cycleId} {
       allow read: if true;
       allow create: if isAuthenticated() && request.resource.data.witnessId == request.auth.uid;
       allow update: if isAuthenticated() && resource.data.witnessId == request.auth.uid;
+      allow delete: if isAuthenticated() && (resource.data.witnessId == request.auth.uid || isAdmin());
     }
 
-    // Testimonies / Evidence Ledger
+    // ==========================================
+    // TESTIMONIES / EVIDENCE LEDGER
+    // ==========================================
     match /testimonies/{testimonyId} {
       allow read: if true;
-      allow create: if isAuthenticated() && request.resource.data.authorId == request.auth.uid
+      allow create: if isAuthenticated() 
+                    && request.resource.data.authorId == request.auth.uid
                     && (request.resource.data.content is string || request.resource.data.content == null);
+                    
       allow update: if isAuthenticated() 
-                    && (request.auth.uid == resource.data.authorId || request.auth.token.admin == true)
+                    && (request.auth.uid == resource.data.authorId || isAdmin())
                     && request.resource.data.authorId == resource.data.authorId;
-      allow delete: if isAuthenticated() && (request.auth.uid == resource.data.authorId || request.auth.token.admin == true);
-     
+                    
+      allow delete: if isAuthenticated() 
+                    && (request.auth.uid == resource.data.authorId || isAdmin());
+      
+      // Subcollection: User Reactions
       match /userReactions/{userId} {
         allow read: if true;
         allow write: if isOwner(userId);
       }
       
+      // Subcollection: Comments
       match /comments/{commentId} {
         allow read: if true;
-        allow create: if isOwner(request.resource.data.authorId);
-        allow update, delete: if isOwner(resource.data.authorId);
+        allow create: if isAuthenticated() && request.resource.data.authorId == request.auth.uid;
+        allow update, delete: if isAuthenticated() && (resource.data.authorId == request.auth.uid || isAdmin());
       }
     }
 
-    // Attestations
+    // ==========================================
+    // ATTESTATIONS (IMMUTABLE LEDGER)
+    // ==========================================
     match /attestations/{attestationId} {
       allow read: if true;
       allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if false; // Immutable
+      allow update, delete: if false; // Strict Immutability
     }
 
-    // Phone Verification Collection
+    // ==========================================
+    // PHONE VERIFICATION
+    // ==========================================
     match /phone_verifications/{userId} {
       allow read, write: if isOwner(userId);
     }
 
-    // Groups Collection
+    // ==========================================
+    // GROUPS COLLECTION
+    // ==========================================
     match /groups/{groupId} {
       allow read: if true;
       allow create: if isAuthenticated() && request.auth.uid == request.resource.data.ownerId;
-      allow update, delete: if isAuthenticated() && request.auth.uid == resource.data.ownerId;
+      allow update, delete: if isAuthenticated() && (request.auth.uid == resource.data.ownerId || isAdmin());
     }
 
-    // Posts Collection
+    // ==========================================
+    // POSTS COLLECTION
+    // ==========================================
     match /posts/{postId} {
       allow read: if true;
       allow create: if isAuthenticated() && request.auth.uid == request.resource.data.authorId;
-      allow update, delete: if isAuthenticated() && request.auth.uid == resource.data.authorId;
+      allow update, delete: if isAuthenticated() && (request.auth.uid == resource.data.authorId || isAdmin());
     }
 
-    // Peer Verification Votes Collection
+    // ==========================================
+    // PEER VERIFICATION VOTES
+    // ==========================================
     match /votes/{voteId} {
       allow read: if true;
-      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
-    }
-
-    // Moderation & Reports Collection
-    match /reports/{reportId} {
-      allow read: if isAuthenticated(); 
-      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.reportedBy;
-      allow update: if isAuthenticated(); 
-    }
-
-    // Immutable Audit Logs
-    match /audit_logs/{logId} {
-      allow read: if isAuthenticated();
       allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
       allow update, delete: if false;
     }
 
-    // DAO Proposals & Quadratic Voting
+    // ==========================================
+    // MODERATION & REPORTS COLLECTION
+    // ==========================================
+    match /reports/{reportId} {
+      allow read: if isAdmin(); 
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.reportedBy;
+      allow update, delete: if isAdmin(); 
+    }
+
+    // ==========================================
+    // AUDIT LOGS (IMMUTABLE)
+    // ==========================================
+    match /audit_logs/{logId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
+      allow update, delete: if false; // Strict Immutability
+    }
+
+    // ==========================================
+    // DAO PROPOSALS & QUADRATIC VOTING
+    // ==========================================
     match /dao_proposals/{proposalId} {
       allow read: if true;
-      allow create: if isAuthenticated();
-      allow update: if isAuthenticated() && (resource.data.authorId == request.auth.uid || request.auth.token.admin == true);
+      allow create: if isAuthenticated() && request.resource.data.authorId == request.auth.uid;
+      allow update: if isAuthenticated() && (resource.data.authorId == request.auth.uid || isAdmin());
     }
 
   }
