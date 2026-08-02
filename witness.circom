@@ -13,16 +13,26 @@ template MerkleProof(levels) {
     signal left[levels];
     signal right[levels];
 
+    // Intermediate terms to keep constraints quadratic
+    signal term1[levels];
+    signal term2[levels];
+
     cur[0] <== leaf;
 
     component hashers[levels];
 
     for (var i = 0; i < levels; i++) {
-        // Force pathIndices to be 0 or 1
+        // Force pathIndices to be binary (0 or 1)
         pathIndices[i] * (pathIndices[i] - 1) === 0;
 
-        left[i]  <== (1 - pathIndices[i]) * cur[i] + pathIndices[i] * pathElements[i];
-        right[i] <== pathIndices[i] * cur[i] + (1 - pathIndices[i]) * pathElements[i];
+        // Break expression into quadratic operations:
+        // left = cur[i] + pathIndices[i] * (pathElements[i] - cur[i])
+        term1[i] <== pathIndices[i] * (pathElements[i] - cur[i]);
+        left[i]  <== cur[i] + term1[i];
+
+        // right = pathElements[i] + pathIndices[i] * (cur[i] - pathElements[i])
+        term2[i] <== pathIndices[i] * (cur[i] - pathElements[i]);
+        right[i] <== pathElements[i] + term2[i];
 
         hashers[i] = Poseidon(2);
         hashers[i].inputs[0] <== left[i];
@@ -83,5 +93,4 @@ template VocalWitness(levels) {
     postsCheck.out === 1;
 }
 
-// THIS LINE WAS MISSING OR PLACED OUTSIDE THE COMPILATION
 component main {public [merkleRoot, minTrustScore, minPosts]} = VocalWitness(8);
