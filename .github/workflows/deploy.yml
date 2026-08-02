@@ -13,6 +13,16 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Compile Tailwind CSS
+        run: |
+          npm install tailwindcss @tailwindcss/cli
+          npx @tailwindcss/cli -i ./input.css -o ./style.css --minify
+
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
