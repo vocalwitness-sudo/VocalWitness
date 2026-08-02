@@ -71,22 +71,35 @@ button[data-i18n],
     white-space: nowrap;
 }
 
-/* Standardize button selection indicator */
-button.selected,
-button.active,
-.tab-btn[aria-selected="true"],
-.filter-chip.active {
-    background-color: var(--primary-color);
-    color: #000000;
+/* ====================== ACTIVE TAB FIX (restores emerald color) ====================== */
+/* Higher specificity + !important so Tailwind utilities cannot override it */
+#main-nav button.nav-tab.active,
+#main-nav button[data-tab].active {
+    background-color: var(--primary-color) !important;
+    color: #000000 !important;
+    border-color: var(--primary-dark) !important;
     font-weight: 600;
-    border-color: var(--primary-dark);
     position: relative;
-    box-shadow: 0 0 12px rgba(16, 185, 129, 0.3);
+    box-shadow: 0 0 14px rgba(16, 185, 129, 0.4);
+}
+
+/* Keep special accent colors ONLY when the tab is NOT active */
+#main-nav button[data-tab="arena"]:not(.active) {
+    background-color: rgba(12, 74, 110, 0.7) !important;
+    color: #7dd3fc !important;
+    border-color: #0369a1 !important;
+}
+
+#main-nav button[data-tab="witness"]:not(.active) {
+    background-color: rgba(120, 53, 15, 0.7) !important;
+    color: #fcd34d !important;
+    border-color: #b45309 !important;
 }
 
 /* Clear visual indicator dot for selected state */
 button.selected::after,
-.filter-chip.active::after {
+.filter-chip.active::after,
+#main-nav button.nav-tab.active::after {
     content: '';
     position: absolute;
     bottom: 3px;
@@ -111,6 +124,7 @@ button.selected::after,
     border-color: var(--accent-red) !important;
     box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3);
 }
+
 /* Search bar click safety */
 #squareSearchInput,
 #clearSearchBtn {
@@ -119,7 +133,6 @@ button.selected::after,
 
 /* ====================== URGENT CLICK FIX (Aug 2026) ====================== */
 /* Target only problematic areas - Safe & Specific */
-
 header {
     z-index: 60 !important;
 }
@@ -169,4 +182,13 @@ button#more-btn {
 /* General protection */
 button, [role="button"] {
     pointer-events: auto !important;
+}
+
+/* Optional: hide scrollbar on the nav (clean look) */
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
