@@ -117,9 +117,8 @@
   "mainInputPlaceholder": "Share your raw testimony... What did you witness?",
   "addPhotoEvidence": "Add Photo Evidence",
   "recordVoiceMessage": "Record Voice Message",
-  "previewAreaText": "Preview will appear here..."
-
-    "aboutPageTitle": "About VocalWitness • Truth • Evidence • Public Square",
+  "previewAreaText": "Preview will appear here...",
+  "aboutPageTitle": "About VocalWitness • Truth • Evidence • Public Square",
   "aboutTitle": "About VocalWitness",
   "aboutSubtitle": "Your Voice. Your Truth. Shared with Integrity.",
   "ourMission": "Our Mission",
@@ -141,9 +140,8 @@
   "trustStep3Title": "3. Un-manipulated Distribution",
   "trustStep3Desc": "We function strictly as a neutral public square and distribution medium. We do not edit, boost, or suppress content except to enforce basic safety and legal requirements.",
   "aboutQuote": "\"In the age of noise, the clearest voice is the one that can prove it was never altered.\"",
-  "footerCopyright": "© 2026 VocalWitness • Built for Truth • Evidence • Public Square"
-
-    "privacyPageTitle": "Privacy Policy - VocalWitness",
+  "footerCopyright": "© 2026 VocalWitness • Built for Truth • Evidence • Public Square",
+  "privacyPageTitle": "Privacy Policy - VocalWitness",
   "privacyTitle": "Privacy Policy",
   "privacyLastUpdated": "Last updated: July 19, 2026",
   "privacyIntro": "At VocalWitness, we believe truth should not require sacrificing privacy. We are committed to minimizing data collection while maintaining the integrity of the public square.",
@@ -175,9 +173,8 @@
   "privacySection7Title": "7. Third Parties & Data Sharing",
   "privacySection7Text": "We use Firebase (Google) for authentication, database, and storage. Your data is protected under their security standards. We do not share personal data with third parties for marketing purposes.",
   "privacyImportant": "Important: Public testimonies are visible to everyone. We strongly recommend that you never post highly sensitive personal information that could compromise your safety.",
-  "backToVocalWitness": "← Back to VocalWitness"
-
-    "termsPageTitle": "Terms of Service • VocalWitness",
+  "backToVocalWitness": "← Back to VocalWitness",
+  "termsPageTitle": "Terms of Service • VocalWitness",
   "termsTitle": "Terms of Service",
   "termsLastUpdated": "Last updated: July 19, 2026",
   "termsIntro": "Welcome to VocalWitness — a citizen-powered public square for truth, evidence, and testimony. By using our platform, you agree to these Terms of Service.",
@@ -206,9 +203,8 @@
   "termsSection8Text": "The platform is provided on an \"as-is\" and \"as-available\" basis without warranties of any kind. VocalWitness, its developers, and its stewards shall not be held liable for any indirect, incidental, or consequential damages arising from the use or inability to use the platform.",
   "termsSection9Title": "9. Changes to Terms",
   "termsSection9Text": "We may modify these Terms from time to time to reflect changes in our infrastructure or legal obligations. Continued use of the platform after updates constitutes your acceptance of the revised terms.",
-  "footerCopyrightShort": "© 2026 VocalWitness"
-
-    "safetyPageTitle": "Safety & Community Guidelines - VocalWitness",
+  "footerCopyrightShort": "© 2026 VocalWitness",
+  "safetyPageTitle": "Safety & Community Guidelines - VocalWitness",
   "safetyTitle": "Safety & Community Guidelines",
   "safetyIntro": "VocalWitness is a public square built for truth, evidence, and respectful dialogue. We are committed to creating a space where people can share their testimonies safely and with integrity.",
   "safetySection1Title": "1. Core Principles",
@@ -234,10 +230,8 @@
   "safetySection5Title": "5. Reporting & Appeals",
   "safetySection5Text": "If you see content that violates these guidelines, please use the in-app report feature. We review reports seriously. If your content is moderated, you will receive a notification and have the opportunity to appeal in good faith.",
   "safetyGoalTitle": "Our Goal:",
-  "safetyGoalText": "A healthier public square where truth can be spoken safely, evidence can be preserved, and every good-faith witness feels protected."
-
-
-    "displayName": "Display Name",
+  "safetyGoalText": "A healthier public square where truth can be spoken safely, evidence can be preserved, and every good-faith witness feels protected.",
+  "displayName": "Display Name",
   "username": "Username",
   "bio": "Bio",
   "save": "Save",
@@ -256,10 +250,8 @@
   "dangerZoneHeader": "Data & Identity",
   "exportLabel": "Export Profile Record",
   "exportSub": "Download encrypted identity summary",
-  "exportBtn": "Download PDF"
-
-
-    "moderationPageTitle": "Steward Moderation Queue | VocalWitness",
+  "exportBtn": "Download PDF",
+  "moderationPageTitle": "Steward Moderation Queue | VocalWitness",
   "moderationTitle": "Steward Moderation Center",
   "backToApp": "← Back to App",
   "pendingReviewQueue": "Pending Review Queue",
@@ -272,10 +264,8 @@
   "noPending": "There are no pending testimonies requiring review right now.",
   "moderationFooter": "© VocalWitness — Secure Steward Moderation Module",
   "purgePost": "Purge Post",
-  "approvePublish": "Approve & Publish"
-
-
-    "groupsPageTitle": "Groups - VocalWitness",
+  "approvePublish": "Approve & Publish",
+  "groupsPageTitle": "Groups - VocalWitness",
   "groupsTitle": "Groups",
   "discoverTab": "Discover",
   "myGroupsTab": "My Groups",
@@ -290,18 +280,14 @@
   "visibilityLabel": "Visibility",
   "visibilityPublic": "Public",
   "visibilityNetwork": "My Network Only",
-  "visibilityWitness": "Witness Circle Only"
-
-    "liveArenaPageTitle": "Live Arena • VocalWitness",
+  "visibilityWitness": "Witness Circle Only",
+  "liveArenaPageTitle": "Live Arena • VocalWitness",
   "liveArenaTitle": "Live Arena",
   "liveArenaSubtitle": "Real-time Public Debate",
   "liveArenaComingSoon": "Real-time discussions, debates, and public testimonies are coming soon.",
   "underConstruction": "🚧 Under Construction",
   "arenaOpenWhen": "The Arena will open when we reach 500 verified witnesses",
-  "notifyMeBtn": "🔔 Notify Me When Arena Goes Live"
-
-
-  {
+  "notifyMeBtn": "🔔 Notify Me When Arena Goes Live",
   "profile": {
     "witness_cycle": "Witness Cycle",
     "witness_cycle_desc": "Participate in active testimony attestation cycles.",
@@ -313,5 +299,4 @@
   "common": {
     "inactive": "Inactive"
   }
-}
 }
