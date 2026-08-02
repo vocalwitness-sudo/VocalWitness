@@ -1,5 +1,5 @@
-// js/tier.js - Enhanced Tier, Progression & Governance System
-import { doc, getDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+// js/tier.js - Enhanced Tier, Progression & Governance System (Optimized & Cached)
+import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { db, auth } from './firebase-config.js';
 
 export const TIERS = {
@@ -66,24 +66,51 @@ export const ROLES = {
   ADMIN: 'admin'
 };
 
+// ====================== CACHING MECHANISM ======================
+let cachedProfile = null;
+let cacheTimestamp = 0;
+const CACHE_TTL = 30000; // 30 Seconds cache
+
+export async function getUserProfile(forceRefresh = false) {
+  if (!auth.currentUser) {
+    cachedProfile = null;
+    return null;
+  }
+
+  const now = Date.now();
+  if (!forceRefresh && cachedProfile && (now - cacheTimestamp < CACHE_TTL)) {
+    return cachedProfile;
+  }
+
+  try {
+    const userRef = doc(db, "users", auth.currentUser.uid);
+    const snap = await getDoc(userRef);
+    cachedProfile = snap.exists() ? snap.data() : {};
+    cacheTimestamp = now;
+    return cachedProfile;
+  } catch (e) {
+    console.warn("User profile fetch failed, using fallback/cache:", e);
+    return cachedProfile || {};
+  }
+}
+
+export function clearProfileCache() {
+  cachedProfile = null;
+  cacheTimestamp = 0;
+}
+
 /**
  * Get current user's main tier
  */
 export async function getCurrentUserTier() {
   if (!auth.currentUser) return TIERS.CITIZEN;
 
-  try {
-    const userRef = doc(db, "users", auth.currentUser.uid);
-    const snap = await getDoc(userRef);
-    const data = snap.data() || {};
+  const data = await getUserProfile();
+  if (!data) return TIERS.CITIZEN;
 
-    if (data.zkVerified === true || data.tier === TIERS.WITNESS_CIRCLE) return TIERS.WITNESS_CIRCLE;
-    if (data.isPhoneVerified === true || data.tier === TIERS.CITIZEN_CIRCLE) return TIERS.CITIZEN_CIRCLE;
-    return TIERS.CITIZEN;
-  } catch (e) {
-    console.warn("Tier fetch failed, defaulting to CITIZEN", e);
-    return TIERS.CITIZEN;
-  }
+  if (data.zkVerified === true || data.tier === TIERS.WITNESS_CIRCLE) return TIERS.WITNESS_CIRCLE;
+  if (data.isPhoneVerified === true || data.tier === TIERS.CITIZEN_CIRCLE) return TIERS.CITIZEN_CIRCLE;
+  return TIERS.CITIZEN;
 }
 
 /**
@@ -93,21 +120,15 @@ export async function getCurrentWitnessLevel() {
   const tier = await getCurrentUserTier();
   if (tier !== TIERS.WITNESS_CIRCLE) return null;
 
-  try {
-    const userRef = doc(db, "users", auth.currentUser.uid);
-    const snap = await getDoc(userRef);
-    const data = snap.data() || {};
-    const rep = data.reputation || 0;
+  const data = await getUserProfile();
+  const rep = data?.reputation || 0;
 
-    // Return highest level achieved
-    const levels = Object.values(WITNESS_LEVELS).reverse();
-    for (const level of levels) {
-      if (rep >= level.minRep) return level;
-    }
-    return WITNESS_LEVELS.VERIFIED;
-  } catch (e) {
-    return WITNESS_LEVELS.VERIFIED;
+  // Return highest level achieved
+  const levels = Object.values(WITNESS_LEVELS).reverse();
+  for (const level of levels) {
+    if (rep >= level.minRep) return level;
   }
+  return WITNESS_LEVELS.VERIFIED;
 }
 
 /**
@@ -115,18 +136,12 @@ export async function getCurrentWitnessLevel() {
  */
 export async function canAdvanceTier(uid) {
   if (!uid) return { canAdvance: false, reason: "Not authenticated" };
-  try {
-    const userRef = doc(db, "users", uid);
-    const snap = await getDoc(userRef);
-    const data = snap.data() || {};
-
-    if (!data.isPhoneVerified) {
-      return { canAdvance: false, reason: "Phone verification required first" };
-    }
-    return { canAdvance: true };
-  } catch (e) {
-    return { canAdvance: false, reason: "Failed to verify user status" };
+  const data = await getUserProfile();
+  
+  if (!data?.isPhoneVerified) {
+    return { canAdvance: false, reason: "Phone verification required first" };
   }
+  return { canAdvance: true };
 }
 
 /**
@@ -146,10 +161,8 @@ export async function getUserVotingWeight() {
     const tier = await getCurrentUserTier();
     if (tier === TIERS.CITIZEN) return 1;
 
-    const userRef = doc(db, "users", auth.currentUser.uid);
-    const snap = await getDoc(userRef);
-    const data = snap.data() || {};
-    const rep = data.reputation || 30;
+    const data = await getUserProfile();
+    const rep = data?.reputation || 30;
 
     if (tier === TIERS.CITIZEN_CIRCLE) return 2;
     return Math.max(3, Math.floor(rep / 50));
@@ -174,6 +187,7 @@ export async function canAccessFeature(feature) {
   }
 
   const permissions = {
+    witness_circle: [TIERS.WITNESS_CIRCLE],
     live_arena: [TIERS.CITIZEN_CIRCLE, TIERS.WITNESS_CIRCLE],
     forensic_shield: [TIERS.CITIZEN_CIRCLE, TIERS.WITNESS_CIRCLE],
     create_group: [TIERS.CITIZEN_CIRCLE, TIERS.WITNESS_CIRCLE],
@@ -230,27 +244,29 @@ export async function updateTierBadge() {
 }
 
 export function refreshTierAndUI() {
+  clearProfileCache();
   applyTierTheme();
   updateTierBadge();
   console.log("✅ Tier system & Governance UI refreshed");
 }
 
-// Replace this function at the bottom of js/tier.js
+/**
+ * Record testimony contribution and award reputation
+ */
 export async function recordTestimonyContribution() {
   if (!auth.currentUser) return;
 
   try {
+    const data = await getUserProfile(true); // Force refresh
+    const currentRep = data?.reputation || 0;
+
     const userRef = doc(db, "users", auth.currentUser.uid);
-    const snap = await getDoc(userRef);
-
-    const currentRep = snap.exists() ? (snap.data().reputation || 0) : 0;
-
-    // Use setDoc with { merge: true } instead of updateDoc
     await setDoc(userRef, {
       reputation: currentRep + 15,
       lastContribution: serverTimestamp()
     }, { merge: true });
 
+    clearProfileCache();
     console.log("✅ +15 Reputation for testimony");
   } catch (e) {
     console.warn("Reputation update failed:", e);
