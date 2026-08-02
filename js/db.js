@@ -9,7 +9,8 @@ import {
   query, 
   where, 
   getDocs,
-  serverTimestamp
+  serverTimestamp,
+  increment
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 import { showToast } from './utils.js';
@@ -108,15 +109,14 @@ export const getUserPosts = (userId) => {
 };
 
 /**
- * Handles peer verification/dispute
+ * Handles peer verification/dispute with atomic increments
  */
 export const submitPeerVote = async (postId, type) => {
     const postRef = doc(db, "posts", postId);
     
     try {
-        // TODO: Better to use FieldValue.increment() for atomic updates
         await updateDoc(postRef, {
-            [`votes.${type}`]: 1,
+            [`votes.${type}`]: increment(1),
             lastUpdated: serverTimestamp()
         });
         
