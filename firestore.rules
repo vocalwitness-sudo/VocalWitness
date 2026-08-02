@@ -37,7 +37,7 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isOwner(userId);
       // Owner can update profile info, but CANNOT self-promote privileges
-      allow update: if isOwner(userId) && isNotModifyingPrivileges() || isAdmin();
+      allow update: if (isOwner(userId) && isNotModifyingPrivileges()) || isAdmin();
       allow delete: if isAdmin();
     }
 
