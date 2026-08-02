@@ -93,7 +93,7 @@ exports.moderateNewTestimony = functions.firestore
     }
   });
 
-// ====================== NEW: PAYSTACK PAYMENT FUNCTIONS ======================
+// ====================== PAYSTACK PAYMENT FUNCTIONS ======================
 
 /** Initialize Paystack Checkout */
 exports.initializePaystack = functions.https.onCall(async (data, context) => {
@@ -267,6 +267,67 @@ exports.verifyZKProof = functions.https.onCall(async (data, context) => {
   } catch (error) {
     console.error("ZK Verification Cloud Error:", error);
     throw new functions.https.HttpsError("internal", error.message || "Failed to verify ZK proof.");
+  }
+});
+
+// ====================== STEWARD PROMOTION CLOUD FUNCTION ======================
+
+/**
+ * Validates user contribution metrics on the server and grants Steward status.
+ */
+exports.promoteToSteward = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+      'unauthenticated', 
+      'Must be authenticated to request promotion.'
+    );
+  }
+
+  const uid = context.auth.uid;
+  const userRef = db.collection('users').doc(uid);
+
+  try {
+    const userSnap = await userRef.get();
+
+    if (!userSnap.exists) {
+      throw new functions.https.HttpsError('not-found', 'User record not found.');
+    }
+
+    const userData = userSnap.data();
+
+    // Re-verify eligibility on server using raw Firestore metrics
+    const testimonies = userData.testimoniesCount || 0;
+    const escalations = userData.successfulEscalations || 0;
+    const endorsements = userData.communityEndorsements || userData.endorsementsReceived || 0;
+
+    const activityScore = (testimonies * 2) + (escalations * 5) + (endorsements * 3);
+
+    if (activityScore > 500 && userData.tier !== 'steward') {
+      await userRef.update({
+        tier: 'steward',
+        role: 'steward',
+        promotedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+
+      // Update Auth Custom Claims for instant token verification
+      const currentClaims = context.auth.token || {};
+      await admin.auth().setCustomUserClaims(uid, {
+        ...currentClaims,
+        steward: true
+      });
+
+      console.log(`🌟 User ${uid} successfully promoted to Steward (Score: ${activityScore})`);
+      return { success: true, newTier: 'steward' };
+    }
+
+    return { 
+      success: false, 
+      message: 'Score threshold not met or already a steward.',
+      currentScore: activityScore 
+    };
+  } catch (error) {
+    console.error("Steward Promotion Function Error:", error);
+    throw new functions.https.HttpsError("internal", error.message || "Failed to process promotion.");
   }
 });
 
