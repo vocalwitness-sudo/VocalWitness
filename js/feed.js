@@ -1,60 +1,99 @@
 // js/feed.js - Polished Public Square Feed with Search, Filtering & Interactivity
-import { collection, query, onSnapshot, limit, doc, updateDoc, increment, addDoc, getDocs, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { 
+    collection, 
+    query, 
+    onSnapshot, 
+    limit, 
+    doc, 
+    updateDoc, 
+    increment, 
+    addDoc, 
+    getDocs, 
+    orderBy, 
+    serverTimestamp 
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { db, app } from './firebase-config.js';
 import { showToast } from './utils.js';
 import { renderTierCircle } from './ui-components.js';
 import { hasStewardAccess } from './tier.js';
 import { getAuth } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { handleReaction } from './reactions.js';
-import { renderUserBadgeHTML } from './badges.js';
 
 let activeFeedListener = null;
 let allPostsCache = []; // Local cache for instant search and filtering
 
+function escapeHTML(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 export function initFeed(dbInstance = db) {
-    const auth = getAuth(app);
     const feedContainer = document.getElementById('feedContainer');
     if (!feedContainer) {
         console.warn("Feed container element not found in DOM.");
         return;
     }
 
+    // Unsubscribe from any active snapshot listener to avoid memory leaks & duplicate listeners
+    if (activeFeedListener) {
+        activeFeedListener();
+        activeFeedListener = null;
+    }
+
     // Ensure Search & Filter UI controls exist above the feed
     ensureSearchAndFilterUI(feedContainer);
 
-    if (activeFeedListener) activeFeedListener();
-    
     feedContainer.innerHTML = `
         <div class="text-center py-12" id="feed-loading">
             <div class="animate-pulse text-zinc-400">Loading testimonies from the Square...</div>
         </div>`;
     
-    // ==================== EVENT DELEGATION LISTENER ====================
-    feedContainer.addEventListener('click', async (e) => {
-        const btn = e.target.closest('button[data-action]');
-        if (!btn) return;
-        
-        const action = btn.getAttribute('data-action');
-        const id = btn.getAttribute('data-id');
+    // Setup delegated event listeners only once
+    if (!feedContainer.dataset.listenerAttached) {
+        feedContainer.dataset.listenerAttached = "true";
+        feedContainer.addEventListener('click', async (e) => {
+            const btn = e.target.closest('button[data-action]');
+            if (!btn) return;
+            
+            const action = btn.getAttribute('data-action');
+            const id = btn.getAttribute('data-id');
 
-        if (action === 'like') {
-            await handleUpvote(id);
-        } else if (action === 'react') {
-            const reactionType = btn.getAttribute('data-reaction');
-            await handleReaction(id, reactionType);
-        } else if (action === 'comment') {
-            openCommentModal(id);
-        } else if (action === 'report') {
-            import('./moderation.js').then(m => m.reportContent(id, "other")).catch(() => {
-                showToast("Moderation module loading...", "info");
-            });
-        } else if (action === 'share') {
-            navigator.clipboard.writeText(`${window.location.origin}?post=${id}`);
-            showToast("Link copied to clipboard", "success");
-        } else if (action === 'pin') {
-            await handlePinPost(id);
-        }
-    });
+            if (action === 'like') {
+                await handleUpvote(id);
+            } else if (action === 'react') {
+                const reactionType = btn.getAttribute('data-reaction');
+                await handleReaction(id, reactionType);
+            } else if (action === 'comment') {
+                openCommentModal(id);
+            } else if (action === 'report') {
+                try {
+                    const m = await import('./moderation.js');
+                    if (m && m.reportContent) {
+                        await m.reportContent(id, "other");
+                    } else {
+                        showToast("Moderation module uninitialized.", "error");
+                    }
+                } catch (err) {
+                    console.error("Moderation module load failure:", err);
+                    showToast("Moderation module loading...", "info");
+                }
+            } else if (action === 'share') {
+                try {
+                    await navigator.clipboard.writeText(`${window.location.origin}?post=${id}`);
+                    showToast("Link copied to clipboard", "success");
+                } catch {
+                    showToast("Failed to copy share link", "error");
+                }
+            } else if (action === 'pin') {
+                await handlePinPost(id);
+            }
+        });
+    }
 
     const q = query(
         collection(dbInstance, "testimonies"),
@@ -88,13 +127,6 @@ export function initFeed(dbInstance = db) {
         console.error("Feed error:", error);
         feedContainer.innerHTML = `<div class="text-red-400 text-center py-8">Failed to load feed. Check your connection or Firestore rules.</div>`;
     });
- 
-    window.addEventListener('languageChanged', () => {
-        console.log("Language changed, refreshing feed UI...");
-        if (typeof initFeed === 'function') {
-            initFeed(); 
-        }
-    });
 }
 
 // ==================== SEARCH & FILTER UI GENERATOR ====================
@@ -119,14 +151,13 @@ function ensureSearchAndFilterUI(container) {
 
     container.parentNode.insertBefore(wrapper, container);
 
-    // Event listeners for search & filter
     document.getElementById('feedSearchInput')?.addEventListener('input', () => applySearchAndFilter());
     wrapper.querySelectorAll('.filter-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             wrapper.querySelectorAll('.filter-btn').forEach(b => {
                 b.className = "filter-btn px-4 py-2 rounded-xl text-xs font-medium bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white transition";
             });
-            e.target.className = "filter-btn px-4 py-2 rounded-xl text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition";
+            e.currentTarget.className = "filter-btn px-4 py-2 rounded-xl text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition";
             applySearchAndFilter();
         });
     });
@@ -141,18 +172,17 @@ function applySearchAndFilter() {
     const filtered = allPostsCache.filter(post => {
         if (post.moderationStatus === "removed") return false;
 
-        // Search term check
         const matchesSearch = !queryText || 
             (post.content && post.content.toLowerCase().includes(queryText)) ||
+            (post.author && post.author.toLowerCase().includes(queryText)) ||
             (post.authorId && post.authorId.toLowerCase().includes(queryText));
 
         if (!matchesSearch) return false;
 
-        // Category filter check
         if (filterType === 'verified') {
             return post.authorTier && post.authorTier !== 'citizen';
         } else if (filterType === 'media') {
-            return post.imageUrl || post.audioUrl;
+            return !!(post.imageUrl || post.audioUrl);
         }
 
         return true;
@@ -165,25 +195,17 @@ function renderFilteredPosts(posts) {
     const feedContainer = document.getElementById('feedContainer');
     if (!feedContainer) return;
 
-    // Preserve search bar wrapper, clear only the post list container or handle display
-    const postsHTML = posts.length === 0 ? `
-        <div class="text-center py-20 text-zinc-400">
-            <div class="text-6xl mb-4">🌍</div>
-            <p class="text-xl">No testimonies match your criteria...</p>
-            <p class="text-sm mt-2">Try adjusting your search terms or filters</p>
-        </div>` : '';
-
-    // Clear existing posts (keeping wrapper intact)
-    const existingPosts = feedContainer.querySelectorAll('.post-card');
-    existingPosts.forEach(el => el.remove());
-    
-    const oldEmpty = document.getElementById('feed-empty-state');
-    if (oldEmpty) oldEmpty.remove();
+    feedContainer.innerHTML = '';
 
     if (posts.length === 0) {
         const emptyDiv = document.createElement('div');
         emptyDiv.id = 'feed-empty-state';
-        emptyDiv.innerHTML = postsHTML;
+        emptyDiv.innerHTML = `
+            <div class="text-center py-20 text-zinc-400">
+                <div class="text-6xl mb-4">🌍</div>
+                <p class="text-xl font-medium">No testimonies match your criteria...</p>
+                <p class="text-sm mt-2 text-zinc-500">Try adjusting your search terms or filters</p>
+            </div>`;
         feedContainer.appendChild(emptyDiv);
         return;
     }
@@ -199,57 +221,47 @@ function renderSinglePostDOM(id, data, container) {
         ? `<span class="bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px] px-2.5 py-0.5 rounded-full font-medium flex items-center gap-1">📌 Pinned</span>`
         : '';
 
-    // ==================== VISIBLE TRUST SIGNALS ====================
     let trustBadgesHTML = '';
     
-    // 1. Phone Verification / Citizen Status
     if (data.authorTier && data.authorTier !== 'unverified') {
         trustBadgesHTML += `<span class="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] px-2 py-0.5 rounded flex items-center gap-1" title="Phone Verified Witness">📱 Verified</span>`;
     }
     
-    // 2. Cryptographic ZK Hash (if audio or image was hashed)
     const activeHash = data.forensicHash || data.imageHash || data.audioHash;
     if (activeHash) {
-        trustBadgesHTML += `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] px-2 py-0.5 rounded flex items-center gap-1" title="Hash: ${activeHash}">🛡️ ZK Sealed</span>`;
+        trustBadgesHTML += `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] px-2 py-0.5 rounded flex items-center gap-1" title="Hash: ${escapeHTML(activeHash)}">🛡️ ZK Sealed</span>`;
     }
 
-    // 3. IPFS Ledger (if you start pinning to IPFS later)
     if (data.ipfsCid) {
-         trustBadgesHTML += `<a href="https://ipfs.io/ipfs/${data.ipfsCid}" target="_blank" class="bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px] px-2 py-0.5 rounded flex items-center gap-1 hover:bg-purple-500/20 transition">📦 IPFS</a>`;
+         trustBadgesHTML += `<a href="https://ipfs.io/ipfs/${escapeHTML(data.ipfsCid)}" target="_blank" rel="noopener noreferrer" class="bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px] px-2 py-0.5 rounded flex items-center gap-1 hover:bg-purple-500/20 transition">📦 IPFS</a>`;
     }
 
     const trustContainer = trustBadgesHTML ? `<div class="flex flex-wrap gap-1 mt-1">${trustBadgesHTML}</div>` : '';
-    // ===============================================================
-
     const reactions = data.reactions || { respect: 0, truth: 0, concern: 0, impact: 0 };
 
-    // Image
     const mediaHTML = data.imageUrl
-        ? `<img src="${data.imageUrl}" class="mt-5 rounded-2xl w-full max-h-96 object-cover border border-zinc-700" alt="Evidence" loading="lazy">`
+        ? `<img src="${escapeHTML(data.imageUrl)}" class="mt-5 rounded-2xl w-full max-h-96 object-cover border border-zinc-700" alt="Evidence" loading="lazy">`
         : '';
 
-    // Hardened Audio
     let audioHTML = '';
     if (data.audioUrl) {
         const safeAudioUrl = data.audioUrl.includes('?') ? data.audioUrl + '&alt=media' : data.audioUrl + '?alt=media';
         audioHTML = `
             <div class="mt-5 bg-zinc-900 rounded-2xl p-4 border border-zinc-700">
                 <audio controls preload="metadata" class="w-full" crossorigin="anonymous">
-                    <source src="${safeAudioUrl}" type="audio/webm">
-                    <source src="${safeAudioUrl}" type="audio/ogg">
+                    <source src="${escapeHTML(safeAudioUrl)}" type="audio/webm">
+                    <source src="${escapeHTML(safeAudioUrl)}" type="audio/ogg">
                     Your browser does not support the audio element.
                 </audio>
             </div>`;
     }
 
-    // Date parsing
     let formattedDate = "Just now";
     if (data.createdAt?.toDate) formattedDate = data.createdAt.toDate().toLocaleString();
     else if (data.createdAt) formattedDate = new Date(data.createdAt).toLocaleString();
     
-    const authorDisplayName = data.author || (data.authorId ? `Witness (${data.authorId.substring(0, 6)}...)` : 'Anonymous Witness');
+    const authorDisplayName = escapeHTML(data.author || (data.authorId ? `Witness (${data.authorId.substring(0, 6)}...)` : 'Anonymous Witness'));
 
-    // HTML Assembly
     postEl.innerHTML = `
         <div class="flex justify-between items-start">
             <div class="flex items-center gap-3">
@@ -265,15 +277,14 @@ function renderSinglePostDOM(id, data, container) {
             </div>
             <div class="flex items-center gap-2">
                 <button data-action="pin" data-id="${id}" title="Pin Post" class="text-zinc-500 hover:text-amber-400 text-xs transition">📌</button>
-                <button onclick="showPostMenu('${id}', '${data.authorId || ''}')" class="text-zinc-400 hover:text-white text-2xl transition">⋯</button>
+                <button onclick="showPostMenu('${id}', '${escapeHTML(data.authorId || '')}')" class="text-zinc-400 hover:text-white text-2xl transition">⋯</button>
             </div>
         </div>
 
-        ${data.content ? `<p class="mt-5 mb-4 text-zinc-100 leading-relaxed">${data.content}</p>` : ''}
+        ${data.content ? `<p class="mt-5 mb-4 text-zinc-100 leading-relaxed">${escapeHTML(data.content)}</p>` : ''}
         ${mediaHTML}
         ${audioHTML}
 
-        <!-- The rest of your reaction buttons stay exactly the same -->
         <div class="flex items-center justify-between mt-6 pt-5 border-t border-zinc-800 text-xs flex-wrap gap-3">
             <div class="flex gap-2 sm:gap-3 flex-wrap">
                 <button data-action="react" data-id="${id}" data-reaction="respect" class="flex items-center gap-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 px-3 py-1.5 rounded-xl text-zinc-300 transition">
@@ -282,7 +293,6 @@ function renderSinglePostDOM(id, data, container) {
                 <button data-action="react" data-id="${id}" data-reaction="truth" class="flex items-center gap-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 px-3 py-1.5 rounded-xl text-zinc-300 transition">
                     💡 <span>${reactions.truth || 0}</span>
                 </button>
-                <!-- Keep other buttons -->
                 <button data-action="comment" data-id="${id}" class="flex items-center gap-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 px-3 py-1.5 rounded-xl text-zinc-300 transition">
                     💬 <span>${data.commentsCount || 0}</span>
                 </button>
@@ -296,7 +306,6 @@ function renderSinglePostDOM(id, data, container) {
 
     container.appendChild(postEl);
 }
-
 
 // ==================== UPVOTE / LIKE BACKEND LOGIC ====================
 async function handleUpvote(postId) {
@@ -391,10 +400,10 @@ async function openCommentModal(postId) {
                 commentEl.className = 'bg-zinc-950 border border-zinc-800/80 rounded-2xl p-3 text-sm';
                 commentEl.innerHTML = `
                     <div class="flex justify-between items-center mb-1">
-                        <span class="font-semibold text-zinc-300 text-xs">${cData.authorName || 'Witness'}</span>
+                        <span class="font-semibold text-zinc-300 text-xs">${escapeHTML(cData.authorName || 'Witness')}</span>
                         <span class="text-[10px] text-zinc-500">${dateStr}</span>
                     </div>
-                    <p class="text-zinc-200 leading-relaxed">${cData.content}</p>
+                    <p class="text-zinc-200 leading-relaxed">${escapeHTML(cData.content)}</p>
                 `;
                 commentsContainer.appendChild(commentEl);
             });
@@ -438,6 +447,11 @@ async function openCommentModal(postId) {
 }
 
 window.showPostMenu = (postId, authorId) => showToast("Post options available", "info");
+
+window.addEventListener('languageChanged', () => {
+    console.log("Language changed, refreshing feed UI...");
+    initFeed();
+});
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => initFeed());
