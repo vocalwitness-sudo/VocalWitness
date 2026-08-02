@@ -1,20 +1,19 @@
 // js/witnessCycle.js
 import { db, auth } from './firebase-config.js';
-import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { doc, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { showToast } from './utils.js';
 import { canAccessFeature } from './tier.js';
 
 export async function startWitnessCycle() {
-    if (!auth.currentUser) {
+    const user = auth.currentUser;
+
+    if (!user) {
         showToast("Sign in required", "error");
         return false;
     }
 
     try {
-        // Force refresh user token to ensure Firestore sees updated claims/roles
-        await auth.currentUser.getIdToken(true);
-
-        // Await the async permission check
+        // Await the async permission check based on user tier/role
         const allowed = await canAccessFeature('witness_circle');
         if (!allowed) {
             showToast("Only True Witnesses can start a Witness Cycle", "error");
@@ -23,26 +22,33 @@ export async function startWitnessCycle() {
 
         const cycleId = Date.now().toString();
         const cycleRef = doc(db, "witnessCycles", cycleId);
-        
-        // Write to witnessCycles
-        await setDoc(cycleRef, {
-            witnessId: auth.currentUser.uid,
+        const userRef = doc(db, "users", user.uid);
+
+        // Use a Firestore Batch to make the writes atomic
+        const batch = writeBatch(db);
+
+        // 1. Create entry in witnessCycles
+        batch.set(cycleRef, {
+            witnessId: user.uid,
             status: "active",
             createdAt: serverTimestamp()
         });
-        
-        // Merge state into user profile
-        const userRef = doc(db, "users", auth.currentUser.uid);
-        await setDoc(userRef, {
+
+        // 2. Merge active state into the user's profile
+        batch.set(userRef, {
             activeWitnessCycle: true,
             lastCycleStart: serverTimestamp()
         }, { merge: true });
 
+        // Commit both writes together
+        await batch.commit();
+
         showToast("🔄 Witness Cycle Activated. You are now attesting in the Square.", "success");
         return true;
+
     } catch (error) {
         console.error("Witness Cycle Error:", error);
-        
+
         if (error.code === 'permission-denied') {
             showToast("⚠️ Security rule blocked this action. Check Firestore rules.", "error");
         } else {
