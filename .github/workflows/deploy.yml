@@ -22,7 +22,7 @@ jobs:
       - name: Compile Tailwind CSS v4
         run: |
           npm install -D tailwindcss @tailwindcss/cli
-          npx @tailwindcss/cli -i ./input.css -o ./style.css --minify
+          npx @tailwindcss/cli -i ./input.css -o ./style.css --target chrome100 --minify
 
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
