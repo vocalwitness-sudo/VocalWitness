@@ -1,9 +1,11 @@
+@import "tailwindcss";
+
 /* ====================== ROOT VARIABLES ====================== */
 :root {
     --bg-dark: #0a0f1c;
     --glass-bg: rgba(17, 24, 39, 0.92);
     --glass-border: rgba(16, 185, 129, 0.22);
-    --primary-color: #10b981; /* Emerald theme matching your platform */
+    --primary-color: #10b981;
     --primary-dark: #059669;
     --accent-blue: #2563eb;
     --accent-red: #ef4444;
@@ -32,19 +34,10 @@ body {
 }
 
 /* ====================== ANTI-SHIFT FIXES ====================== */
-#guest-action-btn {
-    min-width: 185px;
-}
+#guest-action-btn { min-width: 185px; }
+#support-btn { min-width: 175px; }
+#postButton { min-width: 300px; }
 
-#support-btn {
-    min-width: 175px;
-}
-
-#postButton {
-    min-width: 300px;
-}
-
-/* Navigation Tabs - Prevent layout shifts during i18n translation */
 .nav-tab {
     min-width: 160px !important;
     text-align: center;
@@ -53,7 +46,6 @@ body {
     padding-right: 16px;
 }
 
-/* Testimony Composer Area */
 #btn-photo,
 #btn-voice {
     min-height: 68px;
@@ -61,7 +53,6 @@ body {
     white-space: nowrap;
 }
 
-/* General Protection */
 [data-i18n] {
     transition: color 0.2s ease;
 }
@@ -71,8 +62,7 @@ button[data-i18n],
     white-space: nowrap;
 }
 
-/* ====================== ACTIVE TAB FIX (restores emerald color) ====================== */
-/* Higher specificity + !important so Tailwind utilities cannot override it */
+/* ====================== ACTIVE TAB FIX ====================== */
 #main-nav button.nav-tab.active,
 #main-nav button[data-tab].active {
     background-color: var(--primary-color) !important;
@@ -83,7 +73,6 @@ button[data-i18n],
     box-shadow: 0 0 14px rgba(16, 185, 129, 0.4);
 }
 
-/* Keep special accent colors ONLY when the tab is NOT active */
 #main-nav button[data-tab="arena"]:not(.active) {
     background-color: rgba(12, 74, 110, 0.7) !important;
     color: #7dd3fc !important;
@@ -96,7 +85,6 @@ button[data-i18n],
     border-color: #b45309 !important;
 }
 
-/* Clear visual indicator dot for selected state */
 button.selected::after,
 .filter-chip.active::after,
 #main-nav button.nav-tab.active::after {
@@ -111,36 +99,17 @@ button.selected::after,
     border-radius: 50%;
 }
 
-/* Voice recorder bar */
-#voice-recorder-bar {
-    transition: all 0.25s ease;
-}
-
-#rec-waveform {
-    image-rendering: pixelated;
-}
+#voice-recorder-bar { transition: all 0.25s ease; }
+#rec-waveform { image-rendering: pixelated; }
 
 .recording-active {
     border-color: var(--accent-red) !important;
     box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3);
 }
 
-/* Search bar click safety */
-#squareSearchInput,
-#clearSearchBtn {
-    pointer-events: auto !important;
-}
-
-/* ====================== URGENT CLICK FIX (Aug 2026) ====================== */
-/* Target only problematic areas - Safe & Specific */
-header {
-    z-index: 60 !important;
-}
-
-#main-nav {
-    position: relative;
-    z-index: 55 !important;
-}
+/* ====================== Z-INDEX & LAYERING ====================== */
+header { z-index: 60 !important; }
+#main-nav { position: relative; z-index: 55 !important; }
 
 .nav-tab {
     position: relative;
@@ -149,13 +118,11 @@ header {
     cursor: pointer !important;
 }
 
-/* Exclude More Options button from forced active state */
 #nav-tab.more-options,
 button#more-btn {
     pointer-events: auto !important;
 }
 
-/* Search bar must stay behind */
 .relative.w-full.max-w-lg,
 .relative.w-full.max-w-md {
     z-index: 15 !important;
@@ -167,7 +134,6 @@ button#more-btn {
     z-index: 20 !important;
 }
 
-/* Main action buttons */
 #btn-photo,
 #btn-voice,
 #postButton,
@@ -179,16 +145,16 @@ button#more-btn {
     pointer-events: auto !important;
 }
 
-/* General protection */
 button, [role="button"] {
     pointer-events: auto !important;
 }
 
-/* Optional: hide scrollbar on the nav (clean look) */
-.scrollbar-hide::-webkit-scrollbar {
+.scrollbar-hide::-webkit-scrollbar,
+.no-scrollbar::-webkit-scrollbar {
     display: none;
 }
-.scrollbar-hide {
+.scrollbar-hide,
+.no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
 }
