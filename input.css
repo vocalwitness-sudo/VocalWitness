@@ -1,131 +1,131 @@
 @import "tailwindcss";
 
-/* ====================== LEGACY COMPATIBLE VARIABLES ====================== */
-:root {
-    --bg-dark: #0a0f1c;
-    --glass-bg: rgba(17, 24, 39, 0.92);
-    --glass-border: rgba(16, 185, 129, 0.22);
-    --primary-color: #10b981;
-    --primary-dark: #059669;
-    --accent-blue: #2563eb;
-    --accent-red: #ef4444;
+/* ====================== CUSTOM THEME VARIABLES ====================== */
+@theme {
+  --color-bg-dark: #0a0f1c;
+  --color-glass: rgba(17, 24, 39, 0.92);
+  --color-glass-border: rgba(16, 185, 129, 0.22);
+  --color-primary: #10b981;
+  --color-primary-dark: #059669;
+  --color-accent-blue: #2563eb;
+  --color-accent-red: #ef4444;
 }
 
-/* ====================== HARD FALLBACKS FOR OLD CHROME/WINDOWS 7 ====================== */
-/* Force standard background hex/rgba on header and surface controls */
-.glass {
-    background-color: #111827 !important; /* Fallback for no oklch/backdrop-filter */
-    background: rgba(17, 24, 39, 0.92) !important;
-    border: 1px solid rgba(16, 185, 129, 0.22) !important;
-}
-
-/* Target input boxes, buttons, and selector dropdowns */
-#languageSelector, 
-#data-saver-btn, 
-#signin-btn, 
-#profile-btn, 
-#squareSearchInput {
-    background-color: #18181b !important;
-    border-color: #3f3f46 !important;
-    color: #ffffff !important;
-}
-
-/* Base body */
+/* ====================== BASE STYLES ====================== */
 body {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    background-color: #0a0f1c !important;
-    color: #ffffff;
-    min-height: 100vh;
-    overflow-x: hidden;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: #0a0f1c;
+  color: #ffffff;
+  min-height: 100vh;
+  overflow-x: hidden;
 }
 
-/* ====================== ANTI-SHIFT FIXES ====================== */
+/* Glass Effect */
+.glass {
+  background-color: #111827; /* solid fallback */
+  background: rgba(17, 24, 39, 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(16, 185, 129, 0.22);
+}
+
+/* ====================== NAVIGATION TABS ====================== */
+.nav-tab {
+  min-width: 160px !important;
+  text-align: center;
+  white-space: nowrap;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+/* Active tab - strong emerald */
+#main-nav button.nav-tab.active,
+#main-nav button[data-tab].active {
+  background-color: #10b981 !important;
+  color: #000000 !important;
+  border-color: #059669 !important;
+  font-weight: 600;
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.4);
+}
+
+/* Inactive special tabs */
+#main-nav button[data-tab="arena"]:not(.active) {
+  background-color: rgba(12, 74, 110, 0.7) !important;
+  color: #7dd3fc !important;
+  border-color: #0369a1 !important;
+}
+
+#main-nav button[data-tab="witness"]:not(.active) {
+  background-color: rgba(120, 53, 15, 0.7) !important;
+  color: #fcd34d !important;
+  border-color: #b45309 !important;
+}
+
+/* Active indicator dot */
+#main-nav button.nav-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 5px;
+  height: 5px;
+  background-color: currentColor;
+  border-radius: 50%;
+}
+
+/* ====================== ANTI-SHIFT & SIZING ====================== */
 #guest-action-btn { min-width: 185px; }
 #support-btn { min-width: 175px; }
 #postButton { min-width: 300px; }
 
-.nav-tab {
-    min-width: 160px !important;
-    text-align: center;
-    white-space: nowrap;
-    padding-left: 16px;
-    padding-right: 16px;
-}
-
 #btn-photo,
 #btn-voice {
-    min-height: 68px;
-    min-width: 260px;
-    white-space: nowrap;
+  min-height: 68px;
+  min-width: 260px;
+  white-space: nowrap;
 }
 
-[data-i18n] { transition: color 0.2s ease; }
-button[data-i18n], .nav-tab { white-space: nowrap; }
-
-/* ====================== ACTIVE TAB STYLES ====================== */
-#main-nav button.nav-tab.active,
-#main-nav button[data-tab].active {
-    background-color: #10b981 !important;
-    color: #000000 !important;
-    border-color: #059669 !important;
-    font-weight: 600;
-    position: relative;
-    box-shadow: 0 0 14px rgba(16, 185, 129, 0.4);
-}
-
-#main-nav button[data-tab="arena"]:not(.active) {
-    background-color: rgba(12, 74, 110, 0.7) !important;
-    color: #7dd3fc !important;
-    border-color: #0369a1 !important;
-}
-
-#main-nav button[data-tab="witness"]:not(.active) {
-    background-color: rgba(120, 53, 15, 0.7) !important;
-    color: #fcd34d !important;
-    border-color: #b45309 !important;
-}
-
-button.selected::after,
-.filter-chip.active::after,
-#main-nav button.nav-tab.active::after {
-    content: '';
-    position: absolute;
-    bottom: 3px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 5px;
-    height: 5px;
-    background-color: currentColor;
-    border-radius: 50%;
-}
-
-/* ====================== Z-INDEX & INTERACTION ====================== */
+/* ====================== Z-INDEX & CLICK FIXES ====================== */
 header { z-index: 60 !important; }
 #main-nav { position: relative; z-index: 55 !important; }
 
 .nav-tab {
-    position: relative;
-    z-index: 50 !important;
-    pointer-events: auto !important;
-    cursor: pointer !important;
+  position: relative;
+  z-index: 50 !important;
+  pointer-events: auto !important;
+  cursor: pointer !important;
 }
 
-#squareSearchInput, #clearSearchBtn {
-    pointer-events: auto !important;
-    z-index: 20 !important;
+#squareSearchInput,
+#clearSearchBtn {
+  pointer-events: auto !important;
+  z-index: 20 !important;
 }
 
-#btn-photo, #btn-voice, #postButton, #signin-btn, #support-btn, #profile-btn {
-    position: relative;
-    z-index: 40 !important;
-    pointer-events: auto !important;
+#btn-photo,
+#btn-voice,
+#postButton,
+#signin-btn,
+#support-btn,
+#profile-btn {
+  position: relative;
+  z-index: 40 !important;
+  pointer-events: auto !important;
 }
 
-button, [role="button"] { pointer-events: auto !important; }
+button,
+[role="button"] {
+  pointer-events: auto !important;
+}
 
+/* Hide scrollbar on nav */
 .scrollbar-hide::-webkit-scrollbar,
-.no-scrollbar::-webkit-scrollbar { display: none; }
-.scrollbar-hide, .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide,
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
