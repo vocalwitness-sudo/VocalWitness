@@ -1,13 +1,14 @@
 // js/rbac.js - Advanced Role-Based Access Control
 import { getCurrentUserTier, TIERS } from './tier.js';
 import { showToast } from './utils.js';
-import { db, auth } from './firebase-config.js';   // Correct relative path
+import { auth } from './firebase-config.js';
+import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js';
 
 export const ROLES = {
     CITIZEN: TIERS.CITIZEN,
     CITIZEN_CIRCLE: TIERS.CITIZEN_CIRCLE,
     WITNESS_CIRCLE: TIERS.WITNESS_CIRCLE,
-    STEWARD: 'steward' // Earned through contribution
+    STEWARD: 'steward' // Earned through platform contributions
 };
 
 // Feature → Minimum required role
@@ -23,42 +24,70 @@ const FEATURE_PERMISSIONS = {
     delete_post: ROLES.STEWARD
 };
 
+const TIER_LEVELS = {
+    [ROLES.CITIZEN]: 0,
+    [ROLES.CITIZEN_CIRCLE]: 1,
+    [ROLES.WITNESS_CIRCLE]: 2,
+    [ROLES.STEWARD]: 3
+};
+
+/**
+ * Checks if the current user has permission to access a specific feature.
+ */
 export async function canAccess(feature) {
-    const tier = await getCurrentUserTier();
     const required = FEATURE_PERMISSIONS[feature];
     if (!required) return true;
 
-    const tierLevels = {
-        [ROLES.CITIZEN]: 0,
-        [ROLES.CITIZEN_CIRCLE]: 1,
-        [ROLES.WITNESS_CIRCLE]: 2,
-        [ROLES.STEWARD]: 3
-    };
+    const userTier = await getCurrentUserTier();
+    const userLevel = TIER_LEVELS[userTier] ?? 0;
+    const requiredLevel = TIER_LEVELS[required] ?? 0;
 
-    return tierLevels[tier] >= tierLevels[required];
+    return userLevel >= requiredLevel;
 }
 
-// Dynamic UI Helper
+/**
+ * Dynamic UI Helper to toggle element visibility
+ */
 export async function showIfCanAccess(feature, elementId) {
     const hasAccess = await canAccess(feature);
     const el = document.getElementById(elementId);
-    if (el) el.style.display = hasAccess ? 'block' : 'none';
+    if (el) {
+        el.style.display = hasAccess ? 'block' : 'none';
+        if (!hasAccess) el.setAttribute('aria-hidden', 'true');
+    }
 }
 
-// Stewardship Logic (Earned Role)
+/**
+ * Evaluates activity score and requests backend promotion via Cloud Function
+ */
 export async function checkForStewardPromotion(userData) {
-    const activityScore = (userData.testimoniesCount || 0) * 2 +
-                         (userData.successfulEscalations || 0) * 5 +
-                         (userData.communityEndorsements || 0) * 3;
+    if (!auth.currentUser || !userData) return false;
 
+    const activityScore = ((userData.testimoniesCount || 0) * 2) +
+                          ((userData.successfulEscalations || 0) * 5) +
+                          ((userData.communityEndorsements || 0) * 3);
+
+    // Only attempt promotion if threshold is met and user isn't already a Steward
     if (activityScore > 500 && userData.tier !== ROLES.STEWARD) {
-        // Promote to Steward
-        await updateDoc(doc(db, "users", auth.currentUser.uid), {
-            tier: ROLES.STEWARD,
-            promotedAt: new Date().toISOString()
-        });
-        showToast("🌟 You have been promoted to Square Steward!", "success");
-        return true;
+        try {
+            const functions = getFunctions();
+            const promoteUser = httpsCallable(functions, 'promoteToSteward');
+            
+            const result = await promoteUser();
+
+            if (result.data?.success) {
+                if (typeof showToast === 'function') {
+                    showToast("🌟 You have been promoted to Square Steward!", "success");
+                }
+                return true;
+            }
+        } catch (error) {
+            console.error("Cloud Function steward promotion failed:", error);
+            if (typeof showToast === 'function') {
+                showToast("Failed to process Steward promotion. Please try again later.", "error");
+            }
+            return false;
+        }
     }
     return false;
 }
