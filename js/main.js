@@ -279,6 +279,31 @@ async function loadEvidenceLedger() {
     }
 }
 
+// Add to js/main.js
+async function fetchCuratedNews() {
+  const tickerEl = document.getElementById('ticker-content');
+  if (!tickerEl) return;
+
+  const RSS_URL = 'https://api.rss2json.com/v1/api.json?rss_url=https://feeds.bbci.co.uk/news/world/rss.xml';
+
+  try {
+    const res = await fetch(RSS_URL);
+    const data = await res.json();
+    
+    if (data.status === 'ok') {
+      const headlines = data.items.slice(0, 8).map(item => 
+        `<span class="ticker-item"><strong class="text-emerald-400">•</strong> ${item.title}</span>`
+      ).join('');
+
+      tickerEl.innerHTML = headlines;
+    }
+  } catch (err) {
+    tickerEl.innerHTML = `<span class="ticker-item text-slate-400">Public Square feed active. Standby for live updates.</span>`;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', fetchCuratedNews);
+
 // ====================== UTILITIES ======================
 function escapeHtml(str) {
     if (!str) return '';
