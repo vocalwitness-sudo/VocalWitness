@@ -133,7 +133,7 @@ export async function googleLogin() {
             }
 
             window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
-            updateUIForAuthState();
+            updateUIForAuthState(user);
 
             showToast("✅ Signed in successfully!", "success");
 
@@ -190,7 +190,7 @@ export async function handleEmailAuth(event) {
         }
 
         window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
-        updateUIForAuthState();
+        updateUIForAuthState(user);
 
         showToast("✅ Signed in successfully!", "success");
         closeLoginModal();
@@ -244,7 +244,7 @@ export async function logout() {
         updateAppState({ isAuthenticated: false, currentUser: null });
         showToast("Signed out successfully", "success");
         window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user: null } }));
-        updateUIForAuthState();
+        updateUIForAuthState(null);
     } catch (error) {
         console.error("Logout error:", error);
         showToast("Logout failed", "error");
@@ -275,8 +275,10 @@ export function requireAuth(message = "Please sign in to proceed.") {
     return true;
 }
 
-export function updateUIForAuthState() {
-    const isLoggedIn = !!auth.currentUser;
+export function updateUIForAuthState(userParam = null) {
+    const activeUser = userParam || auth.currentUser;
+    const isLoggedIn = !!activeUser;
+    
     const guestBtn = document.getElementById('guest-action-btn');
     const profileBtn = document.getElementById('profile-btn');
     const signInElement = document.getElementById('signin-btn');
@@ -320,7 +322,7 @@ export function initAuth() {
                 detail: { user: isVerified ? user : null }
             })
         );
-        updateUIForAuthState();
+        updateUIForAuthState(isVerified ? user : null);
     });
 
     document.addEventListener('click', (e) => {
