@@ -410,42 +410,66 @@ export function closeCreateAccountModal() {
 
 // Ensure global header buttons bind properly across browsers (Firefox Fix)
 export function bindHeaderEvents() {
-    // 1. Join VocalWitness Button
-    const joinBtn = document.getElementById('joinVocalWitnessBtn') || document.querySelector('[data-action="join"]');
-    if (joinBtn) {
-        joinBtn.replaceWith(joinBtn.cloneNode(true)); // Remove stale event listeners
-        const freshJoinBtn = document.getElementById('joinVocalWitnessBtn') || document.querySelector('[data-action="join"]');
-        freshJoinBtn.addEventListener('click', (e) => {
+    // 1. Sign In / Join VocalWitness Button
+    const guestBtn = document.getElementById('guest-action-btn') || document.querySelector('[data-action="open-auth-modal"]');
+    if (guestBtn) {
+        guestBtn.replaceWith(guestBtn.cloneNode(true)); // Clean old event listeners
+        const freshGuestBtn = document.getElementById('guest-action-btn') || document.querySelector('[data-action="open-auth-modal"]');
+        freshGuestBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            e.stopImmediatePropagation();
+            e.stopImmediatePropagation(); // Stops Firefox double-click bugs
             showAuthModal();
         });
     }
 
     // 2. Data Saver Toggle Button
-    const dataSaverBtn = document.getElementById('dataSaverToggleBtn') || document.getElementById('dataSaverBtn');
+    const dataSaverBtn = document.getElementById('data-saver-btn') || document.querySelector('[data-action="toggle-data-saver"]');
+    const dataSaverStatus = document.getElementById('data-saver-status');
+
     if (dataSaverBtn) {
         dataSaverBtn.replaceWith(dataSaverBtn.cloneNode(true));
-        const freshDataSaverBtn = document.getElementById('dataSaverToggleBtn') || document.getElementById('dataSaverBtn');
+        const freshDataSaverBtn = document.getElementById('data-saver-btn') || document.querySelector('[data-action="toggle-data-saver"]');
+        
+        // Sync initial state from localStorage
+        const isDataSaverActive = localStorage.getItem('vw_data_saver') === 'true';
+        if (dataSaverStatus) {
+            dataSaverStatus.textContent = isDataSaverActive ? 'On' : 'Off';
+        }
+
         freshDataSaverBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopImmediatePropagation();
-            
-            // Toggle Data Saver State
-            const currentMode = localStorage.getItem('vw_data_saver') === 'true';
-            const newMode = !currentMode;
-            localStorage.setItem('vw_data_saver', newMode ? 'true' : 'false');
-            
-            // UI Visual Feedback
-            const statusLabel = freshDataSaverBtn.querySelector('.data-saver-status');
-            if (statusLabel) statusLabel.textContent = newMode ? 'On' : 'Off';
-            
-            showToast(`Data Saver turned ${newMode ? 'ON' : 'OFF'}`, 'info');
+
+            const current = localStorage.getItem('vw_data_saver') === 'true';
+            const nextState = !current;
+            localStorage.setItem('vw_data_saver', nextState ? 'true' : 'false');
+
+            const freshStatusLabel = document.getElementById('data-saver-status');
+            if (freshStatusLabel) {
+                freshStatusLabel.textContent = nextState ? 'On' : 'Off';
+            }
+
+            showToast(`Data Saver mode is now ${nextState ? 'ON' : 'OFF'}`, 'info');
+        });
+    }
+
+    // 3. Mobile Menu Toggle
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    if (mobileMenuBtn) {
+        mobileMenuBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            const rightControls = document.querySelector('.hidden.md\\:flex');
+            if (rightControls) {
+                rightControls.classList.toggle('hidden');
+                rightControls.classList.toggle('flex');
+                rightControls.classList.toggle('flex-col');
+            }
         });
     }
 }
 
-// Update initAuth to bind header events safely
+// Ensure initAuth runs bindHeaderEvents
 export function initAuth() {
     auth.onAuthStateChanged(async (user) => {
         const isOAuthUser = user?.providerData?.some(
@@ -470,18 +494,15 @@ export function initAuth() {
         updateUIForAuthState(isVerified ? user : null);
     });
 
-    document.addEventListener('click', (e) => {
-        const logoutTarget = e.target.closest('#logoutBtn, .btn-logout, [data-action="logout"]');
-        if (logoutTarget) {
-            e.preventDefault();
-            logout();
-        }
-    });
-
     // Run header event binding once DOM is ready
-    bindHeaderEvents();
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bindHeaderEvents);
+    } else {
+        bindHeaderEvents();
+    }
+
     updateUIForAuthState();
-    console.log("🔐 Auth initialized (Popup Mode)");
+    console.log("🔐 Auth initialized (Header Bindings Ready)");
 }
 
 // Global exposures
