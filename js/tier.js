@@ -247,6 +247,7 @@ export function refreshTierAndUI() {
   clearProfileCache();
   applyTierTheme();
   updateTierBadge();
+  loadWeeklyLeaderboard(); // Automatically populates leaderboard
   console.log("✅ Tier system & Governance UI refreshed");
 }
 
