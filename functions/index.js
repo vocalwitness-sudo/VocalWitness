@@ -1,5 +1,6 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
+const cors = require('cors')({ origin: true });
 const paystack = require('paystack-api')(functions.config().paystack.secret_key);
 const snarkjs = require('snarkjs');
 const fs = require('fs');
@@ -8,7 +9,8 @@ const path = require('path');
 admin.initializeApp();
 const db = admin.firestore();
 
-// ====================== EXISTING CODE (Unchanged) ======================
+// ====================== USER INITIALIZATION ======================
+
 exports.initializeCitizenProfile = functions.auth.user().onCreate(async (user) => {
   const userId = user.uid;
   const defaultUsername = `citizen_${Math.floor(1000 + Math.random() * 9000)}`;
@@ -49,7 +51,8 @@ exports.initializeCitizenProfile = functions.auth.user().onCreate(async (user) =
   }
 });
 
-// Gentle Moderation
+// ====================== GENTLE MODERATION ======================
+
 async function gentleModerationCheck(content = "") {
   if (!content || content.length < 5) return { safe: true, note: "" };
 
@@ -167,63 +170,79 @@ exports.paystackWebhook = functions.https.onRequest(async (req, res) => {
   res.sendStatus(200);
 });
 
-// ====================== SAFE RATE LIMITING CLOUD FUNCTION ======================
+// ====================== SAFE RATE LIMITING HTTP FUNCTION ======================
 
-exports.checkRateLimit = functions.https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError("unauthenticated", "Must be logged in.");
-  }
+exports.checkRateLimit = functions.https.onRequest((req, res) => {
+  return cors(req, res, async () => {
+    // 1. Verify Authorization Header for HTTP POST calls
+    const authHeader = req.headers.authorization;
+    let userId = null;
 
-  const userId = context.auth.uid;
-  const action = data.action || "general_action";
-  const maxCalls = data.maxCalls || 5;
-  const windowMinutes = data.windowMinutes || 60;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      const idToken = authHeader.split("Bearer ")[1];
+      try {
+        const decodedToken = await admin.auth().verifyIdToken(idToken);
+        userId = decodedToken.uid;
+      } catch (err) {
+        console.warn("Invalid ID token passed to checkRateLimit:", err.message);
+      }
+    }
 
-  const windowStart = new Date(Date.now() - windowMinutes * 60 * 1000);
-  const rateDocRef = db.collection('rateLimits').doc(`${userId}_${action}`);
-  const now = admin.firestore.Timestamp.now();
+    // Unauthenticated requests default to IP or fallback user key
+    if (!userId) {
+      userId = req.ip ? req.ip.replace(/[\.\:]/g, '_') : 'anonymous_user';
+    }
 
-  try {
-    const doc = await rateDocRef.get();
-    
-    if (!doc.exists) {
-      await rateDocRef.set({
-        count: 1,
-        firstRequest: now,
+    const action = req.body.action || "general_action";
+    const maxCalls = req.body.maxCalls || 5;
+    const windowMinutes = req.body.windowMinutes || 60;
+
+    const windowStart = new Date(Date.now() - windowMinutes * 60 * 1000);
+    const rateDocRef = db.collection('rateLimits').doc(`${userId}_${action}`);
+    const now = admin.firestore.Timestamp.now();
+
+    try {
+      const doc = await rateDocRef.get();
+      
+      if (!doc.exists) {
+        await rateDocRef.set({
+          count: 1,
+          firstRequest: now,
+          lastRequest: now
+        });
+        return res.status(200).json({ allowed: true });
+      }
+
+      const docData = doc.data();
+      
+      // Reset window if expired
+      if (docData.lastRequest.toDate() < windowStart) {
+        await rateDocRef.set({
+          count: 1,
+          firstRequest: now,
+          lastRequest: now
+        });
+        return res.status(200).json({ allowed: true });
+      }
+
+      // Check limit
+      if (docData.count >= maxCalls) {
+        return res.status(200).json({ allowed: false });
+      }
+
+      // Increment counter
+      await rateDocRef.update({
+        count: admin.firestore.FieldValue.increment(1),
         lastRequest: now
       });
-      return true; // Allowed
+
+      return res.status(200).json({ allowed: true });
+
+    } catch (error) {
+      console.error("Rate limit check failed:", error);
+      return res.status(200).json({ allowed: true }); // Fail open (allow action)
     }
-
-    const docData = doc.data();
-    
-    // Reset window if expired
-    if (docData.lastRequest.toDate() < windowStart) {
-      await rateDocRef.set({
-        count: 1,
-        firstRequest: now,
-        lastRequest: now
-      });
-      return true; // Allowed
-    }
-
-    // Check limit
-    if (docData.count >= maxCalls) {
-      return false; // Rate limited
-    }
-
-    // Increment counter
-    await rateDocRef.update({
-      count: admin.firestore.FieldValue.increment(1),
-      lastRequest: now
-    });
-
-    return true; // Allowed
-
-  } catch (error) {
-    console.error("Rate limit check failed:", error);
-    return true; // Fail open (allow action)
-  }
+  });
 });
 
 // ====================== ZK PROOF VERIFICATION FUNCTION ======================
