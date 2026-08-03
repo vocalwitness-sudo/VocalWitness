@@ -1,7 +1,12 @@
 {
   "hosting": {
     "public": ".",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**", "functions/**"],
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**",
+      "functions/**"
+    ],
     "rewrites": [
       {
         "source": "**",
@@ -9,6 +14,9 @@
       }
     ],
     "headers": [
+      {
+        "source": "**/*.js",
+        "headers": [
           {
             "key": "Content-Type",
             "value": "application/javascript; charset=utf-8"
