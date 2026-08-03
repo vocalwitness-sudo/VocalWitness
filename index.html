@@ -6,14 +6,14 @@
     <meta name="theme-color" content="#10b981">
     <meta name="description" content="VocalWitness - Privacy First Public Square for Truth and Evidence">
     
-    <!-- Content Security Policy -->
+    <!-- Content Security Policy (Added api.rss2json.com to connect-src) -->
     <meta http-equiv="Content-Security-Policy" content="
       default-src 'self' https: wss: blob: data:;
       script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://cdnjs.cloudflare.com https://cdn.tailwindcss.com https://apis.google.com https://js.paystack.co https://*.paystack.co https://esm.sh https://cdn.jsdelivr.net;
       worker-src 'self' blob:;
       style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com https://paystack.com https://*.paystack.co;
       font-src 'self' https://fonts.gstatic.com https: data:;
-      connect-src 'self' https://*.googleapis.com https://commentanalyzer.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://api.paystack.co https://*.paystack.co https://*.paystack.com https://*.cloudfunctions.net https://cloudfunctions.googleapis.com wss://*.firebaseio.com https://esm.sh https://cdn.jsdelivr.net blob:;
+      connect-src 'self' https://api.rss2json.com https://*.googleapis.com https://commentanalyzer.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://api.paystack.co https://*.paystack.co https://*.paystack.com https://*.cloudfunctions.net https://cloudfunctions.googleapis.com wss://*.firebaseio.com https://esm.sh https://cdn.jsdelivr.net blob:;
       img-src 'self' https: data: blob:;
       media-src 'self' https: blob: data:;
       frame-src 'self' https://accounts.google.com https://*.firebaseapp.com https://*.web.app https://*.paystack.co https://*.paystack.com;
@@ -23,15 +23,16 @@
     ">
     <title data-i18n="pageTitle">VocalWitness • Truth • Evidence • Public Square</title>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-  
-    <script type="module" src="./js/auth.js"></script>
-    <script type="module" src="./js/main.js"></script>
-    <script src="https://js.paystack.co/v2/inline.js"></script>
+    <!-- External CDNs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" defer></script>
+    <script src="https://js.paystack.co/v2/inline.js" defer></script>
 
-    <!-- HARD FALLBACK FOR OLD CHROMIUM / WIN 7 -->
+    <!-- Main Module Entry Point Only (auth.js is imported inside main.js) -->
+    <script type="module" src="./js/main.js"></script>
+
+    <!-- Fallback Styles -->
     <style>
       body { background-color: #0a0f1c !important; color: #ffffff !important; }
       .glass { background-color: #111827 !important; border: 1px solid rgba(16, 185, 129, 0.22) !important; }
@@ -50,59 +51,55 @@
 <body class="min-h-screen pb-24 bg-[#0a0f1c] text-white antialiased">
     <div class="app-container py-6 px-4 max-w-6xl mx-auto">
 
-        
-<!-- Header -->
-<header class="flex items-center justify-between mb-8 sticky top-4 z-50 glass rounded-3xl p-4 shadow-xl">
-    
-    <!-- Logo & Title -->
-    <div class="flex items-center gap-3">
-        <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-2xl shadow-md font-bold text-black">VW</div>
-        <div>
-            <h1 class="text-xl sm:text-2xl font-bold tracking-tight" data-i18n="appTitle">VocalWitness</h1>
-            <p class="text-xs sm:text-sm text-emerald-400 tracking-widest" data-i18n="appSubtitle">Truth • Evidence • Public Square</p>
-        </div>
-    </div>
+        <!-- Header -->
+        <header class="flex items-center justify-between mb-8 sticky top-4 z-50 glass rounded-3xl p-4 shadow-xl">
+            
+            <!-- Logo & Title -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-2xl shadow-md font-bold text-black">VW</div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-bold tracking-tight" data-i18n="appTitle">VocalWitness</h1>
+                    <p class="text-xs sm:text-sm text-emerald-400 tracking-widest" data-i18n="appSubtitle">Truth • Evidence • Public Square</p>
+                </div>
+            </div>
 
-    <!-- Right Side -->
-    <div class="flex items-center gap-2">
-        
-        <!-- Hamburger Menu - Mobile First -->
-        <button id="mobile-menu-btn" class="md:hidden p-3 text-3xl leading-none hover:bg-zinc-800 rounded-2xl transition">
-            ☰
-        </button>
+            <!-- Right Controls -->
+            <div class="flex items-center gap-2">
+                <button id="mobile-menu-btn" class="md:hidden p-3 text-3xl leading-none hover:bg-zinc-800 rounded-2xl transition">
+                    ☰
+                </button>
 
-        <!-- Support Button -->
-        <button id="support-btn" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl transition whitespace-nowrap text-sm shadow-sm" data-i18n="supportBtn">
-            Support The Square
-        </button>
+                <button id="support-btn" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl transition whitespace-nowrap text-sm shadow-sm" data-i18n="supportBtn">
+                    Support The Square
+                </button>
 
-        <!-- Desktop / Tablet Items -->
-        <div class="hidden md:flex items-center gap-2">
-            <select id="languageSelector" aria-label="Select Language" class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
-                <option value="en">English</option>
-                <option value="es">Español</option>
-                <option value="fr">Français</option>
-            </select>
+                <div class="hidden md:flex items-center gap-2">
+                    <select id="languageSelector" aria-label="Select Language" class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
+                        <option value="en">English</option>
+                        <option value="es">Español</option>
+                        <option value="fr">Français</option>
+                    </select>
 
-            <button id="data-saver-btn" onclick="toggleDataSaver()" class="px-3 py-2.5 rounded-2xl hover:bg-zinc-800 transition text-xs font-medium flex items-center gap-1.5 border border-zinc-700 text-zinc-300">
-                ⚡ <span class="hidden lg:inline">Data Saver: <strong id="data-saver-status" class="text-emerald-400">Off</strong></span>
-            </button>
+                    <button id="data-saver-btn" onclick="toggleDataSaver()" class="px-3 py-2.5 rounded-2xl hover:bg-zinc-800 transition text-xs font-medium flex items-center gap-1.5 border border-zinc-700 text-zinc-300">
+                        ⚡ <span class="hidden lg:inline">Data Saver: <strong id="data-saver-status" class="text-emerald-400">Off</strong></span>
+                    </button>
 
-            <a href="privacy.html" class="hidden lg:flex items-center text-emerald-400 hover:text-emerald-300 transition-colors text-sm font-medium px-3 py-2" data-i18n="privacyLink">
-                Privacy First
-            </a>
+                    <a href="privacy.html" class="hidden lg:flex items-center text-emerald-400 hover:text-emerald-300 transition-colors text-sm font-medium px-3 py-2" data-i18n="privacyLink">
+                        Privacy First
+                    </a>
 
-            <button id="signin-btn" type="button" onclick="showAuthModal()" class="px-4 py-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm text-sm">
-                <img src="https://www.google.com/favicon.ico" class="w-4 h-4" alt="Google">
-                <span class="hidden sm:inline" data-i18n="joinBtn">Sign in</span>
-            </button>
+                    <!-- Fixed ID to match main.js listener -->
+                    <button id="guest-action-btn" type="button" onclick="showAuthModal()" class="px-4 py-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm text-sm">
+                        <img src="https://www.google.com/favicon.ico" class="w-4 h-4" alt="Google">
+                        <span class="hidden sm:inline" data-i18n="joinBtn">Sign in</span>
+                    </button>
 
-            <button id="profile-btn" onclick="openProfile()" class="px-4 py-2.5 border border-zinc-700 hover:bg-zinc-800 rounded-2xl transition flex items-center gap-2 hidden text-sm" data-i18n="profileBtn">
-                Profile
-            </button>
-        </div>
-    </div>
-</header>
+                    <button id="profile-btn" onclick="openProfile()" class="px-4 py-2.5 border border-zinc-700 hover:bg-zinc-800 rounded-2xl transition flex items-center gap-2 hidden text-sm" data-i18n="profileBtn">
+                        Profile
+                    </button>
+                </div>
+            </div>
+        </header>
         <!-- HTML: Top News Ticker -->
 <div class="ticker-wrap border-b border-emerald-500/20 bg-slate-900/90 py-2 text-xs text-slate-300">
   <div class="ticker-badge font-bold uppercase text-emerald-400">Flash Feed</div>
