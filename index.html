@@ -111,7 +111,7 @@
         </div>
     </div>
 </header>
-        <!-- HTML: Top News Ticker -->
+        
 <!-- HTML: Top News Ticker -->
 <div class="ticker-wrap border-b border-emerald-500/20 bg-slate-900/90 py-2 text-xs text-slate-300" style="background-color: #0f172a; border-color: rgba(16, 185, 129, 0.2);">
   <div class="ticker-badge font-bold uppercase text-emerald-400" style="color: #34d399;">Flash Feed</div>
@@ -174,35 +174,42 @@
         ✕
     </button>
 </div>
-        <!-- Main Navigation -->
-        <div class="relative z-40 mb-8">
-            <nav class="flex gap-2 overflow-x-auto pb-3" id="main-nav">
-                <button data-tab="square" class="nav-tab active px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-[155px] group relative">
-                    <span class="font-semibold" data-i18n="publicSquareTab">Public Square</span>
-                    <span class="text-xs text-zinc-400 hidden md:block" data-i18n="publicSquareDesc">Share stories & evidence</span>
-                </button>
-                
-                <button data-tab="ledger" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-[155px] group relative">
-                    <span class="font-semibold" data-i18n="evidenceLedgerTab">Evidence Ledger</span>
-                    <span class="text-xs text-zinc-400 hidden md:block" data-i18n="evidenceLedgerDesc">Permanent record</span>
-                </button>
-                <button data-tab="arena" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-[155px] group relative bg-sky-900/70 text-sky-300 border border-sky-700 hover:bg-sky-800">
-                    <span class="font-semibold" data-i18n="liveArenaTab">Live Arena</span>
-                    <span class="text-xs text-sky-400 hidden md:block" data-i18n="liveArenaDesc">Watch & join live</span>
-                </button>
-                <button data-tab="mycircle" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-[155px] group relative">
-                    <span class="font-semibold" data-i18n="myCircleTab">My Circle</span>
-                    <span class="text-xs text-zinc-400 hidden md:block" data-i18n="myCircleDesc">Trusted people</span>
-                </button>
-                <button data-tab="witness" class="nav-tab px-5 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-[155px] group relative bg-amber-900/70 text-amber-300 border border-amber-700">
-                    <span class="font-semibold" data-i18n="verifiedWitnessesTab">Verified Witnesses</span>
-                    <span class="text-xs text-amber-400 hidden md:block" data-i18n="verifiedWitnessesDesc">Trusted voices</span>
-                </button>
-              <!-- More Options Dropdown -->
+       <!-- Main Navigation -->
+<div class="relative z-40 mb-8 w-full overflow-x-auto no-scrollbar">
+    <nav class="flex items-center gap-2 pb-2 min-w-max" id="main-nav">
+        <button data-tab="square" class="nav-tab active px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative">
+            <span class="font-semibold text-sm" data-i18n="publicSquareTab">Public Square</span>
+            <span class="text-xs text-zinc-400 hidden md:block" data-i18n="publicSquareDesc">Share stories & evidence</span>
+        </button>
+        
+        <button data-tab="ledger" class="nav-tab px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative">
+            <span class="font-semibold text-sm" data-i18n="evidenceLedgerTab">Evidence Ledger</span>
+            <span class="text-xs text-zinc-400 hidden md:block" data-i18n="evidenceLedgerDesc">Permanent record</span>
+        </button>
+
+        <button data-tab="arena" class="nav-tab px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative bg-sky-900/70 text-sky-300 border border-sky-700 hover:bg-sky-800">
+            <span class="font-semibold text-sm" data-i18n="liveArenaTab">Live Arena</span>
+            <span class="text-xs text-sky-400 hidden md:block" data-i18n="liveArenaDesc">Watch & join live</span>
+        </button>
+
+        <button data-tab="mycircle" class="nav-tab px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative">
+            <span class="font-semibold text-sm" data-i18n="myCircleTab">My Circle</span>
+            <span class="text-xs text-zinc-400 hidden md:block" data-i18n="myCircleDesc">Trusted people</span>
+        </button>
+
+        <button data-tab="witness" class="nav-tab px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative bg-amber-900/70 text-amber-300 border border-amber-700">
+            <span class="font-semibold text-sm" data-i18n="verifiedWitnessesTab">Witness Voice</span>
+            <span class="text-xs text-amber-400 hidden md:block" data-i18n="verifiedWitnessesDesc">Trusted voices</span>
+        </button>
+
+        <!-- More Options Dropdown Button -->
         <div class="dropdown-container ml-auto relative">
-            <button id="more-btn" class="nav-tab px-6 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-[145px] bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-md" data-i18n="moreOptionsBtn">
+            <button id="more-btn" class="nav-tab px-6 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-md" data-i18n="moreOptionsBtn">
                 More Options
             </button>
+        </div>
+    </nav>
+</div>
             
             <!-- More Menu (Positioned relative to container) -->
             <div id="more-menu" class="hidden absolute right-0 top-full mt-2 w-64 bg-zinc-900 border border-zinc-700 rounded-3xl shadow-2xl py-3 z-50">
