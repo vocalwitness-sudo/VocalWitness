@@ -272,3 +272,74 @@ export async function recordTestimonyContribution() {
     console.warn("Reputation update failed:", e);
   }
 }
+// ====================== WEEKLY LEADERBOARD & REPUTATION EXPANSION ======================
+
+import { collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+/**
+ * Fetch and render the Top 5 Ranked Witnesses for the weekly sidebar
+ */
+export async function loadWeeklyLeaderboard() {
+  const leaderboardEl = document.getElementById('weekly-leaderboard');
+  if (!leaderboardEl) return;
+
+  try {
+    const q = query(
+      collection(db, "users"),
+      orderBy("weeklyPoints", "desc"),
+      limit(5)
+    );
+
+    const querySnapshot = await getDocs(q);
+    let html = '';
+    let rank = 1;
+
+    querySnapshot.forEach((docSnap) => {
+      const user = docSnap.data();
+      const badgeColor = rank === 1 ? 'text-amber-400' : 'text-emerald-400';
+      
+      html += `
+        <div class="flex items-center justify-between py-2 border-b border-slate-800 text-sm">
+          <div class="flex items-center gap-2">
+            <span class="font-bold ${badgeColor}">#${rank}</span>
+            <span class="text-slate-200 font-medium">${user.displayName || 'Anonymous Witness'}</span>
+          </div>
+          <span class="text-xs bg-emerald-950 text-emerald-400 px-2 py-0.5 rounded border border-emerald-800 font-semibold">
+            ${user.weeklyPoints || 0} pts
+          </span>
+        </div>`;
+      rank++;
+    });
+
+    leaderboardEl.innerHTML = html || `<p class="text-xs text-slate-400">Points resetting for the new week...</p>`;
+  } catch (err) {
+    console.warn("Leaderboard fetch error:", err);
+    leaderboardEl.innerHTML = `<p class="text-xs text-slate-500">Leaderboard temporarily unavailable.</p>`;
+  }
+}
+
+/**
+ * Enhanced recordTestimonyContribution: Awards overall Reputation AND Weekly Leaderboard Points
+ */
+export async function recordTestimonyContribution() {
+  if (!auth.currentUser) return;
+
+  try {
+    const data = await getUserProfile(true); // Force refresh profile
+    const currentRep = data?.reputation || 0;
+    const currentWeeklyPoints = data?.weeklyPoints || 0;
+
+    const userRef = doc(db, "users", auth.currentUser.uid);
+    await setDoc(userRef, {
+      reputation: currentRep + 15,
+      weeklyPoints: currentWeeklyPoints + 15,
+      lastContribution: serverTimestamp()
+    }, { merge: true });
+
+    refreshTierAndUI();
+    loadWeeklyLeaderboard();
+    console.log("✅ +15 Reputation and Weekly Points recorded.");
+  } catch (e) {
+    console.warn("Reputation update failed:", e);
+  }
+}
