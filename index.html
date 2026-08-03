@@ -76,11 +76,11 @@
 
     <!-- Right Controls -->
     <div class="flex items-center gap-2">
-        <button id="mobile-menu-btn" class="md:hidden p-3 text-3xl leading-none hover:bg-zinc-800 rounded-2xl transition">
+        <button id="mobile-menu-btn" data-action="toggle-mobile-menu" class="md:hidden p-3 text-3xl leading-none hover:bg-zinc-800 rounded-2xl transition">
             ☰
         </button>
 
-        <button id="support-btn" onclick="openSupportModal()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl transition whitespace-nowrap text-sm shadow-sm" style="background-color: #10b981; color: #000000;" data-i18n="supportBtn">
+        <button id="support-btn" data-action="open-support-modal" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl transition whitespace-nowrap text-sm shadow-sm" style="background-color: #10b981; color: #000000;" data-i18n="supportBtn">
             Support The Square
         </button>
 
@@ -91,7 +91,7 @@
                 <option value="fr">Français</option>
             </select>
 
-            <button id="data-saver-btn" onclick="toggleDataSaver()" class="px-3 py-2.5 rounded-2xl hover:bg-zinc-800 transition text-xs font-medium flex items-center gap-1.5 border border-zinc-700 text-zinc-300" style="background-color: #18181b; border-color: #3f3f46; color: #d4d4d8;">
+            <button id="data-saver-btn" data-action="toggle-data-saver" class="px-3 py-2.5 rounded-2xl hover:bg-zinc-800 transition text-xs font-medium flex items-center gap-1.5 border border-zinc-700 text-zinc-300" style="background-color: #18181b; border-color: #3f3f46; color: #d4d4d8;">
                 ⚡ <span class="hidden lg:inline">Data Saver: <strong id="data-saver-status" class="text-emerald-400" style="color: #34d399;">Off</strong></span>
             </button>
 
@@ -100,12 +100,12 @@
             </a>
 
             <!-- Fixed ID to match main.js listener -->
-            <button id="guest-action-btn" type="button" onclick="showAuthModal()" class="px-4 py-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm text-sm" style="background-color: #ffffff; color: #000000;">
+            <button id="guest-action-btn" type="button" data-action="open-auth-modal" class="px-4 py-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm text-sm" style="background-color: #ffffff; color: #000000;">
                 <img src="https://www.google.com/favicon.ico" class="w-4 h-4" alt="Google">
                 <span class="hidden sm:inline" data-i18n="joinBtn">Sign in</span>
             </button>
 
-            <button id="profile-btn" onclick="openProfile()" class="px-4 py-2.5 border border-zinc-700 hover:bg-zinc-800 rounded-2xl transition flex items-center gap-2 hidden text-sm" style="background-color: #18181b; border-color: #3f3f46;" data-i18n="profileBtn">
+            <button id="profile-btn" data-action="open-profile" class="px-4 py-2.5 border border-zinc-700 hover:bg-zinc-800 rounded-2xl transition flex items-center gap-2 hidden text-sm" style="background-color: #18181b; border-color: #3f3f46;" data-i18n="profileBtn">
                 Profile
             </button>
         </div>
