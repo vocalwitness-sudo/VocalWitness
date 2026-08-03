@@ -14,6 +14,12 @@ import { AppState } from './app-state.js';
 import { showToast } from './utils.js';
 import './composer.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { loadWeeklyLeaderboard, refreshTierAndUI } from './tier.js';
+
+document.addEventListener('DOMContentLoaded', () => {
+  refreshTierAndUI();
+  loadWeeklyLeaderboard();
+});
 
 // Firebase Firestore Imports
 import {
