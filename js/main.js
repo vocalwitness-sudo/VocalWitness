@@ -296,7 +296,6 @@ async function loadEvidenceLedger() {
         if (syncBtn) syncBtn.disabled = false;
     }
 }
-
 // ====================== CURATED NEWS TICKER ======================
 async function fetchCuratedNews() {
   const tickerEl = document.getElementById('ticker-content');
@@ -306,20 +305,26 @@ async function fetchCuratedNews() {
 
   try {
     const res = await fetch(RSS_URL);
+    if (!res.ok) throw new Error(`HTTP network error: ${res.status}`);
+
     const data = await res.json();
     
-    if (data.status === 'ok') {
-      const headlines = data.items.slice(0, 8).map(item => 
-        `<span class="ticker-item"><strong class="text-emerald-400">•</strong> ${item.title}</span>`
-      ).join(' &nbsp;&nbsp;&nbsp; ');
+    if (data.status === 'ok' && Array.isArray(data.items) && data.items.length > 0) {
+      const headlines = data.items.slice(0, 8).map(item => {
+        const safeTitle = escapeHtml(item.title || '');
+        return `<span class="ticker-item"><strong class="text-emerald-400">•</strong> ${safeTitle}</span>`;
+      }).join(' &nbsp;&nbsp;&nbsp; ');
 
       tickerEl.innerHTML = headlines;
+      return;
     }
+
+    throw new Error('Malformed RSS payload structure');
   } catch (err) {
-    tickerEl.innerHTML = `<span class="ticker-item text-slate-400">Public Square feed active. Standby for live updates.</span>`;
+    console.warn("News ticker fallback active:", err.message);
+    tickerEl.innerHTML = `<span class="ticker-item text-slate-400">🛡️ Public Square feed active • Zero-knowledge evidence ledger online • Standby for live updates.</span>`;
   }
 }
-
 // ====================== UTILITIES ======================
 function escapeHtml(str) {
     if (!str) return '';
