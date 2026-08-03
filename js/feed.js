@@ -61,44 +61,57 @@ export function initFeed(dbInstance = db, channelType = 'citizen-talk') {
             <div class="animate-pulse text-zinc-400">Loading testimonies...</div>
         </div>`;
     
-    // Delegated event listener setup (attached once per container instance)
+   // Delegated event listener setup (attached once per container instance)
     if (!feedContainer.dataset.listenerAttached) {
         feedContainer.dataset.listenerAttached = "true";
         feedContainer.addEventListener('click', async (e) => {
             const btn = e.target.closest('button[data-action]');
             if (!btn) return;
             
+            // PREVENT BUTTON STIFFNESS / DOUBLE-CLICK LOCKOUT
+            if (btn.disabled) return;
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+
             const action = btn.getAttribute('data-action');
             const id = btn.getAttribute('data-id');
 
-            if (action === 'like') {
-                await handleUpvote(id);
-            } else if (action === 'react') {
-                const reactionType = btn.getAttribute('data-reaction');
-                await handleReaction(id, reactionType);
-            } else if (action === 'comment') {
-                openCommentModal(id);
-            } else if (action === 'report') {
-                try {
-                    const m = await import('./moderation.js');
-                    if (m && m.reportContent) {
-                        await m.reportContent(id, "other");
-                    } else {
-                        showToast("Moderation module uninitialized.", "error");
+            try {
+                if (action === 'like') {
+                    await handleUpvote(id);
+                } else if (action === 'react') {
+                    const reactionType = btn.getAttribute('data-reaction');
+                    await handleReaction(id, reactionType);
+                } else if (action === 'comment') {
+                    openCommentModal(id);
+                } else if (action === 'report') {
+                    try {
+                        const m = await import('./moderation.js');
+                        if (m && m.reportContent) {
+                            await m.reportContent(id, "other");
+                        } else {
+                            showToast("Moderation module uninitialized.", "error");
+                        }
+                    } catch (err) {
+                        console.error("Moderation module load failure:", err);
+                        showToast("Moderation module loading...", "info");
                     }
-                } catch (err) {
-                    console.error("Moderation module load failure:", err);
-                    showToast("Moderation module loading...", "info");
+                } else if (action === 'share') {
+                    try {
+                        await navigator.clipboard.writeText(`${window.location.origin}?post=${id}`);
+                        showToast("Link copied to clipboard", "success");
+                    } catch {
+                        showToast("Failed to copy share link", "error");
+                    }
+                } else if (action === 'pin') {
+                    await handlePinPost(id);
                 }
-            } else if (action === 'share') {
-                try {
-                    await navigator.clipboard.writeText(`${window.location.origin}?post=${id}`);
-                    showToast("Link copied to clipboard", "success");
-                } catch {
-                    showToast("Failed to copy share link", "error");
-                }
-            } else if (action === 'pin') {
-                await handlePinPost(id);
+            } catch (err) {
+                console.error(`Action ${action} failed:`, err);
+            } finally {
+                // ALWAYS RELEASE BUTTON EVEN IF BACKEND FAILS
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
             }
         });
     }
