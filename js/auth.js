@@ -380,28 +380,113 @@ export function initAuth() {
 }
 
 export function showAuthModal() {
-    if (!auth.currentUser) {
-        const createModal = document.getElementById('createAccountModal');
-        if (createModal) {
-            createModal.classList.remove('hidden');
-        } else {
-            const loginModal = document.getElementById('loginModal');
-            if (loginModal) loginModal.classList.remove('hidden');
-        }
+    const createModal = document.getElementById('createAccountModal');
+    const loginModal = document.getElementById('loginModal');
+
+    if (createModal && !createModal.classList.contains('flex')) {
+        createModal.classList.remove('hidden');
+        createModal.classList.add('flex');
+    } else if (loginModal) {
+        loginModal.classList.remove('hidden');
+        loginModal.classList.add('flex');
     }
 }
 
 export function closeLoginModal() {
     const loginModal = document.getElementById('loginModal');
-    if (loginModal) loginModal.classList.add('hidden');
+    if (loginModal) {
+        loginModal.classList.add('hidden');
+        loginModal.classList.remove('flex');
+    }
 }
 
 export function closeCreateAccountModal() {
     const createModal = document.getElementById('createAccountModal');
-    if (createModal) createModal.classList.add('hidden');
+    if (createModal) {
+        createModal.classList.add('hidden');
+        createModal.classList.remove('flex');
+    }
+}
+
+// Ensure global header buttons bind properly across browsers (Firefox Fix)
+export function bindHeaderEvents() {
+    // 1. Join VocalWitness Button
+    const joinBtn = document.getElementById('joinVocalWitnessBtn') || document.querySelector('[data-action="join"]');
+    if (joinBtn) {
+        joinBtn.replaceWith(joinBtn.cloneNode(true)); // Remove stale event listeners
+        const freshJoinBtn = document.getElementById('joinVocalWitnessBtn') || document.querySelector('[data-action="join"]');
+        freshJoinBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            showAuthModal();
+        });
+    }
+
+    // 2. Data Saver Toggle Button
+    const dataSaverBtn = document.getElementById('dataSaverToggleBtn') || document.getElementById('dataSaverBtn');
+    if (dataSaverBtn) {
+        dataSaverBtn.replaceWith(dataSaverBtn.cloneNode(true));
+        const freshDataSaverBtn = document.getElementById('dataSaverToggleBtn') || document.getElementById('dataSaverBtn');
+        freshDataSaverBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            
+            // Toggle Data Saver State
+            const currentMode = localStorage.getItem('vw_data_saver') === 'true';
+            const newMode = !currentMode;
+            localStorage.setItem('vw_data_saver', newMode ? 'true' : 'false');
+            
+            // UI Visual Feedback
+            const statusLabel = freshDataSaverBtn.querySelector('.data-saver-status');
+            if (statusLabel) statusLabel.textContent = newMode ? 'On' : 'Off';
+            
+            showToast(`Data Saver turned ${newMode ? 'ON' : 'OFF'}`, 'info');
+        });
+    }
+}
+
+// Update initAuth to bind header events safely
+export function initAuth() {
+    auth.onAuthStateChanged(async (user) => {
+        const isOAuthUser = user?.providerData?.some(
+            (p) => p.providerId === 'google.com' || p.providerId === GoogleAuthProvider.PROVIDER_ID
+        );
+        const isVerified = user && (isOAuthUser || user.emailVerified);
+
+        if (isVerified) {
+            await createOrUpdateUser(user);
+            updateAppState({ isAuthenticated: true, currentUser: user });
+            refreshTierUI();
+        } else {
+            clearProfileCache();
+            updateAppState({ isAuthenticated: false, currentUser: null });
+        }
+
+        window.dispatchEvent(
+            new CustomEvent('auth-changed', {
+                detail: { user: isVerified ? user : null }
+            })
+        );
+        updateUIForAuthState(isVerified ? user : null);
+    });
+
+    document.addEventListener('click', (e) => {
+        const logoutTarget = e.target.closest('#logoutBtn, .btn-logout, [data-action="logout"]');
+        if (logoutTarget) {
+            e.preventDefault();
+            logout();
+        }
+    });
+
+    // Run header event binding once DOM is ready
+    bindHeaderEvents();
+    updateUIForAuthState();
+    console.log("🔐 Auth initialized (Popup Mode)");
 }
 
 // Global exposures
+window.showAuthModal = showAuthModal;
+window.bindHeaderEvents = bindHeaderEvents;
 window.googleLogin = googleLogin;
 window.handleEmailAuth = handleEmailAuth;
 window.handleEmailSignUp = handleEmailSignUp;
@@ -409,6 +494,5 @@ window.logout = logout;
 window.togglePasswordVisibility = togglePasswordVisibility;
 window.requireAuth = requireAuth;
 window.updateUIForAuthState = updateUIForAuthState;
-window.showAuthModal = showAuthModal;
 window.closeLoginModal = closeLoginModal;
 window.closeCreateAccountModal = closeCreateAccountModal;
