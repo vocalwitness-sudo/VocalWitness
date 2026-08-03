@@ -1,16 +1,22 @@
 // js/app-state.js - Central State Manager for Living Square
+
 export let AppState = {
     currentTab: 'square',
     currentMode: 'citizen',     // 'citizen' or 'witness'
-    userTier: 'NONE',           // NONE, CITIZEN, WITNESS
+    userTier: 'NONE',           // 'NONE', 'CITIZEN', 'WITNESS'
     isAuthenticated: false,
     currentUser: null
 };
 
+/**
+ * Updates application state, persists serializable data to localStorage,
+ * and notifies all listeners across the application via CustomEvent.
+ * @param {Object} changes - Key-value pairs to update in AppState
+ */
 export function updateAppState(changes) {
     Object.assign(AppState, changes);
     
-    // Safely persist serializable subset to localStorage
+    // Persist serializable subset (prevents circular JSON errors from Firebase Auth)
     try {
         const stateToSave = {
             currentTab: AppState.currentTab,
@@ -29,19 +35,23 @@ export function updateAppState(changes) {
         console.warn('Could not persist AppState to localStorage:', e);
     }
 
-    // Dispatch event so UI components react instantly
+    // Notify all UI components
     window.dispatchEvent(new CustomEvent('appStateChanged', { 
         detail: { ...AppState } 
     }));
 }
 
+/**
+ * Rehydrates state from localStorage on application bootstrap
+ * and triggers event dispatch to align visual UI.
+ */
 export function loadSavedState() {
     try {
         const saved = localStorage.getItem('vw_app_state');
         if (saved) {
             const parsed = JSON.parse(saved);
             
-            // Mutate in-place to preserve object references
+            // Mutate in-place to preserve object reference bindings
             Object.assign(AppState, {
                 currentTab: parsed.currentTab || 'square',
                 currentMode: parsed.currentMode || 'citizen',
@@ -50,7 +60,7 @@ export function loadSavedState() {
                 currentUser: parsed.currentUser || null
             });
 
-            // Notify UI on initial state hydration
+            // Dispatch event so UI components sync instantly on load
             window.dispatchEvent(new CustomEvent('appStateChanged', { 
                 detail: { ...AppState } 
             }));
@@ -60,9 +70,11 @@ export function loadSavedState() {
     }
 }
 
-// Helper query functions
+// --- HELPER QUERY FUNCTIONS ---
+
 export function isWitnessMode() {
-    return AppState.currentMode === 'witness' && (AppState.userTier === 'WITNESS' || AppState.userTier === 'CITIZEN');
+    return AppState.currentMode === 'witness' && 
+           (AppState.userTier === 'WITNESS' || AppState.userTier === 'CITIZEN');
 }
 
 export function isUserAuthenticated() {
