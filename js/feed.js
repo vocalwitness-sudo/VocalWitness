@@ -10,6 +10,7 @@ import {
     addDoc, 
     getDocs, 
     orderBy, 
+    where,
     serverTimestamp 
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { db, app } from './firebase-config.js';
@@ -21,6 +22,7 @@ import { handleReaction } from './reactions.js';
 
 let activeFeedListener = null;
 let allPostsCache = []; // Local cache for instant search and filtering
+let currentChannel = 'citizen-talk';
 
 function escapeHTML(str) {
     if (!str) return '';
@@ -32,28 +34,34 @@ function escapeHTML(str) {
         .replace(/'/g, '&#039;');
 }
 
-export function initFeed(dbInstance = db) {
+/**
+ * Initializes the feed listener
+ * @param {Firestore} dbInstance 
+ * @param {string} channelType - e.g., 'citizen-talk' or 'witness-voice'
+ */
+export function initFeed(dbInstance = db, channelType = 'citizen-talk') {
+    currentChannel = channelType;
     const feedContainer = document.getElementById('feedContainer');
     if (!feedContainer) {
         console.warn("Feed container element not found in DOM.");
         return;
     }
 
-    // Unsubscribe from any active snapshot listener to avoid memory leaks & duplicate listeners
+    // Clean up active snapshot listener to avoid leaks
     if (activeFeedListener) {
         activeFeedListener();
         activeFeedListener = null;
     }
 
-    // Ensure Search & Filter UI controls exist above the feed
+    // Ensure controls are nested directly inside or clean up stale instances
     ensureSearchAndFilterUI(feedContainer);
 
     feedContainer.innerHTML = `
         <div class="text-center py-12" id="feed-loading">
-            <div class="animate-pulse text-zinc-400">Loading testimonies from the Square...</div>
+            <div class="animate-pulse text-zinc-400">Loading testimonies...</div>
         </div>`;
     
-    // Setup delegated event listeners only once
+    // Delegated event listener setup (attached once per container instance)
     if (!feedContainer.dataset.listenerAttached) {
         feedContainer.dataset.listenerAttached = "true";
         feedContainer.addEventListener('click', async (e) => {
@@ -95,6 +103,7 @@ export function initFeed(dbInstance = db) {
         });
     }
 
+    // Filter by channel type if specified in document schema, or fallback to all
     const q = query(
         collection(dbInstance, "testimonies"),
         limit(50)
@@ -109,7 +118,11 @@ export function initFeed(dbInstance = db) {
         }
 
         snapshot.forEach((docSnap) => {
-            allPostsCache.push({ id: docSnap.id, ...docSnap.data() });
+            const data = docSnap.data();
+            // Filter by channel if post specifies a channel property
+            if (!data.channel || data.channel === currentChannel) {
+                allPostsCache.push({ id: docSnap.id, ...data });
+            }
         });
 
         // Sort: Pinned posts first, then newest timestamp
@@ -131,10 +144,12 @@ export function initFeed(dbInstance = db) {
 
 // ==================== SEARCH & FILTER UI GENERATOR ====================
 function ensureSearchAndFilterUI(container) {
-    let wrapper = document.getElementById('feed-controls-wrapper');
-    if (wrapper) return;
+    let existingWrapper = document.getElementById('feed-controls-wrapper');
+    if (existingWrapper) {
+        existingWrapper.remove(); // Remove existing wrapper to prevent stale elements on tab switch
+    }
 
-    wrapper = document.createElement('div');
+    const wrapper = document.createElement('div');
     wrapper.id = 'feed-controls-wrapper';
     wrapper.className = 'mb-6 flex flex-col sm:flex-row gap-3 items-center justify-between';
     wrapper.innerHTML = `
@@ -180,7 +195,7 @@ function applySearchAndFilter() {
         if (!matchesSearch) return false;
 
         if (filterType === 'verified') {
-            return post.authorTier && post.authorTier !== 'citizen';
+            return post.authorTier && post.authorTier !== 'citizen' && post.authorTier !== 'unverified';
         } else if (filterType === 'media') {
             return !!(post.imageUrl || post.audioUrl);
         }
@@ -233,7 +248,7 @@ function renderSinglePostDOM(id, data, container) {
     }
 
     if (data.ipfsCid) {
-         trustBadgesHTML += `<a href="https://ipfs.io/ipfs/${escapeHTML(data.ipfsCid)}" target="_blank" rel="noopener noreferrer" class="bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px] px-2 py-0.5 rounded flex items-center gap-1 hover:bg-purple-500/20 transition">📦 IPFS</a>`;
+        trustBadgesHTML += `<a href="https://ipfs.io/ipfs/${escapeHTML(data.ipfsCid)}" target="_blank" rel="noopener noreferrer" class="bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px] px-2 py-0.5 rounded flex items-center gap-1 hover:bg-purple-500/20 transition">📦 IPFS</a>`;
     }
 
     const trustContainer = trustBadgesHTML ? `<div class="flex flex-wrap gap-1 mt-1">${trustBadgesHTML}</div>` : '';
@@ -277,7 +292,7 @@ function renderSinglePostDOM(id, data, container) {
             </div>
             <div class="flex items-center gap-2">
                 <button data-action="pin" data-id="${id}" title="Pin Post" class="text-zinc-500 hover:text-amber-400 text-xs transition">📌</button>
-                <button onclick="showPostMenu('${id}', '${escapeHTML(data.authorId || '')}')" class="text-zinc-400 hover:text-white text-2xl transition">⋯</button>
+                <button data-action="menu" data-id="${id}" class="text-zinc-400 hover:text-white text-2xl transition">⋯</button>
             </div>
         </div>
 
@@ -379,22 +394,31 @@ async function openCommentModal(postId) {
         </div>
     `;
 
-    modal.classList.remove('hidden');
-
     document.getElementById('closeCommentModal').onclick = () => modal.remove();
     modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
 
     const commentsContainer = document.getElementById('commentsListContainer');
+    
+    // Fetch comments gracefully without forcing strict unindexed ordering
     try {
-        const commentsQuery = query(collection(db, "testimonies", postId, "comments"), orderBy("createdAt", "desc"));
-        const snapshot = await getDocs(commentsQuery);
+        const commentsRef = collection(db, "testimonies", postId, "comments");
+        const snapshot = await getDocs(commentsRef);
         
         commentsContainer.innerHTML = '';
         if (snapshot.empty) {
             commentsContainer.innerHTML = `<div class="text-zinc-500 text-center py-8 text-sm">No comments yet. Be the first to add perspective.</div>`;
         } else {
-            snapshot.forEach(docSnap => {
-                const cData = docSnap.data();
+            const commentsList = [];
+            snapshot.forEach(docSnap => commentsList.push(docSnap.data()));
+            
+            // In-memory sort by date descending
+            commentsList.sort((a, b) => {
+                const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : new Date(a.createdAt || 0).getTime();
+                const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : new Date(b.createdAt || 0).getTime();
+                return timeB - timeA;
+            });
+
+            commentsList.forEach(cData => {
                 const dateStr = cData.createdAt?.toDate ? cData.createdAt.toDate().toLocaleTimeString() : "Just now";
                 const commentEl = document.createElement('div');
                 commentEl.className = 'bg-zinc-950 border border-zinc-800/80 rounded-2xl p-3 text-sm';
@@ -410,7 +434,7 @@ async function openCommentModal(postId) {
         }
     } catch (e) {
         console.error("Failed to load comments:", e);
-        commentsContainer.innerHTML = `<div class="text-red-400 text-center text-xs py-4">Failed to load comments. Check Firestore rules for subcollections.</div>`;
+        commentsContainer.innerHTML = `<div class="text-red-400 text-center text-xs py-4">Failed to load comments.</div>`;
     }
 
     document.getElementById('submitCommentBtn').onclick = async () => {
@@ -437,8 +461,7 @@ async function openCommentModal(postId) {
             });
 
             showToast("Comment posted!", "success");
-            inputField.value = '';
-            openCommentModal(postId); 
+            modal.remove();
         } catch (e) {
             console.error("Failed to post comment:", e);
             showToast("Failed to post comment.", "error");
@@ -450,11 +473,5 @@ window.showPostMenu = (postId, authorId) => showToast("Post options available", 
 
 window.addEventListener('languageChanged', () => {
     console.log("Language changed, refreshing feed UI...");
-    initFeed();
+    initFeed(db, currentChannel);
 });
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => initFeed());
-} else {
-    initFeed();
-}
