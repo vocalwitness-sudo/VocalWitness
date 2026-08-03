@@ -30,12 +30,34 @@ body {
 }
 
 /* ====================== NAVIGATION TABS ====================== */
+#main-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  overflow-x: auto;
+  white-space: nowrap;
+  padding: 0.5rem 0;
+  position: relative;
+  z-index: 55 !important;
+}
+
 .nav-tab {
-  min-width: 160px !important;
+  min-width: 150px !important;
+  max-width: 200px;
+  height: 52px !important; /* Forces normal tab height to prevent giant vertical stretch */
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   text-align: center;
   white-space: nowrap;
-  padding-left: 16px;
-  padding-right: 16px;
+  padding: 8px 16px !important;
+  border-radius: 1rem;
+  transition: all 0.2s ease;
+  position: relative;
+  z-index: 50 !important;
+  pointer-events: auto !important;
+  cursor: pointer !important;
 }
 
 /* Active tab - strong emerald */
@@ -65,7 +87,7 @@ body {
 #main-nav button.nav-tab.active::after {
   content: '';
   position: absolute;
-  bottom: 3px;
+  bottom: 4px;
   left: 50%;
   transform: translateX(-50%);
   width: 5px;
@@ -73,7 +95,6 @@ body {
   background-color: currentColor;
   border-radius: 50%;
 }
-
 /* ====================== ANTI-SHIFT & SIZING ====================== */
 #guest-action-btn { min-width: 185px; }
 #support-btn { min-width: 175px; }
