@@ -129,3 +129,31 @@ button,
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* CSS: Ticker Styling & Smooth Animation */
+.ticker-wrap {
+  display: flex;
+  overflow: hidden;
+  white-space: nowrap;
+  position: relative;
+  z-index: 40;
+}
+.ticker-badge {
+  padding: 0 12px;
+  background-color: #0a0f1c;
+  z-index: 2;
+  flex-shrink: 0;
+}
+.ticker-move {
+  display: inline-block;
+  white-space: nowrap;
+  padding-left: 100%;
+  animation: ticker 35s linear infinite;
+}
+.ticker-move:hover { animation-play-state: paused; }
+.ticker-item { display: inline-block; padding: 0 2rem; }
+
+@keyframes ticker {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-100%, 0, 0); }
+}
