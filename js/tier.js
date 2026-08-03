@@ -251,28 +251,6 @@ export function refreshTierAndUI() {
   console.log("✅ Tier system & Governance UI refreshed");
 }
 
-/**
- * Record testimony contribution and award reputation
- */
-export async function recordTestimonyContribution() {
-  if (!auth.currentUser) return;
-
-  try {
-    const data = await getUserProfile(true); // Force refresh
-    const currentRep = data?.reputation || 0;
-
-    const userRef = doc(db, "users", auth.currentUser.uid);
-    await setDoc(userRef, {
-      reputation: currentRep + 15,
-      lastContribution: serverTimestamp()
-    }, { merge: true });
-
-    clearProfileCache();
-    console.log("✅ +15 Reputation for testimony");
-  } catch (e) {
-    console.warn("Reputation update failed:", e);
-  }
-}
 // ====================== WEEKLY LEADERBOARD & REPUTATION EXPANSION ======================
 
 import { collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
