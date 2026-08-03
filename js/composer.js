@@ -63,7 +63,7 @@ if (postButton && !postButton.dataset.listenerAttached) {
         postButton.textContent = 'Publishing...';
 
         try {
-            // Rate limit check via Cloud Function
+            // Rate limit check via Cloud Function (Fail-open mode for fallback reliability)
             try {
                 const functions = getFunctions(undefined, 'us-central1');
                 const checkRateLimitFn = httpsCallable(functions, 'checkRateLimit');
@@ -103,9 +103,9 @@ if (postButton && !postButton.dataset.listenerAttached) {
                 imageHash: mediaData.imageHash || null,
                 audioHash: mediaData.audioHash || null,
                 authorId: auth.currentUser.uid,
-                author: auth.currentUser.displayName || null,
+                author: auth.currentUser.displayName || "Anonymous Witness",
                 authorTier: userTier || 'citizen',
-                authorWitnessLevel: userWitnessLevel ? userWitnessLevel.name : null,
+                authorWitnessLevel: userWitnessLevel?.name || null,
                 createdAt: serverTimestamp(),
                 hasForensic: !!(mediaData.imageHash || mediaData.audioHash)
             });
