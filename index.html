@@ -7,20 +7,20 @@
     <meta name="description" content="VocalWitness - Privacy First Public Square for Truth and Evidence">
     
     <!-- Content Security Policy -->
-  <meta http-equiv="Content-Security-Policy" content="
-  default-src 'self' https: wss: blob: data:;
-  script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://cdnjs.cloudflare.com https://cdn.tailwindcss.com https://apis.google.com https://js.paystack.co https://*.paystack.co https://esm.sh https://cdn.jsdelivr.net;
-  worker-src 'self' blob:;
-  style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com https://paystack.com https://*.paystack.co;
-  font-src 'self' https://fonts.gstatic.com https: data:;
-  connect-src 'self' https://*.googleapis.com https://commentanalyzer.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://api.paystack.co https://*.paystack.co https://*.paystack.com https://*.cloudfunctions.net https://cloudfunctions.googleapis.com wss://*.firebaseio.com https://esm.sh https://cdn.jsdelivr.net blob:;
-  img-src 'self' https: data: blob:;
-  media-src 'self' https: blob: data:;
-  frame-src 'self' https://accounts.google.com https://*.firebaseapp.com https://*.web.app https://*.paystack.co https://*.paystack.com;
-  object-src 'none';
-  base-uri 'self';
-  upgrade-insecure-requests;
-">
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self' https: wss: blob: data:;
+      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://cdnjs.cloudflare.com https://cdn.tailwindcss.com https://apis.google.com https://js.paystack.co https://*.paystack.co https://esm.sh https://cdn.jsdelivr.net;
+      worker-src 'self' blob:;
+      style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com https://paystack.com https://*.paystack.co;
+      font-src 'self' https://fonts.gstatic.com https: data:;
+      connect-src 'self' https://*.googleapis.com https://commentanalyzer.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://api.paystack.co https://*.paystack.co https://*.paystack.com https://*.cloudfunctions.net https://cloudfunctions.googleapis.com wss://*.firebaseio.com https://esm.sh https://cdn.jsdelivr.net blob:;
+      img-src 'self' https: data: blob:;
+      media-src 'self' https: blob: data:;
+      frame-src 'self' https://accounts.google.com https://*.firebaseapp.com https://*.web.app https://*.paystack.co https://*.paystack.com;
+      object-src 'none';
+      base-uri 'self';
+      upgrade-insecure-requests;
+    ">
     <title data-i18n="pageTitle">VocalWitness • Truth • Evidence • Public Square</title>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
@@ -30,6 +30,16 @@
     <script type="module" src="./js/auth.js"></script>
     <script type="module" src="./js/main.js"></script>
     <script src="https://js.paystack.co/v2/inline.js"></script>
+
+    <!-- HARD FALLBACK FOR OLD CHROMIUM / WIN 7 -->
+    <style>
+      body { background-color: #0a0f1c !important; color: #ffffff !important; }
+      .glass { background-color: #111827 !important; border: 1px solid rgba(16, 185, 129, 0.22) !important; }
+      #main-nav button.nav-tab.active { background-color: #10b981 !important; color: #000000 !important; }
+      #support-btn { background-color: #10b981 !important; color: #000000 !important; }
+      #languageSelector, #data-saver-btn, #profile-btn, #squareSearchInput { background-color: #18181b !important; color: #ffffff !important; }
+    </style>
+
     <link rel="stylesheet" href="style.css">
     <link rel="icon" href="./logo.png" type="image/png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
