@@ -2,14 +2,14 @@
 import { showToast } from './utils.js';
 
 /**
- * Generates standard signature fallback when ZK WASM fails or OOMs
+ * Generates standard signature fallback when ZK WASM fails, times out, or OOMs
  */
 async function generateFallbackSignature(inputs) {
     if (typeof showToast === 'function') {
         showToast('Falling back to standard cryptographic signature...', 'warning');
     }
     
-    // Check if ethers or Web3 wallet is available
+    // 1. Check if ethers or Web3 wallet is available
     if (window.ethereum && window.ethers) {
         try {
             const provider = new window.ethers.providers.Web3Provider(window.ethereum);
@@ -28,10 +28,12 @@ async function generateFallbackSignature(inputs) {
         }
     }
 
-    // Secondary fallback: Return plain SHA-256 hash payload with timestamp
+    // 2. Secondary fallback: Return SHA-256 hash payload with timestamp + unique random salt
+    const randomSalt = crypto.getRandomValues(new Uint8Array(16));
+    const payload = JSON.stringify(inputs) + Date.now() + Array.from(randomSalt).join('');
+    
     const encoder = new TextEncoder();
-    const data = encoder.encode(JSON.stringify(inputs) + Date.now());
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(payload));
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
@@ -43,60 +45,65 @@ async function generateFallbackSignature(inputs) {
     };
 }
 
-export function generateZKProofAsync(inputs) {
-    return new Promise(async (resolve, reject) => {
-        // 1. Hardware & Memory Guard Pre-Check (<2GB RAM)
-        if (navigator.deviceMemory && navigator.deviceMemory < 2) {
-            console.warn("Low memory environment detected (<2GB). Bypassing ZK WASM to prevent OOM crash.");
-            try {
-                const fallbackResult = await generateFallbackSignature(inputs);
-                return resolve(fallbackResult);
-            } catch (err) {
-                return reject(err);
-            }
-        }
+/**
+ * Main proof entry point with hardware & runtime bounds
+ */
+export async function generateZKProofAsync(inputs) {
+    // 1. Hardware & Memory Guard Pre-Check (<2GB RAM)
+    if (navigator.deviceMemory && navigator.deviceMemory < 2) {
+        console.warn("Low memory environment detected (<2GB). Bypassing ZK WASM to prevent OOM crash.");
+        return await generateFallbackSignature(inputs);
+    }
 
-        // 2. Worker Capability Guard
-        if (!window.Worker) {
-            const errorMsg = "Web Workers not supported. Using standard cryptographic fallback.";
-            if (typeof showToast === 'function') showToast(errorMsg, 'warning');
-            try {
-                const fallbackResult = await generateFallbackSignature(inputs);
-                return resolve(fallbackResult);
-            } catch (err) {
-                return reject(err);
-            }
+    // 2. Worker Capability Guard
+    if (!window.Worker) {
+        if (typeof showToast === 'function') {
+            showToast("Web Workers not supported. Using standard cryptographic fallback.", 'warning');
         }
+        return await generateFallbackSignature(inputs);
+    }
 
-        // 3. Initialize Worker
-        const worker = new Worker('/js/zk-worker.js');
+    // 3. Delegate execution to ZK Web Worker
+    return new Promise((resolve, reject) => {
+        let worker;
+        try {
+            worker = new Worker(new URL('./zk-worker.js', import.meta.url));
+        } catch (e) {
+            console.warn("Failed to construct ZK Worker. Triggering fallback...", e);
+            return generateFallbackSignature(inputs).then(resolve).catch(reject);
+        }
 
         // Safety timeout (45s to protect low-end CPUs)
         const timeout = setTimeout(async () => {
-            worker.terminate();
-            const timeoutError = "ZK proof generation timed out. Executing cryptographic fallback...";
-            if (typeof showToast === 'function') showToast(timeoutError, 'warning');
-            
+            cleanup();
+            if (typeof showToast === 'function') {
+                showToast("ZK proof generation timed out. Executing cryptographic fallback...", 'warning');
+            }
             try {
                 const fallbackResult = await generateFallbackSignature(inputs);
                 resolve(fallbackResult);
             } catch (fallbackErr) {
-                reject(new Error(timeoutError));
+                reject(new Error("ZK proof generation timed out and fallback failed."));
             }
         }, 45000);
 
         const unloadHandler = () => {
-            clearTimeout(timeout);
-            worker.terminate();
+            cleanup();
         };
+
+        const cleanup = () => {
+            clearTimeout(timeout);
+            window.removeEventListener('beforeunload', unloadHandler);
+            if (worker) {
+                worker.terminate();
+            }
+        };
+
         window.addEventListener('beforeunload', unloadHandler, { once: true });
 
         // Worker Message Listener
-        worker.onmessage = (e) => {
-            clearTimeout(timeout);
-            window.removeEventListener('beforeunload', unloadHandler);
-            worker.terminate();
-
+        worker.onmessage = async (e) => {
+            cleanup();
             const { success, proof, publicSignals, error, note } = e.data;
 
             if (success) {
@@ -105,18 +112,15 @@ export function generateZKProofAsync(inputs) {
                 }
                 resolve({ isFallback: false, proofType: 'SNARK_GROTH16', proof, publicSignals });
             } else {
-                console.warn("Worker execution returned false. Triggering fallback:", error);
+                console.warn("Worker execution returned failure status. Triggering fallback:", error);
                 generateFallbackSignature(inputs).then(resolve).catch(reject);
             }
         };
 
         // Worker Runtime/OOM Error Listener
         worker.onerror = async (err) => {
-            clearTimeout(timeout);
-            window.removeEventListener('beforeunload', unloadHandler);
-            worker.terminate();
+            cleanup();
             console.error("ZK Worker execution crashed (likely WASM OOM):", err);
-            
             try {
                 const fallbackResult = await generateFallbackSignature(inputs);
                 resolve(fallbackResult);
