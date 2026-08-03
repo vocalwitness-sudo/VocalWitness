@@ -1,6 +1,7 @@
+// js/firebase-config.js - Firebase Service Initialization & Config
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { initializeFirestore } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { getStorage } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
 
 const firebaseConfig = {
@@ -15,9 +16,11 @@ const firebaseConfig = {
 // Safe initialization preventing duplicate defaults
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// Explicitly pass `app` to services
+// Explicitly pass `app` to services & force long-polling for network stability
 const auth = getAuth(app);
-const db = getFirestore(app);
+const db = initializeFirestore(app, {
+  experimentalForceLongPolling: true
+});
 const storage = getStorage(app);
 
 const provider = new GoogleAuthProvider();
