@@ -190,24 +190,23 @@
                     <span class="font-semibold" data-i18n="verifiedWitnessesTab">Verified Witnesses</span>
                     <span class="text-xs text-amber-400 hidden md:block" data-i18n="verifiedWitnessesDesc">Trusted voices</span>
                 </button>
-                <div class="dropdown-container ml-auto relative">
-                    <button id="more-btn" class="nav-tab px-6 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-[145px] bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-md" data-i18n="moreOptionsBtn">
-                        More Options
-                    </button>
-                </div>
-            </nav>
-        </div>
-
-        <!-- More Menu -->
-        <div id="more-menu" class="hidden fixed top-[165px] right-6 w-64 bg-zinc-900 border border-zinc-700 rounded-3xl shadow-2xl py-3 z-[9999]">
-            <a href="my-testimonies.html" class="block px-6 py-3 hover:bg-zinc-800" data-i18n="myTestimoniesMenu">My Testimonies</a>
-            <a href="groups.html" class="block px-6 py-3 hover:bg-zinc-800" data-i18n="groupsMenu">Groups</a>
-            <a href="true-witness.html" class="block px-6 py-3 hover:bg-zinc-800" data-i18n="trueWitnessMenu">Witness Voice</a>
-            <div class="h-px bg-zinc-700 mx-4 my-2"></div>
-            <a href="about.html" class="block px-6 py-3 hover:bg-zinc-800" data-i18n="aboutMenu">About Us</a>
-            <a href="privacy.html" class="block px-6 py-3 hover:bg-zinc-800" data-i18n="privacyPolicyMenu">Privacy Policy</a>
-            <a href="terms.html" class="block px-6 py-3 hover:bg-zinc-800" data-i18n="termsOfServiceMenu">Terms of Service</a>
-            <a href="safety.html" class="block px-6 py-3 hover:bg-zinc-800" data-i18n="safetyGuidelinesMenu">Safety Guidelines</a>
+              <!-- More Options Dropdown -->
+        <div class="dropdown-container ml-auto relative">
+            <button id="more-btn" class="nav-tab px-6 py-3 rounded-3xl whitespace-nowrap flex flex-col items-center min-w-[145px] bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-md" data-i18n="moreOptionsBtn">
+                More Options
+            </button>
+            
+            <!-- More Menu (Positioned relative to container) -->
+            <div id="more-menu" class="hidden absolute right-0 top-full mt-2 w-64 bg-zinc-900 border border-zinc-700 rounded-3xl shadow-2xl py-3 z-50">
+                <a href="my-testimonies.html" class="block px-6 py-3 hover:bg-zinc-800" data-i18n="myTestimoniesMenu">My Testimonies</a>
+                <a href="groups.html" class="block px-6 py-3 hover:bg-zinc-800" data-i18n="groupsMenu">Groups</a>
+                <a href="true-witness.html" class="block px-6 py-3 hover:bg-zinc-800" data-i18n="trueWitnessMenu">Witness Voice</a>
+                <div class="h-px bg-zinc-700 mx-4 my-2"></div>
+                <a href="about.html" class="block px-6 py-3 hover:bg-zinc-800" data-i18n="aboutMenu">About Us</a>
+                <a href="privacy.html" class="block px-6 py-3 hover:bg-zinc-800" data-i18n="privacyPolicyMenu">Privacy Policy</a>
+                <a href="terms.html" class="block px-6 py-3 hover:bg-zinc-800" data-i18n="termsOfServiceMenu">Terms of Service</a>
+                <a href="safety.html" class="block px-6 py-3 hover:bg-zinc-800" data-i18n="safetyGuidelinesMenu">Safety Guidelines</a>
+            </div>
         </div>
 
         <!-- Testimony Composer -->
@@ -218,10 +217,12 @@
                 </h2>
                 <span class="text-xs text-zinc-500" data-i18n="publicSquareSubtitle">Public Square</span>
             </div>
+            
             <textarea id="mainInput" rows="4"
                       class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-5 text-lg placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none"
                       data-i18n-placeholder="mainInputPlaceholder"
                       placeholder="Share your raw testimony... What did you witness?"></textarea>
+            
             <div class="flex flex-col sm:flex-row gap-3 mt-5">
                 <button id="btn-photo"
                         class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 hover:border-emerald-500 rounded-2xl flex items-center justify-center gap-3 font-medium transition-all active:scale-95"
@@ -238,6 +239,7 @@
             <div id="preview-area" class="mt-6 min-h-[120px] border border-dashed border-zinc-700 rounded-2xl p-4 flex items-center justify-center text-zinc-500 text-sm" data-i18n="previewAreaText">
                 Preview will appear here...
             </div>
+
             <button id="postButton"
                     class="mt-8 w-full py-6 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500
                            hover:from-emerald-600 hover:via-teal-600 hover:to-emerald-600
@@ -291,7 +293,7 @@
             </div>
             <div id="profileContent"></div>
             <div class="mt-8 flex gap-3">
-                <button onclick="handleSignOut()" 
+                <button id="signOutBtn" 
                         class="w-full py-3.5 border border-red-500/40 text-red-400 hover:bg-red-500/10 font-semibold rounded-2xl transition mt-4">
                     Sign Out
                 </button>
@@ -307,7 +309,7 @@
                 <button onclick="closeEditProfile()" class="text-3xl text-zinc-400 hover:text-white">×</button>
             </div>
             
-            <form onsubmit="handleSaveProfile(event)" class="space-y-5">
+            <form id="editProfileForm" class="space-y-5">
                 <div>
                     <label class="block text-xs text-zinc-400 uppercase font-semibold mb-2">Display Name</label>
                     <input type="text" id="editDisplayName" placeholder="e.g. Lawmann" 
@@ -349,12 +351,6 @@
         </div>
     </div>
 
-    <!-- Public Content -->
-    <div id="publicSquareFeed"></div>
-
-    <!-- Private / Authenticated Content -->
-    <div class="requires-auth hidden"></div>
-        
     <!-- Support Modal -->
     <div id="supportModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[10000] flex items-center justify-center p-4 hidden">
         <div class="glass max-w-md w-full rounded-3xl p-6 border border-emerald-500/30 text-white relative modal max-h-[90vh] overflow-y-auto">
@@ -370,7 +366,7 @@
                     <label class="block text-xs text-zinc-400 mb-2">Select Contribution Amount (USD / NGN)</label>
                     <div class="grid grid-cols-3 gap-2">
                         <button type="button" class="support-tier-btn py-2 bg-zinc-800 hover:bg-emerald-600/30 border border-zinc-700 rounded-xl text-sm font-medium transition-all" data-amount="5">$5</button>
-                        <button type="button" class="support-tier-btn py-2 bg-zinc-800 hover:bg-emerald-600/30 border border-emerald-500 bg-emerald-600/20 rounded-xl text-sm font-medium transition-all" data-amount="15">$15</button>
+                        <button type="button" class="support-tier-btn py-2 bg-emerald-600/20 border border-emerald-500 rounded-xl text-sm font-medium transition-all" data-amount="15">$15</button>
                         <button type="button" class="support-tier-btn py-2 bg-zinc-800 hover:bg-emerald-600/30 border border-zinc-700 rounded-xl text-sm font-medium transition-all" data-amount="50">$50</button>
                     </div>
                 </div>
@@ -403,7 +399,7 @@
         </div>
     </div>
 
-    <!-- Single Login Modal -->
+    <!-- Login Modal -->
     <div id="loginModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[10000] p-4">
         <div class="glass rounded-3xl p-6 sm:p-8 max-w-md w-full modal relative max-h-[90vh] overflow-y-auto border border-emerald-500/30">
             <button onclick="closeLoginModal()" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl">✕</button>
@@ -413,8 +409,8 @@
                 <p id="loginModalMessage" class="text-xs text-emerald-400">Sign in or create an account to participate.</p>
             </div>
 
-            <!-- Google -->
-            <button onclick="googleLogin()" class="w-full py-3.5 bg-white hover:bg-zinc-100 text-black rounded-2xl font-semibold flex items-center justify-center gap-3 transition shadow-sm mb-4">
+            <!-- Google Login (ID bound to module handler) -->
+            <button id="googleAuthBtn" class="w-full py-3.5 bg-white hover:bg-zinc-100 text-black rounded-2xl font-semibold flex items-center justify-center gap-3 transition shadow-sm mb-4">
                 <img src="https://www.google.com/favicon.ico" class="w-5 h-5" alt="Google">
                 Continue with Google
             </button>
@@ -426,7 +422,7 @@
             </div>
 
             <!-- Email form -->
-            <form id="emailAuthForm" onsubmit="handleEmailAuth(event)" class="space-y-4">
+            <form id="emailAuthForm" class="space-y-4">
                 <div>
                     <label class="block text-xs text-zinc-400 mb-1" for="authEmail">Email Address</label>
                     <input type="email" id="authEmail" required
@@ -452,7 +448,7 @@
                             class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-black font-semibold rounded-xl text-sm transition">
                         Sign In
                     </button>
-                    <button type="button" onclick="handleEmailSignUp(event)"
+                    <button type="button" id="emailSignUpBtn"
                             class="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white font-semibold rounded-xl text-sm transition">
                         Create Account
                     </button>
@@ -465,11 +461,83 @@
         </div>
     </div>
 
-    <footer class="bg-zinc-950 border-t border-zinc-800 pt-16 pb-12 mt-20">
-        <div class="max-w-6xl mx-auto px-6 text-center text-xs text-zinc-500">
-            © 2026 VocalWitness • Built for Truth • Powered by Citizens
+   <!-- Main Application Footer -->
+<footer class="bg-zinc-950 border-t border-zinc-800/80 pt-16 pb-12 mt-20 text-zinc-400">
+    <div class="max-w-6xl mx-auto px-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-10 pb-12 border-b border-zinc-800/60">
+            
+            <!-- Brand & Mission Column -->
+            <div class="md:col-span-1 space-y-4">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl font-bold tracking-wider text-white">
+                        Vocal<span class="text-emerald-500">Witness</span>
+                    </span>
+                </div>
+                <p class="text-xs text-zinc-400 leading-relaxed" data-i18n="footerMission">
+                    A decentralized public square empowering citizens with immutable testimony, voice verification, and transparent reporting.
+                </p>
+                <button onclick="openSupportModal()" 
+                        class="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-emerald-600/10 hover:bg-emerald-600/20 border border-emerald-500/30 rounded-xl text-emerald-400 text-xs font-semibold transition-all">
+                    <span>♥</span> <span data-i18n="sustainSquareBtn">Sustain the Platform</span>
+                </button>
+            </div>
+
+            <!-- Platform Navigation -->
+            <div class="space-y-3">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-white" data-i18n="footerPlatformHeader">Platform</h3>
+                <ul class="space-y-2 text-xs">
+                    <li><a href="index.html" class="hover:text-emerald-400 transition" data-i18n="publicSquareFeed">Public Square</a></li>
+                    <li><a href="my-testimonies.html" class="hover:text-emerald-400 transition" data-i18n="myTestimoniesMenu">My Testimonies</a></li>
+                    <li><a href="groups.html" class="hover:text-emerald-400 transition" data-i18n="groupsMenu">Groups</a></li>
+                    <li><a href="true-witness.html" class="hover:text-emerald-400 transition" data-i18n="witnessVoiceMenu">Witness Voice</a></li>
+                </ul>
+            </div>
+
+            <!-- Governance & Legal -->
+            <div class="space-y-3">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-white" data-i18n="footerGovernanceHeader">Governance & Legal</h3>
+                <ul class="space-y-2 text-xs">
+                    <li><a href="about.html" class="hover:text-emerald-400 transition" data-i18n="aboutMenu">About Us</a></li>
+                    <li><a href="privacy.html" class="hover:text-emerald-400 transition" data-i18n="privacyPolicyMenu">Privacy Policy</a></li>
+                    <li><a href="terms.html" class="hover:text-emerald-400 transition" data-i18n="termsOfServiceMenu">Terms of Service</a></li>
+                    <li><a href="safety.html" class="hover:text-emerald-400 transition" data-i18n="safetyGuidelinesMenu">Safety Guidelines</a></li>
+                </ul>
+            </div>
+
+            <!-- Network & System Status -->
+            <div class="space-y-3">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-white" data-i18n="footerSystemHeader">System Status</h3>
+                <div class="p-3 bg-zinc-900 border border-zinc-800 rounded-2xl space-y-2">
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="text-zinc-500">Storage Rail:</span>
+                        <span class="text-emerald-400 font-mono text-[11px]">Firestore Active</span>
+                    </div>
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="text-zinc-500">Verification:</span>
+                        <span class="text-emerald-400 font-mono text-[11px]">TRC-20 / Direct</span>
+                    </div>
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="text-zinc-500">Data Saver:</span>
+                        <button onclick="toggleDataSaver()" id="data-saver-status" class="text-amber-400 font-medium text-xs hover:underline">
+                            Off
+                        </button>
+                    </div>
+                </div>
+            </div>
+
         </div>
-    </footer>
+
+        <!-- Bottom Copyright & Security Note -->
+        <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-500">
+            <p data-i18n="footerCopyright">
+                © 2026 VocalWitness • Built for Truth • Powered by Citizens
+            </p>
+            <p class="text-[11px] font-mono text-zinc-600">
+                Non-custodial infrastructure • Zero tracking
+            </p>
+        </div>
+    </div>
+</footer>
 
     <!-- Global UI Helper Script -->
     <script>
@@ -485,7 +553,6 @@
             setTimeout(() => toast.remove(), 3500);
         }
 
-        // Password visibility toggle
         function togglePasswordVisibility() {
             const input = $('authPassword');
             const btn = $('togglePasswordBtn');
@@ -513,61 +580,21 @@
         }
         
         // Modal Utilities
-        function showAuthModal() {
-            $('loginModal')?.classList.remove('hidden');
-        }
-        function closeLoginModal() {
-            $('loginModal')?.classList.add('hidden');
-        }
-        function openProfile() {
-            $('profileModal')?.classList.remove('hidden');
-        }
-        function closeProfile() {
-            $('profileModal')?.classList.add('hidden');
-        }
-        function closeEditProfile() {
-            $('editProfileModal')?.classList.add('hidden');
-        }
-        function toggleDataSaver() {
-            const status = $('data-saver-status');
-            if (status) {
-                const isOff = status.textContent === 'Off';
-                status.textContent = isOff ? 'On' : 'Off';
-                showToast(`Data Saver ${isOff ? 'Enabled' : 'Disabled'}`, 'info');
-            }
-        }
+        function showAuthModal() { $('loginModal')?.classList.remove('hidden'); }
+        function closeLoginModal() { $('loginModal')?.classList.add('hidden'); }
+        function openProfile() { $('profileModal')?.classList.remove('hidden'); }
+        function closeProfile() { $('profileModal')?.classList.add('hidden'); }
+        function closeEditProfile() { $('editProfileModal')?.classList.add('hidden'); }
 
-        // Authentication Placeholders
-        function googleLogin() {
-            showToast("Redirecting to Google Sign-In...", "info");
-        }
-        function handleEmailAuth(e) {
-            e.preventDefault();
-            showToast("Signing in...", "info");
-        }
-        function handleEmailSignUp(e) {
-            e.preventDefault();
-            showToast("Creating account...", "info");
-        }
-        function handleSaveProfile(e) {
-            e.preventDefault();
-            showToast("Profile updated successfully!", "success");
-            closeEditProfile();
-        }
-        function handleSignOut() {
-            showToast("Signed out", "info");
-            closeProfile();
-        }
-
-        // Support Modal Logic
+        // Support Modal Toggle
         const supportModal = $('supportModal');
         function openSupportModal() {
-            supportModal.classList.remove('hidden');
-            supportModal.classList.add('flex');
+            supportModal?.classList.remove('hidden');
+            supportModal?.classList.add('flex');
         }
         function closeSupportModal() {
-            supportModal.classList.add('hidden');
-            supportModal.classList.remove('flex');
+            supportModal?.classList.add('hidden');
+            supportModal?.classList.remove('flex');
         }
         $('closeSupportModal')?.addEventListener('click', closeSupportModal);
         supportModal?.addEventListener('click', (e) => {
@@ -578,7 +605,6 @@
                 closeSupportModal();
             }
         });
-        $('support-btn')?.addEventListener('click', openSupportModal);
 
         // Tier selection logic
         document.querySelectorAll('.support-tier-btn').forEach(btn => {
@@ -597,26 +623,5 @@
             });
         });
     </script>
-
-    <script>
-    // Mobile Menu Toggle
-    const mobileBtn = document.getElementById('mobile-menu-btn');
-    const mobileMenu = document.getElementById('mobile-menu');
-
-    if (mobileBtn && mobileMenu) {
-        mobileBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            mobileMenu.classList.toggle('hidden');
-        });
-
-        // Close menu when clicking outside
-        document.addEventListener('click', function(e) {
-            if (!mobileMenu.contains(e.target) && !mobileBtn.contains(e.target)) {
-                mobileMenu.classList.add('hidden');
-            }
-        });
-    }
-</script>
-    
-</body>
+    </body>
 </html>
