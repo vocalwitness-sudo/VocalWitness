@@ -1,5 +1,5 @@
 // js/app.js - Main Application Orchestrator
-
+import './main.js';
 import { initAuth, showAuthModal, bindHeaderEvents } from './auth.js';
 import { isUserAuthenticated } from './app-state.js';
 import { showToast } from './utils.js';
