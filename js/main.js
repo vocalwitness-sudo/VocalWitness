@@ -1,6 +1,6 @@
-// js/main.js - Polished & Robust Main Entry Point
+// js/main.js - Cleaned Tab Switching & Entry Setup
 
-// 1. Static Module Imports
+// 1. Static Module Imports (All top-level imports grouped together)
 import './app-state.js';
 import { initAuth, requireAuth, updateUIForAuthState } from "./auth.js";
 import { initFeed } from './feed.js';
@@ -14,11 +14,6 @@ import { AppState } from './app-state.js';
 import { showToast } from './utils.js';
 import './composer.js';
 import { loadWeeklyLeaderboard, refreshTierAndUI } from './tier.js';
-
-document.addEventListener('DOMContentLoaded', () => {
-  refreshTierAndUI();
-  loadWeeklyLeaderboard();
-});
 
 // Firebase Firestore Imports
 import {
@@ -34,6 +29,12 @@ import {
 let engineInstance = null;
 let isInitialized = false;
 let listenersInitialized = false;
+
+// Initialize Tier Systems on DOM Ready
+document.addEventListener('DOMContentLoaded', () => {
+    refreshTierAndUI();
+    loadWeeklyLeaderboard();
+});
 
 // ====================== TAB SWITCHING ======================
 window.switchTab = async (tab) => {
@@ -74,7 +75,7 @@ window.switchTab = async (tab) => {
         else if (tab === 'witness') {
             container.innerHTML = `
                 <div class="space-y-6 p-8 text-center glass rounded-3xl border border-amber-700/50">
-                    <h2 class="text-3xl font-bold text-amber-400">🛡️ Verified Witnesses</h2>
+                    <h2 class="text-3xl font-bold text-amber-400">🛡️ Witness Voice</h2>
                     <p class="text-zinc-400">ZK-Verified & High-Trust Evidence Feed</p>
                     <div id="feedContainer" class="space-y-8 mt-6"></div>
                 </div>`;
