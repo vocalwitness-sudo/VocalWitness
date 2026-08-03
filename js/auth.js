@@ -108,10 +108,16 @@ function handleAuthError(error) {
     }
 }
 
-export async function googleLogin() {
+export async function googleLogin(event) {
     if (authActionInProgress) {
         showToast("Sign-in already in progress...", "info");
         return;
+    }
+
+    const btn = event?.currentTarget || document.getElementById('googleSignInBtn');
+    if (btn) {
+        btn.disabled = true;
+        btn.classList.add('opacity-50', 'cursor-not-allowed');
     }
 
     authActionInProgress = true;
@@ -146,11 +152,18 @@ export async function googleLogin() {
         showToast(handleAuthError(error), "error");
     } finally {
         authActionInProgress = false;
+        if (btn) {
+            btn.disabled = false;
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
     }
 }
 
 export async function handleEmailAuth(event) {
     if (event) event.preventDefault();
+
+    const submitBtn = event?.submitter || document.getElementById('signInSubmitBtn') || event?.target?.querySelector('button[type="submit"]');
+    if (submitBtn?.disabled) return;
 
     const email = (
         document.getElementById('authEmail')?.value ||
@@ -167,6 +180,11 @@ export async function handleEmailAuth(event) {
     if (!email || !password) {
         showToast("Please enter both email and password.", "error");
         return;
+    }
+
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
     }
 
     try {
@@ -200,11 +218,20 @@ export async function handleEmailAuth(event) {
     } catch (error) {
         console.error("Email sign-in error:", error);
         showToast(handleAuthError(error), "error");
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
     }
 }
 
 export async function handleEmailSignUp(event) {
     if (event) event.preventDefault();
+
+    const submitBtn = event?.submitter || document.getElementById('signUpSubmitBtn') || event?.target?.querySelector('button[type="submit"]');
+    if (submitBtn?.disabled) return;
+
     const email = (document.getElementById('authEmail')?.value || document.getElementById('signUpEmail')?.value)?.trim();
     const password = document.getElementById('authPassword')?.value || document.getElementById('signUpPassword')?.value;
 
@@ -216,6 +243,11 @@ export async function handleEmailSignUp(event) {
     if (password.length < 6) {
         showToast("Password must be at least 6 characters long.", "error");
         return;
+    }
+
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
     }
 
     try {
@@ -234,6 +266,11 @@ export async function handleEmailSignUp(event) {
     } catch (error) {
         console.error("Email sign-up error:", error);
         showToast(handleAuthError(error), "error");
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
     }
 }
 
