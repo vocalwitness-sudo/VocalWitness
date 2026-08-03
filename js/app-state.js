@@ -29,7 +29,7 @@ export function updateAppState(changes) {
         console.warn('Could not persist AppState to localStorage:', e);
     }
 
-    // Notify all UI components across the application
+    // Dispatch event so UI components react instantly
     window.dispatchEvent(new CustomEvent('appStateChanged', { 
         detail: { ...AppState } 
     }));
@@ -40,12 +40,20 @@ export function loadSavedState() {
         const saved = localStorage.getItem('vw_app_state');
         if (saved) {
             const parsed = JSON.parse(saved);
-            // Restore UI modes & safe profile cache
-            AppState.currentTab = parsed.currentTab || 'square';
-            AppState.currentMode = parsed.currentMode || 'citizen';
-            AppState.userTier = parsed.userTier || 'NONE';
-            AppState.isAuthenticated = !!parsed.isAuthenticated;
-            AppState.currentUser = parsed.currentUser || null;
+            
+            // Mutate in-place to preserve object references
+            Object.assign(AppState, {
+                currentTab: parsed.currentTab || 'square',
+                currentMode: parsed.currentMode || 'citizen',
+                userTier: parsed.userTier || 'NONE',
+                isAuthenticated: !!parsed.isAuthenticated,
+                currentUser: parsed.currentUser || null
+            });
+
+            // Notify UI on initial state hydration
+            window.dispatchEvent(new CustomEvent('appStateChanged', { 
+                detail: { ...AppState } 
+            }));
         }
     } catch (e) {
         console.warn('Could not load saved AppState:', e);
