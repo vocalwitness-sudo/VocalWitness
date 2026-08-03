@@ -28,31 +28,36 @@ function refreshTierUI() {
 }
 
 async function createOrUpdateUser(user) {
-    if (!user) return;
+    if (!user || !user.uid) return;
     try {
         const userRef = doc(db, "users", user.uid);
         const snap = await getDoc(userRef);
 
+        const safeEmail = user.email || "";
+        const safeDisplayName = user.displayName || "Anonymous Witness";
+        const safePhotoURL = user.photoURL || "";
+
         if (!snap.exists()) {
             await setDoc(userRef, {
                 uid: user.uid,
-                email: user.email || "",
-                displayName: user.displayName || "Anonymous Witness",
-                photoURL: user.photoURL || "",
+                email: safeEmail,
+                displayName: safeDisplayName,
+                photoURL: safePhotoURL,
                 tier: "citizen",
                 createdAt: serverTimestamp(),
                 lastActive: serverTimestamp()
             });
         } else {
+            const existingData = snap.data() || {};
             await setDoc(userRef, {
-                email: user.email || snap.data().email || "",
-                displayName: user.displayName || snap.data().displayName || "Anonymous Witness",
-                photoURL: user.photoURL || snap.data().photoURL || "",
+                email: safeEmail || existingData.email || "",
+                displayName: safeDisplayName || existingData.displayName || "Anonymous Witness",
+                photoURL: safePhotoURL || existingData.photoURL || "",
                 lastActive: serverTimestamp()
             }, { merge: true });
         }
     } catch (e) {
-        console.error("User document error:", e);
+        console.error("User document update error:", e);
     }
 }
 
