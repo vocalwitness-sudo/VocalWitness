@@ -13,7 +13,6 @@ import { loadDynamicNavigation } from './navigation.js';
 import { AppState } from './app-state.js';
 import { showToast } from './utils.js';
 import './composer.js';
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { loadWeeklyLeaderboard, refreshTierAndUI } from './tier.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -42,7 +41,6 @@ window.switchTab = async (tab) => {
 
     // Cleanly update active UI tab states
     document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
-        // Remove every possible active / accent class so nothing fights the CSS
         btn.classList.remove(
             'active',
             'bg-emerald-600', 'bg-emerald-500',
@@ -51,7 +49,7 @@ window.switchTab = async (tab) => {
         );
 
         if (btn.dataset.tab === tab) {
-            btn.classList.add('active');   // CSS will force the strong emerald look
+            btn.classList.add('active');
         }
     });
 
@@ -214,7 +212,6 @@ async function loadEvidenceLedger() {
     const container = document.getElementById('ledgerContainer');
     if (!container) return;
 
-    // Render outer skeleton
     container.innerHTML = `
         <div class="glass rounded-3xl p-8 border border-zinc-700/60 shadow-2xl">
             <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8 pb-6 border-b border-zinc-800">
@@ -285,7 +282,7 @@ async function loadEvidenceLedger() {
     }
 }
 
-// Add to js/main.js
+// ====================== CURATED NEWS TICKER ======================
 async function fetchCuratedNews() {
   const tickerEl = document.getElementById('ticker-content');
   if (!tickerEl) return;
@@ -299,7 +296,7 @@ async function fetchCuratedNews() {
     if (data.status === 'ok') {
       const headlines = data.items.slice(0, 8).map(item => 
         `<span class="ticker-item"><strong class="text-emerald-400">•</strong> ${item.title}</span>`
-      ).join('');
+      ).join(' &nbsp;&nbsp;&nbsp; ');
 
       tickerEl.innerHTML = headlines;
     }
@@ -307,8 +304,6 @@ async function fetchCuratedNews() {
     tickerEl.innerHTML = `<span class="ticker-item text-slate-400">Public Square feed active. Standby for live updates.</span>`;
   }
 }
-
-document.addEventListener('DOMContentLoaded', fetchCuratedNews);
 
 // ====================== UTILITIES ======================
 function escapeHtml(str) {
@@ -400,21 +395,19 @@ async function bootstrap() {
         }
 
         loadDynamicNavigation?.();
+        fetchCuratedNews();
 
-        // 2. Wait for Firebase Auth state to resolve before firing database queries
-        import("https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js").then(({ onAuthStateChanged }) => {
-            onAuthStateChanged(auth, (user) => {
-                console.log("🔐 Auth state confirmed:", user ? `Logged in as ${user.uid}` : "Guest session");
+        // 2. Listen to unified auth-changed custom event dispatched by auth.js
+        window.addEventListener('auth-changed', (e) => {
+            const user = e.detail?.user;
+            console.log("🔐 Auth state confirmed:", user ? `Logged in as ${user.uid}` : "Guest session");
 
-                // Update UI based on confirmed state
-                if (typeof updateUIForAuthState === 'function') {
-                    updateUIForAuthState(user);
-                }
+            if (typeof updateUIForAuthState === 'function') {
+                updateUIForAuthState(user);
+            }
 
-                // Initial tab switch ONLY after Auth state is solid
-                window.switchTab('square');
-                showWelcomeNote();
-            });
+            window.switchTab('square');
+            showWelcomeNote();
         });
 
         console.log("✅ Bootstrap finished successfully");
