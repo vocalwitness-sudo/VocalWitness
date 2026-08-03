@@ -29,6 +29,7 @@ import {
 let engineInstance = null;
 let isInitialized = false;
 let listenersInitialized = false;
+let isSwitchingTab = false;
 
 // Initialize Tier Systems on DOM Ready
 document.addEventListener('DOMContentLoaded', () => {
@@ -38,10 +39,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ====================== TAB SWITCHING ======================
 window.switchTab = async (tab) => {
+    if (isSwitchingTab && AppState.currentTab === tab) return;
+    isSwitchingTab = true;
+
     console.log(`Switching to tab: ${tab}`);
 
     // Cleanly update active UI tab states
-    document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
+    const navButtons = document.querySelectorAll('#main-nav button[data-tab]');
+    navButtons.forEach(btn => {
         btn.classList.remove(
             'active',
             'bg-emerald-600', 'bg-emerald-500',
@@ -59,7 +64,10 @@ window.switchTab = async (tab) => {
 
     // Target main container
     const container = document.getElementById('dynamicContainer') || document.getElementById('main-content');
-    if (!container) return;
+    if (!container) {
+        isSwitchingTab = false;
+        return;
+    }
 
     container.innerHTML = `<div class="text-center py-20 text-zinc-400">Loading ${tab}...</div>`;
 
@@ -92,6 +100,8 @@ window.switchTab = async (tab) => {
     } catch (e) {
         console.error("Tab switch error:", e);
         container.innerHTML = `<div class="text-red-400 text-center py-8">Failed to load tab. Please try again.</div>`;
+    } finally {
+        isSwitchingTab = false;
     }
 };
 
@@ -152,7 +162,7 @@ window.publishTestimony = async () => {
     if (postBtn) {
         if (postBtn.disabled) return;
         postBtn.disabled = true;
-        postBtn.classList.add('publishing');
+        postBtn.classList.add('publishing', 'opacity-50', 'cursor-not-allowed');
         postBtn.innerHTML = `
             <span class="flex items-center justify-center gap-3">
                 <span class="animate-spin h-5 w-5 border-2 border-black border-t-transparent rounded-full"></span>
@@ -198,7 +208,7 @@ window.publishTestimony = async () => {
     } finally {
         if (postBtn) {
             postBtn.disabled = false;
-            postBtn.classList.remove('publishing');
+            postBtn.classList.remove('publishing', 'opacity-50', 'cursor-not-allowed');
             postBtn.innerHTML = `
                 <span class="relative z-10 flex items-center justify-center gap-3">
                     Publish to the Square
@@ -222,7 +232,7 @@ async function loadEvidenceLedger() {
                     </h2>
                     <p class="text-sm text-zinc-400 mt-1">Permanent, immutable record of public testimonies.</p>
                 </div>
-                <button onclick="window.refreshLedger()" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-2xl text-xs font-medium text-emerald-400 transition flex items-center gap-2">
+                <button id="syncLedgerBtn" onclick="window.refreshLedger()" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-2xl text-xs font-medium text-emerald-400 transition flex items-center gap-2">
                     🔄 Sync Ledger
                 </button>
             </div>
@@ -232,6 +242,8 @@ async function loadEvidenceLedger() {
         </div>`;
 
     const innerWrapper = document.getElementById('ledgerTableInnerWrapper');
+    const syncBtn = document.getElementById('syncLedgerBtn');
+    if (syncBtn) syncBtn.disabled = true;
 
     try {
         const q = query(collection(db, "testimonies"), limit(20));
@@ -280,6 +292,8 @@ async function loadEvidenceLedger() {
     } catch (err) {
         console.error("Ledger fetch error:", err);
         innerWrapper.innerHTML = `<div class="text-red-400 text-center py-8">Failed to load ledger records. Please check permissions.</div>`;
+    } finally {
+        if (syncBtn) syncBtn.disabled = false;
     }
 }
 
@@ -332,11 +346,13 @@ function setupEventListeners() {
     });
 
     // Auth Buttons
-    document.getElementById('guest-action-btn')?.addEventListener('click', () => {
+    document.getElementById('guest-action-btn')?.addEventListener('click', (e) => {
+        e.preventDefault();
         window.showAuthModal?.();
     });
 
-    document.getElementById('profile-btn')?.addEventListener('click', () => {
+    document.getElementById('profile-btn')?.addEventListener('click', (e) => {
+        e.preventDefault();
         if (typeof window.openProfile === 'function') {
             window.openProfile();
         } else if (typeof window.showProfile === 'function') {
@@ -344,7 +360,8 @@ function setupEventListeners() {
         }
     });
 
-    document.getElementById('support-btn')?.addEventListener('click', () => {
+    document.getElementById('support-btn')?.addEventListener('click', (e) => {
+        e.preventDefault();
         const supportModal = document.getElementById('supportModal');
         if (supportModal) {
             supportModal.classList.remove('hidden');
@@ -353,25 +370,30 @@ function setupEventListeners() {
     });
 
     // Media Controls
-    document.getElementById('btn-photo')?.addEventListener('click', () => {
+    document.getElementById('btn-photo')?.addEventListener('click', (e) => {
+        e.preventDefault();
         if (!requireAuth("Sign in to upload Forensic Photo")) return;
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = 'image/jpeg,image/png,image/webp';
-        input.onchange = (e) => mediaModule.handleImageSelect?.(e, document.getElementById('preview-area'));
+        input.onchange = (ev) => mediaModule.handleImageSelect?.(ev, document.getElementById('preview-area'));
         input.click();
     });
 
     const voiceBtn = document.getElementById('btn-voice');
     if (voiceBtn) {
-        voiceBtn.addEventListener('click', () => {
+        voiceBtn.addEventListener('click', (e) => {
+            e.preventDefault();
             if (!requireAuth("Sign in to record Voice Testimony")) return;
             mediaModule.toggleVoiceRecording?.(voiceBtn);
         });
     }
 
     // Publish Button
-    document.getElementById('postButton')?.addEventListener('click', window.publishTestimony);
+    document.getElementById('postButton')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.publishTestimony();
+    });
 
     console.log("✅ Application listeners active");
 }
