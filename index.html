@@ -105,6 +105,42 @@
                 <span class="hidden sm:inline" data-i18n="joinBtn">Sign in</span>
             </button>
 
+            <!-- Notification Bell & Dropdown Container -->
+<div class="relative inline-block" id="notification-container">
+    <button id="notification-btn" type="button" class="relative p-2.5 rounded-full hover:bg-zinc-800 text-zinc-300 hover:text-white transition-all flex items-center justify-center border border-zinc-700/50" aria-label="Notifications">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+        </svg>
+        <!-- Unread Badge -->
+        <span id="notification-badge" class="hidden absolute -top-1 -right-1 bg-emerald-500 text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-lg border border-zinc-900">
+            0
+        </span>
+    </button>
+
+    <!-- Notifications Dropdown Menu -->
+    <div id="notification-menu" class="hidden absolute right-0 mt-3 w-80 sm:w-96 bg-zinc-900 border border-zinc-700/80 rounded-3xl shadow-2xl z-[100] overflow-hidden backdrop-blur-xl">
+        <!-- Header -->
+        <div class="p-4 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/50">
+            <div class="flex items-center gap-2">
+                <h3 class="font-bold text-white text-base">Notifications</h3>
+                <span id="notification-count-tag" class="text-xs bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded-full">0 new</span>
+            </div>
+            <button id="mark-all-read-btn" class="text-xs text-emerald-400 hover:text-emerald-300 font-medium transition">
+                Mark all as read
+            </button>
+        </div>
+
+        <!-- Scrollable Notification List -->
+        <div id="notification-list" class="max-h-[380px] overflow-y-auto divide-y divide-zinc-800/60 no-scrollbar">
+            <!-- Empty state placeholder -->
+            <div id="no-notifications" class="p-8 text-center text-zinc-500">
+                <p class="text-2xl mb-1">🔔</p>
+                <p class="text-sm">No notifications yet</p>
+            </div>
+        </div>
+    </div>
+</div>
+
             <button id="profile-btn" data-action="open-profile" class="px-4 py-2.5 border border-zinc-700 hover:bg-zinc-800 rounded-2xl transition flex items-center gap-2 hidden text-sm" style="background-color: #18181b; border-color: #3f3f46;" data-i18n="profileBtn">
                 Profile
             </button>
@@ -175,7 +211,6 @@
     </button>
 </div>
      
-<!-- Main Navigation -->
 <!-- Main Navigation Container -->
 <div class="relative z-40 mb-8 w-full flex items-center gap-2">
     <!-- Scrollable Tab Bar -->
