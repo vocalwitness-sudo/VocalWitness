@@ -353,7 +353,6 @@ export function updateUIForAuthState(userParam = null) {
 
     updateUIForAuthState();
     console.log("🔐 Auth initialized (Popup Mode)");
-}// Remove the duplicate initAuth() block above this and keep this version:
 
 export function showAuthModal() {
     const createModal = document.getElementById('createAccountModal');
