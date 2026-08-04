@@ -499,6 +499,7 @@ export function bindHeaderEvents() {
             }
         });
     }
+}
 
 
 // ====================== AUTH INITIALIZATION ======================
