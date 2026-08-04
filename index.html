@@ -174,9 +174,10 @@
         ✕
     </button>
 </div>
-       <!-- Main Navigation -->
-<div class="relative z-40 mb-8 w-full overflow-x-auto no-scrollbar">
-    <nav class="flex items-center gap-2 pb-2 min-w-max" id="main-nav">
+     
+<!-- Main Navigation -->
+<div class="relative z-40 mb-8 w-full">
+    <nav class="flex items-center gap-2 pb-2 overflow-x-auto no-scrollbar" id="main-nav">
         <button data-tab="square" class="nav-tab active px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative">
             <span class="font-semibold text-sm" data-i18n="publicSquareTab">Public Square</span>
             <span class="text-xs text-zinc-400 hidden md:block" data-i18n="publicSquareDesc">Share stories & evidence</span>
@@ -202,16 +203,13 @@
             <span class="text-xs text-amber-400 hidden md:block" data-i18n="verifiedWitnessesDesc">Trusted voices</span>
         </button>
 
-        <!-- More Options Dropdown Button -->
-        <div class="dropdown-container ml-auto relative">
+        <!-- More Options Dropdown Container (Wraps BOTH button and menu) -->
+        <div class="dropdown-container ml-auto relative inline-block">
             <button id="more-btn" class="nav-tab px-6 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-md" data-i18n="moreOptionsBtn">
                 More Options
             </button>
-        </div>
-    </nav>
-</div>
-            
-            <!-- More Menu (Positioned relative to container) -->
+
+            <!-- More Menu placed INSIDE dropdown-container -->
             <div id="more-menu" class="hidden absolute right-0 top-full mt-2 w-64 bg-zinc-900 border border-zinc-700 rounded-3xl shadow-2xl py-3 z-50">
                 <a href="my-testimonies.html" class="block px-6 py-3 hover:bg-zinc-800" data-i18n="myTestimoniesMenu">My Testimonies</a>
                 <a href="groups.html" class="block px-6 py-3 hover:bg-zinc-800" data-i18n="groupsMenu">Groups</a>
@@ -223,6 +221,8 @@
                 <a href="safety.html" class="block px-6 py-3 hover:bg-zinc-800" data-i18n="safetyGuidelinesMenu">Safety Guidelines</a>
             </div>
         </div>
+    </nav>
+</div>
 
         <!-- Testimony Composer -->
         <div class="glass rounded-3xl p-6 sm:p-8 mb-10 shadow-xl">
