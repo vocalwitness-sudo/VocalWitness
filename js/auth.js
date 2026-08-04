@@ -518,7 +518,7 @@ export function initAuth() {
         if (isVerified) {
             await createOrUpdateUser(user);
             updateAppState({ isAuthenticated: true, currentUser: user });
-            refreshTierUI();
+            refreshTierAndUI();
             closeLoginModal();
             closeCreateAccountModal();
         } else {
@@ -533,6 +533,7 @@ export function initAuth() {
         );
         updateUIForAuthState(isVerified ? user : null);
     });
+}
 
     // Global delegate listener for logout triggers
     document.addEventListener('click', (e) => {
