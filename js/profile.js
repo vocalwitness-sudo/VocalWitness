@@ -183,7 +183,9 @@ export function renderProfileUI(userData) {
                     </div> 
                 </div> 
 
-               <!-- Action Controls --> 
+                
+       <!-- Action Controls --> 
+       
                 <div class="flex flex-col sm:flex-row gap-3"> 
                     <button onclick="openEditProfile()"  
                             class="flex-1 py-4 bg-emerald-600 hover:bg-emerald-500 text-black font-semibold rounded-3xl transition flex items-center justify-center gap-2"> 
@@ -197,7 +199,9 @@ export function renderProfileUI(userData) {
                             class="flex-1 py-4 bg-red-950/40 hover:bg-red-900/60 border border-red-500/40 text-red-400 hover:text-red-300 font-semibold rounded-3xl transition flex items-center justify-center gap-2"> 
                         🚪 ${t("auth.sign_out", "Sign Out")} 
                     </button> 
-                </div>
+                </div> 
+            </div> 
+        `; 
 
         targets.forEach(container => { 
             container.innerHTML = html; 
