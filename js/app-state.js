@@ -1,9 +1,24 @@
-// js/app.js - Main Application Orchestrator
+// js/app-state.js - Main Application Orchestrator & State Manager
 import './main.js';
 import { initAuth, showAuthModal, bindHeaderEvents } from './auth.js';
-import { isUserAuthenticated } from './app-state.js';
 import { showToast } from './utils.js';
 
+// ====================== APP STATE ======================
+export const state = {
+    isAuthenticated: false,
+    currentUser: null,
+};
+
+export function isUserAuthenticated() {
+    return state.isAuthenticated || !!state.currentUser;
+}
+
+export function updateAppState(newState) {
+    Object.assign(state, newState);
+    window.dispatchEvent(new CustomEvent('app-state-changed', { detail: state }));
+}
+
+// ====================== MEDIA HANDLERS ======================
 let mediaRecorder = null;
 let audioChunks = [];
 let isRecording = false;
@@ -24,14 +39,14 @@ function setupMediaActionListeners() {
             e.preventDefault();
             e.stopImmediatePropagation();
 
-            // 1. Guest Check: If not logged in, show Auth Modal & preserve read-only experience
+            // 1. Guest Check: If not logged in, show Auth Modal
             if (!isUserAuthenticated()) {
                 showToast("Please sign in or create an account to record testimony.", "info");
                 showAuthModal();
                 return;
             }
 
-            // 2. Prevent button stiffness during initialization
+            // 2. Toggle Recording
             if (!isRecording) {
                 await startRecording(voiceBtn);
             } else {
@@ -52,7 +67,7 @@ function setupMediaActionListeners() {
                 return;
             }
 
-            // Trigger hidden photo file input safely ONCE
+            // Trigger hidden photo file input
             const hiddenFileInput = document.getElementById('hiddenPhotoInput');
             if (hiddenFileInput) hiddenFileInput.click();
         });
@@ -67,7 +82,6 @@ async function startRecording(btnElement) {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         
         audioChunks = [];
-        // Leave mimeType empty so Firefox selects its native supported audio codec
         mediaRecorder = new MediaRecorder(stream);
 
         mediaRecorder.ondataavailable = (event) => {
@@ -77,12 +91,10 @@ async function startRecording(btnElement) {
         };
 
         mediaRecorder.onstop = () => {
-            // Stop hardware streams to prevent Firefox background leaks
+            // Stop hardware streams to prevent background leaks
             stream.getTracks().forEach(track => track.stop());
             
             const audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
-            
-            // Render audio preview ONLY when recording cleanly stops (prevents premature update jump)
             renderAudioPreview(audioBlob);
         };
 
@@ -112,14 +124,30 @@ function stopRecording(btnElement) {
 
 function renderAudioPreview(blob) {
     const previewContainer = document.getElementById('mediaPreviewContainer');
-    if (previewContainer) {
-        const audioUrl = URL.createObjectURL(blob);
-        previewContainer.innerHTML = `
-            <div class="flex items-center gap-2 p-2 bg-gray-800 rounded border border-gray-700 mt-2">
-                <audio controls src="${audioUrl}"></audio>
-                <button type="button" onclick="this.parentElement.remove()" class="text-red-400 hover:text-red-200">Remove</button>
-            </div>
-        `;
-        previewContainer.classList.remove('hidden');
-    }
+    if (!previewContainer) return;
+
+    previewContainer.innerHTML = ''; // Clear existing audio preview
+    const audioUrl = URL.createObjectURL(blob);
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'flex items-center gap-2 p-2 bg-gray-800 rounded border border-gray-700 mt-2';
+
+    const audioEl = document.createElement('audio');
+    audioEl.controls = true;
+    audioEl.src = audioUrl;
+
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'text-red-400 hover:text-red-200 text-sm';
+    removeBtn.textContent = 'Remove';
+    removeBtn.addEventListener('click', () => {
+        wrapper.remove();
+        URL.revokeObjectURL(audioUrl); // Free browser memory
+    });
+
+    wrapper.appendChild(audioEl);
+    wrapper.appendChild(removeBtn);
+
+    previewContainer.appendChild(wrapper);
+    previewContainer.classList.remove('hidden');
 }
