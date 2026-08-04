@@ -71,16 +71,21 @@ export function savePendingDraft() {
 
 export function restorePendingDraft() {
     const draft = sessionStorage.getItem('vocal_pending_draft');
-    if (draft) {
-        setTimeout(() => {
-            const mainInput = document.getElementById('mainInput');
-            if (mainInput) {
-                mainInput.value = draft;
-                showToast("✅ Your testimony draft has been restored!", "success");
-            }
+    if (!draft) return;
+
+    let attempts = 0;
+    const interval = setInterval(() => {
+        const mainInput = document.getElementById('mainInput');
+        if (mainInput) {
+            mainInput.value = draft;
+            showToast("✅ Your testimony draft has been restored!", "success");
             sessionStorage.removeItem('vocal_pending_draft');
-        }, 100);
-    }
+            clearInterval(interval);
+        } else if (++attempts > 10) {
+            // Stop polling after 2 seconds if element isn't found
+            clearInterval(interval);
+        }
+    }, 200);
 }
 
 function handleAuthError(error) {
@@ -114,6 +119,8 @@ function handleAuthError(error) {
 }
 
 export async function googleLogin(event) {
+    if (event) event.preventDefault();
+
     if (authActionInProgress) {
         showToast("Sign-in already in progress...", "info");
         return;
@@ -311,7 +318,10 @@ export function requireAuth(message = "Please sign in to proceed.") {
         const loginModal = document.getElementById('loginModal');
         const modalMsg = document.getElementById('loginModalMessage');
         if (modalMsg) modalMsg.textContent = message;
-        if (loginModal) loginModal.classList.remove('hidden');
+        if (loginModal) {
+            loginModal.classList.remove('hidden');
+            loginModal.classList.add('flex');
+        }
         return false;
     }
     return true;
@@ -377,7 +387,7 @@ export function bindHeaderEvents() {
     // 1. Sign In / Join VocalWitness Button
     const guestBtn = document.getElementById('guest-action-btn') || document.querySelector('[data-action="open-auth-modal"]');
     if (guestBtn) {
-        guestBtn.replaceWith(guestBtn.cloneNode(true)); // Clean old event listeners
+        guestBtn.replaceWith(guestBtn.cloneNode(true));
         const freshGuestBtn = document.getElementById('guest-action-btn') || document.querySelector('[data-action="open-auth-modal"]');
         freshGuestBtn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -419,7 +429,9 @@ export function bindHeaderEvents() {
     // 3. Mobile Menu Toggle
     const mobileMenuBtn = document.getElementById('mobile-menu-btn');
     if (mobileMenuBtn) {
-        mobileMenuBtn.addEventListener('click', (e) => {
+        mobileMenuBtn.replaceWith(mobileMenuBtn.cloneNode(true));
+        const freshMobileMenuBtn = document.getElementById('mobile-menu-btn');
+        freshMobileMenuBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopImmediatePropagation();
             const rightControls = document.querySelector('.hidden.md\\:flex');
@@ -457,6 +469,7 @@ export function initAuth() {
         updateUIForAuthState(isVerified ? user : null);
     });
 
+    // Single global delegate listener for logout triggers
     document.addEventListener('click', (e) => {
         const logoutTarget = e.target.closest('#logoutBtn, .btn-logout, [data-action="logout"]');
         if (logoutTarget) {
@@ -475,19 +488,21 @@ export function initAuth() {
     console.log("🔐 Auth initialized (Header Bindings Ready)");
 }
 
-// Global exposures
-window.showAuthModal = showAuthModal;
-window.bindHeaderEvents = bindHeaderEvents;
-window.googleLogin = googleLogin;
-window.handleEmailAuth = handleEmailAuth;
-window.handleEmailSignUp = handleEmailSignUp;
-window.logout = logout;
-window.togglePasswordVisibility = togglePasswordVisibility;
-window.requireAuth = requireAuth;
-window.updateUIForAuthState = updateUIForAuthState;
-window.closeLoginModal = closeLoginModal;
-window.closeCreateAccountModal = closeCreateAccountModal;
-window.initAuth = initAuth;
+// Global window assignments safely mapped
+Object.assign(window, {
+    showAuthModal,
+    bindHeaderEvents,
+    googleLogin,
+    handleEmailAuth,
+    handleEmailSignUp,
+    logout,
+    togglePasswordVisibility,
+    requireAuth,
+    updateUIForAuthState,
+    closeLoginModal,
+    closeCreateAccountModal,
+    initAuth
+});
 
 // Auto-run initialization
 initAuth();
