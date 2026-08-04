@@ -6,10 +6,7 @@ let unsubscribeNotifs = null;
 
 export function initNotifications(uid) {
     // 1. Clean up old listener before attaching a new one
-    if (unsubscribeNotifs) {
-        unsubscribeNotifs();
-        unsubscribeNotifs = null;
-    }
+    stopNotificationListener();
 
     const auth = getAuth();
     const currentUser = auth.currentUser;
@@ -25,33 +22,21 @@ export function initNotifications(uid) {
     const notificationsRef = collection(db, "users", uid, "notifications");
     const q = query(notificationsRef, orderBy("createdAt", "desc"));
 
-    // 4. Attach listener with explicit error handler
+    // 4. Attach listener
     unsubscribeNotifs = onSnapshot(q, (snapshot) => {
-        const notifications = [];
-        let unreadCount = 0;
-
-        snapshot.forEach((docSnap) => {
-            const data = docSnap.data();
-            if (!data.read) unreadCount++;
-            notifications.push({ id: docSnap.id, ...data });
-        });
-
-        updateNotificationBadge(unreadCount);
-        renderNotificationList(notifications);
+        handleSnapshot(snapshot);
     }, (error) => {
-        console.error("🔔 Notification Listener Error:", error.code, error.message);
+        console.warn("🔔 Ordered Notification Listener failed, trying unordered fallback...", error.code);
         
-        // If query ordering fails due to missing index/fields, fallback to unordered query
-        if (error.code === 'permission-denied' || error.code === 'failed-precondition') {
-            fallbackUnorderedListener(uid);
-        }
+        // Stop the failed listener before starting the fallback
+        stopNotificationListener();
+
+        // Fallback to unordered query (prevents index/null field permission drops)
+        fallbackUnorderedListener(uid);
     });
 }
 
 function fallbackUnorderedListener(uid) {
-    if (unsubscribeNotifs) {
-        unsubscribeNotifs();
-    }
     const notificationsRef = collection(db, "users", uid, "notifications");
     
     unsubscribeNotifs = onSnapshot(notificationsRef, (snapshot) => {
@@ -64,14 +49,39 @@ function fallbackUnorderedListener(uid) {
             notifications.push({ id: docSnap.id, ...data });
         });
 
-        // Client-side sort by createdAt as fallback
-        notifications.sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+        // Safe client-side sort handling missing timestamps
+        notifications.sort((a, b) => {
+            const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+            const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+            return timeB - timeA;
+        });
 
         updateNotificationBadge(unreadCount);
         renderNotificationList(notifications);
     }, (err) => {
-        console.error("🔔 Fallback Listener Error:", err);
+        console.error("🔔 Notification Listener Error: permission-denied Missing or insufficient permissions.", err);
     });
+}
+
+function stopNotificationListener() {
+    if (unsubscribeNotifs) {
+        unsubscribeNotifs();
+        unsubscribeNotifs = null;
+    }
+}
+
+function handleSnapshot(snapshot) {
+    const notifications = [];
+    let unreadCount = 0;
+
+    snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        if (!data.read) unreadCount++;
+        notifications.push({ id: docSnap.id, ...data });
+    });
+
+    updateNotificationBadge(unreadCount);
+    renderNotificationList(notifications);
 }
 
 function updateNotificationBadge(count) {
@@ -100,6 +110,4 @@ function renderNotificationList(notifications) {
             </div>`;
         return;
     }
-
-    // Render list items...
 }
