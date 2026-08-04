@@ -1,13 +1,13 @@
 // js/main.js - Cleaned Tab Switching & Entry Setup
 
-// 1. Static Module Imports (All top-level imports grouped together)
+// 1. Static Module Imports
 import { state, updateAppState, isUserAuthenticated } from './app-state.js';
 import { initAuth, requireAuth, updateUIForAuthState } from "./auth.js";
 import { initFeed } from './feed.js';
 import { db, auth, storage } from './firebase-config.js';
 import { initLanguage } from './i18n.js';
 import * as mediaModule from './media.js';
-import { CitizenTalkEngine } from './vocalWitnessEngine.js'; // Changed ../ to ./
+import { CitizenTalkEngine } from './vocalWitnessEngine.js';
 import { initProfile } from './profile.js';
 import { loadDynamicNavigation } from './navigation.js';
 import { showToast } from './utils.js';
@@ -19,6 +19,7 @@ import {
     serverTimestamp,
     query,
     getDocs,
+    orderBy,
     limit
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
@@ -36,7 +37,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ====================== TAB SWITCHING ======================
 window.switchTab = async (tab) => {
-    if (isSwitchingTab && AppState.currentTab === tab) return;
+    // Guard against concurrent tab rendering
+    if (isSwitchingTab) return;
     isSwitchingTab = true;
 
     console.log(`Switching to tab: ${tab}`);
@@ -56,8 +58,9 @@ window.switchTab = async (tab) => {
         }
     });
 
-    AppState.currentTab = tab;
-    AppState.currentMode = tab === 'witness' ? 'witness' : 'citizen';
+    // Update state imported from app-state.js
+    state.currentTab = tab;
+    state.currentMode = tab === 'witness' ? 'witness' : 'citizen';
 
     // Target main container
     const container = document.getElementById('dynamicContainer') || document.getElementById('main-content');
@@ -181,7 +184,7 @@ window.publishTestimony = async () => {
             timestamp: Date.now(),
             isPublic: true,
             moderationStatus: "approved",
-            feedVisibility: AppState.currentMode === 'witness' ? 'witness-voice' : 'citizen-talk',
+            feedVisibility: state.currentMode === 'witness' ? 'witness-voice' : 'citizen-talk',
             imageUrl: mediaData.imageUrl || null,
             audioUrl: mediaData.audioUrl || null,
             imageHash: mediaData.imageHash || null,
@@ -243,7 +246,11 @@ async function loadEvidenceLedger() {
     if (syncBtn) syncBtn.disabled = true;
 
     try {
-        const q = query(collection(db, "testimonies"), limit(20));
+        const q = query(
+            collection(db, "testimonies"), 
+            orderBy("timestamp", "desc"), 
+            limit(20)
+        );
         const querySnapshot = await getDocs(q);
 
         if (querySnapshot.empty) {
@@ -293,6 +300,7 @@ async function loadEvidenceLedger() {
         if (syncBtn) syncBtn.disabled = false;
     }
 }
+
 // ====================== CURATED NEWS TICKER ======================
 async function fetchCuratedNews() {
   const tickerEl = document.getElementById('ticker-content');
@@ -322,6 +330,7 @@ async function fetchCuratedNews() {
     tickerEl.innerHTML = `<span class="ticker-item text-slate-400">🛡️ Public Square feed active • Zero-knowledge evidence ledger online • Standby for live updates.</span>`;
   }
 }
+
 // ====================== UTILITIES ======================
 function escapeHtml(str) {
     if (!str) return '';
@@ -422,7 +431,7 @@ async function bootstrap() {
         loadDynamicNavigation?.();
         fetchCuratedNews();
 
-        // 2. Listen to unified auth-changed custom event dispatched by auth.js
+        // 2. Listen to unified auth-changed custom event
         window.addEventListener('auth-changed', (e) => {
             const user = e.detail?.user;
             console.log("🔐 Auth state confirmed:", user ? `Logged in as ${user.uid}` : "Guest session");
@@ -431,7 +440,10 @@ async function bootstrap() {
                 updateUIForAuthState(user);
             }
 
-            window.switchTab('square');
+            // Only switch to initial tab if no current tab is set
+            if (!state.currentTab) {
+                window.switchTab('square');
+            }
             showWelcomeNote();
         });
 
