@@ -487,6 +487,26 @@ if (moreBtn && moreMenu) {
     });
 }
 
+    // 7. Notification Dropdown Toggle
+    const notifBtn = document.getElementById('notification-btn');
+    const notifMenu = document.getElementById('notification-menu');
+    if (notifBtn && notifMenu) {
+        notifBtn.replaceWith(notifBtn.cloneNode(true));
+        const freshNotifBtn = document.getElementById('notification-btn');
+
+        freshNotifBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            notifMenu.classList.toggle('hidden');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!freshNotifBtn.contains(e.target) && !notifMenu.contains(e.target)) {
+                notifMenu.classList.add('hidden');
+            }
+        });
+    }
+
 // Single consolidated initAuth
 export function initAuth() {
     auth.onAuthStateChanged(async (user) => {
