@@ -466,25 +466,25 @@ export function bindHeaderEvents() {
         });
     }
 
-    // 6. "More Options" Nav Dropdown Toggle
-    const moreBtn = document.getElementById('more-btn');
-    const moreMenu = document.getElementById('more-menu');
-    if (moreBtn && moreMenu) {
-        moreBtn.replaceWith(moreBtn.cloneNode(true));
-        const freshMoreBtn = document.getElementById('more-btn');
-        freshMoreBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            moreMenu.classList.toggle('hidden');
-        });
+  // 6. "More Options" Nav Dropdown Toggle
+const moreBtn = document.getElementById('more-btn');
+const moreMenu = document.getElementById('more-menu');
+if (moreBtn && moreMenu) {
+    moreBtn.replaceWith(moreBtn.cloneNode(true));
+    const freshMoreBtn = document.getElementById('more-btn');
+    
+    freshMoreBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        moreMenu.classList.toggle('hidden');
+    });
 
-        // Close dropdown when clicking elsewhere
-        document.addEventListener('click', (e) => {
-            if (!moreBtn.contains(e.target) && !moreMenu.contains(e.target)) {
-                moreMenu.classList.add('hidden');
-            }
-        });
-    }
+    // Close dropdown when clicking elsewhere
+    document.addEventListener('click', (e) => {
+        if (!freshMoreBtn.contains(e.target) && !moreMenu.contains(e.target)) {
+            moreMenu.classList.add('hidden');
+        }
+    });
 }
 
 // Single consolidated initAuth
