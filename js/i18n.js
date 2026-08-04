@@ -27,7 +27,7 @@ function getNestedTranslation(obj, path) {
 /**
  * Main function to lookup translation strings with fallback
  */
-export function t(key) {
+export function t(key, fallback = "") {
     const val = getNestedTranslation(currentTranslations, key);
     if (val !== null) return val;
 
@@ -35,8 +35,8 @@ export function t(key) {
     const fallbackVal = getNestedTranslation(fallbackTranslations, key);
     if (fallbackVal !== null) return fallbackVal;
 
-    // Last resort: return key string
-    return key;
+    // Return custom default/fallback text if provided, otherwise return key string as last resort
+    return fallback || key;
 }
 
 export async function loadTranslations(langCode = 'en') {
