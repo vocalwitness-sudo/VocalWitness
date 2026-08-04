@@ -1,5 +1,5 @@
-// sw.js - Stable Service Worker for VocalWitness (Hardened)
-const CACHE_NAME = 'vocalwitness-v11';
+// sw.js - Stable Service Worker for VocalWitness (Hardened & Module-Safe)
+const CACHE_NAME = 'vocalwitness-v12';
 const STATIC_ASSETS = [
     '/',
     '/index.html',
@@ -12,7 +12,7 @@ const STATIC_ASSETS = [
     '/sw.js'
 ];
 
-// Install Event
+// Install Event - Pre-cache essential static Shell UI
 self.addEventListener('install', (event) => {
     console.log('✅ Service Worker installing...');
     self.skipWaiting();
@@ -21,25 +21,28 @@ self.addEventListener('install', (event) => {
     );
 });
 
-// Activate Event - Clean old caches
+// Activate Event - Purge old caches (v11 and prior)
 self.addEventListener('activate', (event) => {
     console.log('✅ Service Worker activated');
     event.waitUntil(
         caches.keys().then(cacheNames => {
             return Promise.all(
                 cacheNames.map(cache => {
-                    if (cache !== CACHE_NAME) return caches.delete(cache);
+                    if (cache !== CACHE_NAME) {
+                        console.log(`🧹 Purging legacy cache: ${cache}`);
+                        return caches.delete(cache);
+                    }
                 })
             );
         }).then(() => self.clients.claim())
     );
 });
 
-// Fetch Event - Cache-first with network fallback & multi-page offline routing
+// Fetch Event - Dynamic routing with module bypass logic
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
 
-    // Skip Firebase, Google, external APIs, and non-GET requests
+    // 1. Skip Firebase, Google SDKs, Paystack, external APIs, and non-GET operations
     if (url.origin.includes('firebase') || 
         url.origin.includes('gstatic.com') || 
         url.origin.includes('googleapis.com') ||
@@ -48,6 +51,14 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
+    // 2. BYPASS CACHE FOR JS MODULES:
+    // Prevents syntax errors caused by caching ES Module scripts (auth.js, main.js, app-state.js, etc.)
+    if (url.pathname.endsWith('.js')) {
+        event.respondWith(fetch(event.request));
+        return;
+    }
+
+    // 3. Cache-first strategy for static assets (HTML, CSS, Images, Manifest)
     event.respondWith(
         caches.match(event.request).then(cachedResponse => {
             if (cachedResponse) return cachedResponse;
@@ -62,7 +73,7 @@ self.addEventListener('fetch', (event) => {
                 return networkResponse;
             });
         }).catch(() => {
-            // Offline fallback for HTML document requests
+            // Offline fallback for HTML navigation requests
             if (event.request.destination === 'document') {
                 return caches.match('/index.html');
             }
