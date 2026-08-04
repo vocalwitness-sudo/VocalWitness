@@ -1,5 +1,15 @@
 // js/tier.js - Enhanced Tier, Progression & Governance System (Optimized & Cached)
-import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { 
+  doc, 
+  getDoc, 
+  setDoc, 
+  collection, 
+  query, 
+  orderBy, 
+  limit, 
+  getDocs, 
+  serverTimestamp 
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { db, auth } from './firebase-config.js';
 
 export const TIERS = {
@@ -252,8 +262,6 @@ export function refreshTierAndUI() {
 }
 
 // ====================== WEEKLY LEADERBOARD & REPUTATION EXPANSION ======================
-
-import { collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 /**
  * Fetch and render the Top 5 Ranked Witnesses for the weekly sidebar
