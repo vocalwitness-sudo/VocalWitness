@@ -353,7 +353,7 @@ export function updateUIForAuthState(userParam = null) {
 
     updateUIForAuthState();
     console.log("🔐 Auth initialized (Popup Mode)");
-}
+}// Remove the duplicate initAuth() block above this and keep this version:
 
 export function showAuthModal() {
     const createModal = document.getElementById('createAccountModal');
@@ -393,7 +393,7 @@ export function bindHeaderEvents() {
         const freshGuestBtn = document.getElementById('guest-action-btn') || document.querySelector('[data-action="open-auth-modal"]');
         freshGuestBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            e.stopImmediatePropagation(); // Stops Firefox double-click bugs
+            e.stopImmediatePropagation();
             showAuthModal();
         });
     }
@@ -406,7 +406,6 @@ export function bindHeaderEvents() {
         dataSaverBtn.replaceWith(dataSaverBtn.cloneNode(true));
         const freshDataSaverBtn = document.getElementById('data-saver-btn') || document.querySelector('[data-action="toggle-data-saver"]');
         
-        // Sync initial state from localStorage
         const isDataSaverActive = localStorage.getItem('vw_data_saver') === 'true';
         if (dataSaverStatus) {
             dataSaverStatus.textContent = isDataSaverActive ? 'On' : 'Off';
@@ -445,7 +444,7 @@ export function bindHeaderEvents() {
     }
 }
 
-// Ensure initAuth runs bindHeaderEvents
+// Single consolidated initAuth
 export function initAuth() {
     auth.onAuthStateChanged(async (user) => {
         const isOAuthUser = user?.providerData?.some(
@@ -470,7 +469,14 @@ export function initAuth() {
         updateUIForAuthState(isVerified ? user : null);
     });
 
-    // Run header event binding once DOM is ready
+    document.addEventListener('click', (e) => {
+        const logoutTarget = e.target.closest('#logoutBtn, .btn-logout, [data-action="logout"]');
+        if (logoutTarget) {
+            e.preventDefault();
+            logout();
+        }
+    });
+
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', bindHeaderEvents);
     } else {
