@@ -554,25 +554,6 @@ export function initAuth() {
     console.log("🔐 Auth initialized (Header Bindings & Notifications Ready)");
 }
 
-    // Global delegate listener for logout triggers
-    document.addEventListener('click', (e) => {
-        const logoutTarget = e.target.closest('#logoutBtn, .btn-logout, [data-action="logout"]');
-        if (logoutTarget) {
-            e.preventDefault();
-            logout();
-        }
-    });
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', bindHeaderEvents);
-    } else {
-        bindHeaderEvents();
-    }
-
-    updateUIForAuthState();
-    console.log("🔐 Auth initialized (Header Bindings Ready)");
-}
-
 // Window Assignments
 Object.assign(window, {
     showAuthModal,
