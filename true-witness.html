@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#10b981">
     
-    <link rel="manifest" href="/manifest.json">
-    <link rel="icon" href="/logo.png" type="image/png">
-    <title data-i18n="trueWitnessTitle">True Witness • VocalWitness</title>
+    <link rel="manifest" href="./manifest.json">
+    <link rel="icon" href="./logo.png" type="image/png">
+    <title data-i18n="witnessVoiceTitle">Witness Voice • VocalWitness</title>
    
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="./style.css">
    
     <style>
         body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: white; }
@@ -23,7 +23,7 @@
         <!-- HEADER -->
         <header class="flex items-center justify-between mb-8">
             <div class="flex items-center gap-3">
-                <button onclick="window.goBack()" 
+                <button id="back-btn" 
                         class="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center gap-2 text-sm"
                         data-i18n="backButton">
                     ← Back
@@ -31,8 +31,8 @@
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-2xl flex items-center justify-center text-2xl">🔬</div>
                     <div>
-                        <h1 class="text-3xl font-bold tracking-tighter text-amber-400" data-i18n="trueWitness">True Witness</h1>
-                        <p class="text-xs text-amber-500" data-i18n="trueWitnessSubtitle">ZK Verified • High Trust</p>
+                        <h1 class="text-3xl font-bold tracking-tighter text-amber-400" data-i18n="witnessVoice">Witness Voice</h1>
+                        <p class="text-xs text-amber-500" data-i18n="witnessVoiceSubtitle">ZK Verified • High Trust</p>
                     </div>
                 </div>
             </div>
@@ -46,36 +46,33 @@
 
         <div class="glass rounded-3xl p-6">
             <h2 class="text-xl font-semibold mb-6" data-i18n="zkVerifiedTestimonies">ZK-Verified Testimonies</h2>
-            <div id="trueWitnessContainer" class="space-y-6">
+            <div id="witnessVoiceContainer" class="space-y-6">
                 <!-- Populated by JS -->
             </div>
         </div>
     </div>
 
-    <!-- Scripts -->
-    <script type="module" src="../js/utils.js"></script>
-    <script>
-        window.goBack = window.goBack || function() {
+    <!-- Unified Module Entry Script -->
+    <script type="module">
+        import './js/utils.js';
+        import './js/auth.js';
+        import './js/main.js';
+        import { initWitnessVoice } from './js/witness-voice.js';
+        import { initLanguage } from './js/i18n.js';
+
+        // Navigation Back Handler
+        document.getElementById('back-btn')?.addEventListener('click', () => {
             if (window.history.length > 1) window.history.back();
             else window.location.href = 'index.html';
-        };
-    </script>
-    <script type="module" src="../js/main.js"></script>
-
-    <!-- True Witness Logic -->
-    <script type="module">
-        import { initTrueWitness } from '../js/true-witness.js';
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log("True Witness page loaded");
-            initTrueWitness('trueWitnessContainer');
         });
-    </script>
 
-    <!-- Language System -->
-    <script type="module">
-        import { initLanguage } from '../js/i18n.js';
+        // Initialize Page Components
         document.addEventListener('DOMContentLoaded', () => {
+            console.log("Witness Voice page loaded");
             initLanguage();
+            if (typeof initWitnessVoice === 'function') {
+                initWitnessVoice('witnessVoiceContainer');
+            }
         });
     </script>
 </body>
