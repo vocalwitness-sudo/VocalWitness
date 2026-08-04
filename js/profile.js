@@ -183,9 +183,7 @@ export function renderProfileUI(userData) {
                     </div> 
                 </div> 
 
-                
-       <!-- Action Controls --> 
-       
+                <!-- Action Controls --> 
                 <div class="flex flex-col sm:flex-row gap-3"> 
                     <button onclick="openEditProfile()"  
                             class="flex-1 py-4 bg-emerald-600 hover:bg-emerald-500 text-black font-semibold rounded-3xl transition flex items-center justify-center gap-2"> 
@@ -423,8 +421,8 @@ window.exportUserDataPDF = async () => {
         pdf.text(`Username: @${currentUserData.username || 'anonymous'}`, 20, 52); 
         pdf.text(`Region: ${currentUserData.region || 'N/A'}`, 20, 60); 
         pdf.text(`Reputation: ${currentUserData.reputation || 0} REP`, 20, 68); 
-        pdf.text(`Phone Verified: ${userData.isPhoneVerified ? 'Yes' : 'No'}`, 20, 76); 
-        pdf.text(`ZK Verified: ${userData.zkVerified ? 'Yes' : 'No'}`, 20, 84); 
+        pdf.text(`Phone Verified: ${currentUserData.isPhoneVerified ? 'Yes' : 'No'}`, 20, 76); 
+        pdf.text(`ZK Verified: ${currentUserData.zkVerified ? 'Yes' : 'No'}`, 20, 84); 
          
         pdf.save(`vocalwitness-identity-${auth.currentUser?.uid || 'user'}.pdf`); 
         showToast("✅ " + t("profile.pdf_exported", "Identity PDF Exported!"), "success"); 
