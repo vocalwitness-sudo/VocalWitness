@@ -44,6 +44,15 @@ service cloud.firestore {
       allow create: if isOwner(userId) && (doesNotContainPrivileges() || request.resource.data.tier == 'citizen');
       allow update: if (isOwner(userId) && isNotModifyingPrivileges()) || isAdmin();
       allow delete: if isAdmin();
+
+      // Subcollection: User Notifications
+      match /notifications/{notificationId} {
+        // Only the account owner can read, mark read, or clear their notifications
+        allow read, update, delete: if isOwner(userId);
+        
+        // Any logged-in user can trigger/create a notification for another user
+        allow create: if isAuthenticated() && request.resource.data.senderId == request.auth.uid;
+      }
     }
 
     // ==========================================
