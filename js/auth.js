@@ -343,17 +343,6 @@ export function updateUIForAuthState(userParam = null) {
     }
 }
 
-    document.addEventListener('click', (e) => {
-        const logoutTarget = e.target.closest('#logoutBtn, .btn-logout, [data-action="logout"]');
-        if (logoutTarget) {
-            e.preventDefault();
-            logout();
-        }
-    });
-
-    updateUIForAuthState();
-    console.log("🔐 Auth initialized (Popup Mode)");
-
 export function showAuthModal() {
     const createModal = document.getElementById('createAccountModal');
     const loginModal = document.getElementById('loginModal');
@@ -383,7 +372,7 @@ export function closeCreateAccountModal() {
     }
 }
 
-// Ensure global header buttons bind properly across browsers (Firefox Fix)
+// Ensure global header buttons bind properly across browsers
 export function bindHeaderEvents() {
     // 1. Sign In / Join VocalWitness Button
     const guestBtn = document.getElementById('guest-action-btn') || document.querySelector('[data-action="open-auth-modal"]');
@@ -498,3 +487,7 @@ window.requireAuth = requireAuth;
 window.updateUIForAuthState = updateUIForAuthState;
 window.closeLoginModal = closeLoginModal;
 window.closeCreateAccountModal = closeCreateAccountModal;
+window.initAuth = initAuth;
+
+// Auto-run initialization
+initAuth();
