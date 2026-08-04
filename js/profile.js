@@ -342,12 +342,18 @@ window.openSettings = () => {
         const toggle2FA = document.getElementById('toggle2FA'); 
         const defaultDoor = document.getElementById('defaultDoorSelect'); 
          
-        if (toggle2FA) toggle2FA.checked = currentUserData.enable2FA === true; 
-        if (defaultDoor) defaultDoor.value = currentUserData.defaultDoor || 'public_square'; 
+        if (toggle2FA) {
+            toggle2FA.checked = currentUserData.enable2FA === true; 
+            toggle2FA.onchange = window.handle2FAToggle; // Rebinds handler cleanly without listener duplication
+        }
+        if (defaultDoor) {
+            defaultDoor.value = currentUserData.defaultDoor || 'public_square'; 
+            defaultDoor.onchange = (e) => window.updateDefaultDoor(e.target.value);
+        }
     } 
      
     modal.classList.remove('hidden'); 
-}; 
+};
 
 window.closeSettings = () => { 
     document.getElementById('settingsModal')?.classList.add('hidden'); 
@@ -407,9 +413,10 @@ window.exportUserDataPDF = async () => {
     showToast(t("profile.generating_pdf", "Generating identity PDF..."), "info"); 
      
     try { 
-        if (!window.jspdf) throw new Error("jsPDF library not loaded"); 
+        // Handles both window.jspdf and global jsPDF instances
+        const jsPDF = window.jspdf?.jsPDF || window.jsPDF; 
+        if (!jsPDF) throw new Error("jsPDF library not initialized"); 
          
-        const { jsPDF } = window.jspdf; 
         const pdf = new jsPDF(); 
          
         pdf.setFontSize(20); 
@@ -430,8 +437,7 @@ window.exportUserDataPDF = async () => {
         console.error("Export error:", e); 
         showToast(t("profile.jspdf_required", "PDF generation requires jsPDF script inclusion"), "error"); 
     } 
-}; 
-
+};
 // Backwards compatibility alias 
 window.downloadMyDataPDF = window.exportUserDataPDF; 
 
