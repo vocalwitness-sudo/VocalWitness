@@ -1,4 +1,4 @@
-// js/auth.js - Auth Handler with Profile Cache Sync
+// js/auth.js - Auth Handler with Profile Cache Sync & Verified State Guards
 import {
     signInWithPopup,
     GoogleAuthProvider,
@@ -83,7 +83,6 @@ export function restorePendingDraft() {
             sessionStorage.removeItem('vocal_pending_draft');
             clearInterval(interval);
         } else if (++attempts > 10) {
-            // Stop polling after 2 seconds if element isn't found
             clearInterval(interval);
         }
     }, 200);
@@ -142,23 +141,11 @@ export async function googleLogin(event) {
         const result = await signInWithPopup(auth, provider);
 
         if (result && result.user) {
-            const user = result.user;
-            await createOrUpdateUser(user);
-            updateAppState({ isAuthenticated: true, currentUser: user });
-            refreshTierUI();
-
-            if (typeof window.updateHeaderButtons === 'function') {
-                window.updateHeaderButtons(true);
-            }
-
-            window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
-            updateUIForAuthState(user);
-
             showToast("✅ Signed in successfully!", "success");
-
             closeLoginModal();
             closeCreateAccountModal();
             restorePendingDraft();
+            // Note: State update & initNotifications are handled cleanly inside onAuthStateChanged
         }
     } catch (error) {
         console.error("Google popup sign-in error:", error);
@@ -211,17 +198,6 @@ export async function handleEmailAuth(event) {
             await signOut(auth);
             return;
         }
-
-        await createOrUpdateUser(user);
-        updateAppState({ isAuthenticated: true, currentUser: user });
-        refreshTierUI();
-
-        if (typeof window.updateHeaderButtons === 'function') {
-            window.updateHeaderButtons(true);
-        }
-
-        window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
-        updateUIForAuthState(user);
 
         showToast("✅ Signed in successfully!", "success");
         closeLoginModal();
@@ -290,6 +266,7 @@ export async function handleEmailSignUp(event) {
 export async function logout() {
     try {
         clearProfileCache();
+        initNotifications(null);
         await signOut(auth);
         updateAppState({ isAuthenticated: false, currentUser: null });
         showToast("Signed out successfully", "success");
@@ -387,7 +364,6 @@ export function hideAuthModal() {
     closeLoginModal();
 }
 
-// Ensure global header buttons bind properly across browsers
 // ====================== BIND HEADER EVENTS ======================
 export function bindHeaderEvents() {
     // 1. Desktop & Mobile Sign In Buttons
@@ -501,7 +477,6 @@ export function bindHeaderEvents() {
     }
 }
 
-
 // ====================== AUTH INITIALIZATION ======================
 export function initAuth() {
     auth.onAuthStateChanged(async (user) => {
@@ -517,13 +492,13 @@ export function initAuth() {
             closeLoginModal();
             closeCreateAccountModal();
 
-            // 🔔 Start real-time notification listener for signed-in user
+            // 🔔 Start real-time notification listener ONLY when auth token is confirmed
             initNotifications(user.uid);
         } else {
             clearProfileCache();
             updateAppState({ isAuthenticated: false, currentUser: null });
 
-            // 🔒 Clear notification state & detach listener on sign-out
+            // 🔒 Clear notification state & detach listener on sign-out or unverified email state
             initNotifications(null);
         }
 
@@ -551,10 +526,10 @@ export function initAuth() {
     }
 
     updateUIForAuthState();
-    console.log("🔐 Auth initialized (Header Bindings & Notifications Ready)");
+    console.log("🔐 Auth initialized (Header Bindings & Notifications Guarded)");
 }
 
-// Window Assignments
+// Global Window Assignments
 Object.assign(window, {
     showAuthModal,
     hideAuthModal,
