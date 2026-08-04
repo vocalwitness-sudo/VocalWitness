@@ -199,7 +199,7 @@ export class BaseEngine {
             }
         }
 
-        // Stop tracks immediately (onstop will still fire)
+        // Stop tracks immediately
         this._cleanupStream();
         this._cleanupAudioGraph();
         this._resetTimerState();
@@ -303,8 +303,8 @@ export class CitizenTalkEngine extends BaseEngine {
     }
 }
 
-// Truth Witness Engine
-export class TruthWitnessEngine extends BaseEngine {
+// Witness Voice Engine
+export class WitnessVoiceEngine extends BaseEngine {
     constructor(db, storage) {
         super(db, storage);
     }
