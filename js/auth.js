@@ -384,61 +384,100 @@ export function closeCreateAccountModal() {
 
 // Ensure global header buttons bind properly across browsers
 export function bindHeaderEvents() {
-    // 1. Sign In / Join VocalWitness Button
-    const guestBtn = document.getElementById('guest-action-btn') || document.querySelector('[data-action="open-auth-modal"]');
-    if (guestBtn) {
-        guestBtn.replaceWith(guestBtn.cloneNode(true));
-        const freshGuestBtn = document.getElementById('guest-action-btn') || document.querySelector('[data-action="open-auth-modal"]');
-        freshGuestBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopImmediatePropagation();
-            showAuthModal();
-        });
-    }
-
-    // 2. Data Saver Toggle Button
-    const dataSaverBtn = document.getElementById('data-saver-btn') || document.querySelector('[data-action="toggle-data-saver"]');
-    const dataSaverStatus = document.getElementById('data-saver-status');
-
-    if (dataSaverBtn) {
-        dataSaverBtn.replaceWith(dataSaverBtn.cloneNode(true));
-        const freshDataSaverBtn = document.getElementById('data-saver-btn') || document.querySelector('[data-action="toggle-data-saver"]');
-        
-        const isDataSaverActive = localStorage.getItem('vw_data_saver') === 'true';
-        if (dataSaverStatus) {
-            dataSaverStatus.textContent = isDataSaverActive ? 'On' : 'Off';
+    // 1. Desktop & Mobile "Sign In / Join VocalWitness" Buttons
+    const guestBtns = document.querySelectorAll('#guest-action-btn, #signin-btn-mobile, [data-action="open-auth-modal"]');
+    guestBtns.forEach(btn => {
+        btn.replaceWith(btn.cloneNode(true));
+        const freshBtn = document.getElementById(btn.id) || document.querySelector(`[data-action="${btn.dataset.action}"]`);
+        if (freshBtn) {
+            freshBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                showAuthModal();
+            });
         }
+    });
 
-        freshDataSaverBtn.addEventListener('click', (e) => {
+    // 2. Google Sign-In Buttons (Modal & Header)
+    const googleBtns = document.querySelectorAll('#googleAuthBtn, [data-action="google-login"]');
+    googleBtns.forEach(btn => {
+        btn.replaceWith(btn.cloneNode(true));
+        const freshBtn = document.getElementById(btn.id) || document.querySelector(`[data-action="${btn.dataset.action}"]`);
+        if (freshBtn) {
+            freshBtn.addEventListener('click', (e) => googleLogin(e));
+        }
+    });
+
+    // 3. Email Authentication Forms
+    const signInForm = document.getElementById('loginForm') || document.getElementById('authModalForm');
+    if (signInForm) {
+        signInForm.addEventListener('submit', (e) => handleEmailAuth(e));
+    }
+
+    const signUpForm = document.getElementById('signUpForm');
+    if (signUpForm) {
+        signUpForm.addEventListener('submit', (e) => handleEmailSignUp(e));
+    }
+
+    // 4. Data Saver Toggle Buttons (Desktop & Mobile)
+    const dataSaverBtns = document.querySelectorAll('#data-saver-btn, #data-saver-btn-mobile, [data-action="toggle-data-saver"]');
+    dataSaverBtns.forEach(btn => {
+        btn.replaceWith(btn.cloneNode(true));
+        const freshBtn = document.getElementById(btn.id) || document.querySelector(`[data-action="${btn.dataset.action}"]`);
+        if (freshBtn) {
+            freshBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+
+                const current = localStorage.getItem('vw_data_saver') === 'true';
+                const nextState = !current;
+                localStorage.setItem('vw_data_saver', nextState ? 'true' : 'false');
+
+                // Sync desktop & mobile labels
+                document.querySelectorAll('#data-saver-status, #data-saver-status-mobile').forEach(label => {
+                    label.textContent = nextState ? 'On' : 'Off';
+                });
+
+                showToast(`Data Saver mode is now ${nextState ? 'ON' : 'OFF'}`, 'info');
+            });
+        }
+    });
+
+    // Sync Data Saver initial label state
+    const isDataSaverActive = localStorage.getItem('vw_data_saver') === 'true';
+    document.querySelectorAll('#data-saver-status, #data-saver-status-mobile').forEach(label => {
+        label.textContent = isDataSaverActive ? 'On' : 'Off';
+    });
+
+    // 5. Mobile Dropdown Menu Toggle
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const mobileDropdown = document.getElementById('mobile-menu');
+    if (mobileMenuBtn && mobileDropdown) {
+        mobileMenuBtn.replaceWith(mobileMenuBtn.cloneNode(true));
+        const freshMobileBtn = document.getElementById('mobile-menu-btn');
+        freshMobileBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopImmediatePropagation();
-
-            const current = localStorage.getItem('vw_data_saver') === 'true';
-            const nextState = !current;
-            localStorage.setItem('vw_data_saver', nextState ? 'true' : 'false');
-
-            const freshStatusLabel = document.getElementById('data-saver-status');
-            if (freshStatusLabel) {
-                freshStatusLabel.textContent = nextState ? 'On' : 'Off';
-            }
-
-            showToast(`Data Saver mode is now ${nextState ? 'ON' : 'OFF'}`, 'info');
+            mobileDropdown.classList.toggle('hidden');
         });
     }
 
-    // 3. Mobile Menu Toggle
-    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-    if (mobileMenuBtn) {
-        mobileMenuBtn.replaceWith(mobileMenuBtn.cloneNode(true));
-        const freshMobileMenuBtn = document.getElementById('mobile-menu-btn');
-        freshMobileMenuBtn.addEventListener('click', (e) => {
+    // 6. "More Options" Nav Dropdown Toggle
+    const moreBtn = document.getElementById('more-btn');
+    const moreMenu = document.getElementById('more-menu');
+    if (moreBtn && moreMenu) {
+        moreBtn.replaceWith(moreBtn.cloneNode(true));
+        const freshMoreBtn = document.getElementById('more-btn');
+        freshMoreBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            e.stopImmediatePropagation();
-            const rightControls = document.querySelector('.hidden.md\\:flex');
-            if (rightControls) {
-                rightControls.classList.toggle('hidden');
-                rightControls.classList.toggle('flex');
-                rightControls.classList.toggle('flex-col');
+            e.stopPropagation();
+            moreMenu.classList.toggle('hidden');
+        });
+
+        // Close dropdown when clicking elsewhere
+        document.addEventListener('click', (e) => {
+            if (!moreBtn.contains(e.target) && !moreMenu.contains(e.target)) {
+                moreMenu.classList.add('hidden');
             }
         });
     }
@@ -456,6 +495,8 @@ export function initAuth() {
             await createOrUpdateUser(user);
             updateAppState({ isAuthenticated: true, currentUser: user });
             refreshTierUI();
+            closeLoginModal();
+            closeCreateAccountModal();
         } else {
             clearProfileCache();
             updateAppState({ isAuthenticated: false, currentUser: null });
@@ -469,7 +510,7 @@ export function initAuth() {
         updateUIForAuthState(isVerified ? user : null);
     });
 
-    // Single global delegate listener for logout triggers
+    // Global delegate listener for logout triggers
     document.addEventListener('click', (e) => {
         const logoutTarget = e.target.closest('#logoutBtn, .btn-logout, [data-action="logout"]');
         if (logoutTarget) {
