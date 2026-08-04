@@ -2,7 +2,7 @@
 import { db, auth } from './firebase-config.js';
 import { collection, addDoc, getDoc, updateDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { showToast } from './utils.js';
-import { getCurrentUserTier, TIERS } from './tier.js';
+import { getCurrentUserTier, TIERS, requireCitizenCirclePermission } from './tier.js';
 import { generateRigorousProof } from './zk-crypto.js';
 
 // Quadratic Voting Cost Formula
@@ -19,9 +19,11 @@ export async function recordTestimonyContribution() {
         const snap = await getDoc(userRef);
 
         if (snap.exists()) {
-            const currentRep = snap.data().credibilityScore || 0;
+            const data = snap.data();
+            const currentRep = data.credibilityScore || data.reputation || 0;
             await updateDoc(userRef, {
                 credibilityScore: currentRep + 15,
+                reputation: currentRep + 15,
                 lastContribution: serverTimestamp()
             });
             console.log("✅ +15 Reputation for testimony");
@@ -68,7 +70,7 @@ export async function createDAOProposal(title, description, category = 'governan
     }
 }
 
-// Cast Quadratic Vote (with Sybil Protection & Voter Snapshot)
+// Cast Quadratic Vote (with Sybil Protection, Interceptor & Voter Snapshot)
 export async function castQuadraticVote(proposalId, direction, strength = 1, proofContext = {}) {
     if (!auth.currentUser) return showToast("Sign in required", "error");
     if (strength < 1 || strength > 5) return showToast("Strength must be between 1-5", "error");
@@ -81,10 +83,16 @@ export async function castQuadraticVote(proposalId, direction, strength = 1, pro
     if (!userSnap.exists()) return showToast("User profile not found", "error");
 
     const userData = userSnap.data();
+    const userReputation = userData.credibilityScore || userData.reputation || 0;
 
-    // Sybil Protection Check
-    if (!userData.isPhoneVerified && (userData.credibilityScore || 0) < 10) {
-        return showToast("Account must be phone verified or have 10+ REP to vote", "error");
+    // Sybil Protection & Interceptor Check
+    if (!userData.isPhoneVerified && userReputation < 10) {
+        if (typeof requireCitizenCirclePermission === 'function') {
+            const hasPermission = await requireCitizenCirclePermission();
+            if (!hasPermission) return;
+        } else {
+            return showToast("Account must be phone verified or have 10+ REP to vote", "error");
+        }
     }
 
     const proposalRef = doc(db, "dao_proposals", proposalId);
@@ -94,12 +102,14 @@ export async function castQuadraticVote(proposalId, direction, strength = 1, pro
     const data = proposalSnap.data();
     const cost = quadraticCost(strength);
 
-    const userVote = data.voteLog?.[userId] || { spent: 0 };
-    if ((userVote.spent || 0) + cost > 25) {
+    const userVote = data.voteLog?.[userId] || { cost: 0 };
+    const currentSpent = userVote.cost || userVote.spent || 0;
+
+    if (currentSpent + cost > 25) {
         return showToast("Exceeded voting budget (max 25 power points)", "error");
     }
 
-    // Optional ZK Proof
+    // Optional ZK Proof Generation
     let zkProof = null;
     try {
         zkProof = await generateRigorousProof({
@@ -125,10 +135,10 @@ export async function castQuadraticVote(proposalId, direction, strength = 1, pro
         [`voteLog.${userId}`]: {
             direction,
             strength,
-            cost: (userVote.spent || 0) + cost,
+            cost: currentSpent + cost,
             voterTier: currentTier || 'CITIZEN',
             voterRole: userData.role || 'citizen',
-            zkProof: zkProof ? zkProof.hash : null,
+            zkProof: zkProof ? (zkProof.hash || zkProof) : null,
             timestamp: serverTimestamp()
         }
     });
