@@ -80,6 +80,34 @@
     "signInCancelled": "Sign-in cancelled.",
     "requireAuth": "Please sign in to continue."
   },
+  "auth": {
+    "sign_out": "Sign Out",
+    "login": "Sign In",
+    "signup": "Create Account"
+  },
+  "profile": {
+    "reputation": "Reputation",
+    "testimonies": "Testimonies",
+    "verifications": "Verifications",
+    "security_status": "Security Status",
+    "phone_verification": "Phone Verification",
+    "zk_proof": "ZK Proof",
+    "account_created": "Account Created",
+    "edit_profile": "Edit Profile",
+    "export_data": "Export Data",
+    "witness_cycle": "Witness Cycle",
+    "witness_cycle_desc": "Participate in active testimony attestation cycles.",
+    "current_cycle_state": "Current Status",
+    "not_attesting": "Not Attesting",
+    "start_cycle": "Start Witness Cycle",
+    "citizen": "Citizen Witness"
+  },
+  "common": {
+    "verified": "Verified",
+    "not_verified": "Not Verified",
+    "inactive": "Inactive",
+    "loading": "Loading..."
+  },
   "trueWitnessTitle": "Witness Voice • VocalWitness",
   "trueWitnessSubtitle": "ZK Verified • High Trust",
   "zkVerifiedTestimonies": "ZK Verified Testimonies",
@@ -287,16 +315,5 @@
   "liveArenaComingSoon": "Real-time discussions, debates, and public testimonies are coming soon.",
   "underConstruction": "🚧 Under Construction",
   "arenaOpenWhen": "The Arena will open when we reach 500 verified witnesses",
-  "notifyMeBtn": "🔔 Notify Me When Arena Goes Live",
-  "profile": {
-    "witness_cycle": "Witness Cycle",
-    "witness_cycle_desc": "Participate in active testimony attestation cycles.",
-    "current_cycle_state": "Current Status",
-    "not_attesting": "Not Attesting",
-    "start_cycle": "Start Witness Cycle",
-    "citizen": "Citizen Witness"
-  },
-  "common": {
-    "inactive": "Inactive"
-  }
+  "notifyMeBtn": "🔔 Notify Me When Arena Goes Live"
 }
