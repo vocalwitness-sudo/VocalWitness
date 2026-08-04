@@ -343,30 +343,6 @@ export function updateUIForAuthState(userParam = null) {
     }
 }
 
-export function initAuth() {
-    auth.onAuthStateChanged(async (user) => {
-        const isOAuthUser = user?.providerData?.some(
-            (p) => p.providerId === 'google.com' || p.providerId === GoogleAuthProvider.PROVIDER_ID
-        );
-        const isVerified = user && (isOAuthUser || user.emailVerified);
-
-        if (isVerified) {
-            await createOrUpdateUser(user);
-            updateAppState({ isAuthenticated: true, currentUser: user });
-            refreshTierUI();
-        } else {
-            clearProfileCache();
-            updateAppState({ isAuthenticated: false, currentUser: null });
-        }
-
-        window.dispatchEvent(
-            new CustomEvent('auth-changed', {
-                detail: { user: isVerified ? user : null }
-            })
-        );
-        updateUIForAuthState(isVerified ? user : null);
-    });
-
     document.addEventListener('click', (e) => {
         const logoutTarget = e.target.closest('#logoutBtn, .btn-logout, [data-action="logout"]');
         if (logoutTarget) {
