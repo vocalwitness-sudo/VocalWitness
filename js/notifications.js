@@ -1,4 +1,5 @@
 import { db } from './firebase-config.js';
+import { getAuth } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 let unsubscribeNotifs = null;
@@ -10,19 +11,21 @@ export function initNotifications(uid) {
         unsubscribeNotifs = null;
     }
 
-    // 2. Clear UI when logged out
-    if (!uid) {
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+
+    // 2. Clear UI & abort if logged out or UID mismatch
+    if (!uid || !currentUser || currentUser.uid !== uid) {
         updateNotificationBadge(0);
         renderNotificationList([]);
         return;
     }
 
-    const q = query(
-        collection(db, "users", uid, "notifications"),
-        orderBy("createdAt", "desc")
-    );
+    // 3. Build query scoped to user's notifications subcollection
+    const notificationsRef = collection(db, "users", uid, "notifications");
+    const q = query(notificationsRef, orderBy("createdAt", "desc"));
 
-    // 3. Attach listener with error callback
+    // 4. Attach listener with explicit error handler
     unsubscribeNotifs = onSnapshot(q, (snapshot) => {
         const notifications = [];
         let unreadCount = 0;
@@ -36,7 +39,38 @@ export function initNotifications(uid) {
         updateNotificationBadge(unreadCount);
         renderNotificationList(notifications);
     }, (error) => {
-        console.error("🔔 Notification Listener Error:", error);
+        console.error("🔔 Notification Listener Error:", error.code, error.message);
+        
+        // If query ordering fails due to missing index/fields, fallback to unordered query
+        if (error.code === 'permission-denied' || error.code === 'failed-precondition') {
+            fallbackUnorderedListener(uid);
+        }
+    });
+}
+
+function fallbackUnorderedListener(uid) {
+    if (unsubscribeNotifs) {
+        unsubscribeNotifs();
+    }
+    const notificationsRef = collection(db, "users", uid, "notifications");
+    
+    unsubscribeNotifs = onSnapshot(notificationsRef, (snapshot) => {
+        const notifications = [];
+        let unreadCount = 0;
+
+        snapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            if (!data.read) unreadCount++;
+            notifications.push({ id: docSnap.id, ...data });
+        });
+
+        // Client-side sort by createdAt as fallback
+        notifications.sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+
+        updateNotificationBadge(unreadCount);
+        renderNotificationList(notifications);
+    }, (err) => {
+        console.error("🔔 Fallback Listener Error:", err);
     });
 }
 
