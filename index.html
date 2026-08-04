@@ -396,6 +396,80 @@
         </div>
     </div>
 
+    <!-- Quadratic Voting Modal -->
+<div id="quadratic-vote-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl relative overflow-hidden">
+        
+        <!-- Background Accent Glow -->
+        <div class="absolute -top-12 -right-12 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl pointer-events-none"></div>
+
+        <!-- Header -->
+        <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-5">
+            <div>
+                <span class="text-xs font-semibold uppercase tracking-wider text-blue-400">Governance Voting</span>
+                <h3 id="qv-modal-title" class="text-lg font-bold text-white leading-tight">Proposal Title</h3>
+            </div>
+            <button id="qv-close-btn" class="text-slate-400 hover:text-white transition p-1">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <!-- Direction Selection (For vs Against) -->
+        <div class="grid grid-cols-2 gap-3 mb-5">
+            <button id="qv-btn-for" class="qv-direction-btn flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 font-semibold text-sm hover:bg-emerald-500/20 transition active" data-direction="for">
+                <span>👍 Vote FOR</span>
+            </button>
+            <button id="qv-btn-against" class="qv-direction-btn flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-rose-500/30 bg-slate-800 text-slate-400 font-semibold text-sm hover:bg-rose-500/20 hover:text-rose-400 transition" data-direction="against">
+                <span>👎 Vote AGAINST</span>
+            </button>
+        </div>
+
+        <!-- Vote Strength Slider -->
+        <div class="mb-6 space-y-3">
+            <div class="flex justify-between items-center text-xs font-medium">
+                <span class="text-slate-400">Vote Strength:</span>
+                <span id="qv-strength-badge" class="bg-blue-950 text-blue-400 border border-blue-800 px-2 py-0.5 rounded font-bold">1 Vote</span>
+            </div>
+            
+            <input type="range" id="qv-strength-slider" min="1" max="5" step="1" value="1" 
+                   class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500">
+
+            <div class="flex justify-between text-[10px] text-slate-500 font-mono px-1">
+                <span>1 (Low)</span>
+                <span>2</span>
+                <span>3</span>
+                <span>4</span>
+                <span>5 (Max)</span>
+            </div>
+        </div>
+
+        <!-- Quadratic Cost Real-time Card -->
+        <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-4 mb-6 space-y-2">
+            <div class="flex justify-between items-center text-xs">
+                <span class="text-slate-400">Power Point Cost ($Strength^2$):</span>
+                <span id="qv-cost-preview" class="text-amber-400 font-bold font-mono">1 Power Point</span>
+            </div>
+            <div class="flex justify-between items-center text-xs">
+                <span class="text-slate-400">Remaining Budget (Max 25):</span>
+                <span id="qv-budget-remaining" class="text-slate-300 font-mono">24 / 25 pts</span>
+            </div>
+            <!-- Progress Bar -->
+            <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden mt-1">
+                <div id="qv-budget-bar" class="h-full bg-blue-500 transition-all duration-300" style="width: 4%;"></div>
+            </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button id="qv-submit-vote-btn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl text-sm transition shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
+            <span>Cast Quadratic Vote</span>
+        </button>
+
+        <p class="text-[11px] text-slate-500 text-center mt-3">
+            Protected by Zero-Knowledge proofs (`zk-crypto.js`) & Sybil filters.
+        </p>
+    </div>
+</div>
+
     <!-- Support Modal -->
     <div id="supportModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[10000] flex items-center justify-center p-4 hidden">
         <div class="glass max-w-md w-full rounded-3xl p-6 border border-emerald-500/30 text-white relative modal max-h-[90vh] overflow-y-auto">
