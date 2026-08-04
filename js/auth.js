@@ -315,13 +315,9 @@ export function requireAuth(message = "Please sign in to proceed.") {
         savePendingDraft();
         showToast(message, "info");
 
-        const loginModal = document.getElementById('loginModal');
         const modalMsg = document.getElementById('loginModalMessage');
         if (modalMsg) modalMsg.textContent = message;
-        if (loginModal) {
-            loginModal.classList.remove('hidden');
-            loginModal.classList.add('flex');
-        }
+        showAuthModal();
         return false;
     }
     return true;
@@ -353,11 +349,17 @@ export function updateUIForAuthState(userParam = null) {
     }
 }
 
+// ====================== MODAL CONTROL HELPERS ======================
+
 export function showAuthModal() {
+    const mainAuthModal = document.getElementById('authModal');
     const createModal = document.getElementById('createAccountModal');
     const loginModal = document.getElementById('loginModal');
 
-    if (createModal && !createModal.classList.contains('flex')) {
+    if (mainAuthModal) {
+        mainAuthModal.classList.remove('hidden');
+        mainAuthModal.classList.add('flex');
+    } else if (createModal && !createModal.classList.contains('flex')) {
         createModal.classList.remove('hidden');
         createModal.classList.add('flex');
     } else if (loginModal) {
@@ -367,19 +369,21 @@ export function showAuthModal() {
 }
 
 export function closeLoginModal() {
-    const loginModal = document.getElementById('loginModal');
-    if (loginModal) {
-        loginModal.classList.add('hidden');
-        loginModal.classList.remove('flex');
-    }
+    const modals = document.querySelectorAll('#authModal, #loginModal, #createAccountModal');
+    modals.forEach(modal => {
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+    });
 }
 
 export function closeCreateAccountModal() {
-    const createModal = document.getElementById('createAccountModal');
-    if (createModal) {
-        createModal.classList.add('hidden');
-        createModal.classList.remove('flex');
-    }
+    closeLoginModal();
+}
+
+export function hideAuthModal() {
+    closeLoginModal();
 }
 
 // Ensure global header buttons bind properly across browsers
@@ -532,6 +536,9 @@ export function initAuth() {
 // Global window assignments safely mapped
 Object.assign(window, {
     showAuthModal,
+    hideAuthModal,
+    closeLoginModal,
+    closeCreateAccountModal,
     bindHeaderEvents,
     googleLogin,
     handleEmailAuth,
@@ -540,8 +547,6 @@ Object.assign(window, {
     togglePasswordVisibility,
     requireAuth,
     updateUIForAuthState,
-    closeLoginModal,
-    closeCreateAccountModal,
     initAuth
 });
 
