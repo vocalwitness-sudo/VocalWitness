@@ -387,8 +387,9 @@ export function hideAuthModal() {
 }
 
 // Ensure global header buttons bind properly across browsers
+// ====================== BIND HEADER EVENTS ======================
 export function bindHeaderEvents() {
-    // 1. Desktop & Mobile "Sign In / Join VocalWitness" Buttons
+    // 1. Desktop & Mobile Sign In Buttons
     const guestBtns = document.querySelectorAll('#guest-action-btn, #signin-btn-mobile, [data-action="open-auth-modal"]');
     guestBtns.forEach(btn => {
         btn.replaceWith(btn.cloneNode(true));
@@ -402,7 +403,7 @@ export function bindHeaderEvents() {
         }
     });
 
-    // 2. Google Sign-In Buttons (Modal & Header)
+    // 2. Google Sign-In
     const googleBtns = document.querySelectorAll('#googleAuthBtn, [data-action="google-login"]');
     googleBtns.forEach(btn => {
         btn.replaceWith(btn.cloneNode(true));
@@ -414,16 +415,12 @@ export function bindHeaderEvents() {
 
     // 3. Email Authentication Forms
     const signInForm = document.getElementById('loginForm') || document.getElementById('authModalForm');
-    if (signInForm) {
-        signInForm.addEventListener('submit', (e) => handleEmailAuth(e));
-    }
+    if (signInForm) signInForm.addEventListener('submit', (e) => handleEmailAuth(e));
 
     const signUpForm = document.getElementById('signUpForm');
-    if (signUpForm) {
-        signUpForm.addEventListener('submit', (e) => handleEmailSignUp(e));
-    }
+    if (signUpForm) signUpForm.addEventListener('submit', (e) => handleEmailSignUp(e));
 
-    // 4. Data Saver Toggle Buttons (Desktop & Mobile)
+    // 4. Data Saver Toggle
     const dataSaverBtns = document.querySelectorAll('#data-saver-btn, #data-saver-btn-mobile, [data-action="toggle-data-saver"]');
     dataSaverBtns.forEach(btn => {
         btn.replaceWith(btn.cloneNode(true));
@@ -432,12 +429,10 @@ export function bindHeaderEvents() {
             freshBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopImmediatePropagation();
-
                 const current = localStorage.getItem('vw_data_saver') === 'true';
                 const nextState = !current;
                 localStorage.setItem('vw_data_saver', nextState ? 'true' : 'false');
 
-                // Sync desktop & mobile labels
                 document.querySelectorAll('#data-saver-status, #data-saver-status-mobile').forEach(label => {
                     label.textContent = nextState ? 'On' : 'Off';
                 });
@@ -447,13 +442,12 @@ export function bindHeaderEvents() {
         }
     });
 
-    // Sync Data Saver initial label state
     const isDataSaverActive = localStorage.getItem('vw_data_saver') === 'true';
     document.querySelectorAll('#data-saver-status, #data-saver-status-mobile').forEach(label => {
         label.textContent = isDataSaverActive ? 'On' : 'Off';
     });
 
-    // 5. Mobile Dropdown Menu Toggle
+    // 5. Mobile Dropdown Toggle
     const mobileMenuBtn = document.getElementById('mobile-menu-btn');
     const mobileDropdown = document.getElementById('mobile-menu');
     if (mobileMenuBtn && mobileDropdown) {
@@ -466,26 +460,24 @@ export function bindHeaderEvents() {
         });
     }
 
-  // 6. "More Options" Nav Dropdown Toggle
-const moreBtn = document.getElementById('more-btn');
-const moreMenu = document.getElementById('more-menu');
-if (moreBtn && moreMenu) {
-    moreBtn.replaceWith(moreBtn.cloneNode(true));
-    const freshMoreBtn = document.getElementById('more-btn');
-    
-    freshMoreBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        moreMenu.classList.toggle('hidden');
-    });
+    // 6. More Options Dropdown Toggle
+    const moreBtn = document.getElementById('more-btn');
+    const moreMenu = document.getElementById('more-menu');
+    if (moreBtn && moreMenu) {
+        moreBtn.replaceWith(moreBtn.cloneNode(true));
+        const freshMoreBtn = document.getElementById('more-btn');
+        freshMoreBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            moreMenu.classList.toggle('hidden');
+        });
 
-    // Close dropdown when clicking elsewhere
-    document.addEventListener('click', (e) => {
-        if (!freshMoreBtn.contains(e.target) && !moreMenu.contains(e.target)) {
-            moreMenu.classList.add('hidden');
-        }
-    });
-}
+        document.addEventListener('click', (e) => {
+            if (!freshMoreBtn.contains(e.target) && !moreMenu.contains(e.target)) {
+                moreMenu.classList.add('hidden');
+            }
+        });
+    }
 
     // 7. Notification Dropdown Toggle
     const notifBtn = document.getElementById('notification-btn');
@@ -506,8 +498,9 @@ if (moreBtn && moreMenu) {
             }
         });
     }
+} // <--- Properly close bindHeaderEvents()
 
-// Single consolidated initAuth
+// ====================== AUTH INITIALIZATION ======================
 export function initAuth() {
     auth.onAuthStateChanged(async (user) => {
         const isOAuthUser = user?.providerData?.some(
@@ -518,7 +511,7 @@ export function initAuth() {
         if (isVerified) {
             await createOrUpdateUser(user);
             updateAppState({ isAuthenticated: true, currentUser: user });
-            refreshTierAndUI();
+            refreshTierUI();
             closeLoginModal();
             closeCreateAccountModal();
         } else {
@@ -533,7 +526,6 @@ export function initAuth() {
         );
         updateUIForAuthState(isVerified ? user : null);
     });
-}
 
     // Global delegate listener for logout triggers
     document.addEventListener('click', (e) => {
@@ -554,7 +546,7 @@ export function initAuth() {
     console.log("🔐 Auth initialized (Header Bindings Ready)");
 }
 
-// Global window assignments safely mapped
+// Window Assignments
 Object.assign(window, {
     showAuthModal,
     hideAuthModal,
