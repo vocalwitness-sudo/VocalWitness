@@ -1,21 +1,18 @@
 // js/main.js - Cleaned Tab Switching & Entry Setup
 
 // 1. Static Module Imports (All top-level imports grouped together)
-import './app-state.js';
+import { state, updateAppState, isUserAuthenticated } from './app-state.js';
 import { initAuth, requireAuth, updateUIForAuthState } from "./auth.js";
 import { initFeed } from './feed.js';
 import { db, auth, storage } from './firebase-config.js';
 import { initLanguage } from './i18n.js';
 import * as mediaModule from './media.js';
-import { CitizenTalkEngine } from '../vocalWitnessEngine.js';
+import { CitizenTalkEngine } from './vocalWitnessEngine.js'; // Changed ../ to ./
 import { initProfile } from './profile.js';
 import { loadDynamicNavigation } from './navigation.js';
-import { AppState } from './app-state.js';
 import { showToast } from './utils.js';
-import './composer.js';
 import { loadWeeklyLeaderboard, refreshTierAndUI } from './tier.js';
-
-// Firebase Firestore Imports
+import './composer.js';
 import {
     collection,
     addDoc,
