@@ -3,7 +3,7 @@ import './main.js';
 import { initAuth, showAuthModal, bindHeaderEvents } from './auth.js';
 import { showToast } from './utils.js';
 import { db, storage } from './firebase-config.js';
-import { CitizenTalkEngine, WitnessVoiceEngine } from './vocalWitnessEngine.js'; // Relative import inside js/
+import { CitizenTalkEngine, WitnessVoiceEngine } from '/js/vocalWitnessEngine.js';
 
 // ====================== ENGINES INSTANTIATION ======================
 export const citizenEngine = new CitizenTalkEngine(db, storage);
