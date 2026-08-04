@@ -330,3 +330,29 @@ export async function recordTestimonyContribution() {
     console.warn("Reputation update failed:", e);
   }
 }
+
+// Add to js/tier.js
+
+/**
+ * Gate restricted actions and automatically prompt verification if required
+ */
+export async function requireCitizenCirclePermission(actionCallback) {
+    const userTier = await getCurrentUserTier();
+    
+    if (userTier === TIERS.CITIZEN) {
+        showToast("Phone verification required to unlock this feature.", "info");
+        
+        // Open the phone verification modal dynamically
+        const modal = document.getElementById('phoneVerificationModal') || document.getElementById('phone-upgrade-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+        }
+        return false;
+    }
+
+    // Permission granted - run action
+    if (typeof actionCallback === 'function') {
+        actionCallback();
+    }
+    return true;
+}
