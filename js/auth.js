@@ -13,6 +13,7 @@ import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/fi
 import { showToast } from './utils.js';
 import { updateAppState } from './app-state.js';
 import { applyTierTheme, updateTierBadge, clearProfileCache } from './tier.js';
+import { initNotifications } from './notifications.js';
 
 let authActionInProgress = false;
 
@@ -498,7 +499,7 @@ export function bindHeaderEvents() {
             }
         });
     }
-} // <--- Properly close bindHeaderEvents()
+
 
 // ====================== AUTH INITIALIZATION ======================
 export function initAuth() {
@@ -514,9 +515,15 @@ export function initAuth() {
             refreshTierUI();
             closeLoginModal();
             closeCreateAccountModal();
+
+            // 🔔 Start real-time notification listener for signed-in user
+            initNotifications(user.uid);
         } else {
             clearProfileCache();
             updateAppState({ isAuthenticated: false, currentUser: null });
+
+            // 🔒 Clear notification state & detach listener on sign-out
+            initNotifications(null);
         }
 
         window.dispatchEvent(
@@ -526,6 +533,25 @@ export function initAuth() {
         );
         updateUIForAuthState(isVerified ? user : null);
     });
+
+    // Global delegate listener for logout triggers
+    document.addEventListener('click', (e) => {
+        const logoutTarget = e.target.closest('#logoutBtn, .btn-logout, [data-action="logout"]');
+        if (logoutTarget) {
+            e.preventDefault();
+            logout();
+        }
+    });
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bindHeaderEvents);
+    } else {
+        bindHeaderEvents();
+    }
+
+    updateUIForAuthState();
+    console.log("🔐 Auth initialized (Header Bindings & Notifications Ready)");
+}
 
     // Global delegate listener for logout triggers
     document.addEventListener('click', (e) => {
