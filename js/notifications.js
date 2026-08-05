@@ -1,38 +1,58 @@
-//notification.js
+// notification.js
 import { db } from '/js/firebase-config.js';
-import { getAuth } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 let unsubscribeNotifs = null;
+let authObserver = null;
 
-export function initNotifications(uid) {
-    // 1. Clean up old listener before attaching a new one
+export function initNotifications(targetUid) {
+    // 1. Clean up existing listeners & observers before starting new ones
     stopNotificationListener();
 
     const auth = getAuth();
-    const currentUser = auth.currentUser;
 
-    // 2. Clear UI & abort if logged out or UID mismatch
-    if (!uid || !currentUser || currentUser.uid !== uid) {
-        updateNotificationBadge(0);
-        renderNotificationList([]);
-        return;
-    }
+    // 2. Wrap initialization in onAuthStateChanged to survive Auth hydration timing
+    if (authObserver) authObserver(); // Unsubscribe previous observer if any
 
-    // 3. Build query scoped to user's notifications subcollection
+    authObserver = onAuthStateChanged(auth, (user) => {
+        // If logged out or target UID doesn't match authenticated user, stop & clear UI
+        if (!user || user.uid !== targetUid) {
+            stopNotificationListener();
+            updateNotificationBadge(0);
+            renderNotificationList([]);
+            return;
+        }
+
+        // Avoid attaching multiple duplicate listeners if already listening for this user
+        if (unsubscribeNotifs) return;
+
+        attachNotificationListener(user.uid);
+    });
+}
+
+function attachNotificationListener(uid) {
     const notificationsRef = collection(db, "users", uid, "notifications");
     const q = query(notificationsRef, orderBy("createdAt", "desc"));
 
-    // 4. Attach listener
     unsubscribeNotifs = onSnapshot(q, (snapshot) => {
         handleSnapshot(snapshot);
     }, (error) => {
-        console.warn("🔔 Ordered Notification Listener failed, trying unordered fallback...", error.code);
-        
-        // Stop the failed listener before starting the fallback
-        stopNotificationListener();
+        // If error is permission-denied, auth token might be missing or expired
+        if (error.code === 'permission-denied') {
+            console.warn("🔔 Notification listener permission-denied. Detaching listener to prevent error loop.");
+            stopNotificationListener();
+            return;
+        }
 
-        // Fallback to unordered query (prevents index/null field permission drops)
+        console.warn("🔔 Ordered query failed (missing index or missing createdAt). Trying fallback...", error.code);
+        
+        // Detach ordered listener before running fallback
+        if (unsubscribeNotifs) {
+            unsubscribeNotifs();
+            unsubscribeNotifs = null;
+        }
+
         fallbackUnorderedListener(uid);
     });
 }
@@ -60,14 +80,23 @@ function fallbackUnorderedListener(uid) {
         updateNotificationBadge(unreadCount);
         renderNotificationList(notifications);
     }, (err) => {
-        console.error("🔔 Notification Listener Error: permission-denied Missing or insufficient permissions.", err);
+        if (err.code === 'permission-denied') {
+            console.warn("🔔 Notification fallback permission-denied. Auth state changed or missing.");
+            stopNotificationListener();
+        } else {
+            console.error("🔔 Fallback Notification Listener Error:", err);
+        }
     });
 }
 
-function stopNotificationListener() {
+export function stopNotificationListener() {
     if (unsubscribeNotifs) {
         unsubscribeNotifs();
         unsubscribeNotifs = null;
+    }
+    if (authObserver) {
+        authObserver();
+        authObserver = null;
     }
 }
 
@@ -111,4 +140,6 @@ function renderNotificationList(notifications) {
             </div>`;
         return;
     }
+
+    // Optional: Render items into container if array has items
 }
