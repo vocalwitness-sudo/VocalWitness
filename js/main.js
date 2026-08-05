@@ -1,10 +1,10 @@
-// js/main.js - Cleaned Tab Switching & Entry Setup
+// js/main.js - Cleaned Tab Switching, Core Handlers & Entry Setup
 
 // 1. Static Module Imports
 import { state, updateAppState, isUserAuthenticated } from './app-state.js';
-import { initAuth, requireAuth, updateUIForAuthState } from "/js/auth.js";
+import { initAuth, requireAuth, updateUIForAuthState } from "./auth.js";
 import { initFeed } from './feed.js';
-import { db, auth, storage } from './firebase-config.js';
+import { db, auth, storage } from './firebaseConfig.js';
 import { initLanguage } from './i18n.js';
 import * as mediaModule from './media.js';
 import { CitizenTalkEngine } from './vocalWitnessEngine.js';
@@ -29,12 +29,6 @@ let engineInstance = null;
 let isInitialized = false;
 let listenersInitialized = false;
 let isSwitchingTab = false;
-
-// Initialize Tier Systems on DOM Ready
-document.addEventListener('DOMContentLoaded', () => {
-    refreshTierAndUI();
-    loadWeeklyLeaderboard();
-});
 
 // ====================== TAB SWITCHING ======================
 window.switchTab = async (tab) => {
@@ -381,22 +375,15 @@ function setupEventListeners() {
         }
     });
 
-    document.addEventListener('DOMContentLoaded', () => {
+    // Bookmarks View Navigation
     const bookmarksBtn = document.getElementById('bookmarks-nav-btn');
-
     if (bookmarksBtn) {
         bookmarksBtn.addEventListener('click', () => {
-            // Hide all other views
             document.querySelectorAll('.tab-view').forEach(view => view.classList.add('hidden'));
-
-            // Deactivate other nav tabs
             document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
-
-            // Initialize and show Bookmarks view
             initBookmarksView();
         });
     }
-});
 
     // Media Controls
     document.getElementById('btn-photo')?.addEventListener('click', (e) => {
@@ -434,8 +421,27 @@ async function bootstrap() {
     console.log("🚀 VocalWitness Bootstrap started");
 
     try {
-        // 1. Initialize static module setups first
-        await initAuth();
+        // 1. Initialize tier systems
+        refreshTierAndUI();
+        loadWeeklyLeaderboard();
+
+        // 2. Wire global listeners before firing auth check
+        window.addEventListener('auth-changed', (e) => {
+            const user = e.detail?.user;
+            console.log("🔐 Auth state confirmed:", user ? `Logged in as ${user.uid}` : "Guest session");
+
+            if (typeof updateUIForAuthState === 'function') {
+                updateUIForAuthState(user);
+            }
+
+            // Default to 'square' tab on cold load
+            if (!state.currentTab) {
+                window.switchTab('square');
+            }
+            showWelcomeNote();
+        });
+
+        // 3. Static module setups
         setupEventListeners();
         initLanguage?.();
         initProfile?.();
@@ -449,21 +455,8 @@ async function bootstrap() {
         loadDynamicNavigation?.();
         fetchCuratedNews();
 
-        // 2. Listen to unified auth-changed custom event
-        window.addEventListener('auth-changed', (e) => {
-            const user = e.detail?.user;
-            console.log("🔐 Auth state confirmed:", user ? `Logged in as ${user.uid}` : "Guest session");
-
-            if (typeof updateUIForAuthState === 'function') {
-                updateUIForAuthState(user);
-            }
-
-            // Only switch to initial tab if no current tab is set
-            if (!state.currentTab) {
-                window.switchTab('square');
-            }
-            showWelcomeNote();
-        });
+        // 4. Trigger auth initialization
+        await initAuth();
 
         console.log("✅ Bootstrap finished successfully");
     } catch (e) {
