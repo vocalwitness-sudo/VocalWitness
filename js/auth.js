@@ -8,7 +8,7 @@ import {
     sendEmailVerification
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 
-import { auth, provider, db } from './firebase-config.js';
+import { auth, provider, db } from './firebaseConfig.js';
 import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { showToast } from './utils.js';
 import { updateAppState } from './app-state.js';
@@ -63,7 +63,7 @@ async function createOrUpdateUser(user) {
 }
 
 export function savePendingDraft() {
-    const mainInput = document.getElementById('mainInput');
+    const mainInput = document.getElementById('mainInput') || document.getElementById('squareSearchInput');
     if (mainInput && mainInput.value.trim() !== '') {
         sessionStorage.setItem('vocal_pending_draft', mainInput.value);
         showToast("Draft saved. We'll restore it after sign-in.", "info");
@@ -76,7 +76,7 @@ export function restorePendingDraft() {
 
     let attempts = 0;
     const interval = setInterval(() => {
-        const mainInput = document.getElementById('mainInput');
+        const mainInput = document.getElementById('mainInput') || document.getElementById('squareSearchInput');
         if (mainInput) {
             mainInput.value = draft;
             showToast("✅ Your testimony draft has been restored!", "success");
@@ -145,7 +145,6 @@ export async function googleLogin(event) {
             closeLoginModal();
             closeCreateAccountModal();
             restorePendingDraft();
-            // Note: State update & initNotifications are handled cleanly inside onAuthStateChanged
         }
     } catch (error) {
         console.error("Google popup sign-in error:", error);
@@ -369,25 +368,21 @@ export function bindHeaderEvents() {
     // 1. Desktop & Mobile Sign In Buttons
     const guestBtns = document.querySelectorAll('#guest-action-btn, #signin-btn-mobile, [data-action="open-auth-modal"]');
     guestBtns.forEach(btn => {
-        btn.replaceWith(btn.cloneNode(true));
-        const freshBtn = document.getElementById(btn.id) || document.querySelector(`[data-action="${btn.dataset.action}"]`);
-        if (freshBtn) {
-            freshBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                showAuthModal();
-            });
-        }
+        const freshBtn = btn.cloneNode(true);
+        btn.replaceWith(freshBtn);
+        freshBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            showAuthModal();
+        });
     });
 
     // 2. Google Sign-In
     const googleBtns = document.querySelectorAll('#googleAuthBtn, [data-action="google-login"]');
     googleBtns.forEach(btn => {
-        btn.replaceWith(btn.cloneNode(true));
-        const freshBtn = document.getElementById(btn.id) || document.querySelector(`[data-action="${btn.dataset.action}"]`);
-        if (freshBtn) {
-            freshBtn.addEventListener('click', (e) => googleLogin(e));
-        }
+        const freshBtn = btn.cloneNode(true);
+        btn.replaceWith(freshBtn);
+        freshBtn.addEventListener('click', (e) => googleLogin(e));
     });
 
     // 3. Email Authentication Forms
@@ -400,23 +395,21 @@ export function bindHeaderEvents() {
     // 4. Data Saver Toggle
     const dataSaverBtns = document.querySelectorAll('#data-saver-btn, #data-saver-btn-mobile, [data-action="toggle-data-saver"]');
     dataSaverBtns.forEach(btn => {
-        btn.replaceWith(btn.cloneNode(true));
-        const freshBtn = document.getElementById(btn.id) || document.querySelector(`[data-action="${btn.dataset.action}"]`);
-        if (freshBtn) {
-            freshBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                const current = localStorage.getItem('vw_data_saver') === 'true';
-                const nextState = !current;
-                localStorage.setItem('vw_data_saver', nextState ? 'true' : 'false');
+        const freshBtn = btn.cloneNode(true);
+        btn.replaceWith(freshBtn);
+        freshBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            const current = localStorage.getItem('vw_data_saver') === 'true';
+            const nextState = !current;
+            localStorage.setItem('vw_data_saver', nextState ? 'true' : 'false');
 
-                document.querySelectorAll('#data-saver-status, #data-saver-status-mobile').forEach(label => {
-                    label.textContent = nextState ? 'On' : 'Off';
-                });
-
-                showToast(`Data Saver mode is now ${nextState ? 'ON' : 'OFF'}`, 'info');
+            document.querySelectorAll('#data-saver-status, #data-saver-status-mobile').forEach(label => {
+                label.textContent = nextState ? 'On' : 'Off';
             });
-        }
+
+            showToast(`Data Saver mode is now ${nextState ? 'ON' : 'OFF'}`, 'info');
+        });
     });
 
     const isDataSaverActive = localStorage.getItem('vw_data_saver') === 'true';
@@ -428,8 +421,8 @@ export function bindHeaderEvents() {
     const mobileMenuBtn = document.getElementById('mobile-menu-btn');
     const mobileDropdown = document.getElementById('mobile-menu');
     if (mobileMenuBtn && mobileDropdown) {
-        mobileMenuBtn.replaceWith(mobileMenuBtn.cloneNode(true));
-        const freshMobileBtn = document.getElementById('mobile-menu-btn');
+        const freshMobileBtn = mobileMenuBtn.cloneNode(true);
+        mobileMenuBtn.replaceWith(freshMobileBtn);
         freshMobileBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopImmediatePropagation();
@@ -441,8 +434,8 @@ export function bindHeaderEvents() {
     const moreBtn = document.getElementById('more-btn');
     const moreMenu = document.getElementById('more-menu');
     if (moreBtn && moreMenu) {
-        moreBtn.replaceWith(moreBtn.cloneNode(true));
-        const freshMoreBtn = document.getElementById('more-btn');
+        const freshMoreBtn = moreBtn.cloneNode(true);
+        moreBtn.replaceWith(freshMoreBtn);
         freshMoreBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -460,8 +453,8 @@ export function bindHeaderEvents() {
     const notifBtn = document.getElementById('notification-btn');
     const notifMenu = document.getElementById('notification-menu');
     if (notifBtn && notifMenu) {
-        notifBtn.replaceWith(notifBtn.cloneNode(true));
-        const freshNotifBtn = document.getElementById('notification-btn');
+        const freshNotifBtn = notifBtn.cloneNode(true);
+        notifBtn.replaceWith(freshNotifBtn);
 
         freshNotifBtn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -492,13 +485,13 @@ export function initAuth() {
             closeLoginModal();
             closeCreateAccountModal();
 
-            // 🔔 Start real-time notification listener ONLY when auth token is confirmed
+            // Start real-time notification listener ONLY when auth token is confirmed
             initNotifications(user.uid);
         } else {
             clearProfileCache();
             updateAppState({ isAuthenticated: false, currentUser: null });
 
-            // 🔒 Clear notification state & detach listener on sign-out or unverified email state
+            // Clear notification state & detach listener on sign-out or unverified email state
             initNotifications(null);
         }
 
