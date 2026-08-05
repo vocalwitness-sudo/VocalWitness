@@ -23,20 +23,20 @@
 ">
     <title data-i18n="pageTitle">VocalWitness • Truth • Evidence • Public Square</title>
 
-    <!-- External CDNs -->
+<!-- External CDNs -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js" defer></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" defer></script>
-<script src="https://js.paystack.co/v2/inline.js" defer></script>
-    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" defer></script>
+    <script src="https://js.paystack.co/v2/inline.js" defer></script>
+
     <!-- Fallback Styles for Legacy & Outdated Browsers -->
     <style>
       body { background-color: #0a0f1c !important; color: #ffffff !important; }
       .glass { background-color: #111827 !important; border: 1px solid rgba(16, 185, 129, 0.22) !important; }
       #main-nav button.nav-tab.active { background-color: #10b981 !important; color: #000000 !important; }
       #support-btn { background-color: #10b981 !important; color: #000000 !important; }
-      #languageSelector, #data-saver-btn, #profile-btn, #squareSearchInput { background-color: #18181b !important; color: #ffffff !important; }
-      
+      #languageSelector, #data-saver-btn, #profile-btn, #squareSearchInput, #bookmarks-nav-btn { background-color: #18181b !important; color: #ffffff !important; }
+
       /* Explicit Fallbacks for Browsers Lacking Modern CSS Variable/Alpha Syntax */
       @supports not (color: rgb(0 0 0 / 0.5)) {
         .bg-zinc-950 { background-color: #09090b !important; }
@@ -56,96 +56,103 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-    
+
 <body class="min-h-screen pb-24 bg-[#0a0f1c] text-white antialiased">
     <div class="app-container py-6 px-4 max-w-6xl mx-auto">
 
-        
         <!-- Header -->
-<header class="flex items-center justify-between mb-8 sticky top-4 z-50 glass rounded-3xl p-4 shadow-xl">
-    
-    <!-- Logo & Title -->
-    <div class="flex items-center gap-3">
-        <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-2xl shadow-md font-bold text-black" style="background-color: #10b981; color: #000000;">VW</div>
-        <div>
-            <h1 class="text-xl sm:text-2xl font-bold tracking-tight" data-i18n="appTitle">VocalWitness</h1>
-            <p class="text-xs sm:text-sm text-emerald-400 tracking-widest" style="color: #34d399;" data-i18n="appSubtitle">Truth • Evidence • Public Square</p>
-        </div>
-    </div>
+        <header class="flex items-center justify-between mb-8 sticky top-4 z-50 glass rounded-3xl p-4 shadow-xl">
 
-    <!-- Right Controls -->
-    <div class="flex items-center gap-2">
-        <button id="mobile-menu-btn" data-action="toggle-mobile-menu" class="md:hidden p-3 text-3xl leading-none hover:bg-zinc-800 rounded-2xl transition">
-            ☰
-        </button>
+            <!-- Logo & Title -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-2xl shadow-md font-bold text-black" style="background-color: #10b981; color: #000000;">VW</div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-bold tracking-tight" data-i18n="appTitle">VocalWitness</h1>
+                    <p class="text-xs sm:text-sm text-emerald-400 tracking-widest" style="color: #34d399;" data-i18n="appSubtitle">Truth • Evidence • Public Square</p>
+                </div>
+            </div>
 
-        <button id="support-btn" data-action="open-support-modal" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl transition whitespace-nowrap text-sm shadow-sm" style="background-color: #10b981; color: #000000;" data-i18n="supportBtn">
-            Support The Square
-        </button>
-
-        <div class="hidden md:flex items-center gap-2">
-            <select id="languageSelector" aria-label="Select Language" class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500" style="background-color: #18181b; color: #ffffff; border-color: #3f3f46;">
-                <option value="en">English</option>
-                <option value="es">Español</option>
-                <option value="fr">Français</option>
-            </select>
-
-            <button id="data-saver-btn" data-action="toggle-data-saver" class="px-3 py-2.5 rounded-2xl hover:bg-zinc-800 transition text-xs font-medium flex items-center gap-1.5 border border-zinc-700 text-zinc-300" style="background-color: #18181b; border-color: #3f3f46; color: #d4d4d8;">
-                ⚡ <span class="hidden lg:inline">Data Saver: <strong id="data-saver-status" class="text-emerald-400" style="color: #34d399;">Off</strong></span>
-            </button>
-
-            <a href="privacy.html" class="hidden lg:flex items-center text-emerald-400 hover:text-emerald-300 transition-colors text-sm font-medium px-3 py-2" style="color: #34d399;" data-i18n="privacyLink">
-                Privacy First
-            </a>
-
-            <!-- Fixed ID to match main.js listener -->
-            <button id="guest-action-btn" type="button" data-action="open-auth-modal" class="px-4 py-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm text-sm" style="background-color: #ffffff; color: #000000;">
-                <img src="https://www.google.com/favicon.ico" class="w-4 h-4" alt="Google">
-                <span class="hidden sm:inline" data-i18n="joinBtn">Sign in</span>
-            </button>
-
-            <!-- Notification Bell & Dropdown Container -->
-<div class="relative inline-block" id="notification-container">
-    <button id="notification-btn" type="button" class="relative p-2.5 rounded-full hover:bg-zinc-800 text-zinc-300 hover:text-white transition-all flex items-center justify-center border border-zinc-700/50" aria-label="Notifications">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-        </svg>
-        <!-- Unread Badge -->
-        <span id="notification-badge" class="hidden absolute -top-1 -right-1 bg-emerald-500 text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-lg border border-zinc-900">
-            0
-        </span>
-    </button>
-
-    <!-- Notifications Dropdown Menu -->
-    <div id="notification-menu" class="hidden absolute right-0 mt-3 w-80 sm:w-96 bg-zinc-900 border border-zinc-700/80 rounded-3xl shadow-2xl z-[100] overflow-hidden backdrop-blur-xl">
-        <!-- Header -->
-        <div class="p-4 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/50">
+            <!-- Right Controls -->
             <div class="flex items-center gap-2">
-                <h3 class="font-bold text-white text-base">Notifications</h3>
-                <span id="notification-count-tag" class="text-xs bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded-full">0 new</span>
-            </div>
-            <button id="mark-all-read-btn" class="text-xs text-emerald-400 hover:text-emerald-300 font-medium transition">
-                Mark all as read
-            </button>
-        </div>
+                <button id="mobile-menu-btn" data-action="toggle-mobile-menu" class="md:hidden p-3 text-3xl leading-none hover:bg-zinc-800 rounded-2xl transition" aria-label="Toggle Menu">
+                    ☰
+                </button>
 
-        <!-- Scrollable Notification List -->
-        <div id="notification-list" class="max-h-[380px] overflow-y-auto divide-y divide-zinc-800/60 no-scrollbar">
-            <!-- Empty state placeholder -->
-            <div id="no-notifications" class="p-8 text-center text-zinc-500">
-                <p class="text-2xl mb-1">🔔</p>
-                <p class="text-sm">No notifications yet</p>
-            </div>
-        </div>
-    </div>
-</div>
+                <button id="support-btn" data-action="open-support-modal" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl transition whitespace-nowrap text-sm shadow-sm" style="background-color: #10b981; color: #000000;" data-i18n="supportBtn">
+                    Support The Square
+                </button>
 
-            <button id="profile-btn" data-action="open-profile" class="px-4 py-2.5 border border-zinc-700 hover:bg-zinc-800 rounded-2xl transition flex items-center gap-2 hidden text-sm" style="background-color: #18181b; border-color: #3f3f46;" data-i18n="profileBtn">
-                Profile
-            </button>
-        </div>
-    </div>
-</header>
+                <div class="hidden md:flex items-center gap-2">
+                    <select id="languageSelector" aria-label="Select Language" class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500" style="background-color: #18181b; color: #ffffff; border-color: #3f3f46;">
+                        <option value="en">English</option>
+                        <option value="es">Español</option>
+                        <option value="fr">Français</option>
+                    </select>
+
+                    <button id="data-saver-btn" data-action="toggle-data-saver" class="px-3 py-2.5 rounded-2xl hover:bg-zinc-800 transition text-xs font-medium flex items-center gap-1.5 border border-zinc-700 text-zinc-300" style="background-color: #18181b; border-color: #3f3f46; color: #d4d4d8;">
+                        ⚡ <span class="hidden lg:inline">Data Saver: <strong id="data-saver-status" class="text-emerald-400" style="color: #34d399;">Off</strong></span>
+                    </button>
+
+                    <a href="privacy.html" class="hidden lg:flex items-center text-emerald-400 hover:text-emerald-300 transition-colors text-sm font-medium px-3 py-2" style="color: #34d399;" data-i18n="privacyLink">
+                        Privacy First
+                    </a>
+
+                    <!-- Saved / Bookmarks Tab Toggle Button -->
+                    <button id="bookmarks-nav-btn" data-action="open-bookmarks" class="p-2.5 rounded-2xl hover:bg-zinc-800 text-zinc-300 hover:text-white transition-all flex items-center justify-center border border-zinc-700/50" style="background-color: #18181b; border-color: #3f3f46;" aria-label="Saved Items" title="Saved Items">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+                        </svg>
+                    </button>
+
+                    <!-- Sign-in Button -->
+                    <button id="guest-action-btn" type="button" data-action="open-auth-modal" class="px-4 py-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm text-sm" style="background-color: #ffffff; color: #000000;">
+                        <img src="https://www.google.com/favicon.ico" class="w-4 h-4" alt="Google">
+                        <span class="hidden sm:inline" data-i18n="joinBtn">Sign in</span>
+                    </button>
+
+                    <!-- Notification Bell & Dropdown Container -->
+                    <div class="relative inline-block" id="notification-container">
+                        <button id="notification-btn" type="button" class="relative p-2.5 rounded-full hover:bg-zinc-800 text-zinc-300 hover:text-white transition-all flex items-center justify-center border border-zinc-700/50" aria-label="Notifications">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                            </svg>
+                            <!-- Unread Badge -->
+                            <span id="notification-badge" class="hidden absolute -top-1 -right-1 bg-emerald-500 text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-lg border border-zinc-900">
+                                0
+                            </span>
+                        </button>
+
+                        <!-- Notifications Dropdown Menu -->
+                        <div id="notification-menu" class="hidden absolute right-0 mt-3 w-80 sm:w-96 bg-zinc-900 border border-zinc-700/80 rounded-3xl shadow-2xl z-[100] overflow-hidden backdrop-blur-xl">
+                            <!-- Header -->
+                            <div class="p-4 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/50">
+                                <div class="flex items-center gap-2">
+                                    <h3 class="font-bold text-white text-base">Notifications</h3>
+                                    <span id="notification-count-tag" class="text-xs bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded-full">0 new</span>
+                                </div>
+                                <button id="mark-all-read-btn" class="text-xs text-emerald-400 hover:text-emerald-300 font-medium transition">
+                                    Mark all as read
+                                </button>
+                            </div>
+
+                            <!-- Scrollable Notification List -->
+                            <div id="notification-list" class="max-h-[380px] overflow-y-auto divide-y divide-zinc-800/60 no-scrollbar">
+                                <!-- Empty state placeholder -->
+                                <div id="no-notifications" class="p-8 text-center text-zinc-500">
+                                    <p class="text-2xl mb-1">🔔</p>
+                                    <p class="text-sm">No notifications yet</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profile Button -->
+                    <button id="profile-btn" data-action="open-profile" class="px-4 py-2.5 border border-zinc-700 hover:bg-zinc-800 rounded-2xl transition flex items-center gap-2 hidden text-sm" style="background-color: #18181b; border-color: #3f3f46;" data-i18n="profileBtn">
+                        Profile
+                    </button>
+                </div>
+            </div>
+        </header>
         
 <!-- HTML: Top News Ticker -->
 <div class="ticker-wrap border-b border-emerald-500/20 bg-slate-900/90 py-2 text-xs text-slate-300" style="background-color: #0f172a; border-color: rgba(16, 185, 129, 0.2);">
