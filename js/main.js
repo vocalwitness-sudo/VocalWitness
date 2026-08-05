@@ -4,7 +4,7 @@
 import { state, updateAppState, isUserAuthenticated } from './app-state.js';
 import { initAuth, requireAuth, updateUIForAuthState } from "./auth.js";
 import { initFeed } from './feed.js';
-import { db, auth, storage } from './firebaseConfig.js';
+import { db, auth, storage } from './firebase-Config.js';
 import { initLanguage } from './i18n.js';
 import * as mediaModule from './media.js';
 import { CitizenTalkEngine } from './vocalWitnessEngine.js';
