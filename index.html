@@ -243,26 +243,27 @@
                     <span class="text-xs text-amber-400 hidden md:block" data-i18n="verifiedWitnessesDesc">Trusted voices</span>
                 </button>
             </nav>
-
-            <!-- More Options Dropdown -->
-            <div class="dropdown-container relative shrink-0">
-                <button id="more-btn" type="button" class="px-6 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-md" data-i18n="moreOptionsBtn">
-                    More Options
-                </button>
-                <div id="more-menu" class="hidden absolute right-0 top-full mt-2 w-64 bg-zinc-900 border border-zinc-700 rounded-3xl shadow-2xl py-3 z-50">
-                    <a href="my-testimonies.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="myTestimoniesMenu">My Testimonies</a>
-                    <a href="groups.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="groupsMenu">Groups</a>
-                    <a href="true-witness.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="trueWitnessMenu">Witness Voice</a>
-                    <div class="h-px bg-zinc-700 mx-4 my-2"></div>
-                    <a href="about.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="aboutMenu">About Us</a>
-                    <a href="privacy.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="privacyPolicyMenu">Privacy Policy</a>
-                    <a href="terms.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="termsOfServiceMenu">Terms of Service</a>
-                    <a href="safety.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="safetyGuidelinesMenu">Safety Guidelines</a>
-                </div>
-            </div>
-        </div>
-
-    </div> <!-- End .app-container -->
+<!-- More Options Dropdown -->
+<div class="dropdown-container relative shrink-0">
+    <button id="more-btn" 
+            type="button" 
+            data-action="toggle-more-menu"
+            onclick="document.getElementById('more-menu')?.classList.toggle('hidden'); event.stopPropagation();"
+            class="px-6 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-md" 
+            data-i18n="moreOptionsBtn">
+        More Options
+    </button>
+    <div id="more-menu" class="hidden absolute right-0 top-full mt-2 w-64 bg-zinc-900 border border-zinc-700 rounded-3xl shadow-2xl py-3 z-50">
+        <a href="my-testimonies.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="myTestimoniesMenu">My Testimonies</a>
+        <a href="groups.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="groupsMenu">Groups</a>
+        <a href="witness-voice.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="witnessVoiceMenu">Witness Voice</a>
+        <div class="h-px bg-zinc-700 mx-4 my-2"></div>
+        <a href="about.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="aboutMenu">About Us</a>
+        <a href="privacy.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="privacyPolicyMenu">Privacy Policy</a>
+        <a href="terms.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="termsOfServiceMenu">Terms of Service</a>
+        <a href="safety.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="safetyGuidelinesMenu">Safety Guidelines</a>
+    </div>
+</div>
 
     <!-- MOBILE BOTTOM NAVIGATION BAR -->
     <nav id="mobile-bottom-nav" class="md:hidden fixed bottom-0 left-0 right-0 z-[100] bg-zinc-950/95 backdrop-blur-xl border-t border-emerald-500/20 px-2 py-1.5 flex justify-around items-center shadow-2xl">
