@@ -95,6 +95,7 @@ body {
   background-color: currentColor;
   border-radius: 50%;
 }
+
 /* ====================== ANTI-SHIFT & SIZING ====================== */
 #guest-action-btn { min-width: 185px; }
 #support-btn { min-width: 175px; }
@@ -129,7 +130,8 @@ header { z-index: 60 !important; }
 #postButton,
 #signin-btn,
 #support-btn,
-#profile-btn {
+#profile-btn,
+#bookmarks-nav-btn {
   position: relative;
   z-index: 40 !important;
   pointer-events: auto !important;
@@ -177,4 +179,43 @@ button,
 @keyframes ticker {
   0% { transform: translate3d(0, 0, 0); }
   100% { transform: translate3d(-100%, 0, 0); }
+}
+
+/* ====================== BOOKMARKS FEED STYLES ====================== */
+.bookmarks-filter-bar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.filter-chip {
+  background-color: #18181b;
+  border: 1px solid #3f3f46;
+  color: #a1a1aa;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-chip.active,
+.filter-chip:hover {
+  background-color: #10b981;
+  color: #000000;
+  border-color: #10b981;
+  font-weight: 600;
+}
+
+.bookmarks-feed-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.bookmark-card {
+  background-color: #111827;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 1rem;
+  padding: 1rem;
 }
