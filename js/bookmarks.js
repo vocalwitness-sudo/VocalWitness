@@ -3,7 +3,7 @@
  * Handles user saved posts and testimonies under /users/{userId}/bookmarks/{bookmarkId}
  */
 
-import { auth, db } from './firebaseConfig.js';
+import { auth, db } from './firebase-config.js';
 import { 
     doc, 
     setDoc, 
