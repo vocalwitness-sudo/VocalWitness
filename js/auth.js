@@ -436,22 +436,40 @@ export function bindHeaderEvents() {
         });
     }
 
-    // 6. More Options Dropdown Toggle
-    const moreBtn = document.getElementById('more-btn');
-    const moreMenu = document.getElementById('more-menu');
-    if (moreBtn && moreMenu) {
-        addSingleEventListener(moreBtn, 'click', (e) => {
+   // 6. More Options Dropdown Toggle (Enhanced Selectors & Event Delegation)
+    const moreBtnSelectors = '#more-btn, #moreOptionsBtn, #more-options-btn, [data-action="toggle-more-menu"]';
+    const moreMenuSelectors = '#more-menu, #moreOptionsMenu, #more-options-dropdown';
+
+    const moreBtns = document.querySelectorAll(moreBtnSelectors);
+    const moreMenu = document.querySelector(moreMenuSelectors);
+
+    moreBtns.forEach(btn => {
+        if (!btn) return;
+        addSingleEventListener(btn, 'click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            moreMenu.classList.toggle('hidden');
-        });
 
-        addSingleEventListener(document, 'click', (e) => {
-            if (!moreBtn.contains(e.target) && !moreMenu.contains(e.target)) {
-                moreMenu.classList.add('hidden');
+            const menu = document.querySelector(moreMenuSelectors);
+            if (menu) {
+                menu.classList.toggle('hidden');
+            } else {
+                console.warn("⚠️ More Options menu element not found in DOM.");
             }
         });
-    }
+    });
+
+    // Close menu when clicking anywhere outside
+    addSingleEventListener(document, 'click', (e) => {
+        const menu = document.querySelector(moreMenuSelectors);
+        if (!menu || menu.classList.contains('hidden')) return;
+
+        const isClickInsideBtn = Array.from(document.querySelectorAll(moreBtnSelectors)).some(b => b.contains(e.target));
+        const isClickInsideMenu = menu.contains(e.target);
+
+        if (!isClickInsideBtn && !isClickInsideMenu) {
+            menu.classList.add('hidden');
+        }
+    });
 
     // 7. Notification Dropdown Toggle
     const notifBtn = document.getElementById('notification-btn');
