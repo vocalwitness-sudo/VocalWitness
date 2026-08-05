@@ -126,7 +126,7 @@ export async function googleLogin(event) {
         return;
     }
 
-    const btn = event?.currentTarget || document.getElementById('googleSignInBtn');
+    const btn = event?.currentTarget || document.getElementById('googleAuthBtn') || document.getElementById('googleSignInBtn');
     if (btn) {
         btn.disabled = true;
         btn.classList.add('opacity-50', 'cursor-not-allowed');
@@ -363,14 +363,19 @@ export function hideAuthModal() {
     closeLoginModal();
 }
 
+// Helper to prevent duplicate listener accumulation without breaking existing bindings
+function addSingleEventListener(element, event, handler) {
+    if (!element || element.dataset[`bound_${event}`]) return;
+    element.addEventListener(event, handler);
+    element.dataset[`bound_${event}`] = "true";
+}
+
 // ====================== BIND HEADER EVENTS ======================
 export function bindHeaderEvents() {
     // 1. Desktop & Mobile Sign In Buttons
     const guestBtns = document.querySelectorAll('#guest-action-btn, #signin-btn-mobile, [data-action="open-auth-modal"]');
     guestBtns.forEach(btn => {
-        const freshBtn = btn.cloneNode(true);
-        btn.replaceWith(freshBtn);
-        freshBtn.addEventListener('click', (e) => {
+        addSingleEventListener(btn, 'click', (e) => {
             e.preventDefault();
             e.stopImmediatePropagation();
             showAuthModal();
@@ -378,26 +383,22 @@ export function bindHeaderEvents() {
     });
 
     // 2. Google Sign-In
-    const googleBtns = document.querySelectorAll('#googleAuthBtn, [data-action="google-login"]');
+    const googleBtns = document.querySelectorAll('#googleAuthBtn, #googleSignInBtn, [data-action="google-login"]');
     googleBtns.forEach(btn => {
-        const freshBtn = btn.cloneNode(true);
-        btn.replaceWith(freshBtn);
-        freshBtn.addEventListener('click', (e) => googleLogin(e));
+        addSingleEventListener(btn, 'click', (e) => googleLogin(e));
     });
 
     // 3. Email Authentication Forms
     const signInForm = document.getElementById('loginForm') || document.getElementById('authModalForm');
-    if (signInForm) signInForm.addEventListener('submit', (e) => handleEmailAuth(e));
+    if (signInForm) addSingleEventListener(signInForm, 'submit', (e) => handleEmailAuth(e));
 
     const signUpForm = document.getElementById('signUpForm');
-    if (signUpForm) signUpForm.addEventListener('submit', (e) => handleEmailSignUp(e));
+    if (signUpForm) addSingleEventListener(signUpForm, 'submit', (e) => handleEmailSignUp(e));
 
     // 4. Data Saver Toggle
     const dataSaverBtns = document.querySelectorAll('#data-saver-btn, #data-saver-btn-mobile, [data-action="toggle-data-saver"]');
     dataSaverBtns.forEach(btn => {
-        const freshBtn = btn.cloneNode(true);
-        btn.replaceWith(freshBtn);
-        freshBtn.addEventListener('click', (e) => {
+        addSingleEventListener(btn, 'click', (e) => {
             e.preventDefault();
             e.stopImmediatePropagation();
             const current = localStorage.getItem('vw_data_saver') === 'true';
@@ -421,9 +422,7 @@ export function bindHeaderEvents() {
     const mobileMenuBtn = document.getElementById('mobile-menu-btn');
     const mobileDropdown = document.getElementById('mobile-menu');
     if (mobileMenuBtn && mobileDropdown) {
-        const freshMobileBtn = mobileMenuBtn.cloneNode(true);
-        mobileMenuBtn.replaceWith(freshMobileBtn);
-        freshMobileBtn.addEventListener('click', (e) => {
+        addSingleEventListener(mobileMenuBtn, 'click', (e) => {
             e.preventDefault();
             e.stopImmediatePropagation();
             mobileDropdown.classList.toggle('hidden');
@@ -434,16 +433,14 @@ export function bindHeaderEvents() {
     const moreBtn = document.getElementById('more-btn');
     const moreMenu = document.getElementById('more-menu');
     if (moreBtn && moreMenu) {
-        const freshMoreBtn = moreBtn.cloneNode(true);
-        moreBtn.replaceWith(freshMoreBtn);
-        freshMoreBtn.addEventListener('click', (e) => {
+        addSingleEventListener(moreBtn, 'click', (e) => {
             e.preventDefault();
             e.stopPropagation();
             moreMenu.classList.toggle('hidden');
         });
 
-        document.addEventListener('click', (e) => {
-            if (!freshMoreBtn.contains(e.target) && !moreMenu.contains(e.target)) {
+        addSingleEventListener(document, 'click', (e) => {
+            if (!moreBtn.contains(e.target) && !moreMenu.contains(e.target)) {
                 moreMenu.classList.add('hidden');
             }
         });
@@ -453,17 +450,14 @@ export function bindHeaderEvents() {
     const notifBtn = document.getElementById('notification-btn');
     const notifMenu = document.getElementById('notification-menu');
     if (notifBtn && notifMenu) {
-        const freshNotifBtn = notifBtn.cloneNode(true);
-        notifBtn.replaceWith(freshNotifBtn);
-
-        freshNotifBtn.addEventListener('click', (e) => {
+        addSingleEventListener(notifBtn, 'click', (e) => {
             e.preventDefault();
             e.stopPropagation();
             notifMenu.classList.toggle('hidden');
         });
 
-        document.addEventListener('click', (e) => {
-            if (!freshNotifBtn.contains(e.target) && !notifMenu.contains(e.target)) {
+        addSingleEventListener(document, 'click', (e) => {
+            if (!notifBtn.contains(e.target) && !notifMenu.contains(e.target)) {
                 notifMenu.classList.add('hidden');
             }
         });
@@ -504,7 +498,7 @@ export function initAuth() {
     });
 
     // Global delegate listener for logout triggers
-    document.addEventListener('click', (e) => {
+    addSingleEventListener(document, 'click', (e) => {
         const logoutTarget = e.target.closest('#logoutBtn, .btn-logout, [data-action="logout"]');
         if (logoutTarget) {
             e.preventDefault();
