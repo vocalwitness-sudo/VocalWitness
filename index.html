@@ -60,17 +60,14 @@
 <body class="min-h-screen pb-28 md:pb-12 bg-[#0a0f1c] text-white antialiased">
     <div class="app-container py-6 px-4 max-w-6xl mx-auto">
 
-
         <!-- MAIN TOP HEADER -->
-        <!-- Sticky glass header with logo, support button, and desktop controls -->
-    
         <header class="flex items-center justify-between mb-8 sticky top-4 z-50 glass rounded-3xl p-4 shadow-xl">
             <!-- App Logo & Branding Title -->
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-2xl shadow-md font-bold text-black" style="background-color: #10b981; color: #000000;">VW</div>
+                <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-2xl shadow-md font-bold" style="background-color: #10b981; color: #000000;">VW</div>
                 <div>
                     <h1 class="text-xl sm:text-2xl font-bold tracking-tight" data-i18n="appTitle">VocalWitness</h1>
-                    <p class="text-xs sm:text-sm text-emerald-400 tracking-widest" style="color: #34d399;" data-i18n="appSubtitle">Truth • Evidence • Public Square</p>
+                    <p class="text-xs sm:text-sm tracking-widest" style="color: #34d399;" data-i18n="appSubtitle">Truth • Evidence • Public Square</p>
                 </div>
             </div>
 
@@ -82,31 +79,31 @@
                 </button>
 
                 <!-- Support Button -->
-                <button id="support-btn" data-action="open-support-modal" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-black font-medium rounded-2xl transition whitespace-nowrap text-sm shadow-sm" style="background-color: #10b981; color: #000000;" data-i18n="supportBtn">
+                <button id="support-btn" data-action="open-support-modal" class="px-5 py-2.5 font-medium rounded-2xl transition whitespace-nowrap text-sm shadow-sm" style="background-color: #10b981; color: #000000;" data-i18n="supportBtn">
                     Support The Square
                 </button>
 
                 <!-- Desktop Controls (hidden on mobile to avoid overflow) -->
                 <div class="hidden md:flex items-center gap-2">
                     <!-- Language Switcher -->
-                    <select id="languageSelector" aria-label="Select Language" class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500" style="background-color: #18181b; color: #ffffff; border-color: #3f3f46;">
+                    <select id="languageSelector" aria-label="Select Language" class="bg-zinc-900 border text-white rounded-2xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500" style="background-color: #18181b; color: #ffffff; border-color: #3f3f46;">
                         <option value="en">English</option>
                         <option value="es">Español</option>
                         <option value="fr">Français</option>
                     </select>
 
                     <!-- Data Saver Toggle -->
-                    <button id="data-saver-btn" data-action="toggle-data-saver" class="px-3 py-2.5 rounded-2xl hover:bg-zinc-800 transition text-xs font-medium flex items-center gap-1.5 border border-zinc-700 text-zinc-300" style="background-color: #18181b; border-color: #3f3f46; color: #d4d4d8;">
-                        ⚡ <span class="hidden lg:inline">Data Saver: <strong id="data-saver-status" class="text-emerald-400" style="color: #34d399;">Off</strong></span>
+                    <button id="data-saver-btn" data-action="toggle-data-saver" class="px-3 py-2.5 rounded-2xl hover:bg-zinc-800 transition text-xs font-medium flex items-center gap-1.5 border text-zinc-300" style="background-color: #18181b; border-color: #3f3f46;">
+                        ⚡ <span class="hidden lg:inline">Data Saver: <strong id="data-saver-status" style="color: #34d399;">Off</strong></span>
                     </button>
 
                     <!-- Privacy Link -->
-                    <a href="privacy.html" class="hidden lg:flex items-center text-emerald-400 hover:text-emerald-300 transition-colors text-sm font-medium px-3 py-2" style="color: #34d399;" data-i18n="privacyLink">
+                    <a href="privacy.html" class="hidden lg:flex items-center hover:text-emerald-300 transition-colors text-sm font-medium px-3 py-2" style="color: #34d399;" data-i18n="privacyLink">
                         Privacy First
                     </a>
 
                     <!-- Bookmarks / Saved Items -->
-                    <button id="bookmarks-nav-btn" data-action="open-bookmarks" class="p-2.5 rounded-2xl hover:bg-zinc-800 text-zinc-300 hover:text-white transition-all flex items-center justify-center border border-zinc-700/50" style="background-color: #18181b; border-color: #3f3f46;" aria-label="Saved Items" title="Saved Items">
+                    <button id="bookmarks-nav-btn" data-action="open-bookmarks" class="p-2.5 rounded-2xl hover:bg-zinc-800 text-zinc-300 hover:text-white transition-all flex items-center justify-center border" style="background-color: #18181b; border-color: #3f3f46;" aria-label="Saved Items" title="Saved Items">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
                         </svg>
@@ -156,52 +153,46 @@
             </div>
         </header>
 
-        <!-- ================================================================= -->
         <!-- BREAKING NEWS TICKER -->
-        <!-- ================================================================= -->
-        <div class="ticker-wrap border-b border-emerald-500/20 bg-slate-900/90 py-2 text-xs text-slate-300" style="background-color: #0f172a; border-color: rgba(16, 185, 129, 0.2);">
-            <div class="ticker-badge font-bold uppercase text-emerald-400" style="color: #34d399;">Flash Feed</div>
+        <div class="ticker-wrap border-b py-2 text-xs text-slate-300" style="background-color: #0f172a; border-color: rgba(16, 185, 129, 0.2);">
+            <div class="ticker-badge font-bold uppercase" style="color: #34d399;">Flash Feed</div>
             <div class="ticker-move" id="ticker-content">
                 <span>Loading breaking feed...</span>
             </div>
         </div>
 
-        <!-- ================================================================= -->
-        <!-- MOBILE MENU DROPDOWN (triggered by ☰ button) -->
-        <!-- ================================================================= -->
+        <!-- MOBILE MENU DROPDOWN -->
         <div id="mobile-menu" class="hidden md:hidden fixed top-[92px] left-4 right-4 glass rounded-3xl p-5 shadow-2xl z-[100] border border-zinc-700" style="background-color: #111827; border-color: #3f3f46;">
             <div class="flex flex-col gap-4">
-                <select id="languageSelector-mobile" aria-label="Select Language"
+                <select id="languageSelector-mobile" aria-label="Select Language" 
                         class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-4 py-3 text-base" style="background-color: #18181b; border-color: #3f3f46; color: #ffffff;">
                     <option value="en">English</option>
                     <option value="es">Español</option>
                     <option value="fr">Français</option>
                 </select>
 
-                <button id="data-saver-btn-mobile" onclick="toggleDataSaver()"
+                <button id="data-saver-btn-mobile" onclick="toggleDataSaver()" 
                         class="w-full text-left px-4 py-3 rounded-2xl hover:bg-zinc-800 transition flex items-center gap-3 text-base">
-                    ⚡ Data Saver: <strong id="data-saver-status-mobile" class="text-emerald-400" style="color: #34d399;">Off</strong>
+                    ⚡ Data Saver: <strong id="data-saver-status-mobile" style="color: #34d399;">Off</strong>
                 </button>
 
                 <a href="privacy.html" class="px-4 py-3 rounded-2xl hover:bg-zinc-800 transition block text-emerald-400" style="color: #34d399;" data-i18n="privacyLink">
                     Privacy First
                 </a>
 
-                <button id="signin-btn-mobile" onclick="showAuthModal()"
+                <button id="signin-btn-mobile" onclick="showAuthModal()" 
                         class="w-full py-3 bg-white text-black font-semibold rounded-2xl" style="background-color: #ffffff; color: #000000;" data-i18n="joinBtn">
                     Sign in
                 </button>
 
-                <button id="profile-btn-mobile" onclick="openProfile()"
+                <button id="profile-btn-mobile" onclick="openProfile()" 
                         class="w-full py-3 border border-zinc-700 hover:bg-zinc-800 rounded-2xl hidden" style="border-color: #3f3f46;" data-i18n="profileBtn">
                     Profile
                 </button>
             </div>
         </div>
 
-        <!-- ================================================================= -->
         <!-- PUBLIC SQUARE SEARCH BAR -->
-        <!-- ================================================================= -->
         <div class="relative w-full max-w-lg mx-auto my-6">
             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-400 z-10" style="color: #a1a1aa;">
                 🔍
@@ -225,9 +216,7 @@
             </button>
         </div>
 
-        <!-- ================================================================= -->
-        <!-- MAIN DESKTOP TAB NAVIGATION + MORE OPTIONS -->
-        <!-- ================================================================= -->
+        <!-- MAIN DESKTOP TAB NAVIGATION -->
         <div class="relative z-40 mb-8 w-full flex items-center gap-2">
             <!-- Scrollable Tab Bar -->
             <nav class="flex items-center gap-2 pb-2 overflow-x-auto no-scrollbar flex-1" id="main-nav">
@@ -257,7 +246,7 @@
                 </button>
             </nav>
 
-            <!-- More Options Dropdown (kept outside scroll area) -->
+            <!-- More Options Dropdown -->
             <div class="dropdown-container relative shrink-0">
                 <button id="more-btn" type="button" class="px-6 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-md" data-i18n="moreOptionsBtn">
                     More Options
@@ -277,13 +266,8 @@
 
     </div> <!-- End .app-container -->
 
-    <!-- ================================================================= -->
     <!-- MOBILE BOTTOM NAVIGATION BAR -->
-    <!-- Only visible on phone-sized screens (md:hidden). -->
-    <!-- Provides quick thumb access to the most important sections. -->
-    <!-- ================================================================= -->
     <nav id="mobile-bottom-nav" class="md:hidden fixed bottom-0 left-0 right-0 z-[100] bg-zinc-950/95 backdrop-blur-xl border-t border-emerald-500/20 px-2 py-1.5 flex justify-around items-center shadow-2xl">
-
         <!-- Public Square -->
         <button data-tab="square" class="mobile-nav-btn active flex flex-col items-center justify-center p-2 text-emerald-400 rounded-xl transition">
             <svg class="w-6 h-6 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
