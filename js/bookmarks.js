@@ -13,11 +13,13 @@ import {
     getDocs, 
     query, 
     orderBy,
-    onSnapshot 
+    onSnapshot,
+    serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // In-memory cache for ultra-fast checks across feed renders
 const bookmarkCache = new Set();
+let bookmarkUnsubscribeHandler = null;
 
 /**
  * Toggles a bookmark for a post/testimony/item.
@@ -51,7 +53,7 @@ export async function toggleBookmark(itemId, itemMetaData = {}) {
             itemType: itemMetaData.itemType || itemMetaData.type || 'post', // 'testimony' (Witness Voice) or 'post' (Citizen Talk)
             title: itemMetaData.title || 'Saved Item',
             authorId: itemMetaData.authorId || '',
-            savedAt: new Date().toISOString()
+            savedAt: serverTimestamp()
         };
 
         await setDoc(bookmarkRef, payload);
@@ -145,4 +147,33 @@ export function subscribeToBookmarks(callback) {
     }, (err) => {
         console.error("[Bookmarks] Subscription error:", err);
     });
+}
+
+/**
+ * Initializer function called on app boot up.
+ * Pre-warms the cache and sets up real-time listener if a user is logged in.
+ */
+export function initBookmarks() {
+    const user = auth.currentUser;
+    if (!user) {
+        bookmarkCache.clear();
+        if (bookmarkUnsubscribeHandler) {
+            bookmarkUnsubscribeHandler();
+            bookmarkUnsubscribeHandler = null;
+        }
+        return;
+    }
+
+    // Subscribe to populate local cache in real time
+    if (!bookmarkUnsubscribeHandler) {
+        bookmarkUnsubscribeHandler = subscribeToBookmarks((items) => {
+            console.log(`[Bookmarks] Cache pre-warmed with ${items.length} items.`);
+        });
+    }
+}
+
+// Global window assignment to ensure cross-module compatibility
+if (typeof window !== 'undefined') {
+    window.initBookmarks = initBookmarks;
+    window.toggleBookmark = toggleBookmark;
 }
