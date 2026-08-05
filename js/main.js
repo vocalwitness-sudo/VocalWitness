@@ -11,6 +11,7 @@ import { CitizenTalkEngine } from './vocalWitnessEngine.js';
 import { initProfile } from './profile.js';
 import { loadDynamicNavigation } from './navigation.js';
 import { showToast } from './utils.js';
+import { initBookmarksView } from './bookmarksView.js';
 import { loadWeeklyLeaderboard, refreshTierAndUI } from './tier.js';
 import './composer.js';
 import {
@@ -379,6 +380,23 @@ function setupEventListeners() {
             supportModal.classList.add('flex');
         }
     });
+
+    document.addEventListener('DOMContentLoaded', () => {
+    const bookmarksBtn = document.getElementById('bookmarks-nav-btn');
+
+    if (bookmarksBtn) {
+        bookmarksBtn.addEventListener('click', () => {
+            // Hide all other views
+            document.querySelectorAll('.tab-view').forEach(view => view.classList.add('hidden'));
+
+            // Deactivate other nav tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+
+            // Initialize and show Bookmarks view
+            initBookmarksView();
+        });
+    }
+});
 
     // Media Controls
     document.getElementById('btn-photo')?.addEventListener('click', (e) => {
