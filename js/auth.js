@@ -265,7 +265,9 @@ export async function handleEmailSignUp(event) {
 export async function logout() {
     try {
         clearProfileCache();
-        initNotifications(null);
+        if (typeof initNotifications === 'function') {
+            initNotifications(null);
+        }
         await signOut(auth);
         updateAppState({ isAuthenticated: false, currentUser: null });
         showToast("Signed out successfully", "success");
@@ -363,11 +365,16 @@ export function hideAuthModal() {
     closeLoginModal();
 }
 
-// Helper to prevent duplicate listener accumulation without breaking existing bindings
+/**
+ * Safely attach event listeners without throwing when element is null or dataset is missing.
+ */
 function addSingleEventListener(element, event, handler) {
-    if (!element || element.dataset[`bound_${event}`]) return;
+    if (!element || !element.dataset) return;
+    const key = `bound_${event}`;
+    if (element.dataset[key]) return;
+
     element.addEventListener(event, handler);
-    element.dataset[`bound_${event}`] = "true";
+    element.dataset[key] = "true";
 }
 
 // ====================== BIND HEADER EVENTS ======================
@@ -480,13 +487,17 @@ export function initAuth() {
             closeCreateAccountModal();
 
             // Start real-time notification listener ONLY when auth token is confirmed
-            initNotifications(user.uid);
+            if (typeof initNotifications === 'function') {
+                initNotifications(user.uid);
+            }
         } else {
             clearProfileCache();
             updateAppState({ isAuthenticated: false, currentUser: null });
 
             // Clear notification state & detach listener on sign-out or unverified email state
-            initNotifications(null);
+            if (typeof initNotifications === 'function') {
+                initNotifications(null);
+            }
         }
 
         window.dispatchEvent(
