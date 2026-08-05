@@ -8,7 +8,7 @@ import {
     sendEmailVerification
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 
-import { auth, provider, db } from './firebase-config.js';
+import { auth, provider, db } from './firebase-Config.js';
 import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { showToast } from './utils.js';
 import { updateAppState } from './app-state.js';
