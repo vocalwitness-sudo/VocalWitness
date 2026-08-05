@@ -4,7 +4,7 @@ import { getAuth, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/
 import { initializeFirestore } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { getStorage } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
 
-const firebaseConfig = {
+const firebase-config = {
   apiKey: "AIzaSyATxYekXgjdLP2SfR42FG8rEdajq_pIEb0",
   authDomain: "vocalwitness-3affa.firebaseapp.com",
   projectId: "vocalwitness-3affa",
