@@ -11,8 +11,7 @@ import { CitizenTalkEngine } from './vocalWitnessEngine.js';
 import { initProfile } from './profile.js';
 import { loadDynamicNavigation } from './navigation.js';
 import { showToast } from './utils.js';
-// BEFORE
-import { initBookmarks } from './bookmarks.js';
+import { initBookmarks, initBookmarksView } from './bookmarks.js';
 import { loadWeeklyLeaderboard, refreshTierAndUI } from './tier.js';
 import './composer.js';
 import {
