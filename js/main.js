@@ -1,4 +1,4 @@
-// js/main.js - Cleaned Tab Switching, Core Handlers & Entry Setup
+// js/main.js - Core Handlers, Tab Switching & Application Entry Setup
 
 // 1. Static Module Imports
 import { state, updateAppState, isUserAuthenticated } from './app-state.js';
