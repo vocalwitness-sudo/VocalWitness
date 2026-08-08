@@ -2,7 +2,7 @@
 
 // 1. Static Module Imports
 import { state, updateAppState, isUserAuthenticated } from './app-state.js';
-import { initAuth, requireAuth, updateUIForAuthState } from "./auth.js";
+import { initAuth, requireAuth, updateUIForAuthState, bindHeaderEvents } from "./auth.js";
 import { initFeed } from './feed.js';
 import { db, auth, storage } from './firebase-config.js';
 import { initLanguage } from './i18n.js';
@@ -351,11 +351,8 @@ function setupEventListeners() {
         });
     });
 
-    // Auth Buttons
-    document.getElementById('guest-action-btn')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        window.showAuthModal?.();
-    });
+    // Auth & Header Bindings
+    bindHeaderEvents();
 
     document.getElementById('profile-btn')?.addEventListener('click', (e) => {
         e.preventDefault();
@@ -381,7 +378,7 @@ function setupEventListeners() {
         bookmarksBtn.addEventListener('click', () => {
             document.querySelectorAll('.tab-view').forEach(view => view.classList.add('hidden'));
             document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
-            initBookmarksView();
+            initBookmarksView?.();
         });
     }
 
