@@ -11,6 +11,7 @@ import {
   serverTimestamp 
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { db, auth } from './firebase-config.js';
+import { showToast } from './utils.js';
 
 export const TIERS = {
   CITIZEN: 'citizen',
@@ -79,7 +80,18 @@ export const ROLES = {
 // ====================== CACHING MECHANISM ======================
 let cachedProfile = null;
 let cacheTimestamp = 0;
+let fetchPromise = null;
 const CACHE_TTL = 30000; // 30 Seconds cache
+
+function escapeHTML(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
 
 export async function getUserProfile(forceRefresh = false) {
   if (!auth.currentUser) {
@@ -92,21 +104,32 @@ export async function getUserProfile(forceRefresh = false) {
     return cachedProfile;
   }
 
-  try {
-    const userRef = doc(db, "users", auth.currentUser.uid);
-    const snap = await getDoc(userRef);
-    cachedProfile = snap.exists() ? snap.data() : {};
-    cacheTimestamp = now;
-    return cachedProfile;
-  } catch (e) {
-    console.warn("User profile fetch failed, using fallback/cache:", e);
-    return cachedProfile || {};
+  if (fetchPromise && !forceRefresh) {
+    return await fetchPromise;
   }
+
+  fetchPromise = (async () => {
+    try {
+      const userRef = doc(db, "users", auth.currentUser.uid);
+      const snap = await getDoc(userRef);
+      cachedProfile = snap.exists() ? snap.data() : {};
+      cacheTimestamp = Date.now();
+      return cachedProfile;
+    } catch (e) {
+      console.warn("User profile fetch failed, using fallback/cache:", e);
+      return cachedProfile || {};
+    } finally {
+      fetchPromise = null;
+    }
+  })();
+
+  return await fetchPromise;
 }
 
 export function clearProfileCache() {
   cachedProfile = null;
   cacheTimestamp = 0;
+  fetchPromise = null;
 }
 
 /**
@@ -147,7 +170,7 @@ export async function getCurrentWitnessLevel() {
 export async function canAdvanceTier(uid) {
   if (!uid) return { canAdvance: false, reason: "Not authenticated" };
   const data = await getUserProfile();
-  
+
   if (!data?.isPhoneVerified) {
     return { canAdvance: false, reason: "Phone verification required first" };
   }
@@ -202,9 +225,7 @@ export async function canAccessFeature(feature) {
     forensic_shield: [TIERS.CITIZEN_CIRCLE, TIERS.WITNESS_CIRCLE],
     create_group: [TIERS.CITIZEN_CIRCLE, TIERS.WITNESS_CIRCLE],
     escalate_post: [TIERS.WITNESS_CIRCLE],
-    review_queue: [TIERS.WITNESS_CIRCLE],
-    dao_proposal: [TIERS.WITNESS_CIRCLE],
-    steward_apartment: [TIERS.WITNESS_CIRCLE]
+    dao_proposal: [TIERS.WITNESS_CIRCLE]
   };
 
   const allowedTiers = permissions[feature];
@@ -257,7 +278,7 @@ export function refreshTierAndUI() {
   clearProfileCache();
   applyTierTheme();
   updateTierBadge();
-  loadWeeklyLeaderboard(); // Automatically populates leaderboard
+  loadWeeklyLeaderboard();
   console.log("✅ Tier system & Governance UI refreshed");
 }
 
@@ -284,12 +305,13 @@ export async function loadWeeklyLeaderboard() {
     querySnapshot.forEach((docSnap) => {
       const user = docSnap.data();
       const badgeColor = rank === 1 ? 'text-amber-400' : 'text-emerald-400';
-      
+      const name = escapeHTML(user.displayName || 'Anonymous Witness');
+
       html += `
         <div class="flex items-center justify-between py-2 border-b border-slate-800 text-sm">
           <div class="flex items-center gap-2">
             <span class="font-bold ${badgeColor}">#${rank}</span>
-            <span class="text-slate-200 font-medium">${user.displayName || 'Anonymous Witness'}</span>
+            <span class="text-slate-200 font-medium">${name}</span>
           </div>
           <span class="text-xs bg-emerald-950 text-emerald-400 px-2 py-0.5 rounded border border-emerald-800 font-semibold">
             ${user.weeklyPoints || 0} pts
@@ -312,7 +334,7 @@ export async function recordTestimonyContribution() {
   if (!auth.currentUser) return;
 
   try {
-    const data = await getUserProfile(true); // Force refresh profile
+    const data = await getUserProfile(true);
     const currentRep = data?.reputation || 0;
     const currentWeeklyPoints = data?.weeklyPoints || 0;
 
@@ -324,35 +346,32 @@ export async function recordTestimonyContribution() {
     }, { merge: true });
 
     refreshTierAndUI();
-    loadWeeklyLeaderboard();
     console.log("✅ +15 Reputation and Weekly Points recorded.");
   } catch (e) {
     console.warn("Reputation update failed:", e);
   }
 }
 
-// Add to js/tier.js
-
 /**
  * Gate restricted actions and automatically prompt verification if required
  */
 export async function requireCitizenCirclePermission(actionCallback) {
-    const userTier = await getCurrentUserTier();
-    
-    if (userTier === TIERS.CITIZEN) {
-        showToast("Phone verification required to unlock this feature.", "info");
-        
-        // Open the phone verification modal dynamically
-        const modal = document.getElementById('phoneVerificationModal') || document.getElementById('phone-upgrade-modal');
-        if (modal) {
-            modal.classList.remove('hidden');
-        }
-        return false;
+  const userTier = await getCurrentUserTier();
+
+  if (userTier === TIERS.CITIZEN) {
+    if (typeof showToast === 'function') {
+      showToast("Phone verification required to unlock this feature.", "info");
     }
 
-    // Permission granted - run action
-    if (typeof actionCallback === 'function') {
-        actionCallback();
+    const modal = document.getElementById('phoneVerificationModal') || document.getElementById('phone-upgrade-modal');
+    if (modal) {
+      modal.classList.remove('hidden');
     }
-    return true;
+    return false;
+  }
+
+  if (typeof actionCallback === 'function') {
+    actionCallback();
+  }
+  return true;
 }
