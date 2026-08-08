@@ -1,4 +1,4 @@
-// js/feed.js - Polished Public Square Feed with Search, Filtering & Interactivity
+// js/feed.js - Public Square Feed with Search, Filtering & Dynamic Interactivity
 import { 
     collection, 
     query, 
@@ -9,8 +9,6 @@ import {
     increment, 
     addDoc, 
     getDocs, 
-    orderBy, 
-    where,
     serverTimestamp 
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { db, app } from './firebase-config.js';
@@ -21,7 +19,7 @@ import { getAuth } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth
 import { handleReaction } from './reactions.js';
 
 let activeFeedListener = null;
-let allPostsCache = []; // Local cache for instant search and filtering
+let allPostsCache = [];
 let currentChannel = 'citizen-talk';
 
 function escapeHTML(str) {
@@ -37,7 +35,7 @@ function escapeHTML(str) {
 /**
  * Initializes the feed listener
  * @param {Firestore} dbInstance 
- * @param {string} channelType - e.g., 'citizen-talk' or 'witness-voice'
+ * @param {string} channelType - 'citizen-talk' or 'witness-voice'
  */
 export function initFeed(dbInstance = db, channelType = 'citizen-talk') {
     currentChannel = channelType;
@@ -47,28 +45,24 @@ export function initFeed(dbInstance = db, channelType = 'citizen-talk') {
         return;
     }
 
-    // Clean up active snapshot listener to avoid leaks
     if (activeFeedListener) {
         activeFeedListener();
         activeFeedListener = null;
     }
 
-    // Ensure controls are nested directly inside or clean up stale instances
     ensureSearchAndFilterUI(feedContainer);
 
     feedContainer.innerHTML = `
         <div class="text-center py-12" id="feed-loading">
             <div class="animate-pulse text-zinc-400">Loading testimonies...</div>
         </div>`;
-    
-   // Delegated event listener setup (attached once per container instance)
+
     if (!feedContainer.dataset.listenerAttached) {
         feedContainer.dataset.listenerAttached = "true";
         feedContainer.addEventListener('click', async (e) => {
             const btn = e.target.closest('button[data-action]');
             if (!btn) return;
-            
-            // PREVENT BUTTON STIFFNESS / DOUBLE-CLICK LOCKOUT
+
             if (btn.disabled) return;
             btn.disabled = true;
             btn.classList.add('opacity-50', 'cursor-not-allowed');
@@ -109,19 +103,17 @@ export function initFeed(dbInstance = db, channelType = 'citizen-talk') {
             } catch (err) {
                 console.error(`Action ${action} failed:`, err);
             } finally {
-                // ALWAYS RELEASE BUTTON EVEN IF BACKEND FAILS
                 btn.disabled = false;
                 btn.classList.remove('opacity-50', 'cursor-not-allowed');
             }
         });
     }
 
-    // Filter by channel type if specified in document schema, or fallback to all
     const q = query(
         collection(dbInstance, "testimonies"),
         limit(50)
     );
-    
+
     activeFeedListener = onSnapshot(q, (snapshot) => {
         allPostsCache = [];
 
@@ -132,13 +124,13 @@ export function initFeed(dbInstance = db, channelType = 'citizen-talk') {
 
         snapshot.forEach((docSnap) => {
             const data = docSnap.data();
-            // Filter by channel if post specifies a channel property
-            if (!data.channel || data.channel === currentChannel) {
+            const postVisibility = data.feedVisibility || data.channel;
+
+            if (!postVisibility || postVisibility === currentChannel) {
                 allPostsCache.push({ id: docSnap.id, ...data });
             }
         });
 
-        // Sort: Pinned posts first, then newest timestamp
         allPostsCache.sort((a, b) => {
             if (a.isPinned && !b.isPinned) return -1;
             if (!a.isPinned && b.isPinned) return 1;
@@ -155,11 +147,10 @@ export function initFeed(dbInstance = db, channelType = 'citizen-talk') {
     });
 }
 
-// ==================== SEARCH & FILTER UI GENERATOR ====================
 function ensureSearchAndFilterUI(container) {
     let existingWrapper = document.getElementById('feed-controls-wrapper');
     if (existingWrapper) {
-        existingWrapper.remove(); // Remove existing wrapper to prevent stale elements on tab switch
+        existingWrapper.remove();
     }
 
     const wrapper = document.createElement('div');
@@ -250,11 +241,11 @@ function renderSinglePostDOM(id, data, container) {
         : '';
 
     let trustBadgesHTML = '';
-    
+
     if (data.authorTier && data.authorTier !== 'unverified') {
-        trustBadgesHTML += `<span class="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] px-2 py-0.5 rounded flex items-center gap-1" title="Phone Verified Witness">📱 Verified</span>`;
+        trustBadgesHTML += `<span class="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] px-2 py-0.5 rounded flex items-center gap-1" title="Verified Witness">📱 Verified</span>`;
     }
-    
+
     const activeHash = data.forensicHash || data.imageHash || data.audioHash;
     if (activeHash) {
         trustBadgesHTML += `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] px-2 py-0.5 rounded flex items-center gap-1" title="Hash: ${escapeHTML(activeHash)}">🛡️ ZK Sealed</span>`;
@@ -287,7 +278,7 @@ function renderSinglePostDOM(id, data, container) {
     let formattedDate = "Just now";
     if (data.createdAt?.toDate) formattedDate = data.createdAt.toDate().toLocaleString();
     else if (data.createdAt) formattedDate = new Date(data.createdAt).toLocaleString();
-    
+
     const authorDisplayName = escapeHTML(data.author || (data.authorId ? `Witness (${data.authorId.substring(0, 6)}...)` : 'Anonymous Witness'));
 
     postEl.innerHTML = `
@@ -335,7 +326,6 @@ function renderSinglePostDOM(id, data, container) {
     container.appendChild(postEl);
 }
 
-// ==================== UPVOTE / LIKE BACKEND LOGIC ====================
 async function handleUpvote(postId) {
     const auth = getAuth(app);
     if (!auth.currentUser) {
@@ -355,7 +345,6 @@ async function handleUpvote(postId) {
     }
 }
 
-// ==================== PIN POST LOGIC (STEWARDS ONLY) ====================
 async function handlePinPost(postId) {
     const authorized = await hasStewardAccess();
     if (!authorized) {
@@ -378,10 +367,9 @@ async function handlePinPost(postId) {
     }
 }
 
-// ==================== COMMENTS MODAL & BACKEND LOGIC ====================
 async function openCommentModal(postId) {
     const auth = getAuth(app);
-    
+
     let modal = document.getElementById('commentModal');
     if (!modal) {
         modal = document.createElement('div');
@@ -411,20 +399,18 @@ async function openCommentModal(postId) {
     modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
 
     const commentsContainer = document.getElementById('commentsListContainer');
-    
-    // Fetch comments gracefully without forcing strict unindexed ordering
+
     try {
         const commentsRef = collection(db, "testimonies", postId, "comments");
         const snapshot = await getDocs(commentsRef);
-        
+
         commentsContainer.innerHTML = '';
         if (snapshot.empty) {
             commentsContainer.innerHTML = `<div class="text-zinc-500 text-center py-8 text-sm">No comments yet. Be the first to add perspective.</div>`;
         } else {
             const commentsList = [];
             snapshot.forEach(docSnap => commentsList.push(docSnap.data()));
-            
-            // In-memory sort by date descending
+
             commentsList.sort((a, b) => {
                 const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : new Date(a.createdAt || 0).getTime();
                 const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : new Date(b.createdAt || 0).getTime();
@@ -485,6 +471,5 @@ async function openCommentModal(postId) {
 window.showPostMenu = (postId, authorId) => showToast("Post options available", "info");
 
 window.addEventListener('languageChanged', () => {
-    console.log("Language changed, refreshing feed UI...");
     initFeed(db, currentChannel);
 });
