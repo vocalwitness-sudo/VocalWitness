@@ -5,7 +5,8 @@ import {
     signOut,
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
-    sendEmailVerification
+    sendEmailVerification,
+    onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 
 import { auth, provider, db } from './firebase-config.js';
@@ -377,7 +378,7 @@ function addSingleEventListener(element, event, handler) {
     element.dataset[key] = "true";
 }
 
-// ====================== BIND HEADER EVENTS ======================
+// ====================== BIND HEADER & AUTH EVENTS ======================
 export function bindHeaderEvents() {
     // 1. Desktop & Mobile Sign In Buttons
     const guestBtns = document.querySelectorAll('#guest-action-btn, #signin-btn-mobile, [data-action="open-auth-modal"]');
@@ -392,175 +393,86 @@ export function bindHeaderEvents() {
     // 2. Google Sign-In
     const googleBtns = document.querySelectorAll('#googleAuthBtn, #googleSignInBtn, [data-action="google-login"]');
     googleBtns.forEach(btn => {
-        addSingleEventListener(btn, 'click', (e) => googleLogin(e));
-    });
-
-    // 3. Email Authentication Forms
-    const signInForm = document.getElementById('loginForm') || document.getElementById('authModalForm');
-    if (signInForm) addSingleEventListener(signInForm, 'submit', (e) => handleEmailAuth(e));
-
-    const signUpForm = document.getElementById('signUpForm');
-    if (signUpForm) addSingleEventListener(signUpForm, 'submit', (e) => handleEmailSignUp(e));
-
-    // 4. Data Saver Toggle
-    const dataSaverBtns = document.querySelectorAll('#data-saver-btn, #data-saver-btn-mobile, [data-action="toggle-data-saver"]');
-    dataSaverBtns.forEach(btn => {
         addSingleEventListener(btn, 'click', (e) => {
             e.preventDefault();
-            e.stopImmediatePropagation();
-            const current = localStorage.getItem('vw_data_saver') === 'true';
-            const nextState = !current;
-            localStorage.setItem('vw_data_saver', nextState ? 'true' : 'false');
-
-            document.querySelectorAll('#data-saver-status, #data-saver-status-mobile').forEach(label => {
-                label.textContent = nextState ? 'On' : 'Off';
-            });
-
-            showToast(`Data Saver mode is now ${nextState ? 'ON' : 'OFF'}`, 'info');
+            googleLogin(e);
         });
     });
 
-    const isDataSaverActive = localStorage.getItem('vw_data_saver') === 'true';
-    document.querySelectorAll('#data-saver-status, #data-saver-status-mobile').forEach(label => {
-        label.textContent = isDataSaverActive ? 'On' : 'Off';
-    });
-
-    // 5. Mobile Dropdown Toggle
-    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-    const mobileDropdown = document.getElementById('mobile-menu');
-    if (mobileMenuBtn && mobileDropdown) {
-        addSingleEventListener(mobileMenuBtn, 'click', (e) => {
+    // 3. Email Auth Forms
+    const signInForm = document.getElementById('signInForm') || document.getElementById('loginForm');
+    if (signInForm) {
+        addSingleEventListener(signInForm, 'submit', (e) => {
             e.preventDefault();
-            e.stopImmediatePropagation();
-            mobileDropdown.classList.toggle('hidden');
+            handleEmailAuth(e);
         });
     }
 
-   // 6. More Options Dropdown Toggle (Enhanced Selectors & Event Delegation)
-    const moreBtnSelectors = '#more-btn, #moreOptionsBtn, #more-options-btn, [data-action="toggle-more-menu"]';
-    const moreMenuSelectors = '#more-menu, #moreOptionsMenu, #more-options-dropdown';
+    const signUpForm = document.getElementById('signUpForm') || document.getElementById('createAccountForm');
+    if (signUpForm) {
+        addSingleEventListener(signUpForm, 'submit', (e) => {
+            e.preventDefault();
+            handleEmailSignUp(e);
+        });
+    }
 
-    const moreBtns = document.querySelectorAll(moreBtnSelectors);
-    const moreMenu = document.querySelector(moreMenuSelectors);
-
-    moreBtns.forEach(btn => {
-        if (!btn) return;
+    // 4. Modal Close Triggers
+    const closeBtns = document.querySelectorAll('[data-action="close-auth-modal"], .close-modal-btn');
+    closeBtns.forEach(btn => {
         addSingleEventListener(btn, 'click', (e) => {
             e.preventDefault();
-            e.stopPropagation();
-
-            const menu = document.querySelector(moreMenuSelectors);
-            if (menu) {
-                menu.classList.toggle('hidden');
-            } else {
-                console.warn("⚠️ More Options menu element not found in DOM.");
-            }
+            closeLoginModal();
         });
     });
 
-    // Close menu when clicking anywhere outside
-    addSingleEventListener(document, 'click', (e) => {
-        const menu = document.querySelector(moreMenuSelectors);
-        if (!menu || menu.classList.contains('hidden')) return;
-
-        const isClickInsideBtn = Array.from(document.querySelectorAll(moreBtnSelectors)).some(b => b.contains(e.target));
-        const isClickInsideMenu = menu.contains(e.target);
-
-        if (!isClickInsideBtn && !isClickInsideMenu) {
-            menu.classList.add('hidden');
-        }
-    });
-
-    // 7. Notification Dropdown Toggle
-    const notifBtn = document.getElementById('notification-btn');
-    const notifMenu = document.getElementById('notification-menu');
-    if (notifBtn && notifMenu) {
-        addSingleEventListener(notifBtn, 'click', (e) => {
+    // 5. Password Visibility Toggles
+    const toggleBtns = document.querySelectorAll('[data-action="toggle-password"]');
+    toggleBtns.forEach(btn => {
+        addSingleEventListener(btn, 'click', (e) => {
             e.preventDefault();
-            e.stopPropagation();
-            notifMenu.classList.toggle('hidden');
+            const targetId = btn.getAttribute('data-target');
+            if (targetId) togglePasswordVisibility(targetId, btn);
         });
+    });
 
-        addSingleEventListener(document, 'click', (e) => {
-            if (!notifBtn.contains(e.target) && !notifMenu.contains(e.target)) {
-                notifMenu.classList.add('hidden');
-            }
+    // 6. Logout Trigger
+    const logoutBtn = document.getElementById('logoutBtn') || document.getElementById('logout-btn');
+    if (logoutBtn) {
+        addSingleEventListener(logoutBtn, 'click', (e) => {
+            e.preventDefault();
+            logout();
         });
     }
 }
 
 // ====================== AUTH INITIALIZATION ======================
 export function initAuth() {
-    auth.onAuthStateChanged(async (user) => {
-        const isOAuthUser = user?.providerData?.some(
-            (p) => p.providerId === 'google.com' || p.providerId === GoogleAuthProvider.PROVIDER_ID
-        );
-        const isVerified = user && (isOAuthUser || user.emailVerified);
-
-        if (isVerified) {
-            await createOrUpdateUser(user);
-            updateAppState({ isAuthenticated: true, currentUser: user });
-            refreshTierUI();
-            closeLoginModal();
-            closeCreateAccountModal();
-
-            // Start real-time notification listener ONLY when auth token is confirmed
-            if (typeof initNotifications === 'function') {
-                initNotifications(user.uid);
+    return new Promise((resolve) => {
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                updateAppState({ isAuthenticated: true, currentUser: user });
+                await createOrUpdateUser(user);
+                refreshTierUI();
+                
+                if (typeof initNotifications === 'function') {
+                    initNotifications(user.uid);
+                }
+            } else {
+                updateAppState({ isAuthenticated: false, currentUser: null });
+                if (typeof initNotifications === 'function') {
+                    initNotifications(null);
+                }
             }
-        } else {
-            clearProfileCache();
-            updateAppState({ isAuthenticated: false, currentUser: null });
 
-            // Clear notification state & detach listener on sign-out or unverified email state
-            if (typeof initNotifications === 'function') {
-                initNotifications(null);
-            }
-        }
-
-        window.dispatchEvent(
-            new CustomEvent('auth-changed', {
-                detail: { user: isVerified ? user : null }
-            })
-        );
-        updateUIForAuthState(isVerified ? user : null);
+            updateUIForAuthState(user);
+            window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
+            resolve(user);
+        });
     });
-
-    // Global delegate listener for logout triggers
-    addSingleEventListener(document, 'click', (e) => {
-        const logoutTarget = e.target.closest('#logoutBtn, .btn-logout, [data-action="logout"]');
-        if (logoutTarget) {
-            e.preventDefault();
-            logout();
-        }
-    });
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', bindHeaderEvents);
-    } else {
-        bindHeaderEvents();
-    }
-
-    updateUIForAuthState();
-    console.log("🔐 Auth initialized (Header Bindings & Notifications Guarded)");
 }
 
-// Global Window Assignments
-Object.assign(window, {
-    showAuthModal,
-    hideAuthModal,
-    closeLoginModal,
-    closeCreateAccountModal,
-    bindHeaderEvents,
-    googleLogin,
-    handleEmailAuth,
-    handleEmailSignUp,
-    logout,
-    togglePasswordVisibility,
-    requireAuth,
-    updateUIForAuthState,
-    initAuth
-});
-
-// Auto-run initialization
-initAuth();
+// Export globals to window for inline onclick attributes if needed
+window.showAuthModal = showAuthModal;
+window.closeLoginModal = closeLoginModal;
+window.logout = logout;
+window.googleLogin = googleLogin;
