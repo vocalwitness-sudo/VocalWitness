@@ -16,6 +16,7 @@ import {
     onSnapshot,
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { showToast } from './utils.js';
 
 // In-memory cache for ultra-fast checks across feed renders
 const bookmarkCache = new Set();
@@ -150,6 +151,100 @@ export function subscribeToBookmarks(callback) {
 }
 
 /**
+ * Renders the Bookmarks view panel inside the main content container.
+ */
+export async function initBookmarksView() {
+    const container = document.getElementById('dynamicContainer') || document.getElementById('main-content');
+    if (!container) return;
+
+    if (!auth.currentUser) {
+        container.innerHTML = `
+            <div class="glass rounded-3xl p-12 text-center text-zinc-400 border border-zinc-800">
+                <div class="text-4xl mb-3">🔖</div>
+                <h3 class="text-xl font-semibold text-white mb-2">Saved Bookmarks</h3>
+                <p class="text-xs text-zinc-500">Please sign in to view your saved testimonies and posts.</p>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = `
+        <div class="space-y-6 glass rounded-3xl p-8 border border-zinc-800">
+            <div class="flex items-center justify-between pb-4 border-b border-zinc-800">
+                <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                    <span>🔖</span> Saved Bookmarks
+                </h2>
+                <span id="bookmark-count" class="text-xs bg-emerald-950 text-emerald-400 px-3 py-1 rounded-full border border-emerald-800 font-semibold">
+                    Loading...
+                </span>
+            </div>
+            <div id="bookmarks-list" class="space-y-4">
+                <div class="text-center py-12 text-zinc-500 animate-pulse">Loading saved items...</div>
+            </div>
+        </div>`;
+
+    const listEl = document.getElementById('bookmarks-list');
+    const countEl = document.getElementById('bookmark-count');
+
+    try {
+        const bookmarks = await getUserBookmarks();
+        if (countEl) countEl.textContent = `${bookmarks.length} Saved`;
+
+        if (bookmarks.length === 0) {
+            listEl.innerHTML = `
+                <div class="text-center py-12 text-zinc-500">
+                    <p class="text-base font-medium text-zinc-400">No saved items found.</p>
+                    <p class="text-xs text-zinc-600 mt-1">Bookmark posts in the feed to access them quickly here.</p>
+                </div>`;
+            return;
+        }
+
+        let html = '';
+        bookmarks.forEach(item => {
+            const savedDate = item.savedAt?.toDate ? item.savedAt.toDate().toLocaleDateString() : 'Recently';
+            html += `
+                <div class="p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800 flex items-center justify-between hover:border-zinc-700 transition">
+                    <div class="space-y-1">
+                        <span class="text-xs font-mono uppercase tracking-wider text-emerald-400">${item.itemType || 'Post'}</span>
+                        <h4 class="text-base font-semibold text-white">${escapeHtml(item.title || 'Saved Item')}</h4>
+                        <p class="text-xs text-zinc-500">Saved on ${savedDate}</p>
+                    </div>
+                    <button onclick="window.removeBookmarkItem('${item.id}')" class="px-3 py-1.5 bg-red-950/40 hover:bg-red-900/60 border border-red-800 text-red-300 text-xs rounded-xl transition">
+                        Remove
+                    </button>
+                </div>`;
+        });
+        listEl.innerHTML = html;
+
+    } catch (err) {
+        console.error("Error loading bookmarks view:", err);
+        listEl.innerHTML = `<div class="text-red-400 text-center py-8">Failed to load bookmarks. Please try again.</div>`;
+    }
+}
+
+/**
+ * Removes a bookmark directly from the bookmarks view.
+ */
+window.removeBookmarkItem = async (itemId) => {
+    try {
+        await toggleBookmark(itemId);
+        showToast("Bookmark removed", "info");
+        initBookmarksView();
+    } catch (err) {
+        showToast("Failed to remove bookmark", "error");
+    }
+};
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+/**
  * Initializer function called on app boot up.
  * Pre-warms the cache and sets up real-time listener if a user is logged in.
  */
@@ -175,5 +270,6 @@ export function initBookmarks() {
 // Global window assignment to ensure cross-module compatibility
 if (typeof window !== 'undefined') {
     window.initBookmarks = initBookmarks;
+    window.initBookmarksView = initBookmarksView;
     window.toggleBookmark = toggleBookmark;
 }
