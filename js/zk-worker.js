@@ -28,12 +28,12 @@ self.onmessage = async (event) => {
             throw new Error('SnarkJS library failed to initialize inside worker.');
         }
 
-        // Real Groth16 proof generation using SnarkJS
         self.postMessage({ type: 'STATUS_UPDATE', message: 'Generating Groth16 witness proof...' });
 
-        // Using relative path resolution to avoid origin root 404s
-        const wasmPath = '../circuits/witness.wasm';
-        const zkeyPath = '../circuits/witness_final.zkey';
+        // Build absolute origin URLs to avoid relative path resolution and SPA fallback issues
+        const baseUrl = self.location.origin;
+        const wasmPath = `${baseUrl}/circuits/witness.wasm`;
+        const zkeyPath = `${baseUrl}/circuits/witness_final.zkey`;
 
         const { proof, publicSignals } = await snarkjs.groth16.fullProve(
             proofPayload,
