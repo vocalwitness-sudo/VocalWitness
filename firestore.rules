@@ -27,16 +27,16 @@ service cloud.firestore {
     // Prevents self-escalation of roles/tiers on user profile updates
     function isNotModifyingPrivileges() {
       let affected = request.resource.data.diff(resource.data).affectedKeys();
-      return !affected.hasAny(['role', 'tier', 'isBanned', 'badges', 'admin', 'moderator', 'createdAt']);
+      return !affected.hasAny(['role', 'tier', 'isBanned', 'badges', 'admin', 'moderator', 'createdAt', 'zkVerified']);
     }
 
     // Prevents setting sensitive role/tier properties on document creation
     function doesNotContainPrivileges() {
       let keys = request.resource.data.keys();
-      return !keys.hasAny(['role', 'tier', 'isBanned', 'badges', 'admin', 'moderator']);
+      return !keys.hasAny(['role', 'tier', 'isBanned', 'badges', 'admin', 'moderator', 'zkVerified']);
     }
 
-    // Schema validator helper for subcollection creations
+    // Schema validator helper for notification creations
     function isValidNotification() {
       let keys = request.resource.data.keys();
       return keys.hasAll(['senderId', 'type', 'timestamp']) 
@@ -54,17 +54,25 @@ service cloud.firestore {
 
       // Subcollection: User Notifications
       match /notifications/{notificationId} {
-        allow get, list: if isOwner(userId);
-        allow update, delete: if isOwner(userId);
+        allow read, write: if isOwner(userId);
         
-        // Any logged-in user can notify another user with a validated payload
+        // Any logged-in user can send a notification to another user
         allow create: if isAuthenticated() && isValidNotification();
       }
 
-      // Subcollection: User Bookmarks (Citizen Talk & Witness Voice items)
+      // Subcollection: User Bookmarks
       match /bookmarks/{bookmarkId} {
         allow read, write: if isOwner(userId);
       }
+    }
+
+    // ==========================================
+    // VERIFICATION REQUESTS (DEVELOPER & PEER QUEUE)
+    // ==========================================
+    match /verification_requests/{requestId} {
+      allow read: if isAuthenticated() && (request.auth.uid == resource.data.applicantId || isModerator());
+      allow create: if isAuthenticated() && request.resource.data.applicantId == request.auth.uid;
+      allow update, delete: if isModerator();
     }
 
     // ==========================================
