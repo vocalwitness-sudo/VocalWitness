@@ -7,12 +7,7 @@ let unsubscribeNotifs = null;
 let authObserver = null;
 let currentSubscribedUid = null;
 
-/**
- * Initializes notification tracking for the target user.
- * @param {string|null} targetUid 
- */
 export function initNotifications(targetUid) {
-    // Standard cleanup before establishing new listeners
     stopNotificationListener();
 
     if (!targetUid) {
@@ -53,7 +48,7 @@ function attachNotificationListener(uid) {
         handleSnapshot(snapshot);
     }, (error) => {
         if (error.code === 'permission-denied') {
-            console.warn("🔔 Notification listener permission-denied. Stopping listener.");
+            console.warn(`🔔 Permission denied for path: users/${uid}/notifications`);
             stopNotificationListener();
             return;
         }
@@ -83,7 +78,6 @@ function fallbackUnorderedListener(uid) {
             notifications.push({ id: docSnap.id, ...data });
         });
 
-        // Client-side timestamp sorting fallback
         notifications.sort((a, b) => {
             const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : new Date(a.createdAt || 0).getTime();
             const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : new Date(b.createdAt || 0).getTime();
@@ -94,7 +88,7 @@ function fallbackUnorderedListener(uid) {
         renderNotificationList(notifications);
     }, (err) => {
         if (err.code === 'permission-denied') {
-            console.warn("🔔 Fallback notification listener permission-denied.");
+            console.warn(`🔔 Fallback listener permission-denied for users/${uid}/notifications`);
             stopNotificationListener();
         } else {
             console.error("🔔 Fallback Notification Listener Error:", err);
