@@ -22,7 +22,7 @@ body {
 
 /* Glass Effect */
 .glass {
-  background-color: #111827; /* solid fallback */
+  background-color: #111827;
   background: rgba(17, 24, 39, 0.92);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
@@ -44,7 +44,7 @@ body {
 .nav-tab {
   min-width: 150px !important;
   max-width: 200px;
-  height: 52px !important; /* Forces normal tab height to prevent giant vertical stretch */
+  height: 52px !important;
   display: inline-flex;
   flex-direction: column;
   justify-content: center;
@@ -110,14 +110,6 @@ body {
 
 /* ====================== Z-INDEX & CLICK FIXES ====================== */
 header { z-index: 60 !important; }
-#main-nav { position: relative; z-index: 55 !important; }
-
-.nav-tab {
-  position: relative;
-  z-index: 50 !important;
-  pointer-events: auto !important;
-  cursor: pointer !important;
-}
 
 #squareSearchInput,
 #clearSearchBtn {
