@@ -24,11 +24,12 @@
 
     <title data-i18n="pageTitle">VocalWitness • Truth • Evidence • Public Square</title>
 
-    <!-- External CDNs for Crypto Wallet Libraries, PDF Generation, and Paystack Payments -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" defer></script>
-    <script src="https://js.paystack.co/v2/inline.js" defer></script>
+  <!-- External CDNs -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" defer></script>
+<script src="https://js.paystack.co/v2/inline.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/snarkjs@0.7.0/build/snarkjs.min.js" defer></script>
 
     <!-- Fallback Styles for Legacy Browsers & Basic Component Overrides -->
     <style>
@@ -785,10 +786,10 @@
             });
         });
     </script>
-    <script type="module" src="./js/main.js"></script>
-    <script type="module" src="./js/notifications.js"></script>
-    <script type="module" src="./js/bookmarks.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/snarkjs@0.7.0/build/snarkjs.min.js"></script>
+   <!-- Application Modules -->
+<script type="module" src="./js/main.js"></script>
+<script type="module" src="./js/notifications.js"></script>
+<script type="module" src="./js/bookmarks.js"></script>
 <script type="module" src="./js/zk-proof.js"></script>
 </body>
 </html>
