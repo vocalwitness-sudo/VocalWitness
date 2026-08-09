@@ -129,6 +129,17 @@ window.initiatePayment = function(amount, email = null, metadata = {}) {
     }
 };
 
+
+// Close more-menu when clicking anywhere outside of it
+window.addEventListener('click', (e) => {
+    const dropdown = document.querySelector('.dropdown-container');
+    const menu = document.getElementById('more-menu');
+    if (menu && dropdown && !dropdown.contains(e.target)) {
+        menu.classList.add('hidden');
+    }
+});
+
+
 // ====================== WELCOME NOTE ======================
 function showWelcomeNote() {
     if (!auth.currentUser || localStorage.getItem('hasSeenWelcome')) return;
