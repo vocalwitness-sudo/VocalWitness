@@ -46,6 +46,8 @@ async function createOrUpdateUser(user) {
                 displayName: safeDisplayName,
                 photoURL: safePhotoURL,
                 tier: "citizen",
+                isVerified: false,
+                verificationType: null,
                 createdAt: serverTimestamp(),
                 lastActive: serverTimestamp()
             });
@@ -57,9 +59,40 @@ async function createOrUpdateUser(user) {
                 photoURL: safePhotoURL || existingData.photoURL || "",
                 lastActive: serverTimestamp()
             }, { merge: true });
+
+            // Sync Verification UI based on user profile state
+            updateVerificationUI(existingData.isVerified || false);
         }
     } catch (e) {
         console.error("User document update error:", e);
+    }
+}
+
+// Update account verification indicators across the modal UI
+export function updateVerificationUI(isVerified = false) {
+    const statusEl = document.getElementById('verification-status');
+    const verifyBtn = document.getElementById('request-verification-btn');
+
+    if (statusEl) {
+        if (isVerified) {
+            statusEl.className = "inline-flex items-center gap-1.5 text-xs font-bold text-emerald-400 bg-emerald-400/10 px-2.5 py-1 rounded-lg border border-emerald-400/20";
+            statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Verified Citizen`;
+        } else {
+            statusEl.className = "inline-flex items-center gap-1.5 text-xs font-bold text-amber-400 bg-amber-400/10 px-2.5 py-1 rounded-lg border border-amber-400/20";
+            statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Unverified`;
+        }
+    }
+
+    if (verifyBtn) {
+        if (isVerified) {
+            verifyBtn.textContent = "Verified";
+            verifyBtn.disabled = true;
+            verifyBtn.classList.add("opacity-50", "cursor-not-allowed");
+        } else {
+            verifyBtn.textContent = "Get Verified";
+            verifyBtn.disabled = false;
+            verifyBtn.classList.remove("opacity-50", "cursor-not-allowed");
+        }
     }
 }
 
@@ -271,6 +304,7 @@ export async function logout() {
         }
         await signOut(auth);
         updateAppState({ isAuthenticated: false, currentUser: null });
+        updateVerificationUI(false);
         showToast("Signed out successfully", "success");
         window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user: null } }));
         updateUIForAuthState(null);
@@ -366,6 +400,24 @@ export function hideAuthModal() {
     closeLoginModal();
 }
 
+// Verification Modal Helpers
+export function openVerificationModal() {
+    if (!requireAuth("Please sign in to complete citizen verification.")) return;
+    const modal = document.getElementById('verificationModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+}
+
+export function closeVerificationModal() {
+    const modal = document.getElementById('verificationModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+}
+
 /**
  * Safely attach event listeners without throwing when element is null or dataset is missing.
  */
@@ -443,6 +495,15 @@ export function bindHeaderEvents() {
             logout();
         });
     }
+
+    // 7. Verification Triggers
+    const verifyTriggerBtn = document.getElementById('request-verification-btn');
+    if (verifyTriggerBtn) {
+        addSingleEventListener(verifyTriggerBtn, 'click', (e) => {
+            e.preventDefault();
+            openVerificationModal();
+        });
+    }
 }
 
 // ====================== AUTH INITIALIZATION ======================
@@ -459,6 +520,7 @@ export function initAuth() {
                 }
             } else {
                 updateAppState({ isAuthenticated: false, currentUser: null });
+                updateVerificationUI(false);
                 if (typeof initNotifications === 'function') {
                     initNotifications(null);
                 }
@@ -471,8 +533,10 @@ export function initAuth() {
     });
 }
 
-// Export globals to window for inline onclick attributes if needed
+// Export globals to window for inline onclick attributes
 window.showAuthModal = showAuthModal;
 window.closeLoginModal = closeLoginModal;
 window.logout = logout;
 window.googleLogin = googleLogin;
+window.openVerificationModal = openVerificationModal;
+window.closeVerificationModal = closeVerificationModal;
