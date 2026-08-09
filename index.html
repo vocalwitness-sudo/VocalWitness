@@ -345,8 +345,7 @@
                              -skew-x-12 -translate-x-full group-active:translate-x-full transition-transform duration-700"></span>
             </button>
         </div>
-
-        <!-- Voice Recording Control Bar -->
+<!-- Voice Recording Control Bar -->
         <div id="voice-recorder-bar" class="hidden mt-4 glass rounded-2xl p-4 border border-emerald-500/30">
             <div class="flex items-center gap-3 flex-wrap">
                 <div class="flex items-center gap-2 min-w-[70px]">
@@ -373,7 +372,7 @@
         </div>
             
         <!-- Dynamic Content -->
-        <main id="main-content">
+        <main id="main-content" class="mt-6">
             <div id="feedContainer" class="space-y-8"></div>
         </main>
     </div>
@@ -440,7 +439,7 @@
     </div>
 
     <!-- Quadratic Voting Modal -->
-    <div id="quadratic-vote-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden z-50 flex items-center justify-center p-4">
+    <div id="quadratic-vote-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden z-[10000] flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl relative overflow-hidden">
             
             <!-- Background Accent Glow -->
@@ -489,7 +488,7 @@
             <!-- Quadratic Cost Real-time Card -->
             <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-4 mb-6 space-y-2">
                 <div class="flex justify-between items-center text-xs">
-                    <span class="text-slate-400">Power Point Cost ($Strength^2$):</span>
+                    <span class="text-slate-400">Power Point Cost (Strength²):</span>
                     <span id="qv-cost-preview" class="text-amber-400 font-bold font-mono">1 Power Point</span>
                 </div>
                 <div class="flex justify-between items-center text-xs">
@@ -508,12 +507,12 @@
             </button>
 
             <p class="text-[11px] text-slate-500 text-center mt-3">
-                Protected by Zero-Knowledge proofs (`zk-crypto.js`) & Sybil filters.
+                Protected by Zero-Knowledge proofs (`zk-proof.js`) & Sybil filters.
             </p>
         </div>
     </div>
 
- <!-- Support Modal -->
+    <!-- Support Modal -->
     <div id="supportModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[10000] flex items-center justify-center p-4 hidden">
         <div class="glass max-w-md w-full rounded-3xl p-6 border border-emerald-500/30 text-white relative modal max-h-[90vh] overflow-y-auto">
             <button id="closeSupportModal" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl">✕</button>
@@ -571,7 +570,7 @@
                 <p id="loginModalMessage" class="text-xs text-emerald-400">Sign in or create an account to participate.</p>
             </div>
 
-            <!-- Google Login (ID bound to module handler) -->
+            <!-- Google Login -->
             <button id="googleAuthBtn" class="w-full py-3.5 bg-white hover:bg-zinc-100 text-black rounded-2xl font-semibold flex items-center justify-center gap-3 transition shadow-sm mb-4">
                 <img src="https://www.google.com/favicon.ico" class="w-5 h-5" alt="Google">
                 Continue with Google
@@ -623,7 +622,7 @@
         </div>
     </div>
 
-    <!-- Interactive Application Footer with Outdated Browser Color Fallbacks -->
+    <!-- Interactive Application Footer -->
     <footer class="bg-zinc-950 border-t border-zinc-800/80 pt-16 pb-12 mt-20 text-zinc-400" style="background-color: #09090b; border-color: #27272a;">
         <div class="max-w-6xl mx-auto px-6">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-10 pb-12 border-b border-zinc-800/60" style="border-color: #27272a;">
@@ -786,10 +785,11 @@
             });
         });
     </script>
-   <!-- Application Modules -->
-<script type="module" src="./js/main.js"></script>
-<script type="module" src="./js/notifications.js"></script>
-<script type="module" src="./js/bookmarks.js"></script>
-<script type="module" src="./js/zk-proof.js"></script>
+
+    <!-- Application Modules -->
+    <script type="module" src="./js/main.js"></script>
+    <script type="module" src="./js/notifications.js"></script>
+    <script type="module" src="./js/bookmarks.js"></script>
+    <script type="module" src="./js/zk-proof.js"></script>
 </body>
 </html>
