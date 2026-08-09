@@ -1,80 +1,149 @@
 /**
- * VocalWitness ZK Proof Web Worker (js/zk-worker.js)
- * Hardened with local fallback support and low-spec mobile performance profiling.
+ * VocalWitness ZK Cryptography Engine (js/zk-crypto.js)
+ * Manages zero-knowledge proof generation, hardware detection,
+ * and multi-threading capabilities based on Cross-Origin Isolation status.
  */
 
-// Import snarkjs inside the worker context
-importScripts('https://cdn.jsdelivr.net/npm/snarkjs@0.7.3/build/snarkjs.min.js');
+import { showToast } from './utils.js';
 
-// Utility to inspect client hardware capability
-function getDevicePerformanceProfile() {
-    const memory = navigator.deviceMemory || 2; // Default to 2GB if API unavailable
-    const cores = navigator.hardwareConcurrency || 2;
-    const isLowEnd = memory < 4 || cores < 4;
+// Cache thread capability status
+let zkCapabilityCache = null;
 
-    return { memory, cores, isLowEnd };
+/**
+ * Inspects system capabilities to determine if hardware acceleration 
+ * and SharedArrayBuffer multithreading are available.
+ * 
+ * @returns {Object} Environment capability profile
+ */
+export function getZKEnvironmentProfile() {
+    if (zkCapabilityCache) return zkCapabilityCache;
+
+    const isIsolated = typeof self !== 'undefined' && Boolean(self.crossOriginIsolated);
+    const hasSAB = typeof SharedArrayBuffer !== 'undefined';
+    const hardwareConcurrency = (navigator && navigator.hardwareConcurrency) || 2;
+    const deviceMemory = (navigator && navigator.deviceMemory) || 2;
+
+    // Multi-threading requires both Cross-Origin Isolation (COOP/COEP) and SharedArrayBuffer
+    const canMultithread = isIsolated && hasSAB && hardwareConcurrency > 1;
+
+    // Optimal worker count calculation
+    const recommendedThreads = canMultithread 
+        ? Math.max(1, Math.min(hardwareConcurrency - 1, 4)) 
+        : 1;
+
+    zkCapabilityCache = {
+        crossOriginIsolated: isIsolated,
+        hasSharedArrayBuffer: hasSAB,
+        canMultithread,
+        recommendedThreads,
+        hardwareConcurrency,
+        deviceMemory,
+        isLowEndDevice: deviceMemory < 4 || hardwareConcurrency < 4
+    };
+
+    console.log('[ZK Crypto Engine] Performance Profile initialized:', zkCapabilityCache);
+    return zkCapabilityCache;
 }
 
-self.onmessage = async (e) => {
-    const { secret, nullifier, isValidWitness, commitment, useMock } = e.data;
-    const profile = getDevicePerformanceProfile();
+/**
+ * Initializes and dispatches ZK proof generation to the worker thread.
+ * 
+ * @param {Object} proofPayload Secret inputs, nullifiers, and commitments
+ * @param {Object} options Configuration flags (e.g. useMock)
+ * @returns {Promise<Object>} Proof and public signals
+ */
+export async function generateWitnessProof(proofPayload, options = {}) {
+    const profile = getZKEnvironmentProfile();
 
-    try {
-        console.log(`🧠 Worker: Processing ZK Proof Request (${profile.isLowEnd ? 'Low-Spec Profile' : 'Standard Profile'})...`);
+    if (!profile.crossOriginIsolated && !options.useMock) {
+        console.warn('[ZK Crypto Engine] Warning: Site is not Cross-Origin Isolated. ZK proof will execute in single-threaded fallback mode.');
+    }
 
-        // Handle explicit mock flag
-        if (useMock) {
-            console.warn("⚠️ Using Mock ZK Proof (Circuit files pending deployment)");
-            await new Promise(r => setTimeout(r, 600)); // Non-blocking pause
-            self.postMessage({
-                success: true,
-                proof: { pi_a: ["mock_a"], pi_b: [["mock_b"]], pi_c: ["mock_c"], protocol: "groth16" },
-                publicSignals: [commitment || "0", nullifier || "0"]
-            });
-            return;
-        }
+    return new Promise((resolve, reject) => {
+        const worker = new Worker('/js/zk-worker.js');
 
-        // Allow thread to yield before heavy WASM execution to prevent tab freezing
-        await new Promise((resolve) => setTimeout(resolve, 50));
+        const timeoutMs = profile.isLowEndDevice ? 60000 : 30000;
+        const timeoutHandler = setTimeout(() => {
+            worker.terminate();
+            reject(new Error(`ZK Proof generation timed out after ${timeoutMs / 1000}s.`));
+        }, timeoutMs);
 
-        const input = {
-            secret: secret ? secret.toString() : "0",
-            nullifier: nullifier ? nullifier.toString() : "0",
-            isValidWitness: isValidWitness ? isValidWitness.toString() : "0",
-            commitment: commitment ? commitment.toString() : "0"
+        worker.onmessage = (event) => {
+            const data = event.data;
+
+            if (data.type === 'STATUS_UPDATE') {
+                console.log(`[ZK Worker Status]: ${data.message}`);
+                return;
+            }
+
+            // Proof generation complete
+            clearTimeout(timeoutHandler);
+            worker.terminate();
+
+            if (data.success) {
+                resolve({
+                    proof: data.proof,
+                    publicSignals: data.publicSignals,
+                    note: data.note || null,
+                    multithreaded: profile.canMultithread
+                });
+            } else {
+                reject(new Error(data.error || 'Failed to generate ZK proof.'));
+            }
         };
 
-        // Brief yield for memory collection before SnarkJS allocation
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        worker.onerror = (error) => {
+            clearTimeout(timeoutHandler);
+            worker.terminate();
+            console.error('[ZK Worker Fatal Execution Error]:', error);
+            reject(error);
+        };
 
-        const { proof, publicSignals } = await snarkjs.groth16.fullProve(
-            input,
-            "/circuits/witness.wasm",
-            "/circuits/witness_final.zkey"
-        );
-
-        self.postMessage({ 
-            success: true, 
-            proof: proof,
-            publicSignals: publicSignals 
+        // Dispatch job to worker with capability flags
+        worker.postMessage({
+            ...proofPayload,
+            useMock: options.useMock || false,
+            threads: profile.recommendedThreads,
+            canMultithread: profile.canMultithread
         });
+    });
+}
 
-    } catch (error) {
-        console.error("Worker Error (Falling back to dev proof):", error);
-        
-        const isMemoryError = error.message && (
-            error.message.includes('out of memory') || 
-            error.message.includes('allocation failed') || 
-            error.name === 'RangeError'
-        );
-
-        self.postMessage({ 
-            success: true, 
-            proof: { pi_a: ["dev_fallback"], pi_b: [["dev_fallback"]], pi_c: ["dev_fallback"], protocol: "groth16" },
-            publicSignals: [commitment || "0", nullifier || "0"],
-            note: "Generated via dev fallback due to asset loading or memory limitations.",
-            isMemoryError: isMemoryError,
-            fallbackSuggested: isMemoryError || profile.isLowEnd
-        });
+/**
+ * Verifies a SnarkJS Groth16 proof against public signals and vkey JSON.
+ * 
+ * @param {Object} verificationKey Parsed JSON verification key
+ * @param {Array} publicSignals Public signal array
+ * @param {Object} proof Groth16 proof object
+ * @returns {Promise<boolean>} True if valid, false otherwise
+ */
+export async function verifyWitnessProof(verificationKey, publicSignals, proof) {
+    if (!verificationKey || !publicSignals || !proof) {
+        throw new Error("Missing arguments for proof verification.");
     }
-};
+
+    // Handle mock proofs early
+    if (proof.pi_a && proof.pi_a[0] === 'mock_a') {
+        console.warn("⚠️ Mock proof submitted for verification — auto-passed for dev environment.");
+        return true;
+    }
+
+    try {
+        if (typeof snarkjs === 'undefined') {
+            throw new Error("SnarkJS library not loaded in main thread window context.");
+        }
+
+        const isValid = await snarkjs.groth16.verify(verificationKey, publicSignals, proof);
+        return isValid;
+    } catch (err) {
+        console.error("[ZK Crypto Engine] Verification error:", err);
+        return false;
+    }
+}
+
+// Auto-register capabilities on module load
+if (typeof window !== 'undefined') {
+    window.getZKEnvironmentProfile = getZKEnvironmentProfile;
+    window.generateWitnessProof = generateWitnessProof;
+    window.verifyWitnessProof = verifyWitnessProof;
+}
