@@ -1,6 +1,11 @@
 // js/zk-worker.js - Web Worker Script
-// Import SnarkJS inside the worker context
-importScripts('https://cdn.jsdelivr.net/npm/snarkjs@0.7.0/build/snarkjs.min.js');
+
+// Safely import SnarkJS inside the worker context
+try {
+    importScripts('https://cdn.jsdelivr.net/npm/snarkjs@0.7.0/build/snarkjs.min.js');
+} catch (err) {
+    console.error("Failed to load SnarkJS CDN inside Web Worker:", err);
+}
 
 self.onmessage = async (event) => {
     const { useMock, threads, canMultithread, ...proofPayload } = event.data;
@@ -19,11 +24,16 @@ self.onmessage = async (event) => {
             return;
         }
 
+        if (typeof snarkjs === 'undefined') {
+            throw new Error('SnarkJS library failed to initialize inside worker.');
+        }
+
         // Real Groth16 proof generation using SnarkJS
         self.postMessage({ type: 'STATUS_UPDATE', message: 'Generating Groth16 witness proof...' });
 
-        const wasmPath = '/circuits/witness.wasm';
-        const zkeyPath = '/circuits/witness_final.zkey';
+        // Using relative path resolution to avoid origin root 404s
+        const wasmPath = '../circuits/witness.wasm';
+        const zkeyPath = '../circuits/witness_final.zkey';
 
         const { proof, publicSignals } = await snarkjs.groth16.fullProve(
             proofPayload,
