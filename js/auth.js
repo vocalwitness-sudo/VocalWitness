@@ -1,6 +1,8 @@
 // js/auth.js - Auth Handler with Profile Cache Sync & Verified State Guards
 import {
     signInWithPopup,
+    signInWithRedirect,
+    getRedirectResult,
     GoogleAuthProvider,
     signOut,
     signInWithEmailAndPassword,
@@ -134,9 +136,9 @@ function handleAuthError(error) {
             return "SMS service temporarily busy. Please try an alternate verification path.";
         case 'auth/popup-closed-by-user':
         case 'auth/cancelled-popup-request':
-            return "Sign-in was cancelled.";
+            return null; // Silent cancel handling
         case 'auth/popup-blocked':
-            return "Popup was blocked by browser. Please allow popups for this site.";
+            return "Popup was blocked by browser. Redirecting to mobile sign-in...";
         case 'auth/invalid-email':
             return "The email address format is invalid.";
         case 'auth/user-not-found':
@@ -156,7 +158,6 @@ export async function googleLogin(event) {
     if (event) event.preventDefault();
 
     if (authActionInProgress) {
-        showToast("Sign-in already in progress...", "info");
         return;
     }
 
@@ -169,8 +170,21 @@ export async function googleLogin(event) {
     authActionInProgress = true;
 
     try {
+        // Save draft synchronously before trigger
         savePendingDraft();
-        showToast("Opening Google Sign-In...", "info");
+
+        // Configure prompt behavior
+        provider.setCustomParameters({
+            prompt: 'select_account'
+        });
+
+        // Detect mobile or standalone PWA environment
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.matchMedia('(display-mode: standalone)').matches;
+
+        if (isMobile) {
+            await signInWithRedirect(auth, provider);
+            return;
+        }
 
         const result = await signInWithPopup(auth, provider);
 
@@ -181,8 +195,20 @@ export async function googleLogin(event) {
             restorePendingDraft();
         }
     } catch (error) {
-        console.error("Google popup sign-in error:", error);
-        showToast(handleAuthError(error), "error");
+        if (error.code === 'auth/popup-blocked' || error.code === 'auth/cancelled-popup-request') {
+            console.warn("Popup blocked or interrupted, falling back to redirect...");
+            await signInWithRedirect(auth, provider);
+            return;
+        }
+
+        if (error.code === 'auth/popup-closed-by-user') {
+            console.info("User closed Google login popup.");
+            return;
+        }
+
+        console.error("Google login error:", error);
+        const errMsg = handleAuthError(error);
+        if (errMsg) showToast(errMsg, "error");
     } finally {
         authActionInProgress = false;
         if (btn) {
@@ -239,7 +265,8 @@ export async function handleEmailAuth(event) {
 
     } catch (error) {
         console.error("Email sign-in error:", error);
-        showToast(handleAuthError(error), "error");
+        const errMsg = handleAuthError(error);
+        if (errMsg) showToast(errMsg, "error");
     } finally {
         if (submitBtn) {
             submitBtn.disabled = false;
@@ -287,7 +314,8 @@ export async function handleEmailSignUp(event) {
         closeCreateAccountModal();
     } catch (error) {
         console.error("Email sign-up error:", error);
-        showToast(handleAuthError(error), "error");
+        const errMsg = handleAuthError(error);
+        if (errMsg) showToast(errMsg, "error");
     } finally {
         if (submitBtn) {
             submitBtn.disabled = false;
@@ -509,6 +537,21 @@ export function bindHeaderEvents() {
 // ====================== AUTH INITIALIZATION ======================
 export function initAuth() {
     return new Promise((resolve) => {
+        // Handle redirect result for mobile logins
+        getRedirectResult(auth)
+            .then((result) => {
+                if (result?.user) {
+                    showToast("✅ Signed in successfully!", "success");
+                    closeLoginModal();
+                    restorePendingDraft();
+                }
+            })
+            .catch((error) => {
+                console.error("Redirect sign-in error:", error);
+                const errMsg = handleAuthError(error);
+                if (errMsg) showToast(errMsg, "error");
+            });
+
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 updateAppState({ isAuthenticated: true, currentUser: user });
