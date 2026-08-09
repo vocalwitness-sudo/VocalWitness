@@ -1,11 +1,43 @@
-// js/composer.js - Testimony Creation, Media Integration & Rate-Limited Publishing
+// js/composer.js - Testimony Creation, Media Integration, Target Feed Routing & Rate-Limited Publishing
 import { compressImage } from './media-compression.js';
 import { showToast } from './utils.js';
 import { getCurrentUserTier, getCurrentWitnessLevel } from './tier.js';
 import { db, auth } from './firebase-config.js';
-import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { collection, addDoc, doc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
 import { uploadForensicMedia, resetMediaState, handleImageSelect, toggleVoiceRecording } from './media.js';
+
+// Verification Door Modal Trigger
+function triggerVerificationDoor({ title, message, onVerifyRequested }) {
+    const existingModal = document.getElementById('verification-door-modal');
+    if (existingModal) existingModal.remove();
+
+    const modalHtml = `
+    <div id="verification-door-modal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-fade-in">
+      <div class="bg-slate-900 border border-amber-500/40 rounded-xl p-6 max-w-md w-full shadow-2xl space-y-4">
+        <div class="flex items-center gap-3 text-amber-400">
+          <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+          <h3 class="text-lg font-bold text-slate-100">${title}</h3>
+        </div>
+        <p class="text-slate-300 text-sm leading-relaxed">${message}</p>
+        <div class="flex justify-end gap-3 pt-2">
+          <button id="cancel-door-btn" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg text-sm hover:bg-slate-700 transition">Cancel</button>
+          <button id="start-verify-btn" class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-sm font-semibold shadow transition">Request Verification</button>
+        </div>
+      </div>
+    </div>
+  `;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    document.getElementById('cancel-door-btn').onclick = () => {
+        document.getElementById('verification-door-modal').remove();
+    };
+
+    document.getElementById('start-verify-btn').onclick = async () => {
+        document.getElementById('verification-door-modal').remove();
+        if (onVerifyRequested) await onVerifyRequested();
+    };
+}
 
 // Active state helper
 function toggleActive(button) {
@@ -27,6 +59,7 @@ function initComposer() {
     const mainInput = document.getElementById('mainInput') || document.getElementById('testimonyInput');
     const previewArea = document.getElementById('preview-area');
     const postButton = document.getElementById('postButton');
+    const targetFeedSelect = document.getElementById('targetFeedSelect') || document.getElementById('feedType');
 
     // --- APPLY FALLBACK STYLING IF COLOR CLASSES ARE MISSING ---
     if (btnPhoto) {
@@ -91,6 +124,7 @@ function initComposer() {
         postButton.addEventListener('click', async (e) => {
             e.preventDefault();
             const text = mainInput?.value ? mainInput.value.trim() : "";
+            const targetFeed = targetFeedSelect?.value || "citizen_talk"; // Defaults to Citizen Talk
 
             if (!auth.currentUser) {
                 showToast('You must be logged in to publish testimony', 'error');
@@ -102,6 +136,38 @@ function initComposer() {
             postButton.textContent = 'Publishing...';
 
             try {
+                // --- TARGET FEED VERIFICATION DOOR CHECK ---
+                if (targetFeed === 'witness_voice' || targetFeed === 'true_witness') {
+                    const userDocRef = doc(db, "users", auth.currentUser.uid);
+                    const userSnap = await getDoc(userDocRef);
+                    const userData = userSnap.exists() ? userSnap.data() : {};
+
+                    const isVerified = userData.zkVerified === true || userData.tier === 'witness' || userData.tier === 'steward';
+
+                    if (!isVerified) {
+                        triggerVerificationDoor({
+                            title: "Witness Voice Access Restricted",
+                            message: "Publishing directly to the Witness Voice feed requires Zero-Knowledge or Developer verification.",
+                            onVerifyRequested: async () => {
+                                try {
+                                    await addDoc(collection(db, "verification_requests"), {
+                                        applicantId: auth.currentUser.uid,
+                                        applicantName: auth.currentUser.displayName || "Anonymous Witness",
+                                        targetFeed: targetFeed,
+                                        status: "pending",
+                                        requestedAt: serverTimestamp()
+                                    });
+                                    showToast("Verification request submitted! Developer/Steward review pending.", "success");
+                                } catch (reqErr) {
+                                    console.error("Verification request error:", reqErr);
+                                    showToast("Failed to submit verification request.", "error");
+                                }
+                            }
+                        });
+                        return; // Stop submission until verified
+                    }
+                }
+
                 // Rate limit check via Cloud Function (Fail-open mode)
                 try {
                     const functions = getFunctions(undefined, 'us-central1');
@@ -135,6 +201,7 @@ function initComposer() {
 
                 await addDoc(collection(db, "testimonies"), {
                     content: text || "",
+                    targetFeed: targetFeed,
                     imageUrl: mediaData.imageUrl || null,
                     audioUrl: mediaData.audioUrl || null,
                     forensicHash: mediaData.imageHash || mediaData.audioHash || null,
@@ -148,7 +215,7 @@ function initComposer() {
                     hasForensic: !!(mediaData.imageHash || mediaData.audioHash)
                 });
 
-                showToast('✅ Testimony published to the Public Square!', 'success');
+                showToast('✅ Testimony published successfully!', 'success');
 
                 if (mainInput) mainInput.value = '';
                 btnPhoto?.classList.remove('active', 'ring-2', 'ring-emerald-500');
@@ -183,4 +250,4 @@ window.addEventListener('languageChanged', () => {
     }
 });
 
-console.log('%cComposer module loaded (Photo, Voice & Publish connected)', 'color:#10b981; font-weight:bold');
+console.log('%cComposer module loaded (Verification Door, Target Feed & Media connected)', 'color:#10b981; font-weight:bold');
