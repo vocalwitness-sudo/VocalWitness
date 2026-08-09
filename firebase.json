@@ -10,7 +10,7 @@
     "trailingSlash": false,
     "rewrites": [
       {
-        "regex": "^/(?!.*\\.(js|css|wasm|zkey|json|png|jpg|jpeg|svg|ico|woff2)$).*",
+        "source": "**",
         "destination": "/index.html"
       }
     ],
