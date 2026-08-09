@@ -8,23 +8,36 @@ export async function generateRigorousProof(testimonyData) {
             throw new Error("Ethers library not loaded");
         }
 
-        // Get location (optional with timeout guard)
+        // Get location with strict timeout guard
         let location = { error: "Location skipped" };
-        if (navigator.geolocation) {
+        if (typeof navigator !== 'undefined' && navigator.geolocation) {
             location = await new Promise((resolve) => {
-                const timer = setTimeout(() => resolve({ error: "Location timeout" }), 4000);
+                let completed = false;
+                const timer = setTimeout(() => {
+                    if (!completed) {
+                        completed = true;
+                        resolve({ error: "Location timeout" });
+                    }
+                }, 4000);
+
                 navigator.geolocation.getCurrentPosition(
                     (pos) => {
-                        clearTimeout(timer);
-                        resolve({
-                            lat: pos.coords.latitude,
-                            lng: pos.coords.longitude,
-                            acc: pos.coords.accuracy
-                        });
+                        if (!completed) {
+                            completed = true;
+                            clearTimeout(timer);
+                            resolve({
+                                lat: pos.coords.latitude,
+                                lng: pos.coords.longitude,
+                                acc: pos.coords.accuracy
+                            });
+                        }
                     },
-                    () => {
-                        clearTimeout(timer);
-                        resolve({ error: "Location denied" });
+                    (err) => {
+                        if (!completed) {
+                            completed = true;
+                            clearTimeout(timer);
+                            resolve({ error: err.message || "Location denied" });
+                        }
                     },
                     { timeout: 4000 }
                 );
@@ -52,11 +65,14 @@ export async function generateRigorousProof(testimonyData) {
 
         const provider = new ethersLib.BrowserProvider(window.ethereum);
         const signer = await provider.getSigner();
-        const signature = await signer.signMessage(hashHex);
+
+        // Sign the raw 32-byte hash buffer rather than the ASCII string
+        const hashBytes = ethersLib.getBytes("0x" + hashHex);
+        const signature = await signer.signMessage(hashBytes);
         const signerAddress = await signer.getAddress();
 
         return {
-            hash: hashHex,
+            hash: "0x" + hashHex,
             signature,
             signer: signerAddress,
             bundle: forensicBundle
@@ -76,8 +92,9 @@ export async function verifyProof(proof) {
             return false;
         }
 
-        // Recover address specifically from the hashHex message that was signed
-        const recovered = ethersLib.verifyMessage(proof.hash, proof.signature);
+        // Verify using Ethers v6 syntax for raw bytes signature recovery
+        const hashBytes = ethersLib.getBytes(proof.hash.startsWith("0x") ? proof.hash : "0x" + proof.hash);
+        const recovered = ethersLib.verifyMessage(hashBytes, proof.signature);
         return recovered.toLowerCase() === proof.signer.toLowerCase();
     } catch (e) {
         console.error("Verification failed:", e);
