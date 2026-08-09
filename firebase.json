@@ -3,13 +3,14 @@
     "public": ".",
     "ignore": [
       "firebase.json",
-      "**/.*",
       "**/node_modules/**",
       "functions/**"
     ],
+    "cleanUrls": false,
+    "trailingSlash": false,
     "rewrites": [
       {
-        "source": "**",
+        "source": "!**/*.{js,css,wasm,zkey,json,png,jpg,jpeg,svg,ico,woff2}",
         "destination": "/index.html"
       }
     ],
