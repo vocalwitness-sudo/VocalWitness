@@ -172,9 +172,22 @@ exports.paystackWebhook = functions.https.onRequest(async (req, res) => {
 
 // ====================== SAFE RATE LIMITING HTTP FUNCTION ======================
 
+// ====================== SAFE RATE LIMITING HTTP FUNCTION ======================
+
 exports.checkRateLimit = functions.https.onRequest((req, res) => {
   return cors(req, res, async () => {
-    // 1. Verify Authorization Header for HTTP POST calls
+    // 1. Explicitly handle preflight CORS requests
+    if (req.method === 'OPTIONS') {
+      res.set('Access-Control-Allow-Origin', '*');
+      res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      return res.status(204).send('');
+    }
+
+    // 2. Ensure CORS header is explicitly attached on standard requests
+    res.set('Access-Control-Allow-Origin', '*');
+
+    // 3. Verify Authorization Header for HTTP POST calls
     const authHeader = req.headers.authorization;
     let userId = null;
 
@@ -193,9 +206,9 @@ exports.checkRateLimit = functions.https.onRequest((req, res) => {
       userId = req.ip ? req.ip.replace(/[\.\:]/g, '_') : 'anonymous_user';
     }
 
-    const action = req.body.action || "general_action";
-    const maxCalls = req.body.maxCalls || 5;
-    const windowMinutes = req.body.windowMinutes || 60;
+    const action = req.body?.action || "general_action";
+    const maxCalls = req.body?.maxCalls || 5;
+    const windowMinutes = req.body?.windowMinutes || 60;
 
     const windowStart = new Date(Date.now() - windowMinutes * 60 * 1000);
     const rateDocRef = db.collection('rateLimits').doc(`${userId}_${action}`);
