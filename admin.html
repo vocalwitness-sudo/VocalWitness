@@ -82,11 +82,14 @@
     </div>
 
     <!-- Navigation Tabs -->
-    <div class="flex border-b border-slate-800 mb-6 gap-6">
-      <button id="tab-btn-users" onclick="switchAdminTab('users')" class="pb-3 border-b-2 border-emerald-500 font-medium text-emerald-400 text-sm flex items-center gap-2">
+    <div class="flex border-b border-slate-800 mb-6 gap-6 overflow-x-auto">
+      <button id="tab-btn-users" onclick="switchAdminTab('users')" class="pb-3 border-b-2 border-emerald-500 font-medium text-emerald-400 text-sm flex items-center gap-2 whitespace-nowrap">
         <span>👥 User & Role Management</span>
       </button>
-      <button id="tab-btn-audit" onclick="switchAdminTab('audit')" class="pb-3 border-b-2 border-transparent font-medium text-slate-400 hover:text-slate-200 text-sm flex items-center gap-2">
+      <button id="tab-btn-verification" onclick="switchAdminTab('verification')" class="pb-3 border-b-2 border-transparent font-medium text-slate-400 hover:text-slate-200 text-sm flex items-center gap-2 whitespace-nowrap">
+        <span>🔑 Witness Verification Requests</span>
+      </button>
+      <button id="tab-btn-audit" onclick="switchAdminTab('audit')" class="pb-3 border-b-2 border-transparent font-medium text-slate-400 hover:text-slate-200 text-sm flex items-center gap-2 whitespace-nowrap">
         <span>🛡️ Security Audit Logs</span>
       </button>
     </div>
@@ -124,7 +127,12 @@
       </div>
     </section>
 
-    <!-- TAB 2: Audit Logs Container -->
+    <!-- TAB 2: Verification Requests Container -->
+    <section id="tab-content-verification" class="hidden space-y-4">
+      <div id="admin-verification-container"></div>
+    </section>
+
+    <!-- TAB 3: Audit Logs Container -->
     <section id="tab-content-audit" class="hidden space-y-4">
       <div class="border border-slate-800 rounded-xl bg-slate-950/60 p-6">
         <h3 class="text-base font-semibold text-white mb-4">Security & Moderation Activity</h3>
@@ -142,6 +150,7 @@
     import { collection, getDocs, doc, updateDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
     import { hasStewardAccess, TIERS } from './js/tier.js';
     import { showToast } from './js/utils.js';
+    import { initAdminVerification } from './js/adminVerification.js';
 
     const adminMain = document.getElementById('admin-main-content');
     const accessDenied = document.getElementById('access-denied');
@@ -151,20 +160,34 @@
     // Tab switcher logic
     window.switchAdminTab = function(tabName) {
       const usersTab = document.getElementById('tab-content-users');
+      const verificationTab = document.getElementById('tab-content-verification');
       const auditTab = document.getElementById('tab-content-audit');
+      
       const btnUsers = document.getElementById('tab-btn-users');
+      const btnVerification = document.getElementById('tab-btn-verification');
       const btnAudit = document.getElementById('tab-btn-audit');
+
+      const activeClass = "pb-3 border-b-2 border-emerald-500 font-medium text-emerald-400 text-sm flex items-center gap-2 whitespace-nowrap";
+      const inactiveClass = "pb-3 border-b-2 border-transparent font-medium text-slate-400 hover:text-slate-200 text-sm flex items-center gap-2 whitespace-nowrap";
+
+      // Hide all tabs
+      usersTab.classList.add('hidden');
+      verificationTab.classList.add('hidden');
+      auditTab.classList.add('hidden');
+
+      btnUsers.className = inactiveClass;
+      btnVerification.className = inactiveClass;
+      btnAudit.className = inactiveClass;
 
       if (tabName === 'users') {
         usersTab.classList.remove('hidden');
-        auditTab.classList.add('hidden');
-        btnUsers.className = "pb-3 border-b-2 border-emerald-500 font-medium text-emerald-400 text-sm flex items-center gap-2";
-        btnAudit.className = "pb-3 border-b-2 border-transparent font-medium text-slate-400 hover:text-slate-200 text-sm flex items-center gap-2";
-      } else {
-        usersTab.classList.add('hidden');
+        btnUsers.className = activeClass;
+      } else if (tabName === 'verification') {
+        verificationTab.classList.remove('hidden');
+        btnVerification.className = activeClass;
+      } else if (tabName === 'audit') {
         auditTab.classList.remove('hidden');
-        btnAudit.className = "pb-3 border-b-2 border-emerald-500 font-medium text-emerald-400 text-sm flex items-center gap-2";
-        btnUsers.className = "pb-3 border-b-2 border-transparent font-medium text-slate-400 hover:text-slate-200 text-sm flex items-center gap-2";
+        btnAudit.className = activeClass;
         loadAuditLogs();
       }
     };
@@ -180,6 +203,9 @@
       }
 
       adminUserBadge.textContent = `Admin: ${auth.currentUser?.email || 'Authenticated'}`;
+
+      // Initialize the live verification queue listener
+      initAdminVerification('admin-verification-container');
 
       try {
         // Fetch Users
@@ -288,7 +314,7 @@
           item.innerHTML = `
             <div>
               <span class="text-emerald-400 font-bold">[${log.action || 'EVENT'}]</span> 
-              <span class="text-slate-300 ml-2">Target ID: ${log.targetId || 'N/A'}</span>
+              <span class="text-slate-300 ml-2">Target ID: ${log.targetUserId || log.targetId || 'N/A'}</span>
             </div>
             <span class="text-slate-500 text-[10px]">${log.timestamp?.toDate ? log.timestamp.toDate().toLocaleString() : 'Recent'}</span>
           `;
