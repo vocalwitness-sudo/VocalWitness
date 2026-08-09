@@ -53,7 +53,7 @@ window.switchTab = async (tab) => {
         }
     });
 
-    // Update state imported from app-state.js
+    // Update global state
     state.currentTab = tab;
     state.currentMode = tab === 'witness' ? 'witness' : 'citizen';
 
@@ -102,15 +102,20 @@ window.switchTab = async (tab) => {
 
 window.refreshLedger = () => loadEvidenceLedger();
 
-// ====================== PAYSTACK INTEGRATION ======================
+// ====================== PAYMENT GATEWAYS ======================
 window.initiatePayment = function(amount, email = null, metadata = {}) {
     if (!requireAuth("Sign in to support VocalWitness")) return;
-    
+
+    if (typeof PaystackPop === 'undefined') {
+        showToast("Payment gateway library not loaded. Please refresh.", "error");
+        return;
+    }
+
     try {
         const handler = PaystackPop.setup({
             key: 'pk_live_5d13a6db326f02375127aae9d0fb03678ed1d923',
             email: email || auth.currentUser?.email || '',
-            amount: amount * 100,
+            amount: amount * 100, // Paystack accepts amount in kobo/cents
             currency: "NGN",
             metadata: {
                 source: "VocalWitness",
@@ -119,6 +124,11 @@ window.initiatePayment = function(amount, email = null, metadata = {}) {
             },
             onSuccess: (transaction) => {
                 showToast(`✅ Payment successful! Ref: ${transaction.reference}`, "success");
+                const supportModal = document.getElementById('supportModal');
+                if (supportModal) {
+                    supportModal.classList.add('hidden');
+                    supportModal.classList.remove('flex');
+                }
             },
             onCancel: () => showToast("Payment was cancelled", "info")
         });
@@ -129,8 +139,7 @@ window.initiatePayment = function(amount, email = null, metadata = {}) {
     }
 };
 
-
-// Close more-menu when clicking anywhere outside of it
+// Dropdown click outside listener
 window.addEventListener('click', (e) => {
     const dropdown = document.querySelector('.dropdown-container');
     const menu = document.getElementById('more-menu');
@@ -139,18 +148,17 @@ window.addEventListener('click', (e) => {
     }
 });
 
-
 // ====================== WELCOME NOTE ======================
 function showWelcomeNote() {
     if (!auth.currentUser || localStorage.getItem('hasSeenWelcome')) return;
     
-    showToast("🎉 Welcome to VocalWitness! Your voice matters in the Public Square.", "success");
+    showToast("🎉 Welcome to VocalWitness! Your voice matters in Citizen Talk.", "success");
     localStorage.setItem('hasSeenWelcome', 'true');
 }
 
 // ====================== PUBLISH TESTIMONY ======================
 window.publishTestimony = async () => {
-    if (!requireAuth("Please sign in to share your testimony in the Public Square.")) return;
+    if (!requireAuth("Please sign in to share your testimony in Citizen Talk.")) return;
 
     const textarea = document.getElementById('mainInput');
     const content = textarea ? textarea.value.trim() : '';
@@ -172,7 +180,7 @@ window.publishTestimony = async () => {
         postBtn.innerHTML = `
             <span class="flex items-center justify-center gap-3">
                 <span class="animate-spin h-5 w-5 border-2 border-black border-t-transparent rounded-full"></span>
-                Publishing to the Square...
+                Publishing to ${state.currentMode === 'witness' ? 'Witness Voice' : 'Citizen Talk'}...
             </span>
         `;
     }
@@ -217,7 +225,7 @@ window.publishTestimony = async () => {
             postBtn.classList.remove('publishing', 'opacity-50', 'cursor-not-allowed');
             postBtn.innerHTML = `
                 <span class="relative z-10 flex items-center justify-center gap-3">
-                    Publish to the Square
+                    Publish to ${state.currentMode === 'witness' ? 'Witness Voice' : 'Citizen Talk'}
                 </span>
             `;
         }
@@ -381,6 +389,14 @@ function setupEventListeners() {
             supportModal.classList.remove('hidden');
             supportModal.classList.add('flex');
         }
+    });
+
+    // Paystack support button binding
+    document.getElementById('paystackPayBtn')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        const amountInput = document.getElementById('customSupportAmount');
+        const amount = amountInput ? parseFloat(amountInput.value) || 1000 : 1000;
+        window.initiatePayment(amount);
     });
 
     // Bookmarks View Navigation
