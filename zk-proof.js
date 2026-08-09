@@ -33,8 +33,10 @@ export async function generateWitnessProof(proofPayload, options = {}) {
     const profile = getZKEnvironmentProfile();
 
     return new Promise((resolve, reject) => {
-        // Spawns the SEPARATE worker file
-        const worker = new Worker('/js/zk-worker.js', { type: 'module' });
+        // Dynamically resolve worker URL relative to this module
+        // Omitted { type: 'module' } so importScripts inside zk-worker.js works without throwing
+        const workerUrl = new URL('./zk-worker.js', import.meta.url);
+        const worker = new Worker(workerUrl);
 
         const timeoutMs = profile.isLowEndDevice ? 60000 : 30000;
         const timeoutHandler = setTimeout(() => {
@@ -68,7 +70,8 @@ export async function generateWitnessProof(proofPayload, options = {}) {
         worker.onerror = (error) => {
             clearTimeout(timeoutHandler);
             worker.terminate();
-            reject(error);
+            console.error('[ZK Worker Error]:', error);
+            reject(new Error(error.message || 'Error executing ZK worker script.'));
         };
 
         worker.postMessage({
