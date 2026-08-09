@@ -268,18 +268,16 @@
         </div>
     </div>
 </div>
-
-    <!-- More Options Dropdown -->
-    <div class="dropdown-container relative shrink-0">
-        <button id="more-btn" 
-                type="button" 
-                data-action="toggle-more-menu"
-                onclick="document.getElementById('more-menu')?.classList.toggle('hidden'); event.stopPropagation();"
-                class="px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center bg-zinc-800 hover:bg-zinc-700 text-white font-semibold transition border border-zinc-700" 
-                data-i18n="moreOptionsBtn">
-            <span class="font-semibold text-sm">More Options</span>
-            <span class="text-xs text-zinc-400 hidden md:block">Menu & Pages</span>
-        </button>
+<!-- More Options Dropdown -->
+<div class="dropdown-container relative shrink-0 z-50">
+    <button id="more-btn" 
+            type="button" 
+            onclick="event.stopPropagation(); const m = document.getElementById('more-menu'); if(m) m.classList.toggle('hidden');"
+            class="px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-white font-semibold transition-all duration-150 border border-zinc-700 cursor-pointer select-none" 
+            data-i18n="moreOptionsBtn">
+        <span class="font-semibold text-sm pointer-events-none">More Options</span>
+        <span class="text-xs text-zinc-400 hidden md:block pointer-events-none">Menu & Pages</span>
+    </button>
         <div id="more-menu" class="hidden absolute right-0 top-full mt-2 w-64 bg-zinc-900 border border-zinc-700 rounded-3xl shadow-2xl py-3 z-50">
             <a href="my-testimonies.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="myTestimoniesMenu">My Testimonies</a>
             <a href="groups.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="groupsMenu">Groups</a>
