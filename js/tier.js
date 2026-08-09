@@ -167,14 +167,45 @@ export async function getCurrentWitnessLevel() {
 /**
  * Helper to check if user can advance tier
  */
-export async function canAdvanceTier(uid) {
-  if (!uid) return { canAdvance: false, reason: "Not authenticated" };
-  const data = await getUserProfile();
+// js/tier.js - Updated canAdvanceTier with internal timeout safety
 
-  if (!data?.isPhoneVerified) {
-    return { canAdvance: false, reason: "Phone verification required first" };
+/**
+ * Check if a user meets the prerequisites to advance their tier.
+ * @param {string} uid - User ID to check
+ * @param {number} timeoutMs - Max wait time in milliseconds (default: 10000ms)
+ * @returns {Promise<{canAdvance: boolean, reason?: string}>}
+ */
+export async function canAdvanceTier(uid, timeoutMs = 10000) {
+  if (!uid) {
+    return { canAdvance: false, reason: "User is not authenticated" };
   }
-  return { canAdvance: true };
+
+  try {
+    // Timeout promise to catch hanging Firestore reads
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Network timeout while fetching user profile")), timeoutMs)
+    );
+
+    // Race the profile fetch against the timeout
+    const data = await Promise.race([getUserProfile(), timeoutPromise]);
+
+    if (!data) {
+      return { canAdvance: false, reason: "User profile not found" };
+    }
+
+    // Example gating check: Citizen Circle (phone verified) is required before Witness Circle
+    if (!data.isPhoneVerified && !data.hasVerifiedPhone) {
+      return { canAdvance: false, reason: "Phone verification is required first" };
+    }
+
+    return { canAdvance: true };
+  } catch (error) {
+    console.error("canAdvanceTier error:", error);
+    return { 
+      canAdvance: false, 
+      reason: error.message || "Verification check timed out or failed" 
+    };
+  }
 }
 
 /**
