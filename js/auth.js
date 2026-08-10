@@ -3,7 +3,6 @@ import {
     signInWithPopup,
     signInWithRedirect,
     getRedirectResult,
-    GoogleAuthProvider,
     signOut,
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
@@ -53,8 +52,11 @@ async function createOrUpdateUser(user) {
                 createdAt: serverTimestamp(),
                 lastActive: serverTimestamp()
             });
+            updateVerificationUI(false);
         } else {
             const existingData = snap.data() || {};
+            
+            // Only update active timestamp and fallback empty profile details
             await setDoc(userRef, {
                 email: safeEmail || existingData.email || "",
                 displayName: safeDisplayName || existingData.displayName || "Anonymous Witness",
@@ -62,7 +64,6 @@ async function createOrUpdateUser(user) {
                 lastActive: serverTimestamp()
             }, { merge: true });
 
-            // Sync Verification UI based on user profile state
             updateVerificationUI(existingData.isVerified || false);
         }
     } catch (e) {
@@ -70,7 +71,6 @@ async function createOrUpdateUser(user) {
     }
 }
 
-// Update account verification indicators across the modal UI
 export function updateVerificationUI(isVerified = false) {
     const statusEl = document.getElementById('verification-status');
     const verifyBtn = document.getElementById('request-verification-btn');
@@ -118,7 +118,7 @@ export function restorePendingDraft() {
             showToast("✅ Your testimony draft has been restored!", "success");
             sessionStorage.removeItem('vocal_pending_draft');
             clearInterval(interval);
-        } else if (++attempts > 10) {
+        } else if (++attempts > 20) { // Extended to 4s polling window
             clearInterval(interval);
         }
     }, 200);
@@ -136,7 +136,7 @@ function handleAuthError(error) {
             return "SMS service temporarily busy. Please try an alternate verification path.";
         case 'auth/popup-closed-by-user':
         case 'auth/cancelled-popup-request':
-            return null; // Silent cancel handling
+            return null;
         case 'auth/popup-blocked':
             return "Popup was blocked by browser. Please allow popups for this site.";
         case 'auth/invalid-email':
@@ -156,13 +156,13 @@ function handleAuthError(error) {
     }
 }
 
+// ====================== AUTH ACTIONS ======================
 export async function googleLogin(event) {
     if (event) {
         event.preventDefault();
         event.stopPropagation();
     }
 
-    // STRICT GUARD: Block double executions instantly
     if (authActionInProgress) {
         console.warn("⚠️ Auth action already in progress. Ignoring duplicate trigger.");
         return;
@@ -178,7 +178,6 @@ export async function googleLogin(event) {
 
     try {
         provider.setCustomParameters({ prompt: 'select_account' });
-
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.matchMedia('(display-mode: standalone)').matches;
 
         try { savePendingDraft(); } catch (e) {}
@@ -188,26 +187,20 @@ export async function googleLogin(event) {
             return;
         }
 
-        // Execute popup cleanly
         const result = await signInWithPopup(auth, provider);
-
-        if (result && result.user) {
+        if (result?.user) {
             showToast("✅ Signed in successfully!", "success");
             closeLoginModal();
-            closeCreateAccountModal();
             restorePendingDraft();
         }
     } catch (error) {
         if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
-            console.info("User closed Google login popup or request was cancelled.");
             return;
         }
-
         if (error.code === 'auth/popup-blocked') {
             showToast("⚠️ Sign-in popup was blocked by browser. Please allow popups.", "warning");
             return;
         }
-
         console.error("Google login error:", error);
         const errMsg = handleAuthError(error);
         if (errMsg) showToast(errMsg, "error");
@@ -225,20 +218,16 @@ export async function googleLogin(event) {
 export async function handleEmailAuth(event) {
     if (event) event.preventDefault();
 
-    const submitBtn = event?.submitter || document.getElementById('signInSubmitBtn') || event?.target?.querySelector('button[type="submit"]');
+    const form = event?.target;
+    const submitBtn = event?.submitter || form?.querySelector('button[type="submit"]') || document.getElementById('signInSubmitBtn');
     if (submitBtn?.disabled) return;
 
-    const email = (
-        document.getElementById('authEmail')?.value ||
-        document.getElementById('signInEmail')?.value ||
-        document.getElementById('signUpEmail')?.value
-    )?.trim();
+    // Target inputs relative to active form target first to avoid modal collision
+    const emailInput = form?.querySelector('input[type="email"]') || document.getElementById('signInEmail') || document.getElementById('authEmail');
+    const passwordInput = form?.querySelector('input[type="password"]') || document.getElementById('signInPassword') || document.getElementById('authPassword');
 
-    const password = (
-        document.getElementById('authPassword')?.value ||
-        document.getElementById('signInPassword')?.value ||
-        document.getElementById('signUpPassword')?.value
-    );
+    const email = emailInput?.value?.trim();
+    const password = passwordInput?.value;
 
     if (!email || !password) {
         showToast("Please enter both email and password.", "error");
@@ -264,9 +253,7 @@ export async function handleEmailAuth(event) {
 
         showToast("✅ Signed in successfully!", "success");
         closeLoginModal();
-        closeCreateAccountModal();
         restorePendingDraft();
-
     } catch (error) {
         console.error("Email sign-in error:", error);
         const errMsg = handleAuthError(error);
@@ -282,11 +269,15 @@ export async function handleEmailAuth(event) {
 export async function handleEmailSignUp(event) {
     if (event) event.preventDefault();
 
-    const submitBtn = event?.submitter || document.getElementById('signUpSubmitBtn') || event?.target?.querySelector('button[type="submit"]');
+    const form = event?.target?.closest('form') || event?.target;
+    const submitBtn = event?.submitter || document.getElementById('signUpSubmitBtn') || form?.querySelector('button[type="submit"]');
     if (submitBtn?.disabled) return;
 
-    const email = (document.getElementById('authEmail')?.value || document.getElementById('signUpEmail')?.value)?.trim();
-    const password = document.getElementById('authPassword')?.value || document.getElementById('signUpPassword')?.value;
+    const emailInput = form?.querySelector('input[type="email"]') || document.getElementById('signUpEmail') || document.getElementById('authEmail');
+    const passwordInput = form?.querySelector('input[type="password"]') || document.getElementById('signUpPassword') || document.getElementById('authPassword');
+
+    const email = emailInput?.value?.trim();
+    const password = passwordInput?.value;
 
     if (!email || !password) {
         showToast("Please enter both email and password.", "error");
@@ -313,9 +304,7 @@ export async function handleEmailSignUp(event) {
         await signOut(auth);
 
         showToast("🎉 Account created! A verification link has been sent to your email.", "success");
-
         closeLoginModal();
-        closeCreateAccountModal();
     } catch (error) {
         console.error("Email sign-up error:", error);
         const errMsg = handleAuthError(error);
@@ -395,8 +384,7 @@ export function updateUIForAuthState(userParam = null) {
     }
 }
 
-// ====================== MODAL CONTROL HELPERS ======================
-
+// ====================== MODAL CONTROLS ======================
 export function showAuthModal() {
     const mainAuthModal = document.getElementById('authModal');
     const createModal = document.getElementById('createAccountModal');
@@ -424,15 +412,9 @@ export function closeLoginModal() {
     });
 }
 
-export function closeCreateAccountModal() {
-    closeLoginModal();
-}
+export function closeCreateAccountModal() { closeLoginModal(); }
+export function hideAuthModal() { closeLoginModal(); }
 
-export function hideAuthModal() {
-    closeLoginModal();
-}
-
-// Verification Modal Helpers
 export function openVerificationModal() {
     if (!requireAuth("Please sign in to complete citizen verification.")) return;
     const modal = document.getElementById('verificationModal');
@@ -450,9 +432,6 @@ export function closeVerificationModal() {
     }
 }
 
-/**
- * Safely attach event listeners without throwing when element is null or dataset is missing.
- */
 function addSingleEventListener(element, event, handler) {
     if (!element || !element.dataset) return;
     const key = `bound_${event}`;
@@ -465,7 +444,7 @@ function addSingleEventListener(element, event, handler) {
 export function toggleProfileMenu(e) {
     if (e) {
         e.preventDefault();
-        e.stopPropagation(); // Prevents document click from immediately closing it
+        e.stopPropagation();
     }
     const profileMenu = document.getElementById('profile-menu') || document.getElementById('user-dropdown');
     if (profileMenu) {
@@ -473,15 +452,14 @@ export function toggleProfileMenu(e) {
     }
 }
 
-// ====================== BIND HEADER & AUTH EVENTS ======================
+// ====================== EVENT BINDINGS ======================
 export function bindHeaderEvents() {
-    // ---- Auth event delegation (Chrome-safe) ----
+    // Single delegated event listener hierarchy
     if (!window.__authDelegationBound) {
         document.addEventListener('click', (e) => {
             const signUpBtn = e.target.closest('#emailSignUpBtn');
             if (signUpBtn) {
                 e.preventDefault();
-                console.log('[auth] Create Account clicked');
                 handleEmailSignUp(e);
                 return;
             }
@@ -498,47 +476,64 @@ export function bindHeaderEvents() {
             if (logoutBtn) {
                 e.preventDefault();
                 logout();
+                return;
+            }
+
+            const guestBtn = e.target.closest('#guest-action-btn, #signin-btn-mobile, [data-action="open-auth-modal"]');
+            if (guestBtn) {
+                e.preventDefault();
+                showAuthModal();
+                return;
+            }
+
+            const profileBtn = e.target.closest('#profile-btn, #profile-btn-mobile, #mobile-profile-nav-btn, [data-action="open-profile"], [data-action="toggle-profile-menu"]');
+            if (profileBtn) {
+                e.preventDefault();
+                if (typeof window.openProfile === 'function') {
+                    window.openProfile();
+                } else {
+                    const modal = document.getElementById('profileModal');
+                    if (modal) modal.classList.remove('hidden');
+                }
+                return;
+            }
+
+            const closeBtn = e.target.closest('[data-action="close-auth-modal"], .close-modal-btn');
+            if (closeBtn) {
+                e.preventDefault();
+                closeLoginModal();
+                return;
+            }
+
+            const verifyTriggerBtn = e.target.closest('#request-verification-btn');
+            if (verifyTriggerBtn) {
+                e.preventDefault();
+                openVerificationModal();
+                return;
+            }
+
+            const toggleBtn = e.target.closest('[data-action="toggle-password"]');
+            if (toggleBtn) {
+                e.preventDefault();
+                const targetId = toggleBtn.getAttribute('data-target');
+                if (targetId) togglePasswordVisibility(targetId, toggleBtn);
             }
         });
 
         document.addEventListener('submit', (e) => {
-            if (e.target?.id === 'emailAuthForm') {
+            if (e.target?.matches('#emailAuthForm, #signInForm, #loginForm')) {
                 e.preventDefault();
-                console.log('[auth] Sign In submit');
                 handleEmailAuth(e);
+            } else if (e.target?.matches('#signUpForm, #createAccountForm')) {
+                e.preventDefault();
+                handleEmailSignUp(e);
             }
         });
 
         window.__authDelegationBound = true;
-        console.log('[auth] Delegation listeners attached');
     }
 
-    // 1. Desktop & Mobile Sign In Buttons
-    const guestBtns = document.querySelectorAll('#guest-action-btn, #signin-btn-mobile, [data-action="open-auth-modal"]');
-    guestBtns.forEach(btn => {
-        addSingleEventListener(btn, 'click', (e) => {
-            e.preventDefault();
-            showAuthModal();
-        });
-    });
-
-    // 2. Profile Button — open the actual profile modal
-    const profileBtns = document.querySelectorAll(
-        '#profile-btn, #profile-btn-mobile, #mobile-profile-nav-btn, [data-action="open-profile"], [data-action="toggle-profile-menu"]'
-    );
-    profileBtns.forEach(btn => {
-        addSingleEventListener(btn, 'click', (e) => {
-            e.preventDefault();
-            if (typeof window.openProfile === 'function') {
-                window.openProfile();
-            } else {
-                const modal = document.getElementById('profileModal');
-                if (modal) modal.classList.remove('hidden');
-            }
-        });
-    });
-
-    // 3. Global Dropdown Close Handler (Click outside)
+    // Global Dropdown Outside Click Listener
     if (!window.__dropdownClickListenerBound) {
         document.addEventListener('click', (e) => {
             const isDropdownClick = e.target.closest('#profile-btn') || 
@@ -553,89 +548,6 @@ export function bindHeaderEvents() {
             }
         });
         window.__dropdownClickListenerBound = true;
-    }
-
-    // 4. Google Sign-In (Deduplicated direct bindings)
-    const rawGoogleBtns = document.querySelectorAll('#googleAuthBtn, #googleSignInBtn, [data-action="google-login"]');
-    const googleBtns = Array.from(new Set(rawGoogleBtns));
-
-    googleBtns.forEach(btn => {
-        addSingleEventListener(btn, 'click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            googleLogin(e);
-        });
-    });
-    
-    // 5. Email Auth Forms — match the REAL HTML IDs
-    const emailAuthForm = document.getElementById('emailAuthForm');
-    if (emailAuthForm) {
-        addSingleEventListener(emailAuthForm, 'submit', (e) => {
-            e.preventDefault();
-            handleEmailAuth(e);
-        });
-    }
-
-    // Create Account is type="button", so it needs its own click handler
-    const emailSignUpBtn = document.getElementById('emailSignUpBtn');
-    if (emailSignUpBtn) {
-        addSingleEventListener(emailSignUpBtn, 'click', (e) => {
-            e.preventDefault();
-            handleEmailSignUp(e);
-        });
-    }
-
-    // Also keep legacy form IDs just in case
-    const signInForm = document.getElementById('signInForm') || document.getElementById('loginForm');
-    if (signInForm) {
-        addSingleEventListener(signInForm, 'submit', (e) => {
-            e.preventDefault();
-            handleEmailAuth(e);
-        });
-    }
-    const signUpForm = document.getElementById('signUpForm') || document.getElementById('createAccountForm');
-    if (signUpForm) {
-        addSingleEventListener(signUpForm, 'submit', (e) => {
-            e.preventDefault();
-            handleEmailSignUp(e);
-        });
-    }
-
-    // 6. Modal Close Triggers
-    const closeBtns = document.querySelectorAll('[data-action="close-auth-modal"], .close-modal-btn');
-    closeBtns.forEach(btn => {
-        addSingleEventListener(btn, 'click', (e) => {
-            e.preventDefault();
-            closeLoginModal();
-        });
-    });
-
-    // 7. Password Visibility Toggles
-    const toggleBtns = document.querySelectorAll('[data-action="toggle-password"]');
-    toggleBtns.forEach(btn => {
-        addSingleEventListener(btn, 'click', (e) => {
-            e.preventDefault();
-            const targetId = btn.getAttribute('data-target');
-            if (targetId) togglePasswordVisibility(targetId, btn);
-        });
-    });
-
-    // 8. Logout — cover common IDs
-    const logoutBtn = document.getElementById('logoutBtn') || document.getElementById('logout-btn');
-    if (logoutBtn) {
-        addSingleEventListener(logoutBtn, 'click', (e) => {
-            e.preventDefault();
-            logout();
-        });
-    }
-
-    // 9. Verification Triggers
-    const verifyTriggerBtn = document.getElementById('request-verification-btn');
-    if (verifyTriggerBtn) {
-        addSingleEventListener(verifyTriggerBtn, 'click', (e) => {
-            e.preventDefault();
-            openVerificationModal();
-        });
     }
 }
 
