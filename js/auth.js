@@ -159,22 +159,22 @@ function handleAuthError(error) {
 export async function googleLogin(event) {
     if (event) {
         event.preventDefault();
-        event.stopPropagation(); // Prevents event bubbling double-triggers
+        event.stopPropagation();
     }
 
-    // Strict lock to prevent duplicate popup triggers
+    // STRICT GUARD: Block double executions instantly
     if (authActionInProgress) {
-        console.warn("Auth action already in progress. Ignoring duplicate click.");
+        console.warn("⚠️ Auth action already in progress. Ignoring duplicate trigger.");
         return;
     }
+
+    authActionInProgress = true;
 
     const btn = event?.currentTarget || document.getElementById('googleAuthBtn') || document.getElementById('googleSignInBtn');
     if (btn) {
         btn.disabled = true;
         btn.classList.add('opacity-50', 'cursor-not-allowed');
     }
-
-    authActionInProgress = true;
 
     try {
         provider.setCustomParameters({ prompt: 'select_account' });
@@ -188,7 +188,7 @@ export async function googleLogin(event) {
             return;
         }
 
-        // Execute popup
+        // Execute popup cleanly
         const result = await signInWithPopup(auth, provider);
 
         if (result && result.user) {
@@ -198,15 +198,13 @@ export async function googleLogin(event) {
             restorePendingDraft();
         }
     } catch (error) {
-        // If the user genuinely closed the window, fail quietly
-        if (error.code === 'auth/popup-closed-by-user') {
-            console.info("User closed Google login popup.");
+        if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
+            console.info("User closed Google login popup or request was cancelled.");
             return;
         }
 
-        if (error.code === 'auth/popup-blocked' || error.code === 'auth/cancelled-popup-request') {
-            console.warn("Popup blocked or cancelled:", error.code);
-            showToast("⚠️ Sign-in popup was blocked or interrupted. Please try again.", "warning");
+        if (error.code === 'auth/popup-blocked') {
+            showToast("⚠️ Sign-in popup was blocked by browser. Please allow popups.", "warning");
             return;
         }
 
@@ -214,16 +212,16 @@ export async function googleLogin(event) {
         const errMsg = handleAuthError(error);
         if (errMsg) showToast(errMsg, "error");
     } finally {
-        // Delay releasing the lock slightly to prevent rapid double-click race conditions
         setTimeout(() => {
             authActionInProgress = false;
             if (btn) {
                 btn.disabled = false;
                 btn.classList.remove('opacity-50', 'cursor-not-allowed');
             }
-        }, 500);
+        }, 600);
     }
 }
+
 export async function handleEmailAuth(event) {
     if (event) event.preventDefault();
 
@@ -464,6 +462,17 @@ function addSingleEventListener(element, event, handler) {
     element.dataset[key] = "true";
 }
 
+export function toggleProfileMenu(e) {
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation(); // Prevents document click from immediately closing it
+    }
+    const profileMenu = document.getElementById('profile-menu') || document.getElementById('user-dropdown');
+    if (profileMenu) {
+        profileMenu.classList.toggle('hidden');
+    }
+}
+
 // ====================== BIND HEADER & AUTH EVENTS ======================
 export function bindHeaderEvents() {
     // 1. Desktop & Mobile Sign In Buttons
@@ -476,21 +485,21 @@ export function bindHeaderEvents() {
     });
 
     // 2. Profile Button & Dropdown Toggle
-    const profileBtn = document.getElementById('profile-btn') || document.querySelector('[data-action="toggle-profile-menu"]');
-    if (profileBtn) {
-        addSingleEventListener(profileBtn, 'click', (e) => {
-            e.preventDefault();
-            const profileMenu = document.getElementById('profile-menu') || document.getElementById('user-dropdown');
-            if (profileMenu) {
-                profileMenu.classList.toggle('hidden');
-            }
+    const profileBtns = document.querySelectorAll('#profile-btn, [data-action="toggle-profile-menu"]');
+    profileBtns.forEach(btn => {
+        addSingleEventListener(btn, 'click', (e) => {
+            toggleProfileMenu(e);
         });
-    }
+    });
 
     // 3. Global Dropdown Close Handler (Click outside)
     if (!window.__dropdownClickListenerBound) {
         document.addEventListener('click', (e) => {
-            const isDropdownClick = e.target.closest('#profile-btn') || e.target.closest('#profile-menu') || e.target.closest('.dropdown-container');
+            const isDropdownClick = e.target.closest('#profile-btn') || 
+                                    e.target.closest('[data-action="toggle-profile-menu"]') || 
+                                    e.target.closest('#profile-menu') || 
+                                    e.target.closest('#user-dropdown') || 
+                                    e.target.closest('.dropdown-container');
             if (!isDropdownClick) {
                 document.querySelectorAll('#profile-menu, #user-dropdown, .dropdown-menu').forEach(el => {
                     el.classList.add('hidden');
@@ -500,9 +509,9 @@ export function bindHeaderEvents() {
         window.__dropdownClickListenerBound = true;
     }
 
-  // 4. Google Sign-In (Deduplicated)
+    // 4. Google Sign-In (Deduplicated)
     const rawGoogleBtns = document.querySelectorAll('#googleAuthBtn, #googleSignInBtn, [data-action="google-login"]');
-    const googleBtns = Array.from(new Set(rawGoogleBtns)); // Removes duplicate element references
+    const googleBtns = Array.from(new Set(rawGoogleBtns));
 
     googleBtns.forEach(btn => {
         addSingleEventListener(btn, 'click', (e) => {
@@ -570,7 +579,6 @@ export function bindHeaderEvents() {
 // ====================== AUTH INITIALIZATION ======================
 export function initAuth() {
     return new Promise((resolve) => {
-        // Handle redirect result for mobile or state-partitioned logins
         getRedirectResult(auth)
             .then((result) => {
                 if (result?.user) {
@@ -611,14 +619,11 @@ export function initAuth() {
     });
 }
 
-// Export globals to window for inline onclick attributes
+// Export globals to window
 window.showAuthModal = showAuthModal;
 window.closeLoginModal = closeLoginModal;
 window.logout = logout;
 window.googleLogin = googleLogin;
 window.openVerificationModal = openVerificationModal;
 window.closeVerificationModal = closeVerificationModal;
-window.toggleProfileMenu = function() {
-    const profileMenu = document.getElementById('profile-menu') || document.getElementById('user-dropdown');
-    if (profileMenu) profileMenu.classList.toggle('hidden');
-};
+window.toggleProfileMenu = toggleProfileMenu;
