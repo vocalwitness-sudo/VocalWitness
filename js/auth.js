@@ -452,12 +452,6 @@ export function toggleProfileMenu(e) {
 export function bindHeaderEvents() {
     if (!window.__authDelegationBound) {
         document.addEventListener('click', (e) => {
-            const signUpBtn = e.target.closest('#emailSignUpBtn');
-            if (signUpBtn) {
-                e.preventDefault();
-                handleEmailSignUp(e);
-                return;
-            }
 
             const googleBtn = e.target.closest('#googleAuthBtn, #googleSignInBtn, [data-action="google-login"]');
             if (googleBtn) {
