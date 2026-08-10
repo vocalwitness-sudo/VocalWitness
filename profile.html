@@ -6,6 +6,9 @@
     <title data-i18n="myProfileTitle">My Profile | VocalWitness</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
+    
+    <!-- PDF Export Dependency -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body class="min-h-screen bg-[#0a0f1c] text-zinc-200">
 
@@ -19,7 +22,7 @@
             
             <div class="flex items-center gap-4">
                 <a href="index.html" class="text-emerald-400 hover:text-emerald-300" data-i18n="backToSquare">← Back to Square</a>
-                <button onclick="toggleDarkMode()" class="p-3 rounded-2xl hover:bg-zinc-800 transition-colors">
+                <button onclick="toggleDarkMode()" class="p-3 rounded-2xl hover:bg-zinc-800 transition-colors" title="Toggle Theme">
                     🌙
                 </button>
             </div>
@@ -29,6 +32,7 @@
     <!-- Main Page Content -->
     <main class="max-w-4xl mx-auto p-6">
         <div class="glass rounded-3xl overflow-hidden min-h-[600px] flex flex-col">
+            <!-- Dynamic profile mount point -->
             <div id="mainProfileContent" class="flex-1 p-8 overflow-y-auto custom-scroll">
                 <div class="text-center py-20 text-zinc-400" data-i18n="loadingProfile">Loading your profile...</div>
             </div>
@@ -52,6 +56,11 @@
                 <div>
                     <label class="text-xs text-zinc-400" data-i18n="username">Username</label>
                     <input type="text" id="editUsername" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div>
+                    <label class="text-xs text-zinc-400" data-i18n="region">Region / Location</label>
+                    <input type="text" id="editRegion" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white focus:outline-none focus:border-emerald-500" placeholder="e.g. West Africa">
                 </div>
 
                 <div>
@@ -100,7 +109,7 @@
                         <div class="font-medium text-white" data-i18n="2faLabel">Two-Factor Auth (2FA)</div>
                         <div class="text-xs text-zinc-400" data-i18n="2faSub">Require phone verification on sign-in</div>
                     </div>
-                    <input type="checkbox" id="toggle2FA" onchange="handle2FAToggle(event)" class="w-5 h-5 accent-emerald-500 rounded cursor-pointer">
+                    <input type="checkbox" id="toggle2FA" class="w-5 h-5 accent-emerald-500 rounded cursor-pointer">
                 </div>
             </div>
 
@@ -110,7 +119,7 @@
                 
                 <div class="bg-zinc-900/60 p-4 rounded-2xl border border-zinc-800 space-y-2">
                     <label class="text-xs text-zinc-400 block" data-i18n="defaultDoorLabel">Default Entrance Door</label>
-                    <select id="defaultDoorSelect" onchange="updateDefaultDoor(this.value)" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+                    <select id="defaultDoorSelect" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
                         <option value="public_square" data-i18n="doorPublicSquare">Public Square</option>
                         <option value="citizen_talk" data-i18n="doorCitizenTalk">Citizen Talk</option>
                         <option value="witness_voice" data-i18n="doorWitnessVoice">Witness Voice</option>
@@ -125,7 +134,7 @@
                 <div class="bg-zinc-900/60 p-4 rounded-2xl border border-zinc-800/80 flex justify-between items-center">
                     <div>
                         <div class="font-medium text-white" data-i18n="exportLabel">Export Profile Record</div>
-                        <div class="text-xs text-zinc-400" data-i18n="exportSub">Download encrypted identity summary</div>
+                        <div class="text-xs text-zinc-400" data-i18n="exportSub">Download identity summary PDF</div>
                     </div>
                     <button onclick="exportUserDataPDF()" class="px-3 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 text-xs font-semibold rounded-xl transition" data-i18n="exportBtn">
                         Download PDF
@@ -135,120 +144,16 @@
         </div>
     </div>
 
-    <!-- User Profile & Tier Progression Card -->
-<div id="vw-profile-card" class="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-lg w-full shadow-2xl relative overflow-hidden text-slate-100">
-    
-    <!-- Background Ambient Glow -->
-    <div id="profile-glow" class="absolute -top-16 -left-16 w-44 h-44 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
-
-    <!-- Header / User Info -->
-    <div class="flex items-center justify-between pb-5 border-b border-slate-800/80">
-        <div class="flex items-center gap-3.5">
-            <!-- Avatar Placeholder / Icon -->
-            <div class="relative">
-                <div id="profile-avatar-badge" class="w-12 h-12 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center text-xl font-bold text-white shadow-inner">
-                    👤
-                </div>
-                <!-- Verification Status Dot -->
-                <span id="profile-status-dot" class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-slate-500 border-2 border-slate-900 rounded-full" title="Unverified"></span>
-            </div>
-
-            <div>
-                <h3 id="profile-display-name" class="font-bold text-base text-white leading-tight">Anonymous Witness</h3>
-                <p id="profile-email-phone" class="text-xs text-slate-400">Loading user profile...</p>
-            </div>
-        </div>
-
-        <!-- Tier Badge UI Target -->
-        <span id="profile-tier-badge" class="px-3 py-1 rounded-full text-xs font-bold shadow-md transition-all flex items-center gap-1.5 bg-slate-800 text-slate-300">
-            👤 Citizen
-        </span>
-    </div>
-
-    <!-- Verification Status Matrix -->
-    <div class="my-5 grid grid-cols-2 gap-2 text-xs">
-        <div id="v-status-phone" class="flex items-center justify-between bg-slate-950/60 border border-slate-800 px-3 py-2 rounded-xl">
-            <span class="text-slate-400 flex items-center gap-1.5">
-                <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
-                Phone Verification
-            </span>
-            <span id="phone-v-tag" class="text-[11px] font-semibold text-rose-400 bg-rose-950/50 px-2 py-0.5 rounded border border-rose-900/50">Unverified</span>
-        </div>
-
-        <div id="v-status-zk" class="flex items-center justify-between bg-slate-950/60 border border-slate-800 px-3 py-2 rounded-xl">
-            <span class="text-slate-400 flex items-center gap-1.5">
-                <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                ZK Identity Proof
-            </span>
-            <span id="zk-v-tag" class="text-[11px] font-semibold text-slate-400 bg-slate-800 px-2 py-0.5 rounded">Pending</span>
-        </div>
-    </div>
-
-    <!-- Tier Reputation & Progression Section -->
-    <div class="bg-slate-950/80 border border-slate-800/90 rounded-xl p-4 mb-5 space-y-3">
-        <div class="flex justify-between items-center text-xs font-semibold">
-            <span class="text-slate-300 flex items-center gap-1">
-                <span>Reputation Score</span>
-                <span class="text-[10px] text-slate-500 font-normal">(REP)</span>
-            </span>
-            <span id="profile-rep-score" class="text-blue-400 font-mono text-sm">0 REP</span>
-        </div>
-
-        <!-- Progress Bar towards Next Level -->
-        <div class="space-y-1">
-            <div class="flex justify-between text-[11px] text-slate-400">
-                <span id="profile-current-rank">Current: Citizen</span>
-                <span id="profile-next-rank">Next: Verified Witness (30 REP)</span>
-            </div>
-            
-            <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-800">
-                <div id="profile-progression-bar" class="h-full bg-gradient-to-r from-blue-600 to-indigo-500 rounded-full transition-all duration-500" style="width: 0%;"></div>
-            </div>
-        </div>
-
-        <p id="profile-level-benefits" class="text-[11px] text-slate-400 italic pt-1 border-t border-slate-900">
-            Benefits: Read public feeds, draft local testimonies.
-        </p>
-    </div>
-
-    <!-- Dynamic Action CTA -->
-    <div id="profile-cta-container">
-        <button id="profile-upgrade-phone-btn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-xl text-xs transition shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
-            <span>🛡️ Verify Phone Number to Unlock Citizen Circle</span>
-        </button>
-    </div>
-</div>
-    
-
     <!-- Application Initialization Scripts -->
     <script type="module">
-        import { initProfile } from './js/profile.js';
         import { initLanguage } from './js/i18n.js';
         import { initDarkMode } from './js/utils.js';
+        import './js/profile.js';
 
         document.addEventListener('DOMContentLoaded', () => {
-            initProfile();
             initLanguage();
             initDarkMode();
         });
-    </script>
-
-    <script>
-        window.openSettings = () => {
-            document.getElementById('settingsModal')?.classList.remove('hidden');
-        };
-
-        window.closeSettings = () => {
-            document.getElementById('settingsModal')?.classList.add('hidden');
-        };
-
-        window.openEditProfile = () => {
-            document.getElementById('editProfileModal')?.classList.remove('hidden');
-        };
-
-        window.closeEditProfile = () => {
-            document.getElementById('editProfileModal')?.classList.add('hidden');
-        };
 
         window.toggleDarkMode = () => {
             const current = document.documentElement.getAttribute('data-theme') || 'dark';
