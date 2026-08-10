@@ -80,6 +80,7 @@ async function createOrUpdateUser(user) {
         console.error("User document update error:", e);
     }
 }
+
 export function updateVerificationUI(isVerified = false) {
     const statusEl = document.getElementById('verification-status');
     const verifyBtn = document.getElementById('request-verification-btn');
@@ -231,6 +232,62 @@ export async function googleLogin(event) {
     }
 }
 
+export async function handleEmailAuth(event) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
+    if (authActionInProgress) return;
+
+    const form = event?.target?.closest('form') || event?.target;
+    const submitBtn = event?.submitter || document.getElementById('signInSubmitBtn') || form?.querySelector('button[type="submit"]');
+
+    const emailInput = form?.querySelector('input[type="email"]') || document.getElementById('signInEmail') || document.getElementById('authEmail');
+    const passwordInput = form?.querySelector('input[type="password"]') || document.getElementById('signInPassword') || document.getElementById('authPassword');
+
+    const email = emailInput?.value?.trim();
+    const password = passwordInput?.value;
+
+    if (!email || !password) {
+        showToast("Please enter both email and password.", "error");
+        return;
+    }
+
+    authActionInProgress = true;
+    if (submitBtn && submitBtn.classList) {
+        submitBtn.disabled = true;
+        submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    }
+
+    try {
+        savePendingDraft();
+
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        if (!user.emailVerified) {
+            showToast("⚠️ Email unverified. Please check your inbox for the verification link.", "warning");
+            await signOut(auth);
+            return;
+        }
+
+        showToast("✅ Signed in successfully!", "success");
+        closeLoginModal();
+        restorePendingDraft();
+    } catch (error) {
+        console.error("Email sign-in error:", error);
+        const errMsg = handleAuthError(error);
+        if (errMsg) showToast(errMsg, "error");
+    } finally {
+        authActionInProgress = false;
+        if (submitBtn && submitBtn.classList) {
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+    }
+}
+
 export async function handleEmailSignUp(event) {
     if (event) {
         event.preventDefault();
@@ -295,6 +352,7 @@ export async function handleEmailSignUp(event) {
         }
     }
 }
+
 export async function logout() {
     try {
         clearProfileCache();
