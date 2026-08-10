@@ -808,33 +808,100 @@
             });
         }
         
-        // Modal Utilities
-        function showAuthModal() { $('loginModal')?.classList.remove('hidden'); }
-        function closeLoginModal() { $('loginModal')?.classList.add('hidden'); }
-        function openProfile() { $('profileModal')?.classList.remove('hidden'); }
-        function closeProfile() { $('profileModal')?.classList.add('hidden'); }
-        function closeEditProfile() { $('editProfileModal')?.classList.add('hidden'); }
+    <!-- LOGIN / AUTH MODAL -->
+<div id="loginModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[10000] p-4">
+    <div class="glass rounded-3xl p-6 sm:p-8 max-w-md w-full border border-zinc-700/80 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+        <button onclick="closeLoginModal()" class="absolute top-5 right-5 text-zinc-400 hover:text-white text-2xl transition">✕</button>
 
-        // Support Modal Toggle
-        const supportModal = $('supportModal');
-        function openSupportModal() {
-            supportModal?.classList.remove('hidden');
-            supportModal?.classList.add('flex');
-        }
-        function closeSupportModal() {
-            supportModal?.classList.add('hidden');
-            supportModal?.classList.remove('flex');
-        }
-        $('closeSupportModal')?.addEventListener('click', closeSupportModal);
-        supportModal?.addEventListener('click', (e) => {
-            if (e.target === supportModal) closeSupportModal();
-        });
-        document.addEventListener('keydown', (e) => {
-            if (e.key === "Escape" && supportModal && !supportModal.classList.contains('hidden')) {
-                closeSupportModal();
-            }
-        });
+        <div class="text-center mb-6">
+            <h2 class="text-2xl font-bold text-white">Welcome Back</h2>
+            <p class="text-xs text-zinc-400 mt-1">Sign in to access your account and contributions.</p>
+        </div>
 
+        <div class="space-y-4">
+            <button id="googleLoginBtn" class="w-full py-3.5 px-4 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center justify-center gap-3 shadow-md active:scale-[0.98]">
+                <img src="https://www.google.com/favicon.ico" class="w-5 h-5" alt="Google">
+                <span class="text-sm">Continue with Google</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<!-- VIEW PROFILE MODAL -->
+<div id="profileModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[10000] p-4">
+    <div class="glass rounded-3xl p-6 sm:p-8 max-w-md w-full border border-zinc-700/80 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+        <button onclick="closeProfile()" class="absolute top-5 right-5 text-zinc-400 hover:text-white text-2xl transition">✕</button>
+
+        <div class="text-center mb-6">
+            <div class="w-20 h-20 rounded-full bg-zinc-800 mx-auto mb-3 flex items-center justify-center border border-zinc-700 overflow-hidden">
+                <span id="profileAvatarText" class="text-2xl font-bold text-emerald-400">👤</span>
+            </div>
+            <h2 id="profileDisplayName" class="text-xl font-bold text-white">User Profile</h2>
+            <p id="profileEmail" class="text-xs text-zinc-400 mt-0.5">user@example.com</p>
+        </div>
+
+        <div class="space-y-3">
+            <button onclick="closeProfile(); $('editProfileModal')?.classList.remove('hidden');" class="w-full py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-semibold transition border border-zinc-700">
+                Edit Profile
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<!-- EDIT PROFILE MODAL -->
+<div id="editProfileModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[10000] p-4">
+    <div class="glass rounded-3xl p-6 sm:p-8 max-w-md w-full border border-zinc-700/80 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+        <button onclick="closeEditProfile()" class="absolute top-5 right-5 text-zinc-400 hover:text-white text-2xl transition">✕</button>
+
+        <h2 class="text-xl font-bold text-white mb-4">Edit Profile</h2>
+
+        <form id="editProfileForm" class="space-y-4">
+            <div>
+                <label class="block text-xs font-medium text-zinc-400 mb-1">Display Name</label>
+                <input type="text" id="editDisplayName" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500" placeholder="Your name">
+            </div>
+
+            <div class="flex gap-2 pt-2">
+                <button type="button" onclick="closeEditProfile()" class="w-1/2 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl text-xs font-semibold transition">
+                    Cancel
+                </button>
+                <button type="submit" class="w-1/2 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold transition">
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<!-- SUPPORT / DONATION MODAL -->
+<div id="supportModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[10000] p-4">
+    <div class="glass rounded-3xl p-6 sm:p-8 max-w-md w-full border border-zinc-700/80 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+        <button id="closeSupportModal" class="absolute top-5 right-5 text-zinc-400 hover:text-white text-2xl transition">✕</button>
+
+        <div class="text-center mb-6">
+            <div class="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center mx-auto mb-3 border border-emerald-500/30 text-emerald-400 text-xl">
+                ☕
+            </div>
+            <h2 class="text-2xl font-bold text-white">Support the Project</h2>
+            <p class="text-xs text-zinc-400 mt-1">Choose your preferred payment method to support maintenance and hosting costs.</p>
+        </div>
+
+        <div class="space-y-3">
+            <button id="paystackBtn" class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-2xl transition text-sm flex items-center justify-center gap-2">
+                <span>💳</span>
+                <span>Pay with Card / Paystack</span>
+            </button>
+
+            <button id="cryptoBtn" class="w-full py-3 px-4 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-200 font-semibold rounded-2xl transition text-sm flex items-center justify-center gap-2">
+                <span>₿</span>
+                <span>Pay with Crypto (NOWPayments)</span>
+            </button>
+        </div>
+    </div>
+</div>
         // Tier selection logic
         document.querySelectorAll('.support-tier-btn').forEach(btn => {
             btn.addEventListener('click', () => {
