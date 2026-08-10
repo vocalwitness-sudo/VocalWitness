@@ -56,7 +56,6 @@ async function createOrUpdateUser(user) {
         } else {
             const existingData = snap.data() || {};
             
-            // Only update active timestamp and fallback empty profile details
             await setDoc(userRef, {
                 email: safeEmail || existingData.email || "",
                 displayName: safeDisplayName || existingData.displayName || "Anonymous Witness",
@@ -118,7 +117,7 @@ export function restorePendingDraft() {
             showToast("✅ Your testimony draft has been restored!", "success");
             sessionStorage.removeItem('vocal_pending_draft');
             clearInterval(interval);
-        } else if (++attempts > 20) { // Extended to 4s polling window
+        } else if (++attempts > 20) {
             clearInterval(interval);
         }
     }, 200);
@@ -170,14 +169,21 @@ export async function googleLogin(event) {
 
     authActionInProgress = true;
 
-    const btn = event?.currentTarget || document.getElementById('googleAuthBtn') || document.getElementById('googleSignInBtn');
-    if (btn) {
+    // SAFE DOM TARGETING: Fall back to data-action selector if ID is missing
+    const btn = event?.currentTarget || 
+                document.getElementById('googleAuthBtn') || 
+                document.getElementById('googleSignInBtn') || 
+                document.querySelector('[data-action="google-login"]');
+
+    if (btn && btn.classList) {
         btn.disabled = true;
         btn.classList.add('opacity-50', 'cursor-not-allowed');
     }
 
     try {
-        provider.setCustomParameters({ prompt: 'select_account' });
+        if (provider && typeof provider.setCustomParameters === 'function') {
+            provider.setCustomParameters({ prompt: 'select_account' });
+        }
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.matchMedia('(display-mode: standalone)').matches;
 
         try { savePendingDraft(); } catch (e) {}
@@ -207,7 +213,7 @@ export async function googleLogin(event) {
     } finally {
         setTimeout(() => {
             authActionInProgress = false;
-            if (btn) {
+            if (btn && btn.classList) {
                 btn.disabled = false;
                 btn.classList.remove('opacity-50', 'cursor-not-allowed');
             }
@@ -222,7 +228,6 @@ export async function handleEmailAuth(event) {
     const submitBtn = event?.submitter || form?.querySelector('button[type="submit"]') || document.getElementById('signInSubmitBtn');
     if (submitBtn?.disabled) return;
 
-    // Target inputs relative to active form target first to avoid modal collision
     const emailInput = form?.querySelector('input[type="email"]') || document.getElementById('signInEmail') || document.getElementById('authEmail');
     const passwordInput = form?.querySelector('input[type="password"]') || document.getElementById('signInPassword') || document.getElementById('authPassword');
 
@@ -234,7 +239,7 @@ export async function handleEmailAuth(event) {
         return;
     }
 
-    if (submitBtn) {
+    if (submitBtn && submitBtn.classList) {
         submitBtn.disabled = true;
         submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
     }
@@ -259,7 +264,7 @@ export async function handleEmailAuth(event) {
         const errMsg = handleAuthError(error);
         if (errMsg) showToast(errMsg, "error");
     } finally {
-        if (submitBtn) {
+        if (submitBtn && submitBtn.classList) {
             submitBtn.disabled = false;
             submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
         }
@@ -289,7 +294,7 @@ export async function handleEmailSignUp(event) {
         return;
     }
 
-    if (submitBtn) {
+    if (submitBtn && submitBtn.classList) {
         submitBtn.disabled = true;
         submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
     }
@@ -310,7 +315,7 @@ export async function handleEmailSignUp(event) {
         const errMsg = handleAuthError(error);
         if (errMsg) showToast(errMsg, "error");
     } finally {
-        if (submitBtn) {
+        if (submitBtn && submitBtn.classList) {
             submitBtn.disabled = false;
             submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
         }
@@ -432,15 +437,6 @@ export function closeVerificationModal() {
     }
 }
 
-function addSingleEventListener(element, event, handler) {
-    if (!element || !element.dataset) return;
-    const key = `bound_${event}`;
-    if (element.dataset[key]) return;
-
-    element.addEventListener(event, handler);
-    element.dataset[key] = "true";
-}
-
 export function toggleProfileMenu(e) {
     if (e) {
         e.preventDefault();
@@ -454,7 +450,6 @@ export function toggleProfileMenu(e) {
 
 // ====================== EVENT BINDINGS ======================
 export function bindHeaderEvents() {
-    // Single delegated event listener hierarchy
     if (!window.__authDelegationBound) {
         document.addEventListener('click', (e) => {
             const signUpBtn = e.target.closest('#emailSignUpBtn');
@@ -533,7 +528,6 @@ export function bindHeaderEvents() {
         window.__authDelegationBound = true;
     }
 
-    // Global Dropdown Outside Click Listener
     if (!window.__dropdownClickListenerBound) {
         document.addEventListener('click', (e) => {
             const isDropdownClick = e.target.closest('#profile-btn') || 
