@@ -43,7 +43,7 @@ service cloud.firestore {
           && request.resource.data.senderId == request.auth.uid;
     }
 
-    // ==========================================
+  // ==========================================
     // USERS COLLECTION
     // ==========================================
     match /users/{userId} {
@@ -52,19 +52,21 @@ service cloud.firestore {
       allow update: if (isOwner(userId) && isNotModifyingPrivileges()) || isAdmin();
       allow delete: if isAdmin();
 
-   // Subcollection: User Notifications
+      // Subcollection: User Notifications
       match /notifications/{notificationId} {
-        allow read, update, delete: if isOwner(userId);
+        // Allows both single document get and collection queries for the document owner
+        allow read, get, list: if isOwner(userId);
+        allow update, delete: if isOwner(userId);
         
         // Any logged-in user can send a notification to another user
         allow create: if isAuthenticated() && isValidNotification();
       }
+
       // Subcollection: User Bookmarks
       match /bookmarks/{bookmarkId} {
         allow read, write: if isOwner(userId);
       }
     }
-
     // ==========================================
     // VERIFICATION REQUESTS (DEVELOPER & PEER QUEUE)
     // ==========================================
