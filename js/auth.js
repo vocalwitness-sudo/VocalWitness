@@ -138,7 +138,7 @@ function handleAuthError(error) {
         case 'auth/cancelled-popup-request':
             return null; // Silent cancel handling
         case 'auth/popup-blocked':
-            return "Popup was blocked by browser. Redirecting to mobile sign-in...";
+            return "Popup was blocked by browser. Please allow popups for this site.";
         case 'auth/invalid-email':
             return "The email address format is invalid.";
         case 'auth/user-not-found':
@@ -159,9 +159,7 @@ function handleAuthError(error) {
 export async function googleLogin(event) {
     if (event) event.preventDefault();
 
-    if (authActionInProgress) {
-        return;
-    }
+    if (authActionInProgress) return;
 
     const btn = event?.currentTarget || document.getElementById('googleAuthBtn') || document.getElementById('googleSignInBtn');
     if (btn) {
@@ -172,25 +170,18 @@ export async function googleLogin(event) {
     authActionInProgress = true;
 
     try {
-        // Configure prompt behavior
-        provider.setCustomParameters({
-            prompt: 'select_account'
-        });
+        provider.setCustomParameters({ prompt: 'select_account' });
 
-        // Detect mobile or standalone PWA environment
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.matchMedia('(display-mode: standalone)').matches;
 
+        try { savePendingDraft(); } catch (e) {}
+
         if (isMobile) {
-            try { savePendingDraft(); } catch (e) {}
             await signInWithRedirect(auth, provider);
             return;
         }
 
-        // Execute popup immediately to preserve Firefox user activation token
-        const popupPromise = signInWithPopup(auth, provider);
-        try { savePendingDraft(); } catch (e) {}
-
-        const result = await popupPromise;
+        const result = await signInWithPopup(auth, provider);
 
         if (result && result.user) {
             showToast("✅ Signed in successfully!", "success");
@@ -199,19 +190,14 @@ export async function googleLogin(event) {
             restorePendingDraft();
         }
     } catch (error) {
-        if (
-            error.code === 'auth/popup-blocked' || 
-            error.code === 'auth/cancelled-popup-request' ||
-            error.code === 'auth/missing-initial-state'
-        ) {
-            console.warn("Popup blocked, state lost, or interrupted. Falling back to redirect...", error.code);
-            try { savePendingDraft(); } catch (e) {}
-            await signInWithRedirect(auth, provider);
+        if (error.code === 'auth/popup-closed-by-user') {
+            console.info("User closed Google login popup.");
             return;
         }
 
-        if (error.code === 'auth/popup-closed-by-user') {
-            console.info("User closed Google login popup.");
+        if (error.code === 'auth/popup-blocked' || error.code === 'auth/cancelled-popup-request') {
+            console.warn("Popup blocked by browser setting:", error.code);
+            showToast("⚠️ Popup was blocked by your browser. Please allow popups or use email sign-in.", "warning");
             return;
         }
 
