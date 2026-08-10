@@ -157,9 +157,16 @@ function handleAuthError(error) {
 }
 
 export async function googleLogin(event) {
-    if (event) event.preventDefault();
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation(); // Prevents event bubbling double-triggers
+    }
 
-    if (authActionInProgress) return;
+    // Strict lock to prevent duplicate popup triggers
+    if (authActionInProgress) {
+        console.warn("Auth action already in progress. Ignoring duplicate click.");
+        return;
+    }
 
     const btn = event?.currentTarget || document.getElementById('googleAuthBtn') || document.getElementById('googleSignInBtn');
     if (btn) {
@@ -181,6 +188,7 @@ export async function googleLogin(event) {
             return;
         }
 
+        // Execute popup
         const result = await signInWithPopup(auth, provider);
 
         if (result && result.user) {
@@ -190,14 +198,15 @@ export async function googleLogin(event) {
             restorePendingDraft();
         }
     } catch (error) {
+        // If the user genuinely closed the window, fail quietly
         if (error.code === 'auth/popup-closed-by-user') {
             console.info("User closed Google login popup.");
             return;
         }
 
         if (error.code === 'auth/popup-blocked' || error.code === 'auth/cancelled-popup-request') {
-            console.warn("Popup blocked by browser setting:", error.code);
-            showToast("⚠️ Popup was blocked by your browser. Please allow popups or use email sign-in.", "warning");
+            console.warn("Popup blocked or cancelled:", error.code);
+            showToast("⚠️ Sign-in popup was blocked or interrupted. Please try again.", "warning");
             return;
         }
 
@@ -205,14 +214,16 @@ export async function googleLogin(event) {
         const errMsg = handleAuthError(error);
         if (errMsg) showToast(errMsg, "error");
     } finally {
-        authActionInProgress = false;
-        if (btn) {
-            btn.disabled = false;
-            btn.classList.remove('opacity-50', 'cursor-not-allowed');
-        }
+        // Delay releasing the lock slightly to prevent rapid double-click race conditions
+        setTimeout(() => {
+            authActionInProgress = false;
+            if (btn) {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }, 500);
     }
 }
-
 export async function handleEmailAuth(event) {
     if (event) event.preventDefault();
 
@@ -489,15 +500,18 @@ export function bindHeaderEvents() {
         window.__dropdownClickListenerBound = true;
     }
 
-    // 4. Google Sign-In
-    const googleBtns = document.querySelectorAll('#googleAuthBtn, #googleSignInBtn, [data-action="google-login"]');
+  // 4. Google Sign-In (Deduplicated)
+    const rawGoogleBtns = document.querySelectorAll('#googleAuthBtn, #googleSignInBtn, [data-action="google-login"]');
+    const googleBtns = Array.from(new Set(rawGoogleBtns)); // Removes duplicate element references
+
     googleBtns.forEach(btn => {
         addSingleEventListener(btn, 'click', (e) => {
             e.preventDefault();
+            e.stopPropagation();
             googleLogin(e);
         });
     });
-
+    
     // 5. Email Auth Forms
     const signInForm = document.getElementById('signInForm') || document.getElementById('loginForm');
     if (signInForm) {
