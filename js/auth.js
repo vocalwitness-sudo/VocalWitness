@@ -653,3 +653,5 @@ window.googleLogin = googleLogin;
 window.openVerificationModal = openVerificationModal;
 window.closeVerificationModal = closeVerificationModal;
 window.toggleProfileMenu = toggleProfileMenu;
+window.handleEmailAuth = handleEmailAuth;
+window.handleEmailSignUp = handleEmailSignUp;
