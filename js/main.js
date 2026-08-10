@@ -148,6 +148,43 @@ window.addEventListener('click', (e) => {
     }
 });
 
+// ====================== MODAL CONTROLLERS ======================
+window.openVerificationModal = function() {
+    const modal = document.getElementById('verificationModal');
+    if (modal) modal.classList.remove('hidden');
+};
+
+window.closeVerificationModal = function() {
+    const modal = document.getElementById('verificationModal');
+    if (modal) modal.classList.add('hidden');
+};
+
+window.openQvModal = function() {
+    const modal = document.getElementById('quadratic-vote-modal');
+    if (modal) modal.classList.remove('hidden');
+};
+
+window.closeQvModal = function() {
+    const modal = document.getElementById('quadratic-vote-modal');
+    if (modal) modal.classList.add('hidden');
+};
+
+window.openSupportModal = function() {
+    const supportModal = document.getElementById('supportModal');
+    if (supportModal) {
+        supportModal.classList.remove('hidden');
+        supportModal.classList.add('flex');
+    }
+};
+
+window.closeSupportModal = function() {
+    const supportModal = document.getElementById('supportModal');
+    if (supportModal) {
+        supportModal.classList.add('hidden');
+        supportModal.classList.remove('flex');
+    }
+};
+
 // ====================== WELCOME NOTE ======================
 function showWelcomeNote() {
     if (!auth.currentUser || localStorage.getItem('hasSeenWelcome')) return;
