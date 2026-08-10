@@ -295,57 +295,6 @@ export async function handleEmailSignUp(event) {
         }
     }
 }
-export async function handleEmailSignUp(event) {
-    if (event) event.preventDefault();
-
-    const form = event?.target?.closest('form') || event?.target;
-    const submitBtn = event?.submitter || document.getElementById('signUpSubmitBtn') || form?.querySelector('button[type="submit"]');
-    if (submitBtn?.disabled) return;
-
-    const emailInput = form?.querySelector('input[type="email"]') || document.getElementById('signUpEmail') || document.getElementById('authEmail');
-    const passwordInput = form?.querySelector('input[type="password"]') || document.getElementById('signUpPassword') || document.getElementById('authPassword');
-
-    const email = emailInput?.value?.trim();
-    const password = passwordInput?.value;
-
-    if (!email || !password) {
-        showToast("Please enter both email and password.", "error");
-        return;
-    }
-
-    if (password.length < 6) {
-        showToast("Password must be at least 6 characters long.", "error");
-        return;
-    }
-
-    if (submitBtn && submitBtn.classList) {
-        submitBtn.disabled = true;
-        submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
-    }
-
-    try {
-        savePendingDraft();
-
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-
-        await sendEmailVerification(user);
-        await signOut(auth);
-
-        showToast("🎉 Account created! A verification link has been sent to your email.", "success");
-        closeLoginModal();
-    } catch (error) {
-        console.error("Email sign-up error:", error);
-        const errMsg = handleAuthError(error);
-        if (errMsg) showToast(errMsg, "error");
-    } finally {
-        if (submitBtn && submitBtn.classList) {
-            submitBtn.disabled = false;
-            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-        }
-    }
-}
-
 export async function logout() {
     try {
         clearProfileCache();
