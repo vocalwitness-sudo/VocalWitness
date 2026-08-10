@@ -1,4 +1,4 @@
-// js/profile.js - Integrated, Refactored & Fully Localized Version 
+// js/profile.js - Integrated, Refactored & Fully Localized Version
 import {  
     onAuthStateChanged,  
     sendPasswordResetEmail, 
@@ -51,6 +51,7 @@ export function initProfile() {
         } 
     }); 
 }
+window.initProfile = initProfile;
 
 // ====================== RENDER UI ====================== 
 export function renderProfileUI(userData) { 
@@ -232,7 +233,7 @@ function listenToUserProfile(userId) {
 } 
 
 // ====================== SIGN OUT HANDLER ====================== 
-window.handleSignOut = async () => { 
+export async function handleSignOut() { 
     try { 
         showToast(t("auth.signing_out", "Signing out..."), "info"); 
          
@@ -263,19 +264,21 @@ window.handleSignOut = async () => {
         console.error("Sign out error:", error); 
         showToast(t("auth.sign_out_error", "Error signing out"), "error"); 
     } 
-}; 
+} 
+window.handleSignOut = handleSignOut;
 
 // ====================== WITNESS CYCLE CONTROL ====================== 
-window.handleProfileStartCycle = async () => { 
+export async function handleProfileStartCycle() { 
     if (typeof startWitnessCycle === 'function') { 
         await startWitnessCycle(); 
     } else { 
         showToast(t("profile.cycle_module_unavailable", "Witness cycle module unavailable"), "error"); 
     } 
-}; 
+} 
+window.handleProfileStartCycle = handleProfileStartCycle;
 
 // ====================== EDIT PROFILE MODAL ====================== 
-window.openEditProfile = () => { 
+export function openEditProfile() { 
     const modal = document.getElementById('editProfileModal'); 
     if (!modal) return showToast(t("profile.edit_modal_not_found", "Edit modal not found"), "error"); 
 
@@ -291,18 +294,21 @@ window.openEditProfile = () => {
         if (bioInput) bioInput.value = currentUserData.bio || ''; 
     } 
     modal.classList.remove('hidden'); 
-}; 
+} 
+window.openEditProfile = openEditProfile;
 
-window.closeEditProfile = () => { 
+export function closeEditProfile() { 
     document.getElementById('editProfileModal')?.classList.add('hidden'); 
-}; 
+} 
+window.closeEditProfile = closeEditProfile;
 
-window.handleSaveProfile = async (event) => { 
+export async function handleSaveProfile(event) { 
     if (event) event.preventDefault(); 
-    await window.saveProfileChanges(); 
-}; 
+    await saveProfileChanges(); 
+} 
+window.handleSaveProfile = handleSaveProfile;
 
-window.saveProfileChanges = async () => { 
+export async function saveProfileChanges() { 
     if (!auth.currentUser) return showToast(t("auth.must_be_logged_in", "You must be logged in"), "error"); 
 
     const displayName = document.getElementById('editDisplayName')?.value.trim(); 
@@ -325,16 +331,17 @@ window.saveProfileChanges = async () => {
         }); 
 
         showToast("✅ " + t("profile.updated_success", "Profile updated successfully!"), "success"); 
-        window.closeEditProfile(); 
+        closeEditProfile(); 
         refreshTierAndUI?.(); 
     } catch (error) { 
         console.error("Save profile error:", error); 
         showToast(t("profile.failed_to_save", "Failed to save profile"), "error"); 
     } 
-}; 
+} 
+window.saveProfileChanges = saveProfileChanges;
 
 // ====================== SETTINGS & SECURITY ====================== 
-window.openSettings = () => { 
+export function openSettings() { 
     const modal = document.getElementById('settingsModal'); 
     if (!modal) return showToast(t("profile.settings_modal_not_found", "Settings modal not found"), "error"); 
      
@@ -344,22 +351,24 @@ window.openSettings = () => {
          
         if (toggle2FA) {
             toggle2FA.checked = currentUserData.enable2FA === true; 
-            toggle2FA.onchange = window.handle2FAToggle; // Rebinds handler cleanly without listener duplication
+            toggle2FA.onchange = handle2FAToggle; 
         }
         if (defaultDoor) {
             defaultDoor.value = currentUserData.defaultDoor || 'public_square'; 
-            defaultDoor.onchange = (e) => window.updateDefaultDoor(e.target.value);
+            defaultDoor.onchange = (e) => updateDefaultDoor(e.target.value);
         }
     } 
      
     modal.classList.remove('hidden'); 
-};
+}
+window.openSettings = openSettings;
 
-window.closeSettings = () => { 
+export function closeSettings() { 
     document.getElementById('settingsModal')?.classList.add('hidden'); 
-}; 
+} 
+window.closeSettings = closeSettings;
 
-window.triggerPasswordReset = async () => { 
+export async function triggerPasswordReset() { 
     if (!auth.currentUser || !auth.currentUser.email) { 
         return showToast(t("auth.no_email_found", "No active user email found"), "error"); 
     } 
@@ -370,9 +379,10 @@ window.triggerPasswordReset = async () => {
         console.error("Password reset error:", error); 
         showToast(t("auth.reset_email_failed", "Failed to send reset email"), "error"); 
     } 
-}; 
+} 
+window.triggerPasswordReset = triggerPasswordReset;
 
-window.handle2FAToggle = async (e) => { 
+export async function handle2FAToggle(e) { 
     if (!auth.currentUser) return; 
     const isEnabled = e.target.checked; 
      
@@ -388,9 +398,10 @@ window.handle2FAToggle = async (e) => {
         console.error("2FA toggle error:", error); 
         showToast(t("profile.2fa_update_failed", "Failed to update 2FA preference"), "error"); 
     } 
-}; 
+} 
+window.handle2FAToggle = handle2FAToggle;
 
-window.updateDefaultDoor = async (doorValue) => { 
+export async function updateDefaultDoor(doorValue) { 
     if (!auth.currentUser) return; 
     try { 
         const userRef = doc(db, "users", auth.currentUser.uid); 
@@ -405,15 +416,15 @@ window.updateDefaultDoor = async (doorValue) => {
         console.error("Default door update error:", error); 
         showToast(t("profile.default_door_failed", "Failed to save default door preference"), "error"); 
     } 
-}; 
+} 
+window.updateDefaultDoor = updateDefaultDoor;
 
 // ====================== PDF EXPORT ====================== 
-window.exportUserDataPDF = async () => { 
+export async function exportUserDataPDF() { 
     if (!currentUserData) return showToast(t("profile.data_not_loaded", "Profile data not loaded"), "error"); 
     showToast(t("profile.generating_pdf", "Generating identity PDF..."), "info"); 
      
     try { 
-        // Handles both window.jspdf and global jsPDF instances
         const jsPDF = window.jspdf?.jsPDF || window.jsPDF; 
         if (!jsPDF) throw new Error("jsPDF library not initialized"); 
          
@@ -437,9 +448,9 @@ window.exportUserDataPDF = async () => {
         console.error("Export error:", e); 
         showToast(t("profile.jspdf_required", "PDF generation requires jsPDF script inclusion"), "error"); 
     } 
-};
-// Backwards compatibility alias 
-window.downloadMyDataPDF = window.exportUserDataPDF; 
+} 
+window.exportUserDataPDF = exportUserDataPDF;
+window.downloadMyDataPDF = exportUserDataPDF; 
 
 // ====================== MODAL CONTROL ALIASES ====================== 
 window.openProfile = function() { 
@@ -457,3 +468,6 @@ window.closeProfile = function() {
 window.addEventListener('languageChanged', () => { 
     if (currentUserData) renderProfileUI(currentUserData); 
 });
+
+// Auto-initialize profile auth listener on load
+initProfile();
