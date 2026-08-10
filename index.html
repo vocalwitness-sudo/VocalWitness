@@ -853,10 +853,49 @@
         });
     </script>
 
+    <!-- AUTHENTICATION MODAL -->
+<div id="authModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[10000] p-4">
+    <div class="glass rounded-3xl p-6 sm:p-8 max-w-md w-full border border-zinc-700/80 shadow-2xl modal relative max-h-[90vh] overflow-y-auto">
+        <!-- Close Button -->
+        <button onclick="closeAuthModal()" class="absolute top-5 right-5 text-zinc-400 hover:text-white text-2xl transition">✕</button>
+
+        <!-- Header -->
+        <div class="text-center mb-6">
+            <div class="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center mx-auto mb-3 border border-emerald-500/30">
+                <img src="https://www.google.com/favicon.ico" class="w-6 h-6" alt="Google">
+            </div>
+            <h2 class="text-2xl font-bold text-white">Sign in to VocalWitness</h2>
+            <p class="text-xs text-zinc-400 mt-1">Join the public square to publish testimonies, vote, and verify evidence.</p>
+        </div>
+
+        <!-- Google One-Tap / Sign-In Button -->
+        <div class="space-y-4">
+            <button id="google-login-btn" type="button" class="w-full py-3.5 px-4 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center justify-center gap-3 shadow-md active:scale-[0.98]">
+                <img src="https://www.google.com/favicon.ico" class="w-5 h-5" alt="Google Logo">
+                <span class="text-sm">Continue with Google</span>
+            </button>
+
+            <div class="relative flex py-2 items-center">
+                <div class="flex-grow border-t border-zinc-800"></div>
+                <span class="flex-shrink mx-4 text-zinc-500 text-xs uppercase font-semibold">Or Anonymous</span>
+                <div class="flex-grow border-t border-zinc-800"></div>
+            </div>
+
+            <!-- Guest / Web3 Option -->
+            <button id="guest-login-btn" type="button" onclick="closeAuthModal()" class="w-full py-3 px-4 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-300 font-medium rounded-2xl transition text-xs flex items-center justify-center gap-2">
+                <span>👤</span>
+                <span>Continue as Guest</span>
+            </button>
+        </div>
+    </div>
+</div>
+
     <!-- Application Modules -->
     <script type="module" src="./js/main.js"></script>
     <script type="module" src="./js/notifications.js"></script>
     <script type="module" src="./js/bookmarks.js"></script>
     <script type="module" src="./js/zk-proof.js"></script>
+
+    
 </body>
 </html>
