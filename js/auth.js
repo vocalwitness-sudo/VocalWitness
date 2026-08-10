@@ -170,9 +170,6 @@ export async function googleLogin(event) {
     authActionInProgress = true;
 
     try {
-        // Save draft synchronously before trigger
-        savePendingDraft();
-
         // Configure prompt behavior
         provider.setCustomParameters({
             prompt: 'select_account'
@@ -182,11 +179,16 @@ export async function googleLogin(event) {
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.matchMedia('(display-mode: standalone)').matches;
 
         if (isMobile) {
+            try { savePendingDraft(); } catch (e) {}
             await signInWithRedirect(auth, provider);
             return;
         }
 
-        const result = await signInWithPopup(auth, provider);
+        // Execute popup immediately to preserve Firefox user activation token
+        const popupPromise = signInWithPopup(auth, provider);
+        try { savePendingDraft(); } catch (e) {}
+
+        const result = await popupPromise;
 
         if (result && result.user) {
             showToast("✅ Signed in successfully!", "success");
@@ -465,12 +467,36 @@ export function bindHeaderEvents() {
     guestBtns.forEach(btn => {
         addSingleEventListener(btn, 'click', (e) => {
             e.preventDefault();
-            e.stopImmediatePropagation();
             showAuthModal();
         });
     });
 
-    // 2. Google Sign-In
+    // 2. Profile Button & Dropdown Toggle
+    const profileBtn = document.getElementById('profile-btn') || document.querySelector('[data-action="toggle-profile-menu"]');
+    if (profileBtn) {
+        addSingleEventListener(profileBtn, 'click', (e) => {
+            e.preventDefault();
+            const profileMenu = document.getElementById('profile-menu') || document.getElementById('user-dropdown');
+            if (profileMenu) {
+                profileMenu.classList.toggle('hidden');
+            }
+        });
+    }
+
+    // 3. Global Dropdown Close Handler (Click outside)
+    if (!window.__dropdownClickListenerBound) {
+        document.addEventListener('click', (e) => {
+            const isDropdownClick = e.target.closest('#profile-btn') || e.target.closest('#profile-menu') || e.target.closest('.dropdown-container');
+            if (!isDropdownClick) {
+                document.querySelectorAll('#profile-menu, #user-dropdown, .dropdown-menu').forEach(el => {
+                    el.classList.add('hidden');
+                });
+            }
+        });
+        window.__dropdownClickListenerBound = true;
+    }
+
+    // 4. Google Sign-In
     const googleBtns = document.querySelectorAll('#googleAuthBtn, #googleSignInBtn, [data-action="google-login"]');
     googleBtns.forEach(btn => {
         addSingleEventListener(btn, 'click', (e) => {
@@ -479,7 +505,7 @@ export function bindHeaderEvents() {
         });
     });
 
-    // 3. Email Auth Forms
+    // 5. Email Auth Forms
     const signInForm = document.getElementById('signInForm') || document.getElementById('loginForm');
     if (signInForm) {
         addSingleEventListener(signInForm, 'submit', (e) => {
@@ -496,7 +522,7 @@ export function bindHeaderEvents() {
         });
     }
 
-    // 4. Modal Close Triggers
+    // 6. Modal Close Triggers
     const closeBtns = document.querySelectorAll('[data-action="close-auth-modal"], .close-modal-btn');
     closeBtns.forEach(btn => {
         addSingleEventListener(btn, 'click', (e) => {
@@ -505,7 +531,7 @@ export function bindHeaderEvents() {
         });
     });
 
-    // 5. Password Visibility Toggles
+    // 7. Password Visibility Toggles
     const toggleBtns = document.querySelectorAll('[data-action="toggle-password"]');
     toggleBtns.forEach(btn => {
         addSingleEventListener(btn, 'click', (e) => {
@@ -515,7 +541,7 @@ export function bindHeaderEvents() {
         });
     });
 
-    // 6. Logout Trigger
+    // 8. Logout Trigger
     const logoutBtn = document.getElementById('logoutBtn') || document.getElementById('logout-btn');
     if (logoutBtn) {
         addSingleEventListener(logoutBtn, 'click', (e) => {
@@ -524,7 +550,7 @@ export function bindHeaderEvents() {
         });
     }
 
-    // 7. Verification Triggers
+    // 9. Verification Triggers
     const verifyTriggerBtn = document.getElementById('request-verification-btn');
     if (verifyTriggerBtn) {
         addSingleEventListener(verifyTriggerBtn, 'click', (e) => {
@@ -583,3 +609,7 @@ window.logout = logout;
 window.googleLogin = googleLogin;
 window.openVerificationModal = openVerificationModal;
 window.closeVerificationModal = closeVerificationModal;
+window.toggleProfileMenu = function() {
+    const profileMenu = document.getElementById('profile-menu') || document.getElementById('user-dropdown');
+    if (profileMenu) profileMenu.classList.toggle('hidden');
+};
