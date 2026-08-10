@@ -32,13 +32,12 @@ let isSwitchingTab = false;
 
 // ====================== TAB SWITCHING ======================
 window.switchTab = async (tab) => {
-    // Guard against concurrent tab rendering
     if (isSwitchingTab) return;
     isSwitchingTab = true;
 
     console.log(`Switching to tab: ${tab}`);
 
-    // Cleanly update active UI tab states
+    // Update nav button visual active state
     const navButtons = document.querySelectorAll('#main-nav button[data-tab]');
     navButtons.forEach(btn => {
         btn.classList.remove(
@@ -57,7 +56,6 @@ window.switchTab = async (tab) => {
     state.currentTab = tab;
     state.currentMode = tab === 'witness' ? 'witness' : 'citizen';
 
-    // Target main container
     const container = document.getElementById('dynamicContainer') || document.getElementById('main-content');
     if (!container) {
         isSwitchingTab = false;
@@ -115,7 +113,7 @@ window.initiatePayment = function(amount, email = null, metadata = {}) {
         const handler = PaystackPop.setup({
             key: 'pk_live_5d13a6db326f02375127aae9d0fb03678ed1d923',
             email: email || auth.currentUser?.email || '',
-            amount: amount * 100, // Paystack accepts amount in kobo/cents
+            amount: amount * 100, // Amount in kobo/cents
             currency: "NGN",
             metadata: {
                 source: "VocalWitness",
@@ -124,11 +122,7 @@ window.initiatePayment = function(amount, email = null, metadata = {}) {
             },
             onSuccess: (transaction) => {
                 showToast(`✅ Payment successful! Ref: ${transaction.reference}`, "success");
-                const supportModal = document.getElementById('supportModal');
-                if (supportModal) {
-                    supportModal.classList.add('hidden');
-                    supportModal.classList.remove('flex');
-                }
+                window.closeSupportModal();
             },
             onCancel: () => showToast("Payment was cancelled", "info")
         });
@@ -139,7 +133,7 @@ window.initiatePayment = function(amount, email = null, metadata = {}) {
     }
 };
 
-// Dropdown click outside listener
+// Global click outside for dropdowns
 window.addEventListener('click', (e) => {
     const dropdown = document.querySelector('.dropdown-container');
     const menu = document.getElementById('more-menu');
@@ -149,46 +143,28 @@ window.addEventListener('click', (e) => {
 });
 
 // ====================== MODAL CONTROLLERS ======================
-window.openVerificationModal = function() {
-    const modal = document.getElementById('verificationModal');
-    if (modal) modal.classList.remove('hidden');
-};
-
-window.closeVerificationModal = function() {
-    const modal = document.getElementById('verificationModal');
-    if (modal) modal.classList.add('hidden');
-};
-
-window.openQvModal = function() {
-    const modal = document.getElementById('quadratic-vote-modal');
-    if (modal) modal.classList.remove('hidden');
-};
-
-window.closeQvModal = function() {
-    const modal = document.getElementById('quadratic-vote-modal');
-    if (modal) modal.classList.add('hidden');
-};
-
-window.openSupportModal = function() {
-    const supportModal = document.getElementById('supportModal');
-    if (supportModal) {
-        supportModal.classList.remove('hidden');
-        supportModal.classList.add('flex');
+const toggleModal = (modalId, show = true) => {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    if (show) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    } else {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
     }
 };
 
-window.closeSupportModal = function() {
-    const supportModal = document.getElementById('supportModal');
-    if (supportModal) {
-        supportModal.classList.add('hidden');
-        supportModal.classList.remove('flex');
-    }
-};
+window.openVerificationModal = () => toggleModal('verificationModal', true);
+window.closeVerificationModal = () => toggleModal('verificationModal', false);
+window.openQvModal = () => toggleModal('quadratic-vote-modal', true);
+window.closeQvModal = () => toggleModal('quadratic-vote-modal', false);
+window.openSupportModal = () => toggleModal('supportModal', true);
+window.closeSupportModal = () => toggleModal('supportModal', false);
 
 // ====================== WELCOME NOTE ======================
 function showWelcomeNote() {
     if (!auth.currentUser || localStorage.getItem('hasSeenWelcome')) return;
-    
     showToast("🎉 Welcome to VocalWitness! Your voice matters in Citizen Talk.", "success");
     localStorage.setItem('hasSeenWelcome', 'true');
 }
@@ -354,32 +330,32 @@ async function loadEvidenceLedger() {
 
 // ====================== CURATED NEWS TICKER ======================
 async function fetchCuratedNews() {
-  const tickerEl = document.getElementById('ticker-content');
-  if (!tickerEl) return;
+    const tickerEl = document.getElementById('ticker-content');
+    if (!tickerEl) return;
 
-  const RSS_URL = 'https://api.rss2json.com/v1/api.json?rss_url=https://feeds.bbci.co.uk/news/world/rss.xml';
+    const RSS_URL = 'https://api.rss2json.com/v1/api.json?rss_url=https://feeds.bbci.co.uk/news/world/rss.xml';
 
-  try {
-    const res = await fetch(RSS_URL);
-    if (!res.ok) throw new Error(`HTTP network error: ${res.status}`);
+    try {
+        const res = await fetch(RSS_URL);
+        if (!res.ok) throw new Error(`HTTP network error: ${res.status}`);
 
-    const data = await res.json();
-    
-    if (data.status === 'ok' && Array.isArray(data.items) && data.items.length > 0) {
-      const headlines = data.items.slice(0, 8).map(item => {
-        const safeTitle = escapeHtml(item.title || '');
-        return `<span class="ticker-item"><strong class="text-emerald-400">•</strong> ${safeTitle}</span>`;
-      }).join(' &nbsp;&nbsp;&nbsp; ');
+        const data = await res.json();
+        
+        if (data.status === 'ok' && Array.isArray(data.items) && data.items.length > 0) {
+            const headlines = data.items.slice(0, 8).map(item => {
+                const safeTitle = escapeHtml(item.title || '');
+                return `<span class="ticker-item"><strong class="text-emerald-400">•</strong> ${safeTitle}</span>`;
+            }).join(' &nbsp;&nbsp;&nbsp; ');
 
-      tickerEl.innerHTML = headlines;
-      return;
+            tickerEl.innerHTML = headlines;
+            return;
+        }
+
+        throw new Error('Malformed RSS payload structure');
+    } catch (err) {
+        console.warn("News ticker fallback active:", err.message);
+        tickerEl.innerHTML = `<span class="ticker-item text-slate-400">🛡️ Public Square feed active • Zero-knowledge evidence ledger online • Standby for live updates.</span>`;
     }
-
-    throw new Error('Malformed RSS payload structure');
-  } catch (err) {
-    console.warn("News ticker fallback active:", err.message);
-    tickerEl.innerHTML = `<span class="ticker-item text-slate-400">🛡️ Public Square feed active • Zero-knowledge evidence ledger online • Standby for live updates.</span>`;
-  }
 }
 
 // ====================== UTILITIES ======================
@@ -421,11 +397,7 @@ function setupEventListeners() {
 
     document.getElementById('support-btn')?.addEventListener('click', (e) => {
         e.preventDefault();
-        const supportModal = document.getElementById('supportModal');
-        if (supportModal) {
-            supportModal.classList.remove('hidden');
-            supportModal.classList.add('flex');
-        }
+        window.openSupportModal();
     });
 
     // Paystack support button binding
