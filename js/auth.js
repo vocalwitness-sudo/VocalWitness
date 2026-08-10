@@ -11,11 +11,11 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 
 import { auth, provider, db } from './firebase-config.js';
-import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { showToast } from './utils.js';
 import { updateAppState } from './app-state.js';
 import { applyTierTheme, updateTierBadge, clearProfileCache } from './tier.js';
 import { initNotifications } from './notifications.js';
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 let authActionInProgress = false;
 
@@ -41,6 +41,7 @@ async function createOrUpdateUser(user) {
         const safePhotoURL = user.photoURL || "";
 
         if (!snap.exists()) {
+            // Document creation -> Triggers 'allow create' in Firestore Rules
             await setDoc(userRef, {
                 uid: user.uid,
                 email: safeEmail,
@@ -54,14 +55,24 @@ async function createOrUpdateUser(user) {
             });
             updateVerificationUI(false);
         } else {
+            // Document update -> Use updateDoc to avoid diff evaluation on un-modified fields
             const existingData = snap.data() || {};
             
-            await setDoc(userRef, {
-                email: safeEmail || existingData.email || "",
-                displayName: safeDisplayName || existingData.displayName || "Anonymous Witness",
-                photoURL: safePhotoURL || existingData.photoURL || "",
+            const updatePayload = {
                 lastActive: serverTimestamp()
-            }, { merge: true });
+            };
+
+            if (safeDisplayName && safeDisplayName !== existingData.displayName) {
+                updatePayload.displayName = safeDisplayName;
+            }
+            if (safePhotoURL && safePhotoURL !== existingData.photoURL) {
+                updatePayload.photoURL = safePhotoURL;
+            }
+            if (safeEmail && safeEmail !== existingData.email) {
+                updatePayload.email = safeEmail;
+            }
+
+            await updateDoc(userRef, updatePayload);
 
             updateVerificationUI(existingData.isVerified || false);
         }
@@ -69,7 +80,6 @@ async function createOrUpdateUser(user) {
         console.error("User document update error:", e);
     }
 }
-
 export function updateVerificationUI(isVerified = false) {
     const statusEl = document.getElementById('verification-status');
     const verifyBtn = document.getElementById('request-verification-btn');
@@ -221,15 +231,19 @@ export async function googleLogin(event) {
     }
 }
 
-export async function handleEmailAuth(event) {
-    if (event) event.preventDefault();
+export async function handleEmailSignUp(event) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
 
-    const form = event?.target;
-    const submitBtn = event?.submitter || form?.querySelector('button[type="submit"]') || document.getElementById('signInSubmitBtn');
-    if (submitBtn?.disabled) return;
+    if (authActionInProgress) return;
 
-    const emailInput = form?.querySelector('input[type="email"]') || document.getElementById('signInEmail') || document.getElementById('authEmail');
-    const passwordInput = form?.querySelector('input[type="password"]') || document.getElementById('signInPassword') || document.getElementById('authPassword');
+    const form = event?.target?.closest('form') || event?.target;
+    const submitBtn = event?.submitter || document.getElementById('signUpSubmitBtn') || form?.querySelector('button[type="submit"]');
+
+    const emailInput = form?.querySelector('input[type="email"]') || document.getElementById('signUpEmail') || document.getElementById('authEmail');
+    const passwordInput = form?.querySelector('input[type="password"]') || document.getElementById('signUpPassword') || document.getElementById('authPassword');
 
     const email = emailInput?.value?.trim();
     const password = passwordInput?.value;
@@ -239,6 +253,12 @@ export async function handleEmailAuth(event) {
         return;
     }
 
+    if (password.length < 6) {
+        showToast("Password must be at least 6 characters long.", "error");
+        return;
+    }
+
+    authActionInProgress = true;
     if (submitBtn && submitBtn.classList) {
         submitBtn.disabled = true;
         submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
@@ -247,30 +267,34 @@ export async function handleEmailAuth(event) {
     try {
         savePendingDraft();
 
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        if (!user.emailVerified) {
-            showToast("⚠️ Email unverified. Please check your inbox for the verification link.", "warning");
-            await signOut(auth);
-            return;
-        }
+        // Create the user profile doc right away before signing out for verification
+        await createOrUpdateUser(user);
 
-        showToast("✅ Signed in successfully!", "success");
+        await sendEmailVerification(user);
+        await signOut(auth);
+
+        showToast("🎉 Account created! Check your email inbox to verify your account before logging in.", "success");
         closeLoginModal();
-        restorePendingDraft();
+
+        // Clear form inputs
+        if (emailInput) emailInput.value = '';
+        if (passwordInput) passwordInput.value = '';
+
     } catch (error) {
-        console.error("Email sign-in error:", error);
+        console.error("Email sign-up error:", error);
         const errMsg = handleAuthError(error);
         if (errMsg) showToast(errMsg, "error");
     } finally {
+        authActionInProgress = false;
         if (submitBtn && submitBtn.classList) {
             submitBtn.disabled = false;
             submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
         }
     }
 }
-
 export async function handleEmailSignUp(event) {
     if (event) event.preventDefault();
 
