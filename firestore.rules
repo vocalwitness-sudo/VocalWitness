@@ -24,16 +24,18 @@ service cloud.firestore {
       );
     }
 
+    // Ensures user profile creation doesn't self-grant elevated permissions
+    function isSafeUserCreation() {
+      let keys = request.resource.data.keys();
+      // Block setting admin, moderator, role, zkVerified, or banned flags on creation
+      return !keys.hasAny(['role', 'isBanned', 'badges', 'admin', 'moderator', 'zkVerified'])
+          && (!keys.hasAny(['tier']) || request.resource.data.tier == 'citizen');
+    }
+
     // Prevents self-escalation of roles/tiers on user profile updates
     function isNotModifyingPrivileges() {
       let affected = request.resource.data.diff(resource.data).affectedKeys();
       return !affected.hasAny(['role', 'tier', 'isBanned', 'badges', 'admin', 'moderator', 'createdAt', 'zkVerified']);
-    }
-
-    // Prevents setting sensitive role/tier properties on document creation
-    function doesNotContainPrivileges() {
-      let keys = request.resource.data.keys();
-      return !keys.hasAny(['role', 'tier', 'isBanned', 'badges', 'admin', 'moderator', 'zkVerified']);
     }
 
     // Schema validator helper for notification creations
@@ -43,18 +45,17 @@ service cloud.firestore {
           && request.resource.data.senderId == request.auth.uid;
     }
 
-  // ==========================================
+    // ==========================================
     // USERS COLLECTION
     // ==========================================
     match /users/{userId} {
       allow read: if true;
-      allow create: if isOwner(userId) && (doesNotContainPrivileges() || request.resource.data.tier == 'citizen');
+      allow create: if isOwner(userId) && isSafeUserCreation();
       allow update: if (isOwner(userId) && isNotModifyingPrivileges()) || isAdmin();
       allow delete: if isAdmin();
 
       // Subcollection: User Notifications
       match /notifications/{notificationId} {
-        // Allows both single document get and collection queries for the document owner
         allow read, get, list: if isOwner(userId);
         allow update, delete: if isOwner(userId);
         
@@ -67,6 +68,7 @@ service cloud.firestore {
         allow read, write: if isOwner(userId);
       }
     }
+
     // ==========================================
     // VERIFICATION REQUESTS (DEVELOPER & PEER QUEUE)
     // ==========================================
