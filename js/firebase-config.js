@@ -6,7 +6,8 @@ import { getStorage } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-s
 
 const firebaseConfig = {
   apiKey: "AIzaSyATxYekXgjdLP2SfR42FG8rEdajq_pIEb0",
-  authDomain: "vocalwitness-3affa.firebaseapp.com",
+  // Updated to match hosting origin and prevent Firefox session/storage-partitioning errors
+  authDomain: "vocalwitness-3affa.web.app",
   projectId: "vocalwitness-3affa",
   storageBucket: "vocalwitness-3affa.firebasestorage.app",
   messagingSenderId: "108466981866",
