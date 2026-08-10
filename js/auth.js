@@ -484,13 +484,21 @@ export function bindHeaderEvents() {
         });
     });
 
-    // 2. Profile Button & Dropdown Toggle
-    const profileBtns = document.querySelectorAll('#profile-btn, [data-action="toggle-profile-menu"]');
-    profileBtns.forEach(btn => {
-        addSingleEventListener(btn, 'click', (e) => {
-            toggleProfileMenu(e);
-        });
+   // 2. Profile Button — open the actual profile modal
+const profileBtns = document.querySelectorAll(
+    '#profile-btn, #profile-btn-mobile, #mobile-profile-nav-btn, [data-action="open-profile"], [data-action="toggle-profile-menu"]'
+);
+profileBtns.forEach(btn => {
+    addSingleEventListener(btn, 'click', (e) => {
+        e.preventDefault();
+        if (typeof window.openProfile === 'function') {
+            window.openProfile();
+        } else {
+            const modal = document.getElementById('profileModal');
+            if (modal) modal.classList.remove('hidden');
+        }
     });
+});
 
     // 3. Global Dropdown Close Handler (Click outside)
     if (!window.__dropdownClickListenerBound) {
@@ -521,23 +529,39 @@ export function bindHeaderEvents() {
         });
     });
     
-    // 5. Email Auth Forms
-    const signInForm = document.getElementById('signInForm') || document.getElementById('loginForm');
-    if (signInForm) {
-        addSingleEventListener(signInForm, 'submit', (e) => {
-            e.preventDefault();
-            handleEmailAuth(e);
-        });
-    }
+ // 5. Email Auth Forms — match the REAL HTML IDs
+const emailAuthForm = document.getElementById('emailAuthForm');
+if (emailAuthForm) {
+    addSingleEventListener(emailAuthForm, 'submit', (e) => {
+        e.preventDefault();
+        handleEmailAuth(e);
+    });
+}
 
-    const signUpForm = document.getElementById('signUpForm') || document.getElementById('createAccountForm');
-    if (signUpForm) {
-        addSingleEventListener(signUpForm, 'submit', (e) => {
-            e.preventDefault();
-            handleEmailSignUp(e);
-        });
-    }
+// Create Account is type="button", so it needs its own click handler
+const emailSignUpBtn = document.getElementById('emailSignUpBtn');
+if (emailSignUpBtn) {
+    addSingleEventListener(emailSignUpBtn, 'click', (e) => {
+        e.preventDefault();
+        handleEmailSignUp(e);
+    });
+}
 
+// Also keep legacy form IDs just in case
+const signInForm = document.getElementById('signInForm') || document.getElementById('loginForm');
+if (signInForm) {
+    addSingleEventListener(signInForm, 'submit', (e) => {
+        e.preventDefault();
+        handleEmailAuth(e);
+    });
+}
+const signUpForm = document.getElementById('signUpForm') || document.getElementById('createAccountForm');
+if (signUpForm) {
+    addSingleEventListener(signUpForm, 'submit', (e) => {
+        e.preventDefault();
+        handleEmailSignUp(e);
+    });
+}
     // 6. Modal Close Triggers
     const closeBtns = document.querySelectorAll('[data-action="close-auth-modal"], .close-modal-btn');
     closeBtns.forEach(btn => {
@@ -557,23 +581,25 @@ export function bindHeaderEvents() {
         });
     });
 
-    // 8. Logout Trigger
-    const logoutBtn = document.getElementById('logoutBtn') || document.getElementById('logout-btn');
-    if (logoutBtn) {
-        addSingleEventListener(logoutBtn, 'click', (e) => {
+    // 8. Logout — cover common IDs + event delegation for dynamic profile content
+const logoutBtn = document.getElementById('logoutBtn') || document.getElementById('logout-btn');
+if (logoutBtn) {
+    addSingleEventListener(logoutBtn, 'click', (e) => {
+        e.preventDefault();
+        logout();
+    });
+}
+
+// Catch logout buttons that are injected later into #profileContent
+if (!window.__logoutDelegationBound) {
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('#logoutBtn, #logout-btn, [data-action="logout"], .logout-btn');
+        if (btn) {
             e.preventDefault();
             logout();
-        });
-    }
-
-    // 9. Verification Triggers
-    const verifyTriggerBtn = document.getElementById('request-verification-btn');
-    if (verifyTriggerBtn) {
-        addSingleEventListener(verifyTriggerBtn, 'click', (e) => {
-            e.preventDefault();
-            openVerificationModal();
-        });
-    }
+        }
+    });
+    window.__logoutDelegationBound = true;
 }
 
 // ====================== AUTH INITIALIZATION ======================
