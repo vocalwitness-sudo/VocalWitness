@@ -149,6 +149,8 @@ function handleAuthError(error) {
             return "An account with this email already exists. Try signing in instead.";
         case 'auth/weak-password':
             return "Password should be at least 6 characters long.";
+        case 'auth/missing-initial-state':
+            return "Browser privacy rules prevented automatic state recovery. Redirecting...";
         default:
             return error?.message || "Authentication failed. Please check your connection.";
     }
@@ -197,8 +199,13 @@ export async function googleLogin(event) {
             restorePendingDraft();
         }
     } catch (error) {
-        if (error.code === 'auth/popup-blocked' || error.code === 'auth/cancelled-popup-request') {
-            console.warn("Popup blocked or interrupted, falling back to redirect...");
+        if (
+            error.code === 'auth/popup-blocked' || 
+            error.code === 'auth/cancelled-popup-request' ||
+            error.code === 'auth/missing-initial-state'
+        ) {
+            console.warn("Popup blocked, state lost, or interrupted. Falling back to redirect...", error.code);
+            try { savePendingDraft(); } catch (e) {}
             await signInWithRedirect(auth, provider);
             return;
         }
@@ -563,7 +570,7 @@ export function bindHeaderEvents() {
 // ====================== AUTH INITIALIZATION ======================
 export function initAuth() {
     return new Promise((resolve) => {
-        // Handle redirect result for mobile logins
+        // Handle redirect result for mobile or state-partitioned logins
         getRedirectResult(auth)
             .then((result) => {
                 if (result?.user) {
@@ -573,9 +580,11 @@ export function initAuth() {
                 }
             })
             .catch((error) => {
-                console.error("Redirect sign-in error:", error);
-                const errMsg = handleAuthError(error);
-                if (errMsg) showToast(errMsg, "error");
+                if (error?.code !== 'auth/missing-initial-state') {
+                    console.error("Redirect sign-in error:", error);
+                    const errMsg = handleAuthError(error);
+                    if (errMsg) showToast(errMsg, "error");
+                }
             });
 
         onAuthStateChanged(auth, async (user) => {
