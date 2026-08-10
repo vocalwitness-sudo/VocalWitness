@@ -581,26 +581,36 @@ if (signUpForm) {
         });
     });
 
-    // 8. Logout — cover common IDs + event delegation for dynamic profile content
-const logoutBtn = document.getElementById('logoutBtn') || document.getElementById('logout-btn');
-if (logoutBtn) {
-    addSingleEventListener(logoutBtn, 'click', (e) => {
-        e.preventDefault();
-        logout();
-    });
-}
-
-// Catch logout buttons that are injected later into #profileContent
-if (!window.__logoutDelegationBound) {
-    document.addEventListener('click', (e) => {
-        const btn = e.target.closest('#logoutBtn, #logout-btn, [data-action="logout"], .logout-btn');
-        if (btn) {
+     // 8. Logout — cover common IDs + event delegation for dynamic profile content
+    const logoutBtn = document.getElementById('logoutBtn') || document.getElementById('logout-btn');
+    if (logoutBtn) {
+        addSingleEventListener(logoutBtn, 'click', (e) => {
             e.preventDefault();
             logout();
-        }
-    });
-    window.__logoutDelegationBound = true;
-}
+        });
+    }
+
+    // Catch logout buttons that are injected later into #profileContent
+    if (!window.__logoutDelegationBound) {
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('#logoutBtn, #logout-btn, [data-action="logout"], .logout-btn');
+            if (btn) {
+                e.preventDefault();
+                logout();
+            }
+        });
+        window.__logoutDelegationBound = true;
+    }
+
+    // 9. Verification Triggers
+    const verifyTriggerBtn = document.getElementById('request-verification-btn');
+    if (verifyTriggerBtn) {
+        addSingleEventListener(verifyTriggerBtn, 'click', (e) => {
+            e.preventDefault();
+            openVerificationModal();
+        });
+    }
+}   // <--- THIS was missing. Closes bindHeaderEvents()
 
 // ====================== AUTH INITIALIZATION ======================
 export function initAuth() {
