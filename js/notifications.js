@@ -1,10 +1,9 @@
 // js/notifications.js - Real-time Notification Listener & Fallback Engine
 import { db } from './firebase-config.js';
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 let unsubscribeNotifs = null;
-let authObserver = null;
 let currentSubscribedUid = null;
 
 export function initNotifications(targetUid) {
@@ -17,26 +16,20 @@ export function initNotifications(targetUid) {
     }
 
     const auth = getAuth();
+    const currentUser = auth.currentUser;
 
-    if (authObserver) {
-        authObserver();
-        authObserver = null;
+    // GUARD: Ensure user is signed in AND matches targetUid before listening
+    if (!currentUser || currentUser.uid !== targetUid) {
+        updateNotificationBadge(0);
+        renderNotificationList([]);
+        return;
     }
 
-    authObserver = onAuthStateChanged(auth, (user) => {
-        if (!user || user.uid !== targetUid) {
-            stopNotificationListener();
-            updateNotificationBadge(0);
-            renderNotificationList([]);
-            return;
-        }
+    if (unsubscribeNotifs && currentSubscribedUid === targetUid) {
+        return;
+    }
 
-        if (unsubscribeNotifs && currentSubscribedUid === user.uid) {
-            return;
-        }
-
-        attachNotificationListener(user.uid);
-    });
+    attachNotificationListener(targetUid);
 }
 
 function attachNotificationListener(uid) {
@@ -100,10 +93,6 @@ export function stopNotificationListener() {
     if (unsubscribeNotifs) {
         unsubscribeNotifs();
         unsubscribeNotifs = null;
-    }
-    if (authObserver) {
-        authObserver();
-        authObserver = null;
     }
     currentSubscribedUid = null;
 }
