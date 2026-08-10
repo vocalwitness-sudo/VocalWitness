@@ -505,7 +505,7 @@
         </div>
     </div>
 
-    <!-- Quadratic Voting Modal -->
+   <!-- Quadratic Voting Modal -->
     <div id="quadratic-vote-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden z-[10000] flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl relative overflow-hidden">
             
@@ -627,10 +627,10 @@
         </div>
     </div>
 
-    <!-- Login Modal -->
-    <div id="loginModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[10000] p-4">
-        <div class="glass rounded-3xl p-6 sm:p-8 max-w-md w-full modal relative max-h-[90vh] overflow-y-auto border border-emerald-500/30">
-            <button onclick="closeLoginModal()" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl">✕</button>
+    <!-- Login / Auth Modal -->
+    <div id="loginModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[10000] p-4">
+        <div class="glass rounded-3xl p-6 sm:p-8 max-w-md w-full border border-zinc-700/80 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <button onclick="closeLoginModal()" class="absolute top-5 right-5 text-zinc-400 hover:text-white text-2xl transition">✕</button>
 
             <div class="text-center mb-6">
                 <h2 class="text-2xl font-bold text-white mb-1">Join the Public Square</h2>
@@ -638,9 +638,9 @@
             </div>
 
             <!-- Google Login -->
-            <button id="googleAuthBtn" class="w-full py-3.5 bg-white hover:bg-zinc-100 text-black rounded-2xl font-semibold flex items-center justify-center gap-3 transition shadow-sm mb-4">
+            <button id="googleAuthBtn" class="w-full py-3.5 bg-white hover:bg-zinc-100 text-black rounded-2xl font-semibold flex items-center justify-center gap-3 transition shadow-sm mb-4 active:scale-[0.98]">
                 <img src="https://www.google.com/favicon.ico" class="w-5 h-5" alt="Google">
-                Continue with Google
+                <span>Continue with Google</span>
             </button>
 
             <div class="flex items-center my-4">
@@ -683,9 +683,66 @@
                 </div>
             </form>
 
+            <div class="relative flex py-2 items-center my-2">
+                <div class="flex-grow border-t border-zinc-800"></div>
+                <span class="flex-shrink mx-4 text-zinc-500 text-xs uppercase font-semibold">Or Anonymous</span>
+                <div class="flex-grow border-t border-zinc-800"></div>
+            </div>
+
+            <button id="guest-login-btn" type="button" onclick="closeLoginModal()" class="w-full py-3 px-4 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-300 font-medium rounded-2xl transition text-xs flex items-center justify-center gap-2">
+                <span>👤</span>
+                <span>Continue as Guest</span>
+            </button>
+
             <button onclick="closeLoginModal()" class="w-full mt-4 py-2 text-xs text-zinc-500 hover:text-zinc-300 transition">
                 Cancel & Continue Browsing
             </button>
+        </div>
+    </div>
+
+    <!-- View Profile Modal -->
+    <div id="profileModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[10000] p-4">
+        <div class="glass rounded-3xl p-6 sm:p-8 max-w-md w-full border border-zinc-700/80 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <button onclick="closeProfile()" class="absolute top-5 right-5 text-zinc-400 hover:text-white text-2xl transition">✕</button>
+
+            <div class="text-center mb-6">
+                <div class="w-20 h-20 rounded-full bg-zinc-800 mx-auto mb-3 flex items-center justify-center border border-zinc-700 overflow-hidden">
+                    <span id="profileAvatarText" class="text-2xl font-bold text-emerald-400">👤</span>
+                </div>
+                <h2 id="profileDisplayName" class="text-xl font-bold text-white">User Profile</h2>
+                <p id="profileEmail" class="text-xs text-zinc-400 mt-0.5">user@example.com</p>
+            </div>
+
+            <div class="space-y-3">
+                <button onclick="closeProfile(); document.getElementById('editProfileModal')?.classList.remove('hidden');" class="w-full py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-semibold transition border border-zinc-700">
+                    Edit Profile
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div id="editProfileModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[10000] p-4">
+        <div class="glass rounded-3xl p-6 sm:p-8 max-w-md w-full border border-zinc-700/80 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <button onclick="closeEditProfile()" class="absolute top-5 right-5 text-zinc-400 hover:text-white text-2xl transition">✕</button>
+
+            <h2 class="text-xl font-bold text-white mb-4">Edit Profile</h2>
+
+            <form id="editProfileForm" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-zinc-400 mb-1">Display Name</label>
+                    <input type="text" id="editDisplayName" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500" placeholder="Your name">
+                </div>
+
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeEditProfile()" class="w-1/2 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl text-xs font-semibold transition">
+                        Cancel
+                    </button>
+                    <button type="submit" class="w-1/2 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold transition">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -795,6 +852,22 @@
             }
         }
 
+        function closeLoginModal() {
+            $('loginModal')?.classList.add('hidden');
+        }
+
+        function closeProfile() {
+            $('profileModal')?.classList.add('hidden');
+        }
+
+        function closeEditProfile() {
+            $('editProfileModal')?.classList.add('hidden');
+        }
+
+        function openSupportModal() {
+            $('supportModal')?.classList.remove('hidden');
+        }
+
         // Dropdown toggle
         const moreBtn = $('more-btn');
         const moreMenu = $('more-menu');
@@ -807,102 +880,8 @@
                 moreMenu.classList.add('hidden');
             });
         }
-        
-    <!-- LOGIN / AUTH MODAL -->
-<div id="loginModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[10000] p-4">
-    <div class="glass rounded-3xl p-6 sm:p-8 max-w-md w-full border border-zinc-700/80 shadow-2xl relative max-h-[90vh] overflow-y-auto">
-        <button onclick="closeLoginModal()" class="absolute top-5 right-5 text-zinc-400 hover:text-white text-2xl transition">✕</button>
 
-        <div class="text-center mb-6">
-            <h2 class="text-2xl font-bold text-white">Welcome Back</h2>
-            <p class="text-xs text-zinc-400 mt-1">Sign in to access your account and contributions.</p>
-        </div>
-
-        <div class="space-y-4">
-            <button id="googleLoginBtn" class="w-full py-3.5 px-4 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center justify-center gap-3 shadow-md active:scale-[0.98]">
-                <img src="https://www.google.com/favicon.ico" class="w-5 h-5" alt="Google">
-                <span class="text-sm">Continue with Google</span>
-            </button>
-        </div>
-    </div>
-</div>
-
-
-<!-- VIEW PROFILE MODAL -->
-<div id="profileModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[10000] p-4">
-    <div class="glass rounded-3xl p-6 sm:p-8 max-w-md w-full border border-zinc-700/80 shadow-2xl relative max-h-[90vh] overflow-y-auto">
-        <button onclick="closeProfile()" class="absolute top-5 right-5 text-zinc-400 hover:text-white text-2xl transition">✕</button>
-
-        <div class="text-center mb-6">
-            <div class="w-20 h-20 rounded-full bg-zinc-800 mx-auto mb-3 flex items-center justify-center border border-zinc-700 overflow-hidden">
-                <span id="profileAvatarText" class="text-2xl font-bold text-emerald-400">👤</span>
-            </div>
-            <h2 id="profileDisplayName" class="text-xl font-bold text-white">User Profile</h2>
-            <p id="profileEmail" class="text-xs text-zinc-400 mt-0.5">user@example.com</p>
-        </div>
-
-        <div class="space-y-3">
-            <button onclick="closeProfile(); $('editProfileModal')?.classList.remove('hidden');" class="w-full py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-semibold transition border border-zinc-700">
-                Edit Profile
-            </button>
-        </div>
-    </div>
-</div>
-
-
-<!-- EDIT PROFILE MODAL -->
-<div id="editProfileModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[10000] p-4">
-    <div class="glass rounded-3xl p-6 sm:p-8 max-w-md w-full border border-zinc-700/80 shadow-2xl relative max-h-[90vh] overflow-y-auto">
-        <button onclick="closeEditProfile()" class="absolute top-5 right-5 text-zinc-400 hover:text-white text-2xl transition">✕</button>
-
-        <h2 class="text-xl font-bold text-white mb-4">Edit Profile</h2>
-
-        <form id="editProfileForm" class="space-y-4">
-            <div>
-                <label class="block text-xs font-medium text-zinc-400 mb-1">Display Name</label>
-                <input type="text" id="editDisplayName" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500" placeholder="Your name">
-            </div>
-
-            <div class="flex gap-2 pt-2">
-                <button type="button" onclick="closeEditProfile()" class="w-1/2 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl text-xs font-semibold transition">
-                    Cancel
-                </button>
-                <button type="submit" class="w-1/2 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold transition">
-                    Save Changes
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-
-<!-- SUPPORT / DONATION MODAL -->
-<div id="supportModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[10000] p-4">
-    <div class="glass rounded-3xl p-6 sm:p-8 max-w-md w-full border border-zinc-700/80 shadow-2xl relative max-h-[90vh] overflow-y-auto">
-        <button id="closeSupportModal" class="absolute top-5 right-5 text-zinc-400 hover:text-white text-2xl transition">✕</button>
-
-        <div class="text-center mb-6">
-            <div class="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center mx-auto mb-3 border border-emerald-500/30 text-emerald-400 text-xl">
-                ☕
-            </div>
-            <h2 class="text-2xl font-bold text-white">Support the Project</h2>
-            <p class="text-xs text-zinc-400 mt-1">Choose your preferred payment method to support maintenance and hosting costs.</p>
-        </div>
-
-        <div class="space-y-3">
-            <button id="paystackBtn" class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-2xl transition text-sm flex items-center justify-center gap-2">
-                <span>💳</span>
-                <span>Pay with Card / Paystack</span>
-            </button>
-
-            <button id="cryptoBtn" class="w-full py-3 px-4 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-200 font-semibold rounded-2xl transition text-sm flex items-center justify-center gap-2">
-                <span>₿</span>
-                <span>Pay with Crypto (NOWPayments)</span>
-            </button>
-        </div>
-    </div>
-</div>
-        // Tier selection logic
+        // Support tier selection logic
         document.querySelectorAll('.support-tier-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.support-tier-btn').forEach(b => {
@@ -920,49 +899,10 @@
         });
     </script>
 
-    <!-- AUTHENTICATION MODAL -->
-<div id="authModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[10000] p-4">
-    <div class="glass rounded-3xl p-6 sm:p-8 max-w-md w-full border border-zinc-700/80 shadow-2xl modal relative max-h-[90vh] overflow-y-auto">
-        <!-- Close Button -->
-        <button onclick="closeAuthModal()" class="absolute top-5 right-5 text-zinc-400 hover:text-white text-2xl transition">✕</button>
-
-        <!-- Header -->
-        <div class="text-center mb-6">
-            <div class="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center mx-auto mb-3 border border-emerald-500/30">
-                <img src="https://www.google.com/favicon.ico" class="w-6 h-6" alt="Google">
-            </div>
-            <h2 class="text-2xl font-bold text-white">Sign in to VocalWitness</h2>
-            <p class="text-xs text-zinc-400 mt-1">Join the public square to publish testimonies, vote, and verify evidence.</p>
-        </div>
-
-        <!-- Google One-Tap / Sign-In Button -->
-        <div class="space-y-4">
-            <button id="google-login-btn" type="button" class="w-full py-3.5 px-4 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center justify-center gap-3 shadow-md active:scale-[0.98]">
-                <img src="https://www.google.com/favicon.ico" class="w-5 h-5" alt="Google Logo">
-                <span class="text-sm">Continue with Google</span>
-            </button>
-
-            <div class="relative flex py-2 items-center">
-                <div class="flex-grow border-t border-zinc-800"></div>
-                <span class="flex-shrink mx-4 text-zinc-500 text-xs uppercase font-semibold">Or Anonymous</span>
-                <div class="flex-grow border-t border-zinc-800"></div>
-            </div>
-
-            <!-- Guest / Web3 Option -->
-            <button id="guest-login-btn" type="button" onclick="closeAuthModal()" class="w-full py-3 px-4 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-300 font-medium rounded-2xl transition text-xs flex items-center justify-center gap-2">
-                <span>👤</span>
-                <span>Continue as Guest</span>
-            </button>
-        </div>
-    </div>
-</div>
-
     <!-- Application Modules -->
     <script type="module" src="./js/main.js"></script>
     <script type="module" src="./js/notifications.js"></script>
     <script type="module" src="./js/bookmarks.js"></script>
     <script type="module" src="./js/zk-proof.js"></script>
-
-    
 </body>
 </html>
