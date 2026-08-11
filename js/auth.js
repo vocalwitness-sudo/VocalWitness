@@ -41,7 +41,6 @@ async function createOrUpdateUser(user) {
         const safePhotoURL = user.photoURL || "";
 
         if (!snap.exists()) {
-            // Creation Payload: Only allowed fields according to isSafeUserCreation()
             await setDoc(userRef, {
                 uid: user.uid,
                 email: safeEmail,
@@ -55,7 +54,7 @@ async function createOrUpdateUser(user) {
         } else {
             const existingData = snap.data() || {};
             const updatePayload = {
-                updatedAt: serverTimestamp() // Uses 'updatedAt' which is allowed in isSafeUserUpdate()
+                updatedAt: serverTimestamp()
             };
 
             if (safeDisplayName && safeDisplayName !== existingData.displayName) {
@@ -75,6 +74,7 @@ async function createOrUpdateUser(user) {
         console.error("User document update error:", e);
     }
 }
+
 export function updateVerificationUI(isVerified = false) {
     const statusEl = document.getElementById('verification-status');
     const verifyBtn = document.getElementById('request-verification-btn');
@@ -142,7 +142,7 @@ function handleAuthError(error) {
         case 'auth/cancelled-popup-request':
             return null;
         case 'auth/popup-blocked':
-            return "Popup was blocked by browser. Please allow popups for this site.";
+            return "Popup was blocked by browser. Switching to redirect...";
         case 'auth/invalid-email':
             return "The email address format is invalid.";
         case 'auth/user-not-found':
@@ -170,79 +170,47 @@ export async function googleLogin(event) {
     if (authActionInProgress) return;
     authActionInProgress = true;
 
-    // Safely target the actual <button> element even if clicking internal img or span text
     const rawTarget = event?.target || event?.currentTarget;
     const btn = (rawTarget && typeof rawTarget.closest === 'function') 
                 ? rawTarget.closest('button') 
                 : (document.getElementById('googleAuthBtn') || document.getElementById('googleSignInBtn'));
 
-    // Safe DOM state mutation with safety guards
     if (btn && typeof btn.setAttribute === 'function') {
         try {
             btn.setAttribute('type', 'button');
         } catch (e) {
             // Ignore non-critical DOM attribute errors
         }
-        
         btn.disabled = true;
         if (btn.classList && typeof btn.classList.add === 'function') {
             btn.classList.add('opacity-50', 'cursor-not-allowed');
         }
     }
 
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.matchMedia('(display-mode: standalone)').matches;
+
     try {
+        try { savePendingDraft(); } catch (e) {}
+
         if (provider && typeof provider.setCustomParameters === 'function') {
             provider.setCustomParameters({ prompt: 'select_account' });
         }
-
-        // Execute Firebase Google Popup Authentication
-        const userCredential = await signInWithPopup(auth, provider);
-        
-        if (userCredential && userCredential.user) {
-            // Create or sync user profile in Firestore
-            await createOrUpdateUser(userCredential.user);
-            console.log("Google authentication successful:", userCredential.user.uid);
-        }
-    } catch (error) {
-        // Handle popup closed by user or cancelled requests cleanly
-        if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
-            console.warn("Google sign-in popup closed by user.");
-        } else {
-            console.error("Google login failed:", error);
-            if (typeof showAuthNotification === 'function') {
-                showAuthNotification("Google sign-in failed. Please try again.");
-            }
-        }
-    } finally {
-        // Always reset lock flag and restore button state
-        authActionInProgress = false;
-
-        if (btn && typeof btn.removeAttribute === 'function') {
-            btn.disabled = false;
-            if (btn.classList && typeof btn.classList.remove === 'function') {
-                btn.classList.remove('opacity-50', 'cursor-not-allowed');
-            }
-        }
-    }
-}
-        // Mobile & PWA Detection
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.matchMedia('(display-mode: standalone)').matches;
-
-        try { savePendingDraft(); } catch (e) {}
 
         if (isMobile) {
             await signInWithRedirect(auth, provider);
             return;
         }
 
-        const result = await signInWithPopup(auth, provider);
-        if (result?.user) {
+        const userCredential = await signInWithPopup(auth, provider);
+        if (userCredential?.user) {
+            await createOrUpdateUser(userCredential.user);
             showToast("✅ Signed in successfully!", "success");
             closeLoginModal();
             restorePendingDraft();
         }
     } catch (error) {
         if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
+            console.warn("Google sign-in popup closed by user.");
             return;
         }
         if (error.code === 'auth/popup-blocked') {
@@ -254,13 +222,13 @@ export async function googleLogin(event) {
         const errMsg = handleAuthError(error);
         if (errMsg) showToast(errMsg, "error");
     } finally {
-        setTimeout(() => {
-            authActionInProgress = false;
-            if (btn && btn.classList) {
-                btn.disabled = false;
+        authActionInProgress = false;
+        if (btn && typeof btn.removeAttribute === 'function') {
+            btn.disabled = false;
+            if (btn.classList && typeof btn.classList.remove === 'function') {
                 btn.classList.remove('opacity-50', 'cursor-not-allowed');
             }
-        }, 600);
+        }
     }
 }
 
@@ -272,17 +240,14 @@ export async function handleEmailAuth(event) {
 
     if (authActionInProgress) return;
 
-    // Strict Target Verification: Ensure event originates from the email form
     const form = event?.target?.closest('form') || document.getElementById('emailAuthForm');
     
-    // Safety Guard: Abort if called outside a submit event or without a valid form context
     if (!form || (event && event.type !== 'submit')) {
         return;
     }
 
     const submitBtn = event?.submitter || document.getElementById('signInBtn') || form.querySelector('button[type="submit"]');
 
-    // Scoped input extraction using your exact HTML IDs
     const emailInput = form.querySelector('input[type="email"]') || document.getElementById('authEmail');
     const passwordInput = form.querySelector('input[type="password"]') || document.getElementById('authPassword');
 
@@ -328,11 +293,11 @@ export async function handleEmailAuth(event) {
     }
 }
 
-// Redirect result handler for mobile / redirect sign-ins
 export async function initAuthRedirectHandler() {
     try {
         const result = await getRedirectResult(auth);
         if (result?.user) {
+            await createOrUpdateUser(result.user);
             showToast("✅ Signed in successfully!", "success");
             closeLoginModal();
             restorePendingDraft();
@@ -355,7 +320,6 @@ export async function handleEmailSignUp(event) {
     const form = event?.target?.closest('form') || event?.target;
     const submitBtn = event?.submitter || document.getElementById('signUpSubmitBtn') || document.getElementById('createAccountBtn') || form?.querySelector('button[type="submit"]');
 
-    // Flexible selector to find fields regardless of DOM structure
     const emailInput = form?.querySelector('input[type="email"]') || document.getElementById('signUpEmail') || document.getElementById('authEmail');
     const passwordInput = form?.querySelector('input[type="password"]') || document.getElementById('signUpPassword') || document.getElementById('authPassword');
 
@@ -610,26 +574,25 @@ export function bindHeaderEvents() {
             }
         });
 
-    document.addEventListener('submit', (e) => {
-    const form = e.target;
+        document.addEventListener('submit', (e) => {
+            const form = e.target;
 
-    // Check if the submitted form matches your auth form IDs or selectors
-    if (form && typeof form.matches === 'function') {
-        if (form.matches('#emailAuthForm, #signInForm, #loginForm') || form.querySelector('#signInBtn')) {
-            e.preventDefault();
-            e.stopPropagation();
-            if (typeof handleEmailAuth === 'function') {
-                handleEmailAuth(e);
+            if (form && typeof form.matches === 'function') {
+                if (form.matches('#emailAuthForm, #signInForm, #loginForm') || form.querySelector('#signInBtn')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof handleEmailAuth === 'function') {
+                        handleEmailAuth(e);
+                    }
+                } else if (form.matches('#signUpForm, #createAccountForm') || form.querySelector('#signUpBtn')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof handleEmailSignUp === 'function') {
+                        handleEmailSignUp(e);
+                    }
+                }
             }
-        } else if (form.matches('#signUpForm, #createAccountForm') || form.querySelector('#signUpBtn')) {
-            e.preventDefault();
-            e.stopPropagation();
-            if (typeof handleEmailSignUp === 'function') {
-                handleEmailSignUp(e);
-            }
-        }
-    }
-});
+        });
 
         window.__authDelegationBound = true;
     }
@@ -657,8 +620,9 @@ export function initAuth() {
     
     return new Promise((resolve) => {
         getRedirectResult(auth)
-            .then((result) => {
+            .then(async (result) => {
                 if (result?.user) {
+                    await createOrUpdateUser(result.user);
                     showToast("✅ Signed in successfully!", "success");
                     closeLoginModal();
                     restorePendingDraft();
