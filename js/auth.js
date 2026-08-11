@@ -239,18 +239,19 @@ export async function handleEmailAuth(event) {
 
     if (authActionInProgress) return;
 
-    // Strict Target Verification: Ensure this action was initiated by a submit form or submit button
-    const form = event?.target?.tagName === 'FORM' ? event.target : event?.target?.closest('form');
+    // Strict Target Verification: Ensure event originates from the email form
+    const form = event?.target?.closest('form') || document.getElementById('emailAuthForm');
     
-    // Abort if handleEmailAuth was inadvertently called from an element outside an email form
-    if (!form && event?.type === 'click') {
+    // Safety Guard: Abort if called outside a submit event or without a valid form context
+    if (!form || (event && event.type !== 'submit')) {
         return;
     }
 
-    const submitBtn = event?.submitter || document.getElementById('signInSubmitBtn') || form?.querySelector('button[type="submit"]');
+    const submitBtn = event?.submitter || document.getElementById('signInBtn') || form.querySelector('button[type="submit"]');
 
-    const emailInput = form ? form.querySelector('input[type="email"]') : (document.getElementById('signInEmail') || document.getElementById('authEmail'));
-    const passwordInput = form ? form.querySelector('input[type="password"]') : (document.getElementById('signInPassword') || document.getElementById('authPassword'));
+    // Scoped input extraction using your exact HTML IDs
+    const emailInput = form.querySelector('input[type="email"]') || document.getElementById('authEmail');
+    const passwordInput = form.querySelector('input[type="password"]') || document.getElementById('authPassword');
 
     const email = emailInput?.value?.trim();
     const password = passwordInput?.value;
@@ -267,7 +268,7 @@ export async function handleEmailAuth(event) {
     }
 
     try {
-        savePendingDraft();
+        try { savePendingDraft(); } catch (e) {}
 
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
@@ -280,7 +281,7 @@ export async function handleEmailAuth(event) {
 
         showToast("✅ Signed in successfully!", "success");
         closeLoginModal();
-        restorePendingDraft();
+        try { restorePendingDraft(); } catch (e) {}
     } catch (error) {
         console.error("Email sign-in error:", error);
         const errMsg = handleAuthError(error);
