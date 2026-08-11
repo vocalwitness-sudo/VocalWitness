@@ -615,7 +615,6 @@ if (modalSignUpBtn) {
         });
 
         window.__authDelegationBound = true;
-    }
 
     if (!window.__dropdownClickListenerBound) {
         document.addEventListener('click', (e) => {
