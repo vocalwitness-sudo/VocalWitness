@@ -24,24 +24,31 @@ service cloud.firestore {
       );
     }
 
-    // Ensures user profile creation doesn't self-grant elevated permissions
+    // Block banned or suspended users from performing write operations
+    function isNotBanned() {
+      return isAuthenticated() && request.auth.token.banned != true;
+    }
+
+    // Safe initial profile creation
     function isSafeUserCreation() {
       let keys = request.resource.data.keys();
       return !keys.hasAny(['role', 'isBanned', 'badges', 'admin', 'moderator', 'zkVerified', 'reputation', 'score'])
           && (!keys.hasAny(['tier']) || request.resource.data.tier == 'citizen');
     }
 
-    // Prevents self-escalation of roles/tiers/scores on user profile updates
-    function isNotModifyingPrivileges() {
+    // Strict allowlist approach for self-profile updates
+    function isSafeUserUpdate() {
       let affected = request.resource.data.diff(resource.data).affectedKeys();
-      return !affected.hasAny(['role', 'tier', 'isBanned', 'badges', 'admin', 'moderator', 'createdAt', 'zkVerified', 'reputation', 'score']);
+      // Only allow modifying standard client-facing profile fields
+      return affected.hasOnly(['displayName', 'photoURL', 'bio', 'location', 'website', 'updatedAt', 'theme', 'language']);
     }
 
-    // Schema validator helper for notification creations
+    // Schema validator helper for notifications
     function isValidNotification() {
       let keys = request.resource.data.keys();
       return keys.hasAll(['senderId', 'type', 'timestamp']) 
-          && request.resource.data.senderId == request.auth.uid;
+          && request.resource.data.senderId == request.auth.uid
+          && request.resource.data.type in ['mention', 'reply', 'vote', 'system', 'witness_alert'];
     }
 
     // Prevents spoofing authorId on updates
@@ -55,14 +62,14 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if true;
       allow create: if isOwner(userId) && isSafeUserCreation();
-      allow update: if (isOwner(userId) && isNotModifyingPrivileges()) || isAdmin();
+      allow update: if (isOwner(userId) && isSafeUserUpdate()) || isAdmin();
       allow delete: if isAdmin();
 
       // Subcollection: User Notifications
       match /notifications/{notificationId} {
         allow read, get, list: if isOwner(userId);
         allow update, delete: if isOwner(userId);
-        allow create: if isAuthenticated() && isValidNotification();
+        allow create: if isNotBanned() && isValidNotification();
       }
 
       // Subcollection: User Bookmarks
@@ -76,7 +83,7 @@ service cloud.firestore {
     // ==========================================
     match /verification_requests/{requestId} {
       allow read: if isAuthenticated() && (request.auth.uid == resource.data.applicantId || isModerator());
-      allow create: if isAuthenticated() && request.resource.data.applicantId == request.auth.uid;
+      allow create: if isNotBanned() && request.resource.data.applicantId == request.auth.uid;
       allow update, delete: if isModerator();
     }
 
@@ -85,8 +92,8 @@ service cloud.firestore {
     // ==========================================
     match /feeds/{feedId} {
       allow read: if true;
-      allow create: if isAuthenticated() && request.resource.data.authorId == request.auth.uid;
-      allow update: if isAuthenticated() && (resource.data.authorId == request.auth.uid || isModerator()) && isAuthorImmutable('authorId');
+      allow create: if isNotBanned() && request.resource.data.authorId == request.auth.uid;
+      allow update: if isNotBanned() && (resource.data.authorId == request.auth.uid || isModerator()) && isAuthorImmutable('authorId');
       allow delete: if isAuthenticated() && (resource.data.authorId == request.auth.uid || isModerator());
     }
 
@@ -95,8 +102,8 @@ service cloud.firestore {
     // ==========================================
     match /witnessCycles/{cycleId} {
       allow read: if true;
-      allow create: if isAuthenticated() && request.resource.data.witnessId == request.auth.uid;
-      allow update: if isAuthenticated() && resource.data.witnessId == request.auth.uid && isAuthorImmutable('witnessId');
+      allow create: if isNotBanned() && request.resource.data.witnessId == request.auth.uid;
+      allow update: if isNotBanned() && resource.data.witnessId == request.auth.uid && isAuthorImmutable('witnessId');
       allow delete: if isAuthenticated() && (resource.data.witnessId == request.auth.uid || isModerator());
     }
 
@@ -105,11 +112,11 @@ service cloud.firestore {
     // ==========================================
     match /testimonies/{testimonyId} {
       allow read: if true;
-      allow create: if isAuthenticated() 
+      allow create: if isNotBanned() 
                     && request.resource.data.authorId == request.auth.uid
                     && (request.resource.data.content is string || request.resource.data.content == null);
                     
-      allow update: if isAuthenticated() 
+      allow update: if isNotBanned() 
                     && (request.auth.uid == resource.data.authorId || isModerator())
                     && isAuthorImmutable('authorId');
                     
@@ -119,14 +126,14 @@ service cloud.firestore {
       // Subcollection: User Reactions
       match /userReactions/{userId} {
         allow read: if true;
-        allow write: if isOwner(userId);
+        allow write: if isOwner(userId) && isNotBanned();
       }
       
       // Subcollection: Comments
       match /comments/{commentId} {
         allow read: if true;
-        allow create: if isAuthenticated() && request.resource.data.authorId == request.auth.uid;
-        allow update: if isAuthenticated() && (resource.data.authorId == request.auth.uid || isModerator()) && isAuthorImmutable('authorId');
+        allow create: if isNotBanned() && request.resource.data.authorId == request.auth.uid;
+        allow update: if isNotBanned() && (resource.data.authorId == request.auth.uid || isModerator()) && isAuthorImmutable('authorId');
         allow delete: if isAuthenticated() && (resource.data.authorId == request.auth.uid || isModerator());
       }
     }
@@ -136,7 +143,7 @@ service cloud.firestore {
     // ==========================================
     match /attestations/{attestationId} {
       allow read: if true;
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow create: if isNotBanned() && request.resource.data.userId == request.auth.uid;
       allow update, delete: if false; // Strict Immutability
     }
 
@@ -152,8 +159,8 @@ service cloud.firestore {
     // ==========================================
     match /groups/{groupId} {
       allow read: if true;
-      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.ownerId;
-      allow update: if isAuthenticated() && (request.auth.uid == resource.data.ownerId || isModerator()) && isAuthorImmutable('ownerId');
+      allow create: if isNotBanned() && request.auth.uid == request.resource.data.ownerId;
+      allow update: if isNotBanned() && (request.auth.uid == resource.data.ownerId || isModerator()) && isAuthorImmutable('ownerId');
       allow delete: if isAuthenticated() && (request.auth.uid == resource.data.ownerId || isModerator());
     }
 
@@ -162,8 +169,8 @@ service cloud.firestore {
     // ==========================================
     match /posts/{postId} {
       allow read: if true;
-      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.authorId;
-      allow update: if isAuthenticated() && (request.auth.uid == resource.data.authorId || isModerator()) && isAuthorImmutable('authorId');
+      allow create: if isNotBanned() && request.auth.uid == request.resource.data.authorId;
+      allow update: if isNotBanned() && (request.auth.uid == resource.data.authorId || isModerator()) && isAuthorImmutable('authorId');
       allow delete: if isAuthenticated() && (request.auth.uid == resource.data.authorId || isModerator());
     }
 
@@ -172,7 +179,7 @@ service cloud.firestore {
     // ==========================================
     match /votes/{voteId} {
       allow read: if true;
-      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
+      allow create: if isNotBanned() && request.auth.uid == request.resource.data.userId;
       allow update, delete: if false; // Strict Immutability
     }
 
@@ -181,7 +188,7 @@ service cloud.firestore {
     // ==========================================
     match /reports/{reportId} {
       allow read: if isModerator(); 
-      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.reportedBy;
+      allow create: if isNotBanned() && request.auth.uid == request.resource.data.reportedBy;
       allow update, delete: if isModerator(); 
     }
 
@@ -190,7 +197,7 @@ service cloud.firestore {
     // ==========================================
     match /audit_logs/{logId} {
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
+      allow create: if isNotBanned() && request.auth.uid == request.resource.data.userId;
       allow update, delete: if false; // Strict Immutability
     }
 
@@ -199,8 +206,8 @@ service cloud.firestore {
     // ==========================================
     match /dao_proposals/{proposalId} {
       allow read: if true;
-      allow create: if isAuthenticated() && request.resource.data.authorId == request.auth.uid;
-      allow update: if isAuthenticated() && (resource.data.authorId == request.auth.uid || isModerator()) && isAuthorImmutable('authorId');
+      allow create: if isNotBanned() && request.resource.data.authorId == request.auth.uid;
+      allow update: if isNotBanned() && (resource.data.authorId == request.auth.uid || isModerator()) && isAuthorImmutable('authorId');
       allow delete: if isAdmin();
     }
 
