@@ -571,28 +571,29 @@ export function bindHeaderEvents() {
                 return;
             }
 
-            const toggleBtn = e.target.closest('[data-action="toggle-password"]');
-            if (toggleBtn) {
-                e.preventDefault();
-                const targetId = toggleBtn.getAttribute('data-target');
-                if (targetId) togglePasswordVisibility(targetId, toggleBtn);
-            }
-            
-            const modalSubmitBtn = e.target.closest('#submitAuthBtn');
-            if (modalSubmitBtn) {
-                e.preventDefault();
-                e.stopPropagation();
-                handleEmailAuth(e);
-                return;
-            }
-            const modalSignUpBtn = e.target.closest('#toggleAuthModeBtn');
-            if (modalSignUpBtn) {
-                e.preventDefault();
-                e.stopPropagation();
-                handleEmailSignUp(e);
-                return;
-            });
+       const toggleBtn = e.target.closest('[data-action="toggle-password"]');
+if (toggleBtn) {
+    e.preventDefault();
+    const targetId = toggleBtn.getAttribute('data-target');
+    if (targetId) togglePasswordVisibility(targetId, toggleBtn);
+    return;
+}
 
+const modalSubmitBtn = e.target.closest('#submitAuthBtn');
+if (modalSubmitBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    handleEmailAuth(e);
+    return;
+}
+
+const modalSignUpBtn = e.target.closest('#toggleAuthModeBtn');
+if (modalSignUpBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    handleEmailSignUp(e);
+    return;
+}
         document.addEventListener('submit', (e) => {
             const form = e.target;
 
