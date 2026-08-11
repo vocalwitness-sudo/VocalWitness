@@ -39,8 +39,18 @@ service cloud.firestore {
     // Strict allowlist approach for self-profile updates
     function isSafeUserUpdate() {
       let affected = request.resource.data.diff(resource.data).affectedKeys();
-      // Only allow modifying standard client-facing profile fields
-      return affected.hasOnly(['displayName', 'photoURL', 'bio', 'location', 'website', 'updatedAt', 'theme', 'language']);
+      
+      // Ensure users cannot self-escalate privileges or alter restricted metadata
+      let hasNoPrivilegeEscalation = !affected.hasAny(['role', 'isBanned', 'badges', 'admin', 'moderator', 'zkVerified', 'reputation', 'score', 'tier']);
+
+      // Allow modifying standard client-facing profile and system session fields
+      let isAllowedKeys = affected.hasOnly([
+        'uid', 'email', 'displayName', 'photoURL', 'bio', 
+        'location', 'website', 'createdAt', 'updatedAt', 
+        'lastLoginAt', 'theme', 'language'
+      ]);
+
+      return hasNoPrivilegeEscalation && isAllowedKeys;
     }
 
     // Schema validator helper for notifications
