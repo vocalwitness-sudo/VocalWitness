@@ -4,25 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#10b981">
-                  
-
+                 
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="logo.png" type="image/png">
     <title>Live Arena • VocalWitness</title>
-
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="../style.css">
-
     <style>
-        body { 
-            font-family: 'Inter', system-ui, sans-serif; 
-            background: #0a0f1c; 
-            color: white; 
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: #0a0f1c;
+            color: white;
         }
-        .glass { 
-            background: rgba(17, 24, 39, 0.95); 
-            backdrop-filter: blur(20px); 
-            border: 1px solid rgba(16, 185, 129, 0.25); 
+        .glass {
+            background: rgba(17, 24, 39, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(16, 185, 129, 0.25);
         }
         .arena-placeholder {
             background: linear-gradient(135deg, #4f46e5, #7c3aed);
@@ -30,13 +27,12 @@
     </style>
 </head>
 <body class="min-h-screen pb-20 p-4 bg-[#0a0f1c]">
-
     <div class="max-w-2xl mx-auto">
         <!-- HEADER -->
         <header class="flex items-center justify-between mb-8">
             <div class="flex items-center gap-3">
                 <button onclick="window.goBack()"
-                        class="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center gap-2 text-sm font-medium">
+                        class="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center gap-2 text-sm font-medium transition">
                     ← Back
                 </button>
                 <div class="flex items-center gap-3">
@@ -57,23 +53,30 @@
                 <p class="text-zinc-400 text-lg max-w-md mx-auto mb-10">
                     Real-time discussions, debates, and public testimonies are coming soon.
                 </p>
-                
+               
                 <div class="arena-placeholder rounded-3xl p-10 mb-10 text-white">
                     <p class="text-xl font-medium mb-2">🚧 Under Construction</p>
                     <p class="text-sm opacity-75">The Arena will open when we reach 500 verified witnesses</p>
                 </div>
 
-                <button onclick="notifyLiveArena()"
-                        class="px-10 py-4 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-black font-bold rounded-3xl text-lg shadow-xl transition-all active:scale-95">
+                <button id="notifyArenaBtn"
+                        onclick="notifyLiveArena()"
+                        class="px-10 py-4 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-black font-bold rounded-3xl text-lg shadow-xl transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed">
                     🔔 Notify Me When Arena Goes Live
                 </button>
             </div>
         </div>
     </div>
 
-      <!-- Scripts -->
-    <script>
-        // Global functions accessible to onclick handlers
+    <!-- Scripts -->
+    <script type="module">
+        // Import what we need from the auth module
+        import { requireAuth, showToast } from '../js/auth.js';
+        // We also need Firestore helpers
+        import { auth, db } from '../js/firebase-config.js';
+        import { doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+        // Make goBack available globally
         window.goBack = function() {
             if (window.history.length > 1) {
                 window.history.back();
@@ -82,13 +85,56 @@
             }
         };
 
-        window.notifyLiveArena = function() {
-            alert("✅ You'll be notified when the Live Arena launches!\n\nThank you for your patience.");
+        // Improved notify function
+        window.notifyLiveArena = async function() {
+            const btn = document.getElementById('notifyArenaBtn');
+
+            // Require authentication first
+            if (!requireAuth("Please sign in to get notified when the Live Arena launches.")) {
+                return;
+            }
+
+            // Disable button while processing
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = "Saving...";
+            }
+
+            try {
+                const user = auth.currentUser;
+                if (!user) {
+                    showToast("Please sign in first.", "error");
+                    return;
+                }
+
+                const userRef = doc(db, "users", user.uid);
+                await updateDoc(userRef, {
+                    interestedInArena: true,
+                    arenaNotifyAt: serverTimestamp()
+                });
+
+                showToast("✅ You're on the list! We'll notify you when the Live Arena goes live.", "success");
+
+                if (btn) {
+                    btn.textContent = "✅ You're on the list";
+                    btn.classList.remove("from-rose-500", "to-pink-500", "hover:from-rose-600", "hover:to-pink-600");
+                    btn.classList.add("from-emerald-500", "to-teal-500");
+                }
+            } catch (error) {
+                console.error("Failed to save arena interest:", error);
+                showToast("Something went wrong. Please try again.", "error");
+
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = "🔔 Notify Me When Arena Goes Live";
+                }
+            }
         };
 
         console.log("✅ Live Arena loaded successfully");
     </script>
 
+    <!-- Keep main.js if you still need it for other global app features -->
     <script type="module" src="../js/main.js"></script>
 </body>
 </html>
