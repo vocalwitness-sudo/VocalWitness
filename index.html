@@ -450,9 +450,7 @@
                 </div>
             </form>
         </div>
-    </div>
-
-    <!-- Verification Action Modal -->
+    </div><!-- Verification Action Modal -->
     <div id="verificationModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[10002] p-4">
         <div class="glass rounded-3xl p-6 sm:p-8 max-w-md w-full border border-emerald-500/30 modal relative max-h-[90vh] overflow-y-auto">
             <button onclick="closeVerificationModal()" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl transition">✕</button>
@@ -574,7 +572,7 @@
             </button>
 
             <p class="text-[11px] text-slate-500 text-center mt-3">
-                Protected by Zero-Knowledge proofs (`zk-proof.js`) & Sybil filters.
+                Protected by Zero-Knowledge proofs (<code class="text-slate-400">zk-proof.js</code>) & Sybil filters.
             </p>
         </div>
     </div>
@@ -589,40 +587,48 @@
                 <h3 class="text-xl font-bold text-white">Sustain the Public Square</h3>
                 <p class="text-xs text-emerald-300 mt-1">VocalWitness stays free, independent, and un-manipulated through voluntary community backing.</p>
             </div>
+
             <div class="space-y-4">
                 <div>
                     <label class="block text-xs text-zinc-400 mb-2">Select Contribution Amount (USD / NGN)</label>
-                    <div class="grid grid-cols-3 gap-2">
+                    <div id="supportTierContainer" class="grid grid-cols-3 gap-2">
                         <button type="button" class="support-tier-btn py-2 bg-zinc-800 hover:bg-emerald-600/30 border border-zinc-700 rounded-xl text-sm font-medium transition-all" data-amount="5">$5</button>
-                        <button type="button" class="support-tier-btn py-2 bg-emerald-600/20 border border-emerald-500 rounded-xl text-sm font-medium transition-all" data-amount="15">$15</button>
+                        <button type="button" class="support-tier-btn py-2 bg-emerald-600/20 border border-emerald-500 rounded-xl text-sm font-medium transition-all active-tier" data-amount="15">$15</button>
                         <button type="button" class="support-tier-btn py-2 bg-zinc-800 hover:bg-emerald-600/30 border border-zinc-700 rounded-xl text-sm font-medium transition-all" data-amount="50">$50</button>
                     </div>
                 </div>
+
                 <div>
                     <label class="block text-xs text-zinc-400 mb-1">Custom Amount ($ USD)</label>
                     <input type="number" id="customSupportAmount" placeholder="Enter amount" min="1" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500" value="15">
                 </div>
+
                 <button id="paystackPayBtn" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-sm transition-all shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
                     <span>Pay with Card / Bank (Paystack)</span>
                 </button>
+
                 <button id="proceedCryptoBtn" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-black font-semibold rounded-xl text-sm transition-all shadow-lg shadow-emerald-600/20">
                     Proceed with Crypto (NOWPayments)
                 </button>
             </div>
+
             <div class="mt-5 pt-4 border-t border-zinc-800">
                 <p class="text-xs text-zinc-400 mb-2 font-medium text-center">Or scan / copy to send USDT directly:</p>
                 
                 <div class="bg-white p-3 rounded-2xl w-36 h-36 mx-auto mb-3 flex items-center justify-center shadow-md">
                     <img src="/image/95756.jpg" alt="USDT QR Code" class="w-full h-full object-contain">
                 </div>
+
                 <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex items-center justify-between gap-2">
                     <span class="text-[11px] text-emerald-400 font-mono truncate select-all">TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK</span>
                     <button type="button" onclick="navigator.clipboard.writeText('TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK'); showToast('TRC-20 address copied!', 'success');" class="text-xs bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 rounded-lg text-white font-medium transition-all shrink-0">
                         Copy
                     </button>
                 </div>
+
                 <p class="text-[10px] text-zinc-500 mt-1.5 text-center">Network: <strong class="text-zinc-400">Tron (TRC-20)</strong> • Send USDT only</p>
             </div>
+
             <p class="text-[10px] text-zinc-500 text-center mt-4">Powered by non-custodial rails. No tracking, no intrusive data collection.</p>
         </div>
     </div>
@@ -736,41 +742,40 @@
     </div>
 
     <!-- Interactive Application Footer -->
-    <footer class="bg-zinc-950 border-t border-zinc-800/80 pt-16 pb-12 mt-20 text-zinc-400" style="background-color: #09090b; border-color: #27272a;">
+    <footer class="bg-zinc-950 border-t border-zinc-800/80 pt-16 pb-12 mt-20 text-zinc-400">
         <div class="max-w-6xl mx-auto px-6">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-10 pb-12 border-b border-zinc-800/60" style="border-color: #27272a;">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-10 pb-12 border-b border-zinc-800/60">
                 
                 <!-- Brand & Mission Column -->
                 <div class="md:col-span-1 space-y-4">
                     <div class="flex items-center gap-2">
-                        <span class="text-xl font-bold tracking-wider text-white" style="color: #ffffff;">
-                            Vocal<span class="text-emerald-500" style="color: #10b981;">Witness</span>
+                        <span class="text-xl font-bold tracking-wider text-white">
+                            Vocal<span class="text-emerald-500">Witness</span>
                         </span>
                     </div>
-                    <p class="text-xs text-zinc-400 leading-relaxed" style="color: #a1a1aa;" data-i18n="footerMission">
+                    <p class="text-xs text-zinc-400 leading-relaxed" data-i18n="footerMission">
                         A decentralized public square empowering citizens with immutable testimony, voice verification, and transparent reporting.
                     </p>
                     <button onclick="openSupportModal()" 
-                            class="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-emerald-600/10 hover:bg-emerald-600/20 border border-emerald-500/30 rounded-xl text-emerald-400 text-xs font-semibold transition-all"
-                            style="background-color: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); color: #34d399;">
+                            class="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-emerald-600/10 hover:bg-emerald-600/20 border border-emerald-500/30 rounded-xl text-emerald-400 text-xs font-semibold transition-all">
                         <span>♥</span> <span data-i18n="sustainSquareBtn">Sustain the Platform</span>
                     </button>
                 </div>
 
                 <!-- Platform Navigation -->
                 <div class="space-y-3">
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-white" style="color: #ffffff;" data-i18n="footerPlatformHeader">Platform</h3>
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-white" data-i18n="footerPlatformHeader">Platform</h3>
                     <ul class="space-y-2 text-xs">
                         <li><a href="index.html" class="hover:text-emerald-400 transition" data-i18n="publicSquareFeed">Public Square</a></li>
                         <li><a href="my-testimonies.html" class="hover:text-emerald-400 transition" data-i18n="myTestimoniesMenu">My Testimonies</a></li>
                         <li><a href="groups.html" class="hover:text-emerald-400 transition" data-i18n="groupsMenu">Groups</a></li>
-                        <li><a href="true-witness.html" class="hover:text-emerald-400 transition" data-i18n="witnessVoiceMenu">Witness Voice</a></li>
+                        <li><a href="witness-voice.html" class="hover:text-emerald-400 transition" data-i18n="witnessVoiceMenu">Witness Voice</a></li>
                     </ul>
                 </div>
 
                 <!-- Governance & Legal -->
                 <div class="space-y-3">
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-white" style="color: #ffffff;" data-i18n="footerGovernanceHeader">Governance & Legal</h3>
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-white" data-i18n="footerGovernanceHeader">Governance & Legal</h3>
                     <ul class="space-y-2 text-xs">
                         <li><a href="about.html" class="hover:text-emerald-400 transition" data-i18n="aboutMenu">About Us</a></li>
                         <li><a href="privacy.html" class="hover:text-emerald-400 transition" data-i18n="privacyPolicyMenu">Privacy Policy</a></li>
@@ -781,19 +786,19 @@
 
                 <!-- Network & System Status -->
                 <div class="space-y-3">
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-white" style="color: #ffffff;" data-i18n="footerSystemHeader">System Status</h3>
-                    <div class="p-3 bg-zinc-900 border border-zinc-800 rounded-2xl space-y-2" style="background-color: #18181b; border-color: #27272a;">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-white" data-i18n="footerSystemHeader">System Status</h3>
+                    <div class="p-3 bg-zinc-900 border border-zinc-800 rounded-2xl space-y-2">
                         <div class="flex items-center justify-between text-xs">
-                            <span class="text-zinc-500" style="color: #71717a;">Storage Rail:</span>
-                            <span class="text-emerald-400 font-mono text-[11px]" style="color: #34d399;">Firestore Active</span>
+                            <span class="text-zinc-500">Storage Rail:</span>
+                            <span class="text-emerald-400 font-mono text-[11px]">Firestore Active</span>
                         </div>
                         <div class="flex items-center justify-between text-xs">
-                            <span class="text-zinc-500" style="color: #71717a;">Verification:</span>
-                            <span class="text-emerald-400 font-mono text-[11px]" style="color: #34d399;">TRC-20 / Direct</span>
+                            <span class="text-zinc-500">Verification:</span>
+                            <span class="text-emerald-400 font-mono text-[11px]">TRC-20 / Direct</span>
                         </div>
                         <div class="flex items-center justify-between text-xs">
-                            <span class="text-zinc-500" style="color: #71717a;">Data Saver:</span>
-                            <button onclick="toggleDataSaver()" id="data-saver-status" class="text-amber-400 font-medium text-xs hover:underline" style="color: #fbbf24;">
+                            <span class="text-zinc-500">Data Saver:</span>
+                            <button onclick="toggleDataSaver()" id="data-saver-status" class="text-amber-400 font-medium text-xs hover:underline">
                                 Off
                             </button>
                         </div>
@@ -803,11 +808,11 @@
             </div>
 
             <!-- Bottom Copyright & Security Note -->
-            <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-500" style="color: #71717a;">
+            <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-500">
                 <p data-i18n="footerCopyright">
                     © 2026 VocalWitness • Built for Truth • Powered by Citizens
                 </p>
-                <p class="text-[11px] font-mono text-zinc-600" style="color: #52525b;">
+                <p class="text-[11px] font-mono text-zinc-600">
                     Non-custodial infrastructure • Zero tracking
                 </p>
             </div>
@@ -832,13 +837,9 @@
             const input = $('authPassword');
             const btn = $('togglePasswordBtn');
             if (!input || !btn) return;
-            if (input.type === 'password') {
-                input.type = 'text';
-                btn.textContent = 'Hide';
-            } else {
-                input.type = 'password';
-                btn.textContent = 'Show';
-            }
+            const isPassword = input.type === 'password';
+            input.type = isPassword ? 'text' : 'password';
+            btn.textContent = isPassword ? 'Hide' : 'Show';
         }
 
         function closeLoginModal() {
@@ -857,6 +858,10 @@
             $('supportModal')?.classList.remove('hidden');
         }
 
+        function closeVerificationModal() {
+            $('verificationModal')?.classList.add('hidden');
+        }
+
         // Header More Options Dropdown toggle
         document.addEventListener('click', (e) => {
             const moreBtn = $('more-btn');
@@ -871,21 +876,26 @@
             }
         });
 
-        // Support tier selection logic
-        document.querySelectorAll('.support-tier-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.support-tier-btn').forEach(b => {
+        // Support tier selection via Event Delegation
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('.support-tier-btn');
+            if (!btn) return;
+
+            const container = $('supportTierContainer');
+            if (container) {
+                container.querySelectorAll('.support-tier-btn').forEach(b => {
                     b.classList.remove('bg-emerald-600/20', 'border-emerald-500');
                     b.classList.add('bg-zinc-800', 'border-zinc-700');
                 });
-                btn.classList.remove('bg-zinc-800', 'border-zinc-700');
-                btn.classList.add('bg-emerald-600/20', 'border-emerald-500');
-                
-                const amountInput = $('customSupportAmount');
-                if (amountInput) {
-                    amountInput.value = btn.getAttribute('data-amount');
-                }
-            });
+            }
+
+            btn.classList.remove('bg-zinc-800', 'border-zinc-700');
+            btn.classList.add('bg-emerald-600/20', 'border-emerald-500');
+            
+            const amountInput = $('customSupportAmount');
+            if (amountInput) {
+                amountInput.value = btn.getAttribute('data-amount');
+            }
         });
     </script>
 
