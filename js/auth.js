@@ -244,8 +244,9 @@ export async function handleEmailAuth(event) {
     if (event?.target) {
         form = event.target.tagName === 'FORM' ? event.target : event.target.closest('form');
     }
+    
     if (!form) {
-        form = document.getElementById('emailAuthForm') || document.getElementById('loginForm');
+    form = document.getElementById('authForm') || document.getElementById('emailAuthForm') || document.getElementById('loginForm');
     }
 
     // Safely exit if no form exists in the DOM yet
@@ -320,7 +321,8 @@ export async function handleEmailSignUp(event) {
 
     if (authActionInProgress) return;
 
-    const form = event?.target?.closest('form') || event?.target;
+    // Replace this line in handleEmailSignUp:
+const form = event?.target?.closest('form') || event?.target || document.getElementById('authForm');
     const submitBtn = event?.submitter || document.getElementById('signUpSubmitBtn') || document.getElementById('createAccountBtn') || form?.querySelector('button[type="submit"]');
 
     const emailInput = form?.querySelector('input[type="email"]') || document.getElementById('signUpEmail') || document.getElementById('authEmail');
