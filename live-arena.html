@@ -47,18 +47,45 @@
 
         <!-- Main Content -->
         <div class="glass rounded-3xl p-8 text-center">
-            <div class="py-16">
+            <div class="py-12">
                 <div class="text-7xl mb-8">🏟️</div>
                 <h2 class="text-3xl font-bold mb-4 text-white">Live Arena</h2>
                 <p class="text-zinc-400 text-lg max-w-md mx-auto mb-10">
                     Real-time discussions, debates, and public testimonies are coming soon.
                 </p>
                
-                <div class="arena-placeholder rounded-3xl p-10 mb-10 text-white">
+                <!-- Arena Progress Card -->
+                <div class="arena-placeholder rounded-3xl p-8 mb-10 text-white relative overflow-hidden">
                     <p class="text-xl font-medium mb-2">🚧 Under Construction</p>
-                    <p class="text-sm opacity-75">The Arena will open when we reach 500 verified witnesses</p>
+                    <p class="text-sm opacity-80 mb-6">
+                        The Arena will open when we reach <strong>500 verified witnesses</strong>
+                    </p>
+
+                    <!-- Live Progress -->
+                    <div class="bg-black/30 rounded-2xl p-5 text-left">
+                        <div class="flex justify-between items-end mb-3">
+                            <div>
+                                <span id="verifiedCount" class="text-4xl font-bold text-emerald-400">—</span>
+                                <span class="text-sm text-zinc-300 ml-2">Verified Citizens</span>
+                            </div>
+                            <span class="text-sm text-zinc-400">Goal: 500</span>
+                        </div>
+
+                        <!-- Progress Bar -->
+                        <div class="w-full h-3 bg-zinc-800/80 rounded-full overflow-hidden">
+                            <div id="verifiedProgress"
+                                 class="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-700 ease-out"
+                                 style="width: 0%">
+                            </div>
+                        </div>
+
+                        <p id="progressText" class="text-xs text-zinc-400 mt-2 text-right">
+                            Loading progress...
+                        </p>
+                    </div>
                 </div>
 
+                <!-- Notify Button -->
                 <button id="notifyArenaBtn"
                         onclick="notifyLiveArena()"
                         class="px-10 py-4 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-black font-bold rounded-3xl text-lg shadow-xl transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed">
@@ -70,31 +97,54 @@
 
     <!-- Scripts -->
     <script type="module">
-        // Import what we need from the auth module
+        import { listenToVerifiedCount } from '../js/utils.js';
         import { requireAuth, showToast } from '../js/auth.js';
-        // We also need Firestore helpers
         import { auth, db } from '../js/firebase-config.js';
         import { doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
-        // Make goBack available globally
-        window.goBack = function() {
-            if (window.history.length > 1) {
-                window.history.back();
-            } else {
-                window.location.href = 'index.html';
-            }
-        };
+        const GOAL = 500;
 
-        // Improved notify function
-        window.notifyLiveArena = async function() {
+        // ========== Real-time Verified Count ==========
+        const unsubscribeVerified = listenToVerifiedCount((count) => {
+            const countEl = document.getElementById('verifiedCount');
+            const progressBar = document.getElementById('verifiedProgress');
+            const progressText = document.getElementById('progressText');
+
+            if (countEl) {
+                countEl.textContent = count.toLocaleString();
+            }
+
+            if (progressBar) {
+                const percentage = Math.min((count / GOAL) * 100, 100);
+                progressBar.style.width = `${percentage}%`;
+            }
+
+            if (progressText) {
+                if (count >= GOAL) {
+                    progressText.textContent = "🎉 Arena is ready to launch!";
+                    progressText.classList.add('text-emerald-400', 'font-medium');
+                } else {
+                    const remaining = GOAL - count;
+                    progressText.textContent = `${remaining.toLocaleString()} more needed`;
+                }
+            }
+        });
+
+        // Clean up listener when leaving the page
+        window.addEventListener('beforeunload', () => {
+            if (typeof unsubscribeVerified === 'function') {
+                unsubscribeVerified();
+            }
+        });
+
+        // ========== Notify Me ==========
+        window.notifyLiveArena = async function () {
             const btn = document.getElementById('notifyArenaBtn');
 
-            // Require authentication first
             if (!requireAuth("Please sign in to get notified when the Live Arena launches.")) {
                 return;
             }
 
-            // Disable button while processing
             if (btn) {
                 btn.disabled = true;
                 btn.textContent = "Saving...";
@@ -113,7 +163,7 @@
                     arenaNotifyAt: serverTimestamp()
                 });
 
-                showToast("✅ You're on the list! We'll notify you when the Live Arena goes live.", "success");
+                showToast("✅ You're on the list! We'll notify you when the Arena goes live.", "success");
 
                 if (btn) {
                     btn.textContent = "✅ You're on the list";
@@ -131,10 +181,19 @@
             }
         };
 
+        // ========== Go Back ==========
+        window.goBack = function () {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = 'index.html';
+            }
+        };
+
         console.log("✅ Live Arena loaded successfully");
     </script>
 
-    <!-- Keep main.js if you still need it for other global app features -->
+    <!-- Optional: keep if you still need global app features -->
     <script type="module" src="../js/main.js"></script>
 </body>
 </html>
