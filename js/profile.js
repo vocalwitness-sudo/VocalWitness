@@ -283,10 +283,11 @@ export function openEditProfile() {
     if (!modal) return showToast(t("profile.edit_modal_not_found", "Edit modal not found"), "error"); 
 
     if (currentUserData) { 
-        const displayNameInput = document.getElementById('editDisplayName'); 
-        const usernameInput = document.getElementById('editUsername'); 
-        const regionInput = document.getElementById('editRegion'); 
-        const bioInput = document.getElementById('editBio'); 
+        // Handles both modal suffix and non-suffix element fallback
+        const displayNameInput = document.getElementById('editDisplayNameModal') || document.getElementById('editDisplayName'); 
+        const usernameInput = document.getElementById('editUsernameModal') || document.getElementById('editUsername'); 
+        const regionInput = document.getElementById('editRegionModal') || document.getElementById('editRegion'); 
+        const bioInput = document.getElementById('editBioModal') || document.getElementById('editBio'); 
 
         if (displayNameInput) displayNameInput.value = currentUserData.displayName || ''; 
         if (usernameInput) usernameInput.value = currentUserData.username || ''; 
@@ -311,10 +312,16 @@ window.handleSaveProfile = handleSaveProfile;
 export async function saveProfileChanges() { 
     if (!auth.currentUser) return showToast(t("auth.must_be_logged_in", "You must be logged in"), "error"); 
 
-    const displayName = document.getElementById('editDisplayName')?.value.trim(); 
-    const username = document.getElementById('editUsername')?.value.trim(); 
-    const region = document.getElementById('editRegion')?.value.trim(); 
-    const bio = document.getElementById('editBio')?.value.trim(); 
+    // Retrieve input values safely across updated unique Modal IDs or standard IDs
+    const displayNameEl = document.getElementById('editDisplayNameModal') || document.getElementById('editDisplayName');
+    const usernameEl = document.getElementById('editUsernameModal') || document.getElementById('editUsername');
+    const regionEl = document.getElementById('editRegionModal') || document.getElementById('editRegion');
+    const bioEl = document.getElementById('editBioModal') || document.getElementById('editBio');
+
+    const displayName = displayNameEl?.value?.trim(); 
+    const username = usernameEl?.value?.trim(); 
+    const region = regionEl?.value?.trim(); 
+    const bio = bioEl?.value?.trim(); 
 
     if (!displayName) return showToast(t("profile.display_name_required", "Display name is required"), "error"); 
 
@@ -339,6 +346,14 @@ export async function saveProfileChanges() {
     } 
 } 
 window.saveProfileChanges = saveProfileChanges;
+
+// Bind submit listener directly to edit form if loaded in DOM
+document.addEventListener('DOMContentLoaded', () => {
+    const editForm = document.getElementById('editProfileFormModal') || document.getElementById('editProfileForm');
+    if (editForm) {
+        editForm.addEventListener('submit', handleSaveProfile);
+    }
+});
 
 // ====================== SETTINGS & SECURITY ====================== 
 export function openSettings() { 
