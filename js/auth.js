@@ -186,7 +186,6 @@ export async function googleLogin(event) {
         }
     }
 
-    // Mobile & PWA Detection MUST BE INSIDE googleLogin
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.matchMedia('(display-mode: standalone)').matches;
 
     try {
@@ -198,7 +197,7 @@ export async function googleLogin(event) {
 
         if (isMobile) {
             await signInWithRedirect(auth, provider);
-            return; // <-- Now valid because it's inside an async function!
+            return;
         }
 
         const userCredential = await signInWithPopup(auth, provider);
