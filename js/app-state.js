@@ -6,52 +6,86 @@ import { CitizenTalkEngine, WitnessVoiceEngine } from './vocalWitnessEngine.js';
 export const citizenEngine = new CitizenTalkEngine(db, storage);
 export const witnessEngine = new WitnessVoiceEngine(db, storage);
 
-// Global debug exposure (optional)
+// Global debug exposure for client runtime inspection
 if (typeof window !== 'undefined') {
     window.citizenEngine = citizenEngine;
     window.witnessEngine = witnessEngine;
 }
 
-// ====================== APP STATE ======================
+// ====================== APPLICATION STATE ======================
 export const state = {
     isAuthenticated: false,
     currentUser: null,
     currentTab: 'square',
-    currentMode: 'citizen'
+    currentMode: 'citizen',
+    selectedLanguage: 'en',
+    userTier: 1
 };
 
+/**
+ * Checks if a user is active and authenticated in the state.
+ * @returns {boolean}
+ */
 export function isUserAuthenticated() {
     return state.isAuthenticated || !!state.currentUser;
 }
 
+/**
+ * Safely updates global application state and dispatches change event.
+ * @param {Object} newState - Partial state update payload.
+ */
 export function updateAppState(newState) {
+    if (!newState || typeof newState !== 'object') return;
+    
     Object.assign(state, newState);
-    window.dispatchEvent(new CustomEvent('app-state-changed', { detail: state }));
+    
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('app-state-changed', { detail: state }));
+    }
 }
 
-// ====================== MEDIA HELPERS ======================
+// ====================== MEDIA PREVIEW HELPERS ======================
+/**
+ * Renders an audio playback element inside the active media preview container.
+ * @param {Blob|File} blob - Recorded or selected audio blob.
+ */
 export function renderAudioPreview(blob) {
-    const previewContainer = document.getElementById('mediaPreviewContainer') || document.getElementById('preview-area');
-    if (!previewContainer) return;
+    if (!blob) return;
 
+    const previewContainer = document.getElementById('mediaPreviewContainer') || document.getElementById('preview-area');
+    if (!previewContainer) {
+        console.warn('Audio preview container not found in DOM.');
+        return;
+    }
+
+    // Clean previous preview elements
     previewContainer.innerHTML = ''; 
     const audioUrl = URL.createObjectURL(blob);
 
     const wrapper = document.createElement('div');
-    wrapper.className = 'flex items-center gap-2 p-2 bg-zinc-800 rounded-2xl border border-zinc-700 mt-2';
+    wrapper.className = 'flex items-center justify-between gap-3 p-3 bg-zinc-800/90 rounded-2xl border border-zinc-700/80 mt-2 transition-all';
 
     const audioEl = document.createElement('audio');
     audioEl.controls = true;
     audioEl.src = audioUrl;
+    audioEl.className = 'w-full h-8 max-w-xs';
 
     const removeBtn = document.createElement('button');
     removeBtn.type = 'button';
-    removeBtn.className = 'text-red-400 hover:text-red-200 text-xs font-medium px-2 py-1';
+    removeBtn.className = 'text-red-400 hover:text-red-300 hover:bg-red-950/40 text-xs font-semibold px-3 py-1.5 rounded-xl border border-red-800/50 transition';
     removeBtn.textContent = 'Remove';
+    
     removeBtn.addEventListener('click', () => {
         wrapper.remove();
         URL.revokeObjectURL(audioUrl);
+        
+        // Clear pending uploads on engine instances
         citizenEngine.clearPendingMedia?.();
+        witnessEngine.clearPendingMedia?.();
+
+        if (previewContainer.children.length === 0) {
+            previewContainer.classList.add('hidden');
+        }
     });
 
     wrapper.appendChild(audioEl);
