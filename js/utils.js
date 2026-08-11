@@ -115,8 +115,29 @@ export async function submitPeerVote(postId, voteType) {
 /* ====================== REAL-TIME LISTENERS ====================== */
 
 /**
+ * Creates a safe unsubscribe function that can be called multiple times
+ * without throwing errors.
+ */
+function createSafeUnsubscribe(unsubscribeFn) {
+    let unsubscribed = false;
+
+    return () => {
+        if (unsubscribed) return;
+        unsubscribed = true;
+
+        try {
+            if (typeof unsubscribeFn === 'function') {
+                unsubscribeFn();
+            }
+        } catch (error) {
+            console.warn("Error while unsubscribing from Firestore listener:", error);
+        }
+    };
+}
+
+/**
  * Listen to the vote count of a specific post in real-time.
- * Returns an unsubscribe function.
+ * Returns a safe unsubscribe function.
  */
 export function listenToVoteCount(postId, callback) {
     if (!postId || typeof callback !== 'function') {
@@ -139,7 +160,7 @@ export function listenToVoteCount(postId, callback) {
         }
     );
 
-    return unsubscribe;
+    return createSafeUnsubscribe(unsubscribe);
 }
 
 /**
@@ -175,7 +196,7 @@ export function listenToVerifiedCount(callback) {
         }
     );
 
-    return unsubscribe;
+    return createSafeUnsubscribe(unsubscribe);
 }
 
 /**
@@ -198,14 +219,11 @@ export function listenToArenaInterest(callback) {
         }
     );
 
-    return unsubscribe;
+    return createSafeUnsubscribe(unsubscribe);
 }
 
 /**
  * Generic real-time document listener
- * @param {string} path - e.g. "users/uid123"
- * @param {(data: object|null) => void} callback
- * @returns {() => void} unsubscribe
  */
 export function listenToDocument(path, callback) {
     if (!path || typeof callback !== 'function') return () => {};
@@ -227,15 +245,11 @@ export function listenToDocument(path, callback) {
         }
     );
 
-    return unsubscribe;
+    return createSafeUnsubscribe(unsubscribe);
 }
 
 /**
  * Generic real-time collection listener
- * @param {string} collectionPath
- * @param {Array} constraints - array of where()/orderBy() etc.
- * @param {(docs: array, snapshot) => void} callback
- * @returns {() => void} unsubscribe
  */
 export function listenToCollection(collectionPath, constraints = [], callback) {
     if (!collectionPath || typeof callback !== 'function') return () => {};
@@ -257,7 +271,7 @@ export function listenToCollection(collectionPath, constraints = [], callback) {
         }
     );
 
-    return unsubscribe;
+    return createSafeUnsubscribe(unsubscribe);
 }
 
 /* ====================== TIER & TRUST SYSTEM ====================== */
