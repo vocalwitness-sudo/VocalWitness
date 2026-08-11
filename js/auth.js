@@ -41,7 +41,6 @@ async function createOrUpdateUser(user) {
         const safePhotoURL = user.photoURL || "";
 
         if (!snap.exists()) {
-            // Document creation -> Triggers 'allow create' in Firestore Rules
             await setDoc(userRef, {
                 uid: user.uid,
                 email: safeEmail,
@@ -55,9 +54,7 @@ async function createOrUpdateUser(user) {
             });
             updateVerificationUI(false);
         } else {
-            // Document update -> Use updateDoc to avoid diff evaluation on un-modified fields
             const existingData = snap.data() || {};
-            
             const updatePayload = {
                 lastActive: serverTimestamp()
             };
@@ -73,7 +70,6 @@ async function createOrUpdateUser(user) {
             }
 
             await updateDoc(userRef, updatePayload);
-
             updateVerificationUI(existingData.isVerified || false);
         }
     } catch (e) {
@@ -173,14 +169,9 @@ export async function googleLogin(event) {
         event.stopPropagation();
     }
 
-    if (authActionInProgress) {
-        console.warn("⚠️ Auth action already in progress. Ignoring duplicate trigger.");
-        return;
-    }
-
+    if (authActionInProgress) return;
     authActionInProgress = true;
 
-    // SAFE DOM TARGETING: Fall back to data-action selector if ID is missing
     const btn = event?.currentTarget || 
                 document.getElementById('googleAuthBtn') || 
                 document.getElementById('googleSignInBtn') || 
@@ -327,16 +318,13 @@ export async function handleEmailSignUp(event) {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        // Create the user profile doc right away before signing out for verification
         await createOrUpdateUser(user);
-
         await sendEmailVerification(user);
         await signOut(auth);
 
         showToast("🎉 Account created! Check your email inbox to verify your account before logging in.", "success");
         closeLoginModal();
 
-        // Clear form inputs
         if (emailInput) emailInput.value = '';
         if (passwordInput) passwordInput.value = '';
 
