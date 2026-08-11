@@ -577,7 +577,21 @@ export function bindHeaderEvents() {
                 const targetId = toggleBtn.getAttribute('data-target');
                 if (targetId) togglePasswordVisibility(targetId, toggleBtn);
             }
-        });
+            
+            const modalSubmitBtn = e.target.closest('#submitAuthBtn');
+            if (modalSubmitBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                handleEmailAuth(e);
+                return;
+            }
+            const modalSignUpBtn = e.target.closest('#toggleAuthModeBtn');
+            if (modalSignUpBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                handleEmailSignUp(e);
+                return;
+            });
 
         document.addEventListener('submit', (e) => {
             const form = e.target;
