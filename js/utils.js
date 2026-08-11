@@ -8,7 +8,7 @@ import {
     where,
     onSnapshot,
     doc,
-    getDoc
+    getCountFromServer
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 /* ====================== TOAST NOTIFICATION ====================== */
@@ -32,7 +32,6 @@ export function showToast(message, type = "success", duration = 3000) {
 
     document.body.appendChild(toast);
 
-    // Animate out
     setTimeout(() => {
         toast.style.opacity = '0';
         toast.style.transform = 'translateY(20px)';
@@ -92,17 +91,11 @@ export async function generateSha256Hash(input) {
 export async function submitPeerVote(postId, voteType) {
     if (!postId) return;
 
-    // Optional: require authentication
-    // if (!auth.currentUser) {
-    //     showToast("Please sign in to vote", "info");
-    //     return;
-    // }
-
     try {
         const votesRef = collection(db, 'votes');
         await addDoc(votesRef, {
             postId,
-            voteType,                       // 'verify' | 'dispute'
+            voteType, // 'verify' | 'dispute'
             userId: auth.currentUser?.uid || 'anonymous',
             timestamp: serverTimestamp()
         });
@@ -142,6 +135,65 @@ export function listenToVoteCount(postId, callback) {
         },
         (error) => {
             console.error("Vote count listener error:", error);
+            callback(0);
+        }
+    );
+
+    return unsubscribe;
+}
+
+/**
+ * Real-time listener for the number of verified citizens.
+ * Perfect for the Live Arena unlock progress.
+ */
+export function listenToVerifiedCount(callback) {
+    if (typeof callback !== 'function') return () => {};
+
+    const q = query(
+        collection(db, "users"),
+        where("isVerified", "==", true)
+    );
+
+    // Accurate initial count
+    getCountFromServer(q)
+        .then((snapshot) => {
+            callback(snapshot.data().count);
+        })
+        .catch((err) => {
+            console.error("Initial verified count error:", err);
+            callback(0);
+        });
+
+    // Real-time updates
+    const unsubscribe = onSnapshot(
+        q,
+        (snapshot) => {
+            callback(snapshot.size);
+        },
+        (error) => {
+            console.error("Verified count listener error:", error);
+        }
+    );
+
+    return unsubscribe;
+}
+
+/**
+ * Listen to how many people requested Live Arena notifications
+ */
+export function listenToArenaInterest(callback) {
+    if (typeof callback !== 'function') return () => {};
+
+    const q = query(
+        collection(db, "users"),
+        where("interestedInArena", "==", true)
+    );
+
+    const unsubscribe = onSnapshot(
+        q,
+        (snapshot) => callback(snapshot.size),
+        (error) => {
+            console.error("Arena interest listener error:", error);
             callback(0);
         }
     );
@@ -237,7 +289,6 @@ export function calculateTrustScore(userData = {}) {
 export async function escalatePost(postId) {
     if (!postId) return false;
     showToast("🛡️ Escalating post to True Witness review...", "info");
-    // You can expand this later to write to an "escalations" collection
     return true;
 }
 
