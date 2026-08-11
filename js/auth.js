@@ -41,22 +41,21 @@ async function createOrUpdateUser(user) {
         const safePhotoURL = user.photoURL || "";
 
         if (!snap.exists()) {
+            // Creation Payload: Only allowed fields according to isSafeUserCreation()
             await setDoc(userRef, {
                 uid: user.uid,
                 email: safeEmail,
                 displayName: safeDisplayName,
                 photoURL: safePhotoURL,
                 tier: "citizen",
-                isVerified: false,
-                verificationType: null,
                 createdAt: serverTimestamp(),
-                lastActive: serverTimestamp()
+                updatedAt: serverTimestamp()
             });
             updateVerificationUI(false);
         } else {
             const existingData = snap.data() || {};
             const updatePayload = {
-                lastActive: serverTimestamp()
+                updatedAt: serverTimestamp() // Uses 'updatedAt' which is allowed in isSafeUserUpdate()
             };
 
             if (safeDisplayName && safeDisplayName !== existingData.displayName) {
@@ -76,7 +75,6 @@ async function createOrUpdateUser(user) {
         console.error("User document update error:", e);
     }
 }
-
 export function updateVerificationUI(isVerified = false) {
     const statusEl = document.getElementById('verification-status');
     const verifyBtn = document.getElementById('request-verification-btn');
