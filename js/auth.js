@@ -186,22 +186,23 @@ export async function googleLogin(event) {
         }
     }
 
+    // Mobile & PWA Detection MUST BE INSIDE googleLogin
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.matchMedia('(display-mode: standalone)').matches;
 
     try {
-        savePendingDraft();
+        try { savePendingDraft(); } catch (e) {}
+
         if (provider && typeof provider.setCustomParameters === 'function') {
             provider.setCustomParameters({ prompt: 'select_account' });
         }
 
         if (isMobile) {
             await signInWithRedirect(auth, provider);
-            return;
+            return; // <-- Now valid because it's inside an async function!
         }
 
         const userCredential = await signInWithPopup(auth, provider);
-        
-        if (userCredential && userCredential.user) {
+        if (userCredential?.user) {
             await createOrUpdateUser(userCredential.user);
             showToast("✅ Signed in successfully!", "success");
             closeLoginModal();
@@ -210,14 +211,16 @@ export async function googleLogin(event) {
     } catch (error) {
         if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
             console.warn("Google sign-in popup closed by user.");
-        } else if (error.code === 'auth/popup-blocked') {
+            return;
+        }
+        if (error.code === 'auth/popup-blocked') {
             showToast("⚠️ Sign-in popup was blocked by browser. Switching to redirect...", "warning");
             await signInWithRedirect(auth, provider);
-        } else {
-            console.error("Google login failed:", error);
-            const errMsg = handleAuthError(error);
-            if (errMsg) showToast(errMsg, "error");
+            return;
         }
+        console.error("Google login error:", error);
+        const errMsg = handleAuthError(error);
+        if (errMsg) showToast(errMsg, "error");
     } finally {
         authActionInProgress = false;
         if (btn && typeof btn.removeAttribute === 'function') {
@@ -227,7 +230,7 @@ export async function googleLogin(event) {
             }
         }
     }
-}
+} 
 
 export async function handleEmailAuth(event) {
     if (event) {
