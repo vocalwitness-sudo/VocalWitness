@@ -27,15 +27,14 @@ service cloud.firestore {
     // Ensures user profile creation doesn't self-grant elevated permissions
     function isSafeUserCreation() {
       let keys = request.resource.data.keys();
-      // Block setting admin, moderator, role, zkVerified, or banned flags on creation
-      return !keys.hasAny(['role', 'isBanned', 'badges', 'admin', 'moderator', 'zkVerified'])
+      return !keys.hasAny(['role', 'isBanned', 'badges', 'admin', 'moderator', 'zkVerified', 'reputation', 'score'])
           && (!keys.hasAny(['tier']) || request.resource.data.tier == 'citizen');
     }
 
-    // Prevents self-escalation of roles/tiers on user profile updates
+    // Prevents self-escalation of roles/tiers/scores on user profile updates
     function isNotModifyingPrivileges() {
       let affected = request.resource.data.diff(resource.data).affectedKeys();
-      return !affected.hasAny(['role', 'tier', 'isBanned', 'badges', 'admin', 'moderator', 'createdAt', 'zkVerified']);
+      return !affected.hasAny(['role', 'tier', 'isBanned', 'badges', 'admin', 'moderator', 'createdAt', 'zkVerified', 'reputation', 'score']);
     }
 
     // Schema validator helper for notification creations
@@ -43,6 +42,11 @@ service cloud.firestore {
       let keys = request.resource.data.keys();
       return keys.hasAll(['senderId', 'type', 'timestamp']) 
           && request.resource.data.senderId == request.auth.uid;
+    }
+
+    // Prevents spoofing authorId on updates
+    function isAuthorImmutable(authorField) {
+      return request.resource.data[authorField] == resource.data[authorField];
     }
 
     // ==========================================
@@ -58,8 +62,6 @@ service cloud.firestore {
       match /notifications/{notificationId} {
         allow read, get, list: if isOwner(userId);
         allow update, delete: if isOwner(userId);
-        
-        // Any logged-in user can send a notification to another user
         allow create: if isAuthenticated() && isValidNotification();
       }
 
@@ -70,7 +72,7 @@ service cloud.firestore {
     }
 
     // ==========================================
-    // VERIFICATION REQUESTS (DEVELOPER & PEER QUEUE)
+    // VERIFICATION REQUESTS
     // ==========================================
     match /verification_requests/{requestId} {
       allow read: if isAuthenticated() && (request.auth.uid == resource.data.applicantId || isModerator());
@@ -79,12 +81,13 @@ service cloud.firestore {
     }
 
     // ==========================================
-    // FEEDS COLLECTION (Citizen Talk & Witness Voice)
+    // FEEDS COLLECTION
     // ==========================================
     match /feeds/{feedId} {
       allow read: if true;
       allow create: if isAuthenticated() && request.resource.data.authorId == request.auth.uid;
-      allow update, delete: if isAuthenticated() && (resource.data.authorId == request.auth.uid || isModerator());
+      allow update: if isAuthenticated() && (resource.data.authorId == request.auth.uid || isModerator()) && isAuthorImmutable('authorId');
+      allow delete: if isAuthenticated() && (resource.data.authorId == request.auth.uid || isModerator());
     }
 
     // ==========================================
@@ -93,7 +96,7 @@ service cloud.firestore {
     match /witnessCycles/{cycleId} {
       allow read: if true;
       allow create: if isAuthenticated() && request.resource.data.witnessId == request.auth.uid;
-      allow update: if isAuthenticated() && resource.data.witnessId == request.auth.uid;
+      allow update: if isAuthenticated() && resource.data.witnessId == request.auth.uid && isAuthorImmutable('witnessId');
       allow delete: if isAuthenticated() && (resource.data.witnessId == request.auth.uid || isModerator());
     }
 
@@ -108,7 +111,7 @@ service cloud.firestore {
                     
       allow update: if isAuthenticated() 
                     && (request.auth.uid == resource.data.authorId || isModerator())
-                    && request.resource.data.authorId == resource.data.authorId;
+                    && isAuthorImmutable('authorId');
                     
       allow delete: if isAuthenticated() 
                     && (request.auth.uid == resource.data.authorId || isAdmin());
@@ -123,7 +126,8 @@ service cloud.firestore {
       match /comments/{commentId} {
         allow read: if true;
         allow create: if isAuthenticated() && request.resource.data.authorId == request.auth.uid;
-        allow update, delete: if isAuthenticated() && (resource.data.authorId == request.auth.uid || isModerator());
+        allow update: if isAuthenticated() && (resource.data.authorId == request.auth.uid || isModerator()) && isAuthorImmutable('authorId');
+        allow delete: if isAuthenticated() && (resource.data.authorId == request.auth.uid || isModerator());
       }
     }
 
@@ -149,7 +153,8 @@ service cloud.firestore {
     match /groups/{groupId} {
       allow read: if true;
       allow create: if isAuthenticated() && request.auth.uid == request.resource.data.ownerId;
-      allow update, delete: if isAuthenticated() && (request.auth.uid == resource.data.ownerId || isModerator());
+      allow update: if isAuthenticated() && (request.auth.uid == resource.data.ownerId || isModerator()) && isAuthorImmutable('ownerId');
+      allow delete: if isAuthenticated() && (request.auth.uid == resource.data.ownerId || isModerator());
     }
 
     // ==========================================
@@ -158,7 +163,8 @@ service cloud.firestore {
     match /posts/{postId} {
       allow read: if true;
       allow create: if isAuthenticated() && request.auth.uid == request.resource.data.authorId;
-      allow update, delete: if isAuthenticated() && (request.auth.uid == resource.data.authorId || isModerator());
+      allow update: if isAuthenticated() && (request.auth.uid == resource.data.authorId || isModerator()) && isAuthorImmutable('authorId');
+      allow delete: if isAuthenticated() && (request.auth.uid == resource.data.authorId || isModerator());
     }
 
     // ==========================================
@@ -194,7 +200,7 @@ service cloud.firestore {
     match /dao_proposals/{proposalId} {
       allow read: if true;
       allow create: if isAuthenticated() && request.resource.data.authorId == request.auth.uid;
-      allow update: if isAuthenticated() && (resource.data.authorId == request.auth.uid || isModerator());
+      allow update: if isAuthenticated() && (resource.data.authorId == request.auth.uid || isModerator()) && isAuthorImmutable('authorId');
       allow delete: if isAdmin();
     }
 
