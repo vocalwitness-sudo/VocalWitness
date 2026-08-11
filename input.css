@@ -12,21 +12,34 @@
 }
 
 /* ====================== BASE STYLES ====================== */
+*, ::before, ::after {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+}
+
 body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background-color: #0a0f1c;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--color-bg-dark);
   color: #ffffff;
   min-height: 100vh;
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* Glass Effect */
 .glass {
-  background-color: #111827;
-  background: rgba(17, 24, 39, 0.92);
+  background-color: var(--color-glass);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(16, 185, 129, 0.22);
+  border: 1px solid var(--color-glass-border);
+}
+
+/* Modal Overlay Constraint */
+.modal {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
 }
 
 /* ====================== NAVIGATION TABS ====================== */
@@ -38,83 +51,84 @@ body {
   white-space: nowrap;
   padding: 0.5rem 0;
   position: relative;
-  z-index: 55 !important;
+  z-index: 55;
 }
 
 .nav-tab {
-  min-width: 150px !important;
+  min-width: 150px;
   max-width: 200px;
-  height: 52px !important;
+  height: 52px;
   display: inline-flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   text-align: center;
   white-space: nowrap;
-  padding: 8px 16px !important;
+  padding: 8px 16px;
   border-radius: 1rem;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
-  z-index: 50 !important;
-  pointer-events: auto !important;
-  cursor: pointer !important;
+  z-index: 50;
+  pointer-events: auto;
+  cursor: pointer;
+  user-select: none;
 }
 
 /* Active tab - strong emerald */
 #main-nav button.nav-tab.active,
 #main-nav button[data-tab].active {
-  background-color: #10b981 !important;
+  background-color: var(--color-primary) !important;
   color: #000000 !important;
-  border-color: #059669 !important;
+  border-color: var(--color-primary-dark) !important;
   font-weight: 600;
   box-shadow: 0 0 14px rgba(16, 185, 129, 0.4);
 }
 
 /* Inactive special tabs */
 #main-nav button[data-tab="arena"]:not(.active) {
-  background-color: rgba(12, 74, 110, 0.7) !important;
-  color: #7dd3fc !important;
-  border-color: #0369a1 !important;
+  background-color: rgba(12, 74, 110, 0.7);
+  color: #7dd3fc;
+  border-color: #0369a1;
 }
 
 #main-nav button[data-tab="witness"]:not(.active) {
-  background-color: rgba(120, 53, 15, 0.7) !important;
-  color: #fcd34d !important;
-  border-color: #b45309 !important;
+  background-color: rgba(120, 53, 15, 0.7);
+  color: #fcd34d;
+  border-color: #b45309;
 }
 
 /* Active indicator dot */
 #main-nav button.nav-tab.active::after {
   content: '';
   position: absolute;
-  bottom: 4px;
+  bottom: 5px;
   left: 50%;
   transform: translateX(-50%);
-  width: 5px;
-  height: 5px;
+  width: 4px;
+  height: 4px;
   background-color: currentColor;
   border-radius: 50%;
 }
 
-/* ====================== ANTI-SHIFT & SIZING ====================== */
+/* ====================== LAYOUT & BUTTON SIZING ====================== */
 #guest-action-btn { min-width: 185px; }
 #support-btn { min-width: 175px; }
-#postButton { min-width: 300px; }
+#postButton { min-width: 280px; }
 
 #btn-photo,
 #btn-voice {
-  min-height: 68px;
-  min-width: 260px;
+  min-height: 60px;
+  min-width: 240px;
   white-space: nowrap;
 }
 
-/* ====================== Z-INDEX & CLICK FIXES ====================== */
-header { z-index: 60 !important; }
+/* ====================== Z-INDEX & INTERACTION DRIFT FIXES ====================== */
+header { z-index: 60; }
 
 #squareSearchInput,
 #clearSearchBtn {
-  pointer-events: auto !important;
-  z-index: 20 !important;
+  pointer-events: auto;
+  z-index: 20;
 }
 
 #btn-photo,
@@ -123,18 +137,15 @@ header { z-index: 60 !important; }
 #signin-btn,
 #support-btn,
 #profile-btn,
-#bookmarks-nav-btn {
-  position: relative;
-  z-index: 40 !important;
-  pointer-events: auto !important;
-}
-
+#bookmarks-nav-btn,
 button,
 [role="button"] {
-  pointer-events: auto !important;
+  position: relative;
+  z-index: 40;
+  pointer-events: auto;
 }
 
-/* Hide scrollbar on nav */
+/* Hide scrollbars cleanly */
 .scrollbar-hide::-webkit-scrollbar,
 .no-scrollbar::-webkit-scrollbar {
   display: none;
@@ -145,7 +156,7 @@ button,
   scrollbar-width: none;
 }
 
-/* CSS: Ticker Styling & Smooth Animation */
+/* ====================== TICKER BANNER ====================== */
 .ticker-wrap {
   display: flex;
   overflow: hidden;
@@ -153,20 +164,30 @@ button,
   position: relative;
   z-index: 40;
 }
+
 .ticker-badge {
   padding: 0 12px;
-  background-color: #0a0f1c;
+  background-color: var(--color-bg-dark);
   z-index: 2;
   flex-shrink: 0;
 }
+
 .ticker-move {
   display: inline-block;
   white-space: nowrap;
   padding-left: 100%;
   animation: ticker 35s linear infinite;
+  will-change: transform;
 }
-.ticker-move:hover { animation-play-state: paused; }
-.ticker-item { display: inline-block; padding: 0 2rem; }
+
+.ticker-move:hover {
+  animation-play-state: paused;
+}
+
+.ticker-item {
+  display: inline-block;
+  padding: 0 2rem;
+}
 
 @keyframes ticker {
   0% { transform: translate3d(0, 0, 0); }
@@ -178,6 +199,8 @@ button,
   display: flex;
   gap: 0.5rem;
   margin-bottom: 1.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
 }
 
 .filter-chip {
@@ -188,14 +211,15 @@ button,
   border-radius: 9999px;
   font-size: 0.875rem;
   cursor: pointer;
+  white-space: nowrap;
   transition: all 0.2s ease;
 }
 
 .filter-chip.active,
 .filter-chip:hover {
-  background-color: #10b981;
+  background-color: var(--color-primary);
   color: #000000;
-  border-color: #10b981;
+  border-color: var(--color-primary);
   font-weight: 600;
 }
 
@@ -207,7 +231,12 @@ button,
 
 .bookmark-card {
   background-color: #111827;
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  border: 1px solid var(--color-glass-border);
   border-radius: 1rem;
   padding: 1rem;
+  transition: border-color 0.2s ease;
+}
+
+.bookmark-card:hover {
+  border-color: rgba(16, 185, 129, 0.4);
 }
