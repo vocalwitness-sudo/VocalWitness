@@ -113,7 +113,7 @@ window.initiatePayment = function(amount, email = null, metadata = {}) {
         const handler = PaystackPop.setup({
             key: 'pk_live_5d13a6db326f02375127aae9d0fb03678ed1d923',
             email: email || auth.currentUser?.email || '',
-            amount: amount * 100, // Amount in kobo/cents
+            amount: amount * 100, // Amount in kobo
             currency: "NGN",
             metadata: {
                 source: "VocalWitness",
@@ -375,13 +375,17 @@ function setupEventListeners() {
     listenersInitialized = true;
     console.log("✅ Wiring application listeners...");
 
-    // Navigation Tabs
-    document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            window.switchTab(btn.dataset.tab);
+    // Event Delegation for Navigation Tabs
+    const mainNav = document.getElementById('main-nav');
+    if (mainNav) {
+        mainNav.addEventListener('click', (e) => {
+            const btn = e.target.closest('button[data-tab]');
+            if (btn) {
+                e.preventDefault();
+                window.switchTab(btn.dataset.tab);
+            }
         });
-    });
+    }
 
     // Auth & Header Bindings
     bindHeaderEvents();
