@@ -163,6 +163,7 @@ function handleAuthError(error) {
 }
 
 // ====================== AUTH ACTIONS ======================
+
 export async function googleLogin(event) {
     if (event) {
         event.preventDefault();
@@ -172,20 +173,26 @@ export async function googleLogin(event) {
     if (authActionInProgress) return;
     authActionInProgress = true;
 
+    // Isolate button element and ensure it never acts as a form submit button
     const btn = event?.currentTarget || 
                 document.getElementById('googleAuthBtn') || 
                 document.getElementById('googleSignInBtn') || 
                 document.querySelector('[data-action="google-login"]');
 
-    if (btn && btn.classList) {
-        btn.disabled = true;
-        btn.classList.add('opacity-50', 'cursor-not-allowed');
+    if (btn) {
+        btn.setAttribute('type', 'button'); // Force button type to prevent form submit
+        if (btn.classList) {
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+        }
     }
 
     try {
         if (provider && typeof provider.setCustomParameters === 'function') {
             provider.setCustomParameters({ prompt: 'select_account' });
         }
+        
+        // Mobile & PWA Detection
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.matchMedia('(display-mode: standalone)').matches;
 
         try { savePendingDraft(); } catch (e) {}
@@ -232,12 +239,18 @@ export async function handleEmailAuth(event) {
 
     if (authActionInProgress) return;
 
-    const form = event?.target?.closest('form') || event?.target;
+    // Strict Target Verification: Ensure this action was initiated by a submit form or submit button
+    const form = event?.target?.tagName === 'FORM' ? event.target : event?.target?.closest('form');
+    
+    // Abort if handleEmailAuth was inadvertently called from an element outside an email form
+    if (!form && event?.type === 'click') {
+        return;
+    }
+
     const submitBtn = event?.submitter || document.getElementById('signInSubmitBtn') || form?.querySelector('button[type="submit"]');
 
-    // Flexible selector to find fields regardless of DOM structure
-    const emailInput = form?.querySelector('input[type="email"]') || document.getElementById('signInEmail') || document.getElementById('authEmail');
-    const passwordInput = form?.querySelector('input[type="password"]') || document.getElementById('signInPassword') || document.getElementById('authPassword');
+    const emailInput = form ? form.querySelector('input[type="email"]') : (document.getElementById('signInEmail') || document.getElementById('authEmail'));
+    const passwordInput = form ? form.querySelector('input[type="password"]') : (document.getElementById('signInPassword') || document.getElementById('authPassword'));
 
     const email = emailInput?.value?.trim();
     const password = passwordInput?.value;
@@ -278,6 +291,22 @@ export async function handleEmailAuth(event) {
             submitBtn.disabled = false;
             submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
         }
+    }
+}
+
+// Redirect result handler for mobile / redirect sign-ins
+export async function initAuthRedirectHandler() {
+    try {
+        const result = await getRedirectResult(auth);
+        if (result?.user) {
+            showToast("✅ Signed in successfully!", "success");
+            closeLoginModal();
+            restorePendingDraft();
+        }
+    } catch (error) {
+        console.error("Redirect auth error:", error);
+        const errMsg = handleAuthError(error);
+        if (errMsg) showToast(errMsg, "error");
     }
 }
 
