@@ -58,8 +58,7 @@
 
 <body class="min-h-screen pb-28 md:pb-12 bg-[#0a0f1c] text-white antialiased">
     <div class="app-container py-6 px-4 max-w-6xl mx-auto">
-
-      <!-- MAIN TOP HEADER -->
+<!-- MAIN TOP HEADER -->
 <header class="flex items-center justify-between mb-8 sticky top-4 z-50 glass rounded-3xl p-4 shadow-xl">
     <!-- App Logo & Branding Title -->
     <div class="flex items-center gap-3">
@@ -108,10 +107,10 @@
                 </svg>
             </button>
 
-            <!-- Sign-in Button -->
+            <!-- Sign-in Button (UPDATED TEXT: Join VocalWitness) -->
             <button id="guest-action-btn" type="button" data-action="open-auth-modal" class="px-4 py-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm text-sm" style="background-color: #ffffff; color: #000000;">
                 <img src="https://www.google.com/favicon.ico" class="w-4 h-4" alt="Google">
-                <span class="hidden sm:inline" data-i18n="joinBtn">Sign in</span>
+                <span class="hidden sm:inline" data-i18n="joinBtn">Join VocalWitness</span>
             </button>
 
             <!-- Notification Bell + Dropdown -->
@@ -144,14 +143,13 @@
                 </div>
             </div>
 
-            <!-- Logged-in Profile Button -->
+            <!-- Logged-in Profile Button (UPDATED TEXT: My Profile) -->
             <button id="profile-btn" data-action="open-profile" class="px-4 py-2.5 border border-zinc-700 hover:bg-zinc-800 rounded-2xl transition flex items-center gap-2 hidden text-sm" style="background-color: #18181b; border-color: #3f3f46;" data-i18n="profileBtn">
-                Profile
+                My Profile
             </button>
         </div>
     </div>
 </header>
-
 <!-- BREAKING NEWS TICKER -->
 <div class="ticker-wrap border-b py-2 text-xs text-slate-300" style="background-color: #0f172a; border-color: rgba(16, 185, 129, 0.2);">
     <div class="ticker-badge font-bold uppercase" style="color: #34d399;">Flash Feed</div>
@@ -212,7 +210,6 @@
         ✕
     </button>
 </div>
-
 <!-- MAIN DESKTOP TAB NAVIGATION -->
 <div class="relative z-50 mb-8 w-full flex items-center gap-2">
     <!-- Scrollable Tab Bar -->
@@ -237,8 +234,9 @@
             <span class="text-xs text-zinc-400 hidden md:block" data-i18n="myCircleDesc">Trusted people</span>
         </button>
 
+        <!-- UPDATED BUTTON: Text changed to "Verified Witnesses" -->
         <button data-tab="witness" class="nav-tab px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative bg-amber-900/70 text-amber-300 border border-amber-700">
-            <span class="font-semibold text-sm" data-i18n="verifiedWitnessesTab">Witness Voice</span>
+            <span class="font-semibold text-sm" data-i18n="verifiedWitnessesTab">Verified Witnesses</span>
             <span class="text-xs text-amber-400 hidden md:block" data-i18n="verifiedWitnessesDesc">Trusted voices</span>
         </button>
     </nav>
