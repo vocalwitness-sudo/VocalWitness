@@ -86,6 +86,23 @@ service cloud.firestore {
       return request.resource.data[authorField] == resource.data[authorField];
     }
 
+
+
+// ==========================================
+// RATE LIMITS COLLECTION
+// ==========================================
+match /rateLimits/{rateLimitId} {
+  // Only the backend (Cloud Functions) should write to this collection
+  allow read: if false;
+  allow write: if false;
+
+  // Optional: Allow a user to read only their own rate limit documents
+  // (uncomment if you ever need the client to check its own limits)
+  // allow read: if isAuthenticated() && rateLimitId.matches('^' + request.auth.uid + '_.*');
+}
+
+
+
     // ==========================================
     // USERS COLLECTION
     // ==========================================
