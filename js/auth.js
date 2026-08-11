@@ -9,7 +9,6 @@ import {
     sendEmailVerification,
     onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-
 import { auth, provider, db } from './firebase-config.js';
 import { showToast } from './utils.js';
 import { updateAppState } from './app-state.js';
@@ -32,6 +31,7 @@ function refreshTierUI() {
 
 async function createOrUpdateUser(user) {
     if (!user || !user.uid) return;
+
     try {
         const userRef = doc(db, "users", user.uid);
         const snap = await getDoc(userRef);
@@ -47,6 +47,7 @@ async function createOrUpdateUser(user) {
                 displayName: safeDisplayName,
                 photoURL: safePhotoURL,
                 tier: "citizen",
+                isVerified: false,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp()
             });
@@ -103,7 +104,10 @@ export function updateVerificationUI(isVerified = false) {
 }
 
 export function savePendingDraft() {
-    const mainInput = document.getElementById('mainInput') || document.getElementById('squareSearchInput') || document.getElementById('testimonyInput');
+    const mainInput = document.getElementById('mainInput') ||
+                      document.getElementById('squareSearchInput') ||
+                      document.getElementById('testimonyInput');
+
     if (mainInput && mainInput.value.trim() !== '') {
         sessionStorage.setItem('vocal_pending_draft', mainInput.value);
         showToast("Draft saved. We'll restore it after sign-in.", "info");
@@ -116,7 +120,10 @@ export function restorePendingDraft() {
 
     let attempts = 0;
     const interval = setInterval(() => {
-        const mainInput = document.getElementById('mainInput') || document.getElementById('squareSearchInput') || document.getElementById('testimonyInput');
+        const mainInput = document.getElementById('mainInput') ||
+                          document.getElementById('squareSearchInput') ||
+                          document.getElementById('testimonyInput');
+
         if (mainInput) {
             mainInput.value = draft;
             showToast("✅ Your testimony draft has been restored!", "success");
@@ -171,22 +178,23 @@ export async function googleLogin(event) {
     authActionInProgress = true;
 
     const rawTarget = event?.target || event?.currentTarget;
-    const btn = (rawTarget && typeof rawTarget.closest === 'function') 
-                ? rawTarget.closest('button') 
-                : (document.getElementById('googleAuthBtn') || document.getElementById('googleSignInBtn'));
+    const btn = (rawTarget && typeof rawTarget.closest === 'function')
+        ? rawTarget.closest('button')
+        : (document.getElementById('googleAuthBtn') || document.getElementById('googleSignInBtn'));
 
     if (btn && typeof btn.setAttribute === 'function') {
         try {
             btn.setAttribute('type', 'button');
         } catch (e) {}
-        
+
         btn.disabled = true;
-        if (btn.classList && typeof btn.classList.add === 'function') {
+        if (btn.classList) {
             btn.classList.add('opacity-50', 'cursor-not-allowed');
         }
     }
 
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.matchMedia('(display-mode: standalone)').matches;
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
+                     window.matchMedia('(display-mode: standalone)').matches;
 
     try {
         try { savePendingDraft(); } catch (e) {}
@@ -212,24 +220,26 @@ export async function googleLogin(event) {
             console.warn("Google sign-in popup closed by user.");
             return;
         }
+
         if (error.code === 'auth/popup-blocked') {
             showToast("⚠️ Sign-in popup was blocked by browser. Switching to redirect...", "warning");
             await signInWithRedirect(auth, provider);
             return;
         }
+
         console.error("Google login error:", error);
         const errMsg = handleAuthError(error);
         if (errMsg) showToast(errMsg, "error");
     } finally {
         authActionInProgress = false;
-        if (btn && typeof btn.removeAttribute === 'function') {
+        if (btn) {
             btn.disabled = false;
-            if (btn.classList && typeof btn.classList.remove === 'function') {
+            if (btn.classList) {
                 btn.classList.remove('opacity-50', 'cursor-not-allowed');
             }
         }
     }
-} 
+}
 
 export async function handleEmailAuth(event) {
     if (event) {
@@ -239,20 +249,22 @@ export async function handleEmailAuth(event) {
 
     if (authActionInProgress) return;
 
-    // Correctly resolve form target across click and submit events
     let form = null;
     if (event?.target) {
         form = event.target.tagName === 'FORM' ? event.target : event.target.closest('form');
     }
-    
+
     if (!form) {
-    form = document.getElementById('authForm') || document.getElementById('emailAuthForm') || document.getElementById('loginForm');
+        form = document.getElementById('authForm') ||
+               document.getElementById('emailAuthForm') ||
+               document.getElementById('loginForm');
     }
 
-    // Safely exit if no form exists in the DOM yet
     if (!form) return;
 
-    const submitBtn = event?.submitter || document.getElementById('signInBtn') || form.querySelector('button[type="submit"]');
+    const submitBtn = event?.submitter ||
+                      document.getElementById('signInBtn') ||
+                      form.querySelector('button[type="submit"]');
 
     const emailInput = form.querySelector('input[type="email"]') || document.getElementById('authEmail');
     const passwordInput = form.querySelector('input[type="password"]') || document.getElementById('authPassword');
@@ -266,9 +278,12 @@ export async function handleEmailAuth(event) {
     }
 
     authActionInProgress = true;
-    if (submitBtn && submitBtn.classList) {
+
+    if (submitBtn) {
         submitBtn.disabled = true;
-        submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        if (submitBtn.classList) {
+            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        }
     }
 
     try {
@@ -292,9 +307,11 @@ export async function handleEmailAuth(event) {
         if (errMsg) showToast(errMsg, "error");
     } finally {
         authActionInProgress = false;
-        if (submitBtn && submitBtn.classList) {
+        if (submitBtn) {
             submitBtn.disabled = false;
-            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            if (submitBtn.classList) {
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
         }
     }
 }
@@ -313,6 +330,7 @@ export async function initAuthRedirectHandler() {
         if (errMsg) showToast(errMsg, "error");
     }
 }
+
 export async function handleEmailSignUp(event) {
     if (event) {
         event.preventDefault();
@@ -321,12 +339,24 @@ export async function handleEmailSignUp(event) {
 
     if (authActionInProgress) return;
 
-    // Replace this line in handleEmailSignUp:
-const form = event?.target?.closest('form') || event?.target || document.getElementById('authForm');
-    const submitBtn = event?.submitter || document.getElementById('signUpSubmitBtn') || document.getElementById('createAccountBtn') || form?.querySelector('button[type="submit"]');
+    const form = event?.target?.closest?.('form') ||
+                 event?.target ||
+                 document.getElementById('authForm') ||
+                 document.getElementById('signUpForm') ||
+                 document.getElementById('createAccountForm');
 
-    const emailInput = form?.querySelector('input[type="email"]') || document.getElementById('signUpEmail') || document.getElementById('authEmail');
-    const passwordInput = form?.querySelector('input[type="password"]') || document.getElementById('signUpPassword') || document.getElementById('authPassword');
+    const submitBtn = event?.submitter ||
+                      document.getElementById('signUpSubmitBtn') ||
+                      document.getElementById('createAccountBtn') ||
+                      form?.querySelector('button[type="submit"]');
+
+    const emailInput = form?.querySelector('input[type="email"]') ||
+                       document.getElementById('signUpEmail') ||
+                       document.getElementById('authEmail');
+
+    const passwordInput = form?.querySelector('input[type="password"]') ||
+                          document.getElementById('signUpPassword') ||
+                          document.getElementById('authPassword');
 
     const email = emailInput?.value?.trim();
     const password = passwordInput?.value;
@@ -342,9 +372,12 @@ const form = event?.target?.closest('form') || event?.target || document.getElem
     }
 
     authActionInProgress = true;
-    if (submitBtn && submitBtn.classList) {
+
+    if (submitBtn) {
         submitBtn.disabled = true;
-        submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        if (submitBtn.classList) {
+            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        }
     }
 
     try {
@@ -362,16 +395,17 @@ const form = event?.target?.closest('form') || event?.target || document.getElem
 
         if (emailInput) emailInput.value = '';
         if (passwordInput) passwordInput.value = '';
-
     } catch (error) {
         console.error("Email sign-up error:", error);
         const errMsg = handleAuthError(error);
         if (errMsg) showToast(errMsg, "error");
     } finally {
         authActionInProgress = false;
-        if (submitBtn && submitBtn.classList) {
+        if (submitBtn) {
             submitBtn.disabled = false;
-            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            if (submitBtn.classList) {
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
         }
     }
 }
@@ -382,10 +416,13 @@ export async function logout() {
         if (typeof initNotifications === 'function') {
             initNotifications(null);
         }
+
         await signOut(auth);
+
         updateAppState({ isAuthenticated: false, currentUser: null });
         updateVerificationUI(false);
         showToast("Signed out successfully", "success");
+
         window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user: null } }));
         updateUIForAuthState(null);
     } catch (error) {
@@ -397,8 +434,10 @@ export async function logout() {
 export function togglePasswordVisibility(inputId, btnElement) {
     const input = document.getElementById(inputId);
     if (!input) return;
+
     const isPassword = input.type === 'password';
     input.type = isPassword ? 'text' : 'password';
+
     if (btnElement) {
         btnElement.textContent = isPassword ? 'Hide' : 'Show';
     }
@@ -411,6 +450,7 @@ export function requireAuth(message = "Please sign in to proceed.") {
 
         const modalMsg = document.getElementById('loginModalMessage');
         if (modalMsg) modalMsg.textContent = message;
+
         showAuthModal();
         return false;
     }
@@ -420,7 +460,7 @@ export function requireAuth(message = "Please sign in to proceed.") {
 export function updateUIForAuthState(userParam = null) {
     const activeUser = userParam || auth.currentUser;
     const isLoggedIn = !!activeUser;
-    
+
     const guestBtn = document.getElementById('guest-action-btn');
     const profileBtn = document.getElementById('profile-btn');
     const signInElement = document.getElementById('signin-btn');
@@ -476,6 +516,7 @@ export function hideAuthModal() { closeLoginModal(); }
 
 export function openVerificationModal() {
     if (!requireAuth("Please sign in to complete citizen verification.")) return;
+
     const modal = document.getElementById('verificationModal');
     if (modal) {
         modal.classList.remove('hidden');
@@ -496,6 +537,7 @@ export function toggleProfileMenu(e) {
         e.preventDefault();
         e.stopPropagation();
     }
+
     const profileMenu = document.getElementById('profile-menu') || document.getElementById('user-dropdown');
     if (profileMenu) {
         profileMenu.classList.toggle('hidden');
@@ -505,8 +547,8 @@ export function toggleProfileMenu(e) {
 // ====================== EVENT BINDINGS ======================
 export function bindHeaderEvents() {
     if (!window.__authDelegationBound) {
+        // Click delegation
         document.addEventListener('click', (e) => {
-
             const googleBtn = e.target.closest('#googleAuthBtn, #googleSignInBtn, [data-action="google-login"], .google-auth-btn');
             if (googleBtn) {
                 e.preventDefault();
@@ -571,58 +613,59 @@ export function bindHeaderEvents() {
                 return;
             }
 
-       const toggleBtn = e.target.closest('[data-action="toggle-password"]');
-if (toggleBtn) {
-    e.preventDefault();
-    const targetId = toggleBtn.getAttribute('data-target');
-    if (targetId) togglePasswordVisibility(targetId, toggleBtn);
-    return;
-}
+            const toggleBtn = e.target.closest('[data-action="toggle-password"]');
+            if (toggleBtn) {
+                e.preventDefault();
+                const targetId = toggleBtn.getAttribute('data-target');
+                if (targetId) togglePasswordVisibility(targetId, toggleBtn);
+                return;
+            }
 
-const modalSubmitBtn = e.target.closest('#submitAuthBtn');
-if (modalSubmitBtn) {
-    e.preventDefault();
-    e.stopPropagation();
-    handleEmailAuth(e);
-    return;
-}
+            const modalSubmitBtn = e.target.closest('#submitAuthBtn');
+            if (modalSubmitBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                handleEmailAuth(e);
+                return;
+            }
 
-const modalSignUpBtn = e.target.closest('#toggleAuthModeBtn');
-if (modalSignUpBtn) {
-    e.preventDefault();
-    e.stopPropagation();
-    handleEmailSignUp(e);
-    return;
-}
+            const modalSignUpBtn = e.target.closest('#toggleAuthModeBtn');
+            if (modalSignUpBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                handleEmailSignUp(e);
+                return;
+            }
+        });
+
+        // Form submit delegation (correctly outside the click listener)
         document.addEventListener('submit', (e) => {
             const form = e.target;
-
             if (form && typeof form.matches === 'function') {
                 if (form.matches('#emailAuthForm, #signInForm, #loginForm') || form.querySelector('#signInBtn')) {
                     e.preventDefault();
                     e.stopPropagation();
-                    if (typeof handleEmailAuth === 'function') {
-                        handleEmailAuth(e);
-                    }
+                    handleEmailAuth(e);
                 } else if (form.matches('#signUpForm, #createAccountForm') || form.querySelector('#signUpBtn')) {
                     e.preventDefault();
                     e.stopPropagation();
-                    if (typeof handleEmailSignUp === 'function') {
-                        handleEmailSignUp(e);
-                    }
+                    handleEmailSignUp(e);
                 }
             }
         });
 
         window.__authDelegationBound = true;
+    }
 
+    // Outside-click to close profile dropdown
     if (!window.__dropdownClickListenerBound) {
         document.addEventListener('click', (e) => {
-            const isDropdownClick = e.target.closest('#profile-btn') || 
-                                    e.target.closest('[data-action="toggle-profile-menu"]') || 
-                                    e.target.closest('#profile-menu') || 
-                                    e.target.closest('#user-dropdown') || 
+            const isDropdownClick = e.target.closest('#profile-btn') ||
+                                    e.target.closest('[data-action="toggle-profile-menu"]') ||
+                                    e.target.closest('#profile-menu') ||
+                                    e.target.closest('#user-dropdown') ||
                                     e.target.closest('.dropdown-container');
+
             if (!isDropdownClick) {
                 document.querySelectorAll('#profile-menu, #user-dropdown, .dropdown-menu').forEach(el => {
                     el.classList.add('hidden');
@@ -636,7 +679,7 @@ if (modalSignUpBtn) {
 // ====================== AUTH INITIALIZATION ======================
 export function initAuth() {
     bindHeaderEvents();
-    
+
     return new Promise((resolve) => {
         getRedirectResult(auth)
             .then((result) => {
@@ -659,7 +702,7 @@ export function initAuth() {
                 updateAppState({ isAuthenticated: true, currentUser: user });
                 await createOrUpdateUser(user);
                 refreshTierUI();
-                
+
                 if (typeof initNotifications === 'function') {
                     initNotifications(user.uid);
                 }
@@ -689,5 +732,5 @@ window.toggleProfileMenu = toggleProfileMenu;
 window.handleEmailAuth = handleEmailAuth;
 window.handleEmailSignUp = handleEmailSignUp;
 
-// Self-initialize listeners
+// Self-initialize
 initAuth();
