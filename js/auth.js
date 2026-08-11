@@ -167,6 +167,40 @@ function handleAuthError(error) {
     }
 }
 
+/**
+ * Robustly finds email + password inputs inside a form.
+ * Prefers visible & enabled fields, then falls back to name / data-auth attributes.
+ * Never uses global document.getElementById (avoids duplicate-ID bugs).
+ */
+function getAuthInputs(form) {
+    if (!form || !(form instanceof HTMLFormElement)) {
+        return { emailInput: null, passwordInput: null };
+    }
+
+    const isUsable = (el) => {
+        if (!el || el.disabled) return false;
+        if (el.hidden || el.type === 'hidden' || el.offsetParent === null) return false;
+        return true;
+    };
+
+    const emailCandidates = [
+        ...form.querySelectorAll('input[type="email"]'),
+        ...form.querySelectorAll('input[name="email"]'),
+        ...form.querySelectorAll('[data-auth="email"]')
+    ];
+
+    const passwordCandidates = [
+        ...form.querySelectorAll('input[type="password"]'),
+        ...form.querySelectorAll('input[name="password"]'),
+        ...form.querySelectorAll('[data-auth="password"]')
+    ];
+
+    const emailInput = emailCandidates.find(isUsable) || emailCandidates[0] || null;
+    const passwordInput = passwordCandidates.find(isUsable) || passwordCandidates[0] || null;
+
+    return { emailInput, passwordInput };
+}
+
 // ====================== AUTH ACTIONS ======================
 export async function googleLogin(event) {
     if (event) {
@@ -249,25 +283,29 @@ export async function handleEmailAuth(event) {
 
     if (authActionInProgress) return;
 
+    // Resolve the form that triggered the event
     let form = null;
     if (event?.target) {
-        form = event.target.tagName === 'FORM' ? event.target : event.target.closest('form');
+        form = event.target.tagName === 'FORM'
+            ? event.target
+            : event.target.closest('form');
     }
 
+    // Fallback only if no form was found
     if (!form) {
         form = document.getElementById('authForm') ||
                document.getElementById('emailAuthForm') ||
-               document.getElementById('loginForm');
+               document.getElementById('loginForm') ||
+               document.getElementById('signInForm');
     }
 
-    if (!form) return;
+    if (!form) {
+        showToast("Authentication form not found.", "error");
+        return;
+    }
 
-    const submitBtn = event?.submitter ||
-                      document.getElementById('signInBtn') ||
-                      form.querySelector('button[type="submit"]');
-
-    const emailInput = form.querySelector('input[type="email"]') || document.getElementById('authEmail');
-    const passwordInput = form.querySelector('input[type="password"]') || document.getElementById('authPassword');
+    // Get inputs safely scoped to this form (immune to duplicate IDs)
+    const { emailInput, passwordInput } = getAuthInputs(form);
 
     const email = emailInput?.value?.trim();
     const password = passwordInput?.value;
@@ -276,6 +314,11 @@ export async function handleEmailAuth(event) {
         showToast("Please enter both email and password.", "error");
         return;
     }
+
+    const submitBtn = event?.submitter ||
+                      form.querySelector('button[type="submit"]') ||
+                      document.getElementById('signInBtn') ||
+                      document.getElementById('submitAuthBtn');
 
     authActionInProgress = true;
 
@@ -333,30 +376,34 @@ export async function initAuthRedirectHandler() {
 
 export async function handleEmailSignUp(event) {
     if (event) {
-        event.preventDefault();
-        event.stopPropagation();
+        if (typeof event.preventDefault === 'function') event.preventDefault();
+        if (typeof event.stopPropagation === 'function') event.stopPropagation();
     }
 
     if (authActionInProgress) return;
 
-    const form = event?.target?.closest?.('form') ||
-                 event?.target ||
-                 document.getElementById('authForm') ||
-                 document.getElementById('signUpForm') ||
-                 document.getElementById('createAccountForm');
+    // Resolve the form
+    let form = null;
+    if (event?.target) {
+        form = event.target.tagName === 'FORM'
+            ? event.target
+            : event.target.closest('form');
+    }
 
-    const submitBtn = event?.submitter ||
-                      document.getElementById('signUpSubmitBtn') ||
-                      document.getElementById('createAccountBtn') ||
-                      form?.querySelector('button[type="submit"]');
+    if (!form) {
+        form = document.getElementById('authForm') ||
+               document.getElementById('signUpForm') ||
+               document.getElementById('createAccountForm') ||
+               document.getElementById('emailAuthForm');
+    }
 
-    const emailInput = form?.querySelector('input[type="email"]') ||
-                       document.getElementById('signUpEmail') ||
-                       document.getElementById('authEmail');
+    if (!form) {
+        showToast("Sign-up form not found.", "error");
+        return;
+    }
 
-    const passwordInput = form?.querySelector('input[type="password"]') ||
-                          document.getElementById('signUpPassword') ||
-                          document.getElementById('authPassword');
+    // Get inputs safely scoped to this form
+    const { emailInput, passwordInput } = getAuthInputs(form);
 
     const email = emailInput?.value?.trim();
     const password = passwordInput?.value;
@@ -370,6 +417,12 @@ export async function handleEmailSignUp(event) {
         showToast("Password must be at least 6 characters long.", "error");
         return;
     }
+
+    const submitBtn = event?.submitter ||
+                      form.querySelector('button[type="submit"]') ||
+                      document.getElementById('signUpSubmitBtn') ||
+                      document.getElementById('createAccountBtn') ||
+                      document.getElementById('toggleAuthModeBtn');
 
     authActionInProgress = true;
 
@@ -638,7 +691,7 @@ export function bindHeaderEvents() {
             }
         });
 
-        // Form submit delegation (correctly outside the click listener)
+        // Form submit delegation
         document.addEventListener('submit', (e) => {
             const form = e.target;
             if (form && typeof form.matches === 'function') {
