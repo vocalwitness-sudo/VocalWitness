@@ -161,26 +161,31 @@ function handleAuthError(error) {
 }
 
 // ====================== AUTH ACTIONS ======================
-
 export async function googleLogin(event) {
     if (event) {
-        event.preventDefault();
-        event.stopPropagation();
+        if (typeof event.preventDefault === 'function') event.preventDefault();
+        if (typeof event.stopPropagation === 'function') event.stopPropagation();
     }
 
     if (authActionInProgress) return;
     authActionInProgress = true;
 
-    // Isolate button element and ensure it never acts as a form submit button
+    // Isolate button element using event delegation or explicit ID fallback
     const btn = event?.currentTarget || 
                 document.getElementById('googleAuthBtn') || 
                 document.getElementById('googleSignInBtn') || 
                 document.querySelector('[data-action="google-login"]');
 
-    if (btn) {
-        btn.setAttribute('type', 'button'); // Force button type to prevent form submit
-        if (btn.classList) {
-            btn.disabled = true;
+    // Safe DOM state mutation
+    if (btn && typeof btn.setAttribute === 'function') {
+        try {
+            btn.setAttribute('type', 'button');
+        } catch (e) {
+            // Non-critical: Ignore if element doesn't support setting type
+        }
+        
+        btn.disabled = true;
+        if (btn.classList && typeof btn.classList.add === 'function') {
             btn.classList.add('opacity-50', 'cursor-not-allowed');
         }
     }
@@ -189,7 +194,37 @@ export async function googleLogin(event) {
         if (provider && typeof provider.setCustomParameters === 'function') {
             provider.setCustomParameters({ prompt: 'select_account' });
         }
+
+        // Execute Firebase Google Popup Authentication
+        const userCredential = await signInWithPopup(auth, provider);
         
+        if (userCredential && userCredential.user) {
+            // Create or sync user profile in Firestore
+            await createOrUpdateUser(userCredential.user);
+            console.log("Google authentication successful:", userCredential.user.uid);
+        }
+    } catch (error) {
+        // Handle popup closed by user or cancelled requests cleanly
+        if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
+            console.warn("Google sign-in popup closed by user.");
+        } else {
+            console.error("Google login failed:", error);
+            if (typeof showAuthNotification === 'function') {
+                showAuthNotification("Google sign-in failed. Please try again.");
+            }
+        }
+    } finally {
+        // Always reset lock flag and restore button state
+        authActionInProgress = false;
+
+        if (btn && typeof btn.removeAttribute === 'function') {
+            btn.disabled = false;
+            if (btn.classList && typeof btn.classList.remove === 'function') {
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+    }
+}
         // Mobile & PWA Detection
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.matchMedia('(display-mode: standalone)').matches;
 
