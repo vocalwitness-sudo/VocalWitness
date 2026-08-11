@@ -105,7 +105,7 @@ export function updateVerificationUI(isVerified = false) {
 }
 
 export function savePendingDraft() {
-    const mainInput = document.getElementById('mainInput') || document.getElementById('squareSearchInput');
+    const mainInput = document.getElementById('mainInput') || document.getElementById('squareSearchInput') || document.getElementById('testimonyInput');
     if (mainInput && mainInput.value.trim() !== '') {
         sessionStorage.setItem('vocal_pending_draft', mainInput.value);
         showToast("Draft saved. We'll restore it after sign-in.", "info");
@@ -118,7 +118,7 @@ export function restorePendingDraft() {
 
     let attempts = 0;
     const interval = setInterval(() => {
-        const mainInput = document.getElementById('mainInput') || document.getElementById('squareSearchInput');
+        const mainInput = document.getElementById('mainInput') || document.getElementById('squareSearchInput') || document.getElementById('testimonyInput');
         if (mainInput) {
             mainInput.value = draft;
             showToast("✅ Your testimony draft has been restored!", "success");
@@ -133,7 +133,7 @@ export function restorePendingDraft() {
 function handleAuthError(error) {
     switch (error?.code) {
         case 'auth/invalid-credential':
-            return "Invalid email or password. If you just created an account, please check your email for the verification link first.";
+            return "Invalid email or password. If you don't have an account, click 'Create Account'.";
         case 'auth/too-many-requests':
             return "Too many attempts. For security, please wait a few minutes before trying again.";
         case 'auth/invalid-phone-number':
@@ -206,7 +206,8 @@ export async function googleLogin(event) {
             return;
         }
         if (error.code === 'auth/popup-blocked') {
-            showToast("⚠️ Sign-in popup was blocked by browser. Please allow popups.", "warning");
+            showToast("⚠️ Sign-in popup was blocked by browser. Switching to redirect...", "warning");
+            await signInWithRedirect(auth, provider);
             return;
         }
         console.error("Google login error:", error);
@@ -234,6 +235,7 @@ export async function handleEmailAuth(event) {
     const form = event?.target?.closest('form') || event?.target;
     const submitBtn = event?.submitter || document.getElementById('signInSubmitBtn') || form?.querySelector('button[type="submit"]');
 
+    // Flexible selector to find fields regardless of DOM structure
     const emailInput = form?.querySelector('input[type="email"]') || document.getElementById('signInEmail') || document.getElementById('authEmail');
     const passwordInput = form?.querySelector('input[type="password"]') || document.getElementById('signInPassword') || document.getElementById('authPassword');
 
@@ -288,8 +290,9 @@ export async function handleEmailSignUp(event) {
     if (authActionInProgress) return;
 
     const form = event?.target?.closest('form') || event?.target;
-    const submitBtn = event?.submitter || document.getElementById('signUpSubmitBtn') || form?.querySelector('button[type="submit"]');
+    const submitBtn = event?.submitter || document.getElementById('signUpSubmitBtn') || document.getElementById('createAccountBtn') || form?.querySelector('button[type="submit"]');
 
+    // Flexible selector to find fields regardless of DOM structure
     const emailInput = form?.querySelector('input[type="email"]') || document.getElementById('signUpEmail') || document.getElementById('authEmail');
     const passwordInput = form?.querySelector('input[type="password"]') || document.getElementById('signUpPassword') || document.getElementById('authPassword');
 
@@ -297,7 +300,7 @@ export async function handleEmailSignUp(event) {
     const password = passwordInput?.value;
 
     if (!email || !password) {
-        showToast("Please enter both email and password.", "error");
+        showToast("Please enter both email and password to create an account.", "error");
         return;
     }
 
@@ -472,11 +475,27 @@ export function bindHeaderEvents() {
     if (!window.__authDelegationBound) {
         document.addEventListener('click', (e) => {
 
-            const googleBtn = e.target.closest('#googleAuthBtn, #googleSignInBtn, [data-action="google-login"]');
+            const googleBtn = e.target.closest('#googleAuthBtn, #googleSignInBtn, [data-action="google-login"], .google-auth-btn');
             if (googleBtn) {
                 e.preventDefault();
                 e.stopPropagation();
                 googleLogin(e);
+                return;
+            }
+
+            const signUpBtn = e.target.closest('#signUpBtn, #createAccountBtn, [data-action="sign-up"], .create-account-btn');
+            if (signUpBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                handleEmailSignUp(e);
+                return;
+            }
+
+            const signInBtn = e.target.closest('#signInBtn, #signInSubmitBtn, [data-action="sign-in"], .sign-in-btn');
+            if (signInBtn && !e.target.closest('form')) {
+                e.preventDefault();
+                e.stopPropagation();
+                handleEmailAuth(e);
                 return;
             }
 
@@ -560,6 +579,8 @@ export function bindHeaderEvents() {
 
 // ====================== AUTH INITIALIZATION ======================
 export function initAuth() {
+    bindHeaderEvents();
+    
     return new Promise((resolve) => {
         getRedirectResult(auth)
             .then((result) => {
@@ -611,3 +632,6 @@ window.closeVerificationModal = closeVerificationModal;
 window.toggleProfileMenu = toggleProfileMenu;
 window.handleEmailAuth = handleEmailAuth;
 window.handleEmailSignUp = handleEmailSignUp;
+
+// Self-initialize listeners
+initAuth();
