@@ -142,7 +142,7 @@ function handleAuthError(error) {
         case 'auth/cancelled-popup-request':
             return null;
         case 'auth/popup-blocked':
-            return "Popup was blocked by browser. Switching to redirect...";
+            return "Popup was blocked by browser. Please allow popups for this site.";
         case 'auth/invalid-email':
             return "The email address format is invalid.";
         case 'auth/user-not-found':
@@ -178,9 +178,8 @@ export async function googleLogin(event) {
     if (btn && typeof btn.setAttribute === 'function') {
         try {
             btn.setAttribute('type', 'button');
-        } catch (e) {
-            // Ignore non-critical DOM attribute errors
-        }
+        } catch (e) {}
+        
         btn.disabled = true;
         if (btn.classList && typeof btn.classList.add === 'function') {
             btn.classList.add('opacity-50', 'cursor-not-allowed');
@@ -190,8 +189,7 @@ export async function googleLogin(event) {
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.matchMedia('(display-mode: standalone)').matches;
 
     try {
-        try { savePendingDraft(); } catch (e) {}
-
+        savePendingDraft();
         if (provider && typeof provider.setCustomParameters === 'function') {
             provider.setCustomParameters({ prompt: 'select_account' });
         }
@@ -202,7 +200,8 @@ export async function googleLogin(event) {
         }
 
         const userCredential = await signInWithPopup(auth, provider);
-        if (userCredential?.user) {
+        
+        if (userCredential && userCredential.user) {
             await createOrUpdateUser(userCredential.user);
             showToast("✅ Signed in successfully!", "success");
             closeLoginModal();
@@ -211,16 +210,14 @@ export async function googleLogin(event) {
     } catch (error) {
         if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
             console.warn("Google sign-in popup closed by user.");
-            return;
-        }
-        if (error.code === 'auth/popup-blocked') {
+        } else if (error.code === 'auth/popup-blocked') {
             showToast("⚠️ Sign-in popup was blocked by browser. Switching to redirect...", "warning");
             await signInWithRedirect(auth, provider);
-            return;
+        } else {
+            console.error("Google login failed:", error);
+            const errMsg = handleAuthError(error);
+            if (errMsg) showToast(errMsg, "error");
         }
-        console.error("Google login error:", error);
-        const errMsg = handleAuthError(error);
-        if (errMsg) showToast(errMsg, "error");
     } finally {
         authActionInProgress = false;
         if (btn && typeof btn.removeAttribute === 'function') {
@@ -241,10 +238,7 @@ export async function handleEmailAuth(event) {
     if (authActionInProgress) return;
 
     const form = event?.target?.closest('form') || document.getElementById('emailAuthForm');
-    
-    if (!form || (event && event.type !== 'submit')) {
-        return;
-    }
+    if (!form || (event && event.type !== 'submit')) return;
 
     const submitBtn = event?.submitter || document.getElementById('signInBtn') || form.querySelector('button[type="submit"]');
 
@@ -297,7 +291,6 @@ export async function initAuthRedirectHandler() {
     try {
         const result = await getRedirectResult(auth);
         if (result?.user) {
-            await createOrUpdateUser(result.user);
             showToast("✅ Signed in successfully!", "success");
             closeLoginModal();
             restorePendingDraft();
@@ -620,9 +613,8 @@ export function initAuth() {
     
     return new Promise((resolve) => {
         getRedirectResult(auth)
-            .then(async (result) => {
+            .then((result) => {
                 if (result?.user) {
-                    await createOrUpdateUser(result.user);
                     showToast("✅ Signed in successfully!", "success");
                     closeLoginModal();
                     restorePendingDraft();
