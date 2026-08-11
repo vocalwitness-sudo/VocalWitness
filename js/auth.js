@@ -170,18 +170,18 @@ export async function googleLogin(event) {
     if (authActionInProgress) return;
     authActionInProgress = true;
 
-    // Isolate button element using event delegation or explicit ID fallback
-    const btn = event?.currentTarget || 
-                document.getElementById('googleAuthBtn') || 
-                document.getElementById('googleSignInBtn') || 
-                document.querySelector('[data-action="google-login"]');
+    // Safely target the actual <button> element even if clicking internal img or span text
+    const rawTarget = event?.target || event?.currentTarget;
+    const btn = (rawTarget && typeof rawTarget.closest === 'function') 
+                ? rawTarget.closest('button') 
+                : (document.getElementById('googleAuthBtn') || document.getElementById('googleSignInBtn'));
 
-    // Safe DOM state mutation
+    // Safe DOM state mutation with safety guards
     if (btn && typeof btn.setAttribute === 'function') {
         try {
             btn.setAttribute('type', 'button');
         } catch (e) {
-            // Non-critical: Ignore if element doesn't support setting type
+            // Ignore non-critical DOM attribute errors
         }
         
         btn.disabled = true;
@@ -610,15 +610,26 @@ export function bindHeaderEvents() {
             }
         });
 
-        document.addEventListener('submit', (e) => {
-            if (e.target?.matches('#emailAuthForm, #signInForm, #loginForm')) {
-                e.preventDefault();
+    document.addEventListener('submit', (e) => {
+    const form = e.target;
+
+    // Check if the submitted form matches your auth form IDs or selectors
+    if (form && typeof form.matches === 'function') {
+        if (form.matches('#emailAuthForm, #signInForm, #loginForm') || form.querySelector('#signInBtn')) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof handleEmailAuth === 'function') {
                 handleEmailAuth(e);
-            } else if (e.target?.matches('#signUpForm, #createAccountForm')) {
-                e.preventDefault();
+            }
+        } else if (form.matches('#signUpForm, #createAccountForm') || form.querySelector('#signUpBtn')) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof handleEmailSignUp === 'function') {
                 handleEmailSignUp(e);
             }
-        });
+        }
+    }
+});
 
         window.__authDelegationBound = true;
     }
