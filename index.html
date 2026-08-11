@@ -635,7 +635,7 @@
         </div>
     </div>
 
-    <!-- Login / Auth Modal -->
+   <!-- Login / Auth Modal -->
     <div id="loginModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[10000] p-4">
         <div class="glass rounded-3xl p-6 sm:p-8 max-w-md w-full border border-zinc-700/80 shadow-2xl relative max-h-[90vh] overflow-y-auto">
             <button onclick="closeLoginModal()" class="absolute top-5 right-5 text-zinc-400 hover:text-white text-2xl transition">✕</button>
@@ -680,11 +680,11 @@
                     </div>
                 </div>
                 <div class="flex gap-2 pt-2">
-                    <button type="submit" id="emailSignInBtn"
+                    <button type="submit" id="signInBtn"
                             class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-black font-semibold rounded-xl text-sm transition">
                         Sign In
                     </button>
-                    <button type="button" id="emailSignUpBtn"
+                    <button type="button" id="createAccountBtn"
                             class="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white font-semibold rounded-xl text-sm transition">
                         Create Account
                     </button>
@@ -715,31 +715,6 @@
                     Edit Profile
                 </button>
             </div>
-        </div>
-    </div>
-
-    <!-- Edit Profile Modal -->
-    <div id="editProfileModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[10000] p-4">
-        <div class="glass rounded-3xl p-6 sm:p-8 max-w-md w-full border border-zinc-700/80 shadow-2xl relative max-h-[90vh] overflow-y-auto">
-            <button onclick="closeEditProfile()" class="absolute top-5 right-5 text-zinc-400 hover:text-white text-2xl transition">✕</button>
-
-            <h2 class="text-xl font-bold text-white mb-4">Edit Profile</h2>
-
-            <form id="editProfileForm" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-medium text-zinc-400 mb-1">Display Name</label>
-                    <input type="text" id="editDisplayName" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500" placeholder="Your name">
-                </div>
-
-                <div class="flex gap-2 pt-2">
-                    <button type="button" onclick="closeEditProfile()" class="w-1/2 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl text-xs font-semibold transition">
-                        Cancel
-                    </button>
-                    <button type="submit" class="w-1/2 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold transition">
-                        Save Changes
-                    </button>
-                </div>
-            </form>
         </div>
     </div>
 
@@ -900,6 +875,8 @@
             }
         });
     </script>
+</body>
+</html>
 
     <!-- Application Modules -->
     <script type="module" src="./js/main.js"></script>
