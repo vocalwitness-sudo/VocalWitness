@@ -5,44 +5,64 @@ const paystack = require('paystack-api')(functions.config().paystack.secret_key)
 const snarkjs = require('snarkjs');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 admin.initializeApp();
 const db = admin.firestore();
 
 // ====================== USER INITIALIZATION ======================
-
 exports.initializeCitizenProfile = functions.auth.user().onCreate(async (user) => {
   const userId = user.uid;
   const defaultUsername = `citizen_${Math.floor(1000 + Math.random() * 9000)}`;
-  
+
   const defaultCitizenData = {
     uid: userId,
     email: user.email || "",
     displayName: user.displayName || "New Citizen",
     username: defaultUsername,
     photoURL: user.photoURL || "https://placehold.co/150",
+
+    // Roles & Tiers
     role: "citizen",
+    tier: "citizen",
+
+    // Scores
     reputationScore: 50,
     trustCircle: 0,
     level: 1,
+
+    // Verification
     isPhoneVerified: false,
+    isVerified: false,
     phoneNumber: "",
     zkVerified: false,
     verifiedAt: null,
+
+    // Activity metrics
     testimoniesCount: 0,
     verificationsMade: 0,
     endorsementsReceived: 0,
     successfulEvidence: 0,
     debunkedEvidence: 0,
+    successfulEscalations: 0,        // ← Added
+    communityEndorsements: 0,        // ← Added
+
+    // Live Arena
+    interestedInArena: false,
+
+    // Timestamps
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
     lastLogin: admin.firestore.FieldValue.serverTimestamp(),
+
+    // Profile
     bio: "Just joined the Citizen Talk room.",
     location: "",
     badges: ["casual_talker"]
   };
 
   try {
-    await db.collection('users').doc(userId).set(defaultCitizenData);
+    // Using merge: true is safer – won’t overwrite if the document already exists
+    await db.collection('users').doc(userId).set(defaultCitizenData, { merge: true });
     console.log(`✅ Created profile for: ${userId}`);
     return null;
   } catch (error) {
@@ -52,14 +72,15 @@ exports.initializeCitizenProfile = functions.auth.user().onCreate(async (user) =
 });
 
 // ====================== GENTLE MODERATION ======================
-
 async function gentleModerationCheck(content = "") {
   if (!content || content.length < 5) return { safe: true, note: "" };
 
   const lower = content.toLowerCase().trim();
   const flags = [];
 
-  if (lower.includes("kill") || lower.includes("hate you") || lower.includes("f*ck")) flags.push("strong language");
+  if (lower.includes("kill") || lower.includes("hate you") || lower.includes("f*ck")) {
+    flags.push("strong language");
+  }
   if (/!{3,}/.test(content)) flags.push("very intense tone");
   if (lower.length > 800) flags.push("very long message");
 
@@ -70,6 +91,7 @@ async function gentleModerationCheck(content = "") {
       flags
     };
   }
+
   return { safe: true, note: "Looks good" };
 }
 
@@ -97,14 +119,12 @@ exports.moderateNewTestimony = functions.firestore
   });
 
 // ====================== PAYSTACK PAYMENT FUNCTIONS ======================
-
-/** Initialize Paystack Checkout */
 exports.initializePaystack = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "Must be logged in to make payment");
   }
 
-  const { amount, metadata } = data;   // amount in kobo
+  const { amount, metadata } = data;
 
   if (!amount || amount < 1000) {
     throw new functions.https.HttpsError("invalid-argument", "Amount too small");
@@ -128,13 +148,12 @@ exports.initializePaystack = functions.https.onCall(async (data, context) => {
   }
 });
 
-/** Paystack Webhook */
 exports.paystackWebhook = functions.https.onRequest(async (req, res) => {
   const secret = functions.config().paystack.secret_key;
   const hash = req.headers["x-paystack-signature"];
 
-  const crypto = require("crypto");
-  const expectedHash = crypto.createHmac("sha512", secret)
+  const expectedHash = crypto
+    .createHmac("sha512", secret)
     .update(JSON.stringify(req.body))
     .digest("hex");
 
@@ -147,7 +166,7 @@ exports.paystackWebhook = functions.https.onRequest(async (req, res) => {
 
   if (event.event === "charge.success") {
     const { metadata } = event.data;
-    const userId = metadata.userId;
+    const userId = metadata?.userId;
 
     if (userId) {
       try {
@@ -158,7 +177,14 @@ exports.paystackWebhook = functions.https.onRequest(async (req, res) => {
           totalContributed: admin.firestore.FieldValue.increment(event.data.amount / 100)
         });
 
-        await admin.auth().setCustomUserClaims(userId, { supporter: true });
+        // Safely merge custom claims
+        const userRecord = await admin.auth().getUser(userId);
+        const currentClaims = userRecord.customClaims || {};
+
+        await admin.auth().setCustomUserClaims(userId, {
+          ...currentClaims,
+          supporter: true
+        });
 
         console.log(`✅ Supporter status granted to user: ${userId}`);
       } catch (err) {
@@ -170,13 +196,9 @@ exports.paystackWebhook = functions.https.onRequest(async (req, res) => {
   res.sendStatus(200);
 });
 
-// ====================== SAFE RATE LIMITING HTTP FUNCTION ======================
-
-// ====================== SAFE RATE LIMITING HTTP FUNCTION ======================
-
+// ====================== SAFE RATE LIMITING ======================
 exports.checkRateLimit = functions.https.onRequest((req, res) => {
   return cors(req, res, async () => {
-    // 1. Explicitly handle preflight CORS requests
     if (req.method === 'OPTIONS') {
       res.set('Access-Control-Allow-Origin', '*');
       res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -184,16 +206,14 @@ exports.checkRateLimit = functions.https.onRequest((req, res) => {
       return res.status(204).send('');
     }
 
-    // 2. Ensure CORS header is explicitly attached on standard requests
     res.set('Access-Control-Allow-Origin', '*');
 
-    // 3. Verify Authorization Header for HTTP POST calls
-    const authHeader = req.headers.authorization;
     let userId = null;
+    const authHeader = req.headers.authorization;
 
     if (authHeader && authHeader.startsWith("Bearer ")) {
-      const idToken = authHeader.split("Bearer ")[1];
       try {
+        const idToken = authHeader.split("Bearer ")[1];
         const decodedToken = await admin.auth().verifyIdToken(idToken);
         userId = decodedToken.uid;
       } catch (err) {
@@ -201,7 +221,6 @@ exports.checkRateLimit = functions.https.onRequest((req, res) => {
       }
     }
 
-    // Unauthenticated requests default to IP or fallback user key
     if (!userId) {
       userId = req.ip ? req.ip.replace(/[\.\:]/g, '_') : 'anonymous_user';
     }
@@ -209,14 +228,14 @@ exports.checkRateLimit = functions.https.onRequest((req, res) => {
     const action = req.body?.action || "general_action";
     const maxCalls = req.body?.maxCalls || 5;
     const windowMinutes = req.body?.windowMinutes || 60;
-
     const windowStart = new Date(Date.now() - windowMinutes * 60 * 1000);
+
     const rateDocRef = db.collection('rateLimits').doc(`${userId}_${action}`);
     const now = admin.firestore.Timestamp.now();
 
     try {
       const doc = await rateDocRef.get();
-      
+
       if (!doc.exists) {
         await rateDocRef.set({
           count: 1,
@@ -227,8 +246,7 @@ exports.checkRateLimit = functions.https.onRequest((req, res) => {
       }
 
       const docData = doc.data();
-      
-      // Reset window if expired
+
       if (docData.lastRequest.toDate() < windowStart) {
         await rateDocRef.set({
           count: 1,
@@ -238,32 +256,24 @@ exports.checkRateLimit = functions.https.onRequest((req, res) => {
         return res.status(200).json({ allowed: true });
       }
 
-      // Check limit
       if (docData.count >= maxCalls) {
         return res.status(200).json({ allowed: false });
       }
 
-      // Increment counter
       await rateDocRef.update({
         count: admin.firestore.FieldValue.increment(1),
         lastRequest: now
       });
 
       return res.status(200).json({ allowed: true });
-
     } catch (error) {
       console.error("Rate limit check failed:", error);
-      return res.status(200).json({ allowed: true }); // Fail open (allow action)
+      return res.status(200).json({ allowed: true }); // Fail open
     }
   });
 });
 
-// ====================== ZK PROOF VERIFICATION FUNCTION ======================
-
-/**
- * Server-side Zero-Knowledge Proof Verifier.
- * Expects `verification_key.json` inside the `functions/` directory.
- */
+// ====================== ZK PROOF VERIFICATION ======================
 exports.verifyZKProof = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "Authentication required to submit ZK proof.");
@@ -288,7 +298,6 @@ exports.verifyZKProof = functions.https.onCall(async (data, context) => {
       return { success: false, reason: "Proof validation failed." };
     }
 
-    // Mark user as ZK Verified in Firestore
     await db.collection('users').doc(context.auth.uid).update({
       zkVerified: true,
       verifiedAt: admin.firestore.FieldValue.serverTimestamp()
@@ -302,15 +311,11 @@ exports.verifyZKProof = functions.https.onCall(async (data, context) => {
   }
 });
 
-// ====================== STEWARD PROMOTION CLOUD FUNCTION ======================
-
-/**
- * Validates user contribution metrics on the server and grants Steward status.
- */
+// ====================== STEWARD PROMOTION ======================
 exports.promoteToSteward = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError(
-      'unauthenticated', 
+      'unauthenticated',
       'Must be authenticated to request promotion.'
     );
   }
@@ -320,14 +325,12 @@ exports.promoteToSteward = functions.https.onCall(async (data, context) => {
 
   try {
     const userSnap = await userRef.get();
-
     if (!userSnap.exists) {
       throw new functions.https.HttpsError('not-found', 'User record not found.');
     }
 
     const userData = userSnap.data();
 
-    // Re-verify eligibility on server using raw Firestore metrics
     const testimonies = userData.testimoniesCount || 0;
     const escalations = userData.successfulEscalations || 0;
     const endorsements = userData.communityEndorsements || userData.endorsementsReceived || 0;
@@ -341,8 +344,10 @@ exports.promoteToSteward = functions.https.onCall(async (data, context) => {
         promotedAt: admin.firestore.FieldValue.serverTimestamp()
       });
 
-      // Update Auth Custom Claims for instant token verification
-      const currentClaims = context.auth.token || {};
+      // Safely merge existing claims
+      const userRecord = await admin.auth().getUser(uid);
+      const currentClaims = userRecord.customClaims || {};
+
       await admin.auth().setCustomUserClaims(uid, {
         ...currentClaims,
         steward: true
@@ -352,10 +357,10 @@ exports.promoteToSteward = functions.https.onCall(async (data, context) => {
       return { success: true, newTier: 'steward' };
     }
 
-    return { 
-      success: false, 
+    return {
+      success: false,
       message: 'Score threshold not met or already a steward.',
-      currentScore: activityScore 
+      currentScore: activityScore
     };
   } catch (error) {
     console.error("Steward Promotion Function Error:", error);
