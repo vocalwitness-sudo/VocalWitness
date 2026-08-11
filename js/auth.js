@@ -233,14 +233,23 @@ export async function googleLogin(event) {
 
 export async function handleEmailAuth(event) {
     if (event) {
-        event.preventDefault();
-        event.stopPropagation();
+        if (typeof event.preventDefault === 'function') event.preventDefault();
+        if (typeof event.stopPropagation === 'function') event.stopPropagation();
     }
 
     if (authActionInProgress) return;
 
-    const form = event?.target?.closest('form') || document.getElementById('emailAuthForm');
-    if (!form || (event && event.type !== 'submit')) return;
+    // Correctly resolve form target across click and submit events
+    let form = null;
+    if (event?.target) {
+        form = event.target.tagName === 'FORM' ? event.target : event.target.closest('form');
+    }
+    if (!form) {
+        form = document.getElementById('emailAuthForm') || document.getElementById('loginForm');
+    }
+
+    // Safely exit if no form exists in the DOM yet
+    if (!form) return;
 
     const submitBtn = event?.submitter || document.getElementById('signInBtn') || form.querySelector('button[type="submit"]');
 
@@ -303,7 +312,6 @@ export async function initAuthRedirectHandler() {
         if (errMsg) showToast(errMsg, "error");
     }
 }
-
 export async function handleEmailSignUp(event) {
     if (event) {
         event.preventDefault();
