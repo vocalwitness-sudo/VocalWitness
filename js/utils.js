@@ -155,7 +155,7 @@ export function listenToVoteCount(postId, callback) {
             callback(snapshot.size);
         },
         (error) => {
-            console.error("Vote count listener error:", error);
+            console.warn("Vote count listener offline/fallback:", error);
             callback(0);
         }
     );
@@ -165,7 +165,7 @@ export function listenToVoteCount(postId, callback) {
 
 /**
  * Real-time listener for the number of verified citizens.
- * Perfect for the Live Arena unlock progress.
+ * Safe fallback added for slow network/aggregation queries.
  */
 export function listenToVerifiedCount(callback) {
     if (typeof callback !== 'function') return () => {};
@@ -175,13 +175,16 @@ export function listenToVerifiedCount(callback) {
         where("isVerified", "==", true)
     );
 
-    // Accurate initial count
+    // Initial count with connection failure handling
     getCountFromServer(q)
         .then((snapshot) => {
-            callback(snapshot.data().count);
+            if (snapshot && snapshot.data) {
+                callback(snapshot.data().count);
+            }
         })
         .catch((err) => {
-            console.error("Initial verified count error:", err);
+            console.warn("Server count query skipped due to connection delay:", err);
+            // Non-blocking fallback
             callback(0);
         });
 
@@ -192,7 +195,7 @@ export function listenToVerifiedCount(callback) {
             callback(snapshot.size);
         },
         (error) => {
-            console.error("Verified count listener error:", error);
+            console.warn("Verified count listener operating offline/limited:", error);
         }
     );
 
@@ -214,7 +217,7 @@ export function listenToArenaInterest(callback) {
         q,
         (snapshot) => callback(snapshot.size),
         (error) => {
-            console.error("Arena interest listener error:", error);
+            console.warn("Arena interest listener fallback:", error);
             callback(0);
         }
     );
@@ -240,7 +243,7 @@ export function listenToDocument(path, callback) {
             }
         },
         (error) => {
-            console.error(`Document listener error (${path}):`, error);
+            console.warn(`Document listener fallback (${path}):`, error);
             callback(null);
         }
     );
@@ -266,7 +269,7 @@ export function listenToCollection(collectionPath, constraints = [], callback) {
             callback(docs, snapshot);
         },
         (error) => {
-            console.error(`Collection listener error (${collectionPath}):`, error);
+            console.warn(`Collection listener fallback (${collectionPath}):`, error);
             callback([], null);
         }
     );
@@ -277,7 +280,7 @@ export function listenToCollection(collectionPath, constraints = [], callback) {
 /* ====================== TIER & TRUST SYSTEM ====================== */
 export function getTier(trustScore = 0) {
     if (trustScore >= 100) return { name: 'Premium', color: '#FFD700', canDownload: true, badge: '🌟 Verified Truth-Bearer', level: 4 };
-    if (trustScore >= 80)  return { name: 'Gold',    color: '#FFD700', canDownload: true, badge: 'Elite Witness',          level: 3 };
+    if (trustScore >= 80)  return { name: 'Gold',    color: '#FFD700', canDownload: true, badge: 'Elite Witness',         level: 3 };
     if (trustScore >= 60)  return { name: 'Silver',  color: '#C0C0C0', canDownload: true, badge: 'Trusted Witness',        level: 2 };
     if (trustScore >= 40)  return { name: 'Bronze',  color: '#CD7F32', canDownload: true, badge: 'Verified Citizen',       level: 1 };
     return { name: 'Explorer', color: '#808080', canDownload: false, badge: 'New Citizen', level: 0 };
@@ -302,7 +305,7 @@ export function calculateTrustScore(userData = {}) {
 /* ====================== MISC ====================== */
 export async function escalatePost(postId) {
     if (!postId) return false;
-    showToast("🛡️ Escalating post to True Witness review...", "info");
+    showToast("🛡️ Escalating post to Witness Voice review...", "info");
     return true;
 }
 
