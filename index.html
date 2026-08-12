@@ -74,13 +74,6 @@
         <button id="mobile-menu-btn" data-action="toggle-mobile-menu" class="md:hidden p-3 text-3xl leading-none hover:bg-zinc-800 rounded-2xl transition" aria-label="Toggle Menu">
             ☰
         </button>
-
-        <!-- Support Button -->
-        <button id="support-btn" data-action="open-support-modal" class="px-5 py-2.5 font-medium rounded-2xl transition whitespace-nowrap text-sm shadow-sm" style="background-color: #10b981; color: #000000;" data-i18n="supportBtn">
-            Support The Square
-        </button>
-
-        <!-- Desktop Controls -->
         <div class="hidden md:flex items-center gap-2">
             <!-- Language Switcher -->
             <select id="languageSelector" aria-label="Select Language" class="bg-zinc-900 border text-white rounded-2xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500" style="background-color: #18181b; color: #ffffff; border-color: #3f3f46;">
@@ -89,10 +82,23 @@
                 <option value="fr">Français</option>
             </select>
 
-            <!-- Data Saver Toggle -->
-            <button id="data-saver-btn" data-action="toggle-data-saver" class="px-3 py-2.5 rounded-2xl hover:bg-zinc-800 transition text-xs font-medium flex items-center gap-1.5 border text-zinc-300" style="background-color: #18181b; border-color: #3f3f46;">
-                ⚡ <span class="hidden lg:inline">Data Saver: <strong id="data-saver-status" style="color: #34d399;">Off</strong></span>
+             <!-- Sign-in Button -->
+            <button id="guest-action-btn" type="button" data-action="open-auth-modal" class="px-4 py-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm text-sm" style="background-color: #ffffff; color: #000000;">
+                <img src="https://www.google.com/favicon.ico" class="w-4 h-4" alt="Google">
+                <span class="hidden sm:inline" data-i18n="joinBtn">Join VocalWitness</span>
             </button>
+
+        <!-- Support Button -->
+        <button id="support-btn" data-action="open-support-modal" class="px-5 py-2.5 font-medium rounded-2xl transition whitespace-nowrap text-sm shadow-sm" style="background-color: #10b981; color: #000000;" data-i18n="supportBtn">
+            Support The Square
+        </button>
+
+
+          <!-- Data Saver Toggle -->
+<button id="data-saver-btn" data-action="toggle-data-saver" class="px-3.5 py-2.5 rounded-2xl hover:bg-zinc-800 transition text-xs font-semibold flex items-center gap-2 border text-zinc-300 shadow-sm cursor-pointer" style="background-color: #121826; border-color: #273548;">
+    <span>⚡</span>
+    <span class="hidden lg:inline">Data Saver: <strong id="data-saver-status" class="text-emerald-400 font-bold" style="color: #34d399;">Off</strong></span>
+</button>
 
             <!-- Privacy Link -->
             <a href="privacy.html" class="hidden lg:flex items-center hover:text-emerald-300 transition-colors text-sm font-medium px-3 py-2" style="color: #34d399;" data-i18n="privacyLink">
@@ -104,12 +110,6 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
                 </svg>
-            </button>
-
-            <!-- Sign-in Button -->
-            <button id="guest-action-btn" type="button" data-action="open-auth-modal" class="px-4 py-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm text-sm" style="background-color: #ffffff; color: #000000;">
-                <img src="https://www.google.com/favicon.ico" class="w-4 h-4" alt="Google">
-                <span class="hidden sm:inline" data-i18n="joinBtn">Join VocalWitness</span>
             </button>
 
             <!-- Notification Bell + Dropdown -->
