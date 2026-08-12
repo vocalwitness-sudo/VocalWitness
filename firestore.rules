@@ -28,6 +28,21 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.token.banned != true;
     }
 
+    // SERVER-SIDE TRUST CHECK: Fetches the caller's Firestore doc
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function hasMinTier(requiredTier) {
+      let u = getUserData();
+      return isNotBanned() && (
+        u.tier == requiredTier ||
+        (requiredTier == 'citizen' && (u.tier == 'verified_citizen' || u.tier == 'elite_witness' || u.tier == 'steward')) ||
+        (requiredTier == 'verified_citizen' && (u.tier == 'elite_witness' || u.tier == 'steward')) ||
+        (requiredTier == 'elite_witness' && u.tier == 'steward')
+      );
+    }
+
     function isSafeUserCreation() {
       let data = request.resource.data;
       let keys = data.keys();
@@ -40,7 +55,7 @@ service cloud.firestore {
           && data.isVerified == false
           && !keys.hasAny([
                'role', 'isBanned', 'badges', 'admin', 'moderator',
-               'zkVerified', 'reputation', 'score'
+               'zkVerified', 'reputation', 'score', 'steward'
              ]);
     }
 
@@ -82,7 +97,6 @@ service cloud.firestore {
       return request.resource.data[authorField] == resource.data[authorField];
     }
 
-    // Prevents tampering with core forensic or creation metadata during updates
     function isImmutableTestimonyMetadata() {
       let affected = request.resource.data.diff(resource.data).affectedKeys();
       let protectedFields = ['authorId', 'createdAt', 'forensicHash', 'imageHash', 'audioHash', 'hasForensic'];
@@ -90,7 +104,7 @@ service cloud.firestore {
     }
 
     // ==========================================
-    // RATE LIMITS (Backend / Cloud Functions only)
+    // RATE LIMITS
     // ==========================================
     match /rateLimits/{rateLimitId} {
       allow read, write: if false;
@@ -108,14 +122,12 @@ service cloud.firestore {
 
       allow delete: if isAdmin();
 
-      // Notifications subcollection
       match /notifications/{notificationId} {
         allow read: if isOwner(userId);
         allow update, delete: if isOwner(userId);
         allow create: if isNotBanned() && isValidNotification();
       }
 
-      // Bookmarks subcollection
       match /bookmarks/{bookmarkId} {
         allow read, write: if isOwner(userId);
       }
@@ -160,7 +172,7 @@ service cloud.firestore {
     match /witnessCycles/{cycleId} {
       allow read: if true;
 
-      allow create: if isNotBanned()
+      allow create: if hasMinTier('verified_citizen')
                     && request.resource.data.witnessId == request.auth.uid
                     && request.resource.data.witnessId is string;
 
@@ -183,7 +195,6 @@ service cloud.firestore {
                     && request.resource.data.authorId is string
                     && request.resource.data.content is string;
 
-      // Allows author edit, moderator update, OR peer atomic vote increments
       allow update: if isNotBanned() && isImmutableTestimonyMetadata() && (
         (request.auth.uid == resource.data.authorId || isModerator()) ||
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['votes', 'lastUpdated'])
@@ -260,7 +271,6 @@ service cloud.firestore {
                     && request.resource.data.authorId == request.auth.uid
                     && request.resource.data.authorId is string;
 
-      // Allows author edit, moderator update, OR peer atomic vote increments
       allow update: if isNotBanned() && isAuthorImmutable('authorId') && (
         (request.auth.uid == resource.data.authorId || isModerator()) ||
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['votes', 'lastUpdated'])
@@ -271,7 +281,7 @@ service cloud.firestore {
     }
 
     // ==========================================
-    // VOTES (IMMUTABLE SEPARATE AUDIT TRAIL)
+    // VOTES (IMMUTABLE AUDIT TRAIL)
     // ==========================================
     match /votes/{voteId} {
       allow read: if true;
@@ -300,18 +310,17 @@ service cloud.firestore {
     }
 
     // ==========================================
-    // AUDIT LOGS (Client Creation Allowed; Immutable)
+    // AUDIT LOGS
     // ==========================================
     match /audit_logs/{logId} {
       allow read: if isAuthenticated();
-      
-      // Supports both 'userId' and 'actorId' field structures from audit.js
+
       allow create: if isNotBanned()
                     && (
                       (request.resource.data.userId == request.auth.uid && request.resource.data.userId is string) ||
                       (request.resource.data.actorId == request.auth.uid && request.resource.data.actorId is string)
                     );
-                    
+
       allow update, delete: if false;
     }
 
@@ -321,7 +330,7 @@ service cloud.firestore {
     match /dao_proposals/{proposalId} {
       allow read: if true;
 
-      allow create: if isNotBanned()
+      allow create: if hasMinTier('elite_witness')
                     && request.resource.data.authorId == request.auth.uid
                     && request.resource.data.authorId is string;
 
