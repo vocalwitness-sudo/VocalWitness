@@ -58,7 +58,7 @@ export function renderAudioPreview(blob) {
         return;
     }
 
-    // Clean previous preview elements
+    // Clean previous preview elements safely
     previewContainer.innerHTML = ''; 
     const audioUrl = URL.createObjectURL(blob);
 
@@ -79,9 +79,9 @@ export function renderAudioPreview(blob) {
         wrapper.remove();
         URL.revokeObjectURL(audioUrl);
         
-        // Clear pending uploads on engine instances
-        citizenEngine.clearPendingMedia?.();
-        witnessEngine.clearPendingMedia?.();
+        // Clear pending uploads on engine instances safely
+        if (typeof citizenEngine?.clearPendingMedia === 'function') citizenEngine.clearPendingMedia();
+        if (typeof witnessEngine?.clearPendingMedia === 'function') witnessEngine.clearPendingMedia();
 
         if (previewContainer.children.length === 0) {
             previewContainer.classList.add('hidden');
