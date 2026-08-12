@@ -1,6 +1,6 @@
 // js/live-arena.js
-import { listenToVerifiedCount } from './utils.js';
-import { requireAuth, showToast } from './auth.js';
+import { listenToVerifiedCount, showToast } from './utils.js';
+import { requireAuth } from './auth.js';
 import { auth, db } from './firebase-config.js';
 import { doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
@@ -70,6 +70,7 @@ export async function notifyLiveArena() {
   } catch (error) {
     console.error(error);
     showToast("Something went wrong. Please try again.", "error");
+
     if (btn) {
       btn.disabled = false;
       btn.textContent = "🔔 Notify Me When Arena Goes Live";
@@ -79,7 +80,14 @@ export async function notifyLiveArena() {
 
 // Make available globally for onclick
 window.notifyLiveArena = notifyLiveArena;
+
 window.goBack = function () {
-  if (window.history.length > 1) window.history.back();
-  else window.location.href = 'index.html';
+  if (window.history.length > 1) {
+    window.history.back();
+  } else {
+    window.location.href = 'index.html';
+  }
 };
+
+// Auto start
+initLiveArena();
