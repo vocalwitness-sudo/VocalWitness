@@ -185,7 +185,8 @@ service cloud.firestore {
 
       match /userReactions/{userId} {
         allow read: if true;
-        allow write: if isOwner(userId) && isNotBanned();
+        allow create, update: if isOwner(userId) && isNotBanned();
+        allow delete: if isOwner(userId);
       }
 
       match /comments/{commentId} {
@@ -288,11 +289,14 @@ service cloud.firestore {
     }
 
     // ==========================================
-    // AUDIT LOGS (Cloud Functions only)
+    // AUDIT LOGS (Client Creation Allowed; Immutable)
     // ==========================================
     match /audit_logs/{logId} {
       allow read: if isAuthenticated();
-      allow create, update, delete: if false;
+      allow create: if isNotBanned()
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.userId is string;
+      allow update, delete: if false;
     }
 
     // ==========================================
