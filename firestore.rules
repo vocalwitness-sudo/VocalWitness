@@ -28,6 +28,14 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.token.banned != true;
     }
 
+    // CLOUDFLARE R2 MEDIA URL VALIDATION
+    function isValidMediaUrl(url) {
+      return url is string && (
+        url == '' || 
+        url.matches('^https://media\\.vocalwitness\\.com/.*')
+      );
+    }
+
     // SERVER-SIDE TRUST CHECK: Fetches the caller's Firestore doc
     function getUserData() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
@@ -78,7 +86,7 @@ service cloud.firestore {
           && affected.hasOnly(allowed)
           && (!('email' in data) || data.email is string)
           && (!('displayName' in data) || data.displayName is string)
-          && (!('photoURL' in data) || data.photoURL is string)
+          && (!('photoURL' in data) || isValidMediaUrl(data.photoURL))
           && (!('bio' in data) || data.bio is string)
           && (!('interestedInArena' in data) || data.interestedInArena is bool);
     }
@@ -115,11 +123,8 @@ service cloud.firestore {
     // ==========================================
     match /users/{userId} {
       allow read: if true;
-
       allow create: if isOwner(userId) && isSafeUserCreation();
-
       allow update: if (isOwner(userId) && isSafeUserUpdate()) || isAdmin();
-
       allow delete: if isAdmin();
 
       match /notifications/{notificationId} {
@@ -156,11 +161,13 @@ service cloud.firestore {
 
       allow create: if isNotBanned()
                     && request.resource.data.authorId == request.auth.uid
-                    && request.resource.data.authorId is string;
+                    && request.resource.data.authorId is string
+                    && (!('mediaUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.mediaUrl));
 
       allow update: if isNotBanned()
                     && (resource.data.authorId == request.auth.uid || isModerator())
-                    && isAuthorImmutable('authorId');
+                    && isAuthorImmutable('authorId')
+                    && (!('mediaUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.mediaUrl));
 
       allow delete: if isAuthenticated()
                     && (resource.data.authorId == request.auth.uid || isModerator());
@@ -193,7 +200,9 @@ service cloud.firestore {
       allow create: if isNotBanned()
                     && request.resource.data.authorId == request.auth.uid
                     && request.resource.data.authorId is string
-                    && request.resource.data.content is string;
+                    && request.resource.data.content is string
+                    && (!('imageUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.imageUrl))
+                    && (!('audioUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.audioUrl));
 
       allow update: if isNotBanned() && isImmutableTestimonyMetadata() && (
         (request.auth.uid == resource.data.authorId || isModerator()) ||
@@ -269,7 +278,9 @@ service cloud.firestore {
 
       allow create: if isNotBanned()
                     && request.resource.data.authorId == request.auth.uid
-                    && request.resource.data.authorId is string;
+                    && request.resource.data.authorId is string
+                    && (!('imageUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.imageUrl))
+                    && (!('audioUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.audioUrl));
 
       allow update: if isNotBanned() && isAuthorImmutable('authorId') && (
         (request.auth.uid == resource.data.authorId || isModerator()) ||
