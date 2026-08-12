@@ -56,7 +56,7 @@ service cloud.firestore {
       let allowed = [
         'email', 'displayName', 'photoURL', 'bio',
         'location', 'website', 'updatedAt', 'lastLoginAt',
-        'theme', 'language', 'interestedInArena', 'arenaNotifyAt'
+        'theme', 'language', 'interestedInArena', 'arenaNotifyAt', 'lastNameChange'
       ];
 
       return !affected.hasAny(forbidden)
@@ -82,8 +82,15 @@ service cloud.firestore {
       return request.resource.data[authorField] == resource.data[authorField];
     }
 
+    // Prevents tampering with core forensic or creation metadata during updates
+    function isImmutableTestimonyMetadata() {
+      let affected = request.resource.data.diff(resource.data).affectedKeys();
+      let protectedFields = ['authorId', 'createdAt', 'forensicHash', 'imageHash', 'audioHash', 'hasForensic'];
+      return !affected.hasAny(protectedFields);
+    }
+
     // ==========================================
-    // RATE LIMITS (Backend only)
+    // RATE LIMITS (Backend / Cloud Functions only)
     // ==========================================
     match /rateLimits/{rateLimitId} {
       allow read, write: if false;
@@ -176,9 +183,11 @@ service cloud.firestore {
                     && request.resource.data.authorId is string
                     && request.resource.data.content is string;
 
-      allow update: if isNotBanned()
-                    && (request.auth.uid == resource.data.authorId || isModerator())
-                    && isAuthorImmutable('authorId');
+      // Allows author edit, moderator update, OR peer atomic vote increments
+      allow update: if isNotBanned() && isImmutableTestimonyMetadata() && (
+        (request.auth.uid == resource.data.authorId || isModerator()) ||
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['votes', 'lastUpdated'])
+      );
 
       allow delete: if isAuthenticated()
                     && (request.auth.uid == resource.data.authorId || isAdmin());
@@ -251,16 +260,18 @@ service cloud.firestore {
                     && request.resource.data.authorId == request.auth.uid
                     && request.resource.data.authorId is string;
 
-      allow update: if isNotBanned()
-                    && (request.auth.uid == resource.data.authorId || isModerator())
-                    && isAuthorImmutable('authorId');
+      // Allows author edit, moderator update, OR peer atomic vote increments
+      allow update: if isNotBanned() && isAuthorImmutable('authorId') && (
+        (request.auth.uid == resource.data.authorId || isModerator()) ||
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['votes', 'lastUpdated'])
+      );
 
       allow delete: if isAuthenticated()
                     && (request.auth.uid == resource.data.authorId || isModerator());
     }
 
     // ==========================================
-    // VOTES (IMMUTABLE)
+    // VOTES (IMMUTABLE SEPARATE AUDIT TRAIL)
     // ==========================================
     match /votes/{voteId} {
       allow read: if true;
@@ -293,9 +304,14 @@ service cloud.firestore {
     // ==========================================
     match /audit_logs/{logId} {
       allow read: if isAuthenticated();
+      
+      // Supports both 'userId' and 'actorId' field structures from audit.js
       allow create: if isNotBanned()
-                    && request.resource.data.userId == request.auth.uid
-                    && request.resource.data.userId is string;
+                    && (
+                      (request.resource.data.userId == request.auth.uid && request.resource.data.userId is string) ||
+                      (request.resource.data.actorId == request.auth.uid && request.resource.data.actorId is string)
+                    );
+                    
       allow update, delete: if false;
     }
 
