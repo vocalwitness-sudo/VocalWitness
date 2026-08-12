@@ -1,12 +1,14 @@
-// js/media.js - Forensic Media Handler (Production)
+// js/media.js - Forensic Media Handler (Production R2 Version)
 import { showToast, generateSha256Hash } from './utils.js';
-import { storage, auth } from './firebase-config.js';
-import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
+import { auth } from './firebase-config.js';
+import { uploadSecurePhoto } from './upload.js';
 
 export let selectedImageFile = null;
 let engineInstance = null;
 let waveAnimationId = null;
 let replayUrl = null;
+
+const R2_UPLOAD_ENDPOINT = 'https://media.vocalwitness.com/upload';
 
 export function setEngine(engine) {
     engineInstance = engine;
@@ -15,11 +17,6 @@ export function setEngine(engine) {
 }
 
 // ====================== HELPERS ======================
-function sanitizeUrl(rawUrl) {
-    if (!rawUrl) return null;
-    return rawUrl.replace(/(&alt=media)+$/g, '&alt=media');
-}
-
 function formatTime(ms) {
     const totalSec = Math.floor(ms / 1000);
     const m = String(Math.floor(totalSec / 60)).padStart(2, '0');
@@ -133,7 +130,6 @@ export async function toggleVoiceRecording(voiceBtn) {
          engineInstance.mediaRecorder.state === "paused");
 
     if (!isActive) {
-        // START
         try {
             await engineInstance.startVoiceRecording(300000);
             voiceBtn?.classList.add('recording-active', 'animate-pulse');
@@ -162,7 +158,6 @@ export async function toggleVoiceRecording(voiceBtn) {
             showToast("Microphone access denied or unavailable", "error");
         }
     } else {
-        // STOP
         const blob = await engineInstance.stopVoiceRecording();
         voiceBtn?.classList.remove('recording-active', 'animate-pulse');
         stopWaveAndTimer();
@@ -249,7 +244,7 @@ export async function uploadForensicMedia() {
 
     const userId = auth.currentUser?.uid || "anonymous";
 
-    // Image
+    // 1. Photo Upload (Scrubbed EXIF via R2)
     if (selectedImageFile) {
         try {
             if (selectedImageFile.size === 0) {
@@ -257,29 +252,18 @@ export async function uploadForensicMedia() {
             }
 
             const hash = await generateSha256Hash(selectedImageFile);
-            const timestamp = Date.now();
-            const safeName = selectedImageFile.name.replace(/\s+/g, '_');
-            const path = `evidence/${userId}/${timestamp}_${safeName}`;
+            const uploadedUrl = await uploadSecurePhoto(selectedImageFile, `evidence/${userId}`);
 
-            const imageRef = ref(storage, path);
-            await uploadBytes(imageRef, selectedImageFile, {
-                contentType: selectedImageFile.type || 'image/jpeg',
-                customMetadata: {
-                    uploadedBy: userId,
-                    originalName: selectedImageFile.name
-                }
-            });
-
-            mediaData.imageUrl = sanitizeUrl(await getDownloadURL(imageRef));
+            mediaData.imageUrl = uploadedUrl;
             mediaData.imageHash = hash;
-            console.log("✅ Image uploaded:", mediaData.imageUrl, `(${selectedImageFile.size} bytes)`);
+            console.log("✅ Image uploaded to R2:", mediaData.imageUrl);
         } catch (e) {
             console.error("Image upload failed", e);
             showToast("Image upload failed", "error");
         }
     }
 
-    // Audio
+    // 2. Audio Upload (Direct to R2)
     if (engineInstance?.currentAudioBlob) {
         try {
             const blob = engineInstance.currentAudioBlob;
@@ -289,52 +273,48 @@ export async function uploadForensicMedia() {
                 showToast("Recording is empty. Please record again.", "error");
             } else {
                 const hash = await generateSha256Hash(blob);
-                const timestamp = Date.now();
-                const path = `evidence/${userId}/${timestamp}_voice.webm`;
+                const fileId = crypto.randomUUID();
+                const keyPath = `evidence/${userId}/${fileId}_voice.webm`;
 
-                const audioRef = ref(storage, path);
-                await uploadBytes(audioRef, blob, {
-                    contentType: blob.type || 'audio/webm',
-                    customMetadata: {
-                        uploadedBy: userId,
-                        durationHint: 'voice'
+                const uploadedUrl = await new Promise((resolve, reject) => {
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('PUT', `${R2_UPLOAD_ENDPOINT}?key=${encodeURIComponent(keyPath)}`, true);
+                    xhr.setRequestHeader('Content-Type', blob.type || 'audio/webm');
+
+                    if (auth.currentUser) {
+                        auth.currentUser.getIdToken().then(token => {
+                            xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+                            xhr.send(blob);
+                        }).catch(reject);
+                    } else {
+                        xhr.send(blob);
                     }
+
+                    xhr.onload = () => {
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            try {
+                                const res = JSON.parse(xhr.responseText);
+                                resolve(res.url || `https://media.vocalwitness.com/${keyPath}`);
+                            } catch (_) {
+                                resolve(`https://media.vocalwitness.com/${keyPath}`);
+                            }
+                        } else {
+                            reject(new Error(`Audio upload failed: ${xhr.status}`));
+                        }
+                    };
+
+                    xhr.onerror = () => reject(new Error('Network error during audio upload.'));
                 });
 
-                mediaData.audioUrl = sanitizeUrl(await getDownloadURL(audioRef));
+                mediaData.audioUrl = uploadedUrl;
                 mediaData.audioHash = hash;
-                console.log("✅ Audio uploaded:", mediaData.audioUrl, `(${blob.size} bytes)`);
+                console.log("✅ Audio uploaded to R2:", mediaData.audioUrl);
             }
         } catch (e) {
             console.error("Audio upload failed", e);
-            showToast("Voice upload failed", "error");
+            showToast("Audio upload failed", "error");
         }
     }
 
     return mediaData;
 }
-
-export function resetMediaState() {
-    selectedImageFile = null;
-    if (engineInstance) {
-        engineInstance.currentAudioBlob = null;
-        engineInstance.audioChunks = [];
-    }
-    if (replayUrl) {
-        URL.revokeObjectURL(replayUrl);
-        replayUrl = null;
-    }
-    stopWaveAndTimer();
-    showRecorderBar(false);
-
-    const preview = document.getElementById('preview-area');
-    if (preview) {
-        preview.innerHTML = 'Preview will appear here...';
-        preview.classList.remove('has-content');
-    }
-}
-
-// Global exposure
-window.handleImageSelect = handleImageSelect;
-window.toggleVoiceRecording = toggleVoiceRecording;
-window.resetMediaState = resetMediaState;
