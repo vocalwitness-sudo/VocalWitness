@@ -1,6 +1,6 @@
 /**
  * VocalWitness Client-Side EXIF & Metadata Scrubber
- * Converts file inputs into clean, metadata-free Blobs prior to Firebase Storage upload.
+ * Converts file inputs into clean, metadata-free Files prior to Cloudflare R2 / Storage upload.
  */
 
 /**
@@ -12,7 +12,7 @@
  * @param {number} [options.maxHeight=2048] - Max height allowed.
  * @param {string} [options.outputType='image/webp'] - Target format ('image/webp', 'image/jpeg').
  * @param {number} [options.quality=0.85] - Compression quality (0.0 to 1.0).
- * @returns {Promise<Blob>} A clean, metadata-free image Blob ready for Firebase Storage.
+ * @returns {Promise<File>} A clean, metadata-free image File ready for upload.
  */
 export async function scrubImageMetadata(imageFile, options = {}) {
     const {
@@ -22,18 +22,17 @@ export async function scrubImageMetadata(imageFile, options = {}) {
         quality = 0.85
     } = options;
 
-    if (!imageFile || !imageFile.type.startsWith('image/')) {
+    if (!imageFile || !imageFile.type || !imageFile.type.startsWith('image/')) {
         throw new Error('Invalid input: A valid image file must be provided.');
     }
 
     try {
         // 1. Load image into ImageBitmap
-        // imageOrientation: 'none' applies EXIF orientation directly into raw pixels
+        // 'from-image' correctly bakes EXIF rotation into raw pixels so mobile photos stay upright
         let bitmap;
         try {
-            bitmap = await createImageBitmap(imageFile, { imageOrientation: 'none' });
-        } catch {
-            // Fallback for browsers with strict imageOrientation support
+            bitmap = await createImageBitmap(imageFile, { imageOrientation: 'from-image' });
+        } catch (_) {
             bitmap = await createImageBitmap(imageFile);
         }
 
@@ -45,7 +44,7 @@ export async function scrubImageMetadata(imageFile, options = {}) {
             height = Math.round(height * ratio);
         }
 
-        // 3. Render onto Canvas (OffscreenCanvas preferred for worker/thread support)
+        // 3. Render onto Canvas (DOM element fallback for legacy WebKit)
         let canvas, ctx;
         if (typeof OffscreenCanvas !== 'undefined') {
             canvas = new OffscreenCanvas(width, height);
@@ -59,28 +58,44 @@ export async function scrubImageMetadata(imageFile, options = {}) {
 
         if (!ctx) throw new Error('Could not acquire 2D context for image scrubbing.');
 
-        // Clear canvas buffer to prevent memory leakage or residual pixels
+        // Clear canvas buffer to eliminate potential ghost pixels
         ctx.clearRect(0, 0, width, height);
         ctx.drawImage(bitmap, 0, 0, width, height);
 
-        // Clean up bitmap memory immediately
-        bitmap.close();
+        // Explicitly release GPU/memory handle
+        if (typeof bitmap.close === 'function') {
+            bitmap.close();
+        }
 
-        // 4. Export clean Blob (Native canvas export generates pristine headers without EXIF)
+        // 4. Export clean Blob with type fallback (JPEG fallback for older WebKit without WebP canvas export)
         let cleanBlob;
-        if (canvas.convertToBlob) {
-            cleanBlob = await canvas.convertToBlob({ type: outputType, quality });
-        } else {
-            cleanBlob = await new Promise((resolve, reject) => {
+        const exportBlob = async (type) => {
+            if (canvas.convertToBlob) {
+                return await canvas.convertToBlob({ type, quality });
+            }
+            return new Promise((resolve, reject) => {
                 canvas.toBlob(
-                    (blob) => blob ? resolve(blob) : reject(new Error('Canvas blob generation failed')),
-                    outputType,
+                    (b) => b ? resolve(b) : reject(new Error('Canvas blob generation failed')),
+                    type,
                     quality
                 );
             });
+        };
+
+        try {
+            cleanBlob = await exportBlob(outputType);
+        } catch (_) {
+            cleanBlob = await exportBlob('image/jpeg');
         }
 
-        return cleanBlob;
+        // 5. Wrap as a clean File object preserving name and timestamps for storage path resolvers
+        const ext = (cleanBlob.type || 'image/webp').split('/')[1] || 'webp';
+        const rawName = imageFile.name ? imageFile.name.replace(/\.[^/.]+$/, '') : 'witness_photo';
+        
+        return new File([cleanBlob], `${rawName}_clean.${ext}`, {
+            type: cleanBlob.type,
+            lastModified: Date.now()
+        });
 
     } catch (err) {
         console.error('[ImageScrubber] Metadata removal failed:', err);
