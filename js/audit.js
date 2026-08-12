@@ -2,6 +2,9 @@
 import { db, auth } from './firebase-config.js';
 import { collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
+// In-memory hash tracking to eliminate Firestore fetch delays between consecutive actions
+let memoryLastHash = null;
+
 /**
  * Deterministically sorts object keys to ensure reliable hashing across platforms.
  */
@@ -33,11 +36,17 @@ export async function generateForensicHash(dataString) {
  * Fetches the most recent log's hash to maintain hash-chain continuity.
  */
 async function getLastLogHash() {
+    if (memoryLastHash) return memoryLastHash;
+
     try {
-        const q = query(collection(db, "audit_logs"), orderBy("createdAt", "desc"), limit(1));
+        const q = query(collection(db, "audit_logs"), orderBy("clientTimestamp", "desc"), limit(1));
         const snapshot = await getDocs(q);
         if (!snapshot.empty) {
-            return snapshot.docs[0].data().forensicHash || "GENESIS_BLOCK";
+            const hash = snapshot.docs[0].data().forensicHash;
+            if (hash) {
+                memoryLastHash = hash;
+                return hash;
+            }
         }
     } catch (e) {
         console.warn("Could not retrieve previous log hash, starting fresh chain link:", e);
@@ -65,6 +74,7 @@ export async function logSecurityAudit(actionType, targetId, details = {}) {
         });
 
         const forensicHash = await generateForensicHash(canonicalPayload);
+        memoryLastHash = forensicHash; // Update memory cache
 
         await addDoc(collection(db, "audit_logs"), {
             userId,
