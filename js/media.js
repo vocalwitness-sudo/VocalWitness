@@ -316,5 +316,13 @@ export async function uploadForensicMedia() {
         }
     }
 
+    
+export function resetMediaState() {
+    // Clear image/audio variables & preview containers
+    const previewArea = document.getElementById('preview-area');
+    if (previewArea) previewArea.innerHTML = '';
+
+}
+
     return mediaData;
 }
