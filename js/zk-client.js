@@ -9,26 +9,36 @@ async function generateFallbackSignature(inputs) {
         showToast('Falling back to standard cryptographic signature...', 'warning');
     }
     
-    // 1. Check if ethers or Web3 wallet is available
+    // Check if wallet provider is present
     if (window.ethereum && window.ethers) {
         try {
-            const provider = new window.ethers.providers.Web3Provider(window.ethereum);
-            const signer = provider.getSigner();
-            const message = JSON.stringify(inputs);
-            const signature = await signer.signMessage(message);
+            const ethersLib = window.ethers;
+            let signer;
+            if (ethersLib.BrowserProvider) {
+                const provider = new ethersLib.BrowserProvider(window.ethereum);
+                signer = await provider.getSigner();
+            } else if (ethersLib.providers?.Web3Provider) {
+                const provider = new ethersLib.providers.Web3Provider(window.ethereum);
+                signer = provider.getSigner();
+            }
 
-            return {
-                isFallback: true,
-                proofType: 'ECDSA_SIGNATURE',
-                proof: { signature },
-                publicSignals: [await signer.getAddress()]
-            };
+            if (signer) {
+                const message = JSON.stringify(inputs);
+                const signature = await signer.signMessage(message);
+
+                return {
+                    isFallback: true,
+                    proofType: 'ECDSA_SIGNATURE',
+                    proof: { signature },
+                    publicSignals: [await signer.getAddress()]
+                };
+            }
         } catch (err) {
             console.warn("Wallet signing fallback rejected:", err);
         }
     }
 
-    // 2. Secondary fallback: Return SHA-256 hash payload with timestamp + unique random salt
+    // SHA-256 fallback stamp
     const randomSalt = crypto.getRandomValues(new Uint8Array(16));
     const payload = JSON.stringify(inputs) + Date.now() + Array.from(randomSalt).join('');
     
@@ -49,9 +59,9 @@ async function generateFallbackSignature(inputs) {
  * Main proof entry point with hardware & runtime bounds
  */
 export async function generateZKProofAsync(inputs) {
-    // 1. Hardware & Memory Guard Pre-Check (<2GB RAM)
+    // 1. Hardware Pre-Check (<2GB RAM)
     if (navigator.deviceMemory && navigator.deviceMemory < 2) {
-        console.warn("Low memory environment detected (<2GB). Bypassing ZK WASM to prevent OOM crash.");
+        console.warn("Low memory environment detected (<2GB). Bypassing ZK WASM.");
         return await generateFallbackSignature(inputs);
     }
 
@@ -67,13 +77,12 @@ export async function generateZKProofAsync(inputs) {
     return new Promise((resolve, reject) => {
         let worker;
         try {
-            worker = new Worker(new URL('./zk-worker.js', import.meta.url));
+            worker = new Worker(new URL('./zk-worker.js', import.meta.url), { type: 'module' });
         } catch (e) {
-            console.warn("Failed to construct ZK Worker. Triggering fallback...", e);
+            console.warn("Failed to construct module ZK Worker. Triggering fallback...", e);
             return generateFallbackSignature(inputs).then(resolve).catch(reject);
         }
 
-        // Safety timeout (45s to protect low-end CPUs)
         const timeout = setTimeout(async () => {
             cleanup();
             if (typeof showToast === 'function') {
@@ -87,9 +96,7 @@ export async function generateZKProofAsync(inputs) {
             }
         }, 45000);
 
-        const unloadHandler = () => {
-            cleanup();
-        };
+        const unloadHandler = () => cleanup();
 
         const cleanup = () => {
             clearTimeout(timeout);
@@ -101,10 +108,14 @@ export async function generateZKProofAsync(inputs) {
 
         window.addEventListener('beforeunload', unloadHandler, { once: true });
 
-        // Worker Message Listener
         worker.onmessage = async (e) => {
+            const { success, proof, publicSignals, error, note, type } = e.data;
+
+            if (type === 'STATUS_UPDATE') {
+                return; // Ignore status update messages during processing
+            }
+
             cleanup();
-            const { success, proof, publicSignals, error, note } = e.data;
 
             if (success) {
                 if (note && typeof showToast === 'function') {
@@ -117,7 +128,6 @@ export async function generateZKProofAsync(inputs) {
             }
         };
 
-        // Worker Runtime/OOM Error Listener
         worker.onerror = async (err) => {
             cleanup();
             console.error("ZK Worker execution crashed (likely WASM OOM):", err);
@@ -129,7 +139,6 @@ export async function generateZKProofAsync(inputs) {
             }
         };
 
-        // Post message to worker
         worker.postMessage(inputs);
     });
 }
