@@ -1,8 +1,8 @@
-// js/verification.js - Enhanced with canAdvanceTier, Cache Invalidation & Timeout Guard
+// js/verification.js - Robust Verification Handlers with Timeout Guards & Tier Checks
 import { doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { db, auth } from "./firebase-config.js";
 import { showToast } from "./utils.js";
-import { canAdvanceTier, updateTierBadge, refreshTierAndUI, TIERS } from './tier.js';
+import { canAdvanceTier, refreshTierAndUI, TIERS } from './tier.js';
 
 /**
  * Execute an async operation with a strict timeout fallback
@@ -18,7 +18,7 @@ function withTimeout(promise, ms = 10000, timeoutMsg = "Operation timed out") {
 }
 
 /**
- * Phone Verification → Citizen Circle
+ * Phone Verification -> Citizen Circle
  */
 export async function startPhoneVerification() {
   try {
@@ -29,20 +29,37 @@ export async function startPhoneVerification() {
 
     showToast("📱 Starting phone verification...", "info");
 
-    // Simulated OTP verification flow with timeout safety
+    // Check progression eligibility before proceeding
+    const advanceResult = await withTimeout(
+      canAdvanceTier(auth.currentUser.uid),
+      10000,
+      "Tier check timed out"
+    );
+
+    if (!advanceResult.canAdvance) {
+      return showToast(`Verification blocked: ${advanceResult.reason}`, "warning");
+    }
+
+    // Simulated OTP delay (replace with real Firebase Auth Recaptcha/Phone Auth step when ready)
     await new Promise((resolve) => setTimeout(resolve, 1800));
 
     const userRef = doc(db, "users", auth.currentUser.uid);
-    await updateDoc(userRef, {
-      hasVerifiedPhone: true,
-      isPhoneVerified: true,
-      tier: TIERS.CITIZEN_CIRCLE,
-      verifiedAt: serverTimestamp()
-    });
-
-    showToast("✅ Phone Verified! You are now in Citizen Circle", "success");
     
-    // Invalidate local profile cache and update UI components
+    await withTimeout(
+      updateDoc(userRef, {
+        hasVerifiedPhone: true,
+        isPhoneVerified: true,
+        tier: TIERS.CITIZEN_CIRCLE,
+        verifiedAt: serverTimestamp(),
+        lastUpdated: serverTimestamp()
+      }),
+      10000,
+      "Database update timed out"
+    );
+
+    showToast("✅ Phone Verified! Welcome to Citizen Circle", "success");
+    
+    // Invalidate local profile cache and refresh UI
     refreshTierAndUI();
   } catch (error) {
     console.error("Phone verification error:", error);
@@ -51,7 +68,7 @@ export async function startPhoneVerification() {
 }
 
 /**
- * ZK Verification → Witness Circle (Witness Voice Access)
+ * ZK Verification -> Witness Circle (Witness Voice Access)
  */
 export async function startZKVerification() {
   try {
@@ -62,7 +79,7 @@ export async function startZKVerification() {
 
     showToast("🔐 Running Zero-Knowledge Verification...", "info");
 
-    // Wrap tier progression check inside timeout guard
+    // Check progression eligibility inside timeout guard
     const advanceResult = await withTimeout(
       canAdvanceTier(auth.currentUser.uid), 
       10000, 
@@ -74,16 +91,21 @@ export async function startZKVerification() {
     }
 
     const userRef = doc(db, "users", auth.currentUser.uid);
-    await updateDoc(userRef, {
-      zkVerified: true,
-      tier: TIERS.WITNESS_CIRCLE,
-      zkVerifiedAt: serverTimestamp(),
-      lastUpdated: serverTimestamp()
-    });
+    
+    await withTimeout(
+      updateDoc(userRef, {
+        zkVerified: true,
+        tier: TIERS.WITNESS_CIRCLE,
+        zkVerifiedAt: serverTimestamp(),
+        lastUpdated: serverTimestamp()
+      }),
+      10000,
+      "Database update timed out"
+    );
 
     showToast("🛡️ ZK Verification Complete! Welcome to Witness Circle", "success");
 
-    // Invalidate local profile cache and update UI components
+    // Invalidate local profile cache and refresh UI
     refreshTierAndUI();
   } catch (error) {
     console.error("ZK verification error:", error);
