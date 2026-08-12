@@ -45,8 +45,8 @@ service cloud.firestore {
       let u = getUserData();
       return isNotBanned() && (
         u.tier == requiredTier ||
-        (requiredTier == 'citizen' && (u.tier == 'verified_citizen' || u.tier == 'elite_witness' || u.tier == 'steward')) ||
-        (requiredTier == 'verified_citizen' && (u.tier == 'elite_witness' || u.tier == 'steward')) ||
+        (requiredTier == 'citizen_circle' && (u.tier == 'witness_circle' || u.tier == 'elite_witness' || u.tier == 'steward')) ||
+        (requiredTier == 'witness_circle' && (u.tier == 'elite_witness' || u.tier == 'steward')) ||
         (requiredTier == 'elite_witness' && u.tier == 'steward')
       );
     }
@@ -59,7 +59,7 @@ service cloud.firestore {
           && data.uid is string
           && data.email is string
           && data.displayName is string
-          && data.tier == 'citizen'
+          && data.tier == 'citizen_circle'
           && data.isVerified == false
           && !keys.hasAny([
                'role', 'isBanned', 'badges', 'admin', 'moderator',
@@ -71,6 +71,7 @@ service cloud.firestore {
       let affected = request.resource.data.diff(resource.data).affectedKeys();
       let data = request.resource.data;
 
+      // IMMUTABLE PRIVILEGED FIELDS - Clients CANNOT modify these directly
       let forbidden = [
         'role', 'isBanned', 'badges', 'admin', 'moderator',
         'zkVerified', 'reputation', 'score', 'tier', 'isVerified', 'uid'
@@ -79,7 +80,8 @@ service cloud.firestore {
       let allowed = [
         'email', 'displayName', 'photoURL', 'bio',
         'location', 'website', 'updatedAt', 'lastLoginAt',
-        'theme', 'language', 'interestedInArena', 'arenaNotifyAt', 'lastNameChange'
+        'theme', 'language', 'interestedInArena', 'arenaNotifyAt', 'lastNameChange',
+        'hasVerifiedPhone'
       ];
 
       return !affected.hasAny(forbidden)
@@ -179,7 +181,7 @@ service cloud.firestore {
     match /witnessCycles/{cycleId} {
       allow read: if true;
 
-      allow create: if hasMinTier('verified_citizen')
+      allow create: if hasMinTier('citizen_circle')
                     && request.resource.data.witnessId == request.auth.uid
                     && request.resource.data.witnessId is string;
 
@@ -288,7 +290,7 @@ service cloud.firestore {
       );
 
       allow delete: if isAuthenticated()
-                    && (request.auth.uid == resource.data.authorId || isModerator());
+                    && (resource.data.authorId == request.auth.uid || isModerator());
     }
 
     // ==========================================
