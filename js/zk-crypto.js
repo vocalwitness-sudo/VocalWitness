@@ -63,11 +63,20 @@ export async function generateRigorousProof(testimonyData) {
             throw new Error("No Web3 wallet detected (e.g. MetaMask)");
         }
 
-        const provider = new ethersLib.BrowserProvider(window.ethereum);
-        const signer = await provider.getSigner();
+        // Dual-support for Ethers v5 and v6
+        let provider, signer;
+        if (ethersLib.BrowserProvider) {
+            provider = new ethersLib.BrowserProvider(window.ethereum);
+            signer = await provider.getSigner();
+        } else if (ethersLib.providers?.Web3Provider) {
+            provider = new ethersLib.providers.Web3Provider(window.ethereum);
+            signer = provider.getSigner();
+        } else {
+            throw new Error("Compatible Ethers provider provider not found");
+        }
 
-        // Sign the raw 32-byte hash buffer rather than the ASCII string
-        const hashBytes = ethersLib.getBytes("0x" + hashHex);
+        const getBytesFn = ethersLib.getBytes || ethersLib.utils?.arrayify;
+        const hashBytes = getBytesFn("0x" + hashHex);
         const signature = await signer.signMessage(hashBytes);
         const signerAddress = await signer.getAddress();
 
@@ -92,9 +101,12 @@ export async function verifyProof(proof) {
             return false;
         }
 
-        // Verify using Ethers v6 syntax for raw bytes signature recovery
-        const hashBytes = ethersLib.getBytes(proof.hash.startsWith("0x") ? proof.hash : "0x" + proof.hash);
-        const recovered = ethersLib.verifyMessage(hashBytes, proof.signature);
+        const getBytesFn = ethersLib.getBytes || ethersLib.utils?.arrayify;
+        const verifyFn = ethersLib.verifyMessage || ethersLib.utils?.verifyMessage;
+
+        const formattedHash = proof.hash.startsWith("0x") ? proof.hash : "0x" + proof.hash;
+        const hashBytes = getBytesFn(formattedHash);
+        const recovered = verifyFn(hashBytes, proof.signature);
         return recovered.toLowerCase() === proof.signer.toLowerCase();
     } catch (e) {
         console.error("Verification failed:", e);
