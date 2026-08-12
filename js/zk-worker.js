@@ -3,10 +3,10 @@
 try {
     importScripts('https://cdn.jsdelivr.net/npm/snarkjs@0.7.0/build/snarkjs.min.js');
 } catch (err) {
-    console.error("Failed to load SnarkJS inside Web Worker:", err);
+    console.warn("importScripts failed, relying on module context:", err);
 }
 
-// In-memory cache for WebAssembly and Proving Keys to eliminate fetch overhead
+// In-memory cache for WebAssembly and Proving Keys
 let cachedWasmBuffer = null;
 let cachedZkeyBuffer = null;
 
@@ -40,7 +40,9 @@ self.onmessage = async (event) => {
             return;
         }
 
-        if (typeof snarkjs === 'undefined') {
+        const snarkEngine = self.snarkjs || typeof snarkjs !== 'undefined' ? snarkjs : null;
+
+        if (!snarkEngine) {
             throw new Error('SnarkJS library failed to initialize inside worker context.');
         }
 
@@ -49,8 +51,7 @@ self.onmessage = async (event) => {
 
         self.postMessage({ type: 'STATUS_UPDATE', message: 'Generating cryptographic proof via Groth16...' });
 
-        // Pass ArrayBuffer views directly to fullProve to avoid network Round Trips
-        const { proof, publicSignals } = await snarkjs.groth16.fullProve(
+        const { proof, publicSignals } = await snarkEngine.groth16.fullProve(
             proofPayload,
             cachedWasmBuffer,
             cachedZkeyBuffer
