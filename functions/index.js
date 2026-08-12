@@ -1,4 +1,6 @@
 const functions = require('firebase-functions');
+const { onRequest } = require("firebase-functions/v2/https");
+const { defineSecret } = require("firebase-functions/params");
 const admin = require('firebase-admin');
 const cors = require('cors')({ origin: true });
 const paystack = require('paystack-api')(functions.config().paystack.secret_key);
@@ -6,9 +8,69 @@ const snarkjs = require('snarkjs');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
+
+// Define secrets for Firebase Secrets Manager
+const r2AccessKeyId = defineSecret("R2_ACCESS_KEY_ID");
+const r2SecretAccessKey = defineSecret("R2_SECRET_ACCESS_KEY");
 
 admin.initializeApp();
 const db = admin.firestore();
+
+// ======================================================
+// CLOUDFLARE R2 PRE-SIGNED URL GENERATOR
+// ======================================================
+exports.getUploadUrl = onRequest(
+  {
+    cors: true,
+    secrets: [r2AccessKeyId, r2SecretAccessKey]
+  },
+  async (req, res) => {
+    if (req.method === "OPTIONS") {
+      return res.status(204).send("");
+    }
+
+    try {
+      const { fileName, fileType } = req.body;
+
+      if (!fileName || !fileType) {
+        return res.status(400).json({ error: "fileName and fileType are required." });
+      }
+
+      // Initialize S3 Client using secrets loaded dynamically
+      const s3Client = new S3Client({
+        region: "auto",
+        endpoint: "https://b282f46ef0831c8af75bfe52120bbac6.r2.cloudflarestorage.com",
+        credentials: {
+          accessKeyId: r2AccessKeyId.value(),
+          secretAccessKey: r2SecretAccessKey.value(),
+        },
+      });
+
+      const objectKey = `uploads/${Date.now()}-${fileName.replace(/[^a-zA-Z0-9.\-_]/g, "_")}`;
+
+      const command = new PutObjectCommand({
+        Bucket: "vocalwitness-media",
+        Key: objectKey,
+        ContentType: fileType,
+      });
+
+      // Generate pre-signed upload URL valid for 15 minutes
+      const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 900 });
+      const publicUrl = `https://media.vocalwitness.com/${objectKey}`;
+
+      return res.status(200).json({
+        uploadUrl,
+        publicUrl,
+        key: objectKey,
+      });
+    } catch (error) {
+      console.error("Error generating pre-signed URL:", error);
+      return res.status(500).json({ error: "Failed to generate upload URL." });
+    }
+  }
+);
 
 // ======================================================
 // AUDIT LOG HELPER
