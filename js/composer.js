@@ -54,6 +54,14 @@ function toggleActive(button) {
     button.classList.toggle('ring-emerald-500');
 }
 
+// Reset composer inputs and UI toggles
+function clearComposerState(mainInput, btnPhoto, btnVoice) {
+    if (mainInput) mainInput.value = '';
+    btnPhoto?.classList.remove('active', 'bg-slate-700', 'ring-2', 'ring-emerald-500');
+    btnVoice?.classList.remove('active', 'bg-slate-700', 'ring-2', 'ring-emerald-500');
+    resetMediaState();
+}
+
 // Initialize Composer Event Listeners & Ensure Visual Styling
 export function initComposer() {
     const btnPhoto = document.getElementById('btn-photo');
@@ -120,20 +128,23 @@ export function initComposer() {
         postButton.addEventListener('click', async (e) => {
             e.preventDefault();
             const text = mainInput?.value ? mainInput.value.trim() : "";
-            const targetFeed = targetFeedSelect?.value || "citizen_talk";
+            
+            // Feed Alias Normalization
+            let rawFeed = targetFeedSelect?.value || "citizen_talk";
+            const targetFeed = (rawFeed === 'vocal_truth' || rawFeed === 'true_witness') ? 'witness_voice' : rawFeed;
 
             if (!auth.currentUser) {
                 showToast('You must be logged in to publish testimony', 'error');
                 return;
             }
 
-            postButton.disabled = true;
             const originalBtnText = postButton.textContent;
+            postButton.disabled = true;
             postButton.textContent = 'Publishing...';
 
             try {
                 // --- TARGET FEED VERIFICATION DOOR CHECK ---
-                if (targetFeed === 'witness_voice' || targetFeed === 'true_witness') {
+                if (targetFeed === 'witness_voice') {
                     const userDocRef = doc(db, "users", auth.currentUser.uid);
                     const userSnap = await getDoc(userDocRef);
                     const userData = userSnap.exists() ? userSnap.data() : {};
@@ -193,8 +204,7 @@ export function initComposer() {
                         createdAt: Date.now()
                     });
                     showToast('Network offline. Testimony saved to local queue!', 'warning');
-                    if (mainInput) mainInput.value = '';
-                    resetMediaState();
+                    clearComposerState(mainInput, btnPhoto, btnVoice);
                     return;
                 }
 
@@ -234,12 +244,7 @@ export function initComposer() {
                 });
 
                 showToast('✅ Testimony published successfully!', 'success');
-
-                if (mainInput) mainInput.value = '';
-                btnPhoto?.classList.remove('active', 'ring-2', 'ring-emerald-500');
-                btnVoice?.classList.remove('active', 'ring-2', 'ring-emerald-500');
-
-                resetMediaState();
+                clearComposerState(mainInput, btnPhoto, btnVoice);
                 window.dispatchEvent(new CustomEvent('vocalWitness:posted'));
 
             } catch (err) {
