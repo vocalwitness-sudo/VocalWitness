@@ -28,7 +28,6 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.token.banned != true;
     }
 
-    // Safe initial profile creation
     function isSafeUserCreation() {
       let data = request.resource.data;
       let keys = data.keys();
@@ -45,18 +44,15 @@ service cloud.firestore {
              ]);
     }
 
-    // Strict allowlist + type validation for self-profile updates
     function isSafeUserUpdate() {
       let affected = request.resource.data.diff(resource.data).affectedKeys();
       let data = request.resource.data;
 
-      // Users must never change these fields themselves
       let forbidden = [
         'role', 'isBanned', 'badges', 'admin', 'moderator',
         'zkVerified', 'reputation', 'score', 'tier', 'isVerified', 'uid'
       ];
 
-      // Allowed client-side fields (including Live Arena)
       let allowed = [
         'email', 'displayName', 'photoURL', 'bio',
         'location', 'website', 'updatedAt', 'lastLoginAt',
@@ -86,22 +82,12 @@ service cloud.firestore {
       return request.resource.data[authorField] == resource.data[authorField];
     }
 
-
-
-// ==========================================
-// RATE LIMITS COLLECTION
-// ==========================================
-match /rateLimits/{rateLimitId} {
-  // Only the backend (Cloud Functions) should write to this collection
-  allow read: if false;
-  allow write: if false;
-
-  // Optional: Allow a user to read only their own rate limit documents
-  // (uncomment if you ever need the client to check its own limits)
-  // allow read: if isAuthenticated() && rateLimitId.matches('^' + request.auth.uid + '_.*');
-}
-
-
+    // ==========================================
+    // RATE LIMITS (Backend only)
+    // ==========================================
+    match /rateLimits/{rateLimitId} {
+      allow read, write: if false;
+    }
 
     // ==========================================
     // USERS COLLECTION
@@ -115,25 +101,18 @@ match /rateLimits/{rateLimitId} {
 
       allow delete: if isAdmin();
 
-      // Subcollection: Notifications
+      // Notifications subcollection
       match /notifications/{notificationId} {
         allow read: if isOwner(userId);
         allow update, delete: if isOwner(userId);
         allow create: if isNotBanned() && isValidNotification();
       }
 
-      // Subcollection: Bookmarks
+      // Bookmarks subcollection
       match /bookmarks/{bookmarkId} {
         allow read, write: if isOwner(userId);
       }
     }
-
-// ==========================================
-// RATE LIMITS (Backend only)
-// ==========================================
-match /rateLimits/{rateLimitId} {
-  allow read, write: if false;
-}
 
     // ==========================================
     // VERIFICATION REQUESTS
@@ -187,7 +166,7 @@ match /rateLimits/{rateLimitId} {
     }
 
     // ==========================================
-    // TESTIMONIES / EVIDENCE LEDGER
+    // TESTIMONIES
     // ==========================================
     match /testimonies/{testimonyId} {
       allow read: if true;
@@ -204,13 +183,11 @@ match /rateLimits/{rateLimitId} {
       allow delete: if isAuthenticated()
                     && (request.auth.uid == resource.data.authorId || isAdmin());
 
-      // Reactions
       match /userReactions/{userId} {
         allow read: if true;
         allow write: if isOwner(userId) && isNotBanned();
       }
 
-      // Comments
       match /comments/{commentId} {
         allow read: if true;
 
@@ -282,7 +259,7 @@ match /rateLimits/{rateLimitId} {
     }
 
     // ==========================================
-    // PEER VERIFICATION VOTES (IMMUTABLE)
+    // VOTES (IMMUTABLE)
     // ==========================================
     match /votes/{voteId} {
       allow read: if true;
@@ -298,7 +275,7 @@ match /rateLimits/{rateLimitId} {
     }
 
     // ==========================================
-    // REPORTS / MODERATION
+    // REPORTS
     // ==========================================
     match /reports/{reportId} {
       allow read: if isModerator();
@@ -311,12 +288,11 @@ match /rateLimits/{rateLimitId} {
     }
 
     // ==========================================
-    // AUDIT LOGS (ONLY CLOUD FUNCTIONS CAN WRITE)
+    // AUDIT LOGS (Cloud Functions only)
     // ==========================================
     match /audit_logs/{logId} {
       allow read: if isAuthenticated();
-      allow create: if false;          // Only backend / Cloud Functions
-      allow update, delete: if false; // Fully immutable
+      allow create, update, delete: if false;
     }
 
     // ==========================================
@@ -337,7 +313,7 @@ match /rateLimits/{rateLimitId} {
     }
 
     // ==========================================
-    // DEFAULT DENY (catch-all)
+    // DEFAULT DENY
     // ==========================================
     match /{document=**} {
       allow read, write: if false;
