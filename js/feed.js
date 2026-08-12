@@ -46,7 +46,8 @@ export function initFeed(dbInstance = db, channelType = 'citizen-talk') {
         return;
     }
 
-    if (activeFeedListener) {
+    // Cleanly unsubscribe from previous snapshot listener
+    if (typeof activeFeedListener === 'function') {
         activeFeedListener();
         activeFeedListener = null;
     }
@@ -58,6 +59,7 @@ export function initFeed(dbInstance = db, channelType = 'citizen-talk') {
             <div class="animate-pulse text-zinc-400">Loading testimonies...</div>
         </div>`;
 
+    // Event delegation on container
     if (!feedContainer.dataset.listenerAttached) {
         feedContainer.dataset.listenerAttached = "true";
         feedContainer.addEventListener('click', async (e) => {
@@ -78,22 +80,22 @@ export function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                     const reactionType = btn.getAttribute('data-reaction');
                     await handleReaction(id, reactionType);
                 } else if (action === 'comment') {
-                    openCommentModal(id);
+                    await openCommentModal(id);
                 } else if (action === 'report') {
                     try {
                         const m = await import('./moderation.js');
-                        if (m && m.reportContent) {
+                        if (m && typeof m.reportContent === 'function') {
                             await m.reportContent(id, "other");
                         } else {
                             showToast("Moderation module uninitialized.", "error");
                         }
                     } catch (err) {
                         console.error("Moderation module load failure:", err);
-                        showToast("Moderation module loading...", "info");
+                        showToast("Failed to load moderation module.", "error");
                     }
                 } else if (action === 'share') {
                     try {
-                        const shareUrl = `${window.location.origin}?post=${id}`;
+                        const shareUrl = `${window.location.origin}?post=${encodeURIComponent(id)}`;
                         if (navigator.share) {
                             await navigator.share({
                                 title: 'VocalWitness Testimony',
@@ -176,22 +178,29 @@ function ensureSearchAndFilterUI(container) {
             <input type="text" id="feedSearchInput" placeholder="🔍 Search testimonies..." 
                    class="w-full bg-zinc-900 border border-zinc-800 rounded-2xl px-4 py-2.5 text-sm text-zinc-100 focus:outline-none focus:border-emerald-500 transition">
         </div>
-        <div class="flex gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
-            <button data-filter="all" class="filter-btn px-4 py-2 rounded-xl text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition">All</button>
-            <button data-filter="verified" class="filter-btn px-4 py-2 rounded-xl text-xs font-medium bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white transition">🛡️ Verified</button>
-            <button data-filter="media" class="filter-btn px-4 py-2 rounded-xl text-xs font-medium bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white transition">📷 Media</button>
+        <div class="flex gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0" id="filterBtnGroup">
+            <button data-filter="all" data-active="true" class="filter-btn px-4 py-2 rounded-xl text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition">All</button>
+            <button data-filter="verified" data-active="false" class="filter-btn px-4 py-2 rounded-xl text-xs font-medium bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white transition">🛡️ Verified</button>
+            <button data-filter="media" data-active="false" class="filter-btn px-4 py-2 rounded-xl text-xs font-medium bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white transition">📷 Media</button>
         </div>
     `;
 
-    container.parentNode.insertBefore(wrapper, container);
+    if (container.parentNode) {
+        container.parentNode.insertBefore(wrapper, container);
+    }
 
     document.getElementById('feedSearchInput')?.addEventListener('input', () => applySearchAndFilter());
-    wrapper.querySelectorAll('.filter-btn').forEach(btn => {
+
+    const filterBtns = wrapper.querySelectorAll('.filter-btn');
+    filterBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
-            wrapper.querySelectorAll('.filter-btn').forEach(b => {
+            filterBtns.forEach(b => {
+                b.setAttribute('data-active', 'false');
                 b.className = "filter-btn px-4 py-2 rounded-xl text-xs font-medium bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white transition";
             });
-            e.currentTarget.className = "filter-btn px-4 py-2 rounded-xl text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition";
+            const target = e.currentTarget;
+            target.setAttribute('data-active', 'true');
+            target.className = "filter-btn px-4 py-2 rounded-xl text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition";
             applySearchAndFilter();
         });
     });
@@ -200,7 +209,7 @@ function ensureSearchAndFilterUI(container) {
 function applySearchAndFilter() {
     const searchInput = document.getElementById('feedSearchInput');
     const queryText = searchInput ? searchInput.value.toLowerCase().trim() : "";
-    const activeFilterBtn = document.querySelector('.filter-btn.bg-emerald-500\\/20');
+    const activeFilterBtn = document.querySelector('#filterBtnGroup .filter-btn[data-active="true"]');
     const filterType = activeFilterBtn ? activeFilterBtn.getAttribute('data-filter') : 'all';
 
     const filtered = allPostsCache.filter(post => {
@@ -283,7 +292,10 @@ function renderSinglePostDOM(id, data, container) {
 
     let audioHTML = '';
     if (data.audioUrl) {
-        const safeAudioUrl = data.audioUrl.includes('?') ? data.audioUrl + '&alt=media' : data.audioUrl + '?alt=media';
+        let safeAudioUrl = data.audioUrl;
+        if (!safeAudioUrl.includes('alt=media')) {
+            safeAudioUrl += safeAudioUrl.includes('?') ? '&alt=media' : '?alt=media';
+        }
         audioHTML = `
             <div class="mt-5 bg-zinc-900 rounded-2xl p-4 border border-zinc-700">
                 <audio controls preload="metadata" class="w-full" crossorigin="anonymous">
@@ -307,7 +319,7 @@ function renderSinglePostDOM(id, data, container) {
     postEl.innerHTML = `
         <div class="flex justify-between items-start">
             <div class="flex items-center gap-3">
-                ${renderTierCircle ? renderTierCircle(data.authorTier || 'citizen', data.reputation || 0) : '<span class="text-2xl">👤</span>'}
+                ${typeof renderTierCircle === 'function' ? renderTierCircle(data.authorTier || 'citizen', data.reputation || 0) : '<span class="text-2xl">👤</span>'}
                 <div>
                     <div class="flex items-center gap-2 flex-wrap">
                         <p class="font-semibold text-zinc-100">${authorDisplayName}</p>
@@ -382,7 +394,6 @@ async function handleDeletePost(postId) {
         const post = allPostsCache.find(p => p.id === postId);
         const postRef = doc(db, "testimonies", postId);
 
-        // Soft-delete if cryptographic hashes exist to preserve log integrity
         if (post && (post.forensicHash || post.imageHash || post.audioHash)) {
             await updateDoc(postRef, {
                 isDeleted: true,
