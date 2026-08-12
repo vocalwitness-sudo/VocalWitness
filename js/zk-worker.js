@@ -1,20 +1,36 @@
-// js/zk-worker.js - Web Worker Script
+// js/zk-worker.js - Optimized Web Worker Execution Thread
 
-// Safely import SnarkJS inside the worker context
 try {
     importScripts('https://cdn.jsdelivr.net/npm/snarkjs@0.7.0/build/snarkjs.min.js');
 } catch (err) {
-    console.error("Failed to load SnarkJS CDN inside Web Worker:", err);
+    console.error("Failed to load SnarkJS inside Web Worker:", err);
+}
+
+// In-memory cache for WebAssembly and Proving Keys to eliminate fetch overhead
+let cachedWasmBuffer = null;
+let cachedZkeyBuffer = null;
+
+async function loadCircuitAssets(baseUrl) {
+    if (!cachedWasmBuffer) {
+        self.postMessage({ type: 'STATUS_UPDATE', message: 'Downloading WASM circuit binaries...' });
+        const res = await fetch(`${baseUrl}/circuits/witness.wasm`);
+        if (!res.ok) throw new Error(`Failed to load WASM circuit: HTTP ${res.status}`);
+        cachedWasmBuffer = new Uint8Array(await res.arrayBuffer());
+    }
+
+    if (!cachedZkeyBuffer) {
+        self.postMessage({ type: 'STATUS_UPDATE', message: 'Downloading Proving Key (zkey)...' });
+        const res = await fetch(`${baseUrl}/circuits/witness_final.zkey`);
+        if (!res.ok) throw new Error(`Failed to load zkey binary: HTTP ${res.status}`);
+        cachedZkeyBuffer = new Uint8Array(await res.arrayBuffer());
+    }
 }
 
 self.onmessage = async (event) => {
     const { useMock, threads, canMultithread, ...proofPayload } = event.data;
 
     try {
-        self.postMessage({ type: 'STATUS_UPDATE', message: 'Initializing zero-knowledge execution environment...' });
-
         if (useMock) {
-            // Fast mock response for local testing
             self.postMessage({
                 success: true,
                 proof: { pi_a: ['mock_a'], pi_b: [['mock_b']], pi_c: ['mock_c'] },
@@ -25,20 +41,19 @@ self.onmessage = async (event) => {
         }
 
         if (typeof snarkjs === 'undefined') {
-            throw new Error('SnarkJS library failed to initialize inside worker.');
+            throw new Error('SnarkJS library failed to initialize inside worker context.');
         }
 
-        self.postMessage({ type: 'STATUS_UPDATE', message: 'Generating Groth16 witness proof...' });
-
-        // Build absolute origin URLs to avoid relative path resolution and SPA fallback issues
         const baseUrl = self.location.origin;
-        const wasmPath = `${baseUrl}/circuits/witness.wasm`;
-        const zkeyPath = `${baseUrl}/circuits/witness_final.zkey`;
+        await loadCircuitAssets(baseUrl);
 
+        self.postMessage({ type: 'STATUS_UPDATE', message: 'Generating cryptographic proof via Groth16...' });
+
+        // Pass ArrayBuffer views directly to fullProve to avoid network Round Trips
         const { proof, publicSignals } = await snarkjs.groth16.fullProve(
             proofPayload,
-            wasmPath,
-            zkeyPath
+            cachedWasmBuffer,
+            cachedZkeyBuffer
         );
 
         self.postMessage({
@@ -50,7 +65,7 @@ self.onmessage = async (event) => {
     } catch (error) {
         self.postMessage({
             success: false,
-            error: error.message || 'Error occurred inside ZK worker thread'
+            error: error.message || 'Error occurred during zero-knowledge proof generation'
         });
     }
 };
