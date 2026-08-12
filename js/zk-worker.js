@@ -3,7 +3,7 @@
 try {
     importScripts('https://cdn.jsdelivr.net/npm/snarkjs@0.7.0/build/snarkjs.min.js');
 } catch (err) {
-    console.warn("importScripts failed, relying on module context:", err);
+    console.warn("importScripts failed, relying on module/global context:", err);
 }
 
 // In-memory cache for WebAssembly and Proving Keys
@@ -40,7 +40,7 @@ self.onmessage = async (event) => {
             return;
         }
 
-        const snarkEngine = self.snarkjs || typeof snarkjs !== 'undefined' ? snarkjs : null;
+        const snarkEngine = self.snarkjs || (typeof snarkjs !== 'undefined' ? snarkjs : null);
 
         if (!snarkEngine) {
             throw new Error('SnarkJS library failed to initialize inside worker context.');
