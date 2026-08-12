@@ -1,10 +1,20 @@
 // js/audit.js - Forensic Tracking & Immutable Audit Log
 import { db, auth } from './firebase-config.js';
-import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 /**
- * Generates a SHA-256 forensic hash for any string data or payload.
- * Useful for verifying integrity of testimonies, audit logs, and actions.
+ * Deterministically sorts object keys to ensure reliable hashing across platforms.
+ */
+function canonicalizeJSON(obj) {
+    if (obj === null || typeof obj !== 'object') return JSON.stringify(obj);
+    if (Array.isArray(obj)) return `[${obj.map(canonicalizeJSON).join(',')}]`;
+    const sortedKeys = Object.keys(obj).sort();
+    const keyValues = sortedKeys.map(key => `${JSON.stringify(key)}:${canonicalizeJSON(obj[key])}`);
+    return `{${keyValues.join(',')}}`;
+}
+
+/**
+ * Generates a SHA-256 forensic hash for string data.
  */
 export async function generateForensicHash(dataString) {
     try {
@@ -20,30 +30,54 @@ export async function generateForensicHash(dataString) {
 }
 
 /**
- * Records an immutable audit log entry into Firestore with a cryptographic hash.
- * 
- * @param {string} actionType - The type of action being logged (e.g., "REPORT_CONTENT", "MODERATE_POST", "ZK_VERIFY")
- * @param {string} targetId - The ID of the document or user being targeted/affected
- * @param {Object} details - Additional metadata or context for the action
+ * Fetches the most recent log's hash to maintain hash-chain continuity.
+ */
+async function getLastLogHash() {
+    try {
+        const q = query(collection(db, "audit_logs"), orderBy("createdAt", "desc"), limit(1));
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) {
+            return snapshot.docs[0].data().forensicHash || "GENESIS_BLOCK";
+        }
+    } catch (e) {
+        console.warn("Could not retrieve previous log hash, starting fresh chain link:", e);
+    }
+    return "GENESIS_BLOCK";
+}
+
+/**
+ * Records a cryptographically chained audit log entry into Firestore.
  */
 export async function logSecurityAudit(actionType, targetId, details = {}) {
     try {
         const userId = auth.currentUser ? auth.currentUser.uid : 'anonymous';
         const timestamp = Date.now();
-        
-        const payloadString = JSON.stringify({ userId, actionType, targetId, details, timestamp });
-        const forensicHash = await generateForensicHash(payloadString);
+        const previousHash = await getLastLogHash();
+
+        // Standardized canonical payload
+        const canonicalPayload = canonicalizeJSON({
+            actionType,
+            details,
+            previousHash,
+            targetId,
+            timestamp,
+            userId
+        });
+
+        const forensicHash = await generateForensicHash(canonicalPayload);
 
         await addDoc(collection(db, "audit_logs"), {
             userId,
             actionType,
             targetId,
             details,
+            previousHash,
             forensicHash,
+            clientTimestamp: timestamp,
             createdAt: serverTimestamp()
         });
 
-        console.log(`🛡️ Audit Log Recorded [${actionType}]:`, forensicHash ? forensicHash.substring(0, 12) + '...' : 'no-hash');
+        console.log(`🛡️ Audit Log Chained [${actionType}]:`, forensicHash ? `${forensicHash.substring(0, 12)}...` : 'no-hash');
         return forensicHash;
     } catch (e) {
         console.error("Failed to record audit log:", e);
