@@ -63,6 +63,62 @@
             margin-bottom: 1.5rem;
         }
 
+        /* Mode Selector Tabs */
+        .tab-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.25rem;
+            border-radius: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 0.6rem;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            font-weight: 600;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background-color: rgba(16, 185, 129, 0.15);
+            color: var(--emerald-accent);
+            border: 1px solid var(--border-emerald);
+        }
+
+        /* Drag & Drop Upload Zone */
+        .drop-zone {
+            border: 2px dashed var(--border-emerald);
+            border-radius: 1rem;
+            padding: 2rem 1rem;
+            text-align: center;
+            background-color: rgba(24, 24, 27, 0.5);
+            cursor: pointer;
+            transition: border-color 0.2s, background-color 0.2s;
+        }
+
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: var(--emerald-accent);
+            background-color: rgba(16, 185, 129, 0.05);
+        }
+
+        .drop-zone-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .drop-zone-text {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
         label { display: block; font-size: 0.875rem; font-weight: 500; color: #d1d5db; margin-bottom: 0.5rem; }
 
         textarea {
@@ -132,14 +188,34 @@
         <main>
             <div class="header">
                 <h1>🔍 Evidence Verifier</h1>
-                <p>Verify the cryptographic signature and forensic integrity of any testimony.</p>
+                <p>Verify C2PA Content Credentials or cryptographic signatures on any testimony asset.</p>
             </div>
 
             <div class="glass">
-                <label for="proofInput">Paste Proof Payload (JSON):</label>
-                <textarea id="proofInput" rows="6" placeholder='{"hash": "0x...", "signature": "0x...", "signer": "0x...", "bundle": {"timestamp": 1700000000000}}'></textarea>
-                
-                <button id="btnVerify" class="btn-primary">Verify Signature</button>
+                <div class="tab-group">
+                    <button type="button" id="tabC2PA" class="tab-btn active">📷 Media C2PA File</button>
+                    <button type="button" id="tabJSON" class="tab-btn">📜 JSON Proof Payload</button>
+                </div>
+
+                <!-- C2PA Media Upload Mode -->
+                <div id="c2paSection">
+                    <div id="dropZone" class="drop-zone">
+                        <div class="drop-zone-icon">📁</div>
+                        <div class="drop-zone-text" id="dropZoneText">
+                            Drag & drop image/video or <strong>click to browse</strong><br>
+                            <span style="font-size: 0.7rem; color: #6b7280;">Inspects embedded C2PA Content Credentials</span>
+                        </div>
+                        <input type="file" id="mediaInput" accept="image/*,video/*" class="hidden">
+                    </div>
+                    <button id="btnVerifyC2PA" class="btn-primary">Verify Media Provenance</button>
+                </div>
+
+                <!-- JSON Proof Mode -->
+                <div id="jsonSection" class="hidden">
+                    <label for="proofInput">Paste Proof Payload (JSON):</label>
+                    <textarea id="proofInput" rows="6" placeholder='{"hash": "0x...", "signature": "0x...", "signer": "0x...", "bundle": {"timestamp": 1700000000000}}'></textarea>
+                    <button id="btnVerifyJSON" class="btn-primary">Verify Signature</button>
+                </div>
             </div>
 
             <!-- Verification Result Container -->
@@ -150,14 +226,119 @@
         </main>
     </div>
 
-    <script>
-        // Standalone signature recovery using native Web Crypto API or basic verify logic
+    <script type="module">
+        import { verifyMediaProvenance } from './js/verification.js';
+
+        // Tab Switching Logic
+        const tabC2PA = document.getElementById('tabC2PA');
+        const tabJSON = document.getElementById('tabJSON');
+        const c2paSection = document.getElementById('c2paSection');
+        const jsonSection = document.getElementById('jsonSection');
+        const resultBox = document.getElementById('resultBox');
+
+        tabC2PA?.addEventListener('click', () => {
+            tabC2PA.classList.add('active');
+            tabJSON.classList.remove('active');
+            c2paSection.classList.remove('hidden');
+            jsonSection.classList.add('hidden');
+            resultBox.classList.add('hidden');
+        });
+
+        tabJSON?.addEventListener('click', () => {
+            tabJSON.classList.add('active');
+            tabC2PA.classList.remove('active');
+            jsonSection.classList.remove('hidden');
+            c2paSection.classList.add('hidden');
+            resultBox.classList.add('hidden');
+        });
+
+        // File Drag & Drop Handling
+        const dropZone = document.getElementById('dropZone');
+        const mediaInput = document.getElementById('mediaInput');
+        const dropZoneText = document.getElementById('dropZoneText');
+        let selectedFile = null;
+
+        dropZone?.addEventListener('click', () => mediaInput.click());
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone?.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone?.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+            }, false);
+        });
+
+        dropZone?.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            if (dt.files && dt.files.length > 0) {
+                selectedFile = dt.files[0];
+                updateDropZoneUI(selectedFile);
+            }
+        });
+
+        mediaInput?.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files.length > 0) {
+                selectedFile = e.target.files[0];
+                updateDropZoneUI(selectedFile);
+            }
+        });
+
+        function updateDropZoneUI(file) {
+            dropZoneText.innerHTML = `📄 <strong>${file.name}</strong> (${(file.size / 1024).toFixed(1)} KB)`;
+        }
+
+        // C2PA Media Verification Action
+        document.getElementById('btnVerifyC2PA')?.addEventListener('click', async () => {
+            const resultHeader = document.getElementById('resultHeader');
+            const resultDetails = document.getElementById('resultDetails');
+
+            if (!selectedFile) {
+                alert('Please select or drop a media file first.');
+                return;
+            }
+
+            resultBox.className = 'glass';
+            resultHeader.className = 'result-header text-valid';
+            resultHeader.innerHTML = '⏳ Inspecting C2PA Manifest...';
+            resultDetails.innerHTML = '<p>Reading WebAssembly provenance signatures...</p>';
+            resultBox.classList.remove('hidden');
+
+            const res = await verifyMediaProvenance(selectedFile);
+
+            if (res.hasC2PA && res.isValid) {
+                resultBox.className = 'glass result-valid';
+                resultHeader.className = 'result-header text-valid';
+                resultHeader.innerHTML = '✅ Authenticated C2PA Content Credentials';
+                resultDetails.innerHTML = `
+                    <p><strong>Issuer:</strong> ${res.issuer}</p>
+                    <p><strong>Claim Generator:</strong> ${res.claimGenerator}</p>
+                    <p><strong>Title:</strong> ${res.title}</p>
+                    <p><strong>Format:</strong> ${res.format}</p>
+                `;
+            } else if (res.hasC2PA && !res.isValid) {
+                resultBox.className = 'glass result-invalid';
+                resultHeader.className = 'result-header text-invalid';
+                resultHeader.innerHTML = '⚠️ C2PA Manifest Tampered or Invalid';
+                resultDetails.innerHTML = `<p>File contains C2PA metadata, but validation failed or bytes were modified after signature.</p>`;
+            } else {
+                resultBox.className = 'glass result-invalid';
+                resultHeader.className = 'result-header text-invalid';
+                resultHeader.innerHTML = 'ℹ️ No C2PA Credentials Found';
+                resultDetails.innerHTML = `<p>${res.message || res.error || 'This media file does not contain embedded C2PA provenance manifests.'}</p>`;
+            }
+        });
+
+        // JSON Signature Verification Logic
         async function verifyProofPayload(proofObj) {
             if (!proofObj.signature || !proofObj.signer || !proofObj.hash) {
                 return false;
             }
-            
-            // Standard validation pass
             const hasValidHash = typeof proofObj.hash === 'string' && proofObj.hash.length > 0;
             const hasValidSigner = typeof proofObj.signer === 'string' && proofObj.signer.startsWith('0x');
             const hasValidSignature = typeof proofObj.signature === 'string' && proofObj.signature.length > 10;
@@ -165,9 +346,8 @@
             return hasValidHash && hasValidSigner && hasValidSignature;
         }
 
-        document.getElementById('btnVerify')?.addEventListener('click', async () => {
+        document.getElementById('btnVerifyJSON')?.addEventListener('click', async () => {
             const rawText = document.getElementById('proofInput').value.trim();
-            const resultBox = document.getElementById('resultBox');
             const resultHeader = document.getElementById('resultHeader');
             const resultDetails = document.getElementById('resultDetails');
 
@@ -181,6 +361,7 @@
                 const isValid = await verifyProofPayload(proofObj);
 
                 resultBox.className = 'glass';
+                resultBox.classList.remove('hidden');
                 
                 if (isValid) {
                     resultBox.classList.add('result-valid');
@@ -199,6 +380,7 @@
                 }
             } catch (err) {
                 resultBox.className = 'glass result-invalid';
+                resultBox.classList.remove('hidden');
                 resultHeader.className = 'result-header text-invalid';
                 resultHeader.innerHTML = '⚠️ Invalid JSON Structure';
                 resultDetails.innerHTML = `<p>Could not parse JSON. Make sure you pasted a valid proof object.</p>`;
