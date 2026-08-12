@@ -28,7 +28,7 @@ export class BaseEngine {
         this._audioCtx = null;
         this._analyser = null;
 
-        // Pending image (legacy helpers)
+        // Pending image
         this.pendingImage = null;
         this.pendingImageHash = null;
         this.pendingExif = null;
@@ -65,6 +65,10 @@ export class BaseEngine {
     }
 
     _resetTimerState() {
+        if (this._durationTimer) {
+            clearTimeout(this._durationTimer);
+            this._durationTimer = null;
+        }
         this._recordingStartedAt = null;
         this._totalPausedMs = 0;
         this._pausedAt = null;
@@ -72,7 +76,7 @@ export class BaseEngine {
 
     // ---------- Start with retry ----------
     async startVoiceRecording(durationLimit = 300000, maxRetries = 3) {
-        // Clean any previous session
+        // Clean any previous active session
         await this.stopVoiceRecording(true);
 
         let lastError = null;
@@ -103,12 +107,16 @@ export class BaseEngine {
                     }
                 };
 
-                // Finalize blob
+                // Finalize blob and cleanup hardware afterwards
                 this.mediaRecorder.onstop = () => {
                     this.currentAudioBlob = new Blob(this.audioChunks, {
                         type: this.mediaRecorder?.mimeType || 'audio/webm'
                     });
                     console.log("✅ Recording stopped. Blob size:", this.currentAudioBlob.size, "bytes");
+
+                    // Clean hardware resources AFTER MediaRecorder flushes final buffers
+                    this._cleanupStream();
+                    this._cleanupAudioGraph();
 
                     if (this._stopResolve) {
                         this._stopResolve(this.currentAudioBlob);
@@ -121,16 +129,21 @@ export class BaseEngine {
                     console.error("MediaRecorder error:", e);
                 };
 
-                // Live waveform via Web Audio API
+                // Live waveform via Web Audio API with auto-resume
                 try {
                     const AudioContext = window.AudioContext || window.webkitAudioContext;
                     this._audioCtx = new AudioContext();
+                    
+                    if (this._audioCtx.state === 'suspended') {
+                        await this._audioCtx.resume();
+                    }
+
                     const source = this._audioCtx.createMediaStreamSource(this.stream);
                     this._analyser = this._audioCtx.createAnalyser();
                     this._analyser.fftSize = 256;
                     source.connect(this._analyser);
                 } catch (e) {
-                    console.warn("AnalyserNode unavailable:", e);
+                    console.warn("AnalyserNode initialization issue:", e);
                     this._analyser = null;
                 }
 
@@ -143,7 +156,7 @@ export class BaseEngine {
                 this.mediaRecorder.start(1000);
                 console.log("🎤 Recording started...");
 
-                // Auto-stop
+                // Auto-stop limit setup
                 if (durationLimit > 0) {
                     this._durationTimer = setTimeout(() => {
                         console.log("⏱️ Duration limit reached – stopping recording");
@@ -173,16 +186,16 @@ export class BaseEngine {
      * Stop recording and return a Promise that resolves with the final Blob.
      */
     stopVoiceRecording(silent = false) {
-        if (this._durationTimer) {
-            clearTimeout(this._durationTimer);
-            this._durationTimer = null;
-        }
+        this._resetTimerState();
 
         if (!this.mediaRecorder || this.mediaRecorder.state === "inactive") {
             this._cleanupStream();
             this._cleanupAudioGraph();
-            this._resetTimerState();
             return Promise.resolve(this.currentAudioBlob);
+        }
+
+        if (this._stopPromise) {
+            return this._stopPromise;
         }
 
         this._stopPromise = new Promise((resolve) => {
@@ -193,16 +206,14 @@ export class BaseEngine {
             this.mediaRecorder.stop();
         } catch (e) {
             console.warn("Error stopping MediaRecorder:", e);
+            this._cleanupStream();
+            this._cleanupAudioGraph();
             if (this._stopResolve) {
                 this._stopResolve(this.currentAudioBlob);
                 this._stopResolve = null;
+                this._stopPromise = null;
             }
         }
-
-        // Stop tracks immediately
-        this._cleanupStream();
-        this._cleanupAudioGraph();
-        this._resetTimerState();
 
         if (!silent) {
             console.log("🛑 Stop requested – waiting for final blob...");
