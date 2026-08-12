@@ -128,6 +128,13 @@ match /rateLimits/{rateLimitId} {
       }
     }
 
+// ==========================================
+// RATE LIMITS (Backend only)
+// ==========================================
+match /rateLimits/{rateLimitId} {
+  allow read, write: if false;
+}
+
     // ==========================================
     // VERIFICATION REQUESTS
     // ==========================================
