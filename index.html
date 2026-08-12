@@ -935,10 +935,16 @@ export async function googleLogin(event) {
 </body>
 </html>
 
-    <!-- Application Modules -->
-    <script type="module" src="./js/main.js"></script>
-    <script type="module" src="./js/notifications.js"></script>
-    <script type="module" src="./js/bookmarks.js"></script>
-    <script type="module" src="./js/zk-proof.js"></script>
+<!-- Application Modules -->
+<script type="module" src="./js/main.js"></script>
+<script type="module" src="./js/notifications.js"></script>
+<script type="module" src="./js/bookmarks.js"></script>
+<script type="module" src="./js/zk-proof.js"></script>
+
+<!-- Live Arena -->
+<script type="module">
+  import { initLiveArena } from './js/live-arena.js';
+  initLiveArena();
+</script>
 </body>
 </html>
