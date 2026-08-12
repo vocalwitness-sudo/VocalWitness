@@ -1,4 +1,4 @@
-// js/composer.js - Testimony Creation, Media Integration, Target Feed Routing & Rate-Limited Publishing
+// js/composer.js - Production Testimony Creation & Forensic Pipeline
 import { compressImage } from './media-compression.js';
 import { showToast } from './utils.js';
 import { getCurrentUserTier, getCurrentWitnessLevel } from './tier.js';
@@ -6,6 +6,8 @@ import { db, auth } from './firebase-config.js';
 import { collection, addDoc, doc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
 import { uploadForensicMedia, resetMediaState, handleImageSelect, toggleVoiceRecording } from './media.js';
+import { logSecurityAudit } from './audit.js';
+import { saveDraftOffline } from './db.js';
 
 // Verification Door Modal Trigger
 function triggerVerificationDoor({ title, message, onVerifyRequested }) {
@@ -30,11 +32,11 @@ function triggerVerificationDoor({ title, message, onVerifyRequested }) {
     document.body.insertAdjacentHTML('beforeend', modalHtml);
 
     document.getElementById('cancel-door-btn').onclick = () => {
-        document.getElementById('verification-door-modal').remove();
+        document.getElementById('verification-door-modal')?.remove();
     };
 
     document.getElementById('start-verify-btn').onclick = async () => {
-        document.getElementById('verification-door-modal').remove();
+        document.getElementById('verification-door-modal')?.remove();
         if (onVerifyRequested) await onVerifyRequested();
     };
 }
@@ -53,7 +55,7 @@ function toggleActive(button) {
 }
 
 // Initialize Composer Event Listeners & Ensure Visual Styling
-function initComposer() {
+export function initComposer() {
     const btnPhoto = document.getElementById('btn-photo');
     const btnVoice = document.getElementById('btn-voice');
     const mainInput = document.getElementById('mainInput') || document.getElementById('testimonyInput');
@@ -61,16 +63,10 @@ function initComposer() {
     const postButton = document.getElementById('postButton');
     const targetFeedSelect = document.getElementById('targetFeedSelect') || document.getElementById('feedType');
 
-    // --- APPLY FALLBACK STYLING IF COLOR CLASSES ARE MISSING ---
-    if (btnPhoto) {
-        btnPhoto.classList.add('inline-flex', 'items-center', 'gap-2', 'px-3', 'py-1.5', 'rounded-lg', 'bg-slate-800', 'text-emerald-400', 'border', 'border-slate-700', 'hover:bg-slate-700', 'cursor-pointer', 'transition');
-    }
-    if (btnVoice) {
-        btnVoice.classList.add('inline-flex', 'items-center', 'gap-2', 'px-3', 'py-1.5', 'rounded-lg', 'bg-slate-800', 'text-amber-400', 'border', 'border-slate-700', 'hover:bg-slate-700', 'cursor-pointer', 'transition');
-    }
-    if (postButton) {
-        postButton.classList.add('inline-flex', 'items-center', 'justify-center', 'px-5', 'py-1.5', 'rounded-lg', 'bg-emerald-600', 'hover:bg-emerald-500', 'text-white', 'font-semibold', 'shadow', 'cursor-pointer', 'transition');
-    }
+    // --- APPLY FALLBACK STYLING ---
+    if (btnPhoto) btnPhoto.classList.add('inline-flex', 'items-center', 'gap-2', 'px-3', 'py-1.5', 'rounded-lg', 'bg-slate-800', 'text-emerald-400', 'border', 'border-slate-700', 'hover:bg-slate-700', 'cursor-pointer', 'transition');
+    if (btnVoice) btnVoice.classList.add('inline-flex', 'items-center', 'gap-2', 'px-3', 'py-1.5', 'rounded-lg', 'bg-slate-800', 'text-amber-400', 'border', 'border-slate-700', 'hover:bg-slate-700', 'cursor-pointer', 'transition');
+    if (postButton) postButton.classList.add('inline-flex', 'items-center', 'justify-center', 'px-5', 'py-1.5', 'rounded-lg', 'bg-emerald-600', 'hover:bg-emerald-500', 'text-white', 'font-semibold', 'shadow', 'cursor-pointer', 'transition');
 
     // --- PHOTO SELECTION ---
     if (btnPhoto && !btnPhoto.dataset.listenerAttached) {
@@ -124,7 +120,7 @@ function initComposer() {
         postButton.addEventListener('click', async (e) => {
             e.preventDefault();
             const text = mainInput?.value ? mainInput.value.trim() : "";
-            const targetFeed = targetFeedSelect?.value || "citizen_talk"; // Defaults to Citizen Talk
+            const targetFeed = targetFeedSelect?.value || "citizen_talk";
 
             if (!auth.currentUser) {
                 showToast('You must be logged in to publish testimony', 'error');
@@ -157,18 +153,18 @@ function initComposer() {
                                         status: "pending",
                                         requestedAt: serverTimestamp()
                                     });
-                                    showToast("Verification request submitted! Developer/Steward review pending.", "success");
+                                    showToast("Verification request submitted! Steward review pending.", "success");
                                 } catch (reqErr) {
                                     console.error("Verification request error:", reqErr);
                                     showToast("Failed to submit verification request.", "error");
                                 }
                             }
                         });
-                        return; // Stop submission until verified
+                        return;
                     }
                 }
 
-                // Rate limit check via Cloud Function (Fail-open mode)
+                // --- RATE LIMIT CHECK (FAIL-OPEN) ---
                 try {
                     const functions = getFunctions(undefined, 'us-central1');
                     const checkRateLimitFn = httpsCallable(functions, 'checkRateLimit');
@@ -181,25 +177,40 @@ function initComposer() {
 
                     const isAllowed = rateLimitCheck.data?.allowed !== undefined ? rateLimitCheck.data.allowed : rateLimitCheck.data;
                     if (!isAllowed) {
-                        showToast("You've reached your posting limit for now. Please try again later.", "error");
+                        showToast("You've reached your posting limit. Please try again in an hour.", "error");
                         return;
                     }
                 } catch (rateError) {
-                    console.warn("Rate limit check failed, allowing post (fail-open):", rateError);
+                    console.warn("Rate limit check bypassed (fail-open):", rateError);
                 }
 
-                // Upload media
+                // --- OFFLINE CHECK & BUFFER ---
+                if (!navigator.onLine) {
+                    await saveDraftOffline({
+                        content: text,
+                        targetFeed: targetFeed,
+                        authorId: auth.currentUser.uid,
+                        createdAt: Date.now()
+                    });
+                    showToast('Network offline. Testimony saved to local queue!', 'warning');
+                    if (mainInput) mainInput.value = '';
+                    resetMediaState();
+                    return;
+                }
+
+                // --- MEDIA UPLOAD ---
                 const mediaData = (await uploadForensicMedia()) || {};
 
                 if (!text && !mediaData.imageUrl && !mediaData.audioUrl) {
-                    showToast('Please write something or add media', 'error');
+                    showToast('Please write something or attach media', 'error');
                     return;
                 }
 
                 const userTier = await getCurrentUserTier();
                 const userWitnessLevel = await getCurrentWitnessLevel();
 
-                await addDoc(collection(db, "testimonies"), {
+                // --- FIRESTORE WRITE ---
+                const testimonyRef = await addDoc(collection(db, "testimonies"), {
                     content: text || "",
                     targetFeed: targetFeed,
                     imageUrl: mediaData.imageUrl || null,
@@ -212,7 +223,14 @@ function initComposer() {
                     authorTier: userTier || 'citizen',
                     authorWitnessLevel: userWitnessLevel?.name || null,
                     createdAt: serverTimestamp(),
-                    hasForensic: !!(mediaData.imageHash || mediaData.audioHash)
+                    hasForensic: !!(mediaData.imageHash || mediaData.audioHash),
+                    status: 'published'
+                });
+
+                // --- FORENSIC AUDIT LOGGING ---
+                await logSecurityAudit('TESTIMONY_PUBLISHED', testimonyRef.id, {
+                    targetFeed,
+                    hasMedia: !!(mediaData.imageUrl || mediaData.audioUrl)
                 });
 
                 showToast('✅ Testimony published successfully!', 'success');
@@ -235,19 +253,16 @@ function initComposer() {
     }
 }
 
-// Safely boot after DOM is fully painted
+// Boot setup
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initComposer);
 } else {
     initComposer();
 }
 
-// Internationalization listener
 window.addEventListener('languageChanged', () => {
     const composerInput = document.getElementById('mainInput') || document.getElementById('testimonyInput');
     if (composerInput && window.t) {
         composerInput.placeholder = window.t('placeholder') || 'What truth will you log today?';
     }
 });
-
-console.log('%cComposer module loaded (Verification Door, Target Feed & Media connected)', 'color:#10b981; font-weight:bold');
