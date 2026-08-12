@@ -599,13 +599,13 @@ export function bindHeaderEvents() {
             return;
         }
 
-        // Toggle Sign In / Create Account mode
-        if (e.target.closest('#toggleAuthModeBtn')) {
-            e.preventDefault();
-            isSignUpMode = !isSignUpMode;
-            updateAuthModeUI();
-            return;
-        }
+      // Toggle Sign In / Create Account mode
+if (e.target.closest('#toggleAuthModeBtn, #switchAuthMode, [data-action="toggle-auth-mode"]')) {
+    e.preventDefault();
+    isSignUpMode = !isSignUpMode;
+    updateAuthModeUI();
+    return;
+}
 
         // Forgot Password → show reset view
         if (e.target.closest('#forgotPasswordBtn')) {
