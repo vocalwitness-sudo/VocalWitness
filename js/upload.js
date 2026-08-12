@@ -1,73 +1,79 @@
 /**
  * VocalWitness Upload Module (js/upload.js)
- * Handles client-side EXIF scrubbing and secure image uploads to Firebase Storage.
+ * Handles client-side EXIF scrubbing and direct uploads to Cloudflare R2 Storage.
  */
 
 import { scrubImageMetadata } from './imageScrubber.js';
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+import { auth } from './firebase-config.js';
+
+const R2_UPLOAD_ENDPOINT = 'https://media.vocalwitness.com/upload';
 
 /**
- * Scrubs and uploads a witness photo or profile image to Firebase Storage.
+ * Scrubs and uploads a photo or profile image to Cloudflare R2 via Worker.
  * 
- * @param {File} file - The raw image file selected from an HTML <input type="file">.
- * @param {string} [folderPath='witness_evidence'] - Target folder in Storage ('avatars', 'witness_evidence', etc.).
- * @param {Function} [onProgress] - Optional callback for tracking upload percentage: (progress) => {}
- * @returns {Promise<string>} The safe public download URL of the uploaded image.
+ * @param {File} file - Raw input image file.
+ * @param {string} [folderPath='witness_evidence'] - Destination directory in R2 bucket.
+ * @param {Function} [onProgress] - Optional callback for tracking progress (0-100).
+ * @returns {Promise<string>} Public HTTPS URL of the stored file.
  */
 export async function uploadSecurePhoto(file, folderPath = 'witness_evidence', onProgress = null) {
-    if (!file || !file.type.startsWith('image/')) {
-        throw new Error("Invalid input: Please select a valid image file.");
-    }
+  if (!file || !file.type.startsWith('image/')) {
+    throw new Error("Invalid input: Please select a valid image file.");
+  }
 
-    try {
-        // 1. Strip EXIF/GPS metadata on client side before network transit
-        const cleanBlob = await scrubImageMetadata(file, {
-            maxWidth: 1920,
-            maxHeight: 1080,
-            outputType: 'image/webp', // WebP strips legacy EXIF and saves bandwidth
-            quality: 0.85
-        });
+  try {
+    const cleanBlob = await scrubImageMetadata(file, {
+      maxWidth: 1920,
+      maxHeight: 1080,
+      outputType: 'image/webp',
+      quality: 0.85
+    });
 
-        // 2. Initialize Storage reference using a UUID (prevents original filename leaks)
-        const storage = getStorage();
-        const fileId = crypto.randomUUID();
-        const storageRef = ref(storage, `${folderPath}/${fileId}.webp`);
+    const uid = auth.currentUser?.uid || 'anonymous';
+    const fileId = crypto.randomUUID();
+    const keyPath = `${folderPath}/${uid}/${fileId}.webp`;
 
-        // 3. Define basic MIME metadata
-        const metadata = {
-            contentType: 'image/webp',
-            cacheControl: 'public, max-age=31536000'
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('PUT', `${R2_UPLOAD_ENDPOINT}?key=${encodeURIComponent(keyPath)}`, true);
+      xhr.setRequestHeader('Content-Type', 'image/webp');
+
+      if (auth.currentUser) {
+        auth.currentUser.getIdToken().then(token => {
+          xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+          xhr.send(cleanBlob);
+        }).catch(reject);
+      } else {
+        xhr.send(cleanBlob);
+      }
+
+      if (xhr.upload && onProgress) {
+        xhr.upload.onprogress = (evt) => {
+          if (evt.lengthComputable) {
+            const progress = Math.round((evt.loaded / evt.total) * 100);
+            onProgress(progress);
+          }
         };
+      }
 
-        // 4. Execute upload task
-        const uploadTask = uploadBytesResumable(storageRef, cleanBlob, metadata);
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const response = JSON.parse(xhr.responseText);
+            resolve(response.url || `https://media.vocalwitness.com/${keyPath}`);
+          } catch (_) {
+            resolve(`https://media.vocalwitness.com/${keyPath}`);
+          }
+        } else {
+          reject(new Error(`Upload failed with status code ${xhr.status}`));
+        }
+      };
 
-        return new Promise((resolve, reject) => {
-            uploadTask.on(
-                'state_changed',
-                (snapshot) => {
-                    if (onProgress && snapshot.totalBytes > 0) {
-                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                        onProgress(Math.round(progress));
-                    }
-                },
-                (error) => {
-                    console.error("[Upload] Storage upload error:", error);
-                    reject(new Error("Failed to upload image to storage."));
-                },
-                async () => {
-                    try {
-                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                        resolve(downloadURL);
-                    } catch (urlErr) {
-                        reject(urlErr);
-                    }
-                }
-            );
-        });
+      xhr.onerror = () => reject(new Error("Failed to upload image to media bucket."));
+    });
 
-    } catch (err) {
-        console.error("[Upload] Secure processing failed:", err);
-        throw err;
-    }
+  } catch (err) {
+    console.error("[Upload] Secure processing failed:", err);
+    throw err;
+  }
 }
