@@ -86,11 +86,55 @@ function stopWaveAndTimer() {
     }
 }
 
+// ====================== STATE RESET ======================
+export function resetMediaState() {
+    // 1. Reset Image File Reference
+    selectedImageFile = null;
+
+    // 2. Clean Up Replay URL & Audio Elements
+    if (replayUrl) {
+        URL.revokeObjectURL(replayUrl);
+        replayUrl = null;
+    }
+
+    const audioEl = document.getElementById('rec-replay-audio');
+    if (audioEl) {
+        audioEl.pause();
+        audioEl.removeAttribute('src');
+        audioEl.load();
+    }
+
+    // 3. Clear Voice Engine Memory
+    if (engineInstance) {
+        if (typeof engineInstance.stopVoiceRecording === 'function' && engineInstance.mediaRecorder?.state === 'recording') {
+            engineInstance.stopVoiceRecording().catch(() => {});
+        }
+        engineInstance.currentAudioBlob = null;
+    }
+
+    // 4. Reset Animations & Timers
+    stopWaveAndTimer();
+
+    // 5. Reset UI Elements
+    showRecorderBar(false);
+
+    const previewArea = document.getElementById('preview-area');
+    if (previewArea) {
+        previewArea.innerHTML = '';
+        previewArea.classList.remove('has-content');
+    }
+
+    const voiceBtn = document.getElementById('btn-voice');
+    if (voiceBtn) {
+        voiceBtn.classList.remove('recording-active', 'animate-pulse');
+    }
+}
+
 // ====================== PHOTO ======================
 export async function handleImageSelect(event, previewArea) {
-    const file = event.target.files[0];
+    const file = event.target?.files?.[0] || event.target?.files;
     if (!file) return;
-    if (!file.type.startsWith('image/')) return showToast("Please select an image", "error");
+    if (!file.type?.startsWith('image/')) return showToast("Please select an image", "error");
     if (file.size > 10 * 1024 * 1024) return showToast("Image too large (max 10MB)", "error");
     if (file.size === 0) return showToast("Selected image is empty", "error");
 
@@ -98,15 +142,18 @@ export async function handleImageSelect(event, previewArea) {
 
     const reader = new FileReader();
     reader.onload = (e) => {
-        previewArea.innerHTML = `
-            <div class="relative mt-4 rounded-2xl overflow-hidden border border-zinc-700">
-                <img src="${e.target.result}" class="w-full max-h-80 object-cover" alt="Preview">
-                <button id="removeImgBtn"
-                        class="absolute top-3 right-3 bg-red-600 hover:bg-red-700 text-white rounded-full w-8 h-8 flex items-center justify-center text-xl shadow-lg transition">
-                    ✕
-                </button>
-            </div>`;
-        document.getElementById('removeImgBtn').onclick = () => removeImage(previewArea);
+        if (previewArea) {
+            previewArea.innerHTML = `
+                <div class="relative mt-4 rounded-2xl overflow-hidden border border-zinc-700">
+                    <img src="${e.target.result}" class="w-full max-h-80 object-cover" alt="Preview">
+                    <button id="removeImgBtn"
+                            class="absolute top-3 right-3 bg-red-600 hover:bg-red-700 text-white rounded-full w-8 h-8 flex items-center justify-center text-xl shadow-lg transition cursor-pointer">
+                        ✕
+                    </button>
+                </div>`;
+            previewArea.classList.add('has-content');
+            document.getElementById('removeImgBtn').onclick = () => removeImage(previewArea);
+        }
     };
     reader.readAsDataURL(file);
 }
@@ -114,7 +161,7 @@ export async function handleImageSelect(event, previewArea) {
 export function removeImage(previewArea) {
     selectedImageFile = null;
     if (previewArea) {
-        previewArea.innerHTML = 'Preview will appear here...';
+        previewArea.innerHTML = '';
         previewArea.classList.remove('has-content');
     }
 }
@@ -315,14 +362,6 @@ export async function uploadForensicMedia() {
             showToast("Audio upload failed", "error");
         }
     }
-
-    
-export function resetMediaState() {
-    // Clear image/audio variables & preview containers
-    const previewArea = document.getElementById('preview-area');
-    if (previewArea) previewArea.innerHTML = '';
-
-}
 
     return mediaData;
 }
