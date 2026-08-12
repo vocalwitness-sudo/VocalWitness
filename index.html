@@ -67,16 +67,43 @@
             <p class="text-xs sm:text-sm tracking-widest" style="color: #34d399;" data-i18n="appSubtitle">Truth • Evidence • Public Square</p>
         </div>
     </div>
+<!-- MAIN TOP HEADER -->
+<header class="flex items-center justify-between mb-8 sticky top-4 z-50 glass rounded-3xl p-4 shadow-2xl border-emerald-500/30">
+    <!-- App Logo & Branding Title -->
+    <div class="flex items-center gap-3.5 group cursor-pointer">
+        <div class="relative">
+            <div class="absolute inset-0 bg-emerald-500 rounded-2xl blur opacity-40 group-hover:opacity-75 transition"></div>
+            <img src="./logo.png" alt="VocalWitness Logo" class="relative w-11 h-11 object-contain rounded-2xl shadow-lg border border-emerald-500/40">
+        </div>
+        <div>
+            <h1 class="text-lg sm:text-2xl font-black tracking-tight bg-gradient-to-r from-white via-slate-100 to-emerald-400 bg-clip-text text-transparent drop-shadow-sm" data-i18n="appTitle">VocalWitness</h1>
+            <p class="text-xs sm:text-sm tracking-wide font-bold text-emerald-400 drop-shadow-sm" data-i18n="appSubtitle">Truth • Evidence • Public Square</p>
+        </div>
+    </div>
 
     <!-- Top Header Right Controls -->
     <div class="flex items-center gap-2">
-        <!-- Mobile Hamburger -->
-        <button id="mobile-menu-btn" data-action="toggle-mobile-menu" class="md:hidden p-3 text-3xl leading-none hover:bg-zinc-800 rounded-2xl transition" aria-label="Toggle Menu">
+        <!-- Phone View: Language Selector First -->
+        <select id="languageSelector" aria-label="Select Language" class="md:hidden bg-zinc-900 border text-white rounded-2xl px-2.5 py-2 text-xs focus:outline-none focus:border-emerald-500" style="background-color: #18181b; color: #ffffff; border-color: #3f3f46;">
+            <option value="en">English</option>
+            <option value="es">Español</option>
+            <option value="fr">Français</option>
+        </select>
+
+        <!-- Phone View: Google / Sign-in Button Second -->
+        <button id="guest-action-btn-mobile-top" type="button" data-action="open-auth-modal" class="md:hidden p-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center justify-center shadow-sm text-xs" style="background-color: #ffffff; color: #000000;" aria-label="Join VocalWitness">
+            <img src="https://www.google.com/favicon.ico" class="w-4 h-4" alt="Google">
+        </button>
+
+        <!-- Mobile Hamburger Menu Button (Phone Only) -->
+        <button id="mobile-menu-btn" data-action="toggle-mobile-menu" class="md:hidden p-3 text-2xl leading-none hover:bg-zinc-800 rounded-2xl transition text-emerald-400 border border-zinc-700/50 bg-zinc-900/80 shadow-sm" aria-label="Toggle Menu">
             ☰
         </button>
+
+        <!-- Desktop Controls Group -->
         <div class="hidden md:flex items-center gap-2">
             <!-- Language Switcher -->
-            <select id="languageSelector" aria-label="Select Language" class="bg-zinc-900 border text-white rounded-2xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500" style="background-color: #18181b; color: #ffffff; border-color: #3f3f46;">
+            <select id="languageSelector-desktop" aria-label="Select Language" class="bg-zinc-900 border text-white rounded-2xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500" style="background-color: #18181b; color: #ffffff; border-color: #3f3f46;">
                 <option value="en">English</option>
                 <option value="es">Español</option>
                 <option value="fr">Français</option>
@@ -88,17 +115,16 @@
                 <span class="hidden sm:inline" data-i18n="joinBtn">Join VocalWitness</span>
             </button>
 
-        <!-- Support Button -->
-        <button id="support-btn" data-action="open-support-modal" class="px-5 py-2.5 font-medium rounded-2xl transition whitespace-nowrap text-sm shadow-sm" style="background-color: #10b981; color: #000000;" data-i18n="supportBtn">
-            Support The Square
-        </button>
+            <!-- Support Button -->
+            <button id="support-btn" data-action="open-support-modal" class="px-5 py-2.5 font-medium rounded-2xl transition whitespace-nowrap text-sm shadow-sm" style="background-color: #10b981; color: #000000;" data-i18n="supportBtn">
+                Support The Square
+            </button>
 
-
-          <!-- Data Saver Toggle -->
-<button id="data-saver-btn" data-action="toggle-data-saver" class="px-3.5 py-2.5 rounded-2xl hover:bg-zinc-800 transition text-xs font-semibold flex items-center gap-2 border text-zinc-300 shadow-sm cursor-pointer" style="background-color: #121826; border-color: #273548;">
-    <span>⚡</span>
-    <span class="hidden lg:inline">Data Saver: <strong id="data-saver-status" class="text-emerald-400 font-bold" style="color: #34d399;">Off</strong></span>
-</button>
+            <!-- Data Saver Toggle -->
+            <button id="data-saver-btn" data-action="toggle-data-saver" class="px-3.5 py-2.5 rounded-2xl hover:bg-zinc-800 transition text-xs font-semibold flex items-center gap-2 border text-zinc-300 shadow-sm cursor-pointer" style="background-color: #121826; border-color: #273548;">
+                <span>⚡</span>
+                <span class="hidden lg:inline">Data Saver: <strong id="data-saver-status" class="text-emerald-400 font-bold" style="color: #34d399;">Off</strong></span>
+            </button>
 
             <!-- Privacy Link -->
             <a href="privacy.html" class="hidden lg:flex items-center hover:text-emerald-300 transition-colors text-sm font-medium px-3 py-2" style="color: #34d399;" data-i18n="privacyLink">
@@ -122,24 +148,6 @@
                         0
                     </span>
                 </button>
-
-                <div id="notification-menu" class="hidden absolute right-0 mt-3 w-80 sm:w-96 bg-zinc-900 border border-zinc-700/80 rounded-3xl shadow-2xl z-[100] overflow-hidden backdrop-blur-xl">
-                    <div class="p-4 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/50">
-                        <div class="flex items-center gap-2">
-                            <h3 class="font-bold text-white text-base">Notifications</h3>
-                            <span id="notification-count-tag" class="text-xs bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded-full">0 new</span>
-                        </div>
-                        <button id="mark-all-read-btn" class="text-xs text-emerald-400 hover:text-emerald-300 font-medium transition">
-                            Mark all as read
-                        </button>
-                    </div>
-                    <div id="notification-list" class="max-h-[380px] overflow-y-auto divide-y divide-zinc-800/60 no-scrollbar">
-                        <div id="no-notifications" class="p-8 text-center text-zinc-500">
-                            <p class="text-2xl mb-1">🔔</p>
-                            <p class="text-sm">No notifications yet</p>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <!-- Logged-in Profile Button -->
@@ -158,32 +166,25 @@
     </div>
 </div>
 
-<!-- MOBILE MENU DROPDOWN -->
+<!-- MOBILE MENU DROPDOWN (Hamburger Drawer) -->
 <div id="mobile-menu" class="hidden md:hidden fixed top-[92px] left-4 right-4 glass rounded-3xl p-5 shadow-2xl z-[100] border border-zinc-700" style="background-color: #111827; border-color: #3f3f46;">
     <div class="flex flex-col gap-4">
-        <select id="languageSelector-mobile" aria-label="Select Language"
-                class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-4 py-3 text-base" style="background-color: #18181b; border-color: #3f3f46; color: #ffffff;">
-            <option value="en">English</option>
-            <option value="es">Español</option>
-            <option value="fr">Français</option>
-        </select>
-
         <button id="data-saver-btn-mobile" data-action="toggle-data-saver"
-                class="w-full text-left px-4 py-3 rounded-2xl hover:bg-zinc-800 transition flex items-center gap-3 text-base">
+                class="w-full text-left px-4 py-3 rounded-2xl hover:bg-zinc-800 transition flex items-center gap-3 text-base text-zinc-200">
             ⚡ Data Saver: <strong id="data-saver-status-mobile" style="color: #34d399;">Off</strong>
+        </button>
+
+        <button id="support-btn-mobile" data-action="open-support-modal"
+                class="w-full py-3 px-4 font-bold rounded-2xl transition text-center text-sm shadow-sm" style="background-color: #10b981; color: #000000;" data-i18n="supportBtn">
+            Support The Square
         </button>
 
         <a href="privacy.html" class="px-4 py-3 rounded-2xl hover:bg-zinc-800 transition block text-emerald-400" style="color: #34d399;" data-i18n="privacyLink">
             Privacy First
         </a>
 
-        <button id="signin-btn-mobile" data-action="open-auth-modal"
-                class="w-full py-3 bg-white text-black font-semibold rounded-2xl" style="background-color: #ffffff; color: #000000;" data-i18n="joinBtn">
-            Sign in
-        </button>
-
         <button id="profile-btn-mobile" data-action="open-profile"
-                class="w-full py-3 border border-zinc-700 hover:bg-zinc-800 rounded-2xl hidden" style="border-color: #3f3f46;" data-i18n="profileBtn">
+                class="w-full py-3 border border-zinc-700 hover:bg-zinc-800 rounded-2xl hidden text-white" style="border-color: #3f3f46;" data-i18n="profileBtn">
             Profile
         </button>
     </div>
@@ -413,6 +414,9 @@
           Forgot password?
         </button>
       </div>
+    </form>
+  </div>
+</div>
 
       <!-- Message area -->
       <div id="authMessage" class="hidden text-sm text-center py-2 px-3 rounded-xl"></div>
