@@ -1,15 +1,17 @@
 /**
  * VocalWitness Upload Module (js/upload.js)
- * Handles client-side EXIF scrubbing and direct uploads to Cloudflare R2 Storage.
+ * Handles client-side EXIF scrubbing, image compression, and direct uploads to Cloudflare R2.
  */
 
 import { scrubImageMetadata } from './imageScrubber.js';
+import { compressImage } from './media-compression.js';
 import { auth } from './firebase-config.js';
 
 const R2_UPLOAD_ENDPOINT = 'https://media.vocalwitness.com/upload';
+const R2_PUBLIC_BASE = 'https://media.vocalwitness.com';
 
 /**
- * Scrubs and uploads a photo or profile image to Cloudflare R2 via Worker.
+ * Scrubs EXIF metadata, compresses, and uploads an image to Cloudflare R2.
  * 
  * @param {File} file - Raw input image file.
  * @param {string} [folderPath='witness_evidence'] - Destination directory in R2 bucket.
@@ -22,6 +24,7 @@ export async function uploadSecurePhoto(file, folderPath = 'witness_evidence', o
   }
 
   try {
+    // 1. Strip EXIF & GPS metadata
     const cleanBlob = await scrubImageMetadata(file, {
       maxWidth: 1920,
       maxHeight: 1080,
@@ -29,51 +32,108 @@ export async function uploadSecurePhoto(file, folderPath = 'witness_evidence', o
       quality: 0.85
     });
 
+    // 2. Convert Blob to File format for compression module
+    const cleanFile = new File([cleanBlob], file.name || 'witness_image.webp', {
+      type: cleanBlob.type || 'image/webp',
+      lastModified: Date.now()
+    });
+
+    // 3. Compress image payload
+    const compressedBlob = await compressImage(cleanFile);
+
+    // 4. Construct path key
     const uid = auth.currentUser?.uid || 'anonymous';
     const fileId = crypto.randomUUID();
     const keyPath = `${folderPath}/${uid}/${fileId}.webp`;
 
-    return new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.open('PUT', `${R2_UPLOAD_ENDPOINT}?key=${encodeURIComponent(keyPath)}`, true);
-      xhr.setRequestHeader('Content-Type', 'image/webp');
-
-      if (auth.currentUser) {
-        auth.currentUser.getIdToken().then(token => {
-          xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-          xhr.send(cleanBlob);
-        }).catch(reject);
-      } else {
-        xhr.send(cleanBlob);
-      }
-
-      if (xhr.upload && onProgress) {
-        xhr.upload.onprogress = (evt) => {
-          if (evt.lengthComputable) {
-            const progress = Math.round((evt.loaded / evt.total) * 100);
-            onProgress(progress);
-          }
-        };
-      }
-
-      xhr.onload = () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          try {
-            const response = JSON.parse(xhr.responseText);
-            resolve(response.url || `https://media.vocalwitness.com/${keyPath}`);
-          } catch (_) {
-            resolve(`https://media.vocalwitness.com/${keyPath}`);
-          }
-        } else {
-          reject(new Error(`Upload failed with status code ${xhr.status}`));
-        }
-      };
-
-      xhr.onerror = () => reject(new Error("Failed to upload image to media bucket."));
-    });
+    return await executeUpload(compressedBlob, keyPath, 'image/webp', onProgress);
 
   } catch (err) {
-    console.error("[Upload] Secure processing failed:", err);
+    console.error("[Upload] Secure image processing failed:", err);
     throw err;
+  }
+}
+
+/**
+ * Uploads audio evidence to Cloudflare R2 storage.
+ * 
+ * @param {Blob|File} audioBlob - Raw audio blob or file.
+ * @param {string} [folderPath='witness_audio'] - Destination directory in R2 bucket.
+ * @param {Function} [onProgress] - Optional callback for tracking progress (0-100).
+ * @returns {Promise<string>} Public HTTPS URL of the stored audio.
+ */
+export async function uploadSecureAudio(audioBlob, folderPath = 'witness_audio', onProgress = null) {
+  if (!audioBlob) {
+    throw new Error("Invalid input: Please select or record a valid audio file.");
+  }
+
+  const mimeType = audioBlob.type || 'audio/webm';
+  const ext = mimeType.includes('mp3') ? 'mp3' : mimeType.includes('wav') ? 'wav' : 'webm';
+  
+  const uid = auth.currentUser?.uid || 'anonymous';
+  const fileId = crypto.randomUUID();
+  const keyPath = `${folderPath}/${uid}/${fileId}.${ext}`;
+
+  return await executeUpload(audioBlob, keyPath, mimeType, onProgress);
+}
+
+/**
+ * Low-level XHR PUT client supporting authorization headers and upload progress monitoring.
+ */
+function executeUpload(blob, keyPath, mimeType, onProgress) {
+  return new Promise(async (resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    const targetUrl = `${R2_UPLOAD_ENDPOINT}?key=${encodeURIComponent(keyPath)}`;
+
+    xhr.open('PUT', targetUrl, true);
+    xhr.setRequestHeader('Content-Type', mimeType);
+
+    // Attach authentication token if present
+    if (auth.currentUser) {
+      try {
+        const token = await auth.currentUser.getIdToken();
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      } catch (tokenErr) {
+        console.warn("[Upload] Could not retrieve ID token:", tokenErr);
+      }
+    }
+
+    if (xhr.upload && onProgress) {
+      xhr.upload.onprogress = (evt) => {
+        if (evt.lengthComputable) {
+          const progress = Math.round((evt.loaded / evt.total) * 100);
+          onProgress(progress);
+        }
+      };
+    }
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const response = JSON.parse(xhr.responseText);
+          resolve(response.url || `${R2_PUBLIC_BASE}/${keyPath}`);
+        } catch (_) {
+          resolve(`${R2_PUBLIC_BASE}/${keyPath}`);
+        }
+      } else {
+        reject(new Error(`Upload failed with status code ${xhr.status}`));
+      }
+    };
+
+    xhr.onerror = () => reject(new Error("Failed to upload media to server. Check network connection."));
+    xhr.send(blob);
+  });
+}
+
+/**
+ * Universal upload helper routing files automatically based on MIME type.
+ */
+export async function uploadMedia(file, folderPath = 'witness_evidence', onProgress = null) {
+  if (file.type.startsWith('image/')) {
+    return await uploadSecurePhoto(file, folderPath, onProgress);
+  } else if (file.type.startsWith('audio/')) {
+    return await uploadSecureAudio(file, folderPath, onProgress);
+  } else {
+    throw new Error("Unsupported media type. Please upload an image or audio file.");
   }
 }
