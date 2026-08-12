@@ -72,7 +72,7 @@ export async function generateRigorousProof(testimonyData) {
             provider = new ethersLib.providers.Web3Provider(window.ethereum);
             signer = provider.getSigner();
         } else {
-            throw new Error("Compatible Ethers provider provider not found");
+            throw new Error("Compatible Ethers provider not found");
         }
 
         const getBytesFn = ethersLib.getBytes || ethersLib.utils?.arrayify;
