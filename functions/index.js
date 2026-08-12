@@ -92,7 +92,6 @@ exports.initializeCitizenProfile = functions.auth.user().onCreate(async (user) =
   try {
     await db.collection('users').doc(userId).set(defaultCitizenData, { merge: true });
 
-    // Set default custom claims
     await admin.auth().setCustomUserClaims(userId, {
       admin: false,
       moderator: false,
@@ -119,13 +118,70 @@ exports.initializeCitizenProfile = functions.auth.user().onCreate(async (user) =
 });
 
 // ======================================================
+// TRUST TIER SERVER EVALUATION
+// ======================================================
+exports.evaluateTrustTier = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Authentication required.");
+  }
+
+  const uid = context.auth.uid;
+  const userRef = db.collection('users').doc(uid);
+
+  try {
+    const userSnap = await userRef.get();
+    if (!userSnap.exists) {
+      throw new functions.https.HttpsError("not-found", "User record not found.");
+    }
+
+    const u = userSnap.data();
+    let newTier = 'citizen';
+
+    const isVerified = u.isVerified || u.isPhoneVerified || u.zkVerified;
+    const testimonies = u.testimoniesCount || 0;
+    const verifications = u.verificationsMade || 0;
+    const score = u.reputationScore || 0;
+
+    if (score >= 1000 && testimonies >= 20 && isVerified) {
+      newTier = 'steward';
+    } else if (score >= 500 && testimonies >= 10 && verifications >= 15) {
+      newTier = 'elite_witness';
+    } else if (isVerified || (score >= 150 && verifications >= 5)) {
+      newTier = 'verified_citizen';
+    }
+
+    if (newTier !== u.tier) {
+      await userRef.update({
+        tier: newTier,
+        tierUpdatedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+
+      if (newTier === 'steward') {
+        const userRecord = await admin.auth().getUser(uid);
+        const claims = userRecord.customClaims || {};
+        await admin.auth().setCustomUserClaims(uid, { ...claims, steward: true });
+      }
+
+      await writeAuditLog({
+        action: "tier_upgraded",
+        performedBy: "system",
+        targetId: uid,
+        targetType: "user",
+        details: { oldTier: u.tier, newTier },
+        severity: "info"
+      });
+    }
+
+    return { success: true, tier: newTier };
+  } catch (error) {
+    console.error("Evaluate tier error:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+// ======================================================
 // CUSTOM CLAIMS MANAGEMENT
 // ======================================================
-
-/**
- * Admin-only: Set custom claims
- * Example: { uid: "xxx", claims: { admin: true, moderator: true, banned: false } }
- */
 exports.setUserClaims = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "You must be signed in.");
@@ -165,7 +221,6 @@ exports.setUserClaims = functions.https.onCall(async (data, context) => {
 
     await admin.auth().setCustomUserClaims(uid, finalClaims);
 
-    // Keep user document in sync for UI
     await db.collection("users").doc(uid).set({
       isAdmin: finalClaims.admin === true,
       isModerator: finalClaims.moderator === true,
@@ -191,9 +246,6 @@ exports.setUserClaims = functions.https.onCall(async (data, context) => {
   }
 });
 
-/**
- * Ban a user (Admin or Moderator)
- */
 exports.banUser = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "Sign in required.");
@@ -241,9 +293,6 @@ exports.banUser = functions.https.onCall(async (data, context) => {
   }
 });
 
-/**
- * Unban a user (Admin only)
- */
 exports.unbanUser = functions.https.onCall(async (data, context) => {
   if (!context.auth?.token?.admin) {
     throw new functions.https.HttpsError("permission-denied", "Only admins can unban users.");
@@ -287,9 +336,6 @@ exports.unbanUser = functions.https.onCall(async (data, context) => {
   }
 });
 
-/**
- * Moderator / Admin delete with full audit trail
- */
 exports.moderatedDelete = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "Sign in required.");
@@ -558,7 +604,7 @@ exports.checkRateLimit = functions.https.onRequest((req, res) => {
       return res.status(200).json({ allowed: true });
     } catch (error) {
       console.error("Rate limit check failed:", error);
-      return res.status(200).json({ allowed: true }); // Fail open
+      return res.status(200).json({ allowed: true });
     }
   });
 });
@@ -653,26 +699,19 @@ exports.promoteToSteward = functions.https.onCall(async (data, context) => {
 
       await writeAuditLog({
         action: "promoted_to_steward",
-        performedBy: "system",
+        performedBy: uid,
         targetId: uid,
         targetType: "user",
         details: { activityScore },
-        severity: "medium"
+        severity: "info"
       });
 
-      console.log(`🌟 User ${uid} successfully promoted to Steward (Score: ${activityScore})`);
-      return { success: true, newTier: 'steward' };
+      return { success: true, message: "Promoted to Steward." };
+    } else {
+      return { success: false, message: "Activity score threshold not met." };
     }
-
-    return {
-      success: false,
-      message: 'Score threshold not met or already a steward.',
-      currentScore: activityScore
-    };
   } catch (error) {
-    console.error("Steward Promotion Function Error:", error);
-    throw new functions.https.HttpsError("internal", error.message || "Failed to process promotion.");
+    console.error("Promote to steward error:", error);
+    throw new functions.https.HttpsError("internal", error.message);
   }
 });
-
-console.log("🚀 VocalWitness Cloud Functions Ready");
