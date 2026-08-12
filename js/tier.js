@@ -71,6 +71,9 @@ export const WITNESS_LEVELS = {
   }
 };
 
+// Pre-sorted witness levels for rapid threshold lookup
+const ORDERED_WITNESS_LEVELS = Object.values(WITNESS_LEVELS).sort((a, b) => b.minRep - a.minRep);
+
 export const ROLES = {
   USER: 'user',
   STEWARD: 'steward',
@@ -110,6 +113,7 @@ export async function getUserProfile(forceRefresh = false) {
 
   fetchPromise = (async () => {
     try {
+      if (!auth.currentUser) return null;
       const userRef = doc(db, "users", auth.currentUser.uid);
       const snap = await getDoc(userRef);
       cachedProfile = snap.exists() ? snap.data() : {};
@@ -156,18 +160,11 @@ export async function getCurrentWitnessLevel() {
   const data = await getUserProfile();
   const rep = data?.reputation || 0;
 
-  // Return highest level achieved
-  const levels = Object.values(WITNESS_LEVELS).reverse();
-  for (const level of levels) {
+  for (const level of ORDERED_WITNESS_LEVELS) {
     if (rep >= level.minRep) return level;
   }
   return WITNESS_LEVELS.VERIFIED;
 }
-
-/**
- * Helper to check if user can advance tier
- */
-// js/tier.js - Updated canAdvanceTier with internal timeout safety
 
 /**
  * Check if a user meets the prerequisites to advance their tier.
@@ -181,19 +178,16 @@ export async function canAdvanceTier(uid, timeoutMs = 10000) {
   }
 
   try {
-    // Timeout promise to catch hanging Firestore reads
     const timeoutPromise = new Promise((_, reject) =>
       setTimeout(() => reject(new Error("Network timeout while fetching user profile")), timeoutMs)
     );
 
-    // Race the profile fetch against the timeout
     const data = await Promise.race([getUserProfile(), timeoutPromise]);
 
     if (!data) {
       return { canAdvance: false, reason: "User profile not found" };
     }
 
-    // Example gating check: Citizen Circle (phone verified) is required before Witness Circle
     if (!data.isPhoneVerified && !data.hasVerifiedPhone) {
       return { canAdvance: false, reason: "Phone verification is required first" };
     }
@@ -290,7 +284,7 @@ export async function updateTierBadge() {
   const level = await getCurrentWitnessLevel();
 
   if (level) {
-    badge.innerHTML = `${level.emblem} ${level.name}`;
+    badge.innerHTML = `${level.emblem} ${escapeHTML(level.name)}`;
     badge.style.backgroundColor = level.color;
     badge.style.color = "#fff";
   } else if (tier === TIERS.CITIZEN_CIRCLE) {
