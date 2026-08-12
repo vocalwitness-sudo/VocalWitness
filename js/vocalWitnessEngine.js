@@ -71,18 +71,18 @@ export async function uploadMediaAsset(file, folder, uid, onProgress = null) {
 
   const path = `${folder}/${uid}/${crypto.randomUUID()}.${ext}`;
 
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open('PUT', `${R2_UPLOAD_ENDPOINT}?key=${encodeURIComponent(path)}`, true);
     xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
 
-    if (auth.currentUser) {
-      auth.currentUser.getIdToken().then(token => {
+    try {
+      if (auth.currentUser) {
+        const token = await auth.currentUser.getIdToken();
         xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-        xhr.send(file);
-      }).catch(reject);
-    } else {
-      xhr.send(file);
+      }
+    } catch (err) {
+      console.warn('[Engine] Could not retrieve Auth Token for R2 Upload:', err);
     }
 
     if (xhr.upload && onProgress) {
@@ -108,6 +108,7 @@ export async function uploadMediaAsset(file, folder, uid, onProgress = null) {
     };
 
     xhr.onerror = () => reject(new Error('Network error during asset upload.'));
+    xhr.send(file);
   });
 }
 
@@ -115,8 +116,9 @@ export async function uploadMediaAsset(file, folder, uid, onProgress = null) {
 // BaseEngine
 // ---------------------------------------------------------------------------
 export class BaseEngine {
-  constructor(db) {
+  constructor(db, storage = null) {
     this.db = db;
+    this.storage = storage;
 
     // Recorder
     this.mediaRecorder = null;
@@ -239,14 +241,16 @@ export class BaseEngine {
 
         try {
           const AC = window.AudioContext || window.webkitAudioContext;
-          this._audioCtx = new AC();
-          if (this._audioCtx.state === 'suspended') {
-            await this._audioCtx.resume();
+          if (AC) {
+            this._audioCtx = new AC();
+            if (this._audioCtx.state === 'suspended') {
+              await this._audioCtx.resume();
+            }
+            const source = this._audioCtx.createMediaStreamSource(this.stream);
+            this._analyser = this._audioCtx.createAnalyser();
+            this._analyser.fftSize = 256;
+            source.connect(this._analyser);
           }
-          const source = this._audioCtx.createMediaStreamSource(this.stream);
-          this._analyser = this._audioCtx.createAnalyser();
-          this._analyser.fftSize = 256;
-          source.connect(this._analyser);
         } catch (e) {
           console.warn('[Engine] Analyser init failed:', e);
           this._analyser = null;
@@ -444,8 +448,8 @@ export class BaseEngine {
 // CitizenTalkEngine
 // ---------------------------------------------------------------------------
 export class CitizenTalkEngine extends BaseEngine {
-  constructor(db) {
-    super(db);
+  constructor(db, storage = null) {
+    super(db, storage);
   }
 
   async submitCitizenTalk({ text = '', category = 'General', onProgress = null } = {}) {
@@ -496,8 +500,8 @@ export class CitizenTalkEngine extends BaseEngine {
 // WitnessVoiceEngine
 // ---------------------------------------------------------------------------
 export class WitnessVoiceEngine extends BaseEngine {
-  constructor(db) {
-    super(db);
+  constructor(db, storage = null) {
+    super(db, storage);
   }
 
   async submitWitnessTestimony({
@@ -585,5 +589,8 @@ export class WitnessVoiceEngine extends BaseEngine {
     };
   }
 }
+
+// Export alias for legacy script compatibility
+export { WitnessVoiceEngine as VocalWitnessEngine };
 
 console.log('%cVocalWitness Engine loaded (production R2 Two-Lungs)', 'color:#10b981;font-weight:bold');
