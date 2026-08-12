@@ -7,7 +7,6 @@ import {
   browserLocalPersistence 
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { initializeFirestore } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-import { getStorage } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
 
 // Dynamically determine host origin for seamless proxying with rewrites
 const hostDomain = window.location.hostname || "vocalwitness-3affa.web.app";
@@ -17,7 +16,6 @@ const firebaseConfig = {
   // Matches host domain so auth handler runs on the same origin via firebase.json rewrites
   authDomain: hostDomain.includes("vocalwitness.com") ? "vocalwitness.com" : "vocalwitness-3affa.web.app",
   projectId: "vocalwitness-3affa",
-  storageBucket: "vocalwitness-3affa.firebasestorage.app",
   messagingSenderId: "108466981866",
   appId: "1:108466981866:web:b53360ad44012a576c8093"
 };
@@ -36,9 +34,8 @@ setPersistence(auth, browserLocalPersistence).catch((err) => {
 const db = initializeFirestore(app, {
   experimentalForceLongPolling: true
 });
-const storage = getStorage(app);
 
 const provider = new GoogleAuthProvider();
 provider.setCustomParameters({ prompt: 'select_account' });
 
-export { app, auth, db, storage, provider };
+export { app, auth, db, provider };
