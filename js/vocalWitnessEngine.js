@@ -1,12 +1,12 @@
 /**
  * VocalWitness Engine – Two-Lungs Architecture
- * Production version
+ * Production version (Cloudflare R2 Integration)
  *
  * - Reliable MediaRecorder finalization (timeslice + stop promise + safety timeout)
  * - Pause / resume with accurate elapsed time
  * - Live waveform (AnalyserNode)
  * - Real SHA-256 forensic hashing
- * - Resumable Storage uploads (UUID paths)
+ * - R2 Worker API uploads (UUID paths)
  * - Size & duration limits
  * - Single `testimonies` collection + targetFeed
  * - Client NEVER writes zkVerified (only Cloud Function after real proof)
@@ -19,15 +19,11 @@ import {
   addDoc,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-import {
-  ref,
-  uploadBytesResumable,
-  getDownloadURL
-} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
+const R2_UPLOAD_ENDPOINT = 'https://media.vocalwitness.com/upload';
 const MAX_AUDIO_BYTES   = 8 * 1024 * 1024;   // 8 MB
 const MAX_DURATION_MS   = 5 * 60 * 1000;     // 5 minutes
 const TIMESLICE_MS      = 1000;
@@ -63,45 +59,55 @@ export async function sha256(data) {
 }
 
 /**
- * Resumable upload with progress callback.
+ * Direct upload to Cloudflare R2 worker endpoint with progress reporting.
  * Paths are UUID-based to avoid collisions and filename leaks.
  */
-export async function uploadMediaAsset(storage, file, folder, uid, onProgress = null) {
-  if (!file || !storage || !uid) return null;
+export async function uploadMediaAsset(file, folder, uid, onProgress = null) {
+  if (!file || !uid) return null;
 
   const ext = (file.type || 'application/octet-stream')
     .split('/')[1]
     ?.split(';')[0] || 'bin';
 
   const path = `${folder}/${uid}/${crypto.randomUUID()}.${ext}`;
-  const storageRef = ref(storage, path);
 
   return new Promise((resolve, reject) => {
-    const task = uploadBytesResumable(storageRef, file, {
-      contentType: file.type || 'application/octet-stream',
-      cacheControl: 'public,max-age=31536000,immutable'
-    });
+    const xhr = new XMLHttpRequest();
+    xhr.open('PUT', `${R2_UPLOAD_ENDPOINT}?key=${encodeURIComponent(path)}`, true);
+    xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
 
-    task.on(
-      'state_changed',
-      (snap) => {
-        if (onProgress && snap.totalBytes > 0) {
-          onProgress(Math.round((snap.bytesTransferred / snap.totalBytes) * 100));
+    if (auth.currentUser) {
+      auth.currentUser.getIdToken().then(token => {
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+        xhr.send(file);
+      }).catch(reject);
+    } else {
+      xhr.send(file);
+    }
+
+    if (xhr.upload && onProgress) {
+      xhr.upload.onprogress = (evt) => {
+        if (evt.lengthComputable) {
+          const percent = Math.round((evt.loaded / evt.total) * 100);
+          onProgress(percent);
         }
-      },
-      (err) => {
-        console.error('[Engine] Upload failed:', err);
-        reject(err);
-      },
-      async () => {
+      };
+    }
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
         try {
-          const url = await getDownloadURL(task.snapshot.ref);
-          resolve(url);
-        } catch (e) {
-          reject(e);
+          const res = JSON.parse(xhr.responseText);
+          resolve(res.url || `https://media.vocalwitness.com/${path}`);
+        } catch (_) {
+          resolve(`https://media.vocalwitness.com/${path}`);
         }
+      } else {
+        reject(new Error(`Upload failed with status ${xhr.status}`));
       }
-    );
+    };
+
+    xhr.onerror = () => reject(new Error('Network error during asset upload.'));
   });
 }
 
@@ -109,9 +115,8 @@ export async function uploadMediaAsset(storage, file, folder, uid, onProgress = 
 // BaseEngine
 // ---------------------------------------------------------------------------
 export class BaseEngine {
-  constructor(db, storage) {
+  constructor(db) {
     this.db = db;
-    this.storage = storage;
 
     // Recorder
     this.mediaRecorder = null;
@@ -137,10 +142,9 @@ export class BaseEngine {
     // Pending image (must already be scrubbed)
     this.pendingImage = null;
     this.pendingImageHash = null;
-    this.pendingExif = null; // only redacted / safe fields
+    this.pendingExif = null;
   }
 
-  // ---------- MIME ----------
   _getSupportedMimeType() {
     const candidates = [
       'audio/webm;codecs=opus',
@@ -154,7 +158,6 @@ export class BaseEngine {
     return '';
   }
 
-  // ---------- Cleanup ----------
   _cleanupAudioGraph() {
     if (this._audioCtx) {
       this._audioCtx.close().catch(() => {});
@@ -187,9 +190,7 @@ export class BaseEngine {
     }
   }
 
-  // ---------- Start ----------
   async startVoiceRecording(durationLimit = MAX_DURATION_MS, maxRetries = MIC_MAX_RETRIES) {
-    // Tear down any previous session
     await this.stopVoiceRecording(true);
 
     let lastError = null;
@@ -236,7 +237,6 @@ export class BaseEngine {
           console.error('[Engine] MediaRecorder error:', e);
         };
 
-        // Waveform
         try {
           const AC = window.AudioContext || window.webkitAudioContext;
           this._audioCtx = new AC();
@@ -252,27 +252,23 @@ export class BaseEngine {
           this._analyser = null;
         }
 
-        // Timer baseline
         this._recordingStartedAt = Date.now();
         this._totalPausedMs = 0;
         this._pausedAt = null;
 
-        // Start with timeslice so final blob is never empty
         this.mediaRecorder.start(TIMESLICE_MS);
 
-        // Force an early chunk on browsers that delay the first one
         if (typeof this.mediaRecorder.requestData === 'function') {
           this.mediaRecorder.requestData();
         }
 
-        // Auto-stop
         if (durationLimit > 0) {
           this._durationTimer = setTimeout(() => {
             this.stopVoiceRecording();
           }, durationLimit);
         }
 
-        return; // success
+        return;
       } catch (err) {
         lastError = err;
         this._cleanupStream();
@@ -286,11 +282,6 @@ export class BaseEngine {
     throw lastError || new Error('Could not access microphone');
   }
 
-  // ---------- Stop ----------
-  /**
-   * Returns a Promise that resolves with the final Blob.
-   * @param {boolean} silent - suppress console noise
-   */
   stopVoiceRecording(silent = false) {
     this._resetTimerState();
 
@@ -306,7 +297,6 @@ export class BaseEngine {
       this._stopResolve = resolve;
     });
 
-    // Safety net – never leave the promise hanging
     this._stopSafetyTimer = setTimeout(() => {
       if (this._stopResolve) {
         this.currentAudioBlob = new Blob(this.audioChunks, {
@@ -336,7 +326,6 @@ export class BaseEngine {
     return this._stopPromise;
   }
 
-  // ---------- Pause / Resume ----------
   get isPaused() {
     return this.mediaRecorder?.state === 'paused';
   }
@@ -362,7 +351,6 @@ export class BaseEngine {
     }
   }
 
-  // ---------- Timer ----------
   getElapsedMs() {
     if (!this._recordingStartedAt) return 0;
     const now = (this.isPaused && this._pausedAt) ? this._pausedAt : Date.now();
@@ -377,7 +365,6 @@ export class BaseEngine {
     return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
   }
 
-  // ---------- Waveform ----------
   getWaveformData() {
     if (!this._analyser) return null;
     const data = new Uint8Array(this._analyser.frequencyBinCount);
@@ -385,9 +372,6 @@ export class BaseEngine {
     return data;
   }
 
-  /**
-   * Returns an array of 0-1 values suitable for drawing bars.
-   */
   getNormalizedWaveform(barCount = 32) {
     const data = this.getWaveformData();
     if (!data || data.length === 0) return new Array(barCount).fill(0);
@@ -404,7 +388,6 @@ export class BaseEngine {
     return bars;
   }
 
-  // ---------- Toggle helper ----------
   async toggleVoiceRecording(btn) {
     const active = this.mediaRecorder &&
       (this.mediaRecorder.state === 'recording' || this.mediaRecorder.state === 'paused');
@@ -420,10 +403,6 @@ export class BaseEngine {
     return blob;
   }
 
-  // ---------- Pending media ----------
-  /**
-   * Image must already be scrubbed (EXIF stripped) before calling this.
-   */
   setPendingImage(file, hash, safeExif = null) {
     this.pendingImage = file;
     this.pendingImageHash = hash;
@@ -451,12 +430,11 @@ export class BaseEngine {
     return sha256(blob);
   }
 
-  // ---------- Validation ----------
   _assertWithinLimits() {
     if (this.currentAudioBlob && this.currentAudioBlob.size > MAX_AUDIO_BYTES) {
       throw new Error(`Recording exceeds maximum size of ${MAX_AUDIO_BYTES / 1024 / 1024} MB`);
     }
-    if (this.getElapsedMs() > MAX_DURATION_MS + 2000) { // small grace
+    if (this.getElapsedMs() > MAX_DURATION_MS + 2000) {
       throw new Error('Recording exceeds maximum duration');
     }
   }
@@ -466,13 +444,10 @@ export class BaseEngine {
 // CitizenTalkEngine
 // ---------------------------------------------------------------------------
 export class CitizenTalkEngine extends BaseEngine {
-  constructor(db, storage) {
-    super(db, storage);
+  constructor(db) {
+    super(db);
   }
 
-  /**
-   * Lightweight community post → testimonies collection with targetFeed = citizen_talk
-   */
   async submitCitizenTalk({ text = '', category = 'General', onProgress = null } = {}) {
     if (!auth.currentUser) throw new Error('Authentication required');
 
@@ -485,7 +460,6 @@ export class CitizenTalkEngine extends BaseEngine {
     if (this.currentAudioBlob?.size > 0) {
       audioHash = await this.generateAudioHash(this.currentAudioBlob);
       audioUrl = await uploadMediaAsset(
-        this.storage,
         this.currentAudioBlob,
         'testimonies/audio',
         uid,
@@ -522,23 +496,10 @@ export class CitizenTalkEngine extends BaseEngine {
 // WitnessVoiceEngine
 // ---------------------------------------------------------------------------
 export class WitnessVoiceEngine extends BaseEngine {
-  constructor(db, storage) {
-    super(db, storage);
+  constructor(db) {
+    super(db);
   }
 
-  /**
-   * Full forensic testimony pipeline.
-   * zkProof is accepted only as opaque data to be verified server-side.
-   * This method NEVER writes zkVerified: true.
-   *
-   * @param {Object} opts
-   * @param {string} opts.title
-   * @param {string} opts.category
-   * @param {string} opts.content
-   * @param {Object|null} opts.zkProof - { proof, publicSignals } for later Cloud Function
-   * @param {Function|null} opts.onProgress - (percent) => void
-   * @returns {Promise<{ id: string, audioHash: string|null, imageHash: string|null }>}
-   */
   async submitWitnessTestimony({
     title = 'Untitled Witness Statement',
     category = 'General',
@@ -555,11 +516,9 @@ export class WitnessVoiceEngine extends BaseEngine {
     let imageUrl = null;
     let audioHash = null;
 
-    // 1. Audio
     if (this.currentAudioBlob?.size > 0) {
       audioHash = await this.generateAudioHash(this.currentAudioBlob);
       audioUrl = await uploadMediaAsset(
-        this.storage,
         this.currentAudioBlob,
         'testimonies/audio',
         uid,
@@ -567,10 +526,8 @@ export class WitnessVoiceEngine extends BaseEngine {
       );
     }
 
-    // 2. Image (already scrubbed)
     if (this.pendingImage) {
       imageUrl = await uploadMediaAsset(
-        this.storage,
         this.pendingImage,
         'testimonies/images',
         uid,
@@ -580,7 +537,6 @@ export class WitnessVoiceEngine extends BaseEngine {
 
     const forensicHash = audioHash || this.pendingImageHash || null;
 
-    // 3. Firestore document – no zkVerified flag written by client
     const docData = {
       authorId: uid,
       author: auth.currentUser.displayName || 'Anonymous Witness',
@@ -594,7 +550,6 @@ export class WitnessVoiceEngine extends BaseEngine {
       imageHash: this.pendingImageHash || null,
       forensicHash,
       hasForensic: Boolean(forensicHash),
-      // Opaque proof payload only – server decides verification
       zkProofPayload: zkProof || null,
       tier: 'witness_circle',
       status: 'published',
@@ -605,14 +560,12 @@ export class WitnessVoiceEngine extends BaseEngine {
 
     const refDoc = await addDoc(collection(this.db, 'testimonies'), docData);
 
-    // 4. Optional: kick off server-side ZK verification (does not block publish)
     if (zkProof?.proof && zkProof?.publicSignals) {
       try {
         const { getFunctions, httpsCallable } = await import(
           "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js"
         );
         const verify = httpsCallable(getFunctions(undefined, 'us-central1'), 'verifyZKProof');
-        // Fire-and-forget; Cloud Function alone sets zkVerified
         verify({
           proof: zkProof.proof,
           publicSignals: zkProof.publicSignals,
@@ -633,4 +586,4 @@ export class WitnessVoiceEngine extends BaseEngine {
   }
 }
 
-console.log('%cVocalWitness Engine loaded (production Two-Lungs)', 'color:#10b981;font-weight:bold');
+console.log('%cVocalWitness Engine loaded (production R2 Two-Lungs)', 'color:#10b981;font-weight:bold');
