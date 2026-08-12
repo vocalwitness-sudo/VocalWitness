@@ -1,11 +1,12 @@
 // js/db.js - Database Operations & Offline Storage Engine
-import { db } from './firebase-config.js';
+import { db, auth } from './firebase-config.js';
 import {
   doc, 
   getDoc, 
   updateDoc, 
   deleteDoc, 
   collection, 
+  addDoc,
   query, 
   where, 
   getDocs,
@@ -14,6 +15,8 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 import { showToast } from './utils.js';
+import { getCurrentUserTier, getCurrentWitnessLevel } from './tier.js';
+import { logSecurityAudit } from './audit.js';
 
 // ==================== INDEXEDDB OFFLINE QUEUE ====================
 const DB_NAME = 'VocalWitnessOffline';
@@ -230,3 +233,93 @@ export const submitPeerVote = async (postId, type, collectionName = "testimonies
     return false;
   }
 };
+
+
+// ==================== AUTOMATED OFFLINE SYNC ENGINE ====================
+let isSyncing = false;
+
+/**
+ * Process and upload queued IndexedDB drafts when online connectivity is restored
+ */
+export async function syncOfflineDrafts() {
+  if (isSyncing || !navigator.onLine) return;
+  if (!auth.currentUser) return; // Wait until Firebase Auth restores active user
+
+  const drafts = await getOfflineDrafts();
+  if (!drafts || drafts.length === 0) return;
+
+  isSyncing = true;
+  let syncedCount = 0;
+  let failedCount = 0;
+
+  showToast(`Syncing ${drafts.length} offline draft(s)...`, 'info');
+
+  for (const draft of drafts) {
+    try {
+      // Feed Alias Normalization
+      let rawFeed = draft.targetFeed || "citizen_talk";
+      const targetFeed = (rawFeed === 'vocal_truth' || rawFeed === 'true_witness') ? 'witness_voice' : rawFeed;
+
+      const currentUserId = auth.currentUser?.uid || draft.authorId;
+      const userTier = await getCurrentUserTier();
+      const userWitnessLevel = await getCurrentWitnessLevel();
+
+      // Write draft to Firestore testimonies collection
+      const testimonyRef = await addDoc(collection(db, "testimonies"), {
+        content: draft.content || "",
+        targetFeed: targetFeed,
+        imageUrl: draft.imageUrl || null,
+        audioUrl: draft.audioUrl || null,
+        forensicHash: draft.forensicHash || draft.imageHash || draft.audioHash || null,
+        authorId: currentUserId,
+        author: auth.currentUser?.displayName || "Anonymous Witness",
+        authorTier: userTier || 'citizen',
+        authorWitnessLevel: userWitnessLevel?.name || null,
+        createdAt: serverTimestamp(),
+        syncedFromOffline: true,
+        originalOfflineTimestamp: draft.savedAt || draft.createdAt,
+        status: 'published'
+      });
+
+      // Audit log entry
+      await logSecurityAudit('OFFLINE_TESTIMONY_SYNCED', testimonyRef.id, {
+        targetFeed: targetFeed,
+        originalSavedAt: draft.savedAt
+      });
+
+      // Remove from IndexedDB queue upon success
+      await removeOfflineDraft(draft.id);
+      syncedCount++;
+
+    } catch (err) {
+      console.error(`Failed to sync offline draft ID ${draft.id}:`, err);
+      failedCount++;
+    }
+  }
+
+  isSyncing = false;
+
+  if (syncedCount > 0) {
+    showToast(`✅ Successfully published ${syncedCount} offline testimony draft(s)!`, 'success');
+    window.dispatchEvent(new CustomEvent('vocalWitness:posted'));
+  }
+
+  if (failedCount > 0) {
+    showToast(`⚠️ ${failedCount} draft(s) could not be synced. Retrying later.`, 'error');
+  }
+}
+
+// Automatically sync when online event triggers
+window.addEventListener('online', () => {
+  console.log("Network online event detected. Initializing sync...");
+  syncOfflineDrafts();
+});
+
+// Trigger sync when Firebase Auth completes initialization
+if (typeof auth !== 'undefined') {
+  auth.onAuthStateChanged((user) => {
+    if (user && navigator.onLine) {
+      syncOfflineDrafts();
+    }
+  });
+}
