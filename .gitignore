@@ -1,6 +1,32 @@
+# Dependencies
 node_modules/
+
+# Firebase & Deployment Artifacts
 .firebase/
-firebase-debug.log
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+
+# OS & Editor Files
 .DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Secret Environment Files (Root & Subfolders)
 .env
+.env.local
 .env.*
+functions/.env
+functions/.env.*
+
+# Private Keys & Credentials
+*.pem
+*.key
+serviceAccountKey.json
+*-firebase-adminsdk-*.json
+
+# ZK Private Inputs & Secrets (Do NOT commit secret proof inputs)
+*input.json
+*secret*.json
+*.priv
