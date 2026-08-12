@@ -9,6 +9,7 @@ import {
     increment, 
     addDoc, 
     getDocs, 
+    deleteDoc,
     serverTimestamp 
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { db, app } from './firebase-config.js';
@@ -92,13 +93,27 @@ export function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                     }
                 } else if (action === 'share') {
                     try {
-                        await navigator.clipboard.writeText(`${window.location.origin}?post=${id}`);
-                        showToast("Link copied to clipboard", "success");
-                    } catch {
-                        showToast("Failed to copy share link", "error");
+                        const shareUrl = `${window.location.origin}?post=${id}`;
+                        if (navigator.share) {
+                            await navigator.share({
+                                title: 'VocalWitness Testimony',
+                                url: shareUrl
+                            });
+                        } else {
+                            await navigator.clipboard.writeText(shareUrl);
+                            showToast("Link copied to clipboard", "success");
+                        }
+                    } catch (err) {
+                        if (err.name !== 'AbortError') {
+                            showToast("Failed to share testimony link", "error");
+                        }
                     }
                 } else if (action === 'pin') {
                     await handlePinPost(id);
+                } else if (action === 'delete') {
+                    await handleDeletePost(id);
+                } else if (action === 'menu') {
+                    showPostMenu(id);
                 }
             } catch (err) {
                 console.error(`Action ${action} failed:`, err);
@@ -189,7 +204,7 @@ function applySearchAndFilter() {
     const filterType = activeFilterBtn ? activeFilterBtn.getAttribute('data-filter') : 'all';
 
     const filtered = allPostsCache.filter(post => {
-        if (post.moderationStatus === "removed") return false;
+        if (post.moderationStatus === "removed" || post.isDeleted) return false;
 
         const matchesSearch = !queryText || 
             (post.content && post.content.toLowerCase().includes(queryText)) ||
@@ -233,6 +248,10 @@ function renderFilteredPosts(posts) {
 }
 
 function renderSinglePostDOM(id, data, container) {
+    const auth = getAuth(app);
+    const currentUser = auth.currentUser;
+    const isOwner = currentUser && currentUser.uid === data.authorId;
+
     const postEl = document.createElement('div');
     postEl.className = 'post-card glass rounded-3xl p-6 mb-6 hover:border-emerald-500/35 transition-all duration-300 border border-zinc-800 bg-zinc-900/50 relative';
 
@@ -281,6 +300,10 @@ function renderSinglePostDOM(id, data, container) {
 
     const authorDisplayName = escapeHTML(data.author || (data.authorId ? `Witness (${data.authorId.substring(0, 6)}...)` : 'Anonymous Witness'));
 
+    const deleteBtnHTML = isOwner || hasStewardAccess() 
+        ? `<button data-action="delete" data-id="${id}" title="Delete Testimony" class="text-zinc-500 hover:text-red-400 text-xs transition">🗑️</button>` 
+        : '';
+
     postEl.innerHTML = `
         <div class="flex justify-between items-start">
             <div class="flex items-center gap-3">
@@ -296,6 +319,7 @@ function renderSinglePostDOM(id, data, container) {
             </div>
             <div class="flex items-center gap-2">
                 <button data-action="pin" data-id="${id}" title="Pin Post" class="text-zinc-500 hover:text-amber-400 text-xs transition">📌</button>
+                ${deleteBtnHTML}
                 <button data-action="menu" data-id="${id}" class="text-zinc-400 hover:text-white text-2xl transition">⋯</button>
             </div>
         </div>
@@ -342,6 +366,37 @@ async function handleUpvote(postId) {
     } catch (e) {
         console.error("Upvote failed:", e);
         showToast("Failed to record upvote.", "error");
+    }
+}
+
+async function handleDeletePost(postId) {
+    const auth = getAuth(app);
+    if (!auth.currentUser) {
+        showToast("Authentication required.", "error");
+        return;
+    }
+
+    if (!confirm("Are you sure you want to delete this testimony?")) return;
+
+    try {
+        const post = allPostsCache.find(p => p.id === postId);
+        const postRef = doc(db, "testimonies", postId);
+
+        // Soft-delete if cryptographic hashes exist to preserve log integrity
+        if (post && (post.forensicHash || post.imageHash || post.audioHash)) {
+            await updateDoc(postRef, {
+                isDeleted: true,
+                content: "[This testimony was deleted by the user]",
+                updatedAt: serverTimestamp()
+            });
+        } else {
+            await deleteDoc(postRef);
+        }
+
+        showToast("Testimony deleted.", "info");
+    } catch (e) {
+        console.error("Delete failed:", e);
+        showToast("Failed to delete testimony.", "error");
     }
 }
 
@@ -468,7 +523,11 @@ async function openCommentModal(postId) {
     };
 }
 
-window.showPostMenu = (postId, authorId) => showToast("Post options available", "info");
+function showPostMenu(postId) {
+    showToast(`Testimony ID: ${postId}`, "info");
+}
+
+window.showPostMenu = showPostMenu;
 
 window.addEventListener('languageChanged', () => {
     initFeed(db, currentChannel);
