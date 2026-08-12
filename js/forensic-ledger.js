@@ -9,12 +9,21 @@ let unsubscribe = null;
 let isInitialized = false;
 
 /**
+ * Safely format timestamp values from Firestore Timestamps or JS Numbers
+ */
+function formatTimestamp(ts) {
+    if (!ts) return new Date().toLocaleString();
+    if (typeof ts.toDate === 'function') return ts.toDate().toLocaleString();
+    return new Date(ts).toLocaleString();
+}
+
+/**
  * Load Forensic Ledger into the dynamic container
  */
 export function loadForensicLedger() {
     const container = document.getElementById('ledgerContainer');
     if (!container) {
-        console.error("ledgerContainer not found");
+        console.error("ledgerContainer element not found in DOM");
         return;
     }
 
@@ -43,7 +52,7 @@ export function loadForensicLedger() {
                 container.innerHTML = `
                     <div class="text-center py-16 text-zinc-400">
                         No verified entries yet.<br>
-                        Be the first to publish with Forensic Shield.
+                        Be the first to publish with Witness Voice.
                     </div>
                 `;
                 return;
@@ -60,7 +69,7 @@ export function loadForensicLedger() {
                             <div class="w-8 h-8 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-lg">🔒</div>
                             <div>
                                 <p class="font-medium">${data.author || 'Anonymous Witness'}</p>
-                                <p class="text-xs text-emerald-500">${new Date(data.timestamp?.toDate?.() || data.timestamp).toLocaleString()}</p>
+                                <p class="text-xs text-emerald-500">${formatTimestamp(data.timestamp)}</p>
                             </div>
                         </div>
                         <div class="text-right">
@@ -83,13 +92,16 @@ export function loadForensicLedger() {
 
                 container.appendChild(entry);
             });
+        }, (error) => {
+            console.error("Ledger snapshot error:", error);
+            container.innerHTML = `<p class="text-red-400 text-center py-12">Failed to load ledger. Please check network/permissions.</p>`;
         });
 
         isInitialized = true;
 
     } catch (error) {
-        console.error("Ledger load error:", error);
-        container.innerHTML = `<p class="text-red-400 text-center py-12">Failed to load ledger. Please try again later.</p>`;
+        console.error("Ledger query initialization error:", error);
+        container.innerHTML = `<p class="text-red-400 text-center py-12">Failed to initialize ledger.</p>`;
     }
 }
 
@@ -99,18 +111,19 @@ export function loadForensicLedger() {
 export function refreshLedger() {
     if (unsubscribe) unsubscribe();
     loadForensicLedger();
-    showToast("Ledger refreshed", "success");
+    if (typeof showToast === 'function') showToast("Ledger refreshed", "success");
 }
 
 /**
- * View full entry (placeholder for future ZK proof modal)
+ * View full entry details
  */
 export function viewFullEntry(id) {
-    showToast(`Opening full forensic record for ID: ${id}`, "info");
-    // TODO: Open modal with ZK proof, full content, signatures, etc.
+    if (typeof showToast === 'function') showToast(`Opening full forensic record for ID: ${id}`, "info");
 }
 
-// Cleanup function (important for memory leaks)
+/**
+ * Cleanup snapshot listeners to prevent memory leaks
+ */
 export function cleanupLedger() {
     if (unsubscribe) {
         unsubscribe();
@@ -119,6 +132,11 @@ export function cleanupLedger() {
     isInitialized = false;
 }
 
-// Make functions available globally for inline onclick handlers
+// Global scope attachments for inline DOM event triggers
 window.refreshLedger = refreshLedger;
 window.viewFullEntry = viewFullEntry;
+
+// Auto-initialize when file is imported directly as module on ledger page
+if (document.getElementById('ledgerContainer')) {
+    document.addEventListener('DOMContentLoaded', loadForensicLedger);
+}
