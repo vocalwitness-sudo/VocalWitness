@@ -1,8 +1,11 @@
-// js/verification.js - Robust Verification Handlers with Timeout Guards & Tier Checks
+// js/verification.js - Robust Verification Handlers with Timeout Guards, Tier Checks & C2PA Provenance
 import { doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { db, auth } from "./firebase-config.js";
 import { showToast } from "./utils.js";
 import { canAdvanceTier, refreshTierAndUI, TIERS } from './tier.js';
+
+// Global C2PA instance cache
+let c2paInstance = null;
 
 /**
  * Execute an async operation with a strict timeout fallback
@@ -15,6 +18,80 @@ function withTimeout(promise, ms = 10000, timeoutMsg = "Operation timed out") {
     promise,
     new Promise((_, reject) => setTimeout(() => reject(new Error(timeoutMsg)), ms))
   ]);
+}
+
+/**
+ * Initialize C2PA WebAssembly SDK with CDN fallbacks
+ */
+async function initC2PA() {
+  if (c2paInstance) return c2paInstance;
+
+  try {
+    const { createC2pa } = await import("https://cdn.jsdelivr.net/npm/@contentauth/c2pa-web@0.8.2/+esm");
+    
+    c2paInstance = await createC2pa({
+      wasmSrc: "https://cdn.jsdelivr.net/npm/@contentauth/c2pa-web@0.8.2/dist/assets/wasm/c2pa.wasm",
+      workerSrc: "https://cdn.jsdelivr.net/npm/@contentauth/c2pa-web@0.8.2/dist/c2pa.worker.js",
+    });
+
+    return c2paInstance;
+  } catch (err) {
+    console.error("Failed to initialize C2PA Web SDK:", err);
+    throw new Error("C2PA engine initialization failed.");
+  }
+}
+
+/**
+ * Read and verify C2PA Content Credentials from a media File/Blob
+ * @param {File|Blob} file - The image or video file to inspect
+ * @returns {Promise<Object>} Verification status and provenance manifest
+ */
+export async function verifyMediaProvenance(file) {
+  if (!file) {
+    showToast("No media file selected for provenance check", "error");
+    return { hasC2PA: false, error: "No file provided" };
+  }
+
+  try {
+    showToast("🔎 Inspecting C2PA Content Credentials...", "info");
+
+    const c2pa = await withTimeout(initC2PA(), 12000, "C2PA WASM engine load timed out");
+    const result = await withTimeout(c2pa.read(file), 15000, "C2PA media parsing timed out");
+
+    if (!result || !result.manifestStore) {
+      showToast("ℹ️ No embedded C2PA credentials found in file", "info");
+      return {
+        hasC2PA: false,
+        isValid: false,
+        message: "No C2PA Content Credentials found in this media asset."
+      };
+    }
+
+    const activeManifest = result.manifestStore.activeManifest;
+    const validationErrors = result.manifestStore.validationStatus || [];
+    const isValid = validationErrors.length === 0;
+
+    if (isValid) {
+      showToast("✅ Authenticated C2PA Content Credentials verified!", "success");
+    } else {
+      showToast("⚠️ C2PA manifest found but validation failed or was altered", "warning");
+    }
+
+    return {
+      hasC2PA: true,
+      isValid,
+      issuer: activeManifest?.signatureInfo?.issuer || "Unknown Issuer",
+      claimGenerator: activeManifest?.claimGenerator || "Unknown Tool",
+      title: activeManifest?.title || file.name,
+      format: activeManifest?.format || file.type,
+      validationErrors,
+      rawManifest: activeManifest
+    };
+  } catch (error) {
+    console.error("C2PA verification error:", error);
+    showToast(error.message || "Failed to parse C2PA provenance data", "error");
+    return { hasC2PA: false, isValid: false, error: error.message };
+  }
 }
 
 /**
