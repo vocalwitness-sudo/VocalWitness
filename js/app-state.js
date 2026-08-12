@@ -1,10 +1,14 @@
 // js/app-state.js - Centralized Application State & Engine Exports
-import { db, storage } from './firebase-config.js';
+import { db } from './firebase-config.js';
 import { CitizenTalkEngine, WitnessVoiceEngine } from './vocalWitnessEngine.js';
 
+// Track active Object URLs to prevent browser memory leaks
+let currentActiveAudioUrl = null;
+
 // ====================== ENGINE INSTANTIATION ======================
-export const citizenEngine = new CitizenTalkEngine(db, storage);
-export const witnessEngine = new WitnessVoiceEngine(db, storage);
+// Initialized without relying on Firebase Storage
+export const citizenEngine = new CitizenTalkEngine(db);
+export const witnessEngine = new WitnessVoiceEngine(db);
 
 // Global debug exposure for client runtime inspection
 if (typeof window !== 'undefined') {
@@ -58,16 +62,22 @@ export function renderAudioPreview(blob) {
         return;
     }
 
+    // Revoke old audio URL if a previous recording existed
+    if (currentActiveAudioUrl) {
+        URL.revokeObjectURL(currentActiveAudioUrl);
+        currentActiveAudioUrl = null;
+    }
+
     // Clean previous preview elements safely
     previewContainer.innerHTML = ''; 
-    const audioUrl = URL.createObjectURL(blob);
+    currentActiveAudioUrl = URL.createObjectURL(blob);
 
     const wrapper = document.createElement('div');
     wrapper.className = 'flex items-center justify-between gap-3 p-3 bg-zinc-800/90 rounded-2xl border border-zinc-700/80 mt-2 transition-all';
 
     const audioEl = document.createElement('audio');
     audioEl.controls = true;
-    audioEl.src = audioUrl;
+    audioEl.src = currentActiveAudioUrl;
     audioEl.className = 'w-full h-8 max-w-xs';
 
     const removeBtn = document.createElement('button');
@@ -77,7 +87,10 @@ export function renderAudioPreview(blob) {
     
     removeBtn.addEventListener('click', () => {
         wrapper.remove();
-        URL.revokeObjectURL(audioUrl);
+        if (currentActiveAudioUrl) {
+            URL.revokeObjectURL(currentActiveAudioUrl);
+            currentActiveAudioUrl = null;
+        }
         
         // Clear pending uploads on engine instances safely
         if (typeof citizenEngine?.clearPendingMedia === 'function') citizenEngine.clearPendingMedia();
