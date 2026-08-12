@@ -240,3 +240,44 @@ button,
 .bookmark-card:hover {
   border-color: rgba(16, 185, 129, 0.4);
 }
+
+/* ====================== BRAND & HEADER FIXES ====================== */
+.brand-title, 
+header h1, 
+header .font-bold {
+    font-weight: 800 !important;
+    opacity: 1 !important;
+    color: #ffffff !important;
+}
+
+header p, 
+.brand-subtitle {
+    font-weight: 500 !important;
+    opacity: 0.9 !important;
+}
+
+/* ====================== DATA SAVER STATES ====================== */
+#dataSaverBtn.active, 
+.data-saver-on {
+    background-color: rgba(16, 185, 129, 0.15) !important;
+    border-color: var(--color-primary) !important;
+    color: var(--color-primary) !important;
+}
+
+#dataSaverBtn:not(.active), 
+.data-saver-off {
+    background-color: rgba(31, 41, 55, 0.8) !important;
+    border-color: rgba(75, 85, 99, 0.4) !important;
+    color: #9ca3af !important;
+}
+
+/* ====================== FLASH FEED FIX ====================== */
+#flashFeed, 
+.flash-feed-container {
+    display: flex;
+    align-items: center;
+    min-height: 40px;
+    pointer-events: auto;
+    position: relative;
+    z-index: 30;
+}
