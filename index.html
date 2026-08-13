@@ -201,39 +201,38 @@
                 ✕
             </button>
         </div>
-
-        <!-- MAIN DESKTOP TAB NAVIGATION -->
-        <div class="relative z-50 mb-8 w-full flex items-center gap-2">
-            <!-- Scrollable Tab Bar -->
-            <nav class="flex items-center gap-2 pb-2 overflow-x-auto no-scrollbar flex-1" id="main-nav">
-                <button data-tab="square" class="nav-tab active px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative">
+<!-- MAIN DESKTOP TAB NAVIGATION -->
+        <div class="relative z-50 mb-8 w-full flex flex-col md:flex-row items-stretch md:items-center gap-2">
+            <!-- Scrollable or Wrapping Tab Bar -->
+            <nav class="flex items-center gap-2 pb-2 overflow-x-auto md:overflow-visible flex-wrap md:flex-nowrap flex-1" id="main-nav">
+                <button data-tab="square" class="nav-tab active px-4 md:px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative flex-shrink-0">
                     <span class="font-semibold text-sm" data-i18n="publicSquareTab">Public Square</span>
                     <span class="text-xs text-zinc-400 hidden md:block" data-i18n="publicSquareDesc">Share stories & evidence</span>
                 </button>
 
-                <button data-tab="ledger" class="nav-tab px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative">
+                <button data-tab="ledger" class="nav-tab px-4 md:px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative flex-shrink-0">
                     <span class="font-semibold text-sm" data-i18n="evidenceLedgerTab">Evidence Ledger</span>
                     <span class="text-xs text-zinc-400 hidden md:block" data-i18n="evidenceLedgerDesc">Permanent record</span>
                 </button>
 
-                <button data-tab="arena" class="nav-tab px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative bg-sky-900/70 text-sky-300 border border-sky-700 hover:bg-sky-800">
+                <button data-tab="arena" class="nav-tab px-4 md:px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative bg-sky-900/70 text-sky-300 border border-sky-700 hover:bg-sky-800 flex-shrink-0">
                     <span class="font-semibold text-sm" data-i18n="liveArenaTab">Live Arena</span>
                     <span class="text-xs text-sky-400 hidden md:block" data-i18n="liveArenaDesc">Watch & join live</span>
                 </button>
 
-                <button data-tab="mycircle" class="nav-tab px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative">
+                <button data-tab="mycircle" class="nav-tab px-4 md:px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative flex-shrink-0">
                     <span class="font-semibold text-sm" data-i18n="myCircleTab">My Circle</span>
                     <span class="text-xs text-zinc-400 hidden md:block" data-i18n="myCircleDesc">Trusted people</span>
                 </button>
 
-                <button data-tab="witness" class="nav-tab px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative bg-amber-900/70 text-amber-300 border border-amber-700">
+                <button data-tab="witness" class="nav-tab px-4 md:px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative bg-amber-900/70 text-amber-300 border border-amber-700 flex-shrink-0">
                     <span class="font-semibold text-sm" data-i18n="verifiedWitnessesTab">Verified Witnesses</span>
                     <span class="text-xs text-amber-400 hidden md:block" data-i18n="verifiedWitnessesDesc">Trusted voices</span>
                 </button>
             </nav>
 
             <!-- More Options Dropdown -->
-            <div class="dropdown-container relative shrink-0 z-50">
+            <div class="dropdown-container relative shrink-0 z-50 self-end md:self-auto">
                 <button id="more-btn" 
                         type="button" 
                         onclick="event.stopPropagation(); const m = document.getElementById('more-menu'); if(m) m.classList.toggle('hidden');"
@@ -254,7 +253,6 @@
                 </div>
             </div>
         </div>
-
         <!-- Testimony Composer -->
         <div class="glass rounded-3xl p-6 sm:p-8 mb-10 shadow-xl">
             <div class="flex items-center justify-between mb-4">
