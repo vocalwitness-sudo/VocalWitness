@@ -19,7 +19,7 @@
       object-src 'none';
       base-uri 'self';
       upgrade-insecure-requests;
-    ">
+    "><head>
     <title data-i18n="pageTitle">VocalWitness • Truth • Evidence • Public Square</title>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js" defer></script>
@@ -52,7 +52,7 @@
     <link rel="icon" href="./logo.png" type="image/png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 
 <body class="min-h-screen pb-28 md:pb-12 bg-[#0a0f1c] text-white antialiased">
@@ -60,75 +60,68 @@
         <!-- MAIN TOP HEADER -->
         <header class="flex items-center justify-between mb-8 sticky top-4 z-50 glass rounded-3xl p-4 shadow-2xl border-emerald-500/30">
             <!-- App Logo & Branding Title -->
-            <div class="flex items-center gap-3.5 group cursor-pointer">
-                <div class="relative">
+            <div class="flex items-center gap-3.5 group cursor-pointer shrink-0">
+                <div class="relative flex items-center justify-center">
                     <div class="absolute inset-0 bg-emerald-500 rounded-2xl blur opacity-40 group-hover:opacity-75 transition"></div>
-                    <img src="./logo.png" alt="VocalWitness Logo" class="relative w-11 h-11 object-contain rounded-2xl shadow-lg border border-emerald-500/40">
+                    <img src="./logo.png" alt="VocalWitness Logo" class="relative w-11 h-11 object-contain rounded-2xl shadow-lg border border-emerald-500/40 shrink-0">
                 </div>
                 <div>
-                    <h1 class="text-lg sm:text-2xl font-black tracking-tight bg-gradient-to-r from-white via-slate-100 to-emerald-400 bg-clip-text text-transparent drop-shadow-sm" data-i18n="appTitle">VocalWitness</h1>
-                    <p class="text-xs sm:text-sm tracking-wide font-bold text-emerald-400 drop-shadow-sm" data-i18n="appSubtitle">Truth • Evidence • Public Square</p>
+                    <h1 class="text-lg sm:text-2xl font-black tracking-tight text-emerald-400 drop-shadow-sm" data-i18n="appTitle">VocalWitness</h1>
+                    <p class="text-xs sm:text-sm tracking-wide font-black text-emerald-400 drop-shadow-sm" data-i18n="appSubtitle">Truth • Evidence • Public Square</p>
                 </div>
             </div>
 
-            <!-- Top Header Right Controls -->
+            <!-- Top Header Controls -->
             <div class="flex items-center gap-2">
-                <!-- Phone View: Language Selector First -->
-                <select id="languageSelector" aria-label="Select Language" class="md:hidden bg-zinc-900 border text-white rounded-2xl px-2.5 py-2 text-xs focus:outline-none focus:border-emerald-500" style="background-color: #18181b; color: #ffffff; border-color: #3f3f46;">
-                    <option value="en">English</option>
-                    <option value="es">Español</option>
-                    <option value="fr">Français</option>
-                </select>
+                <!-- Mobile Controls (Phone View Only) -->
+                <div class="flex md:hidden items-center gap-2">
+                    <select id="languageSelector-mobile" aria-label="Select Language" class="bg-zinc-900 border text-white rounded-2xl px-2.5 py-2 text-xs focus:outline-none focus:border-emerald-500" style="background-color: #18181b; color: #ffffff; border-color: #3f3f46;">
+                        <option value="en">English</option>
+                        <option value="es">Español</option>
+                        <option value="fr">Français</option>
+                    </select>
 
-                <!-- Phone View: Google / Sign-in Button Second -->
-                <button id="guest-action-btn-mobile-top" type="button" data-action="open-auth-modal" class="md:hidden p-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center justify-center shadow-sm text-xs" style="background-color: #ffffff; color: #000000;" aria-label="Join VocalWitness">
-                    <img src="https://www.google.com/favicon.ico" class="w-4 h-4" alt="Google">
-                </button>
+                    <button id="guest-action-btn-mobile-top" type="button" data-action="open-auth-modal" class="p-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center justify-center shadow-sm text-xs" style="background-color: #ffffff; color: #000000;" aria-label="Join VocalWitness">
+                        <img src="https://www.google.com/favicon.ico" class="w-4 h-4" alt="Google">
+                    </button>
 
-                <!-- Mobile Hamburger Menu Button (Phone Only) -->
-                <button id="mobile-menu-btn" data-action="toggle-mobile-menu" class="md:hidden p-3 text-2xl leading-none hover:bg-zinc-800 rounded-2xl transition text-emerald-400 border border-zinc-700/50 bg-zinc-900/80 shadow-sm" aria-label="Toggle Menu">
-                    ☰
-                </button>
+                    <button id="mobile-menu-btn" data-action="toggle-mobile-menu" class="p-3 text-2xl leading-none hover:bg-zinc-800 rounded-2xl transition text-emerald-400 border border-zinc-700/50 bg-zinc-900/80 shadow-sm" aria-label="Toggle Menu">
+                        ☰
+                    </button>
+                </div>
 
-                <!-- Desktop Controls Group -->
+                <!-- Desktop Controls (Medium Screens & Up) -->
                 <div class="hidden md:flex items-center gap-2">
-                    <!-- Language Switcher -->
                     <select id="languageSelector-desktop" aria-label="Select Language" class="bg-zinc-900 border text-white rounded-2xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500" style="background-color: #18181b; color: #ffffff; border-color: #3f3f46;">
                         <option value="en">English</option>
                         <option value="es">Español</option>
                         <option value="fr">Français</option>
                     </select>
 
-                     <!-- Sign-in Button -->
                     <button id="guest-action-btn" type="button" data-action="open-auth-modal" class="px-4 py-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm text-sm" style="background-color: #ffffff; color: #000000;">
                         <img src="https://www.google.com/favicon.ico" class="w-4 h-4" alt="Google">
                         <span class="hidden sm:inline" data-i18n="joinBtn">Join VocalWitness</span>
                     </button>
 
-                    <!-- Support Button -->
                     <button id="support-btn" data-action="open-support-modal" class="px-5 py-2.5 font-medium rounded-2xl transition whitespace-nowrap text-sm shadow-sm" style="background-color: #10b981; color: #000000;" data-i18n="supportBtn">
                         Support The Square
                     </button>
 
-                    <!-- Data Saver Toggle -->
                     <button id="data-saver-btn" data-action="toggle-data-saver" class="px-3.5 py-2.5 rounded-2xl hover:bg-zinc-800 transition text-xs font-semibold flex items-center gap-2 border text-zinc-300 shadow-sm cursor-pointer" style="background-color: #121826; border-color: #273548;">
                         <span>⚡</span>
                         <span class="hidden lg:inline">Data Saver: <strong id="data-saver-status" class="text-emerald-400 font-bold" style="color: #34d399;">Off</strong></span>
                     </button>
 
-                    <!-- Privacy Link -->
                     <a href="privacy.html" class="hidden lg:flex items-center hover:text-emerald-300 transition-colors text-sm font-medium px-3 py-2" style="color: #34d399;" data-i18n="privacyLink">
                         Privacy First
                     </a>
 
-                    <!-- Bookmarks / Saved Items -->
                     <button id="bookmarks-nav-btn" data-action="open-bookmarks" class="p-2.5 rounded-2xl hover:bg-zinc-800 text-zinc-300 hover:text-white transition-all flex items-center justify-center border" style="background-color: #18181b; border-color: #3f3f46;" aria-label="Saved Items" title="Saved Items">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
                         </svg>
                     </button>
 
-                    <!-- Notification Bell + Dropdown -->
                     <div class="relative inline-block" id="notification-container">
                         <button id="notification-btn" type="button" class="relative p-2.5 rounded-full hover:bg-zinc-800 text-zinc-300 hover:text-white transition-all flex items-center justify-center border border-zinc-700/50" aria-label="Notifications">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -140,7 +133,6 @@
                         </button>
                     </div>
 
-                    <!-- Logged-in Profile Button -->
                     <button id="profile-btn" data-action="open-profile" class="px-4 py-2.5 border border-zinc-700 hover:bg-zinc-800 rounded-2xl transition flex items-center gap-2 hidden text-sm" style="background-color: #18181b; border-color: #3f3f46;" data-i18n="profileBtn">
                         My Profile
                     </button>
@@ -156,7 +148,7 @@
             </div>
         </div>
 
-        <!-- MOBILE MENU DROPDOWN (Hamburger Drawer) -->
+        <!-- MOBILE MENU DROPDOWN -->
         <div id="mobile-menu" class="hidden md:hidden fixed top-[92px] left-4 right-4 glass rounded-3xl p-5 shadow-2xl z-[100] border border-zinc-700" style="background-color: #111827; border-color: #3f3f46;">
             <div class="flex flex-col gap-4">
                 <button id="data-saver-btn-mobile" data-action="toggle-data-saver"
@@ -201,9 +193,9 @@
                 ✕
             </button>
         </div>
-<!-- MAIN DESKTOP TAB NAVIGATION -->
+
+        <!-- MAIN DESKTOP TAB NAVIGATION -->
         <div class="relative z-50 mb-8 w-full flex flex-col md:flex-row items-stretch md:items-center gap-2">
-            <!-- Scrollable or Wrapping Tab Bar -->
             <nav class="flex items-center gap-2 pb-2 overflow-x-auto md:overflow-visible flex-wrap md:flex-nowrap flex-1" id="main-nav">
                 <button data-tab="square" class="nav-tab active px-4 md:px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative flex-shrink-0">
                     <span class="font-semibold text-sm" data-i18n="publicSquareTab">Public Square</span>
@@ -231,7 +223,6 @@
                 </button>
             </nav>
 
-            <!-- More Options Dropdown -->
             <div class="dropdown-container relative shrink-0 z-50 self-end md:self-auto">
                 <button id="more-btn" 
                         type="button" 
@@ -253,6 +244,7 @@
                 </div>
             </div>
         </div>
+
         <!-- Testimony Composer -->
         <div class="glass rounded-3xl p-6 sm:p-8 mb-10 shadow-xl">
             <div class="flex items-center justify-between mb-4">
@@ -356,23 +348,19 @@
         </button>
     </nav>
 
-    <!-- ====================== AUTH MODAL ====================== -->
+    <!-- AUTH MODAL -->
     <div id="authModal" class="fixed inset-0 z-[200] hidden flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
         <div class="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-3xl bg-zinc-900 p-6 sm:p-8 shadow-2xl border border-zinc-700/80">
-
-            <!-- Close Button -->
             <button id="closeAuthModalBtn" type="button"
                     class="absolute top-4 right-4 text-zinc-400 hover:text-white text-2xl font-bold w-10 h-10 flex items-center justify-center rounded-full hover:bg-zinc-800 transition">
                 ✕
             </button>
 
-            <!-- Header -->
             <div class="text-center mb-6">
                 <h3 id="authTitle" class="text-2xl font-bold text-white">Join the Public Square</h3>
                 <p id="authSubtitle" class="text-xs text-zinc-400 mt-1">Sign in or create an account to participate.</p>
             </div>
 
-            <!-- Google Button -->
             <button id="googleAuthBtn" type="button"
                     class="w-full flex items-center justify-center gap-3 bg-white text-zinc-900 font-bold py-3.5 px-4 rounded-2xl hover:bg-zinc-100 transition-all mb-4 text-sm shadow-md">
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5" alt="Google">
@@ -386,15 +374,12 @@
                 <span class="relative bg-zinc-900 px-3 text-xs text-zinc-500 uppercase tracking-widest">or email</span>
             </div>
 
-            <!-- ========== MAIN AUTH FORM ========== -->
             <form id="authForm" class="space-y-4">
-                <!-- Email -->
                 <div>
                     <input type="email" id="loginEmail" name="email" placeholder="Email address" required autocomplete="email"
                            class="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 rounded-xl focus:outline-none focus:border-emerald-500 transition text-sm">
                 </div>
 
-                <!-- Password + Show/Hide -->
                 <div class="relative">
                     <input type="password" id="loginPassword" name="password" placeholder="Password" required minlength="6"
                            autocomplete="current-password"
@@ -403,19 +388,16 @@
                     <button type="button" id="togglePasswordBtn"
                             class="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition p-1"
                             aria-label="Show password">
-                        <!-- Eye -->
                         <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                         </svg>
-                        <!-- Eye Off -->
                         <svg id="eyeOffIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
                         </svg>
                     </button>
                 </div>
 
-                <!-- Remember me + Forgot password -->
                 <div class="flex items-center justify-between text-sm">
                     <label class="flex items-center gap-2 cursor-pointer select-none text-zinc-400 hover:text-zinc-300">
                         <input type="checkbox" id="rememberMe"
@@ -429,10 +411,8 @@
                     </button>
                 </div>
 
-                <!-- Message area -->
                 <div id="authMessage" class="hidden text-sm text-center py-2 px-3 rounded-xl"></div>
 
-                <!-- Buttons -->
                 <div class="flex items-center gap-3 pt-1">
                     <button type="submit" id="submitAuthBtn"
                             class="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition text-sm disabled:opacity-60 disabled:cursor-not-allowed">
@@ -444,6 +424,9 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
 
             <!-- ========== PASSWORD RESET VIEW ========== -->
             <div id="resetPasswordView" class="hidden space-y-4">
