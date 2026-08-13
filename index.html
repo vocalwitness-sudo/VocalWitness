@@ -646,27 +646,7 @@
                 Protected by Zero-Knowledge proofs (<code class="text-slate-400">zk-proof.js</code>) & Sybil filters.
             </p>
         </div>
-    </div>
-
-    <!-- Login / Auth Modal -->
-    <div id="loginModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[10000] p-4">
-        <div class="glass rounded-3xl p-6 sm:p-8 max-w-md w-full border border-zinc-700/80 shadow-2xl relative max-h-[90vh] overflow-y-auto">
-            <button onclick="closeLoginModal()" class="absolute top-5 right-5 text-zinc-400 hover:text-white text-2xl transition">✕</button>
-
-            <div class="text-center mb-6">
-                <h2 class="text-2xl font-bold text-white mb-1">Join the Public Square</h2>
-                <p id="loginModalMessage" class="text-xs text-emerald-400">Sign in or create an account to participate.</p>
-            </div>
-
-            <!-- Place your actual HTML login form controls / Google button here -->
-
-        </div>
-    </div>
-
-    <!-- View Profile Modal -->
-    <div id="profileModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[10000] p-4">
-
-    <!-- Support Modal -->
+    </div><!-- Support Modal -->
     <div id="supportModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[10000] flex items-center justify-center p-4 hidden">
         <div class="glass max-w-md w-full rounded-3xl p-6 border border-emerald-500/30 text-white relative modal max-h-[90vh] overflow-y-auto">
             <button id="closeSupportModal" onclick="document.getElementById('supportModal')?.classList.add('hidden')" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl">✕</button>
@@ -722,7 +702,7 @@
         </div>
     </div>
 
-   <!-- Login / Auth Modal -->
+    <!-- Login / Auth Modal -->
     <div id="loginModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[10000] p-4">
         <div class="glass rounded-3xl p-6 sm:p-8 max-w-md w-full border border-zinc-700/80 shadow-2xl relative max-h-[90vh] overflow-y-auto">
             <button onclick="closeLoginModal()" class="absolute top-5 right-5 text-zinc-400 hover:text-white text-2xl transition">✕</button>
@@ -731,6 +711,10 @@
                 <h2 class="text-2xl font-bold text-white mb-1">Join the Public Square</h2>
                 <p id="loginModalMessage" class="text-xs text-emerald-400">Sign in or create an account to participate.</p>
             </div>
+
+            <!-- Login Controls / Auth Form Go Here -->
+        </div>
+    </div>
 
     <!-- View Profile Modal -->
     <div id="profileModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[10000] p-4">
