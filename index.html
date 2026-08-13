@@ -231,56 +231,102 @@
             </button>
         </div>
 
-        <!-- MAIN DESKTOP TAB NAVIGATION -->
-        <div class="relative z-50 mb-8 w-full flex flex-col md:flex-row items-stretch md:items-center gap-2">
-            <nav class="flex items-center gap-2 pb-2 overflow-x-auto md:overflow-visible flex-wrap md:flex-nowrap flex-1" id="main-nav">
-                <button data-tab="square" class="nav-tab active px-4 md:px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative flex-shrink-0">
-                    <span class="font-semibold text-sm" data-i18n="publicSquareTab">Public Square</span>
-                    <span class="text-xs text-zinc-400 hidden md:block" data-i18n="publicSquareDesc">Share stories & evidence</span>
-                </button>
+ <!-- MAIN DESKTOP TAB NAVIGATION (Hidden on mobile, visible on desktop) -->
+<div class="relative z-50 mb-8 w-full hidden md:flex flex-row items-center gap-2">
+    <nav class="flex items-center gap-2 pb-2 overflow-x-auto md:overflow-visible flex-nowrap flex-1" id="main-nav">
+        <button data-tab="square" class="nav-tab active px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative flex-shrink-0">
+            <span class="font-semibold text-sm" data-i18n="publicSquareTab">Public Square</span>
+            <span class="text-xs text-zinc-400" data-i18n="publicSquareDesc">Share stories & evidence</span>
+        </button>
 
-                <button data-tab="ledger" class="nav-tab px-4 md:px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative flex-shrink-0">
-                    <span class="font-semibold text-sm" data-i18n="evidenceLedgerTab">Evidence Ledger</span>
-                    <span class="text-xs text-zinc-400 hidden md:block" data-i18n="evidenceLedgerDesc">Permanent record</span>
-                </button>
+        <button data-tab="ledger" class="nav-tab px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative flex-shrink-0">
+            <span class="font-semibold text-sm" data-i18n="evidenceLedgerTab">Evidence Ledger</span>
+            <span class="text-xs text-zinc-400" data-i18n="evidenceLedgerDesc">Permanent record</span>
+        </button>
 
-                <button data-tab="arena" class="nav-tab px-4 md:px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative bg-sky-900/70 text-sky-300 border border-sky-700 hover:bg-sky-800 flex-shrink-0">
-                    <span class="font-semibold text-sm" data-i18n="liveArenaTab">Live Arena</span>
-                    <span class="text-xs text-sky-400 hidden md:block" data-i18n="liveArenaDesc">Watch & join live</span>
-                </button>
+        <button data-tab="arena" class="nav-tab px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative bg-sky-900/70 text-sky-300 border border-sky-700 hover:bg-sky-800 flex-shrink-0">
+            <span class="font-semibold text-sm" data-i18n="liveArenaTab">Live Arena</span>
+            <span class="text-xs text-sky-400" data-i18n="liveArenaDesc">Watch & join live</span>
+        </button>
 
-                <button data-tab="mycircle" class="nav-tab px-4 md:px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative flex-shrink-0">
-                    <span class="font-semibold text-sm" data-i18n="myCircleTab">My Circle</span>
-                    <span class="text-xs text-zinc-400 hidden md:block" data-i18n="myCircleDesc">Trusted people</span>
-                </button>
+        <button data-tab="mycircle" class="nav-tab px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative flex-shrink-0">
+            <span class="font-semibold text-sm" data-i18n="myCircleTab">My Circle</span>
+            <span class="text-xs text-zinc-400" data-i18n="myCircleDesc">Trusted people</span>
+        </button>
 
-                <button data-tab="witness" class="nav-tab px-4 md:px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative bg-amber-900/70 text-amber-300 border border-amber-700 flex-shrink-0">
-                    <span class="font-semibold text-sm" data-i18n="verifiedWitnessesTab">Verified Witnesses</span>
-                    <span class="text-xs text-amber-400 hidden md:block" data-i18n="verifiedWitnessesDesc">Trusted voices</span>
-                </button>
-            </nav>
+        <button data-tab="witness" class="nav-tab px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative bg-amber-900/70 text-amber-300 border border-amber-700 flex-shrink-0">
+            <span class="font-semibold text-sm" data-i18n="verifiedWitnessesTab">Verified Witnesses</span>
+            <span class="text-xs text-amber-400" data-i18n="verifiedWitnessesDesc">Trusted voices</span>
+        </button>
+    </nav>
 
-            <div class="dropdown-container relative shrink-0 z-50 self-end md:self-auto">
-                <button id="more-btn" 
-                        type="button" 
-                        onclick="event.stopPropagation(); const m = document.getElementById('more-menu'); if(m) m.classList.toggle('hidden');"
-                        class="px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-white font-semibold transition-all duration-150 border border-zinc-700 cursor-pointer select-none" 
-                        data-i18n="moreOptionsBtn">
-                    <span class="font-semibold text-sm pointer-events-none">More Options</span>
-                    <span class="text-xs text-zinc-400 hidden md:block pointer-events-none">Menu & Pages</span>
-                </button>
-                <div id="more-menu" class="hidden absolute right-0 top-full mt-2 w-64 bg-zinc-900 border border-zinc-700 rounded-3xl shadow-2xl py-3 z-50">
-                    <a href="my-testimonies.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="myTestimoniesMenu">My Testimonies</a>
-                    <a href="groups.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="groupsMenu">Groups</a>
-                    <a href="witness-voice.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="witnessVoiceMenu">Witness Voice</a>
-                    <div class="h-px bg-zinc-700 mx-4 my-2"></div>
-                    <a href="about.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="aboutMenu">About Us</a>
-                    <a href="privacy.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="privacyPolicyMenu">Privacy Policy</a>
-                    <a href="terms.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="termsOfServiceMenu">Terms of Service</a>
-                    <a href="safety.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="safetyGuidelinesMenu">Safety Guidelines</a>
-                </div>
-            </div>
+    <!-- More Options Dropdown for Desktop -->
+    <div class="dropdown-container relative shrink-0 z-50">
+        <button id="more-btn" 
+                type="button" 
+                onclick="event.stopPropagation(); const m = document.getElementById('more-menu'); if(m) m.classList.toggle('hidden');"
+                class="px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-white font-semibold transition-all duration-150 border border-zinc-700 cursor-pointer select-none" 
+                data-i18n="moreOptionsBtn">
+            <span class="font-semibold text-sm pointer-events-none">More Options</span>
+            <span class="text-xs text-zinc-400 pointer-events-none">Menu & Pages</span>
+        </button>
+        <div id="more-menu" class="hidden absolute right-0 top-full mt-2 w-64 bg-zinc-900 border border-zinc-700 rounded-3xl shadow-2xl py-3 z-50">
+            <a href="my-testimonies.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="myTestimoniesMenu">My Testimonies</a>
+            <a href="groups.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="groupsMenu">Groups</a>
+            <a href="witness-voice.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="witnessVoiceMenu">Witness Voice</a>
+            <div class="h-px bg-zinc-700 mx-4 my-2"></div>
+            <a href="about.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="aboutMenu">About Us</a>
+            <a href="privacy.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="privacyPolicyMenu">Privacy Policy</a>
+            <a href="terms.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="termsOfServiceMenu">Terms of Service</a>
+            <a href="safety.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="safetyGuidelinesMenu">Safety Guidelines</a>
         </div>
+    </div>
+</div>
+
+
+    <!-- MOBILE BOTTOM NAVIGATION BAR (Visible only on mobile: md:hidden) -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-zinc-950/90 backdrop-blur-xl border-t border-zinc-800 px-2 py-2 z-[9999] flex items-center justify-around shadow-2xl">
+    
+    <!-- Square Tab -->
+    <button data-tab="square" class="nav-tab active flex flex-col items-center justify-center py-1 px-2 text-zinc-400 transition-all">
+        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path>
+        </svg>
+        <span class="text-[10px] font-medium" data-i18n="publicSquareTab">Square</span>
+    </button>
+
+    <!-- Ledger Tab -->
+    <button data-tab="ledger" class="nav-tab flex flex-col items-center justify-center py-1 px-2 text-zinc-400 transition-all">
+        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+        <span class="text-[10px] font-medium" data-i18n="evidenceLedgerTab">Ledger</span>
+    </button>
+
+    <!-- Live Arena Tab -->
+    <button data-tab="arena" class="nav-tab flex flex-col items-center justify-center py-1 px-2 text-sky-400 transition-all">
+        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+        </svg>
+        <span class="text-[10px] font-medium" data-i18n="liveArenaTab">Arena</span>
+    </button>
+
+    <!-- My Circle Tab -->
+    <button data-tab="mycircle" class="nav-tab flex flex-col items-center justify-center py-1 px-2 text-zinc-400 transition-all">
+        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+        </svg>
+        <span class="text-[10px] font-medium" data-i18n="myCircleTab">Circle</span>
+    </button>
+
+    <!-- Verified Witnesses Tab -->
+    <button data-tab="witness" class="nav-tab flex flex-col items-center justify-center py-1 px-2 text-amber-400 transition-all">
+        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+        </svg>
+        <span class="text-[10px] font-medium" data-i18n="verifiedWitnessesTab">Witnesses</span>
+    </button>
+</nav>
 
         <!-- Testimony Composer -->
         <div class="glass rounded-3xl p-6 sm:p-8 mb-10 shadow-xl">
