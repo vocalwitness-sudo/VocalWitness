@@ -57,10 +57,11 @@
 
 <body class="min-h-screen pb-28 md:pb-12 bg-[#0a0f1c] text-white antialiased">
     <div class="app-container py-6 px-4 max-w-6xl mx-auto">
+
         <!-- MAIN TOP HEADER -->
         <header class="flex items-center justify-between mb-8 sticky top-4 z-50 glass rounded-3xl p-4 shadow-2xl border-emerald-500/30">
             <!-- App Logo & Branding Title -->
-            <div class="flex items-center gap-3.5 group cursor-pointer">
+            <div class="flex items-center gap-3.5 group cursor-pointer" onclick="window.location.href='index.html'">
                 <div class="relative">
                     <div class="absolute inset-0 bg-emerald-500 rounded-2xl blur opacity-40 group-hover:opacity-75 transition"></div>
                     <img src="./logo.png" alt="VocalWitness Logo" class="relative w-11 h-11 object-contain rounded-2xl shadow-lg border border-emerald-500/40">
@@ -201,38 +202,40 @@
                 ✕
             </button>
         </div>
-<!-- MAIN DESKTOP TAB NAVIGATION -->
-        <div class="relative z-50 mb-8 w-full flex flex-col md:flex-row items-stretch md:items-center gap-2">
+
+        <!-- MAIN DESKTOP/MOBILE TAB NAVIGATION -->
+        <div class="relative z-40 mb-8 w-full flex flex-col md:flex-row items-stretch md:items-center gap-2">
             <!-- Scrollable or Wrapping Tab Bar -->
             <nav class="flex items-center gap-2 pb-2 overflow-x-auto md:overflow-visible flex-wrap md:flex-nowrap flex-1" id="main-nav">
-                <button data-tab="square" class="nav-tab active px-4 md:px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative flex-shrink-0">
+                <button data-tab="square" class="nav-tab active px-4 md:px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative flex-shrink-0 cursor-pointer">
                     <span class="font-semibold text-sm" data-i18n="publicSquareTab">Public Square</span>
                     <span class="text-xs text-zinc-400 hidden md:block" data-i18n="publicSquareDesc">Share stories & evidence</span>
                 </button>
 
-                <button data-tab="ledger" class="nav-tab px-4 md:px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative flex-shrink-0">
+                <button data-tab="ledger" class="nav-tab px-4 md:px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative flex-shrink-0 cursor-pointer">
                     <span class="font-semibold text-sm" data-i18n="evidenceLedgerTab">Evidence Ledger</span>
                     <span class="text-xs text-zinc-400 hidden md:block" data-i18n="evidenceLedgerDesc">Permanent record</span>
                 </button>
 
-                <button data-tab="arena" class="nav-tab px-4 md:px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative bg-sky-900/70 text-sky-300 border border-sky-700 hover:bg-sky-800 flex-shrink-0">
+                <button data-tab="arena" class="nav-tab px-4 md:px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative bg-sky-900/70 text-sky-300 border border-sky-700 hover:bg-sky-800 flex-shrink-0 cursor-pointer">
                     <span class="font-semibold text-sm" data-i18n="liveArenaTab">Live Arena</span>
                     <span class="text-xs text-sky-400 hidden md:block" data-i18n="liveArenaDesc">Watch & join live</span>
                 </button>
 
-                <button data-tab="mycircle" class="nav-tab px-4 md:px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative flex-shrink-0">
+                <button data-tab="mycircle" class="nav-tab px-4 md:px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative flex-shrink-0 cursor-pointer">
                     <span class="font-semibold text-sm" data-i18n="myCircleTab">My Circle</span>
                     <span class="text-xs text-zinc-400 hidden md:block" data-i18n="myCircleDesc">Trusted people</span>
                 </button>
 
-                <button data-tab="witness" class="nav-tab px-4 md:px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative bg-amber-900/70 text-amber-300 border border-amber-700 flex-shrink-0">
-                    <span class="font-semibold text-sm" data-i18n="verifiedWitnessesTab">Verified Witnesses</span>
-                    <span class="text-xs text-amber-400 hidden md:block" data-i18n="verifiedWitnessesDesc">Trusted voices</span>
+                <!-- WITNESS VOICE TAB (Updated based on branding) -->
+                <button data-tab="witness" class="nav-tab px-4 md:px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative bg-amber-900/70 text-amber-300 border border-amber-700 flex-shrink-0 cursor-pointer">
+                    <span class="font-semibold text-sm" data-i18n="witnessVoiceTab">Witness Voice</span>
+                    <span class="text-xs text-amber-400 hidden md:block" data-i18n="witnessVoiceDesc">Trusted voices</span>
                 </button>
             </nav>
 
-            <!-- More Options Dropdown -->
-            <div class="dropdown-container relative shrink-0 z-50 self-end md:self-auto">
+            <!-- More Options Dropdown (Desktop) -->
+            <div class="dropdown-container relative shrink-0 z-50 hidden md:block">
                 <button id="more-btn" 
                         type="button" 
                         onclick="event.stopPropagation(); const m = document.getElementById('more-menu'); if(m) m.classList.toggle('hidden');"
@@ -242,17 +245,18 @@
                     <span class="text-xs text-zinc-400 hidden md:block pointer-events-none">Menu & Pages</span>
                 </button>
                 <div id="more-menu" class="hidden absolute right-0 top-full mt-2 w-64 bg-zinc-900 border border-zinc-700 rounded-3xl shadow-2xl py-3 z-50">
-                    <a href="my-testimonies.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="myTestimoniesMenu">My Testimonies</a>
-                    <a href="groups.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="groupsMenu">Groups</a>
-                    <a href="witness-voice.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="witnessVoiceMenu">Witness Voice</a>
+                    <a href="my-testimonies.html" class="block px-6 py-3 hover:bg-zinc-800 text-white text-sm" data-i18n="myTestimoniesMenu">My Testimonies</a>
+                    <a href="groups.html" class="block px-6 py-3 hover:bg-zinc-800 text-white text-sm" data-i18n="groupsMenu">Groups</a>
+                    <a href="witness-voice.html" class="block px-6 py-3 hover:bg-zinc-800 text-white text-sm" data-i18n="witnessVoiceMenu">Witness Voice</a>
                     <div class="h-px bg-zinc-700 mx-4 my-2"></div>
-                    <a href="about.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="aboutMenu">About Us</a>
-                    <a href="privacy.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="privacyPolicyMenu">Privacy Policy</a>
-                    <a href="terms.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="termsOfServiceMenu">Terms of Service</a>
-                    <a href="safety.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="safetyGuidelinesMenu">Safety Guidelines</a>
+                    <a href="about.html" class="block px-6 py-3 hover:bg-zinc-800 text-white text-sm" data-i18n="aboutMenu">About Us</a>
+                    <a href="privacy.html" class="block px-6 py-3 hover:bg-zinc-800 text-white text-sm" data-i18n="privacyPolicyMenu">Privacy Policy</a>
+                    <a href="terms.html" class="block px-6 py-3 hover:bg-zinc-800 text-white text-sm" data-i18n="termsOfServiceMenu">Terms of Service</a>
+                    <a href="safety.html" class="block px-6 py-3 hover:bg-zinc-800 text-white text-sm" data-i18n="safetyGuidelinesMenu">Safety Guidelines</a>
                 </div>
             </div>
         </div>
+
         <!-- Testimony Composer -->
         <div class="glass rounded-3xl p-6 sm:p-8 mb-10 shadow-xl">
             <div class="flex items-center justify-between mb-4">
@@ -334,11 +338,12 @@
             <span class="text-[10px] font-medium tracking-wide">Square</span>
         </button>
 
+        <!-- WITNESS VOICE NAV (Updated based on branding) -->
         <button data-tab="witness" class="mobile-nav-btn flex flex-col items-center justify-center p-2 text-zinc-400 hover:text-white rounded-xl transition">
             <svg class="w-6 h-6 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z"></path>
             </svg>
-            <span class="text-[10px] font-medium tracking-wide">Witness</span>
+            <span class="text-[10px] font-medium tracking-wide">Witness Voice</span>
         </button>
 
         <button id="mobile-bookmarks-btn" data-action="open-bookmarks" class="mobile-nav-btn flex flex-col items-center justify-center p-2 text-zinc-400 hover:text-white rounded-xl transition">
@@ -429,6 +434,14 @@
                     </button>
                 </div>
 
+                <!-- Submit Button -->
+                <button type="submit" 
+                        class="w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-all shadow-lg text-sm mt-4">
+                    Sign In
+                </button>
+            </form>
+        </div>
+    </div>
                 <!-- Message area -->
                 <div id="authMessage" class="hidden text-sm text-center py-2 px-3 rounded-xl"></div>
 
