@@ -22,6 +22,7 @@ import { handleReaction } from './reactions.js';
 let activeFeedListener = null;
 let allPostsCache = [];
 let currentChannel = 'citizen-talk';
+let searchDebounceTimer = null;
 
 function escapeHTML(str) {
     if (!str) return '';
@@ -189,7 +190,15 @@ function ensureSearchAndFilterUI(container) {
         container.parentNode.insertBefore(wrapper, container);
     }
 
-    document.getElementById('feedSearchInput')?.addEventListener('input', () => applySearchAndFilter());
+    const searchInput = document.getElementById('feedSearchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(() => {
+                applySearchAndFilter();
+            }, 250);
+        });
+    }
 
     const filterBtns = wrapper.querySelectorAll('.filter-btn');
     filterBtns.forEach(btn => {
