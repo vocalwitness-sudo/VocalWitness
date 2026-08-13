@@ -154,7 +154,7 @@ function handleAuthError(error) {
         case 'auth/cancelled-popup-request':
             return null;
         case 'auth/popup-blocked':
-            return "Popup was blocked by browser. Please allow popups for this site.";
+            return "Popup was blocked by browser. Switching to redirect...";
         case 'auth/invalid-email':
             return "The email address format is invalid.";
         case 'auth/user-not-found':
@@ -273,7 +273,7 @@ export async function googleLogin(event) {
     try {
         savePendingDraft();
 
-        // Remember Me
+        // Remember Me Persistence
         const remember = document.getElementById('rememberMe')?.checked ?? true;
         await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
 
@@ -286,20 +286,26 @@ export async function googleLogin(event) {
             return;
         }
 
-        const userCredential = await signInWithPopup(auth, provider);
-        if (userCredential?.user) {
-            await createOrUpdateUser(userCredential.user);
-            showToast("✅ Signed in successfully!", "success");
-            closeLoginModal();
-            restorePendingDraft();
+        // Attempt Popup first on desktop
+        try {
+            const userCredential = await signInWithPopup(auth, provider);
+            if (userCredential?.user) {
+                await createOrUpdateUser(userCredential.user);
+                showToast("✅ Signed in successfully!", "success");
+                closeLoginModal();
+                restorePendingDraft();
+            }
+        } catch (popupError) {
+            // Popup fallback for restricted environments/blockers
+            if (popupError.code === 'auth/popup-blocked' || popupError.code === 'auth/popup-closed-by-user') {
+                showToast("⚠️ Popup blocked or closed. Switching to redirect...", "info");
+                await signInWithRedirect(auth, provider);
+                return;
+            }
+            throw popupError;
         }
     } catch (error) {
         if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
-            return;
-        }
-        if (error.code === 'auth/popup-blocked') {
-            showToast("⚠️ Popup blocked. Switching to redirect...", "warning");
-            await signInWithRedirect(auth, provider);
             return;
         }
         console.error("Google login error:", error);
@@ -507,12 +513,12 @@ export function updateUIForAuthState(userParam = null) {
     const activeUser = userParam || auth.currentUser;
     const isLoggedIn = !!activeUser;
 
-    const guestBtn = document.getElementById('guest-action-btn');
+    const guestBtns = document.querySelectorAll('#guest-action-btn, #guest-action-btn-mobile, #guest-action-btn-drawer, .guest-only-btn');
     const profileBtn = document.getElementById('profile-btn');
     const signInElement = document.getElementById('signin-btn');
     const privateElements = document.querySelectorAll('.requires-auth');
 
-    if (guestBtn) guestBtn.classList.toggle('hidden', isLoggedIn);
+    guestBtns.forEach(btn => btn.classList.toggle('hidden', isLoggedIn));
     if (signInElement) signInElement.classList.toggle('hidden', isLoggedIn);
     if (profileBtn) profileBtn.classList.toggle('hidden', !isLoggedIn);
 
@@ -599,13 +605,13 @@ export function bindHeaderEvents() {
             return;
         }
 
-      // Toggle Sign In / Create Account mode
-if (e.target.closest('#toggleAuthModeBtn, #switchAuthMode, [data-action="toggle-auth-mode"]')) {
-    e.preventDefault();
-    isSignUpMode = !isSignUpMode;
-    updateAuthModeUI();
-    return;
-}
+        // Toggle Sign In / Create Account mode
+        if (e.target.closest('#toggleAuthModeBtn, #switchAuthMode, [data-action="toggle-auth-mode"]')) {
+            e.preventDefault();
+            isSignUpMode = !isSignUpMode;
+            updateAuthModeUI();
+            return;
+        }
 
         // Forgot Password → show reset view
         if (e.target.closest('#forgotPasswordBtn')) {
@@ -635,8 +641,8 @@ if (e.target.closest('#toggleAuthModeBtn, #switchAuthMode, [data-action="toggle-
             return;
         }
 
-        // Open Auth Modal
-        if (e.target.closest('#guest-action-btn, #signin-btn-mobile, [data-action="open-auth-modal"]')) {
+        // Open Auth Modal (multi-element target support)
+        if (e.target.closest('#guest-action-btn, #guest-action-btn-mobile, #guest-action-btn-drawer, #signin-btn-mobile, .auth-trigger-btn, [data-action="open-auth-modal"]')) {
             e.preventDefault();
             showAuthModal();
             return;
