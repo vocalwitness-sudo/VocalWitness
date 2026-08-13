@@ -61,9 +61,9 @@
     <div class="app-container py-6 px-4 max-w-6xl mx-auto">
      
         
-        <!-- MAIN TOP HEADER -->
+      <!-- MAIN TOP HEADER -->
         <header class="flex items-center justify-between mb-8 sticky top-4 z-50 glass rounded-3xl p-4 shadow-2xl border-emerald-500/30">
-            <!-- App Logo & Branding Title -->
+            <!-- App Logo & Branding Title (Visible Everywhere) -->
             <div class="flex items-center gap-3.5 group cursor-pointer shrink-0">
                 <div class="relative flex items-center justify-center">
                     <div class="absolute inset-0 bg-emerald-500 rounded-2xl blur opacity-40 group-hover:opacity-75 transition"></div>
@@ -75,9 +75,10 @@
                 </div>
             </div>
 
-            <!-- Controls Right Container -->
+            <!-- Controls Container -->
             <div class="flex items-center gap-2">
-                <!-- Desktop Controls (Medium Screens & Up) -->
+                
+                <!-- DESKTOP CONTROLS (Visible on Medium Screens & Up: hidden md:flex) -->
                 <div class="hidden md:flex items-center gap-2">
                     <select id="languageSelector-desktop" aria-label="Select Language" class="bg-zinc-900 border text-white rounded-2xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500" style="background-color: #18181b; color: #ffffff; border-color: #3f3f46;">
                         <option value="en">English</option>
@@ -91,7 +92,7 @@
 
                     <button id="guest-action-btn" type="button" data-action="open-auth-modal" class="px-4 py-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm text-sm" style="background-color: #ffffff; color: #000000;">
                         <img src="https://www.google.com/favicon.ico" class="w-4 h-4" alt="Google">
-                        <span class="hidden sm:inline" data-i18n="joinBtn">Join VocalWitness</span>
+                        <span data-i18n="joinBtn">Join VocalWitness</span>
                     </button>
 
                     <button id="support-btn" data-action="open-support-modal" class="px-5 py-2.5 font-medium rounded-2xl transition whitespace-nowrap text-sm shadow-sm" style="background-color: #10b981; color: #000000;" data-i18n="supportBtn">
@@ -129,56 +130,119 @@
                     </button>
                 </div>
 
-                <!-- Mobile Controls Container (Visible only on phones: flex md:hidden) -->
-                <div class="flex md:hidden items-center gap-2 overflow-x-auto py-1 max-w-full no-scrollbar">
-                    <!-- Mobile Language Selector with Pidgin & Nigerian Languages -->
-                    <select id="languageSelector-mobile" aria-label="Select Language" class="bg-zinc-900 border border-zinc-700 text-white rounded-xl px-2.5 py-1.5 text-xs focus:outline-none focus:border-emerald-500 shrink-0">
-                        <option value="en">English</option>
+                <!-- MOBILE TOP HEADER (Compact: flex md:hidden) -->
+                <div class="flex md:hidden items-center gap-2 shrink-0">
+                    <!-- Mobile Language Selector -->
+                    <select id="languageSelector-mobile" aria-label="Select Language" class="bg-zinc-900 border border-zinc-700 text-white rounded-xl px-2 py-1.5 text-xs focus:outline-none focus:border-emerald-500 shrink-0">
+                        <option value="en">EN</option>
                         <option value="pcm">Pidgin</option>
                         <option value="ha">Hausa</option>
                         <option value="yo">Yoruba</option>
                         <option value="ig">Igbo</option>
-                        <option value="es">Español</option>
-                        <option value="fr">Français</option>
+                        <option value="es">ES</option>
+                        <option value="fr">FR</option>
                     </select>
 
-                    <button id="guest-action-btn-mobile" type="button" data-action="open-auth-modal" class="px-3 py-1.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-xl transition-all flex items-center gap-1.5 shadow-sm text-xs shrink-0">
-                        <img src="https://www.google.com/favicon.ico" class="w-3.5 h-3.5" alt="Google">
-                        <span data-i18n="joinBtn">Join</span>
+                    <!-- Compact Google Logo Button -->
+                    <button id="guest-action-btn-mobile" type="button" data-action="open-auth-modal" class="p-2 bg-white hover:bg-zinc-100 rounded-xl transition-all shadow-sm shrink-0 flex items-center justify-center" aria-label="Join with Google">
+                        <img src="https://www.google.com/favicon.ico" class="w-4 h-4" alt="Google">
                     </button>
 
-                    <button id="support-btn-mobile" type="button" data-action="open-support-modal" class="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-all text-xs shadow-sm shrink-0 whitespace-nowrap" data-i18n="supportBtn">
-                        Support
-                    </button>
-
-                    <button id="data-saver-btn-mobile" type="button" data-action="toggle-data-saver" class="px-2.5 py-1.5 bg-zinc-900 border border-zinc-800 rounded-xl hover:bg-zinc-800 transition-all text-xs font-semibold flex items-center gap-1 text-zinc-300 shadow-sm shrink-0">
-                        <span>⚡</span>
-                        <strong id="data-saver-status-mobile" class="text-emerald-400 font-bold">Off</strong>
-                    </button>
-
-                    <button id="bookmarks-nav-btn-mobile" type="button" data-action="open-bookmarks" class="p-1.5 bg-zinc-900 border border-zinc-700 rounded-xl hover:bg-zinc-800 text-zinc-300 hover:text-white transition-all flex items-center justify-center shrink-0" aria-label="Saved Items" title="Saved Items">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+                    <!-- Mobile Hamburger Menu Button (☰) -->
+                    <button id="mobile-menu-toggle-btn" 
+                            type="button" 
+                            onclick="const drawer = document.getElementById('mobile-drawer'); if(drawer) drawer.classList.toggle('hidden');" 
+                            class="p-2 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 text-white rounded-xl transition-all flex items-center justify-center shrink-0" 
+                            aria-label="Toggle Navigation Menu">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                         </svg>
                     </button>
-
-                    <div class="relative inline-block shrink-0" id="notification-container-mobile">
-                        <button id="notification-btn-mobile" type="button" class="relative p-1.5 bg-zinc-900 border border-zinc-700/80 rounded-full hover:bg-zinc-800 text-zinc-300 hover:text-white transition-all flex items-center justify-center" aria-label="Notifications">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                            </svg>
-                            <span id="notification-badge-mobile" class="hidden absolute -top-1 -right-1 bg-emerald-500 text-black text-[9px] font-bold px-1 rounded-full min-w-[14px] text-center shadow-lg border border-zinc-900">
-                                0
-                            </span>
-                        </button>
-                    </div>
-
-                    <button id="profile-btn-mobile" type="button" data-action="open-profile" class="px-3 py-1.5 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 rounded-xl transition-all hidden text-xs text-white shrink-0" data-i18n="profileBtn">
-                        Profile
-                    </button>
                 </div>
+
             </div>
         </header>
+
+        <!-- MOBILE SLIDE-OUT / OVERLAY DRAWER MENU (Hidden by default) -->
+        <div id="mobile-drawer" class="hidden md:hidden fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex flex-col justify-between p-6 overflow-y-auto">
+            <div>
+                <!-- Drawer Top Header -->
+                <div class="flex items-center justify-between pb-4 border-b border-zinc-800 mb-6">
+                    <div class="flex items-center gap-3">
+                        <img src="./logo.png" alt="VocalWitness Logo" class="w-8 h-8 object-contain rounded-xl border border-emerald-500/40">
+                        <span class="font-bold text-emerald-400 text-lg" data-i18n="appTitle">VocalWitness</span>
+                    </div>
+                    <button type="button" onclick="document.getElementById('mobile-drawer').classList.add('hidden')" class="p-2 bg-zinc-900 border border-zinc-700 rounded-xl text-zinc-400 hover:text-white">
+                        ✕
+                    </button>
+                </div>
+
+                <!-- Primary Action Items in Drawer -->
+                <div class="flex flex-col gap-3 mb-6">
+                    <button id="guest-action-btn-drawer" type="button" data-action="open-auth-modal" class="w-full py-3 bg-white text-black font-bold rounded-2xl flex items-center justify-center gap-2 shadow-md">
+                        <img src="https://www.google.com/favicon.ico" class="w-5 h-5" alt="Google">
+                        <span data-i18n="joinBtn">Join VocalWitness</span>
+                    </button>
+
+                    <button id="support-btn-drawer" type="button" data-action="open-support-modal" class="w-full py-3 bg-emerald-500 text-black font-bold rounded-2xl text-center shadow-md" data-i18n="supportBtn">
+                        Support The Square
+                    </button>
+
+                    <div class="grid grid-cols-2 gap-2 mt-2">
+                        <button id="data-saver-btn-drawer" type="button" data-action="toggle-data-saver" class="py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 text-zinc-300">
+                            <span>⚡</span>
+                            <span>Data Saver: <strong id="data-saver-status-drawer" class="text-emerald-400 font-bold">Off</strong></span>
+                        </button>
+
+                        <button id="bookmarks-nav-btn-drawer" type="button" data-action="open-bookmarks" class="py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 text-zinc-300">
+                            <span>🔖</span>
+                            <span>Saved Items</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- App Navigation Sections -->
+                <div class="mb-6">
+                    <h3 class="text-xs uppercase tracking-wider text-zinc-500 font-bold mb-3">Navigation</h3>
+                    <div class="flex flex-col gap-2">
+                        <button data-tab="square" onclick="document.getElementById('mobile-drawer').classList.add('hidden')" class="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-2xl text-left font-semibold text-white flex items-center gap-3">
+                            <span>🏛️</span> <span data-i18n="publicSquareTab">Public Square</span>
+                        </button>
+                        <button data-tab="ledger" onclick="document.getElementById('mobile-drawer').classList.add('hidden')" class="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-2xl text-left font-semibold text-white flex items-center gap-3">
+                            <span>📜</span> <span data-i18n="evidenceLedgerTab">Evidence Ledger</span>
+                        </button>
+                        <button data-tab="arena" onclick="document.getElementById('mobile-drawer').classList.add('hidden')" class="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-2xl text-left font-semibold text-sky-400 flex items-center gap-3">
+                            <span>🎙️</span> <span data-i18n="liveArenaTab">Live Arena</span>
+                        </button>
+                        <button data-tab="mycircle" onclick="document.getElementById('mobile-drawer').classList.add('hidden')" class="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-2xl text-left font-semibold text-white flex items-center gap-3">
+                            <span>👥</span> <span data-i18n="myCircleTab">My Circle</span>
+                        </button>
+                        <button data-tab="witness" onclick="document.getElementById('mobile-drawer').classList.add('hidden')" class="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-2xl text-left font-semibold text-amber-400 flex items-center gap-3">
+                            <span>🛡️</span> <span data-i18n="verifiedWitnessesTab">Verified Witnesses</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Secondary Menu Pages -->
+                <div>
+                    <h3 class="text-xs uppercase tracking-wider text-zinc-500 font-bold mb-3">Explore & Pages</h3>
+                    <div class="flex flex-col gap-1 text-sm text-zinc-300">
+                        <a href="my-testimonies.html" class="p-2.5 hover:bg-zinc-900 rounded-xl block" data-i18n="myTestimoniesMenu">My Testimonies</a>
+                        <a href="groups.html" class="p-2.5 hover:bg-zinc-900 rounded-xl block" data-i18n="groupsMenu">Groups</a>
+                        <a href="witness-voice.html" class="p-2.5 hover:bg-zinc-900 rounded-xl block" data-i18n="witnessVoiceMenu">Witness Voice</a>
+                        <div class="h-px bg-zinc-800 my-2"></div>
+                        <a href="about.html" class="p-2.5 hover:bg-zinc-900 rounded-xl block" data-i18n="aboutMenu">About Us</a>
+                        <a href="privacy.html" class="p-2.5 hover:bg-zinc-900 rounded-xl block" data-i18n="privacyPolicyMenu">Privacy Policy</a>
+                        <a href="terms.html" class="p-2.5 hover:bg-zinc-900 rounded-xl block" data-i18n="termsOfServiceMenu">Terms of Service</a>
+                        <a href="safety.html" class="p-2.5 hover:bg-zinc-900 rounded-xl block" data-i18n="safetyGuidelinesMenu">Safety Guidelines</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-6 border-t border-zinc-800 mt-6 text-center text-xs text-zinc-500">
+                VocalWitness &copy; Public Truth & Evidence
+            </div>
+        </div>
 
         <!-- BREAKING NEWS TICKER -->
         <div class="ticker-wrap border-b py-2 text-xs text-slate-300 rounded-2xl mb-4" style="background-color: #0f172a; border-color: rgba(16, 185, 129, 0.2);">
@@ -210,7 +274,7 @@
             </button>
         </div>
 
-        <!-- MAIN DESKTOP TAB NAVIGATION (Hidden on mobile, visible on desktop) -->
+        <!-- MAIN DESKTOP TAB NAVIGATION (Hidden on mobile: hidden md:flex) -->
         <div class="relative z-50 mb-8 w-full hidden md:flex flex-row items-center gap-2">
             <nav class="flex items-center gap-2 pb-2 overflow-x-auto md:overflow-visible flex-nowrap flex-1" id="main-nav">
                 <button data-tab="square" class="nav-tab active px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative flex-shrink-0">
@@ -262,8 +326,8 @@
             </div>
         </div>
 
-        <!-- Testimony Composer -->
-        <div class="glass rounded-3xl p-6 sm:p-8 mb-24 shadow-xl">
+        <!-- TESTIMONY COMPOSER -->
+        <div class="glass rounded-3xl p-6 sm:p-8 mb-12 shadow-xl">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-lg font-semibold text-white flex items-center gap-2" data-i18n="shareTestimonyTitle">
                     Share Your Testimony
