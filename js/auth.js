@@ -1,4 +1,4 @@
-// js/auth.js - Auth Handler with Profile Cache Sync & Verified State Guards
+// js/auth.js - Auth Handler with Profile Cache Sync & Default Citizen Tier Assignment
 import {
     signInWithPopup,
     signInWithRedirect,
@@ -16,7 +16,7 @@ import {
 import { auth, provider, db } from './firebase-config.js';
 import { showToast } from './utils.js';
 import { updateAppState } from './app-state.js';
-import { applyTierTheme, updateTierBadge, clearProfileCache } from './tier.js';
+import { applyTierTheme, updateTierBadge, clearProfileCache, TIERS } from './tier.js';
 import { initNotifications } from './notifications.js';
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
@@ -46,17 +46,23 @@ async function createOrUpdateUser(user) {
         const safePhotoURL = user.photoURL || "";
 
         if (!snap.exists()) {
+            // Default tier for new accounts is 'citizen' (Public Square)
             await setDoc(userRef, {
                 uid: user.uid,
                 email: safeEmail,
                 displayName: safeDisplayName,
                 photoURL: safePhotoURL,
-                tier: "citizen",
+                tier: TIERS.CITIZEN || "citizen",
                 isVerified: false,
+                isPhoneVerified: false,
+                zkVerified: false,
+                reputation: 0,
+                weeklyPoints: 0,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp()
             });
             updateVerificationUI(false);
+            showToast("🎉 Account created! Welcome to the Public Square.", "success");
         } else {
             const existingData = snap.data() || {};
             const updatePayload = {
@@ -74,10 +80,11 @@ async function createOrUpdateUser(user) {
             }
 
             await updateDoc(userRef, updatePayload);
-            updateVerificationUI(existingData.isVerified || false);
+            updateVerificationUI(existingData.isVerified || existingData.isPhoneVerified || false);
         }
     } catch (e) {
         console.error("User document update error:", e);
+        showToast("Error configuring user profile in Firestore.", "error");
     }
 }
 
@@ -88,10 +95,10 @@ export function updateVerificationUI(isVerified = false) {
     if (statusEl) {
         if (isVerified) {
             statusEl.className = "inline-flex items-center gap-1.5 text-xs font-bold text-emerald-400 bg-emerald-400/10 px-2.5 py-1 rounded-lg border border-emerald-400/20";
-            statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Verified Citizen`;
+            statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Citizen Circle`;
         } else {
             statusEl.className = "inline-flex items-center gap-1.5 text-xs font-bold text-amber-400 bg-amber-400/10 px-2.5 py-1 rounded-lg border border-amber-400/20";
-            statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Unverified`;
+            statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Citizen (Unverified)`;
         }
     }
 
@@ -158,9 +165,9 @@ function handleAuthError(error) {
         case 'auth/invalid-email':
             return "The email address format is invalid.";
         case 'auth/user-not-found':
-            return "No account found with this email address. Please check or sign up.";
+            return "No account found with this email. Please click 'Create Account'.";
         case 'auth/wrong-password':
-            return "Incorrect password. Please try again.";
+            return "Incorrect password. Please try again or click 'Forgot password?'.";
         case 'auth/email-already-in-use':
             return "An account with this email already exists. Try signing in instead.";
         case 'auth/weak-password':
@@ -172,9 +179,6 @@ function handleAuthError(error) {
     }
 }
 
-/**
- * Robustly finds email + password inputs inside a form.
- */
 function getAuthInputs(form) {
     if (!form || !(form instanceof HTMLFormElement)) {
         return { emailInput: null, passwordInput: null };
@@ -273,7 +277,6 @@ export async function googleLogin(event) {
     try {
         savePendingDraft();
 
-        // Remember Me Persistence
         const remember = document.getElementById('rememberMe')?.checked ?? true;
         await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
 
@@ -286,17 +289,15 @@ export async function googleLogin(event) {
             return;
         }
 
-        // Attempt Popup first on desktop
         try {
             const userCredential = await signInWithPopup(auth, provider);
             if (userCredential?.user) {
                 await createOrUpdateUser(userCredential.user);
-                showToast("✅ Signed in successfully!", "success");
+                showToast("✅ Signed in successfully with Google!", "success");
                 closeLoginModal();
                 restorePendingDraft();
             }
         } catch (popupError) {
-            // Popup fallback for restricted environments/blockers
             if (popupError.code === 'auth/popup-blocked' || popupError.code === 'auth/popup-closed-by-user') {
                 showToast("⚠️ Popup blocked or closed. Switching to redirect...", "info");
                 await signInWithRedirect(auth, provider);
@@ -362,7 +363,6 @@ export async function handleEmailAuth(event) {
     try {
         savePendingDraft();
 
-        // Remember Me
         const remember = document.getElementById('rememberMe')?.checked ?? true;
         await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
 
@@ -375,7 +375,7 @@ export async function handleEmailAuth(event) {
             await sendEmailVerification(user);
             await signOut(auth);
 
-            showToast("🎉 Account created! Check your email to verify before signing in.", "success");
+            showToast("🎉 Account created! Please check your email to verify before logging in.", "success");
             closeLoginModal();
         } else {
             // ===== SIGN IN =====
@@ -485,11 +485,9 @@ export function togglePasswordVisibility(inputId, btnElement) {
     input.type = isPassword ? 'text' : 'password';
 
     if (btnElement) {
-        // Support text buttons
         if (btnElement.textContent === 'Show' || btnElement.textContent === 'Hide') {
             btnElement.textContent = isPassword ? 'Hide' : 'Show';
         }
-        // Support SVG icons
         const eye = btnElement.querySelector('#eyeIcon');
         const eyeOff = btnElement.querySelector('#eyeOffIcon');
         if (eye && eyeOff) {
@@ -596,16 +594,13 @@ export function bindHeaderEvents() {
     if (window.__authDelegationBound) return;
     window.__authDelegationBound = true;
 
-    // Click delegation
     document.addEventListener('click', (e) => {
-        // Google Login
         if (e.target.closest('#googleAuthBtn, #googleSignInBtn, [data-action="google-login"], .google-auth-btn')) {
             e.preventDefault();
             googleLogin(e);
             return;
         }
 
-        // Toggle Sign In / Create Account mode
         if (e.target.closest('#toggleAuthModeBtn, #switchAuthMode, [data-action="toggle-auth-mode"]')) {
             e.preventDefault();
             isSignUpMode = !isSignUpMode;
@@ -613,49 +608,42 @@ export function bindHeaderEvents() {
             return;
         }
 
-        // Forgot Password → show reset view
         if (e.target.closest('#forgotPasswordBtn')) {
             e.preventDefault();
             switchToResetView();
             return;
         }
 
-        // Back from reset view
         if (e.target.closest('#backToAuthBtn')) {
             e.preventDefault();
             switchToAuthView();
             return;
         }
 
-        // Send Reset Email
         if (e.target.closest('#sendResetBtn')) {
             e.preventDefault();
             handlePasswordReset();
             return;
         }
 
-        // Logout
         if (e.target.closest('#logoutBtn, #logout-btn, [data-action="logout"], .logout-btn')) {
             e.preventDefault();
             logout();
             return;
         }
 
-        // Open Auth Modal (multi-element target support)
         if (e.target.closest('#guest-action-btn, #guest-action-btn-mobile, #guest-action-btn-drawer, #signin-btn-mobile, .auth-trigger-btn, [data-action="open-auth-modal"]')) {
             e.preventDefault();
             showAuthModal();
             return;
         }
 
-        // Close Modal
         if (e.target.closest('[data-action="close-auth-modal"], #closeAuthModalBtn')) {
             e.preventDefault();
             closeLoginModal();
             return;
         }
 
-        // Password visibility toggle
         if (e.target.closest('#togglePasswordBtn, [data-action="toggle-password"]')) {
             e.preventDefault();
             const btn = e.target.closest('#togglePasswordBtn, [data-action="toggle-password"]');
@@ -664,14 +652,12 @@ export function bindHeaderEvents() {
             return;
         }
 
-        // Profile
         if (e.target.closest('#profile-btn, #profile-btn-mobile, [data-action="open-profile"]')) {
             e.preventDefault();
             if (typeof window.openProfile === 'function') window.openProfile();
             return;
         }
 
-        // Verification
         if (e.target.closest('#request-verification-btn')) {
             e.preventDefault();
             openVerificationModal();
@@ -679,7 +665,6 @@ export function bindHeaderEvents() {
         }
     });
 
-    // Form submit
     document.addEventListener('submit', (e) => {
         const form = e.target;
         if (form?.matches?.('#authForm, #emailAuthForm, #loginForm, #signInForm, #signUpForm')) {
@@ -688,7 +673,6 @@ export function bindHeaderEvents() {
         }
     });
 
-    // Outside click to close dropdowns
     document.addEventListener('click', (e) => {
         if (!e.target.closest('#profile-btn, #profile-menu, #user-dropdown, .dropdown-container')) {
             document.querySelectorAll('#profile-menu, #user-dropdown, .dropdown-menu')
