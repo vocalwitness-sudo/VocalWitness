@@ -122,6 +122,59 @@
                     </button>
                 </div>
             </div>
+
+
+    <!-- Mobile Controls Container (Visible only on phones, hidden on desktop md:hidden) -->
+<div class="flex md:hidden items-center gap-1.5 overflow-x-auto py-1 max-w-full no-scrollbar">
+    <!-- Mobile Language Selector -->
+    <select id="languageSelector-mobile" aria-label="Select Language" class="bg-zinc-900 border text-white rounded-xl px-2 py-1.5 text-xs focus:outline-none focus:border-emerald-500 shrink-0" style="background-color: #18181b; color: #ffffff; border-color: #3f3f46;">
+        <option value="en">EN</option>
+        <option value="es">ES</option>
+        <option value="fr">FR</option>
+    </select>
+
+    <!-- Mobile Sign In / Join Button -->
+    <button id="guest-action-btn-mobile" type="button" data-action="open-auth-modal" class="px-2.5 py-1.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-xl transition flex items-center gap-1.5 shadow-sm text-xs shrink-0" style="background-color: #ffffff; color: #000000;">
+        <img src="https://www.google.com/favicon.ico" class="w-3.5 h-3.5" alt="Google">
+        <span data-i18n="joinBtn">Join</span>
+    </button>
+
+    <!-- Mobile Support Button -->
+    <button id="support-btn-mobile" data-action="open-support-modal" class="px-2.5 py-1.5 font-medium rounded-xl transition whitespace-nowrap text-xs shadow-sm shrink-0" style="background-color: #10b981; color: #000000;" data-i18n="supportBtn">
+        Support
+    </button>
+
+    <!-- Mobile Data Saver Toggle -->
+    <button id="data-saver-btn-mobile" data-action="toggle-data-saver" class="px-2 py-1.5 rounded-xl hover:bg-zinc-800 transition text-xs font-semibold flex items-center gap-1 border text-zinc-300 shadow-sm shrink-0" style="background-color: #121826; border-color: #273548;">
+        <span>⚡</span>
+        <strong id="data-saver-status-mobile" class="text-emerald-400 font-bold" style="color: #34d399;">Off</strong>
+    </button>
+
+    <!-- Mobile Bookmarks Button -->
+    <button id="bookmarks-nav-btn-mobile" data-action="open-bookmarks" class="p-1.5 rounded-xl hover:bg-zinc-800 text-zinc-300 hover:text-white transition-all flex items-center justify-center border shrink-0" style="background-color: #18181b; border-color: #3f3f46;" aria-label="Saved Items" title="Saved Items">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+        </svg>
+    </button>
+
+    <!-- Mobile Notification Bell -->
+    <div class="relative inline-block shrink-0" id="notification-container-mobile">
+        <button id="notification-btn-mobile" type="button" class="relative p-1.5 rounded-full hover:bg-zinc-800 text-zinc-300 hover:text-white transition-all flex items-center justify-center border border-zinc-700/50" aria-label="Notifications">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+            </svg>
+            <span id="notification-badge-mobile" class="hidden absolute -top-1 -right-1 bg-emerald-500 text-black text-[9px] font-bold px-1 py-0.2 rounded-full min-w-[14px] text-center shadow-lg border border-zinc-900">
+                0
+            </span>
+        </button>
+    </div>
+
+    <!-- Mobile Profile Button -->
+    <button id="profile-btn-mobile" data-action="open-profile" class="px-2.5 py-1.5 border border-zinc-700 hover:bg-zinc-800 rounded-xl transition flex items-center gap-1 hidden text-xs shrink-0" style="background-color: #18181b; border-color: #3f3f46;" data-i18n="profileBtn">
+        Profile
+    </button>
+</div>
+    
         </header>
 
         <!-- BREAKING NEWS TICKER -->
