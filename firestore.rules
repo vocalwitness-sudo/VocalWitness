@@ -28,11 +28,12 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.token.banned != true;
     }
 
-    // CLOUDFLARE R2 MEDIA URL VALIDATION
+    // CLOUDFLARE R2 & GOOGLE PROFILE MEDIA URL VALIDATION
     function isValidMediaUrl(url) {
       return url is string && (
         url == '' || 
-        url.matches('^https://media\\.vocalwitness\\.com/.*')
+        url.matches('^https://media\\.vocalwitness\\.com/.*') ||
+        url.matches('^https://lh3\\.googleusercontent\\.com/.*')
       );
     }
 
@@ -45,6 +46,7 @@ service cloud.firestore {
       let u = getUserData();
       return isNotBanned() && (
         u.tier == requiredTier ||
+        (requiredTier == 'citizen' && (u.tier == 'citizen_circle' || u.tier == 'witness_circle' || u.tier == 'elite_witness' || u.tier == 'steward')) ||
         (requiredTier == 'citizen_circle' && (u.tier == 'witness_circle' || u.tier == 'elite_witness' || u.tier == 'steward')) ||
         (requiredTier == 'witness_circle' && (u.tier == 'elite_witness' || u.tier == 'steward')) ||
         (requiredTier == 'elite_witness' && u.tier == 'steward')
@@ -56,15 +58,15 @@ service cloud.firestore {
       let keys = data.keys();
 
       return data.uid == request.auth.uid
-          && data.uid is string
-          && data.email is string
-          && data.displayName is string
-          && data.tier == 'citizen_circle'
-          && data.isVerified == false
-          && !keys.hasAny([
-               'role', 'isBanned', 'badges', 'admin', 'moderator',
-               'zkVerified', 'reputation', 'score', 'steward'
-             ]);
+        && data.uid is string
+        && data.email is string
+        && data.displayName is string
+        && (data.tier == 'citizen' || data.tier == 'citizen_circle')
+        && data.isVerified == false
+        && !keys.hasAny([
+             'role', 'isBanned', 'badges', 'admin', 'moderator',
+             'zkVerified', 'reputation', 'score', 'steward'
+           ]);
     }
 
     function isSafeUserUpdate() {
@@ -85,32 +87,22 @@ service cloud.firestore {
       ];
 
       return !affected.hasAny(forbidden)
-          && affected.hasOnly(allowed)
-          && (!('email' in data) || data.email is string)
-          && (!('displayName' in data) || data.displayName is string)
-          && (!('photoURL' in data) || isValidMediaUrl(data.photoURL))
-          && (!('bio' in data) || data.bio is string)
-          && (!('interestedInArena' in data) || data.interestedInArena is bool);
+        && affected.hasOnly(allowed)
+        && (!('email' in data) || data.email is string)
+        && (!('displayName' in data) || data.displayName is string)
+        && (!('photoURL' in data) || isValidMediaUrl(data.photoURL))
+        && (!('bio' in data) || data.bio is string)
+        && (!('interestedInArena' in data) || data.interestedInArena is bool);
     }
 
     function isValidNotification() {
       let data = request.resource.data;
       return data.keys().hasAll(['senderId', 'type', 'timestamp'])
-          && data.senderId == request.auth.uid
-          && data.senderId is string
-          && data.type is string
-          && data.type in ['mention', 'reply', 'vote', 'system', 'witness_alert']
-          && data.timestamp is timestamp;
-    }
-
-    function isAuthorImmutable(authorField) {
-      return request.resource.data[authorField] == resource.data[authorField];
-    }
-
-    function isImmutableTestimonyMetadata() {
-      let affected = request.resource.data.diff(resource.data).affectedKeys();
-      let protectedFields = ['authorId', 'createdAt', 'forensicHash', 'imageHash', 'audioHash', 'hasForensic'];
-      return !affected.hasAny(protectedFields);
+        && data.senderId == request.auth.uid
+        && data.senderId is string
+        && data.type is string
+        && data.type in ['mention', 'reply', 'vote', 'system', 'witness_alert']
+        && data.timestamp is timestamp;
     }
 
     // ==========================================
@@ -138,227 +130,6 @@ service cloud.firestore {
       match /bookmarks/{bookmarkId} {
         allow read, write: if isOwner(userId);
       }
-    }
-
-    // ==========================================
-    // VERIFICATION REQUESTS
-    // ==========================================
-    match /verification_requests/{requestId} {
-      allow read: if isAuthenticated() && (
-        resource.data.applicantId == request.auth.uid || isModerator()
-      );
-
-      allow create: if isNotBanned()
-                    && request.resource.data.applicantId == request.auth.uid
-                    && request.resource.data.applicantId is string;
-
-      allow update, delete: if isModerator();
-    }
-
-    // ==========================================
-    // FEEDS
-    // ==========================================
-    match /feeds/{feedId} {
-      allow read: if true;
-
-      allow create: if isNotBanned()
-                    && request.resource.data.authorId == request.auth.uid
-                    && request.resource.data.authorId is string
-                    && (!('mediaUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.mediaUrl));
-
-      allow update: if isNotBanned()
-                    && (resource.data.authorId == request.auth.uid || isModerator())
-                    && isAuthorImmutable('authorId')
-                    && (!('mediaUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.mediaUrl));
-
-      allow delete: if isAuthenticated()
-                    && (resource.data.authorId == request.auth.uid || isModerator());
-    }
-
-    // ==========================================
-    // WITNESS CYCLES
-    // ==========================================
-    match /witnessCycles/{cycleId} {
-      allow read: if true;
-
-      allow create: if hasMinTier('citizen_circle')
-                    && request.resource.data.witnessId == request.auth.uid
-                    && request.resource.data.witnessId is string;
-
-      allow update: if isNotBanned()
-                    && resource.data.witnessId == request.auth.uid
-                    && isAuthorImmutable('witnessId');
-
-      allow delete: if isAuthenticated()
-                    && (resource.data.witnessId == request.auth.uid || isModerator());
-    }
-
-    // ==========================================
-    // TESTIMONIES
-    // ==========================================
-    match /testimonies/{testimonyId} {
-      allow read: if true;
-
-      allow create: if isNotBanned()
-                    && request.resource.data.authorId == request.auth.uid
-                    && request.resource.data.authorId is string
-                    && request.resource.data.content is string
-                    && (!('imageUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.imageUrl))
-                    && (!('audioUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.audioUrl));
-
-      allow update: if isNotBanned() && isImmutableTestimonyMetadata() && (
-        (request.auth.uid == resource.data.authorId || isModerator()) ||
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['votes', 'lastUpdated'])
-      );
-
-      allow delete: if isAuthenticated()
-                    && (request.auth.uid == resource.data.authorId || isAdmin());
-
-      match /userReactions/{userId} {
-        allow read: if true;
-        allow create, update: if isOwner(userId) && isNotBanned();
-        allow delete: if isOwner(userId);
-      }
-
-      match /comments/{commentId} {
-        allow read: if true;
-
-        allow create: if isNotBanned()
-                      && request.resource.data.authorId == request.auth.uid
-                      && request.resource.data.authorId is string;
-
-        allow update: if isNotBanned()
-                      && (resource.data.authorId == request.auth.uid || isModerator())
-                      && isAuthorImmutable('authorId');
-
-        allow delete: if isAuthenticated()
-                      && (resource.data.authorId == request.auth.uid || isModerator());
-      }
-    }
-
-    // ==========================================
-    // ATTESTATIONS (IMMUTABLE)
-    // ==========================================
-    match /attestations/{attestationId} {
-      allow read: if true;
-      allow create: if isNotBanned()
-                    && request.resource.data.userId == request.auth.uid
-                    && request.resource.data.userId is string;
-      allow update, delete: if false;
-    }
-
-    // ==========================================
-    // PHONE VERIFICATION
-    // ==========================================
-    match /phone_verifications/{userId} {
-      allow read, write: if isOwner(userId);
-    }
-
-    // ==========================================
-    // GROUPS
-    // ==========================================
-    match /groups/{groupId} {
-      allow read: if true;
-
-      allow create: if isNotBanned()
-                    && request.resource.data.ownerId == request.auth.uid
-                    && request.resource.data.ownerId is string;
-
-      allow update: if isNotBanned()
-                    && (request.auth.uid == resource.data.ownerId || isModerator())
-                    && isAuthorImmutable('ownerId');
-
-      allow delete: if isAuthenticated()
-                    && (request.auth.uid == resource.data.ownerId || isModerator());
-    }
-
-    // ==========================================
-    // POSTS
-    // ==========================================
-    match /posts/{postId} {
-      allow read: if true;
-
-      allow create: if isNotBanned()
-                    && request.resource.data.authorId == request.auth.uid
-                    && request.resource.data.authorId is string
-                    && (!('imageUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.imageUrl))
-                    && (!('audioUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.audioUrl));
-
-      allow update: if isNotBanned() && isAuthorImmutable('authorId') && (
-        (request.auth.uid == resource.data.authorId || isModerator()) ||
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['votes', 'lastUpdated'])
-      );
-
-      allow delete: if isAuthenticated()
-                    && (resource.data.authorId == request.auth.uid || isModerator());
-    }
-
-    // ==========================================
-    // VOTES (IMMUTABLE AUDIT TRAIL)
-    // ==========================================
-    match /votes/{voteId} {
-      allow read: if true;
-
-      allow create: if isNotBanned()
-                    && request.resource.data.userId == request.auth.uid
-                    && request.resource.data.userId is string
-                    && request.resource.data.postId is string
-                    && request.resource.data.voteType in ['verify', 'dispute']
-                    && request.resource.data.timestamp is timestamp;
-
-      allow update, delete: if false;
-    }
-
-    // ==========================================
-    // REPORTS
-    // ==========================================
-    match /reports/{reportId} {
-      allow read: if isModerator();
-
-      allow create: if isNotBanned()
-                    && request.resource.data.reportedBy == request.auth.uid
-                    && request.resource.data.reportedBy is string;
-
-      allow update, delete: if isModerator();
-    }
-
-    // ==========================================
-    // AUDIT LOGS
-    // ==========================================
-    match /audit_logs/{logId} {
-      allow read: if isAuthenticated();
-
-      allow create: if isNotBanned()
-                    && (
-                      (request.resource.data.userId == request.auth.uid && request.resource.data.userId is string) ||
-                      (request.resource.data.actorId == request.auth.uid && request.resource.data.actorId is string)
-                    );
-
-      allow update, delete: if false;
-    }
-
-    // ==========================================
-    // DAO PROPOSALS
-    // ==========================================
-    match /dao_proposals/{proposalId} {
-      allow read: if true;
-
-      allow create: if hasMinTier('elite_witness')
-                    && request.resource.data.authorId == request.auth.uid
-                    && request.resource.data.authorId is string;
-
-      allow update: if isNotBanned()
-                    && (resource.data.authorId == request.auth.uid || isModerator())
-                    && isAuthorImmutable('authorId');
-
-      allow delete: if isAdmin();
-    }
-
-    // ==========================================
-    // DEFAULT DENY
-    // ==========================================
-    match /{document=**} {
-      allow read, write: if false;
     }
   }
 }
