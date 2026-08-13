@@ -421,33 +421,35 @@ async function handleDeletePost(postId) {
 }
 
 async function handlePinPost(postId) {
-    const authorized = await hasStewardAccess();
-    if (!authorized) {
-        showToast("Unauthorized: Steward access required to pin posts.", "error");
+    const isSteward = await hasStewardAccess();
+    if (!isSteward) {
+        showToast("Only Stewards can pin testimonies.", "error");
         return;
     }
 
     try {
         const post = allPostsCache.find(p => p.id === postId);
+        if (!post) return;
+
+        const newPinnedState = !post.isPinned;
         const postRef = doc(db, "testimonies", postId);
-        const newPinnedStatus = !post?.isPinned;
 
         await updateDoc(postRef, {
-            isPinned: newPinnedStatus,
-            pinnedAt: newPinnedStatus ? serverTimestamp() : null
+            isPinned: newPinnedState,
+            pinnedAt: newPinnedState ? serverTimestamp() : null
         });
 
-        showToast(newPinnedStatus ? "📌 Post pinned to feed" : "Unpinned post", "success");
+        showToast(newPinnedState ? "📌 Post pinned to top" : "📌 Post unpinned", "info");
     } catch (e) {
         console.error("Pin operation failed:", e);
-        showToast("Failed to update pin status.", "error");
+        showToast("Failed to toggle pin state.", "error");
     }
 }
 
 function showPostMenu(postId) {
-    showToast(`Options for post: ${postId.substring(0, 8)}...`, "info");
+    showToast(`Post options menu for: ${postId.substring(0, 8)}...`, "info");
 }
 
 async function openCommentModal(postId) {
-    showToast(`Comments module targeting post: ${postId.substring(0, 8)}...`, "info");
+    showToast("Comments section loading...", "info");
 }
