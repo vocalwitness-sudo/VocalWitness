@@ -239,16 +239,24 @@
         </div>
     </div>
 
-    <!-- Main Content Area -->
+  <!-- Main Content Area -->
     <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         <!-- Hero Section -->
-        <div class="text-center max-w-2xl mx-auto mb-10 space-y-3">
+        <div class="text-center max-w-2xl mx-auto mb-8 space-y-3">
             <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
                 The Decentralized <span class="text-emerald-500">Public Square</span>
             </h1>
             <p class="text-sm text-zinc-400 leading-relaxed">
                 Empowering citizens worldwide with immutable testimonies, voice verifications, and transparent reporting protected by cryptographic rails.
             </p>
+        </div>
+
+        <!-- Clean Action Trigger for Publishing (Guarded for Guest Users) -->
+        <div class="max-w-2xl mx-auto mb-8">
+            <button onclick="handlePublishClick()" class="w-full py-4 px-6 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/50 rounded-2xl text-zinc-300 hover:text-white font-semibold text-sm transition flex items-center justify-center gap-3 shadow-lg">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>Publish to the Square</span>
+            </button>
         </div>
 
         <!-- Search & Filter Controls Bar -->
@@ -505,6 +513,21 @@
             }
         }
     </script>
+
+    <script>
+    function handlePublishClick() {
+        // Check if user is logged in (integrate with your auth state variable)
+        const isLoggedIn = window.currentUser || false; 
+        if (!isLoggedIn) {
+            // Trigger login modal for guest users cleanly
+            $('loginModal')?.classList.remove('hidden');
+            showToast('Please sign in or create an account to publish.', 'info');
+        } else {
+            // Proceed to publish view/modal
+            $('publishModal')?.classList.remove('hidden');
+        }
+    }
+</script>
 
     <!-- Application Modules Scripts -->
     <script type="module" src="./js/main.js"></script>
