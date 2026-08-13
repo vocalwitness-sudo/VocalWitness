@@ -423,132 +423,31 @@ async function handleDeletePost(postId) {
 async function handlePinPost(postId) {
     const authorized = await hasStewardAccess();
     if (!authorized) {
-        showToast("Pinning posts requires Steward-level privileges.", "error");
+        showToast("Unauthorized: Steward access required to pin posts.", "error");
         return;
     }
 
     try {
         const post = allPostsCache.find(p => p.id === postId);
-        const newPinState = post ? !post.isPinned : true;
-
         const postRef = doc(db, "testimonies", postId);
+        const newPinnedStatus = !post?.isPinned;
+
         await updateDoc(postRef, {
-            isPinned: newPinState
+            isPinned: newPinnedStatus,
+            pinnedAt: newPinnedStatus ? serverTimestamp() : null
         });
-        showToast(newPinState ? "📌 Testimony pinned successfully!" : "📌 Testimony unpinned.", "success");
+
+        showToast(newPinnedStatus ? "📌 Post pinned to feed" : "Unpinned post", "success");
     } catch (e) {
-        console.error("Pin action failed:", e);
-        showToast("Failed to update pin state.", "error");
+        console.error("Pin operation failed:", e);
+        showToast("Failed to update pin status.", "error");
     }
-}
-
-async function openCommentModal(postId) {
-    const auth = getAuth(app);
-
-    let modal = document.getElementById('commentModal');
-    if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'commentModal';
-        modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4';
-        document.body.appendChild(modal);
-    }
-
-    modal.innerHTML = `
-        <div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-lg p-6 flex flex-col max-h-[80vh]">
-            <div class="flex justify-between items-center mb-4 pb-3 border-b border-zinc-800">
-                <h3 class="text-zinc-100 font-semibold text-lg">💬 Testimony Comments</h3>
-                <button id="closeCommentModal" class="text-zinc-400 hover:text-white text-xl">✕</button>
-            </div>
-            <div id="commentsListContainer" class="flex-1 overflow-y-auto space-y-3 pr-2 mb-4">
-                <div class="text-zinc-500 text-center py-6">Loading comments...</div>
-            </div>
-            <div class="flex gap-2 pt-3 border-t border-zinc-800">
-                <input type="text" id="commentInputText" placeholder="Write a respectful comment..." 
-                       class="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-100 focus:outline-none focus:border-emerald-500">
-                <button id="submitCommentBtn" class="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition">Post</button>
-            </div>
-        </div>
-    `;
-
-    document.getElementById('closeCommentModal').onclick = () => modal.remove();
-    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
-
-    const commentsContainer = document.getElementById('commentsListContainer');
-
-    try {
-        const commentsRef = collection(db, "testimonies", postId, "comments");
-        const snapshot = await getDocs(commentsRef);
-
-        commentsContainer.innerHTML = '';
-        if (snapshot.empty) {
-            commentsContainer.innerHTML = `<div class="text-zinc-500 text-center py-8 text-sm">No comments yet. Be the first to add perspective.</div>`;
-        } else {
-            const commentsList = [];
-            snapshot.forEach(docSnap => commentsList.push(docSnap.data()));
-
-            commentsList.sort((a, b) => {
-                const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : new Date(a.createdAt || 0).getTime();
-                const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : new Date(b.createdAt || 0).getTime();
-                return timeB - timeA;
-            });
-
-            commentsList.forEach(cData => {
-                const dateStr = cData.createdAt?.toDate ? cData.createdAt.toDate().toLocaleTimeString() : "Just now";
-                const commentEl = document.createElement('div');
-                commentEl.className = 'bg-zinc-950 border border-zinc-800/80 rounded-2xl p-3 text-sm';
-                commentEl.innerHTML = `
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="font-semibold text-zinc-300 text-xs">${escapeHTML(cData.authorName || 'Witness')}</span>
-                        <span class="text-[10px] text-zinc-500">${dateStr}</span>
-                    </div>
-                    <p class="text-zinc-200 leading-relaxed">${escapeHTML(cData.content)}</p>
-                `;
-                commentsContainer.appendChild(commentEl);
-            });
-        }
-    } catch (e) {
-        console.error("Failed to load comments:", e);
-        commentsContainer.innerHTML = `<div class="text-red-400 text-center text-xs py-4">Failed to load comments.</div>`;
-    }
-
-    document.getElementById('submitCommentBtn').onclick = async () => {
-        const inputField = document.getElementById('commentInputText');
-        const text = inputField ? inputField.value.trim() : "";
-        if (!text) return;
-
-        if (!auth.currentUser) {
-            showToast("You must be logged in to comment.", "error");
-            return;
-        }
-
-        try {
-            await addDoc(collection(db, "testimonies", postId, "comments"), {
-                content: text,
-                authorId: auth.currentUser.uid,
-                authorName: auth.currentUser.displayName || `Witness (${auth.currentUser.uid.substring(0, 5)})`,
-                createdAt: serverTimestamp()
-            });
-
-            const postRef = doc(db, "testimonies", postId);
-            await updateDoc(postRef, {
-                commentsCount: increment(1)
-            });
-
-            showToast("Comment posted!", "success");
-            modal.remove();
-        } catch (e) {
-            console.error("Failed to post comment:", e);
-            showToast("Failed to post comment.", "error");
-        }
-    };
 }
 
 function showPostMenu(postId) {
-    showToast(`Testimony ID: ${postId}`, "info");
+    showToast(`Options for post: ${postId.substring(0, 8)}...`, "info");
 }
 
-window.showPostMenu = showPostMenu;
-
-window.addEventListener('languageChanged', () => {
-    initFeed(db, currentChannel);
-});
+async function openCommentModal(postId) {
+    showToast(`Comments module targeting post: ${postId.substring(0, 8)}...`, "info");
+}
