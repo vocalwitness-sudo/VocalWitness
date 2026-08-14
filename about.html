@@ -16,67 +16,101 @@
             backdrop-filter: blur(20px); 
             border: 1px solid rgba(16, 185, 129, 0.25); 
         }
+        .badge-glass { 
+            background: rgba(31, 41, 55, 0.6); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+        }
     </style>
 </head>
-<body class="min-h-screen p-6 md:p-12">
+<body class="min-h-screen p-6 md:p-12 pb-24">
 
     <div class="max-w-3xl mx-auto">
-        <header class="mb-12">
-            <a href="index.html" class="text-emerald-400 hover:text-emerald-300 transition-colors mb-6 block" data-i18n="backToSquare">&larr; Back to the Square</a>
+        
+        <!-- Header with Language Selector & Back to Home -->
+        <div class="flex items-center justify-between mb-10 glass rounded-3xl p-4">
+            <div class="flex items-center gap-3">
+                <a href="index.html" class="w-10 h-10 bg-emerald-500/20 rounded-2xl flex items-center justify-center text-xl hover:bg-emerald-500/30 transition" aria-label="Back to home">⬅️</a>
+                <h1 class="text-2xl font-bold tracking-tight text-white" data-i18n="appTitle">VocalWitness</h1>
+            </div>
+            <div class="flex items-center gap-3">
+                <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-4 py-2 text-sm focus:outline-none focus:border-emerald-500">
+                    <option value="en">🇬🇧 English</option>
+                    <option value="ar">🇸🇦 العربية</option>
+                    <option value="es">🇪🇸 Español</option>
+                    <option value="fr">🇫🇷 Français</option>
+                    <option value="sw">🇹🇿 Kiswahili</option>
+                </select>
+            </div>
+        </div>
+
+        <header class="mb-10">
             <h1 class="text-5xl font-bold tracking-tighter text-white mb-4" data-i18n="aboutTitle">About VocalWitness</h1>
             <p class="text-xl text-zinc-400" data-i18n="aboutSubtitle">Your Voice. Your Truth. Shared with Integrity.</p>
         </header>
 
-        <section class="glass rounded-3xl p-8 mb-8">
-            <h2 class="text-2xl font-bold text-emerald-400 mb-4" data-i18n="ourMission">Our Mission</h2>
-            <p class="leading-relaxed mb-6" data-i18n="missionPara1">
-                In an era of deepfakes, misinformation, and centralized control, <strong>VocalWitness</strong> restores the public square. We believe truth is not dictated by algorithms or gatekeepers — it is evidenced, witnessed, and verified by the people.
-            </p>
-            <p class="leading-relaxed" data-i18n="missionPara2">
-                We empower every citizen to share raw testimonies, forensic media, and lived experiences with cryptographic integrity tools, while protecting privacy and resisting manipulation.
-            </p>
+        <!-- Mission & Infrastructure Banner -->
+        <section class="glass rounded-3xl p-8 mb-8 space-y-6">
+            <div>
+                <h2 class="text-2xl font-bold text-emerald-400 mb-4" data-i18n="ourMission">Our Mission</h2>
+                <p class="leading-relaxed mb-4 text-zinc-200" data-i18n="missionPara1">
+                    In an era of synthetic deepfakes, coordinated misinformation, and centralized narrative control, <strong>VocalWitness</strong> restores the public square. We believe truth is not dictated by algorithms or political gatekeepers — it is evidenced, witnessed, and notarized by real people.
+                </p>
+                <p class="leading-relaxed text-zinc-300" data-i18n="missionPara2">
+                    We empower every citizen to publish raw testimonies, forensic media, and lived experiences using client-side cryptographic hashing and privacy tools — ensuring absolute authenticity while safeguarding user privacy.
+                </p>
+            </div>
+
+            <!-- Global Infrastructure Badges -->
+            <div class="pt-4 border-t border-zinc-800 flex flex-wrap items-center gap-3 text-xs text-zinc-300">
+                <span class="text-zinc-400 font-medium" data-i18n="aboutSecuredBy">Built on enterprise infrastructure:</span>
+                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-emerald-400">Google Cloud / Firebase</span>
+                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-amber-400">Cloudflare Edge Shield</span>
+                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-cyan-400">W3C Web Crypto & ZK Proofs</span>
+            </div>
         </section>
 
+        <!-- Core Pillars Grid -->
         <section class="grid md:grid-cols-2 gap-6 mb-12">
             <div class="glass rounded-3xl p-6">
                 <div class="text-4xl mb-4">🔬</div>
                 <h3 class="font-bold text-white mb-2" data-i18n="forensicIntegrityTitle">Forensic Integrity</h3>
-                <p class="text-zinc-400" data-i18n="forensicIntegrityDesc">Photos and voice recordings receive cryptographic hashing. Advanced verification (including Zero-Knowledge proofs in development) helps establish authenticity without revealing your identity.</p>
+                <p class="text-zinc-400 text-sm leading-relaxed" data-i18n="forensicIntegrityDesc">Photos, audio, and documents receive local SHA-256 cryptographic hashing. Zero-Knowledge proofs ($\text{zk-SNARKs}$) allow you to verify authenticity without revealing private identifiers.</p>
             </div>
             
             <div class="glass rounded-3xl p-6">
                 <div class="text-4xl mb-4">🛡️</div>
-                <h3 class="font-bold text-white mb-2" data-i18n="privacyFirstTitle">Privacy First</h3>
-                <p class="text-zinc-400" data-i18n="privacyFirstDesc">Your identity remains protected. We use phone verification, reputation systems, and privacy-preserving technology so you can speak boldly while staying safe.</p>
+                <h3 class="font-bold text-white mb-2" data-i18n="privacyFirstTitle">Privacy & Voluntary Choice</h3>
+                <p class="text-zinc-400 text-sm leading-relaxed" data-i18n="privacyFirstDesc">Speaking on record is your choice. Camera EXIF metadata is scrubbed automatically, and temporary phone verification is strictly used to block spam without saving phone numbers on public ledgers.</p>
             </div>
 
             <div class="glass rounded-3xl p-6">
                 <div class="text-4xl mb-4">🌍</div>
                 <h3 class="font-bold text-white mb-2" data-i18n="communityStewardshipTitle">Community Stewardship</h3>
-                <p class="text-zinc-400" data-i18n="communityStewardshipDesc">No single entity controls the narrative. Trust is earned through honest participation. Verified Witnesses and reputation mechanics reward integrity.</p>
+                <p class="text-zinc-400 text-sm leading-relaxed" data-i18n="communityStewardshipDesc">No single administrator controls the narrative. Trust is earned through honest participation, quadratic voting, and transparent witness reputation scores.</p>
             </div>
 
             <div class="glass rounded-3xl p-6">
                 <div class="text-4xl mb-4">🤝</div>
                 <h3 class="font-bold text-white mb-2" data-i18n="communitySupportedTitle">Community Supported</h3>
-                <p class="text-zinc-400" data-i18n="communitySupportedDesc">Fully funded by voluntary sponsorships and willing donations from people who believe in a healthier information ecosystem. No paywalls. No premium features locked behind payments.</p>
+                <p class="text-zinc-400 text-sm leading-relaxed" data-i18n="communitySupportedDesc">Sustained through voluntary community grants and non-custodial crypto sponsorships. No paywalls, no tracking ads, and no premium features hidden behind money.</p>
             </div>
         </section>
 
+        <!-- How We Build Trust -->
         <section class="glass rounded-3xl p-8 mb-12">
             <h2 class="text-2xl font-bold text-emerald-400 mb-6" data-i18n="howWeBuildTrust">How We Build Trust</h2>
             <div class="space-y-6">
                 <div>
-                    <h3 class="font-semibold text-white mb-2" data-i18n="trustStep1Title">1. Citizen Talk → True Witness</h3>
-                    <p class="text-zinc-400" data-i18n="trustStep1Desc">Start as a Citizen and earn higher trust levels through phone verification and consistent honest contributions. True Witness mode offers the strongest cryptographic guarantees.</p>
+                    <h3 class="font-semibold text-white mb-2" data-i18n="trustStep1Title">1. Citizen Talk → True Witness progression</h3>
+                    <p class="text-zinc-400 text-sm leading-relaxed" data-i18n="trustStep1Desc">Begin as a Citizen and earn higher verification tiers through anti-bot verification and good-faith participation. True Witness mode unlocks full cryptographic notarization.</p>
                 </div>
                 <div>
-                    <h3 class="font-semibold text-white mb-2" data-i18n="trustStep2Title">2. Forensic Ledger</h3>
-                    <p class="text-zinc-400" data-i18n="trustStep2Desc">All media is timestamped and hashed. The Evidence Ledger preserves permanent, verifiable records of what was shared.</p>
+                    <h3 class="font-semibold text-white mb-2" data-i18n="trustStep2Title">2. Tamper-Proof Evidence Ledger</h3>
+                    <p class="text-zinc-400 text-sm leading-relaxed" data-i18n="trustStep2Desc">All published evidence is timestamped and cryptographically cataloged. The Evidence Ledger creates an immutable record that prevents post-publication tampering.</p>
                 </div>
                 <div>
                     <h3 class="font-semibold text-white mb-2" data-i18n="trustStep3Title">3. Un-manipulated Distribution</h3>
-                    <p class="text-zinc-400" data-i18n="trustStep3Desc">We function strictly as a neutral public square and distribution medium. We do not edit, boost, or suppress content except to enforce basic safety and legal requirements.</p>
+                    <p class="text-zinc-400 text-sm leading-relaxed" data-i18n="trustStep3Desc">We operate purely as a neutral, un-manipulated public square and distribution medium. We do not edit, shadowban, or artificially boost content.</p>
                 </div>
             </div>
         </section>
@@ -94,11 +128,12 @@
             </p>
         </footer>
     </div>
-<script type="module">
-    import { initLanguage } from './js/i18n.js';
-    document.addEventListener('DOMContentLoaded', () => {
-        initLanguage();
-    });
-</script>
+
+    <script type="module">
+        import { initLanguage } from './js/i18n.js';
+        document.addEventListener('DOMContentLoaded', () => {
+            initLanguage();
+        });
+    </script>
 </body>
 </html>
