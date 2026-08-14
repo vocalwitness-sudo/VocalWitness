@@ -42,5 +42,27 @@ export async function handleReaction(postId, type = 'like', btnEl = null) {
     }
 }
 
-// Window export for global click delegation listeners
+/**
+ * Binds global event listener for reaction button clicks in feeds
+ */
+export function bindReactionEvents() {
+    if (window.__reactionDelegationBound) return;
+    window.__reactionDelegationBound = true;
+
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-action="react"], .reaction-btn');
+        if (!btn) return;
+
+        e.preventDefault();
+        const postId = btn.getAttribute('data-post-id') || btn.closest('[data-post-id]')?.getAttribute('data-post-id');
+        const reactionType = btn.getAttribute('data-type') || 'like';
+
+        if (postId) {
+            handleReaction(postId, reactionType, btn);
+        }
+    });
+}
+
+// Window exports for global fallback
 window.handleReaction = handleReaction;
+window.bindReactionEvents = bindReactionEvents;
