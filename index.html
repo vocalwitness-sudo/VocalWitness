@@ -656,11 +656,13 @@
                 Protected by Zero-Knowledge proofs (<code class="text-slate-400">zk-proof.js</code>) & Sybil filters.
             </p>
         </div>
-    </div><!-- Support Modal -->
+    </div>
+        
+       <!-- Support Modal -->
     <div id="supportModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[10000] flex items-center justify-center p-4 hidden">
         <div class="glass max-w-md w-full rounded-3xl p-6 border border-emerald-500/30 text-white relative modal max-h-[90vh] overflow-y-auto">
             <button id="closeSupportModal" onclick="document.getElementById('supportModal')?.classList.add('hidden')" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl">✕</button>
-            
+
             <div class="text-center mb-5">
                 <div class="w-12 h-12 bg-emerald-500/20 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl font-bold text-emerald-400">♥</div>
                 <h3 class="text-xl font-bold text-white">Sustain the Public Square</h3>
@@ -693,7 +695,7 @@
 
             <div class="mt-5 pt-4 border-t border-zinc-800">
                 <p class="text-xs text-zinc-400 mb-2 font-medium text-center">Or scan / copy to send USDT directly:</p>
-                
+
                 <div class="bg-white p-3 rounded-2xl w-36 h-36 mx-auto mb-3 flex items-center justify-center shadow-md">
                     <img src="/image/95756.jpg" alt="USDT QR Code" class="w-full h-full object-contain">
                 </div>
@@ -747,11 +749,11 @@
         </div>
     </div>
 
-   <!-- Interactive Application Footer -->
+    <!-- Interactive Application Footer -->
     <footer class="bg-zinc-950 border-t border-zinc-800/80 pt-16 pb-12 mt-20 text-zinc-400">
         <div class="max-w-6xl mx-auto px-6">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-10 pb-12 border-b border-zinc-800/60">
-                
+
                 <!-- Brand & Mission Column -->
                 <div class="md:col-span-1 space-y-4">
                     <div class="flex items-center gap-2">
@@ -824,6 +826,7 @@
             </div>
         </div>
     </footer>
+
     <!-- Global UI Helper Script -->
     <script>
         const $ = id => document.getElementById(id);
@@ -872,7 +875,7 @@
             const moreBtn = $('more-btn');
             const moreMenu = $('more-menu');
             if (!moreMenu) return;
-            
+
             if (moreBtn && moreBtn.contains(e.target)) {
                 e.stopPropagation();
                 moreMenu.classList.toggle('hidden');
@@ -896,7 +899,7 @@
 
             btn.classList.remove('bg-zinc-800', 'border-zinc-700');
             btn.classList.add('bg-emerald-600/20', 'border-emerald-500');
-            
+
             const amountInput = $('customSupportAmount');
             if (amountInput) {
                 amountInput.value = btn.getAttribute('data-amount');
@@ -904,17 +907,17 @@
         });
     </script>
 
-<!-- Application Modules -->
-<script type="module" src="./js/main.js"></script>
-<script type="module" src="./js/notifications.js"></script>
-<script type="module" src="./js/bookmarks.js"></script>
-<script type="module" src="./js/zk-proof.js"></script>
+    <!-- Application Modules -->
+    <script type="module" src="./js/main.js"></script>
+    <script type="module" src="./js/notifications.js"></script>
+    <script type="module" src="./js/bookmarks.js"></script>
+    <script type="module" src="./js/zk-proof.js"></script>
     <script type="module" src="./js/feed.js"></script>
 
-<!-- Live Arena -->
-<script type="module">
-  import { initLiveArena } from './js/live-arena.js';
-  initLiveArena();
-</script>
+    <!-- Live Arena -->
+    <script type="module">
+      import { initLiveArena } from './js/live-arena.js';
+      initLiveArena();
+    </script>
 </body>
 </html>
