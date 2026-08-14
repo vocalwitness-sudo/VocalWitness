@@ -15,12 +15,12 @@ import { showToast } from './utils.js';
 import { renderTierCircle } from './ui-components.js';
 import { hasStewardAccess } from './tier.js';
 import { toggleReaction, bindReactionEvents } from './reactions.js';
-import { handleReaction } from './reactions.js';
 
 let activeFeedListener = null;
 let allPostsCache = [];
 let currentChannel = 'citizen-talk';
 let searchDebounceTimer = null;
+let isStewardUserCache = false;
 
 function escapeHTML(str) {
     if (!str) return '';
@@ -33,17 +33,31 @@ function escapeHTML(str) {
 }
 
 /**
+ * Checks and caches the user's steward status to prevent unhandled promises in sync renderers.
+ */
+async function syncStewardPermission() {
+    try {
+        isStewardUserCache = await hasStewardAccess();
+    } catch {
+        isStewardUserCache = false;
+    }
+}
+
+/**
  * Initializes the feed listener
  * @param {Firestore} dbInstance 
  * @param {string} channelType - 'citizen-talk' or 'witness-voice'
  */
-export function initFeed(dbInstance = db, channelType = 'citizen-talk') {
+export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
     currentChannel = channelType;
     const feedContainer = document.getElementById('feedContainer');
     if (!feedContainer) {
         console.warn("Feed container element not found in DOM.");
         return;
     }
+
+    // Refresh cached permission status
+    await syncStewardPermission();
 
     // Cleanly unsubscribe from previous snapshot listener
     if (typeof activeFeedListener === 'function') {
@@ -77,7 +91,6 @@ export function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                     await handleUpvote(id);
                 } else if (action === 'react') {
                     const reactionType = btn.getAttribute('data-reaction');
-                    // FIXED: Using toggleReaction from reactions.js
                     await toggleReaction(id, reactionType);
                 } else if (action === 'comment') {
                     await openCommentModal(id);
@@ -265,7 +278,6 @@ function renderFilteredPosts(posts) {
 }
 
 function renderSinglePostDOM(id, data, container) {
-    // FIXED: Accessing user directly from imported auth singleton
     const currentUser = auth.currentUser;
     const isOwner = currentUser && currentUser.uid === data.authorId;
 
@@ -320,7 +332,8 @@ function renderSinglePostDOM(id, data, container) {
 
     const authorDisplayName = escapeHTML(data.author || (data.authorId ? `Witness (${data.authorId.substring(0, 6)}...)` : 'Anonymous Witness'));
 
-    const deleteBtnHTML = isOwner || hasStewardAccess() 
+    // Synchronous evaluation using cached permission state
+    const deleteBtnHTML = isOwner || isStewardUserCache 
         ? `<button data-action="delete" data-id="${id}" title="Delete Testimony" class="text-zinc-500 hover:text-red-400 text-xs transition">🗑️</button>` 
         : '';
 
