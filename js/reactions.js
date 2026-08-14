@@ -19,24 +19,41 @@ export async function handleReaction(postId, type = 'like', btnEl = null) {
     const postRef = doc(db, "posts", postId);
     const userUid = user.uid;
 
-    try {
-        // Visual feedback (Optimistic UI update)
-        if (btnEl) {
-            btnEl.classList.toggle('active-reaction');
-        }
+    // Check current state from DOM attribute or CSS class
+    const isCurrentlyActive = btnEl ? btnEl.classList.contains('active-reaction') : false;
+    const isRemoving = isCurrentlyActive;
 
-        // Perform atomic update in Firestore
+    // Optimistic UI update
+    if (btnEl) {
+        btnEl.classList.toggle('active-reaction', !isRemoving);
+        
+        // Update count badge inside button if present
+        const countSpan = btnEl.querySelector('.reaction-count');
+        if (countSpan) {
+            const currentCount = parseInt(countSpan.textContent || '0', 10);
+            countSpan.textContent = Math.max(0, isRemoving ? currentCount - 1 : currentCount + 1);
+        }
+    }
+
+    try {
+        // Atomic update: toggle add vs remove based on state
         await updateDoc(postRef, {
-            [`reactions.${type}`]: increment(1),
-            [`reactedUsers.${type}`]: arrayUnion(userUid)
+            [`reactions.${type}`]: increment(isRemoving ? -1 : 1),
+            [`reactedUsers.${type}`]: isRemoving ? arrayRemove(userUid) : arrayUnion(userUid)
         });
 
     } catch (error) {
         console.error(`Error processing reaction (${type}):`, error);
-        
-        // Revert visual state on failure
+
+        // Rollback visual state on error
         if (btnEl) {
-            btnEl.classList.toggle('active-reaction');
+            btnEl.classList.toggle('active-reaction', isRemoving);
+            
+            const countSpan = btnEl.querySelector('.reaction-count');
+            if (countSpan) {
+                const currentCount = parseInt(countSpan.textContent || '0', 10);
+                countSpan.textContent = Math.max(0, isRemoving ? currentCount + 1 : currentCount - 1);
+            }
         }
         showToast("Unable to update reaction. Please try again.", "error");
     }
@@ -54,8 +71,10 @@ export function bindReactionEvents() {
         if (!btn) return;
 
         e.preventDefault();
+        
+        // Extract parameters safely
         const postId = btn.getAttribute('data-post-id') || btn.closest('[data-post-id]')?.getAttribute('data-post-id');
-        const reactionType = btn.getAttribute('data-type') || 'like';
+        const reactionType = btn.getAttribute('data-type') || btn.getAttribute('data-reaction') || 'like';
 
         if (postId) {
             handleReaction(postId, reactionType, btn);
@@ -63,6 +82,6 @@ export function bindReactionEvents() {
     });
 }
 
-// Window exports for global fallback
+// Window exports for global fallback / inline execution
 window.handleReaction = handleReaction;
 window.bindReactionEvents = bindReactionEvents;
