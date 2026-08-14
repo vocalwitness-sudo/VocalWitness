@@ -15,6 +15,7 @@ import { showToast } from './utils.js';
 import { renderTierCircle } from './ui-components.js';
 import { hasStewardAccess } from './tier.js';
 import { toggleReaction, bindReactionEvents } from './reactions.js';
+import { handleReaction } from './reactions.js';
 
 let activeFeedListener = null;
 let allPostsCache = [];
