@@ -7,19 +7,8 @@ import {
     doc, 
     updateDoc, 
     increment, 
-    addDoc, 
-    getDocs, 
-    deleteDoc,
+    deleteDoc, 
     serverTimestamp 
-import { 
-    collection, 
-    query, 
-    where, 
-    orderBy, 
-    limit, 
-    getDocs, 
-    doc, 
-    getDoc 
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { db, auth } from './firebase-config.js';
 import { showToast } from './utils.js';
@@ -87,7 +76,8 @@ export function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                     await handleUpvote(id);
                 } else if (action === 'react') {
                     const reactionType = btn.getAttribute('data-reaction');
-                    await handleReaction(id, reactionType);
+                    // FIXED: Using toggleReaction from reactions.js
+                    await toggleReaction(id, reactionType);
                 } else if (action === 'comment') {
                     await openCommentModal(id);
                 } else if (action === 'report') {
@@ -274,7 +264,7 @@ function renderFilteredPosts(posts) {
 }
 
 function renderSinglePostDOM(id, data, container) {
-    const auth = getAuth(app);
+    // FIXED: Accessing user directly from imported auth singleton
     const currentUser = auth.currentUser;
     const isOwner = currentUser && currentUser.uid === data.authorId;
 
@@ -380,7 +370,6 @@ function renderSinglePostDOM(id, data, container) {
 }
 
 async function handleUpvote(postId) {
-    const auth = getAuth(app);
     if (!auth.currentUser) {
         showToast("Please log in to support testimonies.", "error");
         return;
@@ -399,7 +388,6 @@ async function handleUpvote(postId) {
 }
 
 async function handleDeletePost(postId) {
-    const auth = getAuth(app);
     if (!auth.currentUser) {
         showToast("Authentication required.", "error");
         return;
