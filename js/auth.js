@@ -33,7 +33,6 @@ function refreshTierUI() {
         if (typeof updateTierBadge === 'function') updateTierBadge();
     }
 }
-
 async function createOrUpdateUser(user) {
     if (!user || !user.uid) return;
 
@@ -46,13 +45,12 @@ async function createOrUpdateUser(user) {
         const safePhotoURL = user.photoURL || "";
 
         if (!snap.exists()) {
-            // Default tier for new accounts is 'citizen' (Public Square)
             await setDoc(userRef, {
                 uid: user.uid,
                 email: safeEmail,
                 displayName: safeDisplayName,
                 photoURL: safePhotoURL,
-                tier: TIERS.CITIZEN || "citizen",
+                tier: TIERS?.CITIZEN || "citizen",
                 isVerified: false,
                 isPhoneVerified: false,
                 zkVerified: false,
@@ -65,9 +63,7 @@ async function createOrUpdateUser(user) {
             showToast("🎉 Account created! Welcome to the Public Square.", "success");
         } else {
             const existingData = snap.data() || {};
-            const updatePayload = {
-                updatedAt: serverTimestamp()
-            };
+            const updatePayload = { updatedAt: serverTimestamp() };
 
             if (safeDisplayName && safeDisplayName !== existingData.displayName) {
                 updatePayload.displayName = safeDisplayName;
@@ -79,7 +75,11 @@ async function createOrUpdateUser(user) {
                 updatePayload.email = safeEmail;
             }
 
-            await updateDoc(userRef, updatePayload);
+            // Only update if there are keys beyond 'updatedAt' or perform regular heartbeat
+            if (Object.keys(updatePayload).length > 0) {
+                await updateDoc(userRef, updatePayload);
+            }
+            
             updateVerificationUI(existingData.isVerified || existingData.isPhoneVerified || false);
         }
     } catch (e) {
