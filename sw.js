@@ -8,8 +8,7 @@ const STATIC_ASSETS = [
     '/my-testimonies.html',
     '/manifest.json',
     '/logo.png',
-    '/style.css',
-    '/sw.js'
+    '/style.css'
 ];
 
 // Install Event - Pre-cache essential static Shell UI
@@ -52,13 +51,18 @@ self.addEventListener('fetch', (event) => {
     }
 
     // 2. BYPASS CACHE FOR JS MODULES:
-    // Prevents syntax errors caused by caching ES Module scripts (auth.js, main.js, app-state.js, etc.)
+    // Prevents syntax errors caused by caching ES Module scripts (auth.js, main.js, app-state.js, reactions.js, etc.)
     if (url.pathname.endsWith('.js')) {
-        event.respondWith(fetch(event.request));
+        event.respondWith(
+            fetch(event.request).catch(err => {
+                console.error(`Network fetch failed for JS module: ${url.pathname}`, err);
+                return caches.match(event.request);
+            })
+        );
         return;
     }
 
-    // 3. Cache-first strategy for static assets (HTML, CSS, Images, Manifest)
+    // 3. Cache-first strategy for static shell assets (HTML, CSS, Images, Manifest)
     event.respondWith(
         caches.match(event.request).then(cachedResponse => {
             if (cachedResponse) return cachedResponse;
