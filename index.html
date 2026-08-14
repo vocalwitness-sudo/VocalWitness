@@ -441,111 +441,111 @@
             </button>
         </nav>
         
-    <!-- AUTH MODAL -->
-    <div id="authModal" class="fixed inset-0 z-[200] hidden flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-        <div class="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-3xl bg-zinc-900 p-6 sm:p-8 shadow-2xl border border-zinc-700/80">
-            <button id="closeAuthModalBtn" type="button"
-                    class="absolute top-4 right-4 text-zinc-400 hover:text-white text-2xl font-bold w-10 h-10 flex items-center justify-center rounded-full hover:bg-zinc-800 transition">
-                ✕
-            </button>
+  <!-- AUTH MODAL (Part 2) -->
+<div id="authModal" class="fixed inset-0 z-[200] hidden flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+    <div class="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-3xl bg-zinc-900 p-6 sm:p-8 shadow-2xl border border-zinc-700/80">
+        
+        <!-- Close Button -->
+        <button id="closeAuthModalBtn" type="button" onclick="closeAuthModal()"
+                class="absolute top-4 right-4 text-zinc-400 hover:text-white text-2xl font-bold w-10 h-10 flex items-center justify-center rounded-full hover:bg-zinc-800 transition">
+            ✕
+        </button>
 
-            <div class="text-center mb-6">
-                <h3 id="authTitle" class="text-2xl font-bold text-white">Join the Public Square</h3>
-                <p id="authSubtitle" class="text-xs text-zinc-400 mt-1">Sign in or create an account to participate.</p>
-            </div>
-
-            <button id="googleAuthBtn" type="button"
-                    class="w-full flex items-center justify-center gap-3 bg-white text-zinc-900 font-bold py-3.5 px-4 rounded-2xl hover:bg-zinc-100 transition-all mb-4 text-sm shadow-md">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5" alt="Google">
-                <span>Continue with Google</span>
-            </button>
-
-            <div class="relative my-4 text-center">
-                <div class="absolute inset-0 flex items-center">
-                    <div class="w-full border-t border-zinc-800"></div>
-                </div>
-                <span class="relative bg-zinc-900 px-3 text-xs text-zinc-500 uppercase tracking-widest">or email</span>
-            </div>
-
-            <form id="authForm" class="space-y-4">
-                <div>
-                    <input type="email" id="loginEmail" name="email" placeholder="Email address" required autocomplete="email"
-                           class="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 rounded-xl focus:outline-none focus:border-emerald-500 transition text-sm">
-                </div>
-
-                <div class="relative">
-                    <input type="password" id="loginPassword" name="password" placeholder="Password" required minlength="6"
-                           autocomplete="current-password"
-                           class="w-full px-4 py-3 pr-12 bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 rounded-xl focus:outline-none focus:border-emerald-500 transition text-sm">
-
-                    <button type="button" id="togglePasswordBtn"
-                            class="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition p-1"
-                            aria-label="Show password">
-                        <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                        <svg id="eyeOffIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                        </svg>
-                    </button>
-                </div>
-
-                <div class="flex items-center justify-between text-sm">
-                    <label class="flex items-center gap-2 cursor-pointer select-none text-zinc-400 hover:text-zinc-300">
-                        <input type="checkbox" id="rememberMe"
-                               class="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-0">
-                        <span>Remember me</span>
-                    </label>
-
-                    <button type="button" id="forgotPasswordBtn"
-                            class="text-emerald-400 hover:text-emerald-300 transition text-xs">
-                        Forgot password?
-                    </button>
-                </div>
-
-                <div id="authMessage" class="hidden text-sm text-center py-2 px-3 rounded-xl"></div>
-
-                <div class="flex items-center gap-3 pt-1">
-                    <button type="submit" id="submitAuthBtn"
-                            class="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition text-sm disabled:opacity-60 disabled:cursor-not-allowed">
-                        Sign In
-                    </button>
-                    <button type="button" id="toggleAuthModeBtn"
-                            class="flex-1 py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-semibold rounded-xl border border-zinc-700 transition text-sm">
-                        Create Account
-                    </button>
-                </div>
-            </form>
+        <div class="text-center mb-6">
+            <h3 id="authTitle" class="text-2xl font-bold text-white">Join the Public Square</h3>
+            <p id="authSubtitle" class="text-xs text-zinc-400 mt-1">Sign in or create an account to participate.</p>
         </div>
-    </div>
 
+        <!-- Google OAuth -->
+        <button id="googleAuthBtn" type="button"
+                class="w-full flex items-center justify-center gap-3 bg-white text-zinc-900 font-bold py-3.5 px-4 rounded-2xl hover:bg-zinc-100 transition-all mb-4 text-sm shadow-md">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5" alt="Google">
+            <span>Continue with Google</span>
+        </button>
 
-            <!-- ========== PASSWORD RESET VIEW ========== -->
-            <div id="resetPasswordView" class="hidden space-y-4">
-                <p class="text-sm text-zinc-400 text-center">
-                    Enter your email and we’ll send you a reset link.
-                </p>
+        <div class="relative my-4 text-center">
+            <div class="absolute inset-0 flex items-center">
+                <div class="w-full border-t border-zinc-800"></div>
+            </div>
+            <span class="relative bg-zinc-900 px-3 text-xs text-zinc-500 uppercase tracking-widest">or email</span>
+        </div>
 
-                <input type="email" id="resetEmail" placeholder="Email address" required
+        <!-- Auth Form View -->
+        <form id="authForm" class="space-y-4">
+            <div>
+                <input type="email" id="loginEmail" name="email" placeholder="Email address" required autocomplete="email"
                        class="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 rounded-xl focus:outline-none focus:border-emerald-500 transition text-sm">
-
-                <div id="resetMessage" class="hidden text-sm text-center py-2 px-3 rounded-xl"></div>
-
-                <div class="flex gap-3">
-                    <button type="button" id="sendResetBtn"
-                            class="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition text-sm">
-                        Send Reset Link
-                    </button>
-                    <button type="button" id="backToAuthBtn"
-                            class="flex-1 py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-semibold rounded-xl border border-zinc-700 transition text-sm">
-                        Back
-                    </button>
-                </div>
             </div>
 
+            <div class="relative">
+                <input type="password" id="loginPassword" name="password" placeholder="Password" required minlength="6"
+                       autocomplete="current-password"
+                       class="w-full px-4 py-3 pr-12 bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 rounded-xl focus:outline-none focus:border-emerald-500 transition text-sm">
+
+                <button type="button" id="togglePasswordBtn" onclick="togglePasswordVisibility()"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition p-1"
+                        aria-label="Toggle password visibility">
+                    <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    <svg id="eyeOffIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="flex items-center justify-between text-sm">
+                <label class="flex items-center gap-2 cursor-pointer select-none text-zinc-400 hover:text-zinc-300">
+                    <input type="checkbox" id="rememberMe" class="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-0">
+                    <span>Remember me</span>
+                </label>
+
+                <button type="button" id="forgotPasswordBtn" onclick="$('authForm').classList.add('hidden'); $('resetPasswordView').classList.remove('hidden');"
+                        class="text-emerald-400 hover:text-emerald-300 transition text-xs">
+                    Forgot password?
+                </button>
+            </div>
+
+            <div id="authMessage" class="hidden text-sm text-center py-2 px-3 rounded-xl"></div>
+
+            <div class="flex items-center gap-3 pt-1">
+                <button type="submit" id="submitAuthBtn"
+                        class="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition text-sm">
+                    Sign In
+                </button>
+                <button type="button" id="toggleAuthModeBtn"
+                        class="flex-1 py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-semibold rounded-xl border border-zinc-700 transition text-sm">
+                    Create Account
+                </button>
+            </div>
+        </form>
+
+        <!-- Reset Password View (Consolidated inside #authModal dialog) -->
+        <div id="resetPasswordView" class="hidden space-y-4 pt-2">
+            <p class="text-sm text-zinc-400 text-center">
+                Enter your email and we’ll send you a reset link.
+            </p>
+
+            <input type="email" id="resetEmail" placeholder="Email address" required
+                   class="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 rounded-xl focus:outline-none focus:border-emerald-500 transition text-sm">
+
+            <div id="resetMessage" class="hidden text-sm text-center py-2 px-3 rounded-xl"></div>
+
+            <div class="flex gap-3">
+                <button type="button" id="sendResetBtn"
+                        class="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition text-sm">
+                    Send Reset Link
+                </button>
+                <button type="button" id="backToAuthBtn" onclick="$('resetPasswordView').classList.add('hidden'); $('authForm').classList.remove('hidden');"
+                        class="flex-1 py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-semibold rounded-xl border border-zinc-700 transition text-sm">
+                    Back
+                </button>
+            </div>
         </div>
 
+    </div>
+</div>
 <!-- Verification Action Modal -->
     <div id="verificationModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[10002] p-4">
         <div class="glass rounded-3xl p-6 sm:p-8 max-w-md w-full border border-emerald-500/30 modal relative max-h-[90vh] overflow-y-auto">
