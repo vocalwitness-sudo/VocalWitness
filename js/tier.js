@@ -146,7 +146,7 @@ export async function getCurrentUserTier() {
   if (!data) return TIERS.CITIZEN;
 
   if (data.zkVerified === true || data.tier === TIERS.WITNESS_CIRCLE) return TIERS.WITNESS_CIRCLE;
-  if (data.isPhoneVerified === true || data.tier === TIERS.CITIZEN_CIRCLE) return TIERS.CITIZEN_CIRCLE;
+  if (data.isPhoneVerified === true || data.hasVerifiedPhone === true || data.tier === TIERS.CITIZEN_CIRCLE) return TIERS.CITIZEN_CIRCLE;
   return TIERS.CITIZEN;
 }
 
@@ -262,39 +262,49 @@ export async function canAccessFeature(feature) {
 /**
  * Apply visual theme based on tier
  */
-export function applyTierTheme() {
+export async function applyTierTheme() {
   const body = document.body;
-  body.classList.remove('tier-citizen', 'tier-citizen-circle', 'tier-witness');
+  if (!body) return;
 
-  getCurrentUserTier().then(tier => {
-    if (tier === TIERS.WITNESS_CIRCLE) body.classList.add('tier-witness');
-    else if (tier === TIERS.CITIZEN_CIRCLE) body.classList.add('tier-citizen-circle');
-    else body.classList.add('tier-citizen');
-  });
+  body.classList.remove('theme-citizen', 'theme-citizen-circle', 'theme-witness-circle', 'tier-citizen', 'tier-citizen-circle', 'tier-witness');
+
+  const tier = await getCurrentUserTier();
+  const witnessLevel = await getCurrentWitnessLevel();
+
+  if (tier === TIERS.WITNESS_CIRCLE) {
+    body.classList.add('theme-witness-circle', 'tier-witness');
+    if (witnessLevel) {
+      body.style.setProperty('--witness-primary-color', witnessLevel.color);
+    }
+  } else if (tier === TIERS.CITIZEN_CIRCLE) {
+    body.classList.add('theme-citizen-circle', 'tier-citizen-circle');
+  } else {
+    body.classList.add('theme-citizen', 'tier-citizen');
+  }
 }
 
 /**
  * Update profile badge with current level
  */
 export async function updateTierBadge() {
-  const badge = document.getElementById('profile-tier-badge');
+  const badge = document.getElementById('user-tier-badge') || document.getElementById('tier-badge') || document.getElementById('profile-tier-badge');
   if (!badge) return;
 
   const tier = await getCurrentUserTier();
   const level = await getCurrentWitnessLevel();
 
   if (level) {
-    badge.innerHTML = `${level.emblem} ${escapeHTML(level.name)}`;
+    badge.innerHTML = `<span>${level.emblem}</span> <span>${escapeHTML(level.name)}</span>`;
+    badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold shadow-sm text-white transition-all duration-200";
     badge.style.backgroundColor = level.color;
-    badge.style.color = "#fff";
   } else if (tier === TIERS.CITIZEN_CIRCLE) {
     badge.innerHTML = '🛡️ Citizen Circle';
-    badge.style.backgroundColor = '#34d399';
-    badge.style.color = "#000";
+    badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+    badge.style.backgroundColor = '';
   } else {
     badge.innerHTML = '👤 Citizen';
-    badge.style.backgroundColor = '#6b7280';
-    badge.style.color = "#fff";
+    badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-500/10 text-slate-400 border border-slate-500/20";
+    badge.style.backgroundColor = '';
   }
   badge.classList.remove('hidden');
 }
@@ -388,9 +398,10 @@ export async function requireCitizenCirclePermission(actionCallback) {
       showToast("Phone verification required to unlock this feature.", "info");
     }
 
-    const modal = document.getElementById('phoneVerificationModal') || document.getElementById('phone-upgrade-modal');
+    const modal = document.getElementById('phoneVerificationModal') || document.getElementById('phone-upgrade-modal') || document.getElementById('verificationModal');
     if (modal) {
       modal.classList.remove('hidden');
+      modal.classList.add('flex');
     }
     return false;
   }
@@ -400,3 +411,6 @@ export async function requireCitizenCirclePermission(actionCallback) {
   }
   return true;
 }
+
+// Global exports
+window.refreshTierAndUI = refreshTierAndUI;
