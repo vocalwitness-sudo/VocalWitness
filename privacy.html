@@ -8,6 +8,7 @@
   <style>
     body { background-color: #0a0f1c; color: white; font-family: 'Inter', system-ui, sans-serif; }
     .glass { background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(16, 185, 129, 0.25); }
+    .badge-glass { background: rgba(31, 41, 55, 0.6); border: 1px solid rgba(255, 255, 255, 0.1); }
   </style>
 </head>
 <body class="min-h-screen p-8">
@@ -17,100 +18,127 @@
       <h1 class="text-4xl font-bold tracking-tight" data-i18n="privacyTitle">Privacy Policy</h1>
     </div>
     
-    <p class="text-zinc-400 mb-10" data-i18n="privacyLastUpdated">Last updated: July 19, 2026</p>
+    <p class="text-zinc-400 mb-10" data-i18n="privacyLastUpdated">Last updated: August 14, 2026</p>
 
-    <div class="glass rounded-3xl p-8 mb-10">
-      <p class="text-emerald-300 leading-relaxed" data-i18n="privacyIntro">
-        At VocalWitness, we believe <strong>truth should not require sacrificing privacy</strong>. 
-        We are committed to minimizing data collection while maintaining the integrity of the public square.
+    <!-- Global Trust Shield Banner -->
+    <div class="glass rounded-3xl p-8 mb-10 space-y-4">
+      <p class="text-emerald-300 leading-relaxed text-lg" data-i18n="privacyIntro">
+        At VocalWitness, we believe <strong>truth should never require sacrificing your safety</strong>. 
+        We build privacy-first technology designed to protect citizens while maintaining an undeniable public record.
       </p>
+      <div class="pt-2 flex flex-wrap items-center gap-3 text-xs text-zinc-300">
+        <span class="text-zinc-400 font-medium" data-i18n="privacySecuredBy">Secured by industry standards:</span>
+        <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-emerald-400">Google Cloud / Firebase</span>
+        <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-amber-400">Cloudflare Edge Shield</span>
+        <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-cyan-400">W3C Web Crypto & ZK Proofs</span>
+      </div>
     </div>
 
     <div class="space-y-12 text-zinc-300 leading-relaxed">
 
+      <!-- Section 1 -->
       <section>
-        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySection1Title">1. Our Privacy Philosophy</h2>
-        <p data-i18n="privacySection1Text">We use privacy-preserving technologies (including Zero-Knowledge proofs where available) so you can participate meaningfully while protecting your identity. We do not sell user data. We do not engage in surveillance advertising.</p>
+        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySection1Title">1. Our Privacy & Trust Philosophy</h2>
+        <p data-i18n="privacySection1Text">
+          VocalWitness combines client-side cryptography, automated metadata stripping, and zero-knowledge verification so you can speak truth without exposing unwanted personal details. We do not sell user data, run targeted advertisements, or track you across the web.
+        </p>
       </section>
 
+      <!-- Section 2 -->
       <section>
-        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySection2Title">2. Information We Do NOT Collect</h2>
+        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySection2Title">2. Information We Do NOT Collect or Store</h2>
         <ul class="list-disc pl-6 space-y-2 text-zinc-400">
-          <li data-i18n="privacyNotCollect1">Government-issued IDs, passports, or biometric data</li>
-          <li data-i18n="privacyNotCollect2">Precise real-time location tracking</li>
-          <li data-i18n="privacyNotCollect3">Your full social graph or personal contact list</li>
-          <li data-i18n="privacyNotCollect4">Financial information (except voluntary donation records)</li>
+          <li data-i18n="privacyNotCollect1"><strong>Your Phone Number on Public Records:</strong> Phone verification exists solely as a temporary anti-spam check. We never store, publish, or link phone numbers to your public posts.</li>
+          <li data-i18n="privacyNotCollect2">Government IDs, passports, or biometric scans.</li>
+          <li data-i18n="privacyNotCollect3">EXIF camera metadata (GPS coordinates & camera hardware IDs are scrubbed automatically before media uploads).</li>
+          <li data-i18n="privacyNotCollect4">Personal contacts, social graphs, or tracking cookies.</li>
         </ul>
       </section>
 
+      <!-- Section 3 -->
       <section>
-        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySection3Title">3. Information We Collect</h2>
+        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySection3Title">3. Information We Process</h2>
         
         <div class="grid md:grid-cols-2 gap-6 mt-6">
           <div class="glass rounded-3xl p-6">
-            <h3 class="font-semibold text-emerald-400 mb-3" data-i18n="privacyAccountInfoTitle">Account Information</h3>
-            <p class="text-sm" data-i18n="privacyAccountInfoDesc">Email or phone number (for authentication), chosen username, and basic profile data you provide.</p>
+            <h3 class="font-semibold text-emerald-400 mb-3" data-i18n="privacyAccountInfoTitle">Account Identity</h3>
+            <p class="text-sm" data-i18n="privacyAccountInfoDesc">Chosen username, cryptographic keys derived on your local device, and optional profile badges.</p>
           </div>
           
           <div class="glass rounded-3xl p-6">
-            <h3 class="font-semibold text-emerald-400 mb-3" data-i18n="privacyContentTitle">Content You Publish</h3>
-            <p class="text-sm" data-i18n="privacyContentDesc">Testimonies, photos, voice recordings, and associated metadata (e.g., timestamps, cryptographic hashes).</p>
+            <h3 class="font-semibold text-emerald-400 mb-3" data-i18n="privacyContentTitle">Published Evidence</h3>
+            <p class="text-sm" data-i18n="privacyContentDesc">Testimonies, media attachments, tamper-evident SHA-256 hashes, and timestamp certificates.</p>
           </div>
           
           <div class="glass rounded-3xl p-6">
-            <h3 class="font-semibold text-emerald-400 mb-3" data-i18n="privacyVerificationTitle">Verification Data</h3>
-            <p class="text-sm" data-i18n="privacyVerificationDesc">Phone verification status and Zero-Knowledge proofs (where implemented). We do not store the underlying private data.</p>
+            <h3 class="font-semibold text-emerald-400 mb-3" data-i18n="privacyVerificationTitle">Anti-Spam Verification</h3>
+            <p class="text-sm" data-i18n="privacyVerificationDesc">Zero-Knowledge proof receipts verifying human status and account trust without revealing underlying private details.</p>
           </div>
           
           <div class="glass rounded-3xl p-6">
-            <h3 class="font-semibold text-emerald-400 mb-3" data-i18n="privacyTechnicalTitle">Technical Data</h3>
-            <p class="text-sm" data-i18n="privacyTechnicalDesc">Anonymous usage statistics, IP addresses (temporarily for security), and device information for spam/abuse prevention.</p>
+            <h3 class="font-semibold text-emerald-400 mb-3" data-i18n="privacyTechnicalTitle">Security Operations</h3>
+            <p class="text-sm" data-i18n="privacyTechnicalDesc">Anonymized security statistics routed through Cloudflare to block DDoS attacks and malicious bots.</p>
           </div>
         </div>
       </section>
 
+      <!-- Section 4 -->
       <section>
-        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySection4Title">4. How We Use Your Information</h2>
-        <ul class="list-disc pl-6 space-y-3">
-          <li data-i18n="privacyUse1">To provide, maintain, and improve the platform</li>
-          <li data-i18n="privacyUse2">To enable trust features (phone verification, ZK proofs, reputation)</li>
-          <li data-i18n="privacyUse3">To enforce our Terms of Service and Safety Guidelines</li>
-          <li data-i18n="privacyUse4">To respond to legal requests when required by law</li>
+        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySection4Title">4. Global Infrastructure & Third-Party Protections</h2>
+        <p class="mb-4" data-i18n="privacySection4Text">We rely on world-class technical infrastructure to keep VocalWitness resilient and encrypted:</p>
+        <ul class="list-disc pl-6 space-y-2 text-zinc-400">
+          <li data-i18n="privacyThirdParty1"><strong>Google Cloud / Firebase:</strong> Secure enterprise database storage, encrypted in transit and at rest.</li>
+          <li data-i18n="privacyThirdParty2"><strong>Cloudflare DNS & WAF:</strong> Global edge caching and threat filtering to ensure high availability during public events.</li>
         </ul>
       </section>
 
+      <!-- Section 5 -->
       <section>
-        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySection5Title">5. Data Retention & Deletion</h2>
-        <p data-i18n="privacySection5Text">You may delete your account at any time, which will remove your profile and unpublished content. However, content already published to the Public Square becomes part of the permanent record (like public speech) and cannot be fully erased.</p>
+        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySection5Title">5. Mathematical Safeguards (Zero-Knowledge Cryptography)</h2>
+        <p data-i18n="privacySection5Text">
+          Where enabled, Zero-Knowledge proofs ($\text{zk-SNARKs}$) allow our protocol to confirm that a user meets platform credibility or human verification rules mathematically—without ever storing, seeing, or revealing their underlying private information.
+        </p>
       </section>
 
+      <!-- Section 6 -->
       <section>
-        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySection6Title">6. Zero-Knowledge & Cryptographic Protections</h2>
-        <p data-i18n="privacySection6Text">Where implemented, ZK proofs allow us to verify that a user meets certain criteria (e.g., is human, has reached a trust threshold) without storing or revealing sensitive personal information.</p>
+        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySection6Title">6. Data Control & The Public Ledger</h2>
+        <p data-i18n="privacySection6Text">
+          You may delete your account profile at any time. However, content published to the public testimony record functions as a permanent historical record. While metadata is stripped automatically, public statements cannot be altered retroactively once notarized by the ledger.
+        </p>
       </section>
 
-      <section>
-        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySection7Title">7. Third Parties & Data Sharing</h2>
-        <p data-i18n="privacySection7Text">We use Firebase (Google) for authentication, database, and storage. Your data is protected under their security standards. We do not share personal data with third parties for marketing purposes.</p>
-      </section>
-
-      <section class="pt-8 border-t border-zinc-700 text-sm text-zinc-400">
-        <p data-i18n="privacyImportant"><strong>Important:</strong> Public testimonies are visible to everyone. We strongly recommend that you never post highly sensitive personal information that could compromise your safety.</p>
+      <!-- Friendly OpSec Callout Box -->
+      <section class="pt-8 border-t border-zinc-800">
+        <div class="bg-amber-500/10 border border-amber-500/30 rounded-3xl p-6 text-sm text-zinc-300 space-y-3">
+          <div class="flex items-center gap-2 font-semibold text-amber-400 text-base">
+            <span>🛡️</span>
+            <span data-i18n="privacyOpSecTitle">Your Safety & Voluntary Disclosure</span>
+          </div>
+          <p data-i18n="privacyOpSecText">
+            <strong>Your identity is under your control:</strong> Stating your name or speaking on record is entirely voluntary. If you choose to speak publicly, VocalWitness secures your statement with cryptographic timestamps.
+          </p>
+          <p data-i18n="privacyOpSecTip">
+            <strong>Pro Tip for Citizen Safety:</strong> To protect yourself from harassment or targeted abuse, avoid sharing personal phone numbers, home addresses, or private financial details inside the body of your public testimony.
+          </p>
+        </div>
       </section>
     </div>
 
     <div class="mt-16 text-center">
       <a href="index.html" 
-         class="inline-block px-8 py-4 bg-emerald-600 hover:bg-emerald-500 rounded-3xl font-medium transition-all" data-i18n="backToVocalWitness">
+         class="inline-block px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-3xl font-medium transition-all shadow-lg shadow-emerald-900/30" 
+         data-i18n="backToVocalWitness">
         ← Back to VocalWitness
       </a>
     </div>
   </div>
+
   <script type="module">
     import { initLanguage } from './js/i18n.js';
     document.addEventListener('DOMContentLoaded', () => {
-        initLanguage();
+      initLanguage();
     });
-</script>
+  </script>
 </body>
 </html>
