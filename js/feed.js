@@ -11,13 +11,21 @@ import {
     getDocs, 
     deleteDoc,
     serverTimestamp 
+import { 
+    collection, 
+    query, 
+    where, 
+    orderBy, 
+    limit, 
+    getDocs, 
+    doc, 
+    getDoc 
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-import { db, app } from './firebase-config.js';
+import { db, auth } from './firebase-config.js';
 import { showToast } from './utils.js';
 import { renderTierCircle } from './ui-components.js';
 import { hasStewardAccess } from './tier.js';
-import { getAuth } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import { handleReaction } from './reactions.js';
+import { toggleReaction, bindReactionEvents } from './reactions.js';
 
 let activeFeedListener = null;
 let allPostsCache = [];
