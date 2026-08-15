@@ -1,31 +1,25 @@
 import { defineConfig } from 'vite'
 import tailwindcss from '@tailwindcss/vite'
-import { resolve } from 'path'
+import { resolve, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { readdirSync } from 'node:fs'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
+
+// Automatically find every .html file in the project root
+const htmlFiles = readdirSync(__dirname)
+  .filter(file => file.endsWith('.html'))
+  .reduce((entries, file) => {
+    const name = file.replace(/\.html$/, '')
+    entries[name] = resolve(__dirname, file)
+    return entries
+  }, {})
 
 export default defineConfig({
-  plugins: [
-    tailwindcss(),
-  ],
+  plugins: [tailwindcss()],
   build: {
     rollupOptions: {
-      input: {
-        main: resolve(__dirname, 'index.html'),
-        about: resolve(__dirname, 'about.html'),
-        admin: resolve(__dirname, 'admin.html'),
-        'forensic-ledger': resolve(__dirname, 'forensic-ledger.html'),
-        groups: resolve(__dirname, 'groups.html'),
-        legal: resolve(__dirname, 'legal.html'),
-        'live-arena': resolve(__dirname, 'live-arena.html'),
-        moderation: resolve(__dirname, 'moderation.html'),
-        'my-testimonies': resolve(__dirname, 'my-testimonies.html'),
-        privacy: resolve(__dirname, 'privacy.html'),
-        profile: resolve(__dirname, 'profile.html'),
-        safety: resolve(__dirname, 'safety.html'),
-        terms: resolve(__dirname, 'terms.html'),
-        transparency: resolve(__dirname, 'transparency.html'),
-        'true-witness': resolve(__dirname, 'true-witness.html'),
-        verify: resolve(__dirname, 'verify.html'),
-      },
-    },
-  },
+      input: htmlFiles
+    }
+  }
 })
