@@ -9,7 +9,8 @@ import {
     increment, 
     deleteDoc, 
     serverTimestamp 
-} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+} from "firebase/firestore";
+
 import { db, auth } from './firebase-config.js';
 import { showToast } from './utils.js';
 import { renderTierCircle } from './ui-components.js';
