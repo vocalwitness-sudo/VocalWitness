@@ -1,26 +1,34 @@
-// vite.config.js (Root Directory)
-import { defineConfig } from 'vite';
-import { resolve } from 'path';
+name: Deploy to Firebase Hosting
 
-export default defineConfig({
-  build: {
-    rollupOptions: {
-      input: {
-        main: resolve(__dirname, 'index.html'),
-        trueWitness: resolve(__dirname, 'true-witness.html'),
-        forensicLedger: resolve(__dirname, 'forensic-ledger.html'),
-        verify: resolve(__dirname, 'verify.html'),
-        admin: resolve(__dirname, 'admin.html'),
-        groups: resolve(__dirname, 'groups.html'),
-        moderation: resolve(__dirname, 'moderation.html'),
-        myTestimonies: resolve(__dirname, 'my-testimonies.html'),
-        transparency: resolve(__dirname, 'transparency.html'),
-        about: resolve(__dirname, 'about.html'),
-        legal: resolve(__dirname, 'legal.html'),
-        privacy: resolve(__dirname, 'privacy.html'),
-        safety: resolve(__dirname, 'safety.html'),
-        terms: resolve(__dirname, 'terms.html')
-      }
-    }
-  }
-});
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build Application
+        run: npm run build
+
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: vocalwitness-3affa
+          channelId: live
+          entryPoint: .
