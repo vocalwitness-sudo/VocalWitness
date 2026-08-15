@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "public": ".",
+    "public": "dist",
     "ignore": [
       "firebase.json",
       "**/node_modules/**",
@@ -9,10 +9,6 @@
     "cleanUrls": false,
     "trailingSlash": false,
     "rewrites": [
-      {
-        "source": "/__/auth/**",
-        "destination": "https://vocalwitness-3affa.firebaseapp.com/__/auth/<path>"
-      },
       {
         "source": "**",
         "destination": "/index.html"
