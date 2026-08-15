@@ -1,11 +1,11 @@
 // js/witness-voice.js
 import { renderFeed } from './feed.js';
 
-export function initWitnessVoice() {
-  console.log('Witness Voice feed initialized.');
-  // Initialize feed for Witness Voice
-  renderFeed('witness-voice');
+export function initWitnessVoice(containerId = 'witnessVoiceContainer') {
+  const container = document.getElementById(containerId);
+  if (container) {
+    renderFeed('witness-voice', container);
+  } else {
+    renderFeed('witness-voice');
+  }
 }
-
-// Auto-run if loaded as entry script
-initWitnessVoice();
