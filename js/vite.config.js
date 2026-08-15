@@ -9,13 +9,18 @@ export default defineConfig({
     tailwindcss(),
   ],
 
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, './js'),
+      '/js': resolve(__dirname, './js')
+    }
+  },
+
   build: {
     outDir: 'public',
     emptyOutDir: true,
     target: 'es2022',
     sourcemap: true,
-    
-    // Multi-page entry points
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
@@ -31,50 +36,7 @@ export default defineConfig({
         groups: resolve(__dirname, 'groups.html'),
         moderation: resolve(__dirname, 'moderation.html'),
         transparency: resolve(__dirname, 'transparency.html')
-      },
-      output: {
-        chunkFileNames: 'assets/js/[name]-[hash].js',
-        entryFileNames: 'assets/js/[name]-[hash].js',
-        assetFileNames: ({ name }) => {
-          if (/\.(wasm)$/i.test(name ?? '')) {
-            return 'assets/wasm/[name][extname]';
-          }
-          if (/\.(zkey|r1cs)$/i.test(name ?? '')) {
-            return 'assets/zk/[name][extname]';
-          }
-          return 'assets/[ext]/[name]-[hash][extname]';
-        }
       }
     }
-  },
-
-  // Web Worker bundling for ZK proofs
-  worker: {
-    format: 'es',
-    plugins: []
-  },
-
-  assetsInclude: ['**/*.wasm', '**/*.zkey', '**/*.r1cs'],
-
-  // Local dev server headers for SharedArrayBuffer / WASM execution
-  server: {
-    port: 3000,
-    headers: {
-      'Cross-Origin-Opener-Policy': 'same-origin',
-      'Cross-Origin-Embedder-Policy': 'require-corp',
-      'Access-Control-Allow-Origin': '*'
-    }
-  },
-
-  preview: {
-    port: 5000,
-    headers: {
-      'Cross-Origin-Opener-Policy': 'same-origin',
-      'Cross-Origin-Embedder-Policy': 'require-corp'
-    }
-  },
-
-  optimizeDeps: {
-    exclude: ['snarkjs']
   }
 });
