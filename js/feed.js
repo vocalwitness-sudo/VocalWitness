@@ -97,7 +97,8 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                     await openCommentModal(id);
                 } else if (action === 'report') {
                     try {
-                        const m = await import('./moderation.js');
+                        // Added /* @vite-ignore */ to prevent Vite/Rollup bundling error
+                        const m = await import(/* @vite-ignore */ './moderation.js');
                         if (m && typeof m.reportContent === 'function') {
                             await m.reportContent(id, "other");
                         } else {
