@@ -79,102 +79,147 @@
         const unauthorizedWarning = document.getElementById('unauthorizedWarning');
         const refreshQueueBtn = document.getElementById('refreshQueueBtn');
 
-        // Main setup controller
+        function escapeHTML(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
         async function renderModerationDashboard() {
+            if (!queueContainer) return;
+
             queueLoading.classList.remove('hidden');
             queueContainer.innerHTML = '';
             emptyQueue.classList.add('hidden');
             unauthorizedWarning.classList.add('hidden');
 
-            // 1. Steward Guard Check
-            const isSteward = await hasStewardAccess();
-            if (!isSteward) {
+            try {
+                // 1. Steward Guard Check
+                const isSteward = await hasStewardAccess();
+                if (!isSteward) {
+                    queueLoading.classList.add('hidden');
+                    unauthorizedWarning.classList.remove('hidden');
+                    return;
+                }
+
+                // 2. Fetch Pending Items
+                const items = await fetchReviewQueue();
                 queueLoading.classList.add('hidden');
-                unauthorizedWarning.classList.remove('hidden');
-                return;
-            }
 
-            // 2. Fetch Pending Items
-            const items = await fetchReviewQueue();
-            queueLoading.classList.add('hidden');
+                if (!items || items.length === 0) {
+                    emptyQueue.classList.remove('hidden');
+                    return;
+                }
 
-            if (!items || items.length === 0) {
-                emptyQueue.classList.remove('hidden');
-                return;
-            }
+                // 3. Build UI for flagged content
+                items.forEach(item => {
+                    const card = document.createElement('div');
+                    card.id = `post-${item.id}`;
+                    card.className = "bg-slate-950/60 border border-slate-800 rounded-xl p-6 shadow-sm hover:border-slate-700 transition";
 
-            // 3. Build UI for flagged content
-            items.forEach(item => {
-                const card = document.createElement('div');
-                card.id = `post-${item.id}`;
-                card.className = "bg-slate-950/60 border border-slate-800 rounded-xl p-6 shadow-sm hover:border-slate-700 transition";
+                    const reasonsBadge = (item.autoFlaggedReasons || [])
+                        .map(r => `<span class="bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded text-xs">${escapeHTML(r)}</span>`)
+                        .join(' ');
 
-                const reasonsBadge = (item.autoFlaggedReasons || [])
-                    .map(r => `<span class="bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded text-xs">${r}</span>`)
-                    .join(' ');
+                    const safeAuthor = escapeHTML(item.author || 'Anonymous Witness');
+                    const safeTier = escapeHTML(item.authorTier || 'Citizen');
+                    const safeContent = escapeHTML(item.content || 'No text content available.');
 
-                card.innerHTML = `
-                    <div class="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-4">
-                        <div>
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="font-semibold text-slate-200">${item.author || 'Anonymous Witness'}</span>
-                                <span class="bg-slate-800 text-slate-400 text-xs px-2 py-0.5 rounded-full uppercase tracking-wider">${item.authorTier || 'Citizen'}</span>
-                            </div>
-                            <p class="text-xs text-slate-500">Post ID: ${item.id} • Toxicity Score: <span class="font-mono text-rose-400">${((item.toxicityScore || 0) * 100).toFixed(0)}%</span></p>
-                        </div>
-                        <div class="flex flex-wrap gap-1">
-                            ${reasonsBadge || '<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded text-xs">Flagged for Review</span>'}
-                        </div>
-                    </div>
-
-                    <div class="bg-slate-900/90 border border-slate-800/80 p-4 rounded-lg mb-4 text-slate-300 text-sm whitespace-pre-wrap leading-relaxed">${item.content || 'No text content available.'}</div>
-
-                    ${item.imageUrl ? `<img src="${item.imageUrl}" class="w-full max-h-60 object-cover rounded-lg mb-4 border border-slate-800" alt="Testimony attachment">` : ''}
-
-                    <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-800/60">
-                        <button data-action="purge" data-id="${item.id}" class="action-btn border border-rose-500/30 text-rose-400 hover:bg-rose-500/10 px-4 py-2 rounded-lg text-sm font-medium transition">
-                            🗑️ <span data-i18n="purgePost">Purge Post</span>
-                        </button>
-                        <button data-action="approve" data-id="${item.id}" class="action-btn bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm">
-                            ✅ <span data-i18n="approvePublish">Approve & Publish</span>
-                        </button>
-                    </div>
-                `;
-
-                queueContainer.appendChild(card);
-            });
-
-            // Attach Delegate Click Handlers for Approve/Purge
-            queueContainer.querySelectorAll('.action-btn').forEach(btn => {
-                btn.addEventListener('click', async (e) => {
-                    const button = e.currentTarget;
-                    const action = button.getAttribute('data-action');
-                    const postId = button.getAttribute('data-id');
-
-                    button.disabled = true;
-                    button.classList.add('opacity-50');
-
-                    const success = await stewardReviewAction(postId, action);
-                    if (success) {
-                        const card = document.getElementById(`post-${postId}`);
-                        if (card) card.remove();
-                        if (queueContainer.children.length === 0) {
-                            emptyQueue.classList.remove('hidden');
-                        }
-                    } else {
-                        button.disabled = false;
-                        button.classList.remove('opacity-50');
+                    let mediaHTML = '';
+                    if (item.imageUrl) {
+                        mediaHTML += `<img src="${escapeHTML(item.imageUrl)}" class="w-full max-h-60 object-cover rounded-lg mb-4 border border-slate-800" alt="Testimony attachment" loading="lazy">`;
                     }
+                    if (item.audioUrl) {
+                        let audioSrc = item.audioUrl;
+                        if (!audioSrc.includes('alt=media')) {
+                            audioSrc += audioSrc.includes('?') ? '&alt=media' : '?alt=media';
+                        }
+                        mediaHTML += `
+                            <div class="mb-4 p-3 bg-slate-900 border border-slate-800 rounded-lg">
+                                <audio controls preload="metadata" class="w-full">
+                                    <source src="${escapeHTML(audioSrc)}" type="audio/webm">
+                                    <source src="${escapeHTML(audioSrc)}" type="audio/ogg">
+                                    Your browser does not support audio playback.
+                                </audio>
+                            </div>`;
+                    }
+
+                    card.innerHTML = `
+                        <div class="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-4">
+                            <div>
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="font-semibold text-slate-200">${safeAuthor}</span>
+                                    <span class="bg-slate-800 text-slate-400 text-xs px-2 py-0.5 rounded-full uppercase tracking-wider">${safeTier}</span>
+                                </div>
+                                <p class="text-xs text-slate-500">Post ID: ${escapeHTML(item.id)} • Toxicity Score: <span class="font-mono text-rose-400">${((item.toxicityScore || 0) * 100).toFixed(0)}%</span></p>
+                            </div>
+                            <div class="flex flex-wrap gap-1">
+                                ${reasonsBadge || '<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded text-xs">Flagged for Review</span>'}
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900/90 border border-slate-800/80 p-4 rounded-lg mb-4 text-slate-300 text-sm whitespace-pre-wrap leading-relaxed">${safeContent}</div>
+
+                        ${mediaHTML}
+
+                        <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-800/60">
+                            <button data-action="purge" data-id="${item.id}" class="action-btn border border-rose-500/30 text-rose-400 hover:bg-rose-500/10 px-4 py-2 rounded-lg text-sm font-medium transition">
+                                🗑️ <span data-i18n="purgePost">Purge Post</span>
+                            </button>
+                            <button data-action="approve" data-id="${item.id}" class="action-btn bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm">
+                                ✅ <span data-i18n="approvePublish">Approve & Publish</span>
+                            </button>
+                        </div>
+                    `;
+
+                    queueContainer.appendChild(card);
                 });
-            });
+
+                // Attach Handlers
+                queueContainer.querySelectorAll('.action-btn').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const button = e.currentTarget;
+                        const action = button.getAttribute('data-action');
+                        const postId = button.getAttribute('data-id');
+
+                        button.disabled = true;
+                        button.classList.add('opacity-50', 'cursor-not-allowed');
+
+                        const success = await stewardReviewAction(postId, action);
+                        if (success) {
+                            const card = document.getElementById(`post-${postId}`);
+                            if (card) card.remove();
+                            if (queueContainer.querySelectorAll('[id^="post-"]').length === 0) {
+                                emptyQueue.classList.remove('hidden');
+                            }
+                        } else {
+                            button.disabled = false;
+                            button.classList.remove('opacity-50', 'cursor-not-allowed');
+                        }
+                    });
+                });
+
+            } catch (err) {
+                console.error("Failed to load moderation dashboard:", err);
+                queueLoading.classList.add('hidden');
+            }
         }
 
-        // Initialize on Load
         document.addEventListener('DOMContentLoaded', () => {
-            initLanguage();
+            if (typeof initLanguage === 'function') {
+                initLanguage();
+            }
             renderModerationDashboard();
         });
-        refreshQueueBtn.addEventListener('click', renderModerationDashboard);
+
+        if (refreshQueueBtn) {
+            refreshQueueBtn.addEventListener('click', renderModerationDashboard);
+        }
+
         window.addEventListener('languageChanged', renderModerationDashboard);
     </script>
 </body>
