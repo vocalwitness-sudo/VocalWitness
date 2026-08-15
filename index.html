@@ -26,20 +26,33 @@
 
     <title data-i18n="pageTitle">VocalWitness • Truth • Evidence • Public Square</title>
 
+    <!-- Font & Icon Preconnections -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./style.css">
+    <link rel="icon" href="./logo.png" type="image/png">
+
+    <!-- Third-Party Libraries (Deferred for Render Performance) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" defer></script>
     <script src="https://js.paystack.co/v2/inline.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/snarkjs@0.7.0/build/snarkjs.min.js" defer></script>
- 
 
-    <!-- Fallback Styles for Legacy Browsers & Basic Component Overrides -->
+    <!-- Fallback Styles for Legacy Browsers & Core Theme Overrides -->
     <style>
-      body { background-color: #0a0f1c !important; color: #ffffff !important; }
+      body { background-color: #0a0f1c !important; color: #ffffff !important; font-family: 'Inter', sans-serif; }
       .glass { background-color: #111827 !important; border: 1px solid rgba(16, 185, 129, 0.22) !important; }
-      #main-nav button.nav-tab.active { background-color: #10b981 !important; color: #000000 !important; }
+      #main-nav button.nav-tab.active { background-color: #10b981 !important; color: #000000 !important; font-weight: 700; }
       #support-btn { background-color: #10b981 !important; color: #000000 !important; }
-      #languageSelector, #data-saver-btn, #profile-btn, #squareSearchInput, #bookmarks-nav-btn { background-color: #18181b !important; color: #ffffff !important; }
+      #languageSelector, #data-saver-btn, #profile-btn, #squareSearchInput, #bookmarks-nav-btn, #notifications-btn, #google-auth-btn { background-color: #18181b !important; color: #ffffff !important; }
+      
+      /* Mobile Header Specific Adjustments */
+      @media (max-width: 767px) {
+        .mobile-header-row { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+      }
+
       /* Explicit Fallbacks for Browsers Lacking Modern CSS Alpha Syntax */
       @supports not (color: rgb(0 0 0 / 0.5)) {
         .bg-zinc-950 { background-color: #09090b !important; }
@@ -52,118 +65,147 @@
         .glass { background-color: #111827 !important; }
       }
     </style>
-
-    <link rel="stylesheet" href="./style.css">
-    <link rel="icon" href="./logo.png" type="image/png">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 <body class="bg-zinc-950 text-zinc-100 min-h-screen flex flex-col font-sans antialiased selection:bg-emerald-500 selection:text-black">
     <div class="app-container py-6 px-4 max-w-6xl mx-auto">
      
         
-      <!-- MAIN TOP HEADER -->
-        <header class="flex items-center justify-between mb-8 sticky top-4 z-50 glass rounded-3xl p-4 shadow-2xl border-emerald-500/30">
-            <!-- App Logo & Branding Title (Visible Everywhere) -->
+<!-- TOP HEADER -->
+<header class="fixed top-0 left-0 right-0 z-50 bg-zinc-950/90 backdrop-blur-md border-b border-emerald-500/30 shadow-2xl transition-all">
+    <div class="max-w-6xl mx-auto px-3 py-2.5 sm:px-4 sm:py-3">
+        
+        <!-- DESKTOP HEADER (Single Row for Medium Screens & Up) -->
+        <div class="hidden md:flex items-center justify-between">
+            <!-- App Logo & Branding Title -->
             <div class="flex items-center gap-3.5 group cursor-pointer shrink-0">
                 <div class="relative flex items-center justify-center">
                     <div class="absolute inset-0 bg-emerald-500 rounded-2xl blur opacity-40 group-hover:opacity-75 transition"></div>
                     <img src="./logo.png" alt="VocalWitness Logo" class="relative w-11 h-11 object-contain rounded-2xl shadow-lg border border-emerald-500/40 shrink-0">
                 </div>
                 <div>
-                    <h1 class="text-lg sm:text-2xl font-black tracking-tight text-emerald-400 drop-shadow-sm" data-i18n="appTitle">VocalWitness</h1>
+                    <h1 class="text-xl sm:text-2xl font-black tracking-tight text-emerald-400 drop-shadow-sm" data-i18n="appTitle">VocalWitness</h1>
                     <p class="text-xs sm:text-sm tracking-wide font-black text-emerald-400 drop-shadow-sm" data-i18n="appSubtitle">Truth • Evidence • Public Square</p>
                 </div>
             </div>
 
-            <!-- Controls Container -->
+            <!-- Desktop Controls -->
             <div class="flex items-center gap-2">
-                
-                <!-- DESKTOP CONTROLS (Visible on Medium Screens & Up: hidden md:flex) -->
-                <div class="hidden md:flex items-center gap-2">
-                    <select id="languageSelector-desktop" aria-label="Select Language" class="bg-zinc-900 border text-white rounded-2xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500" style="background-color: #18181b; color: #ffffff; border-color: #3f3f46;">
-                        <option value="en">English</option>
-                        <option value="pcm">Pidgin</option>
-                        <option value="ha">Hausa</option>
-                        <option value="yo">Yoruba</option>
-                        <option value="ig">Igbo</option>
-                        <option value="es">Español</option>
-                        <option value="fr">Français</option>
-                    </select>
+                <select id="languageSelector-desktop" aria-label="Select Language" class="bg-zinc-900 border text-white rounded-2xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500" style="background-color: #18181b; color: #ffffff; border-color: #3f3f46;">
+                    <option value="en">English</option>
+                    <option value="pcm">Pidgin</option>
+                    <option value="ha">Hausa</option>
+                    <option value="yo">Yoruba</option>
+                    <option value="ig">Igbo</option>
+                    <option value="es">Español</option>
+                    <option value="fr">Français</option>
+                </select>
 
-                    <button id="guest-action-btn" type="button" data-action="open-auth-modal" class="px-4 py-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm text-sm" style="background-color: #ffffff; color: #000000;">
-                        <img src="https://www.google.com/favicon.ico" class="w-4 h-4" alt="Google">
-                        <span data-i18n="joinBtn">Join VocalWitness</span>
-                    </button>
+                <button id="guest-action-btn" type="button" data-action="open-auth-modal" class="px-4 py-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm text-sm" style="background-color: #ffffff; color: #000000;">
+                    <img src="https://www.google.com/favicon.ico" class="w-4 h-4" alt="Google">
+                    <span data-i18n="joinBtn">Join VocalWitness</span>
+                </button>
 
-                    <button id="support-btn" data-action="open-support-modal" class="px-5 py-2.5 font-medium rounded-2xl transition whitespace-nowrap text-sm shadow-sm" style="background-color: #10b981; color: #000000;" data-i18n="supportBtn">
-                        Support The Square
-                    </button>
+                <button id="support-btn" data-action="open-support-modal" class="px-5 py-2.5 font-medium rounded-2xl transition whitespace-nowrap text-sm shadow-sm" style="background-color: #10b981; color: #000000;" data-i18n="supportBtn">
+                    Support The Square
+                </button>
 
-                    <button id="data-saver-btn" data-action="toggle-data-saver" class="px-3.5 py-2.5 rounded-2xl hover:bg-zinc-800 transition text-xs font-semibold flex items-center gap-2 border text-zinc-300 shadow-sm cursor-pointer" style="background-color: #121826; border-color: #273548;">
-                        <span>⚡</span>
-                        <span class="hidden lg:inline">Data Saver: <strong id="data-saver-status" class="text-emerald-400 font-bold" style="color: #34d399;">Off</strong></span>
-                    </button>
+                <button id="data-saver-btn" data-action="toggle-data-saver" class="px-3.5 py-2.5 rounded-2xl hover:bg-zinc-800 transition text-xs font-semibold flex items-center gap-2 border text-zinc-300 shadow-sm cursor-pointer" style="background-color: #121826; border-color: #273548;">
+                    <span>⚡</span>
+                    <span class="hidden lg:inline">Data Saver: <strong id="data-saver-status" class="text-emerald-400 font-bold" style="color: #34d399;">Off</strong></span>
+                </button>
 
-                    <a href="privacy.html" class="hidden lg:flex items-center hover:text-emerald-300 transition-colors text-sm font-medium px-3 py-2" style="color: #34d399;" data-i18n="privacyLink">
-                        Privacy First
-                    </a>
+                <a href="privacy.html" class="hidden lg:flex items-center hover:text-emerald-300 transition-colors text-sm font-medium px-3 py-2" style="color: #34d399;" data-i18n="privacyLink">
+                    Privacy First
+                </a>
 
-                    <button id="bookmarks-nav-btn" data-action="open-bookmarks" class="p-2.5 rounded-2xl hover:bg-zinc-800 text-zinc-300 hover:text-white transition-all flex items-center justify-center border" style="background-color: #18181b; border-color: #3f3f46;" aria-label="Saved Items" title="Saved Items">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
-                        </svg>
-                    </button>
+                <button id="bookmarks-nav-btn" data-action="open-bookmarks" class="p-2.5 rounded-2xl hover:bg-zinc-800 text-zinc-300 hover:text-white transition-all flex items-center justify-center border" style="background-color: #18181b; border-color: #3f3f46;" aria-label="Saved Items" title="Saved Items">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
+                </button>
 
-                    <div class="relative inline-block" id="notification-container">
-                        <button id="notification-btn" type="button" class="relative p-2.5 rounded-full hover:bg-zinc-800 text-zinc-300 hover:text-white transition-all flex items-center justify-center border border-zinc-700/50" aria-label="Notifications">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                            </svg>
-                            <span id="notification-badge" class="hidden absolute -top-1 -right-1 bg-emerald-500 text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-lg border border-zinc-900">
-                                0
-                            </span>
-                        </button>
-                    </div>
-
-                    <button id="profile-btn" data-action="open-profile" class="px-4 py-2.5 border border-zinc-700 hover:bg-zinc-800 rounded-2xl transition flex items-center gap-2 hidden text-sm" style="background-color: #18181b; border-color: #3f3f46;" data-i18n="profileBtn">
-                        My Profile
+                <div class="relative inline-block" id="notification-container">
+                    <button id="notification-btn" type="button" class="relative p-2.5 rounded-full hover:bg-zinc-800 text-zinc-300 hover:text-white transition-all flex items-center justify-center border border-zinc-700/50" aria-label="Notifications">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                        <span id="notification-badge" class="hidden absolute -top-1 -right-1 bg-emerald-500 text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-lg border border-zinc-900">0</span>
                     </button>
                 </div>
 
-                <!-- MOBILE TOP HEADER (Compact: flex md:hidden) -->
-                <div class="flex md:hidden items-center gap-2 shrink-0">
-                    <!-- Mobile Language Selector -->
-                    <select id="languageSelector-mobile" aria-label="Select Language" class="bg-zinc-900 border border-zinc-700 text-white rounded-xl px-2 py-1.5 text-xs focus:outline-none focus:border-emerald-500 shrink-0">
+                <button id="profile-btn" data-action="open-profile" class="px-4 py-2.5 border border-zinc-700 hover:bg-zinc-800 rounded-2xl transition flex items-center gap-2 hidden text-sm" style="background-color: #18181b; border-color: #3f3f46;" data-i18n="profileBtn">
+                    My Profile
+                </button>
+            </div>
+        </div>
+
+        <!-- MOBILE HEADER (Double-Row Layout for Mobile Screens) -->
+        <div class="flex flex-col gap-2 md:hidden">
+            
+            <!-- ROW 1: Logo & Motto (Left) + Google Auth / Sign-In (Right) -->
+            <div class="flex items-center justify-between w-full">
+                <div class="flex items-center gap-2.5 shrink-0">
+                    <div class="relative flex items-center justify-center">
+                        <div class="absolute inset-0 bg-emerald-500 rounded-xl blur opacity-40"></div>
+                        <img src="./logo.png" alt="VocalWitness Logo" class="relative w-9 h-9 object-contain rounded-xl shadow-md border border-emerald-500/40">
+                    </div>
+                    <div class="flex flex-col">
+                        <h1 class="text-base font-black tracking-tight text-emerald-400 leading-tight" data-i18n="appTitle">VocalWitness</h1>
+                        <p class="text-[10px] font-bold tracking-tight text-emerald-300 leading-none" data-i18n="appSubtitle">Truth • Evidence • Public Square</p>
+                    </div>
+                </div>
+
+                <!-- Google Auth Button (Primary Action Top Right) -->
+                <button id="guest-action-btn-mobile" type="button" data-action="open-auth-modal" class="px-2.5 py-1.5 bg-white hover:bg-zinc-100 text-black font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm text-xs shrink-0">
+                    <img src="https://www.google.com/favicon.ico" class="w-3.5 h-3.5" alt="Google">
+                    <span data-i18n="joinBtn">Sign In</span>
+                </button>
+            </div>
+
+            <!-- ROW 2: Language, Data Saver, Bookmarks, Notifications, Profile -->
+            <div class="flex items-center justify-between w-full pt-1.5 border-t border-zinc-800/80">
+                
+                <!-- Left: Language + Data Saver -->
+                <div class="flex items-center gap-1.5">
+                    <select id="languageSelector-mobile" aria-label="Select Language" class="bg-zinc-900 border border-zinc-700 text-white rounded-lg px-1.5 py-1 text-xs focus:outline-none focus:border-emerald-500">
                         <option value="en">EN</option>
-                        <option value="pcm">Pidgin</option>
-                        <option value="ha">Hausa</option>
-                        <option value="yo">Yoruba</option>
-                        <option value="ig">Igbo</option>
+                        <option value="pcm">PCM</option>
+                        <option value="ha">HA</option>
+                        <option value="yo">YO</option>
+                        <option value="ig">IG</option>
                         <option value="es">ES</option>
                         <option value="fr">FR</option>
                     </select>
 
-                    <!-- Compact Google Logo Button -->
-                    <button id="guest-action-btn-mobile" type="button" data-action="open-auth-modal" class="p-2 bg-white hover:bg-zinc-100 rounded-xl transition-all shadow-sm shrink-0 flex items-center justify-center" aria-label="Join with Google">
-                        <img src="https://www.google.com/favicon.ico" class="w-4 h-4" alt="Google">
+                    <button id="data-saver-btn-mobile" data-action="toggle-data-saver" class="px-2 py-1 bg-zinc-900 border border-zinc-800 rounded-lg text-[11px] font-semibold text-zinc-300 flex items-center gap-1">
+                        <span>⚡</span>
+                        <span>Saver</span>
+                    </button>
+                </div>
+
+                <!-- Right: Privacy, Bookmarks, Notifications, Profile -->
+                <div class="flex items-center gap-1.5">
+                    <a href="privacy.html" class="text-[11px] font-medium text-emerald-400 hover:text-emerald-300 px-1 py-0.5" data-i18n="privacyLink">
+                        Privacy
+                    </a>
+
+                    <button id="bookmarks-nav-btn-mobile" data-action="open-bookmarks" class="p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300" aria-label="Saved Items">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
                     </button>
 
-                    <!-- Mobile Hamburger Menu Button (☰) -->
-                    <button id="mobile-menu-toggle-btn" 
-                            type="button" 
-                            onclick="const drawer = document.getElementById('mobile-drawer'); if(drawer) drawer.classList.toggle('hidden');" 
-                            class="p-2 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 text-white rounded-xl transition-all flex items-center justify-center shrink-0" 
-                            aria-label="Toggle Navigation Menu">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                        </svg>
+                    <button id="notification-btn-mobile" type="button" data-action="open-notifications" class="p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 relative" aria-label="Notifications">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                    </button>
+
+                    <button id="profile-btn-mobile" data-action="open-profile" class="px-2.5 py-1 bg-emerald-500 text-black text-xs font-extrabold rounded-lg hidden" data-i18n="profileBtn">
+                        Profile
                     </button>
                 </div>
 
             </div>
-        </header>
+
+        </div>
+
+    </div>
+</header>
+
+<div class="pt-24 md:pt-28"></div>
 
         <!-- MOBILE SLIDE-OUT / OVERLAY DRAWER MENU (Hidden by default) -->
         <div id="mobile-drawer" class="hidden md:hidden fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex flex-col justify-between p-6 overflow-y-auto">
