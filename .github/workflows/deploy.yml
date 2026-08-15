@@ -16,14 +16,13 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20  # Matched to your package.json engines
-          cache: 'npm'      # Speeds up CI by caching dependencies
+          node-version: 20
 
       - name: Install Dependencies
-        run: npm ci         # Strictly installs what is in package-lock.json
+        run: npm install
 
       - name: Build Application (Vite + Tailwind + ZK Assets)
-        run: npm run build  # Triggers Vite to compile everything to public/
+        run: npm run build
 
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
