@@ -5,7 +5,7 @@ import { logSecurityAudit } from './audit.js';
 import { 
     collection, addDoc, updateDoc, doc, query, where, getDocs, getDoc,
     serverTimestamp, increment, deleteDoc, runTransaction 
-} from "firebase/firestore";
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { getCurrentUserTier, TIERS, hasStewardAccess } from './tier.js';
 
 const PERSPECTIVE_API_KEY = "AIzaSyATxYekXgjdLP2SfR42FG8rEdajq_pIEb0";
