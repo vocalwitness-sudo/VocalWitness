@@ -98,16 +98,10 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                     await openCommentModal(id);
                 } else if (action === 'report') {
                     try {
-                        // Added /* @vite-ignore */ to prevent Vite/Rollup bundling error
-                        const m = await import(/* @vite-ignore */ './moderation.js');
-                        if (m && typeof m.reportContent === 'function') {
-                            await m.reportContent(id, "other");
-                        } else {
-                            showToast("Moderation module uninitialized.", "error");
-                        }
+                        await reportContent(id, "other");
                     } catch (err) {
-                        console.error("Moderation module load failure:", err);
-                        showToast("Failed to load moderation module.", "error");
+                        console.error("Report action failed:", err);
+                        showToast("Failed to submit report.", "error");
                     }
                 } else if (action === 'share') {
                     try {
