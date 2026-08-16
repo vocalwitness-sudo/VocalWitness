@@ -60,13 +60,11 @@
         import { initWitnessVoice } from './js/witness-voice.js';
         import { initLanguage } from './js/i18n.js';
 
-        // Navigation Back Handler
         document.getElementById('back-btn')?.addEventListener('click', () => {
             if (window.history.length > 1) window.history.back();
             else window.location.href = 'index.html';
         });
 
-        // Initialize Page Components
         document.addEventListener('DOMContentLoaded', () => {
             console.log("Witness Voice page loaded");
             initLanguage();
