@@ -697,22 +697,7 @@ export function bindHeaderEvents() {
             handleEmailAuth(e);
         }
     });
-
-
-    document.addEventListener('submit', (e) => {
-        const form = e.target;
-        if (form?.matches?.('#authForm, #emailAuthForm, #loginForm, #signInForm, #signUpForm')) {
-            e.preventDefault();
-            handleEmailAuth(e);
-        }
-    });
-
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('#profile-btn, #profile-menu, #user-dropdown, .dropdown-container')) {
-            document.querySelectorAll('#profile-menu, #user-dropdown, .dropdown-menu')
-                .forEach(el => el.classList.add('hidden'));
-        }
-    });
+} // <-- Correctly closes bindHeaderEvents()
 
 // ====================== AUTH INITIALIZATION ======================
 export function initAuth() {
