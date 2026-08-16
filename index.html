@@ -895,32 +895,22 @@
             }
         }
 
-        function closeAuthModal() {
-            $('authModal')?.classList.add('hidden');
-        }
-
-        function closeLoginModal() {
+        // Attach DOM helper and UI functions to window for global inline onclick access
+        window.$ = $;
+        window.showToast = showToast;
+        window.togglePasswordVisibility = togglePasswordVisibility;
+        
+        window.closeAuthModal = () => $('authModal')?.classList.add('hidden');
+        window.closeLoginModal = () => {
             $('loginModal')?.classList.add('hidden');
-            closeAuthModal();
-        }
+            window.closeAuthModal();
+        };
+        window.closeProfile = () => $('profileModal')?.classList.add('hidden');
+        window.closeEditProfile = () => $('editProfileModal')?.classList.add('hidden');
+        window.openSupportModal = () => $('supportModal')?.classList.remove('hidden');
+        window.closeVerificationModal = () => $('verificationModal')?.classList.add('hidden');
 
-        function closeProfile() {
-            $('profileModal')?.classList.add('hidden');
-        }
-
-        function closeEditProfile() {
-            $('editProfileModal')?.classList.add('hidden');
-        }
-
-        function openSupportModal() {
-            $('supportModal')?.classList.remove('hidden');
-        }
-
-        function closeVerificationModal() {
-            $('verificationModal')?.classList.add('hidden');
-        }
-
-        function toggleDataSaver() {
+        window.toggleDataSaver = function() {
             const btn = $('data-saver-status');
             if (!btn) return;
             const isOff = btn.textContent.trim() === 'Off';
@@ -929,7 +919,7 @@
                 ? 'text-emerald-400 font-medium text-xs hover:underline' 
                 : 'text-amber-400 font-medium text-xs hover:underline';
             showToast(`Data Saver mode turned ${isOff ? 'ON' : 'OFF'}`, 'info');
-        }
+        };
 
         // Header More Options Dropdown toggle
         document.addEventListener('click', (e) => {
@@ -968,7 +958,7 @@
         });
     </script>
 
-  <script type="module" src="./js/auth.js"></script>
+    <script type="module" src="./js/auth.js"></script>
     <script type="module" src="./js/main.js"></script>
     <script type="module" src="./js/notifications.js"></script>
     <script type="module" src="./js/bookmarks.js"></script>
@@ -978,8 +968,8 @@
 
     <!-- Live Arena -->
     <script type="module">
-      import { initLiveArena } from './js/live-arena.js';
-      initLiveArena();
+        import { initLiveArena } from './js/live-arena.js';
+        initLiveArena();
     </script>
 </body>
 </html>
