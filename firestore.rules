@@ -35,12 +35,13 @@ service cloud.firestore {
              request.time > userDoc.data.lastTestimonyAt + duration.value(30, 's');
     }
 
-    // CLOUDFLARE R2 & GOOGLE PROFILE MEDIA URL VALIDATION
+    // RELAXED MEDIA URL VALIDATION: Supports all Google content domains, Cloudflare R2, and inline SVG data URIs
     function isValidMediaUrl(url) {
       return url is string && (
         url == '' || 
         url.matches('^https://media\\.vocalwitness\\.com/.*') ||
-        url.matches('^https://lh3\\.googleusercontent\\.com/.*')
+        url.matches('^https://lh[0-9]+\\.googleusercontent\\.com/.*') ||
+        url.matches('^data:image/svg\\+xml;.*')
       );
     }
 
@@ -71,8 +72,7 @@ service cloud.firestore {
         && (data.tier == 'citizen' || data.tier == 'citizen_circle')
         && data.isVerified == false
         && !keys.hasAny([
-             'role', 'isBanned', 'badges', 'admin', 'moderator',
-             'zkVerified', 'reputation', 'score', 'steward'
+             'role', 'isBanned', 'badges', 'admin', 'moderator', 'score', 'steward'
            ]);
     }
 
@@ -90,7 +90,7 @@ service cloud.firestore {
         'email', 'displayName', 'photoURL', 'bio',
         'location', 'website', 'updatedAt', 'lastLoginAt',
         'theme', 'language', 'interestedInArena', 'arenaNotifyAt', 'lastNameChange',
-        'hasVerifiedPhone', 'lastTestimonyAt'
+        'hasVerifiedPhone', 'isPhoneVerified', 'lastTestimonyAt', 'weeklyPoints'
       ];
 
       return !affected.hasAny(forbidden)
@@ -149,7 +149,7 @@ service cloud.firestore {
         && isNotThrottled()
         && request.resource.data.content is string
         && request.resource.data.content.size() > 0
-        && request.resource.data.content.size() <= 2000 // Prevents huge payload spam
+        && request.resource.data.content.size() <= 2000
         && request.resource.data.authorUid == request.auth.uid
         && request.resource.data.timestamp == request.time;
 
@@ -164,8 +164,8 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isNotBanned()
         && request.resource.data.hash is string
-        && request.resource.data.hash.size() == 64; // Strictly validates SHA-256 strings
-      allow update, delete: if false; // Disallows tampering with cryptographic ledger entries
+        && request.resource.data.hash.size() == 64;
+      allow update, delete: if false;
     }
 
   }
