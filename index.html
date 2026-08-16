@@ -32,13 +32,11 @@
     <link rel="stylesheet" href="./style.css">
     <link rel="icon" href="./logo.png" type="image/png">
 
-    <!-- Third-Party Libraries (Deferred for Render Performance) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" defer></script>
     <script src="https://js.paystack.co/v2/inline.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/snarkjs@0.7.0/build/snarkjs.min.js" defer></script>
-
     <!-- Fallback Styles for Legacy Browsers & Core Theme Overrides -->
     <style>
       body { background-color: #0a0f1c !important; color: #ffffff !important; font-family: 'Inter', sans-serif; }
@@ -970,7 +968,7 @@
         });
     </script>
 
-    <!-- Application Modules -->
+  <script type="module" src="./js/auth.js"></script>
     <script type="module" src="./js/main.js"></script>
     <script type="module" src="./js/notifications.js"></script>
     <script type="module" src="./js/bookmarks.js"></script>
