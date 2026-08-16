@@ -66,9 +66,7 @@
       }
     </style>
 
-    <!-- HEADER -->
-
-    <!-- TOP HEADER -->
+ <!-- HEADER -->
 <header class="fixed top-0 left-0 right-0 z-50 bg-zinc-950/90 backdrop-blur-md border-b border-emerald-500/30 shadow-2xl transition-all">
     <div class="max-w-6xl mx-auto px-3 py-2.5 sm:px-4 sm:py-3">
         
@@ -193,54 +191,6 @@
 
                     <button id="notification-btn-mobile" type="button" data-action="open-notifications" class="p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 relative" aria-label="Notifications">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- ROW 3: Navigation Bar -->
-        <div class="mt-2.5 pt-2 border-t border-zinc-800/80 flex items-center justify-between gap-2">
-            <nav class="flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink" id="main-nav">
-                <button type="button" data-tab="square" class="nav-tab active px-3 py-1.5 rounded-xl text-xs font-semibold text-white bg-emerald-600 border border-emerald-400/50 shadow-sm transition shrink-0 cursor-pointer">
-                    <span data-i18n="publicSquareTab">Public Square</span>
-                </button>
-                <button type="button" data-tab="ledger" class="nav-tab px-3 py-1.5 rounded-xl text-xs font-semibold text-emerald-300 hover:text-white hover:bg-emerald-950/70 border border-transparent transition shrink-0 cursor-pointer">
-                    <span data-i18n="evidenceLedgerTab">Evidence Ledger</span>
-                </button>
-                <button type="button" data-tab="arena" class="nav-tab px-3 py-1.5 rounded-xl text-xs font-semibold text-sky-300 hover:text-white hover:bg-sky-900/70 border border-transparent transition shrink-0 cursor-pointer">
-                    <span data-i18n="liveArenaTab">Live Arena</span>
-                </button>
-                <button type="button" data-tab="mycircle" class="nav-tab px-3 py-1.5 rounded-xl text-xs font-semibold text-zinc-300 hover:text-white hover:bg-zinc-800 border border-transparent transition shrink-0 cursor-pointer">
-                    <span data-i18n="myCircleTab">My Circle</span>
-                </button>
-                <button type="button" data-tab="witness" class="nav-tab px-3 py-1.5 rounded-xl text-xs font-semibold text-amber-300 hover:text-white hover:bg-amber-900/70 border border-transparent transition shrink-0 cursor-pointer">
-                    <span data-i18n="verifiedWitnessesTab">Verified Witnesses</span>
-                </button>
-            </nav>
-
-            <div class="relative inline-block text-left shrink-0 z-50">
-                <button id="more-btn" 
-                        type="button" 
-                        onclick="event.stopPropagation(); const m = document.getElementById('more-menu'); if(m) m.classList.toggle('hidden');"
-                        class="flex items-center justify-center px-2.5 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-800 transition focus:outline-none shrink-0 cursor-pointer"
-                        aria-label="More options">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
-                    </svg>
-                </button>
-
-                <div id="more-menu" class="hidden absolute right-0 mt-2 w-52 rounded-2xl bg-zinc-900/95 border border-zinc-700/80 shadow-2xl z-[100] py-2 backdrop-blur-md">
-                    <a href="my-testimonies.html" class="block px-4 py-2 text-xs text-zinc-300 hover:text-white hover:bg-zinc-800 transition rounded-xl mx-1" data-i18n="myTestimoniesMenu">My Testimonies</a>
-                    <a href="groups.html" class="block px-4 py-2 text-xs text-zinc-300 hover:text-white hover:bg-zinc-800 transition rounded-xl mx-1" data-i18n="groupsMenu">Groups</a>
-                    <a href="witness-voice.html" class="block px-4 py-2 text-xs text-emerald-400 hover:bg-emerald-500/10 transition rounded-xl mx-1" data-i18n="witnessVoiceMenu">Witness Voice</a>
-                    <div class="border-t border-zinc-800 my-1"></div>
-                    <a href="about.html" class="block px-4 py-2 text-xs text-zinc-300 hover:text-white hover:bg-zinc-800 transition rounded-xl mx-1" data-i18n="aboutMenu">About Us</a>
-                    <a href="privacy.html" class="block px-4 py-2 text-xs text-zinc-300 hover:text-white hover:bg-zinc-800 transition rounded-xl mx-1" data-i18n="privacyPolicyMenu">Privacy Policy</a>
-                    <a href="terms.html" class="block px-4 py-2 text-xs text-zinc-300 hover:text-white hover:bg-zinc-800 transition rounded-xl mx-1" data-i18n="termsOfServiceMenu">Terms of Service</a>
-                    <a href="safety.html" class="block px-4 py-2 text-xs text-zinc-300 hover:text-white hover:bg-zinc-800 transition rounded-xl mx-1" data-i18n="safetyGuidelinesMenu">Safety Guidelines</a>
-                    <div class="border-t border-zinc-800 my-1"></div>
-                    <button type="button" onclick="openSupportModal()" class="w-full text-left px-4 py-2 text-xs text-emerald-400 hover:bg-emerald-500/10 transition font-semibold rounded-xl mx-1">
-                        ♥ Sustain Platform
                     </button>
                 </div>
             </div>
