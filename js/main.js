@@ -464,10 +464,37 @@ function setupEventListeners() {
                 e.preventDefault();
                 showToast("🔔 Notification center coming online...", "info");
                 break;
+            case 'change-language':
+                e.preventDefault();
+                const langCode = actionTarget.value || actionTarget.dataset.lang;
+                if (langCode && typeof window.changeLanguage === 'function') {
+                    window.changeLanguage(langCode);
+                }
+                break;
             default:
                 break;
         }
     });
+
+    // Handle change events for select elements or input controls that use data-action
+    document.addEventListener('change', (e) => {
+        const actionTarget = e.target.closest('[data-action]');
+        if (!actionTarget) return;
+
+        const action = actionTarget.dataset.action;
+
+        switch (action) {
+            case 'change-language':
+                const langCode = actionTarget.value;
+                if (langCode && typeof window.changeLanguage === 'function') {
+                    window.changeLanguage(langCode);
+                }
+                break;
+            default:
+                break;
+        }
+    });
+}
 
     // Event Delegation for Navigation Tabs
     const mainNav = document.getElementById('main-nav');
