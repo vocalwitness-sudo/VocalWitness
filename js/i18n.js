@@ -4,16 +4,16 @@ let fallbackTranslations = {};
 let currentLang = 'en';
 
 const supportedLanguages = [
-    { code: 'en',  name: 'English',      flag: '🇬🇧', native: 'English',     rtl: false },
-    { code: 'pcm', name: 'Naija Pidgin',  flag: '🇳🇬', native: 'Pidgin',      rtl: false },
-    { code: 'ha',  name: 'Hausa',         flag: '🇳🇬', native: 'Hausa',       rtl: false },
-    { code: 'yo',  name: 'Yorùbá',        flag: '🇳🇬', native: 'Yorùbá',      rtl: false },
-    { code: 'ig',  name: 'Igbo',          flag: '🇳🇬', native: 'Igbo',        rtl: false },
-    { code: 'sw',  name: 'Swahili',       flag: '🇹🇿', native: 'Kiswahili',   rtl: false },
-    { code: 'ar',  name: 'Arabic',        flag: '🇸🇦', native: 'العربية',     rtl: true },
-    { code: 'es',  name: 'Spanish',       flag: '🇪🇸', native: 'Español',     rtl: false },
-    { code: 'fr',  name: 'French',        flag: '🇫🇷', native: 'Français',    rtl: false },
-    { code: 'pt',  name: 'Portuguese',    flag: '🇵🇹', native: 'Português',   rtl: false }
+    { code: 'en',  name: 'English',      flag: '🇬🇧', native: 'English',      rtl: false },
+    { code: 'pcm', name: 'Naija Pidgin', flag: '🇳🇬', native: 'Pidgin',       rtl: false },
+    { code: 'ha',  name: 'Hausa',        flag: '🇳🇬', native: 'Hausa',        rtl: false },
+    { code: 'yo',  name: 'Yorùbá',       flag: '🇳🇬', native: 'Yorùbá',       rtl: false },
+    { code: 'ig',  name: 'Igbo',         flag: '🇳🇬', native: 'Igbo',         rtl: false },
+    { code: 'sw',  name: 'Swahili',      flag: '🇹🇿', native: 'Kiswahili',    rtl: false },
+    { code: 'ar',  name: 'Arabic',       flag: '🇸🇦', native: 'العربية',      rtl: true },
+    { code: 'es',  name: 'Spanish',      flag: '🇪🇸', native: 'Español',      rtl: false },
+    { code: 'fr',  name: 'French',       flag: '🇫🇷', native: 'Français',     rtl: false },
+    { code: 'pt',  name: 'Portuguese',   flag: '🇵🇹', native: 'Português',    rtl: false }
 ];
 
 /**
@@ -146,7 +146,7 @@ export function initLanguage() {
     loadTranslations(savedLang);
 }
 
-// Optimized dynamic loader for your existing UI logic
+// Optimized dynamic loader for view transitions and component mounts
 async function fetchLanguageData(langCode) {
     try {
         const response = await fetch(`./translations/${langCode}.json`);
@@ -159,22 +159,11 @@ async function fetchLanguageData(langCode) {
     }
 }
 
-// Your existing logic, but made async to handle the fetch
+// Enhanced UI update loop supporting nested keys across dynamic views
 export async function updateUILanguage(langCode) {
     document.documentElement.lang = langCode;
-    const activeData = await fetchLanguageData(langCode);
-    
-    // Update innerText
-    document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.getAttribute('data-i18n');
-        if (activeData[key]) el.innerText = activeData[key];
-    });
-
-    // Update Placeholders
-    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-        const key = el.getAttribute('data-i18n-placeholder');
-        if (activeData[key]) el.placeholder = activeData[key];
-    });
+    // Calling loadTranslations handles setting currentTranslations, dir attributes, and local storage state cleanly
+    await loadTranslations(langCode);
 }
 
 // Global exposure for non-module inline scripts and event handlers
