@@ -41,7 +41,6 @@ export async function loadTranslations(langCode = 'en') {
     const targetLang = supportedLanguages.some(l => l.code === langCode) ? langCode : 'en';
 
     try {
-        // Ensure base English translations are cached for fallback lookup
         if (Object.keys(fallbackTranslations).length === 0 && targetLang !== 'en') {
             try {
                 const fallbackRes = await fetch('./translations/en.json');
@@ -87,13 +86,11 @@ function applyTranslations() {
         const text = t(key);
         if (!text || text === key) return;
 
-        // Form inputs and textareas
         if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
             el.placeholder = text;
             return;
         }
 
-        // Preserve SVG/child element nodes by only replacing text nodes
         let textNodeFound = false;
         for (let node of el.childNodes) {
             if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '') {
@@ -131,14 +128,10 @@ function syncSelectors(langCode) {
 
 export function initLanguage() {
     const savedLang = localStorage.getItem('preferredLang') || 'en';
-    const optionsHTML = supportedLanguages.map(lang => `
-        <option value="${lang.code}">${lang.flag} ${lang.native}</option>
-    `).join('');
 
     const selectors = document.querySelectorAll('#languageSelector, #languageSelector-desktop, #languageSelector-mobile, [data-i18n-selector]');
     
     selectors.forEach(selector => {
-        selector.innerHTML = optionsHTML;
         selector.value = savedLang;
         selector.onchange = (e) => loadTranslations(e.target.value);
     });
@@ -159,12 +152,22 @@ async function fetchLanguageData(langCode) {
     }
 }
 
-// Enhanced UI update loop supporting nested keys across dynamic views
 export async function updateUILanguage(langCode) {
     document.documentElement.lang = langCode;
-    // Calling loadTranslations handles setting currentTranslations, dir attributes, and local storage state cleanly
     await loadTranslations(langCode);
 }
+
+// 🚀 Automatic Mutation Observer: Translates new dynamic views & tabs instantly
+const observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+        if (mutation.addedNodes.length > 0) {
+            applyTranslations();
+            break;
+        }
+    }
+});
+
+observer.observe(document.body, { childList: true, subtree: true });
 
 // Global exposure for non-module inline scripts and event handlers
 window.initLanguage = initLanguage;
