@@ -1,49 +1,90 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-NG">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Legal Information | VocalWitness</title>
+    <title data-i18n="legalPageTitle">Legal Information | VocalWitness</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.json">
+    <style>
+        body { 
+            font-family: 'Inter', system-ui, sans-serif; 
+            background: #0a0f1c; 
+            color: #e4e4e7; 
+        }
+        .glass { 
+            background: rgba(17, 24, 39, 0.95); 
+            backdrop-filter: blur(20px); 
+            border: 1px solid rgba(16, 185, 129, 0.25); 
+        }
+        .badge-glass { 
+            background: rgba(31, 41, 55, 0.6); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+        }
+    </style>
 </head>
-<body class="min-h-screen bg-[#0a0f1c] text-zinc-200">
+<body class="min-h-screen p-6 md:p-12 pb-24">
 
-    <!-- Reuse Header or simple back link -->
-    <div class="max-w-4xl mx-auto p-6">
-        <a href="index.html" class="inline-flex items-center gap-2 text-emerald-400 hover:text-emerald-300 mb-8">
-            ← Back to Public Square
-        </a>
+    <div class="max-w-3xl mx-auto">
+        
+        <!-- Header with Language Selector & Back to Home -->
+        <div class="flex items-center justify-between mb-10 glass rounded-3xl p-4">
+            <div class="flex items-center gap-3">
+                <a href="index.html" class="w-10 h-10 bg-emerald-500/20 rounded-2xl flex items-center justify-center text-xl hover:bg-emerald-500/30 transition" aria-label="Back to home">⬅️</a>
+                <h1 class="text-2xl font-bold tracking-tight text-white" data-i18n="appTitle">VocalWitness</h1>
+            </div>
+            <div class="flex items-center gap-3">
+                <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-4 py-2 text-sm focus:outline-none focus:border-emerald-500">
+                    <option value="en">🇬🇧 English</option>
+                    <option value="ar">🇸🇦 العربية</option>
+                    <option value="es">🇪🇸 Español</option>
+                    <option value="fr">🇫🇷 Français</option>
+                    <option value="sw">🇹🇿 Kiswahili</option>
+                </select>
+            </div>
+        </div>
 
-        <div class="glass rounded-3xl p-10">
-            <h1 class="text-4xl font-bold text-white mb-8">Legal Information</h1>
-            
-            <section class="mb-12">
-                <h2 class="text-2xl font-semibold text-emerald-400 mb-4">Platform Disclaimer</h2>
-                <p class="leading-relaxed">VocalWitness functions strictly as an <strong>un-manipulated decentralized distribution medium</strong>. We do not verify the absolute truth of every testimony — that responsibility lies with the community.</p>
-            </section>
+        <div class="flex items-center gap-4 mb-6">
+            <div class="w-12 h-12 bg-emerald-500/20 rounded-3xl flex items-center justify-center text-4xl">⚖️</div>
+            <h1 class="text-4xl font-bold tracking-tight text-white" data-i18n="legalTitle">Legal Information</h1>
+        </div>
 
-            <section class="mb-12">
-                <h2 class="text-2xl font-semibold text-emerald-400 mb-4">Terms of Use</h2>
-                <p>By using VocalWitness, you agree to our <a href="terms.html" class="text-emerald-400 hover:underline">Terms of Service</a> and <a href="safety.html" class="text-emerald-400 hover:underline">Safety Guidelines</a>.</p>
-            </section>
-
-            <section class="mb-12">
-                <h2 class="text-2xl font-semibold text-emerald-400 mb-4">Liability</h2>
-                <p>We assume no liability for the accuracy, completeness, or consequences of user-generated content.</p>
+        <div class="glass rounded-3xl p-8 space-y-8 text-zinc-300">
+            <section>
+                <h2 class="text-2xl font-semibold text-emerald-400 mb-4" data-i18n="legalSection1Title">Platform Disclaimer</h2>
+                <p class="leading-relaxed" data-i18n="legalSection1Text">VocalWitness functions strictly as an <strong>un-manipulated decentralized distribution medium</strong>. We do not verify the absolute truth of every testimony — that responsibility lies with the community.</p>
             </section>
 
             <section>
-                <h2 class="text-2xl font-semibold text-emerald-400 mb-4">Transparency</h2>
-                <p>All testimonies are immutable once published. Forensic tools help users verify authenticity.</p>
+                <h2 class="text-2xl font-semibold text-emerald-400 mb-4" data-i18n="legalSection2Title">Terms of Use</h2>
+                <p data-i18n="legalSection2Text">By using VocalWitness, you agree to our <a href="terms.html" class="text-emerald-400 hover:underline">Terms of Service</a> and <a href="safety.html" class="text-emerald-400 hover:underline">Safety Guidelines</a>.</p>
+            </section>
+
+            <section>
+                <h2 class="text-2xl font-semibold text-emerald-400 mb-4" data-i18n="legalSection3Title">Liability</h2>
+                <p data-i18n="legalSection3Text">We assume no liability for the accuracy, completeness, or consequences of user-generated content.</p>
+            </section>
+
+            <section>
+                <h2 class="text-2xl font-semibold text-emerald-400 mb-4" data-i18n="legalSection4Title">Transparency</h2>
+                <p data-i18n="legalSection4Text">All testimonies are immutable once published. Forensic tools help users verify authenticity.</p>
             </section>
         </div>
+
+        <footer class="text-center pt-8 mt-12 border-t border-zinc-800 text-xs text-zinc-500">
+            <p data-i18n="footerCopyright">© 2026 VocalWitness • Built for Truth • Evidence • Public Square</p>
+            <p class="mt-2">
+                <a href="privacy.html" class="hover:text-zinc-300" data-i18n="privacy">Privacy</a> • 
+                <a href="terms.html" class="hover:text-zinc-300" data-i18n="terms">Terms</a> • 
+                <a href="safety.html" class="hover:text-zinc-300" data-i18n="safety">Safety</a>
+            </p>
+        </footer>
     </div>
 
-    <!-- Reuse your professional footer here (copy from index.html) -->
-    <!-- ... paste footer ... -->
-
-    <script src="js/navigation.js" type="module"></script>
+    <script type="module">
+        import { initLanguage } from './js/i18n.js';
+        document.addEventListener('DOMContentLoaded', () => {
+            initLanguage();
+        });
+    </script>
 </body>
 </html>
