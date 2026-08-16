@@ -65,7 +65,6 @@
       }
     </style>
 
- <!-- HEADER -->
 <!-- HEADER -->
 <header class="fixed top-0 left-0 right-0 z-50 bg-zinc-950/90 backdrop-blur-md border-b border-emerald-500/30 shadow-2xl transition-all">
     <div class="max-w-6xl mx-auto px-3 py-2.5 sm:px-4 sm:py-3">
@@ -104,8 +103,9 @@
 
                 <!-- AUTHENTICATED PROFILE BUTTON (DESKTOP) -->
                 <button id="profile-btn" data-action="open-profile" class="hidden px-4 py-2.5 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 text-emerald-400 font-bold rounded-2xl transition flex items-center gap-2 text-sm shadow-sm cursor-pointer">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                    <span data-i18n="profileBtn">My Profile</span>
+                    <img id="user-avatar-desktop" src="https://via.placeholder.com/24" alt="User" class="w-5 h-5 rounded-full object-cover hidden">
+                    <svg id="default-avatar-icon-desktop" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                    <span id="user-name-desktop" data-i18n="profileBtn">My Profile</span>
                 </button>
 
                 <button id="support-btn" data-action="open-support-modal" class="px-5 py-2.5 font-medium rounded-2xl transition whitespace-nowrap text-sm shadow-sm" style="background-color: #10b981; color: #000000;" data-i18n="supportBtn">
@@ -136,7 +136,7 @@
 
         <!-- MOBILE HEADER -->
         <div class="flex flex-col gap-2 md:hidden">
-            <!-- ROW 1: Logo & Branding + Auth / Profile Actions (FIXED - NO SCROLL) -->
+            <!-- ROW 1: Logo & Branding + Auth / Profile Actions -->
             <div class="flex items-center justify-between w-full">
                 <div class="flex items-center gap-2.5 shrink-0">
                     <div class="relative flex items-center justify-center">
@@ -156,12 +156,13 @@
                 </button>
 
                 <!-- AUTHENTICATED PROFILE BUTTON (MOBILE) -->
-                <button id="profile-btn-mobile" data-action="open-profile" class="hidden px-2.5 py-1.5 bg-emerald-500 text-black font-black text-xs rounded-xl shadow-sm shrink-0 cursor-pointer" data-i18n="profileBtn">
-                    My Profile
+                <button id="profile-btn-mobile" data-action="open-profile" class="hidden px-2.5 py-1.5 bg-zinc-900 border border-emerald-500/50 text-emerald-400 font-black text-xs rounded-xl shadow-sm shrink-0 cursor-pointer flex items-center gap-1.5">
+                    <img id="user-avatar-mobile" src="https://via.placeholder.com/20" alt="User" class="w-5 h-5 rounded-full object-cover hidden">
+                    <span id="user-name-mobile" data-i18n="profileBtn">My Profile</span>
                 </button>
             </div>
 
-            <!-- ROW 2: Controls & Icons (HORIZONTALLY SCROLLABLE ON MOBILE) -->
+            <!-- ROW 2: Controls & Icons -->
             <div class="flex items-center gap-2 overflow-x-auto no-scrollbar w-full pt-1.5 border-t border-zinc-800/80 touch-pan-x">
                 <div class="flex items-center gap-1.5 shrink-0">
                     <select id="languageSelector-mobile" aria-label="Select Language" class="bg-zinc-900 border border-zinc-700 text-white rounded-lg px-1.5 py-1 text-xs focus:outline-none focus:border-emerald-500 shrink-0">
@@ -198,7 +199,6 @@
 
     </div>
 </header>
-
     
 <!-- Offset Spacer to prevent main page content from getting hidden under fixed header -->
 <main class="pt-28 md:pt-32 max-w-6xl mx-auto px-3 sm:px-4">
