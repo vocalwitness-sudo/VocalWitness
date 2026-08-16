@@ -33,6 +33,7 @@ function refreshTierUI() {
         if (typeof updateTierBadge === 'function') updateTierBadge();
     }
 }
+
 async function createOrUpdateUser(user) {
     if (!user || !user.uid) return;
 
@@ -45,6 +46,7 @@ async function createOrUpdateUser(user) {
         const safePhotoURL = user.photoURL || "";
 
         if (!snap.exists()) {
+            // Initial creation of user document
             await setDoc(userRef, {
                 uid: user.uid,
                 email: safeEmail,
@@ -63,23 +65,24 @@ async function createOrUpdateUser(user) {
             showToast("🎉 Account created! Welcome to the Public Square.", "success");
         } else {
             const existingData = snap.data() || {};
-            const updatePayload = { updatedAt: serverTimestamp() };
+            const changes = {};
 
             if (safeDisplayName && safeDisplayName !== existingData.displayName) {
-                updatePayload.displayName = safeDisplayName;
+                changes.displayName = safeDisplayName;
             }
             if (safePhotoURL && safePhotoURL !== existingData.photoURL) {
-                updatePayload.photoURL = safePhotoURL;
+                changes.photoURL = safePhotoURL;
             }
             if (safeEmail && safeEmail !== existingData.email) {
-                updatePayload.email = safeEmail;
+                changes.email = safeEmail;
             }
 
-            // Only update if there are keys beyond 'updatedAt' or perform regular heartbeat
-            if (Object.keys(updatePayload).length > 0) {
-                await updateDoc(userRef, updatePayload);
+            // Fix: Only update Firestore if actual fields changed to prevent write loops
+            if (Object.keys(changes).length > 0) {
+                changes.updatedAt = serverTimestamp();
+                await updateDoc(userRef, changes);
             }
-            
+
             updateVerificationUI(existingData.isVerified || existingData.isPhoneVerified || false);
         }
     } catch (e) {
@@ -292,7 +295,6 @@ export async function googleLogin(event) {
         try {
             const userCredential = await signInWithPopup(auth, provider);
             if (userCredential?.user) {
-                await createOrUpdateUser(userCredential.user);
                 showToast("✅ Signed in successfully with Google!", "success");
                 closeLoginModal();
                 restorePendingDraft();
@@ -371,7 +373,6 @@ export async function handleEmailAuth(event) {
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
-            await createOrUpdateUser(user);
             await sendEmailVerification(user);
             await signOut(auth);
 
@@ -444,7 +445,6 @@ export async function initAuthRedirectHandler() {
     try {
         const result = await getRedirectResult(auth);
         if (result?.user) {
-            await createOrUpdateUser(result.user);
             showToast("✅ Signed in successfully!", "success");
             closeLoginModal();
             restorePendingDraft();
@@ -689,7 +689,6 @@ export function initAuth() {
         getRedirectResult(auth)
             .then(async (result) => {
                 if (result?.user) {
-                    await createOrUpdateUser(result.user);
                     showToast("✅ Signed in successfully!", "success");
                     closeLoginModal();
                     restorePendingDraft();
