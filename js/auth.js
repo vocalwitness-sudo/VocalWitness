@@ -77,13 +77,23 @@ async function createOrUpdateUser(user) {
                 changes.email = safeEmail;
             }
 
-            // Only update Firestore if actual fields changed to prevent write loops
+            // Populate legacy missing default values
+            if (!existingData.tier) changes.tier = TIERS?.CITIZEN || "citizen";
+            if (existingData.isVerified === undefined) changes.isVerified = false;
+            if (existingData.isPhoneVerified === undefined) changes.isPhoneVerified = false;
+            if (existingData.zkVerified === undefined) changes.zkVerified = false;
+
+            // Only perform network write if actual schema or auth properties changed
             if (Object.keys(changes).length > 0) {
                 changes.updatedAt = serverTimestamp();
                 await updateDoc(userRef, changes);
             }
 
-            updateVerificationUI(existingData.isVerified || existingData.isPhoneVerified || false);
+            // Combine snapshot data with applied changes to ensure UI renders current state
+            const currentIsVerified = changes.isVerified ?? existingData.isVerified ?? false;
+            const currentIsPhoneVerified = changes.isPhoneVerified ?? existingData.isPhoneVerified ?? false;
+
+            updateVerificationUI(currentIsVerified || currentIsPhoneVerified);
         }
     } catch (e) {
         console.error("User document update error:", e);
@@ -595,6 +605,7 @@ export function bindHeaderEvents() {
     window.__authDelegationBound = true;
 
     document.addEventListener('click', (e) => {
+        // Auth Triggers
         if (e.target.closest('#googleAuthBtn, #googleSignInBtn, [data-action="google-login"], .google-auth-btn')) {
             e.preventDefault();
             googleLogin(e);
@@ -663,7 +674,22 @@ export function bindHeaderEvents() {
             openVerificationModal();
             return;
         }
+
+        // Close dropdown menus when clicking outside
+        if (!e.target.closest('#profile-btn, #profile-menu, #user-dropdown, .dropdown-container')) {
+            document.querySelectorAll('#profile-menu, #user-dropdown, .dropdown-menu')
+                .forEach(el => el.classList.add('hidden'));
+        }
     });
+
+    document.addEventListener('submit', (e) => {
+        const form = e.target;
+        if (form?.matches?.('#authForm, #emailAuthForm, #loginForm, #signInForm, #signUpForm')) {
+            e.preventDefault();
+            handleEmailAuth(e);
+        }
+    });
+}
 
     document.addEventListener('submit', (e) => {
         const form = e.target;
