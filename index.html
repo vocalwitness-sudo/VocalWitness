@@ -67,6 +67,7 @@
     </style>
 
  <!-- HEADER -->
+<!-- HEADER -->
 <header class="fixed top-0 left-0 right-0 z-50 bg-zinc-950/90 backdrop-blur-md border-b border-emerald-500/30 shadow-2xl transition-all">
     <div class="max-w-6xl mx-auto px-3 py-2.5 sm:px-4 sm:py-3">
         
@@ -136,7 +137,7 @@
 
         <!-- MOBILE HEADER -->
         <div class="flex flex-col gap-2 md:hidden">
-            <!-- ROW 1: Logo & Branding + Auth / Profile Actions -->
+            <!-- ROW 1: Logo & Branding + Auth / Profile Actions (FIXED - NO SCROLL) -->
             <div class="flex items-center justify-between w-full">
                 <div class="flex items-center gap-2.5 shrink-0">
                     <div class="relative flex items-center justify-center">
@@ -161,10 +162,10 @@
                 </button>
             </div>
 
-            <!-- ROW 2: Controls & Icons -->
-            <div class="flex items-center justify-between w-full pt-1.5 border-t border-zinc-800/80">
-                <div class="flex items-center gap-1.5">
-                    <select id="languageSelector-mobile" aria-label="Select Language" class="bg-zinc-900 border border-zinc-700 text-white rounded-lg px-1.5 py-1 text-xs focus:outline-none focus:border-emerald-500">
+            <!-- ROW 2: Controls & Icons (HORIZONTALLY SCROLLABLE ON MOBILE) -->
+            <div class="flex items-center gap-2 overflow-x-auto no-scrollbar w-full pt-1.5 border-t border-zinc-800/80 touch-pan-x">
+                <div class="flex items-center gap-1.5 shrink-0">
+                    <select id="languageSelector-mobile" aria-label="Select Language" class="bg-zinc-900 border border-zinc-700 text-white rounded-lg px-1.5 py-1 text-xs focus:outline-none focus:border-emerald-500 shrink-0">
                         <option value="en">EN</option>
                         <option value="pcm">PCM</option>
                         <option value="ha">HA</option>
@@ -174,22 +175,22 @@
                         <option value="fr">FR</option>
                     </select>
 
-                    <button id="data-saver-btn-mobile" data-action="toggle-data-saver" class="px-2 py-1 bg-zinc-900 border border-zinc-800 rounded-lg text-[11px] font-semibold text-zinc-300 flex items-center gap-1">
+                    <button id="data-saver-btn-mobile" data-action="toggle-data-saver" class="px-2 py-1 bg-zinc-900 border border-zinc-800 rounded-lg text-[11px] font-semibold text-zinc-300 flex items-center gap-1 shrink-0 whitespace-nowrap">
                         <span>⚡</span>
                         <span>Saver</span>
                     </button>
                 </div>
 
-                <div class="flex items-center gap-1.5">
-                    <a href="privacy.html" class="text-[11px] font-medium text-emerald-400 hover:text-emerald-300 px-1 py-0.5" data-i18n="privacyLink">
+                <div class="flex items-center gap-1.5 shrink-0 ml-auto">
+                    <a href="privacy.html" class="text-[11px] font-medium text-emerald-400 hover:text-emerald-300 px-1 py-0.5 shrink-0 whitespace-nowrap" data-i18n="privacyLink">
                         Privacy
                     </a>
 
-                    <button id="bookmarks-nav-btn-mobile" data-action="open-bookmarks" class="p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300" aria-label="Saved Items">
+                    <button id="bookmarks-nav-btn-mobile" data-action="open-bookmarks" class="p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 shrink-0" aria-label="Saved Items">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
                     </button>
 
-                    <button id="notification-btn-mobile" type="button" data-action="open-notifications" class="p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 relative" aria-label="Notifications">
+                    <button id="notification-btn-mobile" type="button" data-action="open-notifications" class="p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 relative shrink-0" aria-label="Notifications">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
                     </button>
                 </div>
