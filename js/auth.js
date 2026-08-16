@@ -705,7 +705,6 @@ export function bindHeaderEvents() {
                 .forEach(el => el.classList.add('hidden'));
         }
     });
-}
 
 // ====================== AUTH INITIALIZATION ======================
 export function initAuth() {
