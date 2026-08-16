@@ -4,16 +4,16 @@ let fallbackTranslations = {};
 let currentLang = 'en';
 
 const supportedLanguages = [
-    { code: 'en',  name: 'English',       flag: '🇬🇧', native: 'English',     rtl: false },
+    { code: 'en',  name: 'English',      flag: '🇬🇧', native: 'English',     rtl: false },
+    { code: 'pcm', name: 'Naija Pidgin',  flag: '🇳🇬', native: 'Pidgin',      rtl: false },
+    { code: 'ha',  name: 'Hausa',         flag: '🇳🇬', native: 'Hausa',       rtl: false },
+    { code: 'yo',  name: 'Yorùbá',        flag: '🇳🇬', native: 'Yorùbá',      rtl: false },
+    { code: 'ig',  name: 'Igbo',          flag: '🇳🇬', native: 'Igbo',        rtl: false },
+    { code: 'sw',  name: 'Swahili',       flag: '🇹🇿', native: 'Kiswahili',   rtl: false },
     { code: 'ar',  name: 'Arabic',        flag: '🇸🇦', native: 'العربية',     rtl: true },
     { code: 'es',  name: 'Spanish',       flag: '🇪🇸', native: 'Español',     rtl: false },
     { code: 'fr',  name: 'French',        flag: '🇫🇷', native: 'Français',    rtl: false },
-    { code: 'ha',  name: 'Hausa',         flag: '🇳🇬', native: 'Hausa',       rtl: false },
-    { code: 'ig',  name: 'Igbo',          flag: '🇳🇬', native: 'Igbo',        rtl: false },
-    { code: 'pcm', name: 'Naija Pidgin',  flag: '🇳🇬', native: 'Pidgin',      rtl: false },
-    { code: 'pt',  name: 'Portuguese',    flag: '🇵🇹', native: 'Português',   rtl: false },
-    { code: 'yo',  name: 'Yorùbá',        flag: '🇳🇬', native: 'Yorùbá',      rtl: false },
-    { code: 'sw',  name: 'Swahili',       flag: '🇹🇿', native: 'Kiswahili',   rtl: false }
+    { code: 'pt',  name: 'Portuguese',    flag: '🇵🇹', native: 'Português',   rtl: false }
 ];
 
 /**
@@ -41,32 +41,34 @@ export async function loadTranslations(langCode = 'en') {
     const targetLang = supportedLanguages.some(l => l.code === langCode) ? langCode : 'en';
 
     try {
-        // Ensure fallback base (English) is cached
+        // Ensure base English translations are cached for fallback lookup
         if (Object.keys(fallbackTranslations).length === 0 && targetLang !== 'en') {
             try {
-                const fallbackRes = await fetch('translations/en.json');
+                const fallbackRes = await fetch('./translations/en.json');
                 if (fallbackRes.ok) fallbackTranslations = await fallbackRes.json();
             } catch (_) {
-                console.warn('Could not load base fallback translations.');
+                console.warn('[i18n] Could not load base fallback translations.');
             }
         }
 
-        const response = await fetch(`translations/${targetLang}.json`);
+        const response = await fetch(`./translations/${targetLang}.json`);
         
         if (response.ok) {
             currentTranslations = await response.json();
             currentLang = targetLang;
+            if (targetLang === 'en') fallbackTranslations = currentTranslations;
         } else {
-            console.warn(`Translation file for ${targetLang} missing. Preserving fallback state.`);
+            console.warn(`[i18n] Translation file for ${targetLang} missing. Preserving fallback state.`);
             if (targetLang === 'en') currentTranslations = fallbackTranslations;
         }
     } catch (e) {
-        console.warn(`Network error loading ${targetLang}. Using available memory cache.`, e);
+        console.warn(`[i18n] Network error loading ${targetLang}. Using available memory cache.`, e);
     }
 
     localStorage.setItem('preferredLang', currentLang);
     applyTextDirection(currentLang);
     applyTranslations();
+    syncSelectors(currentLang);
 
     window.dispatchEvent(new CustomEvent('languageChanged', { detail: { lang: currentLang } }));
 }
@@ -85,13 +87,13 @@ function applyTranslations() {
         const text = t(key);
         if (!text || text === key) return;
 
-        // Form elements handling
+        // Form inputs and textareas
         if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
             el.placeholder = text;
             return;
         }
 
-        // Targeted element updates that preserve internal SVG/HTML nodes
+        // Preserve SVG/child element nodes by only replacing text nodes
         let textNodeFound = false;
         for (let node of el.childNodes) {
             if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '') {
@@ -101,13 +103,11 @@ function applyTranslations() {
             }
         }
 
-        // If no standalone text node exists and element has zero children, safe to apply textContent
         if (!textNodeFound && el.children.length === 0) {
             el.textContent = text;
         }
     });
 
-    // Handle separate placeholder attributes on standard inputs without data-i18n override
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
         const key = el.getAttribute('data-i18n-placeholder');
         if (key) {
@@ -116,29 +116,37 @@ function applyTranslations() {
         }
     });
 
-    // Update Page Document Title
     const pageTitle = t('pageTitle');
     if (pageTitle && pageTitle !== 'pageTitle') {
         document.title = pageTitle;
     }
 }
 
+function syncSelectors(langCode) {
+    const selectors = document.querySelectorAll('#languageSelector, #languageSelector-desktop, #languageSelector-mobile, [data-i18n-selector]');
+    selectors.forEach(sel => {
+        if (sel.value !== langCode) sel.value = langCode;
+    });
+}
+
 export function initLanguage() {
     const savedLang = localStorage.getItem('preferredLang') || 'en';
+    const optionsHTML = supportedLanguages.map(lang => `
+        <option value="${lang.code}">${lang.flag} ${lang.native}</option>
+    `).join('');
+
+    const selectors = document.querySelectorAll('#languageSelector, #languageSelector-desktop, #languageSelector-mobile, [data-i18n-selector]');
     
-    const selector = document.getElementById('languageSelector');
-    if (selector) {
-        selector.innerHTML = supportedLanguages.map(lang => `
-            <option value="${lang.code}">${lang.flag} ${lang.native}</option>
-        `).join('');
+    selectors.forEach(selector => {
+        selector.innerHTML = optionsHTML;
         selector.value = savedLang;
         selector.onchange = (e) => loadTranslations(e.target.value);
-    }
+    });
 
     loadTranslations(savedLang);
 }
 
-// Global Exports
+// Global exposure for non-module inline scripts and event handlers
 window.initLanguage = initLanguage;
 window.changeLanguage = loadTranslations;
 window.t = t;
