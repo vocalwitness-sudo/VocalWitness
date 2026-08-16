@@ -10,7 +10,112 @@
         .tab-btn.active { background: #10b981; color: #000; }
     </style>
 </head>
-<body class="min-h-screen bg-[#0a0f1c] text-white p-4">
+<body class="min-h-screen bg-[#0a0f1c] text-white p-4">a<!DOCTYPE html>
+<html lang="en-NG">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="groupsPageTitle">Groups - VocalWitness</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .glass { background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(16, 185, 129, 0.25); }
+        .tab-btn.active { background: #10b981; color: #000; }
+    </style>
+</head>
+<body class="min-h-screen bg-[#0a0f1c] text-white p-4 pb-24">
+    <div class="max-w-4xl mx-auto">
+        
+        <!-- Header with Language Selector & Back Button -->
+        <div class="flex items-center justify-between mb-8 glass rounded-3xl p-4">
+            <div class="flex items-center gap-3">
+                <button onclick="window.history.back()" class="w-10 h-10 bg-emerald-500/20 rounded-2xl flex items-center justify-center text-xl hover:bg-emerald-500/30 transition" aria-label="Back">⬅️</button>
+                <h1 class="text-2xl font-bold tracking-tight text-emerald-400" data-i18n="groupsTitle">Groups</h1>
+            </div>
+            <div class="flex items-center gap-3">
+                <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-4 py-2 text-sm focus:outline-none focus:border-emerald-500">
+                    <option value="en">🇬🇧 English</option>
+                    <option value="ar">🇸🇦 العربية</option>
+                    <option value="es">🇪🇸 Español</option>
+                    <option value="fr">🇫🇷 Français</option>
+                    <option value="sw">🇹🇿 Kiswahili</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="flex gap-2 mb-6 border-b border-zinc-700 pb-2">
+            <button class="tab-btn active px-6 py-3 rounded-2xl font-medium" data-i18n="discoverTab">Discover</button>
+            <button class="tab-btn px-6 py-3 rounded-2xl font-medium" data-i18n="myGroupsTab">My Groups</button>
+        </div>
+
+        <input type="text" id="searchInput" 
+               class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4 mb-6 text-white focus:outline-none focus:border-emerald-500"
+               data-i18n-placeholder="searchGroupsPlaceholder"
+               placeholder="Search groups...">
+
+        <div id="group-container" class="space-y-6"></div>
+
+        <!-- Create Group Button -->
+        <button onclick="showGroupCreationModal()" 
+                class="mt-12 w-full max-w-md mx-auto block bg-emerald-500 text-black font-semibold py-5 rounded-3xl hover:bg-emerald-400 transition" data-i18n="createNewGroupBtn">
+            ➕ Create New Group
+        </button>
+    </div>
+
+    <!-- Group Creation Modal -->
+    <div id="groupModal" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center z-[200]">
+        <div class="glass rounded-3xl max-w-md w-full mx-4 overflow-hidden">
+            <div class="p-6 border-b border-zinc-700">
+                <h2 class="text-2xl font-bold" data-i18n="createGroupTitle">Create New Group</h2>
+                <p class="text-zinc-400 text-sm" data-i18n="createGroupSubtitle">Build your community</p>
+            </div>
+            
+            <div class="p-6 space-y-5">
+                <div>
+                    <label class="block text-sm text-zinc-400 mb-1" data-i18n="groupNameLabel">Group Name *</label>
+                    <input id="groupName" type="text" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-3 text-white focus:outline-none focus:border-emerald-500" 
+                           data-i18n-placeholder="groupNamePlaceholder"
+                           placeholder="e.g. Lagos Truth Seekers">
+                </div>
+                
+                <div>
+                    <label class="block text-sm text-zinc-400 mb-1" data-i18n="groupDescLabel">Description</label>
+                    <textarea id="groupDesc" rows="3" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-3 text-white focus:outline-none focus:border-emerald-500" 
+                              data-i18n-placeholder="groupDescPlaceholder"
+                              placeholder="What is this group about?"></textarea>
+                </div>
+                
+                <div>
+                    <label class="block text-sm text-zinc-400 mb-1" data-i18n="visibilityLabel">Visibility</label>
+                    <select id="groupVisibility" class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-3 text-white focus:outline-none focus:border-emerald-500">
+                        <option value="public" data-i18n="visibilityPublic">Public</option>
+                        <option value="network" data-i18n="visibilityNetwork">My Network Only</option>
+                        <option value="witness" data-i18n="visibilityWitness">Witness Circle Only</option>
+                    </select>
+                </div>
+            </div>
+            
+           <div class="p-6 border-t border-zinc-700 flex gap-3">
+                <button type="button" onclick="closeGroupModal()" class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 text-white rounded-2xl transition" data-i18n="cancel">Cancel</button>
+                <button type="button" onclick="createGroup()" class="flex-1 py-4 bg-emerald-600 hover:bg-emerald-500 text-black font-semibold rounded-2xl transition" data-i18n="createGroupBtn">Create Group</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+    <script type="module">
+        import { initGroups } from './js/groups.js';
+        document.addEventListener('DOMContentLoaded', () => {
+            initGroups('group-container');
+        });
+    </script>
+    <script type="module">
+        import { initLanguage } from './js/i18n.js';
+        document.addEventListener('DOMContentLoaded', () => {
+            initLanguage();
+        });
+    </script>
+</body>
+</html>
     <div class="max-w-4xl mx-auto">
         <header class="flex justify-between items-center mb-8">
             <h1 class="text-4xl font-bold text-emerald-400" data-i18n="groupsTitle">Groups</h1>
