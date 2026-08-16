@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Transparency • VocalWitness</title>
+    <title data-i18n="transparencyPageTitle">Transparency • VocalWitness</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
     <link rel="icon" href="/logo.png" type="image/png">
@@ -14,16 +14,16 @@
     <div class="max-w-4xl mx-auto flex items-center justify-between">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 bg-emerald-500 rounded-2xl flex items-center justify-center text-2xl">🛡️</div>
-            <h1 class="text-2xl font-bold">VocalWitness</h1>
+            <h1 class="text-2xl font-bold" data-i18n="vocalWitnessBrand">VocalWitness</h1>
         </div>
-        <a href="index.html" class="px-6 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl">← Back to Square</a>
+        <a href="index.html" class="px-6 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl" data-i18n="backToSquare">← Back to Square</a>
     </div>
 </header>
 
 <div class="max-w-4xl mx-auto px-6" id="transparencyContent">
     <div class="text-center mb-12">
-        <h2 class="text-4xl font-bold mb-3">Transparency Dashboard</h2>
-        <p class="text-emerald-300">Live • Updated in Real Time</p>
+        <h2 class="text-4xl font-bold mb-3" data-i18n="transparencyDashboardTitle">Transparency Dashboard</h2>
+        <p class="text-emerald-300" data-i18n="liveRealtimeSubtitle">Live • Updated in Real Time</p>
     </div>
 
     <!-- Stats -->
@@ -33,15 +33,15 @@
 
     <!-- Allocation -->
     <div class="glass rounded-3xl p-8 mb-10">
-        <h3 class="text-xl font-semibold mb-6">Fund Allocation (This Month)</h3>
+        <h3 class="text-xl font-semibold mb-6" data-i18n="fundAllocationTitle">Fund Allocation (This Month)</h3>
         <div id="allocationContainer" class="space-y-6">
             <!-- Populated by JS -->
         </div>
     </div>
 
     <div class="text-center text-xs text-zinc-500 mt-12">
-        Data is fetched live from our transparent ledger.<br>
-        Last updated: <span id="lastUpdated"></span>
+        <span data-i18n="ledgerFetchNotice">Data is fetched live from our transparent ledger.</span><br>
+        <span data-i18n="lastUpdatedPrefix">Last updated:</span> <span id="lastUpdated"></span>
     </div>
 </div>
 
@@ -51,7 +51,6 @@
 
     async function loadTransparencyData() {
         try {
-            // Example: Fetch total contributions
             const contributionsRef = collection(db, "contributions");
             const snapshot = await getDocs(query(contributionsRef, orderBy("timestamp", "desc"), limit(50)));
 
@@ -60,19 +59,18 @@
                 totalUSD += doc.data().amountUSD || 0;
             });
 
-            // Render Stats
             document.getElementById('statsContainer').innerHTML = `
                 <div class="glass rounded-3xl p-6 text-center">
                     <div class="text-5xl font-bold text-emerald-400">$${totalUSD.toFixed(0)}</div>
-                    <div class="text-sm text-zinc-400 mt-2">Total Contributions</div>
+                    <div class="text-sm text-zinc-400 mt-2" data-i18n="totalContributions">Total Contributions</div>
                 </div>
                 <div class="glass rounded-3xl p-6 text-center">
                     <div class="text-5xl font-bold">${snapshot.size}</div>
-                    <div class="text-sm text-zinc-400 mt-2">Active Sustainers</div>
+                    <div class="text-sm text-zinc-400 mt-2" data-i18n="activeSustainers">Active Sustainers</div>
                 </div>
                 <div class="glass rounded-3xl p-6 text-center">
                     <div class="text-5xl font-bold text-amber-400">94%</div>
-                    <div class="text-sm text-zinc-400 mt-2">Utilization Rate</div>
+                    <div class="text-sm text-zinc-400 mt-2" data-i18n="utilizationRate">Utilization Rate</div>
                 </div>
             `;
 
@@ -80,7 +78,7 @@
 
         } catch (e) {
             console.error(e);
-            document.getElementById('transparencyContent').innerHTML += `<p class="text-red-400 text-center mt-8">Unable to load live data at the moment.</p>`;
+            document.getElementById('transparencyContent').innerHTML += `<p class="text-red-400 text-center mt-8" data-i18n="loadErrorNotice">Unable to load live data at the moment.</p>`;
         }
     }
 
