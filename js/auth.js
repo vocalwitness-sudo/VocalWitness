@@ -46,7 +46,7 @@ async function createOrUpdateUser(user) {
         const safePhotoURL = user.photoURL || "";
 
         if (!snap.exists()) {
-            // Initial creation of user document
+            // Initial creation payload conforming strictly to isSafeUserCreation()
             await setDoc(userRef, {
                 uid: user.uid,
                 email: safeEmail,
@@ -55,18 +55,21 @@ async function createOrUpdateUser(user) {
                 tier: TIERS?.CITIZEN || "citizen",
                 isVerified: false,
                 isPhoneVerified: false,
-                zkVerified: false,
-                reputation: 0,
-                weeklyPoints: 0,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp()
             });
-            updateVerificationUI(false);
-            showToast("🎉 Account created! Welcome to the Public Square.", "success");
+
+            if (typeof updateVerificationUI === 'function') {
+                updateVerificationUI(false);
+            }
+            if (typeof showToast === 'function') {
+                showToast("🎉 Account created! Welcome to the Public Square.", "success");
+            }
         } else {
             const existingData = snap.data() || {};
             const changes = {};
 
+            // Sync auth profile updates
             if (safeDisplayName && safeDisplayName !== existingData.displayName) {
                 changes.displayName = safeDisplayName;
             }
@@ -77,30 +80,35 @@ async function createOrUpdateUser(user) {
                 changes.email = safeEmail;
             }
 
-            // Populate legacy missing default values
+            // Populate missing baseline schema values allowed under isSafeUserUpdate()
             if (!existingData.tier) changes.tier = TIERS?.CITIZEN || "citizen";
-            if (existingData.isVerified === undefined) changes.isVerified = false;
             if (existingData.isPhoneVerified === undefined) changes.isPhoneVerified = false;
-            if (existingData.zkVerified === undefined) changes.zkVerified = false;
 
-            // Only perform network write if actual schema or auth properties changed
+            // Perform write only if actual differences exist
             if (Object.keys(changes).length > 0) {
                 changes.updatedAt = serverTimestamp();
                 await updateDoc(userRef, changes);
             }
 
-            // Combine snapshot data with applied changes to ensure UI renders current state
+            // Determine verification state for UI render
             const currentIsVerified = changes.isVerified ?? existingData.isVerified ?? false;
-            const currentIsPhoneVerified = changes.isPhoneVerified ?? existingData.isPhoneVerified ?? false;
+            const currentIsPhoneVerified = changes.isPhoneVerified ?? existingData.isPhoneVerified ?? existingData.hasVerifiedPhone ?? false;
 
-            updateVerificationUI(currentIsVerified || currentIsPhoneVerified);
+            if (typeof updateVerificationUI === 'function') {
+                updateVerificationUI(currentIsVerified || currentIsPhoneVerified);
+            }
         }
     } catch (e) {
-        console.error("User document update error:", e);
-        showToast("Error configuring user profile in Firestore.", "error");
+        if (e?.code === 'permission-denied') {
+            console.warn("Firestore rules restricted document sync for UID:", user.uid);
+        } else {
+            console.error("User document update error:", e);
+            if (typeof showToast === 'function') {
+                showToast("Error configuring user profile in Firestore.", "error");
+            }
+        }
     }
 }
-
 export function updateVerificationUI(isVerified = false) {
     const statusEl = document.getElementById('verification-status');
     const verifyBtn = document.getElementById('request-verification-btn');
