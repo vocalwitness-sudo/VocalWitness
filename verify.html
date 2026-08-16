@@ -7,7 +7,8 @@
 
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="/logo.png" type="image/png">
-    <title>VocalWitness • Evidence Verification Portal</title>
+    <title data-i18n="verifyPageTitle">VocalWitness • Evidence Verification Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
         :root {
@@ -181,20 +182,35 @@
 <body>
 
     <div class="container">
+        <!-- Top Bar with Back and Language Selector -->
+        <div class="flex items-center justify-between mb-6 glass p-4 rounded-3xl">
+            <div class="flex items-center gap-3">
+                <a href="index.html" class="w-10 h-10 bg-emerald-500/20 rounded-2xl flex items-center justify-center text-xl hover:bg-emerald-500/30 transition" aria-label="Back">⬅️</a>
+                <span class="font-bold text-white" data-i18n="appTitle">VocalWitness</span>
+            </div>
+            <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-4 py-2 text-sm focus:outline-none focus:border-emerald-500">
+                <option value="en">🇬🇧 English</option>
+                <option value="ar">🇸🇦 العربية</option>
+                <option value="es">🇪🇸 Español</option>
+                <option value="fr">🇫🇷 Français</option>
+                <option value="sw">🇹🇿 Kiswahili</option>
+            </select>
+        </div>
+
         <div class="legal-banner">
-            <strong>Legal:</strong> VocalWitness is an un-manipulated decentralized distribution medium.
+            <strong data-i18n="legalLabel">Legal:</strong> <span data-i18n="legalBannerText">VocalWitness is an un-manipulated decentralized distribution medium.</span>
         </div>
 
         <main>
             <div class="header">
-                <h1>🔍 Evidence Verifier</h1>
-                <p>Verify C2PA Content Credentials or cryptographic signatures on any testimony asset.</p>
+                <h1 data-i18n="verifyHeaderTitle">🔍 Evidence Verifier</h1>
+                <p data-i18n="verifyHeaderSubtitle">Verify C2PA Content Credentials or cryptographic signatures on any testimony asset.</p>
             </div>
 
             <div class="glass">
                 <div class="tab-group">
-                    <button type="button" id="tabC2PA" class="tab-btn active">📷 Media C2PA File</button>
-                    <button type="button" id="tabJSON" class="tab-btn">📜 JSON Proof Payload</button>
+                    <button type="button" id="tabC2PA" class="tab-btn active" data-i18n="tabMediaC2PA">📷 Media C2PA File</button>
+                    <button type="button" id="tabJSON" class="tab-btn" data-i18n="tabJSONProof">📜 JSON Proof Payload</button>
                 </div>
 
                 <!-- C2PA Media Upload Mode -->
@@ -202,19 +218,19 @@
                     <div id="dropZone" class="drop-zone">
                         <div class="drop-zone-icon">📁</div>
                         <div class="drop-zone-text" id="dropZoneText">
-                            Drag & drop image/video or <strong>click to browse</strong><br>
-                            <span style="font-size: 0.7rem; color: #6b7280;">Inspects embedded C2PA Content Credentials</span>
+                            <span data-i18n="dropZonePromptPre">Drag & drop image/video or</span> <strong data-i18n="clickToBrowse">click to browse</strong><br>
+                            <span style="font-size: 0.7rem; color: #6b7280;" data-i18n="dropZoneSub">Inspects embedded C2PA Content Credentials</span>
                         </div>
                         <input type="file" id="mediaInput" accept="image/*,video/*" class="hidden">
                     </div>
-                    <button id="btnVerifyC2PA" class="btn-primary">Verify Media Provenance</button>
+                    <button id="btnVerifyC2PA" class="btn-primary" data-i18n="btnVerifyMedia">Verify Media Provenance</button>
                 </div>
 
                 <!-- JSON Proof Mode -->
                 <div id="jsonSection" class="hidden">
-                    <label for="proofInput">Paste Proof Payload (JSON):</label>
+                    <label for="proofInput" data-i18n="proofInputLabel">Paste Proof Payload (JSON):</label>
                     <textarea id="proofInput" rows="6" placeholder='{"hash": "0x...", "signature": "0x...", "signer": "0x...", "bundle": {"timestamp": 1700000000000}}'></textarea>
-                    <button id="btnVerifyJSON" class="btn-primary">Verify Signature</button>
+                    <button id="btnVerifyJSON" class="btn-primary" data-i18n="btnVerifySig">Verify Signature</button>
                 </div>
             </div>
 
@@ -228,6 +244,11 @@
 
     <script type="module">
         import { verifyMediaProvenance } from './js/verification.js';
+        import { initLanguage } from './js/i18n.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initLanguage();
+        });
 
         // Tab Switching Logic
         const tabC2PA = document.getElementById('tabC2PA');
