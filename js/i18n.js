@@ -146,6 +146,37 @@ export function initLanguage() {
     loadTranslations(savedLang);
 }
 
+// Optimized dynamic loader for your existing UI logic
+async function fetchLanguageData(langCode) {
+    try {
+        const response = await fetch(`./translations/${langCode}.json`);
+        if (!response.ok) throw new Error('Language file not found');
+        return await response.json();
+    } catch (err) {
+        console.error(`[i18n] Failed to load ${langCode}, falling back to English:`, err);
+        const fallback = await fetch('./translations/en.json');
+        return await fallback.json();
+    }
+}
+
+// Your existing logic, but made async to handle the fetch
+export async function updateUILanguage(langCode) {
+    document.documentElement.lang = langCode;
+    const activeData = await fetchLanguageData(langCode);
+    
+    // Update innerText
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (activeData[key]) el.innerText = activeData[key];
+    });
+
+    // Update Placeholders
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        if (activeData[key]) el.placeholder = activeData[key];
+    });
+}
+
 // Global exposure for non-module inline scripts and event handlers
 window.initLanguage = initLanguage;
 window.changeLanguage = loadTranslations;
