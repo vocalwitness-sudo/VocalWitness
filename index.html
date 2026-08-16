@@ -207,7 +207,7 @@
 
 <div class="pt-24 md:pt-28"></div>
 
-        <!-- MOBILE SLIDE-OUT / OVERLAY DRAWER MENU (Hidden by default) -->
+    <!-- MOBILE SLIDE-OUT / OVERLAY DRAWER MENU (Hidden by default) -->
         <div id="mobile-drawer" class="hidden md:hidden fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex flex-col justify-between p-6 overflow-y-auto">
             <div>
                 <!-- Drawer Top Header -->
@@ -318,58 +318,80 @@
             </button>
         </div>
 
-        <!-- MAIN DESKTOP TAB NAVIGATION (Hidden on mobile: hidden md:flex) -->
-        <div class="relative z-50 mb-8 w-full hidden md:flex flex-row items-center gap-2">
-            <nav class="flex items-center gap-2 pb-2 overflow-x-auto md:overflow-visible flex-nowrap flex-1" id="main-nav">
-                <button data-tab="square" class="nav-tab active px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative flex-shrink-0">
-                    <span class="font-semibold text-sm" data-i18n="publicSquareTab">Public Square</span>
-                    <span class="text-xs text-zinc-400" data-i18n="publicSquareDesc">Share stories & evidence</span>
+        <!-- RESPONSIVE TAB NAVIGATION & MORE OPTIONS BAR -->
+        <!-- Mobile: 2-column grid in pairs | Desktop: Single flex row -->
+        <div class="relative z-50 mb-8 w-full">
+            <nav class="grid grid-cols-2 sm:grid-cols-3 md:flex md:items-center md:justify-between gap-2.5 w-full" id="main-nav">
+                
+                <!-- 1. Public Square (Default Active Tab) -->
+                <button type="button" 
+                        data-tab="square" 
+                        class="nav-tab active flex flex-col items-center justify-center p-3 sm:px-5 sm:py-2.5 rounded-2xl md:rounded-3xl font-semibold text-xs sm:text-sm text-black bg-emerald-500 shadow-md border border-emerald-400/50 transition-all cursor-pointer hover:scale-[1.02] flex-shrink-0">
+                    <span data-i18n="publicSquareTab">Public Square</span>
+                    <span class="text-[10px] sm:text-xs font-normal opacity-80 hidden sm:inline" data-i18n="publicSquareDesc">Share stories & evidence</span>
                 </button>
 
-                <button data-tab="ledger" class="nav-tab px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative flex-shrink-0">
-                    <span class="font-semibold text-sm" data-i18n="evidenceLedgerTab">Evidence Ledger</span>
-                    <span class="text-xs text-zinc-400" data-i18n="evidenceLedgerDesc">Permanent record</span>
+                <!-- 2. Evidence Ledger -->
+                <button type="button" 
+                        data-tab="ledger" 
+                        class="nav-tab flex flex-col items-center justify-center p-3 sm:px-5 sm:py-2.5 rounded-2xl md:rounded-3xl font-semibold text-xs sm:text-sm text-emerald-300 bg-emerald-950/70 border border-emerald-700/60 hover:bg-emerald-900/50 transition-all cursor-pointer hover:scale-[1.02] flex-shrink-0">
+                    <span data-i18n="evidenceLedgerTab">Evidence Ledger</span>
+                    <span class="text-[10px] sm:text-xs font-normal text-emerald-400/80 hidden sm:inline" data-i18n="evidenceLedgerDesc">Permanent record</span>
                 </button>
 
-                <button data-tab="arena" class="nav-tab px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative bg-sky-900/70 text-sky-300 border border-sky-700 hover:bg-sky-800 flex-shrink-0">
-                    <span class="font-semibold text-sm" data-i18n="liveArenaTab">Live Arena</span>
-                    <span class="text-xs text-sky-400" data-i18n="liveArenaDesc">Watch & join live</span>
+                <!-- 3. Live Arena -->
+                <button type="button" 
+                        data-tab="arena" 
+                        class="nav-tab flex flex-col items-center justify-center p-3 sm:px-5 sm:py-2.5 rounded-2xl md:rounded-3xl font-semibold text-xs sm:text-sm text-sky-300 bg-sky-900/70 border border-sky-700 hover:bg-sky-800 transition-all cursor-pointer hover:scale-[1.02] flex-shrink-0">
+                    <span data-i18n="liveArenaTab">Live Arena</span>
+                    <span class="text-[10px] sm:text-xs font-normal text-sky-400 hidden sm:inline" data-i18n="liveArenaDesc">Watch & join live</span>
                 </button>
 
-                <button data-tab="mycircle" class="nav-tab px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative flex-shrink-0">
-                    <span class="font-semibold text-sm" data-i18n="myCircleTab">My Circle</span>
-                    <span class="text-xs text-zinc-400" data-i18n="myCircleDesc">Trusted people</span>
+                <!-- 4. My Circle -->
+                <button type="button" 
+                        data-tab="mycircle" 
+                        class="nav-tab flex flex-col items-center justify-center p-3 sm:px-5 sm:py-2.5 rounded-2xl md:rounded-3xl font-semibold text-xs sm:text-sm text-zinc-200 bg-zinc-900 border border-zinc-700 hover:border-zinc-500 transition-all cursor-pointer hover:scale-[1.02] flex-shrink-0">
+                    <span data-i18n="myCircleTab">My Circle</span>
+                    <span class="text-[10px] sm:text-xs font-normal text-zinc-400 hidden sm:inline" data-i18n="myCircleDesc">Trusted people</span>
                 </button>
 
-                <button data-tab="witness" class="nav-tab px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center group relative bg-amber-900/70 text-amber-300 border border-amber-700 flex-shrink-0">
-                    <span class="font-semibold text-sm" data-i18n="verifiedWitnessesTab">Verified Witnesses</span>
-                    <span class="text-xs text-amber-400" data-i18n="verifiedWitnessesDesc">Trusted voices</span>
+                <!-- 5. Verified Witnesses -->
+                <button type="button" 
+                        data-tab="witness" 
+                        class="nav-tab flex flex-col items-center justify-center p-3 sm:px-5 sm:py-2.5 rounded-2xl md:rounded-3xl font-semibold text-xs sm:text-sm text-amber-300 bg-amber-900/70 border border-amber-700 hover:bg-amber-800 transition-all cursor-pointer hover:scale-[1.02] flex-shrink-0">
+                    <span data-i18n="verifiedWitnessesTab">Verified Witnesses</span>
+                    <span class="text-[10px] sm:text-xs font-normal text-amber-400 hidden sm:inline" data-i18n="verifiedWitnessesDesc">Trusted voices</span>
                 </button>
-            </nav>
 
-            <!-- More Options Dropdown for Desktop -->
-            <div class="dropdown-container relative shrink-0 z-50">
-                <button id="more-btn" 
-                        type="button" 
-                        onclick="event.stopPropagation(); const m = document.getElementById('more-menu'); if(m) m.classList.toggle('hidden');"
-                        class="px-5 py-2.5 rounded-3xl whitespace-nowrap flex flex-col items-center justify-center bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-white font-semibold transition-all duration-150 border border-zinc-700 cursor-pointer select-none" 
-                        data-i18n="moreOptionsBtn">
-                    <span class="font-semibold text-sm pointer-events-none">More Options</span>
-                    <span class="text-xs text-zinc-400 pointer-events-none">Menu & Pages</span>
-                </button>
-                <div id="more-menu" class="hidden absolute right-0 top-full mt-2 w-64 bg-zinc-900 border border-zinc-700 rounded-3xl shadow-2xl py-3 z-50">
-                    <a href="my-testimonies.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="myTestimoniesMenu">My Testimonies</a>
-                    <a href="groups.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="groupsMenu">Groups</a>
-                    <a href="witness-voice.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="witnessVoiceMenu">Witness Voice</a>
-                    <div class="h-px bg-zinc-700 mx-4 my-2"></div>
-                    <a href="about.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="aboutMenu">About Us</a>
-                    <a href="privacy.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="privacyPolicyMenu">Privacy Policy</a>
-                    <a href="terms.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="termsOfServiceMenu">Terms of Service</a>
-                    <a href="safety.html" class="block px-6 py-3 hover:bg-zinc-800 text-white" data-i18n="safetyGuidelinesMenu">Safety Guidelines</a>
+                <!-- 6. More Options Dropdown Menu -->
+                <div class="dropdown-container relative w-full md:w-auto shrink-0 z-50">
+                    <button id="more-btn" 
+                            type="button" 
+                            onclick="event.stopPropagation(); const m = document.getElementById('more-menu'); if(m) m.classList.toggle('hidden');"
+                            class="w-full flex flex-col items-center justify-center p-3 sm:px-5 sm:py-2.5 rounded-2xl md:rounded-3xl font-semibold text-xs sm:text-sm bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-white transition-all duration-150 border border-zinc-700 cursor-pointer select-none hover:scale-[1.02]" 
+                            data-i18n="moreOptionsBtn">
+                        <div class="flex items-center gap-1 pointer-events-none">
+                            <span>More Options</span>
+                            <svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                        <span class="text-[10px] sm:text-xs text-zinc-400 pointer-events-none hidden sm:inline">Menu & Pages</span>
+                    </button>
+
+                    <!-- Dropdown Modal Drawer -->
+                    <div id="more-menu" class="hidden absolute right-0 top-full mt-2 w-full md:w-64 bg-zinc-900/95 backdrop-blur-xl border border-zinc-700 rounded-2xl md:rounded-3xl shadow-2xl py-3 z-50">
+                        <a href="my-testimonies.html" class="block px-5 py-2.5 hover:bg-zinc-800 text-white text-xs sm:text-sm rounded-xl mx-1" data-i18n="myTestimoniesMenu">My Testimonies</a>
+                        <a href="groups.html" class="block px-5 py-2.5 hover:bg-zinc-800 text-white text-xs sm:text-sm rounded-xl mx-1" data-i18n="groupsMenu">Groups</a>
+                        <a href="witness-voice.html" class="block px-5 py-2.5 hover:bg-zinc-800 text-white text-xs sm:text-sm rounded-xl mx-1" data-i18n="witnessVoiceMenu">Witness Voice</a>
+                        <div class="h-px bg-zinc-800 mx-4 my-2"></div>
+                        <a href="about.html" class="block px-5 py-2.5 hover:bg-zinc-800 text-white text-xs sm:text-sm rounded-xl mx-1" data-i18n="aboutMenu">About Us</a>
+                        <a href="privacy.html" class="block px-5 py-2.5 hover:bg-zinc-800 text-white text-xs sm:text-sm rounded-xl mx-1" data-i18n="privacyPolicyMenu">Privacy Policy</a>
+                        <a href="terms.html" class="block px-5 py-2.5 hover:bg-zinc-800 text-white text-xs sm:text-sm rounded-xl mx-1" data-i18n="termsOfServiceMenu">Terms of Service</a>
+                        <a href="safety.html" class="block px-5 py-2.5 hover:bg-zinc-800 text-white text-xs sm:text-sm rounded-xl mx-1" data-i18n="safetyGuidelinesMenu">Safety Guidelines</a>
+                    </div>
                 </div>
-            </div>
-        </div>
 
+            </nav>
+        </div>
         <!-- TESTIMONY COMPOSER -->
         <div class="glass rounded-3xl p-6 sm:p-8 mb-12 shadow-xl">
             <div class="flex items-center justify-between mb-4">
