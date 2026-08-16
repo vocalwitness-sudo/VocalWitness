@@ -69,6 +69,77 @@
 <body class="bg-zinc-950 text-zinc-100 min-h-screen flex flex-col font-sans antialiased selection:bg-emerald-500 selection:text-black">
     <div class="app-container py-6 px-4 max-w-6xl mx-auto">
      
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta name="theme-color" content="#10b981">
+    <meta name="description" content="VocalWitness - Privacy First Public Square for Truth and Evidence">
+    
+    <!-- Content Security Policy: Authorizes trusted external scripts, styles, and API domains -->
+    <meta http-equiv="Content-Security-Policy" content="
+  default-src 'self' https: wss: blob: data:;
+  script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https://www.gstatic.com https://cdnjs.cloudflare.com https://cdn.tailwindcss.com https://apis.google.com https://js.paystack.co https://*.paystack.co https://esm.sh https://cdn.jsdelivr.net https://static.cloudflareinsights.com blob:;
+  script-src-elem 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://www.gstatic.com https://cdnjs.cloudflare.com https://cdn.tailwindcss.com https://apis.google.com https://js.paystack.co https://*.paystack.co https://esm.sh https://cdn.jsdelivr.net https://static.cloudflareinsights.com blob:;
+  script-src-attr 'unsafe-inline';
+  worker-src 'self' blob:;
+  style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com https://paystack.com https://*.paystack.co;
+  font-src 'self' https://fonts.gstatic.com https: data:;
+  connect-src 'self' https://vocalwitness.com https://vocalwitness-3affa.web.app https://rss2json.com https://*.rss2json.com https://api.rss2json.com https://*.googleapis.com https://commentanalyzer.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://api.paystack.co https://*.paystack.co https://*.paystack.com https://*.cloudfunctions.net https://cloudfunctions.googleapis.com wss://*.firebaseio.com https://esm.sh https://cdn.jsdelivr.net https://*.cloudflareinsights.com https://cloudflareinsights.com blob:;
+  img-src 'self' https: data: blob:;
+  media-src 'self' https: blob: data:;
+  frame-src 'self' https://accounts.google.com https://*.google.com https://*.googleapis.com https://*.firebaseapp.com https://*.web.app https://*.paystack.co https://*.paystack.com https://checkout.paystack.co https://standard.paystack.co;
+  object-src 'none';
+  base-uri 'self';
+  upgrade-insecure-requests;
+">
+
+    <title data-i18n="pageTitle">VocalWitness • Truth • Evidence • Public Square</title>
+
+    <!-- Font & Icon Preconnections -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./style.css">
+    <link rel="icon" href="./logo.png" type="image/png">
+
+    <!-- Third-Party Libraries (Deferred for Render Performance) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" defer></script>
+    <script src="https://js.paystack.co/v2/inline.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/snarkjs@0.7.0/build/snarkjs.min.js" defer></script>
+
+    <!-- Fallback Styles for Legacy Browsers & Core Theme Overrides -->
+    <style>
+      body { background-color: #0a0f1c !important; color: #ffffff !important; font-family: 'Inter', sans-serif; }
+      .glass { background-color: #111827 !important; border: 1px solid rgba(16, 185, 129, 0.22) !important; }
+      #main-nav button.nav-tab.active { background-color: #10b981 !important; color: #000000 !important; font-weight: 700; }
+      #support-btn { background-color: #10b981 !important; color: #000000 !important; }
+      #languageSelector, #data-saver-btn, #profile-btn, #squareSearchInput, #bookmarks-nav-btn, #notifications-btn, #google-auth-btn { background-color: #18181b !important; color: #ffffff !important; }
+      
+      /* Mobile Header Specific Adjustments */
+      @media (max-width: 767px) {
+        .mobile-header-row { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+      }
+
+      /* Explicit Fallbacks for Browsers Lacking Modern CSS Alpha Syntax */
+      @supports not (color: rgb(0 0 0 / 0.5)) {
+        .bg-zinc-950 { background-color: #09090b !important; }
+        .bg-zinc-900 { background-color: #18181b !important; }
+        .bg-zinc-800 { background-color: #27272a !important; }
+        .border-zinc-800 { border-color: #27272a !important; }
+        .border-zinc-700 { border-color: #3f3f46 !important; }
+        .text-zinc-400 { color: #a1a1aa !important; }
+        .text-emerald-400 { color: #34d399 !important; }
+        .glass { background-color: #111827 !important; }
+      }
+    </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen flex flex-col font-sans antialiased selection:bg-emerald-500 selection:text-black">
+    <div class="app-container py-6 px-4 max-w-6xl mx-auto">
+     
 <!-- TOP HEADER -->
 <header class="fixed top-0 left-0 right-0 z-50 bg-zinc-950/90 backdrop-blur-md border-b border-emerald-500/30 shadow-2xl transition-all">
     <div class="max-w-6xl mx-auto px-3 py-2.5 sm:px-4 sm:py-3">
