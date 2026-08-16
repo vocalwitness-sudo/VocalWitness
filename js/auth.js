@@ -77,7 +77,7 @@ async function createOrUpdateUser(user) {
                 changes.email = safeEmail;
             }
 
-            // Fix: Only update Firestore if actual fields changed to prevent write loops
+            // Only update Firestore if actual fields changed to prevent write loops
             if (Object.keys(changes).length > 0) {
                 changes.updatedAt = serverTimestamp();
                 await updateDoc(userRef, changes);
@@ -509,7 +509,7 @@ export function requireAuth(message = "Please sign in to proceed.") {
 
 export function updateUIForAuthState(userParam = null) {
     const activeUser = userParam || auth.currentUser;
-    const isLoggedIn = !!activeUser;
+    const isLoggedIn = !!activeUser && (activeUser.emailVerified || activeUser.providerData?.some(p => p.providerId === 'google.com'));
 
     const guestBtns = document.querySelectorAll('#guest-action-btn, #guest-action-btn-mobile, #guest-action-btn-drawer, .guest-only-btn');
     const profileBtn = document.getElementById('profile-btn');
@@ -703,24 +703,28 @@ export function initAuth() {
             });
 
         onAuthStateChanged(auth, async (user) => {
-            if (user) {
+            const isPasswordUser = user?.providerData?.some(p => p.providerId === 'password');
+            const isValidUser = user && (!isPasswordUser || user.emailVerified);
+
+            if (isValidUser) {
                 updateAppState({ isAuthenticated: true, currentUser: user });
                 await createOrUpdateUser(user);
                 refreshTierUI();
                 if (typeof initNotifications === 'function') {
                     initNotifications(user.uid);
                 }
+                updateUIForAuthState(user);
             } else {
                 updateAppState({ isAuthenticated: false, currentUser: null });
                 updateVerificationUI(false);
                 if (typeof initNotifications === 'function') {
                     initNotifications(null);
                 }
+                updateUIForAuthState(null);
             }
 
-            updateUIForAuthState(user);
-            window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
-            resolve(user);
+            window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user: isValidUser ? user : null } }));
+            resolve(isValidUser ? user : null);
         });
     });
 }
@@ -735,6 +739,4 @@ window.closeVerificationModal = closeVerificationModal;
 window.toggleProfileMenu = toggleProfileMenu;
 window.handleEmailAuth = handleEmailAuth;
 window.handlePasswordReset = handlePasswordReset;
-
-// Self-initialize
-initAuth();
+window.initAuth = initAuth;
