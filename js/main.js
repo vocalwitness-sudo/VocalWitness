@@ -30,6 +30,61 @@ let isInitialized = false;
 let listenersInitialized = false;
 let isSwitchingTab = false;
 
+// ====================== DATA SAVER HANDLER ======================
+export function initDataSaver() {
+    const savedState = localStorage.getItem('vocalwitness_data_saver') === 'true';
+    updateAppState({ dataSaver: savedState });
+    updateDataSaverUI(savedState);
+}
+
+export function toggleDataSaver() {
+    const currentState = state.dataSaver || false;
+    const newState = !currentState;
+    
+    updateAppState({ dataSaver: newState });
+    localStorage.setItem('vocalwitness_data_saver', String(newState));
+    updateDataSaverUI(newState);
+
+    if (newState) {
+        showToast("⚡ Data Saver Activated: High-res media preloading paused.", "info");
+    } else {
+        showToast("⚡ Data Saver Deactivated: Full quality media enabled.", "info");
+    }
+}
+
+function updateDataSaverUI(enabled) {
+    // Desktop Status Indicator
+    const statusEl = document.getElementById('data-saver-status');
+    if (statusEl) {
+        statusEl.textContent = enabled ? "On" : "Off";
+        statusEl.style.color = enabled ? "#10b981" : "#34d399";
+    }
+
+    // Desktop Button Styling
+    const desktopBtn = document.getElementById('data-saver-btn');
+    if (desktopBtn) {
+        if (enabled) {
+            desktopBtn.classList.add('border-emerald-500', 'bg-emerald-950/40');
+        } else {
+            desktopBtn.classList.remove('border-emerald-500', 'bg-emerald-950/40');
+        }
+    }
+
+    // Mobile Button Styling
+    const mobileBtn = document.getElementById('data-saver-btn-mobile');
+    if (mobileBtn) {
+        if (enabled) {
+            mobileBtn.classList.add('border-emerald-500', 'text-emerald-400', 'bg-emerald-950/40');
+            mobileBtn.classList.remove('border-zinc-800', 'text-zinc-300', 'bg-zinc-900');
+        } else {
+            mobileBtn.classList.remove('border-emerald-500', 'text-emerald-400', 'bg-emerald-950/40');
+            mobileBtn.classList.add('border-zinc-800', 'text-zinc-300', 'bg-zinc-900');
+        }
+    }
+}
+
+window.toggleDataSaver = toggleDataSaver;
+
 // ====================== TAB SWITCHING ======================
 window.switchTab = async (tab) => {
     if (isSwitchingTab) return;
@@ -375,6 +430,45 @@ function setupEventListeners() {
     listenersInitialized = true;
     console.log("✅ Wiring application listeners...");
 
+    // Data Delegation Handling for Header & Navigation Controls
+    document.addEventListener('click', (e) => {
+        const actionTarget = e.target.closest('[data-action]');
+        if (!actionTarget) return;
+
+        const action = actionTarget.dataset.action;
+
+        switch (action) {
+            case 'toggle-data-saver':
+                e.preventDefault();
+                toggleDataSaver();
+                break;
+            case 'open-support-modal':
+                e.preventDefault();
+                window.openSupportModal();
+                break;
+            case 'open-profile':
+                e.preventDefault();
+                if (typeof window.openProfile === 'function') {
+                    window.openProfile();
+                } else if (typeof window.showProfile === 'function') {
+                    window.showProfile();
+                }
+                break;
+            case 'open-bookmarks':
+                e.preventDefault();
+                document.querySelectorAll('.tab-view').forEach(view => view.classList.add('hidden'));
+                document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+                initBookmarksView?.();
+                break;
+            case 'open-notifications':
+                e.preventDefault();
+                showToast("🔔 Notification center coming online...", "info");
+                break;
+            default:
+                break;
+        }
+    });
+
     // Event Delegation for Navigation Tabs
     const mainNav = document.getElementById('main-nav');
     if (mainNav) {
@@ -390,37 +484,13 @@ function setupEventListeners() {
     // Auth & Header Bindings
     bindHeaderEvents();
 
-    document.getElementById('profile-btn')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (typeof window.openProfile === 'function') {
-            window.openProfile();
-        } else if (typeof window.showProfile === 'function') {
-            window.showProfile();
-        }
-    });
-
-    document.getElementById('support-btn')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        window.openSupportModal();
-    });
-
-    // Paystack support button binding
+    // Support Modal Paystack Payment Binding
     document.getElementById('paystackPayBtn')?.addEventListener('click', (e) => {
         e.preventDefault();
         const amountInput = document.getElementById('customSupportAmount');
         const amount = amountInput ? parseFloat(amountInput.value) || 1000 : 1000;
         window.initiatePayment(amount);
     });
-
-    // Bookmarks View Navigation
-    const bookmarksBtn = document.getElementById('bookmarks-nav-btn');
-    if (bookmarksBtn) {
-        bookmarksBtn.addEventListener('click', () => {
-            document.querySelectorAll('.tab-view').forEach(view => view.classList.add('hidden'));
-            document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
-            initBookmarksView?.();
-        });
-    }
 
     // Media Controls
     document.getElementById('btn-photo')?.addEventListener('click', (e) => {
@@ -458,7 +528,8 @@ async function bootstrap() {
     console.log("🚀 VocalWitness Bootstrap started");
 
     try {
-        // 1. Initialize tier systems
+        // 1. Initialize tier systems & data saver
+        initDataSaver();
         refreshTierAndUI();
         loadWeeklyLeaderboard();
 
