@@ -31,7 +31,7 @@ export const state = {
  * @returns {boolean}
  */
 export function isUserAuthenticated() {
-    return state.isAuthenticated || !!state.currentUser;
+    return state.isAuthenticated && !!state.currentUser;
 }
 
 /**
