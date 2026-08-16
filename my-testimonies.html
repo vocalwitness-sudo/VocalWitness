@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Testimonies • VocalWitness</title>
+    <title data-i18n="myTestimoniesPageTitle">My Testimonies • VocalWitness</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
@@ -21,16 +21,16 @@
                 <a href="index.html" class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-2xl">🔊</div>
                     <div>
-                        <h1 class="text-2xl font-bold">VocalWitness</h1>
+                        <h1 class="text-2xl font-bold" data-i18n="vocalWitnessBrand">VocalWitness</h1>
                     </div>
                 </a>
             </div>
-            <a href="index.html" class="text-emerald-400 hover:text-emerald-300">← Back to Square</a>
+            <a href="index.html" class="text-emerald-400 hover:text-emerald-300" data-i18n="backToSquare">← Back to Square</a>
         </header>
 
         <div class="glass rounded-3xl p-8">
-            <h1 class="text-3xl font-bold mb-2">My Testimonies</h1>
-            <p class="text-zinc-400 mb-8">Permanent records of your voice in the Public Square</p>
+            <h1 class="text-3xl font-bold mb-2" data-i18n="myTestimoniesMainHeading">My Testimonies</h1>
+            <p class="text-zinc-400 mb-8" data-i18n="myTestimoniesSubtitle">Permanent records of your voice in the Public Square</p>
             
             <div id="myTestimoniesContainer" class="space-y-6 min-h-[400px]">
                 <!-- JS will load here -->
@@ -49,10 +49,10 @@
         });
     </script>
     <script type="module">
-    import { initLanguage } from './js/i18n.js';
-    document.addEventListener('DOMContentLoaded', () => {
-        initLanguage();
-    });
-</script>
+        import { initLanguage } from './js/i18n.js';
+        document.addEventListener('DOMContentLoaded', () => {
+            initLanguage();
+        });
+    </script>
 </body>
 </html>
