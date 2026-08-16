@@ -503,116 +503,116 @@
                 <span class="text-[10px] font-medium tracking-wide" data-i18n="profileBtn">Profile</span>
             </button>
         </nav>
-        
-  <!-- AUTH MODAL (Part 2) -->
-<div id="authModal" class="fixed inset-0 z-[200] hidden flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-    <div class="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-3xl bg-zinc-900 p-6 sm:p-8 shadow-2xl border border-zinc-700/80">
-        
-        <!-- Close Button -->
-        <button id="closeAuthModalBtn" type="button" onclick="closeAuthModal()"
-                class="absolute top-4 right-4 text-zinc-400 hover:text-white text-2xl font-bold w-10 h-10 flex items-center justify-center rounded-full hover:bg-zinc-800 transition">
-            ✕
-        </button>
+        <!-- AUTH MODAL -->
+    <div id="authModal" class="fixed inset-0 z-[200] hidden flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+        <div class="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-3xl bg-zinc-900 p-6 sm:p-8 shadow-2xl border border-zinc-700/80">
+            
+            <!-- Close Button -->
+            <button id="closeAuthModalBtn" type="button" onclick="closeAuthModal()"
+                    class="absolute top-4 right-4 text-zinc-400 hover:text-white text-2xl font-bold w-10 h-10 flex items-center justify-center rounded-full hover:bg-zinc-800 transition">
+                ✕
+            </button>
 
-        <div class="text-center mb-6">
-            <h3 id="authTitle" class="text-2xl font-bold text-white">Join the Public Square</h3>
-            <p id="authSubtitle" class="text-xs text-zinc-400 mt-1">Sign in or create an account to participate.</p>
-        </div>
-
-        <!-- Google OAuth -->
-        <button id="googleAuthBtn" type="button"
-                class="w-full flex items-center justify-center gap-3 bg-white text-zinc-900 font-bold py-3.5 px-4 rounded-2xl hover:bg-zinc-100 transition-all mb-4 text-sm shadow-md">
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5" alt="Google">
-            <span>Continue with Google</span>
-        </button>
-
-        <div class="relative my-4 text-center">
-            <div class="absolute inset-0 flex items-center">
-                <div class="w-full border-t border-zinc-800"></div>
+            <div class="text-center mb-6">
+                <h3 id="authTitle" class="text-2xl font-bold text-white">Join the Public Square</h3>
+                <p id="authSubtitle" class="text-xs text-zinc-400 mt-1">Sign in or create an account to participate.</p>
             </div>
-            <span class="relative bg-zinc-900 px-3 text-xs text-zinc-500 uppercase tracking-widest">or email</span>
-        </div>
 
-        <!-- Auth Form View -->
-        <form id="authForm" class="space-y-4">
-            <div>
-                <input type="email" id="loginEmail" name="email" placeholder="Email address" required autocomplete="email"
+            <!-- Google OAuth -->
+            <button id="googleAuthBtn" type="button"
+                    class="w-full flex items-center justify-center gap-3 bg-white text-zinc-900 font-bold py-3.5 px-4 rounded-2xl hover:bg-zinc-100 transition-all mb-4 text-sm shadow-md">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5" alt="Google">
+                <span>Continue with Google</span>
+            </button>
+
+            <div class="relative my-4 text-center">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-zinc-800"></div>
+                </div>
+                <span class="relative bg-zinc-900 px-3 text-xs text-zinc-500 uppercase tracking-widest">or email</span>
+            </div>
+
+            <!-- Auth Form View -->
+            <form id="authForm" class="space-y-4">
+                <div>
+                    <input type="email" id="loginEmail" name="email" placeholder="Email address" required autocomplete="email"
+                           class="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 rounded-xl focus:outline-none focus:border-emerald-500 transition text-sm">
+                </div>
+
+                <div class="relative">
+                    <input type="password" id="loginPassword" name="password" placeholder="Password" required minlength="6"
+                           autocomplete="current-password"
+                           class="w-full px-4 py-3 pr-12 bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 rounded-xl focus:outline-none focus:border-emerald-500 transition text-sm">
+
+                    <button type="button" id="togglePasswordBtn" onclick="togglePasswordVisibility()"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition p-1"
+                            aria-label="Toggle password visibility">
+                        <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        <svg id="eyeOffIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="flex items-center justify-between text-sm">
+                    <label class="flex items-center gap-2 cursor-pointer select-none text-zinc-400 hover:text-zinc-300">
+                        <input type="checkbox" id="rememberMe" class="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-0">
+                        <span>Remember me</span>
+                    </label>
+
+                    <button type="button" id="forgotPasswordBtn" onclick="document.getElementById('authForm').classList.add('hidden'); document.getElementById('resetPasswordView').classList.remove('hidden');"
+                            class="text-emerald-400 hover:text-emerald-300 transition text-xs">
+                        Forgot password?
+                    </button>
+                </div>
+
+                <div id="authMessage" class="hidden text-sm text-center py-2 px-3 rounded-xl"></div>
+
+                <div class="flex items-center gap-3 pt-1">
+                    <button type="submit" id="submitAuthBtn"
+                            class="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition text-sm">
+                        Sign In
+                    </button>
+                    <button type="button" id="toggleAuthModeBtn"
+                            class="flex-1 py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-semibold rounded-xl border border-zinc-700 transition text-sm">
+                        Create Account
+                    </button>
+                </div>
+            </form>
+
+            <!-- Reset Password View -->
+            <div id="resetPasswordView" class="hidden space-y-4 pt-2">
+                <p class="text-sm text-zinc-400 text-center">
+                    Enter your email and we’ll send you a reset link.
+                </p>
+
+                <input type="email" id="resetEmail" placeholder="Email address" required
                        class="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 rounded-xl focus:outline-none focus:border-emerald-500 transition text-sm">
+
+                <div id="resetMessage" class="hidden text-sm text-center py-2 px-3 rounded-xl"></div>
+
+                <div class="flex gap-3">
+                    <button type="button" id="sendResetBtn"
+                            class="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition text-sm">
+                        Send Reset Link
+                    </button>
+                    <button type="button" id="backToAuthBtn" onclick="document.getElementById('resetPasswordView').classList.add('hidden'); document.getElementById('authForm').classList.remove('hidden');"
+                            class="flex-1 py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-semibold rounded-xl border border-zinc-700 transition text-sm">
+                        Back
+                    </button>
+                </div>
             </div>
 
-            <div class="relative">
-                <input type="password" id="loginPassword" name="password" placeholder="Password" required minlength="6"
-                       autocomplete="current-password"
-                       class="w-full px-4 py-3 pr-12 bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 rounded-xl focus:outline-none focus:border-emerald-500 transition text-sm">
-
-                <button type="button" id="togglePasswordBtn" onclick="togglePasswordVisibility()"
-                        class="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition p-1"
-                        aria-label="Toggle password visibility">
-                    <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                    <svg id="eyeOffIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                    </svg>
-                </button>
-            </div>
-
-            <div class="flex items-center justify-between text-sm">
-                <label class="flex items-center gap-2 cursor-pointer select-none text-zinc-400 hover:text-zinc-300">
-                    <input type="checkbox" id="rememberMe" class="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-0">
-                    <span>Remember me</span>
-                </label>
-
-                <button type="button" id="forgotPasswordBtn" onclick="$('authForm').classList.add('hidden'); $('resetPasswordView').classList.remove('hidden');"
-                        class="text-emerald-400 hover:text-emerald-300 transition text-xs">
-                    Forgot password?
-                </button>
-            </div>
-
-            <div id="authMessage" class="hidden text-sm text-center py-2 px-3 rounded-xl"></div>
-
-            <div class="flex items-center gap-3 pt-1">
-                <button type="submit" id="submitAuthBtn"
-                        class="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition text-sm">
-                    Sign In
-                </button>
-                <button type="button" id="toggleAuthModeBtn"
-                        class="flex-1 py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-semibold rounded-xl border border-zinc-700 transition text-sm">
-                    Create Account
-                </button>
-            </div>
-        </form>
-
-        <!-- Reset Password View (Consolidated inside #authModal dialog) -->
-        <div id="resetPasswordView" class="hidden space-y-4 pt-2">
-            <p class="text-sm text-zinc-400 text-center">
-                Enter your email and we’ll send you a reset link.
-            </p>
-
-            <input type="email" id="resetEmail" placeholder="Email address" required
-                   class="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 rounded-xl focus:outline-none focus:border-emerald-500 transition text-sm">
-
-            <div id="resetMessage" class="hidden text-sm text-center py-2 px-3 rounded-xl"></div>
-
-            <div class="flex gap-3">
-                <button type="button" id="sendResetBtn"
-                        class="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition text-sm">
-                    Send Reset Link
-                </button>
-                <button type="button" id="backToAuthBtn" onclick="$('resetPasswordView').classList.add('hidden'); $('authForm').classList.remove('hidden');"
-                        class="flex-1 py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-semibold rounded-xl border border-zinc-700 transition text-sm">
-                    Back
-                </button>
-            </div>
         </div>
-
     </div>
-</div>
-<!-- Verification Action Modal -->
+
+    <!-- Verification Action Modal -->
     <div id="verificationModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[10002] p-4">
-        <div class="glass rounded-3xl p-6 sm:p-8 max-w-md w-full border border-emerald-500/30 modal relative max-h-[90vh] overflow-y-auto">
-            <button onclick="closeVerificationModal()" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl transition">✕</button>
+        <div class="glass rounded-3xl p-6 sm:p-8 max-w-md w-full border border-emerald-500/30 relative max-h-[90vh] overflow-y-auto">
+            <button type="button" onclick="closeVerificationModal()" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl transition">✕</button>
 
             <div class="text-center mb-6">
                 <div class="w-12 h-12 bg-emerald-500/20 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl text-emerald-400 border border-emerald-500/30">
@@ -623,7 +623,6 @@
             </div>
 
             <div class="space-y-4">
-                <!-- ZK Proof Verification Option -->
                 <div class="p-4 bg-zinc-900/80 border border-zinc-800 rounded-2xl space-y-2 hover:border-emerald-500/50 transition">
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-bold text-white flex items-center gap-1.5">
@@ -634,7 +633,7 @@
                     <p class="text-[11px] text-zinc-400 leading-relaxed">
                         Generate an encrypted proof using <code class="text-emerald-400">zk-proof.js</code> without revealing personal credentials.
                     </p>
-                    <button id="generateZkProofBtn" class="w-full mt-2 py-2.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white font-medium text-xs rounded-xl transition flex items-center justify-center gap-2">
+                    <button id="generateZkProofBtn" type="button" class="w-full mt-2 py-2.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white font-medium text-xs rounded-xl transition flex items-center justify-center gap-2">
                         <span>Generate ZK Proof</span>
                     </button>
                 </div>
@@ -645,37 +644,31 @@
             </p>
         </div>
     </div>
-           
 
     <!-- Quadratic Voting Modal -->
     <div id="quadratic-vote-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden z-[10000] flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl relative overflow-hidden">
-            
-            <!-- Background Accent Glow -->
             <div class="absolute -top-12 -right-12 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl pointer-events-none"></div>
 
-            <!-- Header -->
             <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-5">
                 <div>
                     <span class="text-xs font-semibold uppercase tracking-wider text-blue-400">Governance Voting</span>
                     <h3 id="qv-modal-title" class="text-lg font-bold text-white leading-tight">Proposal Title</h3>
                 </div>
-                <button id="qv-close-btn" class="text-slate-400 hover:text-white transition p-1">
+                <button id="qv-close-btn" type="button" class="text-slate-400 hover:text-white transition p-1">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
 
-            <!-- Direction Selection (For vs Against) -->
             <div class="grid grid-cols-2 gap-3 mb-5">
-                <button id="qv-btn-for" class="qv-direction-btn flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 font-semibold text-sm hover:bg-emerald-500/20 transition active" data-direction="for">
+                <button id="qv-btn-for" type="button" class="qv-direction-btn flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 font-semibold text-sm hover:bg-emerald-500/20 transition active" data-direction="for">
                     <span>👍 Vote FOR</span>
                 </button>
-                <button id="qv-btn-against" class="qv-direction-btn flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-rose-500/30 bg-slate-800 text-slate-400 font-semibold text-sm hover:bg-rose-500/20 hover:text-rose-400 transition" data-direction="against">
+                <button id="qv-btn-against" type="button" class="qv-direction-btn flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-rose-500/30 bg-slate-800 text-slate-400 font-semibold text-sm hover:bg-rose-500/20 hover:text-rose-400 transition" data-direction="against">
                     <span>👎 Vote AGAINST</span>
                 </button>
             </div>
 
-            <!-- Vote Strength Slider -->
             <div class="mb-6 space-y-3">
                 <div class="flex justify-between items-center text-xs font-medium">
                     <span class="text-slate-400">Vote Strength:</span>
@@ -694,7 +687,6 @@
                 </div>
             </div>
 
-            <!-- Quadratic Cost Real-time Card -->
             <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-4 mb-6 space-y-2">
                 <div class="flex justify-between items-center text-xs">
                     <span class="text-slate-400">Power Point Cost (Strength²):</span>
@@ -704,14 +696,12 @@
                     <span class="text-slate-400">Remaining Budget (Max 25):</span>
                     <span id="qv-budget-remaining" class="text-slate-300 font-mono">24 / 25 pts</span>
                 </div>
-                <!-- Progress Bar -->
                 <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden mt-1">
                     <div id="qv-budget-bar" class="h-full bg-blue-500 transition-all duration-300" style="width: 4%;"></div>
                 </div>
             </div>
 
-            <!-- Submit Button -->
-            <button id="qv-submit-vote-btn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl text-sm transition shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
+            <button id="qv-submit-vote-btn" type="button" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl text-sm transition shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
                 <span>Cast Quadratic Vote</span>
             </button>
 
@@ -721,10 +711,10 @@
         </div>
     </div>
         
-       <!-- Support Modal -->
+    <!-- Support Modal -->
     <div id="supportModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[10000] flex items-center justify-center p-4 hidden">
-        <div class="glass max-w-md w-full rounded-3xl p-6 border border-emerald-500/30 text-white relative modal max-h-[90vh] overflow-y-auto">
-            <button id="closeSupportModal" onclick="document.getElementById('supportModal')?.classList.add('hidden')" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl">✕</button>
+        <div class="glass max-w-md w-full rounded-3xl p-6 border border-emerald-500/30 text-white relative max-h-[90vh] overflow-y-auto">
+            <button id="closeSupportModal" type="button" onclick="document.getElementById('supportModal')?.classList.add('hidden')" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl">✕</button>
 
             <div class="text-center mb-5">
                 <div class="w-12 h-12 bg-emerald-500/20 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl font-bold text-emerald-400">♥</div>
@@ -747,11 +737,11 @@
                     <input type="number" id="customSupportAmount" placeholder="Enter amount" min="1" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500" value="15">
                 </div>
 
-                <button id="paystackPayBtn" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-sm transition-all shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
+                <button id="paystackPayBtn" type="button" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-sm transition-all shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
                     <span>Pay with Card / Bank (Paystack)</span>
                 </button>
 
-                <button id="proceedCryptoBtn" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-black font-semibold rounded-xl text-sm transition-all shadow-lg shadow-emerald-600/20">
+                <button id="proceedCryptoBtn" type="button" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-black font-semibold rounded-xl text-sm transition-all shadow-lg shadow-emerald-600/20">
                     Proceed with Crypto (NOWPayments)
                 </button>
             </div>
@@ -765,7 +755,7 @@
 
                 <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex items-center justify-between gap-2">
                     <span class="text-[11px] text-emerald-400 font-mono truncate select-all">TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK</span>
-                    <button type="button" onclick="navigator.clipboard.writeText('TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK'); showToast('TRC-20 address copied!', 'success');" class="text-xs bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 rounded-lg text-white font-medium transition-all shrink-0">
+                    <button type="button" onclick="navigator.clipboard.writeText('TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK'); if (typeof showToast === 'function') showToast('TRC-20 address copied!', 'success');" class="text-xs bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 rounded-lg text-white font-medium transition-all shrink-0">
                         Copy
                     </button>
                 </div>
@@ -777,24 +767,10 @@
         </div>
     </div>
 
-    <!-- Login / Auth Modal -->
-    <div id="loginModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[10000] p-4">
-        <div class="glass rounded-3xl p-6 sm:p-8 max-w-md w-full border border-zinc-700/80 shadow-2xl relative max-h-[90vh] overflow-y-auto">
-            <button onclick="closeLoginModal()" class="absolute top-5 right-5 text-zinc-400 hover:text-white text-2xl transition">✕</button>
-
-            <div class="text-center mb-6">
-                <h2 class="text-2xl font-bold text-white mb-1">Join the Public Square</h2>
-                <p id="loginModalMessage" class="text-xs text-emerald-400">Sign in or create an account to participate.</p>
-            </div>
-
-            <!-- Login Controls / Auth Form Go Here -->
-        </div>
-    </div>
-
     <!-- View Profile Modal -->
     <div id="profileModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[10000] p-4">
         <div class="glass rounded-3xl p-6 sm:p-8 max-w-md w-full border border-zinc-700/80 shadow-2xl relative max-h-[90vh] overflow-y-auto">
-            <button onclick="closeProfile()" class="absolute top-5 right-5 text-zinc-400 hover:text-white text-2xl transition">✕</button>
+            <button type="button" onclick="closeProfile()" class="absolute top-5 right-5 text-zinc-400 hover:text-white text-2xl transition">✕</button>
 
             <div class="text-center mb-6">
                 <div class="w-20 h-20 rounded-full bg-zinc-800 mx-auto mb-3 flex items-center justify-center border border-zinc-700 overflow-hidden">
@@ -805,7 +781,7 @@
             </div>
 
             <div class="space-y-3">
-                <button onclick="closeProfile(); document.getElementById('editProfileModal')?.classList.remove('hidden');" class="w-full py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-semibold transition border border-zinc-700">
+                <button type="button" onclick="closeProfile(); document.getElementById('editProfileModal')?.classList.remove('hidden');" class="w-full py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-semibold transition border border-zinc-700">
                     Edit Profile
                 </button>
             </div>
@@ -827,7 +803,7 @@
                     <p class="text-xs text-zinc-400 leading-relaxed" data-i18n="footerMission">
                         A decentralized public square empowering citizens with immutable testimony, voice verification, and transparent reporting.
                     </p>
-                    <button onclick="openSupportModal()" 
+                    <button type="button" onclick="openSupportModal()" 
                             class="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-emerald-600/10 hover:bg-emerald-600/20 border border-emerald-500/30 rounded-xl text-emerald-400 text-xs font-semibold transition-all">
                         <span>♥</span> <span data-i18n="sustainSquareBtn">Sustain the Platform</span>
                     </button>
@@ -854,8 +830,11 @@
                         <li><a href="safety.html" class="hover:text-emerald-400 transition" data-i18n="safetyGuidelinesMenu">Safety Guidelines</a></li>
                     </ul>
                 </div>
+            </div>
+        </div>
+    </footer>
 
-                <!-- Network & System Status -->
+              <!-- Network & System Status -->
                 <div class="space-y-3">
                     <h3 class="text-xs font-bold uppercase tracking-wider text-white" data-i18n="footerSystemHeader">System Status</h3>
                     <div class="p-3 bg-zinc-900 border border-zinc-800 rounded-2xl space-y-2">
@@ -898,23 +877,35 @@
             const toast = document.createElement('div');
             toast.className = `fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-2xl text-sm font-medium shadow-2xl z-[11000] ${
                 type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-red-600' : 'bg-zinc-800'
-            } text-white`;
+            } text-white transition-all duration-300`;
             toast.textContent = message;
             document.body.appendChild(toast);
             setTimeout(() => toast.remove(), 3500);
         }
 
         function togglePasswordVisibility() {
-            const input = $('authPassword');
-            const btn = $('togglePasswordBtn');
-            if (!input || !btn) return;
+            const input = $('loginPassword');
+            const eyeIcon = $('eyeIcon');
+            const eyeOffIcon = $('eyeOffIcon');
+            
+            if (!input) return;
+            
             const isPassword = input.type === 'password';
             input.type = isPassword ? 'text' : 'password';
-            btn.textContent = isPassword ? 'Hide' : 'Show';
+            
+            if (eyeIcon && eyeOffIcon) {
+                eyeIcon.classList.toggle('hidden', isPassword);
+                eyeOffIcon.classList.toggle('hidden', !isPassword);
+            }
+        }
+
+        function closeAuthModal() {
+            $('authModal')?.classList.add('hidden');
         }
 
         function closeLoginModal() {
             $('loginModal')?.classList.add('hidden');
+            closeAuthModal();
         }
 
         function closeProfile() {
@@ -931,6 +922,17 @@
 
         function closeVerificationModal() {
             $('verificationModal')?.classList.add('hidden');
+        }
+
+        function toggleDataSaver() {
+            const btn = $('data-saver-status');
+            if (!btn) return;
+            const isOff = btn.textContent.trim() === 'Off';
+            btn.textContent = isOff ? 'On' : 'Off';
+            btn.className = isOff 
+                ? 'text-emerald-400 font-medium text-xs hover:underline' 
+                : 'text-amber-400 font-medium text-xs hover:underline';
+            showToast(`Data Saver mode turned ${isOff ? 'ON' : 'OFF'}`, 'info');
         }
 
         // Header More Options Dropdown toggle
@@ -971,17 +973,17 @@
     </script>
 
     <!-- Application Modules -->
-<script type="module" src="./js/main.js"></script>
-<script type="module" src="./js/notifications.js"></script>
-<script type="module" src="./js/bookmarks.js"></script>
-<script type="module" src="./js/zk-proof.js"></script>
-<script type="module" src="./js/feed.js"></script>
-<script type="module" src="./js/witness-voice.js"></script>
+    <script type="module" src="./js/main.js"></script>
+    <script type="module" src="./js/notifications.js"></script>
+    <script type="module" src="./js/bookmarks.js"></script>
+    <script type="module" src="./js/zk-proof.js"></script>
+    <script type="module" src="./js/feed.js"></script>
+    <script type="module" src="./js/witness-voice.js"></script>
 
-<!-- Live Arena -->
-<script type="module">
-  import { initLiveArena } from './js/live-arena.js';
-  initLiveArena();
-</script>
+    <!-- Live Arena -->
+    <script type="module">
+      import { initLiveArena } from './js/live-arena.js';
+      initLiveArena();
+    </script>
 </body>
 </html>
