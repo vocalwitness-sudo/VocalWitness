@@ -51,16 +51,25 @@ self.addEventListener('fetch', (event) => {
     }
 
     // 2. BYPASS CACHE FOR JS MODULES:
-    // Prevents syntax errors caused by caching ES Module scripts (auth.js, main.js, app-state.js, reactions.js, etc.)
-    if (url.pathname.endsWith('.js')) {
-        event.respondWith(
-            fetch(event.request).catch(err => {
-                console.error(`Network fetch failed for JS module: ${url.pathname}`, err);
-                return caches.match(event.request);
-            })
-        );
-        return;
-    }
+    // ✅ Corrected JS Module fetch handling:
+if (url.pathname.endsWith('.js')) {
+    event.respondWith(
+        fetch(event.request).then(response => {
+            if (response && response.status === 200) {
+                const copy = response.clone();
+                caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
+            }
+            return response;
+        }).catch(async () => {
+            const cached = await caches.match(event.request);
+            if (cached) return cached;
+            return new Response('console.error("Offline: Module unavailable");', {
+                headers: { 'Content-Type': 'application/javascript' }
+            });
+        })
+    );
+    return;
+}
 
     // 3. Cache-first strategy for static shell assets (HTML, CSS, Images, Manifest)
     event.respondWith(
