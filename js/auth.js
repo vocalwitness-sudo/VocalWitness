@@ -689,7 +689,7 @@ export function bindHeaderEvents() {
             handleEmailAuth(e);
         }
     });
-}
+
 
     document.addEventListener('submit', (e) => {
         const form = e.target;
