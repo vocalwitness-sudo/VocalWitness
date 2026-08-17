@@ -1,6 +1,6 @@
 // js/audit.js - Forensic Tracking & Immutable Audit Log
 import { db, auth } from './firebase-config.js';
-import { collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { collection, addDoc, doc, setDoc, updateDoc, serverTimestamp, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 // In-memory hash tracking to eliminate Firestore fetch delays between consecutive actions
 let memoryLastHash = null;
@@ -92,5 +92,89 @@ export async function logSecurityAudit(actionType, targetId, details = {}) {
     } catch (e) {
         console.error("Failed to record audit log:", e);
         return null;
+    }
+}
+
+/* ==========================================================================
+   AI FLAG AUDIT LOGS & APPEAL WORKFLOWS
+   ========================================================================== */
+
+const AI_FLAG_COLLECTION = 'ai_flag_audit_logs';
+
+/**
+ * Records cryptographic content hashes, timestamp entries, and confidence scores when media is marked synthetic.
+ */
+export async function logAIFlaggedContent({ mediaHash, confidenceScore, detectorModel = 'Synthetic Detector Engine', details = {} }) {
+    try {
+        const userId = auth.currentUser ? auth.currentUser.uid : 'anonymous';
+        const timestamp = Date.now();
+
+        const auditEntry = {
+            mediaHash,
+            confidenceScore: parseFloat(confidenceScore.toFixed(4)),
+            detectorModel,
+            userId,
+            status: 'QUARANTINED',
+            details,
+            clientTimestamp: timestamp,
+            createdAt: serverTimestamp()
+        };
+
+        // Add to AI-specific flag audit log collection
+        const docRef = doc(db, AI_FLAG_COLLECTION, mediaHash);
+        await setDoc(docRef, auditEntry, { merge: true });
+
+        // Chain into global forensic security chain
+        await logSecurityAudit('AI_SYNTHETIC_MEDIA_FLAGGED', mediaHash, {
+            confidenceScore: auditEntry.confidenceScore,
+            detectorModel
+        });
+
+        console.log(`⚠️ [AI Flag Logged] Hash: ${mediaHash} | Score: ${confidenceScore}`);
+        return auditEntry;
+    } catch (e) {
+        console.error("Failed to log AI flag audit:", e);
+        return null;
+    }
+}
+
+/**
+ * Fetches recent AI flag audit logs for transparency views.
+ */
+export async function fetchAIFlagAuditLogs(limitCount = 50) {
+    try {
+        const q = query(collection(db, AI_FLAG_COLLECTION), orderBy("clientTimestamp", "desc"), limit(limitCount));
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+    } catch (e) {
+        console.error("Error fetching AI flag audit logs:", e);
+        return [];
+    }
+}
+
+/**
+ * Allows users to challenge false positives by submitting an appeal for community/admin review.
+ */
+export async function submitFlagAppeal(mediaHash, justification) {
+    try {
+        const userId = auth.currentUser ? auth.currentUser.uid : 'anonymous';
+        const docRef = doc(db, AI_FLAG_COLLECTION, mediaHash);
+
+        const appealData = {
+            status: 'APPEAL_PENDING',
+            appealSubmittedAt: serverTimestamp(),
+            appealUserId: userId,
+            justification
+        };
+
+        await updateDoc(docRef, appealData);
+
+        await logSecurityAudit('AI_FLAG_APPEAL_SUBMITTED', mediaHash, { justification });
+
+        console.log(`⚖️ [Appeal Submitted] Hash: ${mediaHash}`);
+        return true;
+    } catch (e) {
+        console.error("Failed to submit appeal:", e);
+        return false;
     }
 }
