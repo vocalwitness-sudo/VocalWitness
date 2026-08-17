@@ -1,21 +1,84 @@
-// js/router.js - Dynamic Client-Side Router for VocalWitness
-import { initFeed } from './feed.js';
-import { initModeration } from './moderation.js';
+// js/router.js - Dynamic Client-Side Router for VocalWitness with Native ES6 Code Splitting
 import { showToast } from './utils.js';
 
 const ROUTES = {
-    'citizen-talk': { viewId: 'citizenTalkView', title: 'Citizen Talk', init: () => initFeed(undefined, 'citizen-talk') },
-    'witness-voice': { viewId: 'witnessVoiceView', title: 'Witness Voice', init: () => initFeed(undefined, 'witness-voice') },
-    'moderation': { viewId: 'moderationView', title: 'Steward Moderation', init: () => initModeration() },
-    'profile': { viewId: 'profileView', title: 'Witness Profile' },
-    'audit-log': { viewId: 'auditLogView', title: 'Forensic Audit Log' }
+    'citizen-talk': {
+        viewId: 'citizenTalkView',
+        title: 'Citizen Talk',
+        init: async () => {
+            const { initFeed } = await import('./feed.js');
+            initFeed(undefined, 'citizen-talk');
+        }
+    },
+    'witness-voice': {
+        viewId: 'witnessVoiceView',
+        title: 'Witness Voice',
+        init: async () => {
+            const { initFeed } = await import('./feed.js');
+            initFeed(undefined, 'witness-voice');
+        }
+    },
+    'moderation': {
+        viewId: 'moderationView',
+        title: 'Steward Moderation',
+        init: async () => {
+            const { initModeration } = await import('./moderation.js');
+            initModeration();
+        }
+    },
+    'profile': {
+        viewId: 'profileView',
+        title: 'Witness Profile',
+        init: async () => {
+            const { initProfile } = await import('./profile.js');
+            initProfile?.();
+        }
+    },
+    'audit-log': {
+        viewId: 'auditLogView',
+        title: 'Forensic Audit Log',
+        init: async () => {
+            const auditModule = await import('./audit.js').catch(() => null);
+            auditModule?.initAuditLog?.();
+        }
+    },
+    'arena': {
+        viewId: 'arenaView',
+        title: 'Live Arena',
+        init: async () => {
+            const container = document.getElementById('arenaView');
+            if (container) {
+                container.innerHTML = `<div class="text-center py-16 text-emerald-400 animate-pulse">Initializing Live Arena & ZK Workers...</div>`;
+            }
+            const arenaModule = await import('./arena.js').catch((err) => {
+                console.error("Failed to load Arena module:", err);
+                return null;
+            });
+            arenaModule?.initLiveArena?.(container);
+        }
+    },
+    'quadratic-vote': {
+        viewId: 'quadraticVoteView',
+        title: 'Quadratic Voting',
+        init: async () => {
+            const container = document.getElementById('quadraticVoteView');
+            if (container) {
+                container.innerHTML = `<div class="text-center py-16 text-amber-400 animate-pulse">Loading Quadratic Voting Engine...</div>`;
+            }
+            const qvModule = await import('./quadraticVoting.js').catch((err) => {
+                console.error("Failed to load Quadratic Voting module:", err);
+                return null;
+            });
+            qvModule?.initQuadraticVoting?.(container);
+        }
+    }
 };
 
 /**
- * Navigates to a specific route view
+ * Navigates to a specific route view with dynamic code splitting
  * @param {string} routeKey - Route matching key from ROUTES
  */
-export function navigateTo(routeKey) {
+export async function navigateTo(routeKey) {
     const targetRoute = ROUTES[routeKey] || ROUTES['citizen-talk'];
 
     // Hide all view panels
@@ -53,12 +116,13 @@ export function navigateTo(routeKey) {
         window.history.pushState(null, targetRoute.title, `#${routeKey}`);
     }
 
-    // Trigger optional module initialization
+    // Trigger dynamic module initialization on demand
     if (typeof targetRoute.init === 'function') {
         try {
-            targetRoute.init();
+            await targetRoute.init();
         } catch (err) {
             console.error(`Error initializing route ${routeKey}:`, err);
+            showToast(`Failed to load module for ${targetRoute.title}`, "error");
         }
     }
 }
