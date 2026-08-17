@@ -381,6 +381,12 @@ export async function handleEmailAuth(event) {
         await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
 
         if (isSignUpMode) {
+            // Added validation check right at the start of sign up
+            if (password.length < 6) {
+                showToast("Password must be at least 6 characters long for security.", "error");
+                return;
+            }
+
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
@@ -415,7 +421,6 @@ export async function handleEmailAuth(event) {
         }
     }
 }
-
 export async function handlePasswordReset() {
     if (authActionInProgress) return;
 
