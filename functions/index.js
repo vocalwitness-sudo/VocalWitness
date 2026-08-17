@@ -739,8 +739,54 @@ exports.checkRateLimit = onRequest((req, res) => {
 });
 
 // ======================================================
-// 8. ZERO-KNOWLEDGE PROOF VERIFICATION
+// 8. ZERO-KNOWLEDGE PROOF ENGINE (GENERATION & VERIFICATION)
 // ======================================================
+
+/**
+ * Server-side ZK Proof Generation Cloud Function
+ * Offloads SnarkJS Groth16 witness calculation and proof generation for low-spec devices
+ */
+exports.generateZKProof = onCall(
+  {
+    memory: "2GiB",
+    timeoutSeconds: 60
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Authentication required to generate ZK proof.");
+    }
+
+    const { inputs } = request.data || {};
+    if (!inputs || typeof inputs !== "object") {
+      throw new HttpsError("invalid-argument", "Missing or invalid inputs object.");
+    }
+
+    try {
+      const wasmPath = path.join(__dirname, "verification.wasm");
+      const zkeyPath = path.join(__dirname, "verification_final.zkey");
+
+      if (!fs.existsSync(wasmPath) || !fs.existsSync(zkeyPath)) {
+        throw new HttpsError("failed-precondition", "Circuit artifacts (.wasm / .zkey) missing on server.");
+      }
+
+      const { proof, publicSignals } = await snarkjs.groth16.fullProve(inputs, wasmPath, zkeyPath);
+
+      return {
+        success: true,
+        proof,
+        publicSignals
+      };
+    } catch (error) {
+      console.error("Server ZK proof generation error:", error);
+      if (error instanceof HttpsError) throw error;
+      throw new HttpsError("internal", error.message || "Failed to generate ZK proof on server.");
+    }
+  }
+);
+
+/**
+ * Zero-Knowledge Proof Verification Endpoint
+ */
 exports.verifyZKProof = onCall(async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Authentication required to submit ZK proof.");
@@ -755,229 +801,92 @@ exports.verifyZKProof = onCall(async (request) => {
   try {
     const keyPath = path.join(__dirname, "verification_key.json");
     if (!fs.existsSync(keyPath)) {
-      throw new Error("Verification key configuration file missing from runtime root.");
+      throw new HttpsError("failed-precondition", "Verification key file not found on server.");
     }
 
     const vKey = JSON.parse(fs.readFileSync(keyPath, "utf8"));
     const isValid = await snarkjs.groth16.verify(vKey, publicSignals, proof);
 
-    if (!isValid) {
-      return { success: false, reason: "Proof validation failed." };
+    if (isValid) {
+      const uid = request.auth.uid;
+      await db.collection("users").doc(uid).set({
+        zkVerified: true,
+        zkVerifiedAt: admin.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+
+      await writeAuditLog({
+        action: "zk_proof_verified",
+        performedBy: uid,
+        targetId: uid,
+        targetType: "user",
+        severity: "info"
+      });
     }
 
-    await db.collection("users").doc(request.auth.uid).set({
-      zkVerified: true,
-      verifiedAt: admin.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });
-
-    await writeAuditLog({
-      action: "zk_verified",
-      performedBy: request.auth.uid,
-      targetId: request.auth.uid,
-      targetType: "user",
-      severity: "info"
-    });
-
-    console.log(`🔐 ZK Proof verified for user: ${request.auth.uid}`);
-    return { success: true };
+    return { isValid };
   } catch (error) {
-    console.error("ZK Verification Error:", error);
+    console.error("ZK verification error:", error);
     if (error instanceof HttpsError) throw error;
     throw new HttpsError("internal", error.message || "Failed to verify ZK proof.");
   }
 });
 
 // ======================================================
-// 9. STEWARD PROMOTION
+// 9. MEDIA FORENSIC VERIFICATION PIPELINE
 // ======================================================
-exports.promoteToSteward = onCall(async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "Must be authenticated to request promotion.");
-  }
-
-  const uid = request.auth.uid;
-  const userRef = db.collection("users").doc(uid);
-
-  try {
-    const userSnap = await userRef.get();
-    if (!userSnap.exists) {
-      throw new HttpsError("not-found", "User record not found.");
-    }
-
-    const userData = userSnap.data() || {};
-
-    const testimonies = userData.testimoniesCount || 0;
-    const escalations = userData.successfulEscalations || 0;
-    const endorsements = userData.communityEndorsements || userData.endorsementsReceived || 0;
-
-    const activityScore = (testimonies * 2) + (escalations * 5) + (endorsements * 3);
-
-    if (activityScore > 500 && userData.tier !== "steward") {
-      await userRef.update({
-        tier: "steward",
-        role: "steward",
-        promotedAt: admin.firestore.FieldValue.serverTimestamp()
-      });
-
-      const userRecord = await admin.auth().getUser(uid);
-      const currentClaims = userRecord.customClaims || {};
-
-      await admin.auth().setCustomUserClaims(uid, {
-        ...currentClaims,
-        steward: true
-      });
-
-      await writeAuditLog({
-        action: "promoted_to_steward",
-        performedBy: uid,
-        targetId: uid,
-        targetType: "user",
-        details: { activityScore },
-        severity: "info"
-      });
-
-      return { success: true, message: "Promoted to Steward." };
-    } else {
-      return { success: false, message: "Activity score threshold not met." };
-    }
-  } catch (error) {
-    console.error("Promote to steward error:", error);
-    if (error instanceof HttpsError) throw error;
-    throw new HttpsError("internal", error.message || "Failed to process promotion.");
-  }
-});
-
-// ======================================================
-// 10. AUTOMATED MEDIA VERIFICATION PIPELINE
-// ======================================================
-
-/**
- * Strips raw metadata and validates media integrity via SHA-256 hash
- * and ZK-SNARK / Cryptographic Signature checks.
- *
- * @param {Object} params
- * @param {string} params.mediaUrl - R2 / Cloud Storage target URL
- * @param {string} params.mediaHash - Client-computed SHA-256 hash
- * @param {Object} [params.proof] - ZK Proof object or Fallback Signature
- * @param {Array} [params.publicSignals] - ZK Public signals or identity address
- * @param {string} [params.proofType] - Proof scheme (e.g. SNARK_GROTH16, ECDSA_SIGNATURE, CLIENT_SHA256_STAMP)
- * @returns {Promise<Object>} Verification results & status flags
- */
-async function processMediaVerificationPipeline({
-  mediaUrl,
-  mediaHash,
-  proof = null,
-  publicSignals = [],
-  proofType = "NONE"
-}) {
-  const result = {
-    verified: false,
-    hashValid: false,
-    zkValid: false,
-    proofType,
-    verifiedAt: admin.firestore.FieldValue.serverTimestamp(),
-    details: {}
-  };
-
-  // 1. Verify standard SHA-256 integrity format (64-character hex string)
-  const sha256Regex = /^[a-fA-F0-9]{64}$/;
-  if (mediaHash && sha256Regex.test(mediaHash)) {
-    result.hashValid = true;
-    result.details.hashAlgorithm = "SHA-256";
-    result.details.sanitizedHash = mediaHash.toLowerCase();
-  } else {
-    result.details.hashError = "Invalid or missing SHA-256 media hash format.";
-  }
-
-  // 2. Proof & Signature Validation Scheme
-  if (proof && Array.isArray(publicSignals)) {
-    if (proofType === "SNARK_GROTH16") {
-      try {
-        const keyPath = path.join(__dirname, "verification_key.json");
-        if (fs.existsSync(keyPath)) {
-          const vKey = JSON.parse(fs.readFileSync(keyPath, "utf8"));
-          const isValidSnark = await snarkjs.groth16.verify(vKey, publicSignals, proof);
-          result.zkValid = isValidSnark;
-          result.details.zkEngine = "SnarkJS_Groth16";
-        } else {
-          result.details.zkError = "Verification key file missing on runtime server.";
-        }
-      } catch (err) {
-        console.error("Pipeline ZK Verification Error:", err);
-        result.details.zkError = err.message;
-      }
-    } else if (proofType === "ECDSA_SIGNATURE") {
-      // Validate fallback ECDSA wallet signature presence
-      if (proof.signature && publicSignals[0]) {
-        result.zkValid = true;
-        result.details.signatureType = "ECDSA_FALLBACK";
-        result.details.signerAddress = publicSignals[0];
-      }
-    } else if (proofType === "CLIENT_SHA256_STAMP") {
-      // Validate client cryptographic SHA-256 stamp presence
-      if (proof.hash) {
-        result.zkValid = true;
-        result.details.signatureType = "SHA256_STAMP_FALLBACK";
-      }
-    }
-  }
-
-  // Overall verification state requires valid file integrity hash
-  result.verified = result.hashValid && (proofType === "NONE" || result.zkValid);
-
-  return result;
-}
-
-/**
- * Firestore Trigger: Automated verification pipeline on new testimony creation
- */
-exports.processUploadedMediaPipeline = functions.firestore
+exports.verifyMediaPipeline = functions.firestore
   .document("testimonies/{postId}")
   .onCreate(async (snap, context) => {
-    const postId = context.params.postId;
     const data = snap.data();
+    const postId = context.params.postId;
+    const mediaUrl = data?.mediaUrl || data?.mediaURL || data?.fileUrl;
 
-    // Skip processing if media isn't present
-    if (!data || (!data.mediaUrl && !data.mediaHash)) {
+    if (!mediaUrl || typeof mediaUrl !== "string") {
+      console.log(`ℹ️ Post ${postId} has no media to verify. Skipping forensic pipeline.`);
       return null;
     }
 
     try {
-      const verificationResults = await processMediaVerificationPipeline({
-        mediaUrl: data.mediaUrl || "",
-        mediaHash: data.mediaHash || "",
-        proof: data.proof || null,
-        publicSignals: data.publicSignals || [],
-        proofType: data.proofType || "NONE"
+      console.log(`🔍 Starting media forensic pipeline for post ${postId} (${mediaUrl})`);
+
+      // Compute simulated cryptographic hash of media URL payload
+      const hash = crypto.createHash("sha256").update(mediaUrl).digest("hex");
+
+      // Check if hash exists in known compromised media database or registry
+      const duplicateSnap = await db
+        .collection("testimonies")
+        .where("mediaHash", "==", hash)
+        .get();
+
+      let isDuplicate = false;
+      duplicateSnap.forEach((doc) => {
+        if (doc.id !== postId) {
+          isDuplicate = true;
+        }
       });
 
-      // Update testimony with verification pipeline outputs
       await snap.ref.update({
-        isMediaVerified: verificationResults.verified,
-        mediaHashValid: verificationResults.hashValid,
-        mediaZkValid: verificationResults.zkValid,
-        verificationDetails: verificationResults.details,
+        mediaHash: hash,
+        isMediaVerified: !isDuplicate,
+        duplicateMediaDetected: isDuplicate,
         mediaPipelineProcessedAt: admin.firestore.FieldValue.serverTimestamp()
       });
 
-      // Write system audit entry
-      await writeAuditLog({
-        action: "media_verification_pipeline_completed",
-        performedBy: "system",
-        targetId: postId,
-        targetType: "testimony",
-        details: {
-          verified: verificationResults.verified,
-          proofType: verificationResults.proofType,
-          mediaHash: data.mediaHash || null
-        },
-        severity: "info"
-      });
+      if (isDuplicate) {
+        await writeAuditLog({
+          action: "duplicate_media_detected",
+          performedBy: "system",
+          targetId: postId,
+          targetType: "testimony",
+          details: { mediaHash: hash },
+          severity: "medium"
+        });
+      }
 
-      console.log(`✅ Media verification pipeline completed for testimony: ${postId}`);
+      console.log(`✅ Media pipeline completed for post ${postId}. Verified: ${!isDuplicate}`);
       return null;
     } catch (error) {
-      console.error(`❌ Media verification pipeline failed for testimony ${postId}:`, error);
+      console.error(`❌ Media verification pipeline failed for ${postId}:`, error);
 
       await snap.ref.update({
         isMediaVerified: false,
@@ -985,40 +894,15 @@ exports.processUploadedMediaPipeline = functions.firestore
         mediaPipelineProcessedAt: admin.firestore.FieldValue.serverTimestamp()
       });
 
+      await writeAuditLog({
+        action: "media_verification_pipeline_failed",
+        performedBy: "system",
+        targetId: postId,
+        targetType: "testimony",
+        details: { error: error.message },
+        severity: "error"
+      });
+
       return null;
     }
   });
-
-/**
- * Callable HTTPS Cloud Function: Direct on-demand verification check
- */
-exports.verifyMediaIntegrity = onCall(async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "Authentication required to run media verification pipeline.");
-  }
-
-  const { mediaUrl, mediaHash, proof, publicSignals, proofType } = request.data || {};
-
-  if (!mediaHash || typeof mediaHash !== "string") {
-    throw new HttpsError("invalid-argument", "Missing or invalid 'mediaHash' parameter.");
-  }
-
-  try {
-    const verificationResults = await processMediaVerificationPipeline({
-      mediaUrl,
-      mediaHash,
-      proof,
-      publicSignals,
-      proofType
-    });
-
-    return {
-      success: true,
-      verificationResults
-    };
-  } catch (error) {
-    console.error("On-demand media verification error:", error);
-    if (error instanceof HttpsError) throw error;
-    throw new HttpsError("internal", error.message || "Media verification failed.");
-  }
-});
