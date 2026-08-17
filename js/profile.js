@@ -258,7 +258,6 @@ export function renderProfileUI(userData, retryCount = 0) {
 } 
 window.renderProfileUI = renderProfileUI;
 
-
 // ====================== SIGN OUT HANDLER ====================== 
 export async function handleSignOut() { 
     try { 
