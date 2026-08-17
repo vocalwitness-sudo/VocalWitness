@@ -546,7 +546,7 @@ function setupEventListeners() {
     });
 
     console.log("✅ Application listeners active");
-}
+
 
 // ====================== BOOTSTRAP ======================
 async function bootstrap() {
