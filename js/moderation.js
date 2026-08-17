@@ -18,7 +18,7 @@ export async function scanForToxicity(content) {
 
     try {
         const response = await fetch(
-            `https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze?key=${PERSPECTIVE_API_KEY}`,
+            `https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze?key=${AIzaSyATxYekXgjdLP2SfR42FG8rEdajq_pIEb0}`,
             {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
