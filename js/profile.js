@@ -111,7 +111,7 @@ function listenToUserProfile(userId) {
 } 
 
 // ====================== RENDER UI ====================== 
-export function renderProfileUI(userData) { 
+export function renderProfileUI(userData, retryCount = 0) { 
     if (!userData) return; 
      
     // Target containers across embedded page views and overlay modals 
@@ -122,7 +122,10 @@ export function renderProfileUI(userData) {
     ].filter(Boolean); 
 
     if (targets.length === 0) {
-        console.warn("renderProfileUI: No valid HTML container found for profile data.");
+        if (retryCount < 3) {
+            setTimeout(() => renderProfileUI(userData, retryCount + 1), 50);
+            return;
+        }
         return; 
     }
 
@@ -254,6 +257,7 @@ export function renderProfileUI(userData) {
     }); 
 } 
 window.renderProfileUI = renderProfileUI;
+
 
 // ====================== SIGN OUT HANDLER ====================== 
 export async function handleSignOut() { 
