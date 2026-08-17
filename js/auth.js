@@ -46,7 +46,6 @@ async function createOrUpdateUser(user) {
         const safePhotoURL = user.photoURL || "";
 
         if (!snap.exists()) {
-            // Initial creation payload conforming strictly to isSafeUserCreation()
             await setDoc(userRef, {
                 uid: user.uid,
                 email: safeEmail,
@@ -69,7 +68,6 @@ async function createOrUpdateUser(user) {
             const existingData = snap.data() || {};
             const changes = {};
 
-            // Sync auth profile updates
             if (safeDisplayName && safeDisplayName !== existingData.displayName) {
                 changes.displayName = safeDisplayName;
             }
@@ -80,17 +78,14 @@ async function createOrUpdateUser(user) {
                 changes.email = safeEmail;
             }
 
-            // Populate missing baseline schema values allowed under isSafeUserUpdate()
             if (!existingData.tier) changes.tier = TIERS?.CITIZEN || "citizen";
             if (existingData.isPhoneVerified === undefined) changes.isPhoneVerified = false;
 
-            // Perform write only if actual differences exist
             if (Object.keys(changes).length > 0) {
                 changes.updatedAt = serverTimestamp();
                 await updateDoc(userRef, changes);
             }
 
-            // Determine verification state for UI render
             const currentIsVerified = changes.isVerified ?? existingData.isVerified ?? false;
             const currentIsPhoneVerified = changes.isPhoneVerified ?? existingData.isPhoneVerified ?? existingData.hasVerifiedPhone ?? false;
 
@@ -109,6 +104,7 @@ async function createOrUpdateUser(user) {
         }
     }
 }
+
 export function updateVerificationUI(isVerified = false) {
     const statusEl = document.getElementById('verification-status');
     const verifyBtn = document.getElementById('request-verification-btn');
@@ -229,7 +225,6 @@ function getAuthInputs(form) {
     return { emailInput, passwordInput };
 }
 
-// ====================== UI HELPERS FOR AUTH MODAL ======================
 function updateAuthModeUI() {
     const title = document.getElementById('authTitle');
     const subtitle = document.getElementById('authSubtitle');
@@ -272,7 +267,6 @@ function switchToResetView() {
     }
 }
 
-// ====================== AUTH ACTIONS ======================
 export async function googleLogin(event) {
     if (event) {
         event.preventDefault?.();
@@ -387,7 +381,6 @@ export async function handleEmailAuth(event) {
         await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
 
         if (isSignUpMode) {
-            // ===== CREATE ACCOUNT =====
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
@@ -397,7 +390,6 @@ export async function handleEmailAuth(event) {
             showToast("🎉 Account created! Please check your email to verify before logging in.", "success");
             closeLoginModal();
         } else {
-            // ===== SIGN IN =====
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
@@ -424,7 +416,6 @@ export async function handleEmailAuth(event) {
     }
 }
 
-// ====================== PASSWORD RESET ======================
 export async function handlePasswordReset() {
     if (authActionInProgress) return;
 
@@ -456,21 +447,6 @@ export async function handlePasswordReset() {
             btn.disabled = false;
             btn.classList?.remove('opacity-50', 'cursor-not-allowed');
         }
-    }
-}
-
-export async function initAuthRedirectHandler() {
-    try {
-        const result = await getRedirectResult(auth);
-        if (result?.user) {
-            showToast("✅ Signed in successfully!", "success");
-            closeLoginModal();
-            restorePendingDraft();
-        }
-    } catch (error) {
-        console.error("Redirect auth error:", error);
-        const errMsg = handleAuthError(error);
-        if (errMsg) showToast(errMsg, "error");
     }
 }
 
@@ -551,7 +527,6 @@ export function updateUIForAuthState(userParam = null) {
     }
 }
 
-// ====================== MODAL CONTROLS ======================
 export function showAuthModal() {
     const mainAuthModal = document.getElementById('authModal');
     if (mainAuthModal) {
@@ -607,13 +582,11 @@ export function toggleProfileMenu(e) {
     }
 }
 
-// ====================== EVENT BINDINGS ======================
 export function bindHeaderEvents() {
     if (window.__authDelegationBound) return;
     window.__authDelegationBound = true;
 
     document.addEventListener('click', (e) => {
-        // Auth Triggers
         if (e.target.closest('#googleAuthBtn, #googleSignInBtn, [data-action="google-login"], .google-auth-btn')) {
             e.preventDefault();
             googleLogin(e);
@@ -683,7 +656,6 @@ export function bindHeaderEvents() {
             return;
         }
 
-        // Close dropdown menus when clicking outside
         if (!e.target.closest('#profile-btn, #profile-menu, #user-dropdown, .dropdown-container')) {
             document.querySelectorAll('#profile-menu, #user-dropdown, .dropdown-menu')
                 .forEach(el => el.classList.add('hidden'));
@@ -697,9 +669,8 @@ export function bindHeaderEvents() {
             handleEmailAuth(e);
         }
     });
-} // <-- Correctly closes bindHeaderEvents()
+}
 
-// ====================== AUTH INITIALIZATION ======================
 export function initAuth() {
     bindHeaderEvents();
 
