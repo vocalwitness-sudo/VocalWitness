@@ -30,6 +30,9 @@ const paystackSecretKey = defineSecret("PAYSTACK_SECRET_KEY");
 // Initialize Paystack client lazily using Secret Manager or fallback config
 const getPaystackClient = () => {
   const secret = paystackSecretKey.value() || functions.config().paystack?.secret_key;
+  if (!secret) {
+    throw new Error("Paystack secret key configuration is missing.");
+  }
   return paystackApi(secret);
 };
 
@@ -46,12 +49,12 @@ async function writeAuditLog({
 }) {
   try {
     await db.collection("audit_logs").add({
-      action,
-      performedBy,
-      targetId,
-      targetType,
+      action: String(action),
+      performedBy: String(performedBy),
+      targetId: targetId ? String(targetId) : null,
+      targetType: targetType ? String(targetType) : null,
       details,
-      severity,
+      severity: String(severity),
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
       createdAt: new Date().toISOString()
     });
@@ -88,9 +91,9 @@ exports.getUploadUrl = onRequest(
       const decodedToken = await admin.auth().verifyIdToken(idToken);
       const uid = decodedToken.uid;
 
-      const { fileName, fileType } = req.body;
-      if (!fileName || !fileType) {
-        return res.status(400).json({ error: "fileName and fileType are required parameters." });
+      const { fileName, fileType } = req.body || {};
+      if (!fileName || typeof fileName !== "string" || !fileType || typeof fileType !== "string") {
+        return res.status(400).json({ error: "fileName and fileType must be non-empty strings." });
       }
 
       // Initialize AWS S3 Client for Cloudflare R2
@@ -150,7 +153,7 @@ exports.initializeCitizenProfile = functions.auth.user().onCreate(async (user) =
 
     isPhoneVerified: false,
     isVerified: false,
-    phoneNumber: "",
+    phoneNumber: user.phoneNumber || "",
     zkVerified: false,
     verifiedAt: null,
 
@@ -220,7 +223,7 @@ exports.evaluateTrustTier = onCall(async (request) => {
     const u = userSnap.data();
     let newTier = "citizen";
 
-    const isVerified = u.isVerified || u.isPhoneVerified || u.zkVerified;
+    const isVerified = Boolean(u.isVerified || u.isPhoneVerified || u.zkVerified);
     const testimonies = u.testimoniesCount || 0;
     const verifications = u.verificationsMade || 0;
     const score = u.reputationScore || 0;
@@ -258,7 +261,8 @@ exports.evaluateTrustTier = onCall(async (request) => {
     return { success: true, tier: newTier };
   } catch (error) {
     console.error("Evaluate tier error:", error);
-    throw new HttpsError("internal", error.message);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", error.message || "Failed to evaluate trust tier.");
   }
 });
 
@@ -274,14 +278,14 @@ exports.setUserClaims = onCall(async (request) => {
     throw new HttpsError("permission-denied", "Only admins can set custom claims.");
   }
 
-  const { uid, claims } = request.data;
+  const { uid, claims } = request.data || {};
 
   if (!uid || typeof uid !== "string") {
-    throw new HttpsError("invalid-argument", "A valid uid is required.");
+    throw new HttpsError("invalid-argument", "A valid string uid is required.");
   }
 
-  if (!claims || typeof claims !== "object") {
-    throw new HttpsError("invalid-argument", "Claims object is required.");
+  if (!claims || typeof claims !== "object" || Array.isArray(claims)) {
+    throw new HttpsError("invalid-argument", "A valid claims object is required.");
   }
 
   const allowed = ["admin", "moderator", "banned", "supporter", "steward"];
@@ -325,7 +329,8 @@ exports.setUserClaims = onCall(async (request) => {
     return { success: true, claims: finalClaims };
   } catch (error) {
     console.error("Error setting custom claims:", error);
-    throw new HttpsError("internal", error.message);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", error.message || "Failed to set user claims.");
   }
 });
 
@@ -339,9 +344,9 @@ exports.banUser = onCall(async (request) => {
     throw new HttpsError("permission-denied", "Only admins or moderators can ban users.");
   }
 
-  const { uid, reason = "No reason provided" } = request.data;
-  if (!uid) {
-    throw new HttpsError("invalid-argument", "uid is required.");
+  const { uid, reason = "No reason provided" } = request.data || {};
+  if (!uid || typeof uid !== "string") {
+    throw new HttpsError("invalid-argument", "A valid string uid is required.");
   }
 
   try {
@@ -357,7 +362,7 @@ exports.banUser = onCall(async (request) => {
 
     await db.collection("users").doc(uid).set({
       isBanned: true,
-      banReason: reason,
+      banReason: String(reason),
       bannedAt: admin.firestore.FieldValue.serverTimestamp(),
       bannedBy: request.auth.uid
     }, { merge: true });
@@ -367,14 +372,15 @@ exports.banUser = onCall(async (request) => {
       performedBy: request.auth.uid,
       targetId: uid,
       targetType: "user",
-      details: { reason },
+      details: { reason: String(reason) },
       severity: "high"
     });
 
     return { success: true, message: `User ${uid} has been banned.` };
   } catch (error) {
     console.error("Ban user error:", error);
-    throw new HttpsError("internal", error.message);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", error.message || "Failed to ban user.");
   }
 });
 
@@ -383,9 +389,9 @@ exports.unbanUser = onCall(async (request) => {
     throw new HttpsError("permission-denied", "Only admins can unban users.");
   }
 
-  const { uid } = request.data;
-  if (!uid) {
-    throw new HttpsError("invalid-argument", "uid is required.");
+  const { uid } = request.data || {};
+  if (!uid || typeof uid !== "string") {
+    throw new HttpsError("invalid-argument", "A valid string uid is required.");
   }
 
   try {
@@ -419,7 +425,8 @@ exports.unbanUser = onCall(async (request) => {
     return { success: true, message: `User ${uid} has been unbanned.` };
   } catch (error) {
     console.error("Unban user error:", error);
-    throw new HttpsError("internal", error.message);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", error.message || "Failed to unban user.");
   }
 });
 
@@ -433,10 +440,10 @@ exports.moderatedDelete = onCall(async (request) => {
     throw new HttpsError("permission-denied", "Only moderators or admins can perform moderated deletes.");
   }
 
-  const { collection, docId, reason = "No reason provided" } = request.data;
+  const { collection, docId, reason = "No reason provided" } = request.data || {};
 
-  if (!collection || !docId) {
-    throw new HttpsError("invalid-argument", "collection and docId are required.");
+  if (!collection || typeof collection !== "string" || !docId || typeof docId !== "string") {
+    throw new HttpsError("invalid-argument", "collection and docId must be valid strings.");
   }
 
   const allowedCollections = [
@@ -456,7 +463,7 @@ exports.moderatedDelete = onCall(async (request) => {
       throw new HttpsError("not-found", "Document does not exist.");
     }
 
-    const originalData = docSnap.data();
+    const originalData = docSnap.data() || {};
 
     await docRef.delete();
 
@@ -466,7 +473,7 @@ exports.moderatedDelete = onCall(async (request) => {
       targetId: docId,
       targetType: collection,
       details: {
-        reason,
+        reason: String(reason),
         originalAuthor: originalData.authorId || originalData.ownerId || originalData.witnessId || null,
         contentPreview: originalData.content ? String(originalData.content).substring(0, 200) : null
       },
@@ -476,7 +483,8 @@ exports.moderatedDelete = onCall(async (request) => {
     return { success: true, message: "Document deleted and audited." };
   } catch (error) {
     console.error("Moderated delete error:", error);
-    throw new HttpsError("internal", error.message);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", error.message || "Failed to delete document.");
   }
 });
 
@@ -484,7 +492,9 @@ exports.moderatedDelete = onCall(async (request) => {
 // 5. GENTLE MODERATION
 // ======================================================
 async function gentleModerationCheck(content = "") {
-  if (!content || content.length < 5) return { safe: true, note: "" };
+  if (!content || typeof content !== "string" || content.length < 5) {
+    return { safe: true, note: "" };
+  }
 
   const lower = content.toLowerCase().trim();
   const flags = [];
@@ -513,7 +523,7 @@ exports.moderateNewTestimony = functions.firestore
     const postId = context.params.postId;
 
     try {
-      const result = await gentleModerationCheck(data.content || "");
+      const result = await gentleModerationCheck(data?.content || "");
 
       await snap.ref.update({
         moderationChecked: true,
@@ -539,16 +549,16 @@ exports.initializePaystack = onCall(
       throw new HttpsError("unauthenticated", "Must be logged in to make payment.");
     }
 
-    const { amount, metadata } = request.data;
+    const { amount, metadata = {} } = request.data || {};
 
-    if (!amount || amount < 1000) {
-      throw new HttpsError("invalid-argument", "Amount too small.");
+    if (typeof amount !== "number" || amount < 1000) {
+      throw new HttpsError("invalid-argument", "Amount must be a number equal to or greater than 1000.");
     }
 
     try {
       const paystack = getPaystackClient();
       const transaction = await paystack.transaction.initialize({
-        amount: amount,
+        amount: Math.round(amount),
         email: request.auth.token.email || "supporter@vocalwitness.app",
         reference: `VW_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
         metadata: { ...metadata, userId: request.auth.uid }
@@ -560,6 +570,7 @@ exports.initializePaystack = onCall(
       };
     } catch (error) {
       console.error("Paystack Error:", error);
+      if (error instanceof HttpsError) throw error;
       throw new HttpsError("internal", "Payment initialization failed.");
     }
   }
@@ -575,8 +586,12 @@ exports.paystackWebhook = onRequest(
     const secret = paystackSecretKey.value() || functions.config().paystack?.secret_key;
     const signature = req.headers["x-paystack-signature"];
 
-    if (!signature) {
-      return res.status(400).send("Missing signature header");
+    if (!signature || typeof signature !== "string") {
+      return res.status(400).send("Missing or invalid signature header");
+    }
+
+    if (!req.rawBody) {
+      return res.status(400).send("Missing raw body for verification.");
     }
 
     // HMAC verification using req.rawBody buffer to guarantee match
@@ -585,15 +600,19 @@ exports.paystackWebhook = onRequest(
       .update(req.rawBody)
       .digest("hex");
 
-    if (signature !== expectedHash) {
+    // Timing-safe comparison to prevent signature timing attacks
+    const sigBuffer = Buffer.from(signature);
+    const hashBuffer = Buffer.from(expectedHash);
+
+    if (sigBuffer.length !== hashBuffer.length || !crypto.timingSafeEqual(sigBuffer, hashBuffer)) {
       console.error("Invalid Paystack webhook signature.");
       return res.status(400).send("Invalid signature payload");
     }
 
     const event = req.body;
 
-    if (event.event === "charge.success") {
-      const { metadata } = event.data;
+    if (event && event.event === "charge.success") {
+      const { metadata } = event.data || {};
       const userId = metadata?.userId;
 
       if (userId) {
@@ -664,12 +683,12 @@ exports.checkRateLimit = onRequest((req, res) => {
     }
 
     if (!userId) {
-      userId = req.ip ? req.ip.replace(/[\.\:]/g, "_") : "anonymous_user";
+      userId = req.ip ? String(req.ip).replace(/[\.\:]/g, "_") : "anonymous_user";
     }
 
     const action = req.body?.action || "general_action";
-    const maxCalls = req.body?.maxCalls || 5;
-    const windowMinutes = req.body?.windowMinutes || 60;
+    const maxCalls = Number(req.body?.maxCalls) || 5;
+    const windowMinutes = Number(req.body?.windowMinutes) || 60;
 
     const rateDocRef = db.collection("rateLimits").doc(`${userId}_${action}`);
 
@@ -727,7 +746,7 @@ exports.verifyZKProof = onCall(async (request) => {
     throw new HttpsError("unauthenticated", "Authentication required to submit ZK proof.");
   }
 
-  const { proof, publicSignals } = request.data;
+  const { proof, publicSignals } = request.data || {};
 
   if (!proof || !publicSignals) {
     throw new HttpsError("invalid-argument", "Missing proof or public signals payload.");
@@ -746,10 +765,10 @@ exports.verifyZKProof = onCall(async (request) => {
       return { success: false, reason: "Proof validation failed." };
     }
 
-    await db.collection("users").doc(request.auth.uid).update({
+    await db.collection("users").doc(request.auth.uid).set({
       zkVerified: true,
       verifiedAt: admin.firestore.FieldValue.serverTimestamp()
-    });
+    }, { merge: true });
 
     await writeAuditLog({
       action: "zk_verified",
@@ -763,6 +782,7 @@ exports.verifyZKProof = onCall(async (request) => {
     return { success: true };
   } catch (error) {
     console.error("ZK Verification Error:", error);
+    if (error instanceof HttpsError) throw error;
     throw new HttpsError("internal", error.message || "Failed to verify ZK proof.");
   }
 });
@@ -784,7 +804,7 @@ exports.promoteToSteward = onCall(async (request) => {
       throw new HttpsError("not-found", "User record not found.");
     }
 
-    const userData = userSnap.data();
+    const userData = userSnap.data() || {};
 
     const testimonies = userData.testimoniesCount || 0;
     const escalations = userData.successfulEscalations || 0;
@@ -822,7 +842,8 @@ exports.promoteToSteward = onCall(async (request) => {
     }
   } catch (error) {
     console.error("Promote to steward error:", error);
-    throw new HttpsError("internal", error.message);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", error.message || "Failed to process promotion.");
   }
 });
 
@@ -978,8 +999,8 @@ exports.verifyMediaIntegrity = onCall(async (request) => {
 
   const { mediaUrl, mediaHash, proof, publicSignals, proofType } = request.data || {};
 
-  if (!mediaHash) {
-    throw new HttpsError("invalid-argument", "Missing required 'mediaHash' parameter.");
+  if (!mediaHash || typeof mediaHash !== "string") {
+    throw new HttpsError("invalid-argument", "Missing or invalid 'mediaHash' parameter.");
   }
 
   try {
@@ -997,6 +1018,7 @@ exports.verifyMediaIntegrity = onCall(async (request) => {
     };
   } catch (error) {
     console.error("On-demand media verification error:", error);
+    if (error instanceof HttpsError) throw error;
     throw new HttpsError("internal", error.message || "Media verification failed.");
   }
 });
