@@ -31,11 +31,38 @@
         <!-- Populated by JS -->
     </div>
 
-    <!-- Allocation -->
+    <!-- Fund Allocation -->
     <div class="glass rounded-3xl p-8 mb-10">
         <h3 class="text-xl font-semibold mb-6" data-i18n="fundAllocationTitle">Fund Allocation (This Month)</h3>
         <div id="allocationContainer" class="space-y-6">
             <!-- Populated by JS -->
+        </div>
+    </div>
+
+    <!-- AI Flag Audit Logs & Dispute Table -->
+    <div class="glass rounded-3xl p-8 mb-10">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-semibold">AI Detection Audit Logs & Appeals</h3>
+            <span class="text-xs bg-emerald-950 text-emerald-400 border border-emerald-800 px-3 py-1 rounded-full">System Accountability</span>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                    <tr class="border-b border-zinc-800 text-zinc-400 uppercase text-[10px]">
+                        <th class="p-3">Media Hash</th>
+                        <th class="p-3">Confidence Score</th>
+                        <th class="p-3">Detector</th>
+                        <th class="p-3">Status</th>
+                        <th class="p-3 text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="aiAuditLogsTable" class="divide-y divide-zinc-800/50 text-zinc-300">
+                    <tr>
+                        <td colspan="5" class="p-4 text-center text-zinc-500">Loading AI detection logs...</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -45,9 +72,33 @@
     </div>
 </div>
 
+<!-- Dispute & Appeal Modal -->
+<div id="appealModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 max-w-md w-full space-y-4">
+        <h3 class="text-lg font-bold text-white">Dispute False Positive</h3>
+        <p class="text-xs text-zinc-400">Request a human or community review for media flagged as synthetic.</p>
+        
+        <div>
+            <label class="text-[11px] text-zinc-400 block mb-1">Target Media Hash</label>
+            <input type="text" id="appealHashInput" readonly class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 text-xs text-emerald-400 font-mono" />
+        </div>
+
+        <div>
+            <label class="text-[11px] text-zinc-400 block mb-1">Reason for Appeal</label>
+            <textarea id="appealJustificationInput" rows="3" placeholder="Explain why this content is authentic..." class="w-full bg-zinc-950 border border-zinc-700 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500"></textarea>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+            <button type="button" onclick="document.getElementById('appealModal').classList.add('hidden')" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-xs rounded-xl">Cancel</button>
+            <button type="button" id="submitAppealBtn" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold rounded-xl">Submit Dispute</button>
+        </div>
+    </div>
+</div>
+
 <script type="module">
     import { db } from './js/firebase-config.js';
     import { collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+    import { fetchAIFlagAuditLogs, submitFlagAppeal } from './js/audit.js';
 
     async function loadTransparencyData() {
         try {
@@ -82,7 +133,64 @@
         }
     }
 
+    async function loadAIAuditLogs() {
+        const tableBody = document.getElementById('aiAuditLogsTable');
+        const logs = await fetchAIFlagAuditLogs();
+
+        if (!logs || logs.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-zinc-500">No media currently flagged as synthetic.</td></tr>`;
+            return;
+        }
+
+        tableBody.innerHTML = logs.map(log => `
+            <tr>
+                <td class="p-3 font-mono text-emerald-400 truncate max-w-[120px]">${log.mediaHash || log.id}</td>
+                <td class="p-3 font-bold ${log.confidenceScore > 0.8 ? 'text-red-400' : 'text-amber-400'}">${((log.confidenceScore || 0) * 100).toFixed(1)}%</td>
+                <td class="p-3 text-zinc-400">${log.detectorModel || 'Engine'}</td>
+                <td class="p-3">
+                    <span class="px-2 py-0.5 text-[10px] rounded-full border ${
+                        log.status === 'APPEAL_PENDING' ? 'bg-amber-950 text-amber-300 border-amber-800' :
+                        log.status === 'REINSTATED' ? 'bg-emerald-950 text-emerald-300 border-emerald-800' :
+                        'bg-red-950 text-red-300 border-red-800'
+                    }">
+                        ${log.status || 'QUARANTINED'}
+                    </span>
+                </td>
+                <td class="p-3 text-right">
+                    ${log.status !== 'APPEAL_PENDING' && log.status !== 'REINSTATED' ? `
+                        <button onclick="openAppealModal('${log.mediaHash || log.id}')" class="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-[10px] rounded-lg transition">
+                            Appeal
+                        </button>
+                    ` : '<span class="text-zinc-500 text-[10px]">Under Review</span>'}
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    window.openAppealModal = (mediaHash) => {
+        document.getElementById('appealHashInput').value = mediaHash;
+        document.getElementById('appealModal').classList.remove('hidden');
+    };
+
+    document.getElementById('submitAppealBtn')?.addEventListener('click', async () => {
+        const hash = document.getElementById('appealHashInput').value;
+        const justification = document.getElementById('appealJustificationInput').value.trim();
+
+        if (!justification) {
+            alert('Please provide a justification for your appeal.');
+            return;
+        }
+
+        const success = await submitFlagAppeal(hash, justification);
+        if (success) {
+            document.getElementById('appealModal').classList.add('hidden');
+            document.getElementById('appealJustificationInput').value = '';
+            loadAIAuditLogs();
+        }
+    });
+
     loadTransparencyData();
+    loadAIAuditLogs();
 </script>
 
 </body>
