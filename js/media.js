@@ -86,6 +86,39 @@ function stopWaveAndTimer() {
     }
 }
 
+// ====================== QUICK-CHECK HELPER ======================
+/**
+ * Performs immediate client-side quick checks on media files before processing/upload.
+ * @param {File} file - The file object to validate.
+ * @param {Object} options - Validation constraints.
+ * @returns {{ valid: boolean, error?: string }}
+ */
+export function validateMediaFile(file, options = {}) {
+    const {
+        maxSizeBytes = 10 * 1024 * 1024, // Default 10MB
+        allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic']
+    } = options;
+
+    if (!file) {
+        return { valid: false, error: 'No file selected.' };
+    }
+
+    if (file.size === 0) {
+        return { valid: false, error: 'Selected file is empty or corrupted.' };
+    }
+
+    if (file.size > maxSizeBytes) {
+        const maxSizeMB = Math.round(maxSizeBytes / (1024 * 1024));
+        return { valid: false, error: `File size exceeds the ${maxSizeMB}MB limit.` };
+    }
+
+    if (!file.type || !file.type.startsWith('image/') || (allowedTypes.length > 0 && !allowedTypes.includes(file.type))) {
+        return { valid: false, error: 'Unsupported file type. Please upload a valid image (JPEG, PNG, WebP).' };
+    }
+
+    return { valid: true };
+}
+
 // ====================== STATE RESET ======================
 export function resetMediaState() {
     // 1. Reset Image File Reference
@@ -133,10 +166,17 @@ export function resetMediaState() {
 // ====================== PHOTO ======================
 export async function handleImageSelect(event, previewArea) {
     const file = event.target?.files?.[0] || event.target?.files;
-    if (!file) return;
-    if (!file.type?.startsWith('image/')) return showToast("Please select an image", "error");
-    if (file.size > 10 * 1024 * 1024) return showToast("Image too large (max 10MB)", "error");
-    if (file.size === 0) return showToast("Selected image is empty", "error");
+
+    // Execute Client-Side Quick-Check
+    const check = validateMediaFile(file, {
+        maxSizeBytes: 10 * 1024 * 1024,
+        allowedTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic']
+    });
+
+    if (!check.valid) {
+        showToast(check.error, "error");
+        return;
+    }
 
     selectedImageFile = file;
 
@@ -154,6 +194,10 @@ export async function handleImageSelect(event, previewArea) {
             previewArea.classList.add('has-content');
             document.getElementById('removeImgBtn').onclick = () => removeImage(previewArea);
         }
+    };
+    reader.onerror = () => {
+        showToast("Failed to read selected image", "error");
+        selectedImageFile = null;
     };
     reader.readAsDataURL(file);
 }
