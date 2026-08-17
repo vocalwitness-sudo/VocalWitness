@@ -124,6 +124,12 @@
 
                     snapshot.forEach((docSnap) => {
                         const data = docSnap.data();
+                        
+                        // Robust timestamp handling for both Firestore Timestamps and raw dates/numbers
+                        const rawTimestamp = data.timestamp;
+                        const postDate = rawTimestamp?.toDate ? rawTimestamp.toDate() : new Date(rawTimestamp || Date.now());
+                        const formattedDate = postDate.toLocaleString();
+
                         const entry = document.createElement('div');
                         entry.className = "ledger-entry glass rounded-3xl p-5 border border-emerald-500/20";
                         entry.innerHTML = `
@@ -132,7 +138,7 @@
                                     <div class="w-8 h-8 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-lg">🔒</div>
                                     <div>
                                         <p class="font-medium">${data.author || 'Anonymous Witness'}</p>
-                                        <p class="text-xs text-emerald-500">${new Date(data.timestamp).toLocaleString()}</p>
+                                        <p class="text-xs text-emerald-500">${formattedDate}</p>
                                     </div>
                                 </div>
                                 <div class="text-right">
