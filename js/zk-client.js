@@ -1,5 +1,6 @@
-// js/zk-client.js - ZK Proof Engine with Cryptographic Fallback & Memory Guard
+// js/zk-client.js - ZK Proof Engine with Hybrid Cloud Offloading & Fallback Guard
 import { showToast } from './utils.js';
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
 
 /**
  * Generates standard signature fallback when ZK WASM fails, times out, or OOMs
@@ -8,7 +9,7 @@ async function generateFallbackSignature(inputs) {
     if (typeof showToast === 'function') {
         showToast('Falling back to standard cryptographic signature...', 'warning');
     }
-    
+
     // Check if wallet provider is present
     if (window.ethereum && window.ethers) {
         try {
@@ -41,7 +42,7 @@ async function generateFallbackSignature(inputs) {
     // SHA-256 fallback stamp
     const randomSalt = crypto.getRandomValues(new Uint8Array(16));
     const payload = JSON.stringify(inputs) + Date.now() + Array.from(randomSalt).join('');
-    
+
     const encoder = new TextEncoder();
     const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(payload));
     const hashArray = Array.from(new Uint8Array(hashBuffer));
@@ -56,21 +57,50 @@ async function generateFallbackSignature(inputs) {
 }
 
 /**
+ * Offloads ZK proof generation to Cloud Function when device performance is constrained
+ */
+async function generateZKProofServerSide(inputs) {
+    if (typeof showToast === 'function') {
+        showToast('Offloading ZK proof generation to cloud engine...', 'info');
+    }
+
+    try {
+        const functions = getFunctions();
+        const generateProofCallable = httpsCallable(functions, 'generateZKProof');
+        const response = await generateProofCallable({ inputs });
+
+        if (response.data && response.data.success) {
+            return {
+                isFallback: false,
+                proofType: 'SNARK_GROTH16_SERVER',
+                proof: response.data.proof,
+                publicSignals: response.data.publicSignals
+            };
+        } else {
+            throw new Error(response.data?.error || "Server ZK proof generation failed.");
+        }
+    } catch (err) {
+        console.warn("Server-side ZK execution error, attempting local fallback:", err);
+        return await generateFallbackSignature(inputs);
+    }
+}
+
+/**
  * Main proof entry point with hardware & runtime bounds
  */
 export async function generateZKProofAsync(inputs) {
-    // 1. Hardware Pre-Check (<2GB RAM)
+    // 1. Hardware Pre-Check (<2GB RAM or constrained hardware): Offload to Server
     if (navigator.deviceMemory && navigator.deviceMemory < 2) {
-        console.warn("Low memory environment detected (<2GB). Bypassing ZK WASM.");
-        return await generateFallbackSignature(inputs);
+        console.warn("Low memory environment detected (<2GB RAM). Offloading ZK calculation to server.");
+        return await generateZKProofServerSide(inputs);
     }
 
     // 2. Worker Capability Guard
     if (!window.Worker) {
         if (typeof showToast === 'function') {
-            showToast("Web Workers not supported. Using standard cryptographic fallback.", 'warning');
+            showToast("Web Workers not supported. Offloading ZK proof generation...", 'warning');
         }
-        return await generateFallbackSignature(inputs);
+        return await generateZKProofServerSide(inputs);
     }
 
     // 3. Delegate execution to ZK Web Worker
@@ -79,22 +109,27 @@ export async function generateZKProofAsync(inputs) {
         try {
             worker = new Worker(new URL('./zk-worker.js', import.meta.url), { type: 'module' });
         } catch (e) {
-            console.warn("Failed to construct module ZK Worker. Triggering fallback...", e);
-            return generateFallbackSignature(inputs).then(resolve).catch(reject);
+            console.warn("Failed to construct module ZK Worker. Attempting server offload...", e);
+            return generateZKProofServerSide(inputs).then(resolve).catch(reject);
         }
 
         const timeout = setTimeout(async () => {
             cleanup();
             if (typeof showToast === 'function') {
-                showToast("ZK proof generation timed out. Executing cryptographic fallback...", 'warning');
+                showToast("ZK local generation timed out. Offloading to server...", 'warning');
             }
             try {
-                const fallbackResult = await generateFallbackSignature(inputs);
-                resolve(fallbackResult);
-            } catch (fallbackErr) {
-                reject(new Error("ZK proof generation timed out and fallback failed."));
+                const serverResult = await generateZKProofServerSide(inputs);
+                resolve(serverResult);
+            } catch (serverErr) {
+                try {
+                    const fallbackResult = await generateFallbackSignature(inputs);
+                    resolve(fallbackResult);
+                } catch (fallbackErr) {
+                    reject(new Error("ZK proof generation timed out across all engines."));
+                }
             }
-        }, 45000);
+        }, 30000);
 
         const unloadHandler = () => cleanup();
 
@@ -123,19 +158,24 @@ export async function generateZKProofAsync(inputs) {
                 }
                 resolve({ isFallback: false, proofType: 'SNARK_GROTH16', proof, publicSignals });
             } else {
-                console.warn("Worker execution returned failure status. Triggering fallback:", error);
-                generateFallbackSignature(inputs).then(resolve).catch(reject);
+                console.warn("Worker execution returned failure status. Offloading to server:", error);
+                generateZKProofServerSide(inputs).then(resolve).catch(reject);
             }
         };
 
         worker.onerror = async (err) => {
             cleanup();
-            console.error("ZK Worker execution crashed (likely WASM OOM):", err);
+            console.error("ZK Worker execution crashed (likely WASM OOM). Offloading to server:", err);
             try {
-                const fallbackResult = await generateFallbackSignature(inputs);
-                resolve(fallbackResult);
-            } catch (fallbackErr) {
-                reject(new Error(err.message || "Failed to execute ZK worker script."));
+                const serverResult = await generateZKProofServerSide(inputs);
+                resolve(serverResult);
+            } catch (serverErr) {
+                try {
+                    const fallbackResult = await generateFallbackSignature(inputs);
+                    resolve(fallbackResult);
+                } catch (fallbackErr) {
+                    reject(new Error(err.message || "Failed to execute ZK proof generation."));
+                }
             }
         };
 
