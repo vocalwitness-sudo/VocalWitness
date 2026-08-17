@@ -1,7 +1,7 @@
 // js/moderation.js - Enhanced Moderation Engine & Review Queue
 import { db, auth } from './firebase-config.js';
 import { showToast } from './utils.js';
-import { logSecurityAudit } from './audit.js';
+import { logSecurityAudit, logAIFlaggedContent } from './audit.js';
 import { 
     collection, addDoc, updateDoc, doc, query, where, getDocs, getDoc,
     serverTimestamp, increment, deleteDoc, runTransaction 
@@ -97,6 +97,7 @@ export async function publishWithModeration(content, mediaData, currentUser) {
 
     let moderationStatus = "approved";
 
+    // Auto-flag for toxicity or high synthetic confidence
     if (toxicity.flagged && (tier === TIERS.CITIZEN || tier === 'citizen')) {
         moderationStatus = "needs_review";
         showToast("⚠️ Content flagged for steward review", "warning");
@@ -108,6 +109,9 @@ export async function publishWithModeration(content, mediaData, currentUser) {
         content,
         imageUrl: mediaData?.imageUrl || null,
         audioUrl: mediaData?.audioUrl || null,
+        mediaHash: mediaData?.mediaHash || null,
+        isSynthetic: mediaData?.isSynthetic || false,
+        syntheticScore: mediaData?.syntheticScore || 0,
         timestamp: serverTimestamp(),
         createdAt: serverTimestamp(),
         feedVisibility: "citizen-talk",
@@ -118,6 +122,16 @@ export async function publishWithModeration(content, mediaData, currentUser) {
     };
 
     const docRef = await addDoc(collection(db, "testimonies"), postData);
+
+    // If media was detected as synthetic, record in AI audit collection
+    if (mediaData?.isSynthetic && mediaData?.mediaHash) {
+        await logAIFlaggedContent({
+            mediaHash: mediaData.mediaHash,
+            confidenceScore: mediaData.syntheticScore || 0.9,
+            detectorModel: mediaData.detectorModel || "Deepfake Detector",
+            details: { postId: docRef.id }
+        });
+    }
 
     return { success: true, postId: docRef.id, moderationStatus, toxicity };
 }
@@ -170,7 +184,7 @@ export async function reportContent(postId, reason, details = '') {
 }
 
 // ====================== STEWARD REVIEW ACTIONS ======================
-export async function stewardReviewAction(postId, actionType) {
+export async function stewardReviewAction(postId, actionType, notes = '') {
     const isSteward = await hasStewardAccess();
     if (!isSteward) {
         showToast("Unauthorized: Steward access required", "error");
@@ -184,19 +198,21 @@ export async function stewardReviewAction(postId, actionType) {
             await updateDoc(postRef, {
                 moderationStatus: 'approved',
                 reviewedBy: auth.currentUser.uid,
-                reviewedAt: serverTimestamp()
+                reviewedAt: serverTimestamp(),
+                reviewNotes: notes
             });
 
-            await logSecurityAudit("APPROVE_POST", postId, { reviewedBy: auth.currentUser.uid });
+            await logSecurityAudit("APPROVE_POST", postId, { reviewedBy: auth.currentUser.uid, notes });
             showToast("✅ Testimony approved and published", "success");
         } else if (actionType === 'purge') {
             await updateDoc(postRef, {
                 moderationStatus: 'purged',
                 reviewedBy: auth.currentUser.uid,
-                reviewedAt: serverTimestamp()
+                reviewedAt: serverTimestamp(),
+                reviewNotes: notes
             });
 
-            await logSecurityAudit("PURGE_POST", postId, { reviewedBy: auth.currentUser.uid });
+            await logSecurityAudit("PURGE_POST", postId, { reviewedBy: auth.currentUser.uid, notes });
             showToast("🗑️ Testimony purged from public feed", "info");
         }
         return true;
