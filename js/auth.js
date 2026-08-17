@@ -522,6 +522,34 @@ export function updateUIForAuthState(userParam = null) {
         if (btn) btn.style.opacity = isLoggedIn ? '1' : '0.6';
     });
 
+    // Safe mobile user profile UI updates
+    const userAvatarMobile = document.getElementById('user-avatar-mobile');
+    const defaultAvatarMobile = document.getElementById('default-avatar-icon-mobile');
+    const userNameMobile = document.getElementById('user-name-mobile');
+
+    if (isLoggedIn && activeUser) {
+        if (activeUser.photoURL) {
+            if (userAvatarMobile) {
+                userAvatarMobile.src = activeUser.photoURL;
+                userAvatarMobile.classList.remove('hidden');
+            }
+            if (defaultAvatarMobile) {
+                defaultAvatarMobile.classList.add('hidden');
+            }
+        } else {
+            if (userAvatarMobile) userAvatarMobile.classList.add('hidden');
+            if (defaultAvatarMobile) defaultAvatarMobile.classList.remove('hidden');
+        }
+
+        if (userNameMobile && activeUser.displayName) {
+            userNameMobile.textContent = activeUser.displayName.split(' ')[0]; // Show first name on mobile to save space
+        }
+    } else {
+        if (userAvatarMobile) userAvatarMobile.classList.add('hidden');
+        if (defaultAvatarMobile) defaultAvatarMobile.classList.remove('hidden');
+        if (userNameMobile) userNameMobile.textContent = '';
+    }
+
     if (typeof window.updateHeaderButtons === 'function') {
         window.updateHeaderButtons(isLoggedIn);
     }
