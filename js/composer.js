@@ -133,17 +133,50 @@ export function initComposer() {
             let rawFeed = targetFeedSelect?.value || "citizen_talk";
             const targetFeed = (rawFeed === 'vocal_truth' || rawFeed === 'true_witness') ? 'witness_voice' : rawFeed;
 
+            // --- 1. OFFLINE CHECK & BUFFER ---
+            if (!navigator.onLine) {
+                await saveDraftOffline({
+                    content: text,
+                    targetFeed: targetFeed,
+                    authorId: auth?.currentUser?.uid || 'anonymous',
+                    createdAt: Date.now()
+                });
+                showToast('Network offline. Testimony saved to local queue!', 'warning');
+                clearComposerState(mainInput, btnPhoto, btnVoice);
+                return;
+            }
+
+            // --- 2. DEFERRED ONBOARDING (Unauthenticated Users) ---
             if (!auth.currentUser) {
-                showToast('You must be logged in to publish testimony', 'error');
+                await saveDraftOffline({
+                    content: text,
+                    targetFeed: targetFeed,
+                    createdAt: Date.now(),
+                    status: 'pending_auth'
+                });
+                showToast('Draft saved securely. Please log in to publish.', 'info');
+                
+                // Trigger event for auth.js to catch and show the login modal
+                window.dispatchEvent(new CustomEvent('vocalWitness:requestAuth'));
                 return;
             }
 
             const originalBtnText = postButton.textContent;
             postButton.disabled = true;
-            postButton.textContent = 'Publishing...';
+            postButton.textContent = 'Processing...';
 
             try {
-                // --- TARGET FEED VERIFICATION DOOR CHECK ---
+                // --- 3. MEDIA UPLOAD ---
+                const mediaData = (await uploadForensicMedia()) || {};
+
+                if (!text && !mediaData.imageUrl && !mediaData.audioUrl) {
+                    showToast('Please write something or attach media', 'error');
+                    postButton.disabled = false;
+                    postButton.textContent = originalBtnText;
+                    return;
+                }
+
+                // --- 4. TARGET FEED VERIFICATION DOOR & CLOUD DRAFTS ---
                 if (targetFeed === 'witness_voice') {
                     const userDocRef = doc(db, "users", auth.currentUser.uid);
                     const userSnap = await getDoc(userDocRef);
@@ -152,9 +185,21 @@ export function initComposer() {
                     const isVerified = userData.zkVerified === true || userData.tier === 'witness' || userData.tier === 'steward';
 
                     if (!isVerified) {
+                        // Save to Cloud Drafts so their work isn't lost
+                        await addDoc(collection(db, `users/${auth.currentUser.uid}/drafts`), {
+                            content: text,
+                            targetFeed: targetFeed,
+                            imageUrl: mediaData.imageUrl || null,
+                            audioUrl: mediaData.audioUrl || null,
+                            imageHash: mediaData.imageHash || null,
+                            audioHash: mediaData.audioHash || null,
+                            createdAt: serverTimestamp(),
+                            status: 'draft'
+                        });
+
                         triggerVerificationDoor({
                             title: "Witness Voice Access Restricted",
-                            message: "Publishing directly to the Witness Voice feed requires Zero-Knowledge or Developer verification.",
+                            message: "Your testimony has been saved as a draft. Publishing directly to the Witness Voice feed requires verification.",
                             onVerifyRequested: async () => {
                                 try {
                                     await addDoc(collection(db, "verification_requests"), {
@@ -171,11 +216,13 @@ export function initComposer() {
                                 }
                             }
                         });
-                        return;
+                        
+                        clearComposerState(mainInput, btnPhoto, btnVoice);
+                        return; // Stop publish execution here
                     }
                 }
 
-                // --- RATE LIMIT CHECK (FAIL-OPEN) ---
+                // --- 5. RATE LIMIT CHECK (FAIL-OPEN) ---
                 try {
                     const functions = getFunctions(undefined, 'us-central1');
                     const checkRateLimitFn = httpsCallable(functions, 'checkRateLimit');
@@ -189,37 +236,18 @@ export function initComposer() {
                     const isAllowed = rateLimitCheck.data?.allowed !== undefined ? rateLimitCheck.data.allowed : rateLimitCheck.data;
                     if (!isAllowed) {
                         showToast("You've reached your posting limit. Please try again in an hour.", "error");
+                        postButton.disabled = false;
+                        postButton.textContent = originalBtnText;
                         return;
                     }
                 } catch (rateError) {
                     console.warn("Rate limit check bypassed (fail-open):", rateError);
                 }
 
-                // --- OFFLINE CHECK & BUFFER ---
-                if (!navigator.onLine) {
-                    await saveDraftOffline({
-                        content: text,
-                        targetFeed: targetFeed,
-                        authorId: auth.currentUser.uid,
-                        createdAt: Date.now()
-                    });
-                    showToast('Network offline. Testimony saved to local queue!', 'warning');
-                    clearComposerState(mainInput, btnPhoto, btnVoice);
-                    return;
-                }
-
-                // --- MEDIA UPLOAD ---
-                const mediaData = (await uploadForensicMedia()) || {};
-
-                if (!text && !mediaData.imageUrl && !mediaData.audioUrl) {
-                    showToast('Please write something or attach media', 'error');
-                    return;
-                }
-
                 const userTier = await getCurrentUserTier();
                 const userWitnessLevel = await getCurrentWitnessLevel();
 
-                // --- FIRESTORE WRITE ---
+                // --- 6. FIRESTORE WRITE ---
                 const testimonyRef = await addDoc(collection(db, "testimonies"), {
                     content: text || "",
                     targetFeed: targetFeed,
@@ -237,7 +265,7 @@ export function initComposer() {
                     status: 'published'
                 });
 
-                // --- FORENSIC AUDIT LOGGING ---
+                // --- 7. FORENSIC AUDIT LOGGING ---
                 await logSecurityAudit('TESTIMONY_PUBLISHED', testimonyRef.id, {
                     targetFeed,
                     hasMedia: !!(mediaData.imageUrl || mediaData.audioUrl)
