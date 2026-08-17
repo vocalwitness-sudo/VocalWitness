@@ -41,7 +41,24 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
 
-    // 1. Skip Firebase, Google SDKs, Paystack, external APIs, and non-GET operations
+    // 0. Handle PWA Share Target POST / GET intercepts
+    if (url.pathname.endsWith('/index.html') && url.searchParams.has('share')) {
+        event.respondWith(async function () {
+            if (event.request.method === 'POST') {
+                const formData = await event.request.formData();
+                const mediaFile = formData.get('media');
+
+                if (mediaFile && mediaFile.size > 0) {
+                    const cache = await caches.open(CACHE_NAME);
+                    await cache.put('/shared-media-payload', new Response(mediaFile));
+                }
+            }
+            return caches.match('/index.html');
+        }());
+        return;
+    }
+
+    // 1. Skip Firebase, Google SDKs, Paystack, external APIs, and non-GET operations (excluding Share Target)
     if (url.origin.includes('firebase') || 
         url.origin.includes('gstatic.com') || 
         url.origin.includes('googleapis.com') ||
