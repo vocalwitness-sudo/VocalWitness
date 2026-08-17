@@ -15,6 +15,7 @@ const path = require("path");
 const crypto = require("crypto");
 const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
+const perspectiveApiKey = defineSecret("PERSPECTIVE_API_KEY");
 
 // Initialize Firebase Admin SDK
 if (!admin.apps.length) {
@@ -489,56 +490,46 @@ exports.moderatedDelete = onCall(async (request) => {
 });
 
 // ======================================================
-// 5. GENTLE MODERATION
-// ======================================================
-async function gentleModerationCheck(content = "") {
-  if (!content || typeof content !== "string" || content.length < 5) {
-    return { safe: true, note: "" };
+const axios = require("axios"); // Ensure axios is in package.json or use native fetch
+
+async function analyzeToxicityWithPerspective(content = "") {
+  const apiKey = perspectiveApiKey.value() || process.env.PERSPECTIVE_API_KEY;
+  if (!apiKey || !content || content.length < 3) {
+    return { safe: true, toxicityScore: 0, note: "Skipped or too short" };
   }
 
-  const lower = content.toLowerCase().trim();
-  const flags = [];
+  try {
+    const response = await axios.post(
+      `https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze?key=${apiKey}`,
+      {
+        comment: { text: content },
+        languages: ["en"],
+        requestedAttributes: { TOXICITY: {}, INSULT: {}, THREAT: {} }
+      }
+    );
 
-  if (lower.includes("kill") || lower.includes("hate you") || lower.includes("f*ck")) {
-    flags.push("strong language");
-  }
-  if (/!{3,}/.test(content)) flags.push("very intense tone");
-  if (lower.length > 800) flags.push("very long message");
+    const scores = response.data.attributeScores;
+    const toxicityScore = scores?.TOXICITY?.summaryScore?.value || 0;
+    const insultScore = scores?.INSULT?.summaryScore?.value || 0;
+    const threatScore = scores?.THREAT?.summaryScore?.value || 0;
 
-  if (flags.length > 0) {
+    const isToxic = toxicityScore > 0.7 || insultScore > 0.7 || threatScore > 0.6;
+
     return {
-      safe: false,
-      note: "This testimony feels very passionate. Consider softening a bit?",
-      flags
+      safe: !isToxic,
+      toxicityScore,
+      insultScore,
+      threatScore,
+      note: isToxic 
+        ? "Flagged by automated Perspective API moderation for toxicity/insult." 
+        : "Passed Perspective API check."
     };
+  } catch (error) {
+    console.error("Perspective API evaluation error:", error.message);
+    // Fallback to basic moderation if API fails
+    return gentleModerationCheck(content);
   }
-
-  return { safe: true, note: "Looks good" };
 }
-
-exports.moderateNewTestimony = functions.firestore
-  .document("testimonies/{postId}")
-  .onCreate(async (snap, context) => {
-    const data = snap.data();
-    const postId = context.params.postId;
-
-    try {
-      const result = await gentleModerationCheck(data?.content || "");
-
-      await snap.ref.update({
-        moderationChecked: true,
-        moderationSafe: result.safe,
-        moderationNote: result.note,
-        needsHumanReview: !result.safe,
-        moderatedAt: admin.firestore.FieldValue.serverTimestamp()
-      });
-
-      console.log(result.safe ? `✅ Post ${postId} passed` : `⚠️ Post ${postId} gently flagged`);
-    } catch (err) {
-      console.error("Moderation error for", postId, err);
-    }
-  });
-
 // ======================================================
 // 6. PAYSTACK INTEGRATION
 // ======================================================
