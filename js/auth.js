@@ -167,7 +167,7 @@ export function restorePendingDraft() {
 function handleAuthError(error) {
     switch (error?.code) {
         case 'auth/invalid-credential':
-            return "Invalid email or password. If you don't have an account, click 'Create Account'.";
+            return "Invalid email or password. Please check your details or click 'Create Account' if you're new.";
         case 'auth/too-many-requests':
             return "Too many attempts. For security, please wait a few minutes before trying again.";
         case 'auth/invalid-phone-number':
@@ -506,13 +506,13 @@ export function updateUIForAuthState(userParam = null) {
     const isLoggedIn = !!activeUser && (activeUser.emailVerified || activeUser.providerData?.some(p => p.providerId === 'google.com'));
 
     const guestBtns = document.querySelectorAll('#guest-action-btn, #guest-action-btn-mobile, #guest-action-btn-drawer, .guest-only-btn');
-    const profileBtn = document.getElementById('profile-btn');
-    const signInElement = document.getElementById('signin-btn');
+    const profileBtns = document.querySelectorAll('#profile-btn, #profile-btn-mobile, .profile-action-btn');
+    const signInElements = document.querySelectorAll('#signin-btn, #signin-btn-mobile');
     const privateElements = document.querySelectorAll('.requires-auth');
 
     guestBtns.forEach(btn => btn.classList.toggle('hidden', isLoggedIn));
-    if (signInElement) signInElement.classList.toggle('hidden', isLoggedIn);
-    if (profileBtn) profileBtn.classList.toggle('hidden', !isLoggedIn);
+    signInElements.forEach(el => el.classList.toggle('hidden', isLoggedIn));
+    profileBtns.forEach(btn => btn.classList.toggle('hidden', !isLoggedIn));
 
     privateElements.forEach(el => {
         el.classList.toggle('hidden', !isLoggedIn);
@@ -656,7 +656,7 @@ export function bindHeaderEvents() {
             return;
         }
 
-        if (!e.target.closest('#profile-btn, #profile-menu, #user-dropdown, .dropdown-container')) {
+        if (!e.target.closest('#profile-btn, #profile-btn-mobile, #profile-menu, #user-dropdown, .dropdown-container')) {
             document.querySelectorAll('#profile-menu, #user-dropdown, .dropdown-menu')
                 .forEach(el => el.classList.add('hidden'));
         }
