@@ -6,6 +6,7 @@
 import { scrubImageMetadata } from './imageScrubber.js';
 import { compressImage } from './media-compression.js';
 import { auth } from './firebase-config.js';
+import { showToast } from './utils.js';
 
 const R2_UPLOAD_ENDPOINT = 'https://media.vocalwitness.com/upload';
 const R2_PUBLIC_BASE = 'https://media.vocalwitness.com';
@@ -24,6 +25,9 @@ export async function uploadSecurePhoto(file, folderPath = 'witness_evidence', o
   }
 
   try {
+    // Active Redaction Alert Toast
+    showToast("🛡️ AI Privacy Filter stripping raw EXIF/Location data before saving to ledger...", "info");
+
     // 1. Strip EXIF & GPS metadata
     const cleanBlob = await scrubImageMetadata(file, {
       maxWidth: 1920,
@@ -50,6 +54,7 @@ export async function uploadSecurePhoto(file, folderPath = 'witness_evidence', o
 
   } catch (err) {
     console.error("[Upload] Secure image processing failed:", err);
+    showToast("❌ Image privacy scrubbing failed.", "error");
     throw err;
   }
 }
@@ -66,6 +71,8 @@ export async function uploadSecureAudio(audioBlob, folderPath = 'witness_audio',
   if (!audioBlob) {
     throw new Error("Invalid input: Please select or record a valid audio file.");
   }
+
+  showToast("🛡️ Preparing secure audio upload...", "info");
 
   const mimeType = audioBlob.type || 'audio/webm';
   const ext = mimeType.includes('mp3') ? 'mp3' : mimeType.includes('wav') ? 'wav' : 'webm';
