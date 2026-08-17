@@ -140,6 +140,19 @@ export function renderProfileUI(userData) {
 
         const html = ` 
             <div class="space-y-8 p-4"> 
+                <!-- Red Zone / Privacy Boundary Banner -->
+                <div class="bg-red-950/40 border border-red-500/50 rounded-2xl p-4 flex items-start gap-3 shadow-lg shadow-red-950/20">
+                    <span class="text-2xl">🛑</span>
+                    <div>
+                        <h5 class="text-sm font-bold text-red-400 flex items-center gap-2">
+                            ${t("profile.red_zone_title", "RESTRICTED ZONE — Client-Side Isolation")}
+                        </h5>
+                        <p class="text-xs text-red-200/80 mt-1 leading-relaxed">
+                            ${t("profile.red_zone_desc", "This identity profile is sealed on your device. Third-party AI models and public scrapers are strictly prohibited from accessing, reading, or training on this data.")}
+                        </p>
+                    </div>
+                </div>
+
                 <!-- Profile Header --> 
                 <div class="flex flex-col items-center text-center"> 
                     <div class="relative"> 
@@ -315,7 +328,7 @@ export async function saveProfileChanges() {
     try { 
         showToast(t("common.saving", "Saving changes..."), "info"); 
         const userRef = doc(db, "users", auth.currentUser.uid); 
-         
+        
         await updateDoc(userRef, { 
             displayName, 
             username: username || null, 
@@ -337,15 +350,15 @@ window.saveProfileChanges = saveProfileChanges;
 export async function exportUserDataPDF() { 
     if (!currentUserData) return showToast(t("profile.data_not_loaded", "Profile data not loaded"), "error"); 
     showToast(t("profile.generating_pdf", "Generating identity PDF..."), "info"); 
-     
+    
     try { 
         const jsPDF = window.jspdf?.jsPDF || window.jsPDF; 
         if (!jsPDF) throw new Error("jsPDF library not initialized"); 
-         
+        
         const pdf = new jsPDF(); 
         pdf.setFontSize(20); 
         pdf.text("VocalWitness Identity & Profile Record", 20, 20); 
-         
+        
         pdf.setFontSize(12); 
         pdf.text(`Generated: ${new Date().toLocaleString()}`, 20, 32); 
         pdf.text(`Display Name: ${currentUserData.displayName || 'N/A'}`, 20, 44); 
@@ -354,7 +367,7 @@ export async function exportUserDataPDF() {
         pdf.text(`Reputation: ${currentUserData.reputation || 0} REP`, 20, 68); 
         pdf.text(`Phone Verified: ${currentUserData.isPhoneVerified ? 'Yes' : 'No'}`, 20, 76); 
         pdf.text(`ZK Verified: ${currentUserData.zkVerified ? 'Yes' : 'No'}`, 20, 84); 
-         
+        
         pdf.save(`vocalwitness-identity-${auth.currentUser?.uid || 'user'}.pdf`); 
         showToast("✅ " + t("profile.pdf_exported", "Identity PDF Exported!"), "success"); 
     } catch (e) { 
