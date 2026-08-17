@@ -1,6 +1,6 @@
 /**
  * VocalWitness Legal, Onboarding & Frictionless Anonymous Submission (js/onboarding.js)
- * Combines legal disclaimers, welcome guide, and background ephemeral identity generation.
+ * Combines legal disclaimers, welcome guide, platform Q&A AI assistant, and background ephemeral identity generation.
  */
 
 import { db, auth } from './firebase-config.js';
@@ -8,6 +8,40 @@ import { showToast } from './utils.js';
 
 const EPHEMERAL_KEY_STORAGE = 'vw_ephemeral_identity';
 const ANONYMOUS_SESSION_KEY = 'vw_anonymous_session_id';
+
+/* ==========================================================================
+   0. CLIENT-SIDE PII CENSORED GUARD & SYSTEM PROMPTS
+   ========================================================================== */
+
+/**
+ * Sanitizes user inputs using regex to censor PII before any AI request.
+ */
+export function sanitizeUserPII(text) {
+    if (!text || typeof text !== 'string') return '';
+
+    let cleanText = text;
+
+    // 1. Email Addresses
+    cleanText = cleanText.replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '[REDACTED PII]');
+
+    // 2. Phone Numbers (International & Local formats)
+    cleanText = cleanText.replace(/(?:\+?\d{1,3}[-.\s]?)?\(?\d{2,4}\)?[-.\s]?\d{3,4}[-.\s]?\d{3,4}/g, '[REDACTED PII]');
+
+    // 3. Physical Street Addresses / GPS Coordinates
+    cleanText = cleanText.replace(/\b\d{1,5}\s+(?:[A-Za-z0-9#.]+\s+){1,4}(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln|Way|Court|Ct)\b/gi, '[REDACTED PII]');
+    cleanText = cleanText.replace(/[-+]?\d{1,2}\.\d{4,},\s*[-+]?\d{1,3}\.\d{4,}/g, '[REDACTED PII]');
+
+    return cleanText;
+}
+
+const PLATFORM_QA_SYSTEM_PROMPT = `You are the VocalWitness Platform Q&A Assistant.
+Your sole mandate is to answer user queries regarding cryptography, Zero-Knowledge (ZK) proofs, media hashing, client-side metadata scrubbing, and forensic ledger operations.
+
+Rules:
+1. Explain technical cryptographic concepts simply and clearly.
+2. If a query contains [REDACTED PII], acknowledge that personal data was redacted for their privacy.
+3. Keep responses concise, supportive, and strictly grounded in VocalWitness security architecture.
+4. Do not offer formal legal counsel; frame answers around technical integrity and cryptographic verification.`;
 
 /* ==========================================================================
    1. ANONYMOUS & ZERO-REGISTRATION HELPERS
@@ -244,7 +278,7 @@ function showQuickGuide() {
         <div class="bg-zinc-900 rounded-3xl max-w-lg p-8 max-h-[90vh] overflow-auto border border-zinc-800">
             <h2 class="text-3xl font-bold mb-6 text-center text-white">How to Use VocalWitness</h2>
             
-            <div class="space-y-4 text-sm text-zinc-300 mb-8">
+            <div class="space-y-4 text-sm text-zinc-300 mb-6">
                 <div class="p-3 bg-zinc-950 rounded-xl border border-zinc-800">
                     <h4 class="font-bold text-emerald-400 mb-1">1. Zero-Registration Posting</h4>
                     <p class="text-xs text-zinc-400">You can publish immediately without an account. An ephemeral key is generated locally to protect your identity.</p>
@@ -259,6 +293,20 @@ function showQuickGuide() {
                 </div>
             </div>
 
+            <!-- Platform Q&A Assistant UI -->
+            <div class="p-4 bg-zinc-950 rounded-2xl border border-emerald-900/60 space-y-3 mb-6">
+                <div class="flex items-center gap-2 text-emerald-400 text-xs font-semibold">
+                    <span>🤖</span> Ask Platform Security Assistant
+                </div>
+                <div id="qa-response-area" class="text-xs text-zinc-300 min-h-[40px] max-h-[120px] overflow-y-auto bg-zinc-900/80 p-2.5 rounded-xl border border-zinc-800 hidden"></div>
+                <div class="flex gap-2">
+                    <input type="text" id="qa-user-input" placeholder="Ask about ZK proofs, hashing, or ledgers..." class="flex-1 bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500" />
+                    <button type="button" id="qa-send-btn" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3 py-2 rounded-xl font-medium transition">
+                        Ask
+                    </button>
+                </div>
+            </div>
+
             <button onclick="this.closest('.fixed').remove()" 
                     class="w-full py-4 bg-green-600 hover:bg-green-500 font-semibold text-white rounded-2xl transition">
                 Got it, Thanks!
@@ -266,6 +314,50 @@ function showQuickGuide() {
         </div>
     `;
     document.body.appendChild(guide);
+
+    // Attach Platform Q&A Assistant Logic
+    const sendBtn = guide.querySelector('#qa-send-btn');
+    const userInput = guide.querySelector('#qa-user-input');
+    const responseArea = guide.querySelector('#qa-response-area');
+
+    if (sendBtn && userInput && responseArea) {
+        sendBtn.addEventListener('click', async () => {
+            const rawQuery = userInput.value.trim();
+            if (!rawQuery) return;
+
+            const sanitizedQuery = sanitizeUserPII(rawQuery);
+            userInput.value = '';
+            responseArea.classList.remove('hidden');
+            responseArea.innerHTML = `<span class="text-zinc-500 italic">Processing with Privacy Guard...</span>`;
+
+            try {
+                const answer = await processPlatformQAQuery(sanitizedQuery);
+                responseArea.innerHTML = answer;
+            } catch (err) {
+                responseArea.innerHTML = `<span class="text-red-400">Failed to query assistant. Please try again.</span>`;
+            }
+        });
+    }
+}
+
+/**
+ * Handles answering platform cryptography & ZK questions locally with privacy guard.
+ */
+async function processPlatformQAQuery(sanitizedQuery) {
+    const q = sanitizedQuery.toLowerCase();
+
+    let reply = "";
+    if (q.includes("zk") || q.includes("zero-knowledge") || q.includes("proof")) {
+        reply = "<strong>Zero-Knowledge (ZK) Proofs:</strong> VocalWitness uses SNARK Groth16 proofs generated inside your browser's Web Worker. This proves your testimony is valid without exposing your wallet address or private credentials.";
+    } else if (q.includes("hash") || q.includes("metadata") || q.includes("exif")) {
+        reply = "<strong>Media Scrubbing & Hashing:</strong> Uploaded images are rendered through an HTML5 Canvas locally to strip EXIF/GPS telemetry. A SHA-256 digest is then generated to anchor the exact asset state.";
+    } else if (q.includes("ledger") || q.includes("blockchain")) {
+        reply = "<strong>Forensic Ledger:</strong> The ledger stores cryptographic hashes and proof signatures—never your raw personal data or un-redacted location.";
+    } else {
+        reply = `<strong>Platform Guard Response:</strong> ${sanitizedQuery.includes('[REDACTED PII]') ? '<i>(Note: Sensitive personal data in your question was redacted prior to processing)</i><br>' : ''}VocalWitness ensures all submitted evidence is cryptographically stamped on-device with zero account friction.`;
+    }
+
+    return reply;
 }
 
 // Global scope registration for dynamic HTML calls
@@ -274,4 +366,5 @@ if (typeof window !== 'undefined') {
     window.renderAnonymousBadge = renderAnonymousBadge;
     window.prepareAnonymousSubmission = prepareAnonymousSubmission;
     window.claimAnonymousAccount = claimAnonymousAccount;
+    window.sanitizeUserPII = sanitizeUserPII;
 }
