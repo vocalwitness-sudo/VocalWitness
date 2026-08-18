@@ -12,7 +12,7 @@ const supportedLanguages = [
     { code: 'sw',  name: 'Swahili',      flag: '🇹🇿', native: 'Kiswahili',    rtl: false },
     { code: 'ar',  name: 'Arabic',       flag: '🇸🇦', native: 'العربية',      rtl: true },
     { code: 'es',  name: 'Spanish',      flag: '🇪🇸', native: 'Español',      rtl: false },
-    { code: 'fr',  name: 'French',       flag: '🇫🇷', native: 'Français',     rtl: false },
+    { code: 'fr',  name: 'French',       flag: '🇫🇷', native: 'Français',      rtl: false },
     { code: 'pt',  name: 'Portuguese',   flag: '🇵🇹', native: 'Português',    rtl: false }
 ];
 
@@ -51,7 +51,7 @@ export async function loadTranslations(langCode = 'en') {
         }
 
         const response = await fetch(`./translations/${targetLang}.json`);
-        
+
         if (response.ok) {
             currentTranslations = await response.json();
             currentLang = targetLang;
@@ -78,7 +78,7 @@ function applyTextDirection(langCode) {
     document.documentElement.setAttribute('dir', isRTL ? 'rtl' : 'ltr');
 }
 
-function applyTranslations() {
+export function applyTranslations() {
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
         if (!key) return;
@@ -120,7 +120,7 @@ function applyTranslations() {
 }
 
 function syncSelectors(langCode) {
-    const selectors = document.querySelectorAll('#languageSelector, #languageSelector-desktop, #languageSelector-mobile, [data-i18n-selector]');
+    const selectors = document.querySelectorAll('#languageSelector, #languageSelector-desktop, #languageSelector-mobile, [data-i18n-selector], .lang-select');
     selectors.forEach(sel => {
         if (sel.value !== langCode) sel.value = langCode;
     });
@@ -129,27 +129,16 @@ function syncSelectors(langCode) {
 export function initLanguage() {
     const savedLang = localStorage.getItem('preferredLang') || 'en';
 
-    const selectors = document.querySelectorAll('#languageSelector, #languageSelector-desktop, #languageSelector-mobile, [data-i18n-selector]');
-    
-    selectors.forEach(selector => {
-        selector.value = savedLang;
-        selector.onchange = (e) => loadTranslations(e.target.value);
+    // Global Event Listener: Listens for changes on ANY language selector on the page
+    document.addEventListener('change', (e) => {
+        if (
+            e.target.matches('#languageSelector, #languageSelector-desktop, #languageSelector-mobile, [data-i18n-selector], .lang-select')
+        ) {
+            loadTranslations(e.target.value);
+        }
     });
 
     loadTranslations(savedLang);
-}
-
-// Optimized dynamic loader for view transitions and component mounts
-async function fetchLanguageData(langCode) {
-    try {
-        const response = await fetch(`./translations/${langCode}.json`);
-        if (!response.ok) throw new Error('Language file not found');
-        return await response.json();
-    } catch (err) {
-        console.error(`[i18n] Failed to load ${langCode}, falling back to English:`, err);
-        const fallback = await fetch('./translations/en.json');
-        return await fallback.json();
-    }
 }
 
 export async function updateUILanguage(langCode) {
@@ -169,7 +158,15 @@ const observer = new MutationObserver((mutations) => {
 
 observer.observe(document.body, { childList: true, subtree: true });
 
-// Global exposure for non-module inline scripts and event handlers
+// Auto-initialize on boot
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initLanguage);
+} else {
+    initLanguage();
+}
+
+// Global exposure for non-module inline scripts
 window.initLanguage = initLanguage;
 window.changeLanguage = loadTranslations;
+window.setLanguage = loadTranslations;
 window.t = t;
