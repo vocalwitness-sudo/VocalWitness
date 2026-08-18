@@ -518,6 +518,60 @@ function setupEventListeners() {
         window.initiatePayment(amount);
     });
 
+    // -------------------------------------------------
+    // Media Controls (Photo / Voice / Publish)
+    // REMOVED – these are now owned exclusively by js/composer.js
+    // to prevent duplicate listeners that caused:
+    // - image uploading multiple times on select
+    // - preview resetting / "going back to upload"
+    // - double publish handlers
+    // -------------------------------------------------
+
+    console.log("✅ Application listeners active");
+}
+
+    // Handle change events for select elements or input controls that use data-action
+    document.addEventListener('change', (e) => {
+        const actionTarget = e.target.closest('[data-action]');
+        if (!actionTarget) return;
+
+        const action = actionTarget.dataset.action;
+
+        switch (action) {
+            case 'change-language':
+                const langCode = actionTarget.value;
+                if (langCode && typeof window.changeLanguage === 'function') {
+                    window.changeLanguage(langCode);
+                }
+                break;
+            default:
+                break;
+        }
+    });
+
+    // Event Delegation for Navigation Tabs
+    const mainNav = document.getElementById('main-nav');
+    if (mainNav) {
+        mainNav.addEventListener('click', (e) => {
+            const btn = e.target.closest('button[data-tab]');
+            if (btn) {
+                e.preventDefault();
+                window.switchTab(btn.dataset.tab);
+            }
+        });
+    }
+
+    // Auth & Header Bindings
+    bindHeaderEvents();
+
+    // Support Modal Paystack Payment Binding
+    document.getElementById('paystackPayBtn')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        const amountInput = document.getElementById('customSupportAmount');
+        const amount = amountInput ? parseFloat(amountInput.value) || 1000 : 1000;
+        window.initiatePayment(amount);
+    });
+
     // Media Controls
     document.getElementById('btn-photo')?.addEventListener('click', (e) => {
         e.preventDefault();
