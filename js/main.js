@@ -494,7 +494,6 @@ function setupEventListeners() {
                 break;
         }
     });
-}
 
     // Event Delegation for Navigation Tabs
     const mainNav = document.getElementById('main-nav');
@@ -546,7 +545,7 @@ function setupEventListeners() {
     });
 
     console.log("✅ Application listeners active");
-
+}
 
 // ====================== BOOTSTRAP ======================
 async function bootstrap() {
