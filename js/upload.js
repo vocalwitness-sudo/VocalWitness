@@ -12,7 +12,7 @@ const R2_UPLOAD_ENDPOINT = 'https://media.vocalwitness.com/upload';
 const R2_PUBLIC_BASE = 'https://media.vocalwitness.com';
 
 /**
- * Scrubs EXIF metadata, compresses, and uploads an image to Cloudflare R2.
+ * Scrubs EXIF metadata, compresses (only if needed), and uploads an image to Cloudflare R2.
  * 
  * @param {File} file - Raw input image file.
  * @param {string} [folderPath='witness_evidence'] - Destination directory in R2 bucket.
@@ -28,7 +28,7 @@ export async function uploadSecurePhoto(file, folderPath = 'witness_evidence', o
     // Active Redaction Alert Toast
     showToast("🛡️ AI Privacy Filter stripping raw EXIF/Location data before saving to ledger...", "info");
 
-    // 1. Strip EXIF & GPS metadata
+    // 1. Strip EXIF & GPS metadata + resize
     const cleanBlob = await scrubImageMetadata(file, {
       maxWidth: 1920,
       maxHeight: 1080,
@@ -36,21 +36,25 @@ export async function uploadSecurePhoto(file, folderPath = 'witness_evidence', o
       quality: 0.85
     });
 
-    // 2. Convert Blob to File format for compression module
+    // 2. Convert Blob to File
     const cleanFile = new File([cleanBlob], file.name || 'witness_image.webp', {
       type: cleanBlob.type || 'image/webp',
       lastModified: Date.now()
     });
 
-    // 3. Compress image payload
-    const compressedBlob = await compressImage(cleanFile);
+    // 3. Compress only if the file is still large (avoids double-compression)
+    let finalBlob = cleanFile;
+    if (cleanFile.size > 350 * 1024) {   // only compress if > 350 KB
+      finalBlob = await compressImage(cleanFile);
+    }
 
     // 4. Construct path key
     const uid = auth.currentUser?.uid || 'anonymous';
     const fileId = crypto.randomUUID();
     const keyPath = `${folderPath}/${uid}/${fileId}.webp`;
 
-    return await executeUpload(compressedBlob, keyPath, 'image/webp', onProgress);
+    // 5. Upload
+    return await executeUpload(finalBlob, keyPath, finalBlob.type || 'image/webp', onProgress);
 
   } catch (err) {
     console.error("[Upload] Secure image processing failed:", err);
@@ -61,11 +65,6 @@ export async function uploadSecurePhoto(file, folderPath = 'witness_evidence', o
 
 /**
  * Uploads audio evidence to Cloudflare R2 storage.
- * 
- * @param {Blob|File} audioBlob - Raw audio blob or file.
- * @param {string} [folderPath='witness_audio'] - Destination directory in R2 bucket.
- * @param {Function} [onProgress] - Optional callback for tracking progress (0-100).
- * @returns {Promise<string>} Public HTTPS URL of the stored audio.
  */
 export async function uploadSecureAudio(audioBlob, folderPath = 'witness_audio', onProgress = null) {
   if (!audioBlob) {
