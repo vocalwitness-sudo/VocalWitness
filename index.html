@@ -399,7 +399,7 @@
         </div>
     </div>
 </div>
-       <!-- TESTIMONY COMPOSER -->
+<!-- TESTIMONY COMPOSER -->
 <div class="glass rounded-3xl p-6 sm:p-8 mb-12 shadow-xl">
     <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold text-white flex items-center gap-2" data-i18n="shareTestimonyTitle">
@@ -408,6 +408,12 @@
         <span class="text-xs text-zinc-500" data-i18n="publicSquareSubtitle">Public Square</span>
     </div>
     
+    <!-- HEADLINE INPUT (NEW FIELD) -->
+    <input type="text" id="headlineInput" maxlength="120"
+           class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 mb-4 text-lg font-semibold placeholder-zinc-500 focus:outline-none focus:border-emerald-500 text-white"
+           data-i18n-placeholder="headlinePlaceholder"
+           placeholder="Headline or Title (Optional)">
+
     <textarea id="mainInput" rows="4"
             class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-5 text-lg placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none text-white"
             data-i18n-placeholder="mainInputPlaceholder"
@@ -417,14 +423,14 @@
     <input type="file" id="image-file-input" accept="image/*" class="hidden">
 
     <div class="flex flex-col sm:flex-row gap-3 mt-5">
-       <button id="btn-photo" type="button"
-        class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 hover:border-emerald-500 rounded-2xl flex items-center justify-center gap-3 font-medium transition-all active:scale-95 text-white"
-        title="Take a photo or upload an image as evidence">
-    <span data-i18n="addPhotoEvidence">Add Photo Evidence</span>
-</button>
+        <button id="btn-photo" type="button"
+            class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 hover:border-emerald-500 rounded-2xl flex items-center justify-center gap-3 font-medium transition-all active:scale-95 text-white"
+            title="Take a photo or upload an image as evidence">
+            <span data-i18n="addPhotoEvidence">Add Photo Evidence</span>
+        </button>
         <button id="btn-voice" type="button"
-                class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 hover:border-emerald-500 rounded-2xl flex items-center justify-center gap-3 font-medium transition-all active:scale-95 text-white"
-                title="Record your voice telling what you saw or heard">
+            class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 hover:border-emerald-500 rounded-2xl flex items-center justify-center gap-3 font-medium transition-all active:scale-95 text-white"
+            title="Record your voice telling what you saw or heard">
             <span data-i18n="recordVoiceMessage">Record Voice Message</span>
         </button>
     </div>
@@ -433,7 +439,7 @@
     <div id="preview-area" class="mt-6 min-h-[120px] border border-dashed border-zinc-700 rounded-2xl p-4 flex items-center justify-center text-zinc-500 text-sm" data-i18n="previewAreaText">
         Preview will appear here...
     </div>
-
+</div>
     <!-- Voice Recording Control Bar -->
     <div id="voice-recorder-bar" class="hidden mt-4 glass rounded-2xl p-4 border border-emerald-500/30">
         <div class="flex items-center gap-3 flex-wrap">
