@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#10b981">
     <meta name="description" content="VocalWitness - Privacy First Public Square for Truth and Evidence">
     
-    <!-- Content Security Policy: Authorizes trusted external scripts, styles, and API domains -->
+<!-- Content Security Policy: Authorizes trusted external scripts, styles, and API domains -->
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'self' https: wss: blob: data:;
   script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https://vocalwitness.com https://www.gstatic.com https://cdnjs.cloudflare.com https://cdn.tailwindcss.com https://apis.google.com https://js.paystack.co https://*.paystack.co https://esm.sh https://cdn.jsdelivr.net https://static.cloudflareinsights.com https://*.cloudflare.com blob:;
@@ -15,15 +15,16 @@
   worker-src 'self' blob:;
   style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com https://paystack.com https://*.paystack.co;
   font-src 'self' https://fonts.gstatic.com https: data:;
-  connect-src 'self' https://vocalwitness.com https://vocalwitness-3affa.web.app https://rss2json.com https://*.rss2json.com https://api.rss2json.com https://*.googleapis.com https://firestore.googleapis.com https://*.firestore.googleapis.com https://commentanalyzer.googleapis.com https://*.firebaseio.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://api.paystack.co https://*.paystack.co https://*.paystack.com https://api.nowpayments.io https://*.nowpayments.io https://*.cloudfunctions.net https://cloudfunctions.googleapis.com wss://*.firebaseio.com wss://*.googleapis.com https://esm.sh https://cdn.jsdelivr.net https://*.cloudflareinsights.com https://cloudflareinsights.com https://*.cloudflare.com blob:;
-  img-src 'self' https: data: blob:;
-  media-src 'self' https: blob: data:;
+  connect-src 'self' https://media.vocalwitness.com https://*.vocalwitness.com https://vocalwitness.com https://vocalwitness-3affa.web.app https://rss2json.com https://*.rss2json.com https://api.rss2json.com https://*.googleapis.com https://firestore.googleapis.com https://*.firestore.googleapis.com https://commentanalyzer.googleapis.com https://*.firebaseio.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://api.paystack.co https://*.paystack.co https://*.paystack.com https://api.nowpayments.io https://*.nowpayments.io https://*.cloudfunctions.net https://cloudfunctions.googleapis.com wss://*.firebaseio.com wss://*.googleapis.com https://esm.sh https://cdn.jsdelivr.net https://*.cloudflareinsights.com https://cloudflareinsights.com https://*.cloudflare.com blob:;
+  img-src 'self' https: https://media.vocalwitness.com https://*.vocalwitness.com data: blob:;
+  media-src 'self' https: https://media.vocalwitness.com https://*.vocalwitness.com blob: data:;
   frame-src 'self' https://accounts.google.com https://*.google.com https://*.googleapis.com https://firestore.googleapis.com https://*.firestore.googleapis.com https://*.firebaseapp.com https://*.web.app https://*.paystack.co https://*.paystack.com https://checkout.paystack.co https://standard.paystack.co https://*.nowpayments.io https://*.cloudflare.com;
   object-src 'none';
   base-uri 'self';
   upgrade-insecure-requests;
-"> <title data-i18n="pageTitle">VocalWitness • Truth • Evidence • Public Square</title>
-
+">
+    <title data-i18n="pageTitle">VocalWitness • Truth • Evidence • Public Square</title>
+    
     <!-- Font & Icon Preconnections -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
