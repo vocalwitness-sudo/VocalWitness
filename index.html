@@ -80,22 +80,24 @@
                 </div>
             </div>
 
-           <select id="languageSelector-desktop" aria-label="Select Language" class="bg-zinc-900 text-zinc-100 border border-zinc-700/80 rounded-2xl px-3 py-2 text-sm font-medium focus:outline-none focus:border-emerald-500 shadow-inner">
-    <optgroup label="Primary / Regional" class="bg-zinc-900 text-zinc-300">
-        <option value="en" selected class="bg-zinc-900 text-white">English</option>
-        <option value="pcm" class="bg-zinc-900 text-white">Naija Pidgin</option>
-        <option value="ha" class="bg-zinc-900 text-white">Hausa</option>
-        <option value="yo" class="bg-zinc-900 text-white">Yorùbá</option>
-        <option value="ig" class="bg-zinc-900 text-white">Igbo</option>
-        <option value="sw" class="bg-zinc-900 text-white">Swahili</option>
-    </optgroup>
-    <optgroup label="Global" class="bg-zinc-900 text-zinc-300">
-        <option value="fr" class="bg-zinc-900 text-white">Français</option>
-        <option value="es" class="bg-zinc-900 text-white">Español</option>
-        <option value="pt" class="bg-zinc-900 text-white">Português</option>
-        <option value="ar" class="bg-zinc-900 text-white">العربية</option>
-    </optgroup>
-</select>
+            <div class="flex items-center gap-3">
+                <select id="languageSelector-desktop" aria-label="Select Language" class="bg-zinc-900 text-zinc-100 border border-zinc-700/80 rounded-2xl px-3 py-2 text-sm font-medium focus:outline-none focus:border-emerald-500 shadow-inner">
+                    <optgroup label="Primary / Regional" class="bg-zinc-900 text-zinc-300">
+                        <option value="en" selected class="bg-zinc-900 text-white">English</option>
+                        <option value="pcm" class="bg-zinc-900 text-white">Naija Pidgin</option>
+                        <option value="ha" class="bg-zinc-900 text-white">Hausa</option>
+                        <option value="yo" class="bg-zinc-900 text-white">Yorùbá</option>
+                        <option value="ig" class="bg-zinc-900 text-white">Igbo</option>
+                        <option value="sw" class="bg-zinc-900 text-white">Swahili</option>
+                    </optgroup>
+                    <optgroup label="Global" class="bg-zinc-900 text-zinc-300">
+                        <option value="fr" class="bg-zinc-900 text-white">Français</option>
+                        <option value="es" class="bg-zinc-900 text-white">Español</option>
+                        <option value="pt" class="bg-zinc-900 text-white">Português</option>
+                        <option value="ar" class="bg-zinc-900 text-white">العربية</option>
+                    </optgroup>
+                </select>
+
                 <!-- GUEST / SIGN-IN BUTTON (DESKTOP) -->
                 <button id="guest-action-btn" type="button" data-action="open-auth-modal" class="px-4 py-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm text-sm" style="background-color: #ffffff; color: #000000;">
                     <img src="https://www.google.com/favicon.ico" class="w-4 h-4" alt="Google">
@@ -150,28 +152,26 @@
                     </div>
                 </div>
 
-                <!-- GUEST / SIGN-IN BUTTON (MOBILE) -->
-                <button id="guest-action-btn-mobile" type="button" data-action="open-auth-modal" class="px-3 py-2 bg-white hover:bg-zinc-100 text-black font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm text-xs shrink-0">
-                    <img src="https://www.google.com/favicon.ico" class="w-3.5 h-3.5" alt="Google">
-                    <span data-i18n="joinBtn">Sign In</span>
-                </button>
+                <div class="flex items-center gap-2">
+                    <!-- GUEST / SIGN-IN BUTTON (MOBILE) -->
+                    <button id="guest-action-btn-mobile" type="button" data-action="open-auth-modal" class="px-3 py-2 bg-white hover:bg-zinc-100 text-black font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm text-xs shrink-0">
+                        <img src="https://www.google.com/favicon.ico" class="w-3.5 h-3.5" alt="Google">
+                        <span data-i18n="joinBtn">Sign In</span>
+                    </button>
 
-                <!-- AUTHENTICATED PROFILE BUTTON (MOBILE) -->
-                <button id="profile-btn-mobile" data-action="open-profile" class="hidden px-3 py-2 bg-zinc-900 border border-emerald-500/50 text-emerald-400 font-black text-xs rounded-xl shadow-sm shrink-0 cursor-pointer items-center gap-1.5">
-                    <!-- User Avatar Image -->
-                    <img id="user-avatar-mobile" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='%236B7280'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z'/%3E%3C/svg%3E" alt="User" class="w-5 h-5 rounded-full object-cover hidden">
-                    
-                    <!-- Fallback Icon -->
-                    <svg id="default-avatar-icon-mobile" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                    </svg>
-
-                    <span id="user-name-mobile" data-i18n="profileBtn">My Profile</span>
-                </button>
+                    <!-- AUTHENTICATED PROFILE BUTTON (MOBILE) -->
+                    <button id="profile-btn-mobile" data-action="open-profile" class="hidden px-3 py-2 bg-zinc-900 border border-emerald-500/50 text-emerald-400 font-black text-xs rounded-xl shadow-sm shrink-0 cursor-pointer items-center gap-1.5">
+                        <img id="user-avatar-mobile" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='%236B7280'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z'/%3E%3C/svg%3E" alt="User" class="w-5 h-5 rounded-full object-cover hidden">
+                        <svg id="default-avatar-icon-mobile" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                        <span id="user-name-mobile" data-i18n="profileBtn">My Profile</span>
+                    </button>
+                </div>
             </div>
 
-          <!-- mobile HEAD 2: Utility Toolbar (Language, Data Saver, Privacy, Bookmarks, Notifications) -->
-            <div class="flex items-center justify-between w-full pt-2 border-t border-zinc-800/80 overflow-x-auto no-scrollbar touch-pan-x">
+            <!-- mobile HEAD 2: Utility Toolbar (Language, Support, Data Saver, Privacy, Bookmarks, Notifications) -->
+            <div class="flex items-center justify-between w-full pt-2 border-t border-zinc-800/80 overflow-x-auto no-scrollbar touch-pan-x gap-2">
                 <div class="flex items-center gap-1.5 shrink-0">
                     <select id="languageSelector-mobile" aria-label="Select Language" class="bg-zinc-900 border border-zinc-700/80 text-zinc-100 font-medium rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-emerald-500 shrink-0">
                         <option value="en" class="bg-zinc-900 text-white">EN</option>
@@ -182,15 +182,18 @@
                         <option value="es" class="bg-zinc-900 text-white">ES</option>
                         <option value="fr" class="bg-zinc-900 text-white">FR</option>
                     </select>
+
+                    <button id="support-btn-mobile" data-action="open-support-modal" class="px-2.5 py-1 bg-emerald-500 text-black font-semibold rounded-lg text-[11px] shrink-0 whitespace-nowrap" data-i18n="supportBtn">
+                        Support The Square
+                    </button>
                 </div>
-            </div>
+
+                <div class="flex items-center gap-1.5 shrink-0">
                     <button id="data-saver-btn-mobile" data-action="toggle-data-saver" class="px-2.5 py-1 bg-zinc-900 border border-zinc-800 rounded-lg text-[11px] font-semibold text-zinc-300 flex items-center gap-1 shrink-0 whitespace-nowrap">
                         <span>⚡</span>
                         <span>Saver</span>
                     </button>
-                </div>
 
-                <div class="flex items-center gap-1.5 shrink-0 ml-auto">
                     <a href="privacy.html" class="text-[11px] font-medium text-emerald-400 hover:text-emerald-300 px-1 py-0.5 shrink-0 whitespace-nowrap" data-i18n="privacyLink">
                         Privacy
                     </a>
@@ -207,8 +210,7 @@
         </div>
 
     </div>
-</header>
-    
+</header>    
 <!-- Offset Spacer to prevent main page content from getting hidden under fixed header -->
 <main class="pt-28 md:pt-32 max-w-6xl mx-auto px-3 sm:px-4">
 </main>
