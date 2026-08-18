@@ -14,7 +14,6 @@ import { showToast } from './utils.js';
 import { initBookmarks, initBookmarksView } from './bookmarks.js';
 import { loadWeeklyLeaderboard, refreshTierAndUI } from './tier.js';
 import './composer.js';
-import { initAuthObserver } from './vocalwitness-core.js';
 import {
     collection,
     addDoc,
@@ -579,7 +578,6 @@ async function bootstrap() {
 
         // 3. Static module setups
         setupEventListeners();
-        initAuthObserver();
         initLanguage?.();
         initProfile?.();
 
