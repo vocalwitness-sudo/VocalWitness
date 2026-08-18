@@ -590,7 +590,7 @@ function setupEventListeners() {
             if (!requireAuth("Sign in to record Voice Testimony")) return;
             mediaModule.toggleVoiceRecording?.(voiceBtn);
         });
-    }
+    
 
     // Publish Button
     document.getElementById('postButton')?.addEventListener('click', (e) => {
@@ -599,7 +599,7 @@ function setupEventListeners() {
     });
 
     console.log("✅ Application listeners active");
-}
+
 
 // ====================== BOOTSTRAP ======================
 async function bootstrap() {
