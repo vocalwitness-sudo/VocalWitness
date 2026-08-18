@@ -1,17 +1,28 @@
 // js/publish.js - VocalWitness Publish & Media Submission Handler
 
 import { uploadMedia } from './upload.js';
-import { selectedImageFile } from './media.js';
+import { selectedImageFile, resetMediaState } from './media.js';
 import { auth, db } from './firebase-config.js';
 import { collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-import { showToast } from './utils.js';
+import { showToast, generateSha256Hash } from './utils.js';
+
+// Module-level lock guard to prevent duplicate submissions from rapid taps/clicks
+let isPublishingActive = false;
 
 export async function handlePublishSubmission(event, formElement) {
     if (event) event.preventDefault();
 
+    if (isPublishingActive) {
+        console.warn("Publish action already in progress. Ignoring duplicate trigger.");
+        return;
+    }
+
     const publishBtn = formElement.querySelector('button[type="submit"]');
+    
+    isPublishingActive = true;
     if (publishBtn) {
         publishBtn.disabled = true;
+        publishBtn.style.opacity = '0.6';
         publishBtn.textContent = 'Publishing...';
     }
 
@@ -19,12 +30,11 @@ export async function handlePublishSubmission(event, formElement) {
         const textContent = formElement.querySelector('#post-text, textarea')?.value?.trim() || '';
         const category = formElement.querySelector('#category-select')?.value || 'Citizen Talk';
         
-        if (!textContent && !selectedImageFile && !window.currentAudioBlob) {
+        // Retrieve active audio blob if any from window or voice engine
+        const audioBlob = window.currentAudioBlob || window.engineInstance?.currentAudioBlob;
+
+        if (!textContent && !selectedImageFile && !audioBlob) {
             showToast("Please write a testimony or attach forensic media before publishing.", "error");
-            if (publishBtn) {
-                publishBtn.disabled = false;
-                publishBtn.textContent = 'Publish Testimony';
-            }
             return;
         }
 
@@ -35,23 +45,35 @@ export async function handlePublishSubmission(event, formElement) {
         let imageHash = null;
         let audioHash = null;
 
-        // 1. Upload Image to R2 if selected
+        // 1. Upload Image & Generate Cryptographic Hash to R2 if selected
         if (selectedImageFile) {
-            showToast("📤 Uploading scrubbed image evidence to R2...", "info");
+            showToast("🔐 Generating SHA-256 hash & uploading image evidence...", "info");
+            try {
+                imageHash = await generateSha256Hash(selectedImageFile);
+            } catch (hashErr) {
+                console.warn("Image hashing failed, proceeding without hash:", hashErr);
+            }
+
             imageUrl = await uploadMedia(selectedImageFile, 'witness_evidence', (progress) => {
                 showToast(`📤 Image Upload: ${progress}%`, "info");
             });
         }
 
-        // 2. Upload Voice Audio to R2 if recorded
-        if (window.currentAudioBlob) {
-            showToast("📤 Uploading voice testimony audio to R2...", "info");
-            audioUrl = await uploadMedia(window.currentAudioBlob, 'witness_audio', (progress) => {
+        // 2. Upload Voice Audio & Generate Cryptographic Hash to R2 if recorded
+        if (audioBlob) {
+            showToast("🔐 Generating SHA-256 hash & uploading voice audio...", "info");
+            try {
+                audioHash = await generateSha256Hash(audioBlob);
+            } catch (hashErr) {
+                console.warn("Audio hashing failed, proceeding without hash:", hashErr);
+            }
+
+            audioUrl = await uploadMedia(audioBlob, 'witness_audio', (progress) => {
                 showToast(`📤 Audio Upload: ${progress}%`, "info");
             });
         }
 
-        // 3. Construct Firestore Post Payload
+        // 3. Construct Firestore Post Payload with Forensic Evidence Links & Hashes
         const postData = {
             uid: auth.currentUser?.uid || 'anonymous',
             authorName: auth.currentUser?.displayName || 'Anonymous Witness',
@@ -74,8 +96,12 @@ export async function handlePublishSubmission(event, formElement) {
 
         showToast("✅ Testimony published successfully!", "success");
         
-        // Reset Form and State
+        // Reset Form and State (including media previews and audio blobs)
         formElement.reset();
+        if (typeof resetMediaState === 'function') {
+            resetMediaState();
+        }
+        window.currentAudioBlob = null;
         window.clearMediaPreview?.();
         
         // Trigger feed reload if available
@@ -87,8 +113,10 @@ export async function handlePublishSubmission(event, formElement) {
         console.error("Publishing failed:", err);
         showToast(`❌ Publishing failed: ${err.message}`, "error");
     } finally {
+        isPublishingActive = false;
         if (publishBtn) {
             publishBtn.disabled = false;
+            publishBtn.style.opacity = '1';
             publishBtn.textContent = 'Publish Testimony';
         }
     }
