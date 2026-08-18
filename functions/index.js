@@ -649,16 +649,18 @@ exports.paystackWebhook = onRequest(
 // ======================================================
 // 7. RATE LIMITING (TRANSACTION-BASED)
 // ======================================================
-exports.checkRateLimit = onRequest((req, res) => {
-  return cors(req, res, async () => {
-    if (req.method === "OPTIONS") {
-      res.set("Access-Control-Allow-Origin", "*");
-      res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-      res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
-      return res.status(204).send("");
-    }
-
-    res.set("Access-Control-Allow-Origin", "*");
+exports.checkRateLimit = onRequest(
+  {
+    cors: [
+      "https://vocalwitness-3affa.web.app",
+      "https://vocalwitness.com",
+      "https://www.vocalwitness.com",
+      "http://localhost:5173" // local development
+    ]
+  },
+  async (req, res) => {
+    // Firebase v2 automatically handles OPTIONS preflights and sets
+    // Access-Control-Allow-Origin headers before this block executes.
 
     let userId = null;
     const authHeader = req.headers.authorization;
@@ -726,8 +728,8 @@ exports.checkRateLimit = onRequest((req, res) => {
       console.error("Rate limit check failed:", error);
       return res.status(200).json({ allowed: true });
     }
-  });
-});
+  }
+);
 
 // ======================================================
 // 8. ZERO-KNOWLEDGE PROOF ENGINE (GENERATION & VERIFICATION)
