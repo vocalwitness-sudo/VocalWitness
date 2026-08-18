@@ -55,7 +55,8 @@ function toggleActive(button) {
 }
 
 // Reset composer inputs and UI toggles
-function clearComposerState(mainInput, btnPhoto, btnVoice) {
+function clearComposerState(headlineInput, mainInput, btnPhoto, btnVoice) {
+    if (headlineInput) headlineInput.value = '';
     if (mainInput) mainInput.value = '';
     btnPhoto?.classList.remove('active', 'bg-slate-700', 'ring-2', 'ring-emerald-500');
     btnVoice?.classList.remove('active', 'bg-slate-700', 'ring-2', 'ring-emerald-500');
@@ -66,6 +67,7 @@ function clearComposerState(mainInput, btnPhoto, btnVoice) {
 export function initComposer() {
     const btnPhoto = document.getElementById('btn-photo');
     const btnVoice = document.getElementById('btn-voice');
+    const headlineInput = document.getElementById('headlineInput') || document.getElementById('testimonyHeadline');
     const mainInput = document.getElementById('mainInput') || document.getElementById('testimonyInput');
     const previewArea = document.getElementById('preview-area');
     const postButton = document.getElementById('postButton');
@@ -77,40 +79,40 @@ export function initComposer() {
     if (postButton) postButton.classList.add('inline-flex', 'items-center', 'justify-center', 'px-5', 'py-1.5', 'rounded-lg', 'bg-emerald-600', 'hover:bg-emerald-500', 'text-white', 'font-semibold', 'shadow', 'cursor-pointer', 'transition');
 
     // --- PHOTO SELECTION ---
-if (btnPhoto && !btnPhoto.dataset.listenerAttached) {
-    btnPhoto.dataset.listenerAttached = "true";
+    if (btnPhoto && !btnPhoto.dataset.listenerAttached) {
+        btnPhoto.dataset.listenerAttached = "true";
 
-    const fileInput = document.getElementById('image-file-input');
+        const fileInput = document.getElementById('image-file-input');
 
-    btnPhoto.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (fileInput) {
-            fileInput.value = '';          // allow selecting the same file again
-            fileInput.click();
-        }
-    });
-
-    if (fileInput && !fileInput.dataset.listenerAttached) {
-        fileInput.dataset.listenerAttached = "true";
-
-        fileInput.addEventListener('change', async (evt) => {
-            const file = evt.target.files?.[0];
-            if (!file) return;
-
-            try {
-                showToast('Compressing image...', 'info');
-                const compressedFile = await compressImage(file, 1200, 0.82);
-                const syntheticEvent = { target: { files: [compressedFile] } };
-                await handleImageSelect(syntheticEvent, previewArea);
-                toggleActive(btnPhoto);
-            } catch (err) {
-                console.error("Image compression error:", err);
-                showToast('Failed to compress image', 'error');
+        btnPhoto.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (fileInput) {
+                fileInput.value = '';          // allow selecting the same file again
+                fileInput.click();
             }
         });
+
+        if (fileInput && !fileInput.dataset.listenerAttached) {
+            fileInput.dataset.listenerAttached = "true";
+
+            fileInput.addEventListener('change', async (evt) => {
+                const file = evt.target.files?.[0];
+                if (!file) return;
+
+                try {
+                    showToast('Compressing image...', 'info');
+                    const compressedFile = await compressImage(file, 1200, 0.82);
+                    const syntheticEvent = { target: { files: [compressedFile] } };
+                    await handleImageSelect(syntheticEvent, previewArea);
+                    toggleActive(btnPhoto);
+                } catch (err) {
+                    console.error("Image compression error:", err);
+                    showToast('Failed to compress image', 'error');
+                }
+            });
+        }
     }
-}
 
     // --- VOICE RECORDING ---
     if (btnVoice && !btnVoice.dataset.listenerAttached) {
@@ -136,6 +138,7 @@ if (btnPhoto && !btnPhoto.dataset.listenerAttached) {
         postButton.dataset.listenerAttached = "true";
         postButton.addEventListener('click', async (e) => {
             e.preventDefault();
+            const headline = headlineInput?.value ? headlineInput.value.trim() : "";
             const text = mainInput?.value ? mainInput.value.trim() : "";
             
             // Feed Alias Normalization
@@ -145,19 +148,21 @@ if (btnPhoto && !btnPhoto.dataset.listenerAttached) {
             // --- 1. OFFLINE CHECK & BUFFER ---
             if (!navigator.onLine) {
                 await saveDraftOffline({
+                    headline: headline,
                     content: text,
                     targetFeed: targetFeed,
                     authorId: auth?.currentUser?.uid || 'anonymous',
                     createdAt: Date.now()
                 });
                 showToast('Network offline. Testimony saved to local queue!', 'warning');
-                clearComposerState(mainInput, btnPhoto, btnVoice);
+                clearComposerState(headlineInput, mainInput, btnPhoto, btnVoice);
                 return;
             }
 
             // --- 2. DEFERRED ONBOARDING (Unauthenticated Users) ---
             if (!auth.currentUser) {
                 await saveDraftOffline({
+                    headline: headline,
                     content: text,
                     targetFeed: targetFeed,
                     createdAt: Date.now(),
@@ -178,8 +183,8 @@ if (btnPhoto && !btnPhoto.dataset.listenerAttached) {
                 // --- 3. MEDIA UPLOAD ---
                 const mediaData = (await uploadForensicMedia()) || {};
 
-                if (!text && !mediaData.imageUrl && !mediaData.audioUrl) {
-                    showToast('Please write something or attach media', 'error');
+                if (!headline && !text && !mediaData.imageUrl && !mediaData.audioUrl) {
+                    showToast('Please add a headline, description, or attach media', 'error');
                     postButton.disabled = false;
                     postButton.textContent = originalBtnText;
                     return;
@@ -196,6 +201,7 @@ if (btnPhoto && !btnPhoto.dataset.listenerAttached) {
                     if (!isVerified) {
                         // Save to Cloud Drafts so their work isn't lost
                         await addDoc(collection(db, `users/${auth.currentUser.uid}/drafts`), {
+                            headline: headline || null,
                             content: text,
                             targetFeed: targetFeed,
                             imageUrl: mediaData.imageUrl || null,
@@ -226,7 +232,7 @@ if (btnPhoto && !btnPhoto.dataset.listenerAttached) {
                             }
                         });
                         
-                        clearComposerState(mainInput, btnPhoto, btnVoice);
+                        clearComposerState(headlineInput, mainInput, btnPhoto, btnVoice);
                         return; // Stop publish execution here
                     }
                 }
@@ -258,6 +264,7 @@ if (btnPhoto && !btnPhoto.dataset.listenerAttached) {
 
                 // --- 6. FIRESTORE WRITE ---
                 const testimonyRef = await addDoc(collection(db, "testimonies"), {
+                    headline: headline || null,
                     content: text || "",
                     targetFeed: targetFeed,
                     imageUrl: mediaData.imageUrl || null,
@@ -277,11 +284,12 @@ if (btnPhoto && !btnPhoto.dataset.listenerAttached) {
                 // --- 7. FORENSIC AUDIT LOGGING ---
                 await logSecurityAudit('TESTIMONY_PUBLISHED', testimonyRef.id, {
                     targetFeed,
+                    hasHeadline: !!headline,
                     hasMedia: !!(mediaData.imageUrl || mediaData.audioUrl)
                 });
 
                 showToast('✅ Testimony published successfully!', 'success');
-                clearComposerState(mainInput, btnPhoto, btnVoice);
+                clearComposerState(headlineInput, mainInput, btnPhoto, btnVoice);
                 window.dispatchEvent(new CustomEvent('vocalWitness:posted'));
 
             } catch (err) {
@@ -303,7 +311,12 @@ if (document.readyState === 'loading') {
 }
 
 window.addEventListener('languageChanged', () => {
+    const headlineInput = document.getElementById('headlineInput') || document.getElementById('testimonyHeadline');
     const composerInput = document.getElementById('mainInput') || document.getElementById('testimonyInput');
+    
+    if (headlineInput && window.t) {
+        headlineInput.placeholder = window.t('headlinePlaceholder') || 'Headline or Title (Optional)';
+    }
     if (composerInput && window.t) {
         composerInput.placeholder = window.t('placeholder') || 'What truth will you log today?';
     }
