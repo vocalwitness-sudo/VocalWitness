@@ -179,10 +179,9 @@ export function removeImage(previewArea) {
 // ====================== PHOTO ======================
 export async function handleImageSelect(event, previewArea) {
     const file = event.target?.files?.[0];
-
     if (!file) return;
 
-    // Execute Client-Side Quick-Check
+    // Client-side validation
     const check = validateMediaFile(file, {
         maxSizeBytes: 10 * 1024 * 1024,
         allowedTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic']
@@ -190,48 +189,55 @@ export async function handleImageSelect(event, previewArea) {
 
     if (!check.valid) {
         showToast(check.error, "error");
-        // Reset file input so selecting the same invalid file again triggers change
         if (event.target) event.target.value = '';
         return;
+    }
+
+    // Clear previous image first (enforces single image)
+    selectedImageFile = null;
+    if (previewArea) {
+        previewArea.innerHTML = '';
+        previewArea.classList.remove('has-content');
     }
 
     selectedImageFile = file;
 
     const reader = new FileReader();
     reader.onload = (e) => {
-        if (previewArea) {
-            previewArea.innerHTML = `
-                <div class="relative mt-4 rounded-2xl overflow-hidden border border-emerald-500/40 bg-zinc-950 shadow-xl inline-block">
-                    <img src="${e.target.result}" class="h-32 w-32 object-cover" alt="Evidence Preview">
-                    <button type="button" id="removeImgBtn"
-                            class="absolute top-2 right-2 bg-red-600/90 hover:bg-red-700 text-white rounded-full p-1.5 shadow-lg transition flex items-center justify-center cursor-pointer"
-                            title="Remove Image">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>`;
-            previewArea.classList.add('has-content');
-            
-            const removeBtn = document.getElementById('removeImgBtn');
-            if (removeBtn) {
-                removeBtn.onclick = (ev) => {
-                    ev.stopPropagation();
-                    removeImage(previewArea);
-                };
-            }
+        if (!previewArea) return;
+
+        previewArea.innerHTML = `
+            <div class="relative mt-4 rounded-2xl overflow-hidden border border-emerald-500/40 bg-zinc-950 shadow-xl inline-block">
+                <img src="${e.target.result}" class="h-32 w-32 object-cover" alt="Evidence Preview">
+                <button type="button" id="removeImgBtn"
+                        class="absolute top-2 right-2 bg-red-600/90 hover:bg-red-700 text-white rounded-full p-1.5 shadow-lg transition flex items-center justify-center cursor-pointer"
+                        title="Remove Image">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>`;
+        previewArea.classList.add('has-content');
+
+        const removeBtn = document.getElementById('removeImgBtn');
+        if (removeBtn) {
+            removeBtn.onclick = (ev) => {
+                ev.stopPropagation();
+                removeImage(previewArea);
+            };
         }
     };
+
     reader.onerror = () => {
         showToast("Failed to read selected image", "error");
         selectedImageFile = null;
     };
+
     reader.readAsDataURL(file);
 
-    // Reset the input value so selecting the exact same file name again triggers 'change'
+    // Allow selecting the same file again later
     if (event.target) event.target.value = '';
 }
-
 
 // ====================== VOICE ======================
 export async function toggleVoiceRecording(voiceBtn) {
