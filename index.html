@@ -79,25 +79,22 @@
                 </div>
             </div>
 
-            <!-- Desktop Controls -->
-            <div class="flex items-center gap-2">
-                <select id="languageSelector-desktop" aria-label="Select Language" class="bg-zinc-900 text-white border border-zinc-700 rounded-2xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
-                    <optgroup label="Primary / Regional">
-                        <option value="en" selected>English</option>
-                        <option value="pcm">Naija Pidgin</option>
-                        <option value="ha">Hausa</option>
-                        <option value="yo">Yorùbá</option>
-                        <option value="ig">Igbo</option>
-                        <option value="sw">Swahili</option>
-                    </optgroup>
-                    <optgroup label="Global">
-                        <option value="fr">Français</option>
-                        <option value="es">Español</option>
-                        <option value="pt">Português</option>
-                        <option value="ar">العربية</option>
-                    </optgroup>
-                </select>
-
+           <select id="languageSelector-desktop" aria-label="Select Language" class="bg-zinc-900 text-zinc-100 border border-zinc-700/80 rounded-2xl px-3 py-2 text-sm font-medium focus:outline-none focus:border-emerald-500 shadow-inner">
+    <optgroup label="Primary / Regional" class="bg-zinc-900 text-zinc-300">
+        <option value="en" selected class="bg-zinc-900 text-white">English</option>
+        <option value="pcm" class="bg-zinc-900 text-white">Naija Pidgin</option>
+        <option value="ha" class="bg-zinc-900 text-white">Hausa</option>
+        <option value="yo" class="bg-zinc-900 text-white">Yorùbá</option>
+        <option value="ig" class="bg-zinc-900 text-white">Igbo</option>
+        <option value="sw" class="bg-zinc-900 text-white">Swahili</option>
+    </optgroup>
+    <optgroup label="Global" class="bg-zinc-900 text-zinc-300">
+        <option value="fr" class="bg-zinc-900 text-white">Français</option>
+        <option value="es" class="bg-zinc-900 text-white">Español</option>
+        <option value="pt" class="bg-zinc-900 text-white">Português</option>
+        <option value="ar" class="bg-zinc-900 text-white">العربية</option>
+    </optgroup>
+</select>
                 <!-- GUEST / SIGN-IN BUTTON (DESKTOP) -->
                 <button id="guest-action-btn" type="button" data-action="open-auth-modal" class="px-4 py-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm text-sm" style="background-color: #ffffff; color: #000000;">
                     <img src="https://www.google.com/favicon.ico" class="w-4 h-4" alt="Google">
@@ -172,19 +169,20 @@
                 </button>
             </div>
 
-            <!-- HEAD 2: Utility Toolbar (Language, Data Saver, Privacy, Bookmarks, Notifications) -->
+          <!-- mobile HEAD 2: Utility Toolbar (Language, Data Saver, Privacy, Bookmarks, Notifications) -->
             <div class="flex items-center justify-between w-full pt-2 border-t border-zinc-800/80 overflow-x-auto no-scrollbar touch-pan-x">
                 <div class="flex items-center gap-1.5 shrink-0">
-                    <select id="languageSelector-mobile" aria-label="Select Language" class="bg-zinc-900 border border-zinc-700 text-white rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-emerald-500 shrink-0">
-                        <option value="en">EN</option>
-                        <option value="pcm">PCM</option>
-                        <option value="ha">HA</option>
-                        <option value="yo">YO</option>
-                        <option value="ig">IG</option>
-                        <option value="es">ES</option>
-                        <option value="fr">FR</option>
+                    <select id="languageSelector-mobile" aria-label="Select Language" class="bg-zinc-900 border border-zinc-700/80 text-zinc-100 font-medium rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-emerald-500 shrink-0">
+                        <option value="en" class="bg-zinc-900 text-white">EN</option>
+                        <option value="pcm" class="bg-zinc-900 text-white">PCM</option>
+                        <option value="ha" class="bg-zinc-900 text-white">HA</option>
+                        <option value="yo" class="bg-zinc-900 text-white">YO</option>
+                        <option value="ig" class="bg-zinc-900 text-white">IG</option>
+                        <option value="es" class="bg-zinc-900 text-white">ES</option>
+                        <option value="fr" class="bg-zinc-900 text-white">FR</option>
                     </select>
-
+                </div>
+            </div>
                     <button id="data-saver-btn-mobile" data-action="toggle-data-saver" class="px-2.5 py-1 bg-zinc-900 border border-zinc-800 rounded-lg text-[11px] font-semibold text-zinc-300 flex items-center gap-1 shrink-0 whitespace-nowrap">
                         <span>⚡</span>
                         <span>Saver</span>
