@@ -77,31 +77,40 @@ export function initComposer() {
     if (postButton) postButton.classList.add('inline-flex', 'items-center', 'justify-center', 'px-5', 'py-1.5', 'rounded-lg', 'bg-emerald-600', 'hover:bg-emerald-500', 'text-white', 'font-semibold', 'shadow', 'cursor-pointer', 'transition');
 
     // --- PHOTO SELECTION ---
-    if (btnPhoto && !btnPhoto.dataset.listenerAttached) {
-        btnPhoto.dataset.listenerAttached = "true";
-        btnPhoto.addEventListener('click', (e) => {
-            e.preventDefault();
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'image/*';
+if (btnPhoto && !btnPhoto.dataset.listenerAttached) {
+    btnPhoto.dataset.listenerAttached = "true";
 
-            input.onchange = async (evt) => {
-                const file = evt.target.files?.[0];
-                if (!file) return;
+    const fileInput = document.getElementById('image-file-input');
 
-                try {
-                    const compressedFile = await compressImage(file, 1200, 0.82);
-                    const syntheticEvent = { target: { files: [compressedFile] } };
-                    await handleImageSelect(syntheticEvent, previewArea);
-                    toggleActive(btnPhoto);
-                } catch (err) {
-                    console.error("Image compression error:", err);
-                    showToast('Failed to compress image', 'error');
-                }
-            };
-            input.click();
+    btnPhoto.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (fileInput) {
+            fileInput.value = '';          // allow selecting the same file again
+            fileInput.click();
+        }
+    });
+
+    if (fileInput && !fileInput.dataset.listenerAttached) {
+        fileInput.dataset.listenerAttached = "true";
+
+        fileInput.addEventListener('change', async (evt) => {
+            const file = evt.target.files?.[0];
+            if (!file) return;
+
+            try {
+                showToast('Compressing image...', 'info');
+                const compressedFile = await compressImage(file, 1200, 0.82);
+                const syntheticEvent = { target: { files: [compressedFile] } };
+                await handleImageSelect(syntheticEvent, previewArea);
+                toggleActive(btnPhoto);
+            } catch (err) {
+                console.error("Image compression error:", err);
+                showToast('Failed to compress image', 'error');
+            }
         });
     }
+}
 
     // --- VOICE RECORDING ---
     if (btnVoice && !btnVoice.dataset.listenerAttached) {
