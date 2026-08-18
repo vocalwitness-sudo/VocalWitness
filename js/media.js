@@ -118,7 +118,6 @@ export function validateMediaFile(file, options = {}) {
 
     return { valid: true };
 }
-
 // ====================== STATE RESET ======================
 export function resetMediaState() {
     // 1. Reset Image File Reference
@@ -136,19 +135,6 @@ export function resetMediaState() {
         audioEl.removeAttribute('src');
         audioEl.load();
     }
-
-    // ====================== REMOVE IMAGE (CANCEL) ======================
-export function removeImage(previewArea) {
-    selectedImageFile = null;
-
-    if (previewArea) {
-        previewArea.innerHTML = '';
-        previewArea.classList.remove('has-content');
-    }
-
-    // Also clear any temporary object URL if we switch to createObjectURL later
-    showToast('Image removed', 'info');
-}
 
     // 3. Clear Voice Engine Memory
     if (engineInstance) {
@@ -174,6 +160,18 @@ export function removeImage(previewArea) {
     if (voiceBtn) {
         voiceBtn.classList.remove('recording-active', 'animate-pulse');
     }
+}   // ← THIS closing brace was missing
+
+// ====================== REMOVE IMAGE (CANCEL) ======================
+export function removeImage(previewArea) {
+    selectedImageFile = null;
+
+    if (previewArea) {
+        previewArea.innerHTML = '';
+        previewArea.classList.remove('has-content');
+    }
+
+    showToast('Image removed', 'info');
 }
 
 // ====================== PHOTO ======================
