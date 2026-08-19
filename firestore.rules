@@ -17,7 +17,11 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.token.admin == true;
     }
 
-    // SERVER-SIDE TRUST CHECK: Fetches caller's Firestore user document
+    // Safe existence check – never crashes when the user doc is missing
+    function userExists() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
     function getUserData() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
@@ -26,27 +30,28 @@ service cloud.firestore {
       return isAuthenticated() && (
         request.auth.token.moderator == true ||
         request.auth.token.admin == true ||
-        getUserData().tier == 'steward'
+        (userExists() && getUserData().tier == 'steward')
       );
     }
 
+    // Safe version – works even when the user document does not exist yet
     function isNotBanned() {
-      return isAuthenticated() && 
-            request.auth.token.banned != true &&
-            getUserData().isBanned != true;
+      return isAuthenticated()
+        && request.auth.token.banned != true
+        && (!userExists() || getUserData().isBanned != true);
     }
 
-    // RATE LIMIT CHECK: Enforces a 30-second cooldown between testimony posts
+    // Safe 30-second throttle
     function isNotThrottled() {
-      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
-      return !userDoc.data.keys().hasAll(['lastTestimonyAt']) ||
-            request.time > userDoc.data.lastTestimonyAt + duration.value(30, 's');
+      return !userExists()
+        || !('lastTestimonyAt' in getUserData())
+        || request.time > getUserData().lastTestimonyAt + duration.value(30, 's');
     }
 
     // RELAXED MEDIA URL VALIDATION
     function isValidMediaUrl(url) {
       return url is string && (
-        url == '' || 
+        url == '' ||
         url.matches('^https://media\\.vocalwitness\\.com/.*') ||
         url.matches('^https://lh[0-9]+\\.googleusercontent\\.com/.*') ||
         url.matches('^data:image/svg\\+xml;.*')
@@ -64,15 +69,14 @@ service cloud.firestore {
         && (data.tier == 'citizen' || data.tier == 'citizen_circle')
         && data.isVerified == false
         && !keys.hasAny([
-            'role', 'isBanned', 'badges', 'admin', 'moderator', 'score', 'steward'
-          ]);
+             'role', 'isBanned', 'badges', 'admin', 'moderator', 'score', 'steward'
+           ]);
     }
 
     function isSafeUserUpdate() {
       let affected = request.resource.data.diff(resource.data).affectedKeys();
       let data = request.resource.data;
 
-      // IMMUTABLE PRIVILEGED FIELDS - Clients CANNOT modify these directly
       let forbidden = [
         'role', 'isBanned', 'badges', 'admin', 'moderator',
         'zkVerified', 'reputation', 'score', 'tier', 'isVerified', 'uid'
@@ -104,11 +108,10 @@ service cloud.firestore {
         && data.timestamp is timestamp;
     }
 
-    // Check that user edits cannot tamper with moderation / security flags
     function isSafeAuthorTestimonyUpdate() {
       let affected = request.resource.data.diff(resource.data).affectedKeys();
       let forbidden = [
-        'moderationStatus', 'toxicityScore', 'autoFlaggedReasons', 
+        'moderationStatus', 'toxicityScore', 'autoFlaggedReasons',
         'isSynthetic', 'syntheticScore', 'authorTier', 'reviewedBy', 'reviewedAt', 'reviewNotes'
       ];
       return !affected.hasAny(forbidden);
@@ -118,7 +121,7 @@ service cloud.firestore {
     // RATE LIMITS & INTERNAL COLLECTION
     // ==========================================
     match /rateLimits/{rateLimitId} {
-      allow read, write: if false;
+      allow read, write: if false;   // only Admin SDK can touch this
     }
 
     // ==========================================
@@ -130,7 +133,6 @@ service cloud.firestore {
       allow update: if (isOwner(userId) && isSafeUserUpdate()) || isAdmin();
       allow delete: if isAdmin();
 
-      // Secure Subcollection for Draft Staging
       match /drafts/{draftId} {
         allow read, write: if isOwner(userId);
       }
@@ -158,12 +160,11 @@ service cloud.firestore {
         && request.resource.data.content.size() > 0
         && request.resource.data.content.size() <= 2000
         && request.resource.data.authorId == request.auth.uid
-        // FIXED: Allows server timestamps or any valid client/server timestamp type without exact value matching
         && request.resource.data.createdAt is timestamp;
 
       allow update: if isModerator() || (
-        isNotBanned() && 
-        resource.data.authorId == request.auth.uid && 
+        isNotBanned() &&
+        resource.data.authorId == request.auth.uid &&
         request.resource.data.content.size() <= 2000 &&
         isSafeAuthorTestimonyUpdate()
       );
@@ -176,7 +177,7 @@ service cloud.firestore {
     // ==========================================
     match /reports/{reportId} {
       allow read: if isModerator();
-      allow create: if isNotBanned() 
+      allow create: if isNotBanned()
         && request.resource.data.reportedBy == request.auth.uid
         && request.resource.data.reason is string;
       allow update, delete: if isModerator();
@@ -196,7 +197,7 @@ service cloud.firestore {
     match /audit_logs/{auditId} {
       allow read: if isModerator();
       allow create: if isAuthenticated();
-      allow update, delete: if false; // Audit logs must remain strictly immutable
+      allow update, delete: if false;
     }
 
   }
