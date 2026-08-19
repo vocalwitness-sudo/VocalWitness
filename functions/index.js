@@ -671,12 +671,17 @@ exports.checkRateLimit = onRequest(
       "https://vocalwitness-3affa.web.app",
       "https://vocalwitness.com",
       "https://www.vocalwitness.com",
-      "http://localhost:5173" // local development
+      "http://localhost:5173"
     ]
   },
   async (req, res) => {
-    // Firebase v2 automatically handles OPTIONS preflights and sets
-    // Access-Control-Allow-Origin headers before this block executes.
+    // Explicitly handle preflight OPTIONS requests to prevent browser CORS blocks
+    if (req.method === "OPTIONS") {
+      res.set("Access-Control-Allow-Origin", req.headers.origin || "*");
+      res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+      res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+      return res.status(204).send("");
+    }
 
     let userId = null;
     const authHeader = req.headers.authorization;
@@ -746,6 +751,7 @@ exports.checkRateLimit = onRequest(
     }
   }
 );
+
 
 // ======================================================
 // 8. ZERO-KNOWLEDGE PROOF ENGINE (GENERATION & VERIFICATION)
