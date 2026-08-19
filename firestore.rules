@@ -32,15 +32,15 @@ service cloud.firestore {
 
     function isNotBanned() {
       return isAuthenticated() && 
-             request.auth.token.banned != true &&
-             getUserData().isBanned != true;
+            request.auth.token.banned != true &&
+            getUserData().isBanned != true;
     }
 
     // RATE LIMIT CHECK: Enforces a 30-second cooldown between testimony posts
     function isNotThrottled() {
       let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
       return !userDoc.data.keys().hasAll(['lastTestimonyAt']) ||
-             request.time > userDoc.data.lastTestimonyAt + duration.value(30, 's');
+            request.time > userDoc.data.lastTestimonyAt + duration.value(30, 's');
     }
 
     // RELAXED MEDIA URL VALIDATION
@@ -64,8 +64,8 @@ service cloud.firestore {
         && (data.tier == 'citizen' || data.tier == 'citizen_circle')
         && data.isVerified == false
         && !keys.hasAny([
-             'role', 'isBanned', 'badges', 'admin', 'moderator', 'score', 'steward'
-           ]);
+            'role', 'isBanned', 'badges', 'admin', 'moderator', 'score', 'steward'
+          ]);
     }
 
     function isSafeUserUpdate() {
@@ -130,7 +130,7 @@ service cloud.firestore {
       allow update: if (isOwner(userId) && isSafeUserUpdate()) || isAdmin();
       allow delete: if isAdmin();
 
-      // NEW: Secure Subcollection for Draft Staging
+      // Secure Subcollection for Draft Staging
       match /drafts/{draftId} {
         allow read, write: if isOwner(userId);
       }
@@ -158,8 +158,8 @@ service cloud.firestore {
         && request.resource.data.content.size() > 0
         && request.resource.data.content.size() <= 2000
         && request.resource.data.authorId == request.auth.uid
-        // FIX: The composer sets 'createdAt', not 'timestamp'
-        && request.resource.data.createdAt == request.time;
+        // FIXED: Allows server timestamps or any valid client/server timestamp type without exact value matching
+        && request.resource.data.createdAt is timestamp;
 
       allow update: if isModerator() || (
         isNotBanned() && 
