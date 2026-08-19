@@ -2,18 +2,12 @@
  * Cloud Functions for Firebase / Cloudflare R2 Integration
  * Fully migrated to Firebase Functions v2
  *
- * Features:
- * - Secure CORS + App Check
- * - Background tasks via Cloud Tasks for heavy processing
- * - Ready for Cloudflare Workers edge acceleration
- *
  * Stack: Firebase Functions v2 • AWS SDK v3 • SnarkJS • Paystack • Cloud Tasks
  */
 
 const { onRequest, onCall, HttpsError } = require("firebase-functions/v2/https");
 const { onUserCreated } = require("firebase-functions/v2/identity");
 const { onDocumentCreated } = require("firebase-functions/v2/firestore");
-const { onTaskDispatched } = require("firebase-functions/v2/tasks");
 const { defineSecret } = require("firebase-functions/params");
 const { CloudTasksClient } = require("@google-cloud/tasks");
 const admin = require("firebase-admin");
@@ -43,10 +37,9 @@ if (!admin.apps.length) {
 const db = admin.firestore();
 const tasksClient = new CloudTasksClient();
 
-// Project / location constants (change if needed)
 const PROJECT_ID = process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT;
 const LOCATION = "us-central1";
-const QUEUE_NAME = "heavy-processing-queue"; // Create this queue in Cloud Tasks
+const QUEUE_NAME = "heavy-processing-queue";
 
 // ======================================================
 // RESTRICTED CORS HELPER
@@ -54,7 +47,8 @@ const QUEUE_NAME = "heavy-processing-queue"; // Create this queue in Cloud Tasks
 const allowedOrigins = [
   "https://vocalwitness-3affa.web.app",
   "https://vocalwitness-3affa.firebaseapp.com",
-  // "https://vocalwitness.com",
+  "https://vocalwitness.com",
+  "https://www.vocalwitness.com"
 ];
 
 const corsHandler = require("cors")({
@@ -70,13 +64,6 @@ const corsHandler = require("cors")({
   maxAge: 3600,
 });
 
-/**
- * Creates a Cloud Task for heavy background processing.
- * @param {string} functionName - The name of the task handler function
- * @param {object} payload - Data to send to the background task
- * @param {number} [delaySeconds=0] - Optional delay before execution
- * @returns {Promise<string>} The created task name
- */
 async function enqueueBackgroundTask(functionName, payload, delaySeconds = 0) {
   const parent = tasksClient.queuePath(PROJECT_ID, LOCATION, QUEUE_NAME);
 
@@ -102,14 +89,6 @@ async function enqueueBackgroundTask(functionName, payload, delaySeconds = 0) {
   return response.name;
 }
 
-// ======================================================
-// PAYSTACK CLIENT
-// ======================================================
-/**
- * Returns a configured Paystack client instance using the secret key.
- * @returns {object} Paystack API client
- * @throws {Error} If the secret key is missing
- */
 const getPaystackClient = () => {
   const secret = paystackSecretKey.value();
   if (!secret) {
@@ -118,19 +97,6 @@ const getPaystackClient = () => {
   return paystackApi(secret);
 };
 
-// ======================================================
-// AUDIT LOG HELPER
-// ======================================================
-/**
- * Writes an immutable audit log entry to Firestore.
- * @param {object} params
- * @param {string} params.action - Action performed
- * @param {string} params.performedBy - UID or "system"
- * @param {string|null} [params.targetId] - Target document/user ID
- * @param {string|null} [params.targetType] - Type of target
- * @param {object} [params.details={}] - Additional context
- * @param {string} [params.severity="info"] - info | medium | high | error
- */
 async function writeAuditLog({
   action,
   performedBy,
@@ -158,18 +124,9 @@ async function writeAuditLog({
 // ======================================================
 // 1. R2 PRE-SIGNED URL
 // ======================================================
-/**
- * Generates a pre-signed upload URL for Cloudflare R2.
- * Requires a valid Firebase ID token in the Authorization header.
- *
- * @function getUploadUrl
- * @param {object} req - Express-style request
- * @param {object} res - Express-style response
- * @returns {Promise<void>}
- */
 exports.getUploadUrl = onRequest(
   {
-    cors: false,
+    cors: allowedOrigins,
     secrets: [r2AccessKeyId, r2SecretAccessKey],
   },
   (req, res) => {
@@ -229,13 +186,6 @@ exports.getUploadUrl = onRequest(
 // ======================================================
 // 2. USER INITIALIZATION
 // ======================================================
-/**
- * Triggered when a new Firebase Auth user is created.
- * Creates the default citizen profile and sets initial custom claims.
- *
- * @function initializeCitizenProfile
- * @param {object} event - onUserCreated event
- */
 exports.initializeCitizenProfile = onUserCreated(async (event) => {
   const user = event.data;
   const userId = user.uid;
@@ -301,16 +251,8 @@ exports.initializeCitizenProfile = onUserCreated(async (event) => {
 // ======================================================
 // 3. TRUST TIER
 // ======================================================
-/**
- * Evaluates and upgrades the user's trust tier based on reputation,
- * verification status, and activity metrics.
- *
- * @function evaluateTrustTier
- * @param {CallableRequest} request
- * @returns {Promise<{success: boolean, tier: string}>}
- */
 exports.evaluateTrustTier = onCall(
-  { enforceAppCheck: true },
+  { cors: allowedOrigins },
   async (request) => {
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "Authentication required.");
@@ -375,12 +317,8 @@ exports.evaluateTrustTier = onCall(
 // ======================================================
 // 4. USER MANAGEMENT
 // ======================================================
-/**
- * Allows admins to set custom claims on any user.
- * @function setUserClaims
- */
 exports.setUserClaims = onCall(
-  { enforceAppCheck: true },
+  { cors: allowedOrigins },
   async (request) => {
     if (!request.auth) throw new HttpsError("unauthenticated", "You must be signed in.");
     if (!request.auth.token.admin) {
@@ -438,12 +376,8 @@ exports.setUserClaims = onCall(
   }
 );
 
-/**
- * Bans a user (admin or moderator only).
- * @function banUser
- */
 exports.banUser = onCall(
-  { enforceAppCheck: true },
+  { cors: allowedOrigins },
   async (request) => {
     if (!request.auth) throw new HttpsError("unauthenticated", "Sign in required.");
     const isAllowed = request.auth.token.admin || request.auth.token.moderator;
@@ -491,12 +425,8 @@ exports.banUser = onCall(
   }
 );
 
-/**
- * Unbans a user (admin only).
- * @function unbanUser
- */
 exports.unbanUser = onCall(
-  { enforceAppCheck: true },
+  { cors: allowedOrigins },
   async (request) => {
     if (!request.auth?.token?.admin) {
       throw new HttpsError("permission-denied", "Only admins can unban users.");
@@ -543,12 +473,8 @@ exports.unbanUser = onCall(
   }
 );
 
-/**
- * Allows moderators/admins to delete content with full audit trail.
- * @function moderatedDelete
- */
 exports.moderatedDelete = onCall(
-  { enforceAppCheck: true },
+  { cors: allowedOrigins },
   async (request) => {
     if (!request.auth) throw new HttpsError("unauthenticated", "Sign in required.");
     const isMod = request.auth.token.moderator === true || request.auth.token.admin === true;
@@ -602,12 +528,6 @@ exports.moderatedDelete = onCall(
 // ======================================================
 // TOXICITY HELPERS
 // ======================================================
-/**
- * Analyzes text toxicity using Google Perspective API.
- * Falls back to local keyword check on failure.
- * @param {string} content
- * @returns {Promise<object>}
- */
 async function analyzeToxicityWithPerspective(content = "") {
   const apiKey = perspectiveApiKey.value() || process.env.PERSPECTIVE_API_KEY;
   if (!apiKey || !content || content.length < 3) {
@@ -645,11 +565,6 @@ async function analyzeToxicityWithPerspective(content = "") {
   }
 }
 
-/**
- * Simple local keyword-based moderation fallback.
- * @param {string} content
- * @returns {object}
- */
 function gentleModerationCheck(content = "") {
   const text = content.toLowerCase();
   const flagWords = ["spam", "scam", "abuse", "hate", "harass"];
@@ -664,14 +579,10 @@ function gentleModerationCheck(content = "") {
 // ======================================================
 // 6. PAYSTACK
 // ======================================================
-/**
- * Initializes a Paystack transaction for supporter payments.
- * @function initializePaystack
- */
 exports.initializePaystack = onCall(
   {
+    cors: allowedOrigins,
     secrets: [paystackSecretKey],
-    enforceAppCheck: true,
   },
   async (request) => {
     if (!request.auth) {
@@ -704,12 +615,8 @@ exports.initializePaystack = onCall(
   }
 );
 
-/**
- * Paystack webhook handler. Verifies signature and grants supporter status.
- * @function paystackWebhook
- */
 exports.paystackWebhook = onRequest(
-  { secrets: [paystackSecretKey] },
+  { cors: allowedOrigins, secrets: [paystackSecretKey] },
   async (req, res) => {
     if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
 
@@ -771,15 +678,8 @@ exports.paystackWebhook = onRequest(
 // ======================================================
 // 7. RATE LIMITING
 // ======================================================
-/**
- * Transaction-based rate limiter.
- * Returns whether the action is currently allowed.
- *
- * @function checkRateLimit
- * @returns {Promise<{allowed: boolean}>}
- */
 exports.checkRateLimit = onCall(
-  // enforceAppCheck: true,   ← keep commented until you fully enable App Check on the client
+  { cors: allowedOrigins },
   async (request) => {
     let userId = request.auth?.uid;
     if (!userId) {
@@ -824,7 +724,6 @@ exports.checkRateLimit = onCall(
       return { allowed: isAllowed };
     } catch (error) {
       console.error("Rate limit check failed:", error);
-      // fail-open
       return { allowed: true };
     }
   }
@@ -833,17 +732,11 @@ exports.checkRateLimit = onCall(
 // ======================================================
 // 8. ZERO-KNOWLEDGE PROOFS
 // ======================================================
-/**
- * Generates a Groth16 ZK proof on the server (heavy operation).
- * Prefer calling this via background task for large inputs.
- *
- * @function generateZKProof
- */
 exports.generateZKProof = onCall(
   {
+    cors: allowedOrigins,
     memory: "2GiB",
     timeoutSeconds: 60,
-    enforceAppCheck: true,
   },
   async (request) => {
     if (!request.auth) {
@@ -873,12 +766,8 @@ exports.generateZKProof = onCall(
   }
 );
 
-/**
- * Verifies a submitted ZK proof and marks the user as zkVerified.
- * @function verifyZKProof
- */
 exports.verifyZKProof = onCall(
-  { enforceAppCheck: true },
+  { cors: allowedOrigins },
   async (request) => {
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "Authentication required to submit ZK proof.");
@@ -927,108 +816,34 @@ exports.verifyZKProof = onCall(
 );
 
 // ======================================================
-// 9. MEDIA FORENSIC PIPELINE (Background-friendly)
+// 9. MEDIA FORENSIC PIPELINE
 // ======================================================
-/**
- * Firestore trigger that starts the media forensic pipeline.
- * Heavy work is offloaded to a background Cloud Task.
- *
- * @function verifyMediaPipeline
- */
 exports.verifyMediaPipeline = onDocumentCreated(
-  "testimonies/{postId}",
+  {
+    document: "testimonies/{postId}",
+    secrets: [perspectiveApiKey],
+  },
   async (event) => {
     const snap = event.data;
     if (!snap) return;
 
     const data = snap.data();
     const postId = event.params.postId;
-    const mediaUrl = data?.mediaUrl || data?.mediaURL || data?.fileUrl;
 
-    if (!mediaUrl || typeof mediaUrl !== "string") {
-      console.log(`ℹ️ Post ${postId} has no media. Skipping.`);
-      return;
-    }
-
-    // Enqueue heavy processing instead of doing it inline
     try {
-      await enqueueBackgroundTask("processMediaForensics", {
-        postId,
-        mediaUrl,
-        testimonyRef: snap.ref.path,
-      });
-      console.log(`🚀 Enqueued media forensics for post ${postId}`);
-    } catch (err) {
-      console.error("Failed to enqueue media task:", err);
-      // Fallback: process inline if queue fails
-      await processMediaForensicsLogic(postId, mediaUrl, snap.ref);
+      const moderation = await analyzeToxicityWithPerspective(data.content || "");
+
+      await snap.ref.set(
+        {
+          moderationStatus: moderation.safe ? "approved" : "flagged",
+          toxicityScore: moderation.toxicityScore || 0,
+          moderationNote: moderation.note || "",
+          processedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    } catch (error) {
+      console.error(`Failed to process media pipeline for ${postId}:`, error);
     }
   }
 );
-
-/**
- * Background task handler for media forensic verification.
- * This runs asynchronously via Cloud Tasks.
- *
- * @function processMediaForensics
- */
-exports.processMediaForensics = onTaskDispatched(
-  {
-    retryConfig: { maxAttempts: 3 },
-    rateLimits: { maxConcurrentDispatches: 10 },
-  },
-  async (req) => {
-    const { postId, mediaUrl, testimonyRef } = req.data;
-    const ref = db.doc(testimonyRef);
-    await processMediaForensicsLogic(postId, mediaUrl, ref);
-  }
-);
-
-/**
- * Core media forensic logic (hash + duplicate detection).
- * Can be called from trigger or background task.
- */
-async function processMediaForensicsLogic(postId, mediaUrl, ref) {
-  try {
-    console.log(`🔍 Processing media forensics for ${postId}`);
-
-    const hash = crypto.createHash("sha256").update(mediaUrl).digest("hex");
-
-    const duplicateSnap = await db
-      .collection("testimonies")
-      .where("mediaHash", "==", hash)
-      .get();
-
-    let isDuplicate = false;
-    duplicateSnap.forEach((doc) => {
-      if (doc.id !== postId) isDuplicate = true;
-    });
-
-    await ref.update({
-      mediaHash: hash,
-      isMediaVerified: !isDuplicate,
-      duplicateMediaDetected: isDuplicate,
-      mediaPipelineProcessedAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
-
-    if (isDuplicate) {
-      await writeAuditLog({
-        action: "duplicate_media_detected",
-        performedBy: "system",
-        targetId: postId,
-        targetType: "testimony",
-        details: { mediaHash: hash },
-        severity: "medium",
-      });
-    }
-
-    console.log(`✅ Media forensics completed for ${postId}`);
-  } catch (error) {
-    console.error(`❌ Media forensics failed for ${postId}:`, error);
-    await ref.update({
-      isMediaVerified: false,
-      verificationError: error.message,
-      mediaPipelineProcessedAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
-  }
-}
