@@ -779,7 +779,7 @@ exports.paystackWebhook = onRequest(
  * @returns {Promise<{allowed: boolean}>}
  */
 exports.checkRateLimit = onCall(
-  { enforceAppCheck: true },
+  // enforceAppCheck: true,   ← keep commented until you fully enable App Check on the client
   async (request) => {
     let userId = request.auth?.uid;
     if (!userId) {
@@ -804,7 +804,11 @@ exports.checkRateLimit = onCall(
         const windowStart = new Date(Date.now() - windowMinutes * 60 * 1000);
 
         if (!doc.exists || doc.data().lastRequest.toDate() < windowStart) {
-          transaction.set(rateDocRef, { count: 1, firstRequest: now, lastRequest: now });
+          transaction.set(rateDocRef, {
+            count: 1,
+            firstRequest: now,
+            lastRequest: now,
+          });
           return true;
         }
 
@@ -820,7 +824,8 @@ exports.checkRateLimit = onCall(
       return { allowed: isAllowed };
     } catch (error) {
       console.error("Rate limit check failed:", error);
-      return { allowed: true }; // fail-open
+      // fail-open
+      return { allowed: true };
     }
   }
 );
