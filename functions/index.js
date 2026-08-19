@@ -1,11 +1,13 @@
 /**
  * Cloud Functions for Firebase / Cloudflare R2 Integration
- * Stack: Firebase Functions v1 & v2 / Express / AWS SDK v3 / SnarkJS / Paystack
- * Updated: Secure CORS + App Check + Callable rate limiting
+ * Fully migrated to Firebase Functions v2
+ * Stack: Firebase Functions v2 / AWS SDK v3 / SnarkJS / Paystack
+ * Secure CORS + App Check enabled
  */
 
-const functions = require("firebase-functions");
 const { onRequest, onCall, HttpsError } = require("firebase-functions/v2/https");
+const { onUserCreated } = require("firebase-functions/v2/identity");
+const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 const { defineSecret } = require("firebase-functions/params");
 const admin = require("firebase-admin");
 const paystackApi = require("paystack-api");
@@ -65,7 +67,7 @@ const corsHandler = require("cors")({
 // PAYSTACK CLIENT
 // ======================================================
 const getPaystackClient = () => {
-  const secret = paystackSecretKey.value() || functions.config().paystack?.secret_key;
+  const secret = paystackSecretKey.value();
   if (!secret) {
     throw new Error("Paystack secret key configuration is missing.");
   }
@@ -100,11 +102,11 @@ async function writeAuditLog({
 }
 
 // ======================================================
-// 1. CLOUDFLARE R2 PRE-SIGNED URL GENERATOR (HTTP + Restricted CORS)
+// 1. CLOUDFLARE R2 PRE-SIGNED URL GENERATOR
 // ======================================================
 exports.getUploadUrl = onRequest(
   {
-    cors: false, // we handle CORS ourselves
+    cors: false,
     secrets: [r2AccessKeyId, r2SecretAccessKey],
   },
   (req, res) => {
@@ -118,7 +120,6 @@ exports.getUploadUrl = onRequest(
       }
 
       try {
-        // Security Check: Verify Bearer Token
         const authHeader = req.headers.authorization;
         if (!authHeader || !authHeader.startsWith("Bearer ")) {
           return res.status(401).json({ error: "Unauthorized. ID token required." });
@@ -140,7 +141,6 @@ exports.getUploadUrl = onRequest(
           });
         }
 
-        // Initialize AWS S3 Client for Cloudflare R2
         const s3Client = new S3Client({
           region: "auto",
           endpoint:
@@ -178,9 +178,10 @@ exports.getUploadUrl = onRequest(
 );
 
 // ======================================================
-// 2. USER INITIALIZATION
+// 2. USER INITIALIZATION (v2 Auth Trigger)
 // ======================================================
-exports.initializeCitizenProfile = functions.auth.user().onCreate(async (user) => {
+exports.initializeCitizenProfile = onUserCreated(async (event) => {
+  const user = event.data;
   const userId = user.uid;
   const defaultUsername = `citizen_${Math.floor(1000 + Math.random() * 9000)}`;
 
@@ -243,10 +244,8 @@ exports.initializeCitizenProfile = functions.auth.user().onCreate(async (user) =
     });
 
     console.log(`✅ Created profile for user: ${userId}`);
-    return null;
   } catch (error) {
     console.error(`Error creating profile for ${userId}:`, error);
-    return null;
   }
 });
 
@@ -687,12 +686,11 @@ exports.initializePaystack = onCall(
 exports.paystackWebhook = onRequest(
   { secrets: [paystackSecretKey] },
   async (req, res) => {
-    // Webhooks usually don't need browser CORS, but we keep it clean
     if (req.method !== "POST") {
       return res.status(405).send("Method Not Allowed");
     }
 
-    const secret = paystackSecretKey.value() || functions.config().paystack?.secret_key;
+    const secret = paystackSecretKey.value();
     const signature = req.headers["x-paystack-signature"];
 
     if (!signature || typeof signature !== "string") {
@@ -772,11 +770,11 @@ exports.paystackWebhook = onRequest(
 );
 
 // ======================================================
-// 7. RATE LIMITING – SECURE CALLABLE VERSION
+// 7. RATE LIMITING – SECURE CALLABLE
 // ======================================================
 exports.checkRateLimit = onCall(
   {
-    enforceAppCheck: true, // ← Critical for security
+    enforceAppCheck: true,
   },
   async (request) => {
     let userId = null;
@@ -784,7 +782,6 @@ exports.checkRateLimit = onCall(
     if (request.auth) {
       userId = request.auth.uid;
     } else {
-      // Fallback for unauthenticated (you can reject instead if preferred)
       const ip = request.rawRequest?.ip || "unknown";
       userId = "anonymous_" + String(ip).replace(/[.:]/g, "_");
     }
@@ -840,7 +837,7 @@ exports.checkRateLimit = onCall(
       return { allowed: isAllowed };
     } catch (error) {
       console.error("Rate limit check failed:", error);
-      // Fail-open (same behaviour as original)
+      // Fail-open
       return { allowed: true };
     }
   }
@@ -964,20 +961,23 @@ exports.verifyZKProof = onCall(
 );
 
 // ======================================================
-// 9. MEDIA FORENSIC VERIFICATION PIPELINE
+// 9. MEDIA FORENSIC VERIFICATION PIPELINE (v2 Firestore Trigger)
 // ======================================================
-exports.verifyMediaPipeline = functions.firestore
-  .document("testimonies/{postId}")
-  .onCreate(async (snap, context) => {
+exports.verifyMediaPipeline = onDocumentCreated(
+  "testimonies/{postId}",
+  async (event) => {
+    const snap = event.data;
+    if (!snap) return;
+
     const data = snap.data();
-    const postId = context.params.postId;
+    const postId = event.params.postId;
     const mediaUrl = data?.mediaUrl || data?.mediaURL || data?.fileUrl;
 
     if (!mediaUrl || typeof mediaUrl !== "string") {
       console.log(
         `ℹ️ Post ${postId} has no media to verify. Skipping forensic pipeline.`
       );
-      return null;
+      return;
     }
 
     try {
@@ -1020,7 +1020,6 @@ exports.verifyMediaPipeline = functions.firestore
       console.log(
         `✅ Media pipeline completed for post ${postId}. Verified: ${!isDuplicate}`
       );
-      return null;
     } catch (error) {
       console.error(`❌ Media verification pipeline failed for ${postId}:`, error);
 
@@ -1038,7 +1037,6 @@ exports.verifyMediaPipeline = functions.firestore
         details: { error: error.message },
         severity: "error",
       });
-
-      return null;
     }
-  });
+  }
+);
