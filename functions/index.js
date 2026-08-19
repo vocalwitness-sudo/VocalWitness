@@ -665,24 +665,18 @@ exports.paystackWebhook = onRequest(
 // ======================================================
 // 7. RATE LIMITING (TRANSACTION-BASED)
 // ======================================================
-exports.checkRateLimit = onRequest(
-  {
-    cors: [
-      "https://vocalwitness-3affa.web.app",
-      "https://vocalwitness.com",
-      "https://www.vocalwitness.com",
-      "http://localhost:5173"
-    ]
-  },
-  async (req, res) => {
-    // Explicitly handle preflight OPTIONS requests to prevent browser CORS blocks
-    if (req.method === "OPTIONS") {
-      res.set("Access-Control-Allow-Origin", req.headers.origin || "*");
-      res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-      res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
-      return res.status(204).send("");
-    }
+exports.checkRateLimit = onRequest(async (req, res) => {
+  // 1. Force CORS headers on ALL requests (including preflight)
+  res.set("Access-Control-Allow-Origin", "*");
+  res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
+  // 2. Immediately terminate preflight requests with a 204
+  if (req.method === "OPTIONS") {
+    return res.status(204).send("");
+  }
+
+  try {
     let userId = null;
     const authHeader = req.headers.authorization;
 
@@ -706,52 +700,50 @@ exports.checkRateLimit = onRequest(
 
     const rateDocRef = db.collection("rateLimits").doc(`${userId}_${action}`);
 
-    try {
-      const isAllowed = await db.runTransaction(async (transaction) => {
-        const doc = await transaction.get(rateDocRef);
-        const now = admin.firestore.Timestamp.now();
-        const windowStart = new Date(Date.now() - windowMinutes * 60 * 1000);
+    const isAllowed = await db.runTransaction(async (transaction) => {
+      const doc = await transaction.get(rateDocRef);
+      const now = admin.firestore.Timestamp.now();
+      const windowStart = new Date(Date.now() - windowMinutes * 60 * 1000);
 
-        if (!doc.exists) {
-          transaction.set(rateDocRef, {
-            count: 1,
-            firstRequest: now,
-            lastRequest: now
-          });
-          return true;
-        }
-
-        const docData = doc.data();
-
-        if (docData.lastRequest.toDate() < windowStart) {
-          transaction.set(rateDocRef, {
-            count: 1,
-            firstRequest: now,
-            lastRequest: now
-          });
-          return true;
-        }
-
-        if (docData.count >= maxCalls) {
-          return false;
-        }
-
-        transaction.update(rateDocRef, {
-          count: admin.firestore.FieldValue.increment(1),
+      if (!doc.exists) {
+        transaction.set(rateDocRef, {
+          count: 1,
+          firstRequest: now,
           lastRequest: now
         });
-
         return true;
+      }
+
+      const docData = doc.data();
+
+      if (docData.lastRequest.toDate() < windowStart) {
+        transaction.set(rateDocRef, {
+          count: 1,
+          firstRequest: now,
+          lastRequest: now
+        });
+        return true;
+      }
+
+      if (docData.count >= maxCalls) {
+        return false;
+      }
+
+      transaction.update(rateDocRef, {
+        count: admin.firestore.FieldValue.increment(1),
+        lastRequest: now
       });
 
-      return res.status(200).json({ allowed: isAllowed });
-    } catch (error) {
-      console.error("Rate limit check failed:", error);
-      return res.status(200).json({ allowed: true });
-    }
-  }
-);
+      return true;
+    });
 
+    return res.status(200).json({ allowed: isAllowed });
+  } catch (error) {
+    console.error("Rate limit check failed:", error);
+    // Fail-open gracefully so user isn't blocked by internal function errors
+    return res.status(200).json({ allowed: true });
+  }
+});
 
 // ======================================================
 // 8. ZERO-KNOWLEDGE PROOF ENGINE (GENERATION & VERIFICATION)
