@@ -1,12 +1,10 @@
 /**
  * Cloud Functions for Firebase / Cloudflare R2 Integration
- * Fully migrated to Firebase Functions v2
- *
  * Stack: Firebase Functions v2 • AWS SDK v3 • SnarkJS • Paystack • Cloud Tasks
  */
 
+const functions = require("firebase-functions");
 const { onRequest, onCall, HttpsError } = require("firebase-functions/v2/https");
-const { onUserCreated } = require("firebase-functions/v2/identity");
 const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 const { defineSecret } = require("firebase-functions/params");
 const { CloudTasksClient } = require("@google-cloud/tasks");
@@ -184,10 +182,9 @@ exports.getUploadUrl = onRequest(
 );
 
 // ======================================================
-// 2. USER INITIALIZATION
+// 2. USER INITIALIZATION (v1 Auth Trigger)
 // ======================================================
-exports.initializeCitizenProfile = onUserCreated(async (event) => {
-  const user = event.data;
+exports.initializeCitizenProfile = functions.auth.user().onCreate(async (user) => {
   const userId = user.uid;
   const defaultUsername = `citizen_${Math.floor(1000 + Math.random() * 9000)}`;
 
@@ -247,7 +244,6 @@ exports.initializeCitizenProfile = onUserCreated(async (event) => {
     console.error(`Error creating profile for ${userId}:`, error);
   }
 });
-
 // ======================================================
 // 3. TRUST TIER
 // ======================================================
