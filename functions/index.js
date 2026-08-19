@@ -530,6 +530,22 @@ async function analyzeToxicityWithPerspective(content = "") {
     return gentleModerationCheck(content);
   }
 }
+
+
+// ======================================================
+// 5. TOXICITY MODERATION HELPER
+// ======================================================
+function gentleModerationCheck(content = "") {
+  const text = content.toLowerCase();
+  const flagWords = ["spam", "scam", "abuse", "hate", "harass"];
+  const isFlagged = flagWords.some((word) => text.includes(word));
+  
+  return {
+    safe: !isFlagged,
+    toxicityScore: isFlagged ? 0.8 : 0.0,
+    note: isFlagged ? "Flagged by local fallback moderation check." : "Passed local fallback check."
+  };
+}
 // ======================================================
 // 6. PAYSTACK INTEGRATION
 // ======================================================
