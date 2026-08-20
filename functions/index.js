@@ -832,7 +832,7 @@ exports.verifyZKProof = onCall(
 
 // 9. MEDIA FORENSIC PIPELINE
 // ======================================================
-exports.verifyMediaPipeline = onDocumentCreated(
+exports.verifyMediaPipelineV2 = onDocumentCreated(
   {
     region: "us-central1", // Deploys in us-central1 alongside main stack
     document: "testimonies/{postId}",
