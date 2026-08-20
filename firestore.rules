@@ -17,7 +17,6 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.token.admin == true;
     }
 
-    // Safe existence check – never crashes when the user doc is missing
     function userExists() {
       return exists(/databases/$(database)/documents/users/$(request.auth.uid));
     }
@@ -34,21 +33,18 @@ service cloud.firestore {
       );
     }
 
-    // Safe version – works even when the user document does not exist yet
     function isNotBanned() {
       return isAuthenticated()
         && request.auth.token.banned != true
         && (!userExists() || getUserData().isBanned != true);
     }
 
-    // Safe 30-second throttle
     function isNotThrottled() {
       return !userExists()
         || !('lastTestimonyAt' in getUserData())
         || request.time > getUserData().lastTestimonyAt + duration.value(30, 's');
     }
 
-    // RELAXED MEDIA URL VALIDATION
     function isValidMediaUrl(url) {
       return url is string && (
         url == '' ||
@@ -121,7 +117,7 @@ service cloud.firestore {
     // RATE LIMITS & INTERNAL COLLECTION
     // ==========================================
     match /rateLimits/{rateLimitId} {
-      allow read, write: if false;   // only Admin SDK can touch this
+      allow read, write: if false;
     }
 
     // ==========================================
@@ -154,7 +150,7 @@ service cloud.firestore {
     match /testimonies/{testimonyId} {
       allow read: if true;
 
-      // ★ UPDATED: now allows text OR media (image/audio)
+      // ★ FIXED VERSION – allows text OR media
       allow create: if isNotBanned()
         && isNotThrottled()
         && request.resource.data.authorId == request.auth.uid
@@ -205,6 +201,5 @@ service cloud.firestore {
       allow create: if isAuthenticated();
       allow update, delete: if false;
     }
-
   }
 }
