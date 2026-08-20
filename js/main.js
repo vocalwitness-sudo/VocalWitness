@@ -228,9 +228,15 @@ function showWelcomeNote() {
 window.publishTestimony = async () => {
     if (!requireAuth("Please sign in to share your testimony in Citizen Talk.")) return;
 
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+        showToast("Session expired. Please re-authenticate.", "error");
+        return;
+    }
+
     const textarea = document.getElementById('mainInput');
     const content = textarea ? textarea.value.trim() : '';
-    
+
     if (!content) {
         showToast("Please write something before publishing", "error");
         return;
@@ -242,15 +248,8 @@ window.publishTestimony = async () => {
 
     const postBtn = document.getElementById('postButton');
     if (postBtn) {
-        if (postBtn.disabled) return;
         postBtn.disabled = true;
         postBtn.classList.add('publishing', 'opacity-50', 'cursor-not-allowed');
-        postBtn.innerHTML = `
-            <span class="flex items-center justify-center gap-3">
-                <span class="animate-spin h-5 w-5 border-2 border-black border-t-transparent rounded-full"></span>
-                Publishing to ${state.currentMode === 'witness' ? 'Witness Voice' : 'Citizen Talk'}...
-            </span>
-        `;
     }
 
     try {
@@ -258,10 +257,11 @@ window.publishTestimony = async () => {
             ? await mediaModule.uploadForensicMedia()
             : {};
 
+        // 1. Construct testimony payload strictly obeying rule constraints
         const testimonyData = {
-            authorId: auth.currentUser.uid,
-            author: auth.currentUser.displayName || "Registered Witness",
-            content,
+            authorId: currentUser.uid,
+            author: currentUser.displayName || "Registered Witness",
+            content: content,
             createdAt: serverTimestamp(),
             timestamp: Date.now(),
             isPublic: true,
@@ -274,7 +274,9 @@ window.publishTestimony = async () => {
             hasForensic: !!(mediaData.imageHash || mediaData.audioHash)
         };
 
+        // 2. Add testimony to Firestore
         await addDoc(collection(db, "testimonies"), testimonyData);
+
         showToast("✅ Testimony published successfully!", "success");
 
         if (textarea) textarea.value = '';
@@ -282,20 +284,16 @@ window.publishTestimony = async () => {
         initFeed?.(db, testimonyData.feedVisibility);
 
     } catch (err) {
-        console.error("Publish error:", err);
-        const msg = err.code === 'permission-denied'
-            ? "⚠️ Permission denied. Please check your Firestore security rules."
-            : "Failed to publish. Please try again.";
-        showToast(msg, "error");
+        console.error("Publish error detail:", err);
+        if (err.code === 'permission-denied') {
+            showToast("⚠️ Permission denied: Please wait 30s before posting again or re-login.", "error");
+        } else {
+            showToast("Failed to publish. Please try again.", "error");
+        }
     } finally {
         if (postBtn) {
             postBtn.disabled = false;
             postBtn.classList.remove('publishing', 'opacity-50', 'cursor-not-allowed');
-            postBtn.innerHTML = `
-                <span class="relative z-10 flex items-center justify-center gap-3">
-                    Publish to ${state.currentMode === 'witness' ? 'Witness Voice' : 'Citizen Talk'}
-                </span>
-            `;
         }
     }
 };
