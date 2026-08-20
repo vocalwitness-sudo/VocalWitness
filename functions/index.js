@@ -828,12 +828,11 @@ exports.verifyZKProof = onCall(
   }
 );
 
-// ======================================================
 // 9. MEDIA FORENSIC PIPELINE
 // ======================================================
 exports.verifyMediaPipeline = onDocumentCreated(
   {
-    region: "us-central1", // <--- Explicitly sets deployment region
+    region: "us-central1", // Deploys in us-central1 alongside main stack
     document: "testimonies/{postId}",
     secrets: [perspectiveApiKey],
   },
@@ -841,10 +840,11 @@ exports.verifyMediaPipeline = onDocumentCreated(
     const snap = event.data;
     if (!snap) return;
 
-    const data = snap.data();
+    const data = snap.data() || {};
     const postId = event.params.postId;
 
     try {
+      // Analyze text content using Perspective API secret
       const moderation = await analyzeToxicityWithPerspective(data.content || "");
 
       await snap.ref.set(
