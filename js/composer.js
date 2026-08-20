@@ -190,8 +190,9 @@ export function initComposer() {
                 // --- 3. MEDIA UPLOAD ---
                 const mediaData = (await uploadForensicMedia()) || {};
 
-                if (!headline && !text && !mediaData.imageUrl && !mediaData.audioUrl) {
-                    showToast('Please add a headline, description, or attach media', 'error');
+                // ★ Short clear message to the user
+                if ((!text || text.length === 0) && !mediaData.imageUrl && !mediaData.audioUrl) {
+                    showToast('Please add some text or attach a photo/voice message before publishing.', 'info');
                     postButton.disabled = false;
                     postButton.textContent = originalBtnText;
                     return;
@@ -269,10 +270,20 @@ export function initComposer() {
                 const userTier = await getCurrentUserTier();
                 const userWitnessLevel = await getCurrentWitnessLevel();
 
+                // Diagnostic log (you can remove later)
+                console.log("About to publish with this data:", {
+                    headline,
+                    content: text,
+                    authorId: userId,
+                    imageUrl: mediaData?.imageUrl,
+                    audioUrl: mediaData?.audioUrl,
+                    targetFeed
+                });
+
                 // --- 6. FIRESTORE WRITE ---
                 const testimonyRef = await addDoc(collection(db, "testimonies"), {
                     headline: headline || null,
-                    content: text || "",
+                    content: (text && text.trim()) || "",   // ★ safer – always a string
                     targetFeed: targetFeed,
                     imageUrl: mediaData.imageUrl || null,
                     audioUrl: mediaData.audioUrl || null,
