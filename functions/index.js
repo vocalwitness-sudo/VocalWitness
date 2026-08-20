@@ -843,3 +843,92 @@ exports.verifyMediaPipeline = onDocumentCreated(
     }
   }
 );
+
+// ======================================================
+// EXPORTED CLOUD FUNCTIONS
+// ======================================================
+
+/**
+ * Example 1: Generate R2 Presigned Upload URL
+ */
+exports.getUploadUrl = onRequest({
+  secrets: [r2AccessKeyId, r2SecretAccessKey]
+}, (req, res) => {
+  corsHandler(req, res, async () => {
+    try {
+      // Initialize AWS S3 Client with Cloudflare R2 Credentials
+      const s3Client = new S3Client({
+        region: "auto",
+        endpoint: "https://b282f46ef0831c8af75bfe52120bbac6.r2.cloudflarestorage.com",
+        credentials: {
+          accessKeyId: r2AccessKeyId.value(),
+          secretAccessKey: r2SecretAccessKey.value(),
+        },
+      });
+
+      const { fileName, fileType } = req.body;
+      const command = new PutObjectCommand({
+        Bucket: "vocalwitness-media",
+        Key: fileName,
+        ContentType: fileType,
+      });
+
+      const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+      res.status(200).json({ uploadUrl });
+    } catch (error) {
+      console.error("Presigned URL error:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+});
+
+/**
+ * Example 2: Perspective Toxicity Analysis
+ */
+exports.analyzeToxicity = onRequest({
+  secrets: [perspectiveApiKey]
+}, (req, res) => {
+  corsHandler(req, res, async () => {
+    try {
+      const { text } = req.body;
+      const apiKey = perspectiveApiKey.value();
+
+      const response = await axios.post(
+        `https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze?key=${apiKey}`,
+        {
+          comment: { text },
+          requestedAttributes: { TOXICITY: {} },
+        }
+      );
+
+      res.status(200).json(response.data);
+    } catch (error) {
+      console.error("Perspective API error:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+});
+
+/**
+ * Example 3: Paystack Transaction Initialization
+ */
+exports.initializePaystack = onRequest({
+  secrets: [paystackSecretKey]
+}, (req, res) => {
+  corsHandler(req, res, async () => {
+    try {
+      const paystack = getPaystackClient(); // Automatically accesses paystackSecretKey.value()
+      const { email, amount } = req.body;
+
+      const response = await paystack.transaction.initialize({
+        email,
+        amount: amount * 100, // Amount in kobo
+      });
+
+      res.status(200).json(response.data);
+    } catch (error) {
+      console.error("Paystack error:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+});
