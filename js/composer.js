@@ -160,7 +160,7 @@ export function initComposer() {
             }
 
             // --- 2. DEFERRED ONBOARDING (Unauthenticated Users) ---
-            if (!auth.currentUser) {
+            if (!auth?.currentUser || !auth.currentUser.uid) {
                 await saveDraftOffline({
                     headline: headline,
                     content: text,
@@ -172,6 +172,13 @@ export function initComposer() {
                 
                 // Trigger event for auth.js to catch and show the login modal
                 window.dispatchEvent(new CustomEvent('vocalWitness:requestAuth'));
+                return;
+            }
+
+            // Guard: Ensure user and UID are strictly available before proceeding to network/DB calls
+            const userId = auth.currentUser.uid;
+            if (!userId) {
+                showToast('Authentication error. Please re-login.', 'error');
                 return;
             }
 
@@ -192,7 +199,7 @@ export function initComposer() {
 
                 // --- 4. TARGET FEED VERIFICATION DOOR & CLOUD DRAFTS ---
                 if (targetFeed === 'witness_voice') {
-                    const userDocRef = doc(db, "users", auth.currentUser.uid);
+                    const userDocRef = doc(db, "users", userId);
                     const userSnap = await getDoc(userDocRef);
                     const userData = userSnap.exists() ? userSnap.data() : {};
 
@@ -200,7 +207,7 @@ export function initComposer() {
 
                     if (!isVerified) {
                         // Save to Cloud Drafts so their work isn't lost
-                        await addDoc(collection(db, `users/${auth.currentUser.uid}/drafts`), {
+                        await addDoc(collection(db, `users/${userId}/drafts`), {
                             headline: headline || null,
                             content: text,
                             targetFeed: targetFeed,
@@ -218,8 +225,8 @@ export function initComposer() {
                             onVerifyRequested: async () => {
                                 try {
                                     await addDoc(collection(db, "verification_requests"), {
-                                        applicantId: auth.currentUser.uid,
-                                        applicantName: auth.currentUser.displayName || "Anonymous Witness",
+                                        applicantId: userId,
+                                        applicantName: auth.currentUser?.displayName || "Anonymous Witness",
                                         targetFeed: targetFeed,
                                         status: "pending",
                                         requestedAt: serverTimestamp()
@@ -242,7 +249,7 @@ export function initComposer() {
                     const functions = getFunctions(undefined, 'us-central1');
                     const checkRateLimitFn = httpsCallable(functions, 'checkRateLimit');
                     const rateLimitCheck = await checkRateLimitFn({
-                        userId: auth.currentUser.uid,
+                        userId: userId,
                         action: "create_testimony",
                         maxCalls: 6,
                         windowMinutes: 60
@@ -272,8 +279,8 @@ export function initComposer() {
                     forensicHash: mediaData.imageHash || mediaData.audioHash || null,
                     imageHash: mediaData.imageHash || null,
                     audioHash: mediaData.audioHash || null,
-                    authorId: auth.currentUser.uid,
-                    author: auth.currentUser.displayName || "Anonymous Witness",
+                    authorId: userId,
+                    author: auth.currentUser?.displayName || "Anonymous Witness",
                     authorTier: userTier || 'citizen',
                     authorWitnessLevel: userWitnessLevel?.name || null,
                     createdAt: serverTimestamp(),
