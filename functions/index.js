@@ -17,6 +17,8 @@ const crypto = require("crypto");
 const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const axios = require("axios");
+const { setGlobalOptions } = require("firebase-functions/v2");
+setGlobalOptions({ region: "us-central1" });
 
 // ======================================================
 // SECRETS
