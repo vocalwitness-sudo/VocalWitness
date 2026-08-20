@@ -833,6 +833,7 @@ exports.verifyZKProof = onCall(
 // ======================================================
 exports.verifyMediaPipeline = onDocumentCreated(
   {
+    region: "us-central1", // <--- Explicitly sets deployment region
     document: "testimonies/{postId}",
     secrets: [perspectiveApiKey],
   },
