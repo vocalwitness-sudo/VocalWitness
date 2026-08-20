@@ -150,7 +150,7 @@ service cloud.firestore {
     match /testimonies/{testimonyId} {
       allow read: if true;
 
-      // ★ FIXED VERSION – allows text OR media
+      // ★ UPDATED: now allows text OR media (image/audio)
       allow create: if isNotBanned()
         && isNotThrottled()
         && request.resource.data.authorId == request.auth.uid
