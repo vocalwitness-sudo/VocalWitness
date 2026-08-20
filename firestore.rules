@@ -151,26 +151,32 @@ service cloud.firestore {
     // ==========================================
     // TESTIMONIES & PUBLIC SQUARE FEED
     // ==========================================
-match /testimonies/{testimonyId} {
-  allow read: if true;
+    match /testimonies/{testimonyId} {
+      allow read: if true;
 
-  allow create: if isNotBanned()
-    && isNotThrottled()
-    && request.resource.data.content is string
-    && request.resource.data.content.size() > 0
-    && request.resource.data.content.size() <= 2000
-    && request.resource.data.authorId == request.auth.uid
-    && (request.resource.data.createdAt is timestamp || request.resource.data.createdAt == request.time);
+      // ★ UPDATED: now allows text OR media (image/audio)
+      allow create: if isNotBanned()
+        && isNotThrottled()
+        && request.resource.data.authorId == request.auth.uid
+        && (
+             (request.resource.data.content is string
+              && request.resource.data.content.size() > 0
+              && request.resource.data.content.size() <= 2000)
+             || (request.resource.data.imageUrl is string && request.resource.data.imageUrl.size() > 0)
+             || (request.resource.data.audioUrl is string && request.resource.data.audioUrl.size() > 0)
+           )
+        && (request.resource.data.createdAt is timestamp 
+            || request.resource.data.createdAt == request.time);
 
-  allow update: if isModerator() || (
-    isNotBanned() &&
-    resource.data.authorId == request.auth.uid &&
-    request.resource.data.content.size() <= 2000 &&
-    isSafeAuthorTestimonyUpdate()
-  );
+      allow update: if isModerator() || (
+        isNotBanned() &&
+        resource.data.authorId == request.auth.uid &&
+        request.resource.data.content.size() <= 2000 &&
+        isSafeAuthorTestimonyUpdate()
+      );
 
-  allow delete: if (resource.data.authorId == request.auth.uid) || isModerator();
-}
+      allow delete: if (resource.data.authorId == request.auth.uid) || isModerator();
+    }
 
     // ==========================================
     // REPORTS COLLECTION
