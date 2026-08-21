@@ -2,7 +2,9 @@
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
 import { 
   getAuth, 
-  GoogleAuthProvider, 
+  GoogleAuthProvider,
+  TwitterAuthProvider,
+  GithubAuthProvider,
   setPersistence, 
   browserLocalPersistence 
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
@@ -38,7 +40,28 @@ const db = initializeFirestore(app, {
 
 const storage = getStorage(app);
 
-const provider = new GoogleAuthProvider();
-provider.setCustomParameters({ prompt: 'select_account' });
+// ====================== AUTH PROVIDERS ======================
 
-export { app, auth, db, storage, provider };
+// Google
+const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({
+  prompt: 'select_account'
+});
+
+// Twitter (X)
+const twitterProvider = new TwitterAuthProvider();
+
+// GitHub
+const githubProvider = new GithubAuthProvider();
+// Optional: request extra scopes
+// githubProvider.addScope('read:user');
+
+export { 
+  app, 
+  auth, 
+  db, 
+  storage, 
+  googleProvider, 
+  twitterProvider, 
+  githubProvider 
+};
