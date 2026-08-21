@@ -1,5 +1,6 @@
 // js/composer.js - Production Testimony Creation & Forensic Pipeline
 import { compressImage } from './media-compression.js';
+import { scrubExif } from './imageScrubber.js';
 import { showToast } from './utils.js';
 import { getCurrentUserTier, getCurrentWitnessLevel } from './tier.js';
 import { db, auth } from './firebase-config.js';
@@ -63,6 +64,30 @@ function clearComposerState(headlineInput, mainInput, btnPhoto, btnVoice) {
     resetMediaState();
 }
 
+// Visual Indicator Helper for Witness Voice Switching
+function updateComposerModeUI(targetFeed) {
+    const isWitness = targetFeed === 'witness_voice';
+    const composerBox = document.getElementById('composer-container') || document.querySelector('.composer-box');
+    const modeBadge = document.getElementById('composer-mode-badge');
+
+    if (composerBox) {
+        if (isWitness) {
+            composerBox.classList.add('border-amber-500/50', 'bg-slate-950/90');
+            composerBox.classList.remove('border-slate-800');
+        } else {
+            composerBox.classList.remove('border-amber-500/50', 'bg-slate-950/90');
+            composerBox.classList.add('border-slate-800');
+        }
+    }
+
+    if (modeBadge) {
+        modeBadge.textContent = isWitness ? '🛡️ Witness Voice Mode (EXIF Scrubbing Active)' : '💬 Citizen Talk Mode';
+        modeBadge.className = isWitness 
+            ? 'text-xs font-semibold text-amber-400 bg-amber-950/40 px-2 py-1 rounded border border-amber-500/30' 
+            : 'text-xs font-semibold text-emerald-400 bg-slate-800 px-2 py-1 rounded';
+    }
+}
+
 // Initialize Composer Event Listeners & Ensure Visual Styling
 export function initComposer() {
     const btnPhoto = document.getElementById('btn-photo');
@@ -73,12 +98,26 @@ export function initComposer() {
     const postButton = document.getElementById('postButton');
     const targetFeedSelect = document.getElementById('targetFeedSelect') || document.getElementById('feedType');
 
+    // --- FEED SELECTOR SWITCH LISTENER ---
+    if (targetFeedSelect && !targetFeedSelect.dataset.listenerAttached) {
+        targetFeedSelect.dataset.listenerAttached = "true";
+        targetFeedSelect.addEventListener('change', (e) => {
+            let rawFeed = e.target.value;
+            const normalizedFeed = (rawFeed === 'vocal_truth' || rawFeed === 'true_witness') ? 'witness_voice' : rawFeed;
+            updateComposerModeUI(normalizedFeed);
+        });
+
+        // Initialize UI state
+        let initFeedVal = targetFeedSelect.value;
+        updateComposerModeUI((initFeedVal === 'vocal_truth' || initFeedVal === 'true_witness') ? 'witness_voice' : initFeedVal);
+    }
+
     // --- APPLY FALLBACK STYLING ---
     if (btnPhoto) btnPhoto.classList.add('inline-flex', 'items-center', 'gap-2', 'px-3', 'py-1.5', 'rounded-lg', 'bg-slate-800', 'text-emerald-400', 'border', 'border-slate-700', 'hover:bg-slate-700', 'cursor-pointer', 'transition');
     if (btnVoice) btnVoice.classList.add('inline-flex', 'items-center', 'gap-2', 'px-3', 'py-1.5', 'rounded-lg', 'bg-slate-800', 'text-amber-400', 'border', 'border-slate-700', 'hover:bg-slate-700', 'cursor-pointer', 'transition');
     if (postButton) postButton.classList.add('inline-flex', 'items-center', 'justify-center', 'px-5', 'py-1.5', 'rounded-lg', 'bg-emerald-600', 'hover:bg-emerald-500', 'text-white', 'font-semibold', 'shadow', 'cursor-pointer', 'transition');
 
-    // --- PHOTO SELECTION ---
+    // --- PHOTO SELECTION & FORENSIC SCRUBBING ---
     if (btnPhoto && !btnPhoto.dataset.listenerAttached) {
         btnPhoto.dataset.listenerAttached = "true";
 
@@ -101,14 +140,20 @@ export function initComposer() {
                 if (!file) return;
 
                 try {
-                    showToast('Compressing image...', 'info');
-                    const compressedFile = await compressImage(file, 1200, 0.82);
+                    showToast('Scrubbing EXIF metadata & compressing...', 'info');
+                    
+                    // 1. Scrub EXIF Metadata for privacy protection
+                    const cleanFile = typeof scrubExif === 'function' ? await scrubExif(file) : file;
+                    
+                    // 2. Compress image
+                    const compressedFile = await compressImage(cleanFile, 1200, 0.82);
+                    
                     const syntheticEvent = { target: { files: [compressedFile] } };
                     await handleImageSelect(syntheticEvent, previewArea);
                     toggleActive(btnPhoto);
                 } catch (err) {
-                    console.error("Image compression error:", err);
-                    showToast('Failed to compress image', 'error');
+                    console.error("Image processing error:", err);
+                    showToast('Failed to process image metadata', 'error');
                 }
             });
         }
@@ -144,6 +189,7 @@ export function initComposer() {
             // Feed Alias Normalization
             let rawFeed = targetFeedSelect?.value || "citizen_talk";
             const targetFeed = (rawFeed === 'vocal_truth' || rawFeed === 'true_witness') ? 'witness_voice' : rawFeed;
+            const isWitnessVoice = targetFeed === 'witness_voice';
 
             // --- 1. OFFLINE CHECK & BUFFER ---
             if (!navigator.onLine) {
@@ -151,6 +197,7 @@ export function initComposer() {
                     headline: headline,
                     content: text,
                     targetFeed: targetFeed,
+                    isWitnessVoice: isWitnessVoice,
                     authorId: auth?.currentUser?.uid || 'anonymous',
                     createdAt: Date.now()
                 });
@@ -165,6 +212,7 @@ export function initComposer() {
                     headline: headline,
                     content: text,
                     targetFeed: targetFeed,
+                    isWitnessVoice: isWitnessVoice,
                     createdAt: Date.now(),
                     status: 'pending_auth'
                 });
@@ -184,22 +232,22 @@ export function initComposer() {
 
             const originalBtnText = postButton.textContent;
             postButton.disabled = true;
-            postButton.textContent = 'Processing...';
+            postButton.textContent = isWitnessVoice ? 'Hashing & Publishing...' : 'Processing...';
 
             try {
-                // --- 3. MEDIA UPLOAD ---
+                // --- 3. MEDIA UPLOAD (Includes SHA-256 Forensic Hashing) ---
                 const mediaData = (await uploadForensicMedia()) || {};
 
-                // ★ Short clear message to the user
+                // Validation check
                 if ((!text || text.length === 0) && !mediaData.imageUrl && !mediaData.audioUrl) {
-                    showToast('Please add some text or attach a photo/voice message before publishing.', 'info');
+                    showToast('Please add text or attach verified media before publishing.', 'info');
                     postButton.disabled = false;
                     postButton.textContent = originalBtnText;
                     return;
                 }
 
                 // --- 4. TARGET FEED VERIFICATION DOOR & CLOUD DRAFTS ---
-                if (targetFeed === 'witness_voice') {
+                if (isWitnessVoice) {
                     const userDocRef = doc(db, "users", userId);
                     const userSnap = await getDoc(userDocRef);
                     const userData = userSnap.exists() ? userSnap.data() : {};
@@ -207,11 +255,12 @@ export function initComposer() {
                     const isVerified = userData.zkVerified === true || userData.tier === 'witness' || userData.tier === 'steward';
 
                     if (!isVerified) {
-                        // Save to Cloud Drafts so their work isn't lost
+                        // Save to Cloud Drafts so work isn't lost
                         await addDoc(collection(db, `users/${userId}/drafts`), {
                             headline: headline || null,
                             content: text,
                             targetFeed: targetFeed,
+                            isWitnessVoice: true,
                             imageUrl: mediaData.imageUrl || null,
                             audioUrl: mediaData.audioUrl || null,
                             imageHash: mediaData.imageHash || null,
@@ -270,21 +319,13 @@ export function initComposer() {
                 const userTier = await getCurrentUserTier();
                 const userWitnessLevel = await getCurrentWitnessLevel();
 
-                // Diagnostic log (you can remove later)
-                console.log("About to publish with this data:", {
-                    headline,
-                    content: text,
-                    authorId: userId,
-                    imageUrl: mediaData?.imageUrl,
-                    audioUrl: mediaData?.audioUrl,
-                    targetFeed
-                });
-
                 // --- 6. FIRESTORE WRITE ---
                 const testimonyRef = await addDoc(collection(db, "testimonies"), {
                     headline: headline || null,
-                    content: (text && text.trim()) || "",   // ★ safer – always a string
+                    content: (text && text.trim()) || "",
                     targetFeed: targetFeed,
+                    channel: targetFeed,
+                    isWitnessVoice: isWitnessVoice,
                     imageUrl: mediaData.imageUrl || null,
                     audioUrl: mediaData.audioUrl || null,
                     forensicHash: mediaData.imageHash || mediaData.audioHash || null,
@@ -302,11 +343,12 @@ export function initComposer() {
                 // --- 7. FORENSIC AUDIT LOGGING ---
                 await logSecurityAudit('TESTIMONY_PUBLISHED', testimonyRef.id, {
                     targetFeed,
+                    isWitnessVoice,
                     hasHeadline: !!headline,
                     hasMedia: !!(mediaData.imageUrl || mediaData.audioUrl)
                 });
 
-                showToast('✅ Testimony published successfully!', 'success');
+                showToast(isWitnessVoice ? '🛡️ Witness Voice Testimony Logged!' : '✅ Post Published!', 'success');
                 clearComposerState(headlineInput, mainInput, btnPhoto, btnVoice);
                 window.dispatchEvent(new CustomEvent('vocalWitness:posted'));
 
