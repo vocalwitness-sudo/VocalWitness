@@ -1,764 +1,495 @@
-// js/auth.js - Auth Handler with Profile Cache Sync & Default Citizen Tier Assignment
+// js/auth.js - Social Auth Only (Google + Twitter + GitHub)
 import {
-    signInWithPopup,
-    signInWithRedirect,
-    getRedirectResult,
-    signOut,
-    signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
-    sendEmailVerification,
-    sendPasswordResetEmail,
-    setPersistence,
-    browserLocalPersistence,
-    browserSessionPersistence,
-    onAuthStateChanged
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
+  signOut,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
+  onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import { auth, provider, db } from './firebase-config.js';
+
+import { 
+  auth, 
+  googleProvider, 
+  twitterProvider, 
+  githubProvider, 
+  db 
+} from './firebase-config.js';
+
 import { showToast } from './utils.js';
 import { updateAppState } from './app-state.js';
 import { applyTierTheme, updateTierBadge, clearProfileCache, TIERS } from './tier.js';
 import { initNotifications } from './notifications.js';
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { 
+  doc, 
+  getDoc, 
+  setDoc, 
+  updateDoc, 
+  serverTimestamp 
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 let authActionInProgress = false;
-let isSignUpMode = false; // false = Sign In, true = Create Account
 
-// ====================== TIER & USER HELPERS ======================
+// ====================== HELPERS ======================
+
 function refreshTierUI() {
-    clearProfileCache();
-    if (typeof window.refreshTierAndUI === 'function') {
-        window.refreshTierAndUI();
-    } else {
-        if (typeof applyTierTheme === 'function') applyTierTheme();
-        if (typeof updateTierBadge === 'function') updateTierBadge();
-    }
+  clearProfileCache();
+  if (typeof window.refreshTierAndUI === 'function') {
+    window.refreshTierAndUI();
+  } else {
+    if (typeof applyTierTheme === 'function') applyTierTheme();
+    if (typeof updateTierBadge === 'function') updateTierBadge();
+  }
 }
 
 async function createOrUpdateUser(user) {
-    if (!user || !user.uid) return;
+  if (!user?.uid) return;
 
-    try {
-        const userRef = doc(db, "users", user.uid);
-        const snap = await getDoc(userRef);
+  try {
+    const userRef = doc(db, "users", user.uid);
+    const snap = await getDoc(userRef);
 
-        const safeEmail = user.email || "";
-        const safeDisplayName = user.displayName || "Anonymous Witness";
-        const safePhotoURL = user.photoURL || "";
+    const safeEmail = user.email || "";
+    const safeDisplayName = user.displayName || "Anonymous Witness";
+    const safePhotoURL = user.photoURL || "";
 
-        if (!snap.exists()) {
-            await setDoc(userRef, {
-                uid: user.uid,
-                email: safeEmail,
-                displayName: safeDisplayName,
-                photoURL: safePhotoURL,
-                tier: TIERS?.CITIZEN || "citizen",
-                isVerified: false,
-                isPhoneVerified: false,
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp()
-            });
+    if (!snap.exists()) {
+      await setDoc(userRef, {
+        uid: user.uid,
+        email: safeEmail,
+        displayName: safeDisplayName,
+        photoURL: safePhotoURL,
+        tier: TIERS?.CITIZEN || "citizen",
+        isVerified: false,
+        isPhoneVerified: false,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
 
-            if (typeof updateVerificationUI === 'function') {
-                updateVerificationUI(false);
-            }
-            if (typeof showToast === 'function') {
-                showToast("🎉 Account created! Welcome to the Public Square.", "success");
-            }
-        } else {
-            const existingData = snap.data() || {};
-            const changes = {};
+      updateVerificationUI(false);
+      showToast("🎉 Account created! Welcome to the Public Square.", "success");
+    } else {
+      const existing = snap.data() || {};
+      const changes = {};
 
-            if (safeDisplayName && safeDisplayName !== existingData.displayName) {
-                changes.displayName = safeDisplayName;
-            }
-            if (safePhotoURL && safePhotoURL !== existingData.photoURL) {
-                changes.photoURL = safePhotoURL;
-            }
-            if (safeEmail && safeEmail !== existingData.email) {
-                changes.email = safeEmail;
-            }
+      if (safeDisplayName && safeDisplayName !== existing.displayName) {
+        changes.displayName = safeDisplayName;
+      }
+      if (safePhotoURL && safePhotoURL !== existing.photoURL) {
+        changes.photoURL = safePhotoURL;
+      }
+      if (safeEmail && safeEmail !== existing.email) {
+        changes.email = safeEmail;
+      }
+      if (!existing.tier) changes.tier = TIERS?.CITIZEN || "citizen";
+      if (existing.isPhoneVerified === undefined) changes.isPhoneVerified = false;
 
-            if (!existingData.tier) changes.tier = TIERS?.CITIZEN || "citizen";
-            if (existingData.isPhoneVerified === undefined) changes.isPhoneVerified = false;
+      if (Object.keys(changes).length > 0) {
+        changes.updatedAt = serverTimestamp();
+        await updateDoc(userRef, changes);
+      }
 
-            if (Object.keys(changes).length > 0) {
-                changes.updatedAt = serverTimestamp();
-                await updateDoc(userRef, changes);
-            }
-
-            const currentIsVerified = changes.isVerified ?? existingData.isVerified ?? false;
-            const currentIsPhoneVerified = changes.isPhoneVerified ?? existingData.isPhoneVerified ?? existingData.hasVerifiedPhone ?? false;
-
-            if (typeof updateVerificationUI === 'function') {
-                updateVerificationUI(currentIsVerified || currentIsPhoneVerified);
-            }
-        }
-    } catch (e) {
-        if (e?.code === 'permission-denied') {
-            console.warn("Firestore rules restricted document sync for UID:", user.uid);
-        } else {
-            console.error("User document update error:", e);
-            if (typeof showToast === 'function') {
-                showToast("Error configuring user profile in Firestore.", "error");
-            }
-        }
+      const isVerified = existing.isVerified || existing.isPhoneVerified || existing.hasVerifiedPhone || false;
+      updateVerificationUI(isVerified);
     }
+  } catch (e) {
+    if (e?.code !== 'permission-denied') {
+      console.error("User document error:", e);
+      showToast("Error saving profile.", "error");
+    }
+  }
 }
 
 export function updateVerificationUI(isVerified = false) {
-    const statusEl = document.getElementById('verification-status');
-    const verifyBtn = document.getElementById('request-verification-btn');
+  const statusEl = document.getElementById('verification-status');
+  const verifyBtn = document.getElementById('request-verification-btn');
 
-    if (statusEl) {
-        if (isVerified) {
-            statusEl.className = "inline-flex items-center gap-1.5 text-xs font-bold text-emerald-400 bg-emerald-400/10 px-2.5 py-1 rounded-lg border border-emerald-400/20";
-            statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Citizen Circle`;
-        } else {
-            statusEl.className = "inline-flex items-center gap-1.5 text-xs font-bold text-amber-400 bg-amber-400/10 px-2.5 py-1 rounded-lg border border-amber-400/20";
-            statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Citizen (Unverified)`;
-        }
+  if (statusEl) {
+    if (isVerified) {
+      statusEl.className = "inline-flex items-center gap-1.5 text-xs font-bold text-emerald-400 bg-emerald-400/10 px-2.5 py-1 rounded-lg border border-emerald-400/20";
+      statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Citizen Circle`;
+    } else {
+      statusEl.className = "inline-flex items-center gap-1.5 text-xs font-bold text-amber-400 bg-amber-400/10 px-2.5 py-1 rounded-lg border border-amber-400/20";
+      statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Citizen (Unverified)`;
     }
+  }
 
-    if (verifyBtn) {
-        if (isVerified) {
-            verifyBtn.textContent = "Verified";
-            verifyBtn.disabled = true;
-            verifyBtn.classList.add("opacity-50", "cursor-not-allowed");
-        } else {
-            verifyBtn.textContent = "Get Verified";
-            verifyBtn.disabled = false;
-            verifyBtn.classList.remove("opacity-50", "cursor-not-allowed");
-        }
-    }
+  if (verifyBtn) {
+    verifyBtn.textContent = isVerified ? "Verified" : "Get Verified";
+    verifyBtn.disabled = isVerified;
+    verifyBtn.classList.toggle("opacity-50", isVerified);
+    verifyBtn.classList.toggle("cursor-not-allowed", isVerified);
+  }
 }
 
 export function savePendingDraft() {
+  const mainInput = document.getElementById('mainInput') ||
+                    document.getElementById('squareSearchInput') ||
+                    document.getElementById('testimonyInput');
+
+  if (mainInput?.value.trim()) {
+    sessionStorage.setItem('vocal_pending_draft', mainInput.value);
+    showToast("Draft saved. We'll restore it after sign-in.", "info");
+  }
+}
+
+export function restorePendingDraft() {
+  const draft = sessionStorage.getItem('vocal_pending_draft');
+  if (!draft) return;
+
+  let attempts = 0;
+  const interval = setInterval(() => {
     const mainInput = document.getElementById('mainInput') ||
                       document.getElementById('squareSearchInput') ||
                       document.getElementById('testimonyInput');
 
-    if (mainInput && mainInput.value.trim() !== '') {
-        sessionStorage.setItem('vocal_pending_draft', mainInput.value);
-        showToast("Draft saved. We'll restore it after sign-in.", "info");
+    if (mainInput) {
+      mainInput.value = draft;
+      showToast("✅ Your testimony draft has been restored!", "success");
+      sessionStorage.removeItem('vocal_pending_draft');
+      clearInterval(interval);
+    } else if (++attempts > 20) {
+      clearInterval(interval);
     }
-}
-
-export function restorePendingDraft() {
-    const draft = sessionStorage.getItem('vocal_pending_draft');
-    if (!draft) return;
-
-    let attempts = 0;
-    const interval = setInterval(() => {
-        const mainInput = document.getElementById('mainInput') ||
-                          document.getElementById('squareSearchInput') ||
-                          document.getElementById('testimonyInput');
-
-        if (mainInput) {
-            mainInput.value = draft;
-            showToast("✅ Your testimony draft has been restored!", "success");
-            sessionStorage.removeItem('vocal_pending_draft');
-            clearInterval(interval);
-        } else if (++attempts > 20) {
-            clearInterval(interval);
-        }
-    }, 200);
+  }, 200);
 }
 
 function handleAuthError(error) {
-    switch (error?.code) {
-        case 'auth/invalid-credential':
-            return "Invalid email or password. Please check your details or click 'Create Account' if you're new.";
-        case 'auth/too-many-requests':
-            return "Too many attempts. For security, please wait a few minutes before trying again.";
-        case 'auth/invalid-phone-number':
-            return "The phone number format is invalid. Please include your correct country code.";
-        case 'auth/quota-exceeded':
-            return "SMS service temporarily busy. Please try an alternate verification path.";
-        case 'auth/popup-closed-by-user':
-        case 'auth/cancelled-popup-request':
-            return null;
-        case 'auth/popup-blocked':
-            return "Popup was blocked by browser. Switching to redirect...";
-        case 'auth/invalid-email':
-            return "The email address format is invalid.";
-        case 'auth/user-not-found':
-            return "No account found with this email. Please click 'Create Account'.";
-        case 'auth/wrong-password':
-            return "Incorrect password. Please try again or click 'Forgot password?'.";
-        case 'auth/email-already-in-use':
-            return "An account with this email already exists. Try signing in instead.";
-        case 'auth/weak-password':
-            return "Password should be at least 6 characters long.";
-        case 'auth/missing-initial-state':
-            return "Browser privacy rules prevented automatic state recovery. Redirecting...";
-        default:
-            return error?.message || "Authentication failed. Please check your connection.";
-    }
+  switch (error?.code) {
+    case 'auth/popup-closed-by-user':
+    case 'auth/cancelled-popup-request':
+      return null;
+    case 'auth/popup-blocked':
+      return "Popup was blocked. Trying redirect method...";
+    case 'auth/account-exists-with-different-credential':
+      return "An account already exists with the same email using a different method.";
+    default:
+      return error?.message || "Authentication failed. Please try again.";
+  }
 }
 
-function getAuthInputs(form) {
-    if (!form || !(form instanceof HTMLFormElement)) {
-        return { emailInput: null, passwordInput: null };
+// ====================== SOCIAL LOGIN ======================
+
+async function socialLogin(provider, providerName, event) {
+  if (authActionInProgress) return;
+  authActionInProgress = true;
+
+  const btn = event?.target?.closest?.('button');
+  if (btn) {
+    btn.disabled = true;
+    btn.classList.add('opacity-50', 'cursor-not-allowed');
+  }
+
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
+                   window.matchMedia('(display-mode: standalone)').matches;
+
+  try {
+    savePendingDraft();
+
+    const remember = document.getElementById('rememberMe')?.checked ?? true;
+    await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
+
+    if (isMobile) {
+      await signInWithRedirect(auth, provider);
+      return;
     }
 
-    const isUsable = (el) => {
-        if (!el || el.disabled) return false;
-        if (el.hidden || el.type === 'hidden' || el.offsetParent === null) return false;
-        return true;
-    };
-
-    const emailCandidates = [
-        ...form.querySelectorAll('input[type="email"]'),
-        ...form.querySelectorAll('input[name="email"]'),
-        ...form.querySelectorAll('[data-auth="email"]')
-    ];
-
-    const passwordCandidates = [
-        ...form.querySelectorAll('input[type="password"]'),
-        ...form.querySelectorAll('input[name="password"]'),
-        ...form.querySelectorAll('[data-auth="password"]')
-    ];
-
-    const emailInput = emailCandidates.find(isUsable) || emailCandidates[0] || null;
-    const passwordInput = passwordCandidates.find(isUsable) || passwordCandidates[0] || null;
-
-    return { emailInput, passwordInput };
-}
-
-function updateAuthModeUI() {
-    const title = document.getElementById('authTitle');
-    const subtitle = document.getElementById('authSubtitle');
-    const submitBtn = document.getElementById('submitAuthBtn');
-    const toggleBtn = document.getElementById('toggleAuthModeBtn');
-    const forgotBtn = document.getElementById('forgotPasswordBtn');
-
-    if (isSignUpMode) {
-        if (title) title.textContent = "Create Account";
-        if (subtitle) subtitle.textContent = "Join the Public Square";
-        if (submitBtn) submitBtn.textContent = "Create Account";
-        if (toggleBtn) toggleBtn.textContent = "Sign In instead";
-        if (forgotBtn) forgotBtn.classList.add('hidden');
-    } else {
-        if (title) title.textContent = "Join the Public Square";
-        if (subtitle) subtitle.textContent = "Sign in or create an account to participate.";
-        if (submitBtn) submitBtn.textContent = "Sign In";
-        if (toggleBtn) toggleBtn.textContent = "Create Account";
-        if (forgotBtn) forgotBtn.classList.remove('hidden');
+    try {
+      const result = await signInWithPopup(auth, provider);
+      if (result?.user) {
+        showToast(`✅ Signed in with ${providerName}!`, "success");
+        closeLoginModal();
+        restorePendingDraft();
+      }
+    } catch (popupError) {
+      if (['auth/popup-blocked', 'auth/popup-closed-by-user'].includes(popupError.code)) {
+        showToast("Popup blocked. Switching to redirect...", "info");
+        await signInWithRedirect(auth, provider);
+        return;
+      }
+      throw popupError;
     }
-}
-
-function switchToAuthView() {
-    const form = document.getElementById('authForm');
-    const resetView = document.getElementById('resetPasswordView');
-    if (form) form.classList.remove('hidden');
-    if (resetView) resetView.classList.add('hidden');
-}
-
-function switchToResetView() {
-    const form = document.getElementById('authForm');
-    const resetView = document.getElementById('resetPasswordView');
-    const resetEmail = document.getElementById('resetEmail');
-    const loginEmail = document.getElementById('loginEmail');
-
-    if (form) form.classList.add('hidden');
-    if (resetView) resetView.classList.remove('hidden');
-    if (resetEmail && loginEmail) {
-        resetEmail.value = loginEmail.value || '';
+  } catch (error) {
+    if (['auth/popup-closed-by-user', 'auth/cancelled-popup-request'].includes(error.code)) {
+      return;
     }
+    console.error(`${providerName} login error:`, error);
+    const msg = handleAuthError(error);
+    if (msg) showToast(msg, "error");
+  } finally {
+    authActionInProgress = false;
+    if (btn) {
+      btn.disabled = false;
+      btn.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+  }
 }
 
 export async function googleLogin(event) {
-    if (event) {
-        event.preventDefault?.();
-        event.stopPropagation?.();
-    }
-
-    if (authActionInProgress) return;
-    authActionInProgress = true;
-
-    const rawTarget = event?.target || event?.currentTarget;
-    const btn = (rawTarget && typeof rawTarget.closest === 'function')
-        ? rawTarget.closest('button')
-        : (document.getElementById('googleAuthBtn') || document.getElementById('googleSignInBtn'));
-
-    if (btn) {
-        btn.disabled = true;
-        btn.classList?.add('opacity-50', 'cursor-not-allowed');
-    }
-
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
-                     window.matchMedia('(display-mode: standalone)').matches;
-
-    try {
-        savePendingDraft();
-
-        const remember = document.getElementById('rememberMe')?.checked ?? true;
-        await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
-
-        if (provider?.setCustomParameters) {
-            provider.setCustomParameters({ prompt: 'select_account' });
-        }
-
-        if (isMobile) {
-            await signInWithRedirect(auth, provider);
-            return;
-        }
-
-        try {
-            const userCredential = await signInWithPopup(auth, provider);
-            if (userCredential?.user) {
-                showToast("✅ Signed in successfully with Google!", "success");
-                closeLoginModal();
-                restorePendingDraft();
-            }
-        } catch (popupError) {
-            if (popupError.code === 'auth/popup-blocked' || popupError.code === 'auth/popup-closed-by-user') {
-                showToast("⚠️ Popup blocked or closed. Switching to redirect...", "info");
-                await signInWithRedirect(auth, provider);
-                return;
-            }
-            throw popupError;
-        }
-    } catch (error) {
-        if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
-            return;
-        }
-        console.error("Google login error:", error);
-        const errMsg = handleAuthError(error);
-        if (errMsg) showToast(errMsg, "error");
-    } finally {
-        authActionInProgress = false;
-        if (btn) {
-            btn.disabled = false;
-            btn.classList?.remove('opacity-50', 'cursor-not-allowed');
-        }
-    }
+  return socialLogin(googleProvider, "Google", event);
 }
 
-export async function handleEmailAuth(event) {
-    if (event) {
-        event.preventDefault?.();
-        event.stopPropagation?.();
-    }
-
-    if (authActionInProgress) return;
-
-    let form = event?.target?.closest?.('form') || event?.target;
-    if (!form || form.tagName !== 'FORM') {
-        form = document.getElementById('authForm') ||
-               document.getElementById('emailAuthForm') ||
-               document.getElementById('loginForm');
-    }
-
-    if (!form) {
-        showToast("Authentication form not found.", "error");
-        return;
-    }
-
-    const { emailInput, passwordInput } = getAuthInputs(form);
-    const email = emailInput?.value?.trim();
-    const password = passwordInput?.value;
-
-    if (!email || !password) {
-        showToast("Please enter both email and password.", "error");
-        return;
-    }
-
-    const submitBtn = event?.submitter ||
-                      form.querySelector('button[type="submit"]') ||
-                      document.getElementById('submitAuthBtn');
-
-    authActionInProgress = true;
-    if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.classList?.add('opacity-50', 'cursor-not-allowed');
-    }
-
-    try {
-        savePendingDraft();
-
-        const remember = document.getElementById('rememberMe')?.checked ?? true;
-        await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
-
-        if (isSignUpMode) {
-            // Added validation check right at the start of sign up
-            if (password.length < 6) {
-                showToast("Password must be at least 6 characters long for security.", "error");
-                return;
-            }
-
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            const user = userCredential.user;
-
-            await sendEmailVerification(user);
-            await signOut(auth);
-
-            showToast("🎉 Account created! Please check your email to verify before logging in.", "success");
-            closeLoginModal();
-        } else {
-            const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            const user = userCredential.user;
-
-            if (!user.emailVerified) {
-                showToast("⚠️ Email unverified. Please check your inbox for the verification link.", "warning");
-                await signOut(auth);
-                return;
-            }
-
-            showToast("✅ Signed in successfully!", "success");
-            closeLoginModal();
-            restorePendingDraft();
-        }
-    } catch (error) {
-        console.error("Email auth error:", error);
-        const errMsg = handleAuthError(error);
-        if (errMsg) showToast(errMsg, "error");
-    } finally {
-        authActionInProgress = false;
-        if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.classList?.remove('opacity-50', 'cursor-not-allowed');
-        }
-    }
+export async function twitterLogin(event) {
+  return socialLogin(twitterProvider, "X (Twitter)", event);
 }
-export async function handlePasswordReset() {
-    if (authActionInProgress) return;
 
-    const resetEmailInput = document.getElementById('resetEmail');
-    const email = resetEmailInput?.value?.trim();
-
-    if (!email) {
-        showToast("Please enter your email address.", "error");
-        return;
-    }
-
-    authActionInProgress = true;
-    const btn = document.getElementById('sendResetBtn');
-    if (btn) {
-        btn.disabled = true;
-        btn.classList?.add('opacity-50', 'cursor-not-allowed');
-    }
-
-    try {
-        await sendPasswordResetEmail(auth, email);
-        showToast("✅ Password reset email sent! Check your inbox.", "success");
-    } catch (error) {
-        console.error("Password reset error:", error);
-        const errMsg = handleAuthError(error);
-        if (errMsg) showToast(errMsg, "error");
-    } finally {
-        authActionInProgress = false;
-        if (btn) {
-            btn.disabled = false;
-            btn.classList?.remove('opacity-50', 'cursor-not-allowed');
-        }
-    }
+export async function githubLogin(event) {
+  return socialLogin(githubProvider, "GitHub", event);
 }
+
+// ====================== LOGOUT & UI ======================
 
 export async function logout() {
-    try {
-        clearProfileCache();
-        if (typeof initNotifications === 'function') {
-            initNotifications(null);
-        }
-
-        await signOut(auth);
-
-        updateAppState({ isAuthenticated: false, currentUser: null });
-        updateVerificationUI(false);
-        showToast("Signed out successfully", "success");
-
-        window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user: null } }));
-        updateUIForAuthState(null);
-    } catch (error) {
-        console.error("Logout error:", error);
-        showToast("Logout failed", "error");
+  try {
+    clearProfileCache();
+    if (typeof initNotifications === 'function') {
+      initNotifications(null);
     }
-}
 
-export function togglePasswordVisibility(inputId, btnElement) {
-    const input = document.getElementById(inputId);
-    if (!input) return;
+    await signOut(auth);
 
-    const isPassword = input.type === 'password';
-    input.type = isPassword ? 'text' : 'password';
+    updateAppState({ isAuthenticated: false, currentUser: null });
+    updateVerificationUI(false);
+    showToast("Signed out successfully", "success");
 
-    if (btnElement) {
-        if (btnElement.textContent === 'Show' || btnElement.textContent === 'Hide') {
-            btnElement.textContent = isPassword ? 'Hide' : 'Show';
-        }
-        const eye = btnElement.querySelector('#eyeIcon');
-        const eyeOff = btnElement.querySelector('#eyeOffIcon');
-        if (eye && eyeOff) {
-            eye.classList.toggle('hidden', isPassword);
-            eyeOff.classList.toggle('hidden', !isPassword);
-        }
-    }
+    window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user: null } }));
+    updateUIForAuthState(null);
+  } catch (error) {
+    console.error("Logout error:", error);
+    showToast("Logout failed", "error");
+  }
 }
 
 export function requireAuth(message = "Please sign in to proceed.") {
-    if (!auth.currentUser) {
-        savePendingDraft();
-        showToast(message, "info");
-        showAuthModal();
-        return false;
-    }
-    return true;
+  if (!auth.currentUser) {
+    savePendingDraft();
+    showToast(message, "info");
+    showAuthModal();
+    return false;
+  }
+  return true;
 }
 
 export function updateUIForAuthState(userParam = null) {
-    const activeUser = userParam || auth.currentUser;
-    const isLoggedIn = !!activeUser && (activeUser.emailVerified || activeUser.providerData?.some(p => p.providerId === 'google.com'));
+  const activeUser = userParam || auth.currentUser;
+  const isLoggedIn = !!activeUser;
 
-    const guestBtns = document.querySelectorAll('#guest-action-btn, #guest-action-btn-mobile, #guest-action-btn-drawer, .guest-only-btn');
-    const profileBtns = document.querySelectorAll('#profile-btn, #profile-btn-mobile, .profile-action-btn');
-    const signInElements = document.querySelectorAll('#signin-btn, #signin-btn-mobile');
-    const privateElements = document.querySelectorAll('.requires-auth');
+  // Guest / Sign-in buttons
+  document.querySelectorAll('#guest-action-btn, #guest-action-btn-mobile, #guest-action-btn-drawer, .guest-only-btn, #signin-btn, #signin-btn-mobile')
+    .forEach(el => el.classList.toggle('hidden', isLoggedIn));
 
-    guestBtns.forEach(btn => btn.classList.toggle('hidden', isLoggedIn));
-    signInElements.forEach(el => el.classList.toggle('hidden', isLoggedIn));
-    profileBtns.forEach(btn => btn.classList.toggle('hidden', !isLoggedIn));
+  // Profile buttons
+  document.querySelectorAll('#profile-btn, #profile-btn-mobile, .profile-action-btn')
+    .forEach(el => el.classList.toggle('hidden', !isLoggedIn));
 
-    privateElements.forEach(el => {
-        el.classList.toggle('hidden', !isLoggedIn);
+  // Protected elements
+  document.querySelectorAll('.requires-auth')
+    .forEach(el => el.classList.toggle('hidden', !isLoggedIn));
+
+  // Post buttons opacity
+  document.querySelectorAll('#postButton, #btn-photo, #btn-voice')
+    .forEach(btn => {
+      if (btn) btn.style.opacity = isLoggedIn ? '1' : '0.6';
     });
 
-    document.querySelectorAll('#postButton, #btn-photo, #btn-voice').forEach(btn => {
-        if (btn) btn.style.opacity = isLoggedIn ? '1' : '0.6';
-    });
+  // Mobile avatar
+  const userAvatarMobile = document.getElementById('user-avatar-mobile');
+  const defaultAvatarMobile = document.getElementById('default-avatar-icon-mobile');
+  const userNameMobile = document.getElementById('user-name-mobile');
 
-    // Safe mobile user profile UI updates
-    const userAvatarMobile = document.getElementById('user-avatar-mobile');
-    const defaultAvatarMobile = document.getElementById('default-avatar-icon-mobile');
-    const userNameMobile = document.getElementById('user-name-mobile');
-
-    if (isLoggedIn && activeUser) {
-        if (activeUser.photoURL) {
-            if (userAvatarMobile) {
-                userAvatarMobile.src = activeUser.photoURL;
-                userAvatarMobile.classList.remove('hidden');
-            }
-            if (defaultAvatarMobile) {
-                defaultAvatarMobile.classList.add('hidden');
-            }
-        } else {
-            if (userAvatarMobile) userAvatarMobile.classList.add('hidden');
-            if (defaultAvatarMobile) defaultAvatarMobile.classList.remove('hidden');
-        }
-
-        if (userNameMobile && activeUser.displayName) {
-            userNameMobile.textContent = activeUser.displayName.split(' ')[0]; // Show first name on mobile to save space
-        }
+  if (isLoggedIn && activeUser) {
+    if (activeUser.photoURL && userAvatarMobile) {
+      userAvatarMobile.src = activeUser.photoURL;
+      userAvatarMobile.classList.remove('hidden');
+      if (defaultAvatarMobile) defaultAvatarMobile.classList.add('hidden');
     } else {
-        if (userAvatarMobile) userAvatarMobile.classList.add('hidden');
-        if (defaultAvatarMobile) defaultAvatarMobile.classList.remove('hidden');
-        if (userNameMobile) userNameMobile.textContent = '';
+      if (userAvatarMobile) userAvatarMobile.classList.add('hidden');
+      if (defaultAvatarMobile) defaultAvatarMobile.classList.remove('hidden');
     }
 
-    if (typeof window.updateHeaderButtons === 'function') {
-        window.updateHeaderButtons(isLoggedIn);
+    if (userNameMobile && activeUser.displayName) {
+      userNameMobile.textContent = activeUser.displayName.split(' ')[0];
     }
+  } else {
+    if (userAvatarMobile) userAvatarMobile.classList.add('hidden');
+    if (defaultAvatarMobile) defaultAvatarMobile.classList.remove('hidden');
+    if (userNameMobile) userNameMobile.textContent = '';
+  }
+
+  if (typeof window.updateHeaderButtons === 'function') {
+    window.updateHeaderButtons(isLoggedIn);
+  }
 }
 
 export function showAuthModal() {
-    const mainAuthModal = document.getElementById('authModal');
-    if (mainAuthModal) {
-        mainAuthModal.classList.remove('hidden');
-        mainAuthModal.classList.add('flex');
-        switchToAuthView();
-        isSignUpMode = false;
-        updateAuthModeUI();
-    }
+  const modal = document.getElementById('authModal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
 }
 
 export function closeLoginModal() {
-    const modals = document.querySelectorAll('#authModal, #loginModal, #createAccountModal');
-    modals.forEach(modal => {
-        if (modal) {
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
+  document.querySelectorAll('#authModal, #loginModal, #createAccountModal')
+    .forEach(modal => {
+      modal?.classList.add('hidden');
+      modal?.classList.remove('flex');
     });
-    isSignUpMode = false;
 }
 
-export function closeCreateAccountModal() { closeLoginModal(); }
-export function hideAuthModal() { closeLoginModal(); }
-
 export function openVerificationModal() {
-    if (!requireAuth("Please sign in to complete citizen verification.")) return;
+  if (!requireAuth("Please sign in to complete citizen verification.")) return;
 
-    const modal = document.getElementById('verificationModal');
-    if (modal) {
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-    }
+  const modal = document.getElementById('verificationModal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
 }
 
 export function closeVerificationModal() {
-    const modal = document.getElementById('verificationModal');
-    if (modal) {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-    }
+  const modal = document.getElementById('verificationModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
 }
 
 export function toggleProfileMenu(e) {
-    if (e) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
+  e?.preventDefault();
+  e?.stopPropagation();
 
-    const profileMenu = document.getElementById('profile-menu') || document.getElementById('user-dropdown');
-    if (profileMenu) {
-        profileMenu.classList.toggle('hidden');
-    }
+  const menu = document.getElementById('profile-menu') || document.getElementById('user-dropdown');
+  menu?.classList.toggle('hidden');
 }
 
+// ====================== EVENT BINDING ======================
+
 export function bindHeaderEvents() {
-    if (window.__authDelegationBound) return;
-    window.__authDelegationBound = true;
+  if (window.__authDelegationBound) return;
+  window.__authDelegationBound = true;
 
-    document.addEventListener('click', (e) => {
-        if (e.target.closest('#googleAuthBtn, #googleSignInBtn, [data-action="google-login"], .google-auth-btn')) {
-            e.preventDefault();
-            googleLogin(e);
-            return;
-        }
+  document.addEventListener('click', (e) => {
+    // Google
+    if (e.target.closest('#googleAuthBtn, #googleSignInBtn, [data-action="google-login"], .google-auth-btn')) {
+      e.preventDefault();
+      googleLogin(e);
+      return;
+    }
 
-        if (e.target.closest('#toggleAuthModeBtn, #switchAuthMode, [data-action="toggle-auth-mode"]')) {
-            e.preventDefault();
-            isSignUpMode = !isSignUpMode;
-            updateAuthModeUI();
-            return;
-        }
+    // Twitter / X
+    if (e.target.closest('#twitterAuthBtn, [data-action="twitter-login"], .twitter-auth-btn')) {
+      e.preventDefault();
+      twitterLogin(e);
+      return;
+    }
 
-        if (e.target.closest('#forgotPasswordBtn')) {
-            e.preventDefault();
-            switchToResetView();
-            return;
-        }
+    // GitHub
+    if (e.target.closest('#githubAuthBtn, [data-action="github-login"], .github-auth-btn')) {
+      e.preventDefault();
+      githubLogin(e);
+      return;
+    }
 
-        if (e.target.closest('#backToAuthBtn')) {
-            e.preventDefault();
-            switchToAuthView();
-            return;
-        }
+    // Logout
+    if (e.target.closest('#logoutBtn, #logout-btn, [data-action="logout"], .logout-btn')) {
+      e.preventDefault();
+      logout();
+      return;
+    }
 
-        if (e.target.closest('#sendResetBtn')) {
-            e.preventDefault();
-            handlePasswordReset();
-            return;
-        }
+    // Open Auth Modal
+    if (e.target.closest('#guest-action-btn, #guest-action-btn-mobile, #guest-action-btn-drawer, #signin-btn-mobile, .auth-trigger-btn, [data-action="open-auth-modal"]')) {
+      e.preventDefault();
+      showAuthModal();
+      return;
+    }
 
-        if (e.target.closest('#logoutBtn, #logout-btn, [data-action="logout"], .logout-btn')) {
-            e.preventDefault();
-            logout();
-            return;
-        }
+    // Close Auth Modal
+    if (e.target.closest('[data-action="close-auth-modal"], #closeAuthModalBtn')) {
+      e.preventDefault();
+      closeLoginModal();
+      return;
+    }
 
-        if (e.target.closest('#guest-action-btn, #guest-action-btn-mobile, #guest-action-btn-drawer, #signin-btn-mobile, .auth-trigger-btn, [data-action="open-auth-modal"]')) {
-            e.preventDefault();
-            showAuthModal();
-            return;
-        }
+    // Profile
+    if (e.target.closest('#profile-btn, #profile-btn-mobile, [data-action="open-profile"]')) {
+      e.preventDefault();
+      if (typeof window.openProfile === 'function') window.openProfile();
+      return;
+    }
 
-        if (e.target.closest('[data-action="close-auth-modal"], #closeAuthModalBtn')) {
-            e.preventDefault();
-            closeLoginModal();
-            return;
-        }
+    // Verification
+    if (e.target.closest('#request-verification-btn')) {
+      e.preventDefault();
+      openVerificationModal();
+      return;
+    }
 
-        if (e.target.closest('#togglePasswordBtn, [data-action="toggle-password"]')) {
-            e.preventDefault();
-            const btn = e.target.closest('#togglePasswordBtn, [data-action="toggle-password"]');
-            const targetId = btn.getAttribute('data-target') || 'loginPassword';
-            togglePasswordVisibility(targetId, btn);
-            return;
-        }
-
-        if (e.target.closest('#profile-btn, #profile-btn-mobile, [data-action="open-profile"]')) {
-            e.preventDefault();
-            if (typeof window.openProfile === 'function') window.openProfile();
-            return;
-        }
-
-        if (e.target.closest('#request-verification-btn')) {
-            e.preventDefault();
-            openVerificationModal();
-            return;
-        }
-
-        if (!e.target.closest('#profile-btn, #profile-btn-mobile, #profile-menu, #user-dropdown, .dropdown-container')) {
-            document.querySelectorAll('#profile-menu, #user-dropdown, .dropdown-menu')
-                .forEach(el => el.classList.add('hidden'));
-        }
-    });
-
-    document.addEventListener('submit', (e) => {
-        const form = e.target;
-        if (form?.matches?.('#authForm, #emailAuthForm, #loginForm, #signInForm, #signUpForm')) {
-            e.preventDefault();
-            handleEmailAuth(e);
-        }
-    });
+    // Close dropdowns when clicking outside
+    if (!e.target.closest('#profile-btn, #profile-btn-mobile, #profile-menu, #user-dropdown')) {
+      document.querySelectorAll('#profile-menu, #user-dropdown')
+        .forEach(el => el.classList.add('hidden'));
+    }
+  });
 }
 
 export function initAuth() {
-    bindHeaderEvents();
+  bindHeaderEvents();
 
-    return new Promise((resolve) => {
-        getRedirectResult(auth)
-            .then(async (result) => {
-                if (result?.user) {
-                    showToast("✅ Signed in successfully!", "success");
-                    closeLoginModal();
-                    restorePendingDraft();
-                }
-            })
-            .catch((error) => {
-                if (error?.code !== 'auth/missing-initial-state') {
-                    console.error("Redirect sign-in error:", error);
-                    const errMsg = handleAuthError(error);
-                    if (errMsg) showToast(errMsg, "error");
-                }
-            });
+  return new Promise((resolve) => {
+    // Handle redirect result (mobile)
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result?.user) {
+          showToast("✅ Signed in successfully!", "success");
+          closeLoginModal();
+          restorePendingDraft();
+        }
+      })
+      .catch((error) => {
+        if (error?.code !== 'auth/missing-initial-state') {
+          console.error("Redirect error:", error);
+          const msg = handleAuthError(error);
+          if (msg) showToast(msg, "error");
+        }
+      });
 
-        onAuthStateChanged(auth, async (user) => {
-            const isPasswordUser = user?.providerData?.some(p => p.providerId === 'password');
-            const isValidUser = user && (!isPasswordUser || user.emailVerified);
+    // Auth state listener
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        updateAppState({ isAuthenticated: true, currentUser: user });
+        await createOrUpdateUser(user);
+        refreshTierUI();
+        if (typeof initNotifications === 'function') {
+          initNotifications(user.uid);
+        }
+        updateUIForAuthState(user);
+      } else {
+        updateAppState({ isAuthenticated: false, currentUser: null });
+        updateVerificationUI(false);
+        if (typeof initNotifications === 'function') {
+          initNotifications(null);
+        }
+        updateUIForAuthState(null);
+      }
 
-            if (isValidUser) {
-                updateAppState({ isAuthenticated: true, currentUser: user });
-                await createOrUpdateUser(user);
-                refreshTierUI();
-                if (typeof initNotifications === 'function') {
-                    initNotifications(user.uid);
-                }
-                updateUIForAuthState(user);
-            } else {
-                updateAppState({ isAuthenticated: false, currentUser: null });
-                updateVerificationUI(false);
-                if (typeof initNotifications === 'function') {
-                    initNotifications(null);
-                }
-                updateUIForAuthState(null);
-            }
-
-            window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user: isValidUser ? user : null } }));
-            resolve(isValidUser ? user : null);
-        });
+      window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
+      resolve(user || null);
     });
+  });
 }
 
-// Export globals
+// Make functions available globally
 window.showAuthModal = showAuthModal;
 window.closeLoginModal = closeLoginModal;
 window.logout = logout;
 window.googleLogin = googleLogin;
+window.twitterLogin = twitterLogin;
+window.githubLogin = githubLogin;
 window.openVerificationModal = openVerificationModal;
 window.closeVerificationModal = closeVerificationModal;
 window.toggleProfileMenu = toggleProfileMenu;
-window.handleEmailAuth = handleEmailAuth;
-window.handlePasswordReset = handlePasswordReset;
 window.initAuth = initAuth;
