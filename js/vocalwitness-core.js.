@@ -1,4 +1,4 @@
-// vocalwitness-core.js
+// js/vocalwitness-core.js
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
@@ -22,7 +22,6 @@ export function initAuthObserver() {
         ];
 
         if (user) {
-            // Hide guest buttons, show profile buttons
             guestBtns.forEach(btn => btn && btn.classList.add('hidden'));
             profileBtns.forEach(btn => {
                 if (btn) {
@@ -31,7 +30,6 @@ export function initAuthObserver() {
                 }
             });
 
-            // Fetch extra Firestore profile details if available
             try {
                 const userDocRef = doc(db, "users", user.uid);
                 const userSnap = await getDoc(userDocRef);
@@ -45,7 +43,6 @@ export function initAuthObserver() {
                     if (data.avatarUrl) avatarUrl = data.avatarUrl;
                 }
 
-                // Update Desktop & Mobile profile elements
                 ['desktop', 'mobile'].forEach(suffix => {
                     const isMobile = suffix === 'mobile';
                     const nameEl = document.getElementById(isMobile ? 'user-name-mobile' : 'user-name-desktop');
@@ -63,7 +60,6 @@ export function initAuthObserver() {
                 console.error("Error fetching user profile extension:", error);
             }
         } else {
-            // Show guest buttons, hide profile buttons
             guestBtns.forEach(btn => {
                 if (btn) {
                     btn.classList.remove('hidden');
@@ -80,7 +76,7 @@ export function initAuthObserver() {
 // ==========================================
 export async function scrubAndUploadImage(file, userId) {
     return new Promise((resolve, reject) => {
-        if (!file.type.startsWith('image/')) {
+        if (!file || !file.type.startsWith('image/')) {
             return reject(new Error("Invalid file type. Only images can be scrubbed and uploaded."));
         }
 
@@ -92,14 +88,12 @@ export async function scrubAndUploadImage(file, userId) {
             img.src = event.target.result;
 
             img.onload = async () => {
-                // Flatten image onto canvas to automatically strip EXIF metadata
                 const canvas = document.createElement('canvas');
                 canvas.width = img.width;
                 canvas.height = img.height;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0);
 
-                // Convert to clean JPEG blob (quality 0.85)
                 canvas.toBlob(async (blob) => {
                     if (!blob) {
                         return reject(new Error("Canvas to Blob conversion failed."));
@@ -113,6 +107,10 @@ export async function scrubAndUploadImage(file, userId) {
 
                         const snapshot = await uploadBytes(storageRef, blob, { contentType: 'image/jpeg' });
                         const downloadUrl = await getDownloadURL(snapshot.ref);
+                        
+                        // Clean up memory references
+                        canvas.width = 0;
+                        canvas.height = 0;
                         
                         resolve(downloadUrl);
                     } catch (uploadError) {
@@ -155,8 +153,8 @@ export async function publishTestimony(submissionData, mediaFile) {
     const testimonyPayload = {
         authorId: currentUser.uid,
         authorName: currentUser.displayName || "Anonymous Witness",
-        title: submissionData.title,
-        content: submissionData.content,
+        title: submissionData.title || "",
+        content: submissionData.content || "",
         category: submissionData.category || "Witness Voice",
         mediaUrl: mediaUrl || null,
         mediaHash: mediaHash || null,
