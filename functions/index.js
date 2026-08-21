@@ -18,6 +18,7 @@ const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const axios = require("axios");
 const { setGlobalOptions } = require("firebase-functions/v2");
+
 setGlobalOptions({ region: "us-central1" });
 
 // ======================================================
@@ -29,7 +30,7 @@ const r2SecretAccessKey = defineSecret("R2_SECRET_ACCESS_KEY");
 const paystackSecretKey = defineSecret("PAYSTACK_SECRET_KEY");
 
 // ======================================================
-// INITIALIZE
+// INITIALIZE & SINGLETONS
 // ======================================================
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -41,9 +42,6 @@ const PROJECT_ID = process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT;
 const LOCATION = "us-central1";
 const QUEUE_NAME = "heavy-processing-queue";
 
-// ======================================================
-// RESTRICTED CORS HELPER
-// ======================================================
 const allowedOrigins = [
   "https://vocalwitness-3affa.web.app",
   "https://vocalwitness-3affa.firebaseapp.com",
@@ -51,6 +49,32 @@ const allowedOrigins = [
   "https://www.vocalwitness.com"
 ];
 
+// Reusable S3 / R2 Client Instance
+let r2ClientInstance = null;
+function getR2Client(accessKeyId, secretAccessKey) {
+  if (!r2ClientInstance) {
+    r2ClientInstance = new S3Client({
+      region: "auto",
+      endpoint: process.env.R2_ENDPOINT || "https://b282f46ef0831c8af75bfe52120bbac6.r2.cloudflarestorage.com",
+      credentials: {
+        accessKeyId,
+        secretAccessKey
+      }
+    });
+  }
+  return r2ClientInstance;
+}
+
+// Reusable Paystack Client Instance
+function getPaystackClient() {
+  const secret = paystackSecretKey.value();
+  if (!secret) {
+    throw new HttpsError("failed-precondition", "Paystack secret key configuration is missing.");
+  }
+  return paystackApi(secret);
+}
+
+// Native Express CORS middleware wrapper
 const corsHandler = require("cors")({
   origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) {
@@ -61,7 +85,7 @@ const corsHandler = require("cors")({
   },
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Firebase-AppCheck"],
-  maxAge: 3600,
+  maxAge: 3600
 });
 
 async function enqueueBackgroundTask(functionName, payload, delaySeconds = 0) {
@@ -74,14 +98,14 @@ async function enqueueBackgroundTask(functionName, payload, delaySeconds = 0) {
       headers: { "Content-Type": "application/json" },
       body: Buffer.from(JSON.stringify(payload)).toString("base64"),
       oidcToken: {
-        serviceAccountEmail: `${PROJECT_ID}@appspot.gserviceaccount.com`,
-      },
-    },
+        serviceAccountEmail: `${PROJECT_ID}@appspot.gserviceaccount.com`
+      }
+    }
   };
 
   if (delaySeconds > 0) {
     task.scheduleTime = {
-      seconds: Math.floor(Date.now() / 1000) + delaySeconds,
+      seconds: Math.floor(Date.now() / 1000) + delaySeconds
     };
   }
 
@@ -89,21 +113,13 @@ async function enqueueBackgroundTask(functionName, payload, delaySeconds = 0) {
   return response.name;
 }
 
-const getPaystackClient = () => {
-  const secret = paystackSecretKey.value();
-  if (!secret) {
-    throw new Error("Paystack secret key configuration is missing.");
-  }
-  return paystackApi(secret);
-};
-
 async function writeAuditLog({
   action,
   performedBy,
   targetId = null,
   targetType = null,
   details = {},
-  severity = "info",
+  severity = "info"
 }) {
   try {
     await db.collection("audit_logs").add({
@@ -114,7 +130,7 @@ async function writeAuditLog({
       details,
       severity: String(severity),
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
-      createdAt: new Date().toISOString(),
+      createdAt: new Date().toISOString()
     });
   } catch (error) {
     console.error("Failed to write audit log:", error);
@@ -127,7 +143,7 @@ async function writeAuditLog({
 exports.getUploadUrl = onRequest(
   {
     cors: allowedOrigins,
-    secrets: [r2AccessKeyId, r2SecretAccessKey],
+    secrets: [r2AccessKeyId, r2SecretAccessKey]
   },
   (req, res) => {
     corsHandler(req, res, async () => {
@@ -151,24 +167,14 @@ exports.getUploadUrl = onRequest(
           return res.status(400).json({ error: "fileName and fileType must be non-empty strings." });
         }
 
-        const s3Client = new S3Client({
-          region: "auto",
-          endpoint:
-            process.env.R2_ENDPOINT ||
-            "https://b282f46ef0831c8af75bfe52120bbac6.r2.cloudflarestorage.com",
-          credentials: {
-            accessKeyId: r2AccessKeyId.value(),
-            secretAccessKey: r2SecretAccessKey.value(),
-          },
-        });
-
+        const s3Client = getR2Client(r2AccessKeyId.value(), r2SecretAccessKey.value());
         const sanitizedName = fileName.replace(/[^a-zA-Z0-9.\-_]/g, "_");
         const objectKey = `uploads/${uid}/${Date.now()}-${sanitizedName}`;
 
         const command = new PutObjectCommand({
           Bucket: "vocalwitness-media",
           Key: objectKey,
-          ContentType: fileType,
+          ContentType: fileType
         });
 
         const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 900 });
@@ -218,7 +224,7 @@ exports.initializeCitizenProfile = functions.auth.user().onCreate(async (user) =
     lastLogin: admin.firestore.FieldValue.serverTimestamp(),
     bio: "Just joined the Citizen Talk room.",
     location: "",
-    badges: ["casual_talker"],
+    badges: ["casual_talker"]
   };
 
   try {
@@ -229,7 +235,7 @@ exports.initializeCitizenProfile = functions.auth.user().onCreate(async (user) =
       moderator: false,
       banned: false,
       supporter: false,
-      steward: false,
+      steward: false
     });
 
     await writeAuditLog({
@@ -238,7 +244,7 @@ exports.initializeCitizenProfile = functions.auth.user().onCreate(async (user) =
       targetId: userId,
       targetType: "user",
       details: { email: user.email || null },
-      severity: "info",
+      severity: "info"
     });
 
     console.log(`✅ Created profile for user: ${userId}`);
@@ -285,7 +291,7 @@ exports.evaluateTrustTier = onCall(
       if (newTier !== u.tier) {
         await userRef.update({
           tier: newTier,
-          tierUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          tierUpdatedAt: admin.firestore.FieldValue.serverTimestamp()
         });
 
         if (newTier === "steward") {
@@ -300,7 +306,7 @@ exports.evaluateTrustTier = onCall(
           targetId: uid,
           targetType: "user",
           details: { oldTier: u.tier, newTier },
-          severity: "info",
+          severity: "info"
         });
       }
 
@@ -352,7 +358,7 @@ exports.setUserClaims = onCall(
           isBanned: finalClaims.banned === true,
           isSupporter: finalClaims.supporter === true,
           isSteward: finalClaims.steward === true,
-          claimsUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          claimsUpdatedAt: admin.firestore.FieldValue.serverTimestamp()
         },
         { merge: true }
       );
@@ -363,7 +369,7 @@ exports.setUserClaims = onCall(
         targetId: uid,
         targetType: "user",
         details: { claimsSet: newClaims, finalClaims },
-        severity: "high",
+        severity: "high"
       });
 
       return { success: true, claims: finalClaims };
@@ -401,7 +407,7 @@ exports.banUser = onCall(
           isBanned: true,
           banReason: String(reason),
           bannedAt: admin.firestore.FieldValue.serverTimestamp(),
-          bannedBy: request.auth.uid,
+          bannedBy: request.auth.uid
         },
         { merge: true }
       );
@@ -412,7 +418,7 @@ exports.banUser = onCall(
         targetId: uid,
         targetType: "user",
         details: { reason: String(reason) },
-        severity: "high",
+        severity: "high"
       });
 
       return { success: true, message: `User ${uid} has been banned.` };
@@ -450,7 +456,7 @@ exports.unbanUser = onCall(
           bannedAt: admin.firestore.FieldValue.delete(),
           bannedBy: admin.firestore.FieldValue.delete(),
           unbannedAt: admin.firestore.FieldValue.serverTimestamp(),
-          unbannedBy: request.auth.uid,
+          unbannedBy: request.auth.uid
         },
         { merge: true }
       );
@@ -460,7 +466,7 @@ exports.unbanUser = onCall(
         performedBy: request.auth.uid,
         targetId: uid,
         targetType: "user",
-        severity: "medium",
+        severity: "medium"
       });
 
       return { success: true, message: `User ${uid} has been unbanned.` };
@@ -488,7 +494,7 @@ exports.moderatedDelete = onCall(
 
     const allowedCollections = [
       "testimonies", "posts", "feeds", "groups",
-      "witnessCycles", "dao_proposals", "reports",
+      "witnessCycles", "dao_proposals", "reports"
     ];
     if (!allowedCollections.includes(collection)) {
       throw new HttpsError("invalid-argument", "Collection not allowed for moderated deletion.");
@@ -510,9 +516,9 @@ exports.moderatedDelete = onCall(
         details: {
           reason: String(reason),
           originalAuthor: originalData.authorId || originalData.ownerId || originalData.witnessId || null,
-          contentPreview: originalData.content ? String(originalData.content).substring(0, 200) : null,
+          contentPreview: originalData.content ? String(originalData.content).substring(0, 200) : null
         },
-        severity: "high",
+        severity: "high"
       });
 
       return { success: true, message: "Document deleted and audited." };
@@ -539,7 +545,7 @@ async function analyzeToxicityWithPerspective(content = "") {
       {
         comment: { text: content },
         languages: ["en"],
-        requestedAttributes: { TOXICITY: {}, INSULT: {}, THREAT: {} },
+        requestedAttributes: { TOXICITY: {}, INSULT: {}, THREAT: {} }
       }
     );
 
@@ -556,7 +562,7 @@ async function analyzeToxicityWithPerspective(content = "") {
       threatScore,
       note: isToxic
         ? "Flagged by automated Perspective API moderation for toxicity/insult."
-        : "Passed Perspective API check.",
+        : "Passed Perspective API check."
     };
   } catch (error) {
     console.error("Perspective API evaluation error:", error.message);
@@ -571,7 +577,7 @@ function gentleModerationCheck(content = "") {
   return {
     safe: !isFlagged,
     toxicityScore: isFlagged ? 0.8 : 0.0,
-    note: isFlagged ? "Flagged by local fallback moderation check." : "Passed local fallback check.",
+    note: isFlagged ? "Flagged by local fallback moderation check." : "Passed local fallback check."
   };
 }
 
@@ -597,7 +603,7 @@ exports.analyzeToxicity = onRequest(
 exports.initializePaystack = onCall(
   {
     cors: allowedOrigins,
-    secrets: [paystackSecretKey],
+    secrets: [paystackSecretKey]
   },
   async (request) => {
     if (!request.auth) {
@@ -615,12 +621,12 @@ exports.initializePaystack = onCall(
         amount: Math.round(amount),
         email: request.auth.token.email || "supporter@vocalwitness.app",
         reference: `VW_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
-        metadata: { ...metadata, userId: request.auth.uid },
+        metadata: { ...metadata, userId: request.auth.uid }
       });
 
       return {
         authorization_url: transaction.data.authorization_url,
-        reference: transaction.data.reference,
+        reference: transaction.data.reference
       };
     } catch (error) {
       console.error("Paystack Error:", error);
@@ -663,7 +669,7 @@ exports.paystackWebhook = onRequest(
               supporterTier: "supporter",
               isPremium: true,
               supporterSince: admin.firestore.FieldValue.serverTimestamp(),
-              totalContributed: admin.firestore.FieldValue.increment(amountInMainCurrency),
+              totalContributed: admin.firestore.FieldValue.increment(amountInMainCurrency)
             },
             { merge: true }
           );
@@ -678,7 +684,7 @@ exports.paystackWebhook = onRequest(
             targetId: userId,
             targetType: "user",
             details: { amount: amountInMainCurrency, reference: event.data.reference },
-            severity: "info",
+            severity: "info"
           });
         } catch (err) {
           console.error("Failed to update supporter status:", err);
@@ -722,7 +728,7 @@ exports.checkRateLimit = onCall(
           transaction.set(rateDocRef, {
             count: 1,
             firstRequest: now,
-            lastRequest: now,
+            lastRequest: now
           });
           return true;
         }
@@ -731,7 +737,7 @@ exports.checkRateLimit = onCall(
 
         transaction.update(rateDocRef, {
           count: admin.firestore.FieldValue.increment(1),
-          lastRequest: now,
+          lastRequest: now
         });
         return true;
       });
@@ -751,7 +757,7 @@ exports.generateZKProof = onCall(
   {
     cors: allowedOrigins,
     memory: "2GiB",
-    timeoutSeconds: 60,
+    timeoutSeconds: 60
   },
   async (request) => {
     if (!request.auth) {
@@ -807,7 +813,7 @@ exports.verifyZKProof = onCall(
         await db.collection("users").doc(uid).set(
           {
             zkVerified: true,
-            zkVerifiedAt: admin.firestore.FieldValue.serverTimestamp(),
+            zkVerifiedAt: admin.firestore.FieldValue.serverTimestamp()
           },
           { merge: true }
         );
@@ -817,7 +823,7 @@ exports.verifyZKProof = onCall(
           performedBy: uid,
           targetId: uid,
           targetType: "user",
-          severity: "info",
+          severity: "info"
         });
       }
 
@@ -830,13 +836,14 @@ exports.verifyZKProof = onCall(
   }
 );
 
+// ======================================================
 // 9. MEDIA FORENSIC PIPELINE
 // ======================================================
 exports.verifyMediaPipeline = onDocumentCreated(
   {
-    region: "us-central1", // Deploys in us-central1 alongside main stack
+    region: "us-central1",
     document: "testimonies/{postId}",
-    secrets: [perspectiveApiKey],
+    secrets: [perspectiveApiKey]
   },
   async (event) => {
     const snap = event.data;
@@ -846,7 +853,6 @@ exports.verifyMediaPipeline = onDocumentCreated(
     const postId = event.params.postId;
 
     try {
-      // Analyze text content using Perspective API secret
       const moderation = await analyzeToxicityWithPerspective(data.content || "");
 
       await snap.ref.set(
@@ -854,7 +860,7 @@ exports.verifyMediaPipeline = onDocumentCreated(
           moderationStatus: moderation.safe ? "approved" : "flagged",
           toxicityScore: moderation.toxicityScore || 0,
           moderationNote: moderation.note || "",
-          processedAt: admin.firestore.FieldValue.serverTimestamp(),
+          processedAt: admin.firestore.FieldValue.serverTimestamp()
         },
         { merge: true }
       );
