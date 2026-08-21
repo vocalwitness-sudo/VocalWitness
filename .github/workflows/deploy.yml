@@ -32,11 +32,8 @@ jobs:
       - name: Install Firebase Tools
         run: npm install -g firebase-tools
 
-      - name: Verify Directory Contents
-        run: ls -la
-
       - name: Deploy Firestore Rules
-        run: firebase deploy --only firestore:rules --project vocalwitness-3affa
+        run: firebase deploy --only firestore --project vocalwitness-3affa --non-interactive
 
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
