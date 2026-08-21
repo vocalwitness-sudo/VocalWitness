@@ -144,6 +144,51 @@ export async function startPhoneVerification() {
   }
 }
 
+// Example: Call ZK Proof from Verification Modal
+document.getElementById('generateZkProofBtn')?.addEventListener('click', async () => {
+    const btn = document.getElementById('generateZkProofBtn');
+    if (!btn) return;
+
+    btn.disabled = true;
+    btn.innerHTML = `<span class="animate-spin">⏳</span> Generating Proof...`;
+
+    try {
+        // Option A: If you already have a high-level helper
+        if (typeof window.generateWitnessProof === 'function') {
+            const proof = await window.generateWitnessProof();
+            console.log("ZK Proof generated:", proof);
+            showToast("Zero-Knowledge Proof generated successfully!", "success");
+        } 
+        // Option B: Direct call using snarkjs (basic example)
+        else if (window.snarkjs) {
+            // This is just a skeleton – replace with your real circuit inputs
+            const input = {
+                secret: "123456789",          // private
+                nullifier: "987654321",       // private
+                publicHash: "..."             // public
+            };
+
+            const { proof, publicSignals } = await snarkjs.groth16.fullProve(
+                input,
+                "/circuits/witness.wasm",     // your compiled wasm
+                "/circuits/witness_final.zkey"
+            );
+
+            console.log("Proof:", proof);
+            console.log("Public Signals:", publicSignals);
+            showToast("ZK Proof created!", "success");
+        } else {
+            throw new Error("snarkjs not loaded");
+        }
+    } catch (err) {
+        console.error("ZK Proof error:", err);
+        showToast("Failed to generate proof", "error");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<span>Generate ZK Proof</span>`;
+    }
+});
+
 /**
  * ZK Verification -> Witness Circle (Witness Voice Access)
  */
