@@ -1,12 +1,13 @@
-// js/navigation.js - Final Version
-import { db, auth } from './firebase-config.js';   // Correct relative path
+// js/navigation.js - Single Page App Integrated Version
+import { db, auth } from './firebase-config.js';
+import { navigateTo } from './router.js';
 
 export const menuItems = [
-    { id: "citizen-talk", icon: "💬", label: "Citizen Talk", href: "/" },
-    { id: "true-witness", icon: "🔬", label: "True Witness", href: "/true-witness" },
-    { id: "live-arena", icon: "🏟️", label: "Live Arena", href: "/live-arena" },
-    { id: "forensic-ledger", icon: "📊", label: "Forensic Ledger", href: "/forensic-ledger" },
-    { id: "my-testimonies", icon: "📜", label: "My Testimonies", href: "/my-testimonies" }
+    { id: "citizen-talk", icon: "💬", label: "Citizen Talk", route: "citizen-talk" },
+    { id: "witness-voice", icon: "🔬", label: "Witness Voice", route: "witness-voice" },
+    { id: "arena", icon: "🏟️", label: "Live Arena", route: "arena" },
+    { id: "audit-log", icon: "📊", label: "Forensic Ledger", route: "audit-log" },
+    { id: "my-testimonies", icon: "📜", label: "My Testimonies", route: "profile" }
 ];
 
 export function loadDynamicNavigation() {
@@ -16,36 +17,41 @@ export function loadDynamicNavigation() {
 
         navContainer.innerHTML = '';
 
-        const currentPath = window.location.pathname.replace(/\.html$/, '') || '/';
+        const currentHash = window.location.hash.slice(1) || 'citizen-talk';
 
         menuItems.forEach(item => {
-            const isActive = currentPath === item.href || 
-                           (currentPath === '/' && item.id === 'citizen-talk') ||
-                           (currentPath === '/index' && item.id === 'citizen-talk');
+            const isActive = currentHash === item.route;
 
             const link = document.createElement('a');
-            link.href = item.href;
-            link.className = `flex items-center gap-3 px-4 py-3 rounded-2xl transition-all group ${isActive ? 
+            link.href = `#${item.route}`;
+            link.setAttribute('data-route', item.route);
+            link.className = `flex items-center gap-3 px-4 py-3 rounded-2xl transition-all group cursor-pointer ${
+                isActive ? 
                 'bg-emerald-500 text-black font-semibold' : 
-                'text-zinc-400 hover:text-white hover:bg-zinc-900'}`;
+                'text-zinc-400 hover:text-white hover:bg-zinc-900'
+            }`;
             
             link.innerHTML = `
                 <span class="text-xl transition-transform group-hover:scale-110">${item.icon}</span>
                 <span>${item.label}</span>
             `;
+
+            // Intercept click to trigger client router directly
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                navigateTo(item.route);
+            });
+
             navContainer.appendChild(link);
         });
 
-        console.log("✅ Sidebar navigation loaded");
+        console.log("✅ Sidebar SPA navigation loaded");
         return true;
     }
 
-    // Try multiple times
     if (!tryLoadNav()) {
         setTimeout(() => {
-            if (!tryLoadNav()) {
-                setTimeout(tryLoadNav, 600);
-            }
+            if (!tryLoadNav()) setTimeout(tryLoadNav, 600);
         }, 400);
     }
 }
