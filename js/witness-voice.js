@@ -132,19 +132,21 @@ window.applyStructuredTestimonyToForm = (type, encodedTimeline, encodedFacts) =>
 
 /**
  * Initializes the Witness Voice feed channel.
- * Uses the shared feed engine with channelType = 'witness-voice'.
+ * Triggers the feed engine with channelType = 'witness-voice'.
  */
 export async function initWitnessVoice() {
     try {
-        await initFeed(undefined, 'witness-voice');
-        
+        // 1. Initialize the Intake Assistant if container exists
         const intakeContainer = document.getElementById('witness-intake-assistant-container');
         if (intakeContainer) {
             renderEvidenceIntakeAssistant(intakeContainer);
         }
 
-        console.log('✅ Witness Voice feed & Evidence Intake Assistant initialized');
+        // 2. Load Witness Voice channel in feed engine
+        await initFeed(undefined, 'witness-voice');
+
+        console.log('✅ Witness Voice channel & Intake Assistant active.');
     } catch (err) {
-        console.error('Failed to initialize Witness Voice feed:', err);
+        console.error('Failed to initialize Witness Voice:', err);
     }
 }
