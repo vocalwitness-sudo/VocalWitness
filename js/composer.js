@@ -1,6 +1,6 @@
 // js/composer.js - Production Testimony Creation & Forensic Pipeline
 import { compressImage } from './media-compression.js';
-import { scrubExif } from './imageScrubber.js';
+import { scrubImageMetadata } from './imageScrubber.js';
 import { showToast } from './utils.js';
 import { getCurrentUserTier, getCurrentWitnessLevel } from './tier.js';
 import { db, auth } from './firebase-config.js';
