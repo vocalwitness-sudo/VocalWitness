@@ -143,7 +143,7 @@ export function initComposer() {
                     showToast('Scrubbing EXIF metadata & compressing...', 'info');
                     
                     // 1. Scrub EXIF Metadata for privacy protection
-                    const cleanFile = typeof scrubExif === 'function' ? await scrubExif(file) : file;
+                    const cleanFile = typeof scrubImageMetadata === 'function' ? await scrubImageMetadata(file) : file;
                     
                     // 2. Compress image
                     const compressedFile = await compressImage(cleanFile, 1200, 0.82);
