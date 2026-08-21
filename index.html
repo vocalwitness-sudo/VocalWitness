@@ -99,9 +99,13 @@
                     </optgroup>
                 </select>
 
-                <!-- GUEST / SIGN-IN BUTTON (DESKTOP) -->
+                <!-- GUEST / SIGN-IN BUTTON (DESKTOP: Google, Twitter, GitHub) -->
                 <button id="guest-action-btn" type="button" data-action="open-auth-modal" class="px-4 py-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm text-sm" style="background-color: #ffffff; color: #000000;">
-                    <img src="https://www.google.com/favicon.ico" class="w-4 h-4" alt="Google">
+                    <div class="flex items-center gap-1">
+                        <img src="https://www.google.com/favicon.ico" class="w-3.5 h-3.5" alt="Google">
+                        <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                        <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                    </div>
                     <span data-i18n="joinBtn">Join VocalWitness</span>
                 </button>
 
@@ -154,9 +158,13 @@
                 </div>
 
                 <div class="flex items-center gap-2">
-                    <!-- GUEST / SIGN-IN BUTTON (MOBILE) -->
+                    <!-- GUEST / SIGN-IN BUTTON (MOBILE: Google, Twitter, GitHub) -->
                     <button id="guest-action-btn-mobile" type="button" data-action="open-auth-modal" class="px-3 py-2 bg-white hover:bg-zinc-100 text-black font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm text-xs shrink-0">
-                        <img src="https://www.google.com/favicon.ico" class="w-3.5 h-3.5" alt="Google">
+                        <div class="flex items-center gap-1">
+                            <img src="https://www.google.com/favicon.ico" class="w-3 h-3" alt="Google">
+                            <svg class="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                            <svg class="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                        </div>
                         <span data-i18n="joinBtn">Sign In</span>
                     </button>
 
@@ -212,127 +220,132 @@
 
     </div>
 </header>    
+    
 <!-- Offset Spacer to prevent main page content from getting hidden under fixed header -->
 <main class="pt-28 md:pt-32 max-w-6xl mx-auto px-3 sm:px-4">
 </main>
 
-    <!-- MOBILE SLIDE-OUT / OVERLAY DRAWER MENU (Hidden by default) -->
-        <div id="mobile-drawer" class="hidden md:hidden fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex flex-col justify-between p-6 overflow-y-auto">
-            <div>
-                <!-- Drawer Top Header -->
-                <div class="flex items-center justify-between pb-4 border-b border-zinc-800 mb-6">
-                    <div class="flex items-center gap-3">
-                        <img src="./logo.png" alt="VocalWitness Logo" class="w-8 h-8 object-contain rounded-xl border border-emerald-500/40">
-                        <span class="font-bold text-emerald-400 text-lg" data-i18n="appTitle">VocalWitness</span>
-                    </div>
-                    <button type="button" onclick="document.getElementById('mobile-drawer').classList.add('hidden')" class="p-2 bg-zinc-900 border border-zinc-700 rounded-xl text-zinc-400 hover:text-white">
-                        ✕
-                    </button>
-                </div>
-
-                <!-- Primary Action Items in Drawer -->
-                <div class="flex flex-col gap-3 mb-6">
-                    <button id="guest-action-btn-drawer" type="button" data-action="open-auth-modal" class="w-full py-3 bg-white text-black font-bold rounded-2xl flex items-center justify-center gap-2 shadow-md">
-                        <img src="https://www.google.com/favicon.ico" class="w-5 h-5" alt="Google">
-                        <span data-i18n="joinBtn">Join VocalWitness</span>
-                    </button>
-
-                    <button id="support-btn-drawer" type="button" data-action="open-support-modal" class="w-full py-3 bg-emerald-500 text-black font-bold rounded-2xl text-center shadow-md" data-i18n="supportBtn">
-                        Support The Square
-                    </button>
-
-                    <div class="grid grid-cols-2 gap-2 mt-2">
-                        <button id="data-saver-btn-drawer" type="button" data-action="toggle-data-saver" class="py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 text-zinc-300">
-                            <span>⚡</span>
-                            <span>Data Saver: <strong id="data-saver-status-drawer" class="text-emerald-400 font-bold">Off</strong></span>
-                        </button>
-
-                        <button id="bookmarks-nav-btn-drawer" type="button" data-action="open-bookmarks" class="py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 text-zinc-300">
-                            <span>🔖</span>
-                            <span>Saved Items</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- App Navigation Sections -->
-                <div class="mb-6">
-                    <h3 class="text-xs uppercase tracking-wider text-zinc-500 font-bold mb-3">Navigation</h3>
-                    <div class="flex flex-col gap-2">
-                        <button data-tab="square" onclick="document.getElementById('mobile-drawer').classList.add('hidden')" class="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-2xl text-left font-semibold text-white flex items-center gap-3">
-                            <span>🏛️</span> <span data-i18n="publicSquareTab">Public Square</span>
-                        </button>
-                        <button data-tab="ledger" onclick="document.getElementById('mobile-drawer').classList.add('hidden')" class="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-2xl text-left font-semibold text-white flex items-center gap-3">
-                            <span>📜</span> <span data-i18n="evidenceLedgerTab">Evidence Ledger</span>
-                        </button>
-                        <button data-tab="arena" onclick="document.getElementById('mobile-drawer').classList.add('hidden')" class="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-2xl text-left font-semibold text-sky-400 flex items-center gap-3">
-                            <span>🎙️</span> <span data-i18n="liveArenaTab">Live Arena</span>
-                        </button>
-                        <button data-tab="mycircle" onclick="document.getElementById('mobile-drawer').classList.add('hidden')" class="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-2xl text-left font-semibold text-white flex items-center gap-3">
-                            <span>👥</span> <span data-i18n="myCircleTab">My Circle</span>
-                        </button>
-                        <button data-tab="witness" onclick="document.getElementById('mobile-drawer').classList.add('hidden')" class="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-2xl text-left font-semibold text-amber-400 flex items-center gap-3">
-                            <span>🛡️</span> <span data-i18n="verifiedWitnessesTab">Verified Witnesses</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Secondary Menu Pages -->
-                <div>
-                    <h3 class="text-xs uppercase tracking-wider text-zinc-500 font-bold mb-3">Explore & Pages</h3>
-                    <div class="flex flex-col gap-1 text-sm text-zinc-300">
-                        <a href="my-testimonies.html" class="p-2.5 hover:bg-zinc-900 rounded-xl block" data-i18n="myTestimoniesMenu">My Testimonies</a>
-                        <a href="groups.html" class="p-2.5 hover:bg-zinc-900 rounded-xl block" data-i18n="groupsMenu">Groups</a>
-                        <a href="witness-voice.html" class="p-2.5 hover:bg-zinc-900 rounded-xl block" data-i18n="witnessVoiceMenu">Witness Voice</a>
-                        <div class="h-px bg-zinc-800 my-2"></div>
-                        <a href="about.html" class="p-2.5 hover:bg-zinc-900 rounded-xl block" data-i18n="aboutMenu">About Us</a>
-                        <a href="privacy.html" class="p-2.5 hover:bg-zinc-900 rounded-xl block" data-i18n="privacyPolicyMenu">Privacy Policy</a>
-                        <a href="terms.html" class="p-2.5 hover:bg-zinc-900 rounded-xl block" data-i18n="termsOfServiceMenu">Terms of Service</a>
-                        <a href="safety.html" class="p-2.5 hover:bg-zinc-900 rounded-xl block" data-i18n="safetyGuidelinesMenu">Safety Guidelines</a>
-                    </div>
-                </div>
+<!-- MOBILE SLIDE-OUT / OVERLAY DRAWER MENU (Hidden by default) -->
+<div id="mobile-drawer" class="hidden md:hidden fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex flex-col justify-between p-6 overflow-y-auto">
+    <div>
+        <!-- Drawer Top Header -->
+        <div class="flex items-center justify-between pb-4 border-b border-zinc-800 mb-6">
+            <div class="flex items-center gap-3">
+                <img src="./logo.png" alt="VocalWitness Logo" class="w-8 h-8 object-contain rounded-xl border border-emerald-500/40">
+                <span class="font-bold text-emerald-400 text-lg" data-i18n="appTitle">VocalWitness</span>
             </div>
-
-            <div class="pt-6 border-t border-zinc-800 mt-6 text-center text-xs text-zinc-500">
-                VocalWitness &copy; Public Truth & Evidence
-            </div>
-        </div>
-
-        <!-- BREAKING NEWS TICKER -->
-        <div class="ticker-wrap border-b py-2 text-xs text-slate-300 rounded-2xl mb-4" style="background-color: #0f172a; border-color: rgba(16, 185, 129, 0.2);">
-            <div class="ticker-badge font-bold uppercase" style="color: #34d399;">Flash Feed</div>
-            <div class="ticker-move" id="ticker-content">
-                <span>Loading breaking feed...</span>
-            </div>
-        </div>
-
-        <!-- PUBLIC SQUARE SEARCH BAR -->
-        <div class="relative w-full max-w-lg mx-auto my-6">
-            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-400 z-10" style="color: #a1a1aa;">
-                🔍
-            </div>
-            <input
-                type="text"
-                id="squareSearchInput"
-                data-i18n-placeholder="searchPlaceholder"
-                placeholder="Search testimonies, witnesses, or topics..."
-                class="w-full pl-11 pr-12 py-3.5 bg-zinc-900 border border-zinc-700 rounded-2xl text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500 transition-all text-base shadow-inner"
-                style="background-color: #18181b; border-color: #3f3f46; color: #ffffff;"
-            >
-            <button
-                id="clearSearchBtn"
-                class="absolute inset-y-0 right-0 pr-4 flex items-center text-zinc-500 hover:text-white hidden z-20"
-                title="Clear search"
-            >
+            <button type="button" onclick="document.getElementById('mobile-drawer').classList.add('hidden')" class="p-2 bg-zinc-900 border border-zinc-700 rounded-xl text-zinc-400 hover:text-white">
                 ✕
             </button>
         </div>
 
-       <!-- MAIN FEED / TAB NAVIGATION -->
+        <!-- Primary Action Items in Drawer -->
+        <div class="flex flex-col gap-3 mb-6">
+            <button id="guest-action-btn-drawer" type="button" data-action="open-auth-modal" class="w-full py-3 bg-white text-black font-bold rounded-2xl flex items-center justify-center gap-2 shadow-md">
+                <div class="flex items-center gap-1.5">
+                    <img src="https://www.google.com/favicon.ico" class="w-4 h-4" alt="Google">
+                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                </div>
+                <span data-i18n="joinBtn">Join VocalWitness</span>
+            </button>
+
+            <button id="support-btn-drawer" type="button" data-action="open-support-modal" class="w-full py-3 bg-emerald-500 text-black font-bold rounded-2xl text-center shadow-md" data-i18n="supportBtn">
+                Support The Square
+            </button>
+
+            <div class="grid grid-cols-2 gap-2 mt-2">
+                <button id="data-saver-btn-drawer" type="button" data-action="toggle-data-saver" class="py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 text-zinc-300">
+                    <span>⚡</span>
+                    <span>Data Saver: <strong id="data-saver-status-drawer" class="text-emerald-400 font-bold">Off</strong></span>
+                </button>
+
+                <button id="bookmarks-nav-btn-drawer" type="button" data-action="open-bookmarks" class="py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 text-zinc-300">
+                    <span>🔖</span>
+                    <span>Saved Items</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- App Navigation Sections -->
+        <div class="mb-6">
+            <h3 class="text-xs uppercase tracking-wider text-zinc-500 font-bold mb-3">Navigation</h3>
+            <div class="flex flex-col gap-2">
+                <button data-tab="square" onclick="document.getElementById('mobile-drawer').classList.add('hidden')" class="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-2xl text-left font-semibold text-white flex items-center gap-3">
+                    <span>🏛️</span> <span data-i18n="publicSquareTab">Public Square</span>
+                </button>
+                <button data-tab="ledger" onclick="document.getElementById('mobile-drawer').classList.add('hidden')" class="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-2xl text-left font-semibold text-white flex items-center gap-3">
+                    <span>📜</span> <span data-i18n="evidenceLedgerTab">Evidence Ledger</span>
+                </button>
+                <button data-tab="arena" onclick="document.getElementById('mobile-drawer').classList.add('hidden')" class="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-2xl text-left font-semibold text-sky-400 flex items-center gap-3">
+                    <span>🎙️</span> <span data-i18n="liveArenaTab">Live Arena</span>
+                </button>
+                <button data-tab="mycircle" onclick="document.getElementById('mobile-drawer').classList.add('hidden')" class="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-2xl text-left font-semibold text-white flex items-center gap-3">
+                    <span>👥</span> <span data-i18n="myCircleTab">My Circle</span>
+                </button>
+                <button data-tab="witness" onclick="document.getElementById('mobile-drawer').classList.add('hidden')" class="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-2xl text-left font-semibold text-amber-400 flex items-center gap-3">
+                    <span>🛡️</span> <span data-i18n="verifiedWitnessesTab">Verified Witnesses</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Secondary Menu Pages -->
+        <div>
+            <h3 class="text-xs uppercase tracking-wider text-zinc-500 font-bold mb-3">Explore & Pages</h3>
+            <div class="flex flex-col gap-1 text-sm text-zinc-300">
+                <a href="my-testimonies.html" class="p-2.5 hover:bg-zinc-900 rounded-xl block" data-i18n="myTestimoniesMenu">My Testimonies</a>
+                <a href="groups.html" class="p-2.5 hover:bg-zinc-900 rounded-xl block" data-i18n="groupsMenu">Groups</a>
+                <a href="witness-voice.html" class="p-2.5 hover:bg-zinc-900 rounded-xl block" data-i18n="witnessVoiceMenu">Witness Voice</a>
+                <div class="h-px bg-zinc-800 my-2"></div>
+                <a href="about.html" class="p-2.5 hover:bg-zinc-900 rounded-xl block" data-i18n="aboutMenu">About Us</a>
+                <a href="privacy.html" class="p-2.5 hover:bg-zinc-900 rounded-xl block" data-i18n="privacyPolicyMenu">Privacy Policy</a>
+                <a href="terms.html" class="p-2.5 hover:bg-zinc-900 rounded-xl block" data-i18n="termsOfServiceMenu">Terms of Service</a>
+                <a href="safety.html" class="p-2.5 hover:bg-zinc-900 rounded-xl block" data-i18n="safetyGuidelinesMenu">Safety Guidelines</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="pt-6 border-t border-zinc-800 mt-6 text-center text-xs text-zinc-500">
+        VocalWitness &copy; Public Truth & Evidence
+    </div>
+</div>
+
+<!-- BREAKING NEWS TICKER -->
+<div class="ticker-wrap border-b py-2 text-xs text-slate-300 rounded-2xl mb-4" style="background-color: #0f172a; border-color: rgba(16, 185, 129, 0.2);">
+    <div class="ticker-badge font-bold uppercase" style="color: #34d399;">Flash Feed</div>
+    <div class="ticker-move" id="ticker-content">
+        <span>Loading breaking feed...</span>
+    </div>
+</div>
+
+<!-- PUBLIC SQUARE SEARCH BAR -->
+<div class="relative w-full max-w-lg mx-auto my-6">
+    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-400 z-10" style="color: #a1a1aa;">
+        🔍
+    </div>
+    <input
+        type="text"
+        id="squareSearchInput"
+        data-i18n-placeholder="searchPlaceholder"
+        placeholder="Search testimonies, witnesses, or topics..."
+        class="w-full pl-11 pr-12 py-3.5 bg-zinc-900 border border-zinc-700 rounded-2xl text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500 transition-all text-base shadow-inner"
+        style="background-color: #18181b; border-color: #3f3f46; color: #ffffff;"
+    >
+    <button
+        id="clearSearchBtn"
+        class="absolute inset-y-0 right-0 pr-4 flex items-center text-zinc-500 hover:text-white hidden z-20"
+        title="Clear search"
+    >
+        ✕
+    </button>
+</div>
+
+<!-- MAIN FEED / TAB NAVIGATION -->
 <div class="relative z-50 mb-8 w-full">
     <!-- Main 5 Core Tabs -->
     <nav class="grid grid-cols-2 sm:grid-cols-3 md:flex md:items-center md:justify-between gap-2.5 w-full" id="main-nav">
         
-        <!-- 1. Public Square (Active Tab - Text set to WHITE) -->
+        <!-- 1. Public Square -->
         <button type="button" 
                 data-tab="square" 
                 class="nav-tab active flex flex-col items-center justify-center p-3 sm:px-5 sm:py-2.5 rounded-2xl md:rounded-3xl font-semibold text-xs sm:text-sm text-white bg-emerald-600 shadow-md border border-emerald-400/50 transition-all cursor-pointer hover:scale-[1.02] flex-shrink-0">
@@ -374,7 +387,7 @@
 
     </nav>
 
-    <!-- STANDALONE MORE OPTIONS ROW (Separated from #main-nav row) -->
+    <!-- STANDALONE MORE OPTIONS ROW -->
     <div class="flex justify-end mt-3">
         <div class="dropdown-container relative shrink-0 z-50">
             <button id="more-btn" 
@@ -386,7 +399,7 @@
                 <svg class="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
             </button>
 
-            <!-- Dropdown Menu -->
+           <!-- Dropdown Menu -->
             <div id="more-menu" class="hidden absolute right-0 top-full mt-2 w-56 bg-zinc-900/95 backdrop-blur-xl border border-zinc-700 rounded-2xl shadow-2xl py-2 z-50">
                 <a href="my-testimonies.html" class="block px-4 py-2.5 hover:bg-zinc-800 text-white text-xs sm:text-sm rounded-xl mx-1" data-i18n="myTestimoniesMenu">My Testimonies</a>
                 <a href="groups.html" class="block px-4 py-2.5 hover:bg-zinc-800 text-white text-xs sm:text-sm rounded-xl mx-1" data-i18n="groupsMenu">Groups</a>
@@ -400,6 +413,7 @@
         </div>
     </div>
 </div>
+
 <!-- TESTIMONY COMPOSER -->
 <div class="glass rounded-3xl p-6 sm:p-8 mb-12 shadow-xl">
     <div class="flex items-center justify-between mb-4">
@@ -409,7 +423,7 @@
         <span class="text-xs text-zinc-500" data-i18n="publicSquareSubtitle">Public Square</span>
     </div>
     
-    <!-- HEADLINE INPUT (NEW FIELD) -->
+    <!-- HEADLINE INPUT -->
     <input type="text" id="headlineInput" maxlength="120"
            class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 mb-4 text-lg font-semibold placeholder-zinc-500 focus:outline-none focus:border-emerald-500 text-white"
            data-i18n-placeholder="headlinePlaceholder"
@@ -420,7 +434,7 @@
             data-i18n-placeholder="mainInputPlaceholder"
             placeholder="Share your raw testimony... What did you witness?"></textarea>
     
-    <!-- Hidden Single-File Input (Strictly single image enforcement, no multiple attribute) -->
+    <!-- Hidden Single-File Input -->
     <input type="file" id="image-file-input" accept="image/*" class="hidden">
 
     <div class="flex flex-col sm:flex-row gap-3 mt-5">
@@ -436,11 +450,11 @@
         </button>
     </div>
     
-    <!-- Preview Area where the single image and [×] cancel button will render -->
+    <!-- Preview Area -->
     <div id="preview-area" class="mt-6 min-h-[120px] border border-dashed border-zinc-700 rounded-2xl p-4 flex items-center justify-center text-zinc-500 text-sm" data-i18n="previewAreaText">
         Preview will appear here...
     </div>
-</div>
+
     <!-- Voice Recording Control Bar -->
     <div id="voice-recorder-bar" class="hidden mt-4 glass rounded-2xl p-4 border border-emerald-500/30">
         <div class="flex items-center gap-3 flex-wrap">
@@ -480,532 +494,511 @@
                      -skew-x-12 -translate-x-full group-active:translate-x-full transition-transform duration-700"></span>
     </button>
 </div>
-  <!-- SINGLE MOBILE BOTTOM NAVIGATION BAR -->
-        <nav id="mobile-bottom-nav" class="md:hidden fixed bottom-0 left-0 right-0 z-[9999] bg-zinc-950/95 backdrop-blur-xl border-t border-zinc-800 px-2 pt-2 pb-3 flex justify-around items-center shadow-2xl">
-            <!-- Square Tab -->
-            <button data-tab="square" class="nav-tab active flex flex-col items-center justify-center py-1 px-2 text-emerald-400 transition-all">
-                <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path>
-                </svg>
-                <span class="text-[10px] font-medium tracking-wide" data-i18n="publicSquareTab">Square</span>
-            </button>
 
-            <!-- Ledger Tab -->
-            <button data-tab="ledger" class="nav-tab flex flex-col items-center justify-center py-1 px-2 text-zinc-400 transition-all">
-                <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                </svg>
-                <span class="text-[10px] font-medium tracking-wide" data-i18n="evidenceLedgerTab">Ledger</span>
-            </button>
+<!-- SINGLE MOBILE BOTTOM NAVIGATION BAR -->
+<nav id="mobile-bottom-nav" class="md:hidden fixed bottom-0 left-0 right-0 z-[9999] bg-zinc-950/95 backdrop-blur-xl border-t border-zinc-800 px-2 pt-2 pb-3 flex justify-around items-center shadow-2xl">
+    <button data-tab="square" class="nav-tab active flex flex-col items-center justify-center py-1 px-2 text-emerald-400 transition-all">
+        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path>
+        </svg>
+        <span class="text-[10px] font-medium tracking-wide" data-i18n="publicSquareTab">Square</span>
+    </button>
 
-            <!-- Arena Tab -->
-            <button data-tab="arena" class="nav-tab flex flex-col items-center justify-center py-1 px-2 text-sky-400 transition-all">
-                <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-                </svg>
-                <span class="text-[10px] font-medium tracking-wide" data-i18n="liveArenaTab">Arena</span>
-            </button>
+    <button data-tab="ledger" class="nav-tab flex flex-col items-center justify-center py-1 px-2 text-zinc-400 transition-all">
+        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+        <span class="text-[10px] font-medium tracking-wide" data-i18n="evidenceLedgerTab">Ledger</span>
+    </button>
 
-            <!-- Witnesses Tab -->
-            <button data-tab="witness" class="nav-tab flex flex-col items-center justify-center py-1 px-2 text-amber-400 transition-all">
-                <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-                </svg>
-                <span class="text-[10px] font-medium tracking-wide" data-i18n="verifiedWitnessesTab">Witnesses</span>
-            </button>
+    <button data-tab="arena" class="nav-tab flex flex-col items-center justify-center py-1 px-2 text-sky-400 transition-all">
+        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+        </svg>
+        <span class="text-[10px] font-medium tracking-wide" data-i18n="liveArenaTab">Arena</span>
+    </button>
 
-            <!-- Profile Nav -->
-            <button id="mobile-profile-nav-btn" data-action="open-profile" class="nav-tab flex flex-col items-center justify-center py-1 px-2 text-zinc-400 hover:text-white transition-all">
-                <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                </svg>
-                <span class="text-[10px] font-medium tracking-wide" data-i18n="profileBtn">Profile</span>
-            </button>
-        </nav>
-        <!-- AUTH MODAL -->
-    <div id="authModal" class="fixed inset-0 z-[200] hidden flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-        <div class="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-3xl bg-zinc-900 p-6 sm:p-8 shadow-2xl border border-zinc-700/80">
-            
-            <!-- Close Button -->
-            <button id="closeAuthModalBtn" type="button" onclick="closeAuthModal()"
-                    class="absolute top-4 right-4 text-zinc-400 hover:text-white text-2xl font-bold w-10 h-10 flex items-center justify-center rounded-full hover:bg-zinc-800 transition">
-                ✕
-            </button>
+    <button data-tab="witness" class="nav-tab flex flex-col items-center justify-center py-1 px-2 text-amber-400 transition-all">
+        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+        </svg>
+        <span class="text-[10px] font-medium tracking-wide" data-i18n="verifiedWitnessesTab">Witnesses</span>
+    </button>
 
-            <div class="text-center mb-6">
-                <h3 id="authTitle" class="text-2xl font-bold text-white">Join the Public Square</h3>
-                <p id="authSubtitle" class="text-xs text-zinc-400 mt-1">Sign in or create an account to participate.</p>
-            </div>
+    <button id="mobile-profile-nav-btn" data-action="open-profile" class="nav-tab flex flex-col items-center justify-center py-1 px-2 text-zinc-400 hover:text-white transition-all">
+        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+        </svg>
+        <span class="text-[10px] font-medium tracking-wide" data-i18n="profileBtn">Profile</span>
+    </button>
+</nav>
 
-            <!-- Google OAuth -->
-            <button id="googleAuthBtn" type="button"
-                    class="w-full flex items-center justify-center gap-3 bg-white text-zinc-900 font-bold py-3.5 px-4 rounded-2xl hover:bg-zinc-100 transition-all mb-4 text-sm shadow-md">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5" alt="Google">
-                <span>Continue with Google</span>
-            </button>
-
-            <div class="relative my-4 text-center">
-                <div class="absolute inset-0 flex items-center">
-                    <div class="w-full border-t border-zinc-800"></div>
-                </div>
-                <span class="relative bg-zinc-900 px-3 text-xs text-zinc-500 uppercase tracking-widest">or email</span>
-            </div>
-
-            <!-- Auth Form View -->
-            <form id="authForm" class="space-y-4">
-                <div>
-                    <input type="email" id="loginEmail" name="email" placeholder="Email address" required autocomplete="email"
-                           class="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 rounded-xl focus:outline-none focus:border-emerald-500 transition text-sm">
-                </div>
-
-                <div class="relative">
-                    <input type="password" id="loginPassword" name="password" placeholder="Password" required minlength="6"
-                           autocomplete="current-password"
-                           class="w-full px-4 py-3 pr-12 bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 rounded-xl focus:outline-none focus:border-emerald-500 transition text-sm">
-
-                    <button type="button" id="togglePasswordBtn" onclick="togglePasswordVisibility()"
-                            class="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition p-1"
-                            aria-label="Toggle password visibility">
-                        <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                        <svg id="eyeOffIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                        </svg>
-                    </button>
-                </div>
-
-                <div class="flex items-center justify-between text-sm">
-                    <label class="flex items-center gap-2 cursor-pointer select-none text-zinc-400 hover:text-zinc-300">
-                        <input type="checkbox" id="rememberMe" class="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-0">
-                        <span>Remember me</span>
-                    </label>
-
-                    <button type="button" id="forgotPasswordBtn" onclick="document.getElementById('authForm').classList.add('hidden'); document.getElementById('resetPasswordView').classList.remove('hidden');"
-                            class="text-emerald-400 hover:text-emerald-300 transition text-xs">
-                        Forgot password?
-                    </button>
-                </div>
-
-                <div id="authMessage" class="hidden text-sm text-center py-2 px-3 rounded-xl"></div>
-
-                <div class="flex items-center gap-3 pt-1">
-                    <button type="submit" id="submitAuthBtn"
-                            class="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition text-sm">
-                        Sign In
-                    </button>
-                    <button type="button" id="toggleAuthModeBtn"
-                            class="flex-1 py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-semibold rounded-xl border border-zinc-700 transition text-sm">
-                        Create Account
-                    </button>
-                </div>
-            </form>
-
-            <!-- Reset Password View -->
-            <div id="resetPasswordView" class="hidden space-y-4 pt-2">
-                <p class="text-sm text-zinc-400 text-center">
-                    Enter your email and we’ll send you a reset link.
-                </p>
-
-                <input type="email" id="resetEmail" placeholder="Email address" required
-                       class="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 rounded-xl focus:outline-none focus:border-emerald-500 transition text-sm">
-
-                <div id="resetMessage" class="hidden text-sm text-center py-2 px-3 rounded-xl"></div>
-
-                <div class="flex gap-3">
-                    <button type="button" id="sendResetBtn"
-                            class="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition text-sm">
-                        Send Reset Link
-                    </button>
-                    <button type="button" id="backToAuthBtn" onclick="document.getElementById('resetPasswordView').classList.add('hidden'); document.getElementById('authForm').classList.remove('hidden');"
-                            class="flex-1 py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-semibold rounded-xl border border-zinc-700 transition text-sm">
-                        Back
-                    </button>
-                </div>
-            </div>
-
-        </div>
-    </div>
-
-    <!-- Verification Action Modal -->
-    <div id="verificationModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[10002] p-4">
-        <div class="glass rounded-3xl p-6 sm:p-8 max-w-md w-full border border-emerald-500/30 relative max-h-[90vh] overflow-y-auto">
-            <button type="button" onclick="closeVerificationModal()" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl transition">✕</button>
-
-            <div class="text-center mb-6">
-                <div class="w-12 h-12 bg-emerald-500/20 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl text-emerald-400 border border-emerald-500/30">
-                    🛡️
-                </div>
-                <h2 class="text-2xl font-bold text-white">Citizen Verification</h2>
-                <p class="text-xs text-emerald-300/80 mt-1">Verify your identity to increase trust weights and unlock governance voting.</p>
-            </div>
-
-            <div class="space-y-4">
-                <div class="p-4 bg-zinc-900/80 border border-zinc-800 rounded-2xl space-y-2 hover:border-emerald-500/50 transition">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-bold text-white flex items-center gap-1.5">
-                            <span>🔐</span> Zero-Knowledge Identity
-                        </span>
-                        <span class="text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded">Anonymous</span>
-                    </div>
-                    <p class="text-[11px] text-zinc-400 leading-relaxed">
-                        Generate an encrypted proof using <code class="text-emerald-400">zk-proof.js</code> without revealing personal credentials.
-                    </p>
-                    <button id="generateZkProofBtn" type="button" class="w-full mt-2 py-2.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white font-medium text-xs rounded-xl transition flex items-center justify-center gap-2">
-                        <span>Generate ZK Proof</span>
-                    </button>
-                </div>
-            </div>
-
-            <p class="text-[10px] text-zinc-500 text-center mt-5">
-                Protected by non-custodial cryptographic rails. Zero tracking or raw personal data storage.
-            </p>
-        </div>
-    </div>
-
-    <!-- Quadratic Voting Modal -->
-    <div id="quadratic-vote-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden z-[10000] flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl relative overflow-hidden">
-            <div class="absolute -top-12 -right-12 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl pointer-events-none"></div>
-
-            <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-5">
-                <div>
-                    <span class="text-xs font-semibold uppercase tracking-wider text-blue-400">Governance Voting</span>
-                    <h3 id="qv-modal-title" class="text-lg font-bold text-white leading-tight">Proposal Title</h3>
-                </div>
-                <button id="qv-close-btn" type="button" class="text-slate-400 hover:text-white transition p-1">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3 mb-5">
-                <button id="qv-btn-for" type="button" class="qv-direction-btn flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 font-semibold text-sm hover:bg-emerald-500/20 transition active" data-direction="for">
-                    <span>👍 Vote FOR</span>
-                </button>
-                <button id="qv-btn-against" type="button" class="qv-direction-btn flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-rose-500/30 bg-slate-800 text-slate-400 font-semibold text-sm hover:bg-rose-500/20 hover:text-rose-400 transition" data-direction="against">
-                    <span>👎 Vote AGAINST</span>
-                </button>
-            </div>
-
-            <div class="mb-6 space-y-3">
-                <div class="flex justify-between items-center text-xs font-medium">
-                    <span class="text-slate-400">Vote Strength:</span>
-                    <span id="qv-strength-badge" class="bg-blue-950 text-blue-400 border border-blue-800 px-2 py-0.5 rounded font-bold">1 Vote</span>
-                </div>
-                
-                <input type="range" id="qv-strength-slider" min="1" max="5" step="1" value="1" 
-                       class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500">
-
-                <div class="flex justify-between text-[10px] text-slate-500 font-mono px-1">
-                    <span>1 (Low)</span>
-                    <span>2</span>
-                    <span>3</span>
-                    <span>4</span>
-                    <span>5 (Max)</span>
-                </div>
-            </div>
-
-            <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-4 mb-6 space-y-2">
-                <div class="flex justify-between items-center text-xs">
-                    <span class="text-slate-400">Power Point Cost (Strength²):</span>
-                    <span id="qv-cost-preview" class="text-amber-400 font-bold font-mono">1 Power Point</span>
-                </div>
-                <div class="flex justify-between items-center text-xs">
-                    <span class="text-slate-400">Remaining Budget (Max 25):</span>
-                    <span id="qv-budget-remaining" class="text-slate-300 font-mono">24 / 25 pts</span>
-                </div>
-                <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden mt-1">
-                    <div id="qv-budget-bar" class="h-full bg-blue-500 transition-all duration-300" style="width: 4%;"></div>
-                </div>
-            </div>
-
-            <button id="qv-submit-vote-btn" type="button" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl text-sm transition shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
-                <span>Cast Quadratic Vote</span>
-            </button>
-
-            <p class="text-[11px] text-slate-500 text-center mt-3">
-                Protected by Zero-Knowledge proofs (<code class="text-slate-400">zk-proof.js</code>) & Sybil filters.
-            </p>
-        </div>
-    </div>
-        <!-- Support Modal -->
-    <div id="supportModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[10000] flex items-center justify-center p-4 hidden">
-        <div class="glass max-w-md w-full rounded-3xl p-6 border border-emerald-500/30 text-white relative max-h-[90vh] overflow-y-auto">
-            <button id="closeSupportModal" type="button" onclick="document.getElementById('supportModal')?.classList.add('hidden')" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl">✕</button>
-
-            <div class="text-center mb-5">
-                <div class="w-12 h-12 bg-emerald-500/20 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl font-bold text-emerald-400">♥</div>
-                <h3 class="text-xl font-bold text-white">Sustain the Public Square</h3>
-                <p class="text-xs text-emerald-300 mt-1">VocalWitness stays free, independent, and un-manipulated through voluntary community backing.</p>
-            </div>
-
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs text-zinc-400 mb-2">Select Contribution Amount (USD / NGN)</label>
-                    <div id="supportTierContainer" class="grid grid-cols-3 gap-2">
-                        <button type="button" class="support-tier-btn py-2 bg-zinc-800 hover:bg-emerald-600/30 border border-zinc-700 rounded-xl text-sm font-medium transition-all" data-amount="5">$5</button>
-                        <button type="button" class="support-tier-btn py-2 bg-emerald-600/20 border border-emerald-500 rounded-xl text-sm font-medium transition-all active-tier" data-amount="15">$15</button>
-                        <button type="button" class="support-tier-btn py-2 bg-zinc-800 hover:bg-emerald-600/30 border border-zinc-700 rounded-xl text-sm font-medium transition-all" data-amount="50">$50</button>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs text-zinc-400 mb-1">Custom Amount ($ USD)</label>
-                    <input type="number" id="customSupportAmount" placeholder="Enter amount" min="1" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500" value="15">
-                </div>
-
-                <button id="paystackPayBtn" type="button" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-sm transition-all shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
-                    <span>Pay with Card / Bank (Paystack)</span>
-                </button>
-
-                <button id="proceedCryptoBtn" type="button" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-black font-semibold rounded-xl text-sm transition-all shadow-lg shadow-emerald-600/20">
-                    Proceed with Crypto (NOWPayments)
-                </button>
-            </div>
-
-            <div class="mt-5 pt-4 border-t border-zinc-800">
-                <p class="text-xs text-zinc-400 mb-2 font-medium text-center">Or scan / copy to send USDT directly:</p>
-
-                <div class="bg-white p-3 rounded-2xl w-36 h-36 mx-auto mb-3 flex items-center justify-center shadow-md">
-                    <img src="/image/95756.jpg" alt="USDT QR Code" class="w-full h-full object-contain">
-                </div>
-
-                <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex items-center justify-between gap-2">
-                    <span class="text-[11px] text-emerald-400 font-mono truncate select-all">TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK</span>
-                    <button type="button" onclick="navigator.clipboard.writeText('TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK'); if (typeof showToast === 'function') showToast('TRC-20 address copied!', 'success');" class="text-xs bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 rounded-lg text-white font-medium transition-all shrink-0">
-                        Copy
-                    </button>
-                </div>
-
-                <p class="text-[10px] text-zinc-500 mt-1.5 text-center">Network: <strong class="text-zinc-400">Tron (TRC-20)</strong> • Send USDT only</p>
-            </div>
-
-            <p class="text-[10px] text-zinc-500 text-center mt-4">Powered by non-custodial rails. No tracking, no intrusive data collection.</p>
-        </div>
-    </div>
-
-    <!-- Profile Modal (Corrected Markup Structure) -->
-    <div id="profileModal" class="fixed inset-0 z-[10000] hidden items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto">
-        <!-- Modal Dialog Box -->
-        <div class="relative w-full max-w-lg bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden my-8">
-            
-            <!-- Modal Header -->
-            <div class="flex items-center justify-between p-4 border-b border-slate-800">
-                <h3 class="text-lg font-semibold text-white">User Profile</h3>
-                <button type="button" onclick="closeProfileModal()" class="text-slate-400 hover:text-white text-2xl">&times;</button>
-            </div>
-
-            <!-- Modal Body (Scrollable Content Area) -->
-            <div class="p-6 space-y-6 max-h-[75vh] overflow-y-auto custom-scrollbar">
-                <!-- Profile Avatar & Identity -->
-                <div class="flex flex-col items-center text-center">
-                    <img id="profileAvatar" class="w-20 h-20 rounded-full border-2 border-emerald-500 object-cover mb-3" src="" alt="Avatar">
-                    <h4 id="profileNameDisplay" class="text-xl font-bold text-white"></h4>
-                    <p id="profileEmailDisplay" class="text-sm text-slate-400"></p>
-                </div>
-
-                <!-- Extended Content Section (Witness Tiers, Stats, Badges) -->
-                <div id="profileExtendedContent" class="space-y-4">
-                    <!-- Credibility / Tier Stats -->
-                    <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
-                        <span class="text-xs uppercase tracking-wider text-emerald-400 font-semibold">Witness Circle Tier</span>
-                        <div id="profileTierDisplay" class="text-white font-medium mt-1">Verified Witness</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Modal Footer / Actions -->
-            <div class="p-4 border-t border-slate-800 bg-slate-900/80 flex justify-end gap-3">
-                <button type="button" onclick="closeProfileModal(); document.getElementById('editProfileModal')?.classList.remove('hidden');" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-semibold transition">Edit Profile</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Interactive Application Footer -->
-    <footer class="bg-zinc-950 border-t border-zinc-800/80 pt-16 pb-12 mt-20 text-zinc-400">
-        <div class="max-w-6xl mx-auto px-6">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-10 pb-12 border-b border-zinc-800/60">
-
-                <!-- Brand & Mission Column -->
-                <div class="md:col-span-1 space-y-4">
-                    <div class="flex items-center gap-2">
-                        <span class="text-xl font-bold tracking-wider text-white">
-                            Vocal<span class="text-emerald-500">Witness</span>
-                        </span>
-                    </div>
-                    <p class="text-xs text-zinc-400 leading-relaxed" data-i18n="footerMission">
-                        A decentralized public square empowering citizens with immutable testimony, voice verification, and transparent reporting.
-                    </p>
-                    <button type="button" onclick="openSupportModal()" 
-                            class="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-emerald-600/10 hover:bg-emerald-600/20 border border-emerald-500/30 rounded-xl text-emerald-400 text-xs font-semibold transition-all">
-                        <span>♥</span> <span data-i18n="sustainSquareBtn">Sustain the Platform</span>
-                    </button>
-                </div>
-
-                <!-- Platform Navigation -->
-                <div class="space-y-3">
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-white" data-i18n="footerPlatformHeader">Platform</h3>
-                    <ul class="space-y-2 text-xs">
-                        <li><a href="index.html" class="hover:text-emerald-400 transition" data-i18n="publicSquareFeed">Public Square</a></li>
-                        <li><a href="my-testimonies.html" class="hover:text-emerald-400 transition" data-i18n="myTestimoniesMenu">My Testimonies</a></li>
-                        <li><a href="groups.html" class="hover:text-emerald-400 transition" data-i18n="groupsMenu">Groups</a></li>
-                        <li><a href="witness-voice.html" class="hover:text-emerald-400 transition" data-i18n="witnessVoiceMenu">Witness Voice</a></li>
-                    </ul>
-                </div>
-
-                <!-- Governance & Legal -->
-                <div class="space-y-3">
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-white" data-i18n="footerGovernanceHeader">Governance & Legal</h3>
-                    <ul class="space-y-2 text-xs">
-                        <li><a href="about.html" class="hover:text-emerald-400 transition" data-i18n="aboutMenu">About Us</a></li>
-                        <li><a href="privacy.html" class="hover:text-emerald-400 transition" data-i18n="privacyPolicyMenu">Privacy Policy</a></li>
-                        <li><a href="terms.html" class="hover:text-emerald-400 transition" data-i18n="termsOfServiceMenu">Terms of Service</a></li>
-                        <li><a href="safety.html" class="hover:text-emerald-400 transition" data-i18n="safetyGuidelinesMenu">Safety Guidelines</a></li>
-                    </ul>
-                </div>
-
-                <!-- Network & System Status -->
-                <div class="space-y-3">
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-white" data-i18n="footerSystemHeader">System Status</h3>
-                    <div class="p-3 bg-zinc-900 border border-zinc-800 rounded-2xl space-y-2">
-                        <div class="flex items-center justify-between text-xs">
-                            <span class="text-zinc-500">Storage Rail:</span>
-                            <span class="text-emerald-400 font-mono text-[11px]">Firestore Active</span>
-                        </div>
-                        <div class="flex items-center justify-between text-xs">
-                            <span class="text-zinc-500">Verification:</span>
-                            <span class="text-emerald-400 font-mono text-[11px]">TRC-20 / Direct</span>
-                        </div>
-                        <div class="flex items-center justify-between text-xs">
-                            <span class="text-zinc-500">Data Saver:</span>
-                            <button onclick="toggleDataSaver()" id="data-saver-status" class="text-amber-400 font-medium text-xs hover:underline">
-                                Off
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- Bottom Copyright & Security Note -->
-            <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-500">
-                <p data-i18n="footerCopyright">
-                    © 2026 VocalWitness • Built for Truth • Powered by Citizens
-                </p>
-                <p class="text-[11px] font-mono text-zinc-600 bg-zinc-900/50 px-3 py-1 rounded-full border border-zinc-800">
-                    Non-custodial infrastructure • Zero tracking
-                </p>
-            </div>
-        </div>
-    </footer>
-
-    <!-- Global UI Helper Script -->
-    <script>
-        const $ = id => document.getElementById(id);
-
-        function showToast(message, type = 'info') {
-            const toast = document.createElement('div');
-            toast.className = `fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-2xl text-sm font-medium shadow-2xl z-[11000] ${
-                type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-red-600' : 'bg-zinc-800'
-            } text-white transition-all duration-300`;
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 3500);
-        }
-
-        function togglePasswordVisibility() {
-            const input = $('loginPassword');
-            const eyeIcon = $('eyeIcon');
-            const eyeOffIcon = $('eyeOffIcon');
-            
-            if (!input) return;
-            
-            const isPassword = input.type === 'password';
-            input.type = isPassword ? 'text' : 'password';
-            
-            if (eyeIcon && eyeOffIcon) {
-                eyeIcon.classList.toggle('hidden', isPassword);
-                eyeOffIcon.classList.toggle('hidden', !isPassword);
-            }
-        }
-
-        // Attach DOM helper and UI functions to window for global inline onclick access
-        window.$ = $;
-        window.showToast = showToast;
-        window.togglePasswordVisibility = togglePasswordVisibility;
+<!-- AUTH MODAL -->
+<div id="authModal" class="fixed inset-0 z-[200] hidden flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+    <div class="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-3xl bg-zinc-900 p-6 sm:p-8 shadow-2xl border border-zinc-700/80">
         
-        window.closeAuthModal = () => $('authModal')?.classList.add('hidden');
-        window.closeLoginModal = () => {
-            $('loginModal')?.classList.add('hidden');
-            window.closeAuthModal();
-        };
-        window.closeProfileModal = () => $('profileModal')?.classList.add('hidden');
-        window.closeEditProfile = () => $('editProfileModal')?.classList.add('hidden');
-        window.openSupportModal = () => $('supportModal')?.classList.remove('hidden');
-        window.openProfileModal = () => $('profileModal')?.classList.remove('hidden');
-        window.closeVerificationModal = () => $('verificationModal')?.classList.add('hidden');
+        <button id="closeAuthModalBtn" type="button" onclick="closeAuthModal()"
+                class="absolute top-4 right-4 text-zinc-400 hover:text-white text-2xl font-bold w-10 h-10 flex items-center justify-center rounded-full hover:bg-zinc-800 transition">
+            ✕
+        </button>
 
-        window.toggleDataSaver = function() {
-            const btn = $('data-saver-status');
-            if (!btn) return;
-            const isOff = btn.textContent.trim() === 'Off';
-            btn.textContent = isOff ? 'On' : 'Off';
-            btn.className = isOff 
-                ? 'text-emerald-400 font-medium text-xs hover:underline' 
-                : 'text-amber-400 font-medium text-xs hover:underline';
-            showToast(`Data Saver mode turned ${isOff ? 'ON' : 'OFF'}`, 'info');
-        };
+        <div class="text-center mb-6">
+            <h3 id="authTitle" class="text-2xl font-bold text-white">Join the Public Square</h3>
+            <p id="authSubtitle" class="text-xs text-zinc-400 mt-1">Sign in or create an account to participate.</p>
+        </div>
 
-        // Header More Options Dropdown toggle
-        document.addEventListener('click', (e) => {
-            const moreBtn = $('more-btn');
-            const moreMenu = $('more-menu');
-            if (!moreMenu) return;
+        <button id="googleAuthBtn" type="button"
+                class="w-full flex items-center justify-center gap-3 bg-white text-zinc-900 font-bold py-3.5 px-4 rounded-2xl hover:bg-zinc-100 transition-all mb-4 text-sm shadow-md">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5" alt="Google">
+            <span>Continue with Google</span>
+        </button>
 
-            if (moreBtn && moreBtn.contains(e.target)) {
-                e.stopPropagation();
-                moreMenu.classList.toggle('hidden');
-            } else if (!moreMenu.contains(e.target)) {
-                moreMenu.classList.add('hidden');
-            }
-        });
+        <div class="relative my-4 text-center">
+            <div class="absolute inset-0 flex items-center">
+                <div class="w-full border-t border-zinc-800"></div>
+            </div>
+            <span class="relative bg-zinc-900 px-3 text-xs text-zinc-500 uppercase tracking-widest">or email</span>
+        </div>
 
-        // Support tier selection via Event Delegation
-        document.addEventListener('click', (e) => {
-            const btn = e.target.closest('.support-tier-btn');
-            if (!btn) return;
+        <form id="authForm" class="space-y-4">
+            <div>
+                <input type="email" id="loginEmail" name="email" placeholder="Email address" required autocomplete="email"
+                       class="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 rounded-xl focus:outline-none focus:border-emerald-500 transition text-sm">
+            </div>
 
-            const container = $('supportTierContainer');
-            if (container) {
-                container.querySelectorAll('.support-tier-btn').forEach(b => {
-                    b.classList.remove('bg-emerald-600/20', 'border-emerald-500');
-                    b.classList.add('bg-zinc-800', 'border-zinc-700');
-                });
-            }
+            <div class="relative">
+                <input type="password" id="loginPassword" name="password" placeholder="Password" required minlength="6"
+                       autocomplete="current-password"
+                       class="w-full px-4 py-3 pr-12 bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 rounded-xl focus:outline-none focus:border-emerald-500 transition text-sm">
 
-            btn.classList.remove('bg-zinc-800', 'border-zinc-700');
-            btn.classList.add('bg-emerald-600/20', 'border-emerald-500');
+                <button type="button" id="togglePasswordBtn" onclick="togglePasswordVisibility()"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition p-1"
+                        aria-label="Toggle password visibility">
+                    <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    <svg id="eyeOffIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                    </svg>
+                </button>
+            </div>
 
-            const amountInput = $('customSupportAmount');
-            if (amountInput) {
-                amountInput.value = btn.getAttribute('data-amount');
-            }
-        });
-    </script>
+            <div class="flex items-center justify-between text-sm">
+                <label class="flex items-center gap-2 cursor-pointer select-none text-zinc-400 hover:text-zinc-300">
+                    <input type="checkbox" id="rememberMe" class="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-0">
+                    <span>Remember me</span>
+                </label>
 
-    <script type="module" src="./js/auth.js"></script>
-    <script type="module" src="./js/main.js"></script>
-    <script type="module" src="./js/notifications.js"></script>
-    <script type="module" src="./js/bookmarks.js"></script>
-    <script type="module" src="./js/zk-proof.js"></script>
-    <script type="module" src="./js/feed.js"></script>
-    <script type="module" src="./js/witness-voice.js"></script>
+                <button type="button" id="forgotPasswordBtn" onclick="document.getElementById('authForm').classList.add('hidden'); document.getElementById('resetPasswordView').classList.remove('hidden');"
+                        class="text-emerald-400 hover:text-emerald-300 transition text-xs">
+                    Forgot password?
+                </button>
+            </div>
 
-    <!-- Live Arena -->
-    <script type="module">
-        import { initLiveArena } from './js/live-arena.js';
-        initLiveArena();
-    </script>
+            <div id="authMessage" class="hidden text-sm text-center py-2 px-3 rounded-xl"></div>
+
+            <div class="flex items-center gap-3 pt-1">
+                <button type="submit" id="submitAuthBtn"
+                        class="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition text-sm">
+                    Sign In
+                </button>
+                <button type="button" id="toggleAuthModeBtn"
+                        class="flex-1 py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-semibold rounded-xl border border-zinc-700 transition text-sm">
+                    Create Account
+                </button>
+            </div>
+        </form>
+
+        <!-- Reset Password View -->
+        <div id="resetPasswordView" class="hidden space-y-4 pt-2">
+            <p class="text-sm text-zinc-400 text-center">
+                Enter your email and we’ll send you a reset link.
+            </p>
+
+            <input type="email" id="resetEmail" placeholder="Email address" required
+                   class="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 rounded-xl focus:outline-none focus:border-emerald-500 transition text-sm">
+
+            <div id="resetMessage" class="hidden text-sm text-center py-2 px-3 rounded-xl"></div>
+
+            <div class="flex gap-3">
+                <button type="button" id="sendResetBtn"
+                        class="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition text-sm">
+                    Send Reset Link
+                </button>
+                <button type="button" id="backToAuthBtn" onclick="document.getElementById('resetPasswordView').classList.add('hidden'); document.getElementById('authForm').classList.remove('hidden');"
+                        class="flex-1 py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-semibold rounded-xl border border-zinc-700 transition text-sm">
+                    Back
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- VERIFICATION ACTION MODAL -->
+<div id="verificationModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[10002] p-4">
+    <div class="glass rounded-3xl p-6 sm:p-8 max-w-md w-full border border-emerald-500/30 relative max-h-[90vh] overflow-y-auto">
+        <button type="button" onclick="closeVerificationModal()" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl transition">✕</button>
+
+        <div class="text-center mb-6">
+            <div class="w-12 h-12 bg-emerald-500/20 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl text-emerald-400 border border-emerald-500/30">
+                🛡️
+            </div>
+            <h2 class="text-2xl font-bold text-white">Citizen Verification</h2>
+            <p class="text-xs text-emerald-300/80 mt-1">Verify your identity to increase trust weights and unlock governance voting.</p>
+        </div>
+
+        <div class="space-y-4">
+            <div class="p-4 bg-zinc-900/80 border border-zinc-800 rounded-2xl space-y-2 hover:border-emerald-500/50 transition">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-white flex items-center gap-1.5">
+                        <span>🔐</span> Zero-Knowledge Identity
+                    </span>
+                    <span class="text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded">Anonymous</span>
+                </div>
+                <p class="text-[11px] text-zinc-400 leading-relaxed">
+                    Generate an encrypted proof using <code class="text-emerald-400">zk-proof.js</code> without revealing personal credentials.
+                </p>
+                <button id="generateZkProofBtn" type="button" class="w-full mt-2 py-2.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white font-medium text-xs rounded-xl transition flex items-center justify-center gap-2">
+                    <span>Generate ZK Proof</span>
+                </button>
+            </div>
+        </div>
+
+        <p class="text-[10px] text-zinc-500 text-center mt-5">
+            Protected by non-custodial cryptographic rails. Zero tracking or raw personal data storage.
+        </p>
+    </div>
+</div>
+
+<!-- QUADRATIC VOTING MODAL -->
+<div id="quadratic-vote-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden z-[10000] flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl relative overflow-hidden">
+        <div class="absolute -top-12 -right-12 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl pointer-events-none"></div>
+
+        <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-5">
+            <div>
+                <span class="text-xs font-semibold uppercase tracking-wider text-blue-400">Governance Voting</span>
+                <h3 id="qv-modal-title" class="text-lg font-bold text-white leading-tight">Proposal Title</h3>
+            </div>
+            <button id="qv-close-btn" type="button" class="text-slate-400 hover:text-white transition p-1">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 mb-5">
+            <button id="qv-btn-for" type="button" class="qv-direction-btn flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 font-semibold text-sm hover:bg-emerald-500/20 transition active" data-direction="for">
+                <span>👍 Vote FOR</span>
+            </button>
+            <button id="qv-btn-against" type="button" class="qv-direction-btn flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-rose-500/30 bg-slate-800 text-slate-400 font-semibold text-sm hover:bg-rose-500/20 hover:text-rose-400 transition" data-direction="against">
+                <span>👎 Vote AGAINST</span>
+            </button>
+        </div>
+
+        <div class="mb-6 space-y-3">
+            <div class="flex justify-between items-center text-xs font-medium">
+                <span class="text-slate-400">Vote Strength:</span>
+                <span id="qv-strength-badge" class="bg-blue-950 text-blue-400 border border-blue-800 px-2 py-0.5 rounded font-bold">1 Vote</span>
+            </div>
+            
+            <input type="range" id="qv-strength-slider" min="1" max="5" step="1" value="1" 
+                   class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500">
+
+            <div class="flex justify-between text-[10px] text-slate-500 font-mono px-1">
+                <span>1 (Low)</span>
+                <span>2</span>
+                <span>3</span>
+                <span>4</span>
+                <span>5 (Max)</span>
+            </div>
+        </div>
+
+        <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-4 mb-6 space-y-2">
+            <div class="flex justify-between items-center text-xs">
+                <span class="text-slate-400">Power Point Cost (Strength²):</span>
+                <span id="qv-cost-preview" class="text-amber-400 font-bold font-mono">1 Power Point</span>
+            </div>
+            <div class="flex justify-between items-center text-xs">
+                <span class="text-slate-400">Remaining Budget (Max 25):</span>
+                <span id="qv-budget-remaining" class="text-slate-300 font-mono">24 / 25 pts</span>
+            </div>
+            <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden mt-1">
+                <div id="qv-budget-bar" class="h-full bg-blue-500 transition-all duration-300" style="width: 4%;"></div>
+            </div>
+        </div>
+
+        <button id="qv-submit-vote-btn" type="button" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl text-sm transition shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
+            <span>Cast Quadratic Vote</span>
+        </button>
+
+        <p class="text-[11px] text-slate-500 text-center mt-3">
+            Protected by Zero-Knowledge proofs (<code class="text-slate-400">zk-proof.js</code>) & Sybil filters.
+        </p>
+    </div>
+</div>
+      <!-- SUPPORT MODAL -->
+<div id="supportModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[10000] flex items-center justify-center p-4 hidden">
+    <div class="glass max-w-md w-full rounded-3xl p-6 border border-emerald-500/30 text-white relative max-h-[90vh] overflow-y-auto">
+        <button id="closeSupportModal" type="button" onclick="document.getElementById('supportModal')?.classList.add('hidden')" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl">✕</button>
+
+        <div class="text-center mb-5">
+            <div class="w-12 h-12 bg-emerald-500/20 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl font-bold text-emerald-400">♥</div>
+            <h3 class="text-xl font-bold text-white">Sustain the Public Square</h3>
+            <p class="text-xs text-emerald-300 mt-1">VocalWitness stays free, independent, and un-manipulated through voluntary community backing.</p>
+        </div>
+
+        <div class="space-y-4">
+            <div>
+                <label class="block text-xs text-zinc-400 mb-2">Select Contribution Amount (USD / NGN)</label>
+                <div id="supportTierContainer" class="grid grid-cols-3 gap-2">
+                    <button type="button" class="support-tier-btn py-2 bg-zinc-800 hover:bg-emerald-600/30 border border-zinc-700 rounded-xl text-sm font-medium transition-all" data-amount="5">$5</button>
+                    <button type="button" class="support-tier-btn py-2 bg-emerald-600/20 border border-emerald-500 rounded-xl text-sm font-medium transition-all active-tier" data-amount="15">$15</button>
+                    <button type="button" class="support-tier-btn py-2 bg-zinc-800 hover:bg-emerald-600/30 border border-zinc-700 rounded-xl text-sm font-medium transition-all" data-amount="50">$50</button>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs text-zinc-400 mb-1">Custom Amount ($ USD)</label>
+                <input type="number" id="customSupportAmount" placeholder="Enter amount" min="1" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500" value="15">
+            </div>
+
+            <button id="paystackPayBtn" type="button" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-sm transition-all shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
+                <span>Pay with Card / Bank (Paystack)</span>
+            </button>
+
+            <button id="proceedCryptoBtn" type="button" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-black font-semibold rounded-xl text-sm transition-all shadow-lg shadow-emerald-600/20">
+                Proceed with Crypto (NOWPayments)
+            </button>
+        </div>
+
+        <div class="mt-5 pt-4 border-t border-zinc-800">
+            <p class="text-xs text-zinc-400 mb-2 font-medium text-center">Or scan / copy to send USDT directly:</p>
+
+            <div class="bg-white p-3 rounded-2xl w-36 h-36 mx-auto mb-3 flex items-center justify-center shadow-md">
+                <img src="/image/95756.jpg" alt="USDT QR Code" class="w-full h-full object-contain">
+            </div>
+
+            <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex items-center justify-between gap-2">
+                <span class="text-[11px] text-emerald-400 font-mono truncate select-all">TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK</span>
+                <button type="button" onclick="navigator.clipboard.writeText('TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK'); if (typeof showToast === 'function') showToast('TRC-20 address copied!', 'success');" class="text-xs bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 rounded-lg text-white font-medium transition-all shrink-0">
+                    Copy
+                </button>
+            </div>
+
+            <p class="text-[10px] text-zinc-500 mt-1.5 text-center">Network: <strong class="text-zinc-400">Tron (TRC-20)</strong> • Send USDT only</p>
+        </div>
+
+        <p class="text-[10px] text-zinc-500 text-center mt-4">Powered by non-custodial rails. No tracking, no intrusive data collection.</p>
+    </div>
+</div>
+
+<!-- PROFILE MODAL -->
+<div id="profileModal" class="fixed inset-0 z-[10000] hidden items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto">
+    <div class="relative w-full max-w-lg bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden my-8">
+        
+        <div class="flex items-center justify-between p-4 border-b border-slate-800">
+            <h3 class="text-lg font-semibold text-white">User Profile</h3>
+            <button type="button" onclick="closeProfileModal()" class="text-slate-400 hover:text-white text-2xl">&times;</button>
+        </div>
+
+        <div class="p-6 space-y-6 max-h-[75vh] overflow-y-auto custom-scrollbar">
+            <div class="flex flex-col items-center text-center">
+                <img id="profileAvatar" class="w-20 h-20 rounded-full border-2 border-emerald-500 object-cover mb-3" src="" alt="Avatar">
+                <h4 id="profileNameDisplay" class="text-xl font-bold text-white"></h4>
+                <p id="profileEmailDisplay" class="text-sm text-slate-400"></p>
+            </div>
+
+            <div id="profileExtendedContent" class="space-y-4">
+                <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+                    <span class="text-xs uppercase tracking-wider text-emerald-400 font-semibold">Witness Circle Tier</span>
+                    <div id="profileTierDisplay" class="text-white font-medium mt-1">Verified Witness</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-4 border-t border-slate-800 bg-slate-900/80 flex justify-end gap-3">
+            <button type="button" onclick="closeProfileModal(); document.getElementById('editProfileModal')?.classList.remove('hidden');" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-semibold transition">Edit Profile</button>
+        </div>
+    </div>
+</div>
+
+<!-- APPLICATION FOOTER -->
+<footer class="bg-zinc-950 border-t border-zinc-800/80 pt-16 pb-12 mt-20 text-zinc-400">
+    <div class="max-w-6xl mx-auto px-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-10 pb-12 border-b border-zinc-800/60">
+
+            <div class="md:col-span-1 space-y-4">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl font-bold tracking-wider text-white">
+                        Vocal<span class="text-emerald-500">Witness</span>
+                    </span>
+                </div>
+                <p class="text-xs text-zinc-400 leading-relaxed" data-i18n="footerMission">
+                    A decentralized public square empowering citizens with immutable testimony, voice verification, and transparent reporting.
+                </p>
+                <button type="button" onclick="openSupportModal()" 
+                        class="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-emerald-600/10 hover:bg-emerald-600/20 border border-emerald-500/30 rounded-xl text-emerald-400 text-xs font-semibold transition-all">
+                    <span>♥</span> <span data-i18n="sustainSquareBtn">Sustain the Platform</span>
+                </button>
+            </div>
+
+            <div class="space-y-3">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-white" data-i18n="footerPlatformHeader">Platform</h3>
+                <ul class="space-y-2 text-xs">
+                    <li><a href="index.html" class="hover:text-emerald-400 transition" data-i18n="publicSquareFeed">Public Square</a></li>
+                    <li><a href="my-testimonies.html" class="hover:text-emerald-400 transition" data-i18n="myTestimoniesMenu">My Testimonies</a></li>
+                    <li><a href="groups.html" class="hover:text-emerald-400 transition" data-i18n="groupsMenu">Groups</a></li>
+                    <li><a href="witness-voice.html" class="hover:text-emerald-400 transition" data-i18n="witnessVoiceMenu">Witness Voice</a></li>
+                </ul>
+            </div>
+
+            <div class="space-y-3">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-white" data-i18n="footerGovernanceHeader">Governance & Legal</h3>
+                <ul class="space-y-2 text-xs">
+                    <li><a href="about.html" class="hover:text-emerald-400 transition" data-i18n="aboutMenu">About Us</a></li>
+                    <li><a href="privacy.html" class="hover:text-emerald-400 transition" data-i18n="privacyPolicyMenu">Privacy Policy</a></li>
+                    <li><a href="terms.html" class="hover:text-emerald-400 transition" data-i18n="termsOfServiceMenu">Terms of Service</a></li>
+                    <li><a href="safety.html" class="hover:text-emerald-400 transition" data-i18n="safetyGuidelinesMenu">Safety Guidelines</a></li>
+                </ul>
+            </div>
+
+            <div class="space-y-3">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-white" data-i18n="footerSystemHeader">System Status</h3>
+                <div class="p-3 bg-zinc-900 border border-zinc-800 rounded-2xl space-y-2">
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="text-zinc-500">Storage Rail:</span>
+                        <span class="text-emerald-400 font-mono text-[11px]">Firestore Active</span>
+                    </div>
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="text-zinc-500">Verification:</span>
+                        <span class="text-emerald-400 font-mono text-[11px]">TRC-20 / Direct</span>
+                    </div>
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="text-zinc-500">Data Saver:</span>
+                        <button onclick="toggleDataSaver()" id="data-saver-status" class="text-amber-400 font-medium text-xs hover:underline">
+                            Off
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-500">
+            <p data-i18n="footerCopyright">
+                © 2026 VocalWitness • Built for Truth • Powered by Citizens
+            </p>
+            <p class="text-[11px] font-mono text-zinc-600 bg-zinc-900/50 px-3 py-1 rounded-full border border-zinc-800">
+                Non-custodial infrastructure • Zero tracking
+            </p>
+        </div>
+    </div>
+</footer>
+
+<!-- GLOBAL UI HELPER SCRIPT -->
+<script>
+    const $ = id => document.getElementById(id);
+
+    function showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-2xl text-sm font-medium shadow-2xl z-[11000] ${
+            type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-red-600' : 'bg-zinc-800'
+        } text-white transition-all duration-300`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3500);
+    }
+
+    function togglePasswordVisibility() {
+        const input = $('loginPassword');
+        const eyeIcon = $('eyeIcon');
+        const eyeOffIcon = $('eyeOffIcon');
+        
+        if (!input) return;
+        
+        const isPassword = input.type === 'password';
+        input.type = isPassword ? 'text' : 'password';
+        
+        if (eyeIcon && eyeOffIcon) {
+            eyeIcon.classList.toggle('hidden', isPassword);
+            eyeOffIcon.classList.toggle('hidden', !isPassword);
+        }
+    }
+
+    window.$ = $;
+    window.showToast = showToast;
+    window.togglePasswordVisibility = togglePasswordVisibility;
+    
+    window.closeAuthModal = () => $('authModal')?.classList.add('hidden');
+    window.closeLoginModal = () => {
+        $('loginModal')?.classList.add('hidden');
+        window.closeAuthModal();
+    };
+    window.closeProfileModal = () => $('profileModal')?.classList.add('hidden');
+    window.closeEditProfile = () => $('editProfileModal')?.classList.add('hidden');
+    window.openSupportModal = () => $('supportModal')?.classList.remove('hidden');
+    window.openProfileModal = () => $('profileModal')?.classList.remove('hidden');
+    window.closeVerificationModal = () => $('verificationModal')?.classList.add('hidden');
+
+    window.toggleDataSaver = function() {
+        const btn = $('data-saver-status');
+        if (!btn) return;
+        const isOff = btn.textContent.trim() === 'Off';
+        btn.textContent = isOff ? 'On' : 'Off';
+        btn.className = isOff 
+            ? 'text-emerald-400 font-medium text-xs hover:underline' 
+            : 'text-amber-400 font-medium text-xs hover:underline';
+        showToast(`Data Saver mode turned ${isOff ? 'ON' : 'OFF'}`, 'info');
+    };
+
+    document.addEventListener('click', (e) => {
+        const moreBtn = $('more-btn');
+        const moreMenu = $('more-menu');
+        if (!moreMenu) return;
+
+        if (moreBtn && moreBtn.contains(e.target)) {
+            e.stopPropagation();
+            moreMenu.classList.toggle('hidden');
+        } else if (!moreMenu.contains(e.target)) {
+            moreMenu.classList.add('hidden');
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('.support-tier-btn');
+        if (!btn) return;
+
+        const container = $('supportTierContainer');
+        if (container) {
+            container.querySelectorAll('.support-tier-btn').forEach(b => {
+                b.classList.remove('bg-emerald-600/20', 'border-emerald-500');
+                b.classList.add('bg-zinc-800', 'border-zinc-700');
+            });
+        }
+
+        btn.classList.remove('bg-zinc-800', 'border-zinc-700');
+        btn.classList.add('bg-emerald-600/20', 'border-emerald-500');
+
+        const amountInput = $('customSupportAmount');
+        if (amountInput) {
+            amountInput.value = btn.getAttribute('data-amount');
+        }
+    });
+</script>
+
+<!-- APPLICATION MODULE RUNTIME -->
+<script type="module" src="./js/auth.js"></script>
+<script type="module" src="./js/main.js"></script>
+<script type="module" src="./js/notifications.js"></script>
+<script type="module" src="./js/bookmarks.js"></script>
+<script type="module" src="./js/zk-proof.js"></script>
+<script type="module" src="./js/feed.js"></script>
+<script type="module" src="./js/witness-voice.js"></script>
+
+<!-- LIVE ARENA INITIALIZATION -->
+<script type="module">
+    import { initLiveArena } from './js/live-arena.js';
+    initLiveArena();
+</script>
 </body>
 </html>
