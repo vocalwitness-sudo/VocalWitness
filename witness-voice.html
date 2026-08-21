@@ -27,26 +27,36 @@
 <body class="bg-zinc-950 text-white min-h-screen">
 
     <!-- Header -->
-    <header class="fixed top-0 left-0 right-0 z-50 bg-zinc-950/90 backdrop-blur-md border-b border-emerald-500/30">
-        <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <a href="index.html" class="flex items-center gap-2.5 group">
-                    <img src="./logo.png" alt="VocalWitness" class="w-9 h-9 rounded-xl border border-emerald-500/40">
-                    <div>
-                        <div class="font-bold text-emerald-400 leading-tight">VocalWitness</div>
-                        <div class="text-[10px] text-emerald-300/80">Truth • Evidence</div>
-                    </div>
-                </a>
-                <span class="text-zinc-600">/</span>
-                <span class="font-semibold text-white">Witness Voice</span>
-            </div>
+   <!-- Header -->
+<header class="fixed top-0 left-0 right-0 z-50 bg-zinc-950/90 backdrop-blur-md border-b border-emerald-500/30">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <a href="index.html" class="flex items-center gap-2.5 group">
+                <img src="./logo.png" alt="VocalWitness" class="w-9 h-9 rounded-xl border border-emerald-500/40">
+                <div>
+                    <div class="font-bold text-emerald-400 leading-tight">VocalWitness</div>
+                    <div class="text-[10px] text-emerald-300/80">Truth • Evidence</div>
+                </div>
+            </a>
+            <span class="text-zinc-600">/</span>
+            <span class="font-semibold text-white">Witness Voice</span>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <!-- Dark Mode Toggle -->
+            <button id="theme-toggle" type="button" 
+                    class="p-2 rounded-xl bg-zinc-900 border border-zinc-700 hover:border-emerald-500 text-zinc-300 hover:text-white transition"
+                    title="Toggle Dark / Light mode">
+                <span id="theme-icon">🌙</span>
+            </button>
 
             <a href="index.html" class="text-sm text-zinc-400 hover:text-white transition flex items-center gap-1.5">
                 ← Back to Public Square
             </a>
         </div>
-    </header>
-
+    </div>
+</header>
+    
     <main class="pt-24 pb-16 max-w-5xl mx-auto px-4">
 
         <!-- Page Title -->
@@ -98,5 +108,29 @@
             initWitnessVoice();
         });
     </script>
+    <script>
+    // Simple Dark / Light mode toggle
+    const themeToggle = document.getElementById('theme-toggle');
+    const themeIcon = document.getElementById('theme-icon');
+    const html = document.documentElement;
+
+    // Load saved preference
+    if (localStorage.getItem('theme') === 'light') {
+        html.classList.remove('dark');
+        themeIcon.textContent = '☀️';
+    }
+
+    themeToggle?.addEventListener('click', () => {
+        if (html.classList.contains('dark')) {
+            html.classList.remove('dark');
+            themeIcon.textContent = '☀️';
+            localStorage.setItem('theme', 'light');
+        } else {
+            html.classList.add('dark');
+            themeIcon.textContent = '🌙';
+            localStorage.setItem('theme', 'dark');
+        }
+    });
+</script>
 </body>
 </html>
