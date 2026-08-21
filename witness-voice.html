@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>Witness Voice • VocalWitness</title>
+    <meta name="description" content="Witness Voice - Structured Evidence Intake & Court-Admissible Testimony Channel">
+    <meta name="theme-color" content="#10b981">
+
+    <link rel="stylesheet" href="./style.css">
+    <link rel="icon" href="./logo.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        body {
+            background-color: #0a0f1c;
+            font-family: 'Inter', sans-serif;
+        }
+        .glass {
+            background-color: #111827;
+            border: 1px solid rgba(16, 185, 129, 0.22);
+        }
+    </style>
+</head>
+<body class="bg-zinc-950 text-white min-h-screen">
+
+    <!-- Header -->
+    <header class="fixed top-0 left-0 right-0 z-50 bg-zinc-950/90 backdrop-blur-md border-b border-emerald-500/30">
+        <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <a href="index.html" class="flex items-center gap-2.5 group">
+                    <img src="./logo.png" alt="VocalWitness" class="w-9 h-9 rounded-xl border border-emerald-500/40">
+                    <div>
+                        <div class="font-bold text-emerald-400 leading-tight">VocalWitness</div>
+                        <div class="text-[10px] text-emerald-300/80">Truth • Evidence</div>
+                    </div>
+                </a>
+                <span class="text-zinc-600">/</span>
+                <span class="font-semibold text-white">Witness Voice</span>
+            </div>
+
+            <a href="index.html" class="text-sm text-zinc-400 hover:text-white transition flex items-center gap-1.5">
+                ← Back to Public Square
+            </a>
+        </div>
+    </header>
+
+    <main class="pt-24 pb-16 max-w-5xl mx-auto px-4">
+
+        <!-- Page Title -->
+        <div class="mb-10">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium mb-4">
+                <span>⚖️</span> Court-Admissible Channel
+            </div>
+            <h1 class="text-3xl sm:text-4xl font-bold text-white mb-3">🎙️ Witness Voice</h1>
+            <p class="text-zinc-400 max-w-2xl leading-relaxed">
+                Structured evidence intake designed for high-integrity testimony. 
+                The assistant helps you frame direct observations into clear, verifiable statements.
+            </p>
+        </div>
+
+        <!-- Evidence Intake Assistant -->
+        <section class="mb-12">
+            <div id="witness-intake-assistant-container">
+                <!-- Filled by js/witness-voice.js -->
+                <div class="glass rounded-3xl p-8 text-center text-zinc-500">
+                    Loading Evidence Intake Assistant...
+                </div>
+            </div>
+        </section>
+
+        <!-- Feed Section -->
+        <section>
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-semibold text-white">Recent Witness Voices</h2>
+            </div>
+
+            <div id="feed-container" class="space-y-5">
+                <div class="glass rounded-3xl p-10 text-center text-zinc-500">
+                    Loading channel...
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-zinc-800 py-8 text-center text-xs text-zinc-500">
+        VocalWitness • Witness Voice Channel • Non-custodial • Zero tracking
+    </footer>
+
+    <script type="module">
+        import { initWitnessVoice } from './js/witness-voice.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initWitnessVoice();
+        });
+    </script>
+</body>
+</html>
