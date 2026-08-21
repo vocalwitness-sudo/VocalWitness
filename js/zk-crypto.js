@@ -113,3 +113,6 @@ export async function verifyProof(proof) {
         return false;
     }
 }
+
+// Backward & cross-module compatibility exports
+export { generateRigorousProof as generateProof, verifyProof as verifyIntegrity };
