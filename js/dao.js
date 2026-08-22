@@ -1,4 +1,4 @@
-// js/dao.js - Enhanced Quadratic Voting & Governance (Batch 2)
+// js/dao.js - Enhanced Quadratic Voting, Multi-Sig Governance & Cryptographic Trust (Batch 3)
 import { db, auth } from './firebase-config.js';
 import {
   collection,
@@ -11,7 +11,8 @@ import {
   where,
   orderBy,
   limit,
-  serverTimestamp
+  serverTimestamp,
+  arrayUnion
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { showToast } from './utils.js';
 import {
@@ -23,6 +24,10 @@ import {
 } from './tier.js';
 import { generateRigorousProof } from './zk-crypto.js';
 import { logSecurityAudit } from './audit.js';
+import { generateZKProofAsync } from './zk-client.js';
+
+// Constant Thresholds
+export const MINIMUM_MULTISIG_THRESHOLD = 3;
 
 // Quadratic Voting Cost Formula
 function quadraticCost(strength) {
@@ -109,6 +114,7 @@ export async function createDAOProposal(title, description, category = 'governan
       totalVotesAgainst: 0,
       totalVotingPowerSpent: 0,
       quorum: 12,
+      multiSigSignatures: [],
       voteLog: {}
     });
 
@@ -140,7 +146,6 @@ export async function createModerationAppeal(postId, reason, originalDecision = 
     const proposalId = await createDAOProposal(title, description, 'moderation_appeal');
 
     if (proposalId) {
-      // Link the original post for easy reference
       await updateDoc(doc(db, "dao_proposals", proposalId), {
         relatedPostId: postId,
         originalDecision
@@ -167,7 +172,6 @@ export async function castQuadraticVote(proposalId, direction, strength = 1, pro
 
   const userId = auth.currentUser.uid;
 
-  // Fetch User Data for Sybil Protection
   const userRef = doc(db, "users", userId);
   const userSnap = await getDoc(userRef);
   if (!userSnap.exists()) return showToast("User profile not found", "error");
@@ -175,7 +179,6 @@ export async function castQuadraticVote(proposalId, direction, strength = 1, pro
   const userData = userSnap.data();
   const userReputation = userData.credibilityScore || userData.reputation || 0;
 
-  // Sybil Protection
   if (!userData.isPhoneVerified && !userData.hasVerifiedPhone && userReputation < 10) {
     if (typeof requireCitizenCirclePermission === 'function') {
       const hasPermission = await requireCitizenCirclePermission();
@@ -195,7 +198,6 @@ export async function castQuadraticVote(proposalId, direction, strength = 1, pro
     return showToast("This proposal is no longer open for voting", "error");
   }
 
-  // Prevent double-voting in the same direction with higher strength later
   const previousVote = data.voteLog?.[userId];
   if (previousVote && previousVote.direction === direction) {
     return showToast("You already voted this way. You can change direction or increase strength in a future update.", "info");
@@ -208,7 +210,6 @@ export async function castQuadraticVote(proposalId, direction, strength = 1, pro
     return showToast("Exceeded voting budget (max 25 power points)", "error");
   }
 
-  // Optional ZK Proof
   let zkProof = null;
   try {
     zkProof = await generateRigorousProof({
@@ -223,9 +224,8 @@ export async function castQuadraticVote(proposalId, direction, strength = 1, pro
   }
 
   const currentTier = await getCurrentUserTier();
-  const votingWeight = await getUserVotingWeight(); // from tier.js
+  const votingWeight = await getUserVotingWeight();
 
-  // Effective strength = requested strength × reputation-based weight (capped)
   const effectiveStrength = Math.min(strength * Math.max(1, Math.floor(votingWeight / 2)), 8);
 
   const updateData = direction === 'for'
@@ -256,6 +256,89 @@ export async function castQuadraticVote(proposalId, direction, strength = 1, pro
   });
 
   showToast(`Voted ${direction.toUpperCase()} (Cost: ${cost} • Effective strength: ${effectiveStrength})`, "success");
+}
+
+/* ==========================================================================
+   BATCH 3: HIGH-STAKES MULTI-SIG & DECENTRALIZED TRUST EXTENSIONS
+   ========================================================================== */
+
+/**
+ * Submit an attestation signature/proof to a high-stakes testimony or proposal multi-sig pool
+ */
+export async function submitMultiSigAttestation(targetId, proofData, isProposal = false) {
+  if (!auth.currentUser) {
+    showToast("You must be logged in to sign multi-sig attestations.", "error");
+    return false;
+  }
+
+  try {
+    const collectionName = isProposal ? "dao_proposals" : "testimonies";
+    const targetRef = doc(db, collectionName, targetId);
+    
+    const attestationRecord = {
+      witnessUid: auth.currentUser.uid,
+      proofType: proofData.proofType || "UNKNOWN",
+      publicSignalsHash: proofData.publicSignals ? proofData.publicSignals[0] : (proofData.proof?.hash || proofData.payloadHash || null),
+      isFallback: !!proofData.isFallback,
+      signedAt: new Date().toISOString()
+    };
+
+    await updateDoc(targetRef, {
+      multiSigSignatures: arrayUnion(attestationRecord),
+      updatedAt: serverTimestamp()
+    });
+
+    await awardGovernanceRep(10);
+    await logSecurityAudit('MULTISIG_ATTESTATION_SUBMITTED', targetId, {
+      proofType: proofData.proofType,
+      isProposal
+    });
+
+    showToast("✅ Multi-Sig attestation anchored to witness pool!", "success");
+    return true;
+  } catch (error) {
+    console.error("Multi-Sig attestation error:", error);
+    showToast("Failed to submit multi-sig attestation.", "error");
+    return false;
+  }
+}
+
+/**
+ * Executes a full Circom SNARK or fallback proof and registers high-stakes attestation
+ */
+export async function handleHighStakesAttestation(targetId, inputs, isProposal = false) {
+  try {
+    const proofResult = await generateZKProofAsync(inputs);
+    if (proofResult) {
+      return await submitMultiSigAttestation(targetId, proofResult, isProposal);
+    }
+  } catch (err) {
+    console.error("Failed high-stakes attestation pipeline:", err);
+    showToast("High-stakes attestation aborted.", "error");
+  }
+  return false;
+}
+
+/**
+ * Evaluates whether a testimony or proposal has satisfied decentralized multi-sig consensus
+ */
+export function evaluateMultiSigStatus(entityData) {
+  const signatures = entityData?.multiSigSignatures || [];
+  const count = signatures.length;
+  
+  const hasZkProof = signatures.some(sig => 
+    sig.proofType === "SNARK_GROTH16" || 
+    sig.proofType === "SNARK_GROTH16_SERVER" || 
+    sig.proofType === "GROTH16_CIRCOM_ZK"
+  );
+
+  return {
+    isFullyVerified: count >= MINIMUM_MULTISIG_THRESHOLD && hasZkProof,
+    signatureCount: count,
+    requiredThreshold: MINIMUM_MULTISIG_THRESHOLD,
+    hasZkProof,
+    status: (count >= MINIMUM_MULTISIG_THRESHOLD && hasZkProof) ? "SEALED_HIGH_STAKES" : "PENDING_WITNESSES"
+  };
 }
 
 /**
@@ -343,6 +426,11 @@ export function hasProposalPassed(proposal) {
   if (total === 0) return false;
   return (proposal.totalVotesFor / total) > 0.65 && total >= (proposal.quorum || 12);
 }
+
+// Global Exports
+window.submitMultiSigAttestation = submitMultiSigAttestation;
+window.handleHighStakesAttestation = handleHighStakesAttestation;
+window.evaluateMultiSigStatus = evaluateMultiSigStatus;
 
 // Re-initialize UI on language switch
 window.addEventListener('languageChanged', () => {
