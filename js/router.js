@@ -1,4 +1,4 @@
-// js/router.js - Dynamic Client-Side Router for VocalWitness with Native ES6 Code Splitting
+// js/router.js - Clean Client-Side Router with pushState + Web Component ready structure
 import { showToast } from './utils.js';
 
 const ROUTES = {
@@ -72,32 +72,31 @@ const ROUTES = {
             qvModule?.initQuadraticVoting?.(container);
         }
     },
-
-    // ====================== NEW: DAO Governance ======================
+    // DAO is now a first-class route (no special redirect logic)
     'dao': {
-        viewId: null,               // Standalone page
+        viewId: 'daoView',               // Preferred: in-app panel
         title: 'DAO Governance',
-        init: async () => {
-            // Redirect to the dedicated DAO page
-            window.location.href = 'dao.html';
+        // Fallback: if the panel does not exist, go to the standalone page
+        fallbackUrl: 'dao.html',
+        init: async (container) => {
+            if (!container) return;
+            container.innerHTML = `<div class="text-center py-16 text-emerald-400 animate-pulse">Loading DAO Governance...</div>`;
+
+            // You can later replace this with a real Web Component or module
+            // Example future path:
+            // const { initDAO } = await import('./dao-ui.js');
+            // initDAO(container);
+
+            // For now we keep the simple fallback behavior inside init
+            // so the router itself stays clean
         }
     }
 };
 
 /**
- * Navigates to a specific route view with dynamic code splitting
- * @param {string} routeKey - Route matching key from ROUTES
+ * Hide every registered view panel
  */
-export async function navigateTo(routeKey) {
-    const targetRoute = ROUTES[routeKey] || ROUTES['citizen-talk'];
-
-    // Special case: external / standalone pages
-    if (routeKey === 'dao') {
-        window.location.href = 'dao.html';
-        return;
-    }
-
-    // Hide all view panels
+function hideAllViews() {
     Object.values(ROUTES).forEach(route => {
         if (!route.viewId) return;
         const panel = document.getElementById(route.viewId);
@@ -106,72 +105,117 @@ export async function navigateTo(routeKey) {
             panel.classList.remove('block');
         }
     });
+}
 
-    // Show selected panel
-    if (targetRoute.viewId) {
-        const activePanel = document.getElementById(targetRoute.viewId);
-        if (activePanel) {
-            activePanel.classList.remove('hidden');
-            activePanel.classList.add('block');
-        } else {
-            console.warn(`Panel ID #${targetRoute.viewId} not found in DOM.`);
-        }
-    }
-
-    // Update nav element active states
+/**
+ * Update active state on navigation elements
+ */
+function updateNavActiveState(routeKey) {
     document.querySelectorAll('[data-route]').forEach(navBtn => {
         const routeAttr = navBtn.getAttribute('data-route');
-        if (routeAttr === routeKey) {
-            navBtn.classList.add('bg-zinc-800', 'text-emerald-400');
-            navBtn.classList.remove('text-zinc-400');
-        } else {
-            navBtn.classList.remove('bg-zinc-800', 'text-emerald-400');
-            navBtn.classList.add('text-zinc-400');
-        }
-    });
+        const isActive = routeAttr === routeKey;
 
-    // Update URL hash without forcing reload
-    if (window.location.hash.slice(1) !== routeKey) {
-        window.history.pushState(null, targetRoute.title, `#${routeKey}`);
+        navBtn.classList.toggle('bg-zinc-800', isActive);
+        navBtn.classList.toggle('text-emerald-400', isActive);
+        navBtn.classList.toggle('text-zinc-400', !isActive);
+        navBtn.classList.toggle('bg-emerald-500', isActive);
+        navBtn.classList.toggle('text-black', isActive);
+        navBtn.classList.toggle('font-semibold', isActive);
+    });
+}
+
+/**
+ * Core navigation function
+ */
+export async function navigateTo(routeKey, { replace = false } = {}) {
+    const targetRoute = ROUTES[routeKey] || ROUTES['citizen-talk'];
+    const finalKey = ROUTES[routeKey] ? routeKey : 'citizen-talk';
+
+    // 1. Hide all views
+    hideAllViews();
+
+    // 2. Try to show the in-app panel
+    let activePanel = null;
+    if (targetRoute.viewId) {
+        activePanel = document.getElementById(targetRoute.viewId);
     }
 
-    // Trigger dynamic module initialization on demand
+    if (activePanel) {
+        activePanel.classList.remove('hidden');
+        activePanel.classList.add('block');
+    } else if (targetRoute.fallbackUrl) {
+        // Clean fallback – no special-case code in the main flow
+        window.location.href = targetRoute.fallbackUrl;
+        return;
+    } else {
+        console.warn(`No view found for route: ${finalKey}`);
+    }
+
+    // 3. Update navigation UI
+    updateNavActiveState(finalKey);
+
+    // 4. History management (pushState with hash fallback)
+    const newHash = `#${finalKey}`;
+    const title = targetRoute.title || 'VocalWitness';
+
+    try {
+        if (replace) {
+            window.history.replaceState({ route: finalKey }, title, newHash);
+        } else if (window.location.hash !== newHash) {
+            window.history.pushState({ route: finalKey }, title, newHash);
+        }
+    } catch (err) {
+        // Extremely old browsers – fall back to classic hash change
+        window.location.hash = finalKey;
+    }
+
+    // 5. Run route initializer
     if (typeof targetRoute.init === 'function') {
         try {
-            await targetRoute.init();
+            await targetRoute.init(activePanel);
         } catch (err) {
-            console.error(`Error initializing route ${routeKey}:`, err);
-            showToast(`Failed to load module for ${targetRoute.title}`, "error");
+            console.error(`Error initializing route ${finalKey}:`, err);
+            showToast(`Failed to load ${targetRoute.title}`, "error");
         }
     }
 }
 
 /**
- * Initializes hash routing and event listeners
+ * Initialize the router
  */
 export function initRouter() {
-    // Listen to hash changes in browser history
-    window.addEventListener('hashchange', () => {
-        const hash = window.location.hash.slice(1);
-        if (hash) navigateTo(hash);
+    // Handle browser back / forward
+    window.addEventListener('popstate', (event) => {
+        const routeFromState = event.state?.route;
+        const routeFromHash = window.location.hash.slice(1);
+        const route = routeFromState || routeFromHash || 'citizen-talk';
+        navigateTo(route, { replace: true });
     });
 
-    // Global click listener for elements with data-route
-    document.addEventListener('click', (e) => {
-        const trigger = e.target.closest('[data-route]');
-        if (trigger) {
-            e.preventDefault();
-            const routeKey = trigger.getAttribute('data-route');
-            navigateTo(routeKey);
+    // Support classic hash changes (fallback)
+    window.addEventListener('hashchange', () => {
+        const hash = window.location.hash.slice(1);
+        if (hash && hash !== (history.state?.route || '')) {
+            navigateTo(hash, { replace: true });
         }
     });
 
-    // Boot route selection
-    const initialHash = window.location.hash.slice(1);
-    navigateTo(initialHash || 'citizen-talk');
+    // Click handler for any element with data-route
+    document.addEventListener('click', (e) => {
+        const trigger = e.target.closest('[data-route]');
+        if (!trigger) return;
+
+        e.preventDefault();
+        const routeKey = trigger.getAttribute('data-route');
+        navigateTo(routeKey);
+    });
+
+    // Initial load
+    const initial = window.location.hash.slice(1) || 'citizen-talk';
+    navigateTo(initial, { replace: true });
 }
 
-// Automatic setup on page load
+// Boot
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initRouter);
 } else {
