@@ -222,5 +222,13 @@
   "termsSection7Title": "7. Donations & Sponsorship",
   "termsSection7Text": "VocalWitness is sustained entirely through voluntary community donations, transparent support funds, and direct non-custodial cryptographic contributions. Donations are non-refundable and do not grant special governance privileges or ownership over the platform.",
   "termsSection8Title": "8. Limitation of Liability",
-  "termsSection8Text": "VocalWitness and its maintainers disclaim liability for user-generated content, network disruptions, or external cryptographic verification failures."
+  "termsSection8Text": "VocalWitness and its maintainers disclaim liability for user-generated content, network disruptions, or external cryptographic verification failures.",
+
+  "ledgerIntegrityTitle": "Ledger Integrity & Application-Level Immutability",
+  "ledgerIntegrityPara1": "Once a record is written to the Forensic Ledger or the audit log, the application and database rules make it impossible for any user (or ordinary operator) to edit or delete it.",
+  "ledgerIntegrityPoint1": "Firestore security rules explicitly forbid update and delete on the ledger collections.",
+  "ledgerIntegrityPoint2": "Client-side SHA-256 hashing of media and content.",
+  "ledgerIntegrityPoint3": "Hash-chaining of audit entries (each entry contains the cryptographic hash of the previous one).",
+  "ledgerIntegrityClarification": "Important clarification: This is application-level immutability. It is not a full public blockchain. The data lives in Firebase / Google Cloud. The rules and cryptography make silent changes extremely difficult, but the ultimate trust still rests on the operator’s honesty and the cloud provider’s integrity.",
+  "ledgerIntegrityFuture": "Planned optional strengthening (Batch 1 item 3): periodic cryptographic hashes of the ledger can be exported and pinned to IPFS and/or lightly anchored on a public chain (Polygon or Base). This is not yet active."
 }
