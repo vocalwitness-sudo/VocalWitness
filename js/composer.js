@@ -1,12 +1,16 @@
 // js/composer.js - Hardened Post & Testimony Composer
-
-import { db, auth } from './db.js';
-import { collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
-import { handleImageSelect, uploadForensicMedia } from './media.js';
 import { compressImage } from './media-compression.js';
-import { stripExifData } from './imageScrubber.js';
-import { getUserTier } from './tier.js';
-import { logAuditEvent } from './audit.js';
+import { scrubImageMetadata } from './imageScrubber.js';
+import { showToast } from './utils.js';
+import { getCurrentUserTier, getCurrentWitnessLevel } from './tier.js';
+import { db, auth } from './firebase-config.js';
+import { collection, addDoc, doc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
+import { uploadForensicMedia, resetMediaState, handleImageSelect, toggleVoiceRecording } from './media.js';
+import { logSecurityAudit } from './audit.js';
+
+// Local IndexedDB storage import
+import { saveDraftOffline } from './db.js';
 
 let isSubmitting = false;
 
