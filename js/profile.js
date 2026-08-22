@@ -47,6 +47,40 @@ function sanitize(str) {
         .replace(/'/g, "&#039;"); 
 } 
 
+// ====================== OPEN / CLOSE MAIN PROFILE MODAL ======================
+export function openProfile() {
+    const modal = document.getElementById('profileModal');
+    if (!modal) {
+        showToast(t("profile.modal_not_found", "Profile modal not found"), "error");
+        return;
+    }
+
+    // Make sure content is rendered if we already have data
+    if (currentUserData) {
+        renderProfileUI(currentUserData);
+    }
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');          // your modal uses flex for centering
+    modal.style.display = 'flex';
+}
+
+export function closeProfile() {
+    const modal = document.getElementById('profileModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        modal.style.display = 'none';
+    }
+}
+
+// Expose globally so main.js data-action="open-profile" works
+window.openProfile = openProfile;
+window.closeProfile = closeProfile;
+window.closeProfileModal = closeProfile;   // alias for older HTML
+window.openProfileModal = openProfile;     // alias for older HTML
+
+
 /** 
  * Initialize Profile Listener & State 
  */ 
