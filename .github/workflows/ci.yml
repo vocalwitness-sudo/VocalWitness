@@ -18,7 +18,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          # Removed cache: 'npm' because there is no package-lock.json
+          # NO cache line here – this avoids the lock file error
 
       - name: Install dependencies
         run: npm install
