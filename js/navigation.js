@@ -7,6 +7,7 @@ export const menuItems = [
     { id: "witness-voice", icon: "🔬", label: "Witness Voice", route: "witness-voice" },
     { id: "arena", icon: "🏟️", label: "Live Arena", route: "arena" },
     { id: "audit-log", icon: "📊", label: "Forensic Ledger", route: "audit-log" },
+    { id: "dao", icon: "🏛️", label: "DAO Governance", route: "dao" },          // ← NEW
     { id: "my-testimonies", icon: "📜", label: "My Testimonies", route: "profile" }
 ];
 
@@ -26,11 +27,11 @@ export function loadDynamicNavigation() {
             link.href = `#${item.route}`;
             link.setAttribute('data-route', item.route);
             link.className = `flex items-center gap-3 px-4 py-3 rounded-2xl transition-all group cursor-pointer ${
-                isActive ? 
-                'bg-emerald-500 text-black font-semibold' : 
+                isActive ?
+                'bg-emerald-500 text-black font-semibold' :
                 'text-zinc-400 hover:text-white hover:bg-zinc-900'
             }`;
-            
+           
             link.innerHTML = `
                 <span class="text-xl transition-transform group-hover:scale-110">${item.icon}</span>
                 <span>${item.label}</span>
