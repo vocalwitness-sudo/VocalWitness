@@ -1,5 +1,5 @@
 // js/profile.js - Integrated, Refactored & Fully Localized Version
-// Updated: Fixed Action Grid Layout, Isolated Phone Verification & Clean Sign Out
+// Updated: Fixed Form Submission Handlers, ZK Proof Badge & Complete Modal Suite
 
 import {  
     onAuthStateChanged,  
@@ -26,7 +26,7 @@ let currentUserData = null;
 let userUnsubscribe = null; 
 window.currentUserData = null; 
 
-// Expose startPhoneVerification globally for inline HTML onclick handlers
+// Expose startPhoneVerification globally for inline HTML handlers
 window.startPhoneVerification = function() {
     if (typeof startPhoneVerification === 'function') {
         startPhoneVerification();
@@ -77,7 +77,7 @@ async function ensureUserProfile(user) {
         const snap = await getDoc(userRef);
         
         if (!snap.exists()) {
-            console.log("New user detected. Creating profile in Firestore...");
+            console.log("New user detected. Provisioning zero-knowledge profile in Firestore...");
             await setDoc(userRef, {
                 email: user.email || "",
                 displayName: user.displayName || "",
@@ -154,7 +154,7 @@ export function renderProfileUI(userData, retryCount = 0) {
 
         const html = ` 
             <div class="space-y-6 p-4 text-white"> 
-                <!-- Red Zone / Privacy Boundary Banner -->
+                <!-- Red Zone / Client-Side Isolation Banner -->
                 <div class="bg-red-950/40 border border-red-500/50 rounded-2xl p-4 flex items-start gap-3 shadow-lg shadow-red-950/20">
                     <span class="text-2xl">🛑</span>
                     <div>
@@ -183,8 +183,8 @@ export function renderProfileUI(userData, retryCount = 0) {
                     <p class="text-emerald-400 font-mono text-sm">@${sanitize(userData.username) || 'anonymous'}</p> 
                     ${userData.region ? `<p class="text-xs text-zinc-400 mt-1">📍 ${sanitize(userData.region)}</p>` : ''} 
                      
-                    <!-- Tier Badge --> 
-                    <div class="mt-4"> 
+                    <!-- Tier & ZK Verification Badges --> 
+                    <div class="mt-4 flex flex-wrap justify-center gap-2"> 
                         ${level ? ` 
                             <div class="inline-flex items-center gap-3 px-5 py-2.5 bg-zinc-900 border border-zinc-700 rounded-3xl"> 
                                 <span class="text-3xl">${level.emblem}</span> 
@@ -206,6 +206,12 @@ export function renderProfileUI(userData, retryCount = 0) {
                                 👤 ${t("profile.citizen", "Citizen")} (Unverified)
                             </div> 
                         `} 
+
+                        ${userData.zkVerified ? `
+                            <div class="inline-flex items-center gap-1.5 px-3 py-2.5 bg-teal-500/10 border border-teal-500/30 rounded-3xl text-xs text-teal-400 font-medium">
+                                <span>🔑</span> ZK-Proof Attested
+                            </div>
+                        ` : ''}
                     </div> 
                 </div> 
 
@@ -251,7 +257,7 @@ export function renderProfileUI(userData, retryCount = 0) {
                     </div> 
                 </div> 
 
-                <!-- Action Controls: Responsive 2-Column Grid --> 
+                <!-- Action Controls: Responsive Grid --> 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6"> 
                     ${!isCitizenCircle && !isWitness ? `
                         <button onclick="startPhoneVerification()"
@@ -265,9 +271,9 @@ export function renderProfileUI(userData, retryCount = 0) {
                         ✏️ ${t("profile.edit_profile", "Edit Profile")} 
                     </button> 
 
-                    <button onclick="exportUserDataPDF()"  
+                    <button onclick="openSettings()"  
                             class="py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2"> 
-                        📄 ${t("profile.export_data", "Export Data")} 
+                        ⚙️ ${t("profile.settings", "Settings & Security")} 
                     </button> 
 
                     <button onclick="handleSignOut()"  
@@ -293,13 +299,11 @@ export async function handleSignOut() {
     try { 
         showToast(t("auth.signing_out", "Signing out..."), "info"); 
         
-        // Unsubscribe Firestore profile listener immediately to avoid execution leaks
         if (userUnsubscribe) { 
             userUnsubscribe(); 
             userUnsubscribe = null; 
         } 
         
-        // Hide all active modals immediately
         document.querySelectorAll('.modal, [id$="Modal"]').forEach(modal => {
             modal.classList.add('hidden');
             modal.style.display = 'none';
@@ -332,10 +336,10 @@ export function openEditProfile() {
     if (!modal) return showToast(t("profile.edit_modal_not_found", "Edit modal not found"), "error"); 
 
     if (currentUserData) { 
-        const displayNameInput = document.getElementById('editDisplayNameModal') || document.getElementById('editDisplayName'); 
-        const usernameInput = document.getElementById('editUsernameModal') || document.getElementById('editUsername'); 
-        const regionInput = document.getElementById('editRegionModal') || document.getElementById('editRegion'); 
-        const bioInput = document.getElementById('editBioModal') || document.getElementById('editBio'); 
+        const displayNameInput = document.getElementById('editDisplayName'); 
+        const usernameInput = document.getElementById('editUsername'); 
+        const regionInput = document.getElementById('editRegion'); 
+        const bioInput = document.getElementById('editBio'); 
 
         if (displayNameInput) displayNameInput.value = currentUserData.displayName || ''; 
         if (usernameInput) usernameInput.value = currentUserData.username || ''; 
@@ -356,13 +360,37 @@ export function closeEditProfile() {
 } 
 window.closeEditProfile = closeEditProfile;
 
+export function openSettings() {
+    const modal = document.getElementById('settingsModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+    }
+}
+window.openSettings = openSettings;
+
+export function closeSettings() {
+    const modal = document.getElementById('settingsModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+}
+window.closeSettings = closeSettings;
+
+export function handleSaveProfile(event) {
+    if (event) event.preventDefault();
+    saveProfileChanges();
+}
+window.handleSaveProfile = handleSaveProfile;
+
 export async function saveProfileChanges() { 
     if (!auth.currentUser) return showToast(t("auth.must_be_logged_in", "You must be logged in"), "error"); 
 
-    const displayNameEl = document.getElementById('editDisplayNameModal') || document.getElementById('editDisplayName');
-    const usernameEl = document.getElementById('editUsernameModal') || document.getElementById('editUsername');
-    const regionEl = document.getElementById('editRegionModal') || document.getElementById('editRegion');
-    const bioEl = document.getElementById('editBioModal') || document.getElementById('editBio');
+    const displayNameEl = document.getElementById('editDisplayName');
+    const usernameEl = document.getElementById('editUsername');
+    const regionEl = document.getElementById('editRegion');
+    const bioEl = document.getElementById('editBio');
 
     const displayName = displayNameEl?.value?.trim(); 
     const username = usernameEl?.value?.trim(); 
@@ -392,6 +420,20 @@ export async function saveProfileChanges() {
     } 
 } 
 window.saveProfileChanges = saveProfileChanges;
+
+export async function triggerPasswordReset() {
+    if (!auth.currentUser || !auth.currentUser.email) {
+        return showToast(t("auth.email_not_found", "No email associated with active session"), "error");
+    }
+    try {
+        await sendPasswordResetEmail(auth, auth.currentUser.email);
+        showToast("📧 " + t("auth.reset_email_sent", "Password reset email sent!"), "success");
+    } catch (error) {
+        console.error("Password reset error:", error);
+        showToast(t("auth.reset_failed", "Failed to send reset email"), "error");
+    }
+}
+window.triggerPasswordReset = triggerPasswordReset;
 
 export async function exportUserDataPDF() { 
     if (!currentUserData) return showToast(t("profile.data_not_loaded", "Profile data not loaded"), "error"); 
@@ -423,25 +465,9 @@ export async function exportUserDataPDF() {
 } 
 window.exportUserDataPDF = exportUserDataPDF;
 
-window.openProfile = function() { 
-    const modal = document.getElementById('profileModal'); 
-    if (modal) {
-        modal.classList.remove('hidden'); 
-        modal.style.display = 'flex';
-    }
-}; 
-
-window.closeProfile = function() { 
-    const modal = document.getElementById('profileModal');
-    if (modal) {
-        modal.classList.add('hidden'); 
-        modal.style.display = 'none';
-    }
-}; 
-
 window.addEventListener('languageChanged', () => { 
     if (currentUserData) renderProfileUI(currentUserData); 
 });
 
-// Initialize Profile Hook
+// Initialize Profile Listener Hook
 initProfile();
