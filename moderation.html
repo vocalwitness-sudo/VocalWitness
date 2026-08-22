@@ -222,5 +222,25 @@
 
         window.addEventListener('languageChanged', renderModerationDashboard);
     </script>
+
+    <script type="module">
+    import { createModerationAppeal } from './js/dao.js';
+    import { showToast } from './js/utils.js';
+
+    window.openAppeal = async (postId) => {
+        const reason = prompt("Why should this moderation decision be reviewed by the community?");
+        if (!reason || reason.trim().length < 10) {
+            showToast("Please provide a clear reason (at least 10 characters)", "error");
+            return;
+        }
+
+        const proposalId = await createModerationAppeal(postId, reason.trim(), 'purged');
+        if (proposalId) {
+            showToast("Appeal submitted to DAO. Community can now vote.", "success");
+            // Optional: redirect to the DAO page
+            // window.location.href = 'dao.html';
+        }
+    };
+</script>
 </body>
 </html>
