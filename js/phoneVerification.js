@@ -1,4 +1,5 @@
-// js/phoneVerification.js - Improved & production-ready version
+// js/phoneVerification.js - Hardened Production Version
+
 import { db, auth } from './firebase-config.js';
 import { doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { RecaptchaVerifier, linkWithPhoneNumber } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
@@ -8,7 +9,7 @@ import { TIERS, refreshTierAndUI } from './tier.js';
 let recaptchaVerifier = null;
 let confirmationResult = null;
 
-// Auto-enable demo only on localhost
+// Auto-enable demo only on localhost or query param
 const isDemoMode = location.hostname === 'localhost' || 
                    location.hostname === '127.0.0.1' ||
                    location.search.includes('demo=true');
@@ -16,15 +17,24 @@ const isDemoMode = location.hostname === 'localhost' ||
 let demoCode = null;
 
 /**
- * Initialize invisible reCAPTCHA
+ * Initialize invisible reCAPTCHA safely
  */
 export function initPhoneRecaptcha(buttonId = 'send-otp-btn') {
   if (recaptchaVerifier || isDemoMode) return;
 
   try {
+    // Check if target container exists, create fallback if not
+    let btnContainer = document.getElementById(buttonId);
+    if (!btnContainer) {
+      btnContainer = document.createElement('div');
+      btnContainer.id = buttonId;
+      btnContainer.style.display = 'none';
+      document.body.appendChild(btnContainer);
+    }
+
     // Clear any previous verifier
     if (window.recaptchaVerifier) {
-      window.recaptchaVerifier.clear();
+      try { window.recaptchaVerifier.clear(); } catch (_) {}
     }
 
     recaptchaVerifier = new RecaptchaVerifier(auth, buttonId, {
@@ -38,10 +48,41 @@ export function initPhoneRecaptcha(buttonId = 'send-otp-btn') {
       }
     });
 
-    window.recaptchaVerifier = recaptchaVerifier; // for debugging
+    window.recaptchaVerifier = recaptchaVerifier;
   } catch (e) {
     console.warn("reCAPTCHA init failed:", e);
     showToast("Security check failed to load. Refresh the page.", "error");
+  }
+}
+
+/**
+ * Main Entry Point: Triggered by Profile / UI Buttons
+ */
+export function startPhoneVerification() {
+  if (!auth.currentUser) {
+    showToast("Please log in to verify your phone number", "error");
+    return;
+  }
+
+  // Look for any existing verification modal in DOM
+  const modal = document.getElementById('phoneVerificationModal') || 
+                document.getElementById('phone-upgrade-modal') || 
+                document.getElementById('verificationModal');
+
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+  } else {
+    // If no modal exists in HTML, prompt for phone number via input dialog
+    const phone = prompt("Enter your phone number in international format (e.g., +2348012345678):");
+    if (phone) {
+      sendPhoneVerification(phone).then(success => {
+        if (success) {
+          const code = prompt("Enter the 6-digit verification code sent to your phone:");
+          if (code) verifyPhoneCode(code);
+        }
+      });
+    }
   }
 }
 
@@ -63,7 +104,7 @@ export async function sendPhoneVerification(phoneNumber) {
   if (isDemoMode) {
     demoCode = Math.floor(100000 + Math.random() * 900000).toString();
     console.log(`%c🔑 DEMO OTP for ${phoneNumber}: ${demoCode}`, "color: lime; font-size: 16px; font-weight: bold");
-    showToast(`✅ Demo OTP generated! Check console (F12)`, "success");
+    showToast(`✅ Demo OTP generated! Check browser console (F12)`, "success");
     return true;
   }
 
@@ -86,16 +127,15 @@ export async function sendPhoneVerification(phoneNumber) {
   } catch (e) {
     console.error("SMS Send Error:", e);
     
-    // Better error messages for mobile
     let msg = e.message || "Failed to send OTP";
     if (e.code === 'auth/too-many-requests') msg = "Too many attempts. Wait a few minutes.";
     if (e.code === 'auth/invalid-phone-number') msg = "Invalid phone number format.";
     if (e.code === 'auth/quota-exceeded') msg = "SMS quota exceeded. Try again later.";
     if (e.code === 'auth/captcha-check-failed') msg = "Security check failed. Refresh and try again.";
+    if (e.code === 'auth/credential-already-in-use') msg = "This phone number is already linked to another account.";
     
     showToast(msg, "error");
     
-    // Reset reCAPTCHA
     if (recaptchaVerifier) {
       try {
         await recaptchaVerifier.render();
@@ -135,25 +175,31 @@ export async function verifyPhoneCode(enteredCode) {
       await confirmationResult.confirm(enteredCode);
     }
 
-    // Upgrade user
+    // Upgrade user in Firestore
     const userRef = doc(db, "users", auth.currentUser.uid);
     await updateDoc(userRef, {
       isPhoneVerified: true,
-      hasVerifiedPhone: true,          // keep both for compatibility
+      hasVerifiedPhone: true,
       phoneVerifiedAt: serverTimestamp(),
-      tier: TIERS.CITIZEN_CIRCLE,
+      tier: TIERS?.CITIZEN_CIRCLE || "citizen_circle",
       reputation: 60,
       credibilityScore: 60,
-      lastUpdated: serverTimestamp()
+      updatedAt: serverTimestamp()
     });
 
-    refreshTierAndUI();
+    if (typeof refreshTierAndUI === 'function') {
+      refreshTierAndUI();
+    }
     
     showToast("🎉 Phone Verified! You are now in Citizen Circle", "success");
     
-    // Close any possible modal
+    // Close modals
     ['phoneVerificationModal', 'phone-upgrade-modal', 'verificationModal'].forEach(id => {
-      document.getElementById(id)?.classList.add('hidden');
+      const modal = document.getElementById(id);
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+      }
     });
     
     return true;
@@ -165,7 +211,8 @@ export async function verifyPhoneCode(enteredCode) {
   }
 }
 
-// Export for global use if needed
+// Global Exports
+window.startPhoneVerification = startPhoneVerification;
 window.sendPhoneVerification = sendPhoneVerification;
 window.verifyPhoneCode = verifyPhoneCode;
 window.initPhoneRecaptcha = initPhoneRecaptcha;
