@@ -1,4 +1,6 @@
 // js/profile.js - Integrated, Refactored & Fully Localized Version
+// Updated: Added Get Verified button + proper Citizen Circle badge
+
 import {  
     onAuthStateChanged,  
     sendPasswordResetEmail, 
@@ -18,6 +20,7 @@ import { showToast } from './utils.js';
 import { refreshTierAndUI, getCurrentWitnessLevel } from './tier.js'; 
 import { startWitnessCycle } from './witnessCycle.js'; 
 import { t } from './i18n.js'; 
+import { startPhoneVerification } from './verification.js';   // ← Added
 
 let currentUserData = null; 
 let userUnsubscribe = null; 
@@ -42,7 +45,6 @@ export function initProfile() {
      
     onAuthStateChanged(auth, async (user) => { 
         if (user) { 
-            // Ensure document exists before listening
             await ensureUserProfile(user); 
         } else { 
             currentUserData = null; 
@@ -66,7 +68,6 @@ async function ensureUserProfile(user) {
         
         if (!snap.exists()) {
             console.log("New user detected. Creating profile in Firestore...");
-            // Create default profile for new user
             await setDoc(userRef, {
                 email: user.email || "",
                 displayName: user.displayName || "",
@@ -76,14 +77,15 @@ async function ensureUserProfile(user) {
                 testimoniesCount: 0,
                 verifications: 0,
                 isPhoneVerified: false,
+                hasVerifiedPhone: false,
                 zkVerified: false,
                 activeWitnessCycle: false,
+                tier: "citizen",
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp()
             });
         }
         
-        // Once confirmed it exists, start the real-time listener
         listenToUserProfile(user.uid);
     } catch (error) {
         console.error("Error provisioning user profile:", error);
@@ -114,7 +116,6 @@ function listenToUserProfile(userId) {
 export function renderProfileUI(userData, retryCount = 0) { 
     if (!userData) return; 
      
-    // Target containers across embedded page views and overlay modals 
     const targets = [ 
         document.getElementById('mainProfileContent'), 
         document.getElementById('modalProfileContent'), 
@@ -129,13 +130,13 @@ export function renderProfileUI(userData, retryCount = 0) {
         return; 
     }
 
-    // Default to an empty promise resolution if tier logic isn't fully ready
     const witnessPromise = typeof getCurrentWitnessLevel === 'function' 
         ? getCurrentWitnessLevel() 
         : Promise.resolve(null);
 
     witnessPromise.then(level => { 
         const isWitness = level !== null; 
+        const isCitizenCircle = userData.isPhoneVerified || userData.hasVerifiedPhone || userData.tier === 'citizen_circle';
          
         const formattedDate = (userData.createdAt && typeof userData.createdAt.toDate === 'function') 
             ? new Date(userData.createdAt.toDate()).toLocaleDateString() 
@@ -182,8 +183,18 @@ export function renderProfileUI(userData, retryCount = 0) {
                                     <div class="text-xs text-zinc-400">${t("profile.level", "Level")} ${level.level} • ${userData.reputation || 0} REP</div> 
                                 </div> 
                             </div> 
+                        ` : isCitizenCircle ? `
+                            <div class="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500/10 border border-emerald-500/30 rounded-3xl">
+                                <span class="text-2xl">🛡️</span>
+                                <div class="text-left">
+                                    <div class="font-bold text-emerald-400">Citizen Circle</div>
+                                    <div class="text-xs text-zinc-400">Phone Verified • ${userData.reputation || 60} REP</div>
+                                </div>
+                            </div>
                         ` : ` 
-                            <div class="px-6 py-3 bg-zinc-800 rounded-3xl text-sm text-zinc-300">👤 ${t("profile.citizen", "Citizen")}</div> 
+                            <div class="px-6 py-3 bg-zinc-800 rounded-3xl text-sm text-zinc-300">
+                                👤 ${t("profile.citizen", "Citizen")} (Unverified)
+                            </div> 
                         `} 
                     </div> 
                 </div> 
@@ -231,15 +242,24 @@ export function renderProfileUI(userData, retryCount = 0) {
                 </div> 
 
                 <!-- Action Controls --> 
-                <div class="flex flex-col sm:flex-row gap-3 mt-4"> 
+                <div class="flex flex-col sm:flex-row gap-3 mt-6"> 
+                    ${!isCitizenCircle && !isWitness ? `
+                        <button onclick="startPhoneVerification()"
+                                class="flex-1 py-4 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-semibold rounded-3xl transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/30">
+                            🛡️ Get Verified — Unlock Citizen Circle
+                        </button>
+                    ` : ''}
+
                     <button onclick="openEditProfile()"  
                             class="flex-1 py-4 bg-emerald-600 hover:bg-emerald-500 text-black font-semibold rounded-3xl transition flex items-center justify-center gap-2"> 
                         ✏️ ${t("profile.edit_profile", "Edit Profile")} 
                     </button> 
+
                     <button onclick="exportUserDataPDF()"  
                             class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 text-white font-semibold rounded-3xl transition flex items-center justify-center gap-2"> 
                         📄 ${t("profile.export_data", "Export Data")} 
                     </button> 
+
                     <button onclick="handleSignOut()"  
                             class="flex-1 py-4 bg-red-950/40 hover:bg-red-900/60 border border-red-500/40 text-red-400 hover:text-red-300 font-semibold rounded-3xl transition flex items-center justify-center gap-2"> 
                         🚪 ${t("auth.sign_out", "Sign Out")} 
@@ -368,7 +388,7 @@ export async function exportUserDataPDF() {
         pdf.text(`Username: @${currentUserData.username || 'anonymous'}`, 20, 52); 
         pdf.text(`Region: ${currentUserData.region || 'N/A'}`, 20, 60); 
         pdf.text(`Reputation: ${currentUserData.reputation || 0} REP`, 20, 68); 
-        pdf.text(`Phone Verified: ${currentUserData.isPhoneVerified ? 'Yes' : 'No'}`, 20, 76); 
+        pdf.text(`Phone Verified: ${currentUserData.isPhoneVerified || currentUserData.hasVerifiedPhone ? 'Yes' : 'No'}`, 20, 76); 
         pdf.text(`ZK Verified: ${currentUserData.zkVerified ? 'Yes' : 'No'}`, 20, 84); 
         
         pdf.save(`vocalwitness-identity-${auth.currentUser?.uid || 'user'}.pdf`); 
