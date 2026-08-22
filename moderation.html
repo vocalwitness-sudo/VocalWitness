@@ -17,6 +17,7 @@
                 <h1 class="text-xl font-bold tracking-tight text-white" data-i18n="moderationTitle">Steward Moderation Center</h1>
             </div>
             <div class="flex items-center space-x-4 text-sm">
+                <a href="./dao.html" class="text-emerald-400 hover:text-emerald-300 transition">🏛️ DAO</a>
                 <a href="./index.html" class="text-slate-400 hover:text-white transition" data-i18n="backToApp">← Back to App</a>
             </div>
         </div>
@@ -59,7 +60,6 @@
             <h3 class="text-lg font-semibold text-slate-300" data-i18n="allClear">All clear!</h3>
             <p class="text-slate-500 text-sm" data-i18n="noPending">There are no pending testimonies requiring review right now.</p>
         </div>
-
     </main>
 
     <!-- Footer -->
@@ -71,6 +71,8 @@
     <script type="module">
         import { fetchReviewQueue, stewardReviewAction } from './js/moderation.js';
         import { hasStewardAccess } from './js/tier.js';
+        import { createModerationAppeal } from './js/dao.js';
+        import { showToast } from './js/utils.js';
         import { initLanguage } from './js/i18n.js';
 
         const queueContainer = document.getElementById('queueContainer');
@@ -88,6 +90,20 @@
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#039;');
         }
+
+        // Community Appeal function
+        window.openAppeal = async (postId) => {
+            const reason = prompt("Why should this moderation decision be reviewed by the community?\n\n(Minimum 10 characters)");
+            if (!reason || reason.trim().length < 10) {
+                showToast("Please provide a clear reason (at least 10 characters)", "error");
+                return;
+            }
+
+            const proposalId = await createModerationAppeal(postId, reason.trim(), 'flagged');
+            if (proposalId) {
+                showToast("Appeal submitted to DAO. Community can now vote on it.", "success");
+            }
+        };
 
         async function renderModerationDashboard() {
             if (!queueContainer) return;
@@ -167,12 +183,21 @@
 
                         ${mediaHTML}
 
-                        <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-800/60">
-                            <button data-action="purge" data-id="${item.id}" class="action-btn border border-rose-500/30 text-rose-400 hover:bg-rose-500/10 px-4 py-2 rounded-lg text-sm font-medium transition">
+                        <div class="flex flex-wrap items-center justify-end gap-3 pt-3 border-t border-slate-800/60">
+                            <button data-action="purge" data-id="${item.id}"
+                                    class="action-btn border border-rose-500/30 text-rose-400 hover:bg-rose-500/10 px-4 py-2 rounded-lg text-sm font-medium transition">
                                 🗑️ <span data-i18n="purgePost">Purge Post</span>
                             </button>
-                            <button data-action="approve" data-id="${item.id}" class="action-btn bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm">
+
+                            <button data-action="approve" data-id="${item.id}"
+                                    class="action-btn bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm">
                                 ✅ <span data-i18n="approvePublish">Approve & Publish</span>
+                            </button>
+
+                            <!-- Community Appeal Button -->
+                            <button onclick="openAppeal('${item.id}')"
+                                    class="border border-amber-500/30 text-amber-400 hover:bg-amber-500/10 px-4 py-2 rounded-lg text-sm font-medium transition">
+                                ⚖️ Appeal to DAO
                             </button>
                         </div>
                     `;
@@ -180,6 +205,7 @@
                     queueContainer.appendChild(card);
                 });
 
+                // Attach steward action listeners
                 queueContainer.querySelectorAll('.action-btn').forEach(btn => {
                     btn.addEventListener('click', async (e) => {
                         const button = e.currentTarget;
@@ -222,25 +248,5 @@
 
         window.addEventListener('languageChanged', renderModerationDashboard);
     </script>
-
-    <script type="module">
-    import { createModerationAppeal } from './js/dao.js';
-    import { showToast } from './js/utils.js';
-
-    window.openAppeal = async (postId) => {
-        const reason = prompt("Why should this moderation decision be reviewed by the community?");
-        if (!reason || reason.trim().length < 10) {
-            showToast("Please provide a clear reason (at least 10 characters)", "error");
-            return;
-        }
-
-        const proposalId = await createModerationAppeal(postId, reason.trim(), 'purged');
-        if (proposalId) {
-            showToast("Appeal submitted to DAO. Community can now vote.", "success");
-            // Optional: redirect to the DAO page
-            // window.location.href = 'dao.html';
-        }
-    };
-</script>
 </body>
 </html>
