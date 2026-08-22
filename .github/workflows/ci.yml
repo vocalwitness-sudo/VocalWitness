@@ -18,18 +18,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'npm'
+          # Removed cache: 'npm' because there is no package-lock.json
 
       - name: Install dependencies
-        run: npm ci || npm install
+        run: npm install
 
-      - name: Lint (non-blocking for now)
+      - name: Lint (non-blocking)
         run: npm run lint || echo "Lint warnings present – continuing"
 
       - name: Phone Verification Smoke Test
         run: node tests/phone-smoke.js
 
-      - name: Build CSS (same as deploy)
+      - name: Build CSS
         run: |
           npm install -D tailwindcss @tailwindcss/cli
           npx @tailwindcss/cli -i ./input.css -o ./style.css --minify
