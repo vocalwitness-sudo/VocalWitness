@@ -18,7 +18,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          # NO cache line here – this avoids the lock file error
+          # No cache – avoids lock file error
 
       - name: Install dependencies
         run: npm install
