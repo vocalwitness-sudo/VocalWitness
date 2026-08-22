@@ -787,6 +787,63 @@
     </div>
 </footer>
 
+  <!-- ====================== PHONE VERIFICATION MODAL ====================== -->
+<div id="phoneVerificationModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+  <div class="bg-zinc-900 border border-zinc-700 rounded-3xl w-full max-w-md p-6 space-y-5 shadow-2xl">
+    
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+      <div>
+        <h3 class="text-xl font-bold text-white">Verify Phone Number</h3>
+        <p class="text-sm text-zinc-400 mt-1">Unlock Citizen Circle & advanced features</p>
+      </div>
+      <button onclick="document.getElementById('phoneVerificationModal').classList.add('hidden')" 
+              class="text-zinc-400 hover:text-white text-2xl leading-none">&times;</button>
+    </div>
+
+    <!-- Step 1: Phone Number -->
+    <div id="phone-step-1" class="space-y-4">
+      <div>
+        <label class="block text-sm text-zinc-300 mb-1.5">Phone Number (international format)</label>
+        <input type="tel" id="phone-input" 
+               placeholder="+234 801 234 5678"
+               class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500">
+      </div>
+      
+      <button id="send-otp-btn" 
+              onclick="handleSendOTP()"
+              class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-xl transition">
+        Send Verification Code
+      </button>
+    </div>
+
+    <!-- Step 2: OTP Code (hidden by default) -->
+    <div id="phone-step-2" class="space-y-4 hidden">
+      <div>
+        <label class="block text-sm text-zinc-300 mb-1.5">Enter 6-digit code</label>
+        <input type="text" id="otp-input" maxlength="6"
+               placeholder="123456"
+               class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white text-center text-2xl tracking-widest placeholder-zinc-500 focus:outline-none focus:border-emerald-500">
+      </div>
+      
+      <button onclick="handleVerifyOTP()"
+              class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-xl transition">
+        Verify & Unlock Citizen Circle
+      </button>
+      
+      <button onclick="document.getElementById('phone-step-2').classList.add('hidden'); document.getElementById('phone-step-1').classList.remove('hidden')"
+              class="w-full text-sm text-zinc-400 hover:text-white py-2">
+        ← Change phone number
+      </button>
+    </div>
+
+    <p class="text-xs text-zinc-500 text-center">
+      We only use your number for anti-spam verification.<br>
+      It is never shown publicly or stored on the ledger.
+    </p>
+  </div>
+</div>
+
 <!-- GLOBAL UI HELPER SCRIPT -->
 <script>
     const $ = id => document.getElementById(id);
