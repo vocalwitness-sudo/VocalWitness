@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DAO Governance • VocalWitness</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="/logo.png" type="image/png">
+    <style>
+        body { background: #0a0f1c; color: white; font-family: 'Inter', system-ui, sans-serif; }
+        .glass {
+            background: rgba(17, 24, 39, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-20">
+
+<header class="sticky top-0 z-50 glass rounded-3xl p-4 mb-8 mx-4 mt-4">
+    <div class="max-w-4xl mx-auto flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-emerald-500 rounded-2xl flex items-center justify-center text-2xl">🏛️</div>
+            <h1 class="text-2xl font-bold">DAO Governance</h1>
+        </div>
+        <a href="index.html" class="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-sm">← Back to Square</a>
+    </div>
+</header>
+
+<div class="max-w-4xl mx-auto px-4">
+
+    <!-- Header + Create Button -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div>
+            <h2 class="text-3xl font-bold text-emerald-400">Active Proposals</h2>
+            <p class="text-zinc-400 text-sm mt-1">Quadratic voting • Reputation-weighted • Community governed</p>
+        </div>
+        <button id="openCreateBtn" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 rounded-2xl text-sm font-semibold transition">
+            + New Proposal
+        </button>
+    </div>
+
+    <!-- Proposals List -->
+    <div id="proposalsContainer" class="space-y-5 min-h-[300px]">
+        <div class="text-center py-16 text-zinc-500">Loading proposals...</div>
+    </div>
+</div>
+
+<!-- Create Proposal Modal -->
+<div id="createModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 max-w-md w-full space-y-4">
+        <h3 class="text-lg font-bold">Create DAO Proposal</h3>
+        
+        <div>
+            <label class="text-xs text-zinc-400 block mb-1">Title</label>
+            <input id="proposalTitle" type="text" maxlength="120"
+                   class="w-full bg-zinc-950 border border-zinc-700 rounded-xl p-3 text-sm focus:outline-none focus:border-emerald-500"
+                   placeholder="Clear and specific title">
+        </div>
+
+        <div>
+            <label class="text-xs text-zinc-400 block mb-1">Description</label>
+            <textarea id="proposalDesc" rows="4" maxlength="800"
+                      class="w-full bg-zinc-950 border border-zinc-700 rounded-xl p-3 text-sm focus:outline-none focus:border-emerald-500"
+                      placeholder="Explain the proposal and why it matters..."></textarea>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+            <button id="cancelCreateBtn" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-xl text-sm">Cancel</button>
+            <button id="submitCreateBtn" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-sm font-semibold">Create Proposal</button>
+        </div>
+    </div>
+</div>
+
+<!-- Vote Modal -->
+<div id="voteModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 max-w-sm w-full space-y-5">
+        <h3 class="text-lg font-bold">Cast Quadratic Vote</h3>
+        <p id="voteProposalTitle" class="text-sm text-zinc-400"></p>
+
+        <div>
+            <label class="text-xs text-zinc-400 block mb-2">Vote Strength (1–5)</label>
+            <div class="flex gap-2" id="strengthButtons">
+                <button data-s="1" class="strength-btn flex-1 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm">1</button>
+                <button data-s="2" class="strength-btn flex-1 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm">2</button>
+                <button data-s="3" class="strength-btn flex-1 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm">3</button>
+                <button data-s="4" class="strength-btn flex-1 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm">4</button>
+                <button data-s="5" class="strength-btn flex-1 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm">5</button>
+            </div>
+            <p class="text-[11px] text-zinc-500 mt-2">Cost = strength² (max budget 25 points)</p>
+        </div>
+
+        <div class="flex gap-3">
+            <button id="voteForBtn" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-sm font-semibold">Vote FOR</button>
+            <button id="voteAgainstBtn" class="flex-1 py-2.5 bg-rose-600/80 hover:bg-rose-500 rounded-xl text-sm font-semibold">Vote AGAINST</button>
+        </div>
+
+        <button id="cancelVoteBtn" class="w-full py-2 text-sm text-zinc-400 hover:text-white">Cancel</button>
+    </div>
+</div>
+
+<script type="module">
+    import {
+        fetchActiveProposals,
+        createDAOProposal,
+        castQuadraticVote,
+        closeProposal,
+        hasProposalPassed
+    } from './js/dao.js';
+    import { showToast } from './js/utils.js';
+    import { hasStewardAccess } from './js/tier.js';
+
+    let selectedStrength = 1;
+    let currentProposalId = null;
+
+    // ---------- Render ----------
+    async function loadProposals() {
+        const container = document.getElementById('proposalsContainer');
+        container.innerHTML = `<div class="text-center py-16 text-zinc-500">Loading proposals...</div>`;
+
+        const proposals = await fetchActiveProposals(25);
+
+        if (!proposals || proposals.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-16 text-zinc-500">
+                    <div class="text-4xl mb-3">🏛️</div>
+                    <p>No active proposals yet.</p>
+                    <p class="text-sm mt-1">Be the first to create one.</p>
+                </div>`;
+            return;
+        }
+
+        const isSteward = await hasStewardAccess();
+
+        container.innerHTML = proposals.map(p => {
+            const total = (p.totalVotesFor || 0) + (p.totalVotesAgainst || 0);
+            const forPct = total > 0 ? Math.round((p.totalVotesFor / total) * 100) : 0;
+            const againstPct = total > 0 ? 100 - forPct : 0;
+            const passed = hasProposalPassed(p);
+
+            return `
+            <div class="glass rounded-3xl p-6 border border-emerald-500/20">
+                <div class="flex justify-between items-start gap-4 mb-3">
+                    <div>
+                        <h3 class="text-lg font-semibold text-white">${escapeHTML(p.title)}</h3>
+                        <p class="text-xs text-zinc-500 mt-1">
+                            by ${escapeHTML(p.creatorDisplayName || 'Anonymous')} • 
+                            ${p.createdAt?.toDate ? p.createdAt.toDate().toLocaleDateString() : 'Recently'}
+                        </p>
+                    </div>
+                    <span class="text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-full border 
+                        ${p.category === 'moderation_appeal' ? 'bg-amber-950 text-amber-400 border-amber-800' : 'bg-emerald-950 text-emerald-400 border-emerald-800'}">
+                        ${p.category || 'governance'}
+                    </span>
+                </div>
+
+                <p class="text-sm text-zinc-300 leading-relaxed mb-5">${escapeHTML(p.description || '')}</p>
+
+                <!-- Vote bars -->
+                <div class="mb-4">
+                    <div class="flex justify-between text-xs text-zinc-400 mb-1">
+                        <span>FOR ${p.totalVotesFor || 0}</span>
+                        <span>AGAINST ${p.totalVotesAgainst || 0}</span>
+                    </div>
+                    <div class="h-2 bg-zinc-800 rounded-full overflow-hidden flex">
+                        <div class="bg-emerald-500" style="width:${forPct}%"></div>
+                        <div class="bg-rose-500" style="width:${againstPct}%"></div>
+                    </div>
+                    <p class="text-[11px] text-zinc-500 mt-1">
+                        Quorum: ${p.quorum || 12} • Total power: ${total}
+                        ${passed ? ' • <span class="text-emerald-400">Passing threshold reached</span>' : ''}
+                    </p>
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="openVoteModal('${p.id}', '${escapeHTML(p.title).replace(/'/g, "\\'")}')"
+                            class="flex-1 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-xl text-sm font-medium transition">
+                        Cast Vote
+                    </button>
+                    ${isSteward ? `
+                    <button onclick="handleClose('${p.id}')"
+                            class="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 rounded-xl text-sm text-zinc-400 transition">
+                        Close
+                    </button>` : ''}
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    function escapeHTML(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    // ---------- Create Proposal ----------
+    document.getElementById('openCreateBtn').addEventListener('click', () => {
+        document.getElementById('createModal').classList.remove('hidden');
+    });
+    document.getElementById('cancelCreateBtn').addEventListener('click', () => {
+        document.getElementById('createModal').classList.add('hidden');
+    });
+    document.getElementById('submitCreateBtn').addEventListener('click', async () => {
+        const title = document.getElementById('proposalTitle').value.trim();
+        const desc = document.getElementById('proposalDesc').value.trim();
+        if (!title || !desc) return showToast("Title and description required", "error");
+
+        const id = await createDAOProposal(title, desc);
+        if (id) {
+            document.getElementById('createModal').classList.add('hidden');
+            document.getElementById('proposalTitle').value = '';
+            document.getElementById('proposalDesc').value = '';
+            loadProposals();
+        }
+    });
+
+    // ---------- Vote ----------
+    window.openVoteModal = (id, title) => {
+        currentProposalId = id;
+        selectedStrength = 1;
+        document.getElementById('voteProposalTitle').textContent = title;
+        document.getElementById('voteModal').classList.remove('hidden');
+        updateStrengthUI();
+    };
+
+    document.getElementById('cancelVoteBtn').addEventListener('click', () => {
+        document.getElementById('voteModal').classList.add('hidden');
+    });
+
+    document.querySelectorAll('.strength-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            selectedStrength = parseInt(btn.dataset.s);
+            updateStrengthUI();
+        });
+    });
+
+    function updateStrengthUI() {
+        document.querySelectorAll('.strength-btn').forEach(btn => {
+            const s = parseInt(btn.dataset.s);
+            if (s === selectedStrength) {
+                btn.classList.add('bg-emerald-600', 'text-white');
+                btn.classList.remove('bg-zinc-800');
+            } else {
+                btn.classList.remove('bg-emerald-600', 'text-white');
+                btn.classList.add('bg-zinc-800');
+            }
+        });
+    }
+
+    document.getElementById('voteForBtn').addEventListener('click', async () => {
+        await castQuadraticVote(currentProposalId, 'for', selectedStrength);
+        document.getElementById('voteModal').classList.add('hidden');
+        loadProposals();
+    });
+
+    document.getElementById('voteAgainstBtn').addEventListener('click', async () => {
+        await castQuadraticVote(currentProposalId, 'against', selectedStrength);
+        document.getElementById('voteModal').classList.add('hidden');
+        loadProposals();
+    });
+
+    // ---------- Close ----------
+    window.handleClose = async (id) => {
+        if (!confirm("Close this proposal permanently?")) return;
+        const ok = await closeProposal(id);
+        if (ok) loadProposals();
+    };
+
+    // Init
+    loadProposals();
+</script>
+</body>
+</html>
