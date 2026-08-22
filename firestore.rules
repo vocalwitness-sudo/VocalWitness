@@ -150,7 +150,6 @@ service cloud.firestore {
     match /testimonies/{testimonyId} {
       allow read: if true;
 
-      // ★ UPDATED: now allows text OR media (image/audio)
       allow create: if isNotBanned()
         && isNotThrottled()
         && request.resource.data.authorId == request.auth.uid
@@ -161,7 +160,7 @@ service cloud.firestore {
              || (request.resource.data.imageUrl is string && request.resource.data.imageUrl.size() > 0)
              || (request.resource.data.audioUrl is string && request.resource.data.audioUrl.size() > 0)
            )
-        && (request.resource.data.createdAt is timestamp 
+        && (request.resource.data.createdAt is timestamp
             || request.resource.data.createdAt == request.time);
 
       allow update: if isModerator() || (
@@ -172,23 +171,24 @@ service cloud.firestore {
       );
 
       allow delete: if (resource.data.authorId == request.auth.uid) || isModerator();
-    } 
-    
-  // Add or merge this block into firestore.rules
-match /posts/{postId} {
-  allow read: if true;
+    }
 
-  allow create: if isNotBanned()
-    && request.resource.data.authorId == request.auth.uid
-    && (request.resource.data.createdAt is timestamp || request.resource.data.createdAt == request.time);
+    // ==========================================
+    // POSTS (legacy / secondary)
+    // ==========================================
+    match /posts/{postId} {
+      allow read: if true;
 
-  allow update: if isModerator() || (
-    isNotBanned() && resource.data.authorId == request.auth.uid
-  );
+      allow create: if isNotBanned()
+        && request.resource.data.authorId == request.auth.uid
+        && (request.resource.data.createdAt is timestamp || request.resource.data.createdAt == request.time);
 
-  allow delete: if (resource.data.authorId == request.auth.uid) || isModerator();
-}
+      allow update: if isModerator() || (
+        isNotBanned() && resource.data.authorId == request.auth.uid
+      );
 
+      allow delete: if (resource.data.authorId == request.auth.uid) || isModerator();
+    }
 
     // ==========================================
     // REPORTS COLLECTION
@@ -217,32 +217,31 @@ match /posts/{postId} {
       allow create: if isAuthenticated();
       allow update, delete: if false;
     }
-  }
-}
 
-// ==========================================
-// DAO PROPOSALS (Batch 2 Governance)
-// ==========================================
-match /dao_proposals/{proposalId} {
-  allow read: if true;   // Public can see proposals
+    // ==========================================
+    // DAO PROPOSALS (Batch 2 Governance)
+    // ==========================================
+    match /dao_proposals/{proposalId} {
+      allow read: if true;
 
-  allow create: if isNotBanned()
-    && request.resource.data.title is string
-    && request.resource.data.title.size() > 0
-    && request.resource.data.title.size() <= 120
-    && request.resource.data.description is string
-    && request.resource.data.description.size() <= 800
-    && request.resource.data.createdBy == request.auth.uid
-    && request.resource.data.status == 'active';
+      allow create: if isNotBanned()
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 120
+        && request.resource.data.description is string
+        && request.resource.data.description.size() <= 800
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.status == 'active';
 
-  allow update: if isNotBanned() && (
-    // Anyone can vote (the code controls the fields)
-    request.resource.data.diff(resource.data).affectedKeys()
-      .hasOnly(['totalVotesFor', 'totalVotesAgainst', 'totalVotingPowerSpent', 'voteLog'])
-    ||
-    // Creator or Steward can close
-    (resource.data.createdBy == request.auth.uid || isModerator())
-  );
+      allow update: if isNotBanned() && (
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['totalVotesFor', 'totalVotesAgainst', 'totalVotingPowerSpent', 'voteLog'])
+        ||
+        (resource.data.createdBy == request.auth.uid || isModerator())
+      );
 
-  allow delete: if false;  // Proposals are permanent (application-level immutable)
+      allow delete: if false;
+    }
+
+  } // ← this closing brace was missing / the DAO block was outside
 }
