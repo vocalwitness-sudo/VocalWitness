@@ -11,21 +11,24 @@
 
     <!-- Navigation Header -->
     <header class="border-b border-slate-800 bg-slate-950/80 backdrop-blur sticky top-0 z-50">
-        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <span class="text-2xl">🛡️</span>
-                <h1 class="text-xl font-bold tracking-tight text-white" data-i18n="moderationTitle">Steward Moderation Center</h1>
+        <div class="max-w-6xl mx-auto px-4 py-3 sm:py-4 flex flex-wrap items-center justify-between gap-y-2">
+            <div class="flex items-center space-x-2 sm:space-x-3">
+                <span class="text-xl sm:text-2xl">🛡️</span>
+                <h1 class="text-base sm:text-xl font-bold tracking-tight text-white" data-i18n="moderationTitle">Steward Moderation Center</h1>
             </div>
-            <div class="flex items-center space-x-4 text-sm">
-                <a href="./dao.html" class="text-emerald-400 hover:text-emerald-300 transition">🏛️ DAO</a>
-                <a href="./index.html" class="text-slate-400 hover:text-white transition" data-i18n="backToApp">← Back to App</a>
+            <div class="flex items-center space-x-3 sm:space-x-4 text-xs sm:text-sm">
+                <a href="./dao.html" class="flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 transition font-medium px-2.5 py-1 rounded-lg hover:bg-emerald-500/10" data-i18n="daoGovernanceMenu">
+                    <span>🏛️</span>
+                    <span>DAO</span>
+                </a>
+                <a href="./index.html" class="text-slate-400 hover:text-white transition px-2 py-1" data-i18n="backToApp">← Back to App</a>
             </div>
         </div>
     </header>
 
     <!-- Main Queue Container -->
     <main class="flex-grow max-w-6xl mx-auto w-full px-4 py-8">
-        
+
         <!-- Dashboard Header & Actions -->
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <div>
@@ -132,7 +135,7 @@
                 items.forEach(item => {
                     const card = document.createElement('div');
                     card.id = `post-${item.id}`;
-                    card.className = "bg-slate-950/60 border border-slate-800 rounded-xl p-6 shadow-sm hover:border-slate-700 transition";
+                    card.className = "bg-slate-950/60 border border-slate-800 rounded-xl p-4 sm:p-6 shadow-sm hover:border-slate-700 transition";
 
                     let reasonsBadge = (item.autoFlaggedReasons || [])
                         .map(r => `<span class="bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded text-xs">${escapeHTML(r)}</span>`)
@@ -183,20 +186,19 @@
 
                         ${mediaHTML}
 
-                        <div class="flex flex-wrap items-center justify-end gap-3 pt-3 border-t border-slate-800/60">
+                        <div class="flex flex-wrap items-center justify-end gap-2 sm:gap-3 pt-3 border-t border-slate-800/60">
                             <button data-action="purge" data-id="${item.id}"
-                                    class="action-btn border border-rose-500/30 text-rose-400 hover:bg-rose-500/10 px-4 py-2 rounded-lg text-sm font-medium transition">
+                                    class="action-btn border border-rose-500/30 text-rose-400 hover:bg-rose-500/10 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition">
                                 🗑️ <span data-i18n="purgePost">Purge Post</span>
                             </button>
 
                             <button data-action="approve" data-id="${item.id}"
-                                    class="action-btn bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm">
+                                    class="action-btn bg-emerald-600 hover:bg-emerald-500 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition shadow-sm">
                                 ✅ <span data-i18n="approvePublish">Approve & Publish</span>
                             </button>
 
-                            <!-- Community Appeal Button -->
                             <button onclick="openAppeal('${item.id}')"
-                                    class="border border-amber-500/30 text-amber-400 hover:bg-amber-500/10 px-4 py-2 rounded-lg text-sm font-medium transition">
+                                    class="border border-amber-500/30 text-amber-400 hover:bg-amber-500/10 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition">
                                 ⚖️ Appeal to DAO
                             </button>
                         </div>
