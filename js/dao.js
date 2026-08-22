@@ -418,13 +418,20 @@ export async function closeProposal(proposalId, finalStatus = 'closed') {
   }
 }
 
-/**
- * Helper: Check if proposal passed
- */
-export function hasProposalPassed(proposal) {
+export const MODERATION_PROFILES = {
+  PERMISSIVE: { quorum: 5, approvalRate: 0.51, multiSigRequired: 2 },
+  BALANCED:   { quorum: 12, approvalRate: 0.65, multiSigRequired: 3 }, // Your current default
+  STRICT:     { quorum: 25, approvalRate: 0.75, multiSigRequired: 5 }
+};
+
+export function hasProposalPassed(proposal, profile = MODERATION_PROFILES.BALANCED) {
   const total = (proposal.totalVotesFor || 0) + (proposal.totalVotesAgainst || 0);
   if (total === 0) return false;
-  return (proposal.totalVotesFor / total) > 0.65 && total >= (proposal.quorum || 12);
+
+  const approvalRatio = proposal.totalVotesFor / total;
+  const targetQuorum = proposal.quorum || profile.quorum;
+
+  return approvalRatio >= profile.approvalRate && total >= targetQuorum;
 }
 
 // Global Exports
