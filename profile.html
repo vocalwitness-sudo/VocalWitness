@@ -4,25 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="myProfileTitle">My Profile | VocalWitness</title>
+    
+    <!-- Styling Dependencies -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
     
     <!-- PDF Export Dependency -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 </head>
-<body class="min-h-screen bg-[#0a0f1c] text-zinc-200">
+<body class="min-h-screen bg-[#0a0f1c] text-zinc-200 antialiased selection:bg-emerald-500 selection:text-black">
 
-    <!-- Header -->
-    <header class="glass sticky top-0 z-50 p-4 border-b border-zinc-700">
+    <!-- Header Navigation -->
+    <header class="glass sticky top-0 z-50 p-4 border-b border-zinc-800/80 backdrop-blur-md">
         <div class="max-w-4xl mx-auto flex items-center justify-between">
-            <a href="index.html" class="flex items-center gap-3">
-                <div class="w-9 h-9 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-2xl">🔊</div>
-                <span class="font-bold text-xl" data-i18n="appTitle">VocalWitness</span>
+            <a href="index.html" class="flex items-center gap-3 group">
+                <div class="w-9 h-9 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-emerald-500/10 group-hover:scale-105 transition-transform">🔊</div>
+                <span class="font-bold text-xl tracking-tight text-white" data-i18n="appTitle">VocalWitness</span>
             </a>
             
             <div class="flex items-center gap-4">
-                <a href="index.html" class="text-emerald-400 hover:text-emerald-300" data-i18n="backToSquare">← Back to Square</a>
-                <button onclick="toggleDarkMode()" class="p-3 rounded-2xl hover:bg-zinc-800 transition-colors" title="Toggle Theme">
+                <a href="index.html" class="text-sm font-medium text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-1" data-i18n="backToSquare">
+                    <span>←</span> <span data-i18n="backToSquareText">Back to Square</span>
+                </a>
+                <button onclick="toggleDarkMode()" aria-label="Toggle Theme" class="p-2.5 rounded-2xl bg-zinc-900/50 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500">
                     🌙
                 </button>
             </div>
@@ -30,49 +34,52 @@
     </header>
 
     <!-- Main Page Content -->
-    <main class="max-w-4xl mx-auto p-6">
-        <div class="glass rounded-3xl overflow-hidden min-h-[600px] flex flex-col">
+    <main class="max-w-4xl mx-auto p-4 sm:p-6">
+        <div class="glass rounded-3xl border border-zinc-800/80 overflow-hidden min-h-[600px] flex flex-col shadow-2xl">
             <!-- Dynamic profile mount point -->
-            <div id="mainProfileContent" class="flex-1 p-8 overflow-y-auto custom-scroll">
-                <div class="text-center py-20 text-zinc-400" data-i18n="loadingProfile">Loading your profile...</div>
+            <div id="mainProfileContent" class="flex-1 p-6 sm:p-8 overflow-y-auto custom-scroll">
+                <div class="flex flex-col items-center justify-center py-24 space-y-4">
+                    <div class="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                    <div class="text-sm font-medium text-zinc-400" data-i18n="loadingProfile">Loading your profile...</div>
+                </div>
             </div>
         </div>
     </main>
 
     <!-- Edit Profile Modal -->
-    <div id="editProfileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[10001] p-4">
-        <div class="glass rounded-3xl p-6 max-w-md w-full space-y-4">
-            <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
-                <h3 class="text-xl font-bold text-white" data-i18n="editProfile">Edit Profile</h3>
-                <button onclick="closeEditProfile()" class="text-2xl text-zinc-400 hover:text-white">&times;</button>
+    <div id="editProfileModal" role="dialog" aria-modal="true" aria-labelledby="editProfileTitle" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[10001] p-4 transition-opacity">
+        <div class="glass rounded-3xl p-6 max-w-md w-full border border-zinc-800 space-y-5 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+            <div class="flex justify-between items-center border-b border-zinc-800/80 pb-3">
+                <h3 id="editProfileTitle" class="text-xl font-bold text-white" data-i18n="editProfile">Edit Profile</h3>
+                <button onclick="closeEditProfile()" aria-label="Close modal" class="text-2xl text-zinc-400 hover:text-white transition-colors">&times;</button>
             </div>
             
             <form id="editProfileForm" onsubmit="handleSaveProfile(event)" class="space-y-4">
                 <div>
-                    <label class="text-xs text-zinc-400" data-i18n="displayName">Display Name</label>
-                    <input type="text" id="editDisplayName" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white focus:outline-none focus:border-emerald-500" required>
+                    <label for="editDisplayName" class="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5" data-i18n="displayName">Display Name</label>
+                    <input type="text" id="editDisplayName" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all" required>
                 </div>
 
                 <div>
-                    <label class="text-xs text-zinc-400" data-i18n="username">Username</label>
-                    <input type="text" id="editUsername" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white focus:outline-none focus:border-emerald-500">
+                    <label for="editUsername" class="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5" data-i18n="username">Username</label>
+                    <input type="text" id="editUsername" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all">
                 </div>
 
                 <div>
-                    <label class="text-xs text-zinc-400" data-i18n="region">Region / Location</label>
-                    <input type="text" id="editRegion" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white focus:outline-none focus:border-emerald-500" placeholder="e.g. West Africa">
+                    <label for="editRegion" class="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5" data-i18n="region">Region / Location</label>
+                    <input type="text" id="editRegion" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all" placeholder="e.g. West Africa">
                 </div>
 
                 <div>
-                    <label class="text-xs text-zinc-400" data-i18n="bio">Bio</label>
-                    <textarea id="editBio" rows="3" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white focus:outline-none focus:border-emerald-500"></textarea>
+                    <label for="editBio" class="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5" data-i18n="bio">Bio</label>
+                    <textarea id="editBio" rows="3" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all resize-none"></textarea>
                 </div>
 
                 <div class="flex gap-3 pt-2">
-                    <button type="submit" class="flex-1 py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition" data-i18n="save">
+                    <button type="submit" class="flex-1 py-3 bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-black font-bold rounded-xl transition shadow-lg shadow-emerald-500/20" data-i18n="save">
                         Save
                     </button>
-                    <button type="button" onclick="closeEditProfile()" class="py-3 px-4 bg-zinc-800 text-zinc-300 font-semibold rounded-xl hover:bg-zinc-700 transition" data-i18n="cancel">
+                    <button type="button" onclick="closeEditProfile()" class="py-3 px-5 bg-zinc-800 text-zinc-300 font-semibold rounded-xl hover:bg-zinc-700 transition" data-i18n="cancel">
                         Cancel
                     </button>
                 </div>
@@ -81,45 +88,45 @@
     </div>
 
     <!-- Settings & Security Modal -->
-    <div id="settingsModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[10001] p-4">
-        <div class="glass rounded-3xl p-6 max-w-lg w-full max-h-[85vh] overflow-y-auto custom-scroll space-y-6">
-            <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
-                <h3 class="text-xl font-bold text-white flex items-center gap-2">
+    <div id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[10001] p-4 transition-opacity">
+        <div class="glass rounded-3xl p-6 max-w-lg w-full max-h-[85vh] overflow-y-auto custom-scroll border border-zinc-800 space-y-6 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-zinc-800/80 pb-3">
+                <h3 id="settingsTitle" class="text-xl font-bold text-white flex items-center gap-2">
                     ⚙️ <span data-i18n="accountSettings">Account Settings</span>
                 </h3>
-                <button onclick="closeSettings()" class="text-2xl text-zinc-400 hover:text-white">&times;</button>
+                <button onclick="closeSettings()" aria-label="Close settings" class="text-2xl text-zinc-400 hover:text-white transition-colors">&times;</button>
             </div>
 
             <!-- Security & Auth -->
             <div class="space-y-3">
-                <h4 class="text-sm font-semibold text-emerald-400 uppercase tracking-wider" data-i18n="securityHeader">Security & Access</h4>
+                <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wider" data-i18n="securityHeader">Security & Access</h4>
                 
-                <div class="bg-zinc-900/60 p-4 rounded-2xl border border-zinc-800 flex justify-between items-center">
+                <div class="bg-zinc-900/60 p-4 rounded-2xl border border-zinc-800/80 flex justify-between items-center hover:border-zinc-700 transition-colors">
                     <div>
-                        <div class="font-medium text-white" data-i18n="passwordLabel">Password</div>
+                        <div class="font-medium text-white text-sm" data-i18n="passwordLabel">Password</div>
                         <div class="text-xs text-zinc-400" data-i18n="passwordSub">Send password reset email</div>
                     </div>
-                    <button onclick="triggerPasswordReset()" class="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200 rounded-xl transition" data-i18n="resetBtn">
+                    <button onclick="triggerPasswordReset()" class="px-3.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-zinc-200 rounded-xl transition border border-zinc-700/50" data-i18n="resetBtn">
                         Reset
                     </button>
                 </div>
 
-                <div class="bg-zinc-900/60 p-4 rounded-2xl border border-zinc-800 flex justify-between items-center">
+                <div class="bg-zinc-900/60 p-4 rounded-2xl border border-zinc-800/80 flex justify-between items-center hover:border-zinc-700 transition-colors">
                     <div>
-                        <div class="font-medium text-white" data-i18n="2faLabel">Two-Factor Auth (2FA)</div>
+                        <div class="font-medium text-white text-sm" data-i18n="2faLabel">Two-Factor Auth (2FA)</div>
                         <div class="text-xs text-zinc-400" data-i18n="2faSub">Require phone verification on sign-in</div>
                     </div>
-                    <input type="checkbox" id="toggle2FA" class="w-5 h-5 accent-emerald-500 rounded cursor-pointer">
+                    <input type="checkbox" id="toggle2FA" class="w-5 h-5 accent-emerald-500 rounded cursor-pointer ring-offset-zinc-900 focus:ring-emerald-500">
                 </div>
             </div>
 
             <!-- Door Preferences -->
             <div class="space-y-3">
-                <h4 class="text-sm font-semibold text-emerald-400 uppercase tracking-wider" data-i18n="preferencesHeader">Preferences</h4>
+                <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wider" data-i18n="preferencesHeader">Preferences</h4>
                 
-                <div class="bg-zinc-900/60 p-4 rounded-2xl border border-zinc-800 space-y-2">
-                    <label class="text-xs text-zinc-400 block" data-i18n="defaultDoorLabel">Default Entrance Door</label>
-                    <select id="defaultDoorSelect" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+                <div class="bg-zinc-900/60 p-4 rounded-2xl border border-zinc-800/80 space-y-2">
+                    <label for="defaultDoorSelect" class="text-xs font-medium text-zinc-400 block" data-i18n="defaultDoorLabel">Default Entrance Door</label>
+                    <select id="defaultDoorSelect" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all">
                         <option value="public_square" data-i18n="doorPublicSquare">Public Square</option>
                         <option value="citizen_talk" data-i18n="doorCitizenTalk">Citizen Talk</option>
                         <option value="witness_voice" data-i18n="doorWitnessVoice">Witness Voice</option>
@@ -129,14 +136,14 @@
 
             <!-- Data & Identity -->
             <div class="space-y-3 pt-2">
-                <h4 class="text-sm font-semibold text-red-400 uppercase tracking-wider" data-i18n="dangerZoneHeader">Data & Identity</h4>
+                <h4 class="text-xs font-bold text-red-400 uppercase tracking-wider" data-i18n="dangerZoneHeader">Data & Identity</h4>
                 
-                <div class="bg-zinc-900/60 p-4 rounded-2xl border border-zinc-800/80 flex justify-between items-center">
+                <div class="bg-zinc-900/60 p-4 rounded-2xl border border-zinc-800/80 flex justify-between items-center hover:border-zinc-700 transition-colors">
                     <div>
-                        <div class="font-medium text-white" data-i18n="exportLabel">Export Profile Record</div>
+                        <div class="font-medium text-white text-sm" data-i18n="exportLabel">Export Profile Record</div>
                         <div class="text-xs text-zinc-400" data-i18n="exportSub">Download identity summary PDF</div>
                     </div>
-                    <button onclick="exportUserDataPDF()" class="px-3 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 text-xs font-semibold rounded-xl transition" data-i18n="exportBtn">
+                    <button onclick="exportUserDataPDF()" class="px-3.5 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 text-xs font-semibold rounded-xl transition" data-i18n="exportBtn">
                         Download PDF
                     </button>
                 </div>
@@ -153,6 +160,14 @@
         document.addEventListener('DOMContentLoaded', () => {
             initLanguage();
             initDarkMode();
+
+            // Keyboard navigation support for closing modals via Escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    if (typeof window.closeEditProfile === 'function') window.closeEditProfile();
+                    if (typeof window.closeSettings === 'function') window.closeSettings();
+                }
+            });
         });
 
         window.toggleDarkMode = () => {
