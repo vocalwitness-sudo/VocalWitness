@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#10b981">
-    
+   
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="/logo.png" type="image/png">
     <title data-i18n="forensicLedgerPageTitle">Forensic Ledger • VocalWitness</title>
-    
+   
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
-    
+   
     <style>
         body {
             font-family: 'Inter', system-ui, sans-serif;
@@ -24,67 +24,99 @@
             border: 1px solid rgba(16, 185, 129, 0.25);
         }
         .ledger-entry {
-            transition: all 0.3s ease;
+            transition: all 0.25s ease;
         }
         .ledger-entry:hover {
             transform: translateY(-2px);
-            border-color: rgb(16 185 129 / 0.4);
+            border-color: rgb(16 185 129 / 0.45);
+            box-shadow: 0 8px 30px -8px rgba(16, 185, 129, 0.15);
         }
     </style>
 </head>
-<body class="min-h-screen pb-20 p-4 bg-[#0a0f1c]">
+<body class="min-h-screen pb-24 p-4 bg-[#0a0f1c]">
+
     <!-- LEGAL NOTICE -->
     <div class="max-w-2xl mx-auto bg-red-950/30 border border-red-500/20 rounded-3xl p-4 text-xs mb-6 text-center">
-        <strong class="text-red-400" data-i18n="legalPrefix">Legal:</strong> <span data-i18n="legalNoticeText">VocalWitness is an un-manipulated decentralized distribution medium.</span>
+        <strong class="text-red-400" data-i18n="legalPrefix">Legal:</strong>
+        <span data-i18n="legalNoticeText">VocalWitness is an un-manipulated decentralized distribution medium.</span>
     </div>
 
     <div class="max-w-2xl mx-auto">
+
         <!-- HEADER -->
         <header class="flex items-center justify-between mb-8">
             <div class="flex items-center gap-3">
-                <button onclick="window.goBack()" 
-                        class="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center gap-2 text-sm font-medium">
+                <button onclick="window.goBack()"
+                        class="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center gap-2 text-sm font-medium transition">
                     <span data-i18n="backButton">← Back</span>
                 </button>
                 <div class="flex items-center gap-3">
                     <div class="w-11 h-11 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-3xl shadow-inner">📜</div>
                     <div>
                         <h1 class="text-3xl font-bold tracking-tighter text-emerald-400" data-i18n="forensicLedgerTitle">Forensic Ledger</h1>
-                        <p class="text-xs text-emerald-500 -mt-1" data-i18n="forensicLedgerSubtitle">Immutable • Transparent • Verifiable</p>
+                        <p class="text-xs text-emerald-500 -mt-1" data-i18n="forensicLedgerSubtitle">Application-Level Immutable • Transparent • Verifiable</p>
                     </div>
                 </div>
             </div>
         </header>
 
+        <!-- INTEGRITY BANNER -->
+        <div class="glass rounded-3xl p-5 mb-6 border border-emerald-500/30">
+            <div class="flex items-start gap-3">
+                <div class="text-2xl mt-0.5">🛡️</div>
+                <div class="text-sm leading-relaxed text-zinc-300">
+                    <p class="font-medium text-emerald-400 mb-1">Application-Level Immutability</p>
+                    <p class="text-zinc-400">
+                        Once written, ledger entries cannot be edited or deleted by users or ordinary operators. 
+                        This is enforced by Firestore security rules + client-side SHA-256 hashing + hash-chaining. 
+                        <span class="text-zinc-500">This is not a full public blockchain.</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN LEDGER -->
         <div class="glass rounded-3xl p-6 mb-8">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-xl font-semibold" data-i18n="recentVerifiedTestimonies">Recent Verified Testimonies</h2>
-                <button onclick="refreshLedger()" 
-                        class="px-4 py-2 text-sm bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center gap-2">
+                <button onclick="refreshLedger()"
+                        class="px-4 py-2 text-sm bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center gap-2 transition">
                     🔄 <span data-i18n="refreshButton">Refresh</span>
                 </button>
             </div>
-            
+           
             <div id="ledgerContainer" class="space-y-4 min-h-[300px]">
                 <!-- Dynamic ledger entries loaded here -->
             </div>
         </div>
 
-        <div class="text-center text-xs text-zinc-500 mt-10">
-            <span data-i18n="ledgerFooterNote1">All entries are cryptographically signed, timestamped, and stored immutably.</span><br>
-            <span class="text-emerald-500" data-i18n="ledgerFooterNote2">Zero knowledge proofs available for Witness Voice entries.</span>
+        <!-- FOOTER NOTES -->
+        <div class="text-center text-xs text-zinc-500 space-y-2">
+            <p>
+                All entries are cryptographically signed, timestamped, and stored with 
+                <span class="text-emerald-500 font-medium">application-level immutability</span> 
+                (Firestore rules + hashing + hash-chaining).
+            </p>
+            <p class="text-emerald-500/90">
+                Zero-knowledge proofs are available for Witness Voice entries.
+            </p>
+            <p class="text-zinc-600 text-[11px] pt-1">
+                Optional future strengthening: ledger hashes can be exported and pinned to IPFS 
+                or lightly anchored on a public chain. Not yet active.
+            </p>
         </div>
     </div>
 
     <!-- FOOTER -->
-    <footer class="max-w-2xl mx-auto mt-20 pt-8 border-t border-zinc-800 text-center text-xs text-zinc-500">
+    <footer class="max-w-2xl mx-auto mt-16 pt-8 border-t border-zinc-800 text-center text-xs text-zinc-500">
         <p data-i18n="forensicLedgerFooter">© 2026 VocalWitness • Forensic Ledger</p>
+        <p class="mt-1 text-zinc-600">Built for permanent public record</p>
     </footer>
 
     <script type="module">
         import { db } from './js/firebase-config.js';
-        import { 
-            collection, query, orderBy, limit, onSnapshot, where 
+        import {
+            collection, query, orderBy, limit, onSnapshot, where
         } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
         import { showToast } from './js/utils.js';
         import { initLanguage } from './js/i18n.js';
@@ -114,8 +146,9 @@
                     if (snapshot.empty) {
                         ledgerContainer.innerHTML = `
                             <div class="text-center py-16 text-zinc-400">
+                                <div class="text-4xl mb-3">📜</div>
                                 <span data-i18n="noVerifiedEntries">No verified entries yet.</span><br>
-                                <span data-i18n="beFirstForensic">Be the first to publish with Forensic Shield.</span>
+                                <span class="text-sm text-zinc-500" data-i18n="beFirstForensic">Be the first to publish with Forensic Shield.</span>
                             </div>
                         `;
                         if (typeof initLanguage === 'function') initLanguage();
@@ -124,8 +157,7 @@
 
                     snapshot.forEach((docSnap) => {
                         const data = docSnap.data();
-                        
-                        // Robust timestamp handling for both Firestore Timestamps and raw dates/numbers
+                       
                         const rawTimestamp = data.timestamp;
                         const postDate = rawTimestamp?.toDate ? rawTimestamp.toDate() : new Date(rawTimestamp || Date.now());
                         const formattedDate = postDate.toLocaleString();
@@ -146,14 +178,19 @@
                                 </div>
                             </div>
                             <p class="mt-4 text-zinc-100 leading-relaxed">${data.content ? data.content.substring(0, 180) + (data.content.length > 180 ? '...' : '') : 'Media Testimony'}</p>
-                            
-                            ${data.imageUrl ? `<img src="${data.imageUrl}" class="mt-4 rounded-2xl w-full max-h-64 object-cover" alt="Evidence">` : ''}
+                           
+                            ${data.imageUrl ? `<img src="${data.imageUrl}" class="mt-4 rounded-2xl w-full max-h-64 object-cover" alt="Evidence" loading="lazy">` : ''}
                             ${data.audioUrl ? `<audio controls class="w-full mt-4"><source src="${data.audioUrl}" type="audio/webm"></audio>` : ''}
-                            
+                           
                             <div class="flex items-center justify-between text-xs mt-5 pt-4 border-t border-zinc-700 text-zinc-400">
-                                <div><span data-i18n="hashLabel">Hash:</span> <span class="font-mono text-[10px]">${data.hash ? data.hash.substring(0, 12) + '...' : 'N/A'}</span></div>
-                                <button onclick="viewFullEntry('${docSnap.id}')" 
-                                        class="text-emerald-400 hover:text-emerald-300" data-i18n="viewFullProof">View Full Proof →</button>
+                                <div>
+                                    <span data-i18n="hashLabel">Hash:</span> 
+                                    <span class="font-mono text-[10px] text-emerald-400/80">${data.hash ? data.hash.substring(0, 14) + '…' : 'N/A'}</span>
+                                </div>
+                                <button onclick="viewFullEntry('${docSnap.id}')"
+                                        class="text-emerald-400 hover:text-emerald-300 transition" data-i18n="viewFullProof">
+                                    View Full Proof →
+                                </button>
                             </div>
                         `;
                         ledgerContainer.appendChild(entry);
@@ -178,14 +215,12 @@
             showToast("Opening full forensic record for ID: " + id, "info");
         };
 
-        // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             console.log("📜 Forensic Ledger initialized");
             if (typeof initLanguage === 'function') initLanguage();
             loadForensicLedger();
         });
 
-        // Cleanup
         window.addEventListener('beforeunload', () => {
             if (unsubscribe) unsubscribe();
         });
@@ -193,7 +228,6 @@
 
     <script type="module" src="js/main.js"></script>
 
-    <!-- Global helpers -->
     <script>
         window.goBack = function() {
             if (window.history.length > 1) {
