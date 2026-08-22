@@ -219,3 +219,30 @@ match /posts/{postId} {
     }
   }
 }
+
+// ==========================================
+// DAO PROPOSALS (Batch 2 Governance)
+// ==========================================
+match /dao_proposals/{proposalId} {
+  allow read: if true;   // Public can see proposals
+
+  allow create: if isNotBanned()
+    && request.resource.data.title is string
+    && request.resource.data.title.size() > 0
+    && request.resource.data.title.size() <= 120
+    && request.resource.data.description is string
+    && request.resource.data.description.size() <= 800
+    && request.resource.data.createdBy == request.auth.uid
+    && request.resource.data.status == 'active';
+
+  allow update: if isNotBanned() && (
+    // Anyone can vote (the code controls the fields)
+    request.resource.data.diff(resource.data).affectedKeys()
+      .hasOnly(['totalVotesFor', 'totalVotesAgainst', 'totalVotingPowerSpent', 'voteLog'])
+    ||
+    // Creator or Steward can close
+    (resource.data.createdBy == request.auth.uid || isModerator())
+  );
+
+  allow delete: if false;  // Proposals are permanent (application-level immutable)
+}
