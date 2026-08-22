@@ -55,25 +55,35 @@ export function openProfile() {
         return;
     }
 
-    // Make sure content is rendered if we already have data
     if (currentUserData) {
         renderProfileUI(currentUserData);
     }
 
+    // Remove every possible "closed" state
     modal.classList.remove('hidden');
-    modal.classList.add('flex');          // your modal uses flex for centering
+    modal.classList.add('flex');
     modal.style.display = 'flex';
+    modal.style.visibility = 'visible';
+    modal.style.opacity = '1';
+    modal.setAttribute('aria-hidden', 'false');
 }
 
 export function closeProfile() {
     const modal = document.getElementById('profileModal');
-    if (modal) {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-        modal.style.display = 'none';
-    }
+    if (!modal) return;
+
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    modal.style.display = 'none';
+    modal.style.visibility = 'hidden';
+    modal.setAttribute('aria-hidden', 'true');
 }
 
+// Expose globally (and keep aliases)
+window.openProfile = openProfile;
+window.closeProfile = closeProfile;
+window.closeProfileModal = closeProfile;
+window.openProfileModal = openProfile;
 // Expose globally so main.js data-action="open-profile" works
 window.openProfile = openProfile;
 window.closeProfile = closeProfile;
