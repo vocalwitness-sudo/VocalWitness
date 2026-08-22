@@ -872,17 +872,71 @@
         setTimeout(() => toast.remove(), 3500);
     }
 
+<script>
+    const $ = id => document.getElementById(id);
+
+    function showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-2xl text-sm font-medium shadow-2xl z-[11000] ${
+            type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-red-600' : 'bg-zinc-800'
+        } text-white transition-all duration-300`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3500);
+    }
+
     window.$ = $;
     window.showToast = showToast;
+
     window.closeAuthModal = () => $('authModal')?.classList.add('hidden');
     window.closeLoginModal = () => {
         $('loginModal')?.classList.add('hidden');
         window.closeAuthModal();
     };
-    window.closeProfileModal = () => $('profileModal')?.classList.add('hidden');
-    window.closeEditProfile = () => $('editProfileModal')?.classList.add('hidden');
-    window.openSupportModal = () => $('supportModal')?.classList.remove('hidden');
-    window.openProfileModal = () => $('profileModal')?.classList.remove('hidden');
+
+    // Profile modal – only set fallbacks if profile.js has not already defined them
+    if (typeof window.closeProfile !== 'function') {
+        window.closeProfileModal = () => {
+            const m = $('profileModal');
+            if (m) {
+                m.classList.add('hidden');
+                m.classList.remove('flex');
+                m.style.display = 'none';
+            }
+        };
+    } else {
+        window.closeProfileModal = window.closeProfile;
+    }
+
+    if (typeof window.openProfile !== 'function') {
+        window.openProfileModal = () => {
+            const m = $('profileModal');
+            if (m) {
+                m.classList.remove('hidden');
+                m.classList.add('flex');
+                m.style.display = 'flex';
+            }
+        };
+    } else {
+        window.openProfileModal = window.openProfile;
+    }
+
+    window.closeEditProfile = () => {
+        const m = $('editProfileModal');
+        if (m) {
+            m.classList.add('hidden');
+            m.style.display = 'none';
+        }
+    };
+
+    window.openSupportModal = () => {
+        const m = $('supportModal');
+        if (m) {
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+    };
+
     window.closeVerificationModal = () => $('verificationModal')?.classList.add('hidden');
 
     window.toggleDataSaver = function() {
@@ -890,8 +944,8 @@
         if (!btn) return;
         const isOff = btn.textContent.trim() === 'Off';
         btn.textContent = isOff ? 'On' : 'Off';
-        btn.className = isOff 
-            ? 'text-emerald-400 font-medium text-xs hover:underline' 
+        btn.className = isOff
+            ? 'text-emerald-400 font-medium text-xs hover:underline'
             : 'text-amber-400 font-medium text-xs hover:underline';
         showToast(`Data Saver mode turned ${isOff ? 'ON' : 'OFF'}`, 'info');
     };
@@ -900,7 +954,6 @@
         const moreBtn = $('more-btn');
         const moreMenu = $('more-menu');
         if (!moreMenu) return;
-
         if (moreBtn && moreBtn.contains(e.target)) {
             e.stopPropagation();
             moreMenu.classList.toggle('hidden');
@@ -912,7 +965,6 @@
     document.addEventListener('click', (e) => {
         const btn = e.target.closest('.support-tier-btn');
         if (!btn) return;
-
         const container = $('supportTierContainer');
         if (container) {
             container.querySelectorAll('.support-tier-btn').forEach(b => {
@@ -920,10 +972,8 @@
                 b.classList.add('bg-zinc-800', 'border-zinc-700');
             });
         }
-
         btn.classList.remove('bg-zinc-800', 'border-zinc-700');
         btn.classList.add('bg-emerald-600/20', 'border-emerald-500');
-
         const amountInput = $('customSupportAmount');
         if (amountInput) {
             amountInput.value = btn.getAttribute('data-amount');
