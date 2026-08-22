@@ -1,5 +1,5 @@
 // js/profile.js - Integrated, Refactored & Fully Localized Version
-// Updated: Added Get Verified button + proper Citizen Circle badge
+// Updated: Fixed Action Grid Layout, Isolated Phone Verification & Clean Sign Out
 
 import {  
     onAuthStateChanged,  
@@ -20,11 +20,21 @@ import { showToast } from './utils.js';
 import { refreshTierAndUI, getCurrentWitnessLevel } from './tier.js'; 
 import { startWitnessCycle } from './witnessCycle.js'; 
 import { t } from './i18n.js'; 
-import { startPhoneVerification } from './verification.js';   // ← Added
+import { startPhoneVerification } from './verification.js';
 
 let currentUserData = null; 
 let userUnsubscribe = null; 
 window.currentUserData = null; 
+
+// Expose startPhoneVerification globally for inline HTML onclick handlers
+window.startPhoneVerification = function() {
+    if (typeof startPhoneVerification === 'function') {
+        startPhoneVerification();
+    } else {
+        console.error("Phone verification module not available.");
+        showToast(t("profile.verification_unavailable", "Verification module unavailable"), "error");
+    }
+};
 
 // Helper function to sanitize untrusted strings before innerHTML injection 
 function sanitize(str) { 
@@ -143,7 +153,7 @@ export function renderProfileUI(userData, retryCount = 0) {
             : t("common.recent", "Recent"); 
 
         const html = ` 
-            <div class="space-y-8 p-4"> 
+            <div class="space-y-6 p-4 text-white"> 
                 <!-- Red Zone / Privacy Boundary Banner -->
                 <div class="bg-red-950/40 border border-red-500/50 rounded-2xl p-4 flex items-start gap-3 shadow-lg shadow-red-950/20">
                     <span class="text-2xl">🛑</span>
@@ -160,39 +170,39 @@ export function renderProfileUI(userData, retryCount = 0) {
                 <!-- Profile Header --> 
                 <div class="flex flex-col items-center text-center"> 
                     <div class="relative"> 
-                        <div class="w-32 h-32 mx-auto rounded-3xl overflow-hidden border-4 border-zinc-700 shadow-2xl"> 
+                        <div class="w-28 h-28 mx-auto rounded-3xl overflow-hidden border-4 border-zinc-700 shadow-2xl"> 
                             ${userData.photoURL ?  
                                 `<img src="${sanitize(userData.photoURL)}" class="w-full h-full object-cover" alt="Profile Photo">` :  
-                                `<div class="w-full h-full bg-gradient-to-br from-zinc-700 to-zinc-800 flex items-center justify-center text-7xl">👤</div>` 
+                                `<div class="w-full h-full bg-gradient-to-br from-zinc-700 to-zinc-800 flex items-center justify-center text-6xl">👤</div>` 
                             } 
                         </div> 
                         ${isWitness ? `<div class="absolute -bottom-1 -right-1 text-3xl" title="${t("profile.active_witness", "Active Witness")}">🔐</div>` : ''} 
                     </div> 
                      
-                    <h2 class="text-3xl font-bold mt-5 text-white">${sanitize(userData.displayName) || t("profile.anonymous_witness", "Anonymous Witness")}</h2> 
-                    <p class="text-emerald-400">@${sanitize(userData.username) || 'anonymous'}</p> 
+                    <h2 class="text-2xl font-bold mt-4 text-white">${sanitize(userData.displayName) || t("profile.anonymous_witness", "Anonymous Witness")}</h2> 
+                    <p class="text-emerald-400 font-mono text-sm">@${sanitize(userData.username) || 'anonymous'}</p> 
                     ${userData.region ? `<p class="text-xs text-zinc-400 mt-1">📍 ${sanitize(userData.region)}</p>` : ''} 
                      
                     <!-- Tier Badge --> 
-                    <div class="mt-6"> 
+                    <div class="mt-4"> 
                         ${level ? ` 
-                            <div class="inline-flex items-center gap-3 px-6 py-3 bg-zinc-900 border border-zinc-700 rounded-3xl"> 
-                                <span class="text-4xl">${level.emblem}</span> 
+                            <div class="inline-flex items-center gap-3 px-5 py-2.5 bg-zinc-900 border border-zinc-700 rounded-3xl"> 
+                                <span class="text-3xl">${level.emblem}</span> 
                                 <div class="text-left"> 
-                                    <div class="font-bold text-lg text-white">${sanitize(level.name)}</div> 
+                                    <div class="font-bold text-sm text-white">${sanitize(level.name)}</div> 
                                     <div class="text-xs text-zinc-400">${t("profile.level", "Level")} ${level.level} • ${userData.reputation || 0} REP</div> 
                                 </div> 
                             </div> 
                         ` : isCitizenCircle ? `
-                            <div class="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500/10 border border-emerald-500/30 rounded-3xl">
+                            <div class="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-500/10 border border-emerald-500/30 rounded-3xl">
                                 <span class="text-2xl">🛡️</span>
                                 <div class="text-left">
-                                    <div class="font-bold text-emerald-400">Citizen Circle</div>
+                                    <div class="font-bold text-sm text-emerald-400">Citizen Circle</div>
                                     <div class="text-xs text-zinc-400">Phone Verified • ${userData.reputation || 60} REP</div>
                                 </div>
                             </div>
                         ` : ` 
-                            <div class="px-6 py-3 bg-zinc-800 rounded-3xl text-sm text-zinc-300">
+                            <div class="px-5 py-2.5 bg-zinc-800 rounded-3xl text-xs text-zinc-300">
                                 👤 ${t("profile.citizen", "Citizen")} (Unverified)
                             </div> 
                         `} 
@@ -200,68 +210,68 @@ export function renderProfileUI(userData, retryCount = 0) {
                 </div> 
 
                 <!-- Witness Cycle Control Card --> 
-                <div class="bg-zinc-900 rounded-3xl p-6 border border-amber-500/20"> 
-                    <div class="flex justify-between items-start mb-4"> 
+                <div class="bg-zinc-900 rounded-3xl p-5 border border-amber-500/20"> 
+                    <div class="flex justify-between items-start mb-3"> 
                         <div> 
-                            <h4 class="font-semibold text-lg text-amber-400 flex items-center gap-2"> 
+                            <h4 class="font-semibold text-base text-amber-400 flex items-center gap-2"> 
                                 <span>🔄</span> ${t("profile.witness_cycle", "Witness Cycle")} 
                             </h4> 
-                            <p class="text-xs text-zinc-400 mt-1">${t("profile.witness_cycle_desc", "Manage active attestation status in the public square.")}</p> 
+                            <p class="text-xs text-zinc-400 mt-0.5">${t("profile.witness_cycle_desc", "Manage active attestation status in the public square.")}</p> 
                         </div> 
-                        <span class="px-3 py-1 bg-amber-500/10 text-amber-400 text-xs font-mono rounded-full border border-amber-500/30"> 
+                        <span class="px-2.5 py-1 bg-amber-500/10 text-amber-400 text-xs font-mono rounded-full border border-amber-500/30"> 
                             ${userData.activeWitnessCycle ? t("common.active", "Active") : t("common.inactive", "Inactive")} 
                         </span> 
                     </div> 
                     <button onclick="handleProfileStartCycle()"  
-                            class="w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-black font-semibold rounded-2xl transition flex items-center justify-center gap-2 shadow-lg shadow-amber-500/10"> 
+                            class="w-full py-3 bg-amber-500 hover:bg-amber-400 text-black font-semibold rounded-2xl transition flex items-center justify-center gap-2 shadow-lg shadow-amber-500/10 text-sm"> 
                         <span>🔄</span> ${userData.activeWitnessCycle ? t("profile.end_cycle", "End Witness Cycle") : t("profile.start_cycle", "Start Witness Cycle")} 
                     </button> 
                 </div> 
 
                 <!-- Bio --> 
                 ${userData.bio ? ` 
-                    <div class="bg-zinc-900/70 border border-zinc-700 rounded-3xl p-6 text-zinc-300"> 
+                    <div class="bg-zinc-900/70 border border-zinc-700 rounded-2xl p-4 text-xs text-zinc-300 leading-relaxed"> 
                         ${sanitize(userData.bio)} 
                     </div> 
                 ` : ''} 
 
                 <!-- Stats --> 
-                <div class="grid grid-cols-3 gap-4"> 
-                    <div class="bg-zinc-900 rounded-3xl p-5 text-center"> 
-                        <div class="text-3xl font-bold text-emerald-400">${userData.reputation || 0}</div> 
+                <div class="grid grid-cols-3 gap-3"> 
+                    <div class="bg-zinc-900 rounded-2xl p-4 text-center"> 
+                        <div class="text-2xl font-bold text-emerald-400">${userData.reputation || 0}</div> 
                         <div class="text-xs text-zinc-500 mt-1">${t("profile.reputation", "Reputation")}</div> 
                     </div> 
-                    <div class="bg-zinc-900 rounded-3xl p-5 text-center"> 
-                        <div class="text-3xl font-bold text-white">${userData.testimoniesCount || 0}</div> 
+                    <div class="bg-zinc-900 rounded-2xl p-4 text-center"> 
+                        <div class="text-2xl font-bold text-white">${userData.testimoniesCount || 0}</div> 
                         <div class="text-xs text-zinc-500 mt-1">${t("profile.testimonies", "Testimonies")}</div> 
                     </div> 
-                    <div class="bg-zinc-900 rounded-3xl p-5 text-center"> 
-                        <div class="text-3xl font-bold text-amber-400">${userData.verifications || 0}</div> 
+                    <div class="bg-zinc-900 rounded-2xl p-4 text-center"> 
+                        <div class="text-2xl font-bold text-amber-400">${userData.verifications || 0}</div> 
                         <div class="text-xs text-zinc-500 mt-1">${t("profile.verifications", "Verifications")}</div> 
                     </div> 
                 </div> 
 
-                <!-- Action Controls --> 
-                <div class="flex flex-col sm:flex-row gap-3 mt-6"> 
+                <!-- Action Controls: Responsive 2-Column Grid --> 
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6"> 
                     ${!isCitizenCircle && !isWitness ? `
                         <button onclick="startPhoneVerification()"
-                                class="flex-1 py-4 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-semibold rounded-3xl transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/30">
+                                class="col-span-1 sm:col-span-2 py-3 px-4 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/30">
                             🛡️ Get Verified — Unlock Citizen Circle
                         </button>
                     ` : ''}
 
                     <button onclick="openEditProfile()"  
-                            class="flex-1 py-4 bg-emerald-600 hover:bg-emerald-500 text-black font-semibold rounded-3xl transition flex items-center justify-center gap-2"> 
+                            class="py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-black text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2"> 
                         ✏️ ${t("profile.edit_profile", "Edit Profile")} 
                     </button> 
 
                     <button onclick="exportUserDataPDF()"  
-                            class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 text-white font-semibold rounded-3xl transition flex items-center justify-center gap-2"> 
+                            class="py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2"> 
                         📄 ${t("profile.export_data", "Export Data")} 
                     </button> 
 
                     <button onclick="handleSignOut()"  
-                            class="flex-1 py-4 bg-red-950/40 hover:bg-red-900/60 border border-red-500/40 text-red-400 hover:text-red-300 font-semibold rounded-3xl transition flex items-center justify-center gap-2"> 
+                            class="col-span-1 sm:col-span-2 py-3 px-4 bg-red-950/40 hover:bg-red-900/60 border border-red-500/40 text-red-400 hover:text-red-300 text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2"> 
                         🚪 ${t("auth.sign_out", "Sign Out")} 
                     </button> 
                 </div> 
@@ -282,16 +292,24 @@ window.renderProfileUI = renderProfileUI;
 export async function handleSignOut() { 
     try { 
         showToast(t("auth.signing_out", "Signing out..."), "info"); 
-        document.getElementById('profileModal')?.classList.add('hidden'); 
         
+        // Unsubscribe Firestore profile listener immediately to avoid execution leaks
         if (userUnsubscribe) { 
             userUnsubscribe(); 
             userUnsubscribe = null; 
         } 
+        
+        // Hide all active modals immediately
+        document.querySelectorAll('.modal, [id$="Modal"]').forEach(modal => {
+            modal.classList.add('hidden');
+            modal.style.display = 'none';
+        });
+
         currentUserData = null; 
         window.currentUserData = null; 
+        
         await signOut(auth); 
-        window.location.reload(); 
+        window.location.href = '/'; 
     } catch (error) { 
         console.error("Sign out error:", error); 
         showToast(t("auth.sign_out_error", "Error signing out"), "error"); 
@@ -325,11 +343,16 @@ export function openEditProfile() {
         if (bioInput) bioInput.value = currentUserData.bio || ''; 
     } 
     modal.classList.remove('hidden'); 
+    modal.style.display = 'flex';
 } 
 window.openEditProfile = openEditProfile;
 
 export function closeEditProfile() { 
-    document.getElementById('editProfileModal')?.classList.add('hidden'); 
+    const modal = document.getElementById('editProfileModal');
+    if (modal) {
+        modal.classList.add('hidden'); 
+        modal.style.display = 'none';
+    }
 } 
 window.closeEditProfile = closeEditProfile;
 
@@ -402,11 +425,18 @@ window.exportUserDataPDF = exportUserDataPDF;
 
 window.openProfile = function() { 
     const modal = document.getElementById('profileModal'); 
-    if (modal) modal.classList.remove('hidden'); 
+    if (modal) {
+        modal.classList.remove('hidden'); 
+        modal.style.display = 'flex';
+    }
 }; 
 
 window.closeProfile = function() { 
-    document.getElementById('profileModal')?.classList.add('hidden'); 
+    const modal = document.getElementById('profileModal');
+    if (modal) {
+        modal.classList.add('hidden'); 
+        modal.style.display = 'none';
+    }
 }; 
 
 window.addEventListener('languageChanged', () => { 
