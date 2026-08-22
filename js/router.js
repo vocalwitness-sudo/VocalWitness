@@ -71,6 +71,16 @@ const ROUTES = {
             });
             qvModule?.initQuadraticVoting?.(container);
         }
+    },
+
+    // ====================== NEW: DAO Governance ======================
+    'dao': {
+        viewId: null,               // Standalone page
+        title: 'DAO Governance',
+        init: async () => {
+            // Redirect to the dedicated DAO page
+            window.location.href = 'dao.html';
+        }
     }
 };
 
@@ -81,8 +91,15 @@ const ROUTES = {
 export async function navigateTo(routeKey) {
     const targetRoute = ROUTES[routeKey] || ROUTES['citizen-talk'];
 
+    // Special case: external / standalone pages
+    if (routeKey === 'dao') {
+        window.location.href = 'dao.html';
+        return;
+    }
+
     // Hide all view panels
     Object.values(ROUTES).forEach(route => {
+        if (!route.viewId) return;
         const panel = document.getElementById(route.viewId);
         if (panel) {
             panel.classList.add('hidden');
@@ -91,12 +108,14 @@ export async function navigateTo(routeKey) {
     });
 
     // Show selected panel
-    const activePanel = document.getElementById(targetRoute.viewId);
-    if (activePanel) {
-        activePanel.classList.remove('hidden');
-        activePanel.classList.add('block');
-    } else {
-        console.warn(`Panel ID #${targetRoute.viewId} not found in DOM.`);
+    if (targetRoute.viewId) {
+        const activePanel = document.getElementById(targetRoute.viewId);
+        if (activePanel) {
+            activePanel.classList.remove('hidden');
+            activePanel.classList.add('block');
+        } else {
+            console.warn(`Panel ID #${targetRoute.viewId} not found in DOM.`);
+        }
     }
 
     // Update nav element active states
