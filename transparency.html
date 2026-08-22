@@ -39,6 +39,34 @@
         </div>
     </div>
 
+    <!-- Operator Transparency: Ledger Integrity -->
+    <div class="glass rounded-3xl p-8 mb-10">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-semibold" data-i18n="ledgerIntegrityTitle">Ledger Integrity & Application-Level Immutability</h3>
+            <span class="text-xs bg-emerald-950 text-emerald-400 border border-emerald-800 px-3 py-1 rounded-full">Operator Transparency</span>
+        </div>
+
+        <div class="space-y-4 text-sm text-zinc-300 leading-relaxed">
+            <p data-i18n="ledgerIntegrityPara1">
+                Once a record is written to the Forensic Ledger or the audit log, the application and database rules make it impossible for any user (or ordinary operator) to edit or delete it.
+            </p>
+
+            <ul class="list-disc pl-5 space-y-2 text-zinc-400">
+                <li data-i18n="ledgerIntegrityPoint1">Firestore security rules explicitly forbid <code class="text-emerald-400">update</code> and <code class="text-emerald-400">delete</code> on the ledger collections.</li>
+                <li data-i18n="ledgerIntegrityPoint2">Client-side SHA-256 hashing of media and content.</li>
+                <li data-i18n="ledgerIntegrityPoint3">Hash-chaining of audit entries (each entry contains the cryptographic hash of the previous one).</li>
+            </ul>
+
+            <p class="pt-2" data-i18n="ledgerIntegrityClarification">
+                <strong class="text-emerald-400">Important clarification:</strong> This is <strong>application-level immutability</strong>. It is not a full public blockchain. The data lives in Firebase / Google Cloud. The rules and cryptography make silent changes extremely difficult, but the ultimate trust still rests on the operator’s honesty and the cloud provider’s integrity.
+            </p>
+
+            <p class="text-xs text-zinc-500 pt-2 border-t border-zinc-800" data-i18n="ledgerIntegrityFuture">
+                Planned optional strengthening (Batch 1 item 3): periodic cryptographic hashes of the ledger can be exported and pinned to IPFS and/or lightly anchored on a public chain (Polygon or Base). This is not yet active.
+            </p>
+        </div>
+    </div>
+
     <!-- AI Flag Audit Logs & Dispute Table -->
     <div class="glass rounded-3xl p-8 mb-10">
         <div class="flex items-center justify-between mb-6">
