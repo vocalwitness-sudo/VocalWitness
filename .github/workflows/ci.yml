@@ -1,0 +1,35 @@
+name: CI - Smoke Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci || npm install
+
+      - name: Lint (non-blocking for now)
+        run: npm run lint || echo "Lint warnings present – continuing"
+
+      - name: Phone Verification Smoke Test
+        run: node tests/phone-smoke.js
+
+      - name: Build CSS (same as deploy)
+        run: |
+          npm install -D tailwindcss @tailwindcss/cli
+          npx @tailwindcss/cli -i ./input.css -o ./style.css --minify
