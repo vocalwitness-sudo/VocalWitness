@@ -40,7 +40,7 @@ export function initDataSaver() {
 export function toggleDataSaver() {
     const currentState = state.dataSaver || false;
     const newState = !currentState;
-    
+   
     updateAppState({ dataSaver: newState });
     localStorage.setItem('vocalwitness_data_saver', String(newState));
     updateDataSaverUI(newState);
@@ -257,7 +257,7 @@ window.publishTestimony = async () => {
             ? await mediaModule.uploadForensicMedia()
             : {};
 
-        // 1. Construct testimony payload strictly obeying rule constraints
+        // 1. Construct testimony payload
         const testimonyData = {
             authorId: currentUser.uid,
             author: currentUser.displayName || "Registered Witness",
@@ -327,8 +327,8 @@ async function loadEvidenceLedger() {
 
     try {
         const q = query(
-            collection(db, "testimonies"), 
-            orderBy("timestamp", "desc"), 
+            collection(db, "testimonies"),
+            orderBy("timestamp", "desc"),
             limit(20)
         );
         const querySnapshot = await getDocs(q);
@@ -357,8 +357,8 @@ async function loadEvidenceLedger() {
             const data = docSnapshot.data();
             const dateStr = data.timestamp ? new Date(data.timestamp).toLocaleString() : 'N/A';
             const hasHash = data.imageHash || data.audioHash || data.hasForensic;
-            const hashDisplay = hasHash 
-                ? '<span class="text-emerald-400 flex items-center gap-1 font-semibold">🔒 Verified Hash</span>' 
+            const hashDisplay = hasHash
+                ? '<span class="text-emerald-400 flex items-center gap-1 font-semibold">🔒 Verified Hash</span>'
                 : '<span class="text-zinc-500">Standard</span>';
 
             html += `
@@ -391,9 +391,8 @@ async function fetchCuratedNews() {
     try {
         const res = await fetch(RSS_URL);
         if (!res.ok) throw new Error(`HTTP network error: ${res.status}`);
-
         const data = await res.json();
-        
+       
         if (data.status === 'ok' && Array.isArray(data.items) && data.items.length > 0) {
             const headlines = data.items.slice(0, 8).map(item => {
                 const safeTitle = escapeHtml(item.title || '');
@@ -516,16 +515,65 @@ function setupEventListeners() {
         window.initiatePayment(amount);
     });
 
-    // -------------------------------------------------
-    // Media Controls (Photo / Voice / Publish)
-    // REMOVED – these are now owned exclusively by js/composer.js
-    // to prevent duplicate listeners that caused:
-    // - image uploading multiple times on select
-    // - preview resetting / "going back to upload"
-    // - double publish handlers
-    // -------------------------------------------------
-
+    // Media Controls (Photo / Voice / Publish) are now handled by wireTestimonyComposer()
     console.log("✅ Application listeners active");
+}
+
+// ====================== COMPOSER WIRING (matches current index.html IDs) ======================
+function wireTestimonyComposer() {
+    // Create hidden file input if it doesn't exist
+    let fileInput = document.getElementById('media-input');
+    if (!fileInput) {
+        fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.id = 'media-input';
+        fileInput.accept = 'image/jpeg,image/png,image/webp,image/heic,image/gif';
+        fileInput.className = 'hidden';
+        document.body.appendChild(fileInput);
+    }
+
+    // Photo button → open file picker
+    const btnPhoto = document.getElementById('btn-photo');
+    if (btnPhoto && !btnPhoto.dataset.wired) {
+        btnPhoto.addEventListener('click', () => fileInput.click());
+        btnPhoto.dataset.wired = 'true';
+    }
+
+    // When a file is selected → show preview
+    if (fileInput && !fileInput.dataset.wired) {
+        fileInput.addEventListener('change', async (e) => {
+            const previewArea = document.getElementById('preview-area');
+            if (e.target.files?.[0]) {
+                try {
+                    await mediaModule.handleImageSelect(e, previewArea);
+                } catch (err) {
+                    console.error(err);
+                    showToast('Failed to load image', 'error');
+                }
+            }
+        });
+        fileInput.dataset.wired = 'true';
+    }
+
+    // Voice button
+    const btnVoice = document.getElementById('btn-voice');
+    if (btnVoice && !btnVoice.dataset.wired) {
+        btnVoice.addEventListener('click', () => {
+            mediaModule.toggleVoiceRecording(btnVoice);
+        });
+        btnVoice.dataset.wired = 'true';
+    }
+
+    // Publish button
+    const postBtn = document.getElementById('postButton');
+    if (postBtn && !postBtn.dataset.wired) {
+        postBtn.addEventListener('click', () => {
+            window.publishTestimony();
+        });
+        postBtn.dataset.wired = 'true';
+    }
+
+    console.log('✅ Testimony composer wired (btn-photo / btn-voice / postButton)');
 }
 
 // ====================== BOOTSTRAP ======================
@@ -559,7 +607,7 @@ async function bootstrap() {
         // 3. Static module setups
         setupEventListeners();
         initLanguage?.();
-        initProfile?.();
+        initProfile?.();   // Profile logic lives in profile.js
 
         if (typeof CitizenTalkEngine === 'function') {
             engineInstance = new CitizenTalkEngine(db, storage);
@@ -580,4 +628,8 @@ async function bootstrap() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', bootstrap);
+document.addEventListener('DOMContentLoaded', async () => {
+    await bootstrap();
+    // Give the media engine a short moment to initialise
+    setTimeout(wireTestimonyComposer, 600);
+});
