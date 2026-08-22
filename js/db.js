@@ -243,7 +243,7 @@ let isSyncing = false;
  */
 export async function syncOfflineDrafts() {
   if (isSyncing || !navigator.onLine) return;
-  if (!auth.currentUser) return; // Wait until Firebase Auth restores active user
+  if (!auth?.currentUser) return; // Wait until Firebase Auth restores active user
 
   const drafts = await getOfflineDrafts();
   if (!drafts || drafts.length === 0) return;
@@ -259,23 +259,30 @@ export async function syncOfflineDrafts() {
       // Feed Alias Normalization
       let rawFeed = draft.targetFeed || "citizen_talk";
       const targetFeed = (rawFeed === 'vocal_truth' || rawFeed === 'true_witness') ? 'witness_voice' : rawFeed;
+      const isWitnessVoice = draft.isWitnessVoice !== undefined ? draft.isWitnessVoice : targetFeed === 'witness_voice';
 
       const currentUserId = auth.currentUser?.uid || draft.authorId;
       const userTier = await getCurrentUserTier();
       const userWitnessLevel = await getCurrentWitnessLevel();
 
-      // Write draft to Firestore testimonies collection
+      // Write draft to Firestore testimonies collection with complete schema alignment
       const testimonyRef = await addDoc(collection(db, "testimonies"), {
+        headline: draft.headline || null,
         content: draft.content || "",
         targetFeed: targetFeed,
+        channel: targetFeed,
+        isWitnessVoice: isWitnessVoice,
         imageUrl: draft.imageUrl || null,
         audioUrl: draft.audioUrl || null,
         forensicHash: draft.forensicHash || draft.imageHash || draft.audioHash || null,
+        imageHash: draft.imageHash || null,
+        audioHash: draft.audioHash || null,
         authorId: currentUserId,
         author: auth.currentUser?.displayName || "Anonymous Witness",
         authorTier: userTier || 'citizen',
         authorWitnessLevel: userWitnessLevel?.name || null,
         createdAt: serverTimestamp(),
+        hasForensic: !!(draft.forensicHash || draft.imageHash || draft.audioHash),
         syncedFromOffline: true,
         originalOfflineTimestamp: draft.savedAt || draft.createdAt,
         status: 'published'
@@ -284,6 +291,8 @@ export async function syncOfflineDrafts() {
       // Audit log entry
       await logSecurityAudit('OFFLINE_TESTIMONY_SYNCED', testimonyRef.id, {
         targetFeed: targetFeed,
+        isWitnessVoice: isWitnessVoice,
+        hasHeadline: !!draft.headline,
         originalSavedAt: draft.savedAt
       });
 
@@ -316,7 +325,7 @@ window.addEventListener('online', () => {
 });
 
 // Trigger sync when Firebase Auth completes initialization
-if (typeof auth !== 'undefined') {
+if (auth) {
   auth.onAuthStateChanged((user) => {
     if (user && navigator.onLine) {
       syncOfflineDrafts();
