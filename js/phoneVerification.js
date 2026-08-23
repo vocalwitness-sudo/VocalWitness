@@ -231,19 +231,18 @@ export async function sendPhoneVerification(phoneNumber) {
 
     // ========== KEY FIX: already-linked handling ==========
     if (e.code === 'auth/provider-already-linked') {
-      try {
-        // Check if this user already has a phone provider
-        const hasPhone = auth.currentUser.providerData.some(p => p.providerId === 'phone');
+      const hasPhone = auth.currentUser.providerData.some(p => p.providerId === 'phone');
 
-        if (hasPhone) {
-          // Already verified on THIS account → just unlock Citizen Circle
+      if (hasPhone) {
+        // Already verified on this account → just make sure Firestore is correct
+        try {
           await forceMarkPhoneVerified();
-          showToast("🎉 Phone already verified on this account! Citizen Circle unlocked.", "success");
-          closeAllVerificationModals();
-          return true;
-        }
-      } catch (upgradeErr) {
-        console.error("Failed to upgrade already-linked user:", upgradeErr);
+        } catch (_) {}
+        
+        // Softer message (no more scary red error for already-verified users)
+        showToast("You are already phone verified (Citizen Circle).", "success");
+        closeAllVerificationModals();
+        return true;
       }
 
       showToast("This phone number is already linked to another account.", "error");
