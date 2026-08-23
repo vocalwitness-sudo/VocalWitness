@@ -706,101 +706,119 @@
 </div>
 
 <!-- USER PROFILE MODAL -->
-<div id="profileModal" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4 z-[9000] overflow-y-auto">
+<div id="profileModal" 
+     class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4 z-[9000] overflow-y-auto"
+     aria-hidden="true" 
+     aria-labelledby="profileModalTitle"
+     role="dialog">
+     
     <div class="relative w-full max-w-lg bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl text-white space-y-6">
         
         <!-- Modal Header -->
         <div class="flex items-center justify-between border-b border-zinc-800 pb-4">
-            <h3 class="text-xl font-bold tracking-tight" data-i18n="profile_modal_title">User Profile</h3>
-            <button onclick="closeProfileModal()" class="text-zinc-400 hover:text-white p-2 rounded-full hover:bg-zinc-800 transition cursor-pointer" aria-label="Close Profile Modal">
+            <h3 id="profileModalTitle" class="text-xl font-bold tracking-tight" data-i18n="profile.title">User Profile</h3>
+            <button onclick="closeProfileModal()" 
+                    class="text-zinc-400 hover:text-white p-2 rounded-full hover:bg-zinc-800 transition cursor-pointer"
+                    aria-label="Close Profile">
                 ✕
             </button>
         </div>
 
-        <!-- Identity Banner Card -->
-        <div class="flex items-center gap-4 p-4 bg-zinc-950/80 border border-zinc-800 rounded-2xl">
-            <div class="relative shrink-0">
-                <img id="profileAvatar" src="logo.png" alt="User Avatar" class="w-16 h-16 rounded-2xl object-cover border border-zinc-700/60 bg-zinc-800" />
-                <span id="profileVerificationBadge" class="absolute -bottom-1 -right-1 bg-emerald-500 text-zinc-950 p-1 rounded-full text-xs shadow-md hidden" title="Verified Witness">
-                    ✓
-                </span>
-            </div>
-            <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2">
-                    <h4 id="profileDisplayName" class="font-bold text-base text-zinc-100 truncate">Anonymous Witness</h4>
-                    <span id="profileTierBadge" class="px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider rounded-md bg-zinc-800 text-zinc-400 border border-zinc-700">
-                        Tier 0
-                    </span>
+        <!-- Dynamic Profile Content Container (Mounted via renderProfileUI in js/profile.js) -->
+        <div id="profileContent" class="space-y-6">
+            
+            <!-- User Identity Card Placeholder (Hydrated by renderProfileUI) -->
+            <div id="profileUserHeader" class="flex items-center gap-4 p-4 bg-zinc-950/80 border border-zinc-800/80 rounded-2xl">
+                <div class="relative shrink-0">
+                    <img id="profileUserAvatar" src="logo.png" alt="Profile Picture" class="w-14 h-14 rounded-2xl object-cover border border-zinc-700/60 bg-zinc-800" />
+                    <span id="profileVerificationBadge" class="absolute -bottom-1 -right-1 bg-emerald-500 text-zinc-950 text-[10px] p-1 rounded-full font-bold hidden shadow-md" title="Verified Witness">✓</span>
                 </div>
-                <p id="profileHandleOrDID" class="text-xs text-zinc-400 font-mono truncate mt-0.5">did:vw:0x000...0000</p>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2">
+                        <h4 id="profileDisplayName" class="font-bold text-base text-zinc-100 truncate">Anonymous Witness</h4>
+                        <span id="profileTierBadge" class="px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider rounded-md bg-zinc-800 text-zinc-400 border border-zinc-700">Tier 0</span>
+                    </div>
+                    <p id="profileHandleOrDID" class="text-xs text-zinc-400 font-mono truncate mt-0.5">did:vw:0x000...0000</p>
+                </div>
             </div>
-        </div>
 
-        <!-- Forensic Stats Grid -->
-        <div class="grid grid-cols-3 gap-2">
-            <div class="p-3 bg-zinc-800/40 border border-zinc-800 rounded-2xl text-center">
-                <span id="statTestimoniesCount" class="block font-bold text-base text-emerald-400">0</span>
-                <span class="text-[10px] font-medium text-zinc-400 uppercase tracking-wider" data-i18n="stat_testimonies">Testimonies</span>
+            <!-- Forensic Metrics Grid -->
+            <div class="grid grid-cols-3 gap-2 text-center">
+                <div class="p-3 bg-zinc-950/50 border border-zinc-800/80 rounded-2xl">
+                    <span id="profileStatTestimonies" class="block font-bold text-base text-emerald-400">0</span>
+                    <span class="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider" data-i18n="profile.stat_testimonies">Testimonies</span>
+                </div>
+                <div class="p-3 bg-zinc-950/50 border border-zinc-800/80 rounded-2xl">
+                    <span id="profileStatHashes" class="block font-bold text-base text-cyan-400">0</span>
+                    <span class="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider" data-i18n="profile.stat_hashes">Hashes</span>
+                </div>
+                <div class="p-3 bg-zinc-950/50 border border-zinc-800/80 rounded-2xl">
+                    <span id="profileStatReputation" class="block font-bold text-base text-amber-400">1.0x</span>
+                    <span class="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider" data-i18n="profile.stat_rep">Rep Score</span>
+                </div>
             </div>
-            <div class="p-3 bg-zinc-800/40 border border-zinc-800 rounded-2xl text-center">
-                <span id="statAuditedHashes" class="block font-bold text-base text-cyan-400">0</span>
-                <span class="text-[10px] font-medium text-zinc-400 uppercase tracking-wider" data-i18n="stat_hashes">Hashes</span>
-            </div>
-            <div class="p-3 bg-zinc-800/40 border border-zinc-800 rounded-2xl text-center">
-                <span id="statReputationScore" class="block font-bold text-base text-amber-400">1.0x</span>
-                <span class="text-[10px] font-medium text-zinc-400 uppercase tracking-wider" data-i18n="stat_rep">Rep Score</span>
-            </div>
-        </div>
 
-        <!-- Witness Cycle Status Card -->
-        <div class="p-4 bg-zinc-800/60 rounded-2xl border border-zinc-700/50 flex items-center justify-between">
-            <div>
-                <h4 class="font-semibold text-sm flex items-center gap-2">
-                    <span>🛡️</span> <span data-i18n="witness_cycle_heading">Witness Cycle</span>
-                </h4>
-                <p class="text-xs text-zinc-400 mt-0.5" data-i18n="witness_cycle_desc">Participate in active testimony attestation cycles.</p>
-            </div>
-            <span id="witnessCycleStatusBadge" class="px-2.5 py-1 text-xs font-semibold rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                Inactive
-            </span>
-        </div>
-
-        <!-- Editable Bio Section -->
-        <div class="space-y-2">
-            <div class="flex items-center justify-between">
-                <label for="profileBioInput" class="text-xs font-medium text-zinc-400 uppercase tracking-wider" data-i18n="user_bio_label">User Bio</label>
-                <span id="bioSaveStatus" class="text-[11px] text-emerald-400 hidden">✓ Saved</span>
-            </div>
-            <textarea id="profileBioInput" rows="3" 
-                class="w-full bg-zinc-950 border border-zinc-800 rounded-2xl p-3 text-sm text-zinc-200 focus:outline-none focus:border-emerald-500 transition resize-none placeholder:text-zinc-600" 
-                placeholder="Write your witness statement or bio..."
-                data-i18n-placeholder="user_bio_placeholder"></textarea>
-            <button id="btnSaveBio" onclick="saveProfileBio()" class="w-full py-2 bg-zinc-800 hover:bg-zinc-700 active:scale-[0.99] border border-zinc-700 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-2">
-                <span data-i18n="btn_save_bio">Save Bio</span>
-            </button>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="space-y-3 pt-2">
-            <button id="btn-get-verified" onclick="openVerificationModalFromProfile()" 
-                class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] font-semibold rounded-2xl text-sm transition shadow-lg shadow-emerald-900/20 cursor-pointer flex items-center justify-center gap-2">
-                <span>🔓</span> <span data-i18n="btn_get_verified">Get Verified — Unlock Citizen Circle</span>
-            </button>
-
-            <div class="grid grid-cols-2 gap-3">
-                <button id="btn-settings-security" onclick="openSettingsModal()" 
-                    class="py-2.5 bg-zinc-800 hover:bg-zinc-700 active:scale-[0.98] border border-zinc-700 rounded-2xl text-xs font-medium transition cursor-pointer flex items-center justify-center gap-2">
-                    <span>⚙️</span> <span data-i18n="btn_settings">Settings & Security</span>
-                </button>
-                <button onclick="auth.signOut(); closeProfileModal();" 
-                    class="py-2.5 bg-red-950/40 hover:bg-red-900/60 active:scale-[0.98] border border-red-800/50 text-red-300 rounded-2xl text-xs font-medium transition cursor-pointer flex items-center justify-center gap-2">
-                    <span>🚪</span> <span data-i18n="btn_sign_out">Sign Out</span>
+            <!-- Witness Cycle Status Card -->
+            <div class="p-4 bg-zinc-800/60 rounded-2xl border border-zinc-700/50 flex items-center justify-between">
+                <div>
+                    <h4 class="font-semibold text-sm flex items-center gap-2">
+                        <span>🛡️</span> <span data-i18n="profile.witness_cycle">Witness Cycle</span>
+                    </h4>
+                    <p class="text-xs text-zinc-400 mt-0.5" data-i18n="profile.witness_cycle_desc">
+                        Participate in active testimony attestation cycles.
+                    </p>
+                </div>
+                <button onclick="handleProfileStartCycle()" 
+                        class="px-3 py-1 text-xs font-semibold rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition cursor-pointer">
+                    <span id="witnessCycleStatusText" data-i18n="common.inactive">Inactive</span>
                 </button>
             </div>
+
+            <!-- Editable Bio Section -->
+            <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                    <label for="profileBioInput" class="text-xs font-medium text-zinc-400 uppercase tracking-wider" data-i18n="profile.bio_label">
+                        User Bio
+                    </label>
+                    <span id="profileBioSavedNotice" class="text-[11px] text-emerald-400 font-medium hidden">✓ Saved</span>
+                </div>
+                <textarea id="profileBioInput" 
+                          rows="3" 
+                          class="w-full bg-zinc-950 border border-zinc-800 rounded-2xl p-3 text-sm text-zinc-200 focus:outline-none focus:border-emerald-500 transition resize-none placeholder:text-zinc-600" 
+                          placeholder="Write your witness statement or bio..."
+                          data-i18n-placeholder="profile.bio_placeholder"></textarea>
+                <button onclick="saveProfileBio()" 
+                        class="w-full py-2 bg-zinc-800 hover:bg-zinc-700 active:scale-[0.99] border border-zinc-700 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-2">
+                    <span>💾</span> <span data-i18n="profile.save_bio">Save Bio</span>
+                </button>
+            </div>
+
+            <!-- Action Controls Grid -->
+            <div class="space-y-3 pt-2">
+                <button id="btn-get-verified" 
+                        onclick="openVerificationModalFromProfile()" 
+                        class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-black font-semibold rounded-2xl text-sm transition shadow-lg shadow-emerald-900/20 cursor-pointer flex items-center justify-center gap-2 active:scale-[0.99]">
+                    <span>🔓</span> <span data-i18n="profile.get_verified">Get Verified — Unlock Citizen Circle</span>
+                </button>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <button id="btn-settings-security" 
+                            onclick="openSettingsModal()" 
+                            class="py-2.5 bg-zinc-800 hover:bg-zinc-700 active:scale-[0.98] border border-zinc-700 rounded-2xl text-xs font-medium transition cursor-pointer flex items-center justify-center gap-2">
+                        <span>⚙️</span> <span data-i18n="profile.settings">Settings & Security</span>
+                    </button>
+                    <button onclick="handleSignOut()" 
+                            class="py-2.5 bg-red-950/40 hover:bg-red-900/60 active:scale-[0.98] border border-red-800/50 text-red-300 rounded-2xl text-xs font-medium transition cursor-pointer flex items-center justify-center gap-2">
+                        <span>🚪</span> <span data-i18n="auth.sign_out">Sign Out</span>
+                    </button>
+                </div>
+            </div>
+
         </div>
 
     </div>
 </div>
+  
 <!-- APPLICATION FOOTER -->
 <footer class="bg-zinc-950 border-t border-zinc-800/80 pt-16 pb-12 mt-20 text-zinc-400">
     <div class="max-w-6xl mx-auto px-6">
