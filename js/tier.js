@@ -1,4 +1,6 @@
 // js/tier.js - Enhanced Tier, Progression & Governance System (Optimized & Cached)
+// Compatible with the fixed phoneVerification.js + firestore.rules
+
 import { 
   doc, 
   getDoc, 
@@ -71,7 +73,6 @@ export const WITNESS_LEVELS = {
   }
 };
 
-// Pre-sorted witness levels for rapid threshold lookup
 const ORDERED_WITNESS_LEVELS = Object.values(WITNESS_LEVELS).sort((a, b) => b.minRep - a.minRep);
 
 export const ROLES = {
@@ -84,7 +85,7 @@ export const ROLES = {
 let cachedProfile = null;
 let cacheTimestamp = 0;
 let fetchPromise = null;
-const CACHE_TTL = 30000; // 30 Seconds cache
+const CACHE_TTL = 30000; // 30 Seconds
 
 function escapeHTML(str) {
   if (!str) return '';
@@ -138,6 +139,7 @@ export function clearProfileCache() {
 
 /**
  * Get current user's main tier
+ * Priority: Witness Circle > Citizen Circle (phone verified) > Citizen
  */
 export async function getCurrentUserTier() {
   if (!auth.currentUser) return TIERS.CITIZEN;
@@ -145,8 +147,19 @@ export async function getCurrentUserTier() {
   const data = await getUserProfile();
   if (!data) return TIERS.CITIZEN;
 
-  if (data.zkVerified === true || data.tier === TIERS.WITNESS_CIRCLE) return TIERS.WITNESS_CIRCLE;
-  if (data.isPhoneVerified === true || data.hasVerifiedPhone === true || data.tier === TIERS.CITIZEN_CIRCLE) return TIERS.CITIZEN_CIRCLE;
+  if (data.zkVerified === true || data.tier === TIERS.WITNESS_CIRCLE) {
+    return TIERS.WITNESS_CIRCLE;
+  }
+
+  // Phone verified = Citizen Circle
+  if (
+    data.isPhoneVerified === true ||
+    data.hasVerifiedPhone === true ||
+    data.tier === TIERS.CITIZEN_CIRCLE
+  ) {
+    return TIERS.CITIZEN_CIRCLE;
+  }
+
   return TIERS.CITIZEN;
 }
 
@@ -167,10 +180,7 @@ export async function getCurrentWitnessLevel() {
 }
 
 /**
- * Check if a user meets the prerequisites to advance their tier.
- * @param {string} uid - User ID to check
- * @param {number} timeoutMs - Max wait time in milliseconds (default: 10000ms)
- * @returns {Promise<{canAdvance: boolean, reason?: string}>}
+ * Check if a user can advance to higher tiers (needs phone verified first)
  */
 export async function canAdvanceTier(uid, timeoutMs = 10000) {
   if (!uid) {
@@ -182,7 +192,7 @@ export async function canAdvanceTier(uid, timeoutMs = 10000) {
       setTimeout(() => reject(new Error("Network timeout while fetching user profile")), timeoutMs)
     );
 
-    const data = await Promise.race([getUserProfile(), timeoutPromise]);
+    const data = await Promise.race([getUserProfile(true), timeoutPromise]); // forceRefresh
 
     if (!data) {
       return { canAdvance: false, reason: "User profile not found" };
@@ -202,18 +212,12 @@ export async function canAdvanceTier(uid, timeoutMs = 10000) {
   }
 }
 
-/**
- * Check if the user has Steward-level privileges
- */
 export async function hasStewardAccess() {
   const level = await getCurrentWitnessLevel();
   if (!level) return false;
   return level.level >= WITNESS_LEVELS.STEWARD.level;
 }
 
-/**
- * Calculate voting weight for DAO proposals based on reputation & tier
- */
 export async function getUserVotingWeight() {
   try {
     const tier = await getCurrentUserTier();
@@ -266,7 +270,10 @@ export async function applyTierTheme() {
   const body = document.body;
   if (!body) return;
 
-  body.classList.remove('theme-citizen', 'theme-citizen-circle', 'theme-witness-circle', 'tier-citizen', 'tier-citizen-circle', 'tier-witness');
+  body.classList.remove(
+    'theme-citizen', 'theme-citizen-circle', 'theme-witness-circle',
+    'tier-citizen', 'tier-citizen-circle', 'tier-witness'
+  );
 
   const tier = await getCurrentUserTier();
   const witnessLevel = await getCurrentWitnessLevel();
@@ -287,7 +294,9 @@ export async function applyTierTheme() {
  * Update profile badge with current level
  */
 export async function updateTierBadge() {
-  const badge = document.getElementById('user-tier-badge') || document.getElementById('tier-badge') || document.getElementById('profile-tier-badge');
+  const badge = document.getElementById('user-tier-badge') || 
+                document.getElementById('tier-badge') || 
+                document.getElementById('profile-tier-badge');
   if (!badge) return;
 
   const tier = await getCurrentUserTier();
@@ -309,19 +318,19 @@ export async function updateTierBadge() {
   badge.classList.remove('hidden');
 }
 
+/**
+ * Force refresh of tier system and UI (called after phone verification)
+ */
 export function refreshTierAndUI() {
-  clearProfileCache();
+  clearProfileCache();                 // very important
   applyTierTheme();
   updateTierBadge();
   loadWeeklyLeaderboard();
   console.log("✅ Tier system & Governance UI refreshed");
 }
 
-// ====================== WEEKLY LEADERBOARD & REPUTATION EXPANSION ======================
+// ====================== WEEKLY LEADERBOARD ======================
 
-/**
- * Fetch and render the Top 5 Ranked Witnesses for the weekly sidebar
- */
 export async function loadWeeklyLeaderboard() {
   const leaderboardEl = document.getElementById('weekly-leaderboard');
   if (!leaderboardEl) return;
@@ -363,7 +372,7 @@ export async function loadWeeklyLeaderboard() {
 }
 
 /**
- * Enhanced recordTestimonyContribution: Awards overall Reputation AND Weekly Leaderboard Points
+ * Award reputation + weekly points after posting testimony
  */
 export async function recordTestimonyContribution() {
   if (!auth.currentUser) return;
@@ -387,64 +396,27 @@ export async function recordTestimonyContribution() {
   }
 }
 
-
-// Add inside tier.js or main.js where UI buttons are initialized
-
-function setupProfileModalListeners() {
-  // Safe binding for Edit Profile
-  const editBtn = document.getElementById('editProfileBtn');
-  if (editBtn) {
-    editBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      const editModal = document.getElementById('editProfileModal');
-      if (editModal) {
-        editModal.style.display = 'flex';
-        editModal.classList.remove('hidden');
-      } else {
-        console.error("Edit profile modal element (#editProfileModal) not found in DOM.");
-      }
-    });
-  }
-
-  // Safe binding for Settings & Security
-  const settingsBtn = document.getElementById('settingsBtn') || document.getElementById('securitySettingsBtn');
-  if (settingsBtn) {
-    settingsBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      const settingsModal = document.getElementById('settingsModal') || document.getElementById('securityModal');
-      if (settingsModal) {
-        settingsModal.style.display = 'flex';
-        settingsModal.classList.remove('hidden');
-      } else {
-        console.error("Settings modal element not found in DOM.");
-      }
-    });
-  }
-}
-
-// Ensure listeners run when DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', setupProfileModalListeners);
-} else {
-  setupProfileModalListeners();
-}
-
 /**
- * Gate restricted actions and automatically prompt verification if required
+ * Gate restricted actions – automatically opens phone verification if needed
  */
 export async function requireCitizenCirclePermission(actionCallback) {
   const userTier = await getCurrentUserTier();
 
   if (userTier === TIERS.CITIZEN) {
-    if (typeof showToast === 'function') {
-      showToast("Phone verification required to unlock this feature.", "info");
-    }
+    showToast("Phone verification required to unlock this feature.", "info");
 
-    const modal = document.getElementById('phoneVerificationModal') || document.getElementById('phone-upgrade-modal') || document.getElementById('verificationModal');
+    // Prefer the dedicated phone modal
+    const modal = document.getElementById('phoneVerificationModal') || 
+                  document.getElementById('phone-upgrade-modal') || 
+                  document.getElementById('verificationModal');
+
     if (modal) {
       modal.classList.remove('hidden');
-      modal.classList.add('flex');
+      modal.style.display = 'flex';
+    } else if (typeof window.startPhoneVerification === 'function') {
+      window.startPhoneVerification();
     }
+
     return false;
   }
 
@@ -454,5 +426,41 @@ export async function requireCitizenCirclePermission(actionCallback) {
   return true;
 }
 
+// Profile modal listeners (kept for compatibility)
+function setupProfileModalListeners() {
+  const editBtn = document.getElementById('editProfileBtn');
+  if (editBtn) {
+    editBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const editModal = document.getElementById('editProfileModal');
+      if (editModal) {
+        editModal.style.display = 'flex';
+        editModal.classList.remove('hidden');
+      }
+    });
+  }
+
+  const settingsBtn = document.getElementById('settingsBtn') || document.getElementById('securitySettingsBtn');
+  if (settingsBtn) {
+    settingsBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const settingsModal = document.getElementById('settingsModal') || document.getElementById('securityModal');
+      if (settingsModal) {
+        settingsModal.style.display = 'flex';
+        settingsModal.classList.remove('hidden');
+      }
+    });
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupProfileModalListeners);
+} else {
+  setupProfileModalListeners();
+}
+
 // Global exports
 window.refreshTierAndUI = refreshTierAndUI;
+window.requireCitizenCirclePermission = requireCitizenCirclePermission;
+window.getCurrentUserTier = getCurrentUserTier;
+window.canAccessFeature = canAccessFeature;
