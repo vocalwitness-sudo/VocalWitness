@@ -1,6 +1,7 @@
 // js/app-state.js - Centralized Application State & Engine Exports
 import { db } from './firebase-config.js';
 import { CitizenTalkEngine, WitnessVoiceEngine } from './vocalWitnessEngine.js';
+import { TIERS, PROFILE_MODES } from './tier.js';
 
 // Track active Object URLs to prevent browser memory leaks
 let currentActiveAudioUrl = null;
@@ -24,7 +25,15 @@ export const state = {
     currentTab: 'square',
     currentMode: 'citizen',
     selectedLanguage: 'en',
-    userTier: 1
+    
+    // VocalWitness Tier & Verification Progression
+    userTier: TIERS.TIER_1_BASIC.id,
+    isPhoneVerified: false,
+    isZkReady: false,
+    zkIdentityCommitment: null,
+
+    // Identity Mode: 'ANONYMOUS' (Default) | 'BOLD_WITNESS' (Public Real Name)
+    profileMode: localStorage.getItem('vw_profile_mode') || PROFILE_MODES.ANONYMOUS
 };
 
 /**
@@ -36,6 +45,35 @@ export function isUserAuthenticated() {
 }
 
 /**
+ * Evaluates whether the current user can access a specific feature feed.
+ * @param {string} feedName - ('citizen-talk' | 'citizen-circle' | 'witness-voice' | 'witness-circle')
+ * @returns {boolean}
+ */
+export function canAccessFeed(feedName) {
+    if (feedName === 'citizen-talk') return true;
+    if (feedName === 'citizen-circle') return state.isPhoneVerified || state.userTier >= TIERS.TIER_2_VERIFIED.id;
+    if (feedName === 'witness-voice' || feedName === 'witness-circle') {
+        return state.isZkReady && state.userTier >= TIERS.TIER_3_AUDITOR.id;
+    }
+    return false;
+}
+
+/**
+ * Returns active identity configuration for media uploaders and engines.
+ * @returns {Object}
+ */
+export function getActiveIdentityConfig() {
+    const isBoldWitness = state.profileMode === PROFILE_MODES.BOLD_WITNESS;
+    return {
+        mode: state.profileMode,
+        isPublic: isBoldWitness,
+        displayName: isBoldWitness ? (state.currentUser?.displayName || 'Bold Witness') : (state.currentUser?.anonymousHandle || 'CitizenObserver'),
+        scrubMetadata: !isBoldWitness,
+        obfuscateVoice: !isBoldWitness
+    };
+}
+
+/**
  * Safely updates global application state and dispatches change event.
  * @param {Object} newState - Partial state update payload.
  */
@@ -43,6 +81,10 @@ export function updateAppState(newState) {
     if (!newState || typeof newState !== 'object') return;
     
     Object.assign(state, newState);
+    
+    if (newState.profileMode) {
+        localStorage.setItem('vw_profile_mode', newState.profileMode);
+    }
     
     if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('app-state-changed', { detail: state }));
