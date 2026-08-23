@@ -1,4 +1,6 @@
 // js/utils.js
+// Updated: Enhanced Toast Notification System & Core Forensic/Data Utilities
+
 import { db, auth } from './firebase-config.js';
 import {
     collection,
@@ -11,32 +13,84 @@ import {
     getCountFromServer
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
-/* ====================== TOAST NOTIFICATION ====================== */
-export function showToast(message, type = "success", duration = 3000) {
+/* ====================== TOAST NOTIFICATION SYSTEM ====================== */
+
+/**
+ * Displays a non-blocking toast notification with auto-cleanup and visual timer bar.
+ * @param {string} message - Notification text
+ * @param {string} type - 'success' | 'error' | 'warning' | 'info'
+ * @param {number|null} duration - Optional custom duration in ms. If null, uses default by type.
+ */
+export function showToast(message, type = "success", duration = null) {
     const styles = {
-        success: { bg: 'bg-emerald-600', icon: '✅' },
-        error:   { bg: 'bg-red-600',     icon: '❌' },
-        warning: { bg: 'bg-amber-600',   icon: '⚠️' },
-        info:    { bg: 'bg-sky-600',     icon: 'ℹ️' }
+        success: { bg: 'bg-emerald-600 border-emerald-500/50', icon: '✅', defaultDuration: 3500 },
+        error:   { bg: 'bg-red-600 border-red-500/50',       icon: '❌', defaultDuration: 5500 },
+        warning: { bg: 'bg-amber-600 border-amber-500/50',   icon: '⚠️', defaultDuration: 5000 },
+        info:    { bg: 'bg-sky-600 border-sky-500/50',       icon: 'ℹ️', defaultDuration: 3500 }
     };
 
-    const { bg, icon } = styles[type] || styles.success;
+    const style = styles[type] || styles.success;
+    const activeDuration = duration !== null ? duration : style.defaultDuration;
 
+    // Toast Container Layer Management
+    let container = document.getElementById('vocalwitness-toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'vocalwitness-toast-container';
+        container.className = 'fixed bottom-5 right-5 z-[11000] flex flex-col gap-2 pointer-events-none max-w-sm w-full px-4 sm:px-0';
+        document.body.appendChild(container);
+    }
+
+    // Toast Card Element
     const toast = document.createElement('div');
     toast.className = `
-        fixed bottom-5 right-5 p-4 rounded-2xl shadow-2xl z-[100]
-        text-white font-medium text-sm flex items-center gap-2
-        ${bg} transition-all duration-300 translate-y-0 opacity-100
+        pointer-events-auto relative overflow-hidden p-4 rounded-2xl shadow-2xl border
+        text-white font-medium text-sm flex items-center gap-3
+        ${style.bg} transition-all duration-300 transform translate-y-4 opacity-0 scale-95
     `;
-    toast.innerHTML = `${icon} ${message}`;
 
-    document.body.appendChild(toast);
+    toast.innerHTML = `
+        <span class="text-base shrink-0">${style.icon}</span>
+        <span class="flex-1 leading-snug">${message}</span>
+        <div class="toast-progress-bar absolute bottom-0 left-0 h-1 bg-white/40 w-full transition-all linear"></div>
+    `;
 
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateY(20px)';
-        setTimeout(() => toast.remove(), 350);
-    }, duration);
+    container.appendChild(toast);
+
+    // Trigger Entrance Animation
+    requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-4', 'opacity-0', 'scale-95');
+        toast.classList.add('translate-y-0', 'opacity-100', 'scale-100');
+        
+        const progressBar = toast.querySelector('.toast-progress-bar');
+        if (progressBar) {
+            progressBar.style.transitionDuration = `${activeDuration}ms`;
+            progressBar.style.width = '0%';
+        }
+    });
+
+    // Auto Dismiss
+    const timer = setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100', 'scale-100');
+        toast.classList.add('translate-y-2', 'opacity-0', 'scale-95');
+        
+        setTimeout(() => {
+            toast.remove();
+            if (container.children.length === 0) {
+                container.remove();
+            }
+        }, 300);
+    }, activeDuration);
+
+    // Allow Manual Dismiss on Click
+    toast.addEventListener('click', () => {
+        clearTimeout(timer);
+        toast.classList.add('opacity-0', 'scale-95');
+        setTimeout(() => {
+            toast.remove();
+            if (container.children.length === 0) container.remove();
+        }, 200);
+    });
 }
 
 /* ====================== DATA & PERFORMANCE ====================== */
@@ -57,7 +111,7 @@ export async function executeAction(actionFn, buttonEl, loadingText = "Processin
 
     const originalContent = buttonEl.innerHTML;
     buttonEl.disabled = true;
-    buttonEl.innerHTML = loadingText;
+    buttonEl.innerHTML = `<span class="inline-block animate-spin mr-1">⏳</span> ${loadingText}`;
 
     try {
         await actionFn();
@@ -102,13 +156,13 @@ export async function submitPeerVote(postId, voteType) {
 
         showToast(
             voteType === 'verify'
-                ? "✅ Thank you for helping verify truth!"
-                : "⚠️ Dispute submitted. Thank you for your vigilance.",
+                ? "Thank you for helping verify truth!"
+                : "Dispute submitted. Thank you for your vigilance.",
             voteType === 'verify' ? "success" : "warning"
         );
     } catch (error) {
         console.error("Voting failed:", error);
-        showToast("❌ Failed to submit vote", "error");
+        showToast("Failed to submit vote", "error");
     }
 }
 
@@ -175,7 +229,6 @@ export function listenToVerifiedCount(callback) {
         where("isVerified", "==", true)
     );
 
-    // Initial count with connection failure handling
     getCountFromServer(q)
         .then((snapshot) => {
             if (snapshot && snapshot.data) {
@@ -184,11 +237,9 @@ export function listenToVerifiedCount(callback) {
         })
         .catch((err) => {
             console.warn("Server count query skipped due to connection delay:", err);
-            // Non-blocking fallback
             callback(0);
         });
 
-    // Real-time updates
     const unsubscribe = onSnapshot(
         q,
         (snapshot) => {
@@ -281,8 +332,8 @@ export function listenToCollection(collectionPath, constraints = [], callback) {
 export function getTier(trustScore = 0) {
     if (trustScore >= 100) return { name: 'Premium', color: '#FFD700', canDownload: true, badge: '🌟 Verified Truth-Bearer', level: 4 };
     if (trustScore >= 80)  return { name: 'Gold',    color: '#FFD700', canDownload: true, badge: 'Elite Witness',         level: 3 };
-    if (trustScore >= 60)  return { name: 'Silver',  color: '#C0C0C0', canDownload: true, badge: 'Trusted Witness',        level: 2 };
-    if (trustScore >= 40)  return { name: 'Bronze',  color: '#CD7F32', canDownload: true, badge: 'Verified Citizen',       level: 1 };
+    if (trustScore >= 60)  return { name: 'Silver',  color: '#C0C0C0', canDownload: true, badge: 'Trusted Witness',       level: 2 };
+    if (trustScore >= 40)  return { name: 'Bronze',  color: '#CD7F32', canDownload: true, badge: 'Verified Citizen',      level: 1 };
     return { name: 'Explorer', color: '#808080', canDownload: false, badge: 'New Citizen', level: 0 };
 }
 
@@ -305,7 +356,7 @@ export function calculateTrustScore(userData = {}) {
 /* ====================== MISC ====================== */
 export async function escalatePost(postId) {
     if (!postId) return false;
-    showToast("🛡️ Escalating post to Witness Voice review...", "info");
+    showToast("Escalating post to Witness Voice review...", "info");
     return true;
 }
 
