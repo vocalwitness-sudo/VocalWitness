@@ -86,6 +86,54 @@ export function startPhoneVerification() {
   }
 }
 
+
+/**
+ * Setup event listeners for closing modal windows securely
+ */
+export function setupModalDismissListeners() {
+  // Target all potential modal close elements (including X buttons and close links)
+  const closeSelectors = [
+    '.close-modal-btn',
+    '.modal-close',
+    '#closePhoneAuth',
+    '[data-dismiss="modal"]'
+  ];
+
+  closeSelectors.forEach(selector => {
+    document.querySelectorAll(selector).forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        
+        // Hide active verification modals
+        ['phoneVerificationModal', 'phone-upgrade-modal', 'verificationModal'].forEach(id => {
+          const modal = document.getElementById(id);
+          if (modal) {
+            modal.classList.add('hidden');
+            modal.style.display = 'none';
+          }
+        });
+
+        // Reset reCAPTCHA instance to clear residual memory
+        if (window.recaptchaVerifier) {
+          try {
+            window.recaptchaVerifier.clear();
+          } catch (_) {}
+          recaptchaVerifier = null;
+          window.recaptchaVerifier = null;
+        }
+      });
+    });
+  });
+}
+
+// Auto-bind event listeners when DOM loads
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupModalDismissListeners);
+} else {
+  setupModalDismissListeners();
+}
+
+
 /**
  * Send OTP
  */
