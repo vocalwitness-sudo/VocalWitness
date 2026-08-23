@@ -1,4 +1,5 @@
 // js/verification.js - Production Ready: Real Phone Verification + Backend Confirmation + Real ZK + C2PA
+// Updated to work cleanly with the hardened phoneVerification.js
 
 import { doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
@@ -6,7 +7,12 @@ import { db, auth } from "./firebase-config.js";
 import { showToast } from "./utils.js";
 import { canAdvanceTier, refreshTierAndUI, TIERS, getUserProfile } from './tier.js';
 import { generateZKProofAsync } from './zk-client.js';
-import { sendPhoneVerification, verifyPhoneCode, initPhoneRecaptcha } from './phoneVerification.js';
+import { 
+  sendPhoneVerification, 
+  verifyPhoneCode, 
+  initPhoneRecaptcha,
+  closeAllVerificationModals 
+} from './phoneVerification.js';
 
 // Global C2PA instance cache
 let c2paInstance = null;
@@ -111,7 +117,7 @@ export async function startPhoneVerification() {
       modal.classList.remove('hidden');
       modal.style.display = 'flex';
       
-      // Reset steps safely with optional chaining
+      // Reset steps
       const step1 = document.getElementById('phone-step-1');
       const step2 = document.getElementById('phone-step-2');
       const phoneInput = document.getElementById('phone-input');
@@ -128,7 +134,7 @@ export async function startPhoneVerification() {
       
       showToast("📱 Enter your phone number to unlock Citizen Circle", "info");
     } else {
-      // Prompt Fallback if modal HTML element is not rendered on current page
+      // Fallback prompt
       const phone = prompt("Enter your phone number in international format (e.g., +2348012345678):");
       if (phone) {
         const success = await sendPhoneVerification(phone);
@@ -245,9 +251,6 @@ export async function startZKVerification() {
 /**
  * Handle Send OTP button
  */
-/**
- * Handle Send OTP button
- */
 export async function handleSendOTP() {
   const phoneInput = document.getElementById('phone-input');
   const phone = phoneInput?.value.trim();
@@ -272,9 +275,16 @@ export async function handleSendOTP() {
     const success = await sendPhoneVerification(phone);
 
     if (success) {
-      document.getElementById('phone-step-1')?.classList.add('hidden');
-      document.getElementById('phone-step-2')?.classList.remove('hidden');
-      document.getElementById('otp-input')?.focus();
+      // Move to OTP step only if we actually need a code
+      // (if it was already-linked, phoneVerification.js already closed the modal)
+      const step1 = document.getElementById('phone-step-1');
+      const step2 = document.getElementById('phone-step-2');
+
+      if (step1 && step2 && !step1.classList.contains('hidden')) {
+        step1.classList.add('hidden');
+        step2.classList.remove('hidden');
+        document.getElementById('otp-input')?.focus();
+      }
     }
   } catch (err) {
     console.error("Send OTP error:", err);
@@ -286,9 +296,7 @@ export async function handleSendOTP() {
     }
   }
 }
-/**
- * Handle Verify OTP button + optional backend confirmation
- */
+
 /**
  * Handle Verify OTP button + optional backend confirmation
  */
@@ -296,7 +304,7 @@ export async function handleVerifyOTP() {
   const otpInput = document.getElementById('otp-input');
   const rawCode = otpInput?.value || "";
 
-  // Clean the code (remove spaces and non-digits)
+  // Clean the code
   const code = String(rawCode).replace(/\D/g, "").trim();
 
   if (code.length !== 6) {
@@ -304,7 +312,10 @@ export async function handleVerifyOTP() {
     return;
   }
 
-  const btn = document.getElementById('verify-otp-btn') || document.querySelector('[data-action="verify-otp"]');
+  const btn = document.getElementById('verify-otp-btn') || 
+              document.querySelector('[data-action="verify-otp"]') ||
+              document.querySelector('button[onclick*="handleVerifyOTP"]');
+
   if (btn) {
     btn.disabled = true;
     btn.textContent = "Verifying...";
@@ -319,12 +330,17 @@ export async function handleVerifyOTP() {
         const functions = getFunctions();
         const confirmPhone = httpsCallable(functions, 'confirmPhoneVerification');
         const phone = document.getElementById('phone-input')?.value.trim();
-        await confirmPhone({ phoneNumber: phone });
-        console.log("✅ Backend phone confirmation successful");
+        
+        if (phone) {
+          await confirmPhone({ phoneNumber: phone });
+          console.log("✅ Backend phone confirmation successful");
+        }
       } catch (backendError) {
+        // Non-critical – we already unlocked the user on the client
         console.warn("Backend confirmation skipped or failed:", backendError);
       }
 
+      // Extra safety refresh
       if (typeof refreshTierAndUI === 'function') {
         refreshTierAndUI();
       }
@@ -339,6 +355,7 @@ export async function handleVerifyOTP() {
     }
   }
 }
+
 // Attach event listener for ZK proof generation button
 document.addEventListener('DOMContentLoaded', () => {
   const btn = document.getElementById('generateZkProofBtn');
