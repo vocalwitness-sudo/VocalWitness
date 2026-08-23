@@ -69,24 +69,42 @@ service cloud.firestore {
            ]);
     }
 
+    // ========== UPDATED: Allows phone verification + controlled tier upgrade ==========
     function isSafeUserUpdate() {
       let affected = request.resource.data.diff(resource.data).affectedKeys();
       let data = request.resource.data;
+      let old = resource.data;
 
+      // Still forbidden (high privilege)
       let forbidden = [
         'role', 'isBanned', 'badges', 'admin', 'moderator',
-        'zkVerified', 'reputation', 'score', 'tier', 'isVerified', 'uid'
+        'zkVerified', 'score', 'isVerified', 'uid'
       ];
 
+      // Now allowed (including phone verification fields)
       let allowed = [
         'email', 'displayName', 'photoURL', 'bio',
         'location', 'website', 'updatedAt', 'lastLoginAt',
         'theme', 'language', 'interestedInArena', 'arenaNotifyAt', 'lastNameChange',
-        'hasVerifiedPhone', 'isPhoneVerified', 'lastTestimonyAt', 'weeklyPoints'
+        'hasVerifiedPhone', 'isPhoneVerified', 'phoneVerifiedAt',
+        'lastTestimonyAt', 'weeklyPoints',
+        'tier', 'reputation', 'credibilityScore'          // newly allowed under conditions
       ];
+
+      // Extra safety: only allow citizen → citizen_circle upgrade
+      let tierOk = !affected.hasAny(['tier']) || (
+        (old.tier == null || old.tier == 'citizen') && data.tier == 'citizen_circle'
+      );
+
+      // Only allow reputation/credibility bump when phone is being verified
+      let repOk = !affected.hasAny(['reputation', 'credibilityScore']) || (
+        data.isPhoneVerified == true && data.hasVerifiedPhone == true
+      );
 
       return !affected.hasAny(forbidden)
         && affected.hasOnly(allowed)
+        && tierOk
+        && repOk
         && (!('email' in data) || data.email is string)
         && (!('displayName' in data) || data.displayName is string)
         && (!('photoURL' in data) || isValidMediaUrl(data.photoURL))
@@ -219,7 +237,7 @@ service cloud.firestore {
     }
 
     // ==========================================
-    // DAO PROPOSALS (Batch 2 Governance)
+    // DAO PROPOSALS
     // ==========================================
     match /dao_proposals/{proposalId} {
       allow read: if true;
@@ -243,5 +261,5 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-  } // ← this closing brace was missing / the DAO block was outside
+  }
 }
