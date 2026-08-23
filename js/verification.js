@@ -245,6 +245,9 @@ export async function startZKVerification() {
 /**
  * Handle Send OTP button
  */
+/**
+ * Handle Send OTP button
+ */
 export async function handleSendOTP() {
   const phoneInput = document.getElementById('phone-input');
   const phone = phoneInput?.value.trim();
@@ -267,11 +270,15 @@ export async function handleSendOTP() {
 
   try {
     const success = await sendPhoneVerification(phone);
+
     if (success) {
       document.getElementById('phone-step-1')?.classList.add('hidden');
       document.getElementById('phone-step-2')?.classList.remove('hidden');
       document.getElementById('otp-input')?.focus();
     }
+  } catch (err) {
+    console.error("Send OTP error:", err);
+    showToast(err.message || "Failed to send verification code", "error");
   } finally {
     if (btn) {
       btn.disabled = false;
@@ -279,37 +286,59 @@ export async function handleSendOTP() {
     }
   }
 }
-
+/**
+ * Handle Verify OTP button + optional backend confirmation
+ */
 /**
  * Handle Verify OTP button + optional backend confirmation
  */
 export async function handleVerifyOTP() {
-  const code = document.getElementById('otp-input')?.value.trim();
+  const otpInput = document.getElementById('otp-input');
+  const rawCode = otpInput?.value || "";
 
-  if (!code || code.length !== 6) {
+  // Clean the code (remove spaces and non-digits)
+  const code = String(rawCode).replace(/\D/g, "").trim();
+
+  if (code.length !== 6) {
     showToast("Please enter the 6-digit code", "error");
     return;
   }
 
-  const success = await verifyPhoneCode(code);
+  const btn = document.getElementById('verify-otp-btn') || document.querySelector('[data-action="verify-otp"]');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "Verifying...";
+  }
 
-  if (success) {
-    try {
-      const functions = getFunctions();
-      const confirmPhone = httpsCallable(functions, 'confirmPhoneVerification');
-      
-      const phone = document.getElementById('phone-input')?.value.trim();
-      await confirmPhone({ phoneNumber: phone });
-      
-      console.log("✅ Backend phone confirmation successful");
-    } catch (backendError) {
-      console.warn("Backend confirmation skipped or failed:", backendError);
+  try {
+    const success = await verifyPhoneCode(code);
+
+    if (success) {
+      // Optional backend confirmation (non-blocking)
+      try {
+        const functions = getFunctions();
+        const confirmPhone = httpsCallable(functions, 'confirmPhoneVerification');
+        const phone = document.getElementById('phone-input')?.value.trim();
+        await confirmPhone({ phoneNumber: phone });
+        console.log("✅ Backend phone confirmation successful");
+      } catch (backendError) {
+        console.warn("Backend confirmation skipped or failed:", backendError);
+      }
+
+      if (typeof refreshTierAndUI === 'function') {
+        refreshTierAndUI();
+      }
     }
-
-    if (typeof refreshTierAndUI === 'function') refreshTierAndUI();
+  } catch (err) {
+    console.error("Verify OTP error:", err);
+    showToast(err.message || "Verification failed", "error");
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "Verify Code";
+    }
   }
 }
-
 // Attach event listener for ZK proof generation button
 document.addEventListener('DOMContentLoaded', () => {
   const btn = document.getElementById('generateZkProofBtn');
