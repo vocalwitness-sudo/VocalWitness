@@ -387,6 +387,48 @@ export async function recordTestimonyContribution() {
   }
 }
 
+
+// Add inside tier.js or main.js where UI buttons are initialized
+
+function setupProfileModalListeners() {
+  // Safe binding for Edit Profile
+  const editBtn = document.getElementById('editProfileBtn');
+  if (editBtn) {
+    editBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const editModal = document.getElementById('editProfileModal');
+      if (editModal) {
+        editModal.style.display = 'flex';
+        editModal.classList.remove('hidden');
+      } else {
+        console.error("Edit profile modal element (#editProfileModal) not found in DOM.");
+      }
+    });
+  }
+
+  // Safe binding for Settings & Security
+  const settingsBtn = document.getElementById('settingsBtn') || document.getElementById('securitySettingsBtn');
+  if (settingsBtn) {
+    settingsBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const settingsModal = document.getElementById('settingsModal') || document.getElementById('securityModal');
+      if (settingsModal) {
+        settingsModal.style.display = 'flex';
+        settingsModal.classList.remove('hidden');
+      } else {
+        console.error("Settings modal element not found in DOM.");
+      }
+    });
+  }
+}
+
+// Ensure listeners run when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupProfileModalListeners);
+} else {
+  setupProfileModalListeners();
+}
+
 /**
  * Gate restricted actions and automatically prompt verification if required
  */
