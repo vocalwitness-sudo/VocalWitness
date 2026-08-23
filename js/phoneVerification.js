@@ -23,7 +23,6 @@ export function initPhoneRecaptcha(buttonId = 'send-otp-btn') {
   if (recaptchaVerifier || isDemoMode) return;
 
   try {
-    // Check if target container exists, create fallback if not
     let btnContainer = document.getElementById(buttonId);
     if (!btnContainer) {
       btnContainer = document.createElement('div');
@@ -32,16 +31,13 @@ export function initPhoneRecaptcha(buttonId = 'send-otp-btn') {
       document.body.appendChild(btnContainer);
     }
 
-    // Clear any previous verifier
     if (window.recaptchaVerifier) {
       try { window.recaptchaVerifier.clear(); } catch (_) {}
     }
 
     recaptchaVerifier = new RecaptchaVerifier(auth, buttonId, {
       size: 'invisible',
-      callback: () => {
-        // reCAPTCHA solved – ready to send
-      },
+      callback: () => {},
       'expired-callback': () => {
         showToast("reCAPTCHA expired. Please try again.", "error");
         recaptchaVerifier = null;
@@ -56,6 +52,61 @@ export function initPhoneRecaptcha(buttonId = 'send-otp-btn') {
 }
 
 /**
+ * Setup event listeners for closing modal windows and handling clicks
+ */
+export function setupModalDismissListeners() {
+  // Delegate event listener to catch dynamic close buttons, background backdrops, and modal actions
+  document.addEventListener('click', (e) => {
+    const target = e.target;
+
+    // Check if click was on a close button, dismiss trigger, or background overlay
+    if (
+      target.closest('.close-modal-btn') ||
+      target.closest('.modal-close') ||
+      target.closest('#closePhoneAuth') ||
+      target.closest('[data-dismiss="modal"]') ||
+      target.classList.contains('modal-backdrop') ||
+      target.classList.contains('modal-overlay')
+    ) {
+      e.preventDefault();
+      closeAllVerificationModals();
+    }
+  });
+}
+
+/**
+ * Helper to dismiss all verification-related modals and reset reCAPTCHA
+ */
+export function closeAllVerificationModals() {
+  const modalIds = ['phoneVerificationModal', 'phone-upgrade-modal', 'verificationModal', 'phoneAuthModal'];
+  
+  modalIds.forEach(id => {
+    const modal = document.getElementById(id);
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.style.display = 'none';
+    }
+  });
+
+  // Reset reCAPTCHA instance to clear residual state/memory
+  if (window.recaptchaVerifier || recaptchaVerifier) {
+    try {
+      if (recaptchaVerifier) recaptchaVerifier.clear();
+      if (window.recaptchaVerifier) window.recaptchaVerifier.clear();
+    } catch (_) {}
+    recaptchaVerifier = null;
+    window.recaptchaVerifier = null;
+  }
+}
+
+// Auto-bind event listeners when DOM loads
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupModalDismissListeners);
+} else {
+  setupModalDismissListeners();
+}
+
+/**
  * Main Entry Point: Triggered by Profile / UI Buttons
  */
 export function startPhoneVerification() {
@@ -64,7 +115,6 @@ export function startPhoneVerification() {
     return;
   }
 
-  // Look for any existing verification modal in DOM
   const modal = document.getElementById('phoneVerificationModal') || 
                 document.getElementById('phone-upgrade-modal') || 
                 document.getElementById('verificationModal');
@@ -73,7 +123,6 @@ export function startPhoneVerification() {
     modal.classList.remove('hidden');
     modal.style.display = 'flex';
   } else {
-    // If no modal exists in HTML, prompt for phone number via input dialog
     const phone = prompt("Enter your phone number in international format (e.g., +2348012345678):");
     if (phone) {
       sendPhoneVerification(phone).then(success => {
@@ -85,54 +134,6 @@ export function startPhoneVerification() {
     }
   }
 }
-
-
-/**
- * Setup event listeners for closing modal windows securely
- */
-export function setupModalDismissListeners() {
-  // Target all potential modal close elements (including X buttons and close links)
-  const closeSelectors = [
-    '.close-modal-btn',
-    '.modal-close',
-    '#closePhoneAuth',
-    '[data-dismiss="modal"]'
-  ];
-
-  closeSelectors.forEach(selector => {
-    document.querySelectorAll(selector).forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        
-        // Hide active verification modals
-        ['phoneVerificationModal', 'phone-upgrade-modal', 'verificationModal'].forEach(id => {
-          const modal = document.getElementById(id);
-          if (modal) {
-            modal.classList.add('hidden');
-            modal.style.display = 'none';
-          }
-        });
-
-        // Reset reCAPTCHA instance to clear residual memory
-        if (window.recaptchaVerifier) {
-          try {
-            window.recaptchaVerifier.clear();
-          } catch (_) {}
-          recaptchaVerifier = null;
-          window.recaptchaVerifier = null;
-        }
-      });
-    });
-  });
-}
-
-// Auto-bind event listeners when DOM loads
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', setupModalDismissListeners);
-} else {
-  setupModalDismissListeners();
-}
-
 
 /**
  * Send OTP
@@ -148,7 +149,6 @@ export async function sendPhoneVerification(phoneNumber) {
     return false;
   }
 
-  // Demo mode for local testing
   if (isDemoMode) {
     demoCode = Math.floor(100000 + Math.random() * 900000).toString();
     console.log(`%c🔑 DEMO OTP for ${phoneNumber}: ${demoCode}`, "color: lime; font-size: 16px; font-weight: bold");
@@ -223,7 +223,6 @@ export async function verifyPhoneCode(enteredCode) {
       await confirmationResult.confirm(enteredCode);
     }
 
-    // Upgrade user in Firestore
     const userRef = doc(db, "users", auth.currentUser.uid);
     await updateDoc(userRef, {
       isPhoneVerified: true,
@@ -240,16 +239,7 @@ export async function verifyPhoneCode(enteredCode) {
     }
     
     showToast("🎉 Phone Verified! You are now in Citizen Circle", "success");
-    
-    // Close modals
-    ['phoneVerificationModal', 'phone-upgrade-modal', 'verificationModal'].forEach(id => {
-      const modal = document.getElementById(id);
-      if (modal) {
-        modal.classList.add('hidden');
-        modal.style.display = 'none';
-      }
-    });
-    
+    closeAllVerificationModals();
     return true;
 
   } catch (e) {
@@ -264,3 +254,4 @@ window.startPhoneVerification = startPhoneVerification;
 window.sendPhoneVerification = sendPhoneVerification;
 window.verifyPhoneCode = verifyPhoneCode;
 window.initPhoneRecaptcha = initPhoneRecaptcha;
+window.closeAllVerificationModals = closeAllVerificationModals;
