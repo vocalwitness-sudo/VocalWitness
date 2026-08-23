@@ -396,6 +396,59 @@ export async function recordTestimonyContribution() {
   }
 }
 
+
+/* ==========================================================================
+   VocalWitness - System Tier Matrix & RBAC Definitions
+   ========================================================================== */
+
+export const TIERS = {
+  TIER_1_BASIC: {
+    id: 1,
+    name: 'Citizen (Email)',
+    badge: '🔒 Citizen',
+    maxUploadMB: 15,
+    requiresPhone: false,
+    requiresZK: false,
+    allowedFeeds: ['citizen-talk'],
+    allowAudioNormalizer: true,
+    allowMetadataScrubbing: true,
+    canVoteGovernance: false,
+    canValidate: false,
+  },
+  TIER_2_VERIFIED: {
+    id: 2,
+    name: 'Verified Citizen (Phone)',
+    badge: '🛡️ Field Witness',
+    maxUploadMB: 100,
+    requiresPhone: true,
+    requiresZK: false,
+    allowedFeeds: ['citizen-talk', 'citizen-circle'],
+    allowAudioNormalizer: true,
+    allowMetadataScrubbing: true,
+    canVoteGovernance: true,
+    canValidate: false,
+  },
+  TIER_3_AUDITOR: {
+    id: 3,
+    name: 'True Witness (ZK-Verified)',
+    badge: '⚖️ Witness Voice',
+    maxUploadMB: 500,
+    requiresPhone: true,
+    requiresZK: true,
+    allowedFeeds: ['citizen-talk', 'citizen-circle', 'witness-voice', 'witness-circle'],
+    allowAudioNormalizer: true,
+    allowMetadataScrubbing: true,
+    canVoteGovernance: true,
+    canValidate: true,
+  }
+};
+
+export const PROFILE_MODES = {
+  ANONYMOUS: 'ANONYMOUS',
+  BOLD_WITNESS: 'BOLD_WITNESS'
+};
+
+
 /**
  * Gate restricted actions – automatically opens phone verification if needed
  */
