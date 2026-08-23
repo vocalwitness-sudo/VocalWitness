@@ -1,5 +1,4 @@
 // js/phoneVerification.js - Hardened Production Version
-
 import { db, auth } from './firebase-config.js';
 import { doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { RecaptchaVerifier, linkWithPhoneNumber } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
@@ -10,7 +9,7 @@ let recaptchaVerifier = null;
 let confirmationResult = null;
 
 // Auto-enable demo only on localhost or query param
-const isDemoMode = location.hostname === 'localhost' || 
+const isDemoMode = location.hostname === 'localhost' ||
                    location.hostname === '127.0.0.1' ||
                    location.search.includes('demo=true');
 
@@ -31,16 +30,20 @@ export function initPhoneRecaptcha(buttonId = 'send-otp-btn') {
       document.body.appendChild(btnContainer);
     }
 
+    // Clear any previous instance
     if (window.recaptchaVerifier) {
       try { window.recaptchaVerifier.clear(); } catch (_) {}
     }
 
     recaptchaVerifier = new RecaptchaVerifier(auth, buttonId, {
       size: 'invisible',
-      callback: () => {},
+      callback: () => {
+        // reCAPTCHA solved
+      },
       'expired-callback': () => {
         showToast("reCAPTCHA expired. Please try again.", "error");
         recaptchaVerifier = null;
+        window.recaptchaVerifier = null;
       }
     });
 
@@ -52,14 +55,11 @@ export function initPhoneRecaptcha(buttonId = 'send-otp-btn') {
 }
 
 /**
- * Setup event listeners for closing modal windows and handling clicks
+ * Setup event listeners for closing modal windows
  */
 export function setupModalDismissListeners() {
-  // Delegate event listener to catch dynamic close buttons, background backdrops, and modal actions
   document.addEventListener('click', (e) => {
     const target = e.target;
-
-    // Check if click was on a close button, dismiss trigger, or background overlay
     if (
       target.closest('.close-modal-btn') ||
       target.closest('.modal-close') ||
@@ -78,8 +78,13 @@ export function setupModalDismissListeners() {
  * Helper to dismiss all verification-related modals and reset reCAPTCHA
  */
 export function closeAllVerificationModals() {
-  const modalIds = ['phoneVerificationModal', 'phone-upgrade-modal', 'verificationModal', 'phoneAuthModal'];
-  
+  const modalIds = [
+    'phoneVerificationModal',
+    'phone-upgrade-modal',
+    'verificationModal',
+    'phoneAuthModal'
+  ];
+
   modalIds.forEach(id => {
     const modal = document.getElementById(id);
     if (modal) {
@@ -88,7 +93,7 @@ export function closeAllVerificationModals() {
     }
   });
 
-  // Reset reCAPTCHA instance to clear residual state/memory
+  // Reset reCAPTCHA
   if (window.recaptchaVerifier || recaptchaVerifier) {
     try {
       if (recaptchaVerifier) recaptchaVerifier.clear();
@@ -99,7 +104,7 @@ export function closeAllVerificationModals() {
   }
 }
 
-// Auto-bind event listeners when DOM loads
+// Auto-bind
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', setupModalDismissListeners);
 } else {
@@ -107,7 +112,7 @@ if (document.readyState === 'loading') {
 }
 
 /**
- * Main Entry Point: Triggered by Profile / UI Buttons
+ * Main Entry Point
  */
 export function startPhoneVerification() {
   if (!auth.currentUser) {
@@ -115,14 +120,15 @@ export function startPhoneVerification() {
     return;
   }
 
-  const modal = document.getElementById('phoneVerificationModal') || 
-                document.getElementById('phone-upgrade-modal') || 
+  const modal = document.getElementById('phoneVerificationModal') ||
+                document.getElementById('phone-upgrade-modal') ||
                 document.getElementById('verificationModal');
 
   if (modal) {
     modal.classList.remove('hidden');
     modal.style.display = 'flex';
   } else {
+    // Fallback prompt
     const phone = prompt("Enter your phone number in international format (e.g., +2348012345678):");
     if (phone) {
       sendPhoneVerification(phone).then(success => {
@@ -149,6 +155,7 @@ export async function sendPhoneVerification(phoneNumber) {
     return false;
   }
 
+  // Demo mode
   if (isDemoMode) {
     demoCode = Math.floor(100000 + Math.random() * 900000).toString();
     console.log(`%c🔑 DEMO OTP for ${phoneNumber}: ${demoCode}`, "color: lime; font-size: 16px; font-weight: bold");
@@ -157,39 +164,54 @@ export async function sendPhoneVerification(phoneNumber) {
   }
 
   try {
-    initPhoneRecaptcha();
-    
+    // Always re-init reCAPTCHA for a clean session
+    if (recaptchaVerifier) {
+      try { recaptchaVerifier.clear(); } catch (_) {}
+      recaptchaVerifier = null;
+      window.recaptchaVerifier = null;
+    }
+
+    initPhoneRecaptcha('send-otp-btn');
+
     if (!recaptchaVerifier) {
-      showToast("reCAPTCHA not ready. Please refresh.", "error");
+      showToast("reCAPTCHA not ready. Please refresh the page.", "error");
       return false;
     }
 
+    // Clear any previous confirmation
+    confirmationResult = null;
+
     confirmationResult = await linkWithPhoneNumber(
-      auth.currentUser, 
-      phoneNumber, 
+      auth.currentUser,
+      phoneNumber,
       recaptchaVerifier
     );
-    
+
+    // Keep it also on window for safety
+    window.confirmationResult = confirmationResult;
+
     showToast(`✅ OTP sent to ${phoneNumber}`, "success");
     return true;
+
   } catch (e) {
     console.error("SMS Send Error:", e);
-    
+
     let msg = e.message || "Failed to send OTP";
     if (e.code === 'auth/too-many-requests') msg = "Too many attempts. Wait a few minutes.";
     if (e.code === 'auth/invalid-phone-number') msg = "Invalid phone number format.";
     if (e.code === 'auth/quota-exceeded') msg = "SMS quota exceeded. Try again later.";
     if (e.code === 'auth/captcha-check-failed') msg = "Security check failed. Refresh and try again.";
     if (e.code === 'auth/credential-already-in-use') msg = "This phone number is already linked to another account.";
-    
+
     showToast(msg, "error");
-    
+
+    // Reset reCAPTCHA so user can try again
     if (recaptchaVerifier) {
       try {
-        await recaptchaVerifier.render();
-        window.grecaptcha?.reset();
+        recaptchaVerifier.clear();
       } catch (_) {}
       recaptchaVerifier = null;
+      window.recaptchaVerifier = null;
     }
     return false;
   }
@@ -204,25 +226,33 @@ export async function verifyPhoneCode(enteredCode) {
     return false;
   }
 
-  if (!enteredCode || enteredCode.length !== 6) {
+  // Clean the code (remove spaces and non-digits)
+  const code = String(enteredCode || "").replace(/\D/g, "").trim();
+
+  if (code.length !== 6) {
     showToast("Enter the 6-digit code", "error");
     return false;
   }
 
   try {
     if (isDemoMode) {
-      if (enteredCode !== demoCode) {
+      if (code !== demoCode) {
         showToast("❌ Incorrect code. Try again.", "error");
         return false;
       }
     } else {
-      if (!confirmationResult) {
+      // Prefer the module variable, fall back to window
+      const result = confirmationResult || window.confirmationResult;
+
+      if (!result) {
         showToast("No active verification. Please resend the code.", "error");
         return false;
       }
-      await confirmationResult.confirm(enteredCode);
+
+      await result.confirm(code);
     }
 
+    // Success → update Firestore
     const userRef = doc(db, "users", auth.currentUser.uid);
     await updateDoc(userRef, {
       isPhoneVerified: true,
@@ -237,14 +267,24 @@ export async function verifyPhoneCode(enteredCode) {
     if (typeof refreshTierAndUI === 'function') {
       refreshTierAndUI();
     }
-    
+
     showToast("🎉 Phone Verified! You are now in Citizen Circle", "success");
     closeAllVerificationModals();
     return true;
 
   } catch (e) {
     console.error("Verification Error:", e);
-    showToast("Invalid code or verification failed.", "error");
+
+    let msg = "Invalid code or verification failed.";
+    if (e.code === "auth/invalid-verification-code") {
+      msg = "Incorrect code. Please check and try again.";
+    } else if (e.code === "auth/code-expired") {
+      msg = "Code has expired. Please request a new one.";
+    } else if (e.code === "auth/credential-already-in-use") {
+      msg = "This phone number is already linked to another account.";
+    }
+
+    showToast(msg, "error");
     return false;
   }
 }
