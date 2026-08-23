@@ -15,19 +15,57 @@ import { saveDraftOffline } from './db.js';
 let isSubmitting = false;
 
 /**
+ * Helper to strip EXIF metadata using the imported scrubber or fallback
+ */
+async function stripExifData(file) {
+    if (typeof scrubImageMetadata === 'function') {
+        return await scrubImageMetadata(file);
+    }
+    return file;
+}
+
+/**
+ * Helper to retrieve user tier safely
+ */
+async function getUserTier(uid) {
+    try {
+        if (typeof getCurrentUserTier === 'function') {
+            return await getCurrentUserTier(uid);
+        }
+    } catch (e) {
+        console.warn('Failed to fetch tier, falling back to base level:', e);
+    }
+    return { level: 0 };
+}
+
+/**
+ * Log audit helper wrapper
+ */
+async function logAuditEvent(uid, eventType, metadata) {
+    if (typeof logSecurityAudit === 'function') {
+        await logSecurityAudit(uid, eventType, metadata);
+    }
+}
+
+/**
  * Initializes listeners for the composer component.
  */
 export function initComposer() {
     const fileInput = document.getElementById('media-input') || document.getElementById('photoInput');
-    const btnPhoto = document.getElementById('btn-attach-photo') || document.getElementById('btnPhoto');
+    const btnPhoto = document.getElementById('btn-attach-photo') || document.getElementById('btnPhoto') || document.getElementById('btn-photo');
+    const postButton = document.getElementById('postButton') || document.getElementById('submitBtn');
     const composerForm = document.getElementById('composer-form') || document.getElementById('testimonyForm');
 
-    // Prevent duplicate event listener bindings
+    // Wire Photo Upload Trigger
     if (btnPhoto && fileInput && !btnPhoto.dataset.listenerAttached) {
-        btnPhoto.addEventListener('click', () => fileInput.click());
+        btnPhoto.addEventListener('click', (e) => {
+            e.preventDefault();
+            fileInput.click();
+        });
         btnPhoto.dataset.listenerAttached = 'true';
     }
 
+    // Wire File Change Event
     if (fileInput && !fileInput.dataset.listenerAttached) {
         fileInput.addEventListener('change', async (e) => {
             const previewArea = document.getElementById('preview-area') || document.getElementById('media-preview');
@@ -39,7 +77,7 @@ export function initComposer() {
                     const cleanFile = await stripExifData(originalFile);
                     const compressedFile = await compressImage(cleanFile, { maxWidth: 1200, maxHeight: 1200, quality: 0.8 });
                     
-                    // Construct safe synthetic event (won't throw if media.js calls event methods)
+                    // Construct safe synthetic event for downstream processor
                     const syntheticEvent = {
                         target: { files: [compressedFile] },
                         preventDefault: () => {},
@@ -56,6 +94,13 @@ export function initComposer() {
         fileInput.dataset.listenerAttached = 'true';
     }
 
+    // Wire Submit Button directly if not inside a formal <form>
+    if (postButton && !postButton.dataset.listenerAttached) {
+        postButton.addEventListener('click', handleComposerSubmit);
+        postButton.dataset.listenerAttached = 'true';
+    }
+
+    // Wire Form Submit Event if form exists
     if (composerForm && !composerForm.dataset.listenerAttached) {
         composerForm.addEventListener('submit', handleComposerSubmit);
         composerForm.dataset.listenerAttached = 'true';
@@ -66,30 +111,55 @@ export function initComposer() {
  * Handles the submission of Citizen Talk posts or Witness Voice testimonies.
  */
 async function handleComposerSubmit(e) {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     if (isSubmitting) return;
 
     const user = auth.currentUser;
     if (!user) {
-        alert('You must be signed in to submit.');
+        if (typeof showToast === 'function') {
+            showToast('You must be signed in to submit.', 'error');
+        } else {
+            alert('You must be signed in to submit.');
+        }
         return;
     }
 
-    // Dynamic element resolution with fallbacks
-    const bodyInput = document.getElementById('postBody') || document.getElementById('testimonyBody');
-    const headlineInput = document.getElementById('headlineInput') || document.getElementById('testimonyHeadline');
+    // Dynamic element resolution with fallbacks for HTML schema
+    const bodyInput = document.getElementById('mainInput') || document.getElementById('postBody') || document.getElementById('testimonyBody');
+    const headlineInput = document.getElementById('testimonyTitle') || document.getElementById('headlineInput') || document.getElementById('testimonyHeadline');
     const categorySelect = document.getElementById('categorySelect') || document.getElementById('testimonyCategory');
     const fileInput = document.getElementById('media-input') || document.getElementById('photoInput');
+    const targetFeedSelect = document.getElementById('targetFeedSelect');
     const channelToggle = document.getElementById('channelToggle') || document.getElementById('isWitnessVoice');
-    const submitBtn = document.getElementById('submitBtn') || document.querySelector('button[type="submit"]');
+    const submitBtn = document.getElementById('postButton') || document.getElementById('submitBtn') || document.querySelector('button[type="submit"]');
 
     const body = bodyInput ? bodyInput.value.trim() : '';
     const headline = headlineInput ? headlineInput.value.trim() : '';
     const category = categorySelect ? categorySelect.value : 'General';
-    const isWitnessVoice = channelToggle ? channelToggle.checked : false;
+    
+    // Evaluate if post belongs to Witness Voice
+    let isWitnessVoice = false;
+    if (targetFeedSelect) {
+        isWitnessVoice = targetFeedSelect.value === 'witness_voice';
+    } else if (channelToggle) {
+        isWitnessVoice = channelToggle.checked;
+    }
+
+    if (!headline) {
+        if (typeof showToast === 'function') {
+            showToast('Please add a heading for your testimony.', 'error');
+        } else {
+            alert('Please add a heading for your testimony.');
+        }
+        return;
+    }
 
     if (!body) {
-        alert('Please enter your post content.');
+        if (typeof showToast === 'function') {
+            showToast('Please enter your post content.', 'error');
+        } else {
+            alert('Please enter your post content.');
+        }
         return;
     }
 
@@ -103,7 +173,6 @@ async function handleComposerSubmit(e) {
         // Process media upload if selected
         if (fileInput && fileInput.files && fileInput.files[0]) {
             const uploaded = await uploadForensicMedia(fileInput.files[0]);
-            // Ensure media values are safe strings/nulls for Firestore serialization
             mediaData = {
                 imageUrl: typeof uploaded?.imageUrl === 'string' ? uploaded.imageUrl : null,
                 mediaHash: typeof uploaded?.mediaHash === 'string' ? uploaded.mediaHash : null
@@ -123,16 +192,21 @@ async function handleComposerSubmit(e) {
                 createdAt: serverTimestamp()
             });
 
-            alert('Your testimony was saved as a draft. Complete verification to publish to Witness Voice.');
+            if (typeof showToast === 'function') {
+                showToast('Testimony saved as draft. Complete verification to publish.', 'info');
+            } else {
+                alert('Your testimony was saved as a draft. Complete verification to publish to Witness Voice.');
+            }
             resetForm();
             return;
         }
 
-        // Publish to main public feeds
+        // Target collection routing
         const targetCollection = isWitnessVoice ? 'testimonies' : 'posts';
         const payload = {
             authorUid: user.uid,
             authorName: user.displayName || 'Anonymous',
+            headline: headline || 'Untitled Testimony',
             body: body,
             category: category,
             imageUrl: mediaData.imageUrl,
@@ -140,10 +214,6 @@ async function handleComposerSubmit(e) {
             createdAt: serverTimestamp(),
             verifiedTier: userTier.level
         };
-
-        if (isWitnessVoice) {
-            payload.headline = headline || 'Untitled Testimony';
-        }
 
         const docRef = await addDoc(collection(db, targetCollection), payload);
 
@@ -153,10 +223,18 @@ async function handleComposerSubmit(e) {
             channel: targetCollection
         });
 
+        if (typeof showToast === 'function') {
+            showToast('Testimony published successfully!', 'success');
+        }
+
         resetForm();
     } catch (error) {
         console.error('Composer error:', error);
-        alert('Failed to submit post. Please try again.');
+        if (typeof showToast === 'function') {
+            showToast('Failed to submit post. Please try again.', 'error');
+        } else {
+            alert('Failed to submit post. Please try again.');
+        }
     } finally {
         isSubmitting = false;
         if (submitBtn) submitBtn.disabled = false;
@@ -168,10 +246,21 @@ async function handleComposerSubmit(e) {
  */
 function resetForm() {
     const composerForm = document.getElementById('composer-form') || document.getElementById('testimonyForm');
+    const headlineInput = document.getElementById('testimonyTitle') || document.getElementById('headlineInput');
+    const bodyInput = document.getElementById('mainInput') || document.getElementById('postBody');
     const previewArea = document.getElementById('preview-area') || document.getElementById('media-preview');
     const fileInput = document.getElementById('media-input') || document.getElementById('photoInput');
 
     if (composerForm) composerForm.reset();
+    if (headlineInput) headlineInput.value = '';
+    if (bodyInput) bodyInput.value = '';
     if (fileInput) fileInput.value = '';
-    if (previewArea) previewArea.innerHTML = '';
+    
+    if (previewArea) {
+        previewArea.innerHTML = '<span>Preview will appear here...</span>';
+    }
+
+    if (typeof resetMediaState === 'function') {
+        resetMediaState();
+    }
 }
