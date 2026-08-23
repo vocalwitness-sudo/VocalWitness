@@ -143,6 +143,8 @@ export function startPhoneVerification() {
 
 /**
  * Send OTP
+/**
+ * Send OTP with self-healing provider checks and comprehensive error messaging
  */
 export async function sendPhoneVerification(phoneNumber) {
   if (!phoneNumber || !phoneNumber.startsWith('+')) {
@@ -155,7 +157,7 @@ export async function sendPhoneVerification(phoneNumber) {
     return false;
   }
 
-  // Demo mode
+  // Demo mode branch
   if (isDemoMode) {
     demoCode = Math.floor(100000 + Math.random() * 900000).toString();
     console.log(`%c🔑 DEMO OTP for ${phoneNumber}: ${demoCode}`, "color: lime; font-size: 16px; font-weight: bold");
@@ -187,7 +189,7 @@ export async function sendPhoneVerification(phoneNumber) {
       recaptchaVerifier
     );
 
-    // Keep it also on window for safety
+    // Keep on window for global access safety
     window.confirmationResult = confirmationResult;
 
     showToast(`✅ OTP sent to ${phoneNumber}`, "success");
@@ -196,6 +198,36 @@ export async function sendPhoneVerification(phoneNumber) {
   } catch (e) {
     console.error("SMS Send Error:", e);
 
+    // 1. Recover gracefully if user is already linked in Firebase Auth
+    if (e.code === 'auth/provider-already-linked') {
+      try {
+        const userRef = doc(db, "users", auth.currentUser.uid);
+
+        await updateDoc(userRef, {
+          isPhoneVerified: true,
+          hasVerifiedPhone: true,
+          phoneVerifiedAt: serverTimestamp(),
+          tier: TIERS?.CITIZEN_CIRCLE || "citizen_circle",
+          reputation: 60,
+          credibilityScore: 60,
+          updatedAt: serverTimestamp()
+        });
+
+        if (typeof refreshTierAndUI === 'function') {
+          refreshTierAndUI();
+        }
+
+        showToast("🎉 Welcome to Citizen Circle! All benefits are now unlocked.", "success");
+        closeAllVerificationModals();
+        return true;
+      } catch (updateErr) {
+        console.error("Failed to upgrade already-linked user:", updateErr);
+        showToast("Phone is linked, but failing to update user status in DB.", "error");
+        return false;
+      }
+    }
+
+    // 2. Map standard human-readable error messages
     let msg = e.message || "Failed to send OTP";
     if (e.code === 'auth/too-many-requests') msg = "Too many attempts. Wait a few minutes.";
     if (e.code === 'auth/invalid-phone-number') msg = "Invalid phone number format.";
@@ -205,18 +237,16 @@ export async function sendPhoneVerification(phoneNumber) {
 
     showToast(msg, "error");
 
-    // Reset reCAPTCHA so user can try again
+    // 3. Clean up reCAPTCHA state so user can retry without hard reload
     if (recaptchaVerifier) {
-      try {
-        recaptchaVerifier.clear();
-      } catch (_) {}
+      try { recaptchaVerifier.clear(); } catch (_) {}
       recaptchaVerifier = null;
       window.recaptchaVerifier = null;
     }
+
     return false;
   }
 }
-
 /**
  * Confirm code + upgrade tier
  */
