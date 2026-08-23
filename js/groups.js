@@ -17,6 +17,7 @@ import {
 } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
 import { showToast } from './utils.js';
 import { getCurrentUserTier, TIERS } from './tier.js';
+import { startZKVerification } from './verification.js';   // make sure this path is correct
 
 let currentTab = 'discover';
 let allGroups = [];
@@ -112,9 +113,11 @@ function renderGroups() {
         card.innerHTML = `
             <div class="flex justify-between items-start gap-4">
                 <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2 mb-1">
+                    <div class="flex items-center gap-2 mb-1 flex-wrap">
                         <h3 class="font-bold text-lg text-emerald-400 truncate">${escapeHtml(group.name)}</h3>
                         ${isCreator ? '<span class="text-[10px] bg-amber-500/15 text-amber-400 px-2 py-0.5 rounded-full">Creator</span>' : ''}
+                        ${group.visibility === 'witness_circle' || group.creatorTier === 'witness_circle' ? 
+                            '<span class="text-[10px] bg-cyan-500/15 text-cyan-400 px-2 py-0.5 rounded-full border border-cyan-500/30">🔐 High Trust</span>' : ''}
                     </div>
                     
                     <p class="text-zinc-400 text-sm line-clamp-2 mb-3">
@@ -126,8 +129,6 @@ function renderGroups() {
                         <span class="px-2.5 py-1 bg-zinc-800 rounded-full capitalize">
                             ${formatVisibility(group.visibility)}
                         </span>
-                        ${group.creatorTier === 'witness_circle' ? 
-                            '<span class="text-cyan-400">🔐 High Trust</span>' : ''}
                     </div>
                 </div>
 
@@ -145,11 +146,22 @@ function renderGroups() {
                 </div>
             </div>
 
-            <!-- Future tools preview -->
-            <div class="mt-4 pt-3 border-t border-zinc-800 flex flex-wrap gap-2">
-                <span class="text-[11px] px-2 py-1 bg-emerald-500/10 text-emerald-400 rounded-full">Evidence Locker</span>
-                <span class="text-[11px] px-2 py-1 bg-amber-500/10 text-amber-400 rounded-full">Attestation</span>
-                <span class="text-[11px] px-2 py-1 bg-cyan-500/10 text-cyan-400 rounded-full">Timeline</span>
+            <!-- Tools row -->
+            <div class="mt-4 pt-3 border-t border-zinc-800 flex flex-wrap gap-2 items-center">
+                <button onclick="handleToolClick('evidence')" 
+                        class="text-[11px] px-2.5 py-1 bg-emerald-500/10 text-emerald-400 rounded-full hover:bg-emerald-500/20 transition">
+                    Evidence Locker
+                </button>
+                <button onclick="handleToolClick('attestation')" 
+                        class="text-[11px] px-2.5 py-1 bg-amber-500/10 text-amber-400 rounded-full hover:bg-amber-500/20 transition">
+                    Attestation
+                </button>
+                <button onclick="handleToolClick('timeline')" 
+                        class="text-[11px] px-2.5 py-1 bg-cyan-500/10 text-cyan-400 rounded-full hover:bg-cyan-500/20 transition">
+                    Timeline
+                </button>
+                ${group.visibility === 'witness_circle' ? 
+                    '<span class="text-[11px] text-cyan-400/80 ml-1">ZK Protected</span>' : ''}
             </div>
         `;
 
@@ -252,6 +264,12 @@ function formatVisibility(vis) {
     return map[vis] || vis || 'Public';
 }
 
+// Helper: Check if current user is Witness Circle
+async function isWitnessCircleUser() {
+    const tier = await getCurrentUserTier();
+    return tier === TIERS.WITNESS_CIRCLE;
+}
+
 // ====================== GLOBAL MODAL CONTROLS ======================
 
 window.showGroupCreationModal = function() {
@@ -294,6 +312,46 @@ window.createGroup = async function() {
         if (visibilityInput) visibilityInput.value = 'public';
         window.closeGroupModal();
     }
+};
+
+// ====================== UPGRADE MODAL CONTROLS ======================
+
+window.showUpgradeToWitnessModal = function() {
+    const modal = document.getElementById('upgradeToWitnessModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+};
+
+window.closeUpgradeModal = function() {
+    const modal = document.getElementById('upgradeToWitnessModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+};
+
+window.startZKUpgradeFromGroups = function() {
+    closeUpgradeModal();
+    if (typeof startZKVerification === 'function') {
+        startZKVerification();
+    } else {
+        showToast("ZK Verification module not available", "error");
+    }
+};
+
+// ====================== TOOL CLICK HANDLER ======================
+window.handleToolClick = async function(toolName) {
+    const isWitness = await isWitnessCircleUser();
+
+    if (!isWitness) {
+        showUpgradeToWitnessModal();
+        return;
+    }
+
+    // Later we will open the actual tool
+    showToast(`Opening ${toolName} tool... (Coming in next update)`, "info");
 };
 
 // Re-render on language change
