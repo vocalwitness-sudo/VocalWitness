@@ -1,5 +1,5 @@
-// js/profile.js - Integrated, Refactored & Fully Localized Version
-// Updated: Fixed Modal Stacking, Chrome/Firefox Layering & Form Handlers
+// js/profile.js - Integrated, Refactored & Extended Version
+// Handles modal layering, multi-field form persistence, image upload preview, and legacy alias bindings
 
 import {  
     onAuthStateChanged,  
@@ -24,25 +24,8 @@ import { startPhoneVerification } from './verification.js';
 
 let currentUserData = null; 
 let userUnsubscribe = null; 
+let pendingAvatarBase64 = null; // Holds temporary base64 image data during edit modal preview
 window.currentUserData = null; 
-
-// Expose startPhoneVerification globally for inline HTML handlers with stack fix
-window.startPhoneVerification = function() {
-    closeProfile(); // Dismiss profile modal to prevent z-index overlap on mobile
-    if (typeof startPhoneVerification === 'function') {
-        startPhoneVerification();
-    } else {
-        const verifModal = document.getElementById('verificationModal');
-        if (verifModal) {
-            verifModal.classList.remove('hidden');
-            verifModal.style.display = 'flex';
-            verifModal.style.zIndex = '10000';
-        } else {
-            console.error("Phone verification module not available.");
-            showToast(t("profile.verification_unavailable", "Verification module unavailable"), "error");
-        }
-    }
-};
 
 // Helper function to sanitize untrusted strings before innerHTML injection 
 function sanitize(str) { 
@@ -72,7 +55,7 @@ export function openProfile() {
     modal.style.display = 'flex';
     modal.style.visibility = 'visible';
     modal.style.opacity = '1';
-    modal.style.zIndex = '9000'; // Explicit z-index stack layer
+    modal.style.zIndex = '9000';
     modal.setAttribute('aria-hidden', 'false');
 }
 
@@ -86,12 +69,6 @@ export function closeProfile() {
     modal.style.visibility = 'hidden';
     modal.setAttribute('aria-hidden', 'true');
 }
-
-// Global scope aliases
-window.openProfile = openProfile;
-window.closeProfile = closeProfile;
-window.closeProfileModal = closeProfile;
-window.openProfileModal = openProfile;
 
 /** 
  * Initialize Profile Listener & State 
@@ -112,10 +89,9 @@ export function initProfile() {
         } 
     }); 
 }
-window.initProfile = initProfile;
 
 /**
- * Creates a default user document in Firestore if it doesn't exist yet
+ * Ensures user document exists in Firestore with extended privacy & identity defaults
  */
 async function ensureUserProfile(user) {
     try {
@@ -127,8 +103,12 @@ async function ensureUserProfile(user) {
             await setDoc(userRef, {
                 email: user.email || "",
                 displayName: user.displayName || "",
+                firstName: "",
+                lastName: "",
                 photoURL: user.photoURL || "",
                 username: user.email ? user.email.split('@')[0] : `user_${user.uid.substring(0, 6)}`,
+                region: "",
+                bio: "",
                 reputation: 0,
                 testimoniesCount: 0,
                 verifications: 0,
@@ -136,6 +116,7 @@ async function ensureUserProfile(user) {
                 hasVerifiedPhone: false,
                 zkVerified: false,
                 activeWitnessCycle: false,
+                hidePublicInfo: true, // Default ZK Privacy Shield ON
                 tier: "citizen",
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp()
@@ -194,9 +175,9 @@ export function renderProfileUI(userData, retryCount = 0) {
         const isWitness = level !== null; 
         const isCitizenCircle = userData.isPhoneVerified || userData.hasVerifiedPhone || userData.tier === 'citizen_circle';
          
-        const formattedDate = (userData.createdAt && typeof userData.createdAt.toDate === 'function') 
-            ? new Date(userData.createdAt.toDate()).toLocaleDateString() 
-            : t("common.recent", "Recent"); 
+        // Format Full Name according to Privacy Shield State
+        const fullName = [userData.firstName, userData.lastName].filter(Boolean).join(" ");
+        const isPrivacyShieldActive = userData.hidePublicInfo !== false;
 
         const html = ` 
             <div class="space-y-6 p-4 text-white"> 
@@ -216,17 +197,20 @@ export function renderProfileUI(userData, retryCount = 0) {
                 <!-- Profile Header --> 
                 <div class="flex flex-col items-center text-center"> 
                     <div class="relative"> 
-                        <div class="w-28 h-28 mx-auto rounded-3xl overflow-hidden border-4 border-zinc-700 shadow-2xl"> 
+                        <div class="w-28 h-28 mx-auto rounded-3xl overflow-hidden border-4 border-zinc-700 shadow-2xl bg-zinc-800"> 
                             ${userData.photoURL ?  
                                 `<img src="${sanitize(userData.photoURL)}" class="w-full h-full object-cover" alt="Profile Photo">` :  
-                                `<div class="w-full h-full bg-gradient-to-br from-zinc-700 to-zinc-800 flex items-center justify-center text-6xl">👤</div>` 
+                                `<div class="w-full h-full flex items-center justify-center text-6xl">👤</div>` 
                             } 
                         </div> 
                         ${isWitness ? `<div class="absolute -bottom-1 -right-1 text-3xl" title="${t("profile.active_witness", "Active Witness")}">🔐</div>` : ''} 
                     </div> 
                      
                     <h2 class="text-2xl font-bold mt-4 text-white">${sanitize(userData.displayName) || t("profile.anonymous_witness", "Anonymous Witness")}</h2> 
-                    <p class="text-emerald-400 font-mono text-sm">@${sanitize(userData.username) || 'anonymous'}</p> 
+                    
+                    ${fullName ? `<p class="text-xs font-semibold text-zinc-300 mt-0.5">${sanitize(fullName)} ${isPrivacyShieldActive ? '<span class="text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full ml-1">🛡️ Private</span>' : ''}</p>` : ''}
+
+                    <p class="text-emerald-400 font-mono text-sm mt-1">@${sanitize(userData.username) || 'anonymous'}</p> 
                     ${userData.region ? `<p class="text-xs text-zinc-400 mt-1">📍 ${sanitize(userData.region)}</p>` : ''} 
                      
                     <!-- Tier & ZK Verification Badges --> 
@@ -338,7 +322,32 @@ export function renderProfileUI(userData, retryCount = 0) {
         console.error("Error computing witness level:", err); 
     }); 
 } 
-window.renderProfileUI = renderProfileUI;
+
+// ====================== IMAGE UPLOAD & PREVIEW HANDLER ======================
+export function handleImagePreview(event) {
+    const file = event?.target?.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+        showToast(t("profile.image_too_large", "Image size must be under 2MB"), "error");
+        event.target.value = '';
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        pendingAvatarBase64 = e.target.result;
+        const imgPreview = document.getElementById('avatarPreview');
+        const fallback = document.getElementById('avatarFallback');
+
+        if (imgPreview) {
+            imgPreview.src = pendingAvatarBase64;
+            imgPreview.classList.remove('hidden');
+        }
+        if (fallback) fallback.classList.add('hidden');
+    };
+    reader.readAsDataURL(file);
+}
 
 // ====================== SIGN OUT HANDLER ====================== 
 export async function handleSignOut() { 
@@ -365,7 +374,6 @@ export async function handleSignOut() {
         showToast(t("auth.sign_out_error", "Error signing out"), "error"); 
     } 
 } 
-window.handleSignOut = handleSignOut;
 
 // ====================== MODAL & OTHER CONTROLS ====================== 
 export async function handleProfileStartCycle() { 
@@ -375,29 +383,46 @@ export async function handleProfileStartCycle() {
         showToast(t("profile.cycle_module_unavailable", "Witness cycle module unavailable"), "error"); 
     } 
 } 
-window.handleProfileStartCycle = handleProfileStartCycle;
 
 export function openEditProfile() { 
     closeProfile(); // Dismiss base profile modal to avoid stacking conflicts
     const modal = document.getElementById('editProfileModal'); 
     if (!modal) return showToast(t("profile.edit_modal_not_found", "Edit modal not found"), "error"); 
 
+    pendingAvatarBase64 = null; // Reset pending state
+
     if (currentUserData) { 
+        const firstNameInput = document.getElementById('editFirstName');
+        const lastNameInput = document.getElementById('editLastName');
         const displayNameInput = document.getElementById('editDisplayName'); 
         const usernameInput = document.getElementById('editUsername'); 
         const regionInput = document.getElementById('editRegion'); 
         const bioInput = document.getElementById('editBio'); 
+        const hidePublicToggle = document.getElementById('toggleHidePublicInfo');
+        const imgPreview = document.getElementById('avatarPreview');
+        const avatarFallback = document.getElementById('avatarFallback');
 
+        if (firstNameInput) firstNameInput.value = currentUserData.firstName || '';
+        if (lastNameInput) lastNameInput.value = currentUserData.lastName || '';
         if (displayNameInput) displayNameInput.value = currentUserData.displayName || ''; 
         if (usernameInput) usernameInput.value = currentUserData.username || ''; 
         if (regionInput) regionInput.value = currentUserData.region || ''; 
         if (bioInput) bioInput.value = currentUserData.bio || ''; 
+        if (hidePublicToggle) hidePublicToggle.checked = currentUserData.hidePublicInfo !== false;
+
+        if (currentUserData.photoURL && imgPreview) {
+            imgPreview.src = currentUserData.photoURL;
+            imgPreview.classList.remove('hidden');
+            if (avatarFallback) avatarFallback.classList.add('hidden');
+        } else {
+            if (imgPreview) imgPreview.classList.add('hidden');
+            if (avatarFallback) avatarFallback.classList.remove('hidden');
+        }
     } 
     modal.classList.remove('hidden'); 
     modal.style.display = 'flex';
     modal.style.zIndex = '10000';
 } 
-window.openEditProfile = openEditProfile;
 
 export function closeEditProfile() { 
     const modal = document.getElementById('editProfileModal');
@@ -406,7 +431,6 @@ export function closeEditProfile() {
         modal.style.display = 'none';
     }
 } 
-window.closeEditProfile = closeEditProfile;
 
 export function openSettings() {
     closeProfile(); // Dismiss base profile modal to avoid stacking conflicts
@@ -417,7 +441,6 @@ export function openSettings() {
         modal.style.zIndex = '10000';
     }
 }
-window.openSettings = openSettings;
 
 export function closeSettings() {
     const modal = document.getElementById('settingsModal');
@@ -426,26 +449,31 @@ export function closeSettings() {
         modal.style.display = 'none';
     }
 }
-window.closeSettings = closeSettings;
 
 export function handleSaveProfile(event) {
     if (event) event.preventDefault();
     saveProfileChanges();
 }
-window.handleSaveProfile = handleSaveProfile;
 
-export async function saveProfileChanges() { 
+export async function saveProfileChanges(event) { 
+    if (event) event.preventDefault();
     if (!auth.currentUser) return showToast(t("auth.must_be_logged_in", "You must be logged in"), "error"); 
 
+    const firstNameEl = document.getElementById('editFirstName');
+    const lastNameEl = document.getElementById('editLastName');
     const displayNameEl = document.getElementById('editDisplayName');
     const usernameEl = document.getElementById('editUsername');
     const regionEl = document.getElementById('editRegion');
     const bioEl = document.getElementById('editBio');
+    const hidePublicEl = document.getElementById('toggleHidePublicInfo');
 
+    const firstName = firstNameEl?.value?.trim() || "";
+    const lastName = lastNameEl?.value?.trim() || "";
     const displayName = displayNameEl?.value?.trim(); 
     const username = usernameEl?.value?.trim(); 
     const region = regionEl?.value?.trim(); 
     const bio = bioEl?.value?.trim(); 
+    const hidePublicInfo = hidePublicEl ? hidePublicEl.checked : true;
 
     if (!displayName) return showToast(t("profile.display_name_required", "Display name is required"), "error"); 
 
@@ -453,13 +481,22 @@ export async function saveProfileChanges() {
         showToast(t("common.saving", "Saving changes..."), "info"); 
         const userRef = doc(db, "users", auth.currentUser.uid); 
         
-        await updateDoc(userRef, { 
+        const updatePayload = { 
+            firstName,
+            lastName,
             displayName, 
             username: username || null, 
             region: region || null, 
             bio: bio || null, 
+            hidePublicInfo,
             updatedAt: serverTimestamp() 
-        }); 
+        };
+
+        if (pendingAvatarBase64) {
+            updatePayload.photoURL = pendingAvatarBase64;
+        }
+
+        await updateDoc(userRef, updatePayload); 
 
         showToast("✅ " + t("profile.updated_success", "Profile updated successfully!"), "success"); 
         closeEditProfile(); 
@@ -469,7 +506,6 @@ export async function saveProfileChanges() {
         showToast(t("profile.failed_to_save", "Failed to save profile"), "error"); 
     } 
 } 
-window.saveProfileChanges = saveProfileChanges;
 
 export async function triggerPasswordReset() {
     if (!auth.currentUser || !auth.currentUser.email) {
@@ -483,7 +519,6 @@ export async function triggerPasswordReset() {
         showToast(t("auth.reset_failed", "Failed to send reset email"), "error");
     }
 }
-window.triggerPasswordReset = triggerPasswordReset;
 
 export async function exportUserDataPDF() { 
     if (!currentUserData) return showToast(t("profile.data_not_loaded", "Profile data not loaded"), "error"); 
@@ -502,9 +537,10 @@ export async function exportUserDataPDF() {
         pdf.text(`Display Name: ${currentUserData.displayName || 'N/A'}`, 20, 44); 
         pdf.text(`Username: @${currentUserData.username || 'anonymous'}`, 20, 52); 
         pdf.text(`Region: ${currentUserData.region || 'N/A'}`, 20, 60); 
-        pdf.text(`Reputation: ${currentUserData.reputation || 0} REP`, 20, 68); 
-        pdf.text(`Phone Verified: ${currentUserData.isPhoneVerified || currentUserData.hasVerifiedPhone ? 'Yes' : 'No'}`, 20, 76); 
-        pdf.text(`ZK Verified: ${currentUserData.zkVerified ? 'Yes' : 'No'}`, 20, 84); 
+        pdf.text(`Privacy Shield Active: ${currentUserData.hidePublicInfo !== false ? 'Yes' : 'No'}`, 20, 68);
+        pdf.text(`Reputation: ${currentUserData.reputation || 0} REP`, 20, 76); 
+        pdf.text(`Phone Verified: ${currentUserData.isPhoneVerified || currentUserData.hasVerifiedPhone ? 'Yes' : 'No'}`, 20, 84); 
+        pdf.text(`ZK Verified: ${currentUserData.zkVerified ? 'Yes' : 'No'}`, 20, 92); 
         
         pdf.save(`vocalwitness-identity-${auth.currentUser?.uid || 'user'}.pdf`); 
         showToast("✅ " + t("profile.pdf_exported", "Identity PDF Exported!"), "success"); 
@@ -513,11 +549,53 @@ export async function exportUserDataPDF() {
         showToast(t("profile.jspdf_required", "PDF generation requires jsPDF script inclusion"), "error"); 
     } 
 } 
-window.exportUserDataPDF = exportUserDataPDF;
 
 window.addEventListener('languageChanged', () => { 
     if (currentUserData) renderProfileUI(currentUserData); 
 });
+
+// ====================== GLOBAL ALIAS & COMPATIBILITY BINDINGS ======================
+// Expose startPhoneVerification globally for inline HTML handlers with stack fix
+window.startPhoneVerification = function() {
+    closeProfile();
+    if (typeof startPhoneVerification === 'function') {
+        startPhoneVerification();
+    } else {
+        const verifModal = document.getElementById('verificationModal');
+        if (verifModal) {
+            verifModal.classList.remove('hidden');
+            verifModal.style.display = 'flex';
+            verifModal.style.zIndex = '10000';
+        } else {
+            console.error("Phone verification module not available.");
+            showToast(t("profile.verification_unavailable", "Verification module unavailable"), "error");
+        }
+    }
+};
+
+window.openProfile = openProfile;
+window.closeProfile = closeProfile;
+window.closeProfileModal = closeProfile;
+window.openProfileModal = openProfile;
+window.openEditProfile = openEditProfile;
+window.closeEditProfile = closeEditProfile;
+window.openSettings = openSettings;
+window.closeSettings = closeSettings;
+window.handleSaveProfile = handleSaveProfile;
+window.saveProfileChanges = saveProfileChanges;
+window.handleImagePreview = handleImagePreview;
+window.handleSignOut = handleSignOut;
+window.handleProfileStartCycle = handleProfileStartCycle;
+window.triggerPasswordReset = triggerPasswordReset;
+window.exportUserDataPDF = exportUserDataPDF;
+window.renderProfileUI = renderProfileUI;
+window.initProfile = initProfile;
+
+// Legacy HTML Function Names Mapping to Prevent ReferenceErrors
+window.openVerificationModalFromProfile = window.startPhoneVerification;
+window.openSettingsModal = window.openSettings;
+window.closeSettingsModal = window.closeSettings;
+window.saveProfileBio = window.saveProfileChanges;
 
 // Initialize Profile Listener Hook
 initProfile();
