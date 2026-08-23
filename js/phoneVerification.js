@@ -1,4 +1,4 @@
-// js/phoneVerification.js - Hardened Production Version
+// js/phoneVerification.js - Hardened Production Version (Fixed for Citizen Circle unlock)
 import { db, auth } from './firebase-config.js';
 import { doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { RecaptchaVerifier, linkWithPhoneNumber } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
@@ -16,6 +16,26 @@ const isDemoMode = location.hostname === 'localhost' ||
 let demoCode = null;
 
 /**
+ * Shared helper – marks user as phone verified + unlocks Citizen Circle
+ */
+async function forceMarkPhoneVerified() {
+  const userRef = doc(db, "users", auth.currentUser.uid);
+  await updateDoc(userRef, {
+    isPhoneVerified: true,
+    hasVerifiedPhone: true,
+    phoneVerifiedAt: serverTimestamp(),
+    tier: TIERS?.CITIZEN_CIRCLE || "citizen_circle",
+    reputation: 60,
+    credibilityScore: 60,
+    updatedAt: serverTimestamp()
+  });
+
+  if (typeof refreshTierAndUI === 'function') {
+    refreshTierAndUI();
+  }
+}
+
+/**
  * Initialize invisible reCAPTCHA safely
  */
 export function initPhoneRecaptcha(buttonId = 'send-otp-btn') {
@@ -30,16 +50,13 @@ export function initPhoneRecaptcha(buttonId = 'send-otp-btn') {
       document.body.appendChild(btnContainer);
     }
 
-    // Clear any previous instance
     if (window.recaptchaVerifier) {
       try { window.recaptchaVerifier.clear(); } catch (_) {}
     }
 
     recaptchaVerifier = new RecaptchaVerifier(auth, buttonId, {
       size: 'invisible',
-      callback: () => {
-        // reCAPTCHA solved
-      },
+      callback: () => {},
       'expired-callback': () => {
         showToast("reCAPTCHA expired. Please try again.", "error");
         recaptchaVerifier = null;
@@ -60,13 +77,18 @@ export function initPhoneRecaptcha(buttonId = 'send-otp-btn') {
 export function setupModalDismissListeners() {
   document.addEventListener('click', (e) => {
     const target = e.target;
+
+    // Broad matching so the × button always works
     if (
       target.closest('.close-modal-btn') ||
       target.closest('.modal-close') ||
       target.closest('#closePhoneAuth') ||
       target.closest('[data-dismiss="modal"]') ||
       target.classList.contains('modal-backdrop') ||
-      target.classList.contains('modal-overlay')
+      target.classList.contains('modal-overlay') ||
+      target.textContent?.trim() === '×' ||
+      target.textContent?.trim() === '✕' ||
+      target.getAttribute('aria-label')?.toLowerCase().includes('close')
     ) {
       e.preventDefault();
       closeAllVerificationModals();
@@ -93,6 +115,16 @@ export function closeAllVerificationModals() {
     }
   });
 
+  // Also hide any generic modal that might be open
+  document.querySelectorAll('.modal, [role="dialog"]').forEach(m => {
+    if (m.id && modalIds.includes(m.id)) return;
+    // only force-close if it looks like a phone modal
+    if (m.textContent?.includes('Verify Phone') || m.textContent?.includes('Phone Number')) {
+      m.classList.add('hidden');
+      m.style.display = 'none';
+    }
+  });
+
   // Reset reCAPTCHA
   if (window.recaptchaVerifier || recaptchaVerifier) {
     try {
@@ -102,6 +134,9 @@ export function closeAllVerificationModals() {
     recaptchaVerifier = null;
     window.recaptchaVerifier = null;
   }
+
+  confirmationResult = null;
+  window.confirmationResult = null;
 }
 
 // Auto-bind
@@ -128,7 +163,6 @@ export function startPhoneVerification() {
     modal.classList.remove('hidden');
     modal.style.display = 'flex';
   } else {
-    // Fallback prompt
     const phone = prompt("Enter your phone number in international format (e.g., +2348012345678):");
     if (phone) {
       sendPhoneVerification(phone).then(success => {
@@ -143,8 +177,6 @@ export function startPhoneVerification() {
 
 /**
  * Send OTP
-/**
- * Send OTP with self-healing provider checks and comprehensive error messaging
  */
 export async function sendPhoneVerification(phoneNumber) {
   if (!phoneNumber || !phoneNumber.startsWith('+')) {
@@ -157,7 +189,7 @@ export async function sendPhoneVerification(phoneNumber) {
     return false;
   }
 
-  // Demo mode branch
+  // Demo mode
   if (isDemoMode) {
     demoCode = Math.floor(100000 + Math.random() * 900000).toString();
     console.log(`%c🔑 DEMO OTP for ${phoneNumber}: ${demoCode}`, "color: lime; font-size: 16px; font-weight: bold");
@@ -166,7 +198,7 @@ export async function sendPhoneVerification(phoneNumber) {
   }
 
   try {
-    // Always re-init reCAPTCHA for a clean session
+    // Clean previous reCAPTCHA
     if (recaptchaVerifier) {
       try { recaptchaVerifier.clear(); } catch (_) {}
       recaptchaVerifier = null;
@@ -180,8 +212,8 @@ export async function sendPhoneVerification(phoneNumber) {
       return false;
     }
 
-    // Clear any previous confirmation
     confirmationResult = null;
+    window.confirmationResult = null;
 
     confirmationResult = await linkWithPhoneNumber(
       auth.currentUser,
@@ -189,7 +221,6 @@ export async function sendPhoneVerification(phoneNumber) {
       recaptchaVerifier
     );
 
-    // Keep on window for global access safety
     window.confirmationResult = confirmationResult;
 
     showToast(`✅ OTP sent to ${phoneNumber}`, "success");
@@ -198,36 +229,28 @@ export async function sendPhoneVerification(phoneNumber) {
   } catch (e) {
     console.error("SMS Send Error:", e);
 
-    // 1. Recover gracefully if user is already linked in Firebase Auth
+    // ========== KEY FIX: already-linked handling ==========
     if (e.code === 'auth/provider-already-linked') {
       try {
-        const userRef = doc(db, "users", auth.currentUser.uid);
+        // Check if this user already has a phone provider
+        const hasPhone = auth.currentUser.providerData.some(p => p.providerId === 'phone');
 
-        await updateDoc(userRef, {
-          isPhoneVerified: true,
-          hasVerifiedPhone: true,
-          phoneVerifiedAt: serverTimestamp(),
-          tier: TIERS?.CITIZEN_CIRCLE || "citizen_circle",
-          reputation: 60,
-          credibilityScore: 60,
-          updatedAt: serverTimestamp()
-        });
-
-        if (typeof refreshTierAndUI === 'function') {
-          refreshTierAndUI();
+        if (hasPhone) {
+          // Already verified on THIS account → just unlock Citizen Circle
+          await forceMarkPhoneVerified();
+          showToast("🎉 Phone already verified on this account! Citizen Circle unlocked.", "success");
+          closeAllVerificationModals();
+          return true;
         }
-
-        showToast("🎉 Welcome to Citizen Circle! All benefits are now unlocked.", "success");
-        closeAllVerificationModals();
-        return true;
-      } catch (updateErr) {
-        console.error("Failed to upgrade already-linked user:", updateErr);
-        showToast("Phone is linked, but failing to update user status in DB.", "error");
-        return false;
+      } catch (upgradeErr) {
+        console.error("Failed to upgrade already-linked user:", upgradeErr);
       }
+
+      showToast("This phone number is already linked to another account.", "error");
+      return false;
     }
 
-    // 2. Map standard human-readable error messages
+    // Other errors
     let msg = e.message || "Failed to send OTP";
     if (e.code === 'auth/too-many-requests') msg = "Too many attempts. Wait a few minutes.";
     if (e.code === 'auth/invalid-phone-number') msg = "Invalid phone number format.";
@@ -237,7 +260,7 @@ export async function sendPhoneVerification(phoneNumber) {
 
     showToast(msg, "error");
 
-    // 3. Clean up reCAPTCHA state so user can retry without hard reload
+    // Clean reCAPTCHA so user can retry
     if (recaptchaVerifier) {
       try { recaptchaVerifier.clear(); } catch (_) {}
       recaptchaVerifier = null;
@@ -247,6 +270,7 @@ export async function sendPhoneVerification(phoneNumber) {
     return false;
   }
 }
+
 /**
  * Confirm code + upgrade tier
  */
@@ -256,7 +280,6 @@ export async function verifyPhoneCode(enteredCode) {
     return false;
   }
 
-  // Clean the code (remove spaces and non-digits)
   const code = String(enteredCode || "").replace(/\D/g, "").trim();
 
   if (code.length !== 6) {
@@ -271,7 +294,6 @@ export async function verifyPhoneCode(enteredCode) {
         return false;
       }
     } else {
-      // Prefer the module variable, fall back to window
       const result = confirmationResult || window.confirmationResult;
 
       if (!result) {
@@ -282,21 +304,8 @@ export async function verifyPhoneCode(enteredCode) {
       await result.confirm(code);
     }
 
-    // Success → update Firestore
-    const userRef = doc(db, "users", auth.currentUser.uid);
-    await updateDoc(userRef, {
-      isPhoneVerified: true,
-      hasVerifiedPhone: true,
-      phoneVerifiedAt: serverTimestamp(),
-      tier: TIERS?.CITIZEN_CIRCLE || "citizen_circle",
-      reputation: 60,
-      credibilityScore: 60,
-      updatedAt: serverTimestamp()
-    });
-
-    if (typeof refreshTierAndUI === 'function') {
-      refreshTierAndUI();
-    }
+    // Success → unlock Citizen Circle
+    await forceMarkPhoneVerified();
 
     showToast("🎉 Phone Verified! You are now in Citizen Circle", "success");
     closeAllVerificationModals();
