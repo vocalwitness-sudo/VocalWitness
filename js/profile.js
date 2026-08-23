@@ -1,5 +1,5 @@
 // js/profile.js - Integrated, Refactored & Fully Localized Version
-// Updated: Fixed Form Submission Handlers, ZK Proof Badge & Complete Modal Suite
+// Updated: Fixed Modal Stacking, Chrome/Firefox Layering & Form Handlers
 
 import {  
     onAuthStateChanged,  
@@ -26,13 +26,21 @@ let currentUserData = null;
 let userUnsubscribe = null; 
 window.currentUserData = null; 
 
-// Expose startPhoneVerification globally for inline HTML handlers
+// Expose startPhoneVerification globally for inline HTML handlers with stack fix
 window.startPhoneVerification = function() {
+    closeProfile(); // Dismiss profile modal to prevent z-index overlap on mobile
     if (typeof startPhoneVerification === 'function') {
         startPhoneVerification();
     } else {
-        console.error("Phone verification module not available.");
-        showToast(t("profile.verification_unavailable", "Verification module unavailable"), "error");
+        const verifModal = document.getElementById('verificationModal');
+        if (verifModal) {
+            verifModal.classList.remove('hidden');
+            verifModal.style.display = 'flex';
+            verifModal.style.zIndex = '10000';
+        } else {
+            console.error("Phone verification module not available.");
+            showToast(t("profile.verification_unavailable", "Verification module unavailable"), "error");
+        }
     }
 };
 
@@ -59,12 +67,12 @@ export function openProfile() {
         renderProfileUI(currentUserData);
     }
 
-    // Remove every possible "closed" state
     modal.classList.remove('hidden');
     modal.classList.add('flex');
     modal.style.display = 'flex';
     modal.style.visibility = 'visible';
     modal.style.opacity = '1';
+    modal.style.zIndex = '9000'; // Explicit z-index stack layer
     modal.setAttribute('aria-hidden', 'false');
 }
 
@@ -79,17 +87,11 @@ export function closeProfile() {
     modal.setAttribute('aria-hidden', 'true');
 }
 
-// Expose globally (and keep aliases)
+// Global scope aliases
 window.openProfile = openProfile;
 window.closeProfile = closeProfile;
 window.closeProfileModal = closeProfile;
 window.openProfileModal = openProfile;
-// Expose globally so main.js data-action="open-profile" works
-window.openProfile = openProfile;
-window.closeProfile = closeProfile;
-window.closeProfileModal = closeProfile;   // alias for older HTML
-window.openProfileModal = openProfile;     // alias for older HTML
-
 
 /** 
  * Initialize Profile Listener & State 
@@ -273,7 +275,7 @@ export function renderProfileUI(userData, retryCount = 0) {
                         </span> 
                     </div> 
                     <button onclick="handleProfileStartCycle()"  
-                            class="w-full py-3 bg-amber-500 hover:bg-amber-400 text-black font-semibold rounded-2xl transition flex items-center justify-center gap-2 shadow-lg shadow-amber-500/10 text-sm"> 
+                            class="w-full py-3 bg-amber-500 hover:bg-amber-400 text-black font-semibold rounded-2xl transition flex items-center justify-center gap-2 shadow-lg shadow-amber-500/10 text-sm cursor-pointer"> 
                         <span>🔄</span> ${userData.activeWitnessCycle ? t("profile.end_cycle", "End Witness Cycle") : t("profile.start_cycle", "Start Witness Cycle")} 
                     </button> 
                 </div> 
@@ -305,23 +307,23 @@ export function renderProfileUI(userData, retryCount = 0) {
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6"> 
                     ${!isCitizenCircle && !isWitness ? `
                         <button onclick="startPhoneVerification()"
-                                class="col-span-1 sm:col-span-2 py-3 px-4 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/30">
+                                class="col-span-1 sm:col-span-2 py-3 px-4 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/30 cursor-pointer">
                             🛡️ Get Verified — Unlock Citizen Circle
                         </button>
                     ` : ''}
 
                     <button onclick="openEditProfile()"  
-                            class="py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-black text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2"> 
+                            class="py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-black text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2 cursor-pointer"> 
                         ✏️ ${t("profile.edit_profile", "Edit Profile")} 
                     </button> 
 
                     <button onclick="openSettings()"  
-                            class="py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2"> 
+                            class="py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2 cursor-pointer"> 
                         ⚙️ ${t("profile.settings", "Settings & Security")} 
                     </button> 
 
                     <button onclick="handleSignOut()"  
-                            class="col-span-1 sm:col-span-2 py-3 px-4 bg-red-950/40 hover:bg-red-900/60 border border-red-500/40 text-red-400 hover:text-red-300 text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2"> 
+                            class="col-span-1 sm:col-span-2 py-3 px-4 bg-red-950/40 hover:bg-red-900/60 border border-red-500/40 text-red-400 hover:text-red-300 text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2 cursor-pointer"> 
                         🚪 ${t("auth.sign_out", "Sign Out")} 
                     </button> 
                 </div> 
@@ -376,6 +378,7 @@ export async function handleProfileStartCycle() {
 window.handleProfileStartCycle = handleProfileStartCycle;
 
 export function openEditProfile() { 
+    closeProfile(); // Dismiss base profile modal to avoid stacking conflicts
     const modal = document.getElementById('editProfileModal'); 
     if (!modal) return showToast(t("profile.edit_modal_not_found", "Edit modal not found"), "error"); 
 
@@ -392,6 +395,7 @@ export function openEditProfile() {
     } 
     modal.classList.remove('hidden'); 
     modal.style.display = 'flex';
+    modal.style.zIndex = '10000';
 } 
 window.openEditProfile = openEditProfile;
 
@@ -405,10 +409,12 @@ export function closeEditProfile() {
 window.closeEditProfile = closeEditProfile;
 
 export function openSettings() {
+    closeProfile(); // Dismiss base profile modal to avoid stacking conflicts
     const modal = document.getElementById('settingsModal');
     if (modal) {
         modal.classList.remove('hidden');
         modal.style.display = 'flex';
+        modal.style.zIndex = '10000';
     }
 }
 window.openSettings = openSettings;
