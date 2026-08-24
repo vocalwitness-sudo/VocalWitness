@@ -178,3 +178,25 @@ export async function submitFlagAppeal(mediaHash, justification) {
         return false;
     }
 }
+
+/* ==========================================================================
+   COMPATIBILITY ALIAS EXPORTS FOR IMAGESCRUBBER & MEDIA MODULES
+   ========================================================================== */
+
+/**
+ * Legacy/Module Alias mapping `logAuditEvent` to `logSecurityAudit`
+ */
+export async function logAuditEvent(actionType, targetId, details = {}) {
+    return await logSecurityAudit(actionType, targetId, details);
+}
+
+export const AuditEngine = {
+    logSecurityAudit,
+    logAuditEvent,
+    logAIFlaggedContent,
+    fetchAIFlagAuditLogs,
+    submitFlagAppeal,
+    generateForensicHash
+};
+
+export default AuditEngine;
