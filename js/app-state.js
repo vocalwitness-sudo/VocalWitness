@@ -25,7 +25,7 @@ export const state = {
     selectedLanguage: 'en',
     
     // VocalWitness Tier & Verification Progression
-    userTier: TIERS.TIER_1_BASIC.id,
+userTier: TIERS?.TIER_1_BASIC?.id || 'tier_1_basic',
     isPhoneVerified: false,
     isZkReady: false,
     zkIdentityCommitment: null,
