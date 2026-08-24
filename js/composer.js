@@ -2,30 +2,43 @@
 import { compressImage } from './media-compression.js';
 import { scrubImageMetadata } from './imageScrubber.js';
 import { showToast } from './utils.js';
-import { getCurrentUserTier, getCurrentWitnessLevel } from './tier.js';
+import { getCurrentUserTier } from './tier.js';
 import { db, auth } from './firebase-config.js';
-import { collection, addDoc, doc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
-import { uploadForensicMedia, resetMediaState, handleImageSelect, toggleVoiceRecording } from './media.js';
+import {
+    collection,
+    addDoc,
+    serverTimestamp
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import {
+    uploadForensicMedia,
+    resetMediaState,
+    handleImageSelect
+} from './media.js';
 import { logSecurityAudit } from './audit.js';
-
-// Local IndexedDB storage import
-import { saveDraftOffline } from './db.js';
 
 let isSubmitting = false;
 
 /**
- * Helper to strip EXIF metadata using the imported scrubber or fallback
+ * Safely strip EXIF / GPS metadata
  */
 async function stripExifData(file) {
-    if (typeof scrubImageMetadata === 'function') {
-        return await scrubImageMetadata(file);
+    try {
+        if (typeof scrubImageMetadata === 'function') {
+            return await scrubImageMetadata(file, {
+                maxWidth: 1920,
+                maxHeight: 1080,
+                outputType: 'image/webp',
+                quality: 0.85
+            });
+        }
+    } catch (err) {
+        console.warn('[Composer] EXIF scrub failed, using original file:', err);
     }
     return file;
 }
 
 /**
- * Helper to retrieve user tier safely
+ * Safely get user tier
  */
 async function getUserTier(uid) {
     try {
@@ -33,30 +46,36 @@ async function getUserTier(uid) {
             return await getCurrentUserTier(uid);
         }
     } catch (e) {
-        console.warn('Failed to fetch tier, falling back to base level:', e);
+        console.warn('Failed to fetch tier, falling back to level 0:', e);
     }
     return { level: 0 };
 }
 
 /**
- * Log audit helper wrapper
+ * Audit helper
  */
-async function logAuditEvent(uid, eventType, metadata) {
-    if (typeof logSecurityAudit === 'function') {
-        await logSecurityAudit(uid, eventType, metadata);
+async function logAuditEvent(uid, eventType, metadata = {}) {
+    try {
+        if (typeof logSecurityAudit === 'function') {
+            await logSecurityAudit(uid, eventType, metadata);
+        }
+    } catch (err) {
+        console.warn('Audit logging failed:', err);
     }
 }
 
 /**
- * Initializes listeners for the composer component.
+ * Initialize composer listeners
  */
 export function initComposer() {
     const fileInput = document.getElementById('media-input') || document.getElementById('photoInput');
-    const btnPhoto = document.getElementById('btn-attach-photo') || document.getElementById('btnPhoto') || document.getElementById('btn-photo');
+    const btnPhoto = document.getElementById('btn-attach-photo') ||
+                     document.getElementById('btnPhoto') ||
+                     document.getElementById('btn-photo');
     const postButton = document.getElementById('postButton') || document.getElementById('submitBtn');
     const composerForm = document.getElementById('composer-form') || document.getElementById('testimonyForm');
 
-    // Wire Photo Upload Trigger
+    // Photo button → open file picker
     if (btnPhoto && fileInput && !btnPhoto.dataset.listenerAttached) {
         btnPhoto.addEventListener('click', (e) => {
             e.preventDefault();
@@ -65,42 +84,57 @@ export function initComposer() {
         btnPhoto.dataset.listenerAttached = 'true';
     }
 
-    // Wire File Change Event
+    // File selected → scrub + compress + show preview
     if (fileInput && !fileInput.dataset.listenerAttached) {
         fileInput.addEventListener('change', async (e) => {
-            const previewArea = document.getElementById('preview-area') || document.getElementById('media-preview');
-            
-            if (e.target.files && e.target.files[0]) {
-                const originalFile = e.target.files[0];
-                try {
-                    // Scrub EXIF and compress
-                    const cleanFile = await stripExifData(originalFile);
-                    const compressedFile = await compressImage(cleanFile, { maxWidth: 1200, maxHeight: 1200, quality: 0.8 });
-                    
-                    // Construct safe synthetic event for downstream processor
-                    const syntheticEvent = {
-                        target: { files: [compressedFile] },
-                        preventDefault: () => {},
-                        stopPropagation: () => {}
-                    };
-                    
-                    await handleImageSelect(syntheticEvent, previewArea);
-                } catch (err) {
-                    console.error('Media processing error:', err);
-                    await handleImageSelect(e, previewArea); // Fallback to raw file
-                }
+            const previewArea = document.getElementById('preview-area') ||
+                                document.getElementById('media-preview');
+
+            if (!e.target.files?.[0]) return;
+
+            const originalFile = e.target.files[0];
+
+            try {
+                showToast('Processing image...', 'info');
+
+                // 1. Strip EXIF / GPS according to identity mode
+                const cleanFile = await stripExifData(originalFile);
+
+                // 2. Compress
+                const compressedFile = await compressImage(cleanFile, {
+                    maxWidth: 1200,
+                    maxHeight: 1200,
+                    quality: 0.8
+                });
+
+                // 3. Pass cleaned file to the existing media handler
+                const syntheticEvent = {
+                    target: { files: [compressedFile] },
+                    preventDefault: () => {},
+                    stopPropagation: () => {}
+                };
+
+                await handleImageSelect(syntheticEvent, previewArea);
+                showToast('Image ready', 'success');
+
+            } catch (err) {
+                console.error('Media processing error:', err);
+                showToast('Image processing failed – using original', 'warning');
+                // Fallback to original file
+                await handleImageSelect(e, previewArea);
             }
         });
+
         fileInput.dataset.listenerAttached = 'true';
     }
 
-    // Wire Submit Button directly if not inside a formal <form>
+    // Submit button
     if (postButton && !postButton.dataset.listenerAttached) {
         postButton.addEventListener('click', handleComposerSubmit);
         postButton.dataset.listenerAttached = 'true';
     }
 
-    // Wire Form Submit Event if form exists
+    // Form submit
     if (composerForm && !composerForm.dataset.listenerAttached) {
         composerForm.addEventListener('submit', handleComposerSubmit);
         composerForm.dataset.listenerAttached = 'true';
@@ -108,36 +142,46 @@ export function initComposer() {
 }
 
 /**
- * Handles the submission of Citizen Talk posts or Witness Voice testimonies.
+ * Main submit handler
  */
 async function handleComposerSubmit(e) {
-    if (e && e.preventDefault) e.preventDefault();
+    if (e?.preventDefault) e.preventDefault();
     if (isSubmitting) return;
 
     const user = auth.currentUser;
     if (!user) {
-        if (typeof showToast === 'function') {
-            showToast('You must be signed in to submit.', 'error');
-        } else {
-            alert('You must be signed in to submit.');
-        }
+        showToast('You must be signed in to submit.', 'error');
         return;
     }
 
-    // Dynamic element resolution with fallbacks for HTML schema
-    const bodyInput = document.getElementById('mainInput') || document.getElementById('postBody') || document.getElementById('testimonyBody');
-    const headlineInput = document.getElementById('testimonyTitle') || document.getElementById('headlineInput') || document.getElementById('testimonyHeadline');
-    const categorySelect = document.getElementById('categorySelect') || document.getElementById('testimonyCategory');
-    const fileInput = document.getElementById('media-input') || document.getElementById('photoInput');
-    const targetFeedSelect = document.getElementById('targetFeedSelect');
-    const channelToggle = document.getElementById('channelToggle') || document.getElementById('isWitnessVoice');
-    const submitBtn = document.getElementById('postButton') || document.getElementById('submitBtn') || document.querySelector('button[type="submit"]');
+    // Resolve elements with fallbacks
+    const bodyInput = document.getElementById('mainInput') ||
+                      document.getElementById('postBody') ||
+                      document.getElementById('testimonyBody');
 
-    const body = bodyInput ? bodyInput.value.trim() : '';
-    const headline = headlineInput ? headlineInput.value.trim() : '';
-    const category = categorySelect ? categorySelect.value : 'General';
-    
-    // Evaluate if post belongs to Witness Voice
+    const headlineInput = document.getElementById('testimonyTitle') ||
+                          document.getElementById('headlineInput') ||
+                          document.getElementById('testimonyHeadline');
+
+    const categorySelect = document.getElementById('categorySelect') ||
+                           document.getElementById('testimonyCategory');
+
+    const fileInput = document.getElementById('media-input') ||
+                      document.getElementById('photoInput');
+
+    const targetFeedSelect = document.getElementById('targetFeedSelect');
+    const channelToggle = document.getElementById('channelToggle') ||
+                          document.getElementById('isWitnessVoice');
+
+    const submitBtn = document.getElementById('postButton') ||
+                      document.getElementById('submitBtn') ||
+                      document.querySelector('button[type="submit"]');
+
+    const body = bodyInput?.value.trim() || '';
+    const headline = headlineInput?.value.trim() || '';
+    const category = categorySelect?.value || 'General';
+
+    // Determine channel
     let isWitnessVoice = false;
     if (targetFeedSelect) {
         isWitnessVoice = targetFeedSelect.value === 'witness_voice';
@@ -145,21 +189,13 @@ async function handleComposerSubmit(e) {
         isWitnessVoice = channelToggle.checked;
     }
 
+    // Validation
     if (!headline) {
-        if (typeof showToast === 'function') {
-            showToast('Please add a heading for your testimony.', 'error');
-        } else {
-            alert('Please add a heading for your testimony.');
-        }
+        showToast('Please add a heading for your testimony.', 'error');
         return;
     }
-
     if (!body) {
-        if (typeof showToast === 'function') {
-            showToast('Please enter your post content.', 'error');
-        } else {
-            alert('Please enter your post content.');
-        }
+        showToast('Please enter your post content.', 'error');
         return;
     }
 
@@ -170,8 +206,8 @@ async function handleComposerSubmit(e) {
         const userTier = await getUserTier(user.uid);
         let mediaData = { imageUrl: null, mediaHash: null };
 
-        // Process media upload if selected
-        if (fileInput && fileInput.files && fileInput.files[0]) {
+        // Upload media if present
+        if (fileInput?.files?.[0]) {
             const uploaded = await uploadForensicMedia(fileInput.files[0]);
             mediaData = {
                 imageUrl: typeof uploaded?.imageUrl === 'string' ? uploaded.imageUrl : null,
@@ -179,36 +215,32 @@ async function handleComposerSubmit(e) {
             };
         }
 
-        // Tier restriction check for Witness Voice feed
+        // Unverified users → save as draft when targeting Witness Voice
         if (isWitnessVoice && userTier.level < 1) {
-            // Unverified users save as Cloud Draft
             await addDoc(collection(db, `users/${user.uid}/drafts`), {
                 headline: headline || null,
-                body: body,
-                category: category,
+                body,
+                category,
                 imageUrl: mediaData.imageUrl,
                 mediaHash: mediaData.mediaHash,
                 targetChannel: 'witness_voice',
                 createdAt: serverTimestamp()
             });
 
-            if (typeof showToast === 'function') {
-                showToast('Testimony saved as draft. Complete verification to publish.', 'info');
-            } else {
-                alert('Your testimony was saved as a draft. Complete verification to publish to Witness Voice.');
-            }
+            showToast('Testimony saved as draft. Complete verification to publish.', 'info');
             resetForm();
             return;
         }
 
-        // Target collection routing
+        // Publish
         const targetCollection = isWitnessVoice ? 'testimonies' : 'posts';
+
         const payload = {
             authorUid: user.uid,
             authorName: user.displayName || 'Anonymous',
             headline: headline || 'Untitled Testimony',
-            body: body,
-            category: category,
+            body,
+            category,
             imageUrl: mediaData.imageUrl,
             mediaHash: mediaData.mediaHash,
             createdAt: serverTimestamp(),
@@ -217,24 +249,17 @@ async function handleComposerSubmit(e) {
 
         const docRef = await addDoc(collection(db, targetCollection), payload);
 
-        // Audit log trigger
         await logAuditEvent(user.uid, 'POST_CREATED', {
             docId: docRef.id,
             channel: targetCollection
         });
 
-        if (typeof showToast === 'function') {
-            showToast('Testimony published successfully!', 'success');
-        }
-
+        showToast('Testimony published successfully!', 'success');
         resetForm();
+
     } catch (error) {
         console.error('Composer error:', error);
-        if (typeof showToast === 'function') {
-            showToast('Failed to submit post. Please try again.', 'error');
-        } else {
-            alert('Failed to submit post. Please try again.');
-        }
+        showToast('Failed to submit post. Please try again.', 'error');
     } finally {
         isSubmitting = false;
         if (submitBtn) submitBtn.disabled = false;
@@ -242,22 +267,22 @@ async function handleComposerSubmit(e) {
 }
 
 /**
- * Resets composer UI state.
+ * Reset form UI
  */
 function resetForm() {
-    const composerForm = document.getElementById('composer-form') || document.getElementById('testimonyForm');
+    const form = document.getElementById('composer-form') || document.getElementById('testimonyForm');
     const headlineInput = document.getElementById('testimonyTitle') || document.getElementById('headlineInput');
     const bodyInput = document.getElementById('mainInput') || document.getElementById('postBody');
     const previewArea = document.getElementById('preview-area') || document.getElementById('media-preview');
     const fileInput = document.getElementById('media-input') || document.getElementById('photoInput');
 
-    if (composerForm) composerForm.reset();
+    if (form) form.reset();
     if (headlineInput) headlineInput.value = '';
     if (bodyInput) bodyInput.value = '';
     if (fileInput) fileInput.value = '';
-    
+
     if (previewArea) {
-        previewArea.innerHTML = '<span>Preview will appear here...</span>';
+        previewArea.innerHTML = '<span class="text-zinc-500 text-sm">Preview will appear here...</span>';
     }
 
     if (typeof resetMediaState === 'function') {
