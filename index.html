@@ -148,7 +148,7 @@
         <!-- DESKTOP HEADER -->
         <div class="hidden md:flex items-center justify-between">
             <!-- App Logo & Branding Title -->
-            <div class="flex items-center gap-3.5 group cursor-pointer shrink-0">
+            <a href="/" class="flex items-center gap-3.5 group shrink-0">
                 <div class="relative flex items-center justify-center">
                     <div class="absolute inset-0 bg-emerald-500 rounded-2xl blur opacity-40 group-hover:opacity-75 transition"></div>
                     <img src="./logo.png" alt="VocalWitness Logo" class="relative w-11 h-11 object-contain rounded-2xl shadow-lg border border-emerald-500/40 shrink-0">
@@ -157,10 +157,10 @@
                     <h1 class="text-xl sm:text-2xl font-black tracking-tight text-emerald-400 drop-shadow-sm" data-i18n="appTitle">VocalWitness</h1>
                     <p class="text-xs sm:text-sm tracking-wide font-black text-emerald-400 drop-shadow-sm" data-i18n="appSubtitle">Truth • Evidence • Public Square</p>
                 </div>
-            </div>
+            </a>
 
             <div class="flex items-center gap-3">
-                <select id="languageSelector-desktop" aria-label="Select Language" class="bg-zinc-900 text-zinc-100 border border-zinc-700/80 rounded-2xl px-3 py-2 text-sm font-medium focus:outline-none focus:border-emerald-500 shadow-inner">
+                <select id="languageSelect" aria-label="Select Language" class="bg-zinc-900 text-zinc-100 border border-zinc-700/80 rounded-2xl px-3 py-2 text-sm font-medium focus:outline-none focus:border-emerald-500 shadow-inner">
                     <optgroup label="Primary / Regional" class="bg-zinc-900 text-zinc-300">
                         <option value="en" selected class="bg-zinc-900 text-white">English</option>
                         <option value="pcm" class="bg-zinc-900 text-white">Naija Pidgin</option>
@@ -177,8 +177,10 @@
                     </optgroup>
                 </select>
 
-                <!-- GUEST / SIGN-IN BUTTON (DESKTOP: Google, Twitter, GitHub) -->
-                <button id="guest-action-btn" type="button" data-action="open-auth-modal" class="px-4 py-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm text-sm" style="background-color: #ffffff; color: #000000;">
+                <!-- GUEST / SIGN-IN BUTTON -->
+                <button id="openAuthModalBtn" type="button" 
+                        onclick="document.getElementById('authModal')?.classList.remove('hidden')" 
+                        class="px-4 py-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm text-sm">
                     <div class="flex items-center gap-1">
                         <img src="https://www.google.com/favicon.ico" class="w-3.5 h-3.5" alt="Google">
                         <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
@@ -187,34 +189,38 @@
                     <span data-i18n="joinBtn">Join VocalWitness</span>
                 </button>
 
-                <!-- AUTHENTICATED PROFILE BUTTON (DESKTOP) -->
-                <button id="profile-btn" data-action="open-profile" class="hidden px-4 py-2.5 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 text-emerald-400 font-bold rounded-2xl transition flex items-center gap-2 text-sm shadow-sm cursor-pointer">
-                    <img id="user-avatar-desktop" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='%236B7280'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z'/%3E%3C/svg%3E" alt="User" class="w-5 h-5 rounded-full object-cover hidden">
-                    <svg id="default-avatar-icon-desktop" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                <!-- AUTHENTICATED PROFILE BUTTON -->
+                <button id="userProfileBtn" type="button" 
+                        onclick="if (typeof openProfileModal === 'function') openProfileModal();" 
+                        class="hidden px-4 py-2.5 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 text-emerald-400 font-bold rounded-2xl transition flex items-center gap-2 text-sm shadow-sm cursor-pointer">
+                    <img id="user-avatar-desktop" src="" alt="User" class="w-5 h-5 rounded-full object-cover hidden">
+                    <span id="default-avatar-icon-desktop">👤</span>
                     <span id="user-name-desktop" data-i18n="profileBtn">My Profile</span>
                 </button>
 
-                <button id="support-btn" data-action="open-support-modal" class="px-5 py-2.5 font-medium rounded-2xl transition whitespace-nowrap text-sm shadow-sm" style="background-color: #10b981; color: #000000;" data-i18n="supportBtn">
+                <button id="openSupportModalBtn" type="button" 
+                        onclick="document.getElementById('supportModal')?.classList.remove('hidden')" 
+                        class="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black font-semibold rounded-2xl transition whitespace-nowrap text-sm shadow-sm" data-i18n="supportBtn">
                     Support The Square
                 </button>
 
-                <button id="data-saver-btn" data-action="toggle-data-saver" class="px-3.5 py-2.5 rounded-2xl hover:bg-zinc-800 transition text-xs font-semibold flex items-center gap-2 border text-zinc-300 shadow-sm cursor-pointer" style="background-color: #121826; border-color: #273548;">
+                <button id="data-saver-btn" type="button" class="px-3.5 py-2.5 rounded-2xl hover:bg-zinc-800 transition text-xs font-semibold flex items-center gap-2 border text-zinc-300 shadow-sm bg-zinc-900 border-zinc-800">
                     <span>⚡</span>
-                    <span class="hidden lg:inline">Data Saver: <strong id="data-saver-status" class="text-emerald-400 font-bold" style="color: #34d399;">Off</strong></span>
+                    <span class="hidden lg:inline">Data Saver: <strong id="data-saver-status" class="text-emerald-400 font-bold">Off</strong></span>
                 </button>
 
-                <a href="privacy.html" class="hidden lg:flex items-center hover:text-emerald-300 transition-colors text-sm font-medium px-3 py-2" style="color: #34d399;" data-i18n="privacyLink">
+                <a href="privacy.html" class="hidden lg:flex items-center text-emerald-400 hover:text-emerald-300 transition-colors text-sm font-medium px-3 py-2" data-i18n="privacyLink">
                     Privacy First
                 </a>
 
-                <button id="bookmarks-nav-btn" data-action="open-bookmarks" class="p-2.5 rounded-2xl hover:bg-zinc-800 text-zinc-300 hover:text-white transition-all flex items-center justify-center border" style="background-color: #18181b; border-color: #3f3f46;" aria-label="Saved Items" title="Saved Items">
+                <button id="bookmarks-nav-btn" type="button" class="p-2.5 rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white transition-all flex items-center justify-center" aria-label="Saved Items" title="Saved Items">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
                 </button>
 
                 <div class="relative inline-block" id="notification-container">
-                    <button id="notification-btn" type="button" class="relative p-2.5 rounded-full hover:bg-zinc-800 text-zinc-300 hover:text-white transition-all flex items-center justify-center border border-zinc-700/50" aria-label="Notifications">
+                    <button id="notification-btn" type="button" class="relative p-2.5 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white transition-all flex items-center justify-center" aria-label="Notifications">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-                        <span id="notification-badge" class="hidden absolute -top-1 -right-1 bg-emerald-500 text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-lg border border-zinc-900">0</span>
+                        <span id="notification-badge" class="hidden absolute -top-1 -right-1 bg-emerald-500 text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-lg">0</span>
                     </button>
                 </div>
             </div>
@@ -222,9 +228,8 @@
 
         <!-- MOBILE HEADER -->
         <div class="flex flex-col gap-2 md:hidden w-full">
-            <!-- HEAD 1: App Logo, Motto & Core Auth / Profile Button -->
             <div class="flex items-center justify-between w-full">
-                <div class="flex items-center gap-2.5 shrink-0">
+                <a href="/" class="flex items-center gap-2.5 shrink-0">
                     <div class="relative flex items-center justify-center">
                         <div class="absolute inset-0 bg-emerald-500 rounded-xl blur opacity-40"></div>
                         <img src="./logo.png" alt="VocalWitness Logo" class="relative w-9 h-9 object-contain rounded-xl shadow-md border border-emerald-500/40">
@@ -233,65 +238,37 @@
                         <h1 class="text-base font-black tracking-tight text-emerald-400 leading-tight" data-i18n="appTitle">VocalWitness</h1>
                         <p class="text-[10px] font-bold tracking-tight text-emerald-300 leading-none" data-i18n="appSubtitle">Truth • Evidence • Public Square</p>
                     </div>
-                </div>
+                </a>
 
                 <div class="flex items-center gap-2">
-                    <!-- GUEST / SIGN-IN BUTTON (MOBILE: Google, Twitter, GitHub) -->
-                    <button id="guest-action-btn-mobile" type="button" data-action="open-auth-modal" class="px-3 py-2 bg-white hover:bg-zinc-100 text-black font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm text-xs shrink-0">
-                        <div class="flex items-center gap-1">
-                            <img src="https://www.google.com/favicon.ico" class="w-3 h-3" alt="Google">
-                            <svg class="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-                            <svg class="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-                        </div>
-                        <span data-i18n="joinBtn">Sign In</span>
-                    </button>
-
-                    <!-- AUTHENTICATED PROFILE BUTTON (MOBILE) -->
-                    <button id="profile-btn-mobile" data-action="open-profile" class="hidden px-3 py-2 bg-zinc-900 border border-emerald-500/50 text-emerald-400 font-black text-xs rounded-xl shadow-sm shrink-0 cursor-pointer items-center gap-1.5">
-                        <img id="user-avatar-mobile" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='%236B7280'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z'/%3E%3C/svg%3E" alt="User" class="w-5 h-5 rounded-full object-cover hidden">
-                        <svg id="default-avatar-icon-mobile" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                        </svg>
-                        <span id="user-name-mobile" data-i18n="profileBtn">My Profile</span>
+                    <button type="button" onclick="document.getElementById('authModal')?.classList.remove('hidden')" class="px-3 py-2 bg-white hover:bg-zinc-100 text-black font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm text-xs shrink-0">
+                        <span>Sign In</span>
                     </button>
                 </div>
             </div>
 
-            <!-- mobile HEAD 2: Utility Toolbar (Language, Support, Data Saver, Privacy, Bookmarks, Notifications) -->
-            <div class="flex items-center justify-between w-full pt-2 border-t border-zinc-800/80 overflow-x-auto no-scrollbar touch-pan-x gap-2">
+            <div class="flex items-center justify-between w-full pt-2 border-t border-zinc-800/80 overflow-x-auto no-scrollbar gap-2">
                 <div class="flex items-center gap-1.5 shrink-0">
-                    <select id="languageSelector-mobile" aria-label="Select Language" class="bg-zinc-900 border border-zinc-700/80 text-zinc-100 font-medium rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-emerald-500 shrink-0">
-                        <option value="en" class="bg-zinc-900 text-white">EN</option>
-                        <option value="pcm" class="bg-zinc-900 text-white">PCM</option>
-                        <option value="ha" class="bg-zinc-900 text-white">HA</option>
-                        <option value="yo" class="bg-zinc-900 text-white">YO</option>
-                        <option value="ig" class="bg-zinc-900 text-white">IG</option>
-                        <option value="es" class="bg-zinc-900 text-white">ES</option>
-                        <option value="fr" class="bg-zinc-900 text-white">FR</option>
+                    <select id="languageSelectMobile" class="bg-zinc-900 border border-zinc-700/80 text-zinc-100 font-medium rounded-lg px-2 py-1 text-xs focus:outline-none">
+                        <option value="en">EN</option>
+                        <option value="pcm">PCM</option>
+                        <option value="ha">HA</option>
+                        <option value="yo">YO</option>
+                        <option value="ig">IG</option>
+                        <option value="sw">SW</option>
+                        <option value="fr">FR</option>
+                        <option value="es">ES</option>
                     </select>
 
-                    <button id="support-btn-mobile" data-action="open-support-modal" class="px-2.5 py-1 bg-emerald-500 text-black font-semibold rounded-lg text-[11px] shrink-0 whitespace-nowrap" data-i18n="supportBtn">
-                        Support The Square
+                    <button type="button" onclick="document.getElementById('supportModal')?.classList.remove('hidden')" class="px-2.5 py-1 bg-emerald-500 text-black font-semibold rounded-lg text-[11px] shrink-0 whitespace-nowrap" data-i18n="supportBtn">
+                        Support
                     </button>
                 </div>
 
                 <div class="flex items-center gap-1.5 shrink-0">
-                    <button id="data-saver-btn-mobile" data-action="toggle-data-saver" class="px-2.5 py-1 bg-zinc-900 border border-zinc-800 rounded-lg text-[11px] font-semibold text-zinc-300 flex items-center gap-1 shrink-0 whitespace-nowrap">
-                        <span>⚡</span>
-                        <span>Saver</span>
-                    </button>
-
-                    <a href="privacy.html" class="text-[11px] font-medium text-emerald-400 hover:text-emerald-300 px-1 py-0.5 shrink-0 whitespace-nowrap" data-i18n="privacyLink">
+                    <a href="privacy.html" class="text-[11px] font-medium text-emerald-400 px-1 py-0.5 shrink-0 whitespace-nowrap" data-i18n="privacyLink">
                         Privacy
                     </a>
-
-                    <button id="bookmarks-nav-btn-mobile" data-action="open-bookmarks" class="p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 shrink-0" aria-label="Saved Items">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
-                    </button>
-
-                    <button id="notification-btn-mobile" type="button" data-action="open-notifications" class="p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 relative shrink-0" aria-label="Notifications">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-                    </button>
                 </div>
             </div>
         </div>
@@ -300,51 +277,50 @@
 </header>
 
 
-<!-- MAIN CONTENT WRAPPER: CLEARANCE SPACING SO NOTHING IS HIDDEN BEHIND HEADER -->
-<main class="pt-48 md:pt-36 max-w-7xl mx-auto px-4">
-    <!-- Rest of your page content, Share Your Testimony box, feeds, etc. -->
-</main>
-<!-- MAIN CONTENT WRAPPER WITH PROPER TOP CLEARANCE -->
-<main class="pt-48 md:pt-24 max-w-6xl mx-auto px-4">
+<!-- ===================== SINGLE MAIN CONTENT WRAPPER ===================== -->
+<main id="main-content" class="pt-48 md:pt-28 max-w-6xl mx-auto px-3 sm:px-4 pb-20">
+
+  <!-- DESKTOP ONLY: Flash News Ticker & Global Search Bar (Stacked Vertically) -->
+  <div class="hidden md:flex flex-col gap-3 mb-6">
     
-    <!-- Navigation Feed Tabs -->
-    <nav id="main-nav" class="flex items-center gap-3 overflow-x-auto no-scrollbar py-2 my-2 border-b border-zinc-800">
-        <button class="nav-tab active" data-tab="citizen">
-            <span class="font-bold text-sm">Citizen Talk</span>
-            <span class="text-[10px] opacity-75">Public Feed</span>
-        </button>
-        <button class="nav-tab" data-tab="witness">
-            <span class="font-bold text-sm">Witness Voice</span>
-            <span class="text-[10px] opacity-75">Verified Stream</span>
-        </button>
-        <button class="nav-tab" data-tab="circle">
-            <span class="font-bold text-sm">My Circle</span>
-            <span class="text-[10px] opacity-75">Trusted Network</span>
-        </button>
-        <button class="nav-tab" data-tab="arena">
-            <span class="font-bold text-sm">The Arena</span>
-            <span class="text-[10px] opacity-75">Live Debates</span>
-        </button>
-    </nav>
+    <!-- 1. World-Class Media Ticker Feed -->
+    <div class="ticker-wrap border border-emerald-500/20 rounded-2xl py-2.5 px-3 text-xs text-slate-300 overflow-hidden flex items-center gap-3 bg-slate-900/90 shadow-md">
+      <div class="ticker-badge font-black uppercase text-emerald-400 px-3 py-1 bg-emerald-950/80 border border-emerald-500/30 rounded-xl shrink-0 tracking-wider">
+        ⚡ Flash Feed
+      </div>
+      <div class="ticker-move flex-1 overflow-hidden whitespace-nowrap" id="ticker-content-desktop">
+        <span class="inline-block animate-pulse text-zinc-300">
+          Loading breaking headlines from trusted global media sources...
+        </span>
+      </div>
+    </div>
 
-    <!-- Rest of your application content... -->
-</main>
+    <!-- 2. Long Desktop Search Bar -->
+    <div class="relative w-full">
+      <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-400">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+      </div>
+      <input type="text" 
+             id="desktop-search-input" 
+             placeholder="Search verified testimonies, news headlines, hashtags, or witnesses..." 
+             class="w-full bg-zinc-900/90 border border-zinc-700/80 hover:border-emerald-500/50 focus:border-emerald-500 rounded-2xl pl-11 pr-4 py-3 text-sm text-white placeholder-zinc-500 focus:outline-none transition shadow-inner">
+    </div>
 
-  
-<!-- ===================== MAIN CONTENT ===================== -->
-<main id="main-content" class="pt-[var(--header-height)] max-w-6xl mx-auto px-3 sm:px-4 pb-20">
+  </div>
 
-  <!-- BREAKING NEWS TICKER -->
-  <div class="ticker-wrap border border-emerald-500/20 rounded-2xl py-2 text-xs text-slate-300 mb-5 overflow-hidden"
-       style="background-color: #0f172a;">
+
+  <!-- MOBILE ONLY: Flash News Ticker -->
+  <div class="block md:hidden ticker-wrap border border-emerald-500/20 rounded-2xl py-2 text-xs text-slate-300 mb-5 overflow-hidden bg-slate-900">
     <div class="ticker-badge font-bold uppercase text-emerald-400 px-3">Flash Feed</div>
-    <div class="ticker-move" id="ticker-content">
+    <div class="ticker-move" id="ticker-content-mobile">
       <span>Loading breaking feed...</span>
     </div>
   </div>
 
 
-  <!-- MAIN TAB NAVIGATION -->
+  <!-- MAIN TAB NAVIGATION GRID -->
   <div class="mb-8">
     <nav id="main-nav" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5">
       <!-- Public Square -->
@@ -383,7 +359,7 @@
       </button>
     </nav>
 
-    <!-- More Options -->
+    <!-- More Options Menu -->
     <div class="flex justify-end mt-3">
       <div class="relative">
         <button id="more-btn" type="button"
@@ -408,8 +384,10 @@
       </div>
     </div>
   </div>
+
+  <!-- Testimony Composer and feeds follow here inside the same <main> -->
+
 </main>
-  
 <!-- ===================== TESTIMONY COMPOSER ===================== -->
 <section class="glass rounded-3xl p-5 sm:p-8 mb-10 shadow-xl border border-zinc-800/80">
   <!-- Header -->
@@ -508,6 +486,41 @@
     <span data-i18n="postButton">Publish Testimony</span>
   </button>
 </section>
+
+<!-- ===================== FEED CONTAINER ===================== -->
+<section id="feed-container" class="space-y-6 mb-16">
+  <!-- Feed Header & Controls -->
+  <div class="flex items-center justify-between px-2 mb-4">
+    <h3 id="feed-title" class="text-lg font-bold text-white flex items-center gap-2" data-i18n="recentTestimoniesTitle">
+      📜 Recent Testimonies
+    </h3>
+    <div class="flex items-center gap-2 text-xs text-zinc-400">
+      <span data-i18n="sortLabel">Sort:</span>
+      <select id="feedSortSelect" class="bg-zinc-900 border border-zinc-800 text-zinc-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-emerald-500 cursor-pointer">
+        <option value="latest" data-i18n="sortLatest">Latest</option>
+        <option value="verified" data-i18n="sortVerified">Verified First</option>
+        <option value="trending" data-i18n="sortTrending">Trending</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Dynamic Post Container Mount Point -->
+  <div id="testimonies-feed" class="space-y-4">
+    <!-- Initial Skeleton Loader -->
+    <div class="glass rounded-2xl p-6 border border-zinc-800/80 animate-pulse space-y-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-zinc-800"></div>
+        <div class="space-y-2 flex-1">
+          <div class="h-3 bg-zinc-800 rounded w-1/4"></div>
+          <div class="h-2 bg-zinc-800/60 rounded w-1/6"></div>
+        </div>
+      </div>
+      <div class="h-4 bg-zinc-800 rounded w-3/4"></div>
+      <div class="h-16 bg-zinc-800/50 rounded-xl"></div>
+    </div>
+  </div>
+</section>
+
 <!-- AUTH MODAL (Social Login Only - Google + X + GitHub) -->
 <div id="authModal" class="fixed inset-0 z-[200] hidden flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
     <div class="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-3xl bg-zinc-900 p-6 sm:p-8 shadow-2xl border border-zinc-700/80">
@@ -780,7 +793,6 @@
         </form>
     </div>
 </div>
-
   <!-- ====================== SETTINGS & SECURITY MODAL ====================== -->
 <div id="settingsModal"
      class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4 z-[10001] overflow-y-auto"
