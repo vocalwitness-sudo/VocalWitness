@@ -143,7 +143,7 @@
   
 <!-- HEADER -->
 <header class="fixed top-0 left-0 right-0 z-50 bg-zinc-950/90 backdrop-blur-md border-b border-emerald-500/30 shadow-2xl transition-all">
-    <div class="max-w-6xl mx-auto px-3 py-2.5 sm:px-4 sm:py-3">
+    <div class="max-w-6xl mx-auto px-3 py-2 sm:px-4 sm:py-3">
         
         <!-- DESKTOP HEADER -->
         <div class="hidden md:flex items-center justify-between">
@@ -176,17 +176,17 @@
                     </optgroup>
                 </select>
 
-                <!-- RESTORED: DESKTOP SUPPORT BUTTON -->
-               <button id="openSupportModalBtn" type="button" 
-        onclick="document.getElementById('supportModal')?.classList.remove('hidden')" 
-        class="px-4 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-2xl transition whitespace-nowrap text-sm shadow-md" 
-        data-i18n="supportBtn">
-    Support The Square
-</button>
+                <!-- FIXED VISIBILITY: DESKTOP SUPPORT BUTTON -->
+                <button id="openSupportModalBtn" type="button" 
+                        onclick="document.getElementById('supportModal')?.classList.remove('hidden')" 
+                        class="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold rounded-2xl transition whitespace-nowrap text-sm shadow-md cursor-pointer" 
+                        data-i18n="supportBtn">
+                    Support The Square
+                </button>
 
                 <button id="openAuthModalBtn" type="button" 
                         onclick="document.getElementById('authModal')?.classList.remove('hidden')" 
-                        class="px-4 py-2.5 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm text-sm">
+                        class="px-4 py-2 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm text-sm">
                     <div class="flex items-center gap-1">
                         <img src="https://www.google.com/favicon.ico" class="w-3.5 h-3.5" alt="Google">
                     </div>
@@ -195,23 +195,23 @@
 
                 <button id="userProfileBtn" type="button" 
                         onclick="if (typeof openProfileModal === 'function') openProfileModal();" 
-                        class="hidden px-4 py-2.5 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 text-emerald-400 font-bold rounded-2xl transition flex items-center gap-2 text-sm shadow-sm cursor-pointer">
+                        class="hidden px-4 py-2 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 text-emerald-400 font-bold rounded-2xl transition flex items-center gap-2 text-sm shadow-sm cursor-pointer">
                     <img id="user-avatar-desktop" src="" alt="User" class="w-5 h-5 rounded-full object-cover hidden">
                     <span id="default-avatar-icon-desktop">👤</span>
                     <span id="user-name-desktop" data-i18n="profileBtn">My Profile</span>
                 </button>
 
-                <button id="data-saver-btn" type="button" class="px-3 py-2.5 rounded-2xl hover:bg-zinc-800 transition text-xs font-semibold flex items-center gap-2 border text-zinc-300 shadow-sm bg-zinc-900 border-zinc-800">
+                <button id="data-saver-btn" type="button" class="px-3 py-2 rounded-2xl hover:bg-zinc-800 transition text-xs font-semibold flex items-center gap-2 border text-zinc-300 shadow-sm bg-zinc-900 border-zinc-800">
                     <span>⚡</span>
                     <span class="hidden lg:inline">Data Saver: <strong id="data-saver-status" class="text-emerald-400 font-bold">Off</strong></span>
                 </button>
 
-                <button id="bookmarks-nav-btn" type="button" class="p-2.5 rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white transition-all flex items-center justify-center" aria-label="Saved Items" title="Saved Items">
+                <button id="bookmarks-nav-btn" type="button" class="p-2 rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white transition-all flex items-center justify-center" aria-label="Saved Items" title="Saved Items">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
                 </button>
 
                 <div class="relative inline-block" id="notification-container">
-                    <button id="notification-btn" type="button" class="relative p-2.5 rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white transition-all flex items-center justify-center" aria-label="Notifications">
+                    <button id="notification-btn" type="button" class="relative p-2 rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white transition-all flex items-center justify-center" aria-label="Notifications">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
                         <span id="notification-badge" class="hidden absolute -top-1 -right-1 bg-emerald-500 text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-lg">0</span>
                     </button>
@@ -221,7 +221,7 @@
 
         <!-- MOBILE HEADER -->
         <div class="flex flex-col gap-2 md:hidden w-full">
-            <!-- HEADER 1 (Top Bar: Logo & Sign In) -->
+            <!-- HEADER 1 (Top Bar) -->
             <div class="flex items-center justify-between w-full">
                 <a href="/" class="flex items-center gap-2 shrink-0">
                     <div class="relative flex items-center justify-center">
@@ -234,13 +234,13 @@
                     </div>
                 </a>
 
-                <button type="button" onclick="document.getElementById('authModal')?.classList.remove('hidden')" class="px-3 py-1.5 bg-white hover:bg-zinc-100 text-black font-bold rounded-xl transition flex items-center gap-1 shadow-sm text-xs shrink-0">
+                <button type="button" onclick="document.getElementById('authModal')?.classList.remove('hidden')" class="px-3 py-1 bg-white hover:bg-zinc-100 text-black font-bold rounded-xl transition flex items-center gap-1 shadow-sm text-xs shrink-0">
                     <span>Sign In</span>
                 </button>
             </div>
 
-            <!-- HEADER 2 (Sub-bar: Restored Bookmark & Notification + Support + Lang) -->
-            <div class="flex items-center justify-between w-full pt-1.5 border-t border-zinc-800/80 gap-2">
+            <!-- HEADER 2 (Sub-bar with Bookmarks, Notifications, Lang & Support) -->
+            <div class="flex items-center justify-between w-full pt-1.5 border-t border-zinc-800/80 gap-1.5">
                 <div class="flex items-center gap-1.5 shrink-0">
                     <select id="languageSelectMobile" class="bg-zinc-900 border border-zinc-700/80 text-zinc-100 font-medium rounded-lg px-2 py-1 text-xs focus:outline-none">
                         <option value="en">EN</option>
@@ -253,25 +253,11 @@
                         <option value="es">ES</option>
                     </select>
 
-                    <button type="button" onclick="document.getElementById('supportModal')?.classList.remove('hidden')" class="px-2.5 py-1 bg-emerald-500 text-black font-semibold rounded-lg text-[11px] shrink-0 whitespace-nowrap" data-i18n="supportBtn">
+                    <button type="button" onclick="document.getElementById('supportModal')?.classList.remove('hidden')" class="px-2.5 py-1 bg-emerald-500 text-black font-bold rounded-lg text-[11px] shrink-0 whitespace-nowrap" data-i18n="supportBtn">
                         Support
                     </button>
                 </div>
 
-              <!-- MOBILE SEARCH BAR (Place above or inside Mobile Header 2) -->
-<div class="block md:hidden w-full px-1 pt-1 pb-2">
-    <div class="relative w-full">
-        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg class="h-4 w-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-            </svg>
-        </div>
-        <input type="text" id="searchInputMobile" 
-               placeholder="Search testimonies, news, tags..." 
-               class="w-full pl-9 pr-3 py-1.5 bg-zinc-900/90 border border-zinc-800 rounded-xl text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500">
-    </div>
-</div>
-                <!-- RESTORED: BOOKMARK & NOTIFICATION IN HEADER 2 -->
                 <div class="flex items-center gap-1.5 shrink-0">
                     <button id="bookmarks-nav-btn-mobile" type="button" class="p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white transition-all flex items-center justify-center">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
@@ -279,7 +265,7 @@
 
                     <div class="relative inline-block">
                         <button id="notification-btn-mobile" type="button" class="relative p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white transition-all flex items-center justify-center">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
                             <span id="notification-badge-mobile" class="hidden absolute -top-1 -right-1 bg-emerald-500 text-black text-[8px] font-bold px-1 rounded-full min-w-[12px] text-center">0</span>
                         </button>
                     </div>
@@ -289,10 +275,26 @@
                     </a>
                 </div>
             </div>
+
+            <!-- RESTORED: MOBILE SEARCH BAR -->
+            <div class="w-full pt-1">
+                <div class="relative w-full">
+                    <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+                        <svg class="h-3.5 w-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </div>
+                    <input type="text" id="searchInputMobile" 
+                           placeholder="Search testimonies, news, tags..." 
+                           class="w-full pl-8 pr-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500">
+                </div>
+            </div>
         </div>
 
     </div>
 </header>
+
+  
 <!-- ===================== SINGLE MAIN CONTENT WRAPPER ===================== -->
 <main id="main-content" class="pt-36 sm:pt-28 md:pt-24 max-w-6xl mx-auto px-3 sm:px-4 pb-20">
   <!-- DESKTOP ONLY: Flash News Ticker & Global Search Bar (Stacked Vertically) -->
