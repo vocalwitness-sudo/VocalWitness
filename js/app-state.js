@@ -8,11 +8,9 @@ let currentActiveAudioUrl = null;
 let currentActiveImageUrls = [];
 
 // ====================== ENGINE INSTANTIATION ======================
-// Initialized without relying on Firebase Storage
 export const citizenEngine = new CitizenTalkEngine(db);
 export const witnessEngine = new WitnessVoiceEngine(db);
 
-// Global debug exposure for client runtime inspection
 if (typeof window !== 'undefined') {
     window.citizenEngine = citizenEngine;
     window.witnessEngine = witnessEngine;
@@ -36,19 +34,10 @@ export const state = {
     profileMode: localStorage.getItem('vw_profile_mode') || PROFILE_MODES.ANONYMOUS
 };
 
-/**
- * Checks if a user is active and authenticated in the state.
- * @returns {boolean}
- */
 export function isUserAuthenticated() {
     return state.isAuthenticated && !!state.currentUser;
 }
 
-/**
- * Evaluates whether the current user can access a specific feature feed.
- * @param {string} feedName - ('citizen-talk' | 'citizen-circle' | 'witness-voice' | 'witness-circle')
- * @returns {boolean}
- */
 export function canAccessFeed(feedName) {
     if (feedName === 'citizen-talk') return true;
     if (feedName === 'citizen-circle') return state.isPhoneVerified || state.userTier >= TIERS.TIER_2_VERIFIED.id;
@@ -58,10 +47,6 @@ export function canAccessFeed(feedName) {
     return false;
 }
 
-/**
- * Returns active identity configuration for media uploaders and engines.
- * @returns {Object}
- */
 export function getActiveIdentityConfig() {
     const isBoldWitness = state.profileMode === PROFILE_MODES.BOLD_WITNESS;
     return {
@@ -73,10 +58,6 @@ export function getActiveIdentityConfig() {
     };
 }
 
-/**
- * Safely updates global application state and dispatches change event.
- * @param {Object} newState - Partial state update payload.
- */
 export function updateAppState(newState) {
     if (!newState || typeof newState !== 'object') return;
     
@@ -93,12 +74,8 @@ export function updateAppState(newState) {
 
 // ====================== MEDIA PREVIEW HELPERS ======================
 
-/**
- * Resets the media preview container back to its default placeholder state.
- */
 export function clearMediaPreviews() {
     const previewContainer = document.getElementById('preview-area') || document.getElementById('mediaPreviewContainer');
-    if (!previewContainer) return;
 
     // Revoke memory allocations
     if (currentActiveAudioUrl) {
@@ -108,19 +85,15 @@ export function clearMediaPreviews() {
     currentActiveImageUrls.forEach(url => URL.revokeObjectURL(url));
     currentActiveImageUrls = [];
 
-    // Reset UI to fallback placeholder
-    previewContainer.innerHTML = '<span>Preview will appear here...</span>';
-    previewContainer.classList.remove('hidden');
+    if (previewContainer) {
+        previewContainer.innerHTML = '<span>Preview will appear here...</span>';
+        previewContainer.classList.remove('hidden');
+    }
 
-    // Clear pending uploads on engine instances safely
     if (typeof citizenEngine?.clearPendingMedia === 'function') citizenEngine.clearPendingMedia();
     if (typeof witnessEngine?.clearPendingMedia === 'function') witnessEngine.clearPendingMedia();
 }
 
-/**
- * Renders an audio playback element inside the active media preview container.
- * @param {Blob|File} blob - Recorded or selected audio blob.
- */
 export function renderAudioPreview(blob) {
     if (!blob) return;
 
@@ -130,13 +103,11 @@ export function renderAudioPreview(blob) {
         return;
     }
 
-    // Revoke old audio URL if a previous recording existed
     if (currentActiveAudioUrl) {
         URL.revokeObjectURL(currentActiveAudioUrl);
         currentActiveAudioUrl = null;
     }
 
-    // Clean previous preview elements safely
     previewContainer.innerHTML = ''; 
     currentActiveAudioUrl = URL.createObjectURL(blob);
 
@@ -159,14 +130,9 @@ export function renderAudioPreview(blob) {
 
     wrapper.appendChild(audioEl);
     wrapper.appendChild(removeBtn);
-
     previewContainer.appendChild(wrapper);
 }
 
-/**
- * Renders moderate image thumbnails inside the active media preview container.
- * @param {File[]} files - Array of selected image files.
- */
 export function renderImagePreview(files = []) {
     const previewContainer = document.getElementById('preview-area') || document.getElementById('mediaPreviewContainer');
     if (!previewContainer) return;
@@ -176,7 +142,6 @@ export function renderImagePreview(files = []) {
         return;
     }
 
-    // Clean old objects
     currentActiveImageUrls.forEach(url => URL.revokeObjectURL(url));
     currentActiveImageUrls = [];
     previewContainer.innerHTML = '';
@@ -201,8 +166,8 @@ export function renderImagePreview(files = []) {
         removeBtn.innerHTML = '✕';
         
         removeBtn.addEventListener('click', () => {
-            files.splice(index, 1);
-            renderImagePreview(files);
+            const updatedFiles = files.filter((_, fIndex) => fIndex !== index);
+            renderImagePreview(updatedFiles);
         });
 
         card.appendChild(img);
