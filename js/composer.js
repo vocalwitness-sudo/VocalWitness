@@ -1,6 +1,6 @@
 // js/composer.js - Hardened Post & Testimony Composer
-import { compressImage } from './media-compression.js';
-import { scrubImageMetadata } from './imageScrubber.js';
+import { prepareMediaForUpload } from './media-pipeline.js';
+import { uploadMedia } from './upload.js'; // or uploadForensicMedia from ./upload.js
 import { showToast } from './utils.js';
 import { getCurrentUserTier } from './tier.js';
 import { db, auth } from './firebase-config.js';
@@ -10,32 +10,12 @@ import {
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import {
-    uploadForensicMedia,
     resetMediaState,
     handleImageSelect
 } from './media.js';
 import { logSecurityAudit } from './audit.js';
 
 let isSubmitting = false;
-
-/**
- * Safely strip EXIF / GPS metadata
- */
-async function stripExifData(file) {
-    try {
-        if (typeof scrubImageMetadata === 'function') {
-            return await scrubImageMetadata(file, {
-                maxWidth: 1920,
-                maxHeight: 1080,
-                outputType: 'image/webp',
-                quality: 0.85
-            });
-        }
-    } catch (err) {
-        console.warn('[Composer] EXIF scrub failed, using original file:', err);
-    }
-    return file;
-}
 
 /**
  * Safely get user tier
@@ -84,7 +64,7 @@ export function initComposer() {
         btnPhoto.dataset.listenerAttached = 'true';
     }
 
-    // File selected → scrub + compress + show preview
+    // File selected → prepare media (scrub metadata + compress) + show preview
     if (fileInput && !fileInput.dataset.listenerAttached) {
         fileInput.addEventListener('change', async (e) => {
             const previewArea = document.getElementById('preview-area') ||
@@ -97,19 +77,12 @@ export function initComposer() {
             try {
                 showToast('Processing image...', 'info');
 
-                // 1. Strip EXIF / GPS according to identity mode
-                const cleanFile = await stripExifData(originalFile);
+                // Pipeline handles EXIF scrubbing & compression
+                const preparedFile = await prepareMediaForUpload(originalFile);
 
-                // 2. Compress
-                const compressedFile = await compressImage(cleanFile, {
-                    maxWidth: 1200,
-                    maxHeight: 1200,
-                    quality: 0.8
-                });
-
-                // 3. Pass cleaned file to the existing media handler
+                // Pass prepared file to preview UI renderer
                 const syntheticEvent = {
-                    target: { files: [compressedFile] },
+                    target: { files: [preparedFile] },
                     preventDefault: () => {},
                     stopPropagation: () => {}
                 };
@@ -208,9 +181,12 @@ async function handleComposerSubmit(e) {
 
         // Upload media if present
         if (fileInput?.files?.[0]) {
-            const uploaded = await uploadForensicMedia(fileInput.files[0]);
+            // Pipeline scrubs/compresses, then upload.js uploads the result
+            const preparedFile = await prepareMediaForUpload(fileInput.files[0]);
+            const uploaded = await uploadMedia(preparedFile); // or uploadForensicMedia(preparedFile)
+            
             mediaData = {
-                imageUrl: typeof uploaded?.imageUrl === 'string' ? uploaded.imageUrl : null,
+                imageUrl: typeof uploaded === 'string' ? uploaded : (uploaded?.imageUrl || null),
                 mediaHash: typeof uploaded?.mediaHash === 'string' ? uploaded.mediaHash : null
             };
         }
