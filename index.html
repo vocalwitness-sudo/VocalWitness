@@ -139,9 +139,9 @@
 <!-- HEADER -->
 <header class="fixed top-0 left-0 right-0 z-50 bg-zinc-950/90 backdrop-blur-md border-b border-emerald-500/30 shadow-2xl transition-all">
     <div class="max-w-6xl mx-auto px-3 py-2.5 sm:px-4 sm:py-3">
-        
+
         <!-- DESKTOP HEADER -->
-        <div class="hidden md:flex items-center justify-between">
+        <div class="hidden md:flex items-center justify-between gap-4">
             <!-- App Logo & Branding Title -->
             <div class="flex items-center gap-3.5 group cursor-pointer shrink-0">
                 <div class="relative flex items-center justify-center">
@@ -154,7 +154,24 @@
                 </div>
             </div>
 
-            <div class="flex items-center gap-3">
+            <!-- DESKTOP SEARCH BAR -->
+            <div class="relative flex-1 max-w-md mx-2">
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400 text-sm">
+                    🔍
+                </div>
+                <input
+                    type="text"
+                    id="squareSearchInput"
+                    data-i18n-placeholder="searchPlaceholder"
+                    placeholder="Search testimonies, witnesses, or topics..."
+                    class="w-full pl-9 pr-10 py-2 bg-zinc-900 border border-zinc-700/80 rounded-xl text-white text-sm placeholder-zinc-500 focus:outline-none focus:border-emerald-500 transition-all shadow-inner"
+                >
+                <button id="clearSearchBtn" class="absolute inset-y-0 right-0 pr-3 flex items-center text-zinc-500 hover:text-white hidden text-xs" title="Clear search">
+                    ✕
+                </button>
+            </div>
+
+            <div class="flex items-center gap-2.5 shrink-0">
                 <select id="languageSelector-desktop" aria-label="Select Language" class="bg-zinc-900 text-zinc-100 border border-zinc-700/80 rounded-2xl px-3 py-2 text-sm font-medium focus:outline-none focus:border-emerald-500 shadow-inner">
                     <optgroup label="Primary / Regional" class="bg-zinc-900 text-zinc-300">
                         <option value="en" selected class="bg-zinc-900 text-white">English</option>
@@ -252,8 +269,25 @@
                 </div>
             </div>
 
-            <!-- mobile HEAD 2: Utility Toolbar (Language, Support, Data Saver, Privacy, Bookmarks, Notifications) -->
-            <div class="flex items-center justify-between w-full pt-2 border-t border-zinc-800/80 overflow-x-auto no-scrollbar touch-pan-x gap-2">
+            <!-- MOBILE HEAD 2: SEARCH BAR -->
+            <div class="relative w-full">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400 text-xs">
+                    🔍
+                </div>
+                <input
+                    type="text"
+                    id="squareSearchInputMobile"
+                    data-i18n-placeholder="searchPlaceholder"
+                    placeholder="Search testimonies, witnesses, or topics..."
+                    class="w-full pl-8 pr-8 py-2 bg-zinc-900 border border-zinc-700/80 rounded-xl text-white text-xs placeholder-zinc-500 focus:outline-none focus:border-emerald-500 transition-all shadow-inner"
+                >
+                <button id="clearSearchBtnMobile" class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-zinc-500 hover:text-white hidden text-xs" title="Clear search">
+                    ✕
+                </button>
+            </div>
+
+            <!-- MOBILE HEAD 3: Utility Toolbar (Language, Support, Data Saver, Privacy, Bookmarks, Notifications) -->
+            <div class="flex items-center justify-between w-full pt-1.5 border-t border-zinc-800/80 overflow-x-auto no-scrollbar touch-pan-x gap-2">
                 <div class="flex items-center gap-1.5 shrink-0">
                     <select id="languageSelector-mobile" aria-label="Select Language" class="bg-zinc-900 border border-zinc-700/80 text-zinc-100 font-medium rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-emerald-500 shrink-0">
                         <option value="en" class="bg-zinc-900 text-white">EN</option>
@@ -292,8 +326,18 @@
         </div>
 
     </div>
+
+    <!-- RESTORED EVIDENCE / TICKER BAR -->
+    <div id="live-evidence-ticker" class="w-full bg-zinc-900/90 border-t border-emerald-500/20 py-1 px-4 flex items-center gap-3 overflow-hidden text-xs text-zinc-400">
+        <span class="flex items-center gap-1.5 font-bold text-emerald-400 shrink-0 uppercase tracking-wider text-[10px] bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-500/30">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            Live
+        </span>
+        <div id="ticker-content" class="truncate font-mono text-[11px]">
+            Network operational • Forensic verification active • Secure ZK sync ready
+        </div>
+    </div>
 </header>
-  
 <!-- ===================== MAIN CONTENT ===================== -->
 <main id="main-content" class="pt-[var(--header-height)] max-w-6xl mx-auto px-3 sm:px-4 pb-20">
 
@@ -306,22 +350,6 @@
     </div>
   </div>
 
-  <!-- SEARCH BAR -->
-  <div class="relative w-full max-w-xl mx-auto mb-6">
-    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-400">
-      🔍
-    </div>
-    <input
-      type="text"
-      id="squareSearchInput"
-      data-i18n-placeholder="searchPlaceholder"
-      placeholder="Search testimonies, witnesses, or topics..."
-      class="w-full pl-11 pr-12 py-3.5 bg-zinc-900 border border-zinc-700 rounded-2xl text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500 transition-all text-base shadow-inner"
-    >
-    <button id="clearSearchBtn" class="absolute inset-y-0 right-0 pr-4 flex items-center text-zinc-500 hover:text-white hidden" title="Clear search">
-      ✕
-    </button>
-  </div>
 
   <!-- MAIN TAB NAVIGATION -->
   <div class="mb-8">
