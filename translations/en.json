@@ -2,22 +2,28 @@
   "appTitle": "VocalWitness",
   "appSubtitle": "Truth • Evidence • Public Square",
   "pageTitle": "VocalWitness • Truth • Evidence • Public Square",
+
   "legalLabel": "Important Notice:",
   "privacyWarning": "VocalWitness operates as a tamper-proof decentralized medium. We do not collect ID cards, passports, or personal data.",
+
   "placeholder": "Share your raw testimony... What did you witness?",
   "postButton": "🚀 Publish to the Square",
   "searchPlaceholder": "Search testimonies, witnesses, or topics...",
+
   "citizenTalk": "Citizen Talk",
   "trueWitness": "Witness Voice",
   "liveArena": "Live Arena",
   "groups": "Groups",
+
   "photoForensic": "📸 Photo + Forensic Shield",
   "voiceTestimony": "🎤 Voice Testimony",
+
   "supportPlatform": "Support The Square",
   "about": "About Us",
   "safety": "Safety Guidelines",
   "privacy": "Privacy Policy",
   "terms": "Terms of Service",
+
   "myDigitalPassport": "My Digital Passport",
   "editProfile": "✏️ Edit Profile",
   "changePassword": "🔑 Change Password",
@@ -25,6 +31,7 @@
   "signOut": "Sign Out",
   "signIn": "Sign In",
   "signUp": "Create Account",
+
   "createGroup": "Create New Group",
   "createGroupBtn": "Create Group",
   "cultivateSquare": "Cultivate the Public Square",
@@ -36,6 +43,7 @@
   "maybeLater": "Maybe later",
   "becomeSteward": "🌱 Become a Square Guardian",
   "cancel": "Cancel",
+
   "daoProposal": "Guardian DAO Proposal",
   "submitProposal": "Submit Proposal",
   "moderationDashboard": "Moderation Dashboard",
@@ -44,12 +52,14 @@
   "trustLevel": "Trust Level",
   "currentCircle": "Current Circle",
   "level": "Level",
+
   "loading": "Loading...",
   "success": "Success",
   "error": "Error",
   "warning": "Warning",
   "postPublished": "Testimony published successfully!",
   "postFailed": "Failed to publish testimony",
+
   "privacyLink": "🔒 Privacy First",
   "supportBtn": "Support The Square",
   "joinBtn": "Join VocalWitness",
@@ -57,7 +67,9 @@
   "toggleTheme": "Toggle theme",
   "backButton": "← Back",
   "backToSquare": "← Back to Square",
+  "backToSquareText": "Back to Square",
   "backToVocalWitness": "← Back to VocalWitness",
+
   "identity": {
     "anonymous_title": "ZK-Anonymous Mode",
     "anonymous_desc": "EXIF tags, GPS metadata, and voice acoustic patterns are automatically scrubbed before publishing.",
@@ -70,12 +82,14 @@
     "confirm_bold": "I Understand, Enable Bold Witness",
     "cancel": "Cancel"
   },
+
   "composer": {
     "scrubbing_active": "🛡️ Media Scrubbing Active: Metadata and GPS will be stripped upon posting.",
     "preserving_active": "⚡ Legal Preservation Active: Raw EXIF and GPS data will be attached.",
     "audio_normalized": "🎵 Acoustic normalization enabled.",
     "audio_raw": "🎙️ Raw un-normalized audio recorded."
   },
+
   "supportModal": {
     "title": "Sustain the Public Square",
     "description": "Contribute directly to the VocalWitness truth ledger. Your support helps keep our infrastructure alive.",
@@ -84,6 +98,7 @@
     "warning": "Send only USDT on the TRC-20 network.",
     "closeButton": "Close"
   },
+
   "authModal": {
     "title": "Enter The Square",
     "subtitle": "Establish your node identity on VocalWitness to report, verify, and publish evidence.",
@@ -91,6 +106,7 @@
     "anonymousBtn": "Continue as Anonymous Node",
     "cancelBtn": "Cancel & Continue Browsing"
   },
+
   "toast": {
     "nodeConnected": "Node Link Established: Google OAuth",
     "anonymousInit": "Anonymous Identity Node Initialized",
@@ -100,7 +116,9 @@
     "signInCancelled": "Sign-in cancelled.",
     "requireAuth": "Please sign in to continue."
   },
+
   "profile": {
+    "title": "User Profile",
     "reputation": "Reputation",
     "testimonies": "Testimonies",
     "verifications": "Verifications",
@@ -115,14 +133,52 @@
     "current_cycle_state": "Current Status",
     "not_attesting": "Not Attesting",
     "start_cycle": "Start Witness Cycle",
-    "citizen": "Citizen Witness"
+    "end_cycle": "End Witness Cycle",
+    "citizen": "Citizen Witness",
+    "bio_label": "Bio",
+    "bio_placeholder": "Tell the Square who you are... Share your story, values, or what truth means to you.",
+    "save_bio": "Save Bio",
+    "get_verified": "Get Verified — Unlock Citizen Circle",
+    "settings": "Settings & Security",
+    "stat_testimonies": "Testimonies",
+    "stat_hashes": "Hashes",
+    "stat_rep": "Rep Score"
   },
+
+  "accountSettings": "Account Settings",
+  "securityHeader": "Security & Access",
+  "passwordLabel": "Password",
+  "passwordSub": "Send password reset email",
+  "resetBtn": "Reset",
+  "2faLabel": "Two-Factor Auth (2FA)",
+  "2faSub": "Require phone verification on sign-in",
+  "preferencesHeader": "Preferences",
+  "defaultDoorLabel": "Default Entrance Door",
+  "doorPublicSquare": "Public Square",
+  "doorCitizenTalk": "Citizen Talk",
+  "doorWitnessVoice": "Witness Voice",
+  "dangerZoneHeader": "Data & Identity",
+  "exportLabel": "Export Profile Record",
+  "exportSub": "Download identity summary PDF",
+  "exportBtn": "Download PDF",
+
+  "displayName": "Display Name",
+  "username": "Username",
+  "region": "Region / Location",
+  "bio": "Bio",
+  "save": "Save",
+  "saveChanges": "Save Changes",
+
   "common": {
     "verified": "Verified",
     "not_verified": "Not Verified",
     "inactive": "Inactive",
-    "loading": "Loading..."
+    "active": "Active",
+    "loading": "Loading...",
+    "cancel": "Cancel",
+    "close": "Close"
   },
+
   "trueWitnessTitle": "Witness Voice • VocalWitness",
   "trueWitnessSubtitle": "ZK Verified • High Trust",
   "zkVerifiedTestimonies": "ZK Verified Testimonies",
@@ -131,10 +187,12 @@
   "trustScore": "Trust Score",
   "forensicProof": "Forensic Proof",
   "viewFullTestimony": "View Full Testimony",
+
   "myProfileTitle": "My Profile | VocalWitness",
   "myProfile": "My Profile",
   "loadingProfile": "Loading your profile...",
   "settings": "Settings",
+
   "publicSquareTab": "Public Square",
   "publicSquareDesc": "Share stories & evidence",
   "evidenceLedgerTab": "Evidence Ledger",
@@ -146,6 +204,7 @@
   "verifiedWitnessesTab": "Verified Witnesses",
   "verifiedWitnessesDesc": "Trusted voices",
   "moreOptionsBtn": "More Options",
+
   "myTestimoniesMenu": "My Testimonies",
   "groupsMenu": "Groups",
   "trueWitnessMenu": "Witness Voice",
@@ -153,12 +212,14 @@
   "privacyPolicyMenu": "Privacy Policy",
   "termsOfServiceMenu": "Terms of Service",
   "safetyGuidelinesMenu": "Safety Guidelines",
+
   "shareTestimonyTitle": "Share Your Testimony",
   "publicSquareSubtitle": "Public Square",
   "mainInputPlaceholder": "Share your raw testimony... What did you witness?",
   "addPhotoEvidence": "Add Photo Evidence",
   "recordVoiceMessage": "Record Voice Message",
   "previewAreaText": "Preview will appear here...",
+
   "aboutPageTitle": "About VocalWitness • Truth • Evidence • Public Square",
   "aboutTitle": "About VocalWitness",
   "aboutSubtitle": "Your Voice. Your Truth. Shared with Integrity.",
@@ -182,6 +243,7 @@
   "trustStep3Desc": "We function strictly as a neutral public square and distribution medium. We do not edit, boost, or suppress content except to enforce basic safety and legal requirements.",
   "aboutQuote": "\"In the age of noise, the clearest voice is the one that can prove it was never altered.\"",
   "footerCopyright": "© 2026 VocalWitness • Built for Truth • Evidence • Public Square",
+
   "privacyPageTitle": "Privacy Policy - VocalWitness",
   "privacyTitle": "Privacy Policy",
   "privacyLastUpdated": "Last updated: July 19, 2026",
@@ -214,6 +276,7 @@
   "privacySection7Title": "7. Third Parties & Data Sharing",
   "privacySection7Text": "We use Firebase (Google) for authentication, database, and storage. Your data is protected under their security standards. We do not share personal data with third parties for marketing purposes.",
   "privacyImportant": "Important: Public testimonies are visible to everyone. We strongly recommend that you never post highly sensitive personal information that could compromise your safety.",
+
   "termsPageTitle": "Terms of Service • VocalWitness",
   "termsTitle": "Terms of Service",
   "termsLastUpdated": "Last updated: July 19, 2026",
@@ -241,6 +304,7 @@
   "termsSection7Text": "VocalWitness is sustained entirely through voluntary community donations, transparent support funds, and direct non-custodial cryptographic contributions. Donations are non-refundable and do not grant special governance privileges or ownership over the platform.",
   "termsSection8Title": "8. Limitation of Liability",
   "termsSection8Text": "VocalWitness and its maintainers disclaim liability for user-generated content, network disruptions, or external cryptographic verification failures.",
+
   "ledgerIntegrityTitle": "Ledger Integrity & Application-Level Immutability",
   "ledgerIntegrityPara1": "Once a record is written to the Forensic Ledger or the audit log, the application and database rules make it impossible for any user (or ordinary operator) to edit or delete it.",
   "ledgerIntegrityPoint1": "Firestore security rules explicitly forbid update and delete on the ledger collections.",
