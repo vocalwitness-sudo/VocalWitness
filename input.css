@@ -46,32 +46,35 @@ body {
 #main-nav {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
   overflow-x: auto;
   white-space: nowrap;
   padding: 0.5rem 0;
   position: relative;
-  z-index: 55;
+  z-index: 30; /* Keep underneath fixed header z-index */
 }
 
 .nav-tab {
-  min-width: 150px;
-  max-width: 200px;
-  height: 52px;
+  min-width: 120px;
+  max-width: 180px;
+  height: 46px;
   display: inline-flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   text-align: center;
   white-space: nowrap;
-  padding: 8px 16px;
-  border-radius: 1rem;
+  padding: 6px 14px;
+  border-radius: 0.75rem;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
-  z-index: 50;
-  pointer-events: auto;
-  cursor: pointer;
+  z-index: 20;
+  pointer-events: auto !important;
+  cursor: pointer !important;
   user-select: none;
+  background-color: rgba(24, 24, 27, 0.8);
+  border: 1px solid rgba(63, 63, 70, 0.6);
+  color: #a1a1aa;
 }
 
 /* Active tab - strong emerald */
@@ -80,7 +83,7 @@ body {
   background-color: var(--color-primary) !important;
   color: #000000 !important;
   border-color: var(--color-primary-dark) !important;
-  font-weight: 600;
+  font-weight: 700;
   box-shadow: 0 0 14px rgba(16, 185, 129, 0.4);
 }
 
@@ -101,7 +104,7 @@ body {
 #main-nav button.nav-tab.active::after {
   content: '';
   position: absolute;
-  bottom: 5px;
+  bottom: 4px;
   left: 50%;
   transform: translateX(-50%);
   width: 4px;
@@ -110,39 +113,12 @@ body {
   border-radius: 50%;
 }
 
-/* ====================== LAYOUT & BUTTON SIZING ====================== */
-#guest-action-btn { min-width: 185px; }
-#support-btn { min-width: 175px; }
-#postButton { min-width: 280px; }
-
-#btn-photo,
-#btn-voice {
-  min-height: 60px;
-  min-width: 240px;
-  white-space: nowrap;
-}
-
-/* ====================== Z-INDEX & INTERACTION DRIFT FIXES ====================== */
-header { z-index: 60; }
-
-#squareSearchInput,
-#clearSearchBtn {
-  pointer-events: auto;
-  z-index: 20;
-}
-
-#btn-photo,
-#btn-voice,
-#postButton,
-#signin-btn,
+/* ====================== BUTTON FLEXIBILITY ====================== */
+/* Responsive sizing removes fixed overflow issues */
+#guest-action-btn,
 #support-btn,
-#profile-btn,
-#bookmarks-nav-btn,
-button,
-[role="button"] {
-  position: relative;
-  z-index: 40;
-  pointer-events: auto;
+#postButton {
+  min-width: auto;
 }
 
 /* Hide scrollbars cleanly */
@@ -156,104 +132,17 @@ button,
   scrollbar-width: none;
 }
 
-/* ====================== TICKER BANNER ====================== */
-.ticker-wrap {
-  display: flex;
-  overflow: hidden;
-  white-space: nowrap;
-  position: relative;
-  z-index: 40;
+/* ====================== Z-INDEX FIXES ====================== */
+header { 
+  z-index: 50 !important; 
 }
 
-.ticker-badge {
-  padding: 0 12px;
-  background-color: var(--color-bg-dark);
-  z-index: 2;
-  flex-shrink: 0;
-}
-
-.ticker-move {
-  display: inline-block;
-  white-space: nowrap;
-  padding-left: 100%;
-  animation: ticker 35s linear infinite;
-  will-change: transform;
-}
-
-.ticker-move:hover {
-  animation-play-state: paused;
-}
-
-.ticker-item {
-  display: inline-block;
-  padding: 0 2rem;
-}
-
-@keyframes ticker {
-  0% { transform: translate3d(0, 0, 0); }
-  100% { transform: translate3d(-100%, 0, 0); }
-}
-
-/* ====================== BOOKMARKS FEED STYLES ====================== */
-.bookmarks-filter-bar {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
-  overflow-x: auto;
-  padding-bottom: 0.25rem;
-}
-
-.filter-chip {
-  background-color: #18181b;
-  border: 1px solid #3f3f46;
-  color: #a1a1aa;
-  padding: 0.5rem 1rem;
-  border-radius: 9999px;
-  font-size: 0.875rem;
+header button,
+header input,
+header select,
+header a {
+  pointer-events: auto !important;
   cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.2s ease;
-}
-
-.filter-chip.active,
-.filter-chip:hover {
-  background-color: var(--color-primary);
-  color: #000000;
-  border-color: var(--color-primary);
-  font-weight: 600;
-}
-
-.bookmarks-feed-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
-}
-
-.bookmark-card {
-  background-color: #111827;
-  border: 1px solid var(--color-glass-border);
-  border-radius: 1rem;
-  padding: 1rem;
-  transition: border-color 0.2s ease;
-}
-
-.bookmark-card:hover {
-  border-color: rgba(16, 185, 129, 0.4);
-}
-
-/* ====================== BRAND & HEADER FIXES ====================== */
-.brand-title, 
-header h1, 
-header .font-bold {
-    font-weight: 800 !important;
-    opacity: 1 !important;
-    color: #ffffff !important;
-}
-
-header p, 
-.brand-subtitle {
-    font-weight: 500 !important;
-    opacity: 0.9 !important;
 }
 
 /* ====================== DATA SAVER STATES ====================== */
@@ -269,15 +158,4 @@ header p,
     background-color: rgba(31, 41, 55, 0.8) !important;
     border-color: rgba(75, 85, 99, 0.4) !important;
     color: #9ca3af !important;
-}
-
-/* ====================== FLASH FEED FIX ====================== */
-#flashFeed, 
-.flash-feed-container {
-    display: flex;
-    align-items: center;
-    min-height: 40px;
-    pointer-events: auto;
-    position: relative;
-    z-index: 30;
 }
