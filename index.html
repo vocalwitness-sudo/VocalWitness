@@ -108,6 +108,7 @@
 <link rel="stylesheet" href="./style.css">
 <link rel="icon" href="./logo.png" type="image/png">
 
+<!-- CDN LIBRARIES (Global Window Attachments) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" defer></script>
@@ -1148,14 +1149,15 @@
     });
 </script>
 
-<!-- APPLICATION MODULE RUNTIME -->
+<!-- APPLICATION MODULE RUNTIME (ES Modules) -->
+<script type="module" src="./js/app-state.js"></script>
 <script type="module" src="./js/auth.js"></script>
-<script type="module" src="./js/main.js"></script>
 <script type="module" src="./js/notifications.js"></script>
 <script type="module" src="./js/bookmarks.js"></script>
 <script type="module" src="./js/zk-proof.js"></script>
 <script type="module" src="./js/feed.js"></script>
 <script type="module" src="./js/witness-voice.js"></script>
+<script type="module" src="./js/main.js"></script>
 
 <!-- LIVE ARENA INITIALIZATION -->
 <script type="module">
