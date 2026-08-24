@@ -164,12 +164,14 @@
     .glass { background-color: #111827 !important; }
   }
 </style>
+
+  
 <!-- ====================== HEADER ====================== -->
 <header class="fixed top-0 left-0 right-0 z-50 bg-zinc-950/90 backdrop-blur-md border-b border-emerald-500/30 shadow-2xl">
   <div class="max-w-6xl mx-auto px-3 py-2 sm:px-4 sm:py-2.5">
 
     <!-- ===================== DESKTOP HEADER ===================== -->
-  <!-- ===================== DESKTOP HEADER ===================== -->
+  
 <div class="hidden md:flex items-center justify-between gap-4 py-3">
   
   <!-- Brand - fixed width so it doesn't push everything -->
@@ -257,93 +259,96 @@
 </div>
 
     <!-- ===================== DESKTOP HEADER ===================== -->
-<div class="hidden md:flex items-center justify-between gap-4 py-3">
-  
-  <!-- Brand - fixed width so it doesn't push everything -->
-  <a href="/" class="flex items-center gap-3 group shrink-0" aria-label="VocalWitness Home">
-    <div class="relative flex items-center justify-center">
-      <div class="absolute inset-0 bg-emerald-500 rounded-2xl blur opacity-40 group-hover:opacity-70 transition"></div>
-      <img src="./logo.png" alt="VocalWitness Logo" 
-           class="relative w-10 h-10 object-contain rounded-2xl shadow-lg border border-emerald-500/40">
-    </div>
-    <div class="leading-tight">
-      <h1 class="text-xl font-black tracking-tight text-emerald-400" data-i18n="appTitle">VocalWitness</h1>
-      <p class="text-[11px] font-bold tracking-wide text-emerald-400/90" data-i18n="appSubtitle">Truth • Evidence • Public Square</p>
-    </div>
-  </a>
+<!-- ====================== HEADER ====================== -->
+<header class="fixed top-0 left-0 right-0 z-50 bg-zinc-950/90 backdrop-blur-md border-b border-emerald-500/30 shadow-2xl">
+  <div class="max-w-6xl mx-auto px-3 py-2 sm:px-4 sm:py-2.5">
 
-  <!-- Right side actions - now properly spaced and equal height -->
-  <div class="flex items-center gap-2 shrink-0">
-    
-    <!-- Language -->
-    <select id="languageSelect" aria-label="Select Language"
-            class="h-9 bg-zinc-900 text-zinc-100 border border-zinc-700 rounded-xl px-3 text-xs font-medium focus:outline-none focus:border-emerald-500">
-      <option value="en" selected>English</option>
-      <option value="pcm">Naija Pidgin</option>
-      <option value="ha">Hausa</option>
-      <option value="yo">Yorùbá</option>
-      <option value="ig">Igbo</option>
-      <option value="sw">Swahili</option>
-      <option value="fr">Français</option>
-      <option value="es">Español</option>
-      <option value="pt">Português</option>
-      <option value="ar">العربية</option>
-    </select>
+    <!-- ===================== DESKTOP HEADER ===================== -->
+    <div class="hidden md:flex items-center justify-between gap-4 py-3">
 
-    <!-- Support -->
-    <button id="openSupportModalBtn" type="button"
-            class="h-9 px-4 font-bold rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs transition hover:scale-105 shadow-md whitespace-nowrap"
-            data-i18n="supportBtn">
-      Support The Square
-    </button>
+      <!-- Brand -->
+      <a href="/" class="flex items-center gap-3 group shrink-0" aria-label="VocalWitness Home">
+        <div class="relative flex items-center justify-center">
+          <div class="absolute inset-0 bg-emerald-500 rounded-2xl blur opacity-40 group-hover:opacity-70 transition"></div>
+          <img src="./logo.png" alt="VocalWitness Logo"
+               class="relative w-10 h-10 object-contain rounded-2xl shadow-lg border border-emerald-500/40">
+        </div>
+        <div class="leading-tight">
+          <h1 class="text-xl font-black tracking-tight text-emerald-400" data-i18n="appTitle">VocalWitness</h1>
+          <p class="text-[11px] font-bold tracking-wide text-emerald-400/90" data-i18n="appSubtitle">Truth • Evidence • Public Square</p>
+        </div>
+      </a>
 
-    <!-- Join -->
-    <button id="openAuthModalBtn" type="button"
-            class="h-9 px-4 bg-white hover:bg-zinc-100 text-zinc-900 font-bold rounded-xl text-xs flex items-center gap-1.5 border border-zinc-200 whitespace-nowrap"
-            style="background-color:#ffffff !important; color:#18181b !important;">
-      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-3.5 h-3.5" alt="">
-      <span data-i18n="joinBtn">Join VocalWitness</span>
-    </button>
+      <!-- Right side actions -->
+      <div class="flex items-center gap-2 shrink-0">
 
-    <!-- Profile (hidden until login) -->
-    <button id="userProfileBtn" type="button"
-            class="hidden h-9 px-4 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 text-emerald-400 font-bold rounded-xl text-xs flex items-center gap-1.5 whitespace-nowrap"
-            aria-label="Open profile">
-      <img id="user-avatar-desktop" src="" alt="" class="w-4 h-4 rounded-full object-cover hidden">
-      <span id="default-avatar-icon-desktop">👤</span>
-      <span id="user-name-desktop" data-i18n="profileBtn">My Profile</span>
-    </button>
+        <!-- Language -->
+        <select id="languageSelect" aria-label="Select Language"
+                class="h-9 bg-zinc-900 text-zinc-100 border border-zinc-700 rounded-xl px-3 text-xs font-medium focus:outline-none focus:border-emerald-500">
+          <option value="en" selected>English</option>
+          <option value="pcm">Naija Pidgin</option>
+          <option value="ha">Hausa</option>
+          <option value="yo">Yorùbá</option>
+          <option value="ig">Igbo</option>
+          <option value="sw">Swahili</option>
+          <option value="fr">Français</option>
+          <option value="es">Español</option>
+          <option value="pt">Português</option>
+          <option value="ar">العربية</option>
+        </select>
 
-    <!-- Data Saver -->
-    <button id="data-saver-btn" type="button" onclick="toggleDataSaver()"
-            class="h-9 px-3 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white text-xs font-semibold flex items-center gap-1.5">
-      <span>⚡</span>
-      <span class="hidden xl:inline">Data Saver: <strong id="data-saver-status" class="text-emerald-400">Off</strong></span>
-    </button>
+        <!-- Support -->
+        <button id="openSupportModalBtn" type="button"
+                class="h-9 px-4 font-bold rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs transition hover:scale-105 shadow-md whitespace-nowrap"
+                data-i18n="supportBtn">
+          Support The Square
+        </button>
 
-    <!-- Bookmarks -->
-    <button id="bookmarks-nav-btn" type="button" aria-label="Saved Items"
-            class="h-9 w-9 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:border-emerald-500/50 flex items-center justify-center">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
-      </svg>
-    </button>
+        <!-- Join -->
+        <button id="openAuthModalBtn" type="button"
+                class="h-9 px-4 bg-white hover:bg-zinc-100 text-zinc-900 font-bold rounded-xl text-xs flex items-center gap-1.5 border border-zinc-200 whitespace-nowrap"
+                style="background-color:#ffffff !important; color:#18181b !important;">
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-3.5 h-3.5" alt="">
+          <span data-i18n="joinBtn">Join VocalWitness</span>
+        </button>
 
-    <!-- Notifications -->
-    <div class="relative" id="notification-container">
-      <button id="notification-btn" type="button" aria-label="Notifications"
-              class="h-9 w-9 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:border-emerald-500/50 flex items-center justify-center relative"
-              onclick="toggleNotificationDropdown(event)">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-        </svg>
-        <span id="notification-badge" class="hidden absolute -top-1 -right-1 bg-emerald-500 text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">0</span>
-      </button>
-    </div>
-  </div>
-</div>
-          <!-- Notification Dropdown -->
-          <div id="notification-dropdown" 
+        <!-- Profile (hidden until login) -->
+        <button id="userProfileBtn" type="button"
+                class="hidden h-9 px-4 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 text-emerald-400 font-bold rounded-xl text-xs flex items-center gap-1.5 whitespace-nowrap"
+                aria-label="Open profile">
+          <img id="user-avatar-desktop" src="" alt="" class="w-4 h-4 rounded-full object-cover hidden">
+          <span id="default-avatar-icon-desktop">👤</span>
+          <span id="user-name-desktop" data-i18n="profileBtn">My Profile</span>
+        </button>
+
+        <!-- Data Saver -->
+        <button id="data-saver-btn" type="button" onclick="toggleDataSaver()"
+                class="h-9 px-3 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white text-xs font-semibold flex items-center gap-1.5">
+          <span>⚡</span>
+          <span class="hidden xl:inline">Data Saver: <strong id="data-saver-status" class="text-emerald-400">Off</strong></span>
+        </button>
+
+        <!-- Bookmarks -->
+        <button id="bookmarks-nav-btn" type="button" aria-label="Saved Items"
+                class="h-9 w-9 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:border-emerald-500/50 flex items-center justify-center">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
+          </svg>
+        </button>
+
+        <!-- Notifications -->
+        <div class="relative" id="notification-container">
+          <button id="notification-btn" type="button" aria-label="Notifications"
+                  class="h-9 w-9 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:border-emerald-500/50 flex items-center justify-center relative"
+                  onclick="toggleNotificationDropdown(event)">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+            </svg>
+            <span id="notification-badge" class="hidden absolute -top-1 -right-1 bg-emerald-500 text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">0</span>
+          </button>
+
+          <!-- Notification Dropdown (positioned relative to this container) -->
+          <div id="notification-dropdown"
                class="hidden absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto bg-zinc-900/95 backdrop-blur-xl border border-zinc-700 rounded-2xl shadow-2xl z-50">
             <div class="sticky top-0 bg-zinc-900/95 border-b border-zinc-800 px-4 py-3 flex items-center justify-between">
               <h3 class="text-sm font-bold text-white">Notifications</h3>
