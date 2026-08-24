@@ -1,5 +1,5 @@
-// js/tier.js - Enhanced Tier, Progression & Governance System (Optimized & Cached)
-// Compatible with the fixed phoneVerification.js + firestore.rules
+// js/tier.js - Enhanced Tier, Progression & Governance System
+// Integrated with ZK Paid Features, Fixed Duplicate TIERS, and Cached Firebase Access
 
 import { 
   doc, 
@@ -15,10 +15,76 @@ import {
 import { db, auth } from './firebase-config.js';
 import { showToast } from './utils.js';
 
+// ====================== TIER DEFINITIONS ======================
 export const TIERS = {
   CITIZEN: 'citizen',
   CITIZEN_CIRCLE: 'citizen_circle',     // Phone Verified
   WITNESS_CIRCLE: 'witness_circle'      // ZK Verified
+};
+
+// Detailed Tier Metadata for Application Logic & Upload Limits
+export const TIER_METADATA = {
+  [TIERS.CITIZEN]: {
+    id: 1,
+    name: 'Citizen (Email)',
+    badge: '🔒 Citizen',
+    maxUploadMB: 15,
+    requiresPhone: false,
+    requiresZK: false,
+    allowedFeeds: ['citizen-talk'],
+    canVoteGovernance: false,
+    canValidate: false,
+  },
+  [TIERS.CITIZEN_CIRCLE]: {
+    id: 2,
+    name: 'Verified Citizen (Phone)',
+    badge: '🛡️ Field Witness',
+    maxUploadMB: 100,
+    requiresPhone: true,
+    requiresZK: false,
+    allowedFeeds: ['citizen-talk', 'citizen-circle'],
+    canVoteGovernance: true,
+    canValidate: false,
+  },
+  [TIERS.WITNESS_CIRCLE]: {
+    id: 3,
+    name: 'True Witness (ZK-Verified)',
+    badge: '⚖️ Witness Voice',
+    maxUploadMB: 500,
+    requiresPhone: true,
+    requiresZK: true,
+    allowedFeeds: ['citizen-talk', 'citizen-circle', 'witness-voice', 'witness-circle'],
+    canVoteGovernance: true,
+    canValidate: true,
+  }
+};
+
+// Optional Paid Add-ons for ZK Level (Core ZK Proofs stay free)
+export const ZK_PAID_SERVICES = {
+  ARWEAVE_PERMASTORAGE: {
+    id: 'arweave_pin',
+    name: 'Permanent IPFS / Arweave Storage',
+    description: 'Pin high-res video permanently on decentralized storage so it can never be taken down.',
+    baseCostUSD: 1.50
+  },
+  PRIORITY_ZK_PROOF: {
+    id: 'priority_zk',
+    name: 'Instant ZK Worker Queue',
+    description: 'Bypass local browser generation and use dedicated cloud ZK workers for faster proofing.',
+    baseCostUSD: 0.50
+  },
+  LEGAL_DISPATCH_PACK: {
+    id: 'legal_dispatch',
+    name: 'NGO & Legal Escalation Dispatch',
+    description: 'Automatically transmit hash-verified evidence bundle to partner civil rights attorneys.',
+    baseCostUSD: 2.00
+  },
+  WITNESS_BOOST: {
+    id: 'witness_boost',
+    name: 'Witness Voice Arena Boost',
+    description: 'Pin testimony to top of Witness Voice feed for 48 hours to increase corroborations.',
+    baseCostUSD: 3.00
+  }
 };
 
 // Witness Circle Progression Levels
@@ -79,6 +145,11 @@ export const ROLES = {
   USER: 'user',
   STEWARD: 'steward',
   ADMIN: 'admin'
+};
+
+export const PROFILE_MODES = {
+  ANONYMOUS: 'ANONYMOUS',
+  BOLD_WITNESS: 'BOLD_WITNESS'
 };
 
 // ====================== CACHING MECHANISM ======================
@@ -180,7 +251,7 @@ export async function getCurrentWitnessLevel() {
 }
 
 /**
- * Check if a user can advance to higher tiers (needs phone verified first)
+ * Check if a user can advance to higher tiers
  */
 export async function canAdvanceTier(uid, timeoutMs = 10000) {
   if (!uid) {
@@ -192,7 +263,7 @@ export async function canAdvanceTier(uid, timeoutMs = 10000) {
       setTimeout(() => reject(new Error("Network timeout while fetching user profile")), timeoutMs)
     );
 
-    const data = await Promise.race([getUserProfile(true), timeoutPromise]); // forceRefresh
+    const data = await Promise.race([getUserProfile(true), timeoutPromise]);
 
     if (!data) {
       return { canAdvance: false, reason: "User profile not found" };
@@ -322,7 +393,7 @@ export async function updateTierBadge() {
  * Force refresh of tier system and UI (called after phone verification)
  */
 export function refreshTierAndUI() {
-  clearProfileCache();                 // very important
+  clearProfileCache();
   applyTierTheme();
   updateTierBadge();
   loadWeeklyLeaderboard();
@@ -396,59 +467,6 @@ export async function recordTestimonyContribution() {
   }
 }
 
-
-/* ==========================================================================
-   VocalWitness - System Tier Matrix & RBAC Definitions
-   ========================================================================== */
-
-export const TIERS = {
-  TIER_1_BASIC: {
-    id: 1,
-    name: 'Citizen (Email)',
-    badge: '🔒 Citizen',
-    maxUploadMB: 15,
-    requiresPhone: false,
-    requiresZK: false,
-    allowedFeeds: ['citizen-talk'],
-    allowAudioNormalizer: true,
-    allowMetadataScrubbing: true,
-    canVoteGovernance: false,
-    canValidate: false,
-  },
-  TIER_2_VERIFIED: {
-    id: 2,
-    name: 'Verified Citizen (Phone)',
-    badge: '🛡️ Field Witness',
-    maxUploadMB: 100,
-    requiresPhone: true,
-    requiresZK: false,
-    allowedFeeds: ['citizen-talk', 'citizen-circle'],
-    allowAudioNormalizer: true,
-    allowMetadataScrubbing: true,
-    canVoteGovernance: true,
-    canValidate: false,
-  },
-  TIER_3_AUDITOR: {
-    id: 3,
-    name: 'True Witness (ZK-Verified)',
-    badge: '⚖️ Witness Voice',
-    maxUploadMB: 500,
-    requiresPhone: true,
-    requiresZK: true,
-    allowedFeeds: ['citizen-talk', 'citizen-circle', 'witness-voice', 'witness-circle'],
-    allowAudioNormalizer: true,
-    allowMetadataScrubbing: true,
-    canVoteGovernance: true,
-    canValidate: true,
-  }
-};
-
-export const PROFILE_MODES = {
-  ANONYMOUS: 'ANONYMOUS',
-  BOLD_WITNESS: 'BOLD_WITNESS'
-};
-
-
 /**
  * Gate restricted actions – automatically opens phone verification if needed
  */
@@ -458,7 +476,6 @@ export async function requireCitizenCirclePermission(actionCallback) {
   if (userTier === TIERS.CITIZEN) {
     showToast("Phone verification required to unlock this feature.", "info");
 
-    // Prefer the dedicated phone modal
     const modal = document.getElementById('phoneVerificationModal') || 
                   document.getElementById('phone-upgrade-modal') || 
                   document.getElementById('verificationModal');
@@ -479,7 +496,7 @@ export async function requireCitizenCirclePermission(actionCallback) {
   return true;
 }
 
-// Profile modal listeners (kept for compatibility)
+// Setup profile modal listeners
 function setupProfileModalListeners() {
   const editBtn = document.getElementById('editProfileBtn');
   if (editBtn) {
@@ -512,8 +529,9 @@ if (document.readyState === 'loading') {
   setupProfileModalListeners();
 }
 
-// Global exports
+// Global exports for window context
 window.refreshTierAndUI = refreshTierAndUI;
 window.requireCitizenCirclePermission = requireCitizenCirclePermission;
 window.getCurrentUserTier = getCurrentUserTier;
 window.canAccessFeature = canAccessFeature;
+window.ZK_PAID_SERVICES = ZK_PAID_SERVICES;
