@@ -1,13 +1,13 @@
-// js/app-state.js - Centralized Application State & Engine Exports
+// js/app-state.js - Centralized Plain-Object Application State
 import { db } from './firebase-config.js';
 import { CitizenTalkEngine, WitnessVoiceEngine } from './vocalWitnessEngine.js';
 import { TIERS, PROFILE_MODES } from './tier.js';
 
-// Track active Object URLs to prevent browser memory leaks
+// Memory cleanup trackers for Object URLs
 let currentActiveAudioUrl = null;
 let currentActiveImageUrls = [];
 
-// Helper to Safely Resolve Tier Values for Comparison
+// Safely rank verification tiers
 const TIER_RANKS = {
   tier_1_basic: 1,
   tier_2_verified: 2,
@@ -29,23 +29,43 @@ if (typeof window !== 'undefined') {
   window.witnessEngine = witnessEngine;
 }
 
-// ====================== APPLICATION STATE ======================
+// ====================== CENTRAL STATE OBJECT ======================
 export const state = {
   isAuthenticated: false,
   currentUser: null,
+  userRole: 'guest',
   currentTab: 'square',
   currentMode: 'citizen',
-  selectedLanguage: 'en',
+  activeFeed: 'citizen_talk',
+  selectedLanguage: localStorage.getItem('vw_lang') || 'en',
   
-  // VocalWitness Tier & Verification Progression
+  // Tier & Progression
   userTier: TIERS?.TIER_1_BASIC?.id || 'tier_1_basic',
   isPhoneVerified: false,
   isZkReady: false,
   zkIdentityCommitment: null,
 
-  // Identity Mode: 'ANONYMOUS' (Default) | 'BOLD_WITNESS' (Public Real Name)
+  // Network Status
+  isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
+
+  // Privacy & Identity Settings
   profileMode: localStorage.getItem('vw_profile_mode') || PROFILE_MODES?.ANONYMOUS || 'ANONYMOUS'
 };
+
+// Listen for network connectivity changes
+if (typeof window !== 'undefined') {
+  window.addEventListener('online', () => {
+    state.isOnline = true;
+    window.dispatchEvent(new CustomEvent('network:status-changed', { detail: { isOnline: true } }));
+  });
+
+  window.addEventListener('offline', () => {
+    state.isOnline = false;
+    window.dispatchEvent(new CustomEvent('network:status-changed', { detail: { isOnline: false } }));
+  });
+}
+
+// ====================== STATE ACCESSORS & MUTATORS ======================
 
 export function isUserAuthenticated() {
   return state.isAuthenticated && !!state.currentUser;
@@ -54,7 +74,7 @@ export function isUserAuthenticated() {
 export function canAccessFeed(feedName) {
   const currentRank = getTierRank(state.userTier);
 
-  if (feedName === 'citizen-talk') return true;
+  if (feedName === 'citizen-talk' || feedName === 'citizen_talk') return true;
   if (feedName === 'citizen-circle') {
     return state.isPhoneVerified || currentRank >= 2;
   }
@@ -67,8 +87,8 @@ export function canAccessFeed(feedName) {
 export function getActiveIdentityConfig() {
   const anonymousMode = PROFILE_MODES?.ANONYMOUS || 'ANONYMOUS';
   const boldMode = PROFILE_MODES?.BOLD_WITNESS || 'BOLD_WITNESS';
-  
   const isBoldWitness = state.profileMode === boldMode;
+
   return {
     mode: state.profileMode || anonymousMode,
     isPublic: isBoldWitness,
@@ -80,15 +100,23 @@ export function getActiveIdentityConfig() {
   };
 }
 
-export function updateAppState(newState) {
+export function updateAppState(newState = {}) {
   if (!newState || typeof newState !== 'object') return;
-  
+
   Object.assign(state, newState);
-  
+
+  if (newState.currentUser) {
+    state.isAuthenticated = true;
+  }
+
   if (newState.profileMode) {
     localStorage.setItem('vw_profile_mode', newState.profileMode);
   }
-  
+
+  if (newState.selectedLanguage) {
+    localStorage.setItem('vw_lang', newState.selectedLanguage);
+  }
+
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('app-state-changed', { detail: state }));
   }
@@ -99,7 +127,6 @@ export function updateAppState(newState) {
 export function clearMediaPreviews() {
   const previewContainer = document.getElementById('preview-area') || document.getElementById('mediaPreviewContainer');
 
-  // Revoke memory allocations
   if (currentActiveAudioUrl) {
     URL.revokeObjectURL(currentActiveAudioUrl);
     currentActiveAudioUrl = null;
@@ -120,10 +147,7 @@ export function renderAudioPreview(blob) {
   if (!blob) return;
 
   const previewContainer = document.getElementById('preview-area') || document.getElementById('mediaPreviewContainer');
-  if (!previewContainer) {
-    console.warn('Audio preview container not found in DOM.');
-    return;
-  }
+  if (!previewContainer) return;
 
   if (currentActiveAudioUrl) {
     URL.revokeObjectURL(currentActiveAudioUrl);
@@ -145,10 +169,7 @@ export function renderAudioPreview(blob) {
   removeBtn.type = 'button';
   removeBtn.className = 'text-red-400 hover:text-red-300 hover:bg-red-950/40 text-xs font-semibold px-3 py-1.5 rounded-xl border border-red-800/50 transition cursor-pointer';
   removeBtn.textContent = 'Remove';
-  
-  removeBtn.addEventListener('click', () => {
-    clearMediaPreviews();
-  });
+  removeBtn.addEventListener('click', () => clearMediaPreviews());
 
   wrapper.appendChild(audioEl);
   wrapper.appendChild(removeBtn);
@@ -189,11 +210,8 @@ export function renderImagePreview(files = []) {
     
     removeBtn.addEventListener('click', () => {
       const updatedFiles = files.filter((_, fIndex) => fIndex !== index);
-      
-      // Update pending media in engines when files are removed individually
       if (typeof citizenEngine?.setPendingImages === 'function') citizenEngine.setPendingImages(updatedFiles);
       if (typeof witnessEngine?.setPendingImages === 'function') witnessEngine.setPendingImages(updatedFiles);
-
       renderImagePreview(updatedFiles);
     });
 
@@ -203,6 +221,6 @@ export function renderImagePreview(files = []) {
   });
 }
 
-// ====================== ROOT EXPORTS ======================
+// Exports
 export { state as AppState };
 export default state;
