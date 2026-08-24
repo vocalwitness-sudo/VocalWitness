@@ -8,27 +8,22 @@ let currentSubscribedUid = null;
 
 export function initNotifications(targetUid) {
     stopNotificationListener();
-
     if (!targetUid) {
         updateNotificationBadge(0);
         renderNotificationList([]);
         return;
     }
-
     const auth = getAuth();
     const currentUser = auth.currentUser;
-
     // GUARD: Ensure user is signed in AND matches targetUid before listening
     if (!currentUser || currentUser.uid !== targetUid) {
         updateNotificationBadge(0);
         renderNotificationList([]);
         return;
     }
-
     if (unsubscribeNotifs && currentSubscribedUid === targetUid) {
         return;
     }
-
     attachNotificationListener(targetUid);
 }
 
@@ -36,7 +31,6 @@ function attachNotificationListener(uid) {
     currentSubscribedUid = uid;
     const notificationsRef = collection(db, "users", uid, "notifications");
     const q = query(notificationsRef, orderBy("createdAt", "desc"));
-
     unsubscribeNotifs = onSnapshot(q, (snapshot) => {
         handleSnapshot(snapshot);
     }, (error) => {
@@ -45,26 +39,20 @@ function attachNotificationListener(uid) {
             stopNotificationListener();
             return;
         }
-
         console.warn("🔔 Notification ordered query failed or requires index. Activating fallback...", error.code);
-
         if (unsubscribeNotifs) {
             unsubscribeNotifs();
             unsubscribeNotifs = null;
         }
-
         fallbackUnorderedListener(uid);
     });
 }
-
 
 function updateNotificationBadge(count) {
   const badge = document.getElementById('notification-badge');
   const badgeMobile = document.getElementById('notification-badge-mobile');
   const tag = document.getElementById('notification-count-tag');
-
   const display = count > 99 ? '99+' : count;
-
   if (badge) {
     badge.textContent = display;
     badge.classList.toggle('hidden', count === 0);
@@ -81,23 +69,19 @@ function updateNotificationBadge(count) {
 function fallbackUnorderedListener(uid) {
     currentSubscribedUid = uid;
     const notificationsRef = collection(db, "users", uid, "notifications");
-
     unsubscribeNotifs = onSnapshot(notificationsRef, (snapshot) => {
         const notifications = [];
         let unreadCount = 0;
-
         snapshot.forEach((docSnap) => {
             const data = docSnap.data();
             if (!data.read) unreadCount++;
             notifications.push({ id: docSnap.id, ...data });
         });
-
         notifications.sort((a, b) => {
             const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : new Date(a.createdAt || 0).getTime();
             const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : new Date(b.createdAt || 0).getTime();
             return timeB - timeA;
         });
-
         updateNotificationBadge(unreadCount);
         renderNotificationList(notifications);
     }, (err) => {
@@ -121,35 +105,18 @@ export function stopNotificationListener() {
 function handleSnapshot(snapshot) {
     const notifications = [];
     let unreadCount = 0;
-
     snapshot.forEach((docSnap) => {
         const data = docSnap.data();
         if (!data.read) unreadCount++;
         notifications.push({ id: docSnap.id, ...data });
     });
-
     updateNotificationBadge(unreadCount);
     renderNotificationList(notifications);
-}
-
-function updateNotificationBadge(count) {
-    const badge = document.getElementById('notification-badge');
-    const tag = document.getElementById('notification-count-tag');
-
-    if (badge) {
-        badge.textContent = count > 99 ? '99+' : count;
-        badge.classList.toggle('hidden', count === 0);
-    }
-
-    if (tag) {
-        tag.textContent = `${count} new`;
-    }
 }
 
 function renderNotificationList(notifications) {
     const listContainer = document.getElementById('notification-list');
     if (!listContainer) return;
-
     if (!notifications || notifications.length === 0) {
         listContainer.innerHTML = `
             <div class="p-8 text-center text-zinc-500">
@@ -158,12 +125,10 @@ function renderNotificationList(notifications) {
             </div>`;
         return;
     }
-
     let html = '<div class="divide-y divide-zinc-800/60">';
     notifications.forEach((item) => {
         const isUnread = !item.read;
         const timeStr = item.createdAt?.toDate ? item.createdAt.toDate().toLocaleString() : 'Recently';
-
         html += `
             <div class="p-4 hover:bg-zinc-800/40 transition ${isUnread ? 'bg-emerald-950/20' : ''}">
                 <div class="flex items-start justify-between gap-2">
@@ -174,7 +139,6 @@ function renderNotificationList(notifications) {
             </div>`;
     });
     html += '</div>';
-
     listContainer.innerHTML = html;
 }
 
