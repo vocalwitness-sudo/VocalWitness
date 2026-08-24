@@ -298,8 +298,9 @@
 
   
 <!-- ===================== SINGLE MAIN CONTENT WRAPPER ===================== -->
-<main id="main-content" class="pt-36 sm:pt-28 md:pt-24 max-w-6xl mx-auto px-3 sm:px-4 pb-20">
-  <!-- DESKTOP ONLY: Flash News Ticker & Global Search Bar (Stacked Vertically) -->
+<main id="main-content" class="pt-24 sm:pt-20 md:pt-20 max-w-6xl mx-auto px-3 sm:px-4 pb-20 w-full overflow-hidden">
+  
+  <!-- DESKTOP ONLY: Flash News Ticker & Global Search Bar -->
   <div class="hidden md:flex flex-col gap-3 mb-6">
     
     <!-- 1. World-Class Media Ticker Feed -->
@@ -329,7 +330,6 @@
 
   </div>
 
-
   <!-- MOBILE ONLY: Flash News Ticker -->
   <div class="block md:hidden ticker-wrap border border-emerald-500/20 rounded-2xl py-2 text-xs text-slate-300 mb-5 overflow-hidden bg-slate-900">
     <div class="ticker-badge font-bold uppercase text-emerald-400 px-3">Flash Feed</div>
@@ -338,72 +338,71 @@
     </div>
   </div>
 
+  <!-- SECTION: Main Navigation Bar -->
+  <div class="mb-8 w-full">
+    <nav id="main-nav" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 w-full">
+      
+      <!-- Tab: Public Square -->
+      <button type="button" data-tab="square" 
+              class="nav-tab active flex flex-col items-center justify-center p-3 rounded-2xl font-semibold text-xs sm:text-sm text-black bg-emerald-500 shadow-md border border-emerald-400/50 transition hover:scale-[1.02]">
+        <span data-i18n="publicSquareTab">Public Square</span>
+        <span class="text-[10px] font-normal opacity-90 hidden sm:block" data-i18n="publicSquareDesc">Share stories & evidence</span>
+      </button>
 
-<!-- SECTION: Main Navigation Bar -->
-<div class="mb-8">
-  <nav id="main-nav" class="grid grid-cols-2 sm:grid-cols-3 lg:flex lg:items-center lg:justify-between gap-2.5">
-    
-    <!-- Tab: Public Square -->
-    <button type="button" data-tab="square" 
-            class="nav-tab active flex flex-col items-center justify-center p-3 rounded-2xl font-semibold text-xs sm:text-sm text-black bg-emerald-500 shadow-md border border-emerald-400/50 transition hover:scale-[1.02] lg:flex-1">
-      <span data-i18n="publicSquareTab">Public Square</span>
-      <span class="text-[10px] font-normal opacity-90 hidden sm:block" data-i18n="publicSquareDesc">Share stories & evidence</span>
-    </button>
+      <!-- Tab: Evidence Ledger -->
+      <button type="button" data-tab="ledger" 
+              class="nav-tab flex flex-col items-center justify-center p-3 rounded-2xl font-semibold text-xs sm:text-sm text-emerald-300 bg-emerald-950/70 border border-emerald-700/60 hover:bg-emerald-900/50 transition hover:scale-[1.02]">
+        <span data-i18n="evidenceLedgerTab">Evidence Ledger</span>
+        <span class="text-[10px] font-normal text-emerald-400/80 hidden sm:block" data-i18n="evidenceLedgerDesc">Permanent record</span>
+      </button>
 
-    <!-- Tab: Evidence Ledger -->
-    <button type="button" data-tab="ledger" 
-            class="nav-tab flex flex-col items-center justify-center p-3 rounded-2xl font-semibold text-xs sm:text-sm text-emerald-300 bg-emerald-950/70 border border-emerald-700/60 hover:bg-emerald-900/50 transition hover:scale-[1.02] lg:flex-1">
-      <span data-i18n="evidenceLedgerTab">Evidence Ledger</span>
-      <span class="text-[10px] font-normal text-emerald-400/80 hidden sm:block" data-i18n="evidenceLedgerDesc">Permanent record</span>
-    </button>
+      <!-- Tab: Live Arena -->
+      <button type="button" data-tab="arena" 
+              class="nav-tab flex flex-col items-center justify-center p-3 rounded-2xl font-semibold text-xs sm:text-sm text-sky-300 bg-sky-900/70 border border-sky-700 hover:bg-sky-800 transition hover:scale-[1.02]">
+        <span data-i18n="liveArenaTab">Live Arena</span>
+        <span class="text-[10px] font-normal text-sky-400 hidden sm:block" data-i18n="liveArenaDesc">Watch & join live</span>
+      </button>
 
-    <!-- Tab: Live Arena -->
-    <button type="button" data-tab="arena" 
-            class="nav-tab flex flex-col items-center justify-center p-3 rounded-2xl font-semibold text-xs sm:text-sm text-sky-300 bg-sky-900/70 border border-sky-700 hover:bg-sky-800 transition hover:scale-[1.02] lg:flex-1">
-      <span data-i18n="liveArenaTab">Live Arena</span>
-      <span class="text-[10px] font-normal text-sky-400 hidden sm:block" data-i18n="liveArenaDesc">Watch & join live</span>
-    </button>
+      <!-- Tab: My Circle -->
+      <button type="button" data-tab="mycircle" 
+              class="nav-tab flex flex-col items-center justify-center p-3 rounded-2xl font-semibold text-xs sm:text-sm text-zinc-200 bg-zinc-900 border border-zinc-700 hover:border-zinc-500 transition hover:scale-[1.02]">
+        <span data-i18n="myCircleTab">My Circle</span>
+        <span class="text-[10px] font-normal text-zinc-400 hidden sm:block" data-i18n="myCircleDesc">Trusted people</span>
+      </button>
 
-    <!-- Tab: My Circle -->
-    <button type="button" data-tab="mycircle" 
-            class="nav-tab flex flex-col items-center justify-center p-3 rounded-2xl font-semibold text-xs sm:text-sm text-zinc-200 bg-zinc-900 border border-zinc-700 hover:border-zinc-500 transition hover:scale-[1.02] lg:flex-1">
-      <span data-i18n="myCircleTab">My Circle</span>
-      <span class="text-[10px] font-normal text-zinc-400 hidden sm:block" data-i18n="myCircleDesc">Trusted people</span>
-    </button>
+      <!-- Tab: Verified Witnesses -->
+      <button type="button" data-tab="witness" 
+              class="nav-tab flex flex-col items-center justify-center p-3 rounded-2xl font-semibold text-xs sm:text-sm text-amber-300 bg-amber-900/70 border border-amber-700 hover:bg-amber-800 transition hover:scale-[1.02]">
+        <span data-i18n="verifiedWitnessesTab">Verified Witnesses</span>
+        <span class="text-[10px] font-normal text-amber-400 hidden sm:block" data-i18n="verifiedWitnessesDesc">Trusted voices</span>
+      </button>
 
-    <!-- Tab: Verified Witnesses -->
-    <button type="button" data-tab="witness" 
-            class="nav-tab flex flex-col items-center justify-center p-3 rounded-2xl font-semibold text-xs sm:text-sm text-amber-300 bg-amber-900/70 border border-amber-700 hover:bg-amber-800 transition hover:scale-[1.02] lg:flex-1">
-      <span data-i18n="verifiedWitnessesTab">Verified Witnesses</span>
-      <span class="text-[10px] font-normal text-amber-400 hidden sm:block" data-i18n="verifiedWitnessesDesc">Trusted voices</span>
-    </button>
+      <!-- Dropdown: More Options Container -->
+      <div class="relative w-full z-40">
+        <button id="more-btn" type="button" aria-haspopup="true" aria-expanded="false"
+                class="w-full h-full flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 p-3 rounded-2xl font-semibold text-xs sm:text-sm bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-700 transition hover:scale-[1.02]">
+          <span data-i18n="moreOptionsBtn">More</span>
+          <svg id="more-chevron" class="w-4 h-4 text-zinc-400 shrink-0 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </button>
 
-    
-<!-- Dropdown: More Options Container -->
-<div class="relative flex-1 lg:flex-initial z-40">
-  <button id="more-btn" type="button" aria-haspopup="true" aria-expanded="false"
-          class="w-full h-full flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 p-3 rounded-2xl font-semibold text-xs sm:text-sm bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-700 transition hover:scale-[1.02]">
-    <span data-i18n="moreOptionsBtn">More</span>
-    <svg id="more-chevron" class="w-4 h-4 text-zinc-400 shrink-0 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-    </svg>
-  </button>
+        <!-- Dropdown Menu Layer -->
+        <div id="more-menu" class="hidden absolute right-0 top-full mt-2 w-56 bg-zinc-900/95 backdrop-blur-xl border border-zinc-700 rounded-2xl shadow-2xl py-2 z-50">
+          <a href="my-testimonies.html" class="block px-4 py-2.5 hover:bg-zinc-800 text-white text-sm rounded-xl mx-1 transition" data-i18n="myTestimoniesMenu">My Testimonies</a>
+          <a href="groups.html" class="block px-4 py-2.5 hover:bg-zinc-800 text-white text-sm rounded-xl mx-1 transition" data-i18n="groupsMenu">Groups</a>
+          <a href="witness-voice.html" class="block px-4 py-2.5 hover:bg-zinc-800 text-white text-sm rounded-xl mx-1 transition" data-i18n="witnessVoiceMenu">Witness Voice</a>
+          <div class="h-px bg-zinc-800 mx-3 my-1"></div>
+          <a href="about.html" class="block px-4 py-2.5 hover:bg-zinc-800 text-white text-sm rounded-xl mx-1 transition" data-i18n="aboutMenu">About Us</a>
+          <a href="privacy.html" class="block px-4 py-2.5 hover:bg-zinc-800 text-white text-sm rounded-xl mx-1 transition" data-i18n="privacyPolicyMenu">Privacy Policy</a>
+          <a href="terms.html" class="block px-4 py-2.5 hover:bg-zinc-800 text-white text-sm rounded-xl mx-1 transition" data-i18n="termsOfServiceMenu">Terms of Service</a>
+          <a href="safety.html" class="block px-4 py-2.5 hover:bg-zinc-800 text-white text-sm rounded-xl mx-1 transition" data-i18n="safetyGuidelinesMenu">Safety Guidelines</a>
+        </div>
+      </div>
 
-  <!-- Dropdown Menu Layer -->
-  <div id="more-menu" class="hidden absolute right-0 top-full mt-2 w-56 bg-zinc-900/95 backdrop-blur-xl border border-zinc-700 rounded-2xl shadow-2xl py-2 z-50">
-    <a href="my-testimonies.html" class="block px-4 py-2.5 hover:bg-zinc-800 text-white text-sm rounded-xl mx-1 transition" data-i18n="myTestimoniesMenu">My Testimonies</a>
-    <a href="groups.html" class="block px-4 py-2.5 hover:bg-zinc-800 text-white text-sm rounded-xl mx-1 transition" data-i18n="groupsMenu">Groups</a>
-    <a href="witness-voice.html" class="block px-4 py-2.5 hover:bg-zinc-800 text-white text-sm rounded-xl mx-1 transition" data-i18n="witnessVoiceMenu">Witness Voice</a>
-    
-    <div class="h-px bg-zinc-800 mx-3 my-1"></div>
-    
-    <a href="about.html" class="block px-4 py-2.5 hover:bg-zinc-800 text-white text-sm rounded-xl mx-1 transition" data-i18n="aboutMenu">About Us</a>
-    <a href="privacy.html" class="block px-4 py-2.5 hover:bg-zinc-800 text-white text-sm rounded-xl mx-1 transition" data-i18n="privacyPolicyMenu">Privacy Policy</a>
-    <a href="terms.html" class="block px-4 py-2.5 hover:bg-zinc-800 text-white text-sm rounded-xl mx-1 transition" data-i18n="termsOfServiceMenu">Terms of Service</a>
-    <a href="safety.html" class="block px-4 py-2.5 hover:bg-zinc-800 text-white text-sm rounded-xl mx-1 transition" data-i18n="safetyGuidelinesMenu">Safety Guidelines</a>
+    </nav>
   </div>
-  </div>
-
+  
 
 <!-- SECTION: Testimony Composer -->
 <section class="glass rounded-3xl p-5 sm:p-8 mb-10 shadow-xl border border-zinc-800/80">
