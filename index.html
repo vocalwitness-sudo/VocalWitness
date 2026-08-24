@@ -393,9 +393,10 @@
     </div>
   </div>
 
-<!-- ===================== TESTIMONY COMPOSER ===================== -->
+<!-- SECTION: Testimony Composer -->
 <section class="glass rounded-3xl p-5 sm:p-8 mb-10 shadow-xl border border-zinc-800/80">
-  <!-- Header -->
+  
+  <!-- Composer Header & Feed Select -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
     <h2 class="text-lg sm:text-xl font-semibold text-white flex items-center gap-2" data-i18n="shareTestimonyTitle">
       Share Your Testimony
@@ -413,7 +414,11 @@
     </div>
   </div>
 
-  <!-- Optional Title -->
+  <!-- Hidden Native File Inputs -->
+  <input type="file" id="photoInput" accept="image/*" class="hidden" multiple>
+  <input type="file" id="voiceInput" accept="audio/*" class="hidden">
+
+  <!-- Inputs: Title & Body -->
   <input type="text"
          id="testimonyTitle"
          maxlength="120"
@@ -421,20 +426,18 @@
          class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-4 sm:px-5 py-3.5 mb-4 text-base text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500 transition"
          data-i18n-placeholder="testimonyTitlePlaceholder">
 
-  <!-- Main Textarea -->
   <textarea id="mainInput"
             rows="5"
             class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 sm:p-5 text-base sm:text-lg placeholder-zinc-500 focus:outline-none focus:border-emerald-500 resize-none text-white transition"
             data-i18n-placeholder="mainInputPlaceholder"
             placeholder="What truth will you log today? What did you witness?"></textarea>
 
-  <!-- Media Buttons -->
+  <!-- Media Action Buttons -->
   <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5">
     <button id="btn-photo" type="button"
             class="py-3.5 px-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 hover:border-emerald-500 rounded-2xl flex items-center justify-center gap-2 text-emerald-400 font-medium transition active:scale-95">
       <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
       </svg>
       <span data-i18n="addPhotoEvidence">Add Photo Evidence</span>
@@ -443,14 +446,13 @@
     <button id="btn-voice" type="button"
             class="py-3.5 px-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 hover:border-emerald-500 rounded-2xl flex items-center justify-center gap-2 text-amber-400 font-medium transition active:scale-95">
       <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z"/>
       </svg>
       <span data-i18n="recordVoiceMessage">Record Voice Message</span>
     </button>
   </div>
 
-  <!-- Preview Area -->
+  <!-- Media Preview Container -->
   <div id="preview-area"
        class="mt-6 min-h-[100px] border border-dashed border-zinc-700 rounded-2xl p-4 flex flex-wrap items-center justify-center gap-4 text-zinc-500 text-sm bg-zinc-900/40">
     <div id="preview-empty" class="text-center py-2">
@@ -459,17 +461,20 @@
     </div>
   </div>
 
-  <!-- Voice Recording Bar -->
+  <!-- Voice Recording Action Bar -->
   <div id="voice-recorder-bar" class="hidden mt-4 glass rounded-2xl p-4 border border-emerald-500/30">
     <div class="flex items-center gap-3 flex-wrap">
       <div class="flex items-center gap-2 min-w-[70px]">
         <span id="rec-indicator" class="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></span>
         <span id="rec-timer" class="font-mono text-sm text-emerald-400">00:00</span>
       </div>
+
       <button id="verify-voice-btn" type="button" class="px-3 py-1.5 text-xs rounded-xl bg-blue-600/80 hover:bg-blue-600 text-white font-medium">
         🛡️ Verify Voice
       </button>
+
       <canvas id="rec-waveform" width="180" height="36" class="flex-1 max-w-[200px] rounded bg-zinc-900/80"></canvas>
+
       <div class="flex items-center gap-2 ml-auto">
         <button id="rec-pause-btn" type="button" class="px-3 py-1.5 text-xs rounded-xl bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white">
           ⏸ Pause
@@ -485,16 +490,16 @@
     <audio id="rec-replay-audio" class="hidden"></audio>
   </div>
 
-  <!-- Publish Button -->
+  <!-- Post Action -->
   <button id="postButton" type="button"
           class="mt-6 w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-lg rounded-2xl shadow-lg transition active:scale-[0.98] flex items-center justify-center gap-2">
     <span data-i18n="postButton">Publish Testimony</span>
   </button>
 </section>
 
-<!-- ===================== FEED CONTAINER ===================== -->
+<!-- SECTION: Feed Container -->
 <section id="feed-container" class="space-y-6 mb-16">
-  <!-- Feed Header & Controls -->
+  <!-- Feed Sort & Header -->
   <div class="flex items-center justify-between px-2 mb-4">
     <h3 id="feed-title" class="text-lg font-bold text-white flex items-center gap-2" data-i18n="recentTestimoniesTitle">
       📜 Recent Testimonies
@@ -509,9 +514,8 @@
     </div>
   </div>
 
-  <!-- Dynamic Post Container Mount Point -->
+  <!-- Dynamic Post Stream -->
   <div id="testimonies-feed" class="space-y-4">
-    <!-- Initial Skeleton Loader -->
     <div class="glass rounded-2xl p-6 border border-zinc-800/80 animate-pulse space-y-4">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-full bg-zinc-800"></div>
@@ -526,24 +530,25 @@
   </div>
 </section>
 
-<!-- AUTH MODAL (Social Login Only - Google + X + GitHub) -->
-<div id="authModal" class="fixed inset-0 z-[200] hidden flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-    <div class="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-3xl bg-zinc-900 p-6 sm:p-8 shadow-2xl border border-zinc-700/80">
-        
-        <!-- Close Button -->
-        <button id="closeAuthModalBtn" type="button" data-action="close-auth-modal"
-                class="absolute top-4 right-4 text-zinc-400 hover:text-white text-2xl font-bold w-10 h-10 flex items-center justify-center rounded-full hover:bg-zinc-800 transition">
-            ✕
-        </button>
+<!-- SECTION: Auth Modal -->
+<div id="authModal" 
+     role="dialog" 
+     aria-modal="true" 
+     aria-labelledby="authTitle" 
+     class="fixed inset-0 z-[200] hidden flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+  <div class="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-3xl bg-zinc-900 p-6 sm:p-8 shadow-2xl border border-zinc-700/80">
+    
+    <button id="closeAuthModalBtn" type="button" data-action="close-auth-modal"
+            class="absolute top-4 right-4 text-zinc-400 hover:text-white text-2xl font-bold w-10 h-10 flex items-center justify-center rounded-full hover:bg-zinc-800 transition">
+      ✕
+    </button>
 
-        <!-- Header -->
-        <div class="text-center mb-8">
-            <h3 id="authTitle" class="text-2xl font-bold text-white">Join the Public Square</h3>
-            <p id="authSubtitle" class="text-sm text-zinc-400 mt-2">
-                Sign in with your preferred account to participate.
-            </p>
-        </div>
-
+    <div class="text-center mb-8">
+      <h3 id="authTitle" class="text-2xl font-bold text-white">Join the Public Square</h3>
+      <p id="authSubtitle" class="text-sm text-zinc-400 mt-2">
+        Sign in with your preferred account to participate.
+      </p>
+    </div>
         <!-- Social Login Buttons -->
         <div class="space-y-3">
             <!-- Google -->
