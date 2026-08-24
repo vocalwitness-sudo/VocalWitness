@@ -187,72 +187,76 @@
           </p>
         </div>
       </a>
+<div class="flex items-center gap-2 lg:gap-2.5 shrink-0">
+  <!-- Language -->
+  <select id="languageSelect" aria-label="Select Language"
+          class="bg-zinc-900 text-zinc-100 border border-zinc-700/80 rounded-2xl px-2.5 py-2 text-sm font-medium focus:outline-none focus:border-emerald-500 shadow-inner max-w-[130px]">
+    <optgroup label="Primary / Regional" class="bg-zinc-900 text-zinc-300">
+      <option value="en" selected>English</option>
+      <option value="pcm">Naija Pidgin</option>
+      <option value="ha">Hausa</option>
+      <option value="yo">Yorùbá</option>
+      <option value="ig">Igbo</option>
+      <option value="sw">Swahili</option>
+    </optgroup>
+    <optgroup label="Global" class="bg-zinc-900 text-zinc-300">
+      <option value="fr">Français</option>
+      <option value="es">Español</option>
+      <option value="pt">Português</option>
+      <option value="ar">العربية</option>
+    </optgroup>
+  </select>
 
-      <!-- Right side controls -->
-      <div class="flex items-center gap-2.5 lg:gap-3">
-        <select id="languageSelect" aria-label="Select Language"
-                class="bg-zinc-900 text-zinc-100 border border-zinc-700/80 rounded-2xl px-3 py-2 text-sm font-medium focus:outline-none focus:border-emerald-500 shadow-inner">
-          <optgroup label="Primary / Regional" class="bg-zinc-900 text-zinc-300">
-            <option value="en" selected>English</option>
-            <option value="pcm">Naija Pidgin</option>
-            <option value="ha">Hausa</option>
-            <option value="yo">Yorùbá</option>
-            <option value="ig">Igbo</option>
-            <option value="sw">Swahili</option>
-          </optgroup>
-          <optgroup label="Global" class="bg-zinc-900 text-zinc-300">
-            <option value="fr">Français</option>
-            <option value="es">Español</option>
-            <option value="pt">Português</option>
-            <option value="ar">العربية</option>
-          </optgroup>
-        </select>
+  <!-- Support – always visible, strong emerald -->
+  <button id="openSupportModalBtn" type="button"
+          class="px-3.5 py-2 font-black rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black transition-transform hover:scale-105 text-sm shadow-md whitespace-nowrap border-0"
+          data-i18n="supportBtn">
+    Support The Square
+  </button>
 
-        <button id="openSupportModalBtn" type="button"
-                class="px-4 py-2 font-black rounded-2xl bg-emerald-500 text-black hover:scale-105 transition-transform text-sm shadow-md"
-                data-i18n="supportBtn">
-          Support The Square
-        </button>
+  <!-- Join / Google – white is intentional (Google style), but force contrast -->
+  <button id="openAuthModalBtn" type="button"
+          class="px-3.5 py-2 bg-white hover:bg-zinc-100 text-zinc-900 font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm text-sm whitespace-nowrap border border-zinc-200"
+          style="background-color: #ffffff !important; color: #18181b !important;">
+    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-4 h-4 shrink-0" alt="">
+    <span class="font-bold" data-i18n="joinBtn">Join VocalWitness</span>
+  </button>
 
-        <button id="openAuthModalBtn" type="button"
-                class="px-4 py-2 bg-white hover:bg-zinc-200 text-zinc-900 font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm text-sm">
-          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-4 h-4" alt="">
-          <span data-i18n="joinBtn">Join VocalWitness</span>
-        </button>
+  <!-- Profile (starts hidden until logged in) -->
+  <button id="userProfileBtn" type="button"
+          class="hidden px-3.5 py-2 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 text-emerald-400 font-bold rounded-2xl transition flex items-center gap-2 text-sm whitespace-nowrap"
+          aria-label="Open profile">
+    <img id="user-avatar-desktop" src="" alt="" class="w-5 h-5 rounded-full object-cover hidden">
+    <span id="default-avatar-icon-desktop">👤</span>
+    <span id="user-name-desktop" data-i18n="profileBtn">My Profile</span>
+  </button>
 
-        <button id="userProfileBtn" type="button"
-                class="hidden px-4 py-2 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 text-emerald-400 font-bold rounded-2xl transition flex items-center gap-2 text-sm"
-                aria-label="Open profile">
-          <img id="user-avatar-desktop" src="" alt="User" class="w-5 h-5 rounded-full object-cover hidden">
-          <span id="default-avatar-icon-desktop">👤</span>
-          <span id="user-name-desktop" data-i18n="profileBtn">My Profile</span>
-        </button>
+  <!-- Data Saver -->
+  <button id="data-saver-btn" type="button" aria-label="Toggle Data Saver"
+          class="px-2.5 py-2 rounded-2xl hover:bg-zinc-800 transition text-xs font-semibold flex items-center gap-1.5 border text-zinc-300 bg-zinc-900 border-zinc-800">
+    <span>⚡</span>
+    <span class="hidden xl:inline">Data Saver: <strong id="data-saver-status" class="text-emerald-400 font-bold">Off</strong></span>
+  </button>
 
-        <button id="data-saver-btn" type="button" aria-label="Toggle Data Saver"
-                class="px-3 py-2 rounded-2xl hover:bg-zinc-800 transition text-xs font-semibold flex items-center gap-2 border text-zinc-300 shadow-sm bg-zinc-900 border-zinc-800">
-          <span>⚡</span>
-          <span class="hidden lg:inline">Data Saver: <strong id="data-saver-status" class="text-emerald-400 font-bold">Off</strong></span>
-        </button>
+  <!-- Bookmarks -->
+  <button id="bookmarks-nav-btn" type="button" aria-label="Saved Items" title="Saved Items"
+          class="p-2 rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white transition-all flex items-center justify-center">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+    </svg>
+  </button>
 
-        <button id="bookmarks-nav-btn" type="button" aria-label="Saved Items" title="Saved Items"
-                class="p-2 rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white transition-all flex items-center justify-center">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
-          </svg>
-        </button>
-
-        <div class="relative inline-block" id="notification-container">
-          <button id="notification-btn" type="button" aria-label="Notifications"
-                  class="relative p-2 rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white transition-all flex items-center justify-center">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-            </svg>
-            <span id="notification-badge" class="hidden absolute -top-1 -right-1 bg-emerald-500 text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-lg">0</span>
-          </button>
-        </div>
-      </div>
-    </div>
-
+  <!-- Notifications -->
+  <div class="relative inline-block" id="notification-container">
+    <button id="notification-btn" type="button" aria-label="Notifications"
+            class="relative p-2 rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white transition-all flex items-center justify-center">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+      </svg>
+      <span id="notification-badge" class="hidden absolute -top-1 -right-1 bg-emerald-500 text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-lg">0</span>
+    </button>
+  </div>
+</div>
     <!-- ===================== MOBILE HEADER ===================== -->
     <div class="flex flex-col gap-2 md:hidden w-full">
       <!-- Top bar: Logo + Title + Sign In -->
