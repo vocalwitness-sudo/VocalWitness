@@ -29,7 +29,7 @@ import {
   updateDoc, 
   serverTimestamp 
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-
+const DEFAULT_TIER = "citizen";
 let authActionInProgress = false;
 let authInitialized = false;
 
@@ -61,12 +61,13 @@ async function createOrUpdateUser(user) {
     const safePhotoURL = user.photoURL || "";
 
     if (!snap.exists()) {
+      // Brand-new user → start as basic citizen (before any verification)
       await setDoc(userRef, {
         uid: user.uid,
         email: safeEmail,
         displayName: safeDisplayName,
         photoURL: safePhotoURL,
-        tier: TIERS?.CITIZEN || "citizen",
+        tier: DEFAULT_TIER,               // always "citizen"
         isVerified: false,
         isPhoneVerified: false,
         hasVerifiedPhone: false,
@@ -77,6 +78,7 @@ async function createOrUpdateUser(user) {
       updateVerificationUI(false);
       showToast("🎉 Account created! Welcome to the Public Square.", "success");
     } else {
+      // Existing user → only update safe fields
       const existing = snap.data() || {};
       const changes = {};
 
@@ -89,27 +91,39 @@ async function createOrUpdateUser(user) {
       if (safeEmail && safeEmail !== existing.email) {
         changes.email = safeEmail;
       }
-      if (!existing.tier) changes.tier = TIERS?.CITIZEN || "citizen";
-      if (existing.isPhoneVerified === undefined) changes.isPhoneVerified = false;
-      if (existing.hasVerifiedPhone === undefined) changes.hasVerifiedPhone = false;
+
+      // Guarantee a tier exists (never leave it undefined)
+      if (!existing.tier) {
+        changes.tier = DEFAULT_TIER;
+      }
+
+      if (existing.isPhoneVerified === undefined) {
+        changes.isPhoneVerified = false;
+      }
+      if (existing.hasVerifiedPhone === undefined) {
+        changes.hasVerifiedPhone = false;
+      }
 
       if (Object.keys(changes).length > 0) {
         changes.updatedAt = serverTimestamp();
         await updateDoc(userRef, changes);
       }
 
-      const isVerified = !!(existing.isVerified || existing.isPhoneVerified || existing.hasVerifiedPhone);
+      const isVerified = !!(
+        existing.isVerified ||
+        existing.isPhoneVerified ||
+        existing.hasVerifiedPhone
+      );
       updateVerificationUI(isVerified);
     }
   } catch (e) {
-    // Permission-denied is expected in some rule configurations during first write race
+    // Permission-denied can happen in race conditions — ignore it
     if (e?.code !== 'permission-denied') {
       console.error("User document error:", e);
       showToast("Error saving profile.", "error");
     }
   }
 }
-
 export function updateVerificationUI(isVerified = false) {
   const statusEl = document.getElementById('verification-status');
   const verifyBtn = document.getElementById('request-verification-btn');
