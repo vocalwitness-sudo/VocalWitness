@@ -1,4 +1,4 @@
-// js/firebase-config.js - Firebase Service Initialization & Config
+// js/firebase-config.js - Centralized Firebase Initialization & Config
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
 import { 
   getAuth, 
@@ -8,53 +8,43 @@ import {
   setPersistence, 
   browserLocalPersistence 
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import { initializeFirestore } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { getStorage } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
 
-// Dynamically determine host origin for seamless proxying with rewrites
-const hostDomain = window.location.hostname || "vocalwitness-3affa.web.app";
+// Dynamically match auth domain without breaking local development
+const hostDomain = window.location.hostname;
+const isCustomDomain = hostDomain.includes("vocalwitness.com");
 
 const firebaseConfig = {
   apiKey: "AIzaSyATxYekXgjdLP2SfR42FG8rEdajq_pIEb0",
-  // Matches host domain so auth handler runs on the same origin via firebase.json rewrites
-  authDomain: hostDomain.includes("vocalwitness.com") ? "vocalwitness.com" : "vocalwitness-3affa.web.app",
+  // Route custom domain traffic through vocalwitness.com; default to Firebase subdomains otherwise
+  authDomain: isCustomDomain ? "vocalwitness.com" : "vocalwitness-3affa.web.app",
   projectId: "vocalwitness-3affa",
   messagingSenderId: "108466981866",
   appId: "1:108466981866:web:b53360ad44012a576c8093"
 };
 
-// Safe initialization preventing duplicate defaults
+// Safe singleton initialization
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// Explicitly pass `app` to services
+// Authentication Instance & Local Persistence Setup
 const auth = getAuth(app);
-
-// Force browser local persistence to prevent cross-origin sessionStorage loss in Firefox/Safari
 setPersistence(auth, browserLocalPersistence).catch((err) => {
-  console.warn("Could not enforce local persistence:", err);
+  console.warn("Failed to set local persistence:", err);
 });
 
-const db = initializeFirestore(app, {
-  experimentalForceLongPolling: true
-});
-
+// Database & Storage Instances
+const db = getFirestore(app);
 const storage = getStorage(app);
 
-// ====================== AUTH PROVIDERS ======================
-
-// Google
+// OAuth Providers Configuration
 const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({
   prompt: 'select_account'
 });
 
-// Twitter (X)
 const twitterProvider = new TwitterAuthProvider();
-
-// GitHub
 const githubProvider = new GithubAuthProvider();
-// Optional: request extra scopes
-// githubProvider.addScope('read:user');
 
 export { 
   app, 
