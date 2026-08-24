@@ -31,16 +31,21 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 let authActionInProgress = false;
+let authInitialized = false;
 
 // ====================== HELPERS ======================
 
 function refreshTierUI() {
-  clearProfileCache();
-  if (typeof window.refreshTierAndUI === 'function') {
-    window.refreshTierAndUI();
-  } else {
-    if (typeof applyTierTheme === 'function') applyTierTheme();
-    if (typeof updateTierBadge === 'function') updateTierBadge();
+  try {
+    clearProfileCache?.();
+    if (typeof window.refreshTierAndUI === 'function') {
+      window.refreshTierAndUI();
+    } else {
+      applyTierTheme?.();
+      updateTierBadge?.();
+    }
+  } catch (e) {
+    console.warn("Tier UI refresh skipped:", e);
   }
 }
 
@@ -64,6 +69,7 @@ async function createOrUpdateUser(user) {
         tier: TIERS?.CITIZEN || "citizen",
         isVerified: false,
         isPhoneVerified: false,
+        hasVerifiedPhone: false,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
@@ -85,16 +91,18 @@ async function createOrUpdateUser(user) {
       }
       if (!existing.tier) changes.tier = TIERS?.CITIZEN || "citizen";
       if (existing.isPhoneVerified === undefined) changes.isPhoneVerified = false;
+      if (existing.hasVerifiedPhone === undefined) changes.hasVerifiedPhone = false;
 
       if (Object.keys(changes).length > 0) {
         changes.updatedAt = serverTimestamp();
         await updateDoc(userRef, changes);
       }
 
-      const isVerified = existing.isVerified || existing.isPhoneVerified || existing.hasVerifiedPhone || false;
+      const isVerified = !!(existing.isVerified || existing.isPhoneVerified || existing.hasVerifiedPhone);
       updateVerificationUI(isVerified);
     }
   } catch (e) {
+    // Permission-denied is expected in some rule configurations during first write race
     if (e?.code !== 'permission-denied') {
       console.error("User document error:", e);
       showToast("Error saving profile.", "error");
@@ -243,10 +251,12 @@ export async function githubLogin(event) {
 
 export async function logout() {
   try {
-    clearProfileCache();
-    if (typeof initNotifications === 'function') {
-      initNotifications(null);
-    }
+    clearProfileCache?.();
+    try {
+      if (typeof initNotifications === 'function') {
+        initNotifications(null);
+      }
+    } catch (_) {}
 
     await signOut(auth);
 
@@ -276,12 +286,31 @@ export function updateUIForAuthState(userParam = null) {
   const activeUser = userParam || auth.currentUser;
   const isLoggedIn = !!activeUser;
 
-  // Guest / Sign-in buttons
-  document.querySelectorAll('#guest-action-btn, #guest-action-btn-mobile, #guest-action-btn-drawer, .guest-only-btn, #signin-btn, #signin-btn-mobile')
+  // Guest / Sign-in buttons (old + new header IDs)
+  const guestSelectors = [
+    '#guest-action-btn',
+    '#guest-action-btn-mobile',
+    '#guest-action-btn-drawer',
+    '.guest-only-btn',
+    '#signin-btn',
+    '#signin-btn-mobile',
+    '#openAuthModalBtn',
+    '#openAuthModalBtnMobile'
+  ].join(', ');
+
+  document.querySelectorAll(guestSelectors)
     .forEach(el => el.classList.toggle('hidden', isLoggedIn));
 
-  // Profile buttons
-  document.querySelectorAll('#profile-btn, #profile-btn-mobile, .profile-action-btn')
+  // Profile buttons (old + new)
+  const profileSelectors = [
+    '#profile-btn',
+    '#profile-btn-mobile',
+    '.profile-action-btn',
+    '#userProfileBtn',
+    '#userProfileBtnMobile'
+  ].join(', ');
+
+  document.querySelectorAll(profileSelectors)
     .forEach(el => el.classList.toggle('hidden', !isLoggedIn));
 
   // Protected elements
@@ -294,27 +323,49 @@ export function updateUIForAuthState(userParam = null) {
       if (btn) btn.style.opacity = isLoggedIn ? '1' : '0.6';
     });
 
-  // Mobile avatar
+  // Desktop avatar / name
+  const userAvatarDesktop = document.getElementById('user-avatar-desktop');
+  const defaultAvatarDesktop = document.getElementById('default-avatar-icon-desktop');
+  const userNameDesktop = document.getElementById('user-name-desktop');
+
+  // Mobile avatar / name
   const userAvatarMobile = document.getElementById('user-avatar-mobile');
   const defaultAvatarMobile = document.getElementById('default-avatar-icon-mobile');
   const userNameMobile = document.getElementById('user-name-mobile');
 
   if (isLoggedIn && activeUser) {
+    // Desktop
+    if (activeUser.photoURL && userAvatarDesktop) {
+      userAvatarDesktop.src = activeUser.photoURL;
+      userAvatarDesktop.classList.remove('hidden');
+      defaultAvatarDesktop?.classList.add('hidden');
+    } else {
+      userAvatarDesktop?.classList.add('hidden');
+      defaultAvatarDesktop?.classList.remove('hidden');
+    }
+    if (userNameDesktop && activeUser.displayName) {
+      userNameDesktop.textContent = activeUser.displayName.split(' ')[0];
+    }
+
+    // Mobile
     if (activeUser.photoURL && userAvatarMobile) {
       userAvatarMobile.src = activeUser.photoURL;
       userAvatarMobile.classList.remove('hidden');
-      if (defaultAvatarMobile) defaultAvatarMobile.classList.add('hidden');
+      defaultAvatarMobile?.classList.add('hidden');
     } else {
-      if (userAvatarMobile) userAvatarMobile.classList.add('hidden');
-      if (defaultAvatarMobile) defaultAvatarMobile.classList.remove('hidden');
+      userAvatarMobile?.classList.add('hidden');
+      defaultAvatarMobile?.classList.remove('hidden');
     }
-
     if (userNameMobile && activeUser.displayName) {
       userNameMobile.textContent = activeUser.displayName.split(' ')[0];
     }
   } else {
-    if (userAvatarMobile) userAvatarMobile.classList.add('hidden');
-    if (defaultAvatarMobile) defaultAvatarMobile.classList.remove('hidden');
+    userAvatarDesktop?.classList.add('hidden');
+    defaultAvatarDesktop?.classList.remove('hidden');
+    if (userNameDesktop) userNameDesktop.textContent = '';
+
+    userAvatarMobile?.classList.add('hidden');
+    defaultAvatarMobile?.classList.remove('hidden');
     if (userNameMobile) userNameMobile.textContent = '';
   }
 
@@ -328,19 +379,33 @@ export function showAuthModal() {
   if (modal) {
     modal.classList.remove('hidden');
     modal.classList.add('flex');
+    modal.setAttribute('aria-hidden', 'false');
+    // Optional: trap focus later
   }
 }
 
 export function closeLoginModal() {
   document.querySelectorAll('#authModal, #loginModal, #createAccountModal')
     .forEach(modal => {
-      modal?.classList.add('hidden');
-      modal?.classList.remove('flex');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        modal.setAttribute('aria-hidden', 'true');
+      }
     });
 }
 
 export function openVerificationModal() {
   if (!requireAuth("Please sign in to complete citizen verification.")) return;
+
+  // Prefer the new phone verification modal if present
+  const phoneModal = document.getElementById('phoneVerificationModal');
+  if (phoneModal) {
+    phoneModal.classList.remove('hidden');
+    phoneModal.classList.add('flex');
+    phoneModal.setAttribute('aria-hidden', 'false');
+    return;
+  }
 
   const modal = document.getElementById('verificationModal');
   if (modal) {
@@ -350,6 +415,13 @@ export function openVerificationModal() {
 }
 
 export function closeVerificationModal() {
+  const phoneModal = document.getElementById('phoneVerificationModal');
+  if (phoneModal) {
+    phoneModal.classList.add('hidden');
+    phoneModal.classList.remove('flex');
+    phoneModal.setAttribute('aria-hidden', 'true');
+  }
+
   const modal = document.getElementById('verificationModal');
   if (modal) {
     modal.classList.add('hidden');
@@ -400,8 +472,8 @@ export function bindHeaderEvents() {
       return;
     }
 
-    // Open Auth Modal
-    if (e.target.closest('#guest-action-btn, #guest-action-btn-mobile, #guest-action-btn-drawer, #signin-btn-mobile, .auth-trigger-btn, [data-action="open-auth-modal"]')) {
+    // Open Auth Modal (covers new header buttons)
+    if (e.target.closest('#openAuthModalBtn, #openAuthModalBtnMobile, #guest-action-btn, #guest-action-btn-mobile, #guest-action-btn-drawer, #signin-btn-mobile, .auth-trigger-btn, [data-action="open-auth-modal"]')) {
       e.preventDefault();
       showAuthModal();
       return;
@@ -415,9 +487,13 @@ export function bindHeaderEvents() {
     }
 
     // Profile
-    if (e.target.closest('#profile-btn, #profile-btn-mobile, [data-action="open-profile"]')) {
+    if (e.target.closest('#userProfileBtn, #userProfileBtnMobile, #profile-btn, #profile-btn-mobile, [data-action="open-profile"]')) {
       e.preventDefault();
-      if (typeof window.openProfile === 'function') window.openProfile();
+      if (typeof window.openProfileModal === 'function') {
+        window.openProfileModal();
+      } else if (typeof window.openProfile === 'function') {
+        window.openProfile();
+      }
       return;
     }
 
@@ -429,7 +505,7 @@ export function bindHeaderEvents() {
     }
 
     // Close dropdowns when clicking outside
-    if (!e.target.closest('#profile-btn, #profile-btn-mobile, #profile-menu, #user-dropdown')) {
+    if (!e.target.closest('#profile-btn, #profile-btn-mobile, #userProfileBtn, #profile-menu, #user-dropdown')) {
       document.querySelectorAll('#profile-menu, #user-dropdown')
         .forEach(el => el.classList.add('hidden'));
     }
@@ -437,6 +513,11 @@ export function bindHeaderEvents() {
 }
 
 export function initAuth() {
+  if (authInitialized) {
+    return Promise.resolve(auth.currentUser);
+  }
+  authInitialized = true;
+
   bindHeaderEvents();
 
   return new Promise((resolve) => {
@@ -459,30 +540,41 @@ export function initAuth() {
 
     // Auth state listener
     onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        updateAppState({ isAuthenticated: true, currentUser: user });
-        await createOrUpdateUser(user);
-        refreshTierUI();
-        if (typeof initNotifications === 'function') {
-          initNotifications(user.uid);
+      try {
+        if (user) {
+          updateAppState({ isAuthenticated: true, currentUser: user });
+          await createOrUpdateUser(user);
+          refreshTierUI();
+          try {
+            if (typeof initNotifications === 'function') {
+              initNotifications(user.uid);
+            }
+          } catch (nErr) {
+            console.warn("Notifications init failed:", nErr);
+          }
+          updateUIForAuthState(user);
+        } else {
+          updateAppState({ isAuthenticated: false, currentUser: null });
+          updateVerificationUI(false);
+          try {
+            if (typeof initNotifications === 'function') {
+              initNotifications(null);
+            }
+          } catch (_) {}
+          updateUIForAuthState(null);
         }
-        updateUIForAuthState(user);
-      } else {
-        updateAppState({ isAuthenticated: false, currentUser: null });
-        updateVerificationUI(false);
-        if (typeof initNotifications === 'function') {
-          initNotifications(null);
-        }
-        updateUIForAuthState(null);
-      }
 
-      window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
-      resolve(user || null);
+        window.dispatchEvent(new CustomEvent('auth-changed', { detail: { user } }));
+      } catch (err) {
+        console.error("Auth state handler error:", err);
+      } finally {
+        resolve(user || null);
+      }
     });
   });
 }
 
-// Make functions available globally
+// Global exports for HTML / other modules
 window.showAuthModal = showAuthModal;
 window.closeLoginModal = closeLoginModal;
 window.logout = logout;
@@ -493,3 +585,5 @@ window.openVerificationModal = openVerificationModal;
 window.closeVerificationModal = closeVerificationModal;
 window.toggleProfileMenu = toggleProfileMenu;
 window.initAuth = initAuth;
+window.requireAuth = requireAuth;
+window.updateUIForAuthState = updateUIForAuthState;
