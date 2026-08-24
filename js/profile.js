@@ -1,43 +1,54 @@
 // js/profile.js - Integrated, Refactored & Extended Version
-// Handles modal layering, multi-field form persistence, image upload preview, and legacy alias bindings
-// Updated: Better Bio editing + Safe Edit/Settings buttons
+// Handles modal layering, multi-field form persistence, image upload preview,
+// bio editing, dual-identity mode, and legacy alias bindings
+// Updated: Better Bio editing + Safe Edit/Settings buttons + ProfileManager
 
-import {  
-    onAuthStateChanged,  
-    sendPasswordResetEmail, 
-    signOut  
-} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js"; 
-import {  
-    doc,  
+import {
+    onAuthStateChanged,
+    sendPasswordResetEmail,
+    signOut
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+
+import {
+    doc,
     getDoc,
     setDoc,
-    onSnapshot,  
-    updateDoc,  
-    serverTimestamp  
-} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js"; 
+    onSnapshot,
+    updateDoc,
+    serverTimestamp
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
-import { auth, db } from './firebase-config.js'; 
-import { showToast } from './utils.js'; 
-import { refreshTierAndUI, getCurrentWitnessLevel } from './tier.js'; 
-import { startWitnessCycle } from './witnessCycle.js'; 
-import { t } from './i18n.js'; 
-import { startPhoneVerification } from './verification.js';
+import { auth, db } from './firebase-config.js';
+import { AppState } from './app-state.js';
+import {
+    getUserTierData,
+    hasStewardAccess,
+    refreshTierAndUI,
+    getCurrentWitnessLevel
+} from './tier.js';
+import { renderTierBadge, showBoldWitnessModal } from './ui-components.js';
+import { t } from './i18n.js';
+import { showToast } from './utils.js';
+import { startWitnessCycle } from './witnessCycle.js';
+import { startPhoneVerification as startPhoneVerificationModule } from './verification.js';
 
-let currentUserData = null; 
-let userUnsubscribe = null; 
+// ====================== STATE ======================
+let currentUserData = null;
+let userUnsubscribe = null;
 let pendingAvatarBase64 = null;
-window.currentUserData = null; 
 
-// Helper function to sanitize untrusted strings
-function sanitize(str) { 
-    if (!str) return ''; 
-    return String(str) 
-        .replace(/&/g, "&amp;") 
-        .replace(/</g, "&lt;") 
-        .replace(/>/g, "&gt;") 
-        .replace(/"/g, "&quot;") 
-        .replace(/'/g, "&#039;"); 
-} 
+window.currentUserData = null;
+
+// ====================== HELPERS ======================
+function sanitize(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
 
 // ====================== OPEN / CLOSE MAIN PROFILE MODAL ======================
 export function openProfile() {
@@ -71,24 +82,22 @@ export function closeProfile() {
     modal.setAttribute('aria-hidden', 'true');
 }
 
-/** 
- * Initialize Profile Listener & State 
- */ 
-export function initProfile() { 
-    if (userUnsubscribe) userUnsubscribe(); 
-     
-    onAuthStateChanged(auth, async (user) => { 
-        if (user) { 
-            await ensureUserProfile(user); 
-        } else { 
-            currentUserData = null; 
-            window.currentUserData = null; 
-            if (userUnsubscribe) { 
-                userUnsubscribe(); 
-                userUnsubscribe = null; 
-            } 
-        } 
-    }); 
+// ====================== INITIALIZATION ======================
+export function initProfile() {
+    if (userUnsubscribe) userUnsubscribe();
+
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            await ensureUserProfile(user);
+        } else {
+            currentUserData = null;
+            window.currentUserData = null;
+            if (userUnsubscribe) {
+                userUnsubscribe();
+                userUnsubscribe = null;
+            }
+        }
+    });
 }
 
 /**
@@ -98,7 +107,7 @@ async function ensureUserProfile(user) {
     try {
         const userRef = doc(db, "users", user.uid);
         const snap = await getDoc(userRef);
-        
+
         if (!snap.exists()) {
             console.log("New user detected. Provisioning profile...");
             await setDoc(userRef, {
@@ -123,7 +132,7 @@ async function ensureUserProfile(user) {
                 updatedAt: serverTimestamp()
             });
         }
-        
+
         listenToUserProfile(user.uid);
     } catch (error) {
         console.error("Error provisioning user profile:", error);
@@ -131,86 +140,93 @@ async function ensureUserProfile(user) {
     }
 }
 
-/** 
- * Real-time Firestore user document listener 
- */ 
-function listenToUserProfile(userId) { 
+/**
+ * Real-time Firestore user document listener
+ */
+function listenToUserProfile(userId) {
     if (userUnsubscribe) userUnsubscribe();
 
-    const userRef = doc(db, "users", userId); 
-    userUnsubscribe = onSnapshot(userRef, (snapshot) => { 
-        if (snapshot.exists()) { 
-            currentUserData = snapshot.data(); 
-            window.currentUserData = currentUserData; 
-            renderProfileUI(currentUserData); 
-            if (typeof refreshTierAndUI === 'function') refreshTierAndUI(); 
-        } 
-    }, (error) => { 
-        console.error("Profile Firestore Error:", error); 
-    }); 
-} 
+    const userRef = doc(db, "users", userId);
+    userUnsubscribe = onSnapshot(userRef, (snapshot) => {
+        if (snapshot.exists()) {
+            currentUserData = snapshot.data();
+            window.currentUserData = currentUserData;
+            renderProfileUI(currentUserData);
+            if (typeof refreshTierAndUI === 'function') refreshTierAndUI();
+        }
+    }, (error) => {
+        console.error("Profile Firestore Error:", error);
+    });
+}
 
-// ====================== RENDER UI ====================== 
-export function renderProfileUI(userData, retryCount = 0) { 
-    if (!userData) return; 
-     
-    const targets = [ 
-        document.getElementById('mainProfileContent'), 
-        document.getElementById('modalProfileContent'), 
-        document.getElementById('profileContent') 
-    ].filter(Boolean); 
+// ====================== RENDER PROFILE UI ======================
+export function renderProfileUI(userData, retryCount = 0) {
+    if (!userData) return;
+
+    const targets = [
+        document.getElementById('mainProfileContent'),
+        document.getElementById('modalProfileContent'),
+        document.getElementById('profileContent')
+    ].filter(Boolean);
 
     if (targets.length === 0) {
         if (retryCount < 3) {
             setTimeout(() => renderProfileUI(userData, retryCount + 1), 50);
             return;
         }
-        return; 
+        return;
     }
 
-    const witnessPromise = typeof getCurrentWitnessLevel === 'function' 
-        ? getCurrentWitnessLevel() 
+    const witnessPromise = typeof getCurrentWitnessLevel === 'function'
+        ? getCurrentWitnessLevel()
         : Promise.resolve(null);
 
-    witnessPromise.then(level => { 
-        const isWitness = level !== null; 
+    witnessPromise.then(level => {
+        const isWitness = level !== null;
         const isCitizenCircle = userData.isPhoneVerified || userData.hasVerifiedPhone || userData.tier === 'citizen_circle';
-         
+
         const fullName = [userData.firstName, userData.lastName].filter(Boolean).join(" ");
         const isPrivacyShieldActive = userData.hidePublicInfo !== false;
 
-        const html = ` 
-            <div class="space-y-5 p-1 text-white"> 
+        const html = `
+            <div class="space-y-5 p-1 text-white">
+                <!-- Profile Header -->
+                <div class="flex flex-col items-center text-center">
+                    <div class="relative">
+                        <div class="w-24 h-24 mx-auto rounded-3xl overflow-hidden border-4 border-zinc-700 shadow-2xl bg-zinc-800">
+                            ${userData.photoURL
+                                ? `<img src="${sanitize(userData.photoURL)}" class="w-full h-full object-cover" alt="Profile Photo">`
+                                : `<div class="w-full h-full flex items-center justify-center text-5xl">👤</div>`
+                            }
+                        </div>
+                        ${isWitness ? `<div class="absolute -bottom-1 -right-1 text-2xl">🔐</div>` : ''}
+                    </div>
 
-                <!-- Profile Header --> 
-                <div class="flex flex-col items-center text-center"> 
-                    <div class="relative"> 
-                        <div class="w-24 h-24 mx-auto rounded-3xl overflow-hidden border-4 border-zinc-700 shadow-2xl bg-zinc-800"> 
-                            ${userData.photoURL ?  
-                                `<img src="${sanitize(userData.photoURL)}" class="w-full h-full object-cover" alt="Profile Photo">` :  
-                                `<div class="w-full h-full flex items-center justify-center text-5xl">👤</div>` 
-                            } 
-                        </div> 
-                        ${isWitness ? `<div class="absolute -bottom-1 -right-1 text-2xl">🔐</div>` : ''} 
-                    </div> 
-                     
-                    <h2 class="text-xl font-bold mt-3 text-white">${sanitize(userData.displayName) || "Anonymous Witness"}</h2> 
-                    
-                    ${fullName ? `<p class="text-xs font-semibold text-zinc-300 mt-0.5">${sanitize(fullName)} ${isPrivacyShieldActive ? '<span class="text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full ml-1">🛡️ Private</span>' : ''}</p>` : ''}
+                    <h2 class="text-xl font-bold mt-3 text-white">${sanitize(userData.displayName) || "Anonymous Witness"}</h2>
 
-                    <p class="text-emerald-400 font-mono text-sm mt-1">@${sanitize(userData.username) || 'anonymous'}</p> 
-                    ${userData.region ? `<p class="text-xs text-zinc-400 mt-1">📍 ${sanitize(userData.region)}</p>` : ''} 
-                     
-                    <!-- Tier Badge --> 
-                    <div class="mt-3 flex flex-wrap justify-center gap-2"> 
-                        ${level ? ` 
-                            <div class="inline-flex items-center gap-2 px-4 py-2 bg-zinc-900 border border-zinc-700 rounded-2xl"> 
-                                <span class="text-2xl">${level.emblem}</span> 
-                                <div class="text-left"> 
-                                    <div class="font-bold text-sm text-white">${sanitize(level.name)}</div> 
-                                    <div class="text-xs text-zinc-400">Level ${level.level} • ${userData.reputation || 0} REP</div> 
-                                </div> 
-                            </div> 
+                    ${fullName ? `
+                        <p class="text-xs font-semibold text-zinc-300 mt-0.5">
+                            ${sanitize(fullName)}
+                            ${isPrivacyShieldActive
+                                ? '<span class="text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full ml-1">🛡️ Private</span>'
+                                : ''
+                            }
+                        </p>
+                    ` : ''}
+
+                    <p class="text-emerald-400 font-mono text-sm mt-1">@${sanitize(userData.username) || 'anonymous'}</p>
+                    ${userData.region ? `<p class="text-xs text-zinc-400 mt-1">📍 ${sanitize(userData.region)}</p>` : ''}
+
+                    <!-- Tier Badge -->
+                    <div class="mt-3 flex flex-wrap justify-center gap-2">
+                        ${level ? `
+                            <div class="inline-flex items-center gap-2 px-4 py-2 bg-zinc-900 border border-zinc-700 rounded-2xl">
+                                <span class="text-2xl">${level.emblem}</span>
+                                <div class="text-left">
+                                    <div class="font-bold text-sm text-white">${sanitize(level.name)}</div>
+                                    <div class="text-xs text-zinc-400">Level ${level.level} • ${userData.reputation || 0} REP</div>
+                                </div>
+                            </div>
                         ` : isCitizenCircle ? `
                             <div class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl">
                                 <span class="text-xl">🛡️</span>
@@ -219,67 +235,68 @@ export function renderProfileUI(userData, retryCount = 0) {
                                     <div class="text-xs text-zinc-400">Phone Verified • ${userData.reputation || 60} REP</div>
                                 </div>
                             </div>
-                        ` : ` 
+                        ` : `
                             <div class="px-4 py-2 bg-zinc-800 rounded-2xl text-xs text-zinc-300">
                                 👤 Citizen (Unverified)
-                            </div> 
-                        `} 
+                            </div>
+                        `}
 
                         ${userData.zkVerified ? `
                             <div class="inline-flex items-center gap-1.5 px-3 py-2 bg-teal-500/10 border border-teal-500/30 rounded-2xl text-xs text-teal-400 font-medium">
                                 <span>🔑</span> ZK-Proof
                             </div>
                         ` : ''}
-                    </div> 
-                </div> 
+                    </div>
+                </div>
 
-                <!-- Witness Cycle --> 
-                <div class="bg-zinc-900 rounded-2xl p-4 border border-amber-500/20"> 
-                    <div class="flex justify-between items-start mb-3"> 
-                        <div> 
-                            <h4 class="font-semibold text-sm text-amber-400 flex items-center gap-2"> 
-                                <span>🔄</span> Witness Cycle 
-                            </h4> 
-                            <p class="text-xs text-zinc-400 mt-0.5">Participate in active testimony attestation cycles.</p> 
-                        </div> 
-                        <span class="px-2.5 py-1 bg-amber-500/10 text-amber-400 text-xs font-mono rounded-full border border-amber-500/30"> 
-                            ${userData.activeWitnessCycle ? 'Active' : 'Inactive'} 
-                        </span> 
-                    </div> 
-                    <button onclick="handleProfileStartCycle()"  
-                            class="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-black font-semibold rounded-xl transition text-sm"> 
-                        ${userData.activeWitnessCycle ? 'End Witness Cycle' : 'Start Witness Cycle'} 
-                    </button> 
-                </div> 
+                <!-- Witness Cycle -->
+                <div class="bg-zinc-900 rounded-2xl p-4 border border-amber-500/20">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <h4 class="font-semibold text-sm text-amber-400 flex items-center gap-2">
+                                <span>🔄</span> Witness Cycle
+                            </h4>
+                            <p class="text-xs text-zinc-400 mt-0.5">Participate in active testimony attestation cycles.</p>
+                        </div>
+                        <span class="px-2.5 py-1 bg-amber-500/10 text-amber-400 text-xs font-mono rounded-full border border-amber-500/30">
+                            ${userData.activeWitnessCycle ? 'Active' : 'Inactive'}
+                        </span>
+                    </div>
+                    <button onclick="handleProfileStartCycle()"
+                            class="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-black font-semibold rounded-xl transition text-sm">
+                        ${userData.activeWitnessCycle ? 'End Witness Cycle' : 'Start Witness Cycle'}
+                    </button>
+                </div>
 
                 <!-- ========== IMPROVED BIO SECTION ========== -->
                 <div class="bg-zinc-900/80 border border-zinc-700 rounded-2xl p-4">
                     <div class="flex items-center justify-between mb-2">
                         <h4 class="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Bio</h4>
-                        <button onclick="toggleBioEdit()" 
+                        <button onclick="toggleBioEdit()"
                                 class="text-xs text-emerald-400 hover:text-emerald-300 font-medium transition">
                             Edit
                         </button>
                     </div>
-                    
+
                     <div id="bioDisplay" class="text-sm text-zinc-300 leading-relaxed min-h-[52px]">
-                        ${userData.bio 
-                            ? sanitize(userData.bio) 
-                            : `<span class="text-zinc-500 italic">Tell the Square who you are... Share your story, values, or what truth means to you.</span>`}
+                        ${userData.bio
+                            ? sanitize(userData.bio)
+                            : `<span class="text-zinc-500 italic">Tell the Square who you are... Share your story, values, or what truth means to you.</span>`
+                        }
                     </div>
-                    
+
                     <div id="bioEditSection" class="hidden space-y-3 mt-2">
-                        <textarea id="profileBioTextarea" 
+                        <textarea id="profileBioTextarea"
                                   rows="3"
                                   maxlength="280"
                                   class="w-full bg-zinc-950 border border-zinc-700 rounded-xl p-3 text-sm text-zinc-200 focus:outline-none focus:border-emerald-500 resize-none"
                                   placeholder="Write a short bio about yourself... What do you stand for?">${sanitize(userData.bio || '')}</textarea>
                         <div class="flex gap-2">
-                            <button onclick="saveUserBio()" 
+                            <button onclick="saveUserBio()"
                                     class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-black text-xs font-semibold rounded-xl transition">
                                 Save Bio
                             </button>
-                            <button onclick="cancelBioEdit()" 
+                            <button onclick="cancelBioEdit()"
                                     class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs rounded-xl transition">
                                 Cancel
                             </button>
@@ -287,24 +304,24 @@ export function renderProfileUI(userData, retryCount = 0) {
                     </div>
                 </div>
 
-                <!-- Stats --> 
-                <div class="grid grid-cols-3 gap-3"> 
-                    <div class="bg-zinc-900 rounded-2xl p-3 text-center"> 
-                        <div class="text-xl font-bold text-emerald-400">${userData.reputation || 0}</div> 
-                        <div class="text-xs text-zinc-500 mt-1">Reputation</div> 
-                    </div> 
-                    <div class="bg-zinc-900 rounded-2xl p-3 text-center"> 
-                        <div class="text-xl font-bold text-white">${userData.testimoniesCount || 0}</div> 
-                        <div class="text-xs text-zinc-500 mt-1">Testimonies</div> 
-                    </div> 
-                    <div class="bg-zinc-900 rounded-2xl p-3 text-center"> 
-                        <div class="text-xl font-bold text-amber-400">${userData.verifications || 0}</div> 
-                        <div class="text-xs text-zinc-500 mt-1">Verifications</div> 
-                    </div> 
-                </div> 
+                <!-- Stats -->
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="bg-zinc-900 rounded-2xl p-3 text-center">
+                        <div class="text-xl font-bold text-emerald-400">${userData.reputation || 0}</div>
+                        <div class="text-xs text-zinc-500 mt-1">Reputation</div>
+                    </div>
+                    <div class="bg-zinc-900 rounded-2xl p-3 text-center">
+                        <div class="text-xl font-bold text-white">${userData.testimoniesCount || 0}</div>
+                        <div class="text-xs text-zinc-500 mt-1">Testimonies</div>
+                    </div>
+                    <div class="bg-zinc-900 rounded-2xl p-3 text-center">
+                        <div class="text-xl font-bold text-amber-400">${userData.verifications || 0}</div>
+                        <div class="text-xs text-zinc-500 mt-1">Verifications</div>
+                    </div>
+                </div>
 
-                <!-- Action Buttons --> 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2"> 
+                <!-- Action Buttons -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
                     ${!isCitizenCircle && !isWitness ? `
                         <button onclick="window.startPhoneVerification()"
                                 class="col-span-1 sm:col-span-2 py-3 px-4 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
@@ -312,35 +329,34 @@ export function renderProfileUI(userData, retryCount = 0) {
                         </button>
                     ` : ''}
 
-                    <button onclick="openEditProfileSafe()"  
-                            class="py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-black text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2"> 
-                        ✏️ Edit Profile 
-                    </button> 
+                    <button onclick="openEditProfileSafe()"
+                            class="py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-black text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
+                        ✏️ Edit Profile
+                    </button>
 
-                    <button onclick="openSettingsSafe()"  
-                            class="py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2"> 
-                        ⚙️ Settings & Security 
-                    </button> 
+                    <button onclick="openSettingsSafe()"
+                            class="py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
+                        ⚙️ Settings & Security
+                    </button>
 
-                    <button onclick="handleSignOut()"  
-                            class="col-span-1 sm:col-span-2 py-3 px-4 bg-red-950/40 hover:bg-red-900/60 border border-red-500/40 text-red-400 hover:text-red-300 text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2"> 
-                        🚪 Sign Out 
-                    </button> 
-                </div> 
-            </div> 
-        `; 
+                    <button onclick="handleSignOut()"
+                            class="col-span-1 sm:col-span-2 py-3 px-4 bg-red-950/40 hover:bg-red-900/60 border border-red-500/40 text-red-400 hover:text-red-300 text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
+                        🚪 Sign Out
+                    </button>
+                </div>
+            </div>
+        `;
 
-        targets.forEach(container => { 
-            container.innerHTML = html; 
-        }); 
-
-    }).catch(err => { 
-        console.error("Error computing witness level:", err); 
-    }); 
-} 
+        targets.forEach(container => {
+            container.innerHTML = html;
+        });
+    }).catch(err => {
+        console.error("Error computing witness level:", err);
+    });
+}
 
 // ====================== BIO EDIT HELPERS ======================
-window.toggleBioEdit = function() {
+window.toggleBioEdit = function () {
     const display = document.getElementById('bioDisplay');
     const edit = document.getElementById('bioEditSection');
     if (display && edit) {
@@ -350,7 +366,7 @@ window.toggleBioEdit = function() {
     }
 };
 
-window.cancelBioEdit = function() {
+window.cancelBioEdit = function () {
     const display = document.getElementById('bioDisplay');
     const edit = document.getElementById('bioEditSection');
     if (display && edit) {
@@ -359,7 +375,7 @@ window.cancelBioEdit = function() {
     }
 };
 
-window.saveUserBio = async function() {
+window.saveUserBio = async function () {
     const textarea = document.getElementById('profileBioTextarea');
     if (!textarea || !auth.currentUser) return;
 
@@ -372,7 +388,6 @@ window.saveUserBio = async function() {
             bio: bioText || null,
             updatedAt: serverTimestamp()
         });
-
         showToast("✅ Bio saved successfully!", "success");
         cancelBioEdit();
 
@@ -387,30 +402,26 @@ window.saveUserBio = async function() {
 };
 
 // ====================== SAFE MODAL OPENERS ======================
-window.openEditProfileSafe = function() {
+window.openEditProfileSafe = function () {
     const modal = document.getElementById('editProfileModal');
     if (modal) {
         openEditProfile();
         return;
     }
-    
-    // Fallback when editProfileModal is missing
     showToast("Opening quick bio editor...", "info");
     toggleBioEdit();
 };
 
-window.openSettingsSafe = function() {
+window.openSettingsSafe = function () {
     const modal = document.getElementById('settingsModal');
     if (modal) {
         openSettings();
         return;
     }
-    
     showToast("Settings & Security panel is being improved. Coming soon!", "info");
 };
 
-// ====================== IMAGE UPLOAD ======================
-// ====================== IMAGE UPLOAD ======================
+// ====================== IMAGE UPLOAD + COMPRESSION ======================
 export function handleImagePreview(event) {
     const file = event?.target?.files?.[0];
     if (!file) return;
@@ -453,6 +464,7 @@ export function handleImagePreview(event) {
 
             const imgPreview = document.getElementById('avatarPreview');
             const fallback = document.getElementById('avatarFallback');
+
             if (imgPreview) {
                 imgPreview.src = pendingAvatarBase64;
                 imgPreview.classList.remove('hidden');
@@ -463,44 +475,46 @@ export function handleImagePreview(event) {
     };
     reader.readAsDataURL(file);
 }
-// ====================== SIGN OUT ====================== 
-export async function handleSignOut() { 
-    try { 
-        showToast("Signing out...", "info"); 
-        
-        if (userUnsubscribe) { 
-            userUnsubscribe(); 
-            userUnsubscribe = null; 
-        } 
-        
+
+// ====================== SIGN OUT ======================
+export async function handleSignOut() {
+    try {
+        showToast("Signing out...", "info");
+
+        if (userUnsubscribe) {
+            userUnsubscribe();
+            userUnsubscribe = null;
+        }
+
         document.querySelectorAll('.modal, [id$="Modal"]').forEach(modal => {
             modal.classList.add('hidden');
             modal.style.display = 'none';
         });
 
-        currentUserData = null; 
-        window.currentUserData = null; 
-        
-        await signOut(auth); 
-        window.location.href = '/'; 
-    } catch (error) { 
-        console.error("Sign out error:", error); 
-        showToast("Error signing out", "error"); 
-    } 
-} 
+        currentUserData = null;
+        window.currentUserData = null;
 
-// ====================== OTHER CONTROLS ====================== 
-export async function handleProfileStartCycle() { 
-    if (typeof startWitnessCycle === 'function') { 
-        await startWitnessCycle(); 
-    } else { 
-        showToast("Witness cycle module unavailable", "error"); 
-    } 
-} 
+        await signOut(auth);
+        window.location.href = '/';
+    } catch (error) {
+        console.error("Sign out error:", error);
+        showToast("Error signing out", "error");
+    }
+}
 
-export function openEditProfile() { 
+// ====================== OTHER CONTROLS ======================
+export async function handleProfileStartCycle() {
+    if (typeof startWitnessCycle === 'function') {
+        await startWitnessCycle();
+    } else {
+        showToast("Witness cycle module unavailable", "error");
+    }
+}
+
+export function openEditProfile() {
     closeProfile();
-    const modal = document.getElementById('editProfileModal'); 
+
+    const modal = document.getElementById('editProfileModal');
     if (!modal) {
         showToast("Edit Profile modal not found. Using quick bio editor instead.", "info");
         openProfile();
@@ -510,23 +524,23 @@ export function openEditProfile() {
 
     pendingAvatarBase64 = null;
 
-    if (currentUserData) { 
+    if (currentUserData) {
         const firstNameInput = document.getElementById('editFirstName');
         const lastNameInput = document.getElementById('editLastName');
-        const displayNameInput = document.getElementById('editDisplayName'); 
-        const usernameInput = document.getElementById('editUsername'); 
-        const regionInput = document.getElementById('editRegion'); 
-        const bioInput = document.getElementById('editBio'); 
+        const displayNameInput = document.getElementById('editDisplayName');
+        const usernameInput = document.getElementById('editUsername');
+        const regionInput = document.getElementById('editRegion');
+        const bioInput = document.getElementById('editBio');
         const hidePublicToggle = document.getElementById('toggleHidePublicInfo');
         const imgPreview = document.getElementById('avatarPreview');
         const avatarFallback = document.getElementById('avatarFallback');
 
         if (firstNameInput) firstNameInput.value = currentUserData.firstName || '';
         if (lastNameInput) lastNameInput.value = currentUserData.lastName || '';
-        if (displayNameInput) displayNameInput.value = currentUserData.displayName || ''; 
-        if (usernameInput) usernameInput.value = currentUserData.username || ''; 
-        if (regionInput) regionInput.value = currentUserData.region || ''; 
-        if (bioInput) bioInput.value = currentUserData.bio || ''; 
+        if (displayNameInput) displayNameInput.value = currentUserData.displayName || '';
+        if (usernameInput) usernameInput.value = currentUserData.username || '';
+        if (regionInput) regionInput.value = currentUserData.region || '';
+        if (bioInput) bioInput.value = currentUserData.bio || '';
         if (hidePublicToggle) hidePublicToggle.checked = currentUserData.hidePublicInfo !== false;
 
         if (currentUserData.photoURL && imgPreview) {
@@ -537,19 +551,20 @@ export function openEditProfile() {
             if (imgPreview) imgPreview.classList.add('hidden');
             if (avatarFallback) avatarFallback.classList.remove('hidden');
         }
-    } 
-    modal.classList.remove('hidden'); 
+    }
+
+    modal.classList.remove('hidden');
     modal.style.display = 'flex';
     modal.style.zIndex = '10000';
-} 
+}
 
-export function closeEditProfile() { 
+export function closeEditProfile() {
     const modal = document.getElementById('editProfileModal');
     if (modal) {
-        modal.classList.add('hidden'); 
+        modal.classList.add('hidden');
         modal.style.display = 'none';
     }
-} 
+}
 
 export function openSettings() {
     closeProfile();
@@ -576,9 +591,9 @@ export function handleSaveProfile(event) {
     saveProfileChanges();
 }
 
-export async function saveProfileChanges(event) { 
+export async function saveProfileChanges(event) {
     if (event) event.preventDefault();
-    if (!auth.currentUser) return showToast("You must be logged in", "error"); 
+    if (!auth.currentUser) return showToast("You must be logged in", "error");
 
     const firstNameEl = document.getElementById('editFirstName');
     const lastNameEl = document.getElementById('editLastName');
@@ -590,48 +605,49 @@ export async function saveProfileChanges(event) {
 
     const firstName = firstNameEl?.value?.trim() || "";
     const lastName = lastNameEl?.value?.trim() || "";
-    const displayName = displayNameEl?.value?.trim(); 
-    const username = usernameEl?.value?.trim(); 
-    const region = regionEl?.value?.trim(); 
-    const bio = bioEl?.value?.trim(); 
+    const displayName = displayNameEl?.value?.trim();
+    const username = usernameEl?.value?.trim();
+    const region = regionEl?.value?.trim();
+    const bio = bioEl?.value?.trim();
     const hidePublicInfo = hidePublicEl ? hidePublicEl.checked : true;
 
-    if (!displayName) return showToast("Display name is required", "error"); 
+    if (!displayName) return showToast("Display name is required", "error");
 
-    try { 
-        showToast("Saving changes...", "info"); 
-        const userRef = doc(db, "users", auth.currentUser.uid); 
-        
-        const updatePayload = { 
+    try {
+        showToast("Saving changes...", "info");
+        const userRef = doc(db, "users", auth.currentUser.uid);
+
+        const updatePayload = {
             firstName,
             lastName,
-            displayName, 
-            username: username || null, 
-            region: region || null, 
-            bio: bio || null, 
+            displayName,
+            username: username || null,
+            region: region || null,
+            bio: bio || null,
             hidePublicInfo,
-            updatedAt: serverTimestamp() 
+            updatedAt: serverTimestamp()
         };
 
         if (pendingAvatarBase64) {
             updatePayload.photoURL = pendingAvatarBase64;
         }
 
-        await updateDoc(userRef, updatePayload); 
+        await updateDoc(userRef, updatePayload);
+        showToast("✅ Profile updated successfully!", "success");
+        closeEditProfile();
 
-        showToast("✅ Profile updated successfully!", "success"); 
-        closeEditProfile(); 
-        if (typeof refreshTierAndUI === 'function') refreshTierAndUI(); 
-    } catch (error) { 
-        console.error("Save profile error:", error); 
-        showToast("Failed to save profile", "error"); 
-    } 
-} 
+        if (typeof refreshTierAndUI === 'function') refreshTierAndUI();
+    } catch (error) {
+        console.error("Save profile error:", error);
+        showToast("Failed to save profile", "error");
+    }
+}
 
 export async function triggerPasswordReset() {
     if (!auth.currentUser || !auth.currentUser.email) {
         return showToast("No email associated with this account", "error");
     }
+
     try {
         await sendPasswordResetEmail(auth, auth.currentUser.email);
         showToast("📧 Password reset email sent!", "success");
@@ -641,45 +657,47 @@ export async function triggerPasswordReset() {
     }
 }
 
-export async function exportUserDataPDF() { 
-    if (!currentUserData) return showToast("Profile data not loaded", "error"); 
-    showToast("Generating identity PDF...", "info"); 
-    
-    try { 
-        const jsPDF = window.jspdf?.jsPDF || window.jsPDF; 
-        if (!jsPDF) throw new Error("jsPDF library not initialized"); 
-        
-        const pdf = new jsPDF(); 
-        pdf.setFontSize(20); 
-        pdf.text("VocalWitness Identity & Profile Record", 20, 20); 
-        
-        pdf.setFontSize(12); 
-        pdf.text(`Generated: ${new Date().toLocaleString()}`, 20, 32); 
-        pdf.text(`Display Name: ${currentUserData.displayName || 'N/A'}`, 20, 44); 
-        pdf.text(`Username: @${currentUserData.username || 'anonymous'}`, 20, 52); 
-        pdf.text(`Region: ${currentUserData.region || 'N/A'}`, 20, 60); 
-        pdf.text(`Privacy Shield Active: ${currentUserData.hidePublicInfo !== false ? 'Yes' : 'No'}`, 20, 68);
-        pdf.text(`Reputation: ${currentUserData.reputation || 0} REP`, 20, 76); 
-        pdf.text(`Phone Verified: ${currentUserData.isPhoneVerified || currentUserData.hasVerifiedPhone ? 'Yes' : 'No'}`, 20, 84); 
-        pdf.text(`ZK Verified: ${currentUserData.zkVerified ? 'Yes' : 'No'}`, 20, 92); 
-        
-        pdf.save(`vocalwitness-identity-${auth.currentUser?.uid || 'user'}.pdf`); 
-        showToast("✅ Identity PDF Exported!", "success"); 
-    } catch (e) { 
-        console.error("Export error:", e); 
-        showToast("PDF generation requires jsPDF", "error"); 
-    } 
-} 
+export async function exportUserDataPDF() {
+    if (!currentUserData) return showToast("Profile data not loaded", "error");
 
-window.addEventListener('languageChanged', () => { 
-    if (currentUserData) renderProfileUI(currentUserData); 
+    showToast("Generating identity PDF...", "info");
+
+    try {
+        const jsPDF = window.jspdf?.jsPDF || window.jsPDF;
+        if (!jsPDF) throw new Error("jsPDF library not initialized");
+
+        const pdf = new jsPDF();
+        pdf.setFontSize(20);
+        pdf.text("VocalWitness Identity & Profile Record", 20, 20);
+
+        pdf.setFontSize(12);
+        pdf.text(`Generated: ${new Date().toLocaleString()}`, 20, 32);
+        pdf.text(`Display Name: ${currentUserData.displayName || 'N/A'}`, 20, 44);
+        pdf.text(`Username: @${currentUserData.username || 'anonymous'}`, 20, 52);
+        pdf.text(`Region: ${currentUserData.region || 'N/A'}`, 20, 60);
+        pdf.text(`Privacy Shield Active: ${currentUserData.hidePublicInfo !== false ? 'Yes' : 'No'}`, 20, 68);
+        pdf.text(`Reputation: ${currentUserData.reputation || 0} REP`, 20, 76);
+        pdf.text(`Phone Verified: ${currentUserData.isPhoneVerified || currentUserData.hasVerifiedPhone ? 'Yes' : 'No'}`, 20, 84);
+        pdf.text(`ZK Verified: ${currentUserData.zkVerified ? 'Yes' : 'No'}`, 20, 92);
+
+        pdf.save(`vocalwitness-identity-${auth.currentUser?.uid || 'user'}.pdf`);
+        showToast("✅ Identity PDF Exported!", "success");
+    } catch (e) {
+        console.error("Export error:", e);
+        showToast("PDF generation requires jsPDF", "error");
+    }
+}
+
+// ====================== LANGUAGE CHANGE SUPPORT ======================
+window.addEventListener('languageChanged', () => {
+    if (currentUserData) renderProfileUI(currentUserData);
 });
 
-// ====================== GLOBAL EXPORTS ======================
-window.startPhoneVerification = function() {
+// ====================== GLOBAL EXPORTS & LEGACY ALIASES ======================
+window.startPhoneVerification = function () {
     closeProfile();
-    if (typeof startPhoneVerification === 'function') {
-        startPhoneVerification();
+    if (typeof startPhoneVerificationModule === 'function') {
+        startPhoneVerificationModule();
     } else {
         const verifModal = document.getElementById('verificationModal') || document.getElementById('phoneVerificationModal');
         if (verifModal) {
@@ -716,5 +734,161 @@ window.openSettingsModal = window.openSettings;
 window.closeSettingsModal = window.closeSettings;
 window.saveProfileBio = window.saveUserBio;
 
-// Initialize
+// ====================== PROFILE MANAGER (Card / Dual-Identity View) ======================
+export class ProfileManager {
+    constructor() {
+        this.profileContainer = document.getElementById('profileCard');
+        this.modeToggleBtn = document.getElementById('identityModeToggleBtn');
+    }
+
+    /**
+     * Initializes the profile view and identity mode bindings.
+     */
+    async init() {
+        if (!auth.currentUser) {
+            this.renderLoggedOutState();
+            return;
+        }
+
+        const user = auth.currentUser;
+        const tierData = await getUserTierData(user.uid);
+        const currentMode = AppState.getIdentityMode(); // 'ANONYMOUS' or 'BOLD_WITNESS'
+
+        this.renderProfileCard(user, tierData, currentMode);
+        this.bindEvents(user, tierData);
+    }
+
+    /**
+     * Renders the dynamic dual-identity profile card.
+     */
+    renderProfileCard(user, tierData, mode) {
+        if (!this.profileContainer) return;
+
+        const isBold = mode === 'BOLD_WITNESS';
+
+        const displayName = isBold
+            ? (user.displayName || 'Verified Witness')
+            : `Witness #${user.uid.slice(0, 6)}`;
+
+        const avatarUrl = isBold
+            ? (user.photoURL || 'assets/default-avatar.png')
+            : 'assets/zk-shield-avatar.png';
+
+        const identityBadge = isBold
+            ? `<span class="bg-amber-500/10 text-amber-400 border border-amber-500/30 text-xs px-2.5 py-1 rounded-full font-mono">⚡ Bold Witness</span>`
+            : `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-xs px-2.5 py-1 rounded-full font-mono">🛡️ ZK-Anonymous</span>`;
+
+        this.profileContainer.innerHTML = `
+            <div class="bg-zinc-950 border border-zinc-800 rounded-3xl p-6 shadow-2xl space-y-6">
+                <!-- Header / Identity Overview -->
+                <div class="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
+                    <img src="${avatarUrl}" alt="Avatar" class="w-20 h-20 rounded-full border-2 border-zinc-700 object-cover" />
+                    <div class="space-y-1">
+                        <div class="flex items-center justify-center sm:justify-start gap-2">
+                            <h2 class="text-xl font-bold text-white">${displayName}</h2>
+                            ${renderTierBadge(tierData?.tier || 'citizen')}
+                        </div>
+                        <p class="text-xs text-zinc-400 font-mono">${user.email || 'Phone Verified'}</p>
+                        <div class="pt-1">${identityBadge}</div>
+                    </div>
+                </div>
+
+                <hr class="border-zinc-800" />
+
+                <!-- Identity Mode Switcher -->
+                <div class="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-4 flex items-center justify-between">
+                    <div>
+                        <h4 class="text-sm font-semibold text-zinc-200">Active Identity Mode</h4>
+                        <p class="text-xs text-zinc-400 mt-0.5">
+                            ${isBold
+                                ? 'Metadata preserved for legal validity.'
+                                : 'EXIF & IP stripped via zero-knowledge layer.'
+                            }
+                        </p>
+                    </div>
+                    <button id="switchModeBtn"
+                            class="bg-zinc-800 hover:bg-zinc-700 text-zinc-100 px-4 py-2 rounded-xl text-xs font-semibold transition border border-zinc-700">
+                        ${isBold ? 'Switch to Anonymous' : 'Enable Bold Witness'}
+                    </button>
+                </div>
+
+                <!-- Forensic Settings & Preferences -->
+                <div class="space-y-3">
+                    <h4 class="text-xs font-mono uppercase tracking-wider text-zinc-500">Forensic Pipeline Defaults</h4>
+                    <div class="space-y-2">
+                        <label class="flex items-center justify-between p-3 bg-zinc-900/40 rounded-xl border border-zinc-800/60 cursor-pointer">
+                            <span class="text-xs text-zinc-300">Auto-Pitch Shift Audio Recordings</span>
+                            <input type="checkbox" id="prefVoiceObfuscation"
+                                   ${AppState.getPref('voiceObfuscate') ? 'checked' : ''}
+                                   class="rounded bg-zinc-800 border-zinc-700 text-emerald-500">
+                        </label>
+                        <label class="flex items-center justify-between p-3 bg-zinc-900/40 rounded-xl border border-zinc-800/60 cursor-pointer">
+                            <span class="text-xs text-zinc-300">Strip Image EXIF & Location Data</span>
+                            <input type="checkbox" id="prefExifScrub"
+                                   ${AppState.getPref('exifScrub') ? 'checked' : ''}
+                                   class="rounded bg-zinc-800 border-zinc-700 text-emerald-500">
+                        </label>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * Binds interactions for mode switching and preferences.
+     */
+    bindEvents(user, tierData) {
+        const switchBtn = document.getElementById('switchModeBtn');
+        if (switchBtn) {
+            switchBtn.addEventListener('click', () => {
+                const currentMode = AppState.getIdentityMode();
+
+                if (currentMode === 'ANONYMOUS') {
+                    showBoldWitnessModal(async () => {
+                        AppState.setIdentityMode('BOLD_WITNESS');
+                        this.init();
+                        showToast("Bold Witness Mode Activated", "info");
+                    });
+                } else {
+                    AppState.setIdentityMode('ANONYMOUS');
+                    this.init();
+                    showToast("Switched to ZK-Anonymous Mode", "success");
+                }
+            });
+        }
+
+        const voiceToggle = document.getElementById('prefVoiceObfuscation');
+        if (voiceToggle) {
+            voiceToggle.addEventListener('change', (e) => {
+                AppState.setPref('voiceObfuscate', e.target.checked);
+            });
+        }
+
+        const exifToggle = document.getElementById('prefExifScrub');
+        if (exifToggle) {
+            exifToggle.addEventListener('change', (e) => {
+                AppState.setPref('exifScrub', e.target.checked);
+            });
+        }
+    }
+
+    renderLoggedOutState() {
+        if (!this.profileContainer) return;
+        this.profileContainer.innerHTML = `
+            <div class="text-center py-12 text-zinc-500">
+                <p class="text-sm">Please connect or verify your account to view profile settings.</p>
+            </div>
+        `;
+    }
+}
+
+// ====================== AUTO-INIT ======================
 initProfile();
+
+// Also initialize ProfileManager if the card exists on the page
+document.addEventListener('DOMContentLoaded', () => {
+    const manager = new ProfileManager();
+    if (manager.profileContainer) {
+        manager.init();
+    }
+});
