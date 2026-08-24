@@ -174,4 +174,8 @@ export function renderImagePreview(files = []) {
         card.appendChild(removeBtn);
         previewContainer.appendChild(card);
     });
+
+    // Add to the bottom of js/app-state.js
+export { state as AppState };
+export default state;
 }
