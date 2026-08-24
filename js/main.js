@@ -519,6 +519,73 @@ function setupEventListeners() {
     console.log("✅ Application listeners active");
 }
 
+// ====================== NOTIFICATION DROPDOWN ======================
+window.toggleNotificationDropdown = function(event) {
+  event.stopPropagation();
+  const dropdown = document.getElementById('notification-dropdown');
+  if (!dropdown) return;
+
+  // Close other open menus first
+  document.getElementById('more-menu')?.classList.add('hidden');
+
+  dropdown.classList.toggle('hidden');
+};
+
+// Close dropdown when clicking outside
+document.addEventListener('click', (e) => {
+  const dropdown = document.getElementById('notification-dropdown');
+  const container = document.getElementById('notification-container');
+  const mobileBtn = document.getElementById('notification-btn-mobile');
+
+  if (dropdown && !dropdown.classList.contains('hidden')) {
+    if (!container?.contains(e.target) && !mobileBtn?.contains(e.target)) {
+      dropdown.classList.add('hidden');
+    }
+  }
+});
+
+// ====================== MOBILE + GLOBAL SEARCH LOGIC ======================
+function initHeaderSearch() {
+  const mobileSearch = document.getElementById('searchInputMobile');
+  const feedSearch = document.getElementById('feedSearchInput'); // from feed.js
+
+  const performSearch = (query) => {
+    // Sync with feed search if it exists
+    if (feedSearch && feedSearch.value !== query) {
+      feedSearch.value = query;
+      feedSearch.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    // Fallback: trigger feed filter directly if available
+    if (typeof window.applySearchAndFilter === 'function') {
+      window.applySearchAndFilter();
+    }
+  };
+
+  if (mobileSearch) {
+    let debounce;
+    mobileSearch.addEventListener('input', (e) => {
+      clearTimeout(debounce);
+      debounce = setTimeout(() => {
+        performSearch(e.target.value.trim());
+      }, 280);
+    });
+
+    // Also support Enter key
+    mobileSearch.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        performSearch(e.target.value.trim());
+      }
+    });
+  }
+}
+
+// Call this after DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  initHeaderSearch();
+});
+
 // ====================== COMPOSER WIRING (matches current index.html IDs) ======================
 function wireTestimonyComposer() {
     // Create hidden file input if it doesn't exist
