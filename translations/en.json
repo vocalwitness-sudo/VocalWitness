@@ -58,6 +58,24 @@
   "backButton": "← Back",
   "backToSquare": "← Back to Square",
   "backToVocalWitness": "← Back to VocalWitness",
+  "identity": {
+    "anonymous_title": "ZK-Anonymous Mode",
+    "anonymous_desc": "EXIF tags, GPS metadata, and voice acoustic patterns are automatically scrubbed before publishing.",
+    "bold_witness_title": "Bold Witness Mode",
+    "bold_witness_desc": "Raw EXIF tags, GPS coordinates, and original biometrics are preserved for legal court admissibility.",
+    "switch_to_bold": "Enable Bold Witness",
+    "switch_to_anon": "Switch to Anonymous",
+    "modal_warning_title": "Entering Bold Witness Mode",
+    "modal_warning_body": "By switching to Bold Witness Mode, your submissions will retain original device metadata and public identity attribution. This increases evidentiary weight in legal proceedings but reveals your device signature.",
+    "confirm_bold": "I Understand, Enable Bold Witness",
+    "cancel": "Cancel"
+  },
+  "composer": {
+    "scrubbing_active": "🛡️ Media Scrubbing Active: Metadata and GPS will be stripped upon posting.",
+    "preserving_active": "⚡ Legal Preservation Active: Raw EXIF and GPS data will be attached.",
+    "audio_normalized": "🎵 Acoustic normalization enabled.",
+    "audio_raw": "🎙️ Raw un-normalized audio recorded."
+  },
   "supportModal": {
     "title": "Sustain the Public Square",
     "description": "Contribute directly to the VocalWitness truth ledger. Your support helps keep our infrastructure alive.",
@@ -223,7 +241,6 @@
   "termsSection7Text": "VocalWitness is sustained entirely through voluntary community donations, transparent support funds, and direct non-custodial cryptographic contributions. Donations are non-refundable and do not grant special governance privileges or ownership over the platform.",
   "termsSection8Title": "8. Limitation of Liability",
   "termsSection8Text": "VocalWitness and its maintainers disclaim liability for user-generated content, network disruptions, or external cryptographic verification failures.",
-
   "ledgerIntegrityTitle": "Ledger Integrity & Application-Level Immutability",
   "ledgerIntegrityPara1": "Once a record is written to the Forensic Ledger or the audit log, the application and database rules make it impossible for any user (or ordinary operator) to edit or delete it.",
   "ledgerIntegrityPoint1": "Firestore security rules explicitly forbid update and delete on the ledger collections.",
