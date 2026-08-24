@@ -186,14 +186,14 @@
     Support The Square
 </button>
 
-                <button id="openAuthModalBtn" type="button" 
-                        onclick="document.getElementById('authModal')?.classList.remove('hidden')" 
-                        class="px-4 py-2 bg-white hover:bg-zinc-100 text-black font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm text-sm">
-                    <div class="flex items-center gap-1">
-                        <img src="https://www.google.com/favicon.ico" class="w-3.5 h-3.5" alt="Google">
-                    </div>
-                    <span data-i18n="joinBtn">Join VocalWitness</span>
-                </button>
+            <button id="openAuthModalBtn" type="button" 
+        onclick="document.getElementById('authModal')?.classList.remove('hidden')" 
+        class="px-4 py-2 bg-white hover:bg-zinc-200 text-zinc-900 font-semibold rounded-2xl transition flex items-center gap-2 shadow-sm text-sm cursor-pointer active:scale-95">
+    <div class="flex items-center gap-1 shrink-0">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-4 h-4" alt="Google">
+    </div>
+    <span class="text-zinc-900 font-bold" data-i18n="joinBtn">Join VocalWitness</span>
+</button>
 
                 <button id="userProfileBtn" type="button" 
                         onclick="if (typeof openProfileModal === 'function') openProfileModal();" 
@@ -562,12 +562,13 @@
     </div>
         <!-- Social Login Buttons -->
         <div class="space-y-3">
-            <!-- Google -->
-            <button id="googleAuthBtn" type="button" data-action="google-login"
-                    class="w-full flex items-center justify-center gap-3 bg-white text-zinc-900 font-bold py-3.5 px-4 rounded-2xl hover:bg-zinc-100 transition-all text-sm shadow-md">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5" alt="Google">
-                <span>Continue with Google</span>
-            </button>
+         
+          <!-- Google -->
+<button id="googleAuthBtn" type="button" data-action="google-login"
+        class="w-full flex items-center justify-center gap-3 bg-white hover:bg-zinc-200 text-zinc-900 font-bold py-3.5 px-4 rounded-2xl transition-all text-sm shadow-md cursor-pointer active:scale-[0.98]">
+    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5 shrink-0" alt="Google">
+    <span class="text-zinc-900 font-bold">Continue with Google</span>
+</button>
 
             <!-- X (Twitter) -->
             <button id="twitterAuthBtn" type="button" data-action="twitter-login"
