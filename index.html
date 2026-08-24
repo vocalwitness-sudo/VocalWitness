@@ -176,13 +176,14 @@
                     </optgroup>
                 </select>
 
-                <!-- FIXED VISIBILITY: DESKTOP SUPPORT BUTTON -->
-                <button id="openSupportModalBtn" type="button" 
-                        onclick="document.getElementById('supportModal')?.classList.remove('hidden')" 
-                        class="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold rounded-2xl transition whitespace-nowrap text-sm shadow-md cursor-pointer" 
-                        data-i18n="supportBtn">
-                    Support The Square
-                </button>
+                <!-- DESKTOP SUPPORT BUTTON -->
+<button id="openSupportModalBtn" type="button" 
+        onclick="document.getElementById('supportModal')?.classList.remove('hidden')" 
+        style="background-color: #10b981 !important; color: #000000 !important;"
+        class="px-4 py-2 font-black rounded-2xl transition-transform hover:scale-105 whitespace-nowrap text-sm shadow-md cursor-pointer border-none" 
+        data-i18n="supportBtn">
+    Support The Square
+</button>
 
                 <button id="openAuthModalBtn" type="button" 
                         onclick="document.getElementById('authModal')?.classList.remove('hidden')" 
