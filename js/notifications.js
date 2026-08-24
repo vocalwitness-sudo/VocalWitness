@@ -57,6 +57,27 @@ function attachNotificationListener(uid) {
     });
 }
 
+
+function updateNotificationBadge(count) {
+  const badge = document.getElementById('notification-badge');
+  const badgeMobile = document.getElementById('notification-badge-mobile');
+  const tag = document.getElementById('notification-count-tag');
+
+  const display = count > 99 ? '99+' : count;
+
+  if (badge) {
+    badge.textContent = display;
+    badge.classList.toggle('hidden', count === 0);
+  }
+  if (badgeMobile) {
+    badgeMobile.textContent = display;
+    badgeMobile.classList.toggle('hidden', count === 0);
+  }
+  if (tag) {
+    tag.textContent = `${count} new`;
+  }
+}
+
 function fallbackUnorderedListener(uid) {
     currentSubscribedUid = uid;
     const notificationsRef = collection(db, "users", uid, "notifications");
