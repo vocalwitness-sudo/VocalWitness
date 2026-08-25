@@ -1,166 +1,217 @@
 <!DOCTYPE html>
 <html lang="en-NG">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title data-i18n="privacyPageTitle">Privacy Policy & Platform Disclaimers - VocalWitness</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    body { background-color: #0a0f1c; color: white; font-family: 'Inter', system-ui, sans-serif; }
-    .glass { background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(16, 185, 129, 0.25); }
-    .badge-glass { background: rgba(31, 41, 55, 0.6); border: 1px solid rgba(255, 255, 255, 0.1); }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="privacyPageTitle">Privacy Policy • Zero-Knowledge Defense • VocalWitness</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { 
+            font-family: 'Inter', system-ui, sans-serif; 
+            background: #0a0f1c; 
+            color: #e4e4e7; 
+        }
+        .glass { 
+            background: rgba(17, 24, 39, 0.95); 
+            backdrop-filter: blur(20px); 
+            border: 1px solid rgba(16, 185, 129, 0.25); 
+        }
+        .badge-glass { 
+            background: rgba(31, 41, 55, 0.6); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+        }
+        .panic-btn { 
+            background: linear-gradient(135deg, #dc2626, #991b1b); 
+        }
+    </style>
 </head>
-<body class="min-h-screen p-8">
-  <div class="max-w-3xl mx-auto">
-    <div class="flex items-center gap-4 mb-10">
-      <div class="w-12 h-12 bg-emerald-500/20 rounded-3xl flex items-center justify-center text-4xl">🔒</div>
-      <h1 class="text-4xl font-bold tracking-tight" data-i18n="privacyTitle">Privacy Policy & Disclaimers</h1>
-    </div>
-    
-    <p class="text-zinc-400 mb-10" data-i18n="privacyLastUpdated">Last updated: August 25, 2026</p>
+<body class="min-h-screen p-6 md:p-12 pb-24">
 
-    <!-- Global Trust Shield Banner -->
-    <div class="glass rounded-3xl p-8 mb-10 space-y-4">
-      <p class="text-emerald-300 leading-relaxed text-lg" data-i18n="privacyIntro">
-        At VocalWitness, we believe <strong>truth should never require sacrificing your safety</strong>. 
-        We build privacy-first infrastructure designed to protect citizens while maintaining an undeniable public record.
-      </p>
-      <div class="pt-2 flex flex-wrap items-center gap-3 text-xs text-zinc-300">
-        <span class="text-zinc-400 font-medium" data-i18n="privacySecuredBy">Secured by industry standards:</span>
-        <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-emerald-400">Google Cloud / Firebase</span>
-        <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-amber-400">Cloudflare Edge Shield</span>
-        <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-cyan-400">W3C Web Crypto & ZK Proofs</span>
-      </div>
-    </div>
-
-    <div class="space-y-12 text-zinc-300 leading-relaxed">
-
-      <!-- Section 1 -->
-      <section>
-        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySection1Title">1. Our Privacy & Trust Philosophy</h2>
-        <p data-i18n="privacySection1Text">
-          VocalWitness combines client-side cryptography, automated metadata stripping, and zero-knowledge verification so you can speak truth without exposing unwanted personal details. We do not sell user data, run targeted advertisements, or track you across the web.
-        </p>
-      </section>
-
-      <!-- Section 2 -->
-      <section>
-        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySection2Title">2. Information We Do NOT Collect or Store</h2>
-        <ul class="list-disc pl-6 space-y-2 text-zinc-400">
-          <li data-i18n="privacyNotCollect1"><strong>Your Phone Number on Public Records:</strong> Phone verification exists solely as a temporary anti-spam check. We never store, publish, or link phone numbers to your public posts.</li>
-          <li data-i18n="privacyNotCollect2">Government IDs, passports, or biometric scans.</li>
-          <li data-i18n="privacyNotCollect3">EXIF camera metadata (GPS coordinates & camera hardware IDs are scrubbed automatically before media uploads).</li>
-          <li data-i18n="privacyNotCollect4">Personal contacts, social graphs, or tracking cookies.</li>
-        </ul>
-      </section>
-
-      <!-- Section 3 -->
-      <section>
-        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySection3Title">3. Information We Process</h2>
+    <div class="max-w-3xl mx-auto">
         
-        <div class="grid md:grid-cols-2 gap-6 mt-6">
-          <div class="glass rounded-3xl p-6">
-            <h3 class="font-semibold text-emerald-400 mb-3" data-i18n="privacyAccountInfoTitle">Account Identity</h3>
-            <p class="text-sm" data-i18n="privacyAccountInfoDesc">Chosen username, cryptographic keys derived on your local device, and optional profile badges.</p>
-          </div>
-          
-          <div class="glass rounded-3xl p-6">
-            <h3 class="font-semibold text-emerald-400 mb-3" data-i18n="privacyContentTitle">Published Evidence</h3>
-            <p class="text-sm" data-i18n="privacyContentDesc">Testimonies, media attachments, tamper-evident SHA-256 hashes, and timestamp certificates.</p>
-          </div>
-          
-          <div class="glass rounded-3xl p-6">
-            <h3 class="font-semibold text-emerald-400 mb-3" data-i18n="privacyVerificationTitle">Anti-Spam Verification</h3>
-            <p class="text-sm" data-i18n="privacyVerificationDesc">Zero-Knowledge proof receipts verifying human status and account trust without revealing underlying private details.</p>
-          </div>
-          
-          <div class="glass rounded-3xl p-6">
-            <h3 class="font-semibold text-emerald-400 mb-3" data-i18n="privacyTechnicalTitle">Security Operations</h3>
-            <p class="text-sm" data-i18n="privacyTechnicalDesc">Anonymized security statistics routed through Cloudflare to block DDoS attacks and malicious bots.</p>
-          </div>
+        <!-- Header with Language Selector & Emergency Quick Exit Panic Button -->
+        <div class="flex items-center justify-between mb-10 glass rounded-3xl p-4">
+            <div class="flex items-center gap-3">
+                <a href="index.html" class="w-10 h-10 bg-emerald-500/20 rounded-2xl flex items-center justify-center text-xl hover:bg-emerald-500/30 transition" aria-label="Back to home">⬅️</a>
+                <h1 class="text-2xl font-bold tracking-tight text-white" data-i18n="appTitle">VocalWitness</h1>
+            </div>
+            <div class="flex items-center gap-2 md:gap-3">
+                <button id="panicButton" class="panic-btn text-white text-xs md:text-sm font-bold px-3 py-2 rounded-2xl shadow-lg hover:opacity-90 transition flex items-center gap-1.5" title="Instantly clear local history and exit to weather page">
+                    🚨 <span data-i18n="panicExit">Quick Exit</span>
+                </button>
+                <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
+                    <option value="en">🇬🇧 English</option>
+                    <option value="ar">🇸🇦 العربية</option>
+                    <option value="es">🇪🇸 Español</option>
+                    <option value="fr">🇫🇷 Français</option>
+                    <option value="sw">🇹🇿 Kiswahili</option>
+                </select>
+            </div>
         </div>
-      </section>
 
-      <!-- Section 4 -->
-      <section>
-        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySection4Title">4. Global Infrastructure & Third-Party Protections</h2>
-        <p class="mb-4" data-i18n="privacySection4Text">We rely on world-class technical infrastructure to keep VocalWitness resilient and encrypted:</p>
-        <ul class="list-disc pl-6 space-y-2 text-zinc-400">
-          <li data-i18n="privacyThirdParty1"><strong>Google Cloud / Firebase:</strong> Secure enterprise database storage, encrypted in transit and at rest.</li>
-          <li data-i18n="privacyThirdParty2"><strong>Cloudflare DNS & WAF:</strong> Global edge caching and threat filtering to ensure high availability during public events.</li>
-        </ul>
-      </section>
+        <header class="mb-10">
+            <div class="flex items-center gap-4 mb-4">
+                <div class="w-12 h-12 bg-emerald-500/20 rounded-3xl flex items-center justify-center text-4xl">🔐</div>
+                <h1 class="text-4xl md:text-5xl font-bold tracking-tighter text-white" data-i18n="privacyTitle">Privacy Policy & Disclaimers</h1>
+            </div>
+            <p class="text-sm text-zinc-400 mb-2" data-i18n="privacyLastUpdated">Last updated: August 25, 2026</p>
+            <p class="text-xl text-zinc-400" data-i18n="privacySubtitle">Privacy by Math, Not Promises. Protecting Witness Identity Across Global Jurisdictions.</p>
+        </header>
 
-      <!-- Section 5 -->
-      <section>
-        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySection5Title">5. Mathematical Safeguards (Zero-Knowledge Cryptography)</h2>
-        <p data-i18n="privacySection5Text">
-          Where enabled, Zero-Knowledge proofs (zk-SNARKs) allow our protocol to confirm that a user meets platform credibility or human verification rules mathematically—without ever storing, seeing, or revealing their underlying private information.
-        </p>
-      </section>
+        <!-- Zero-Knowledge Subpoena Defense Banner -->
+        <section class="glass rounded-3xl p-8 mb-10 border-emerald-500/40 space-y-4">
+            <div class="flex items-center gap-3 text-emerald-400 font-bold text-xl">
+                <span class="text-2xl">🛡️</span>
+                <span data-i18n="zkSubpoenaTitle">Zero-Knowledge Subpoena Defense</span>
+            </div>
+            <p class="text-zinc-200 leading-relaxed text-sm md:text-base" data-i18n="zkSubpoenaDesc">
+                <strong>We cannot surrender what we do not possess.</strong> VocalWitness is architected so that personal identifiable information (PII) never reaches our servers. In the event of court orders, state subpoenas, or legal demands from any jurisdiction worldwide, our response is mathematically fixed: <em>Zero user identity logs exist to be disclosed.</em>
+            </p>
+            <div class="pt-2 flex flex-wrap items-center gap-3 text-xs text-zinc-300">
+                <span class="text-zinc-400 font-medium" data-i18n="privacyArchitectureBy">Enforced via:</span>
+                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-emerald-400">Client-Side zk-SNARKs</span>
+                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-cyan-400">Local Canvas EXIF Scrubbing</span>
+                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-amber-400">Zero IP Logging</span>
+            </div>
+        </section>
 
-      <!-- Section 6 -->
-      <section>
-        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySection6Title">6. Data Control & The Public Ledger</h2>
-        <p data-i18n="privacySection6Text">
-          You may delete your account profile at any time. However, content published to the public testimony record functions as a permanent historical record. While metadata is stripped automatically, public statements cannot be altered retroactively once notarized by the ledger.
-        </p>
-      </section>
+        <!-- Privacy Sections -->
+        <div class="space-y-10 text-zinc-300 leading-relaxed">
 
-      <!-- Section 7 (NEW: Intermediary Liability Shield) -->
-      <section>
-        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySection7Title">7. Platform Neutrality & Intermediary Disclaimer</h2>
-        <p class="mb-3" data-i18n="privacySection7Text1">
-          VocalWitness operates as a technical host and neutral communications platform. We do not author, endorse, verify, or certify the factual accuracy of statements or media posted by users.
-        </p>
-        <p class="text-zinc-400 text-sm leading-relaxed" data-i18n="privacySection7Text2">
-          Under established legal standards for online intermediaries, VocalWitness and its maintainers assume zero legal liability for user-generated submissions, claims, or defamatory assertions. Each user bears sole legal and personal responsibility for the content they choose to publish.
-        </p>
-      </section>
+            <!-- Section 1 -->
+            <section class="glass rounded-3xl p-6 md:p-8">
+                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec1Title">1. Client-Side Data & Cryptographic Handling</h2>
+                <div class="space-y-3 text-sm md:text-base text-zinc-300">
+                    <p data-i18n="privacySec1Para1">
+                        VocalWitness combines client-side cryptography, automated metadata stripping, and zero-knowledge verification so you can speak truth without exposing unwanted personal details. When you attach evidence, processing happens entirely inside your browser:
+                    </p>
+                    <ul class="list-disc pl-5 space-y-2 text-zinc-400">
+                        <li data-i18n="privacySec1Bullet1"><strong>Local EXIF Scrubbing:</strong> Camera identifiers, hardware details, and GPS coordinates are stripped in browser memory prior to upload.</li>
+                        <li data-i18n="privacySec1Bullet2"><strong>SHA-256 Hashing:</strong> Your browser calculates a unique fingerprint locally. Only this digest and sanitized media are broadcasted.</li>
+                        <li data-i18n="privacySec1Bullet3"><strong>Zero-Knowledge Proofs:</strong> Verification rules use client-side zero-knowledge proofs (zk-SNARKs) to confirm standing without revealing private credentials.</li>
+                    </ul>
+                </div>
+            </section>
 
-      <!-- Section 8 (NEW: Takedown & Dispute Resolution) -->
-      <section>
-        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySection8Title">8. Disputes, Misconduct & Takedown Requests</h2>
-        <p class="mb-3" data-i18n="privacySection8Text1">
-          We strictly prohibit targeted harassment, malicious doxxing, explicit illegal abuse material, and intentionally fraudulent evidence submissions.
-        </p>
-        <p class="text-zinc-400 text-sm leading-relaxed" data-i18n="privacySection8Text2">
-          If you believe published content infringes on your rights, discloses unscrubbed non-consensual personal information, or constitutes malicious defamation, you may file a formal request via our platform review process. We reserve the right to flag, restrict, or hide violating content from public indexes upon valid notification.
-        </p>
-      </section>
+            <!-- Section 2 -->
+            <section class="glass rounded-3xl p-6 md:p-8">
+                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec2Title">2. Information We Do NOT Collect or Store</h2>
+                <div class="space-y-3 text-sm md:text-base text-zinc-300">
+                    <p data-i18n="privacySec2Intro">To ensure absolute whistleblower safety, VocalWitness maintains a strict zero-retention policy on:</p>
+                    <ul class="space-y-2 text-zinc-400">
+                        <li class="flex items-start gap-2">
+                            <span class="text-red-400 font-bold">✕</span>
+                            <span data-i18n="privacySec2Item1"><strong>IP Addresses:</strong> Network requests routed through Cloudflare Edge Shield purge origin IP metadata; IPs are never indexed against public records.</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-red-400 font-bold">✕</span>
+                            <span data-i18n="privacySec2Item2"><strong>Phone Numbers on Public Records:</strong> Phone verification exists solely as an ephemeral anti-spam gate. We never store, publish, or link phone numbers to public posts.</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-red-400 font-bold">✕</span>
+                            <span data-i18n="privacySec2Item3">Government IDs, passports, biometric scans, or personal contact social graphs.</span>
+                        </li>
+                    </ul>
+                </div>
+            </section>
 
-      <!-- Friendly OpSec Callout Box -->
-      <section class="pt-8 border-t border-zinc-800">
-        <div class="bg-amber-500/15 border border-amber-500/30 rounded-3xl p-6 text-sm text-zinc-300 space-y-3">
-          <div class="flex items-center gap-2 font-semibold text-amber-400 text-base">
-            <span>🛡️</span>
-            <span data-i18n="privacyOpSecTitle">Your Safety & Voluntary Disclosure</span>
-          </div>
-          <p data-i18n="privacyOpSecText">
-            <strong>Your identity is under your control:</strong> Stating your name or speaking on record is entirely voluntary. If you choose to speak publicly, VocalWitness secures your statement with cryptographic timestamps.
-          </p>
-          <p data-i18n="privacyOpSecTip">
-            <strong>Pro Tip for Citizen Safety:</strong> To protect yourself from harassment or targeted abuse, avoid sharing personal phone numbers, home addresses, or private financial details inside the body of your public testimony.
-          </p>
+            <!-- Section 3 -->
+            <section class="glass rounded-3xl p-6 md:p-8">
+                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec3Title">3. Data Processed for Platform Operations</h2>
+                <div class="grid md:grid-cols-2 gap-6 mt-4">
+                    <div class="glass rounded-3xl p-6">
+                        <h3 class="font-semibold text-emerald-400 mb-2" data-i18n="privacyAccountInfoTitle">Account Identity</h3>
+                        <p class="text-sm text-zinc-400" data-i18n="privacyAccountInfoDesc">Chosen pseudonymous username, local browser keypairs, and optional trust badges.</p>
+                    </div>
+                    <div class="glass rounded-3xl p-6">
+                        <h3 class="font-semibold text-emerald-400 mb-2" data-i18n="privacyContentTitle">Published Evidence</h3>
+                        <p class="text-sm text-zinc-400" data-i18n="privacyContentDesc">Testimonies, media attachments, tamper-evident SHA-256 hashes, and timestamp certificates.</p>
+                    </div>
+                    <div class="glass rounded-3xl p-6">
+                        <h3 class="font-semibold text-emerald-400 mb-2" data-i18n="privacyVerificationTitle">Anti-Spam Verification</h3>
+                        <p class="text-sm text-zinc-400" data-i18n="privacyVerificationDesc">Zero-Knowledge proof receipts verifying human status without revealing underlying credentials.</p>
+                    </div>
+                    <div class="glass rounded-3xl p-6">
+                        <h3 class="font-semibold text-emerald-400 mb-2" data-i18n="privacyTechnicalTitle">Infrastructure Shielding</h3>
+                        <p class="text-sm text-zinc-400" data-i18n="privacyTechnicalDesc">Anonymized security telemetry routed through Cloudflare and Firebase to block DDoS attacks and botnets.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 4 -->
+            <section class="glass rounded-3xl p-6 md:p-8">
+                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec4Title">4. Universal Human Rights Alignment</h2>
+                <p class="text-sm md:text-base text-zinc-300 leading-relaxed" data-i18n="privacySec4Text">
+                    Our privacy design is anchored in <strong>Article 12 and Article 19 of the Universal Declaration of Human Rights</strong>. Everyone has the right to protection against arbitrary interference with their privacy, as well as the freedom to seek, receive, and impart information through any media regardless of frontiers.
+                </p>
+            </section>
+
+            <!-- Section 5 -->
+            <section class="glass rounded-3xl p-6 md:p-8">
+                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec5Title">5. Neutral Host Intermediary Disclaimer</h2>
+                <p class="mb-3 text-sm md:text-base text-zinc-300" data-i18n="privacySec5Text1">
+                    VocalWitness operates strictly as a technical host and neutral communications platform under global intermediary safe harbor frameworks. We do not author, endorse, verify, or certify user-generated submissions.
+                </p>
+                <p class="text-zinc-400 text-sm leading-relaxed" data-i18n="privacySec5Text2">
+                    Under established legal standards for online host platforms, VocalWitness and its maintainers assume zero liability for user content, claims, or assertions. Each user bears sole responsibility for the content they choose to publish.
+                </p>
+            </section>
+
+            <!-- Section 6 -->
+            <section class="glass rounded-3xl p-6 md:p-8">
+                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec6Title">6. Disallowed Conduct & Takedown Requests</h2>
+                <p class="mb-3 text-sm md:text-base text-zinc-300" data-i18n="privacySec6Text1">
+                    Targeted harassment, malicious doxxing of private personal information, CSAM, and intentionally fraudulent framing media are strictly prohibited.
+                </p>
+                <p class="text-zinc-400 text-sm leading-relaxed" data-i18n="privacySec6Text2">
+                    If published content infringes your rights or discloses unscrubbed non-consensual personal information, file a report via the in-app review button. Valid violations will be flagged, hidden, or restricted from public indexes.
+                </p>
+            </section>
+
+            <!-- Section 7 -->
+            <section class="glass rounded-3xl p-6 md:p-8">
+                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec7Title">7. Local Cache Clearance & The Public Record</h2>
+                <p class="text-sm md:text-base text-zinc-300 leading-relaxed" data-i18n="privacySec7Text">
+                    Session state resides locally in your browser and can be wiped instantly using the <strong>Quick Exit</strong> button. However, content published to the public testimony record functions as an immutable historical record once notarized by the ledger.
+                </p>
+            </section>
+
         </div>
-      </section>
+
+        <section class="pt-8 border-t border-zinc-800 text-center mt-12">
+            <a href="index.html" 
+               class="inline-block px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-3xl font-medium transition-all shadow-lg shadow-emerald-900/30" 
+               data-i18n="backToSquare">
+                ← Back to VocalWitness
+            </a>
+        </section>
+
+        <!-- Footer -->
+        <footer class="text-center pt-8 border-t border-zinc-800 text-xs text-zinc-500 mt-12">
+            <p data-i18n="footerCopyright">© 2026 VocalWitness • Built for Truth • Evidence • Public Square</p>
+            <p class="mt-2">
+                <a href="terms.html" class="hover:text-zinc-300" data-i18n="terms">Terms</a> • 
+                <a href="about.html" class="hover:text-zinc-300" data-i18n="about">About</a> • 
+                <a href="safety.html" class="hover:text-zinc-300" data-i18n="safety">Safety</a>
+            </p>
+        </footer>
+
     </div>
 
-    <div class="mt-16 text-center">
-      <a href="index.html" 
-         class="inline-block px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-3xl font-medium transition-all shadow-lg shadow-emerald-900/30" 
-         data-i18n="backToVocalWitness">
-        ← Back to VocalWitness
-      </a>
-    </div>
-  </div>
+    <!-- Quick Exit Script -->
+    <script>
+        document.getElementById('panicButton').addEventListener('click', () => {
+            localStorage.clear();
+            sessionStorage.clear();
+            window.location.replace('https://www.accuweather.com');
+        });
+    </script>
 
-  <script type="module">
-    import { initLanguage } from './js/i18n.js';
-    document.addEventListener('DOMContentLoaded', () => {
-      initLanguage();
-    });
-  </script>
+    <script type="module">
+        import { initLanguage } from './js/i18n.js';
+        document.addEventListener('DOMContentLoaded', () => {
+            initLanguage();
+        });
+    </script>
 </body>
 </html>
