@@ -8,7 +8,6 @@ let currentTranslations = {};
 let fallbackTranslations = {};
 let currentLang = 'en';
 
-// Inline fallback dictionary if network/JSON fetching ever fails
 const DEFAULT_FALLBACK_DICTIONARY = {
     shareTestimonyTitle: "Share Your Testimony",
     publicSquareSubtitle: "Public Square",
@@ -16,9 +15,12 @@ const DEFAULT_FALLBACK_DICTIONARY = {
     mainInputPlaceholder: "Share your raw testimony... What did you witness?",
     addPhotoEvidence: "Add Photo Evidence",
     recordVoiceMessage: "Record Voice Message",
-    previewAreaText: "Preview will appear here..."
-};
+    previewAreaText: "Preview will appear here...",
 
+    // Section 9 Translations
+    termsSection9Title: "9. User Indemnification & Dispute Protocol",
+    termsSection9Text: "You agree to defend, indemnify, and hold harmless VocalWitness and its operators from any legal claims, liabilities, damages, or legal expenses arising from your violation of these Terms or your publication of illegal, defamatory, or infringing material. Any legal disputes or claims against content must be directed through our administrative takedown channel rather than against protocol infrastructure operators."
+};
 const supportedLanguages = [
     { code: 'en',  name: 'English',     flag: '🇬🇧', native: 'English',      rtl: false },
     { code: 'pcm', name: 'Naija Pidgin', flag: '🇳🇬', native: 'Pidgin',       rtl: false },
