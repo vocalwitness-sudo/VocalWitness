@@ -1,140 +1,148 @@
 <!DOCTYPE html>
 <html lang="en-NG">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title data-i18n="safetyPageTitle">Safety & Community Guidelines - VocalWitness</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    body { background-color: #0a0f1c; color: white; font-family: 'Inter', system-ui, sans-serif; }
-    .glass { background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(16, 185, 129, 0.25); }
-    .badge-glass { background: rgba(31, 41, 55, 0.6); border: 1px solid rgba(255, 255, 255, 0.1); }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="safetyPageTitle">Safety & Global Rights • VocalWitness</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #0a0f1c; color: #e4e4e7; font-family: 'Inter', system-ui, sans-serif; }
+        .glass { background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(16, 185, 129, 0.25); }
+        .badge-glass { background: rgba(31, 41, 55, 0.6); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .panic-btn { background: linear-gradient(135deg, #dc2626, #991b1b); }
+    </style>
 </head>
 <body class="min-h-screen p-6 md:p-12 pb-24">
-  <div class="max-w-3xl mx-auto">
-    
-    <!-- Header with Language Selector & Back to Home -->
-    <div class="flex items-center justify-between mb-10 glass rounded-3xl p-4">
-      <div class="flex items-center gap-3">
-        <a href="index.html" class="w-10 h-10 bg-emerald-500/20 rounded-2xl flex items-center justify-center text-xl hover:bg-emerald-500/30 transition" aria-label="Back to home">⬅️</a>
-        <h1 class="text-2xl font-bold tracking-tight" data-i18n="appTitle">VocalWitness</h1>
-      </div>
-      <div class="flex items-center gap-3">
-        <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-4 py-2 text-sm focus:outline-none focus:border-emerald-500">
-            <option value="en">🇬🇧 English</option>
-            <option value="ar">🇸🇦 العربية</option>
-            <option value="es">🇪🇸 Español</option>
-            <option value="fr">🇫🇷 Français</option>
-            <option value="sw">🇹🇿 Kiswahili</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="flex items-center gap-4 mb-6">
-      <div class="w-12 h-12 bg-emerald-500/20 rounded-3xl flex items-center justify-center text-4xl">🛡️</div>
-      <h1 class="text-4xl font-bold tracking-tight" data-i18n="safetyTitle">Safety & Community Guidelines</h1>
-    </div>
-
-    <!-- Global Trust Shield Banner -->
-    <div class="glass rounded-3xl p-8 mb-10 space-y-4">
-      <p class="text-lg text-emerald-300 leading-relaxed" data-i18n="safetyIntro">
-        VocalWitness is a public square built for truth, evidence, and respectful dialogue. 
-        We protect good-faith witnesses with world-class infrastructure while keeping our public record resilient against bad actors.
-      </p>
-      <div class="pt-2 flex flex-wrap items-center gap-3 text-xs text-zinc-300">
-        <span class="text-zinc-400 font-medium" data-i18n="safetySecuredBy">Security architecture backed by:</span>
-        <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-emerald-400">Google Cloud / Firebase</span>
-        <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-amber-400">Cloudflare Edge Shield</span>
-        <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-cyan-400">Client-Side EXIF Scrubbing</span>
-      </div>
-    </div>
-
-    <div class="space-y-12 text-zinc-300 leading-relaxed">
-
-      <!-- Section 1 -->
-      <section>
-        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="safetySection1Title">1. Core Principles</h2>
-        <div class="grid md:grid-cols-2 gap-6">
-          <div class="glass rounded-3xl p-6">
-            <div class="text-3xl mb-4">🌟</div>
-            <h3 class="font-semibold mb-2 text-white" data-i18n="safetySpeakTruthfully">Speak Truthfully & Freely</h3>
-            <p class="text-sm text-zinc-400" data-i18n="safetySpeakTruthfullyDesc">Share what you genuinely witnessed or experienced. Whether you choose to attach your name or publish under zero-knowledge proofs, honest testimony builds public trust.</p>
-          </div>
-          <div class="glass rounded-3xl p-6">
-            <div class="text-3xl mb-4">🤝</div>
-            <h3 class="font-semibold mb-2 text-white" data-i18n="safetyRespectOthers">Protect the Public Square</h3>
-            <p class="text-sm text-zinc-400" data-i18n="safetyRespectOthersDesc">Disagreement and debate are essential. Targeted harassment, malicious doxxing, or manufacturing fake evidence undermines truth for everyone.</p>
-          </div>
+    <div class="max-w-3xl mx-auto">
+        
+        <!-- Top Nav with Emergency Panic Button -->
+        <div class="flex items-center justify-between mb-8 glass rounded-3xl p-4">
+            <div class="flex items-center gap-3">
+                <a href="index.html" class="w-10 h-10 bg-emerald-500/20 rounded-2xl flex items-center justify-center text-xl hover:bg-emerald-500/30 transition" aria-label="Back to home">⬅️</a>
+                <h1 class="text-2xl font-bold tracking-tight text-white" data-i18n="appTitle">VocalWitness</h1>
+            </div>
+            <div class="flex items-center gap-2 md:gap-3">
+                <button id="panicButton" class="panic-btn text-white text-xs md:text-sm font-bold px-3 py-2 rounded-2xl shadow-lg hover:opacity-90 transition flex items-center gap-1.5" title="Instantly clear local history and exit to weather page">
+                    🚨 <span data-i18n="panicExit">Quick Exit</span>
+                </button>
+                <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
+                    <option value="en">🇬🇧 English</option>
+                    <option value="ar">🇸🇦 العربية</option>
+                    <option value="es">🇪🇸 Español</option>
+                    <option value="fr">🇫🇷 Français</option>
+                    <option value="sw">🇹🇿 Kiswahili</option>
+                </select>
+            </div>
         </div>
-      </section>
 
-      <!-- Section 2 -->
-      <section>
-        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="safetySection2Title">2. Prohibited Conduct</h2>
-        <p class="mb-4 text-zinc-400" data-i18n="safetyProhibitIntro">To keep VocalWitness safe and credible, the following are strictly forbidden:</p>
-        <ul class="space-y-4 text-zinc-300">
-          <li class="flex gap-3"><span class="text-red-400 font-bold">✕</span> <span data-i18n="safetyProhibit1"><strong>Doxxing & Contact Exposure:</strong> Publishing private third-party phone numbers, home addresses, or financial IDs without consent.</span></li>
-          <li class="flex gap-3"><span class="text-red-400 font-bold">✕</span> <span data-i18n="safetyProhibit2"><strong>Targeted Harassment & Threats:</strong> Intimidation, incitement to violence, or hate speech against individuals or vulnerable groups.</span></li>
-          <li class="flex gap-3"><span class="text-red-400 font-bold">✕</span> <span data-i18n="safetyProhibit3"><strong>Evidence Tampering & Synthetic Media:</strong> Uploading manipulated deepfakes or fake evidence designed to frame innocent people.</span></li>
-          <li class="flex gap-3"><span class="text-red-400 font-bold">✕</span> <span data-i18n="safetyProhibit4"><strong>Spam & Bot Networks:</strong> Automated spamming, commercial scams, or deploying sybil accounts to manipulate democratic voting.</span></li>
-          <li class="flex gap-3"><span class="text-red-400 font-bold">✕</span> <span data-i18n="safetyProhibit5"><strong>Exploitative Content:</strong> Sexually explicit, non-consensual, or violent exploitation media.</span></li>
-        </ul>
-      </section>
-
-      <!-- Section 3 -->
-      <section>
-        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="safetySection3Title">3. OpSec & Personal Safety Tips</h2>
-        <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-3xl p-6 text-sm space-y-4">
-          <div class="flex items-center gap-2 font-semibold text-emerald-400 text-base">
-            <span>💡</span>
-            <span data-i18n="safetyOpSecHeader">Smart Operational Security for Witnesses</span>
-          </div>
-          <ul class="list-disc pl-5 space-y-2 text-zinc-300">
-            <li data-i18n="safetyOpSec1"><strong>Your Identity is Your Choice:</strong> Stating your name or speaking on record is completely voluntary. If you prefer privacy, VocalWitness automatically scrubs photo camera metadata (EXIF/GPS tags) before saving.</li>
-            <li data-i18n="safetyOpSec2"><strong>Keep Private Details Private:</strong> Avoid writing your personal phone number, private home address, or payment credentials inside public testimony text.</li>
-            <li data-i18n="safetyOpSec3"><strong>No Phone Tracking:</strong> Phone verification is used strictly as a temporary bot-prevention gate. We do not store or display your phone number on public ledgers.</li>
-          </ul>
+        <div class="flex items-center gap-4 mb-6">
+            <div class="w-12 h-12 bg-emerald-500/20 rounded-3xl flex items-center justify-center text-4xl">🛡️</div>
+            <h1 class="text-4xl font-bold tracking-tight text-white" data-i18n="safetyTitle">Safety & Protection Rights</h1>
         </div>
-      </section>
 
-      <!-- Section 4 -->
-      <section>
-        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="safetySection4Title">4. Moderation, Reporting & Verification Tiers</h2>
-        <p class="mb-4" data-i18n="safetySection4Text">We enforce community safety through decentralized community reporting, Perspective API toxicity filtering, and transparent moderation:</p>
-        <div class="space-y-3 text-zinc-400">
-          <p data-i18n="safetyModTier1"><strong>• Citizen Talk:</strong> Community-monitored open discourse.</p>
-          <p data-i18n="safetyModTier2"><strong>• Trust Circle & True Witness:</strong> Verified tiers with higher reputation standards and responsibilities for moderating flagged content.</p>
-          <p data-i18n="safetyModActions">Violations result in content flagging, reduced reach, temporary warnings, or permanent cryptographic account suspension.</p>
+        <!-- Higher Law & Universal Freedom Banner -->
+        <div class="glass rounded-3xl p-8 mb-10 space-y-4">
+            <h2 class="text-xl font-bold text-emerald-400" data-i18n="divineNaturalLawTitle">Governed by Truth, Nature, and Universal Law</h2>
+            <p class="text-zinc-200 leading-relaxed text-sm md:text-base" data-i18n="divineNaturalLawDesc">
+                Every human being possesses a natural, inherent right to witness and speak the truth. Grounded in moral truth and protected internationally under <strong>Article 19 of the Universal Declaration of Human Rights</strong>, your right to hold opinions, receive, and impart evidence without interference is absolute across all geographic borders.
+            </p>
+            <div class="pt-2 flex flex-wrap items-center gap-3 text-xs text-zinc-300">
+                <span class="text-zinc-400 font-medium" data-i18n="safetySecuredBy">Security architecture backed by:</span>
+                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-emerald-400">Google Cloud / Firebase</span>
+                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-amber-400">Cloudflare Edge Shield</span>
+                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-cyan-400">Zero-Knowledge Cryptography</span>
+            </div>
         </div>
-      </section>
 
-      <!-- Section 5 -->
-      <section>
-        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="safetySection5Title">5. Reporting & Good-Faith Appeals</h2>
-        <p data-i18n="safetySection5Text">If you encounter harmful content, use the in-app <strong>Report</strong> button on any post. If your post was flagged or moderated by mistake, you can submit an appeal through your profile dashboard for review by community stewards.</p>
-      </section>
+        <div class="space-y-12 text-zinc-300 leading-relaxed">
 
-      <section class="pt-8 border-t border-zinc-800 text-sm">
-        <p class="text-emerald-400 font-medium text-base mb-1" data-i18n="safetyGoalTitle">Our Shared Goal:</p>
-        <p class="text-zinc-400" data-i18n="safetyGoalText">A healthier public square where truth can be spoken safely, evidence can be preserved immutably, and every good-faith citizen feels protected against malicious actors.</p>
-      </section>
+            <!-- Section 1: Cryptographic Protection & Subpoena Immunity -->
+            <section>
+                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="subpoenaDefenseTitle">1. Mathematical & Subpoena Defense</h2>
+                <div class="glass rounded-3xl p-6 md:p-8 space-y-3">
+                    <p class="text-sm md:text-base text-zinc-300" data-i18n="subpoenaDefenseDesc">
+                        We cannot surrender what we do not possess. VocalWitness uses client-side SHA-256 hashing and zero-knowledge proofs (zk-SNARKs). 
+                    </p>
+                    <p class="text-sm md:text-base text-zinc-300" data-i18n="subpoenaDefenseBullets">
+                        • <strong>Zero Identity Storage:</strong> We do not log IP addresses alongside public testimonies.<br>
+                        • <strong>Automatic EXIF Scrubbing:</strong> Camera identities and GPS coordinates are stripped in your browser prior to ledger submission.<br>
+                        • <strong>Mathematical Immunity:</strong> Even when presented with state orders or subpoenas, zero-knowledge architecture ensures no central administrator holds private keys to unmask anonymous witnesses.
+                    </p>
+                </div>
+            </section>
+
+            <!-- Section 2: Physical & Network OpSec Protocol -->
+            <section>
+                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="opsecProtocolTitle">2. Operational Protocols for High-Risk Regions</h2>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="glass rounded-3xl p-6">
+                        <div class="text-3xl mb-3">📡</div>
+                        <h3 class="font-semibold text-white mb-2" data-i18n="networkSafetySub">Network & Connection Security</h3>
+                        <p class="text-sm text-zinc-400" data-i18n="networkSafetySubDesc">Always connect through Tor or trusted encrypted VPNs when publishing from restrictive regimes. Avoid using personal mobile networks tied directly to government-issued SIM cards.</p>
+                    </div>
+                    <div class="glass rounded-3xl p-6">
+                        <div class="text-3xl mb-3">📱</div>
+                        <h3 class="font-semibold text-white mb-2" data-i18n="physicalSafetySub">Device Safety & Quick Exit</h3>
+                        <p class="text-sm text-zinc-400" data-i18n="physicalSafetySubDesc">Keep your device protected with a passcode rather than biometric unlock. In physical danger, use the <strong>Quick Exit</strong> button at the top of the page to immediately flush local caches and leave the application.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 3: Prohibited Conduct -->
+            <section>
+                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="safetySection2Title">3. Prohibited Conduct</h2>
+                <p class="mb-4 text-zinc-400" data-i18n="safetyProhibitIntro">To keep VocalWitness safe, credible, and legally defended worldwide, the following are strictly prohibited:</p>
+                <ul class="space-y-4 text-zinc-300">
+                    <li class="flex gap-3"><span class="text-red-400 font-bold">✕</span> <span data-i18n="safetyProhibit1"><strong>Doxxing & Contact Exposure:</strong> Publishing private phone numbers, physical addresses, or ID credentials without explicit consent.</span></li>
+                    <li class="flex gap-3"><span class="text-red-400 font-bold">✕</span> <span data-i18n="safetyProhibit2"><strong>Targeted Harassment & Threats:</strong> Intimidation, incitement to violence, or malicious attacks against individuals or groups.</span></li>
+                    <li class="flex gap-3"><span class="text-red-400 font-bold">✕</span> <span data-i18n="safetyProhibit3"><strong>Evidence Tampering & AI Fabrications:</strong> Uploading fabricated deepfakes or altered media designed to frame innocent parties.</span></li>
+                    <li class="flex gap-3"><span class="text-red-400 font-bold">✕</span> <span data-i18n="safetyProhibit4"><strong>Spam & Bot Sybil Networks:</strong> Deploying automated scripts or fake accounts to manipulate community moderation.</span></li>
+                </ul>
+            </section>
+
+            <!-- Section 4: Moderation & Appeals -->
+            <section>
+                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="safetySection4Title">4. Community Moderation & Integrity Tiers</h2>
+                <p class="mb-4 text-zinc-400" data-i18n="safetySection4Text">Safety is maintained through decentralized reporting, Perspective API toxicity boundaries, and progressive reputation tiers:</p>
+                <div class="space-y-2 text-zinc-400 text-sm">
+                    <p data-i18n="safetyModTier1">• <strong>Citizen Talk:</strong> Monitored open discourse for general discussion.</p>
+                    <p data-i18n="safetyModTier2">• <strong>True Witness:</strong> Cryptographically notarized evidence records backed by reputation scores.</p>
+                </div>
+            </section>
+
+            <!-- Shared Moral Goal -->
+            <section class="pt-8 border-t border-zinc-800 text-sm">
+                <p class="text-emerald-400 font-medium text-base mb-1" data-i18n="safetyGoalTitle">Our Universal Goal:</p>
+                <p class="text-zinc-400" data-i18n="safetyGoalText">A protected public square where truth is preserved, citizens are safeguarded by design, and technology serves humanity in freedom.</p>
+            </section>
+        </div>
+
+        <div class="mt-16 text-center">
+            <a href="index.html" 
+               class="inline-block px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-3xl font-medium transition-all shadow-lg shadow-emerald-900/30" 
+               data-i18n="backToSquare">
+                ← Back to the Square
+            </a>
+        </div>
     </div>
 
-    <div class="mt-16 text-center">
-      <a href="index.html" 
-         class="inline-block px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-3xl font-medium transition-all shadow-lg shadow-emerald-900/30" 
-         data-i18n="backToSquare">
-        ← Back to the Square
-      </a>
-    </div>
-  </div>
+    <!-- Quick Exit Script -->
+    <script>
+        document.getElementById('panicButton').addEventListener('click', () => {
+            // 1. Flush local and session storage
+            localStorage.clear();
+            sessionStorage.clear();
+            
+            // 2. Redirect immediately to neutral external page (e.g., Weather channel)
+            window.location.replace('https://www.accuweather.com');
+        });
+    </script>
 
-  <script type="module">
-    import { initLanguage } from './js/i18n.js';
-    document.addEventListener('DOMContentLoaded', () => {
-      initLanguage();
-    });
-  </script>
+    <script type="module">
+        import { initLanguage } from './js/i18n.js';
+        document.addEventListener('DOMContentLoaded', () => {
+            initLanguage();
+        });
+    </script>
 </body>
 </html>
