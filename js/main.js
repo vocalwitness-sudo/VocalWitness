@@ -15,6 +15,10 @@ import { initBookmarks, initBookmarksView } from './bookmarks.js';
 import { loadWeeklyLeaderboard, refreshTierAndUI } from './tier.js';
 import './composer.js';
 import {
+  buildPackCore,
+  toFirestoreEvidencePack
+} from './evidence-pack.js';
+import {
     collection,
     addDoc,
     serverTimestamp,
