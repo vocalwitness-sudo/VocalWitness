@@ -305,6 +305,8 @@
   "termsSection7Text": "VocalWitness is sustained entirely through voluntary community donations, transparent support funds, and direct non-custodial cryptographic contributions. Donations are non-refundable and do not grant special governance privileges or ownership over the platform.",
   "termsSection8Title": "8. Limitation of Liability",
   "termsSection8Text": "VocalWitness and its maintainers disclaim liability for user-generated content, network disruptions, or external cryptographic verification failures.",
+  "termsSection9Title": "9. User Indemnification & Dispute Protocol",
+  "termsSection9Text": "You agree to defend, indemnify, and hold harmless VocalWitness and its operators from any legal claims, liabilities, damages, or legal expenses arising from your violation of these Terms or your publication of illegal, defamatory, or infringing material. Any legal disputes or claims against content must be directed through our administrative takedown channel rather than against protocol infrastructure operators.",
 
   "ledgerIntegrityTitle": "Ledger Integrity & Application-Level Immutability",
   "ledgerIntegrityPara1": "Once a record is written to the Forensic Ledger or the audit log, the application and database rules make it impossible for any user (or ordinary operator) to edit or delete it.",
