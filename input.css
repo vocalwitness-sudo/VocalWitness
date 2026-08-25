@@ -216,12 +216,16 @@ header h1 {
   100% { transform: translateX(-100%); }
 }
 
-/* Make sure the More dropdown is not cut off */
+/* Fix More dropdown on desktop */
 #main-nav {
-  overflow: visible;
+  overflow: visible !important;
 }
 
 .scrollbar-hide {
   overflow-x: auto;
-  overflow-y: visible;
+  overflow-y: visible !important;
+}
+
+#more-menu {
+  z-index: 9999 !important;
 }
