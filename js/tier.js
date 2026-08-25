@@ -535,3 +535,31 @@ window.requireCitizenCirclePermission = requireCitizenCirclePermission;
 window.getCurrentUserTier = getCurrentUserTier;
 window.canAccessFeature = canAccessFeature;
 window.ZK_PAID_SERVICES = ZK_PAID_SERVICES;
+
+/**
+ * Comprehensive helper to fetch complete user tier and level data.
+ * Used by profile.js and user dashboard views.
+ */
+export async function getUserTierData(uid = null) {
+  const profile = await getUserProfile();
+  const currentTier = await getCurrentUserTier();
+  const witnessLevel = await getCurrentWitnessLevel();
+  const metadata = TIER_METADATA[currentTier] || TIER_METADATA[TIERS.CITIZEN];
+
+  return {
+    tier: currentTier,
+    level: witnessLevel,
+    metadata: metadata,
+    reputation: profile?.reputation || 0,
+    weeklyPoints: profile?.weeklyPoints || 0,
+    isPhoneVerified: !!(profile?.isPhoneVerified || profile?.hasVerifiedPhone),
+    isZkVerified: !!(profile?.zkVerified || currentTier === TIERS.WITNESS_CIRCLE),
+    badge: witnessLevel ? `${witnessLevel.emblem} ${witnessLevel.name}` : metadata.badge,
+    maxUploadMB: metadata.maxUploadMB,
+    canVoteGovernance: metadata.canVoteGovernance,
+    canValidate: metadata.canValidate
+  };
+}
+
+// Make sure to add it to the window global exports as well
+window.getUserTierData = getUserTierData;
