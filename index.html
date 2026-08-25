@@ -132,13 +132,13 @@
   <link rel="stylesheet" href="./style.css">
   <link rel="icon" href="./logo.png" type="image/png">
 
-  <!-- CDN Libraries (defer) -->
+  <!-- UP IN HEAD: External CDNs (with defer) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" defer></script>
   <script src="https://js.paystack.co/v2/inline.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/snarkjs@0.7.0/build/snarkjs.min.js" defer></script>
-
+  
   <!-- Critical Styles -->
   <style>
     :root {
@@ -752,21 +752,571 @@
 </section>
   </main>
 
-  <!-- Scripts -->
-  <script>
-    function toggleMoreMenu(event) {
-      event.stopPropagation();
-      const menu = document.getElementById('more-menu');
-      if (menu) menu.classList.toggle('hidden');
-    }
+  
+<!-- ====================== SUPPORT MODAL ====================== -->
+<div id="supportModal"
+     class="fixed inset-0 z-[10000] hidden items-center justify-center bg-black/80 p-4 backdrop-blur-md"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="supportModalTitle"
+     aria-hidden="true">
+  <div class="glass relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl border border-emerald-500/30 p-6 text-white">
+    <button id="closeSupportModal" type="button"
+            class="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full text-xl text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+            aria-label="Close support dialog">
+      ✕
+    </button>
 
-    document.addEventListener('click', function(e) {
-      const menu = document.getElementById('more-menu');
-      const btn = document.getElementById('more-btn');
-      if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) {
-        menu.classList.add('hidden');
+    <div class="mb-5 text-center">
+      <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/20 text-2xl font-bold text-emerald-400" aria-hidden="true">♥</div>
+      <h3 id="supportModalTitle" class="text-xl font-bold text-white">Sustain the Public Square</h3>
+      <p class="mt-1 text-xs text-emerald-300">
+        VocalWitness stays free, independent, and un-manipulated through voluntary community backing.
+      </p>
+    </div>
+
+    <div class="space-y-4">
+      <div>
+        <label class="mb-2 block text-xs text-zinc-400">Select Contribution Amount (USD)</label>
+        <div id="supportTierContainer" class="grid grid-cols-3 gap-2" role="group" aria-label="Contribution amount">
+          <button type="button" class="support-tier-btn rounded-xl border border-zinc-700 bg-zinc-800 py-2 text-sm font-medium transition-all hover:bg-emerald-600/30" data-amount="5">$5</button>
+          <button type="button" class="support-tier-btn active-tier rounded-xl border border-emerald-500 bg-emerald-600/20 py-2 text-sm font-medium transition-all" data-amount="15">$15</button>
+          <button type="button" class="support-tier-btn rounded-xl border border-zinc-700 bg-zinc-800 py-2 text-sm font-medium transition-all hover:bg-emerald-600/30" data-amount="50">$50</button>
+        </div>
+      </div>
+
+      <div>
+        <label for="customSupportAmount" class="mb-1 block text-xs text-zinc-400">Custom Amount ($ USD)</label>
+        <input type="number" id="customSupportAmount" placeholder="Enter amount" min="1" value="15"
+               class="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-sm text-white focus:border-emerald-500 focus:outline-none">
+      </div>
+
+      <button id="paystackPayBtn" type="button"
+              class="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 transition-all hover:bg-blue-500">
+        <span>Pay with Card / Bank (Paystack)</span>
+      </button>
+
+      <button id="proceedCryptoBtn" type="button"
+              class="w-full rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-black shadow-lg shadow-emerald-600/20 transition-all hover:bg-emerald-500">
+        Proceed with Crypto (NOWPayments)
+      </button>
+    </div>
+
+    <div class="mt-5 border-t border-zinc-800 pt-4">
+      <p class="mb-2 text-center text-xs font-medium text-zinc-400">Or scan / copy to send USDT directly:</p>
+
+      <div class="mx-auto mb-3 flex h-36 w-36 items-center justify-center rounded-2xl bg-white p-3 shadow-md">
+        <img src="./image/95756.jpg" alt="USDT TRC-20 QR Code" class="h-full w-full object-contain"
+             onerror="this.parentElement.innerHTML='<span class=\'text-xs text-zinc-500\'>QR unavailable</span>'">
+      </div>
+
+      <div class="flex items-center justify-between gap-2 rounded-xl border border-zinc-800 bg-zinc-900 p-3">
+        <span id="usdtAddress" class="select-all truncate font-mono text-[11px] text-emerald-400">
+          TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK
+        </span>
+        <button id="copyUsdtBtn" type="button"
+                class="shrink-0 rounded-lg bg-zinc-800 px-3 py-1.5 text-xs font-medium text-white transition-all hover:bg-zinc-700"
+                aria-label="Copy USDT address">
+          Copy
+        </button>
+      </div>
+
+      <p class="mt-1.5 text-center text-[10px] text-zinc-500">
+        Network: <strong class="text-zinc-400">Tron (TRC-20)</strong> • Send USDT only
+      </p>
+    </div>
+
+    <p class="mt-4 text-center text-[10px] text-zinc-500">
+      Powered by non-custodial rails. No tracking, no intrusive data collection.
+    </p>
+  </div>
+</div>
+
+<!-- ====================== USER PROFILE MODAL ====================== -->
+<div id="profileModal"
+     class="fixed inset-0 z-[9000] hidden items-center justify-center overflow-y-auto bg-black/80 p-4 backdrop-blur-md"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="profileModalTitle"
+     aria-hidden="true">
+  <div class="relative w-full max-w-lg rounded-3xl border border-zinc-800 bg-zinc-900 p-6 text-white shadow-2xl">
+    <div class="mb-2 flex items-center justify-between border-b border-zinc-800 pb-4">
+      <h3 id="profileModalTitle" class="text-xl font-bold tracking-tight" data-i18n="profile.title">User Profile</h3>
+      <button id="closeProfileModalBtn" type="button"
+              class="rounded-full p-2 text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+              aria-label="Close profile">✕</button>
+    </div>
+    <div id="profileContent" class="space-y-5">
+      <div class="flex flex-col items-center justify-center space-y-4 py-16">
+        <div class="h-8 w-8 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" aria-hidden="true"></div>
+        <p class="text-sm text-zinc-400" data-i18n="loadingProfile">Loading profile...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====================== EDIT PROFILE MODAL ====================== -->
+<div id="editProfileModal"
+     class="fixed inset-0 z-[10001] hidden items-center justify-center overflow-y-auto bg-black/80 p-4 backdrop-blur-md"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="editProfileTitle"
+     aria-hidden="true">
+  <div class="custom-scroll relative max-h-[90vh] w-full max-w-md space-y-5 overflow-y-auto rounded-3xl border border-zinc-800 bg-zinc-900 p-6 text-white shadow-2xl">
+    <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+      <h3 id="editProfileTitle" class="text-xl font-bold" data-i18n="editProfile">Edit Profile</h3>
+      <button id="closeEditProfileBtn" type="button"
+              class="rounded-full p-2 text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+              aria-label="Close edit profile">✕</button>
+    </div>
+
+    <form id="editProfileForm" class="space-y-5">
+      <div class="flex flex-col items-center gap-3">
+        <div class="relative">
+          <div class="h-24 w-24 overflow-hidden rounded-3xl border-4 border-zinc-700 bg-zinc-800 shadow-xl">
+            <img id="avatarPreview" src="" alt="Avatar preview" class="hidden h-full w-full object-cover">
+            <div id="avatarFallback" class="flex h-full w-full items-center justify-center text-5xl" aria-hidden="true">👤</div>
+          </div>
+        </div>
+        <label class="cursor-pointer text-sm font-medium text-emerald-400 transition hover:text-emerald-300">
+          Change Photo
+          <input type="file" id="avatarInput" accept="image/*" class="hidden">
+        </label>
+        <p class="text-[11px] text-zinc-500">Max 2MB • Auto-compressed</p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label for="editFirstName" class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">First Name</label>
+          <input type="text" id="editFirstName"
+                 class="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+        </div>
+        <div>
+          <label for="editLastName" class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">Last Name</label>
+          <input type="text" id="editLastName"
+                 class="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+        </div>
+      </div>
+
+      <div>
+        <label for="editDisplayName" class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400" data-i18n="displayName">Display Name</label>
+        <input type="text" id="editDisplayName" required
+               class="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+      </div>
+
+      <div>
+        <label for="editUsername" class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400" data-i18n="username">Username</label>
+        <input type="text" id="editUsername"
+               class="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+      </div>
+
+      <div>
+        <label for="editRegion" class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400" data-i18n="region">Region / Location</label>
+        <input type="text" id="editRegion" placeholder="e.g. West Africa"
+               class="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+      </div>
+
+      <div>
+        <label for="editBio" class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400" data-i18n="bio">Bio</label>
+        <textarea id="editBio" rows="3" maxlength="280"
+                  class="w-full resize-none rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"></textarea>
+      </div>
+
+      <div class="flex items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4">
+        <div>
+          <div class="flex items-center gap-2 text-sm font-medium">🛡️ Privacy Shield</div>
+          <div class="mt-0.5 text-xs text-zinc-400">Hide real name &amp; location from public view</div>
+        </div>
+        <input type="checkbox" id="toggleHidePublicInfo" checked
+               class="h-5 w-5 cursor-pointer rounded accent-emerald-500"
+               aria-label="Hide real name and location from public view">
+      </div>
+
+      <div class="flex gap-3 pt-1">
+        <button type="submit" class="flex-1 rounded-xl bg-emerald-500 py-3 font-bold text-black transition hover:bg-emerald-400">Save Changes</button>
+        <button type="button" id="cancelEditProfileBtn" class="rounded-xl bg-zinc-800 px-5 py-3 font-semibold text-zinc-300 transition hover:bg-zinc-700">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ====================== SETTINGS & SECURITY MODAL ====================== -->
+<div id="settingsModal"
+     class="fixed inset-0 z-[10001] hidden items-center justify-center overflow-y-auto bg-black/80 p-4 backdrop-blur-md"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="settingsTitle"
+     aria-hidden="true">
+  <div class="custom-scroll relative max-h-[85vh] w-full max-w-lg space-y-6 overflow-y-auto rounded-3xl border border-zinc-800 bg-zinc-900 p-6 text-white shadow-2xl">
+    <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+      <h3 id="settingsTitle" class="flex items-center gap-2 text-xl font-bold">
+        ⚙️ <span data-i18n="accountSettings">Account Settings</span>
+      </h3>
+      <button id="closeSettingsBtn" type="button"
+              class="rounded-full p-2 text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+              aria-label="Close settings">✕</button>
+    </div>
+
+    <div class="space-y-3">
+      <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400" data-i18n="securityHeader">Security &amp; Access</h4>
+      <div class="flex items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4">
+        <div>
+          <div class="text-sm font-medium" data-i18n="passwordLabel">Password</div>
+          <div class="text-xs text-zinc-400" data-i18n="passwordSub">Send password reset email</div>
+        </div>
+        <button id="triggerPasswordResetBtn" type="button"
+                class="rounded-xl border border-zinc-700 bg-zinc-800 px-3.5 py-1.5 text-xs font-semibold hover:bg-zinc-700"
+                data-i18n="resetBtn">Reset</button>
+      </div>
+      <div class="flex items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4">
+        <div>
+          <div class="text-sm font-medium" data-i18n="2faLabel">Two-Factor Auth (2FA)</div>
+          <div class="text-xs text-zinc-400" data-i18n="2faSub">Require phone verification on sign-in</div>
+        </div>
+        <input type="checkbox" id="toggle2FA" class="h-5 w-5 cursor-pointer rounded accent-emerald-500"
+               aria-label="Enable two-factor authentication">
+      </div>
+    </div>
+
+    <div class="space-y-3">
+      <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400" data-i18n="preferencesHeader">Preferences</h4>
+      <div class="space-y-2 rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4">
+        <label for="defaultDoorSelect" class="block text-xs font-medium text-zinc-400" data-i18n="defaultDoorLabel">Default Entrance Door</label>
+        <select id="defaultDoorSelect"
+                class="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+          <option value="public_square" data-i18n="doorPublicSquare">Public Square</option>
+          <option value="citizen_talk" data-i18n="doorCitizenTalk">Citizen Talk</option>
+          <option value="witness_voice" data-i18n="doorWitnessVoice">Witness Voice</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="space-y-3">
+      <h4 class="text-xs font-bold uppercase tracking-wider text-red-400" data-i18n="dangerZoneHeader">Data &amp; Identity</h4>
+      <div class="flex items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4">
+        <div>
+          <div class="text-sm font-medium" data-i18n="exportLabel">Export Profile Record</div>
+          <div class="text-xs text-zinc-400" data-i18n="exportSub">Download identity summary PDF</div>
+        </div>
+        <button id="exportUserDataPdfBtn" type="button"
+                class="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-1.5 text-xs font-semibold text-emerald-400 hover:bg-emerald-500/20"
+                data-i18n="exportBtn">Download PDF</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====================== APPLICATION FOOTER ====================== -->
+<footer class="mt-20 border-t border-zinc-800/80 bg-zinc-950 pb-12 pt-16 text-zinc-400">
+  <div class="mx-auto max-w-6xl px-6">
+    <div class="grid grid-cols-1 gap-10 border-b border-zinc-800/60 pb-12 md:grid-cols-4">
+      <div class="space-y-4 md:col-span-1">
+        <div class="flex items-center gap-2">
+          <span class="text-xl font-bold tracking-wider text-white">Vocal<span class="text-emerald-500">Witness</span></span>
+        </div>
+        <p class="text-xs leading-relaxed text-zinc-400" data-i18n="footerMission">
+          A decentralized public square empowering citizens with immutable testimony, voice verification, and transparent reporting.
+        </p>
+        <button type="button" id="footerSupportBtn"
+                class="mt-2 inline-flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-600/10 px-4 py-2 text-xs font-semibold text-emerald-400 transition-all hover:bg-emerald-600/20">
+          <span aria-hidden="true">♥</span>
+          <span data-i18n="sustainSquareBtn">Sustain the Platform</span>
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-white" data-i18n="footerPlatformHeader">Platform</h3>
+        <ul class="space-y-2 text-xs">
+          <li><a href="/" class="transition hover:text-emerald-400" data-i18n="publicSquareFeed">Public Square</a></li>
+          <li><a href="/my-testimonies" class="transition hover:text-emerald-400" data-i18n="myTestimoniesMenu">My Testimonies</a></li>
+          <li><a href="/groups" class="transition hover:text-emerald-400" data-i18n="groupsMenu">Groups</a></li>
+          <li><a href="/witness-voice" class="transition hover:text-emerald-400" data-i18n="witnessVoiceMenu">Witness Voice</a></li>
+        </ul>
+      </div>
+
+      <div class="space-y-3">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-white" data-i18n="footerGovernanceHeader">Governance &amp; Legal</h3>
+        <ul class="footer-links space-y-2 text-xs">
+          <li><a href="/about" class="transition hover:text-emerald-400" data-i18n="about">About Us</a></li>
+          <li><a href="/privacy" class="transition hover:text-emerald-400" data-i18n="privacy">Privacy Policy</a></li>
+          <li><a href="/terms" class="transition hover:text-emerald-400" data-i18n="terms">Terms of Service</a></li>
+          <li><a href="/safety" class="transition hover:text-emerald-400" data-i18n="safety">Safety Guidelines</a></li>
+        </ul>
+      </div>
+
+      <div class="space-y-3">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-white" data-i18n="footerSystemHeader">System Status</h3>
+        <div class="space-y-2 rounded-2xl border border-zinc-800 bg-zinc-900 p-3">
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-zinc-500">Storage Rail:</span>
+            <span class="font-mono text-[11px] text-emerald-400">Firestore Active</span>
+          </div>
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-zinc-500">Verification:</span>
+            <span class="font-mono text-[11px] text-emerald-400">TRC-20 / Direct</span>
+          </div>
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-zinc-500">Data Saver:</span>
+            <button type="button" id="footer-data-saver-btn" class="text-xs font-medium text-amber-400 hover:underline" aria-label="Toggle Data Saver">
+              <span id="footer-data-saver-status">Off</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex flex-col items-center justify-between gap-4 pt-8 text-xs text-zinc-500 sm:flex-row">
+      <p data-i18n="footerCopyright">© 2026 VocalWitness • Built for Truth • Evidence • Public Square</p>
+      <p class="rounded-full border border-zinc-800 bg-zinc-900/50 px-3 py-1 font-mono text-[11px] text-zinc-600">
+        Non-custodial infrastructure • Zero tracking
+      </p>
+    </div>
+  </div>
+</footer>
+
+
+
+
+
+
+
+
+<!-- ====================== PHONE VERIFICATION MODAL ====================== -->
+<div id="phoneVerificationModal"
+     class="fixed inset-0 z-[10050] hidden items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="phoneVerificationTitle"
+     aria-hidden="true">
+  <div class="w-full max-w-md space-y-5 rounded-3xl border border-zinc-700 bg-zinc-900 p-6 shadow-2xl">
+    <div class="flex items-center justify-between">
+      <div>
+        <h3 id="phoneVerificationTitle" class="text-xl font-bold text-white">Verify Phone Number</h3>
+        <p class="mt-1 text-sm text-zinc-400">Unlock Citizen Circle &amp; advanced features</p>
+      </div>
+      <button type="button" id="closePhoneVerificationBtn"
+              class="flex h-10 w-10 items-center justify-center rounded-full text-2xl leading-none text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+              aria-label="Close phone verification">
+        &times;
+      </button>
+    </div>
+
+    <!-- Step 1: Phone -->
+    <div id="phone-step-1" class="space-y-4">
+      <div>
+        <label for="phone-input" class="mb-1.5 block text-sm text-zinc-300">
+          Phone Number (international format)
+        </label>
+        <input type="tel" id="phone-input"
+               placeholder="+234 801 234 5678"
+               autocomplete="tel"
+               class="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-white placeholder-zinc-500 focus:border-emerald-500 focus:outline-none">
+      </div>
+      <button type="button" id="send-otp-btn"
+              class="w-full rounded-xl bg-emerald-600 py-3 font-semibold text-white transition hover:bg-emerald-500">
+        Send Verification Code
+      </button>
+    </div>
+
+    <!-- Step 2: OTP -->
+    <div id="phone-step-2" class="hidden space-y-4">
+      <div>
+        <label for="otp-input" class="mb-1.5 block text-sm text-zinc-300">Enter 6-digit code</label>
+        <input type="text" id="otp-input" maxlength="6" inputmode="numeric" pattern="[0-9]*"
+               placeholder="123456"
+               autocomplete="one-time-code"
+               class="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-center text-2xl tracking-widest text-white placeholder-zinc-500 focus:border-emerald-500 focus:outline-none">
+      </div>
+      <button type="button" id="verify-otp-btn"
+              class="w-full rounded-xl bg-emerald-600 py-3 font-semibold text-white transition hover:bg-emerald-500">
+        Verify &amp; Unlock Citizen Circle
+      </button>
+      <button type="button" id="change-phone-btn"
+              class="w-full py-2 text-sm text-zinc-400 hover:text-white">
+        ← Change phone number
+      </button>
+    </div>
+
+    <p class="text-center text-xs text-zinc-500">
+      We only use your number for anti-spam verification.<br>
+      It is never shown publicly or stored on the ledger.
+    </p>
+  </div>
+</div>
+
+<!-- ====================== GLOBAL UI HELPER SCRIPT ====================== -->
+<script>
+  const $ = (id) => document.getElementById(id);
+
+  function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `fixed bottom-6 left-1/2 z-[11000] -translate-x-1/2 rounded-2xl px-6 py-3 text-sm font-medium text-white shadow-2xl transition-all duration-300 ${
+      type === 'success' ? 'bg-emerald-600' :
+      type === 'error'   ? 'bg-red-600' :
+      type === 'warning' ? 'bg-amber-600' : 'bg-zinc-800'
+    }`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3500);
+  }
+
+  function openModal(id) {
+    const m = $(id);
+    if (!m) return;
+    m.classList.remove('hidden');
+    m.classList.add('flex');
+    m.setAttribute('aria-hidden', 'false');
+  }
+
+  function closeModal(id) {
+    const m = $(id);
+    if (!m) return;
+    m.classList.add('hidden');
+    m.classList.remove('flex');
+    m.setAttribute('aria-hidden', 'true');
+  }
+
+  window.$ = $;
+  window.showToast = showToast;
+  window.openModal = openModal;
+  window.closeModal = closeModal;
+
+  window.closeAuthModal = () => closeModal('authModal');
+  window.closeLoginModal = () => {
+    closeModal('loginModal');
+    closeModal('authModal');
+  };
+
+  if (typeof window.openProfileModal !== 'function') {
+    window.openProfileModal = () => openModal('profileModal');
+  }
+  if (typeof window.closeProfileModal !== 'function') {
+    window.closeProfileModal = () => closeModal('profileModal');
+  }
+
+  window.closeEditProfile = () => closeModal('editProfileModal');
+  window.openSupportModal = () => openModal('supportModal');
+  window.closeSupportModal = () => closeModal('supportModal');
+  window.closeVerificationModal = () => closeModal('verificationModal');
+  window.openPhoneVerificationModal = () => {
+    openModal('phoneVerificationModal');
+    $('phone-step-2')?.classList.add('hidden');
+    $('phone-step-1')?.classList.remove('hidden');
+  };
+  window.closePhoneVerificationModal = () => closeModal('phoneVerificationModal');
+
+  // Lightweight Data Saver fallback (main.js should own the real logic)
+  window.toggleDataSaver = function () {
+    if (typeof window.toggleDataSaverFromModule === 'function') {
+      return window.toggleDataSaverFromModule();
+    }
+    const enabled = localStorage.getItem('vocalwitness_data_saver') === 'true';
+    const next = !enabled;
+    localStorage.setItem('vocalwitness_data_saver', String(next));
+
+    ['data-saver-status', 'footer-data-saver-status'].forEach((id) => {
+      const el = $(id);
+      if (!el) return;
+      el.textContent = next ? 'On' : 'Off';
+      el.classList.toggle('text-emerald-400', next);
+      el.classList.toggle('text-amber-400', !next);
+    });
+    showToast(`Data Saver mode turned ${next ? 'ON' : 'OFF'}`, 'info');
+  };
+
+  document.addEventListener('DOMContentLoaded', () => {
+    // Restore data-saver labels
+    const enabled = localStorage.getItem('vocalwitness_data_saver') === 'true';
+    ['data-saver-status', 'footer-data-saver-status'].forEach((id) => {
+      const el = $(id);
+      if (!el) return;
+      el.textContent = enabled ? 'On' : 'Off';
+    });
+
+    $('footerSupportBtn')?.addEventListener('click', () => window.openSupportModal());
+    $('footer-data-saver-btn')?.addEventListener('click', () => window.toggleDataSaver());
+
+    $('closePhoneVerificationBtn')?.addEventListener('click', () => window.closePhoneVerificationModal());
+    $('send-otp-btn')?.addEventListener('click', () => {
+      if (typeof handleSendOTP === 'function') handleSendOTP();
+    });
+    $('verify-otp-btn')?.addEventListener('click', () => {
+      if (typeof handleVerifyOTP === 'function') handleVerifyOTP();
+    });
+    $('change-phone-btn')?.addEventListener('click', () => {
+      $('phone-step-2')?.classList.add('hidden');
+      $('phone-step-1')?.classList.remove('hidden');
+    });
+
+    // Close modals on backdrop click
+    ['supportModal', 'profileModal', 'editProfileModal', 'settingsModal', 'phoneVerificationModal', 'authModal'].forEach((id) => {
+      const m = $(id);
+      m?.addEventListener('click', (e) => {
+        if (e.target === m) closeModal(id);
+      });
+    });
+
+    // Escape closes topmost visible modal
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      const order = ['phoneVerificationModal', 'editProfileModal', 'settingsModal', 'supportModal', 'profileModal', 'authModal'];
+      for (const id of order) {
+        const m = $(id);
+        if (m && !m.classList.contains('hidden')) {
+          closeModal(id);
+          break;
+        }
       }
     });
+
+    // More menu
+    document.addEventListener('click', (e) => {
+      const moreBtn = $('more-btn');
+      const moreMenu = $('more-menu');
+      if (!moreMenu) return;
+      if (moreBtn && moreBtn.contains(e.target)) {
+        e.stopPropagation();
+        const open = moreMenu.classList.toggle('hidden') === false;
+        moreBtn.setAttribute('aria-expanded', String(open));
+      } else if (!moreMenu.contains(e.target)) {
+        moreMenu.classList.add('hidden');
+        moreBtn?.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    // Support tier buttons
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('.support-tier-btn');
+      if (!btn) return;
+      const container = $('supportTierContainer');
+      container?.querySelectorAll('.support-tier-btn').forEach((b) => {
+        b.classList.remove('bg-emerald-600/20', 'border-emerald-500', 'active-tier');
+        b.classList.add('bg-zinc-800', 'border-zinc-700');
+      });
+      btn.classList.remove('bg-zinc-800', 'border-zinc-700');
+      btn.classList.add('bg-emerald-600/20', 'border-emerald-500', 'active-tier');
+      const amountInput = $('customSupportAmount');
+      if (amountInput) amountInput.value = btn.getAttribute('data-amount') || '15';
+    });
+  });
+</script>
+
+
+
+  <script type="module" src="./js/app-state.js"></script>
+  <script type="module" src="./js/auth.js"></script>
+  <script type="module" src="./js/notifications.js"></script>
+  <script type="module" src="./js/bookmarks.js"></script>
+  <script type="module" src="./js/zk-client.js"></script>
+  <script type="module" src="./js/feed.js"></script>
+  <script type="module" src="./js/witness-voice.js"></script>
+  <script type="module" src="./js/main.js"></script>
+
+  <script type="module">
+    import { initLiveArena } from './js/live-arena.js';
+    if (document.querySelector('[data-tab="arena"], #live-arena')) {
+      initLiveArena();
+    }
   </script>
 </body>
 </html>
