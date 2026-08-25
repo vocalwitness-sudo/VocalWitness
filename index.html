@@ -506,54 +506,66 @@
     </div>
   </div>
 
-  <!-- MOBILE ONLY: Flash News Ticker -->
-  <div class="block md:hidden ticker-wrap border border-emerald-500/20 rounded-2xl py-2 text-xs text-slate-300 mb-5 overflow-hidden bg-slate-900">
-    <div class="ticker-badge font-bold uppercase text-emerald-400 px-3">Flash Feed</div>
-    <div class="ticker-move" id="ticker-content-mobile" aria-live="polite">
-      <span data-i18n="flashFeedLoadingMobile">Loading breaking feed...</span>
-    </div>
+ <!-- MOBILE ONLY: Flash News Ticker -->
+<div class="block md:hidden ticker-wrap border border-emerald-500/20 rounded-2xl py-2 text-xs text-slate-300 mb-5 overflow-hidden bg-slate-900 relative">
+  
+  <!-- Fixed badge on the left -->
+  <div class="ticker-badge absolute left-0 top-0 bottom-0 z-10 flex items-center font-bold uppercase text-emerald-400 px-3 bg-slate-900 border-r border-emerald-500/20">
+    ⚡ Flash Feed
   </div>
 
- <!-- SECTION: Main Navigation -->
-<div class="mb-6 w-full">
-  <nav id="main-nav" class="flex flex-wrap items-center gap-2" role="tablist" aria-label="Main navigation">
-    
+  <!-- Scrolling content -->
+  <div class="ticker-move pl-28 whitespace-nowrap overflow-hidden" id="ticker-content-mobile" aria-live="polite">
+    <div class="ticker-track inline-block">
+      <span class="ticker-item">Loading breaking feed...</span>
+      <!-- More items will be injected here by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- SECTION: Main Navigation -->
+<div class="mb-6 w-full overflow-x-auto scrollbar-hide">
+  <nav id="main-nav" 
+       class="flex flex-nowrap items-center gap-2 min-w-max" 
+       role="tablist" 
+       aria-label="Main navigation">
+   
     <!-- Public Square -->
     <button type="button" data-tab="square" role="tab" aria-selected="true"
-            class="nav-tab active h-11 px-4 rounded-2xl font-semibold text-xs sm:text-sm text-black bg-emerald-500 border border-emerald-400/50 shadow-md transition hover:scale-[1.02] flex flex-col items-center justify-center min-w-[110px]">
+            class="nav-tab active h-11 px-4 rounded-2xl font-semibold text-xs sm:text-sm text-black bg-emerald-500 border border-emerald-400/50 shadow-md transition hover:scale-[1.02] flex flex-col items-center justify-center shrink-0 min-w-[110px]">
       <span data-i18n="publicSquareTab">Public Square</span>
       <span class="text-[10px] font-normal opacity-90 hidden sm:block" data-i18n="publicSquareDesc">Share stories & evidence</span>
     </button>
 
     <!-- Evidence Ledger -->
     <button type="button" data-tab="ledger" role="tab"
-            class="nav-tab h-11 px-4 rounded-2xl font-semibold text-xs sm:text-sm text-emerald-300 bg-emerald-950/70 border border-emerald-700/60 hover:bg-emerald-900/50 transition hover:scale-[1.02] flex flex-col items-center justify-center min-w-[110px]">
+            class="nav-tab h-11 px-4 rounded-2xl font-semibold text-xs sm:text-sm text-emerald-300 bg-emerald-950/70 border border-emerald-700/60 hover:bg-emerald-900/50 transition hover:scale-[1.02] flex flex-col items-center justify-center shrink-0 min-w-[110px]">
       <span data-i18n="evidenceLedgerTab">Evidence Ledger</span>
       <span class="text-[10px] font-normal text-emerald-400/80 hidden sm:block" data-i18n="evidenceLedgerDesc">Permanent record</span>
     </button>
 
     <!-- Live Arena -->
     <button type="button" data-tab="arena" role="tab"
-            class="nav-tab h-11 px-4 rounded-2xl font-semibold text-xs sm:text-sm text-sky-300 bg-sky-900/70 border border-sky-700 hover:bg-sky-800 transition hover:scale-[1.02] flex flex-col items-center justify-center min-w-[100px]">
+            class="nav-tab h-11 px-4 rounded-2xl font-semibold text-xs sm:text-sm text-sky-300 bg-sky-900/70 border border-sky-700 hover:bg-sky-800 transition hover:scale-[1.02] flex flex-col items-center justify-center shrink-0 min-w-[100px]">
       <span data-i18n="liveArenaTab">Live Arena</span>
       <span class="text-[10px] font-normal text-sky-400 hidden sm:block" data-i18n="liveArenaDesc">Watch & join live</span>
     </button>
 
     <!-- My Circle -->
     <button type="button" data-tab="mycircle" role="tab"
-            class="nav-tab h-11 px-4 rounded-2xl font-semibold text-xs sm:text-sm text-zinc-200 bg-zinc-900 border border-zinc-700 hover:border-zinc-500 transition hover:scale-[1.02] flex flex-col items-center justify-center min-w-[100px]">
+            class="nav-tab h-11 px-4 rounded-2xl font-semibold text-xs sm:text-sm text-zinc-200 bg-zinc-900 border border-zinc-700 hover:border-zinc-500 transition hover:scale-[1.02] flex flex-col items-center justify-center shrink-0 min-w-[100px]">
       <span data-i18n="myCircleTab">My Circle</span>
       <span class="text-[10px] font-normal text-zinc-400 hidden sm:block" data-i18n="myCircleDesc">Trusted people</span>
     </button>
 
     <!-- Verified Witnesses -->
     <button type="button" data-tab="witness" role="tab"
-            class="nav-tab h-11 px-4 rounded-2xl font-semibold text-xs sm:text-sm text-amber-300 bg-amber-900/70 border border-amber-700 hover:bg-amber-800 transition hover:scale-[1.02] flex flex-col items-center justify-center min-w-[110px]">
+            class="nav-tab h-11 px-4 rounded-2xl font-semibold text-xs sm:text-sm text-amber-300 bg-amber-900/70 border border-amber-700 hover:bg-amber-800 transition hover:scale-[1.02] flex flex-col items-center justify-center shrink-0 min-w-[110px]">
       <span data-i18n="verifiedWitnessesTab">Verified Witnesses</span>
       <span class="text-[10px] font-normal text-amber-400 hidden sm:block" data-i18n="verifiedWitnessesDesc">Trusted voices</span>
     </button>
 
-    <!-- MORE - now compact and pulled forward -->
+    <!-- MORE -->
     <div class="relative shrink-0">
       <button id="more-btn" type="button"
               class="h-11 px-4 rounded-2xl font-semibold text-xs sm:text-sm bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-700 hover:border-emerald-500/50 transition hover:scale-[1.02] flex items-center gap-1.5"
