@@ -41,7 +41,7 @@ export function renderTierCircle(tier = 'citizen', reputation = 0) {
 export function updateTierBadge(containerId, tier, reputation) {
     const container = document.getElementById(containerId);
     if (!container) return;
-    
+
     container.style.transition = "opacity 0.4s ease";
     container.style.opacity = 0;
 
@@ -67,24 +67,19 @@ export function renderForensicChips(post = {}) {
 
     return `
         <div class="mt-3 pt-2 border-t border-slate-800/80 flex flex-wrap items-center gap-2 text-xs">
-            <!-- Channel / Mode Indicator -->
             ${isWitness ? `
                 <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/30">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
                     Witness Voice
                 </span>
             ` : ''}
-
-            <!-- ZK Proof Verification Badge -->
             ${isZk ? `
                 <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md font-medium bg-purple-500/10 text-purple-300 border border-purple-500/30">
                     <span class="text-xs">🔐</span> ZK-Verified
                 </span>
             ` : ''}
-
-            <!-- Copyable SHA-256 Evidence Hash Chip -->
             ${hash ? `
-                <button 
+                <button
                     type="button"
                     data-copy-hash="${hash}"
                     class="copy-hash-btn inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md font-mono bg-slate-900 text-slate-300 border border-slate-700 hover:border-emerald-500 hover:text-emerald-400 transition cursor-pointer"
@@ -104,7 +99,7 @@ if (typeof window !== 'undefined' && !window.__hashCopyListenerAttached) {
     document.addEventListener('click', (e) => {
         const btn = e.target.closest('[data-copy-hash]');
         if (!btn) return;
-        
+
         e.preventDefault();
         const hashText = btn.getAttribute('data-copy-hash');
         if (hashText) {
@@ -144,7 +139,82 @@ export function renderTierBadge(tierData = {}) {
     return `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">${badgeText}</span>`;
 }
 
-// Global window export
+/**
+ * Confirmation modal when switching from ZK-Anonymous → Bold Witness mode.
+ * Required by profile.js (ProfileManager.bindEvents).
+ * @param {Function} onConfirm - async/sync callback after user confirms
+ */
+export function showBoldWitnessModal(onConfirm) {
+    document.getElementById('boldWitnessModal')?.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'boldWitnessModal';
+    modal.className = 'fixed inset-0 z-[10020] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-labelledby', 'boldWitnessTitle');
+
+    modal.innerHTML = `
+      <div class="w-full max-w-md rounded-3xl border border-amber-500/40 bg-zinc-900 p-6 text-white shadow-2xl">
+        <div class="mb-4 flex items-start gap-3">
+          <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-500/20 text-2xl" aria-hidden="true">👁️</div>
+          <div>
+            <h3 id="boldWitnessTitle" class="text-lg font-bold text-amber-400">Switch to Bold Witness?</h3>
+            <p class="mt-1 text-sm text-zinc-400">
+              Your display name and profile will be visible on public testimonies.
+              You can switch back to ZK-Anonymous anytime.
+            </p>
+          </div>
+        </div>
+        <ul class="mb-5 space-y-1.5 rounded-xl border border-zinc-800 bg-zinc-950/60 p-3 text-xs text-zinc-400">
+          <li>• Real name / handle shown on posts</li>
+          <li>• Stronger public accountability</li>
+          <li>• Privacy Shield can still hide location</li>
+        </ul>
+        <div class="flex gap-3">
+          <button type="button" id="boldWitnessConfirm"
+                  class="flex-1 rounded-xl bg-amber-500 py-3 text-sm font-bold text-black transition hover:bg-amber-400">
+            Activate Bold Witness
+          </button>
+          <button type="button" id="boldWitnessCancel"
+                  class="rounded-xl bg-zinc-800 px-5 py-3 text-sm font-semibold text-zinc-300 transition hover:bg-zinc-700">
+            Cancel
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    const close = () => {
+        modal.remove();
+        document.removeEventListener('keydown', onKey);
+    };
+
+    const onKey = (e) => {
+        if (e.key === 'Escape') close();
+    };
+    document.addEventListener('keydown', onKey);
+
+    modal.querySelector('#boldWitnessCancel')?.addEventListener('click', close);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) close();
+    });
+
+    modal.querySelector('#boldWitnessConfirm')?.addEventListener('click', async () => {
+        close();
+        if (typeof onConfirm === 'function') {
+            try {
+                await onConfirm();
+            } catch (err) {
+                console.error('Bold Witness confirm error:', err);
+            }
+        }
+    });
+}
+
+// Global window exports
 if (typeof window !== 'undefined') {
     window.renderTierBadge = renderTierBadge;
+    window.showBoldWitnessModal = showBoldWitnessModal;
 }
