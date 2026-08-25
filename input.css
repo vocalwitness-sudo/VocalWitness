@@ -11,6 +11,12 @@
   --color-accent-red: #ef4444;
 }
 
+/* ====================== HEADER HEIGHT CONTROL ====================== */
+:root {
+  --header-height-mobile: 112px;
+  --header-height-desktop: 72px;
+}
+
 /* ====================== BASE STYLES ====================== */
 *, ::before, ::after {
   box-sizing: border-box;
@@ -27,9 +33,22 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  margin: 0;
+  padding: 0;
 }
 
-/* Glass Effect */
+/* ====================== MAIN CONTENT SPACING ====================== */
+#main-content {
+  padding-top: var(--header-height-mobile);
+}
+
+@media (min-width: 768px) {
+  #main-content {
+    padding-top: var(--header-height-desktop);
+  }
+}
+
+/* ====================== GLASS EFFECT ====================== */
 .glass {
   background-color: var(--color-glass);
   backdrop-filter: blur(24px);
@@ -37,7 +56,7 @@ body {
   border: 1px solid var(--color-glass-border);
 }
 
-/* Modal Overlay Constraint */
+/* ====================== MODAL ====================== */
 .modal {
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
 }
@@ -51,7 +70,7 @@ body {
   white-space: nowrap;
   padding: 0.5rem 0;
   position: relative;
-  z-index: 30; /* Keep underneath fixed header z-index */
+  z-index: 30;
 }
 
 .nav-tab {
@@ -77,7 +96,7 @@ body {
   color: #a1a1aa;
 }
 
-/* Active tab - strong emerald */
+/* Active tab */
 #main-nav button.nav-tab.active,
 #main-nav button[data-tab].active {
   background-color: var(--color-primary) !important;
@@ -114,27 +133,27 @@ body {
 }
 
 /* ====================== BUTTON FLEXIBILITY ====================== */
-/* Responsive sizing removes fixed overflow issues */
 #guest-action-btn,
 #support-btn,
 #postButton {
   min-width: auto;
 }
 
-/* Hide scrollbars cleanly */
+/* ====================== SCROLLBAR HIDE ====================== */
 .scrollbar-hide::-webkit-scrollbar,
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
 .scrollbar-hide,
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
 
-/* ====================== Z-INDEX FIXES ====================== */
-header { 
-  z-index: 50 !important; 
+/* ====================== Z-INDEX & HEADER ====================== */
+#main-header {
+  z-index: 50 !important;
 }
 
 header button,
@@ -146,16 +165,28 @@ header a {
 }
 
 /* ====================== DATA SAVER STATES ====================== */
-#dataSaverBtn.active, 
+#dataSaverBtn.active,
 .data-saver-on {
-    background-color: rgba(16, 185, 129, 0.15) !important;
-    border-color: var(--color-primary) !important;
-    color: var(--color-primary) !important;
+  background-color: rgba(16, 185, 129, 0.15) !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary) !important;
 }
 
-#dataSaverBtn:not(.active), 
+#dataSaverBtn:not(.active),
 .data-saver-off {
-    background-color: rgba(31, 41, 55, 0.8) !important;
-    border-color: rgba(75, 85, 99, 0.4) !important;
-    color: #9ca3af !important;
+  background-color: rgba(31, 41, 55, 0.8) !important;
+  border-color: rgba(75, 85, 99, 0.4) !important;
+  color: #9ca3af !important;
+}
+
+/* ====================== MOBILE SAFE AREA ====================== */
+@media (max-width: 767px) {
+  #main-header {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+/* ====================== BRAND STRENGTH ====================== */
+header h1 {
+  letter-spacing: -0.025em;
 }
