@@ -19,7 +19,28 @@ const DEFAULT_FALLBACK_DICTIONARY = {
 
     // Section 9 Translations
     termsSection9Title: "9. User Indemnification & Dispute Protocol",
-    termsSection9Text: "You agree to defend, indemnify, and hold harmless VocalWitness and its operators from any legal claims, liabilities, damages, or legal expenses arising from your violation of these Terms or your publication of illegal, defamatory, or infringing material. Any legal disputes or claims against content must be directed through our administrative takedown channel rather than against protocol infrastructure operators."
+    termsSection9Text: "You agree to defend, indemnify, and hold harmless VocalWitness and its operators from any legal claims, liabilities, damages, or legal expenses arising from your violation of these Terms or your publication of illegal, defamatory, or infringing material. Any legal disputes or claims against content must be directed through our administrative takedown channel rather than against protocol infrastructure operators.",
+
+    // Safety & Operational Security Translations
+    safetyPageTitle: "Safety & Operational Security Guide • VocalWitness",
+    safetyTitle: "Citizen OpSec & Safety Guide",
+    safetySubtitle: "Practical protocols to protect your identity, location, and digital footprint when capturing and sharing evidence.",
+    threatModelTitle: "Understand Your Threat Model",
+    threatModelDesc: "While VocalWitness automatically scrubs EXIF metadata and utilizes client-side zero-knowledge proofs, technology alone cannot prevent accidental personal exposure. If you are submitting high-risk testimonies or evidence under hostile surveillance, follow these operational security best practices.",
+    networkSafetyTitle: "Network Connection & IP Masking",
+    networkTip1: "Use Tor or a Trustworthy VPN: Hide your physical location and IP address from network eavesdroppers before navigating to VocalWitness.",
+    networkTip2: "Avoid Public Personal Wi-Fi: Do not upload sensitive whistleblower materials over home broadband or personal mobile accounts registered directly to your government ID.",
+    mediaSafetyTitle: "Media & Metadata Protection",
+    mediaTip1: "Automated Scrubbing: VocalWitness strips EXIF metadata (camera model, GPS coordinates) locally in your browser. However, check your background visually for identifying reflections, unique street signs, or private documents.",
+    mediaTip2: "Voice & Face Anonymization: When recording video or audio in hostile environments, blur faces of non-consenting bystanders and alter distinct voice patterns before publishing.",
+    identitySafetyTitle: "Identity & Account Discretion",
+    identityTip1: "Pseudonymous Handle: Choose a username completely unlinked to your real name, social handles, or personal email address.",
+    identityTip2: "Zero-Knowledge Verification: Take advantage of True Witness ZK-verification options to establish trust without linking personal contact details to your submissions.",
+    physicalSafetyTitle: "Physical Security & Device Handling",
+    physicalTip1: "Secure Device Storage: Keep your mobile phone encrypted and passcoded (avoid biometrics like fingerprint/face unlock in regions where authorities can compel biometric unlock).",
+    physicalTip2: "Clear Browser Data: If using a shared or at-risk device, clear local storage and browser cache immediately after submitting your record.",
+    goldenRuleTitle: "The Golden Rule of Citizen Witnessing",
+    goldenRuleText: "Never put yourself in immediate physical danger to capture evidence. Secure your physical safety first. Once you are in a protected location, use cryptographic tools to notarize and share your record with the world."
 };
 const supportedLanguages = [
     { code: 'en',  name: 'English',     flag: '🇬🇧', native: 'English',      rtl: false },
