@@ -855,6 +855,101 @@ exports.verifyMediaPipeline = onDocumentCreated(
     try {
       const moderation = await analyzeToxicityWithPerspective(data.content || "");
 
+
+      // ======================================================
+// 10. EVIDENCE PACK — PLATFORM TIMESTAMP (hash only)
+// ======================================================
+/**
+ * Client sends only a SHA-256 hex (packCoreHash).
+ * Never receives media bytes or testimony text.
+ * Phase 1: platform integrity receipt (not eIDAS qualified).
+ * Swap body later for real RFC 3161 TSA without changing the client contract.
+ */
+exports.requestTimestamp = onCall(
+  { cors: allowedOrigins },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Sign in required.");
+    }
+
+    const hash = String(request.data?.hash || "").toLowerCase().trim();
+    if (!/^[a-f0-9]{64}$/.test(hash)) {
+      throw new HttpsError(
+        "invalid-argument",
+        "SHA-256 hex digest required (64 characters)."
+      );
+    }
+
+    const uid = request.auth.uid;
+    const requestedAt = new Date().toISOString();
+
+    // Simple per-user rate limit (10 timestamps / hour)
+    const rateRef = db.collection("rateLimits").doc(`${uid}_requestTimestamp`);
+    try {
+      const allowed = await db.runTransaction(async (tx) => {
+        const doc = await tx.get(rateRef);
+        const now = admin.firestore.Timestamp.now();
+        const windowStart = new Date(Date.now() - 60 * 60 * 1000);
+
+        if (!doc.exists || doc.data().lastRequest.toDate() < windowStart) {
+          tx.set(rateRef, { count: 1, firstRequest: now, lastRequest: now });
+          return true;
+        }
+        if ((doc.data().count || 0) >= 10) return false;
+        tx.update(rateRef, {
+          count: admin.firestore.FieldValue.increment(1),
+          lastRequest: now
+        });
+        return true;
+      });
+
+      if (!allowed) {
+        throw new HttpsError(
+          "resource-exhausted",
+          "Too many timestamp requests. Try again later."
+        );
+      }
+    } catch (err) {
+      if (err instanceof HttpsError) throw err;
+      console.warn("requestTimestamp rate limit skipped:", err.message);
+    }
+
+    // Platform receipt — only hash is bound; no file content
+    const receipt = crypto
+      .createHash("sha256")
+      .update(`vocalwitness|${hash}|${requestedAt}|${uid}`)
+      .digest("hex");
+
+    const payload = {
+      hash,
+      requestedAt,
+      receipt,
+      uid,
+      authority: "vocalwitness-platform"
+    };
+
+    const tokenBase64 = Buffer.from(JSON.stringify(payload)).toString("base64");
+
+    await writeAuditLog({
+      action: "evidence_timestamp",
+      performedBy: uid,
+      targetId: hash.slice(0, 16),
+      targetType: "packCoreHash",
+      details: { authority: "vocalwitness-platform", qualified: false },
+      severity: "info"
+    });
+
+    return {
+      authority: "vocalwitness-platform",
+      qualified: false,
+      hashedMessage: hash,
+      tokenBase64,
+      requestedAt,
+      note: "Platform integrity receipt. Not an eIDAS qualified timestamp. Replace with RFC 3161 TSA when ready."
+    };
+  }
+);
+
       await snap.ref.set(
         {
           moderationStatus: moderation.safe ? "approved" : "flagged",
