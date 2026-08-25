@@ -7,7 +7,20 @@ const DISCLAIMER =
 
 /** Stable stringify so the same object always hashes the same way */
 export function canonicalStringify(obj) {
-  return JSON.stringify(obj, Object.keys(obj).sort());
+  if (obj === null || typeof obj !== 'object') {
+    return JSON.stringify(obj);
+  }
+  if (Array.isArray(obj)) {
+    return '[' + obj.map((item) => canonicalStringify(item)).join(',') + ']';
+  }
+  const keys = Object.keys(obj).sort();
+  return (
+    '{' +
+    keys
+      .map((k) => JSON.stringify(k) + ':' + canonicalStringify(obj[k]))
+      .join(',') +
+    '}'
+  );
 }
 
 /**
@@ -22,6 +35,7 @@ export async function buildPackCore({
   clientCaptureMs = Date.now()
 }) {
   const mediaRows = [];
+
   if (media.imageUrl && media.imageHash) {
     mediaRows.push({
       role: 'image',
@@ -33,6 +47,7 @@ export async function buildPackCore({
       exifScrubbed: true
     });
   }
+
   if (media.audioUrl && media.audioHash) {
     mediaRows.push({
       role: 'audio',
@@ -47,7 +62,7 @@ export async function buildPackCore({
   const core = {
     schemaVersion: SCHEMA,
     content: {
-      body: content,
+      body: content || '',
       bodyHash: bodyHash || null,
       channel
     },
@@ -77,8 +92,8 @@ export async function buildPackCore({
 export function toFirestoreEvidencePack(packCoreHash, rfc3161, clientCaptureMs) {
   return {
     schemaVersion: SCHEMA,
-    packCoreHash,
-    clientCaptureMs,
+    packCoreHash: packCoreHash || null,
+    clientCaptureMs: clientCaptureMs || Date.now(),
     rfc3161: rfc3161 || null
   };
 }
@@ -92,9 +107,9 @@ export function toFullEvidencePack(core, packCoreHash, rfc3161, testimonyId) {
     packId: testimonyId || null,
     generatedAt: new Date().toISOString(),
     disclaimer: DISCLAIMER,
-    packCoreHash,
+    packCoreHash: packCoreHash || null,
     timestamps: {
-      ...core.timestamps,
+      ...(core?.timestamps || {}),
       rfc3161: rfc3161 || null
     },
     verify: {
@@ -102,17 +117,21 @@ export function toFullEvidencePack(core, packCoreHash, rfc3161, testimonyId) {
         'Re-download media from the listed URLs',
         'Compute SHA-256 of each file; compare to hashAfterUpload',
         'Compute SHA-256 of body UTF-8; compare to bodyHash',
-        'If rfc3161.tokenBase64 is present, verify with: openssl ts -verify ...'
+        'If rfc3161.tokenBase64 is present, verify offline with your TSA tools'
       ]
     }
   };
 }
 
 export function downloadJson(filename, obj) {
-  const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify(obj, null, 2)], {
+    type: 'application/json'
+  });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = filename;
+  document.body.appendChild(a);
   a.click();
+  a.remove();
   URL.revokeObjectURL(a.href);
 }
