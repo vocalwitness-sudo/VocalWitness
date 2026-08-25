@@ -392,14 +392,52 @@
   </div>
 </header>
 
+
   <!-- ====================== MAIN CONTENT ====================== -->
   <main class="pt-[header-height] max-w-6xl mx-auto px-3 sm:px-4">
 
-    <!-- Flash Feed Banner -->
-    <div id="flash-feed" class="...">...</div>
+    <!-- ====================== FLASH FEED + GLOBAL SEARCH ====================== -->
+<div class="mb-6 space-y-4">
 
-    <!-- Search -->
-    <div class="search-wrapper ...">...</div>
+  <!-- FLASH NEWS TICKER -->
+  <div class="ticker-wrap relative overflow-hidden rounded-2xl border border-emerald-500/20 bg-zinc-900/90">
+    
+    <!-- Badge -->
+    <div class="absolute left-0 top-0 bottom-0 z-10 flex items-center px-3 bg-zinc-900 border-r border-emerald-500/20">
+      <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">
+        ⚡ Flash Feed
+      </span>
+    </div>
+
+    <!-- Scrolling Content -->
+    <div class="overflow-hidden whitespace-nowrap pl-28 py-2.5">
+      <div id="ticker-content" class="ticker-track inline-block text-sm text-zinc-300" aria-live="polite">
+        <span class="ticker-item">Loading trusted global headlines...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- GLOBAL SEARCH BAR -->
+  <div class="relative w-full">
+    <label for="global-search" class="sr-only">Search</label>
+    
+    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-500">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+    </div>
+
+    <input 
+      type="search" 
+      id="global-search"
+      placeholder="Search testimonies, news, hashtags, or witnesses..."
+      class="w-full bg-zinc-900/90 border border-zinc-700 hover:border-emerald-500/50 focus:border-emerald-500 rounded-2xl pl-12 pr-4 py-3 text-sm text-white placeholder-zinc-500 focus:outline-none transition"
+      autocomplete="off"
+    >
+  </div>
+
+</div>
 
     <!-- Navigation Tabs -->
     <nav id="main-nav" class="flex overflow-x-auto gap-2 ...">
