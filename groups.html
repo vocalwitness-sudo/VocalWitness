@@ -6,6 +6,7 @@
   <title>Groups • VocalWitness</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="./style.css">
+  <link rel="icon" href="./logo.png" type="image/png">
   <style>
     .glass {
       background: rgba(17, 24, 39, 0.92);
@@ -22,7 +23,6 @@
 </head>
 <body class="min-h-screen bg-[#0a0f1c] pb-28 text-white">
   <div class="mx-auto max-w-3xl px-4 py-6">
-    <!-- Header -->
     <div class="glass mb-8 flex items-center justify-between rounded-3xl p-4">
       <div class="flex items-center gap-3">
         <a href="/" class="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/15 text-lg transition hover:bg-emerald-500/25" aria-label="Back">←</a>
@@ -42,13 +42,11 @@
       </select>
     </div>
 
-    <!-- Tabs -->
     <div class="mb-6 flex gap-2 rounded-2xl border border-zinc-800 bg-zinc-900/80 p-1">
       <button type="button" class="tab-btn active flex-1 rounded-xl py-3 text-sm font-medium" data-tab="discover">Discover</button>
       <button type="button" class="tab-btn flex-1 rounded-xl py-3 text-sm font-medium" data-tab="my-groups">My Groups</button>
     </div>
 
-    <!-- Search -->
     <div class="relative mb-6">
       <input type="text" id="searchInput" placeholder="Search groups by name or topic..."
              class="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-5 py-4 text-white placeholder-zinc-500 transition focus:border-emerald-500 focus:outline-none">
@@ -70,7 +68,6 @@
     </div>
   </div>
 
-  <!-- Create Group Modal -->
   <div id="groupModal"
        class="fixed inset-0 z-[200] hidden items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
        role="dialog" aria-modal="true" aria-labelledby="groupModalTitle">
@@ -121,7 +118,6 @@
     </div>
   </div>
 
-  <!-- Upgrade modal -->
   <div id="upgradeToWitnessModal"
        class="fixed inset-0 z-[210] hidden items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
        role="dialog" aria-modal="true">
@@ -152,7 +148,6 @@
   <script type="module">
     import { initGroups } from './js/groups.js';
     import { initLanguage } from './js/i18n.js';
-
     document.addEventListener('DOMContentLoaded', () => {
       initLanguage();
       initGroups('group-container');
