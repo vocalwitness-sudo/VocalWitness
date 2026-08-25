@@ -479,11 +479,11 @@
       <span class="text-[10px] font-normal opacity-80 hidden sm:block" data-i18n="verifiedWitnessesDesc">Trusted voices</span>
     </button>
 
-    <!-- More -->
+  <!-- More -->
 <div class="relative shrink-0">
   <button id="more-btn" type="button"
           class="nav-tab h-11 px-4 rounded-2xl font-semibold text-xs sm:text-sm flex items-center gap-1.5"
-          onclick="document.getElementById('more-menu').classList.toggle('hidden')">
+          onclick="toggleMoreMenu(event)">
     <span data-i18n="moreOptionsBtn">More</span>
     <svg class="w-3.5 h-3.5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
@@ -492,7 +492,7 @@
 
   <!-- More Menu -->
   <div id="more-menu" 
-       class="hidden absolute right-0 top-full mt-2 w-52 bg-zinc-900 border border-zinc-700 rounded-2xl shadow-2xl py-1.5 z-[100]">
+       class="hidden absolute right-0 top-full mt-2 w-52 bg-zinc-900 border border-zinc-700 rounded-2xl shadow-2xl py-1.5 z-[9999]">
     <a href="/my-testimonies" class="block px-4 py-2.5 hover:bg-zinc-800 text-white text-sm rounded-lg mx-1">My Testimonies</a>
     <a href="/groups" class="block px-4 py-2.5 hover:bg-zinc-800 text-white text-sm rounded-lg mx-1">Groups</a>
     <a href="/witness-voice" class="block px-4 py-2.5 hover:bg-zinc-800 text-white text-sm rounded-lg mx-1">Witness Voice</a>
@@ -520,5 +520,21 @@
 
   <!-- Modals, Bottom sheets, etc. -->
   <!-- Scripts at the bottom -->
+  <script>
+  function toggleMoreMenu(event) {
+    event.stopPropagation();
+    const menu = document.getElementById('more-menu');
+    menu.classList.toggle('hidden');
+  }
+
+  // Close when clicking outside
+  document.addEventListener('click', function(e) {
+    const menu = document.getElementById('more-menu');
+    const btn = document.getElementById('more-btn');
+    if (!menu.contains(e.target) && !btn.contains(e.target)) {
+      menu.classList.add('hidden');
+    }
+  });
+</script>
 </body>
 </html>
