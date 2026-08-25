@@ -23,7 +23,8 @@
   ],
   "share_target": {
     "action": "/index.html?share=true",
-    "method": "GET",
+    "method": "POST",
+    "enctype": "multipart/form-data",
     "params": {
       "title": "title",
       "text": "text",
