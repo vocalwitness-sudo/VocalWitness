@@ -120,3 +120,31 @@ if (typeof window !== 'undefined' && !window.__hashCopyListenerAttached) {
         }
     });
 }
+
+/**
+ * Renders HTML string for a user's Tier / Level badge.
+ * Used by profile.js and UI components.
+ * @param {Object} tierData - Result object from getUserTierData()
+ * @returns {string} Formatted HTML badge string
+ */
+export function renderTierBadge(tierData = {}) {
+    if (!tierData || Object.keys(tierData).length === 0) {
+        return `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-500/10 text-slate-400 border border-slate-500/20">👤 Citizen</span>`;
+    }
+
+    const { level, metadata } = tierData;
+
+    if (level) {
+        return `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold shadow-sm text-white transition-all duration-200" style="background-color: ${level.color}">
+            <span>${level.emblem}</span> <span>${level.name}</span>
+        </span>`;
+    }
+
+    const badgeText = metadata?.badge || '👤 Citizen';
+    return `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">${badgeText}</span>`;
+}
+
+// Global window export
+if (typeof window !== 'undefined') {
+    window.renderTierBadge = renderTierBadge;
+}
