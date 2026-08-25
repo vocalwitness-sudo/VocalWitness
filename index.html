@@ -304,36 +304,35 @@
     <!-- ========== MOBILE HEADER ========== -->
     <div class="flex flex-col md:hidden py-2.5 gap-2">
 
-      <!-- ROW 1: Brand + Auth -->
-      <div class="flex items-center justify-between">
-        <a href="/" class="flex items-center gap-2.5 shrink-0" aria-label="VocalWitness Home">
-          <div class="relative">
-            <div class="absolute inset-0 bg-emerald-500 rounded-xl blur opacity-40"></div>
-            <img src="./logo.png" alt="VocalWitness" class="relative w-9 h-9 rounded-xl border border-emerald-500/40 object-contain">
-          </div>
-          <div class="leading-none">
-  <h1 class="text-base font-black tracking-tight text-white" data-i18n="appTitle">
-    VocalWitness
-  </h1>
-</div>
-            <p class="text-[10px] font-bold tracking-tight text-emerald-300 mt-0.5" data-i18n="appSubtitle">
-              Truth • Evidence • Public Square
-            </p>
-          </div>
-        </a>
+     <!-- ROW 1: Brand + Auth -->
+<div class="flex items-center justify-between">
+  <a href="/" class="flex items-center gap-2.5 shrink-0" aria-label="VocalWitness Home">
+    <div class="relative">
+      <div class="absolute inset-0 bg-emerald-500 rounded-xl blur opacity-40"></div>
+      <img src="./logo.png" alt="VocalWitness" class="relative w-9 h-9 rounded-xl border border-emerald-500/40 object-contain">
+    </div>
+    <div class="leading-none">
+      <h1 class="text-base font-black tracking-tight text-emerald-400" data-i18n="appTitle">
+        VocalWitness
+      </h1>
+      <p class="text-[10px] font-bold tracking-tight text-emerald-300 mt-0.5" data-i18n="appSubtitle">
+        Truth • Evidence • Public Square
+      </p>
+    </div>
+  </a>
 
-       <div class="flex items-center gap-1.5">
-  <button id="openAuthModalBtnMobile" type="button"
-          class="h-8 px-2.5 bg-white hover:bg-zinc-100 text-zinc-900 font-bold rounded-lg text-xs flex items-center gap-1.5 transition shadow-sm">
-    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-3.5 h-3.5" alt="Google">
-    <span>Sign In</span>
-  </button>
-  <button id="userProfileBtnMobile" type="button"
-          class="hidden h-8 w-8 bg-zinc-900 border border-zinc-700 text-emerald-400 rounded-lg flex items-center justify-center text-sm">
-    👤
-  </button>
+  <div class="flex items-center gap-1.5">
+    <button id="openAuthModalBtnMobile" type="button"
+            class="h-8 px-2.5 bg-white hover:bg-zinc-100 text-zinc-900 font-bold rounded-lg text-xs flex items-center gap-1.5 transition shadow-sm">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-3.5 h-3.5" alt="Google">
+      <span>Sign In</span>
+    </button>
+    <button id="userProfileBtnMobile" type="button"
+            class="hidden h-8 w-8 bg-zinc-900 border border-zinc-700 text-emerald-400 rounded-lg flex items-center justify-center text-sm">
+      👤
+    </button>
+  </div>
 </div>
-      </div>
 
       <!-- ROW 2: Quick Actions -->
       <div class="flex items-center justify-between gap-2 pt-1.5 border-t border-zinc-800/70">
@@ -394,8 +393,7 @@
 
 
   <!-- ====================== MAIN CONTENT ====================== -->
-  <main class="pt-[header-height] max-w-6xl mx-auto px-3 sm:px-4">
-
+<main id="main-content" class="max-w-6xl mx-auto px-3 sm:px-4 pb-20">
     <!-- ====================== FLASH FEED + GLOBAL SEARCH ====================== -->
 <div class="mb-6 space-y-4">
 
@@ -439,11 +437,74 @@
 
 </div>
 
-    <!-- Navigation Tabs -->
-    <nav id="main-nav" class="flex overflow-x-auto gap-2 ...">
-      <!-- Public Square, Evidence Ledger, Live Arena, etc. -->
-    </nav>
+  <!-- ====================== MAIN NAVIGATION TABS ====================== -->
+<div class="mb-6 w-full overflow-x-auto scrollbar-hide">
+  <nav id="main-nav" 
+       class="flex flex-nowrap items-center gap-2 min-w-max" 
+       role="tablist" 
+       aria-label="Main navigation">
 
+    <!-- Public Square -->
+    <button type="button" data-tab="square" role="tab" aria-selected="true"
+            class="nav-tab active h-11 px-4 rounded-2xl font-semibold text-xs sm:text-sm flex flex-col items-center justify-center shrink-0 min-w-[110px]">
+      <span data-i18n="publicSquareTab">Public Square</span>
+      <span class="text-[10px] font-normal opacity-90 hidden sm:block" data-i18n="publicSquareDesc">Share stories & evidence</span>
+    </button>
+
+    <!-- Evidence Ledger -->
+    <button type="button" data-tab="ledger" role="tab"
+            class="nav-tab h-11 px-4 rounded-2xl font-semibold text-xs sm:text-sm flex flex-col items-center justify-center shrink-0 min-w-[110px]">
+      <span data-i18n="evidenceLedgerTab">Evidence Ledger</span>
+      <span class="text-[10px] font-normal opacity-80 hidden sm:block" data-i18n="evidenceLedgerDesc">Permanent record</span>
+    </button>
+
+    <!-- Live Arena -->
+    <button type="button" data-tab="arena" role="tab"
+            class="nav-tab h-11 px-4 rounded-2xl font-semibold text-xs sm:text-sm flex flex-col items-center justify-center shrink-0 min-w-[100px]">
+      <span data-i18n="liveArenaTab">Live Arena</span>
+      <span class="text-[10px] font-normal opacity-80 hidden sm:block" data-i18n="liveArenaDesc">Watch & join live</span>
+    </button>
+
+    <!-- My Circle -->
+    <button type="button" data-tab="mycircle" role="tab"
+            class="nav-tab h-11 px-4 rounded-2xl font-semibold text-xs sm:text-sm flex flex-col items-center justify-center shrink-0 min-w-[100px]">
+      <span data-i18n="myCircleTab">My Circle</span>
+      <span class="text-[10px] font-normal opacity-80 hidden sm:block" data-i18n="myCircleDesc">Trusted people</span>
+    </button>
+
+    <!-- Verified Witnesses -->
+    <button type="button" data-tab="witness" role="tab"
+            class="nav-tab h-11 px-4 rounded-2xl font-semibold text-xs sm:text-sm flex flex-col items-center justify-center shrink-0 min-w-[110px]">
+      <span data-i18n="verifiedWitnessesTab">Verified Witnesses</span>
+      <span class="text-[10px] font-normal opacity-80 hidden sm:block" data-i18n="verifiedWitnessesDesc">Trusted voices</span>
+    </button>
+
+    <!-- More -->
+    <div class="relative shrink-0">
+      <button id="more-btn" type="button"
+              class="nav-tab h-11 px-4 rounded-2xl font-semibold text-xs sm:text-sm flex items-center gap-1.5"
+              onclick="event.stopPropagation(); document.getElementById('more-menu').classList.toggle('hidden')">
+        <span data-i18n="moreOptionsBtn">More</span>
+        <svg class="w-3.5 h-3.5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+        </svg>
+      </button>
+
+      <!-- More Menu -->
+      <div id="more-menu" class="hidden absolute left-0 top-full mt-2 w-52 bg-zinc-900/95 backdrop-blur-xl border border-zinc-700 rounded-2xl shadow-2xl py-1.5 z-50">
+        <a href="/my-testimonies" class="block px-4 py-2.5 hover:bg-zinc-800 text-white text-sm rounded-lg mx-1">My Testimonies</a>
+        <a href="/groups" class="block px-4 py-2.5 hover:bg-zinc-800 text-white text-sm rounded-lg mx-1">Groups</a>
+        <a href="/witness-voice" class="block px-4 py-2.5 hover:bg-zinc-800 text-white text-sm rounded-lg mx-1">Witness Voice</a>
+        <div class="h-px bg-zinc-800 mx-3 my-1"></div>
+        <a href="/about" class="block px-4 py-2.5 hover:bg-zinc-800 text-white text-sm rounded-lg mx-1">About Us</a>
+        <a href="/privacy" class="block px-4 py-2.5 hover:bg-zinc-800 text-white text-sm rounded-lg mx-1">Privacy Policy</a>
+        <a href="/terms" class="block px-4 py-2.5 hover:bg-zinc-800 text-white text-sm rounded-lg mx-1">Terms of Service</a>
+        <a href="/safety" class="block px-4 py-2.5 hover:bg-zinc-800 text-white text-sm rounded-lg mx-1">Safety Guidelines</a>
+      </div>
+    </div>
+
+  </nav>
+</div>
     <!-- ========== PAGE SECTIONS (show/hide with JS) ========== -->
     <section id="public-square" class="...">
       <!-- Share Your Testimony card -->
