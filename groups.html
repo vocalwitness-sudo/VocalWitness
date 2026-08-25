@@ -1,227 +1,162 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Groups • VocalWitness</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="./style.css">
-    <style>
-        .glass {
-            background: rgba(17, 24, 39, 0.92);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(16, 185, 129, 0.22);
-        }
-        .tab-btn.active {
-            background: #10b981;
-            color: #000;
-            font-weight: 600;
-        }
-        .tab-btn {
-            transition: all 0.2s ease;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Groups • VocalWitness</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="./style.css">
+  <style>
+    .glass {
+      background: rgba(17, 24, 39, 0.92);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(16, 185, 129, 0.22);
+    }
+    .tab-btn.active {
+      background: #10b981;
+      color: #000;
+      font-weight: 600;
+    }
+    .tab-btn { transition: all 0.2s ease; }
+  </style>
 </head>
-<body class="min-h-screen bg-[#0a0f1c] text-white pb-28">
-
-    <div class="max-w-3xl mx-auto px-4 py-6">
-
-        <!-- Header -->
-        <div class="flex items-center justify-between mb-8 glass rounded-3xl p-4">
-            <div class="flex items-center gap-3">
-                <button onclick="window.history.back()" 
-                        class="w-10 h-10 bg-emerald-500/15 hover:bg-emerald-500/25 rounded-2xl flex items-center justify-center text-lg transition">
-                    ←
-                </button>
-                <div>
-                    <h1 class="text-2xl font-bold text-emerald-400">Groups</h1>
-                    <p class="text-xs text-zinc-400">Truth communities & evidence circles</p>
-                </div>
-            </div>
-
-            <select id="languageSelector" 
-                    class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
-                <option value="en">English</option>
-                <option value="pcm">Naija Pidgin</option>
-                <option value="yo">Yorùbá</option>
-                <option value="ha">Hausa</option>
-                <option value="ig">Igbo</option>
-                <option value="sw">Swahili</option>
-            </select>
+<body class="min-h-screen bg-[#0a0f1c] pb-28 text-white">
+  <div class="mx-auto max-w-3xl px-4 py-6">
+    <!-- Header -->
+    <div class="glass mb-8 flex items-center justify-between rounded-3xl p-4">
+      <div class="flex items-center gap-3">
+        <a href="/" class="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/15 text-lg transition hover:bg-emerald-500/25" aria-label="Back">←</a>
+        <div>
+          <h1 class="text-2xl font-bold text-emerald-400">Groups</h1>
+          <p class="text-xs text-zinc-400">Truth communities &amp; evidence circles</p>
         </div>
-
-        <!-- Tabs -->
-        <div class="flex gap-2 mb-6 p-1 bg-zinc-900/80 rounded-2xl border border-zinc-800">
-            <button class="tab-btn active flex-1 py-3 rounded-xl text-sm font-medium" data-tab="discover">
-                Discover
-            </button>
-            <button class="tab-btn flex-1 py-3 rounded-xl text-sm font-medium" data-tab="my-groups">
-                My Groups
-            </button>
-        </div>
-
-        <!-- Search -->
-        <div class="relative mb-6">
-            <input type="text" 
-                   id="searchInput"
-                   placeholder="Search groups by name or topic..."
-                   class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4 text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500 transition">
-        </div>
-
-        <!-- Groups Container -->
-        <div id="group-container" class="space-y-5">
-            <!-- Groups will be rendered here -->
-        </div>
-
-        <!-- Empty State (hidden by default) -->
-        <div id="empty-state" class="hidden text-center py-16">
-            <div class="text-5xl mb-4">🛡️</div>
-            <h3 class="text-xl font-semibold text-white mb-2">No groups yet</h3>
-            <p class="text-zinc-400 text-sm max-w-xs mx-auto">
-                Be the first to create a Truth Circle in your community.
-            </p>
-        </div>
-
-        <!-- Create Group Button -->
-        <div class="fixed bottom-6 left-0 right-0 px-4 z-40">
-            <button onclick="showGroupCreationModal()" 
-                    class="w-full max-w-md mx-auto block bg-emerald-500 hover:bg-emerald-400 text-black font-semibold py-4 rounded-2xl shadow-lg shadow-emerald-900/30 transition active:scale-[0.98]">
-                ➕ Create New Group
-            </button>
-        </div>
+      </div>
+      <select id="languageSelector"
+              class="rounded-2xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none">
+        <option value="en">English</option>
+        <option value="pcm">Naija Pidgin</option>
+        <option value="yo">Yorùbá</option>
+        <option value="ha">Hausa</option>
+        <option value="ig">Igbo</option>
+        <option value="sw">Swahili</option>
+      </select>
     </div>
 
-    <!-- ==================== CREATE GROUP MODAL ==================== -->
-<!-- ==================== CREATE GROUP MODAL ==================== -->
-<div id="groupModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-[200] p-4">
-    <div class="glass rounded-3xl max-w-md w-full overflow-hidden shadow-2xl">
-        
-        <div class="p-6 border-b border-zinc-700">
-            <h2 class="text-xl font-bold text-white">Create New Group</h2>
-            <p class="text-zinc-400 text-sm mt-1">Build a Truth Circle for your community</p>
-        </div>
-        
-        <div class="p-6 space-y-5">
-            <div>
-                <label class="block text-sm text-zinc-400 mb-1.5">Group Name *</label>
-                <input id="groupName" type="text" maxlength="60"
-                       class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500"
-                       placeholder="e.g. Lagos Truth Seekers">
-            </div>
-            
-            <div>
-                <label class="block text-sm text-zinc-400 mb-1.5">Description</label>
-                <textarea id="groupDesc" rows="3" maxlength="280"
-                          class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 resize-none"
-                          placeholder="What truth or cause does this group stand for?"></textarea>
-            </div>
-            
-            <div>
-                <label class="block text-sm text-zinc-400 mb-1.5">Visibility</label>
-                <select id="groupVisibility" 
-                        class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500">
-                    <option value="public">🌍 Public – Anyone can discover & join</option>
-                    <option value="network">🔗 Network Only</option>
-                    <option value="citizen_circle">🛡️ Citizen Circle Only</option>
-                    <option value="witness_circle">🔐 Witness Circle Only (Highest Trust)</option>
-                </select>
-            </div>
-
-            <!-- Tools Preview -->
-            <div class="bg-zinc-900/70 border border-zinc-700 rounded-2xl p-4">
-                <p class="text-xs text-zinc-400 mb-2">Every group includes:</p>
-                <div class="flex flex-wrap gap-2 text-xs">
-                    <span class="px-2.5 py-1 bg-emerald-500/10 text-emerald-400 rounded-full border border-emerald-500/20">Evidence Locker</span>
-                    <span class="px-2.5 py-1 bg-amber-500/10 text-amber-400 rounded-full border border-amber-500/20">Attestation Wall</span>
-                    <span class="px-2.5 py-1 bg-cyan-500/10 text-cyan-400 rounded-full border border-cyan-500/20">Forensic Timeline</span>
-                </div>
-                <p class="text-[11px] text-zinc-500 mt-2">Full cryptographic tools require Witness Circle (ZK)</p>
-            </div>
-        </div>
-        
-        <div class="p-6 border-t border-zinc-700 flex gap-3">
-            <button onclick="closeGroupModal()" 
-                    class="flex-1 py-3.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-2xl text-sm font-medium">
-                Cancel
-            </button>
-            <button onclick="createGroup()" 
-                    class="flex-1 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-black font-semibold rounded-2xl text-sm">
-                Create Group
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- ==================== UPGRADE TO WITNESS CIRCLE MODAL ==================== -->
-<div id="upgradeToWitnessModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-[210] p-4">
-    <div class="glass rounded-3xl max-w-md w-full overflow-hidden shadow-2xl border border-cyan-500/30">
-        <div class="p-6 text-center">
-            <div class="text-5xl mb-4">🔐</div>
-            <h2 class="text-xl font-bold text-white mb-2">Witness Circle Required</h2>
-            <p class="text-zinc-400 text-sm mb-6">
-                Cryptographic evidence tools, ZK seals, and high-trust features are only available to 
-                <span class="text-cyan-400 font-medium">Witness Circle</span> members.
-            </p>
-
-            <div class="bg-zinc-900/80 rounded-2xl p-4 text-left text-sm text-zinc-300 mb-6 space-y-2">
-                <div class="flex items-center gap-2">
-                    <span class="text-emerald-400">✓</span> You are currently in <strong>Citizen Circle</strong>
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="text-cyan-400">→</span> Complete Zero-Knowledge verification to unlock full power
-                </div>
-            </div>
-
-            <div class="flex flex-col gap-3">
-                <button onclick="startZKUpgradeFromGroups()" 
-                        class="w-full py-3.5 bg-gradient-to-r from-cyan-600 to-teal-500 hover:from-cyan-500 hover:to-teal-400 text-white font-semibold rounded-2xl transition">
-                    🔑 Start ZK Verification
-                </button>
-                <button onclick="closeUpgradeModal()" 
-                        class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-2xl text-sm">
-                    Maybe later
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-                <!-- Future tools preview (suggestion) -->
-                <div class="bg-zinc-900/70 border border-zinc-700 rounded-2xl p-4">
-                    <p class="text-xs text-zinc-400 mb-2">Every group comes with:</p>
-                    <div class="flex flex-wrap gap-2 text-xs">
-                        <span class="px-2.5 py-1 bg-emerald-500/10 text-emerald-400 rounded-full border border-emerald-500/20">Evidence Locker</span>
-                        <span class="px-2.5 py-1 bg-amber-500/10 text-amber-400 rounded-full border border-amber-500/20">Attestation Wall</span>
-                        <span class="px-2.5 py-1 bg-cyan-500/10 text-cyan-400 rounded-full border border-cyan-500/20">Forensic Timeline</span>
-                    </div>
-                    <p class="text-[11px] text-zinc-500 mt-2">Cryptographic evidence & ZK tools coming soon</p>
-                </div>
-            </div>
-            
-            <div class="p-6 border-t border-zinc-700 flex gap-3">
-                <button type="button" 
-                        onclick="closeGroupModal()" 
-                        class="flex-1 py-3.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-2xl transition text-sm font-medium">
-                    Cancel
-                </button>
-                <button type="button" 
-                        onclick="createGroup()" 
-                        class="flex-1 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-black font-semibold rounded-2xl transition text-sm">
-                    Create Group
-                </button>
-            </div>
-        </div>
+    <!-- Tabs -->
+    <div class="mb-6 flex gap-2 rounded-2xl border border-zinc-800 bg-zinc-900/80 p-1">
+      <button type="button" class="tab-btn active flex-1 rounded-xl py-3 text-sm font-medium" data-tab="discover">Discover</button>
+      <button type="button" class="tab-btn flex-1 rounded-xl py-3 text-sm font-medium" data-tab="my-groups">My Groups</button>
     </div>
 
-    <!-- Scripts -->
-    <script type="module" src="./js/main.js"></script>
-    <script type="module">
-        import { initGroups } from './js/groups.js';
-        import { initLanguage } from './js/i18n.js';
+    <!-- Search -->
+    <div class="relative mb-6">
+      <input type="text" id="searchInput" placeholder="Search groups by name or topic..."
+             class="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-5 py-4 text-white placeholder-zinc-500 transition focus:border-emerald-500 focus:outline-none">
+    </div>
 
-        document.addEventListener('DOMContentLoaded', () => {
-            initLanguage();
-            initGroups('group-container');
-        });
-    </script>
+    <div id="group-container" class="space-y-5"></div>
+
+    <div id="empty-state" class="hidden py-16 text-center">
+      <div class="mb-4 text-5xl">🛡️</div>
+      <h3 class="mb-2 text-xl font-semibold text-white">No groups yet</h3>
+      <p class="mx-auto max-w-xs text-sm text-zinc-400">Be the first to create a Truth Circle in your community.</p>
+    </div>
+
+    <div class="fixed bottom-6 left-0 right-0 z-40 px-4">
+      <button type="button" onclick="showGroupCreationModal()"
+              class="mx-auto block w-full max-w-md rounded-2xl bg-emerald-500 py-4 font-semibold text-black shadow-lg shadow-emerald-900/30 transition hover:bg-emerald-400 active:scale-[0.98]">
+        ➕ Create New Group
+      </button>
+    </div>
+  </div>
+
+  <!-- Create Group Modal -->
+  <div id="groupModal"
+       class="fixed inset-0 z-[200] hidden items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+       role="dialog" aria-modal="true" aria-labelledby="groupModalTitle">
+    <div class="glass w-full max-w-md overflow-hidden rounded-3xl shadow-2xl">
+      <div class="border-b border-zinc-700 p-6">
+        <h2 id="groupModalTitle" class="text-xl font-bold text-white">Create New Group</h2>
+        <p class="mt-1 text-sm text-zinc-400">Build a Truth Circle for your community</p>
+      </div>
+      <div class="space-y-5 p-6">
+        <div>
+          <label for="groupName" class="mb-1.5 block text-sm text-zinc-400">Group Name *</label>
+          <input id="groupName" type="text" maxlength="60"
+                 class="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-white focus:border-emerald-500 focus:outline-none"
+                 placeholder="e.g. Lagos Truth Seekers">
+        </div>
+        <div>
+          <label for="groupDesc" class="mb-1.5 block text-sm text-zinc-400">Description</label>
+          <textarea id="groupDesc" rows="3" maxlength="280"
+                    class="w-full resize-none rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-white focus:border-emerald-500 focus:outline-none"
+                    placeholder="What truth or cause does this group stand for?"></textarea>
+        </div>
+        <div>
+          <label for="groupVisibility" class="mb-1.5 block text-sm text-zinc-400">Visibility</label>
+          <select id="groupVisibility"
+                  class="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-white focus:border-emerald-500 focus:outline-none">
+            <option value="public">🌍 Public – Anyone can discover &amp; join</option>
+            <option value="network">🔗 Network Only</option>
+            <option value="citizen_circle">🛡️ Citizen Circle Only</option>
+            <option value="witness_circle">🔐 Witness Circle Only (Highest Trust)</option>
+          </select>
+        </div>
+        <div class="rounded-2xl border border-zinc-700 bg-zinc-900/70 p-4">
+          <p class="mb-2 text-xs text-zinc-400">Every group includes:</p>
+          <div class="flex flex-wrap gap-2 text-xs">
+            <span class="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-emerald-400">Evidence Locker</span>
+            <span class="rounded-full border border-amber-500/20 bg-amber-500/10 px-2.5 py-1 text-amber-400">Attestation Wall</span>
+            <span class="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-2.5 py-1 text-cyan-400">Forensic Timeline</span>
+          </div>
+          <p class="mt-2 text-[11px] text-zinc-500">Full cryptographic tools require Witness Circle (ZK)</p>
+        </div>
+      </div>
+      <div class="flex gap-3 border-t border-zinc-700 p-6">
+        <button type="button" onclick="closeGroupModal()"
+                class="flex-1 rounded-2xl bg-zinc-800 py-3.5 text-sm font-medium text-white hover:bg-zinc-700">Cancel</button>
+        <button type="button" onclick="createGroup()"
+                class="flex-1 rounded-2xl bg-emerald-600 py-3.5 text-sm font-semibold text-black hover:bg-emerald-500">Create Group</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upgrade modal -->
+  <div id="upgradeToWitnessModal"
+       class="fixed inset-0 z-[210] hidden items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+       role="dialog" aria-modal="true">
+    <div class="glass w-full max-w-md overflow-hidden rounded-3xl border border-cyan-500/30 shadow-2xl">
+      <div class="p-6 text-center">
+        <div class="mb-4 text-5xl">🔐</div>
+        <h2 class="mb-2 text-xl font-bold text-white">Witness Circle Required</h2>
+        <p class="mb-6 text-sm text-zinc-400">
+          Cryptographic evidence tools and high-trust features require
+          <span class="font-medium text-cyan-400">Witness Circle</span> membership.
+        </p>
+        <div class="mb-6 space-y-2 rounded-2xl bg-zinc-900/80 p-4 text-left text-sm text-zinc-300">
+          <div class="flex items-center gap-2"><span class="text-emerald-400">✓</span> Citizen Circle is available today</div>
+          <div class="flex items-center gap-2"><span class="text-cyan-400">→</span> Complete ZK verification for full tools</div>
+        </div>
+        <div class="flex flex-col gap-3">
+          <button type="button" onclick="startZKUpgradeFromGroups()"
+                  class="w-full rounded-2xl bg-gradient-to-r from-cyan-600 to-teal-500 py-3.5 font-semibold text-white hover:from-cyan-500 hover:to-teal-400">
+            🔑 Start ZK Verification
+          </button>
+          <button type="button" onclick="closeUpgradeModal()"
+                  class="w-full rounded-2xl bg-zinc-800 py-3 text-sm text-zinc-300 hover:bg-zinc-700">Maybe later</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initGroups } from './js/groups.js';
+    import { initLanguage } from './js/i18n.js';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initLanguage();
+      initGroups('group-container');
+    });
+  </script>
 </body>
 </html>
