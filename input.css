@@ -215,3 +215,13 @@ header h1 {
   0%   { transform: translateX(0); }
   100% { transform: translateX(-100%); }
 }
+
+/* Make sure the More dropdown is not cut off */
+#main-nav {
+  overflow: visible;
+}
+
+.scrollbar-hide {
+  overflow-x: auto;
+  overflow-y: visible;
+}
