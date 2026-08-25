@@ -96,26 +96,94 @@ export function renderForensicChips(post = {}) {
 // Delegate click listener for all dynamic SHA-256 hash copy buttons
 if (typeof window !== 'undefined' && !window.__hashCopyListenerAttached) {
     window.__hashCopyListenerAttached = true;
-    document.addEventListener('click', (e) => {
+
+    /**
+     * Copy text to clipboard with modern API + legacy fallback.
+     * @param {string} text
+     * @returns {Promise<boolean>} true if copy succeeded
+     */
+    async function copyToClipboard(text) {
+        if (!text) return false;
+
+        // Modern Clipboard API (requires secure context: https or localhost)
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+            try {
+                await navigator.clipboard.writeText(text);
+                return true;
+            } catch (err) {
+                console.warn('Clipboard API failed, trying fallback:', err?.message || err);
+            }
+        }
+
+        // Fallback for older browsers / denied permission / non-secure context
+        try {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.setAttribute('readonly', '');
+            textarea.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0;';
+            document.body.appendChild(textarea);
+            textarea.select();
+            textarea.setSelectionRange(0, text.length);
+            const ok = document.execCommand('copy');
+            document.body.removeChild(textarea);
+            return ok;
+        } catch (err) {
+            console.error('Clipboard fallback failed:', err);
+            return false;
+        }
+    }
+
+    document.addEventListener('click', async (e) => {
         const btn = e.target.closest('[data-copy-hash]');
         if (!btn) return;
 
         e.preventDefault();
+        e.stopPropagation();
+
         const hashText = btn.getAttribute('data-copy-hash');
-        if (hashText) {
-            navigator.clipboard.writeText(hashText).then(() => {
-                const originalHTML = btn.innerHTML;
+        if (!hashText) return;
+
+        // Prevent double-clicks while copying
+        if (btn.dataset.copying === '1') return;
+        btn.dataset.copying = '1';
+
+        const originalHTML = btn.innerHTML;
+
+        try {
+            const success = await copyToClipboard(hashText);
+
+            if (success) {
                 btn.innerHTML = `<span>✅ Copied!</span>`;
                 btn.classList.add('border-emerald-500', 'text-emerald-400');
-                setTimeout(() => {
-                    btn.innerHTML = originalHTML;
-                    btn.classList.remove('border-emerald-500', 'text-emerald-400');
-                }, 1800);
-            }).catch(err => console.error('Failed to copy hash:', err));
+                if (typeof window.showToast === 'function') {
+                    window.showToast('Hash copied to clipboard', 'success');
+                }
+            } else {
+                btn.innerHTML = `<span>❌ Copy failed</span>`;
+                btn.classList.add('border-red-500', 'text-red-400');
+                if (typeof window.showToast === 'function') {
+                    window.showToast('Could not copy. Select and copy manually.', 'error');
+                } else {
+                    // Last resort: show the hash so user can copy manually
+                    window.prompt('Copy this hash manually:', hashText);
+                }
+            }
+        } catch (err) {
+            console.error('Copy handler error:', err);
+            btn.innerHTML = `<span>❌ Error</span>`;
+            btn.classList.add('border-red-500', 'text-red-400');
+        } finally {
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.classList.remove(
+                    'border-emerald-500', 'text-emerald-400',
+                    'border-red-500', 'text-red-400'
+                );
+                delete btn.dataset.copying;
+            }, 1800);
         }
     });
 }
-
 /**
  * Renders HTML string for a user's Tier / Level badge.
  * Used by profile.js and UI components.
