@@ -363,23 +363,24 @@ export async function uploadForensicMedia() {
     const userId = auth.currentUser?.uid || "anonymous";
 
     // 1. Photo Upload (Scrubbed EXIF via R2)
-    if (selectedImageFile) {
-        try {
-            if (selectedImageFile.size === 0) {
-                throw new Error("Selected image is empty");
-            }
-
-            const hash = await generateSha256Hash(selectedImageFile);
-            const uploadedUrl = await uploadSecurePhoto(selectedImageFile, `evidence/${userId}`);
-
-            mediaData.imageUrl = uploadedUrl;
-            mediaData.imageHash = hash;
-            console.log("✅ Image uploaded to R2:", mediaData.imageUrl);
-        } catch (e) {
-            console.error("Image upload failed", e);
-            showToast("Image upload failed", "error");
+if (selectedImageFile) {
+    try {
+        if (selectedImageFile.size === 0) {
+            throw new Error("Selected image is empty");
         }
+
+        const hash = await generateSha256Hash(selectedImageFile);
+        // folder only — uploadSecurePhoto appends uid + uuid
+        const uploadedUrl = await uploadSecurePhoto(selectedImageFile, 'evidence');
+
+        mediaData.imageUrl = uploadedUrl;
+        mediaData.imageHash = hash;
+        console.log("✅ Image uploaded to R2:", mediaData.imageUrl);
+    } catch (e) {
+        console.error("Image upload failed", e);
+        showToast("Image upload failed", "error");
     }
+}
 
     // 2. Audio Upload (Direct to R2)
     if (engineInstance?.currentAudioBlob) {
