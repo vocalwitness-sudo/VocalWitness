@@ -25,6 +25,15 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
+    function isZkVerified() {
+      return isAuthenticated() && (
+        request.auth.token.zkVerified == true || 
+        getUserData().zkVerified == true || 
+        getUserData().tier == 'witness_circle' || 
+        getUserData().tier == 'steward'
+      );
+    }
+
     function isModerator() {
       return isAuthenticated() && (
         request.auth.token.moderator == true ||
@@ -39,7 +48,6 @@ service cloud.firestore {
         && (!userExists() || getUserData().isBanned != true);
     }
 
-    // FIXED: Enforce rate limits safely without allowing pre-profile creation bypasses
     function isNotThrottled() {
       return !userExists()
         || !('lastTestimonyAt' in getUserData())
@@ -71,12 +79,10 @@ service cloud.firestore {
            ]);
     }
 
-    // FIXED: Stripped phone verification, reputation, and tier upgrades out of direct client updates
     function isSafeUserUpdate() {
       let affected = request.resource.data.diff(resource.data).affectedKeys();
       let data = request.resource.data;
 
-      // High privilege fields strict lock (Must be updated via Cloud Functions Admin SDK)
       let forbidden = [
         'role', 'isBanned', 'badges', 'admin', 'moderator',
         'zkVerified', 'score', 'isVerified', 'uid', 'tier',
@@ -84,7 +90,6 @@ service cloud.firestore {
         'reputation', 'credibilityScore', 'weeklyPoints'
       ];
 
-      // Safe client-editable profile settings
       let allowed = [
         'email', 'displayName', 'photoURL', 'bio',
         'location', 'website', 'updatedAt', 'lastLoginAt',
@@ -181,10 +186,13 @@ service cloud.firestore {
     }
 
     // ==========================================
-    // POSTS (legacy / secondary)
+    // POSTS & COMMENTS (Door & ZK Privacy Rules)
     // ==========================================
     match /posts/{postId} {
-      allow read: if true;
+      // Visibility Door Controls Read Access
+      allow read: if resource.data.visibilityDoor == 'public_square' ||
+                    (resource.data.visibilityDoor == 'citizen_circle' && isAuthenticated()) ||
+                    (resource.data.visibilityDoor == 'witness_circle' && isZkVerified());
 
       allow create: if isNotBanned()
         && request.resource.data.authorId == request.auth.uid
@@ -197,6 +205,25 @@ service cloud.firestore {
       );
 
       allow delete: if (resource.data.authorId == request.auth.uid) || isModerator();
+
+      // SUBCOLLECTION: Comments / Replies (Enforces Door Interaction Bounds)
+      match /comments/{commentId} {
+        allow read: if true;
+
+        allow create: if isNotBanned() && (
+          // 1. Author's door is OPEN to everyone
+          get(/databases/$(database)/documents/posts/$(postId)).data.authorDoorPrivacy == 'open' ||
+          
+          // 2. Author's door is ZK_ONLY -> Requiring the commenter to be ZK-Verified
+          (
+            get(/databases/$(database)/documents/posts/$(postId)).data.authorDoorPrivacy == 'zk_only' && 
+            isZkVerified()
+          ) ||
+
+          // 3. The author is commenting on their own post
+          request.auth.uid == get(/databases/$(database)/documents/posts/$(postId)).data.authorId
+        );
+      }
     }
 
     // ==========================================
@@ -215,7 +242,6 @@ service cloud.firestore {
     // ==========================================
     match /forensic_ledger/{ledgerId} {
       allow read: if true;
-      // FIXED: Bind creation to genuine logged in author to prevent hash log spamming
       allow create: if isNotBanned()
         && request.resource.data.authorId == request.auth.uid
         && request.resource.data.hash is string
@@ -244,7 +270,6 @@ service cloud.firestore {
         && request.resource.data.createdBy == request.auth.uid
         && request.resource.data.status == 'active';
 
-      // FIXED: Restrict updates strictly to author/moderator administrative updates. Voting must run in Cloud Functions.
       allow update: if isNotBanned() && (
         resource.data.createdBy == request.auth.uid || isModerator()
       );
