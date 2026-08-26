@@ -17,6 +17,8 @@ import { renderTierCircle } from './ui-components.js';
 import { hasStewardAccess } from './tier.js';
 import { toggleReaction, bindReactionEvents } from './reactions.js';
 import { reportContent } from './moderation.js';
+import { applyPostDoorDecorations } from './door-ui.js';
+import { state } from './app-state.js';
 
 let activeFeedListener = null;
 let allPostsCache = [];
@@ -275,11 +277,12 @@ function renderFilteredPosts(posts) {
 }
 
 function renderSinglePostDOM(id, data, container) {
-    const currentUser = auth.currentUser;
+    const currentUser = auth.currentUser || state.currentUser;
     const isOwner = currentUser && currentUser.uid === data.authorId;
 
     const postEl = document.createElement('div');
     postEl.className = 'post-card glass rounded-3xl p-6 mb-6 hover:border-emerald-500/35 transition-all duration-300 border border-zinc-800 bg-zinc-900/50 relative';
+    postEl.setAttribute('data-post-id', id);
 
     const pinnedBadge = data.isPinned
         ? `<span class="bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px] px-2.5 py-0.5 rounded-full font-medium flex items-center gap-1">📌 Pinned</span>`
@@ -366,7 +369,7 @@ function renderSinglePostDOM(id, data, container) {
                 <button data-action="react" data-id="${id}" data-reaction="truth" class="flex items-center gap-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 px-3 py-1.5 rounded-xl text-zinc-300 transition">
                     💡 <span>${reactions.truth || 0}</span>
                 </button>
-                <button data-action="comment" data-id="${id}" class="flex items-center gap-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 px-3 py-1.5 rounded-xl text-zinc-300 transition">
+                <button data-action="comment" data-id="${id}" class="comment-trigger-btn flex items-center gap-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 px-3 py-1.5 rounded-xl text-zinc-300 transition">
                     💬 <span>${data.commentsCount || 0}</span>
                 </button>
             </div>
@@ -375,8 +378,10 @@ function renderSinglePostDOM(id, data, container) {
                 <button data-action="share" data-id="${id}" class="text-emerald-400 hover:text-emerald-500 transition">Share</button>
             </div>
         </div>
+        <div class="reply-input-area mt-3"></div>
     `;
 
+    applyPostDoorDecorations(postEl, data, currentUser);
     container.appendChild(postEl);
 }
 
