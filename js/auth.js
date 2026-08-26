@@ -20,7 +20,7 @@ import {
 
 import { showToast } from './utils.js';
 import { updateAppState } from './app-state.js';
-import { applyTierTheme, updateTierBadge, clearProfileCache, TIERS } from './tier.js';
+import { applyTierTheme, updateTierBadge, clearProfileCache } from './tier.js';
 import { initNotifications } from './notifications.js';
 import { 
   doc, 
@@ -29,6 +29,7 @@ import {
   updateDoc, 
   serverTimestamp 
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
 const DEFAULT_TIER = "citizen";
 let authActionInProgress = false;
 let authInitialized = false;
@@ -61,7 +62,7 @@ async function createOrUpdateUser(user) {
     const safePhotoURL = user.photoURL || "";
 
     if (!snap.exists()) {
-      // Brand-new user → start as basic citizen (before any verification)
+      // Brand-new user → start as basic citizen (unverified)
       await setDoc(userRef, {
         uid: user.uid,
         email: safeEmail,
@@ -78,7 +79,7 @@ async function createOrUpdateUser(user) {
       updateVerificationUI(false);
       showToast("🎉 Account created! Welcome to the Public Square.", "success");
     } else {
-      // Existing user → only update safe fields
+      // Existing user → update ONLY client-safe fields
       const existing = snap.data() || {};
       const changes = {};
 
@@ -92,38 +93,26 @@ async function createOrUpdateUser(user) {
         changes.email = safeEmail;
       }
 
-      // Guarantee a tier exists (never leave it undefined)
-      if (!existing.tier) {
-        changes.tier = DEFAULT_TIER;
-      }
-
-      if (existing.isPhoneVerified === undefined) {
-        changes.isPhoneVerified = false;
-      }
-      if (existing.hasVerifiedPhone === undefined) {
-        changes.hasVerifiedPhone = false;
-      }
-
       if (Object.keys(changes).length > 0) {
         changes.updatedAt = serverTimestamp();
         await updateDoc(userRef, changes);
       }
 
-      const isVerified = !!(
-        existing.isVerified ||
-        existing.isPhoneVerified ||
-        existing.hasVerifiedPhone
+      const isVerified = Boolean(
+        existing.isVerified === true ||
+        existing.isPhoneVerified === true ||
+        existing.hasVerifiedPhone === true
       );
       updateVerificationUI(isVerified);
     }
   } catch (e) {
-    // Permission-denied can happen in race conditions — ignore it
+    console.error("User document update error:", e);
     if (e?.code !== 'permission-denied') {
-      console.error("User document error:", e);
-      showToast("Error saving profile.", "error");
+      showToast("Error updating profile state.", "error");
     }
   }
 }
+
 export function updateVerificationUI(isVerified = false) {
   const statusEl = document.getElementById('verification-status');
   const verifyBtn = document.getElementById('request-verification-btn');
@@ -184,9 +173,9 @@ function handleAuthError(error) {
     case 'auth/cancelled-popup-request':
       return null;
     case 'auth/popup-blocked':
-      return "Popup was blocked. Trying redirect method...";
+      return "Popup was blocked by your browser. Switch to redirect mode or enable popups.";
     case 'auth/account-exists-with-different-credential':
-      return "An account already exists with the same email using a different method.";
+      return "An account already exists with this email address using a different login provider.";
     default:
       return error?.message || "Authentication failed. Please try again.";
   }
@@ -300,7 +289,7 @@ export function updateUIForAuthState(userParam = null) {
   const activeUser = userParam || auth.currentUser;
   const isLoggedIn = !!activeUser;
 
-  // Guest / Sign-in buttons (old + new header IDs)
+  // Guest / Sign-in buttons
   const guestSelectors = [
     '#guest-action-btn',
     '#guest-action-btn-mobile',
@@ -315,7 +304,7 @@ export function updateUIForAuthState(userParam = null) {
   document.querySelectorAll(guestSelectors)
     .forEach(el => el.classList.toggle('hidden', isLoggedIn));
 
-  // Profile buttons (old + new)
+  // Profile buttons
   const profileSelectors = [
     '#profile-btn',
     '#profile-btn-mobile',
@@ -331,18 +320,18 @@ export function updateUIForAuthState(userParam = null) {
   document.querySelectorAll('.requires-auth')
     .forEach(el => el.classList.toggle('hidden', !isLoggedIn));
 
-  // Post buttons opacity
+  // Post action element opacity feedback
   document.querySelectorAll('#postButton, #btn-photo, #btn-voice')
     .forEach(btn => {
       if (btn) btn.style.opacity = isLoggedIn ? '1' : '0.6';
     });
 
-  // Desktop avatar / name
+  // Desktop user elements
   const userAvatarDesktop = document.getElementById('user-avatar-desktop');
   const defaultAvatarDesktop = document.getElementById('default-avatar-icon-desktop');
   const userNameDesktop = document.getElementById('user-name-desktop');
 
-  // Mobile avatar / name
+  // Mobile user elements
   const userAvatarMobile = document.getElementById('user-avatar-mobile');
   const defaultAvatarMobile = document.getElementById('default-avatar-icon-mobile');
   const userNameMobile = document.getElementById('user-name-mobile');
@@ -394,7 +383,6 @@ export function showAuthModal() {
     modal.classList.remove('hidden');
     modal.classList.add('flex');
     modal.setAttribute('aria-hidden', 'false');
-    // Optional: trap focus later
   }
 }
 
@@ -412,7 +400,6 @@ export function closeLoginModal() {
 export function openVerificationModal() {
   if (!requireAuth("Please sign in to complete citizen verification.")) return;
 
-  // Prefer the new phone verification modal if present
   const phoneModal = document.getElementById('phoneVerificationModal');
   if (phoneModal) {
     phoneModal.classList.remove('hidden');
@@ -458,35 +445,35 @@ export function bindHeaderEvents() {
   window.__authDelegationBound = true;
 
   document.addEventListener('click', (e) => {
-    // Google
+    // Google Auth
     if (e.target.closest('#googleAuthBtn, #googleSignInBtn, [data-action="google-login"], .google-auth-btn')) {
       e.preventDefault();
       googleLogin(e);
       return;
     }
 
-    // Twitter / X
+    // Twitter / X Auth
     if (e.target.closest('#twitterAuthBtn, [data-action="twitter-login"], .twitter-auth-btn')) {
       e.preventDefault();
       twitterLogin(e);
       return;
     }
 
-    // GitHub
+    // GitHub Auth
     if (e.target.closest('#githubAuthBtn, [data-action="github-login"], .github-auth-btn')) {
       e.preventDefault();
       githubLogin(e);
       return;
     }
 
-    // Logout
+    // Logout Trigger
     if (e.target.closest('#logoutBtn, #logout-btn, [data-action="logout"], .logout-btn')) {
       e.preventDefault();
       logout();
       return;
     }
 
-    // Open Auth Modal (covers new header buttons)
+    // Open Auth Modal
     if (e.target.closest('#openAuthModalBtn, #openAuthModalBtnMobile, #guest-action-btn, #guest-action-btn-mobile, #guest-action-btn-drawer, #signin-btn-mobile, .auth-trigger-btn, [data-action="open-auth-modal"]')) {
       e.preventDefault();
       showAuthModal();
@@ -500,7 +487,7 @@ export function bindHeaderEvents() {
       return;
     }
 
-    // Profile
+    // Profile Trigger
     if (e.target.closest('#userProfileBtn, #userProfileBtnMobile, #profile-btn, #profile-btn-mobile, [data-action="open-profile"]')) {
       e.preventDefault();
       if (typeof window.openProfileModal === 'function') {
@@ -511,14 +498,14 @@ export function bindHeaderEvents() {
       return;
     }
 
-    // Verification
+    // Verification Trigger
     if (e.target.closest('#request-verification-btn')) {
       e.preventDefault();
       openVerificationModal();
       return;
     }
 
-    // Close dropdowns when clicking outside
+    // Close Dropdowns Outside Click
     if (!e.target.closest('#profile-btn, #profile-btn-mobile, #userProfileBtn, #profile-menu, #user-dropdown')) {
       document.querySelectorAll('#profile-menu, #user-dropdown')
         .forEach(el => el.classList.add('hidden'));
@@ -535,7 +522,7 @@ export function initAuth() {
   bindHeaderEvents();
 
   return new Promise((resolve) => {
-    // Handle redirect result (mobile)
+    // Handle redirect result for mobile devices
     getRedirectResult(auth)
       .then((result) => {
         if (result?.user) {
@@ -546,13 +533,13 @@ export function initAuth() {
       })
       .catch((error) => {
         if (error?.code !== 'auth/missing-initial-state') {
-          console.error("Redirect error:", error);
+          console.error("Redirect auth error:", error);
           const msg = handleAuthError(error);
           if (msg) showToast(msg, "error");
         }
       });
 
-    // Auth state listener
+    // Auth state observer
     onAuthStateChanged(auth, async (user) => {
       try {
         if (user) {
@@ -588,7 +575,7 @@ export function initAuth() {
   });
 }
 
-// Global exports for HTML / other modules
+// Global exports
 window.showAuthModal = showAuthModal;
 window.closeLoginModal = closeLoginModal;
 window.logout = logout;
