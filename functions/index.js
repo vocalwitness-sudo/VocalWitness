@@ -190,7 +190,7 @@ exports.getUploadUrl = onRequest(
 );
 
 // ======================================================
-// 2. USER INITIALIZATION (v1 Auth Trigger)
+// 2. USER INITIALIZATION & PHONE VERIFICATION
 // ======================================================
 exports.initializeCitizenProfile = functions.auth.user().onCreate(async (user) => {
   const userId = user.uid;
@@ -207,11 +207,11 @@ exports.initializeCitizenProfile = functions.auth.user().onCreate(async (user) =
     reputationScore: 50,
     trustCircle: 0,
     level: 1,
-    isPhoneVerified: false,
-    isVerified: false,
+    isPhoneVerified: Boolean(user.phoneNumber),
+    isVerified: Boolean(user.phoneNumber),
     phoneNumber: user.phoneNumber || "",
     zkVerified: false,
-    verifiedAt: null,
+    verifiedAt: user.phoneNumber ? admin.firestore.FieldValue.serverTimestamp() : null,
     testimoniesCount: 0,
     verificationsMade: 0,
     endorsementsReceived: 0,
@@ -243,7 +243,7 @@ exports.initializeCitizenProfile = functions.auth.user().onCreate(async (user) =
       performedBy: "system",
       targetId: userId,
       targetType: "user",
-      details: { email: user.email || null },
+      details: { email: user.email || null, phoneVerified: Boolean(user.phoneNumber) },
       severity: "info"
     });
 
@@ -252,6 +252,49 @@ exports.initializeCitizenProfile = functions.auth.user().onCreate(async (user) =
     console.error(`Error creating profile for ${userId}:`, error);
   }
 });
+
+exports.confirmPhoneVerification = onCall(
+  { cors: allowedOrigins },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Authentication required.");
+    }
+
+    const uid = request.auth.uid;
+    try {
+      const userRecord = await admin.auth().getUser(uid);
+
+      if (!userRecord.phoneNumber) {
+        throw new HttpsError("failed-precondition", "No verified phone number linked to Auth user record.");
+      }
+
+      await db.collection("users").doc(uid).set(
+        {
+          isPhoneVerified: true,
+          isVerified: true,
+          phoneNumber: userRecord.phoneNumber,
+          verifiedAt: admin.firestore.FieldValue.serverTimestamp()
+        },
+        { merge: true }
+      );
+
+      await writeAuditLog({
+        action: "phone_verification_confirmed",
+        performedBy: uid,
+        targetId: uid,
+        targetType: "user",
+        details: { phoneNumber: userRecord.phoneNumber },
+        severity: "info"
+      });
+
+      return { success: true, phoneNumber: userRecord.phoneNumber };
+    } catch (error) {
+      console.error("Phone verification confirmation error:", error);
+      if (error instanceof HttpsError) throw error;
+      throw new HttpsError("internal", "Failed to confirm phone verification.");
+    }
+  }
+);
 
 // ======================================================
 // 3. TRUST TIER
@@ -813,6 +856,7 @@ exports.verifyZKProof = onCall(
         await db.collection("users").doc(uid).set(
           {
             zkVerified: true,
+            isVerified: true,
             zkVerifiedAt: admin.firestore.FieldValue.serverTimestamp()
           },
           { merge: true }
@@ -855,16 +899,24 @@ exports.verifyMediaPipeline = onDocumentCreated(
     try {
       const moderation = await analyzeToxicityWithPerspective(data.content || "");
 
+      await snap.ref.set(
+        {
+          moderationStatus: moderation.safe ? "approved" : "flagged",
+          toxicityScore: moderation.toxicityScore || 0,
+          moderationNote: moderation.note || "",
+          processedAt: admin.firestore.FieldValue.serverTimestamp()
+        },
+        { merge: true }
+      );
+    } catch (error) {
+      console.error(`Media pipeline error for ${postId}:`, error);
+    }
+  }
+);
 
-      // ======================================================
+// ======================================================
 // 10. EVIDENCE PACK — PLATFORM TIMESTAMP (hash only)
 // ======================================================
-/**
- * Client sends only a SHA-256 hex (packCoreHash).
- * Never receives media bytes or testimony text.
- * Phase 1: platform integrity receipt (not eIDAS qualified).
- * Swap body later for real RFC 3161 TSA without changing the client contract.
- */
 exports.requestTimestamp = onCall(
   { cors: allowedOrigins },
   async (request) => {
@@ -883,7 +935,7 @@ exports.requestTimestamp = onCall(
     const uid = request.auth.uid;
     const requestedAt = new Date().toISOString();
 
-    // Simple per-user rate limit (10 timestamps / hour)
+    // Per-user rate limit (10 timestamps / hour)
     const rateRef = db.collection("rateLimits").doc(`${uid}_requestTimestamp`);
     try {
       const allowed = await db.runTransaction(async (tx) => {
@@ -914,7 +966,6 @@ exports.requestTimestamp = onCall(
       console.warn("requestTimestamp rate limit skipped:", err.message);
     }
 
-    // Platform receipt — only hash is bound; no file content
     const receipt = crypto
       .createHash("sha256")
       .update(`vocalwitness|${hash}|${requestedAt}|${uid}`)
@@ -947,20 +998,5 @@ exports.requestTimestamp = onCall(
       requestedAt,
       note: "Platform integrity receipt. Not an eIDAS qualified timestamp. Replace with RFC 3161 TSA when ready."
     };
-  }
-);
-
-      await snap.ref.set(
-        {
-          moderationStatus: moderation.safe ? "approved" : "flagged",
-          toxicityScore: moderation.toxicityScore || 0,
-          moderationNote: moderation.note || "",
-          processedAt: admin.firestore.FieldValue.serverTimestamp()
-        },
-        { merge: true }
-      );
-    } catch (error) {
-      console.error(`Failed to process media pipeline for ${postId}:`, error);
-    }
   }
 );
