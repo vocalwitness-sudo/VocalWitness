@@ -11,12 +11,17 @@ let currentActiveImageUrls = [];
 const TIER_RANKS = {
   tier_1_basic: 1,
   tier_2_verified: 2,
-  tier_3_auditor: 3
+  tier_3_auditor: 3,
+  citizen: 1,
+  verified_citizen: 2,
+  elite_witness: 3,
+  steward: 3
 };
 
 function getTierRank(tierInput) {
   if (typeof tierInput === 'number') return tierInput;
-  if (typeof tierInput === 'object' && tierInput?.rank) return tierInput.rank;
+  if (!isNaN(Number(tierInput))) return Number(tierInput);
+  if (typeof tierInput === 'object' && tierInput?.rank) return Number(tierInput.rank);
   return TIER_RANKS[tierInput] || 1;
 }
 
@@ -105,8 +110,8 @@ export function updateAppState(newState = {}) {
 
   Object.assign(state, newState);
 
-  if (newState.currentUser) {
-    state.isAuthenticated = true;
+  if (newState.currentUser !== undefined) {
+    state.isAuthenticated = !!newState.currentUser;
   }
 
   if (newState.profileMode) {
@@ -131,6 +136,7 @@ export function clearMediaPreviews() {
     URL.revokeObjectURL(currentActiveAudioUrl);
     currentActiveAudioUrl = null;
   }
+
   currentActiveImageUrls.forEach(url => URL.revokeObjectURL(url));
   currentActiveImageUrls = [];
 
@@ -185,13 +191,14 @@ export function renderImagePreview(files = []) {
     return;
   }
 
+  // Revoke previous URLs before re-rendering
   currentActiveImageUrls.forEach(url => URL.revokeObjectURL(url));
   currentActiveImageUrls = [];
   previewContainer.innerHTML = '';
 
-  files.forEach((file, index) => {
-    if (!file.type.startsWith('image/')) return;
+  const validFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
 
+  validFiles.forEach((file, index) => {
     const objectUrl = URL.createObjectURL(file);
     currentActiveImageUrls.push(objectUrl);
 
@@ -209,7 +216,7 @@ export function renderImagePreview(files = []) {
     removeBtn.innerHTML = '✕';
     
     removeBtn.addEventListener('click', () => {
-      const updatedFiles = files.filter((_, fIndex) => fIndex !== index);
+      const updatedFiles = validFiles.filter((_, fIndex) => fIndex !== index);
       if (typeof citizenEngine?.setPendingImages === 'function') citizenEngine.setPendingImages(updatedFiles);
       if (typeof witnessEngine?.setPendingImages === 'function') witnessEngine.setPendingImages(updatedFiles);
       renderImagePreview(updatedFiles);
