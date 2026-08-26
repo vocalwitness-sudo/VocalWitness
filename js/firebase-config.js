@@ -2,23 +2,23 @@
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
 import { 
   getAuth, 
-  GoogleAuthProvider,
-  TwitterAuthProvider,
-  GithubAuthProvider,
+  GoogleAuthProvider, 
+  TwitterAuthProvider, 
+  GithubAuthProvider, 
   setPersistence, 
   browserLocalPersistence 
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { getStorage } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
 
-// Dynamically match auth domain without breaking local development
+// Dynamically target auth domain for seamless custom domain or web.app execution
 const hostDomain = window.location.hostname;
 const isCustomDomain = hostDomain.includes("vocalwitness.com");
 
 const firebaseConfig = {
   apiKey: "AIzaSyATxYekXgjdLP2SfR42FG8rEdajq_pIEb0",
-  // Route custom domain traffic through vocalwitness.com; default to Firebase subdomains otherwise
-  authDomain: isCustomDomain ? "vocalwitness.com" : "vocalwitness-3affa.web.app",
+  // Route auth traffic safely through canonical web.app target unless custom domain handler is active
+  authDomain: isCustomDomain ? "vocalwitness.com" : "vocalwitness-3affa.firebaseapp.com",
   projectId: "vocalwitness-3affa",
   messagingSenderId: "108466981866",
   appId: "1:108466981866:web:b53360ad44012a576c8093"
@@ -30,7 +30,7 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 // Authentication Instance & Local Persistence Setup
 const auth = getAuth(app);
 setPersistence(auth, browserLocalPersistence).catch((err) => {
-  console.warn("Failed to set local persistence:", err);
+  console.warn("Firebase local persistence fallback:", err?.message || err);
 });
 
 // Database & Storage Instances
