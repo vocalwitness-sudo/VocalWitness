@@ -4,14 +4,13 @@
 import { 
   doc, 
   getDoc, 
-  setDoc, 
   collection, 
   query, 
   orderBy, 
   limit, 
-  getDocs, 
-  serverTimestamp 
+  getDocs 
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { db, auth } from './firebase-config.js';
 import { showToast } from './utils.js';
 
@@ -59,7 +58,7 @@ export const TIER_METADATA = {
   }
 };
 
-// Optional Paid Add-ons for ZK Level (Core ZK Proofs stay free)
+// Optional Paid Add-ons for ZK Level
 export const ZK_PAID_SERVICES = {
   ARWEAVE_PERMASTORAGE: {
     id: 'arweave_pin',
@@ -152,11 +151,20 @@ export const PROFILE_MODES = {
   BOLD_WITNESS: 'BOLD_WITNESS'
 };
 
-// ====================== CACHING MECHANISM ======================
+// ====================== CACHING & AUTH LISTENER ======================
 let cachedProfile = null;
+let cachedUid = null;
 let cacheTimestamp = 0;
 let fetchPromise = null;
 const CACHE_TTL = 30000; // 30 Seconds
+
+// Invalidate cache immediately when user auth state changes
+onAuthStateChanged(auth, (user) => {
+  if (!user || user.uid !== cachedUid) {
+    clearProfileCache();
+    if (user) cachedUid = user.uid;
+  }
+});
 
 function escapeHTML(str) {
   if (!str) return '';
@@ -170,12 +178,14 @@ function escapeHTML(str) {
 
 export async function getUserProfile(forceRefresh = false) {
   if (!auth.currentUser) {
-    cachedProfile = null;
+    clearProfileCache();
     return null;
   }
 
+  const currentUid = auth.currentUser.uid;
   const now = Date.now();
-  if (!forceRefresh && cachedProfile && (now - cacheTimestamp < CACHE_TTL)) {
+
+  if (!forceRefresh && cachedProfile && cachedUid === currentUid && (now - cacheTimestamp < CACHE_TTL)) {
     return cachedProfile;
   }
 
@@ -189,6 +199,7 @@ export async function getUserProfile(forceRefresh = false) {
       const userRef = doc(db, "users", auth.currentUser.uid);
       const snap = await getDoc(userRef);
       cachedProfile = snap.exists() ? snap.data() : {};
+      cachedUid = auth.currentUser.uid;
       cacheTimestamp = Date.now();
       return cachedProfile;
     } catch (e) {
@@ -204,13 +215,13 @@ export async function getUserProfile(forceRefresh = false) {
 
 export function clearProfileCache() {
   cachedProfile = null;
+  cachedUid = null;
   cacheTimestamp = 0;
   fetchPromise = null;
 }
 
 /**
  * Get current user's main tier
- * Priority: Witness Circle > Citizen Circle (phone verified) > Citizen
  */
 export async function getCurrentUserTier() {
   if (!auth.currentUser) return TIERS.CITIZEN;
@@ -222,7 +233,6 @@ export async function getCurrentUserTier() {
     return TIERS.WITNESS_CIRCLE;
   }
 
-  // Phone verified = Citizen Circle
   if (
     data.isPhoneVerified === true ||
     data.hasVerifiedPhone === true ||
@@ -242,7 +252,7 @@ export async function getCurrentWitnessLevel() {
   if (tier !== TIERS.WITNESS_CIRCLE) return null;
 
   const data = await getUserProfile();
-  const rep = data?.reputation || 0;
+  const rep = Math.max(0, data?.reputation || 0);
 
   for (const level of ORDERED_WITNESS_LEVELS) {
     if (rep >= level.minRep) return level;
@@ -295,7 +305,7 @@ export async function getUserVotingWeight() {
     if (tier === TIERS.CITIZEN) return 1;
 
     const data = await getUserProfile();
-    const rep = data?.reputation || 30;
+    const rep = Math.max(0, data?.reputation || 30);
 
     if (tier === TIERS.CITIZEN_CIRCLE) return 2;
     return Math.max(3, Math.floor(rep / 50));
@@ -335,13 +345,12 @@ export async function canAccessFeature(feature) {
 }
 
 /**
- * Apply visual theme based on tier
+ * Apply visual theme based on tier safely
  */
 export async function applyTierTheme() {
-  const body = document.body;
-  if (!body) return;
+  if (typeof document === 'undefined' || !document.body) return;
 
-  body.classList.remove(
+  document.body.classList.remove(
     'theme-citizen', 'theme-citizen-circle', 'theme-witness-circle',
     'tier-citizen', 'tier-citizen-circle', 'tier-witness'
   );
@@ -350,14 +359,14 @@ export async function applyTierTheme() {
   const witnessLevel = await getCurrentWitnessLevel();
 
   if (tier === TIERS.WITNESS_CIRCLE) {
-    body.classList.add('theme-witness-circle', 'tier-witness');
+    document.body.classList.add('theme-witness-circle', 'tier-witness');
     if (witnessLevel) {
-      body.style.setProperty('--witness-primary-color', witnessLevel.color);
+      document.body.style.setProperty('--witness-primary-color', witnessLevel.color);
     }
   } else if (tier === TIERS.CITIZEN_CIRCLE) {
-    body.classList.add('theme-citizen-circle', 'tier-citizen-circle');
+    document.body.classList.add('theme-citizen-circle', 'tier-citizen-circle');
   } else {
-    body.classList.add('theme-citizen', 'tier-citizen');
+    document.body.classList.add('theme-citizen', 'tier-citizen');
   }
 }
 
@@ -390,7 +399,7 @@ export async function updateTierBadge() {
 }
 
 /**
- * Force refresh of tier system and UI (called after phone verification)
+ * Force refresh of tier system and UI
  */
 export function refreshTierAndUI() {
   clearProfileCache();
@@ -439,31 +448,6 @@ export async function loadWeeklyLeaderboard() {
   } catch (err) {
     console.warn("Leaderboard fetch error:", err);
     leaderboardEl.innerHTML = `<p class="text-xs text-slate-500">Leaderboard temporarily unavailable.</p>`;
-  }
-}
-
-/**
- * Award reputation + weekly points after posting testimony
- */
-export async function recordTestimonyContribution() {
-  if (!auth.currentUser) return;
-
-  try {
-    const data = await getUserProfile(true);
-    const currentRep = data?.reputation || 0;
-    const currentWeeklyPoints = data?.weeklyPoints || 0;
-
-    const userRef = doc(db, "users", auth.currentUser.uid);
-    await setDoc(userRef, {
-      reputation: currentRep + 15,
-      weeklyPoints: currentWeeklyPoints + 15,
-      lastContribution: serverTimestamp()
-    }, { merge: true });
-
-    refreshTierAndUI();
-    console.log("✅ +15 Reputation and Weekly Points recorded.");
-  } catch (e) {
-    console.warn("Reputation update failed:", e);
   }
 }
 
@@ -529,16 +513,8 @@ if (document.readyState === 'loading') {
   setupProfileModalListeners();
 }
 
-// Global exports for window context
-window.refreshTierAndUI = refreshTierAndUI;
-window.requireCitizenCirclePermission = requireCitizenCirclePermission;
-window.getCurrentUserTier = getCurrentUserTier;
-window.canAccessFeature = canAccessFeature;
-window.ZK_PAID_SERVICES = ZK_PAID_SERVICES;
-
 /**
- * Comprehensive helper to fetch complete user tier and level data.
- * Used by profile.js and user dashboard views.
+ * Helper to fetch complete user tier and level data.
  */
 export async function getUserTierData(uid = null) {
   const profile = await getUserProfile();
@@ -561,5 +537,10 @@ export async function getUserTierData(uid = null) {
   };
 }
 
-// Make sure to add it to the window global exports as well
+// Global exports for window context
+window.refreshTierAndUI = refreshTierAndUI;
+window.requireCitizenCirclePermission = requireCitizenCirclePermission;
+window.getCurrentUserTier = getCurrentUserTier;
+window.canAccessFeature = canAccessFeature;
+window.ZK_PAID_SERVICES = ZK_PAID_SERVICES;
 window.getUserTierData = getUserTierData;
