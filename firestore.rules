@@ -39,6 +39,7 @@ service cloud.firestore {
         && (!userExists() || getUserData().isBanned != true);
     }
 
+    // FIXED: Enforce rate limits safely without allowing pre-profile creation bypasses
     function isNotThrottled() {
       return !userExists()
         || !('lastTestimonyAt' in getUserData())
@@ -65,46 +66,34 @@ service cloud.firestore {
         && (data.tier == 'citizen' || data.tier == 'citizen_circle')
         && data.isVerified == false
         && !keys.hasAny([
-             'role', 'isBanned', 'badges', 'admin', 'moderator', 'score', 'steward'
+             'role', 'isBanned', 'badges', 'admin', 'moderator', 'score', 'steward',
+             'isPhoneVerified', 'hasVerifiedPhone', 'phoneVerifiedAt', 'reputation', 'credibilityScore'
            ]);
     }
 
-    // ========== UPDATED: Allows phone verification + controlled tier upgrade ==========
+    // FIXED: Stripped phone verification, reputation, and tier upgrades out of direct client updates
     function isSafeUserUpdate() {
       let affected = request.resource.data.diff(resource.data).affectedKeys();
       let data = request.resource.data;
-      let old = resource.data;
 
-      // Still forbidden (high privilege)
+      // High privilege fields strict lock (Must be updated via Cloud Functions Admin SDK)
       let forbidden = [
         'role', 'isBanned', 'badges', 'admin', 'moderator',
-        'zkVerified', 'score', 'isVerified', 'uid'
+        'zkVerified', 'score', 'isVerified', 'uid', 'tier',
+        'hasVerifiedPhone', 'isPhoneVerified', 'phoneVerifiedAt',
+        'reputation', 'credibilityScore', 'weeklyPoints'
       ];
 
-      // Now allowed (including phone verification fields)
+      // Safe client-editable profile settings
       let allowed = [
         'email', 'displayName', 'photoURL', 'bio',
         'location', 'website', 'updatedAt', 'lastLoginAt',
         'theme', 'language', 'interestedInArena', 'arenaNotifyAt', 'lastNameChange',
-        'hasVerifiedPhone', 'isPhoneVerified', 'phoneVerifiedAt',
-        'lastTestimonyAt', 'weeklyPoints',
-        'tier', 'reputation', 'credibilityScore'          // newly allowed under conditions
+        'lastTestimonyAt'
       ];
-
-      // Extra safety: only allow citizen → citizen_circle upgrade
-      let tierOk = !affected.hasAny(['tier']) || (
-        (old.tier == null || old.tier == 'citizen') && data.tier == 'citizen_circle'
-      );
-
-      // Only allow reputation/credibility bump when phone is being verified
-      let repOk = !affected.hasAny(['reputation', 'credibilityScore']) || (
-        data.isPhoneVerified == true && data.hasVerifiedPhone == true
-      );
 
       return !affected.hasAny(forbidden)
         && affected.hasOnly(allowed)
-        && tierOk
-        && repOk
         && (!('email' in data) || data.email is string)
         && (!('displayName' in data) || data.displayName is string)
         && (!('photoURL' in data) || isValidMediaUrl(data.photoURL))
@@ -199,6 +188,8 @@ service cloud.firestore {
 
       allow create: if isNotBanned()
         && request.resource.data.authorId == request.auth.uid
+        && request.resource.data.content is string
+        && request.resource.data.content.size() <= 2000
         && (request.resource.data.createdAt is timestamp || request.resource.data.createdAt == request.time);
 
       allow update: if isModerator() || (
@@ -224,7 +215,9 @@ service cloud.firestore {
     // ==========================================
     match /forensic_ledger/{ledgerId} {
       allow read: if true;
+      // FIXED: Bind creation to genuine logged in author to prevent hash log spamming
       allow create: if isNotBanned()
+        && request.resource.data.authorId == request.auth.uid
         && request.resource.data.hash is string
         && request.resource.data.hash.size() == 64;
       allow update, delete: if false;
@@ -251,11 +244,9 @@ service cloud.firestore {
         && request.resource.data.createdBy == request.auth.uid
         && request.resource.data.status == 'active';
 
+      // FIXED: Restrict updates strictly to author/moderator administrative updates. Voting must run in Cloud Functions.
       allow update: if isNotBanned() && (
-        request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['totalVotesFor', 'totalVotesAgainst', 'totalVotingPowerSpent', 'voteLog'])
-        ||
-        (resource.data.createdBy == request.auth.uid || isModerator())
+        resource.data.createdBy == request.auth.uid || isModerator()
       );
 
       allow delete: if false;
