@@ -28,112 +28,115 @@
   <meta name="twitter:description" content="Privacy First Public Square for Truth and Evidence">
   <meta name="twitter:image" content="https://vocalwitness.com/logo.png">
 
-<!-- Content Security Policy -->
-<meta http-equiv="Content-Security-Policy" content="
-  default-src 'self' https: wss: blob: data:;
-  script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval'
-    https://vocalwitness.com
-    https://www.gstatic.com
-    https://cdnjs.cloudflare.com
-    https://cdn.tailwindcss.com
-    https://apis.google.com
-    https://js.paystack.co
-    https://*.paystack.co
-    https://esm.sh
-    https://cdn.jsdelivr.net
-    https://static.cloudflareinsights.com
-    https://*.cloudflare.com
-    https://challenges.cloudflare.com
-    https://www.google.com
-    https://www.recaptcha.net
-    blob:;
-  script-src-elem 'self' 'unsafe-inline'
-    https://vocalwitness.com
-    https://www.gstatic.com
-    https://cdnjs.cloudflare.com
-    https://cdn.tailwindcss.com
-    https://apis.google.com
-    https://js.paystack.co
-    https://*.paystack.co
-    https://esm.sh
-    https://cdn.jsdelivr.net
-    https://static.cloudflareinsights.com
-    https://*.cloudflare.com
-    https://challenges.cloudflare.com
-    https://www.google.com
-    https://www.recaptcha.net
-    blob:;
-  script-src-attr 'unsafe-inline';
-  worker-src 'self' blob: 'wasm-unsafe-eval';
-  style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com https://paystack.com https://*.paystack.co;
-  font-src 'self' https://fonts.gstatic.com https: data:;
-  connect-src 'self'
-    https://media.vocalwitness.com
-    https://*.vocalwitness.com
-    https://vocalwitness.com
-    https://vocalwitness-3affa.web.app
-    https://*.r2.cloudflarestorage.com
-    https://rss2json.com
-    https://*.rss2json.com
-    https://api.rss2json.com
-    https://*.googleapis.com
-    https://firestore.googleapis.com
-    https://*.firestore.googleapis.com
-    https://firebasestorage.googleapis.com
-    https://*.firebasestorage.app
-    https://commentanalyzer.googleapis.com
-    https://*.firebaseio.com
-    https://identitytoolkit.googleapis.com
-    https://securetoken.googleapis.com
-    https://api.paystack.co
-    https://*.paystack.co
-    https://*.paystack.com
-    https://api.nowpayments.io
-    https://*.nowpayments.io
-    https://*.cloudfunctions.net
-    https://cloudfunctions.googleapis.com
-    wss://*.firebaseio.com
-    wss://*.googleapis.com
-    https://esm.sh
-    https://cdn.jsdelivr.net
-    https://*.cloudflareinsights.com
-    https://cloudflareinsights.com
-    https://*.cloudflare.com
-    https://challenges.cloudflare.com
-    blob:;
-  img-src 'self' https: data: blob:
-    https://media.vocalwitness.com
-    https://*.vocalwitness.com
-    https://firebasestorage.googleapis.com
-    https://*.firebasestorage.app
-    https://*.googleusercontent.com;
-  media-src 'self'
-    https://media.vocalwitness.com
-    https://*.vocalwitness.com
-    https://firebasestorage.googleapis.com
-    https://*.firebasestorage.app
-    https://*.googleapis.com
-    blob: data:;
-  frame-src 'self'
-    https://accounts.google.com
-    https://*.google.com
-    https://*.googleapis.com
-    https://firestore.googleapis.com
-    https://*.firestore.googleapis.com
-    https://*.firebaseapp.com
-    https://*.web.app
-    https://*.paystack.co
-    https://*.paystack.com
-    https://checkout.paystack.co
-    https://standard.paystack.co
-    https://*.nowpayments.io
-    https://*.cloudflare.com
-    https://www.google.com
-    https://www.recaptcha.net;
-  object-src 'none';
-  base-uri 'self';
-  upgrade-insecure-requests;
-">
+  <!-- Content Security Policy -->
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self' https: wss: blob: data:;
+    script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval'
+      https://vocalwitness.com
+      https://accounts.google.com
+      https://www.gstatic.com
+      https://cdnjs.cloudflare.com
+      https://cdn.tailwindcss.com
+      https://apis.google.com
+      https://js.paystack.co
+      https://*.paystack.co
+      https://esm.sh
+      https://cdn.jsdelivr.net
+      https://static.cloudflareinsights.com
+      https://*.cloudflare.com
+      https://challenges.cloudflare.com
+      https://www.google.com
+      https://www.recaptcha.net
+      blob:;
+    script-src-elem 'self' 'unsafe-inline'
+      https://vocalwitness.com
+      https://accounts.google.com
+      https://www.gstatic.com
+      https://cdnjs.cloudflare.com
+      https://cdn.tailwindcss.com
+      https://apis.google.com
+      https://js.paystack.co
+      https://*.paystack.co
+      https://esm.sh
+      https://cdn.jsdelivr.net
+      https://static.cloudflareinsights.com
+      https://*.cloudflare.com
+      https://challenges.cloudflare.com
+      https://www.google.com
+      https://www.recaptcha.net
+      blob:;
+    script-src-attr 'unsafe-inline';
+    worker-src 'self' blob: 'wasm-unsafe-eval';
+    style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com https://paystack.com https://*.paystack.co;
+    font-src 'self' https://fonts.gstatic.com https: data:;
+    connect-src 'self'
+      https://media.vocalwitness.com
+      https://*.vocalwitness.com
+      https://vocalwitness.com
+      https://vocalwitness-3affa.web.app
+      https://*.r2.cloudflarestorage.com
+      https://rss2json.com
+      https://*.rss2json.com
+      https://api.rss2json.com
+      https://*.googleapis.com
+      https://firestore.googleapis.com
+      https://*.firestore.googleapis.com
+      https://firebasestorage.googleapis.com
+      https://*.firebasestorage.app
+      https://commentanalyzer.googleapis.com
+      https://*.firebaseio.com
+      https://identitytoolkit.googleapis.com
+      https://securetoken.googleapis.com
+      https://api.paystack.co
+      https://*.paystack.co
+      https://*.paystack.com
+      https://api.nowpayments.io
+      https://*.nowpayments.io
+      https://*.cloudfunctions.net
+      https://cloudfunctions.googleapis.com
+      wss://*.firebaseio.com
+      wss://*.googleapis.com
+      https://esm.sh
+      https://cdn.jsdelivr.net
+      https://*.cloudflareinsights.com
+      https://cloudflareinsights.com
+      https://*.cloudflare.com
+      https://challenges.cloudflare.com
+      blob:;
+    img-src 'self' https: data: blob:
+      https://media.vocalwitness.com
+      https://*.vocalwitness.com
+      https://firebasestorage.googleapis.com
+      https://*.firebasestorage.app
+      https://*.googleusercontent.com
+      https://www.gstatic.com;
+    media-src 'self'
+      https://media.vocalwitness.com
+      https://*.vocalwitness.com
+      https://firebasestorage.googleapis.com
+      https://*.firebasestorage.app
+      https://*.googleapis.com
+      blob: data:;
+    frame-src 'self'
+      https://accounts.google.com
+      https://*.google.com
+      https://*.googleapis.com
+      https://firestore.googleapis.com
+      https://*.firestore.googleapis.com
+      https://*.firebaseapp.com
+      https://*.web.app
+      https://*.paystack.co
+      https://*.paystack.com
+      https://checkout.paystack.co
+      https://standard.paystack.co
+      https://*.nowpayments.io
+      https://*.cloudflare.com
+      https://www.google.com
+      https://www.recaptcha.net;
+    object-src 'none';
+    base-uri 'self';
+    upgrade-insecure-requests;
+  ">
   <title data-i18n="pageTitle">VocalWitness • Truth • Evidence • Public Square</title>
 
   <!-- Fonts & Styles -->
@@ -144,6 +147,7 @@
   <link rel="icon" href="./logo.png" type="image/png">
 
   <!-- External CDNs (defer) -->
+  <script src="https://accounts.google.com/gsi/client" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" defer></script>
@@ -201,13 +205,6 @@
 
 <body class="bg-zinc-950 text-white antialiased">
 
-  <body>
-  <header>…</header>
-  <main id="main-content">
-  </main>
-</body>
-  
-
   <!-- ====================== HEADER ====================== -->
   <header id="main-header" class="fixed top-0 left-0 right-0 z-50 border-b border-emerald-500/30 bg-zinc-950/95 shadow-lg backdrop-blur-md">
     <div class="mx-auto max-w-6xl px-3 sm:px-4">
@@ -258,7 +255,7 @@
           </button>
 
           <button id="userProfileBtn" type="button"
-                  class="hidden h-9 items-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-900 px-4 text-xs font-bold text-emerald-400 flex"
+                  class="hidden h-9 items-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-900 px-4 text-xs font-bold text-emerald-400"
                   aria-label="Open profile">
             <img id="user-avatar-desktop" src="" alt="" class="hidden h-4 w-4 rounded-full object-cover">
             <span id="default-avatar-icon-desktop" aria-hidden="true">👤</span>
@@ -329,7 +326,7 @@
               <span>Sign In</span>
             </button>
             <button id="userProfileBtnMobile" type="button"
-                    class="hidden h-8 w-8 items-center justify-center rounded-lg border border-zinc-700 bg-zinc-900 text-sm text-emerald-400 flex"
+                    class="hidden h-8 w-8 items-center justify-center rounded-lg border border-zinc-700 bg-zinc-900 text-sm text-emerald-400"
                     aria-label="Open profile">👤</button>
           </div>
         </div>
@@ -384,11 +381,11 @@
       </div>
     </div>
   </header>
-<!-- ====================== MAIN CONTAINER ====================== -->
-<main id="main-content" class="mx-auto max-w-6xl px-3 pb-24 pt-4 sm:px-4 md:pt-6">
 
+<!-- ====================== MAIN CONTAINER ====================== -->
+<main id="main-content" class="mx-auto max-w-6xl px-3 pb-24 pt-1 sm:px-4 md:pt-2">
   <!-- Flash Feed + Global Search -->
-  <div class="mb-6 space-y-4">
+ <div class="mb-3 space-y-2">
     <div class="ticker-wrap relative overflow-hidden rounded-2xl border border-emerald-500/20 bg-zinc-900/90">
       <div class="absolute bottom-0 left-0 top-0 z-10 flex items-center border-r border-emerald-500/20 bg-zinc-900 px-3">
         <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">⚡ Flash Feed</span>
