@@ -282,6 +282,8 @@
   "privacySec6Text2": "If you see content that breaks these rules or exposes private information, please report it using the in-app button. Valid reports will be reviewed and the content can be hidden or restricted.",
   "privacySec7Title": "7. Quick Exit & Permanent Records",
   "privacySec7Text": "You can instantly clear your local browser data with the red Quick Exit button. However, once a testimony is published and locked into the public ledger, it becomes a permanent historical record and cannot be quietly changed or deleted.",
+  "privacySec8Title": "8. Intellectual Property",
+  "privacySec8Text": "The VocalWitness platform, including its software, cryptographic systems, hashing methods, Zero-Knowledge technology implementation, Evidence Ledger design, interface, branding, name, and logo, is the exclusive intellectual property of VocalWitness. These elements are protected by copyright and applicable intellectual property laws. You may not copy, reverse-engineer, or reuse any part of the platform’s technology or methods without explicit written permission.",
   "panicExit": "Quick Exit",
 
   "termsPageTitle": "Terms of Service • VocalWitness",
@@ -314,6 +316,9 @@
   "termsSection8Text": "To the fullest extent allowed by law, VocalWitness and its operators are not responsible for any indirect or consequential damages that may arise from using the platform, from content posted by users, or from temporary service interruptions.",
   "termsSection9Title": "9. Your Responsibility for What You Post",
   "termsSection9Text": "You agree to protect VocalWitness from any legal claims that arise because you broke these rules or posted illegal, defamatory, or infringing material. If someone has a problem with content, they should use our official reporting and takedown process instead of targeting the platform operators directly.",
+  "termsSection10Title": "10. Intellectual Property",
+  "termsSection10Text": "All rights, title, and interest in and to the VocalWitness platform — including its software, source code, design, user interface, cryptographic methods, hashing systems, Zero-Knowledge verification processes, Evidence Ledger architecture, branding, name, logo, and all related materials — are and shall remain the exclusive property of VocalWitness and its rightful owners.",
+  "termsSection10Text2": "You may not copy, reverse-engineer, modify, distribute, sell, create derivative works from, or commercially exploit any part of the platform or its underlying methods without prior written permission from VocalWitness. Unauthorized use may result in legal action.",
 
   "safetyPageTitle": "Safety & Global Rights • VocalWitness",
   "safetyTitle": "Safety & Your Rights",
