@@ -52,26 +52,28 @@
         <header class="mb-10">
             <div class="flex items-center gap-4 mb-4">
                 <div class="w-12 h-12 bg-emerald-500/20 rounded-3xl flex items-center justify-center text-4xl">🔐</div>
-                <h1 class="text-4xl md:text-5xl font-bold tracking-tighter text-white" data-i18n="privacyTitle">Privacy Policy & Disclaimers</h1>
+                <h1 class="text-4xl md:text-5xl font-bold tracking-tighter text-white" data-i18n="privacyTitle">Privacy Policy</h1>
             </div>
             <p class="text-sm text-zinc-400 mb-2" data-i18n="privacyLastUpdated">Last updated: August 25, 2026</p>
-            <p class="text-xl text-zinc-400" data-i18n="privacySubtitle">Privacy by Math, Not Promises. Protecting Witness Identity Across Global Jurisdictions.</p>
+            <p class="text-xl text-zinc-400" data-i18n="privacySubtitle">Your privacy is protected by strong technology — not just promises.</p>
         </header>
 
         <!-- Zero-Knowledge Subpoena Defense Banner -->
         <section class="glass rounded-3xl p-8 mb-10 border-emerald-500/40 space-y-4">
             <div class="flex items-center gap-3 text-emerald-400 font-bold text-xl">
                 <span class="text-2xl">🛡️</span>
-                <span data-i18n="zkSubpoenaTitle">Zero-Knowledge Subpoena Defense</span>
+                <span data-i18n="zkSubpoenaTitle">We Cannot Give What We Do Not Have</span>
             </div>
             <p class="text-zinc-200 leading-relaxed text-sm md:text-base" data-i18n="zkSubpoenaDesc">
-                <strong>We cannot surrender what we do not possess.</strong> VocalWitness is architected so that personal identifiable information (PII) never reaches our servers. In the event of court orders, state subpoenas, or legal demands from any jurisdiction worldwide, our response is mathematically fixed: <em>Zero user identity logs exist to be disclosed.</em>
+                <strong>VocalWitness is built so that your personal identity never reaches our servers.</strong>  
+                If any court, government, or authority asks us for your private information, our answer is simple and mathematical:  
+                <em>We have nothing to give. Zero personal identity logs exist.</em>
             </p>
             <div class="pt-2 flex flex-wrap items-center gap-3 text-xs text-zinc-300">
-                <span class="text-zinc-400 font-medium" data-i18n="privacyArchitectureBy">Enforced via:</span>
-                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-emerald-400">Client-Side zk-SNARKs</span>
-                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-cyan-400">Local Canvas EXIF Scrubbing</span>
-                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-amber-400">Zero IP Logging</span>
+                <span class="text-zinc-400 font-medium" data-i18n="privacyArchitectureBy">Protected by:</span>
+                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-emerald-400">Client-Side Zero-Knowledge Proofs</span>
+                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-cyan-400">Automatic Metadata Removal</span>
+                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-amber-400">No IP Logging</span>
             </div>
         </section>
 
@@ -80,36 +82,36 @@
 
             <!-- Section 1 -->
             <section class="glass rounded-3xl p-6 md:p-8">
-                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec1Title">1. Client-Side Data & Cryptographic Handling</h2>
+                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec1Title">1. Everything Important Happens on Your Device</h2>
                 <div class="space-y-3 text-sm md:text-base text-zinc-300">
                     <p data-i18n="privacySec1Para1">
-                        VocalWitness combines client-side cryptography, automated metadata stripping, and zero-knowledge verification so you can speak truth without exposing unwanted personal details. When you attach evidence, processing happens entirely inside your browser:
+                        When you upload a photo, voice note, or document, the sensitive work is done inside your own browser before anything leaves your device:
                     </p>
                     <ul class="list-disc pl-5 space-y-2 text-zinc-400">
-                        <li data-i18n="privacySec1Bullet1"><strong>Local EXIF Scrubbing:</strong> Camera identifiers, hardware details, and GPS coordinates are stripped in browser memory prior to upload.</li>
-                        <li data-i18n="privacySec1Bullet2"><strong>SHA-256 Hashing:</strong> Your browser calculates a unique fingerprint locally. Only this digest and sanitized media are broadcasted.</li>
-                        <li data-i18n="privacySec1Bullet3"><strong>Zero-Knowledge Proofs:</strong> Verification rules use client-side zero-knowledge proofs (zk-SNARKs) to confirm standing without revealing private credentials.</li>
+                        <li data-i18n="privacySec1Bullet1"><strong>Metadata is removed:</strong> Camera model, GPS location, and other private details are automatically stripped.</li>
+                        <li data-i18n="privacySec1Bullet2"><strong>Digital fingerprint is created:</strong> Your browser makes a unique SHA-256 hash (like a fingerprint) of the file. Only this fingerprint and the cleaned media are sent.</li>
+                        <li data-i18n="privacySec1Bullet3"><strong>Zero-Knowledge proofs:</strong> You can prove you are a real verified person without revealing your private identity details.</li>
                     </ul>
                 </div>
             </section>
 
             <!-- Section 2 -->
             <section class="glass rounded-3xl p-6 md:p-8">
-                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec2Title">2. Information We Do NOT Collect or Store</h2>
+                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec2Title">2. What We Never Collect or Store</h2>
                 <div class="space-y-3 text-sm md:text-base text-zinc-300">
-                    <p data-i18n="privacySec2Intro">To ensure absolute whistleblower safety, VocalWitness maintains a strict zero-retention policy on:</p>
+                    <p data-i18n="privacySec2Intro">For maximum safety (especially for people in high-risk situations), we deliberately do not keep:</p>
                     <ul class="space-y-2 text-zinc-400">
                         <li class="flex items-start gap-2">
                             <span class="text-red-400 font-bold">✕</span>
-                            <span data-i18n="privacySec2Item1"><strong>IP Addresses:</strong> Network requests routed through Cloudflare Edge Shield purge origin IP metadata; IPs are never indexed against public records.</span>
+                            <span data-i18n="privacySec2Item1"><strong>Your real IP address</strong> — requests go through Cloudflare so your original location is not linked to your posts.</span>
                         </li>
                         <li class="flex items-start gap-2">
                             <span class="text-red-400 font-bold">✕</span>
-                            <span data-i18n="privacySec2Item2"><strong>Phone Numbers on Public Records:</strong> Phone verification exists solely as an ephemeral anti-spam gate. We never store, publish, or link phone numbers to public posts.</span>
+                            <span data-i18n="privacySec2Item2"><strong>Phone numbers on any public record</strong> — phone checks are only temporary to stop spam bots and are never saved or shown.</span>
                         </li>
                         <li class="flex items-start gap-2">
                             <span class="text-red-400 font-bold">✕</span>
-                            <span data-i18n="privacySec2Item3">Government IDs, passports, biometric scans, or personal contact social graphs.</span>
+                            <span data-i18n="privacySec2Item3">Government IDs, passports, biometrics, or your personal contact list.</span>
                         </li>
                     </ul>
                 </div>
@@ -117,62 +119,64 @@
 
             <!-- Section 3 -->
             <section class="glass rounded-3xl p-6 md:p-8">
-                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec3Title">3. Data Processed for Platform Operations</h2>
+                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec3Title">3. What We Do Process (Only What’s Needed)</h2>
                 <div class="grid md:grid-cols-2 gap-6 mt-4">
                     <div class="glass rounded-3xl p-6">
-                        <h3 class="font-semibold text-emerald-400 mb-2" data-i18n="privacyAccountInfoTitle">Account Identity</h3>
-                        <p class="text-sm text-zinc-400" data-i18n="privacyAccountInfoDesc">Chosen pseudonymous username, local browser keypairs, and optional trust badges.</p>
+                        <h3 class="font-semibold text-emerald-400 mb-2" data-i18n="privacyAccountInfoTitle">Account Basics</h3>
+                        <p class="text-sm text-zinc-400" data-i18n="privacyAccountInfoDesc">Your chosen username, browser security keys, and any trust badges you earn.</p>
                     </div>
                     <div class="glass rounded-3xl p-6">
-                        <h3 class="font-semibold text-emerald-400 mb-2" data-i18n="privacyContentTitle">Published Evidence</h3>
-                        <p class="text-sm text-zinc-400" data-i18n="privacyContentDesc">Testimonies, media attachments, tamper-evident SHA-256 hashes, and timestamp certificates.</p>
+                        <h3 class="font-semibold text-emerald-400 mb-2" data-i18n="privacyContentTitle">Published Content</h3>
+                        <p class="text-sm text-zinc-400" data-i18n="privacyContentDesc">Your testimonies, cleaned media, digital fingerprints (hashes), and timestamps.</p>
                     </div>
                     <div class="glass rounded-3xl p-6">
-                        <h3 class="font-semibold text-emerald-400 mb-2" data-i18n="privacyVerificationTitle">Anti-Spam Verification</h3>
-                        <p class="text-sm text-zinc-400" data-i18n="privacyVerificationDesc">Zero-Knowledge proof receipts verifying human status without revealing underlying credentials.</p>
+                        <h3 class="font-semibold text-emerald-400 mb-2" data-i18n="privacyVerificationTitle">Anti-Spam Checks</h3>
+                        <p class="text-sm text-zinc-400" data-i18n="privacyVerificationDesc">Proof that you are a real person — without revealing who you are.</p>
                     </div>
                     <div class="glass rounded-3xl p-6">
-                        <h3 class="font-semibold text-emerald-400 mb-2" data-i18n="privacyTechnicalTitle">Infrastructure Shielding</h3>
-                        <p class="text-sm text-zinc-400" data-i18n="privacyTechnicalDesc">Anonymized security telemetry routed through Cloudflare and Firebase to block DDoS attacks and botnets.</p>
+                        <h3 class="font-semibold text-emerald-400 mb-2" data-i18n="privacyTechnicalTitle">Security Protection</h3>
+                        <p class="text-sm text-zinc-400" data-i18n="privacyTechnicalDesc">Anonymous technical data used only to block attacks and bots (via Cloudflare and Firebase).</p>
                     </div>
                 </div>
             </section>
 
             <!-- Section 4 -->
             <section class="glass rounded-3xl p-6 md:p-8">
-                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec4Title">4. Universal Human Rights Alignment</h2>
+                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec4Title">4. Aligned with Universal Human Rights</h2>
                 <p class="text-sm md:text-base text-zinc-300 leading-relaxed" data-i18n="privacySec4Text">
-                    Our privacy design is anchored in <strong>Article 12 and Article 19 of the Universal Declaration of Human Rights</strong>. Everyone has the right to protection against arbitrary interference with their privacy, as well as the freedom to seek, receive, and impart information through any media regardless of frontiers.
+                    Our design follows Articles 12 and 19 of the Universal Declaration of Human Rights:  
+                    everyone has the right to privacy and the freedom to share information without interference, no matter where they live.
                 </p>
             </section>
 
             <!-- Section 5 -->
             <section class="glass rounded-3xl p-6 md:p-8">
-                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec5Title">5. Neutral Host Intermediary Disclaimer</h2>
+                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec5Title">5. We Are a Neutral Platform</h2>
                 <p class="mb-3 text-sm md:text-base text-zinc-300" data-i18n="privacySec5Text1">
-                    VocalWitness operates strictly as a technical host and neutral communications platform under global intermediary safe harbor frameworks. We do not author, endorse, verify, or certify user-generated submissions.
+                    VocalWitness is only a technical host. We do not write, approve, or fact-check the content people post.
                 </p>
                 <p class="text-zinc-400 text-sm leading-relaxed" data-i18n="privacySec5Text2">
-                    Under established legal standards for online host platforms, VocalWitness and its maintainers assume zero liability for user content, claims, or assertions. Each user bears sole responsibility for the content they choose to publish.
+                    Each person is fully responsible for what they choose to publish. We are not liable for user content.
                 </p>
             </section>
 
             <!-- Section 6 -->
             <section class="glass rounded-3xl p-6 md:p-8">
-                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec6Title">6. Disallowed Conduct & Takedown Requests</h2>
+                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec6Title">6. What Is Not Allowed & How to Report</h2>
                 <p class="mb-3 text-sm md:text-base text-zinc-300" data-i18n="privacySec6Text1">
-                    Targeted harassment, malicious doxxing of private personal information, CSAM, and intentionally fraudulent framing media are strictly prohibited.
+                    Harassment, sharing someone’s private personal details without consent, child sexual abuse material, and deliberately fake harmful media are strictly forbidden.
                 </p>
                 <p class="text-zinc-400 text-sm leading-relaxed" data-i18n="privacySec6Text2">
-                    If published content infringes your rights or discloses unscrubbed non-consensual personal information, file a report via the in-app review button. Valid violations will be flagged, hidden, or restricted from public indexes.
+                    If you see content that breaks these rules or exposes private information, please report it using the in-app button. Valid reports will be reviewed and the content can be hidden or restricted.
                 </p>
             </section>
 
             <!-- Section 7 -->
             <section class="glass rounded-3xl p-6 md:p-8">
-                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec7Title">7. Local Cache Clearance & The Public Record</h2>
+                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec7Title">7. Quick Exit & Permanent Records</h2>
                 <p class="text-sm md:text-base text-zinc-300 leading-relaxed" data-i18n="privacySec7Text">
-                    Session state resides locally in your browser and can be wiped instantly using the <strong>Quick Exit</strong> button. However, content published to the public testimony record functions as an immutable historical record once notarized by the ledger.
+                    You can instantly clear your local browser data with the red <strong>Quick Exit</strong> button.  
+                    However, once a testimony is published and locked into the public ledger, it becomes a permanent historical record and cannot be quietly changed or deleted.
                 </p>
             </section>
 
