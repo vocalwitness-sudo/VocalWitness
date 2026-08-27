@@ -111,3 +111,16 @@ if (url.pathname.endsWith('.js')) {
         })
     );
 });
+
+// Panic / clear-from-device: wipe all Cache Storage (ledger is server-side only)
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'VW_PANIC_CLEAR_CACHES') {
+    event.waitUntil(
+      caches.keys().then((names) =>
+        Promise.all(names.map((name) => caches.delete(name)))
+      ).then(() => {
+        console.log('🧹 Panic: all caches cleared');
+      })
+    );
+  }
+});
