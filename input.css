@@ -216,3 +216,18 @@ header h1 {
 #more-menu {
   z-index: 9999;
 }
+
+/* ====================== ACTION BUTTONS ====================== */
+#postButton {
+  background-color: #059669 !important; /* solid emerald-600 */
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  opacity: 1 !important;
+  border: none !important;
+  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.4) !important;
+  transition: background-color 0.2s ease;
+}
+
+#postButton:hover {
+  background-color: #10b981 !important; /* solid emerald-500 */
+}
