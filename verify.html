@@ -4,12 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#10b981">
-
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="/logo.png" type="image/png">
     <title data-i18n="verifyPageTitle">VocalWitness • Evidence Verification Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
-
     <style>
         :root {
             --bg-main: #0a0f1c;
@@ -22,9 +20,7 @@
             --text-white: #ffffff;
             --text-muted: #9ca3af;
         }
-
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        
         body {
             font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background-color: var(--bg-main);
@@ -33,12 +29,7 @@
             padding: 1rem;
             padding-bottom: 5rem;
         }
-
-        .container {
-            max-width: 42rem;
-            margin: 0 auto;
-        }
-
+        .container { max-width: 42rem; margin: 0 auto; }
         .legal-banner {
             background-color: var(--red-bg);
             border: 1px solid var(--red-border);
@@ -48,13 +39,10 @@
             margin-bottom: 1.5rem;
             text-align: center;
         }
-
         .legal-banner strong { color: #f87171; }
-
         .header { text-align: center; margin-bottom: 2rem; }
         .header h1 { font-size: 1.875rem; color: var(--emerald-accent); font-weight: 700; margin-bottom: 0.5rem; }
         .header p { color: var(--text-muted); font-size: 0.875rem; }
-
         .glass {
             background: var(--card-bg);
             backdrop-filter: blur(20px);
@@ -63,8 +51,6 @@
             padding: 1.5rem;
             margin-bottom: 1.5rem;
         }
-
-        /* Mode Selector Tabs */
         .tab-group {
             display: flex;
             gap: 0.5rem;
@@ -73,28 +59,26 @@
             padding: 0.25rem;
             border-radius: 1rem;
             border: 1px solid rgba(255, 255, 255, 0.05);
+            flex-wrap: wrap;
         }
-
         .tab-btn {
             flex: 1;
+            min-width: 5.5rem;
             padding: 0.6rem;
             background: transparent;
             border: none;
             color: var(--text-muted);
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: 600;
             border-radius: 0.75rem;
             cursor: pointer;
             transition: all 0.2s;
         }
-
         .tab-btn.active {
             background-color: rgba(16, 185, 129, 0.15);
             color: var(--emerald-accent);
             border: 1px solid var(--border-emerald);
         }
-
-        /* Drag & Drop Upload Zone */
         .drop-zone {
             border: 2px dashed var(--border-emerald);
             border-radius: 1rem;
@@ -102,41 +86,24 @@
             text-align: center;
             background-color: rgba(24, 24, 27, 0.5);
             cursor: pointer;
-            transition: border-color 0.2s, background-color 0.2s;
         }
-
         .drop-zone:hover, .drop-zone.dragover {
             border-color: var(--emerald-accent);
             background-color: rgba(16, 185, 129, 0.05);
         }
-
-        .drop-zone-icon {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .drop-zone-text {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-        }
-
         label { display: block; font-size: 0.875rem; font-weight: 500; color: #d1d5db; margin-bottom: 0.5rem; }
-
-        textarea {
+        textarea, input[type="text"] {
             width: 100%;
             background-color: rgba(24, 24, 27, 0.8);
             border: 1px solid #3f3f46;
             border-radius: 1rem;
-            padding: 1rem;
+            padding: 0.75rem 1rem;
             font-size: 0.75rem;
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             color: #6ee7b7;
             outline: none;
-            resize: vertical;
         }
-
-        textarea:focus { border-color: var(--emerald-accent); }
-
+        textarea:focus, input[type="text"]:focus { border-color: var(--emerald-accent); }
         .btn-primary {
             width: 100%;
             margin-top: 1rem;
@@ -147,42 +114,21 @@
             border-radius: 1rem;
             border: none;
             cursor: pointer;
-            box-shadow: 0 10px 15px -3px rgba(6, 78, 59, 0.3);
-            transition: background-color 0.2s;
         }
-
         .btn-primary:hover { background-color: var(--emerald-hover); }
-
         .hidden { display: none !important; }
-
-        .result-valid {
-            border-color: rgba(16, 185, 129, 0.5);
-            background-color: rgba(6, 78, 59, 0.2);
-        }
-
-        .result-invalid {
-            border-color: rgba(239, 68, 68, 0.5);
-            background-color: rgba(127, 29, 29, 0.2);
-        }
-
+        .result-valid { border-color: rgba(16, 185, 129, 0.5); background-color: rgba(6, 78, 59, 0.2); }
+        .result-invalid { border-color: rgba(239, 68, 68, 0.5); background-color: rgba(127, 29, 29, 0.2); }
         .result-header { font-size: 1.125rem; font-weight: 700; margin-bottom: 0.5rem; }
         .text-valid { color: #34d399; }
         .text-invalid { color: #f87171; }
-
-        .result-details {
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-            font-size: 0.75rem;
-            color: #d1d5db;
-        }
-
+        .result-details { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.75rem; color: #d1d5db; }
         .result-details p { margin-bottom: 0.5rem; word-break: break-all; }
         .result-details strong { color: var(--text-muted); }
     </style>
 </head>
 <body>
-
     <div class="container">
-        <!-- Top Bar with Back and Language Selector -->
         <div class="flex items-center justify-between mb-6 glass p-4 rounded-3xl">
             <div class="flex items-center gap-3">
                 <a href="index.html" class="w-10 h-10 bg-emerald-500/20 rounded-2xl flex items-center justify-center text-xl hover:bg-emerald-500/30 transition" aria-label="Back">⬅️</a>
@@ -198,43 +144,54 @@
         </div>
 
         <div class="legal-banner">
-            <strong data-i18n="legalLabel">Legal:</strong> <span data-i18n="legalBannerText">VocalWitness is an un-manipulated decentralized distribution medium.</span>
+            <strong data-i18n="legalLabel">Legal:</strong>
+            <span data-i18n="legalBannerText">VocalWitness is an un-manipulated decentralized distribution medium. Verification checks integrity hashes, not real-world truth.</span>
         </div>
 
         <main>
             <div class="header">
                 <h1 data-i18n="verifyHeaderTitle">🔍 Evidence Verifier</h1>
-                <p data-i18n="verifyHeaderSubtitle">Verify C2PA Content Credentials or cryptographic signatures on any testimony asset.</p>
+                <p data-i18n="verifyHeaderSubtitle">Ledger link, C2PA media, or JSON proof — confirm integrity references.</p>
             </div>
 
             <div class="glass">
                 <div class="tab-group">
-                    <button type="button" id="tabC2PA" class="tab-btn active" data-i18n="tabMediaC2PA">📷 Media C2PA File</button>
-                    <button type="button" id="tabJSON" class="tab-btn" data-i18n="tabJSONProof">📜 JSON Proof Payload</button>
+                    <button type="button" id="tabLedger" class="tab-btn active">🔗 Ledger link</button>
+                    <button type="button" id="tabC2PA" class="tab-btn" data-i18n="tabMediaC2PA">📷 Media C2PA</button>
+                    <button type="button" id="tabJSON" class="tab-btn" data-i18n="tabJSONProof">📜 JSON proof</button>
                 </div>
 
-                <!-- C2PA Media Upload Mode -->
-                <div id="c2paSection">
+                <!-- Batch 6: ledger id + hash -->
+                <div id="ledgerSection">
+                    <label for="ledgerIdInput">Testimony ID</label>
+                    <input type="text" id="ledgerIdInput" placeholder="Firestore testimony id" autocomplete="off" />
+                    <label for="ledgerHashInput" style="margin-top: 0.75rem;">Ledger / forensic hash (h)</label>
+                    <input type="text" id="ledgerHashInput" placeholder="SHA-256 hex from share link" autocomplete="off" />
+                    <button type="button" id="btnVerifyLedger" class="btn-primary">Verify against ledger</button>
+                    <p style="font-size: 0.7rem; color: #6b7280; margin-top: 0.75rem;">
+                        Share links look like <code style="color:#6ee7b7">/verify.html?id=…&amp;h=…</code>
+                    </p>
+                </div>
+
+                <div id="c2paSection" class="hidden">
                     <div id="dropZone" class="drop-zone">
-                        <div class="drop-zone-icon">📁</div>
-                        <div class="drop-zone-text" id="dropZoneText">
-                            <span data-i18n="dropZonePromptPre">Drag & drop image/video or</span> <strong data-i18n="clickToBrowse">click to browse</strong><br>
-                            <span style="font-size: 0.7rem; color: #6b7280;" data-i18n="dropZoneSub">Inspects embedded C2PA Content Credentials</span>
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">📁</div>
+                        <div id="dropZoneText" style="font-size: 0.85rem; color: var(--text-muted);">
+                            <span data-i18n="dropZonePromptPre">Drag & drop image/video or</span>
+                            <strong data-i18n="clickToBrowse">click to browse</strong>
                         </div>
                         <input type="file" id="mediaInput" accept="image/*,video/*" class="hidden">
                     </div>
-                    <button id="btnVerifyC2PA" class="btn-primary" data-i18n="btnVerifyMedia">Verify Media Provenance</button>
+                    <button type="button" id="btnVerifyC2PA" class="btn-primary" data-i18n="btnVerifyMedia">Verify Media Provenance</button>
                 </div>
 
-                <!-- JSON Proof Mode -->
                 <div id="jsonSection" class="hidden">
-                    <label for="proofInput" data-i18n="proofInputLabel">Paste Proof Payload (JSON):</label>
-                    <textarea id="proofInput" rows="6" placeholder='{"hash": "0x...", "signature": "0x...", "signer": "0x...", "bundle": {"timestamp": 1700000000000}}'></textarea>
-                    <button id="btnVerifyJSON" class="btn-primary" data-i18n="btnVerifySig">Verify Signature</button>
+                    <label for="proofInput" data-i18n="proofInputLabel">Paste Proof / Evidence Pack (JSON)</label>
+                    <textarea id="proofInput" rows="6" placeholder='{"packCoreHash":"...","integrity":{"forensicHash":"..."}}'></textarea>
+                    <button type="button" id="btnVerifyJSON" class="btn-primary" data-i18n="btnVerifySig">Verify payload</button>
                 </div>
             </div>
 
-            <!-- Verification Result Container -->
             <div id="resultBox" class="hidden glass">
                 <div id="resultHeader" class="result-header"></div>
                 <div id="resultDetails" class="result-details"></div>
@@ -245,166 +202,229 @@
     <script type="module">
         import { verifyMediaProvenance } from './js/verification.js';
         import { initLanguage } from './js/i18n.js';
+        import { db } from './js/firebase-config.js';
+        import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
+        import { resolveLedgerHash, buildShareUrl } from './js/evidence-pack.js';
 
         document.addEventListener('DOMContentLoaded', () => {
             initLanguage();
+            hydrateFromQuery();
         });
 
-        // Tab Switching Logic
+        const tabLedger = document.getElementById('tabLedger');
         const tabC2PA = document.getElementById('tabC2PA');
         const tabJSON = document.getElementById('tabJSON');
+        const ledgerSection = document.getElementById('ledgerSection');
         const c2paSection = document.getElementById('c2paSection');
         const jsonSection = document.getElementById('jsonSection');
         const resultBox = document.getElementById('resultBox');
 
-        tabC2PA?.addEventListener('click', () => {
-            tabC2PA.classList.add('active');
-            tabJSON.classList.remove('active');
-            c2paSection.classList.remove('hidden');
+        function setTab(which) {
+            [tabLedger, tabC2PA, tabJSON].forEach((t) => t?.classList.remove('active'));
+            ledgerSection.classList.add('hidden');
+            c2paSection.classList.add('hidden');
             jsonSection.classList.add('hidden');
             resultBox.classList.add('hidden');
+
+            if (which === 'ledger') {
+                tabLedger.classList.add('active');
+                ledgerSection.classList.remove('hidden');
+            } else if (which === 'c2pa') {
+                tabC2PA.classList.add('active');
+                c2paSection.classList.remove('hidden');
+            } else {
+                tabJSON.classList.add('active');
+                jsonSection.classList.remove('hidden');
+            }
+        }
+
+        tabLedger?.addEventListener('click', () => setTab('ledger'));
+        tabC2PA?.addEventListener('click', () => setTab('c2pa'));
+        tabJSON?.addEventListener('click', () => setTab('json'));
+
+        function hydrateFromQuery() {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('id') || params.get('t') || '';
+            const h = params.get('h') || params.get('hash') || '';
+            if (id || h) {
+                setTab('ledger');
+                if (id) document.getElementById('ledgerIdInput').value = id;
+                if (h) document.getElementById('ledgerHashInput').value = h;
+                if (id) verifyLedger(id, h);
+            }
+        }
+
+        function showResult(ok, title, html) {
+            resultBox.className = 'glass ' + (ok ? 'result-valid' : 'result-invalid');
+            resultBox.classList.remove('hidden');
+            document.getElementById('resultHeader').className =
+                'result-header ' + (ok ? 'text-valid' : 'text-invalid');
+            document.getElementById('resultHeader').textContent = title;
+            document.getElementById('resultDetails').innerHTML = html;
+        }
+
+        async function verifyLedger(id, claimedHash) {
+            const resultHeader = document.getElementById('resultHeader');
+            const resultDetails = document.getElementById('resultDetails');
+            resultBox.className = 'glass';
+            resultBox.classList.remove('hidden');
+            resultHeader.className = 'result-header text-valid';
+            resultHeader.textContent = '⏳ Checking ledger…';
+            resultDetails.innerHTML = '<p>Loading testimony record…</p>';
+
+            if (!id) {
+                showResult(false, 'Missing testimony id', '<p>Provide id from the share link.</p>');
+                return;
+            }
+
+            try {
+                const snap = await getDoc(doc(db, 'testimonies', id));
+                if (!snap.exists()) {
+                    showResult(false, '❌ Not found on ledger', `<p>No testimony with id <strong>${id}</strong>.</p>`);
+                    return;
+                }
+
+                const data = { id: snap.id, ...snap.data() };
+                const stored = resolveLedgerHash(data);
+                const claimed = (claimedHash || '').trim().toLowerCase();
+                const storedNorm = (stored || '').trim().toLowerCase();
+
+                let match = null;
+                if (claimed && storedNorm) {
+                    match = claimed === storedNorm;
+                }
+
+                const share = buildShareUrl(data);
+                const ok = match === true || (match === null && !!storedNorm);
+
+                const title =
+                    match === true
+                        ? '✅ Hash matches ledger'
+                        : match === false
+                          ? '❌ Hash does not match ledger'
+                          : storedNorm
+                            ? 'ℹ️ Record found (no h= in link to compare)'
+                            : '⚠️ Record found but no forensic hash stored';
+
+                showResult(match !== false && !!storedNorm, title, `
+                    <p><strong>Testimony ID:</strong> ${data.id}</p>
+                    <p><strong>Stored hash:</strong> ${stored || '—'}</p>
+                    <p><strong>Claimed h=:</strong> ${claimed || '—'}</p>
+                    <p><strong>Match:</strong> ${match === null ? 'n/a' : match}</p>
+                    <p><strong>Status:</strong> ${data.status || '—'}</p>
+                    <p><strong>Anonymous:</strong> ${data.isAnonymous ? 'yes' : 'no'}</p>
+                    <p><strong>Channel:</strong> ${data.targetFeed || data.channel || '—'}</p>
+                    <p><strong>Canonical link:</strong> ${share}</p>
+                    <p style="margin-top:0.75rem;color:#9ca3af">Application-level integrity only. Does not prove real-world events.</p>
+                `);
+            } catch (e) {
+                console.error(e);
+                showResult(false, 'Verification error', `<p>${e.message || 'Could not read ledger'}</p>`);
+            }
+        }
+
+        document.getElementById('btnVerifyLedger')?.addEventListener('click', () => {
+            const id = document.getElementById('ledgerIdInput').value.trim();
+            const h = document.getElementById('ledgerHashInput').value.trim();
+            verifyLedger(id, h);
         });
 
-        tabJSON?.addEventListener('click', () => {
-            tabJSON.classList.add('active');
-            tabC2PA.classList.remove('active');
-            jsonSection.classList.remove('hidden');
-            c2paSection.classList.add('hidden');
-            resultBox.classList.add('hidden');
-        });
-
-        // File Drag & Drop Handling
+        // C2PA (unchanged behaviour)
         const dropZone = document.getElementById('dropZone');
         const mediaInput = document.getElementById('mediaInput');
         const dropZoneText = document.getElementById('dropZoneText');
         let selectedFile = null;
 
         dropZone?.addEventListener('click', () => mediaInput.click());
-
-        ['dragenter', 'dragover'].forEach(eventName => {
+        ['dragenter', 'dragover'].forEach((eventName) => {
             dropZone?.addEventListener(eventName, (e) => {
                 e.preventDefault();
                 dropZone.classList.add('dragover');
-            }, false);
+            });
         });
-
-        ['dragleave', 'drop'].forEach(eventName => {
+        ['dragleave', 'drop'].forEach((eventName) => {
             dropZone?.addEventListener(eventName, (e) => {
                 e.preventDefault();
                 dropZone.classList.remove('dragover');
-            }, false);
+            });
         });
-
         dropZone?.addEventListener('drop', (e) => {
-            const dt = e.dataTransfer;
-            if (dt.files && dt.files.length > 0) {
-                selectedFile = dt.files[0];
-                updateDropZoneUI(selectedFile);
+            if (e.dataTransfer?.files?.length) {
+                selectedFile = e.dataTransfer.files[0];
+                dropZoneText.innerHTML = `📄 <strong>${selectedFile.name}</strong>`;
             }
         });
-
         mediaInput?.addEventListener('change', (e) => {
-            if (e.target.files && e.target.files.length > 0) {
+            if (e.target.files?.length) {
                 selectedFile = e.target.files[0];
-                updateDropZoneUI(selectedFile);
+                dropZoneText.innerHTML = `📄 <strong>${selectedFile.name}</strong>`;
             }
         });
 
-        function updateDropZoneUI(file) {
-            dropZoneText.innerHTML = `📄 <strong>${file.name}</strong> (${(file.size / 1024).toFixed(1)} KB)`;
-        }
-
-        // C2PA Media Verification Action
         document.getElementById('btnVerifyC2PA')?.addEventListener('click', async () => {
-            const resultHeader = document.getElementById('resultHeader');
-            const resultDetails = document.getElementById('resultDetails');
-
             if (!selectedFile) {
                 alert('Please select or drop a media file first.');
                 return;
             }
-
             resultBox.className = 'glass';
-            resultHeader.className = 'result-header text-valid';
-            resultHeader.innerHTML = '⏳ Inspecting C2PA Manifest...';
-            resultDetails.innerHTML = '<p>Reading WebAssembly provenance signatures...</p>';
             resultBox.classList.remove('hidden');
-
+            document.getElementById('resultHeader').textContent = '⏳ Inspecting C2PA Manifest...';
             const res = await verifyMediaProvenance(selectedFile);
-
             if (res.hasC2PA && res.isValid) {
-                resultBox.className = 'glass result-valid';
-                resultHeader.className = 'result-header text-valid';
-                resultHeader.innerHTML = '✅ Authenticated C2PA Content Credentials';
-                resultDetails.innerHTML = `
+                showResult(true, '✅ Authenticated C2PA Content Credentials', `
                     <p><strong>Issuer:</strong> ${res.issuer}</p>
                     <p><strong>Claim Generator:</strong> ${res.claimGenerator}</p>
                     <p><strong>Title:</strong> ${res.title}</p>
-                    <p><strong>Format:</strong> ${res.format}</p>
-                `;
-            } else if (res.hasC2PA && !res.isValid) {
-                resultBox.className = 'glass result-invalid';
-                resultHeader.className = 'result-header text-invalid';
-                resultHeader.innerHTML = '⚠️ C2PA Manifest Tampered or Invalid';
-                resultDetails.innerHTML = `<p>File contains C2PA metadata, but validation failed or bytes were modified after signature.</p>`;
+                `);
+            } else if (res.hasC2PA) {
+                showResult(false, '⚠️ C2PA Manifest Tampered or Invalid', '<p>Validation failed or bytes modified after signature.</p>');
             } else {
-                resultBox.className = 'glass result-invalid';
-                resultHeader.className = 'result-header text-invalid';
-                resultHeader.innerHTML = 'ℹ️ No C2PA Credentials Found';
-                resultDetails.innerHTML = `<p>${res.message || res.error || 'This media file does not contain embedded C2PA provenance manifests.'}</p>`;
+                showResult(false, 'ℹ️ No C2PA Credentials Found', `<p>${res.message || res.error || 'No embedded C2PA manifest.'}</p>`);
             }
         });
 
-        // JSON Signature Verification Logic
-        async function verifyProofPayload(proofObj) {
-            if (!proofObj.signature || !proofObj.signer || !proofObj.hash) {
-                return false;
-            }
-            const hasValidHash = typeof proofObj.hash === 'string' && proofObj.hash.length > 0;
-            const hasValidSigner = typeof proofObj.signer === 'string' && proofObj.signer.startsWith('0x');
-            const hasValidSignature = typeof proofObj.signature === 'string' && proofObj.signature.length > 10;
-
-            return hasValidHash && hasValidSigner && hasValidSignature;
-        }
-
         document.getElementById('btnVerifyJSON')?.addEventListener('click', async () => {
             const rawText = document.getElementById('proofInput').value.trim();
-            const resultHeader = document.getElementById('resultHeader');
-            const resultDetails = document.getElementById('resultDetails');
-
             if (!rawText) {
-                alert('Please paste a JSON proof payload to verify.');
+                alert('Paste a JSON proof or evidence pack.');
                 return;
             }
-
             try {
                 const proofObj = JSON.parse(rawText);
-                const isValid = await verifyProofPayload(proofObj);
+                const hash =
+                    proofObj.packCoreHash ||
+                    proofObj.forensicHash ||
+                    proofObj.integrity?.forensicHash ||
+                    proofObj.hash ||
+                    null;
+                const id = proofObj.packId || proofObj.testimony?.id || null;
+                const verifyUrl = proofObj.verifyUrl || null;
 
-                resultBox.className = 'glass';
-                resultBox.classList.remove('hidden');
-                
-                if (isValid) {
-                    resultBox.classList.add('result-valid');
-                    resultHeader.className = 'result-header text-valid';
-                    resultHeader.innerHTML = '✅ Authentic & Valid Signature';
-                    resultDetails.innerHTML = `
-                        <p><strong>Signer Address:</strong> ${proofObj.signer}</p>
-                        <p><strong>Payload Hash:</strong> ${proofObj.hash}</p>
-                        <p><strong>Timestamp:</strong> ${proofObj.bundle?.timestamp ? new Date(proofObj.bundle.timestamp).toLocaleString() : 'N/A'}</p>
-                    `;
+                // Prefer ledger check when pack includes id
+                if (id && hash) {
+                    document.getElementById('ledgerIdInput').value = id;
+                    document.getElementById('ledgerHashInput').value = hash;
+                    setTab('ledger');
+                    await verifyLedger(id, hash);
+                    return;
+                }
+
+                const structural =
+                    typeof hash === 'string' &&
+                    hash.length >= 16 &&
+                    (proofObj.schemaVersion || proofObj.signature || proofObj.integrity);
+
+                if (structural) {
+                    showResult(true, '✅ Pack structure looks valid', `
+                        <p><strong>Hash:</strong> ${hash}</p>
+                        <p><strong>verifyUrl:</strong> ${verifyUrl || '—'}</p>
+                        <p>Open Ledger tab with id + h for live comparison when available.</p>
+                    `);
                 } else {
-                    resultBox.classList.add('result-invalid');
-                    resultHeader.className = 'result-header text-invalid';
-                    resultHeader.innerHTML = '❌ Invalid or Tampered Signature';
-                    resultDetails.innerHTML = `<p>The signature does not match the provided signer or payload content.</p>`;
+                    showResult(false, '❌ Incomplete proof payload', '<p>Need packCoreHash / forensicHash (and ideally packId).</p>');
                 }
             } catch (err) {
-                resultBox.className = 'glass result-invalid';
-                resultBox.classList.remove('hidden');
-                resultHeader.className = 'result-header text-invalid';
-                resultHeader.innerHTML = '⚠️ Invalid JSON Structure';
-                resultDetails.innerHTML = `<p>Could not parse JSON. Make sure you pasted a valid proof object.</p>`;
+                showResult(false, '⚠️ Invalid JSON Structure', '<p>Could not parse JSON.</p>');
             }
         });
     </script>
