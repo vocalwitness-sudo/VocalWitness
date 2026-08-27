@@ -537,6 +537,20 @@ export async function getUserTierData(uid = null) {
   };
 }
 
+export async function canCorroborate(user) {
+  if (!user) return false;
+  // Your existing phone / tier logic
+  const tier = await getUserTier(user.uid); // adjust to your real function
+  return tier >= 2 || tier === 'citizen' || tier === 'witness'; // phone-verified+
+}
+
+export async function getUserTierWeight(user) {
+  const tier = await getUserTier(user.uid);
+  if (tier === 'witness' || tier >= 3) return 3;
+  if (tier === 'citizen' || tier === 2) return 2;
+  return 1;
+}
+
 // Global exports for window context
 window.refreshTierAndUI = refreshTierAndUI;
 window.requireCitizenCirclePermission = requireCitizenCirclePermission;
