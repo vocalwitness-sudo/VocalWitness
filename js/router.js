@@ -1,6 +1,25 @@
 // js/router.js - Clean Client-Side Router with pushState + Web Component ready structure
 import { showToast } from './utils.js';
 
+// Central view mapping for alias normalization across different naming styles
+const VIEW_MAP = {
+    'square': 'citizenTalkView',
+    'public_square': 'citizenTalkView',
+    'public-square': 'citizenTalkView',
+    'citizen-talk': 'citizenTalkView',
+    'citizen_talk': 'citizenTalkView',
+    'witness-voice': 'witnessVoiceView',
+    'witness_voice': 'witnessVoiceView',
+    'moderation': 'moderationView',
+    'profile': 'profileView',
+    'audit-log': 'auditLogView',
+    'audit_log': 'auditLogView',
+    'arena': 'arenaView',
+    'quadratic-vote': 'quadraticVoteView',
+    'quadratic_vote': 'quadraticVoteView',
+    'dao': 'daoView'
+};
+
 const ROUTES = {
     'citizen-talk': {
         viewId: 'citizenTalkView',
@@ -72,26 +91,35 @@ const ROUTES = {
             qvModule?.initQuadraticVoting?.(container);
         }
     },
-    // DAO is now a first-class route (no special redirect logic)
     'dao': {
-        viewId: 'daoView',               // Preferred: in-app panel
+        viewId: 'daoView',
         title: 'DAO Governance',
-        // Fallback: if the panel does not exist, go to the standalone page
         fallbackUrl: 'dao.html',
         init: async (container) => {
             if (!container) return;
             container.innerHTML = `<div class="text-center py-16 text-emerald-400 animate-pulse">Loading DAO Governance...</div>`;
-
-            // You can later replace this with a real Web Component or module
-            // Example future path:
-            // const { initDAO } = await import('./dao-ui.js');
-            // initDAO(container);
-
-            // For now we keep the simple fallback behavior inside init
-            // so the router itself stays clean
         }
     }
 };
+
+// Aliases mapping to standard route keys
+const ROUTE_ALIASES = {
+    'square': 'citizen-talk',
+    'public_square': 'citizen-talk',
+    'public-square': 'citizen-talk',
+    'citizen_talk': 'citizen-talk',
+    'witness_voice': 'witness-voice',
+    'audit_log': 'audit-log',
+    'quadratic_vote': 'quadratic-vote'
+};
+
+/**
+ * Normalizes input key using alias mapping defaults
+ */
+function normalizeRouteKey(rawKey) {
+    if (!rawKey) return 'citizen-talk';
+    return ROUTE_ALIASES[rawKey] || (ROUTES[rawKey] ? rawKey : 'citizen-talk');
+}
 
 /**
  * Hide every registered view panel
@@ -105,15 +133,24 @@ function hideAllViews() {
             panel.classList.remove('block');
         }
     });
+
+    // Clean up any views directly referenced in VIEW_MAP
+    Object.values(VIEW_MAP).forEach(viewId => {
+        const panel = document.getElementById(viewId);
+        if (panel) {
+            panel.classList.add('hidden');
+            panel.classList.remove('block');
+        }
+    });
 }
 
 /**
  * Update active state on navigation elements
  */
-function updateNavActiveState(routeKey) {
+function updateNavActiveState(routeKey, rawInputKey) {
     document.querySelectorAll('[data-route]').forEach(navBtn => {
         const routeAttr = navBtn.getAttribute('data-route');
-        const isActive = routeAttr === routeKey;
+        const isActive = routeAttr === routeKey || routeAttr === rawInputKey;
 
         navBtn.classList.toggle('bg-zinc-800', isActive);
         navBtn.classList.toggle('text-emerald-400', isActive);
@@ -128,23 +165,20 @@ function updateNavActiveState(routeKey) {
  * Core navigation function
  */
 export async function navigateTo(routeKey, { replace = false } = {}) {
-    const targetRoute = ROUTES[routeKey] || ROUTES['citizen-talk'];
-    const finalKey = ROUTES[routeKey] ? routeKey : 'citizen-talk';
+    const finalKey = normalizeRouteKey(routeKey);
+    const targetRoute = ROUTES[finalKey];
 
     // 1. Hide all views
     hideAllViews();
 
     // 2. Try to show the in-app panel
-    let activePanel = null;
-    if (targetRoute.viewId) {
-        activePanel = document.getElementById(targetRoute.viewId);
-    }
+    let targetViewId = targetRoute.viewId || VIEW_MAP[routeKey] || VIEW_MAP[finalKey];
+    let activePanel = targetViewId ? document.getElementById(targetViewId) : null;
 
     if (activePanel) {
         activePanel.classList.remove('hidden');
         activePanel.classList.add('block');
     } else if (targetRoute.fallbackUrl) {
-        // Clean fallback – no special-case code in the main flow
         window.location.href = targetRoute.fallbackUrl;
         return;
     } else {
@@ -152,7 +186,7 @@ export async function navigateTo(routeKey, { replace = false } = {}) {
     }
 
     // 3. Update navigation UI
-    updateNavActiveState(finalKey);
+    updateNavActiveState(finalKey, routeKey);
 
     // 4. History management (pushState with hash fallback)
     const newHash = `#${finalKey}`;
@@ -165,7 +199,6 @@ export async function navigateTo(routeKey, { replace = false } = {}) {
             window.history.pushState({ route: finalKey }, title, newHash);
         }
     } catch (err) {
-        // Extremely old browsers – fall back to classic hash change
         window.location.hash = finalKey;
     }
 
