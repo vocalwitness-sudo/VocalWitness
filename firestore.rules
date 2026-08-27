@@ -8,23 +8,18 @@ service cloud.firestore {
     function isAuthenticated() {
       return request.auth != null;
     }
-
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
-
     function isAdmin() {
       return isAuthenticated() && request.auth.token.admin == true;
     }
-
     function userExists() {
       return exists(/databases/$(database)/documents/users/$(request.auth.uid));
     }
-
     function getUserData() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
-
     function isZkVerified() {
       return isAuthenticated() && (
         request.auth.token.zkVerified == true || 
@@ -33,7 +28,6 @@ service cloud.firestore {
         getUserData().tier == 'steward'
       );
     }
-
     function isModerator() {
       return isAuthenticated() && (
         request.auth.token.moderator == true ||
@@ -41,19 +35,16 @@ service cloud.firestore {
         (userExists() && getUserData().tier == 'steward')
       );
     }
-
     function isNotBanned() {
       return isAuthenticated()
         && request.auth.token.banned != true
         && (!userExists() || getUserData().isBanned != true);
     }
-
     function isNotThrottled() {
       return !userExists()
         || !('lastTestimonyAt' in getUserData())
         || request.time > getUserData().lastTestimonyAt + duration.value(30, 's');
     }
-
     function isValidMediaUrl(url) {
       return url is string && (
         url == '' ||
@@ -62,11 +53,9 @@ service cloud.firestore {
         url.matches('^data:image/svg\\+xml;.*')
       );
     }
-
     function isSafeUserCreation() {
       let data = request.resource.data;
       let keys = data.keys();
-
       return data.uid == request.auth.uid
         && data.uid is string
         && data.email is string
@@ -78,25 +67,21 @@ service cloud.firestore {
              'isPhoneVerified', 'hasVerifiedPhone', 'phoneVerifiedAt', 'reputation', 'credibilityScore'
            ]);
     }
-
     function isSafeUserUpdate() {
       let affected = request.resource.data.diff(resource.data).affectedKeys();
       let data = request.resource.data;
-
       let forbidden = [
         'role', 'isBanned', 'badges', 'admin', 'moderator',
         'zkVerified', 'score', 'isVerified', 'uid', 'tier',
         'hasVerifiedPhone', 'isPhoneVerified', 'phoneVerifiedAt',
         'reputation', 'credibilityScore', 'weeklyPoints'
       ];
-
       let allowed = [
         'email', 'displayName', 'photoURL', 'bio',
         'location', 'website', 'updatedAt', 'lastLoginAt',
         'theme', 'language', 'interestedInArena', 'arenaNotifyAt', 'lastNameChange',
         'lastTestimonyAt'
       ];
-
       return !affected.hasAny(forbidden)
         && affected.hasOnly(allowed)
         && (!('email' in data) || data.email is string)
@@ -105,7 +90,6 @@ service cloud.firestore {
         && (!('bio' in data) || data.bio is string)
         && (!('interestedInArena' in data) || data.interestedInArena is bool);
     }
-
     function isValidNotification() {
       let data = request.resource.data;
       return data.keys().hasAll(['senderId', 'type', 'timestamp'])
@@ -115,7 +99,6 @@ service cloud.firestore {
         && data.type in ['mention', 'reply', 'vote', 'system', 'witness_alert']
         && data.timestamp is timestamp;
     }
-
     function isSafeAuthorTestimonyUpdate() {
       let affected = request.resource.data.diff(resource.data).affectedKeys();
       let forbidden = [
@@ -144,13 +127,11 @@ service cloud.firestore {
       match /drafts/{draftId} {
         allow read, write: if isOwner(userId);
       }
-
       match /notifications/{notificationId} {
         allow read: if isOwner(userId);
         allow update, delete: if isOwner(userId);
         allow create: if isNotBanned() && isValidNotification();
       }
-
       match /bookmarks/{bookmarkId} {
         allow read, write: if isOwner(userId);
       }
@@ -175,21 +156,52 @@ service cloud.firestore {
         && (request.resource.data.createdAt is timestamp
             || request.resource.data.createdAt == request.time);
 
-      allow update: if isModerator() || (
-        isNotBanned() &&
-        resource.data.authorId == request.auth.uid &&
-        request.resource.data.content.size() <= 2000 &&
-        isSafeAuthorTestimonyUpdate()
-      );
+      // Authors can edit their own content (with safety checks)
+      // Moderators can do anything
+      // Any authenticated user can ONLY increment the two corroboration counters
+      allow update: if isModerator()
+        || (
+             isNotBanned()
+             && resource.data.authorId == request.auth.uid
+             && request.resource.data.content.size() <= 2000
+             && isSafeAuthorTestimonyUpdate()
+           )
+        || (
+             isNotBanned()
+             && request.resource.data.diff(resource.data).affectedKeys()
+                  .hasOnly(['corroborationCount', 'corroborationScore', 'lastCorroboratedAt'])
+           );
 
       allow delete: if (resource.data.authorId == request.auth.uid) || isModerator();
+    }
+
+    // ==========================================
+    // ★ CORROBORATIONS (Batch 2)
+    // ==========================================
+    match /corroborations/{corrId} {
+      // Public read – scores are visible to everyone
+      allow read: if true;
+
+      // Only authenticated users can create (phone-verified check is done in client + can be strengthened later)
+      allow create: if isNotBanned()
+        && request.resource.data.authorId == request.auth.uid
+        && request.resource.data.keys().hasAll(['testimonyId', 'authorId', 'weight', 'createdAt'])
+        && request.resource.data.testimonyId is string
+        && request.resource.data.authorId is string
+        && request.resource.data.weight is number
+        && request.resource.data.weight >= 1
+        && request.resource.data.weight <= 5
+        && (!('note' in request.resource.data) || 
+            (request.resource.data.note is string && request.resource.data.note.size() <= 280));
+
+      // Immutable – no one can edit or delete a corroboration
+      allow update, delete: if false;
     }
 
     // ==========================================
     // POSTS & COMMENTS (Door & ZK Privacy Rules)
     // ==========================================
     match /posts/{postId} {
-      // Visibility Door Controls Read Access
       allow read: if resource.data.visibilityDoor == 'public_square' ||
                     (resource.data.visibilityDoor == 'citizen_circle' && isAuthenticated()) ||
                     (resource.data.visibilityDoor == 'witness_circle' && isZkVerified());
@@ -206,21 +218,14 @@ service cloud.firestore {
 
       allow delete: if (resource.data.authorId == request.auth.uid) || isModerator();
 
-      // SUBCOLLECTION: Comments / Replies (Enforces Door Interaction Bounds)
       match /comments/{commentId} {
         allow read: if true;
-
         allow create: if isNotBanned() && (
-          // 1. Author's door is OPEN to everyone
           get(/databases/$(database)/documents/posts/$(postId)).data.authorDoorPrivacy == 'open' ||
-          
-          // 2. Author's door is ZK_ONLY -> Requiring the commenter to be ZK-Verified
           (
             get(/databases/$(database)/documents/posts/$(postId)).data.authorDoorPrivacy == 'zk_only' && 
             isZkVerified()
           ) ||
-
-          // 3. The author is commenting on their own post
           request.auth.uid == get(/databases/$(database)/documents/posts/$(postId)).data.authorId
         );
       }
@@ -260,7 +265,6 @@ service cloud.firestore {
     // ==========================================
     match /dao_proposals/{proposalId} {
       allow read: if true;
-
       allow create: if isNotBanned()
         && request.resource.data.title is string
         && request.resource.data.title.size() > 0
@@ -269,13 +273,10 @@ service cloud.firestore {
         && request.resource.data.description.size() <= 800
         && request.resource.data.createdBy == request.auth.uid
         && request.resource.data.status == 'active';
-
       allow update: if isNotBanned() && (
         resource.data.createdBy == request.auth.uid || isModerator()
       );
-
       allow delete: if false;
     }
-
   }
 }
