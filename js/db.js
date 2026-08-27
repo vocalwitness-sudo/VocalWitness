@@ -1,4 +1,4 @@
-// js/db.js - Database Operations & Offline Storage Engine (Batch 4)
+// js/db.js - Database Operations & Offline Storage Engine (Batch 4 Hardened)
 import { db, auth } from './firebase-config.js';
 import {
   doc,
@@ -41,9 +41,7 @@ export function openOfflineDB() {
 }
 
 /**
- * Save pending testimony when offline (or forced queue).
- * payload should include { public, private } from prepareAnonymousSubmission
- * or a flat legacy draft.
+ * 2. TRANSACTION SAFETY: Save pending testimony when offline.
  */
 export async function saveDraftOffline(payload) {
   try {
@@ -57,13 +55,12 @@ export async function saveDraftOffline(payload) {
       status: 'pending',
     };
 
-    await new Promise((resolve, reject) => {
-      const req = store.add(record);
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
+    return new Promise((resolve, reject) => {
+      store.add(record);
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = (e) => reject(e.target.error || tx.error);
+      tx.onabort = (e) => reject(e.target.error || tx.error);
     });
-
-    return true;
   } catch (err) {
     console.error('IndexedDB Save Error:', err);
     return false;
@@ -93,10 +90,10 @@ export async function removeOfflineDraft(id) {
     const tx = dbInstance.transaction(STORE_NAME, 'readwrite');
     const store = tx.objectStore(STORE_NAME);
 
-    await new Promise((resolve, reject) => {
-      const req = store.delete(id);
-      req.onsuccess = () => resolve();
-      req.onerror = () => reject(req.error);
+    return new Promise((resolve, reject) => {
+      store.delete(id);
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = (e) => reject(e.target.error);
     });
   } catch (err) {
     console.error('IndexedDB Removal Error:', err);
@@ -113,8 +110,19 @@ export async function clearOfflineQueue() {
 }
 
 /**
+ * 3. COMPREHENSIVE PANIC CLEAR: Force drops the entire IndexedDB instance.
+ */
+export async function dropOfflineDatabase() {
+  return new Promise((resolve) => {
+    const req = indexedDB.deleteDatabase(DB_NAME);
+    req.onsuccess = () => resolve(true);
+    req.onerror = () => resolve(false);
+    req.onblocked = () => resolve(false);
+  });
+}
+
+/**
  * Single entry point for composer: online → publish; offline → queue.
- * @param {object} prepared - return value of prepareAnonymousSubmission
  */
 export async function publishTestimonyOrQueue(prepared) {
   const publicData = prepared.public || prepared;
@@ -124,7 +132,6 @@ export async function publishTestimonyOrQueue(prepared) {
     const ok = await saveDraftOffline({
       public: publicData,
       private: privateData,
-      // legacy flat fields for older sync paths
       content: publicData.content,
       headline: publicData.headline,
       targetFeed: publicData.targetFeed,
@@ -193,7 +200,6 @@ export async function publishTestimonyNow(publicData, privateData = null) {
       null,
     imageHash: publicData.imageHash || null,
     audioHash: publicData.audioHash || null,
-    // Batch 4 anonymity: null author on public doc when anonymous
     authorId: isAnonymous ? null : publicData.authorId || user?.uid || null,
     author: isAnonymous
       ? 'Anonymous Witness'
@@ -213,7 +219,6 @@ export async function publishTestimonyNow(publicData, privateData = null) {
     status: 'published',
   });
 
-  // Private tier credit (signed-in anonymous or identified)
   if (privateData?.countsTowardTier && user) {
     try {
       await addDoc(collection(db, 'userContributions'), {
@@ -224,7 +229,6 @@ export async function publishTestimonyNow(publicData, privateData = null) {
         testimonyClientId: privateData.testimonyClientId || null,
         createdAt: serverTimestamp(),
       });
-      // Optional: Cloud Function listens and increments reputation/tier
     } catch (err) {
       console.warn('Private contribution write failed (tier may lag):', err);
     }
@@ -242,7 +246,7 @@ export async function publishTestimonyNow(publicData, privateData = null) {
   return { id: testimonyRef.id, queued: false };
 }
 
-// ==================== USER PROFILE (unchanged logic) ====================
+// ==================== USER PROFILE ====================
 export const updateUserProfile = async (userId, updates) => {
   const userRef = doc(db, 'users', userId);
   const userSnap = await getDoc(userRef);
@@ -290,12 +294,7 @@ export const getUserData = async (userId) => {
 };
 
 // ==================== POST MANAGEMENT ====================
-export const editPost = async (
-  postId,
-  userId,
-  newContent,
-  collectionName = 'testimonies'
-) => {
+export const editPost = async (postId, userId, newContent, collectionName = 'testimonies') => {
   const docRef = doc(db, collectionName, postId);
   const snap = await getDoc(docRef);
 
@@ -309,11 +308,7 @@ export const editPost = async (
   });
 };
 
-export const deletePost = async (
-  postId,
-  userId,
-  collectionName = 'testimonies'
-) => {
+export const deletePost = async (postId, userId, collectionName = 'testimonies') => {
   const docRef = doc(db, collectionName, postId);
   const snap = await getDoc(docRef);
 
@@ -324,11 +319,7 @@ export const deletePost = async (
   await deleteDoc(docRef);
 };
 
-export const togglePinPost = async (
-  postId,
-  userId,
-  collectionName = 'testimonies'
-) => {
+export const togglePinPost = async (postId, userId, collectionName = 'testimonies') => {
   const docRef = doc(db, collectionName, postId);
   const snap = await getDoc(docRef);
 
@@ -362,11 +353,7 @@ export const getUserPosts = (userId, collectionName = 'testimonies') => {
   return query(collection(db, collectionName), where('authorId', '==', userId));
 };
 
-export const submitPeerVote = async (
-  postId,
-  type,
-  collectionName = 'testimonies'
-) => {
+export const submitPeerVote = async (postId, type, collectionName = 'testimonies') => {
   const docRef = doc(db, collectionName, postId);
 
   try {
@@ -386,11 +373,8 @@ export const submitPeerVote = async (
 
 // ==================== OFFLINE SYNC ENGINE ====================
 let isSyncing = false;
+const activeSyncIds = new Set(); // 1. HARDENED SYNC LOCKING TRACKER
 
-/**
- * Flush IndexedDB queue. Supports zero-registration (no auth) for anonymous public posts.
- * Private tier writes only when auth.currentUser exists.
- */
 export async function syncOfflineDrafts() {
   if (isSyncing || !navigator.onLine) return;
 
@@ -404,6 +388,10 @@ export async function syncOfflineDrafts() {
   showToast(`Syncing ${drafts.length} offline draft(s)...`, 'info');
 
   for (const draft of drafts) {
+    // Prevent duplicate submission loops across rapid auth/network state triggers
+    if (activeSyncIds.has(draft.id)) continue;
+    activeSyncIds.add(draft.id);
+
     try {
       const publicData = {
         ...(draft.public || draft),
@@ -412,9 +400,9 @@ export async function syncOfflineDrafts() {
       };
       const privateData = draft.private || draft._private || null;
 
-      // Allow anonymous sync without auth; identified/tier needs user
       if (!publicData.isAnonymous && !auth?.currentUser) {
         console.log('Skipping identified draft until auth restores');
+        activeSyncIds.delete(draft.id);
         continue;
       }
 
@@ -424,23 +412,19 @@ export async function syncOfflineDrafts() {
     } catch (err) {
       console.error(`Failed to sync offline draft ID ${draft.id}:`, err);
       failedCount++;
+    } finally {
+      activeSyncIds.delete(draft.id);
     }
   }
 
   isSyncing = false;
 
   if (syncedCount > 0) {
-    showToast(
-      `✅ Successfully published ${syncedCount} offline testimony draft(s)!`,
-      'success'
-    );
+    showToast(`✅ Successfully published ${syncedCount} offline testimony draft(s)!`, 'success');
   }
 
   if (failedCount > 0) {
-    showToast(
-      `⚠️ ${failedCount} draft(s) could not be synced. Retrying later.`,
-      'error'
-    );
+    showToast(`⚠️ ${failedCount} draft(s) could not be synced. Retrying later.`, 'error');
   }
 }
 
@@ -452,7 +436,6 @@ window.addEventListener('online', () => {
 if (auth) {
   auth.onAuthStateChanged((user) => {
     if (navigator.onLine) {
-      // Anonymous drafts can sync without user; identified drafts wait for user
       syncOfflineDrafts();
     }
   });
