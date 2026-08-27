@@ -54,9 +54,17 @@ async function syncStewardPermission() {
  */
 export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
     currentChannel = channelType;
-    const feedContainer = document.getElementById('feedContainer');
+
+    // Multi-fallback feed container lookup
+    const feedContainer = 
+        document.getElementById('testimonies-feed') ||
+        document.getElementById('feed-container') ||
+        document.getElementById('feedContainer') ||
+        document.querySelector('#public-square #testimonies-feed') ||
+        document.querySelector('[aria-label="Reports feed"]');
+
     if (!feedContainer) {
-        console.warn("Feed container element not found in DOM.");
+        console.warn('Feed container still not found in DOM.');
         return;
     }
 
@@ -147,7 +155,7 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
         allPostsCache = [];
 
         if (snapshot.empty) {
-            renderFilteredPosts([]);
+            renderFilteredPosts([], feedContainer);
             return;
         }
 
@@ -169,7 +177,7 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
             return timeB - timeA;
         });
 
-        applySearchAndFilter();
+        applySearchAndFilter(feedContainer);
     }, (error) => {
         console.error("Feed error:", error);
         feedContainer.innerHTML = `<div class="text-red-400 text-center py-8">Failed to load feed. Check your connection or Firestore rules.</div>`;
@@ -206,7 +214,7 @@ function ensureSearchAndFilterUI(container) {
         searchInput.addEventListener('input', () => {
             clearTimeout(searchDebounceTimer);
             searchDebounceTimer = setTimeout(() => {
-                applySearchAndFilter();
+                applySearchAndFilter(container);
             }, 250);
         });
     }
@@ -221,12 +229,12 @@ function ensureSearchAndFilterUI(container) {
             const target = e.currentTarget;
             target.setAttribute('data-active', 'true');
             target.className = "filter-btn px-4 py-2 rounded-xl text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition";
-            applySearchAndFilter();
+            applySearchAndFilter(container);
         });
     });
 }
 
-function applySearchAndFilter() {
+function applySearchAndFilter(container) {
     const searchInput = document.getElementById('feedSearchInput');
     const queryText = searchInput ? searchInput.value.toLowerCase().trim() : "";
     const activeFilterBtn = document.querySelector('#filterBtnGroup .filter-btn[data-active="true"]');
@@ -251,11 +259,15 @@ function applySearchAndFilter() {
         return true;
     });
 
-    renderFilteredPosts(filtered);
+    renderFilteredPosts(filtered, container);
 }
 
-function renderFilteredPosts(posts) {
-    const feedContainer = document.getElementById('feedContainer');
+function renderFilteredPosts(posts, container) {
+    const feedContainer = container || 
+        document.getElementById('testimonies-feed') ||
+        document.getElementById('feed-container') ||
+        document.getElementById('feedContainer');
+
     if (!feedContainer) return;
 
     feedContainer.innerHTML = '';
@@ -332,7 +344,6 @@ function renderSinglePostDOM(id, data, container) {
 
     const authorDisplayName = escapeHTML(data.author || (data.authorId ? `Witness (${data.authorId.substring(0, 6)}...)` : 'Anonymous Witness'));
 
-    // Synchronous evaluation using cached permission state
     const deleteBtnHTML = isOwner || isStewardUserCache 
         ? `<button data-action="delete" data-id="${id}" title="Delete Testimony" class="text-zinc-500 hover:text-red-400 text-xs transition">🗑️</button>` 
         : '';
