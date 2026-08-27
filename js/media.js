@@ -2,6 +2,7 @@
 import { showToast, generateSha256Hash } from './utils.js';
 import { auth } from './firebase-config.js';
 import { uploadSecurePhoto } from './upload.js';
+import { prepareMediaForUpload } from './media-pipeline.js';
 
 export let selectedImageFile = null;
 let engineInstance = null;
@@ -118,6 +119,7 @@ export function validateMediaFile(file, options = {}) {
 
     return { valid: true };
 }
+
 // ====================== STATE RESET ======================
 export function resetMediaState() {
     // 1. Reset Image File Reference
@@ -160,7 +162,7 @@ export function resetMediaState() {
     if (voiceBtn) {
         voiceBtn.classList.remove('recording-active', 'animate-pulse');
     }
-}   // ← THIS closing brace was missing
+}
 
 // ====================== REMOVE IMAGE (CANCEL) ======================
 export function removeImage(previewArea) {
@@ -362,25 +364,34 @@ export async function uploadForensicMedia() {
 
     const userId = auth.currentUser?.uid || "anonymous";
 
-    // 1. Photo Upload (Scrubbed EXIF via R2)
-if (selectedImageFile) {
-    try {
-        if (selectedImageFile.size === 0) {
-            throw new Error("Selected image is empty");
+    // 1. Photo Upload (Scrubbed EXIF via R2 & Hashed Clean Bytes)
+    if (selectedImageFile) {
+        try {
+            if (selectedImageFile.size === 0) {
+                throw new Error("Selected image is empty");
+            }
+
+            // Scrub EXIF metadata and compress first
+            const cleanedFile = await prepareMediaForUpload(selectedImageFile, {
+                maxWidth: 1920,
+                maxHeight: 1080
+            });
+
+            // Hash the cleaned file (matches what is uploaded)
+            const hash = await generateSha256Hash(cleanedFile);
+
+            // Upload the cleaned file to storage
+            const uploadedUrl = await uploadSecurePhoto(cleanedFile, 'evidence');
+
+            mediaData.imageUrl = uploadedUrl;
+            mediaData.imageHash = hash;
+
+            console.log("✅ Image scrubbed, hashed & uploaded:", mediaData.imageUrl);
+        } catch (e) {
+            console.error("Image upload failed", e);
+            showToast("Image upload failed", "error");
         }
-
-        const hash = await generateSha256Hash(selectedImageFile);
-        // folder only — uploadSecurePhoto appends uid + uuid
-        const uploadedUrl = await uploadSecurePhoto(selectedImageFile, 'evidence');
-
-        mediaData.imageUrl = uploadedUrl;
-        mediaData.imageHash = hash;
-        console.log("✅ Image uploaded to R2:", mediaData.imageUrl);
-    } catch (e) {
-        console.error("Image upload failed", e);
-        showToast("Image upload failed", "error");
     }
-}
 
     // 2. Audio Upload (Direct to R2)
     if (engineInstance?.currentAudioBlob) {
