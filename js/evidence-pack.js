@@ -135,3 +135,60 @@ export function downloadJson(filename, obj) {
   a.remove();
   URL.revokeObjectURL(a.href);
 }
+
+/* ============================================================
+   Batch 1 additions – convenience helpers (do not break existing API)
+   ============================================================ */
+
+/**
+ * One-call helper used by createPost.js
+ * Returns both the compact Firestore version and the full downloadable pack.
+ */
+export async function createEvidencePack({
+  content,
+  bodyHash,
+  media = {},
+  identity = {},
+  channel = 'citizen-talk',
+  clientCaptureMs = Date.now(),
+  testimonyId = null,
+  rfc3161 = null
+}) {
+  const { core, packCoreHash } = await buildPackCore({
+    content,
+    bodyHash,
+    media,
+    identity,
+    channel,
+    clientCaptureMs
+  });
+
+  const firestorePack = toFirestoreEvidencePack(
+    packCoreHash,
+    rfc3161,
+    clientCaptureMs
+  );
+
+  const fullPack = toFullEvidencePack(
+    core,
+    packCoreHash,
+    rfc3161,
+    testimonyId
+  );
+
+  return {
+    firestorePack,
+    fullPack,
+    packCoreHash,
+    core
+  };
+}
+
+/**
+ * Consistent download helper used by evidence-ui.js
+ */
+export function downloadEvidencePack(fullPack, testimonyId) {
+  const id = testimonyId || fullPack?.packId || 'unknown';
+  const filename = `vocalwitness-evidence-${id}.json`;
+  downloadJson(filename, fullPack);
+}
