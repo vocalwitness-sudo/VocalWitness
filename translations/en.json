@@ -252,6 +252,11 @@
   "trustStep2Desc": "Once something is published, it is locked. No one can quietly change or delete the original.",
   "trustStep3Title": "3. We Don’t Control the Narrative",
   "trustStep3Desc": "VocalWitness is a neutral public square. We do not edit posts or push certain stories. The evidence speaks for itself.",
+  "aboutSubtitle": "Your voice. Your truth. Protected.",
+"aboutSubtitleTechnical": "Your Voice. Your Truth. Protected by Design.",
+
+"forensicIntegrityTitle": "Proof Nothing Was Changed",
+"forensicIntegrityTitleTechnical": "Forensic Integrity (SHA-256 + zk-SNARKs)",
   "aboutQuote": "\"In the age of noise, the clearest voice is the one that can prove it was never altered.\"",
   "footerCopyright": "© 2026 VocalWitness • Citizen Reporting • Real Evidence",
 
