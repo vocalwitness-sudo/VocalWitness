@@ -19,7 +19,7 @@ export function initMyTestimonies(containerId) {
 
     container.innerHTML = `<div class="text-center py-12 text-zinc-400">Loading your testimonies...</div>`;
 
-    // Event delegation for download (and future actions)
+    // Event delegation for download
     if (!container.dataset.listenerAttached) {
         container.dataset.listenerAttached = 'true';
         container.addEventListener('click', async (e) => {
@@ -40,7 +40,6 @@ export function initMyTestimonies(containerId) {
 }
 
 function loadUserTestimonies(userId, container) {
-    // Match what main.js actually writes: authorId
     const q = query(
         collection(db, 'testimonies'),
         where('authorId', '==', userId),
@@ -51,7 +50,6 @@ function loadUserTestimonies(userId, container) {
         renderTestimonies(snapshot, container);
     }, (error) => {
         console.error('Snapshot error:', error);
-        // Common cause: missing composite index for authorId + createdAt
         container.innerHTML = `<p class="text-red-400 text-center py-8">Error loading testimonies. Check Firestore index / rules.</p>`;
     });
 }
@@ -83,7 +81,14 @@ function renderTestimonies(snapshot, container) {
     snapshot.forEach((docSnap) => {
         const data = docSnap.data();
         const testimonyId = docSnap.id;
-        myPostsCache.push({ id: testimonyId, ...data });
+        
+        // Cache post including corroboration metrics
+        myPostsCache.push({ 
+            id: testimonyId, 
+            corroborationCount: data.corroborationCount || 0,
+            corroborationScore: data.corroborationScore || 0,
+            ...data 
+        });
 
         const textContent = data.content || data.text || '';
         const dateStr = data.createdAt?.toDate
@@ -92,6 +97,8 @@ function renderTestimonies(snapshot, container) {
 
         const hasPack = !!(data.hasEvidencePack || data.evidencePack || data.packCoreHash);
         const hasHash = !!(data.imageHash || data.audioHash || data.forensicHash || data.hasForensic);
+        
+        const corrobCount = data.corroborationCount || 0;
 
         const div = document.createElement('div');
         div.className = 'glass rounded-3xl p-6 transition-all border border-zinc-800';
@@ -103,6 +110,7 @@ function renderTestimonies(snapshot, container) {
                     <div class="flex flex-wrap items-center gap-2 mb-2">
                         ${hasPack ? renderSealedBadge(true) : ''}
                         ${!hasPack && hasHash ? '<span class="text-[10px] text-emerald-400 border border-emerald-700/40 rounded-full px-2 py-0.5">🔒 Hashed</span>' : ''}
+                        ${corrobCount > 0 ? `<span class="text-[10px] text-cyan-400 border border-cyan-700/40 rounded-full px-2 py-0.5">🤝 ${corrobCount} Corroboration${corrobCount > 1 ? 's' : ''}</span>` : ''}
                     </div>
                     <p class="text-zinc-100 leading-relaxed" id="content-${testimonyId}">${escapeHTML(textContent)}</p>
                     <div class="flex flex-wrap items-center gap-3 mt-4 text-xs text-zinc-400">
@@ -145,6 +153,10 @@ async function handleDownloadEvidencePack(postId) {
                 authorId: post.authorId || null,
                 displayName: post.author || null,
                 phoneOnPublicRecord: false
+            },
+            corroboration: {
+                count: post.corroborationCount || post.evidencePack?.corroboration?.count || 0,
+                score: post.corroborationScore || post.evidencePack?.corroboration?.score || 0
             },
             timestamps: {
                 clientCaptureMs: post.evidencePack?.clientCaptureMs || post.timestamp || Date.now()
@@ -243,7 +255,6 @@ window.deleteTestimony = async (testimonyId) => {
         const ref = doc(db, 'testimonies', testimonyId);
 
         if (isSealed) {
-            // Soft-delete: keep ledger integrity, hide from normal views
             await updateDoc(ref, {
                 isDeleted: true,
                 content: '[This report was removed by the author]',
