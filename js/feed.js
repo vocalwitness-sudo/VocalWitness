@@ -27,6 +27,12 @@ import {
     submitCorroboration, 
     getCorroborationScoreFromDoc 
 } from './corroboration.js';
+import {
+    loadCircle,
+    getCircleAuthorIds,
+    hasCircle,
+    circleEmptyMessage
+} from './circle.js';
 
 let activeFeedListener = null;
 let allPostsCache = [];
