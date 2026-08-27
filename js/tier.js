@@ -550,6 +550,18 @@ export async function canCorroborate(user = null) {
 }
 
 /**
+ * Can the current user corroborate a report?
+ * Requirement: phone-verified or higher (CITIZEN_CIRCLE / WITNESS_CIRCLE)
+ */
+export async function canCorroborate(user = null) {
+  const u = user || auth.currentUser;
+  if (!u) return false;
+
+  const tier = await getCurrentUserTier();
+  return tier === TIERS.CITIZEN_CIRCLE || tier === TIERS.WITNESS_CIRCLE;
+}
+
+/**
  * Weight used for Corroboration Score
  * CITIZEN_CIRCLE = 2, WITNESS_CIRCLE = 3 (or higher based on reputation)
  */
@@ -570,13 +582,3 @@ export async function getUserTierWeight(user = null) {
 
   return 1; // plain Citizen (should never reach here because of canCorroborate)
 }
-
-// Global exports for window context
-window.refreshTierAndUI = refreshTierAndUI;
-window.requireCitizenCirclePermission = requireCitizenCirclePermission;
-window.getCurrentUserTier = getCurrentUserTier;
-window.canAccessFeature = canAccessFeature;
-window.ZK_PAID_SERVICES = ZK_PAID_SERVICES;
-window.getUserTierData = getUserTierData;
-window.canCorroborate = canCorroborate;
-window.getUserTierWeight = getUserTierWeight;
