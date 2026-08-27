@@ -368,25 +368,35 @@ function renderSinglePostDOM(id, data, container) {
         : '';
 
     postEl.innerHTML = `
-        <div class="flex justify-between items-start">
-            <div class="flex items-center gap-3">
-                ${typeof renderTierCircle === 'function' ? renderTierCircle(data.authorTier || 'citizen', data.reputation || 0) : '<span class="text-2xl">👤</span>'}
-                <div>
-                    <div class="flex items-center gap-2 flex-wrap">
-                        <p class="font-semibold text-zinc-100">${authorDisplayName}</p>
-                        ${pinnedBadge}
-                    </div>
-                    ${trustContainer}
-                    <p class="text-xs text-zinc-500 mt-1">${formattedDate}</p>
-                </div>
+            <div class="flex items-center justify-between mt-6 pt-5 border-t border-zinc-800 text-xs flex-wrap gap-3">
+            <div class="flex gap-2 sm:gap-3 flex-wrap items-center">
+                <button data-action="react" data-id="${id}" data-reaction="respect" class="flex items-center gap-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 px-3 py-1.5 rounded-xl text-zinc-300 transition">
+                    👍 <span>${reactions.respect || 0}</span>
+                </button>
+                <button data-action="react" data-id="${id}" data-reaction="truth" class="flex items-center gap-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 px-3 py-1.5 rounded-xl text-zinc-300 transition">
+                    💡 <span>${reactions.truth || 0}</span>
+                </button>
+                <button data-action="comment" data-id="${id}" class="comment-trigger-btn flex items-center gap-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 px-3 py-1.5 rounded-xl text-zinc-300 transition">
+                    💬 <span>${data.commentsCount || 0}</span>
+                </button>
+
+                <!-- ★ THIS IS THE NEW BUTTON -->
+                <button data-action="corroborate" data-id="${id}"
+                    class="corroborate-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium
+                           bg-emerald-600/15 text-emerald-400 border border-emerald-500/30 
+                           hover:bg-emerald-600/25 transition">
+                    👁️ I saw this too
+                </button>
+
+                ${corrScoreHTML}
             </div>
-            <div class="flex items-center gap-2">
-                <button data-action="pin" data-id="${id}" title="Pin Post" class="text-zinc-500 hover:text-amber-400 text-xs transition">📌</button>
-                ${deleteBtnHTML}
-                <button data-action="menu" data-id="${id}" class="text-zinc-400 hover:text-white text-2xl transition">⋯</button>
+
+            <div class="flex gap-4 items-center">
+                ${hasPack ? renderDownloadPackButton(id) : ''}
+                <button data-action="report" data-id="${id}" class="text-red-400 hover:text-red-500 transition">Report</button>
+                <button data-action="share" data-id="${id}" class="text-emerald-400 hover:text-emerald-500 transition">Share</button>
             </div>
         </div>
-
         ${data.content ? `<p class="mt-5 mb-4 text-zinc-100 leading-relaxed">${escapeHTML(data.content)}</p>` : ''}
         ${mediaHTML}
         ${audioHTML}
