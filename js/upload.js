@@ -6,7 +6,7 @@ import { scrubImageMetadata } from './imageScrubber.js';
 import { compressImage } from './media-compression.js';
 import { auth } from './firebase-config.js';
 import { showToast } from './utils.js';
-import { logAuditEvent } from './audit.js'; // or logSecurityAudit depending on your audit module
+import { logAuditEvent } from './audit.js';
 
 const R2_UPLOAD_ENDPOINT = 'https://media.vocalwitness.com/upload';
 const R2_PUBLIC_BASE = 'https://media.vocalwitness.com';
@@ -29,20 +29,26 @@ export async function prepareMediaForUpload(file, options = {}) {
         });
 
         // Optional extra compression if still large
+        let finalFile = cleanFile;
         if (cleanFile.size > 400 * 1024) {
-            return await compressImage(cleanFile, {
+            finalFile = await compressImage(cleanFile, {
                 maxWidth: options.maxWidth || 1600,
                 maxHeight: options.maxHeight || 1600,
                 quality: 0.82
             });
         }
 
-        return cleanFile;
+        // Flag the file object so downstream processors know it's pre-cleaned
+        try {
+            Object.defineProperty(finalFile, 'isCleaned', { value: true, writable: false });
+        } catch (_) {}
+
+        return finalFile;
     }
 
-    // Audio path (you can expand later with processAudioForensics)
+    // Audio path
     if (file.type.startsWith('audio/')) {
-        return file; // or call processAudioForensics(file) when ready
+        return file;
     }
 
     throw new Error('Unsupported media type');
@@ -57,12 +63,19 @@ export async function uploadSecurePhoto(file, folderPath = 'witness_evidence', o
     }
 
     try {
-        showToast('🛡️ Stripping EXIF & location data...', 'info');
+        // Guard: Check if the file is already scrubbed/cleaned to avoid double-processing
+        const isAlreadyClean = Boolean(file.isCleaned) || Boolean(file.name && file.name.includes('_clean'));
 
-        const preparedFile = await prepareMediaForUpload(file, {
-            maxWidth: 1920,
-            maxHeight: 1080
-        });
+        if (!isAlreadyClean) {
+            showToast('🛡️ Stripping EXIF & location data...', 'info');
+        }
+
+        const preparedFile = isAlreadyClean
+            ? file
+            : await prepareMediaForUpload(file, {
+                maxWidth: 1920,
+                maxHeight: 1080
+            });
 
         const uid = auth.currentUser?.uid || 'anonymous';
         const fileId = crypto.randomUUID();
