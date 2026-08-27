@@ -14,6 +14,8 @@ import {
     handleImageSelect
 } from './media.js';
 import { logSecurityAudit } from './audit.js';
+import { prepareAnonymousSubmission } from './onboarding.js';
+import { publishTestimonyOrQueue } from './db.js';
 
 let isSubmitting = false;
 
@@ -150,17 +152,23 @@ async function handleComposerSubmit(e) {
                       document.getElementById('submitBtn') ||
                       document.querySelector('button[type="submit"]');
 
+    const anonymousCheckbox = document.getElementById('post-anonymously') ||
+                              document.getElementById('isAnonymous');
+
     const body = bodyInput?.value.trim() || '';
     const headline = headlineInput?.value.trim() || '';
     const category = categorySelect?.value || 'General';
+    const anonymous = anonymousCheckbox?.checked === true;
 
-    // Determine channel
-    let isWitnessVoice = false;
+    // Determine target feed
+    let targetFeed = 'citizen_talk';
     if (targetFeedSelect) {
-        isWitnessVoice = targetFeedSelect.value === 'witness_voice';
-    } else if (channelToggle) {
-        isWitnessVoice = channelToggle.checked;
+        targetFeed = targetFeedSelect.value;
+    } else if (channelToggle?.checked) {
+        targetFeed = 'witness_voice';
     }
+
+    const isWitnessVoice = targetFeed === 'witness_voice';
 
     // Validation
     if (!headline) {
@@ -177,29 +185,32 @@ async function handleComposerSubmit(e) {
 
     try {
         const userTier = await getUserTier(user.uid);
-        let mediaData = { imageUrl: null, mediaHash: null };
+        let mediaData = { imageUrl: null, mediaHash: null, forensicHash: null, audioUrl: null, audioHash: null };
 
         // Upload media if present
         if (fileInput?.files?.[0]) {
-            // Pipeline scrubs/compresses, then upload.js uploads the result
             const preparedFile = await prepareMediaForUpload(fileInput.files[0]);
-            const uploaded = await uploadMedia(preparedFile); // or uploadForensicMedia(preparedFile)
-            
+            const uploaded = await uploadMedia(preparedFile);
+
             mediaData = {
                 imageUrl: typeof uploaded === 'string' ? uploaded : (uploaded?.imageUrl || null),
-                mediaHash: typeof uploaded?.mediaHash === 'string' ? uploaded.mediaHash : null
+                imageHash: typeof uploaded?.mediaHash === 'string' ? uploaded.mediaHash : null,
+                audioUrl: uploaded?.audioUrl || null,
+                audioHash: uploaded?.audioHash || null,
+                forensicHash: uploaded?.forensicHash || uploaded?.mediaHash || null
             };
         }
 
-        // Unverified users → save as draft when targeting Witness Voice
+        // Unverified users targeting Witness Voice -> Draft flow
         if (isWitnessVoice && userTier.level < 1) {
             await addDoc(collection(db, `users/${user.uid}/drafts`), {
                 headline: headline || null,
                 body,
                 category,
                 imageUrl: mediaData.imageUrl,
-                mediaHash: mediaData.mediaHash,
+                imageHash: mediaData.imageHash,
                 targetChannel: 'witness_voice',
+                isAnonymous: anonymous,
                 createdAt: serverTimestamp()
             });
 
@@ -208,26 +219,29 @@ async function handleComposerSubmit(e) {
             return;
         }
 
-        // Publish
-        const targetCollection = isWitnessVoice ? 'testimonies' : 'posts';
+        // Prepare submission with anonymous privacy payload split
+        const prepared = await prepareAnonymousSubmission(
+            {
+                content: body,
+                headline: headline || null,
+                category,
+                targetFeed,
+                imageUrl: mediaData.imageUrl,
+                audioUrl: mediaData.audioUrl,
+                imageHash: mediaData.imageHash,
+                audioHash: mediaData.audioHash,
+                forensicHash: mediaData.forensicHash
+            },
+            { anonymous }
+        );
 
-        const payload = {
-            authorUid: user.uid,
-            authorName: user.displayName || 'Anonymous',
-            headline: headline || 'Untitled Testimony',
-            body,
-            category,
-            imageUrl: mediaData.imageUrl,
-            mediaHash: mediaData.mediaHash,
-            createdAt: serverTimestamp(),
-            verifiedTier: userTier.level
-        };
-
-        const docRef = await addDoc(collection(db, targetCollection), payload);
+        // Publish public/private payload structure
+        const result = await publishTestimonyOrQueue(prepared);
 
         await logAuditEvent(user.uid, 'POST_CREATED', {
-            docId: docRef.id,
-            channel: targetCollection
+            docId: result?.id || null,
+            channel: targetFeed,
+            isAnonymous: anonymous
         });
 
         showToast('Testimony published successfully!', 'success');
@@ -251,11 +265,13 @@ function resetForm() {
     const bodyInput = document.getElementById('mainInput') || document.getElementById('postBody');
     const previewArea = document.getElementById('preview-area') || document.getElementById('media-preview');
     const fileInput = document.getElementById('media-input') || document.getElementById('photoInput');
+    const anonymousCheckbox = document.getElementById('post-anonymously') || document.getElementById('isAnonymous');
 
     if (form) form.reset();
     if (headlineInput) headlineInput.value = '';
     if (bodyInput) bodyInput.value = '';
     if (fileInput) fileInput.value = '';
+    if (anonymousCheckbox) anonymousCheckbox.checked = false;
 
     if (previewArea) {
         previewArea.innerHTML = '<span class="text-zinc-500 text-sm">Preview will appear here...</span>';
