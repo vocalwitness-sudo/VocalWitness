@@ -26,7 +26,7 @@
             <option value="ar">🇸🇦 العربية</option>
             <option value="es">🇪🇸 Español</option>
             <option value="fr">🇫🇷 Français</option>
-            <option value="sw">🇹ℤ Kiswahili</option>
+            <option value="sw">🇹🇿 Kiswahili</option>
         </select>
       </div>
     </div>
@@ -41,14 +41,14 @@
     <!-- Global Trust Shield Banner -->
     <div class="glass rounded-3xl p-8 mb-10 space-y-4">
       <p class="text-emerald-300 leading-relaxed text-lg" data-i18n="termsIntro">
-        Welcome to VocalWitness — a citizen-powered public square for truth, evidence, and testimony. 
-        By accessing or participating in our protocol, you agree to these Terms of Service.
+        Welcome to VocalWitness — a public square where people can share real testimonies and evidence with strong protection.  
+        By using the platform you agree to these simple rules.
       </p>
       <div class="pt-2 flex flex-wrap items-center gap-3 text-xs text-zinc-300">
-        <span class="text-zinc-400 font-medium" data-i18n="termsSecuredBy">Infrastructure powered by:</span>
+        <span class="text-zinc-400 font-medium" data-i18n="termsSecuredBy">Secured by:</span>
         <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-emerald-400">Google Cloud / Firebase</span>
         <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-amber-400">Cloudflare Edge Shield</span>
-        <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-cyan-400">W3C Web Crypto & ZK Proofs</span>
+        <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-cyan-400">W3C Web Crypto & Zero-Knowledge Proofs</span>
       </div>
     </div>
 
@@ -56,67 +56,106 @@
       
       <!-- Section 1 -->
       <div>
-        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="termsSection1Title">1. Acceptance & Community Covenant</h2>
-        <p data-i18n="termsSection1Text">By creating an account, accessing, or submitting media to VocalWitness, you agree to be legally bound by these Terms and our Privacy Policy. If you do not agree to these terms, you should not access or publish through the platform.</p>
+        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="termsSection1Title">1. Acceptance of These Terms</h2>
+        <p data-i18n="termsSection1Text">
+          By creating an account, posting, or using VocalWitness in any way, you agree to these Terms and our Privacy Policy.  
+          If you do not agree, please do not use the platform.
+        </p>
       </div>
 
       <!-- Section 2 -->
       <div>
-        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="termsSection2Title">2. Our Role: Neutral Distribution & Protocol</h2>
-        <p data-i18n="termsSection2Text">VocalWitness operates as a neutral, un-manipulated distribution medium and public square. We provide decentralized notarization rails and cryptographic media hashing. VocalWitness is not a legal publisher, does not curate editorial stances, and does not function as a court of law or judicial tribunal.</p>
+        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="termsSection2Title">2. Our Role – A Neutral Public Square</h2>
+        <p data-i18n="termsSection2Text">
+          VocalWitness is a neutral platform. We give people tools to publish testimonies and protect evidence with cryptography.  
+          We are not a news publisher, we do not decide what is true, and we are not a court of law.
+        </p>
       </div>
 
       <!-- Section 3 -->
       <div>
-        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="termsSection3Title">3. Architecture & Verification Tiers</h2>
-        <p data-i18n="termsSection3Intro">To prevent automated spam and coordinated network manipulation, VocalWitness employs a layered trust architecture:</p>
-        <ul class="list-disc pl-6 space-y-2 mt-4 text-zinc-400">
-          <li data-i18n="termsTier1"><strong class="text-emerald-400">Citizen Talk:</strong> Open public discourse for registered participants.</li>
-          <li data-i18n="termsTier2"><strong class="text-emerald-400">Trust Circle:</strong> Unlocked via anti-spam verification (e.g., temporary phone check or reputation credentials). Phone numbers are strictly processed for bot-prevention and are never saved or tied to public records.</li>
-          <li data-i18n="termsTier3"><strong class="text-emerald-400">Witness Voice / True Witness:</strong> Advanced notarization tier utilizing client-side SHA-256 media hashing, metadata stripping, and Zero-Knowledge proofs (zk-SNARKs) to establish immutable proof-of-authenticity.</li>
+        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="termsSection3Title">3. Verification Levels (How Trust Works)</h2>
+        <p data-i18n="termsSection3Intro">To keep the square safe from bots and spam, we use simple levels of verification:</p>
+        <ul class="list-disc pl-6 space-y-3 mt-4 text-zinc-400">
+          <li data-i18n="termsTier1">
+            <strong class="text-emerald-400">Citizen Talk</strong> — Open to everyone who signs up. Basic public discussion.
+          </li>
+          <li data-i18n="termsTier2">
+            <strong class="text-emerald-400">Trust Circle</strong> — Unlocked with a temporary phone check (used only to stop spam). Your phone number is never saved on the public ledger.
+          </li>
+          <li data-i18n="termsTier3">
+            <strong class="text-emerald-400">Witness Voice / True Witness</strong> — Highest level. Your media gets a digital fingerprint (SHA-256 hash) on your own device, private details are removed, and Zero-Knowledge proofs help prove the evidence is real without revealing your identity.
+          </li>
         </ul>
       </div>
 
       <!-- Section 4 -->
       <div>
-        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="termsSection4Title">4. User Rights, Voluntary Disclosure & Responsibilities</h2>
-        <p class="mb-4 text-zinc-400" data-i18n="termsSection4Intro">You maintain full agency over your voice and submissions on VocalWitness:</p>
+        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="termsSection4Title">4. Your Rights and Responsibilities</h2>
+        <p class="mb-4 text-zinc-400" data-i18n="termsSection4Intro">You stay in control of your voice. Here are the clear rules:</p>
         <ul class="space-y-4">
-          <li class="flex gap-3"><span class="text-emerald-400">✅</span> <span data-i18n="termsConduct1"><strong>Freedom of Identification:</strong> Speaking on record or attaching your name to a testimony is entirely your voluntary choice.</span></li>
-          <li class="flex gap-3"><span class="text-emerald-400">✅</span> <span data-i18n="termsConduct2"><strong>Good Faith:</strong> You agree to submit evidence and testimonies that you genuinely believe to be truthful and authentic.</span></li>
-          <li class="flex gap-3"><span class="text-red-400">❌</span> <span data-i18n="termsConduct3"><strong>No Harmful Doxxing or Harassment:</strong> You must not post private third-party contact details (e.g., personal phone numbers, home addresses, private banking IDs) or engage in targeted harassment.</span></li>
-          <li class="flex gap-3"><span class="text-red-400">❌</span> <span data-i18n="termsConduct4"><strong>No Malicious Exploitation:</strong> Fabricating synthetic media (deepfakes) to intentionally defame individuals or deploying harmful malware is strictly prohibited.</span></li>
+          <li class="flex gap-3">
+            <span class="text-emerald-400">✅</span> 
+            <span data-i18n="termsConduct1"><strong>Your Choice:</strong> You decide whether to speak publicly or stay more private. Attaching your real name is always voluntary.</span>
+          </li>
+          <li class="flex gap-3">
+            <span class="text-emerald-400">✅</span> 
+            <span data-i18n="termsConduct2"><strong>Be Honest:</strong> Only post testimonies and evidence you genuinely believe are true and authentic.</span>
+          </li>
+          <li class="flex gap-3">
+            <span class="text-red-400">❌</span> 
+            <span data-i18n="termsConduct3"><strong>No Doxxing or Harassment:</strong> Do not share other people’s private contact details, home addresses, or banking information. Targeted harassment is not allowed.</span>
+          </li>
+          <li class="flex gap-3">
+            <span class="text-red-400">❌</span> 
+            <span data-i18n="termsConduct4"><strong>No Fake or Harmful Content:</strong> Creating deepfakes to harm someone, or spreading malware, is strictly forbidden.</span>
+          </li>
         </ul>
       </div>
 
       <!-- Section 5 -->
       <div>
-        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="termsSection5Title">5. Content Ownership & Immutable Ledger License</h2>
-        <p data-i18n="termsSection5Text">You retain full original ownership of your testimonies and media. By publishing on VocalWitness, you grant the platform and its decentralized edge nodes a worldwide, non-exclusive, royalty-free license to archive, display, and notarize your content on the public ledger. Because public testimonies become part of the immutable historical record, notarized content cannot be altered retroactively.</p>
+        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="termsSection5Title">5. Who Owns Your Content</h2>
+        <p data-i18n="termsSection5Text">
+          You keep full ownership of everything you post.  
+          By publishing, you give VocalWitness permission to store, display, and protect your content on the public ledger.  
+          Once something is notarized, it becomes part of a permanent record and cannot be quietly changed later.
+        </p>
       </div>
 
       <!-- Section 6 -->
       <div>
-        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="termsSection6Title">6. Infrastructure & Third-Party Service Providers</h2>
-        <p data-i18n="termsSection6Text">VocalWitness relies on global tier-1 technology partners including <strong>Google Cloud / Firebase</strong> for encrypted data hosting and <strong>Cloudflare</strong> for edge security and DDoS protection. While these enterprise systems provide high availability, VocalWitness is provided on an "as-is" and "as-available" basis.</p>
+        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="termsSection6Title">6. Technology We Use</h2>
+        <p data-i18n="termsSection6Text">
+          We use trusted global services (Google Cloud / Firebase for secure storage and Cloudflare for protection against attacks).  
+          The platform is provided “as is” — we work hard to keep it reliable, but we cannot guarantee it will never have downtime.
+        </p>
       </div>
 
       <!-- Section 7 -->
       <div>
-        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="termsSection7Title">7. Donations, Sponsorship & Non-Custodial Support</h2>
-        <p data-i18n="termsSection7Text">VocalWitness is sustained through voluntary community donations, transparent grants, and direct non-custodial cryptocurrency contributions. Donations are voluntary, non-refundable, and grant no editorial control, special immunity, or ownership over the public protocol.</p>
+        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="termsSection7Title">7. How VocalWitness Stays Free</h2>
+        <p data-i18n="termsSection7Text">
+          The platform is supported by voluntary donations and community contributions (including crypto).  
+          Donations are non-refundable and do not give anyone special control, immunity, or ownership of the platform.
+        </p>
       </div>
 
       <!-- Section 8 -->
       <div>
         <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="termsSection8Title">8. Limitation of Liability</h2>
-        <p data-i18n="termsSection8Text">To the maximum extent permitted by law, VocalWitness, its operators, contributors, and infrastructure providers shall not be held liable for any indirect, incidental, or consequential damages resulting from platform usage, user-submitted content, or network disruptions.</p>
+        <p data-i18n="termsSection8Text">
+          To the fullest extent allowed by law, VocalWitness and its operators are not responsible for any indirect or consequential damages that may arise from using the platform, from content posted by users, or from temporary service interruptions.
+        </p>
       </div>
 
-      <!-- Section 9 (NEW: Trouble-Seeker Shield & Legal Protection) -->
+      <!-- Section 9 -->
       <div>
-        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="termsSection9Title">9. User Indemnification & Dispute Protocol</h2>
-        <p data-i18n="termsSection9Text">You agree to defend, indemnify, and hold harmless VocalWitness and its operators from any legal claims, liabilities, damages, or legal expenses arising from your violation of these Terms or your publication of illegal, defamatory, or infringing material. Any legal disputes or claims against content must be directed through our administrative takedown channel rather than against protocol infrastructure operators.</p>
+        <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="termsSection9Title">9. Your Responsibility for What You Post</h2>
+        <p data-i18n="termsSection9Text">
+          You agree to protect VocalWitness from any legal claims that arise because you broke these rules or posted illegal, defamatory, or infringing material.  
+          If someone has a problem with content, they should use our official reporting and takedown process instead of targeting the platform operators directly.
+        </p>
       </div>
 
     </div>
@@ -129,7 +168,6 @@
 
   </div>
 
-  <!-- Enable Localization on this page -->
   <script type="module">
       import { initLanguage } from './js/i18n.js';
       document.addEventListener('DOMContentLoaded', () => {
