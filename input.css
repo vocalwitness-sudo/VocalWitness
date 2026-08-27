@@ -218,16 +218,54 @@ header h1 {
 }
 
 /* ====================== ACTION BUTTONS ====================== */
+/* Stronger contrast for main action buttons */
+#btn-photo,
+#btn-voice {
+  background-color: #18181b !important;   /* zinc-900 */
+  border: 1px solid #3f3f46 !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  opacity: 1 !important;
+  transition: all 0.2s ease;
+}
+
+#btn-photo {
+  border-color: #10b981 !important;
+  color: #34d399 !important;
+}
+
+#btn-voice {
+  border-color: #f59e0b !important;
+  color: #fbbf24 !important;
+}
+
+#btn-photo:hover,
+#btn-voice:hover {
+  background-color: #27272a !important;
+  transform: scale(1.02);
+}
+
+/* Publish button – force high visibility */
 #postButton {
-  background-color: #059669 !important; /* solid emerald-600 */
+  display: flex !important;
+  background-color: #059669 !important;   /* solid emerald-600 */
   color: #ffffff !important;
   font-weight: 700 !important;
-  opacity: 1 !important;
+  font-size: 1.125rem !important;
+  padding: 1rem !important;
+  margin-top: 1.5rem !important;
   border: none !important;
-  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.4) !important;
-  transition: background-color 0.2s ease;
+  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.45) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transition: background-color 0.2s ease, transform 0.1s ease;
 }
 
 #postButton:hover {
-  background-color: #10b981 !important; /* solid emerald-500 */
+  background-color: #10b981 !important;
+}
+
+#postButton:disabled {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
 }
