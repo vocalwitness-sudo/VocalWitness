@@ -177,6 +177,38 @@
             </section>
 
         </div>
+        <!-- ===================== TECHNICAL DETAILS ===================== -->
+<section class="glass rounded-3xl p-6 md:p-8 mt-10 border border-zinc-700">
+    <h2 class="text-xl font-bold text-zinc-300 mb-6 flex items-center gap-2">
+        <span>⚙️</span> Technical & Legal Details
+    </h2>
+    
+    <div class="space-y-5 text-sm text-zinc-400 leading-relaxed">
+        <div>
+            <h3 class="font-semibold text-emerald-400 mb-1">Client-Side Processing</h3>
+            <p>EXIF metadata, GPS coordinates and device identifiers are stripped in-browser using Canvas / Web Crypto APIs before any upload occurs. Only the cleaned media + SHA-256 digest leave the device.</p>
+        </div>
+        
+        <div>
+            <h3 class="font-semibold text-emerald-400 mb-1">Zero-Knowledge Architecture</h3>
+            <p>Verification uses client-side zk-SNARKs so standing can be proven without revealing underlying credentials or identity. No private keys or identity logs exist on VocalWitness servers.</p>
+        </div>
+
+        <div>
+            <h3 class="font-semibold text-emerald-400 mb-1">What is never stored</h3>
+            <ul class="list-disc pl-5 space-y-1">
+                <li>Origin IP addresses (purged at Cloudflare Edge)</li>
+                <li>Phone numbers on any public or permanent ledger</li>
+                <li>Government IDs, biometrics, or contact graphs</li>
+            </ul>
+        </div>
+
+        <div>
+            <h3 class="font-semibold text-emerald-400 mb-1">Intellectual Property</h3>
+            <p>The VocalWitness platform (software, cryptographic systems, hashing methods, Zero-Knowledge implementation, Evidence Ledger design, interface, branding, name and logo) is the exclusive intellectual property of VocalWitness and is protected by copyright and applicable laws.</p>
+        </div>
+    </div>
+</section>
 
         <section class="pt-8 border-t border-zinc-800 text-center mt-12">
             <a href="index.html" 
