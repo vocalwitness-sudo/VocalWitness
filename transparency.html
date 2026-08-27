@@ -7,6 +7,14 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
     <link rel="icon" href="/logo.png" type="image/png">
+    <style>
+        body { background-color: #0a0f1c; color: #fff; }
+        .glass {
+            background: rgba(17, 24, 39, 0.95);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(16, 185, 129, 0.22);
+        }
+    </style>
 </head>
 <body class="min-h-screen bg-[#0a0f1c] text-white pb-16">
 
@@ -24,9 +32,70 @@
     <div class="text-center mb-12">
         <h2 class="text-4xl font-bold mb-3" data-i18n="transparencyDashboardTitle">Transparency Dashboard</h2>
         <p class="text-emerald-300" data-i18n="liveRealtimeSubtitle">Live • Updated in Real Time</p>
+        <p class="text-xs text-zinc-500 mt-2">Trust metrics, hash-chain health, disputes, and operator accountability</p>
     </div>
 
-    <!-- Stats -->
+    <!-- Batch 5: Trust model metrics -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10" id="trustStatsContainer">
+        <div class="glass rounded-3xl p-6 text-center">
+            <div class="text-3xl font-bold text-zinc-500">—</div>
+            <div class="text-sm text-zinc-400 mt-2">Sealed reports</div>
+        </div>
+        <div class="glass rounded-3xl p-6 text-center">
+            <div class="text-3xl font-bold text-zinc-500">—</div>
+            <div class="text-sm text-zinc-400 mt-2">Hash-chain</div>
+        </div>
+        <div class="glass rounded-3xl p-6 text-center">
+            <div class="text-3xl font-bold text-zinc-500">—</div>
+            <div class="text-sm text-zinc-400 mt-2">Open disputes</div>
+        </div>
+        <div class="glass rounded-3xl p-6 text-center">
+            <div class="text-3xl font-bold text-zinc-500">—</div>
+            <div class="text-sm text-zinc-400 mt-2">Upheld / Rejected</div>
+        </div>
+    </div>
+
+    <!-- Dispute outcomes detail -->
+    <div class="glass rounded-3xl p-8 mb-10">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-semibold">Dispute &amp; Challenge Outcomes</h3>
+            <span class="text-xs bg-amber-950 text-amber-400 border border-amber-800 px-3 py-1 rounded-full">Reputation feed</span>
+        </div>
+        <div id="disputeOutcomes" class="text-sm text-zinc-300">
+            Loading dispute metrics…
+        </div>
+        <p class="text-[11px] text-zinc-500 mt-4 border-t border-zinc-800 pt-3">
+            Challenges that are <strong class="text-zinc-400">upheld</strong> or <strong class="text-zinc-400">rejected</strong> feed the reputation model
+            (corroborations − failed challenges + longevity). Score writes should be server-enforced.
+        </p>
+    </div>
+
+    <!-- Geographic density pilot -->
+    <div class="glass rounded-3xl p-8 mb-10">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-semibold">Focus Regions</h3>
+            <span class="text-xs bg-zinc-900 text-zinc-400 border border-zinc-700 px-3 py-1 rounded-full">Density pilot</span>
+        </div>
+        <p class="text-sm text-zinc-400 mb-4">
+            Batch 5 geographic density: seed real witnesses in 1–2 cities, measure sealed reports and challenges there first.
+        </p>
+        <div id="densityRegions" class="flex flex-wrap gap-2 text-xs mb-4">
+            <span class="px-3 py-1.5 rounded-full border border-emerald-800 bg-emerald-950 text-emerald-300 font-medium">Lagos, NG</span>
+            <span class="px-3 py-1.5 rounded-full border border-emerald-800 bg-emerald-950 text-emerald-300 font-medium">Nairobi, KE</span>
+        </div>
+        <div id="densityStats" class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-zinc-400">
+            <div class="bg-zinc-950/60 border border-zinc-800 rounded-2xl p-4">
+                <div class="text-zinc-500 text-[11px] uppercase tracking-wide mb-1">Lagos (sample)</div>
+                <div id="density-lagos" class="text-white font-semibold">— sealed</div>
+            </div>
+            <div class="bg-zinc-950/60 border border-zinc-800 rounded-2xl p-4">
+                <div class="text-zinc-500 text-[11px] uppercase tracking-wide mb-1">Nairobi (sample)</div>
+                <div id="density-nairobi" class="text-white font-semibold">— sealed</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fund / sustainer stats -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10" id="statsContainer">
         <!-- Populated by JS -->
     </div>
@@ -34,15 +103,15 @@
     <!-- Fund Allocation -->
     <div class="glass rounded-3xl p-8 mb-10">
         <h3 class="text-xl font-semibold mb-6" data-i18n="fundAllocationTitle">Fund Allocation (This Month)</h3>
-        <div id="allocationContainer" class="space-y-6">
-            <!-- Populated by JS -->
+        <div id="allocationContainer" class="space-y-6 text-sm text-zinc-400">
+            <p class="text-zinc-500">Allocation breakdown loads when contribution data is available.</p>
         </div>
     </div>
 
     <!-- Operator Transparency: Ledger Integrity -->
     <div class="glass rounded-3xl p-8 mb-10">
         <div class="flex items-center justify-between mb-6">
-            <h3 class="text-xl font-semibold" data-i18n="ledgerIntegrityTitle">Ledger Integrity & Application-Level Immutability</h3>
+            <h3 class="text-xl font-semibold" data-i18n="ledgerIntegrityTitle">Ledger Integrity &amp; Application-Level Immutability</h3>
             <span class="text-xs bg-emerald-950 text-emerald-400 border border-emerald-800 px-3 py-1 rounded-full">Operator Transparency</span>
         </div>
 
@@ -62,18 +131,22 @@
             </p>
 
             <p class="text-xs text-zinc-500 pt-2 border-t border-zinc-800" data-i18n="ledgerIntegrityFuture">
-                Planned optional strengthening (Batch 1 item 3): periodic cryptographic hashes of the ledger can be exported and pinned to IPFS and/or lightly anchored on a public chain (Polygon or Base). This is not yet active.
+                Planned optional strengthening: periodic cryptographic hashes of the ledger can be exported and pinned to IPFS and/or lightly anchored on a public chain (Polygon or Base). This is not yet active.
             </p>
+
+            <div id="chainHeadDisplay" class="mt-4 p-3 bg-zinc-950 border border-zinc-800 rounded-xl font-mono text-[10px] text-zinc-500 break-all hidden">
+            </div>
         </div>
     </div>
 
     <!-- AI Flag Audit Logs & Dispute Table -->
     <div class="glass rounded-3xl p-8 mb-10">
         <div class="flex items-center justify-between mb-6">
-            <h3 class="text-xl font-semibold">AI Detection Audit Logs & Appeals</h3>
+            <h3 class="text-xl font-semibold">AI Detection Audit Logs &amp; Appeals</h3>
             <span class="text-xs bg-emerald-950 text-emerald-400 border border-emerald-800 px-3 py-1 rounded-full">System Accountability</span>
         </div>
-        
+        <p class="text-xs text-zinc-500 mb-4">Appeals here are for <strong class="text-zinc-400">false-positive synthetic flags</strong>. Testimony challenges use a separate dispute flow (governance).</p>
+
         <div class="overflow-x-auto">
             <table class="w-full text-left text-xs border-collapse">
                 <thead>
@@ -94,18 +167,43 @@
         </div>
     </div>
 
+    <!-- Recent open challenges (public transparency) -->
+    <div class="glass rounded-3xl p-8 mb-10">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-semibold">Recent Testimony Challenges</h3>
+            <span class="text-xs bg-zinc-900 text-zinc-400 border border-zinc-700 px-3 py-1 rounded-full">Governance</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                    <tr class="border-b border-zinc-800 text-zinc-400 uppercase text-[10px]">
+                        <th class="p-3">Dispute ID</th>
+                        <th class="p-3">Testimony</th>
+                        <th class="p-3">Status</th>
+                        <th class="p-3">Created</th>
+                    </tr>
+                </thead>
+                <tbody id="challengesTable" class="divide-y divide-zinc-800/50 text-zinc-300">
+                    <tr>
+                        <td colspan="4" class="p-4 text-center text-zinc-500">Loading challenges…</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     <div class="text-center text-xs text-zinc-500 mt-12">
         <span data-i18n="ledgerFetchNotice">Data is fetched live from our transparent ledger.</span><br>
-        <span data-i18n="lastUpdatedPrefix">Last updated:</span> <span id="lastUpdated"></span>
+        <span data-i18n="lastUpdatedPrefix">Last updated:</span> <span id="lastUpdated">—</span>
     </div>
 </div>
 
-<!-- Dispute & Appeal Modal -->
+<!-- AI Flag Appeal Modal -->
 <div id="appealModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
     <div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 max-w-md w-full space-y-4">
         <h3 class="text-lg font-bold text-white">Dispute False Positive</h3>
         <p class="text-xs text-zinc-400">Request a human or community review for media flagged as synthetic.</p>
-        
+
         <div>
             <label class="text-[11px] text-zinc-400 block mb-1">Target Media Hash</label>
             <input type="text" id="appealHashInput" readonly class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 text-xs text-emerald-400 font-mono" />
@@ -117,7 +215,7 @@
         </div>
 
         <div class="flex justify-end gap-2 pt-2">
-            <button type="button" onclick="document.getElementById('appealModal').classList.add('hidden')" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-xs rounded-xl">Cancel</button>
+            <button type="button" id="cancelAppealBtn" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-xs rounded-xl">Cancel</button>
             <button type="button" id="submitAppealBtn" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold rounded-xl">Submit Dispute</button>
         </div>
     </div>
@@ -125,84 +223,264 @@
 
 <script type="module">
     import { db } from './js/firebase-config.js';
-    import { collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-    import { fetchAIFlagAuditLogs, submitFlagAppeal } from './js/audit.js';
+    import {
+        collection,
+        getDocs,
+        query,
+        orderBy,
+        limit,
+    } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
+    import {
+        fetchAIFlagAuditLogs,
+        submitFlagAppeal,
+        getTransparencyMetrics,
+    } from './js/audit.js';
+    import { listRecentDisputes } from './js/governance.js';
+
+    function escapeHtml(str) {
+        return String(str ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    async function loadTrustMetrics() {
+        const trustEl = document.getElementById('trustStatsContainer');
+        const disputeEl = document.getElementById('disputeOutcomes');
+        const chainHeadEl = document.getElementById('chainHeadDisplay');
+
+        try {
+            const m = await getTransparencyMetrics();
+            const chainLabel =
+                m.chain.status === 'HEALTHY'
+                    ? 'Healthy'
+                    : m.chain.status === 'BREAKS_DETECTED'
+                      ? 'Breaks'
+                      : m.chain.status === 'HEALTHY_SHORT'
+                        ? 'OK (short)'
+                        : m.chain.status || '—';
+
+            const chainClass = m.chain.ok ? 'text-emerald-400' : 'text-red-400';
+
+            if (trustEl) {
+                trustEl.innerHTML = `
+                    <div class="glass rounded-3xl p-6 text-center">
+                        <div class="text-4xl font-bold text-emerald-400">${Number(m.sealedReports || 0).toLocaleString()}</div>
+                        <div class="text-sm text-zinc-400 mt-2">Sealed reports <span class="text-zinc-600">(sample)</span></div>
+                    </div>
+                    <div class="glass rounded-3xl p-6 text-center">
+                        <div class="text-3xl font-bold ${chainClass}">${escapeHtml(chainLabel)}</div>
+                        <div class="text-sm text-zinc-400 mt-2">Hash-chain · ${m.chain.checked || 0} checked${m.chain.breaks ? ` · ${m.chain.breaks} break(s)` : ''}</div>
+                    </div>
+                    <div class="glass rounded-3xl p-6 text-center">
+                        <div class="text-4xl font-bold text-amber-400">${Number(m.disputes.open || 0).toLocaleString()}</div>
+                        <div class="text-sm text-zinc-400 mt-2">Open disputes</div>
+                    </div>
+                    <div class="glass rounded-3xl p-6 text-center">
+                        <div class="text-4xl font-bold text-white">${Number(m.disputes.upheld || 0).toLocaleString()} <span class="text-zinc-600">/</span> ${Number(m.disputes.rejected || 0).toLocaleString()}</div>
+                        <div class="text-sm text-zinc-400 mt-2">Upheld / Rejected</div>
+                    </div>
+                `;
+            }
+
+            if (disputeEl) {
+                disputeEl.innerHTML = `
+                    <ul class="grid grid-cols-2 gap-3 text-zinc-400">
+                        <li class="bg-zinc-950/50 border border-zinc-800 rounded-xl p-3">Open: <span class="text-white font-semibold">${m.disputes.open || 0}</span></li>
+                        <li class="bg-zinc-950/50 border border-zinc-800 rounded-xl p-3">Total: <span class="text-white font-semibold">${m.disputes.total || 0}</span></li>
+                        <li class="bg-zinc-950/50 border border-zinc-800 rounded-xl p-3">Upheld: <span class="text-amber-300 font-semibold">${m.disputes.upheld || 0}</span></li>
+                        <li class="bg-zinc-950/50 border border-zinc-800 rounded-xl p-3">Rejected: <span class="text-emerald-300 font-semibold">${m.disputes.rejected || 0}</span></li>
+                    </ul>
+                `;
+            }
+
+            if (chainHeadEl && m.chain.headHash) {
+                chainHeadEl.classList.remove('hidden');
+                chainHeadEl.textContent = `Chain head (newest forensicHash): ${m.chain.headHash}`;
+            }
+
+            if (m.density) {
+                const lagos = document.getElementById('density-lagos');
+                const nairobi = document.getElementById('density-nairobi');
+                if (lagos) lagos.textContent = `${m.density.lagos ?? 0} sealed`;
+                if (nairobi) nairobi.textContent = `${m.density.nairobi ?? 0} sealed`;
+            }
+
+            const lastUpdatedEl = document.getElementById('lastUpdated');
+            if (lastUpdatedEl) {
+                lastUpdatedEl.textContent = new Date(m.updatedAt || Date.now()).toLocaleString();
+            }
+        } catch (e) {
+            console.error('Trust metrics error:', e);
+            if (trustEl) trustEl.innerHTML = `<div class="col-span-full text-center text-red-400 text-sm">Unable to load trust metrics.</div>`;
+            if (disputeEl) disputeEl.textContent = 'Dispute metrics unavailable.';
+        }
+    }
 
     async function loadTransparencyData() {
+        const statsEl = document.getElementById('statsContainer');
         try {
-            const contributionsRef = collection(db, "contributions");
-            const snapshot = await getDocs(query(contributionsRef, orderBy("timestamp", "desc"), limit(50)));
+            const contributionsRef = collection(db, 'contributions');
+            const snapshot = await getDocs(
+                query(contributionsRef, orderBy('timestamp', 'desc'), limit(50))
+            );
 
             let totalUSD = 0;
-            snapshot.forEach(doc => {
-                totalUSD += doc.data().amountUSD || 0;
+            snapshot.forEach((docSnap) => {
+                totalUSD += docSnap.data().amountUSD || 0;
             });
 
-            document.getElementById('statsContainer').innerHTML = `
-                <div class="glass rounded-3xl p-6 text-center">
-                    <div class="text-5xl font-bold text-emerald-400">$${totalUSD.toFixed(0)}</div>
-                    <div class="text-sm text-zinc-400 mt-2" data-i18n="totalContributions">Total Contributions</div>
-                </div>
-                <div class="glass rounded-3xl p-6 text-center">
-                    <div class="text-5xl font-bold">${snapshot.size}</div>
-                    <div class="text-sm text-zinc-400 mt-2" data-i18n="activeSustainers">Active Sustainers</div>
-                </div>
-                <div class="glass rounded-3xl p-6 text-center">
-                    <div class="text-5xl font-bold text-amber-400">94%</div>
-                    <div class="text-sm text-zinc-400 mt-2" data-i18n="utilizationRate">Utilization Rate</div>
-                </div>
-            `;
-
-            document.getElementById('lastUpdated').textContent = new Date().toLocaleDateString();
-
+            if (statsEl) {
+                statsEl.innerHTML = `
+                    <div class="glass rounded-3xl p-6 text-center">
+                        <div class="text-5xl font-bold text-emerald-400">$${totalUSD.toFixed(0)}</div>
+                        <div class="text-sm text-zinc-400 mt-2" data-i18n="totalContributions">Total Contributions</div>
+                    </div>
+                    <div class="glass rounded-3xl p-6 text-center">
+                        <div class="text-5xl font-bold">${snapshot.size}</div>
+                        <div class="text-sm text-zinc-400 mt-2" data-i18n="activeSustainers">Active Sustainers</div>
+                    </div>
+                    <div class="glass rounded-3xl p-6 text-center">
+                        <div class="text-5xl font-bold text-amber-400">—</div>
+                        <div class="text-sm text-zinc-400 mt-2" data-i18n="utilizationRate">Utilization Rate</div>
+                    </div>
+                `;
+            }
         } catch (e) {
             console.error(e);
-            document.getElementById('transparencyContent').innerHTML += `<p class="text-red-400 text-center mt-8" data-i18n="loadErrorNotice">Unable to load live data at the moment.</p>`;
+            if (statsEl) {
+                statsEl.innerHTML = `
+                    <p class="text-zinc-500 text-sm col-span-full text-center">Contribution data unavailable.</p>
+                `;
+            }
         }
     }
 
     async function loadAIAuditLogs() {
         const tableBody = document.getElementById('aiAuditLogsTable');
-        const logs = await fetchAIFlagAuditLogs();
+        if (!tableBody) return;
 
-        if (!logs || logs.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-zinc-500">No media currently flagged as synthetic.</td></tr>`;
-            return;
+        try {
+            const logs = await fetchAIFlagAuditLogs();
+
+            if (!logs || logs.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-zinc-500">No media currently flagged as synthetic.</td></tr>`;
+                return;
+            }
+
+            tableBody.innerHTML = logs
+                .map((log) => {
+                    const rawHash = log.mediaHash || log.id || '';
+                    const hash = escapeHtml(rawHash);
+                    const conf = ((log.confidenceScore || 0) * 100).toFixed(1);
+                    const confClass = (log.confidenceScore || 0) > 0.8 ? 'text-red-400' : 'text-amber-400';
+                    const status = escapeHtml(log.status || 'QUARANTINED');
+                    const statusClass =
+                        log.status === 'APPEAL_PENDING'
+                            ? 'bg-amber-950 text-amber-300 border-amber-800'
+                            : log.status === 'REINSTATED'
+                              ? 'bg-emerald-950 text-emerald-300 border-emerald-800'
+                              : 'bg-red-950 text-red-300 border-red-800';
+                    const canAppeal = log.status !== 'APPEAL_PENDING' && log.status !== 'REINSTATED';
+
+                    return `
+                <tr>
+                    <td class="p-3 font-mono text-emerald-400 truncate max-w-[120px]" title="${hash}">${hash}</td>
+                    <td class="p-3 font-bold ${confClass}">${conf}%</td>
+                    <td class="p-3 text-zinc-400">${escapeHtml(log.detectorModel || 'Engine')}</td>
+                    <td class="p-3">
+                        <span class="px-2 py-0.5 text-[10px] rounded-full border ${statusClass}">${status}</span>
+                    </td>
+                    <td class="p-3 text-right">
+                        ${
+                            canAppeal
+                                ? `<button type="button" data-appeal-hash="${hash}" class="appeal-btn px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-[10px] rounded-lg transition">Appeal</button>`
+                                : `<span class="text-zinc-500 text-[10px]">Under Review</span>`
+                        }
+                    </td>
+                </tr>`;
+                })
+                .join('');
+
+            tableBody.querySelectorAll('.appeal-btn').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    openAppealModal(btn.getAttribute('data-appeal-hash'));
+                });
+            });
+        } catch (e) {
+            console.error(e);
+            tableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-400">Failed to load AI logs.</td></tr>`;
         }
-
-        tableBody.innerHTML = logs.map(log => `
-            <tr>
-                <td class="p-3 font-mono text-emerald-400 truncate max-w-[120px]">${log.mediaHash || log.id}</td>
-                <td class="p-3 font-bold ${log.confidenceScore > 0.8 ? 'text-red-400' : 'text-amber-400'}">${((log.confidenceScore || 0) * 100).toFixed(1)}%</td>
-                <td class="p-3 text-zinc-400">${log.detectorModel || 'Engine'}</td>
-                <td class="p-3">
-                    <span class="px-2 py-0.5 text-[10px] rounded-full border ${
-                        log.status === 'APPEAL_PENDING' ? 'bg-amber-950 text-amber-300 border-amber-800' :
-                        log.status === 'REINSTATED' ? 'bg-emerald-950 text-emerald-300 border-emerald-800' :
-                        'bg-red-950 text-red-300 border-red-800'
-                    }">
-                        ${log.status || 'QUARANTINED'}
-                    </span>
-                </td>
-                <td class="p-3 text-right">
-                    ${log.status !== 'APPEAL_PENDING' && log.status !== 'REINSTATED' ? `
-                        <button onclick="openAppealModal('${log.mediaHash || log.id}')" class="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-[10px] rounded-lg transition">
-                            Appeal
-                        </button>
-                    ` : '<span class="text-zinc-500 text-[10px]">Under Review</span>'}
-                </td>
-            </tr>
-        `).join('');
     }
 
-    window.openAppealModal = (mediaHash) => {
-        document.getElementById('appealHashInput').value = mediaHash;
-        document.getElementById('appealModal').classList.remove('hidden');
-    };
+    async function loadChallengesTable() {
+        const tbody = document.getElementById('challengesTable');
+        if (!tbody) return;
+
+        try {
+            const rows = await listRecentDisputes(25);
+            if (!rows.length) {
+                tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-zinc-500">No testimony challenges yet.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = rows
+                .map((d) => {
+                    const id = escapeHtml((d.id || '').substring(0, 10));
+                    const tid = escapeHtml((d.testimonyId || '—').substring(0, 12));
+                    const status = escapeHtml(d.status || 'OPEN');
+                    let created = '—';
+                    if (d.createdAt?.toDate) created = d.createdAt.toDate().toLocaleDateString();
+                    else if (d.createdAtClient) created = new Date(d.createdAtClient).toLocaleDateString();
+
+                    const stClass =
+                        status === 'OPEN' || status === 'PENDING'
+                            ? 'text-amber-300'
+                            : status === 'UPHELD'
+                              ? 'text-amber-400'
+                              : status === 'REJECTED'
+                                ? 'text-emerald-400'
+                                : 'text-zinc-400';
+
+                    return `
+                <tr>
+                    <td class="p-3 font-mono text-zinc-400">${id}…</td>
+                    <td class="p-3 font-mono text-emerald-400/90">${tid}…</td>
+                    <td class="p-3 font-semibold ${stClass}">${status}</td>
+                    <td class="p-3 text-zinc-500">${created}</td>
+                </tr>`;
+                })
+                .join('');
+        } catch (e) {
+            console.error(e);
+            tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-zinc-500">Challenges unavailable (collection or rules).</td></tr>`;
+        }
+    }
+
+    function openAppealModal(mediaHash) {
+        const hashInput = document.getElementById('appealHashInput');
+        const modal = document.getElementById('appealModal');
+        if (hashInput && modal) {
+            hashInput.value = mediaHash || '';
+            modal.classList.remove('hidden');
+        }
+    }
+
+    document.getElementById('cancelAppealBtn')?.addEventListener('click', () => {
+        const modal = document.getElementById('appealModal');
+        if (modal) modal.classList.add('hidden');
+    });
 
     document.getElementById('submitAppealBtn')?.addEventListener('click', async () => {
-        const hash = document.getElementById('appealHashInput').value;
-        const justification = document.getElementById('appealJustificationInput').value.trim();
+        const hashInput = document.getElementById('appealHashInput');
+        const justificationInput = document.getElementById('appealJustificationInput');
+
+        if (!hashInput || !justificationInput) return;
+
+        const hash = hashInput.value;
+        const justification = justificationInput.value.trim();
 
         if (!justification) {
             alert('Please provide a justification for your appeal.');
@@ -211,14 +489,25 @@
 
         const success = await submitFlagAppeal(hash, justification);
         if (success) {
-            document.getElementById('appealModal').classList.add('hidden');
-            document.getElementById('appealJustificationInput').value = '';
+            document.getElementById('appealModal')?.classList.add('hidden');
+            justificationInput.value = '';
             loadAIAuditLogs();
+        } else {
+            alert('Appeal failed. You may need to be signed in, or the flag record may be missing.');
         }
     });
 
+    // Refresh metrics on offline sync events broadcast from js/db.js
+    window.addEventListener('vocalWitness:posted', () => {
+        loadTrustMetrics();
+        loadChallengesTable();
+    });
+
+    // Initial load
+    loadTrustMetrics();
     loadTransparencyData();
     loadAIAuditLogs();
+    loadChallengesTable();
 </script>
 
 </body>
