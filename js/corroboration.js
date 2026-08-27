@@ -1,5 +1,6 @@
 // js/corroboration.js
 // Corroboration Engine – “I saw this too”
+// Batch 3: notify report owner on successful corroboration
 
 import { auth, db } from './firebase-config.js';
 import {
@@ -11,6 +12,7 @@ import { showToast } from './utils.js';
 import { canCorroborate, getUserTierWeight } from './tier.js';
 import { uploadEvidenceMedia } from './storage.js';   // or your existing upload helper
 import { computeSHA256 } from './utils.js';           // adjust name if different
+import { notifyCorroboration } from './notifications.js';
 
 const CORROBORATIONS = 'corroborations';
 const TESTIMONIES   = 'testimonies';
@@ -106,6 +108,15 @@ export async function submitCorroboration(testimonyId, opts = {}) {
   });
 
   await batch.commit();
+
+  // 3. High-signal notification to report owner (non-blocking)
+  if (testimony.authorId) {
+    try {
+      await notifyCorroboration(testimony.authorId, user.uid, testimonyId);
+    } catch (err) {
+      console.warn("Corroboration notification failed (non-fatal):", err);
+    }
+  }
 
   showToast("🛡️ Corroboration sealed", "success");
   return corrRef.id;
