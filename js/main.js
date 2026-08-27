@@ -665,6 +665,23 @@ document.addEventListener('DOMContentLoaded', () => {
   initHeaderSearch();
 });
 
+  // ====================== FOCUS BANNER (Batch 1) ======================
+function initFocusBanner() {
+    const banner = document.getElementById('focus-banner');
+    const dismiss = document.getElementById('dismiss-focus-banner');
+    if (!banner) return;
+
+    if (localStorage.getItem('vw_focus_banner_dismissed') === '1') {
+        banner.classList.add('hidden');
+        return;
+    }
+
+    dismiss?.addEventListener('click', () => {
+        banner.classList.add('hidden');
+        localStorage.setItem('vw_focus_banner_dismissed', '1');
+    });
+}
+
 // ====================== COMPOSER WIRING (matches current index.html IDs) ======================
 function wireTestimonyComposer() {
     // Create hidden file input if it doesn't exist
@@ -753,8 +770,9 @@ async function bootstrap() {
         // 3. Static module setups
         setupEventListeners();
         initLanguage?.();
-        initProfile?.();   // Profile logic lives in profile.js
-
+        initProfile?.();   
+      nitFocusBanner();
+      
         if (typeof CitizenTalkEngine === 'function') {
             engineInstance = new CitizenTalkEngine(db, storage);
             window.engineInstance = engineInstance;
