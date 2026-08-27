@@ -6,41 +6,28 @@
     <title data-i18n="aboutPageTitle">About VocalWitness • Citizen Reporting</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { 
-            font-family: 'Inter', system-ui, sans-serif; 
-            background: #0a0f1c; 
-            color: #e4e4e7; 
-        }
-        .glass { 
-            background: rgba(17, 24, 39, 0.95); 
-            backdrop-filter: blur(20px); 
-            border: 1px solid rgba(16, 185, 129, 0.25); 
-        }
-        .badge-glass { 
-            background: rgba(31, 41, 55, 0.6); 
-            border: 1px solid rgba(255, 255, 255, 0.1); 
-        }
+        body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: #e4e4e7; }
+        .glass { background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(16, 185, 129, 0.25); }
+        .badge-glass { background: rgba(31, 41, 55, 0.6); border: 1px solid rgba(255, 255, 255, 0.1); }
     </style>
 </head>
 <body class="min-h-screen p-6 md:p-12 pb-24">
 
     <div class="max-w-3xl mx-auto">
         
-        <!-- Header with Language Selector & Back to Home -->
+        <!-- Header -->
         <div class="flex items-center justify-between mb-10 glass rounded-3xl p-4">
             <div class="flex items-center gap-3">
-                <a href="index.html" class="w-10 h-10 bg-emerald-500/20 rounded-2xl flex items-center justify-center text-xl hover:bg-emerald-500/30 transition" aria-label="Back to home">⬅️</a>
+                <a href="index.html" class="w-10 h-10 bg-emerald-500/20 rounded-2xl flex items-center justify-center text-xl hover:bg-emerald-500/30 transition">⬅️</a>
                 <h1 class="text-2xl font-bold tracking-tight text-white" data-i18n="appTitle">VocalWitness</h1>
             </div>
-            <div class="flex items-center gap-3">
-                <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-4 py-2 text-sm focus:outline-none focus:border-emerald-500">
-                    <option value="en">🇬🇧 English</option>
-                    <option value="ar">🇸🇦 العربية</option>
-                    <option value="es">🇪🇸 Español</option>
-                    <option value="fr">🇫🇷 Français</option>
-                    <option value="sw">🇹🇿 Kiswahili</option>
-                </select>
-            </div>
+            <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-4 py-2 text-sm focus:outline-none focus:border-emerald-500">
+                <option value="en">🇬🇧 English</option>
+                <option value="ar">🇸🇦 العربية</option>
+                <option value="es">🇪🇸 Español</option>
+                <option value="fr">🇫🇷 Français</option>
+                <option value="sw">🇹🇿 Kiswahili</option>
+            </select>
         </div>
 
         <header class="mb-10">
@@ -48,107 +35,138 @@
             <p class="text-xl text-zinc-400" data-i18n="aboutSubtitle">Your voice. Your truth. Protected.</p>
         </header>
 
-        <!-- Mission & Infrastructure Banner -->
+        <!-- Friendly Mission -->
         <section class="glass rounded-3xl p-8 mb-8 space-y-6">
             <div>
-                <h2 class="text-2xl font-bold text-emerald-400 mb-4" data-i18n="ourMission">What is VocalWitness?</h2>
-                <p class="leading-relaxed mb-4 text-zinc-200" data-i18n="missionPara1">
+                <h2 class="text-2xl font-bold text-emerald-400 mb-4">What is VocalWitness?</h2>
+                <p class="leading-relaxed mb-4 text-zinc-200">
                     VocalWitness is a simple public square where anyone can share what they saw or experienced — with proof that it hasn’t been changed.
                 </p>
-                <p class="leading-relaxed text-zinc-300" data-i18n="missionPara2">
+                <p class="leading-relaxed text-zinc-300">
                     In a world full of edited videos and fake news, we give ordinary people a safe place to publish photos, voice notes, and reports. Everything is protected so the evidence stays trustworthy and your privacy stays intact.
                 </p>
             </div>
 
             <div class="pt-4 border-t border-zinc-800 flex flex-wrap items-center gap-3 text-xs text-zinc-300">
-                <span class="text-zinc-400 font-medium" data-i18n="aboutSecuredBy">Protected by strong technology:</span>
+                <span class="text-zinc-400 font-medium">Protected by strong technology:</span>
                 <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-emerald-400">Google Cloud / Firebase</span>
                 <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-amber-400">Cloudflare Edge Shield</span>
-                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-cyan-400">W3C Web Crypto & Zero-Knowledge</span>
+                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-cyan-400">Web Crypto & Zero-Knowledge</span>
             </div>
         </section>
 
-        <!-- Core Pillars Grid -->
+        <!-- Friendly Pillars -->
         <section class="grid md:grid-cols-2 gap-6 mb-12">
             <div class="glass rounded-3xl p-6">
                 <div class="text-4xl mb-4">🔬</div>
-                <h3 class="font-bold text-white mb-2" data-i18n="forensicIntegrityTitle">Proof Nothing Was Changed</h3>
-                <p class="text-zinc-400 text-sm leading-relaxed" data-i18n="forensicIntegrityDesc">
+                <h3 class="font-bold text-white mb-2">Proof Nothing Was Changed</h3>
+                <p class="text-zinc-400 text-sm leading-relaxed">
                     Every photo, voice note and document gets a unique digital fingerprint on your device before upload. Others can confirm it is real without seeing your private details.
                 </p>
             </div>
             
             <div class="glass rounded-3xl p-6">
                 <div class="text-4xl mb-4">🛡️</div>
-                <h3 class="font-bold text-white mb-2" data-i18n="privacyFirstTitle">Your Privacy Comes First</h3>
-                <p class="text-zinc-400 text-sm leading-relaxed" data-i18n="privacyFirstDesc">
+                <h3 class="font-bold text-white mb-2">Your Privacy Comes First</h3>
+                <p class="text-zinc-400 text-sm leading-relaxed">
                     Speaking out is always your choice. We automatically remove location and device information. Phone checks are only temporary to stop spam and are never stored publicly.
                 </p>
             </div>
 
             <div class="glass rounded-3xl p-6">
                 <div class="text-4xl mb-4">🌍</div>
-                <h3 class="font-bold text-white mb-2" data-i18n="communityStewardshipTitle">Community, Not Control</h3>
-                <p class="text-zinc-400 text-sm leading-relaxed" data-i18n="communityStewardshipDesc">
+                <h3 class="font-bold text-white mb-2">Community, Not Control</h3>
+                <p class="text-zinc-400 text-sm leading-relaxed">
                     No single person decides what is true. Trust grows through honest participation and clear reputation. We stay neutral.
                 </p>
             </div>
 
             <div class="glass rounded-3xl p-6">
                 <div class="text-4xl mb-4">🤝</div>
-                <h3 class="font-bold text-white mb-2" data-i18n="communitySupportedTitle">Free Forever for Everyone</h3>
-                <p class="text-zinc-400 text-sm leading-relaxed" data-i18n="communitySupportedDesc">
+                <h3 class="font-bold text-white mb-2">Free Forever for Everyone</h3>
+                <p class="text-zinc-400 text-sm leading-relaxed">
                     VocalWitness is kept alive by voluntary support. There are no ads, no paywalls, and no premium features locked behind payment.
                 </p>
             </div>
         </section>
 
-        <!-- How We Build Trust -->
-        <section class="glass rounded-3xl p-8 mb-12">
-            <h2 class="text-2xl font-bold text-emerald-400 mb-6" data-i18n="howWeBuildTrust">How Trust Works Here</h2>
+        <!-- How Trust Works (Friendly) -->
+        <section class="glass rounded-3xl p-8 mb-8">
+            <h2 class="text-2xl font-bold text-emerald-400 mb-6">How Trust Works Here</h2>
             <div class="space-y-6">
                 <div>
-                    <h3 class="font-semibold text-white mb-2" data-i18n="trustStep1Title">1. Start Simple, Grow Stronger</h3>
-                    <p class="text-zinc-400 text-sm leading-relaxed" data-i18n="trustStep1Desc">
+                    <h3 class="font-semibold text-white mb-2">1. Start Simple, Grow Stronger</h3>
+                    <p class="text-zinc-400 text-sm leading-relaxed">
                         Everyone begins as a Citizen. You can raise your level with simple checks. Higher levels unlock stronger protection.
                     </p>
                 </div>
                 <div>
-                    <h3 class="font-semibold text-white mb-2" data-i18n="trustStep2Title">2. Protected Public Record</h3>
-                    <p class="text-zinc-400 text-sm leading-relaxed" data-i18n="trustStep2Desc">
+                    <h3 class="font-semibold text-white mb-2">2. Protected Public Record</h3>
+                    <p class="text-zinc-400 text-sm leading-relaxed">
                         Once something is published, it is locked. No one can quietly change or delete the original.
                     </p>
                 </div>
                 <div>
-                    <h3 class="font-semibold text-white mb-2" data-i18n="trustStep3Title">3. We Don’t Control the Narrative</h3>
-                    <p class="text-zinc-400 text-sm leading-relaxed" data-i18n="trustStep3Desc">
+                    <h3 class="font-semibold text-white mb-2">3. We Don’t Control the Narrative</h3>
+                    <p class="text-zinc-400 text-sm leading-relaxed">
                         VocalWitness is a neutral public square. We do not edit posts or push certain stories. The evidence speaks for itself.
                     </p>
                 </div>
             </div>
         </section>
 
+        <!-- ===================== TECHNICAL DETAILS (lower) ===================== -->
+        <section class="glass rounded-3xl p-8 mb-12 border border-zinc-700">
+            <h2 class="text-xl font-bold text-zinc-300 mb-6 flex items-center gap-2">
+                <span>⚙️</span> Technical Details (for journalists, researchers & developers)
+            </h2>
+            
+            <div class="space-y-6 text-sm text-zinc-400">
+                <div>
+                    <h3 class="font-semibold text-emerald-400 mb-1">Cryptographic Integrity</h3>
+                    <p>All media receives a local <strong>SHA-256</strong> cryptographic hash before upload. Entries are hash-chained (<code>prevHash + hash</code>). Zero-Knowledge proofs (zk-SNARKs) allow verification of authenticity without revealing private identifiers.</p>
+                </div>
+                
+                <div>
+                    <h3 class="font-semibold text-emerald-400 mb-1">Privacy Architecture</h3>
+                    <p>Client-side EXIF/GPS scrubbing • No IP logging (Cloudflare Edge) • Ephemeral phone verification (never stored on public ledger) • Zero-Knowledge Subpoena Defense design.</p>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold text-emerald-400 mb-1">Trust Tiers</h3>
+                    <p>
+                        • <strong>Open Talk / Citizen Talk</strong> – basic participation<br>
+                        • <strong>Citizen Circle</strong> – temporary phone verification (anti-spam only)<br>
+                        • <strong>Higher Trust / True Witness / Witness Voice</strong> – full cryptographic notarization + ZK proofs
+                    </p>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold text-emerald-400 mb-1">Immutability Model</h3>
+                    <p>Application-level immutability enforced by Firestore security rules + client-side hashing + hash-chaining. This is <em>not</em> a full public blockchain. Optional future IPFS / public-chain anchoring is planned but not yet active.</p>
+                </div>
+            </div>
+        </section>
+
         <section class="text-center mb-12">
-            <p class="text-emerald-300 italic text-lg" data-i18n="aboutQuote">
+            <p class="text-emerald-300 italic text-lg">
                 “In the age of noise, the clearest voice is the one that can prove it was never altered.”
             </p>
         </section>
 
         <footer class="text-center pt-8 border-t border-zinc-800 text-xs text-zinc-500">
-            <p data-i18n="footerCopyright">© 2026 VocalWitness • Citizen Reporting • Real Evidence</p>
+            <p>© 2026 VocalWitness • Citizen Reporting • Real Evidence</p>
             <p class="mt-2">
-                <a href="privacy.html" class="hover:text-zinc-300" data-i18n="privacy">Privacy</a> • 
-                <a href="terms.html" class="hover:text-zinc-300" data-i18n="terms">Terms</a> • 
-                <a href="safety.html" class="hover:text-zinc-300" data-i18n="safety">Safety</a>
+                <a href="privacy.html" class="hover:text-zinc-300">Privacy</a> • 
+                <a href="terms.html" class="hover:text-zinc-300">Terms</a> • 
+                <a href="safety.html" class="hover:text-zinc-300">Safety</a>
             </p>
         </footer>
     </div>
 
     <script type="module">
         import { initLanguage } from './js/i18n.js';
-        document.addEventListener('DOMContentLoaded', () => {
-            initLanguage();
-        });
+        document.addEventListener('DOMContentLoaded', () => initLanguage());
     </script>
 </body>
 </html>
