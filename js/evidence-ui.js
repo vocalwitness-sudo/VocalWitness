@@ -31,9 +31,8 @@ export function renderDownloadPackButton(testimonyId) {
 }
 
 /**
- * Optional global click handler.
- * Prefer handling the action inside feed.js (cleaner).
- * Keep this only if you want a fallback.
+ * Optional global click handler fallback.
+ * Primary handling is delegated to js/feed.js.
  */
 export function initEvidencePackUI() {
   document.addEventListener('click', async (e) => {
