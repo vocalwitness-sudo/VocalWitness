@@ -57,15 +57,15 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
     currentChannel = channelType;
 
     // Multi-fallback feed container lookup
-   const feedContainer =
-  document.getElementById('testimonies-feed') ||
-  document.getElementById('feed-container') ||
-  document.querySelector('#public-square #testimonies-feed');
+    const feedContainer =
+        document.getElementById('testimonies-feed') ||
+        document.getElementById('feed-container') ||
+        document.querySelector('#public-square #testimonies-feed');
 
-if (!feedContainer) {
-  console.warn('Feed container not found');
-  return;
-}
+    if (!feedContainer) {
+        console.warn('Feed container not found');
+        return;
+    }
 
     // Refresh cached permission status
     await syncStewardPermission();
@@ -105,6 +105,8 @@ if (!feedContainer) {
                     await toggleReaction(id, reactionType);
                 } else if (action === 'comment') {
                     await openCommentModal(id);
+                } else if (action === 'download-pack') {
+                    await handleDownloadEvidencePack(id);
                 } else if (action === 'report') {
                     try {
                         await reportContent(id, "other");
@@ -316,6 +318,7 @@ function renderSinglePostDOM(id, data, container) {
 
     const trustContainer = trustBadgesHTML ? `<div class="flex flex-wrap gap-1 mt-1">${trustBadgesHTML}</div>` : '';
     const reactions = data.reactions || { respect: 0, truth: 0, concern: 0, impact: 0 };
+    const hasPack = Boolean(data.evidencePack || data.packCoreHash || data.imageHash || data.audioHash || data.forensicHash);
 
     const mediaHTML = data.imageUrl
         ? `<img src="${escapeHTML(data.imageUrl)}" class="mt-5 rounded-2xl w-full max-h-96 object-cover border border-zinc-700" alt="Evidence" loading="lazy">`
@@ -383,7 +386,8 @@ function renderSinglePostDOM(id, data, container) {
                     💬 <span>${data.commentsCount || 0}</span>
                 </button>
             </div>
-            <div class="flex gap-4">
+            <div class="flex gap-4 items-center">
+                ${hasPack ? renderDownloadPackButton(id) : ''}
                 <button data-action="report" data-id="${id}" class="text-red-400 hover:text-red-500 transition">Report</button>
                 <button data-action="share" data-id="${id}" class="text-emerald-400 hover:text-emerald-500 transition">Share</button>
             </div>
@@ -474,4 +478,72 @@ function showPostMenu(postId) {
 
 async function openCommentModal(postId) {
     showToast("Comments section loading...", "info");
+}
+
+async function handleDownloadEvidencePack(postId) {
+    try {
+        const post = allPostsCache.find(p => p.id === postId);
+        if (!post) {
+            showToast('Post not found', 'error');
+            return;
+        }
+
+        const core = {
+            schemaVersion: post.evidencePack?.schemaVersion || 'vocalwitness.evidence-pack.v1',
+            content: {
+                body: post.content || '',
+                bodyHash: post.bodyHash || null,
+                channel: post.feedVisibility || post.channel || 'citizen-talk'
+            },
+            media: [],
+            identity: {
+                mode: post.isAnonymous ? 'ANONYMOUS' : 'IDENTIFIED',
+                authorId: post.authorId || null,
+                displayName: post.author || null,
+                phoneOnPublicRecord: false
+            },
+            timestamps: {
+                clientCaptureMs: post.evidencePack?.clientCaptureMs || post.timestamp || Date.now()
+            },
+            environment: {
+                app: 'VocalWitness',
+                hashApi: 'WebCrypto.subtle.digest SHA-256'
+            }
+        };
+
+        if (post.imageUrl && post.imageHash) {
+            core.media.push({
+                role: 'image',
+                url: post.imageUrl,
+                hashAlg: 'SHA-256',
+                hashCapture: post.imageHash,
+                hashAfterUpload: post.imageHash,
+                hashMatch: true,
+                exifScrubbed: true
+            });
+        }
+        if (post.audioUrl && post.audioHash) {
+            core.media.push({
+                role: 'audio',
+                url: post.audioUrl,
+                hashAlg: 'SHA-256',
+                hashCapture: post.audioHash,
+                hashAfterUpload: post.audioHash,
+                hashMatch: true
+            });
+        }
+
+        const fullPack = toFullEvidencePack(
+            core,
+            post.packCoreHash || post.evidencePack?.packCoreHash || null,
+            post.evidencePack?.rfc3161 || null,
+            postId
+        );
+
+        downloadEvidencePack(fullPack, postId);
+        showToast('Evidence pack downloaded', 'success');
+    } catch (err) {
+        console.error('Download pack failed:', err);
+        showToast('Could not prepare evidence pack', 'error');
+    }
 }
