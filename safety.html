@@ -15,13 +15,14 @@
 <body class="min-h-screen p-6 md:p-12 pb-24">
     <div class="max-w-3xl mx-auto">
         
+        <!-- Header with Quick Exit -->
         <div class="flex items-center justify-between mb-8 glass rounded-3xl p-4">
             <div class="flex items-center gap-3">
-                <a href="index.html" class="w-10 h-10 bg-emerald-500/20 rounded-2xl flex items-center justify-center text-xl hover:bg-emerald-500/30 transition" aria-label="Back to home">⬅️</a>
+                <a href="index.html" class="w-10 h-10 bg-emerald-500/20 rounded-2xl flex items-center justify-center text-xl hover:bg-emerald-500/30 transition">⬅️</a>
                 <h1 class="text-2xl font-bold tracking-tight text-white" data-i18n="appTitle">VocalWitness</h1>
             </div>
             <div class="flex items-center gap-2 md:gap-3">
-                <button id="panicButton" class="panic-btn text-white text-xs md:text-sm font-bold px-3 py-2 rounded-2xl shadow-lg hover:opacity-90 transition flex items-center gap-1.5" title="Instantly clear local history and exit">
+                <button id="panicButton" class="panic-btn text-white text-xs md:text-sm font-bold px-3 py-2 rounded-2xl shadow-lg hover:opacity-90 transition flex items-center gap-1.5">
                     🚨 <span data-i18n="panicExit">Quick Exit</span>
                 </button>
                 <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
@@ -36,17 +37,18 @@
 
         <div class="flex items-center gap-4 mb-6">
             <div class="w-12 h-12 bg-emerald-500/20 rounded-3xl flex items-center justify-center text-4xl">🛡️</div>
-            <h1 class="text-4xl font-bold tracking-tight text-white" data-i18n="safetyTitle">Safety & Your Rights</h1>
+            <h1 class="text-4xl font-bold tracking-tight text-white">Safety & Your Rights</h1>
         </div>
 
+        <!-- Friendly Banner -->
         <div class="glass rounded-3xl p-8 mb-10 space-y-4">
-            <h2 class="text-xl font-bold text-emerald-400" data-i18n="divineNaturalLawTitle">Your Right to Speak the Truth</h2>
-            <p class="text-zinc-200 leading-relaxed text-sm md:text-base" data-i18n="divineNaturalLawDesc">
+            <h2 class="text-xl font-bold text-emerald-400">Your Right to Speak the Truth</h2>
+            <p class="text-zinc-200 leading-relaxed text-sm md:text-base">
                 Every person has the right to share what they have witnessed.  
-                This is protected under Article 19 of the Universal Declaration of Human Rights.
+                This right is protected under Article 19 of the Universal Declaration of Human Rights.
             </p>
             <div class="pt-2 flex flex-wrap items-center gap-3 text-xs text-zinc-300">
-                <span class="text-zinc-400 font-medium" data-i18n="safetySecuredBy">Protected by:</span>
+                <span class="text-zinc-400 font-medium">Protected by:</span>
                 <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-emerald-400">Google Cloud / Firebase</span>
                 <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-amber-400">Cloudflare Edge Shield</span>
                 <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-cyan-400">Strong Cryptography</span>
@@ -55,89 +57,108 @@
 
         <div class="space-y-12 text-zinc-300 leading-relaxed">
 
+            <!-- 1 -->
             <section>
-                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="subpoenaDefenseTitle">1. Strong Protection by Design</h2>
+                <h2 class="text-2xl font-semibold text-white mb-4">1. Strong Protection by Design</h2>
                 <div class="glass rounded-3xl p-6 md:p-8 space-y-3">
-                    <p class="text-sm md:text-base text-zinc-300" data-i18n="subpoenaDefenseDesc">
-                        We cannot give away information that we never collected.  
-                        Your identity stays protected.
+                    <p class="text-sm md:text-base text-zinc-300">
+                        We cannot give away information that we never collected. Your identity stays protected.
                     </p>
                     <ul class="space-y-2 text-sm md:text-base text-zinc-300 list-disc pl-5">
-                        <li data-i18n="subpoenaDefenseBullet1"><strong>No identity logs</strong> linked to your public posts.</li>
-                        <li data-i18n="subpoenaDefenseBullet2"><strong>Location and device details</strong> are removed in your browser before upload.</li>
-                        <li data-i18n="subpoenaDefenseBullet3"><strong>Strong technical protection</strong> for anonymous reporters.</li>
+                        <li><strong>No identity logs</strong> linked to your public posts.</li>
+                        <li><strong>Location and device details</strong> are removed in your browser before upload.</li>
+                        <li><strong>Strong technical protection</strong> for anonymous reporters.</li>
                     </ul>
                 </div>
             </section>
 
+            <!-- 2 -->
             <section>
-                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="opsecProtocolTitle">2. Extra Safety Tips for High-Risk Situations</h2>
+                <h2 class="text-2xl font-semibold text-white mb-4">2. Extra Safety Tips for High-Risk Situations</h2>
                 <div class="grid md:grid-cols-2 gap-6">
                     <div class="glass rounded-3xl p-6">
                         <div class="text-3xl mb-3">📡</div>
-                        <h3 class="font-semibold text-white mb-2" data-i18n="networkSafetySub">Safer Internet Connection</h3>
-                        <p class="text-sm text-zinc-400" data-i18n="networkSafetySubDesc">
-                            In restrictive areas, use Tor or a trusted VPN.  
-                            Avoid publishing on networks linked to your official ID.
+                        <h3 class="font-semibold text-white mb-2">Safer Internet Connection</h3>
+                        <p class="text-sm text-zinc-400">
+                            In restrictive areas, use Tor or a trusted VPN. Avoid publishing on networks linked to your official ID.
                         </p>
                     </div>
                     <div class="glass rounded-3xl p-6">
                         <div class="text-3xl mb-3">📱</div>
-                        <h3 class="font-semibold text-white mb-2" data-i18n="physicalSafetySub">Device Safety & Quick Exit</h3>
-                        <p class="text-sm text-zinc-400" data-i18n="physicalSafetySubDesc">
-                            Use a strong passcode.  
-                            If you feel in danger, press the red <strong>Quick Exit</strong> button — it clears local data and leaves the site.
+                        <h3 class="font-semibold text-white mb-2">Device Safety & Quick Exit</h3>
+                        <p class="text-sm text-zinc-400">
+                            Use a strong passcode. If you feel in danger, press the red <strong>Quick Exit</strong> button — it clears local data and leaves the site.
                         </p>
                     </div>
                 </div>
             </section>
 
+            <!-- 3 -->
             <section>
-                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="safetySection2Title">3. What Is Not Allowed</h2>
-                <p class="mb-4 text-zinc-400" data-i18n="safetyProhibitIntro">These actions are strictly forbidden:</p>
+                <h2 class="text-2xl font-semibold text-white mb-4">3. What Is Not Allowed</h2>
+                <p class="mb-4 text-zinc-400">These actions are strictly forbidden:</p>
                 <ul class="space-y-4 text-zinc-300">
-                    <li class="flex gap-3">
-                        <span class="text-red-400 font-bold">✕</span> 
-                        <span data-i18n="safetyProhibit1"><strong>Doxxing:</strong> Sharing someone’s private details without permission.</span>
-                    </li>
-                    <li class="flex gap-3">
-                        <span class="text-red-400 font-bold">✕</span> 
-                        <span data-i18n="safetyProhibit2"><strong>Harassment & Threats.</strong></span>
-                    </li>
-                    <li class="flex gap-3">
-                        <span class="text-red-400 font-bold">✕</span> 
-                        <span data-i18n="safetyProhibit3"><strong>Fake or Altered Evidence</strong> meant to harm others.</span>
-                    </li>
-                    <li class="flex gap-3">
-                        <span class="text-red-400 font-bold">✕</span> 
-                        <span data-i18n="safetyProhibit4"><strong>Spam & Fake Accounts.</strong></span>
-                    </li>
+                    <li class="flex gap-3"><span class="text-red-400 font-bold">✕</span> <span><strong>Doxxing:</strong> Sharing someone’s private details without permission.</span></li>
+                    <li class="flex gap-3"><span class="text-red-400 font-bold">✕</span> <span><strong>Harassment & Threats.</strong></span></li>
+                    <li class="flex gap-3"><span class="text-red-400 font-bold">✕</span> <span><strong>Fake or Altered Evidence</strong> meant to harm others.</span></li>
+                    <li class="flex gap-3"><span class="text-red-400 font-bold">✕</span> <span><strong>Spam & Fake Accounts.</strong></span></li>
                 </ul>
             </section>
 
+            <!-- 4 -->
             <section>
-                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="safetySection4Title">4. How We Keep the Community Safe</h2>
-                <p class="mb-4 text-zinc-400" data-i18n="safetySection4Text">
-                    Safety comes from community reporting and clear verification levels:
-                </p>
+                <h2 class="text-2xl font-semibold text-white mb-4">4. How We Keep the Community Safe</h2>
+                <p class="mb-4 text-zinc-400">Safety comes from community reporting and clear verification levels:</p>
                 <div class="space-y-2 text-zinc-400 text-sm">
-                    <p data-i18n="safetyModTier1">• <strong>Open Talk</strong> — Open discussion for everyone.</p>
-                    <p data-i18n="safetyModTier2">• <strong>Higher Trust</strong> — Stronger protection and reputation.</p>
+                    <p>• <strong>Open Talk</strong> — Open discussion for everyone.</p>
+                    <p>• <strong>Higher Trust</strong> — Stronger protection and reputation.</p>
                 </div>
             </section>
 
             <section class="pt-8 border-t border-zinc-800 text-sm">
-                <p class="text-emerald-400 font-medium text-base mb-1" data-i18n="safetyGoalTitle">Our Goal:</p>
-                <p class="text-zinc-400" data-i18n="safetyGoalText">
-                    A safe public square where real reports can be shared and people are protected by design.
-                </p>
+                <p class="text-emerald-400 font-medium text-base mb-1">Our Goal:</p>
+                <p class="text-zinc-400">A safe public square where real reports can be shared and people are protected by design.</p>
             </section>
         </div>
 
+        <!-- ===================== TECHNICAL DETAILS ===================== -->
+        <section class="glass rounded-3xl p-6 md:p-8 mt-16 border border-zinc-700">
+            <h2 class="text-xl font-bold text-zinc-300 mb-6 flex items-center gap-2">
+                <span>⚙️</span> Technical & Operational Details
+            </h2>
+            
+            <div class="space-y-6 text-sm text-zinc-400 leading-relaxed">
+                <div>
+                    <h3 class="font-semibold text-emerald-400 mb-1">Cryptographic & Subpoena Defense</h3>
+                    <p>
+                        VocalWitness uses client-side SHA-256 hashing and zero-knowledge proofs (zk-SNARKs).  
+                        • Zero identity storage: IP addresses are not logged alongside public posts.<br>
+                        • Automatic EXIF scrubbing: Camera identifiers and GPS are stripped in the browser before upload.<br>
+                        • Mathematical protection: No central private keys exist that can unmask anonymous witnesses.
+                    </p>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold text-emerald-400 mb-1">High-Risk Operational Advice</h3>
+                    <p>
+                        Prefer Tor or trusted VPNs in restrictive environments. Avoid mobile networks tied to government-issued SIMs.  
+                        Use a strong device passcode (not only biometrics). The Quick Exit button immediately clears localStorage/sessionStorage and redirects to a neutral site.
+                    </p>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold text-emerald-400 mb-1">Moderation Tiers</h3>
+                    <p>
+                        • <strong>Open Talk / Citizen Talk</strong> — Open discourse with community reporting.<br>
+                        • <strong>Higher Trust / True Witness</strong> — Cryptographically notarized evidence with reputation scores.
+                    </p>
+                </div>
+            </div>
+        </section>
+
         <div class="mt-16 text-center">
             <a href="index.html" 
-               class="inline-block px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-3xl font-medium transition-all shadow-lg shadow-emerald-900/30" 
-               data-i18n="backToSquare">
+               class="inline-block px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-3xl font-medium transition-all shadow-lg shadow-emerald-900/30">
                 ← Back to the Square
             </a>
         </div>
@@ -153,9 +174,7 @@
 
     <script type="module">
         import { initLanguage } from './js/i18n.js';
-        document.addEventListener('DOMContentLoaded', () => {
-            initLanguage();
-        });
+        document.addEventListener('DOMContentLoaded', () => initLanguage());
     </script>
 </body>
 </html>
