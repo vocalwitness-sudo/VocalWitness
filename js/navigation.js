@@ -1,13 +1,14 @@
-// js/navigation.js - Single Page App Integrated Version
+// js/navigation.js - Single Page App Integrated Version (Batch 3 aware)
 import { db, auth } from './firebase-config.js';
 import { navigateTo } from './router.js';
 
 export const menuItems = [
     { id: "citizen-talk", icon: "💬", label: "Citizen Talk", route: "citizen-talk" },
     { id: "witness-voice", icon: "🔬", label: "Witness Voice", route: "witness-voice" },
+    { id: "my-circle", icon: "👥", label: "My Circle", route: "my-circle" },
     { id: "arena", icon: "🏟️", label: "Live Arena", route: "arena" },
     { id: "audit-log", icon: "📊", label: "Forensic Ledger", route: "audit-log" },
-    { id: "dao", icon: "🏛️", label: "DAO Governance", route: "dao" },          // ← NEW
+    { id: "dao", icon: "🏛️", label: "DAO Governance", route: "dao" },
     { id: "my-testimonies", icon: "📜", label: "My Testimonies", route: "profile" }
 ];
 
@@ -21,25 +22,32 @@ export function loadDynamicNavigation() {
         const currentHash = window.location.hash.slice(1) || 'citizen-talk';
 
         menuItems.forEach(item => {
-            const isActive = currentHash === item.route;
+            const isActive =
+                currentHash === item.route ||
+                (item.route === 'citizen-talk' && (currentHash === '' || currentHash === 'square'));
 
             const link = document.createElement('a');
             link.href = `#${item.route}`;
             link.setAttribute('data-route', item.route);
             link.className = `flex items-center gap-3 px-4 py-3 rounded-2xl transition-all group cursor-pointer ${
-                isActive ?
-                'bg-emerald-500 text-black font-semibold' :
-                'text-zinc-400 hover:text-white hover:bg-zinc-900'
+                isActive
+                    ? 'bg-emerald-500 text-black font-semibold'
+                    : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
             }`;
-           
+
             link.innerHTML = `
                 <span class="text-xl transition-transform group-hover:scale-110">${item.icon}</span>
                 <span>${item.label}</span>
             `;
 
-            // Intercept click to trigger client router directly
             link.addEventListener('click', (e) => {
                 e.preventDefault();
+                // My Circle → same public square feed, prefer circle sort via event
+                if (item.route === 'my-circle') {
+                    navigateTo('citizen-talk');
+                    window.dispatchEvent(new CustomEvent('feed-set-sort', { detail: { sort: 'circle' } }));
+                    return;
+                }
                 navigateTo(item.route);
             });
 
