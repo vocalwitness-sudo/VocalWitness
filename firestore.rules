@@ -80,7 +80,9 @@ service cloud.firestore {
         'email', 'displayName', 'photoURL', 'bio',
         'location', 'website', 'updatedAt', 'lastLoginAt',
         'theme', 'language', 'interestedInArena', 'arenaNotifyAt', 'lastNameChange',
-        'lastTestimonyAt'
+        'lastTestimonyAt',
+        // Network / Trust Relationship Arrays
+        'following', 'trusted', 'followers'
       ];
       return !affected.hasAny(forbidden)
         && affected.hasOnly(allowed)
@@ -88,7 +90,11 @@ service cloud.firestore {
         && (!('displayName' in data) || data.displayName is string)
         && (!('photoURL' in data) || isValidMediaUrl(data.photoURL))
         && (!('bio' in data) || data.bio is string)
-        && (!('interestedInArena' in data) || data.interestedInArena is bool);
+        && (!('interestedInArena' in data) || data.interestedInArena is bool)
+        // Array validations for social network graph
+        && (!('following' in data) || data.following is list)
+        && (!('trusted' in data) || data.trusted is list)
+        && (!('followers' in data) || data.followers is list);
     }
     function isValidNotification() {
       let data = request.resource.data;
@@ -135,6 +141,16 @@ service cloud.firestore {
       match /bookmarks/{bookmarkId} {
         allow read, write: if isOwner(userId);
       }
+      
+      // Allow users to read/manage explicit follow subcollections if implemented
+      match /following/{targetUid} {
+        allow read: if true;
+        allow write: if isOwner(userId);
+      }
+      match /followers/{targetUid} {
+        allow read: if true;
+        allow write: if isOwner(userId) || request.auth.uid == targetUid;
+      }
     }
 
     // ==========================================
@@ -156,9 +172,6 @@ service cloud.firestore {
         && (request.resource.data.createdAt is timestamp
             || request.resource.data.createdAt == request.time);
 
-      // Authors can edit their own content (with safety checks)
-      // Moderators can do anything
-      // Any authenticated user can ONLY increment the two corroboration counters
       allow update: if isModerator()
         || (
              isNotBanned()
@@ -169,20 +182,18 @@ service cloud.firestore {
         || (
              isNotBanned()
              && request.resource.data.diff(resource.data).affectedKeys()
-                  .hasOnly(['corroborationCount', 'corroborationScore', 'lastCorroboratedAt'])
+                 .hasOnly(['corroborationCount', 'corroborationScore', 'lastCorroboratedAt'])
            );
 
       allow delete: if (resource.data.authorId == request.auth.uid) || isModerator();
     }
 
     // ==========================================
-    // ★ CORROBORATIONS (Batch 2)
+    // CORROBORATIONS
     // ==========================================
     match /corroborations/{corrId} {
-      // Public read – scores are visible to everyone
       allow read: if true;
 
-      // Only authenticated users can create (phone-verified check is done in client + can be strengthened later)
       allow create: if isNotBanned()
         && request.resource.data.authorId == request.auth.uid
         && request.resource.data.keys().hasAll(['testimonyId', 'authorId', 'weight', 'createdAt'])
@@ -194,12 +205,11 @@ service cloud.firestore {
         && (!('note' in request.resource.data) || 
             (request.resource.data.note is string && request.resource.data.note.size() <= 280));
 
-      // Immutable – no one can edit or delete a corroboration
       allow update, delete: if false;
     }
 
     // ==========================================
-    // POSTS & COMMENTS (Door & ZK Privacy Rules)
+    // POSTS & COMMENTS
     // ==========================================
     match /posts/{postId} {
       allow read: if resource.data.visibilityDoor == 'public_square' ||
