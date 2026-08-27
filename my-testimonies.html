@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="myTestimoniesPageTitle">My Testimonies • VocalWitness</title>
+    <title data-i18n="publicSquareTitle">Public Square • VocalWitness</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
@@ -25,34 +25,45 @@
                     </div>
                 </a>
             </div>
-            <a href="index.html" class="text-emerald-400 hover:text-emerald-300" data-i18n="backToSquare">← Back to Square</a>
+            <a href="my-testimonies.html" class="text-emerald-400 hover:text-emerald-300">My Testimonies →</a>
         </header>
 
-        <div class="glass rounded-3xl p-8">
-            <h1 class="text-3xl font-bold mb-2" data-i18n="myTestimoniesMainHeading">My Testimonies</h1>
-            <p class="text-zinc-400 mb-8" data-i18n="myTestimoniesSubtitle">Permanent records of your voice in the Public Square</p>
+        <!-- Testimony Recording / Creation Box -->
+        <div class="glass rounded-3xl p-8 mb-8">
+            <h2 class="text-xl font-bold mb-4">Record Your Testimony</h2>
             
-            <div id="myTestimoniesContainer" class="space-y-6 min-h-[400px]">
-                <!-- JS will load here -->
+            <textarea 
+                id="testimonyText"
+                rows="4" 
+                class="w-full bg-slate-900/80 border border-emerald-500/30 rounded-2xl p-4 text-slate-200 placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
+                placeholder="Share your witness..."
+            ></textarea>
+
+            <!-- Bottom Action Controls -->
+            <div class="flex flex-wrap items-center justify-between gap-4 mt-4 pt-2 border-t border-slate-800">
+                
+                <!-- PASTE YOUR ANONYMOUS CHECKBOX HERE -->
+                <label class="flex items-center gap-2 text-xs text-zinc-300 cursor-pointer select-none">
+                    <input type="checkbox" id="post-anonymously" class="rounded border-zinc-600 accent-emerald-500" />
+                    <span>Post Anonymously <span class="text-zinc-500">(tier still counts privately if signed in)</span></span>
+                </label>
+
+                <!-- Submit Button -->
+                <button 
+                    id="submitTestimonyBtn"
+                    class="bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-semibold px-6 py-2.5 rounded-xl hover:opacity-90 transition-opacity"
+                >
+                    Publish Testimony
+                </button>
             </div>
+        </div>
+
+        <!-- Feed Container -->
+        <div id="testimoniesFeed" class="space-y-6">
+            <!-- Feed items will render here -->
         </div>
     </div>
 
     <script type="module" src="js/main.js"></script>
-    <script type="module" src="js/my-testimonies.js"></script>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            if (typeof initMyTestimonies === 'function') {
-                initMyTestimonies('myTestimoniesContainer');
-            }
-        });
-    </script>
-    <script type="module">
-        import { initLanguage } from './js/i18n.js';
-        document.addEventListener('DOMContentLoaded', () => {
-            initLanguage();
-        });
-    </script>
 </body>
 </html>
