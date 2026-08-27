@@ -1,18 +1,18 @@
-// js/db.js - Database Operations & Offline Storage Engine
+// js/db.js - Database Operations & Offline Storage Engine (Batch 4)
 import { db, auth } from './firebase-config.js';
 import {
-  doc, 
-  getDoc, 
-  updateDoc, 
-  deleteDoc, 
-  collection, 
+  doc,
+  getDoc,
+  updateDoc,
+  deleteDoc,
+  collection,
   addDoc,
-  query, 
-  where, 
+  query,
+  where,
   getDocs,
   serverTimestamp,
-  increment
-} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+  increment,
+} from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
 
 import { showToast } from './utils.js';
 import { getCurrentUserTier, getCurrentWitnessLevel } from './tier.js';
@@ -21,17 +21,18 @@ import { logSecurityAudit } from './audit.js';
 // ==================== INDEXEDDB OFFLINE QUEUE ====================
 const DB_NAME = 'VocalWitnessOffline';
 const STORE_NAME = 'pending_testimonies';
+const DB_VERSION = 1;
 
-/**
- * Initialize or retrieve the local IndexedDB database for offline resilience
- */
 export function openOfflineDB() {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, 1);
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
     request.onupgradeneeded = (e) => {
       const dbInstance = e.target.result;
       if (!dbInstance.objectStoreNames.contains(STORE_NAME)) {
-        dbInstance.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+        dbInstance.createObjectStore(STORE_NAME, {
+          keyPath: 'id',
+          autoIncrement: true,
+        });
       }
     };
     request.onsuccess = () => resolve(request.result);
@@ -40,210 +41,358 @@ export function openOfflineDB() {
 }
 
 /**
- * Save pending testimony draft locally when offline
+ * Save pending testimony when offline (or forced queue).
+ * payload should include { public, private } from prepareAnonymousSubmission
+ * or a flat legacy draft.
  */
 export async function saveDraftOffline(payload) {
   try {
     const dbInstance = await openOfflineDB();
     const tx = dbInstance.transaction(STORE_NAME, 'readwrite');
     const store = tx.objectStore(STORE_NAME);
-    
+
+    const record = {
+      ...payload,
+      savedAt: Date.now(),
+      status: 'pending',
+    };
+
     await new Promise((resolve, reject) => {
-      const req = store.add({ ...payload, savedAt: Date.now() });
+      const req = store.add(record);
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error);
     });
-    
+
     return true;
   } catch (err) {
-    console.error("IndexedDB Save Error:", err);
+    console.error('IndexedDB Save Error:', err);
     return false;
   }
 }
 
-/**
- * Fetch all buffered offline drafts
- */
 export async function getOfflineDrafts() {
   try {
     const dbInstance = await openOfflineDB();
     const tx = dbInstance.transaction(STORE_NAME, 'readonly');
     const store = tx.objectStore(STORE_NAME);
-    
+
     return new Promise((resolve, reject) => {
       const req = store.getAll();
       req.onsuccess = () => resolve(req.result || []);
       req.onerror = () => reject(req.error);
     });
   } catch (err) {
-    console.error("IndexedDB Retrieval Error:", err);
+    console.error('IndexedDB Retrieval Error:', err);
     return [];
   }
 }
 
-/**
- * Clear synchronized item from IndexedDB queue
- */
 export async function removeOfflineDraft(id) {
   try {
     const dbInstance = await openOfflineDB();
     const tx = dbInstance.transaction(STORE_NAME, 'readwrite');
     const store = tx.objectStore(STORE_NAME);
-    
+
     await new Promise((resolve, reject) => {
       const req = store.delete(id);
       req.onsuccess = () => resolve();
       req.onerror = () => reject(req.error);
     });
   } catch (err) {
-    console.error("IndexedDB Removal Error:", err);
+    console.error('IndexedDB Removal Error:', err);
   }
 }
 
+export async function clearOfflineQueue() {
+  try {
+    const drafts = await getOfflineDrafts();
+    await Promise.all(drafts.map((d) => removeOfflineDraft(d.id)));
+  } catch (err) {
+    console.error('Clear offline queue error:', err);
+  }
+}
 
-// ==================== USER PROFILE ====================
 /**
- * Update user profile enforcing safety rules & 60-day name change cooldown
+ * Single entry point for composer: online → publish; offline → queue.
+ * @param {object} prepared - return value of prepareAnonymousSubmission
  */
+export async function publishTestimonyOrQueue(prepared) {
+  const publicData = prepared.public || prepared;
+  const privateData = prepared.private || prepared._private || null;
+
+  if (!navigator.onLine) {
+    const ok = await saveDraftOffline({
+      public: publicData,
+      private: privateData,
+      // legacy flat fields for older sync paths
+      content: publicData.content,
+      headline: publicData.headline,
+      targetFeed: publicData.targetFeed,
+      imageUrl: publicData.imageUrl,
+      audioUrl: publicData.audioUrl,
+      imageHash: publicData.imageHash,
+      audioHash: publicData.audioHash,
+      forensicHash: publicData.forensicHash,
+      isAnonymous: publicData.isAnonymous,
+      authorId: publicData.authorId,
+      publicNullifier: publicData.publicNullifier,
+    });
+
+    if (ok) {
+      showToast('Saved offline. Will publish when you are back online.', 'info');
+      window.dispatchEvent(
+        new CustomEvent('vocalWitness:queued', { detail: { offline: true } })
+      );
+      return { queued: true };
+    }
+    throw new Error('Could not save offline draft');
+  }
+
+  return publishTestimonyNow(publicData, privateData);
+}
+
+/**
+ * Write public testimony + optional private tier contribution.
+ */
+export async function publishTestimonyNow(publicData, privateData = null) {
+  let rawFeed = publicData.targetFeed || 'citizen_talk';
+  const targetFeed =
+    rawFeed === 'vocal_truth' || rawFeed === 'true_witness'
+      ? 'witness_voice'
+      : rawFeed;
+  const isWitnessVoice =
+    publicData.isWitnessVoice !== undefined
+      ? publicData.isWitnessVoice
+      : targetFeed === 'witness_voice';
+
+  const isAnonymous = Boolean(publicData.isAnonymous);
+  const user = auth?.currentUser;
+
+  let authorTier = 'citizen';
+  let authorWitnessLevel = null;
+  if (user && !isAnonymous) {
+    try {
+      authorTier = (await getCurrentUserTier()) || 'citizen';
+      const wl = await getCurrentWitnessLevel();
+      authorWitnessLevel = wl?.name || null;
+    } catch (_) {}
+  }
+
+  const testimonyRef = await addDoc(collection(db, 'testimonies'), {
+    headline: publicData.headline || null,
+    content: publicData.content || '',
+    targetFeed,
+    channel: targetFeed,
+    isWitnessVoice,
+    imageUrl: publicData.imageUrl || null,
+    audioUrl: publicData.audioUrl || null,
+    forensicHash:
+      publicData.forensicHash ||
+      publicData.imageHash ||
+      publicData.audioHash ||
+      null,
+    imageHash: publicData.imageHash || null,
+    audioHash: publicData.audioHash || null,
+    // Batch 4 anonymity: null author on public doc when anonymous
+    authorId: isAnonymous ? null : publicData.authorId || user?.uid || null,
+    author: isAnonymous
+      ? 'Anonymous Witness'
+      : user?.displayName || publicData.author || 'Witness',
+    isAnonymous,
+    publicNullifier: isAnonymous ? publicData.publicNullifier || null : null,
+    authorTier: isAnonymous ? null : authorTier,
+    authorWitnessLevel: isAnonymous ? null : authorWitnessLevel,
+    createdAt: serverTimestamp(),
+    hasForensic: !!(
+      publicData.forensicHash ||
+      publicData.imageHash ||
+      publicData.audioHash
+    ),
+    syncedFromOffline: Boolean(publicData.syncedFromOffline),
+    originalOfflineTimestamp: publicData.originalOfflineTimestamp || null,
+    status: 'published',
+  });
+
+  // Private tier credit (signed-in anonymous or identified)
+  if (privateData?.countsTowardTier && user) {
+    try {
+      await addDoc(collection(db, 'userContributions'), {
+        uid: user.uid,
+        testimonyId: testimonyRef.id,
+        isAnonymous: Boolean(privateData.isAnonymous),
+        nullifierNonce: privateData.nullifierNonce ?? null,
+        testimonyClientId: privateData.testimonyClientId || null,
+        createdAt: serverTimestamp(),
+      });
+      // Optional: Cloud Function listens and increments reputation/tier
+    } catch (err) {
+      console.warn('Private contribution write failed (tier may lag):', err);
+    }
+  }
+
+  try {
+    await logSecurityAudit('TESTIMONY_PUBLISHED', testimonyRef.id, {
+      targetFeed,
+      isAnonymous,
+      offline: Boolean(publicData.syncedFromOffline),
+    });
+  } catch (_) {}
+
+  window.dispatchEvent(new CustomEvent('vocalWitness:posted'));
+  return { id: testimonyRef.id, queued: false };
+}
+
+// ==================== USER PROFILE (unchanged logic) ====================
 export const updateUserProfile = async (userId, updates) => {
-  const userRef = doc(db, "users", userId);
+  const userRef = doc(db, 'users', userId);
   const userSnap = await getDoc(userRef);
 
-  if (!userSnap.exists()) throw new Error("User not found");
+  if (!userSnap.exists()) throw new Error('User not found');
 
   const data = userSnap.data();
   const now = Date.now();
 
-  // Strip forbidden security keys to avoid triggering security rule rejections
-  const forbiddenKeys = ['role', 'isBanned', 'badges', 'admin', 'moderator', 'zkVerified', 'reputation', 'score', 'tier', 'isVerified', 'uid'];
+  const forbiddenKeys = [
+    'role',
+    'isBanned',
+    'badges',
+    'admin',
+    'moderator',
+    'zkVerified',
+    'reputation',
+    'score',
+    'tier',
+    'isVerified',
+    'uid',
+  ];
   const safeUpdates = { ...updates };
-  forbiddenKeys.forEach(key => delete safeUpdates[key]);
+  forbiddenKeys.forEach((key) => delete safeUpdates[key]);
 
-  // 60-day name change cooldown
   if (safeUpdates.displayName && safeUpdates.displayName !== data.displayName) {
     const lastChange = data.lastNameChange || 0;
-    const cooldownMs = 60 * 24 * 60 * 60 * 1000; // 60 Days
+    const cooldownMs = 60 * 24 * 60 * 60 * 1000;
     if (now - lastChange < cooldownMs) {
-      throw new Error("You can only change your name once every 60 days.");
+      throw new Error('You can only change your name once every 60 days.');
     }
     safeUpdates.lastNameChange = now;
   }
 
   await updateDoc(userRef, {
     ...safeUpdates,
-    updatedAt: serverTimestamp()
+    updatedAt: serverTimestamp(),
   });
 };
 
 export const getUserData = async (userId) => {
-  const userRef = doc(db, "users", userId);
+  const userRef = doc(db, 'users', userId);
   const snap = await getDoc(userRef);
   return snap.exists() ? snap.data() : null;
 };
 
-
-// ==================== POST & TESTIMONY MANAGEMENT ====================
-/**
- * Edit testimony or post content safely
- */
-export const editPost = async (postId, userId, newContent, collectionName = "testimonies") => {
+// ==================== POST MANAGEMENT ====================
+export const editPost = async (
+  postId,
+  userId,
+  newContent,
+  collectionName = 'testimonies'
+) => {
   const docRef = doc(db, collectionName, postId);
   const snap = await getDoc(docRef);
 
   if (!snap.exists() || snap.data().authorId !== userId) {
-    throw new Error("Not authorized to edit this content");
+    throw new Error('Not authorized to edit this content');
   }
 
   await updateDoc(docRef, {
     content: newContent.trim(),
-    editedAt: serverTimestamp()
+    editedAt: serverTimestamp(),
   });
 };
 
-/**
- * Delete testimony or post
- */
-export const deletePost = async (postId, userId, collectionName = "testimonies") => {
+export const deletePost = async (
+  postId,
+  userId,
+  collectionName = 'testimonies'
+) => {
   const docRef = doc(db, collectionName, postId);
   const snap = await getDoc(docRef);
 
   if (!snap.exists() || snap.data().authorId !== userId) {
-    throw new Error("Not authorized to delete this content");
+    throw new Error('Not authorized to delete this content');
   }
 
   await deleteDoc(docRef);
 };
 
-/**
- * Pin single post/testimony per user
- */
-export const togglePinPost = async (postId, userId, collectionName = "testimonies") => {
+export const togglePinPost = async (
+  postId,
+  userId,
+  collectionName = 'testimonies'
+) => {
   const docRef = doc(db, collectionName, postId);
   const snap = await getDoc(docRef);
 
   if (!snap.exists() || snap.data().authorId !== userId) {
-    throw new Error("Not authorized");
+    throw new Error('Not authorized');
   }
 
   const post = snap.data();
 
   if (post.pinnedBy === userId) {
-    // Unpin
     await updateDoc(docRef, { pinnedBy: null, pinnedAt: null });
   } else {
-    // Verify no existing pinned items exist
-    const pinnedQuery = query(collection(db, collectionName), where("pinnedBy", "==", userId));
+    const pinnedQuery = query(
+      collection(db, collectionName),
+      where('pinnedBy', '==', userId)
+    );
     const pinnedSnap = await getDocs(pinnedQuery);
 
     if (!pinnedSnap.empty) {
-      throw new Error("You can only pin one item at a time.");
+      throw new Error('You can only pin one item at a time.');
     }
 
     await updateDoc(docRef, {
       pinnedBy: userId,
-      pinnedAt: serverTimestamp()
+      pinnedAt: serverTimestamp(),
     });
   }
 };
 
-/**
- * Get all testimonies/posts by author
- */
-export const getUserPosts = (userId, collectionName = "testimonies") => {
-  return query(collection(db, collectionName), where("authorId", "==", userId));
+export const getUserPosts = (userId, collectionName = 'testimonies') => {
+  return query(collection(db, collectionName), where('authorId', '==', userId));
 };
 
-/**
- * Handles peer verification or dispute atomic increments
- */
-export const submitPeerVote = async (postId, type, collectionName = "testimonies") => {
+export const submitPeerVote = async (
+  postId,
+  type,
+  collectionName = 'testimonies'
+) => {
   const docRef = doc(db, collectionName, postId);
-  
+
   try {
     await updateDoc(docRef, {
       [`votes.${type}`]: increment(1),
-      lastUpdated: serverTimestamp()
+      lastUpdated: serverTimestamp(),
     });
-    
-    showToast(`Vote (${type}) recorded!`, "success");
+
+    showToast(`Vote (${type}) recorded!`, 'success');
     return true;
   } catch (error) {
-    console.error("Vote error:", error);
-    showToast("Failed to record vote", "error");
+    console.error('Vote error:', error);
+    showToast('Failed to record vote', 'error');
     return false;
   }
 };
 
-
-// ==================== AUTOMATED OFFLINE SYNC ENGINE ====================
+// ==================== OFFLINE SYNC ENGINE ====================
 let isSyncing = false;
 
 /**
- * Process and upload queued IndexedDB drafts when online connectivity is restored
+ * Flush IndexedDB queue. Supports zero-registration (no auth) for anonymous public posts.
+ * Private tier writes only when auth.currentUser exists.
  */
 export async function syncOfflineDrafts() {
   if (isSyncing || !navigator.onLine) return;
-  if (!auth?.currentUser) return; // Wait until Firebase Auth restores active user
 
   const drafts = await getOfflineDrafts();
   if (!drafts || drafts.length === 0) return;
@@ -256,50 +405,22 @@ export async function syncOfflineDrafts() {
 
   for (const draft of drafts) {
     try {
-      // Feed Alias Normalization
-      let rawFeed = draft.targetFeed || "citizen_talk";
-      const targetFeed = (rawFeed === 'vocal_truth' || rawFeed === 'true_witness') ? 'witness_voice' : rawFeed;
-      const isWitnessVoice = draft.isWitnessVoice !== undefined ? draft.isWitnessVoice : targetFeed === 'witness_voice';
-
-      const currentUserId = auth.currentUser?.uid || draft.authorId;
-      const userTier = await getCurrentUserTier();
-      const userWitnessLevel = await getCurrentWitnessLevel();
-
-      // Write draft to Firestore testimonies collection with complete schema alignment
-      const testimonyRef = await addDoc(collection(db, "testimonies"), {
-        headline: draft.headline || null,
-        content: draft.content || "",
-        targetFeed: targetFeed,
-        channel: targetFeed,
-        isWitnessVoice: isWitnessVoice,
-        imageUrl: draft.imageUrl || null,
-        audioUrl: draft.audioUrl || null,
-        forensicHash: draft.forensicHash || draft.imageHash || draft.audioHash || null,
-        imageHash: draft.imageHash || null,
-        audioHash: draft.audioHash || null,
-        authorId: currentUserId,
-        author: auth.currentUser?.displayName || "Anonymous Witness",
-        authorTier: userTier || 'citizen',
-        authorWitnessLevel: userWitnessLevel?.name || null,
-        createdAt: serverTimestamp(),
-        hasForensic: !!(draft.forensicHash || draft.imageHash || draft.audioHash),
+      const publicData = {
+        ...(draft.public || draft),
         syncedFromOffline: true,
-        originalOfflineTimestamp: draft.savedAt || draft.createdAt,
-        status: 'published'
-      });
+        originalOfflineTimestamp: draft.savedAt || draft.createdAt || null,
+      };
+      const privateData = draft.private || draft._private || null;
 
-      // Audit log entry
-      await logSecurityAudit('OFFLINE_TESTIMONY_SYNCED', testimonyRef.id, {
-        targetFeed: targetFeed,
-        isWitnessVoice: isWitnessVoice,
-        hasHeadline: !!draft.headline,
-        originalSavedAt: draft.savedAt
-      });
+      // Allow anonymous sync without auth; identified/tier needs user
+      if (!publicData.isAnonymous && !auth?.currentUser) {
+        console.log('Skipping identified draft until auth restores');
+        continue;
+      }
 
-      // Remove from IndexedDB queue upon success
+      await publishTestimonyNow(publicData, privateData);
       await removeOfflineDraft(draft.id);
       syncedCount++;
-
     } catch (err) {
       console.error(`Failed to sync offline draft ID ${draft.id}:`, err);
       failedCount++;
@@ -309,25 +430,29 @@ export async function syncOfflineDrafts() {
   isSyncing = false;
 
   if (syncedCount > 0) {
-    showToast(`✅ Successfully published ${syncedCount} offline testimony draft(s)!`, 'success');
-    window.dispatchEvent(new CustomEvent('vocalWitness:posted'));
+    showToast(
+      `✅ Successfully published ${syncedCount} offline testimony draft(s)!`,
+      'success'
+    );
   }
 
   if (failedCount > 0) {
-    showToast(`⚠️ ${failedCount} draft(s) could not be synced. Retrying later.`, 'error');
+    showToast(
+      `⚠️ ${failedCount} draft(s) could not be synced. Retrying later.`,
+      'error'
+    );
   }
 }
 
-// Automatically sync when online event triggers
 window.addEventListener('online', () => {
-  console.log("Network online event detected. Initializing sync...");
+  console.log('Network online — syncing offline queue...');
   syncOfflineDrafts();
 });
 
-// Trigger sync when Firebase Auth completes initialization
 if (auth) {
   auth.onAuthStateChanged((user) => {
-    if (user && navigator.onLine) {
+    if (navigator.onLine) {
+      // Anonymous drafts can sync without user; identified drafts wait for user
       syncOfflineDrafts();
     }
   });
