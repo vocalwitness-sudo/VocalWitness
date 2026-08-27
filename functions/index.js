@@ -941,13 +941,23 @@ exports.requestTimestamp = onCall(
       const allowed = await db.runTransaction(async (tx) => {
         const doc = await tx.get(rateRef);
         const now = admin.firestore.Timestamp.now();
-        const windowStart = new Date(Date.now() - 60 * 60 * 1000);
+        const windowStartMs = Date.now() - 3600000; // 1 hour ago
 
-        if (!doc.exists || doc.data().lastRequest.toDate() < windowStart) {
-          tx.set(rateRef, { count: 1, firstRequest: now, lastRequest: now });
+        if (!doc.exists) {
+          tx.set(rateRef, { count: 1, lastRequest: now, windowStartedAt: now });
           return true;
         }
-        if ((doc.data().count || 0) >= 10) return false;
+
+        const data = doc.data();
+        const windowStartedAtMs = data.windowStartedAt ? data.windowStartedAt.toMillis() : 0;
+
+        if (windowStartedAtMs < windowStartMs) {
+          tx.set(rateRef, { count: 1, lastRequest: now, windowStartedAt: now });
+          return true;
+        }
+
+        if ((data.count || 0) >= 10) return false;
+
         tx.update(rateRef, {
           count: admin.firestore.FieldValue.increment(1),
           lastRequest: now
@@ -966,8 +976,10 @@ exports.requestTimestamp = onCall(
       console.warn("requestTimestamp rate limit skipped:", err.message);
     }
 
+    // Secure HMAC-SHA256 signature
+    const hmacSecret = process.env.TIMESTAMP_HMAC_SECRET || "default-secret-change-in-env";
     const receipt = crypto
-      .createHash("sha256")
+      .createHmac("sha256", hmacSecret)
       .update(`vocalwitness|${hash}|${requestedAt}|${uid}`)
       .digest("hex");
 
@@ -980,6 +992,18 @@ exports.requestTimestamp = onCall(
     };
 
     const tokenBase64 = Buffer.from(JSON.stringify(payload)).toString("base64");
+
+    // Save timestamp record in Firestore
+    await db.collection("evidence_timestamps").doc(hash).set(
+      {
+        hash,
+        receipt,
+        requestedAt,
+        submittedBy: uid,
+        createdAt: admin.firestore.FieldValue.serverTimestamp()
+      },
+      { merge: true }
+    );
 
     await writeAuditLog({
       action: "evidence_timestamp",
