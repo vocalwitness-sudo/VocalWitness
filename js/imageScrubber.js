@@ -27,23 +27,18 @@ export async function scrubImageMetadata(imageFile, options = {}) {
         throw new Error('Invalid input: A valid image File or Blob must be provided.');
     }
 
-    // 1. Identity Mode Evaluation
-    const activeMode = AppState.getIdentityMode?.() || 'ANONYMOUS';
-    const userScrubPref = AppState.getPref?.('exifScrub') ?? true;
+   // Batch 1 policy: always scrub by default.
+// Only skip if caller explicitly sets forceScrub = false.
+const shouldScrub = forceScrub !== false;
 
-    // ANONYMOUS mode or user preference forces scrubbing.
-    // BOLD_WITNESS preserves raw EXIF unless forceScrub is true.
-    const shouldScrub = forceScrub ?? (activeMode === 'ANONYMOUS' || userScrubPref === true);
-
-    if (!shouldScrub) {
-        // BOLD_WITNESS Mode: Retain original file with EXIF/GPS for legal chain of custody
-        await logAuditEvent("MEDIA_METADATA_PRESERVED", {
-            filename: imageFile.name || 'unnamed',
-            mode: activeMode,
-            size: imageFile.size
-        });
-        return imageFile;
-    }
+if (!shouldScrub) {
+    await logAuditEvent?.("MEDIA_METADATA_PRESERVED", {
+        filename: imageFile.name || 'unnamed',
+        reason: 'forceScrub=false',
+        size: imageFile.size
+    });
+    return imageFile;
+}
 
     try {
         // 2. Load image into ImageBitmap
