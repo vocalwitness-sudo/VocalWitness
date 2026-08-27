@@ -1,4 +1,6 @@
 // js/feed.js - Public Square Feed with Search, Filtering & Dynamic Interactivity
+// + Corroboration Engine (Batch 2)
+
 import { 
     collection, 
     query, 
@@ -10,16 +12,21 @@ import {
     deleteDoc, 
     serverTimestamp 
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
 import { renderSealedBadge, renderDownloadPackButton } from './evidence-ui.js';
 import { toFullEvidencePack, downloadEvidencePack } from './evidence-pack.js';
 import { db, auth } from './firebase-config.js';
 import { showToast } from './utils.js';
 import { renderTierCircle } from './ui-components.js';
-import { hasStewardAccess } from './tier.js';
+import { hasStewardAccess, canCorroborate } from './tier.js';
 import { toggleReaction, bindReactionEvents } from './reactions.js';
 import { reportContent } from './moderation.js';
 import { applyPostDoorDecorations } from './door-ui.js';
 import { state } from './app-state.js';
+import { 
+    submitCorroboration, 
+    getCorroborationScoreFromDoc 
+} from './corroboration.js';
 
 let activeFeedListener = null;
 let allPostsCache = [];
@@ -56,7 +63,6 @@ async function syncStewardPermission() {
 export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
     currentChannel = channelType;
 
-    // Multi-fallback feed container lookup
     const feedContainer =
         document.getElementById('testimonies-feed') ||
         document.getElementById('feed-container') ||
@@ -67,10 +73,8 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
         return;
     }
 
-    // Refresh cached permission status
     await syncStewardPermission();
 
-    // Cleanly unsubscribe from previous snapshot listener
     if (typeof activeFeedListener === 'function') {
         activeFeedListener();
         activeFeedListener = null;
@@ -83,14 +87,14 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
             <div class="animate-pulse text-zinc-400">Loading testimonies...</div>
         </div>`;
 
-    // Event delegation on container
+    // Event delegation (attached only once)
     if (!feedContainer.dataset.listenerAttached) {
         feedContainer.dataset.listenerAttached = "true";
+
         feedContainer.addEventListener('click', async (e) => {
             const btn = e.target.closest('button[data-action]');
-            if (!btn) return;
+            if (!btn || btn.disabled) return;
 
-            if (btn.disabled) return;
             btn.disabled = true;
             btn.classList.add('opacity-50', 'cursor-not-allowed');
 
@@ -137,12 +141,17 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                     await handleDeletePost(id);
                 } else if (action === 'menu') {
                     showPostMenu(id);
+                } else if (action === 'corroborate') {
+                    await handleCorroborate(id, btn);
                 }
             } catch (err) {
                 console.error(`Action ${action} failed:`, err);
             } finally {
-                btn.disabled = false;
-                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                // Only re-enable if it wasn't permanently disabled by corroboration success
+                if (action !== 'corroborate' || !btn.classList.contains('cursor-default')) {
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
             }
         });
     }
@@ -163,7 +172,6 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
         snapshot.forEach((docSnap) => {
             const data = docSnap.data();
             const postVisibility = data.feedVisibility || data.channel;
-
             if (!postVisibility || postVisibility === currentChannel) {
                 allPostsCache.push({ id: docSnap.id, ...data });
             }
@@ -172,7 +180,6 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
         allPostsCache.sort((a, b) => {
             if (a.isPinned && !b.isPinned) return -1;
             if (!a.isPinned && b.isPinned) return 1;
-
             const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : new Date(a.createdAt || 0).getTime();
             const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : new Date(b.createdAt || 0).getTime();
             return timeB - timeA;
@@ -187,13 +194,12 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
 
 function ensureSearchAndFilterUI(container) {
     let existingWrapper = document.getElementById('feed-controls-wrapper');
-    if (existingWrapper) {
-        existingWrapper.remove();
-    }
+    if (existingWrapper) existingWrapper.remove();
 
     const wrapper = document.createElement('div');
     wrapper.id = 'feed-controls-wrapper';
     wrapper.className = 'mb-6 flex flex-col sm:flex-row gap-3 items-center justify-between';
+
     wrapper.innerHTML = `
         <div class="relative w-full sm:w-72">
             <input type="text" id="feedSearchInput" placeholder="🔍 Search testimonies..." 
@@ -203,6 +209,7 @@ function ensureSearchAndFilterUI(container) {
             <button data-filter="all" data-active="true" class="filter-btn px-4 py-2 rounded-xl text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition">All</button>
             <button data-filter="verified" data-active="false" class="filter-btn px-4 py-2 rounded-xl text-xs font-medium bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white transition">🛡️ Verified</button>
             <button data-filter="media" data-active="false" class="filter-btn px-4 py-2 rounded-xl text-xs font-medium bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white transition">📷 Media</button>
+            <button data-filter="corroborated" data-active="false" class="filter-btn px-4 py-2 rounded-xl text-xs font-medium bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white transition">👁️ Corroborated</button>
         </div>
     `;
 
@@ -255,6 +262,8 @@ function applySearchAndFilter(container) {
             return post.authorTier && post.authorTier !== 'citizen' && post.authorTier !== 'unverified';
         } else if (filterType === 'media') {
             return !!(post.imageUrl || post.audioUrl);
+        } else if (filterType === 'corroborated') {
+            return (post.corroborationCount || 0) >= 1;
         }
 
         return true;
@@ -302,7 +311,6 @@ function renderSinglePostDOM(id, data, container) {
         : '';
 
     let trustBadgesHTML = '';
-
     if (data.authorTier && data.authorTier !== 'unverified') {
         trustBadgesHTML += `<span class="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] px-2 py-0.5 rounded flex items-center gap-1" title="Verified Witness">📱 Verified</span>`;
     }
@@ -350,6 +358,15 @@ function renderSinglePostDOM(id, data, container) {
         ? `<button data-action="delete" data-id="${id}" title="Delete Testimony" class="text-zinc-500 hover:text-red-400 text-xs transition">🗑️</button>` 
         : '';
 
+    // Corroboration score display
+    const corrCount = data.corroborationCount || 0;
+    const corrScore = data.corroborationScore || corrCount;
+    const corrScoreHTML = corrCount > 0
+        ? `<span class="corr-score text-[11px] text-emerald-400/90 font-medium tracking-tight ml-1">
+               ${corrScore} pts · ${corrCount} saw this
+           </span>`
+        : '';
+
     postEl.innerHTML = `
         <div class="flex justify-between items-start">
             <div class="flex items-center gap-3">
@@ -375,7 +392,7 @@ function renderSinglePostDOM(id, data, container) {
         ${audioHTML}
 
         <div class="flex items-center justify-between mt-6 pt-5 border-t border-zinc-800 text-xs flex-wrap gap-3">
-            <div class="flex gap-2 sm:gap-3 flex-wrap">
+            <div class="flex gap-2 sm:gap-3 flex-wrap items-center">
                 <button data-action="react" data-id="${id}" data-reaction="respect" class="flex items-center gap-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 px-3 py-1.5 rounded-xl text-zinc-300 transition">
                     👍 <span>${reactions.respect || 0}</span>
                 </button>
@@ -385,13 +402,24 @@ function renderSinglePostDOM(id, data, container) {
                 <button data-action="comment" data-id="${id}" class="comment-trigger-btn flex items-center gap-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 px-3 py-1.5 rounded-xl text-zinc-300 transition">
                     💬 <span>${data.commentsCount || 0}</span>
                 </button>
+
+                <!-- CORROBORATION BUTTON -->
+                <button data-action="corroborate" data-id="${id}"
+                    class="corroborate-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium
+                           bg-emerald-600/15 text-emerald-400 border border-emerald-500/30 
+                           hover:bg-emerald-600/25 transition">
+                    👁️ I saw this too
+                </button>
+                ${corrScoreHTML}
             </div>
+
             <div class="flex gap-4 items-center">
                 ${hasPack ? renderDownloadPackButton(id) : ''}
                 <button data-action="report" data-id="${id}" class="text-red-400 hover:text-red-500 transition">Report</button>
                 <button data-action="share" data-id="${id}" class="text-emerald-400 hover:text-emerald-500 transition">Share</button>
             </div>
         </div>
+
         <div class="reply-input-area mt-3"></div>
     `;
 
@@ -404,12 +432,9 @@ async function handleUpvote(postId) {
         showToast("Please log in to support testimonies.", "error");
         return;
     }
-
     try {
         const postRef = doc(db, "testimonies", postId);
-        await updateDoc(postRef, {
-            likes: increment(1)
-        });
+        await updateDoc(postRef, { likes: increment(1) });
         showToast("👍 Upvoted testimony!", "success");
     } catch (e) {
         console.error("Upvote failed:", e);
@@ -422,7 +447,6 @@ async function handleDeletePost(postId) {
         showToast("Authentication required.", "error");
         return;
     }
-
     if (!confirm("Are you sure you want to delete this testimony?")) return;
 
     try {
@@ -438,7 +462,6 @@ async function handleDeletePost(postId) {
         } else {
             await deleteDoc(postRef);
         }
-
         showToast("Testimony deleted.", "info");
     } catch (e) {
         console.error("Delete failed:", e);
@@ -452,23 +475,79 @@ async function handlePinPost(postId) {
         showToast("Only Stewards can pin testimonies.", "error");
         return;
     }
-
     try {
         const post = allPostsCache.find(p => p.id === postId);
         if (!post) return;
 
         const newPinnedState = !post.isPinned;
         const postRef = doc(db, "testimonies", postId);
-
         await updateDoc(postRef, {
             isPinned: newPinnedState,
             pinnedAt: newPinnedState ? serverTimestamp() : null
         });
-
         showToast(newPinnedState ? "📌 Post pinned to top" : "📌 Post unpinned", "info");
     } catch (e) {
         console.error("Pin operation failed:", e);
         showToast("Failed to toggle pin state.", "error");
+    }
+}
+
+/**
+ * Handle "I saw this too" click – Corroboration Engine
+ */
+async function handleCorroborate(postId, btnEl) {
+    if (!auth.currentUser) {
+        showToast("Please sign in to corroborate.", "error");
+        return;
+    }
+
+    const allowed = await canCorroborate();
+    if (!allowed) {
+        showToast("Phone verification required to corroborate reports.", "info");
+        const modal = document.getElementById('phoneVerificationModal') || 
+                      document.getElementById('phone-upgrade-modal') ||
+                      document.getElementById('verificationModal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.style.display = 'flex';
+        }
+        return;
+    }
+
+    const note = prompt("Optional short note (max 280 chars):\nWhat did you also see / hear?");
+    if (note === null) return; // user cancelled
+
+    try {
+        btnEl.disabled = true;
+        btnEl.textContent = "Sealing…";
+
+        await submitCorroboration(postId, {
+            note: (note || "").trim().slice(0, 280)
+        });
+
+        // Optimistic UI update
+        const post = allPostsCache.find(p => p.id === postId);
+        if (post) {
+            post.corroborationCount = (post.corroborationCount || 0) + 1;
+            // Real score is updated by the backend increment
+        }
+
+        btnEl.textContent = "👁️ You corroborated";
+        btnEl.classList.add('opacity-60', 'cursor-default');
+        btnEl.disabled = true;
+
+        // Update score text if it exists
+        const scoreEl = btnEl.parentElement?.querySelector('.corr-score');
+        if (scoreEl && post) {
+            const { count, score } = getCorroborationScoreFromDoc(post);
+            scoreEl.textContent = `${score || count} pts · ${count} saw this`;
+        }
+
+    } catch (err) {
+        console.error("Corroboration failed:", err);
+        btnEl.disabled = false;
+        btnEl.textContent = "👁️ I saw this too";
+        // Toast is already shown inside submitCorroboration
     }
 }
 
@@ -522,6 +601,7 @@ async function handleDownloadEvidencePack(postId) {
                 exifScrubbed: true
             });
         }
+
         if (post.audioUrl && post.audioHash) {
             core.media.push({
                 role: 'audio',
