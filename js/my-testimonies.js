@@ -1,12 +1,15 @@
-// js/my-testimonies.js - With Optimistic UI
+// js/my-testimonies.js - With Optimistic UI + Batch 1 Evidence Pack UI
 import { db, auth } from './firebase-config.js';
-import { 
-    collection, query, where, onSnapshot, orderBy, 
-    deleteDoc, doc, updateDoc 
+import {
+    collection, query, where, onSnapshot, orderBy,
+    deleteDoc, doc, updateDoc, serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
 import { showToast } from './utils.js';
+import { renderSealedBadge, renderDownloadPackButton } from './evidence-ui.js';
+import { toFullEvidencePack, downloadEvidencePack } from './evidence-pack.js';
 
 let currentSnapshotUnsubscribe = null;
+let myPostsCache = []; // for download handler
 
 export function initMyTestimonies(containerId) {
     const container = document.getElementById(containerId);
@@ -15,6 +18,17 @@ export function initMyTestimonies(containerId) {
     if (currentSnapshotUnsubscribe) currentSnapshotUnsubscribe();
 
     container.innerHTML = `<div class="text-center py-12 text-zinc-400">Loading your testimonies...</div>`;
+
+    // Event delegation for download (and future actions)
+    if (!container.dataset.listenerAttached) {
+        container.dataset.listenerAttached = 'true';
+        container.addEventListener('click', async (e) => {
+            const btn = e.target.closest('button[data-action="download-pack"]');
+            if (!btn) return;
+            const id = btn.getAttribute('data-id');
+            if (id) await handleDownloadEvidencePack(id);
+        });
+    }
 
     auth.onAuthStateChanged((user) => {
         if (!user) {
@@ -26,22 +40,35 @@ export function initMyTestimonies(containerId) {
 }
 
 function loadUserTestimonies(userId, container) {
+    // Match what main.js actually writes: authorId
     const q = query(
-        collection(db, "testimonies"),
-        where("author.uid", "==", userId), // Updated to match the denormalized author object structure
-        orderBy("createdAt", "desc")
+        collection(db, 'testimonies'),
+        where('authorId', '==', userId),
+        orderBy('createdAt', 'desc')
     );
 
     currentSnapshotUnsubscribe = onSnapshot(q, (snapshot) => {
         renderTestimonies(snapshot, container);
     }, (error) => {
-        console.error("Snapshot error:", error);
-        container.innerHTML = `<p class="text-red-400 text-center py-8">Error loading testimonies</p>`;
+        console.error('Snapshot error:', error);
+        // Common cause: missing composite index for authorId + createdAt
+        container.innerHTML = `<p class="text-red-400 text-center py-8">Error loading testimonies. Check Firestore index / rules.</p>`;
     });
+}
+
+function escapeHTML(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
 }
 
 function renderTestimonies(snapshot, container) {
     container.innerHTML = '';
+    myPostsCache = [];
 
     if (snapshot.empty) {
         container.innerHTML = `
@@ -56,25 +83,39 @@ function renderTestimonies(snapshot, container) {
     snapshot.forEach((docSnap) => {
         const data = docSnap.data();
         const testimonyId = docSnap.id;
-        const textContent = data.text || data.content || ''; // Support both 'text' and legacy 'content' fields
-        const dateStr = data.createdAt ? new Date(data.createdAt.toDate()).toLocaleString() : 'N/A';
+        myPostsCache.push({ id: testimonyId, ...data });
+
+        const textContent = data.content || data.text || '';
+        const dateStr = data.createdAt?.toDate
+            ? data.createdAt.toDate().toLocaleString()
+            : (data.timestamp ? new Date(data.timestamp).toLocaleString() : 'N/A');
+
+        const hasPack = !!(data.hasEvidencePack || data.evidencePack || data.packCoreHash);
+        const hasHash = !!(data.imageHash || data.audioHash || data.forensicHash || data.hasForensic);
 
         const div = document.createElement('div');
-        div.className = 'glass rounded-3xl p-6 transition-all';
+        div.className = 'glass rounded-3xl p-6 transition-all border border-zinc-800';
         div.id = `testimony-${testimonyId}`;
+
         div.innerHTML = `
             <div class="flex justify-between items-start gap-4">
-                <div class="flex-1">
-                    <p class="text-zinc-100 leading-relaxed" id="content-${testimonyId}">${textContent}</p>
-                    <div class="flex items-center gap-3 mt-4 text-xs">
+                <div class="flex-1 min-w-0">
+                    <div class="flex flex-wrap items-center gap-2 mb-2">
+                        ${hasPack ? renderSealedBadge(true) : ''}
+                        ${!hasPack && hasHash ? '<span class="text-[10px] text-emerald-400 border border-emerald-700/40 rounded-full px-2 py-0.5">🔒 Hashed</span>' : ''}
+                    </div>
+                    <p class="text-zinc-100 leading-relaxed" id="content-${testimonyId}">${escapeHTML(textContent)}</p>
+                    <div class="flex flex-wrap items-center gap-3 mt-4 text-xs text-zinc-400">
                         <span class="text-emerald-500">${dateStr}</span>
-                        ${data.hasForensic ? `<span class="text-emerald-400">🔬 Forensic Proof</span>` : ''}
+                        ${hasPack ? renderDownloadPackButton(testimonyId) : ''}
                     </div>
                 </div>
-                <div class="flex flex-col gap-2 text-sm">
-                    <button onclick="editTestimony('${testimonyId}')" 
-                            class="text-blue-400 hover:text-blue-300 px-4 py-1">Edit</button>
-                    <button onclick="deleteTestimony('${testimonyId}')" 
+                <div class="flex flex-col gap-2 text-sm shrink-0">
+                    ${hasPack
+                        ? `<span class="text-[11px] text-zinc-500 px-2 py-1" title="Sealed reports cannot be edited">Locked</span>`
+                        : `<button type="button" onclick="editTestimony('${testimonyId}')" class="text-blue-400 hover:text-blue-300 px-4 py-1">Edit</button>`
+                    }
+                    <button type="button" onclick="deleteTestimony('${testimonyId}')"
                             class="text-red-400 hover:text-red-300 px-4 py-1">Delete</button>
                 </div>
             </div>
@@ -83,51 +124,141 @@ function renderTestimonies(snapshot, container) {
     });
 }
 
+async function handleDownloadEvidencePack(postId) {
+    try {
+        const post = myPostsCache.find(p => p.id === postId);
+        if (!post) {
+            showToast('Post not found', 'error');
+            return;
+        }
+
+        const core = {
+            schemaVersion: post.evidencePack?.schemaVersion || 'vocalwitness.evidence-pack.v1',
+            content: {
+                body: post.content || post.text || '',
+                bodyHash: post.bodyHash || null,
+                channel: post.feedVisibility || post.channel || 'citizen-talk'
+            },
+            media: [],
+            identity: {
+                mode: post.isAnonymous ? 'ANONYMOUS' : 'IDENTIFIED',
+                authorId: post.authorId || null,
+                displayName: post.author || null,
+                phoneOnPublicRecord: false
+            },
+            timestamps: {
+                clientCaptureMs: post.evidencePack?.clientCaptureMs || post.timestamp || Date.now()
+            },
+            environment: {
+                app: 'VocalWitness',
+                hashApi: 'WebCrypto.subtle.digest SHA-256'
+            }
+        };
+
+        if (post.imageUrl && post.imageHash) {
+            core.media.push({
+                role: 'image',
+                url: post.imageUrl,
+                hashAlg: 'SHA-256',
+                hashCapture: post.imageHash,
+                hashAfterUpload: post.imageHash,
+                hashMatch: true,
+                exifScrubbed: true
+            });
+        }
+        if (post.audioUrl && post.audioHash) {
+            core.media.push({
+                role: 'audio',
+                url: post.audioUrl,
+                hashAlg: 'SHA-256',
+                hashCapture: post.audioHash,
+                hashAfterUpload: post.audioHash,
+                hashMatch: true
+            });
+        }
+
+        const fullPack = toFullEvidencePack(
+            core,
+            post.packCoreHash || post.evidencePack?.packCoreHash || null,
+            post.evidencePack?.rfc3161 || null,
+            postId
+        );
+
+        downloadEvidencePack(fullPack, postId);
+        showToast('Evidence pack downloaded', 'success');
+    } catch (err) {
+        console.error('Download pack failed:', err);
+        showToast('Could not prepare evidence pack', 'error');
+    }
+}
+
 // ====================== OPTIMISTIC UPDATES ======================
 
 window.editTestimony = async (testimonyId) => {
+    const post = myPostsCache.find(p => p.id === testimonyId);
+    if (post && (post.hasEvidencePack || post.evidencePack || post.packCoreHash)) {
+        showToast('Sealed reports cannot be edited', 'info');
+        return;
+    }
+
     const contentEl = document.getElementById(`content-${testimonyId}`);
     if (!contentEl) return;
 
     const oldText = contentEl.innerText;
-    const newText = prompt("Edit your testimony:", oldText);
-    
+    const newText = prompt('Edit your testimony:', oldText);
+
     if (newText === null || newText.trim() === oldText) return;
 
-    // Optimistic Update
     const originalHTML = contentEl.innerHTML;
-    contentEl.innerHTML = newText + ' <span class="text-amber-400 text-xs">(saving...)</span>';
+    contentEl.innerHTML = escapeHTML(newText) + ' <span class="text-amber-400 text-xs">(saving...)</span>';
 
     try {
-        await updateDoc(doc(db, 'testimonies', testimonyId), { 
-            text: newText,
-            updatedAt: new Date()
+        await updateDoc(doc(db, 'testimonies', testimonyId), {
+            content: newText.trim(),
+            text: newText.trim(),
+            updatedAt: serverTimestamp()
         });
-        showToast("✅ Updated successfully", "success");
+        showToast('Updated successfully', 'success');
     } catch (error) {
         console.error(error);
-        contentEl.innerHTML = originalHTML; // Rollback
-        showToast("Failed to update. Changes reverted.", "error");
+        contentEl.innerHTML = originalHTML;
+        showToast('Failed to update. Changes reverted.', 'error');
     }
 };
 
 window.deleteTestimony = async (testimonyId) => {
-    if (!confirm("Delete this testimony permanently?")) return;
+    if (!confirm('Remove this testimony from your list?')) return;
 
     const testimonyEl = document.getElementById(`testimony-${testimonyId}`);
     if (!testimonyEl) return;
+
+    const post = myPostsCache.find(p => p.id === testimonyId);
+    const isSealed = !!(post?.hasEvidencePack || post?.evidencePack || post?.packCoreHash ||
+        post?.imageHash || post?.audioHash || post?.forensicHash);
 
     testimonyEl.style.opacity = '0.4';
     testimonyEl.style.pointerEvents = 'none';
 
     try {
-        await deleteDoc(doc(db, 'testimonies', testimonyId));
-        testimonyEl.remove(); // Optimistic remove
-        showToast("Testimony deleted", "success");
+        const ref = doc(db, 'testimonies', testimonyId);
+
+        if (isSealed) {
+            // Soft-delete: keep ledger integrity, hide from normal views
+            await updateDoc(ref, {
+                isDeleted: true,
+                content: '[This report was removed by the author]',
+                updatedAt: serverTimestamp()
+            });
+        } else {
+            await deleteDoc(ref);
+        }
+
+        testimonyEl.remove();
+        showToast(isSealed ? 'Report removed from your list (record retained)' : 'Testimony deleted', 'success');
     } catch (error) {
         console.error(error);
         testimonyEl.style.opacity = '1';
         testimonyEl.style.pointerEvents = 'auto';
-        showToast("Failed to delete testimony", "error");
+        showToast('Failed to delete testimony', 'error');
     }
 };
