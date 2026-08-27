@@ -739,6 +739,23 @@ function wireTestimonyComposer() {
     console.log('✅ Testimony composer wired (btn-photo / btn-voice / postButton)');
 }
 
+// ====================== FOCUS BANNER ======================
+function initFocusBanner() {
+    const banner = document.getElementById('focus-banner');
+    if (!banner) return;
+
+    const key = 'vw_focus_banner_dismissed';
+    if (localStorage.getItem(key) === '1') {
+        banner.remove();
+        return;
+    }
+
+    document.getElementById('dismiss-focus-banner')?.addEventListener('click', () => {
+        localStorage.setItem(key, '1'); // remember forever
+        banner.remove();
+    });
+}
+
 // ====================== BOOTSTRAP ======================
 async function bootstrap() {
     if (isInitialized) return;
@@ -770,9 +787,9 @@ async function bootstrap() {
         // 3. Static module setups
         setupEventListeners();
         initLanguage?.();
-        initProfile?.();   
-      nitFocusBanner();
-      
+        initProfile?.();
+        initFocusBanner();   // ← dismissible focus banner (persists via localStorage)
+
         if (typeof CitizenTalkEngine === 'function') {
             engineInstance = new CitizenTalkEngine(db, storage);
             window.engineInstance = engineInstance;
