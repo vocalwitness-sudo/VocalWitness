@@ -537,18 +537,38 @@ export async function getUserTierData(uid = null) {
   };
 }
 
-export async function canCorroborate(user) {
-  if (!user) return false;
-  // Your existing phone / tier logic
-  const tier = await getUserTier(user.uid); // adjust to your real function
-  return tier >= 2 || tier === 'citizen' || tier === 'witness'; // phone-verified+
+/**
+ * Can the current user corroborate a report?
+ * Requirement: phone-verified or higher (CITIZEN_CIRCLE / WITNESS_CIRCLE)
+ */
+export async function canCorroborate(user = null) {
+  const u = user || auth.currentUser;
+  if (!u) return false;
+
+  const tier = await getCurrentUserTier();
+  return tier === TIERS.CITIZEN_CIRCLE || tier === TIERS.WITNESS_CIRCLE;
 }
 
-export async function getUserTierWeight(user) {
-  const tier = await getUserTier(user.uid);
-  if (tier === 'witness' || tier >= 3) return 3;
-  if (tier === 'citizen' || tier === 2) return 2;
-  return 1;
+/**
+ * Weight used for Corroboration Score
+ * CITIZEN_CIRCLE = 2, WITNESS_CIRCLE = 3 (or higher based on reputation)
+ */
+export async function getUserTierWeight(user = null) {
+  const u = user || auth.currentUser;
+  if (!u) return 1;
+
+  const tier = await getCurrentUserTier();
+
+  if (tier === TIERS.WITNESS_CIRCLE) {
+    // Optional: scale a bit with reputation for Witness Circle
+    const data = await getUserProfile();
+    const rep = Math.max(0, data?.reputation || 0);
+    return Math.max(3, Math.min(5, Math.floor(rep / 100) + 3)); // 3–5
+  }
+
+  if (tier === TIERS.CITIZEN_CIRCLE) return 2;
+
+  return 1; // plain Citizen (should never reach here because of canCorroborate)
 }
 
 // Global exports for window context
@@ -558,3 +578,5 @@ window.getCurrentUserTier = getCurrentUserTier;
 window.canAccessFeature = canAccessFeature;
 window.ZK_PAID_SERVICES = ZK_PAID_SERVICES;
 window.getUserTierData = getUserTierData;
+window.canCorroborate = canCorroborate;
+window.getUserTierWeight = getUserTierWeight;
