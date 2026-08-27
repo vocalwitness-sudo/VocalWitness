@@ -179,6 +179,81 @@ export async function submitFlagAppeal(mediaHash, justification) {
     }
 }
 
+/**
+ * Hash-chain health: sample recent audit_logs, verify previousHash links.
+ */
+export async function getHashChainHealth(sampleSize = 40) {
+  const q = query(
+    collection(db, 'audit_logs'),
+    orderBy('clientTimestamp', 'desc'),
+    limit(sampleSize)
+  );
+  const snapshot = await getDocs(q);
+  const logs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+  if (logs.length < 2) {
+    return {
+      ok: true,
+      checked: logs.length,
+      breaks: 0,
+      headHash: logs[0]?.forensicHash || null,
+      status: logs.length ? 'HEALTHY_SHORT' : 'EMPTY',
+    };
+  }
+
+  // logs[0] is newest; chain points backward via previousHash
+  let breaks = 0;
+  for (let i = 0; i < logs.length - 1; i++) {
+    const newer = logs[i];
+    const older = logs[i + 1];
+    if (newer.previousHash && older.forensicHash && newer.previousHash !== older.forensicHash) {
+      breaks++;
+    }
+  }
+
+  return {
+    ok: breaks === 0,
+    checked: logs.length,
+    breaks,
+    headHash: logs[0]?.forensicHash || null,
+    status: breaks === 0 ? 'HEALTHY' : 'BREAKS_DETECTED',
+  };
+}
+
+/**
+ * Public counts for transparency dashboard.
+ */
+export async function getTransparencyMetrics() {
+  const [testimoniesSnap, disputesSnap, chain] = await Promise.all([
+    getDocs(query(collection(db, 'testimonies'), orderBy('createdAt', 'desc'), limit(500))),
+    getDocs(query(collection(db, 'disputes'), orderBy('createdAt', 'desc'), limit(200))).catch(() => ({ docs: [], size: 0 })),
+    getHashChainHealth(50),
+  ]);
+
+  let sealed = 0;
+  testimoniesSnap.forEach((d) => {
+    const x = d.data();
+    if (x.status === 'published' || x.forensicHash || x.hasForensic) sealed++;
+  });
+
+  const disputes = (disputesSnap.docs || []).map((d) => ({ id: d.id, ...d.data() }));
+  const outcomes = {
+    open: disputes.filter((x) => x.status === 'OPEN' || x.status === 'PENDING').length,
+    upheld: disputes.filter((x) => x.status === 'UPHELD' || x.status === 'CHALLENGE_SUCCESS').length,
+    rejected: disputes.filter((x) => x.status === 'REJECTED' || x.status === 'CHALLENGE_FAILED').length,
+    total: disputes.length,
+  };
+
+  return {
+    sealedReports: sealed,
+    sampledTestimonies: testimoniesSnap.size,
+    chain,
+    disputes: outcomes,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+
 /* ==========================================================================
    COMPATIBILITY ALIAS EXPORTS FOR IMAGESCRUBBER & MEDIA MODULES
    ========================================================================== */
