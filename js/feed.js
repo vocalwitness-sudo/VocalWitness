@@ -56,17 +56,15 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
     currentChannel = channelType;
 
     // Multi-fallback feed container lookup
-    const feedContainer = 
-        document.getElementById('testimonies-feed') ||
-        document.getElementById('feed-container') ||
-        document.getElementById('feedContainer') ||
-        document.querySelector('#public-square #testimonies-feed') ||
-        document.querySelector('[aria-label="Reports feed"]');
+   const feedContainer =
+  document.getElementById('testimonies-feed') ||
+  document.getElementById('feed-container') ||
+  document.querySelector('#public-square #testimonies-feed');
 
-    if (!feedContainer) {
-        console.warn('Feed container still not found in DOM.');
-        return;
-    }
+if (!feedContainer) {
+  console.warn('Feed container not found');
+  return;
+}
 
     // Refresh cached permission status
     await syncStewardPermission();
