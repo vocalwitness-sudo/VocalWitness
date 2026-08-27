@@ -376,6 +376,8 @@
     </div>
   </div>
 </header>
+
+  
 <!-- ====================== MAIN CONTAINER ====================== -->
 <main id="main-content" class="mx-auto max-w-6xl px-3 pb-24 pt-1 sm:px-4 md:pt-2">
 
@@ -749,7 +751,6 @@
     <p class="mt-4 text-center text-[10px] text-zinc-500">Powered by non-custodial rails. No tracking, no intrusive data collection.</p>
   </div>
 </div>
-
 <!-- ====================== USER PROFILE MODAL ====================== -->
 <div id="profileModal"
      class="fixed inset-0 z-[9000] hidden flex items-center justify-center overflow-y-auto bg-black/80 p-4 backdrop-blur-md"
@@ -769,7 +770,6 @@
     </div>
   </div>
 </div>
-
 <!-- ====================== EDIT PROFILE MODAL ====================== -->
 <div id="editProfileModal"
      class="fixed inset-0 z-[10001] hidden flex items-center justify-center overflow-y-auto bg-black/80 p-4 backdrop-blur-md"
@@ -835,7 +835,6 @@
     </form>
   </div>
 </div>
-
 <!-- ====================== SETTINGS & SECURITY MODAL ====================== -->
 <div id="settingsModal"
      class="fixed inset-0 z-[10001] hidden flex items-center justify-center overflow-y-auto bg-black/80 p-4 backdrop-blur-md"
@@ -885,7 +884,6 @@
     </div>
   </div>
 </div>
-
 <!-- ====================== PHONE VERIFICATION MODAL ====================== -->
 <div id="phoneVerificationModal"
      class="fixed inset-0 z-[10050] hidden flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
@@ -900,7 +898,6 @@
               class="flex h-10 w-10 items-center justify-center rounded-full text-2xl leading-none text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
               aria-label="Close phone verification">&times;</button>
     </div>
-
     <div id="phone-step-1" class="space-y-4">
       <div>
         <label for="phone-input" class="mb-1.5 block text-sm text-zinc-300">Phone Number (international format)</label>
@@ -912,7 +909,6 @@
         Send Verification Code
       </button>
     </div>
-
     <div id="phone-step-2" class="hidden space-y-4">
       <div>
         <label for="otp-input" class="mb-1.5 block text-sm text-zinc-300">Enter 6-digit code</label>
@@ -929,14 +925,12 @@
         ← Change phone number
       </button>
     </div>
-
     <p class="text-center text-xs text-zinc-500">
       We only use your number for anti-spam verification.<br>
       It is never shown publicly or stored on the ledger.
     </p>
   </div>
 </div>
-
 <!-- ====================== APPLICATION FOOTER ====================== -->
 <footer class="mt-20 border-t border-zinc-800/80 bg-zinc-950 pb-12 pt-16 text-zinc-400">
   <div class="mx-auto max-w-6xl px-6">
@@ -954,7 +948,6 @@
           <span data-i18n="sustainSquareBtn">Sustain the Platform</span>
         </button>
       </div>
-
       <div class="space-y-3">
         <h3 class="text-xs font-bold uppercase tracking-wider text-white" data-i18n="footerPlatformHeader">Platform</h3>
         <ul class="space-y-2 text-xs">
@@ -964,7 +957,6 @@
           <li><a href="/witness-voice" class="transition hover:text-emerald-400" data-i18n="witnessVoiceMenu">Witness Voice</a></li>
         </ul>
       </div>
-
       <div class="space-y-3">
         <h3 class="text-xs font-bold uppercase tracking-wider text-white" data-i18n="footerGovernanceHeader">Governance &amp; Legal</h3>
         <ul class="footer-links space-y-2 text-xs">
@@ -974,7 +966,6 @@
           <li><a href="/safety" class="transition hover:text-emerald-400" data-i18n="safety">Safety Guidelines</a></li>
         </ul>
       </div>
-
       <div class="space-y-3">
         <h3 class="text-xs font-bold uppercase tracking-wider text-white" data-i18n="footerSystemHeader">System Status</h3>
         <div class="space-y-2 rounded-2xl border border-zinc-800 bg-zinc-900 p-3">
@@ -995,7 +986,6 @@
         </div>
       </div>
     </div>
-
     <div class="flex flex-col items-center justify-between gap-4 pt-8 text-xs text-zinc-500 sm:flex-row">
       <p data-i18n="footerCopyright">© 2026 VocalWitness • Built for Truth • Evidence • Public Square</p>
       <p class="rounded-full border border-zinc-800 bg-zinc-900/50 px-3 py-1 font-mono text-[11px] text-zinc-600">
@@ -1004,11 +994,9 @@
     </div>
   </div>
 </footer>
-
 <!-- ====================== GLOBAL UI HELPER SCRIPT ====================== -->
 <script>
   const $ = (id) => document.getElementById(id);
-
   function showToast(message, type = 'info') {
     const toast = document.createElement('div');
     toast.className = `fixed bottom-6 left-1/2 z-[11000] -translate-x-1/2 rounded-2xl px-6 py-3 text-sm font-medium text-white shadow-2xl transition-all duration-300 ${
@@ -1020,7 +1008,6 @@
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3500);
   }
-
   function openModal(id) {
     const m = $(id);
     if (!m) return;
@@ -1028,7 +1015,6 @@
     m.classList.add('flex');
     m.setAttribute('aria-hidden', 'false');
   }
-
   function closeModal(id) {
     const m = $(id);
     if (!m) return;
@@ -1036,39 +1022,32 @@
     m.classList.remove('flex');
     m.setAttribute('aria-hidden', 'true');
   }
-
   window.$ = $;
   window.showToast = showToast;
   window.openModal = openModal;
   window.closeModal = closeModal;
-
   window.closeAuthModal = () => closeModal('authModal');
   window.closeLoginModal = () => {
     closeModal('loginModal');
     closeModal('authModal');
   };
-
   if (typeof window.openProfileModal !== 'function') {
     window.openProfileModal = () => openModal('profileModal');
   }
   if (typeof window.closeProfileModal !== 'function') {
     window.closeProfileModal = () => closeModal('profileModal');
   }
-
   window.closeEditProfile = () => closeModal('editProfileModal');
   window.openSupportModal = () => openModal('supportModal');
   window.closeSupportModal = () => closeModal('supportModal');
-
   // Fixed: was pointing to non-existent "verificationModal"
   window.closeVerificationModal = () => closeModal('phoneVerificationModal');
-
   window.openPhoneVerificationModal = () => {
     openModal('phoneVerificationModal');
     $('phone-step-2')?.classList.add('hidden');
     $('phone-step-1')?.classList.remove('hidden');
   };
   window.closePhoneVerificationModal = () => closeModal('phoneVerificationModal');
-
   window.toggleDataSaver = function () {
     if (typeof window.toggleDataSaverFromModule === 'function') {
       return window.toggleDataSaverFromModule();
@@ -1085,7 +1064,6 @@
     });
     showToast(`Data Saver mode turned ${next ? 'ON' : 'OFF'}`, 'info');
   };
-
   document.addEventListener('DOMContentLoaded', () => {
     const enabled = localStorage.getItem('vocalwitness_data_saver') === 'true';
     ['data-saver-status', 'footer-data-saver-status'].forEach((id) => {
@@ -1095,19 +1073,15 @@
       el.classList.toggle('text-emerald-400', enabled);
       el.classList.toggle('text-amber-400', !enabled);
     });
-
     $('footerSupportBtn')?.addEventListener('click', () => window.openSupportModal());
     $('openSupportModalBtn')?.addEventListener('click', () => window.openSupportModal());
     $('openSupportModalBtnMobile')?.addEventListener('click', () => window.openSupportModal());
     $('closeSupportModal')?.addEventListener('click', () => window.closeSupportModal());
-
     $('data-saver-btn')?.addEventListener('click', () => window.toggleDataSaver());
     $('data-saver-btn-mobile')?.addEventListener('click', () => window.toggleDataSaver());
     $('footer-data-saver-btn')?.addEventListener('click', () => window.toggleDataSaver());
-
     $('closePhoneVerificationBtn')?.addEventListener('click', () => window.closePhoneVerificationModal());
     $('startPhoneVerificationBtn')?.addEventListener('click', () => window.openPhoneVerificationModal());
-
     $('send-otp-btn')?.addEventListener('click', () => {
       if (typeof handleSendOTP === 'function') handleSendOTP();
     });
@@ -1118,19 +1092,16 @@
       $('phone-step-2')?.classList.add('hidden');
       $('phone-step-1')?.classList.remove('hidden');
     });
-
     $('closeProfileModalBtn')?.addEventListener('click', () => window.closeProfileModal());
     $('closeEditProfileBtn')?.addEventListener('click', () => window.closeEditProfile());
     $('cancelEditProfileBtn')?.addEventListener('click', () => window.closeEditProfile());
     $('closeSettingsBtn')?.addEventListener('click', () => closeModal('settingsModal'));
-
     ['supportModal', 'profileModal', 'editProfileModal', 'settingsModal', 'phoneVerificationModal', 'authModal'].forEach((id) => {
       const m = $(id);
       m?.addEventListener('click', (e) => {
         if (e.target === m) closeModal(id);
       });
     });
-
     document.addEventListener('keydown', (e) => {
       if (e.key !== 'Escape') return;
       const order = ['phoneVerificationModal', 'editProfileModal', 'settingsModal', 'supportModal', 'profileModal', 'authModal'];
@@ -1142,7 +1113,6 @@
         }
       }
     });
-
     document.addEventListener('click', (e) => {
       const moreBtn = $('more-btn');
       const moreMenu = $('more-menu');
@@ -1156,7 +1126,6 @@
         moreBtn?.setAttribute('aria-expanded', 'false');
       }
     });
-
     document.addEventListener('click', (e) => {
       const btn = e.target.closest('.support-tier-btn');
       if (!btn) return;
@@ -1170,9 +1139,47 @@
       const amountInput = $('customSupportAmount');
       if (amountInput) amountInput.value = btn.getAttribute('data-amount') || '15';
     });
+
+    // ===== Integrated fixes =====
+    // Copy USDT address
+    $('copyUsdtBtn')?.addEventListener('click', async () => {
+      const addr = $('usdtAddress')?.textContent?.trim();
+      if (!addr) return;
+      try {
+        await navigator.clipboard.writeText(addr);
+        showToast('USDT address copied', 'success');
+      } catch {
+        showToast('Copy failed — select and copy manually', 'error');
+      }
+    });
+
+    // Optional: clear active-tier highlight when user types a custom value
+    $('customSupportAmount')?.addEventListener('input', (e) => {
+      const val = e.target.value;
+      if (!val) return;
+      const container = $('supportTierContainer');
+      container?.querySelectorAll('.support-tier-btn').forEach((b) => {
+        b.classList.remove('bg-emerald-600/20', 'border-emerald-500', 'active-tier');
+        b.classList.add('bg-zinc-800', 'border-zinc-700');
+      });
+    });
+
+    // Placeholder for payment buttons (replace with real Paystack / NOWPayments calls)
+    $('paystackPayBtn')?.addEventListener('click', () => {
+      const amount = Number($('customSupportAmount')?.value) || 15;
+      if (amount < 1) return showToast('Enter a valid amount', 'warning');
+      // initPaystack(amount) …
+      showToast(`Paystack flow for $${amount} (not implemented)`, 'info');
+    });
+
+    $('proceedCryptoBtn')?.addEventListener('click', () => {
+      const amount = Number($('customSupportAmount')?.value) || 15;
+      if (amount < 1) return showToast('Enter a valid amount', 'warning');
+      // open NOWPayments invoice …
+      showToast(`Crypto flow for $${amount} (not implemented)`, 'info');
+    });
   });
 </script>
-
 <script type="module" src="./js/app-state.js"></script>
 <script type="module" src="./js/auth.js"></script>
 <script type="module" src="./js/notifications.js"></script>
