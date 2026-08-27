@@ -15,9 +15,9 @@ import { initBookmarks, initBookmarksView } from './bookmarks.js';
 import { loadWeeklyLeaderboard, refreshTierAndUI } from './tier.js';
 import './composer.js';
 import {
-  buildPackCore,
-  toFirestoreEvidencePack
+  createEvidencePack
 } from './evidence-pack.js';
+import { generateSha256Hash } from './utils.js';
 import {
     collection,
     addDoc,
@@ -289,51 +289,94 @@ window.publishTestimony = async () => {
     }
 
     try {
-        const mediaData = (typeof mediaModule.uploadForensicMedia === 'function')
-            ? await mediaModule.uploadForensicMedia()
-            : {};
+    const mediaData = (typeof mediaModule.uploadForensicMedia === 'function')
+        ? await mediaModule.uploadForensicMedia()
+        : {};
 
-        // 1. Construct testimony payload
-        const testimonyData = {
-            authorId: currentUser.uid,
-            author: currentUser.displayName || "Registered Witness",
-            content: content,
-            createdAt: serverTimestamp(),
-            timestamp: Date.now(),
-            isPublic: true,
-            moderationStatus: "approved",
-            feedVisibility: state.currentMode === 'witness' ? 'witness-voice' : 'citizen-talk',
-            imageUrl: mediaData.imageUrl || null,
-            audioUrl: mediaData.audioUrl || null,
-            imageHash: mediaData.imageHash || null,
-            audioHash: mediaData.audioHash || null,
-            hasForensic: !!(mediaData.imageHash || mediaData.audioHash)
-        };
+    const clientCaptureMs = Date.now();
+    const channel = state.currentMode === 'witness' ? 'witness-voice' : 'citizen-talk';
 
-        // 2. Add testimony to Firestore
-        await addDoc(collection(db, "testimonies"), testimonyData);
+    // Body hash (text integrity)
+    const bodyHash = content
+        ? await generateSha256Hash(content)
+        : null;
 
-        showToast("✅ Testimony published successfully!", "success");
-
-        if (textarea) textarea.value = '';
-        mediaModule.resetMediaState?.();
-        initFeed?.(db, testimonyData.feedVisibility);
-
-    } catch (err) {
-        console.error("Publish error detail:", err);
-        if (err.code === 'permission-denied') {
-            showToast("⚠️ Permission denied: Please wait 30s before posting again or re-login.", "error");
-        } else {
-            showToast("Failed to publish. Please try again.", "error");
-        }
-    } finally {
-        if (postBtn) {
-            postBtn.disabled = false;
-            postBtn.classList.remove('publishing', 'opacity-50', 'cursor-not-allowed');
-        }
+    // Prepare media object for the evidence pack
+    const mediaForPack = {};
+    if (mediaData.imageUrl && mediaData.imageHash) {
+        mediaForPack.imageUrl = mediaData.imageUrl;
+        mediaForPack.imageHash = mediaData.imageHash;
     }
-};
+    if (mediaData.audioUrl && mediaData.audioHash) {
+        mediaForPack.audioUrl = mediaData.audioUrl;
+        mediaForPack.audioHash = mediaData.audioHash;
+    }
 
+    // Identity
+    const identity = {
+        mode: 'IDENTIFIED',
+        authorId: currentUser.uid,
+        displayName: currentUser.displayName || null
+    };
+
+    // === Automatic Evidence Pack (invisible to user) ===
+    const { firestorePack, packCoreHash } = await createEvidencePack({
+        content,
+        bodyHash,
+        media: mediaForPack,
+        identity,
+        channel,
+        clientCaptureMs
+    });
+
+    // 1. Construct testimony payload
+    const testimonyData = {
+        authorId: currentUser.uid,
+        author: currentUser.displayName || "Registered Witness",
+        content: content,
+        createdAt: serverTimestamp(),
+        timestamp: clientCaptureMs,
+        isPublic: true,
+        moderationStatus: "approved",
+        feedVisibility: channel,
+
+        // Existing media fields (backward compatible)
+        imageUrl: mediaData.imageUrl || null,
+        audioUrl: mediaData.audioUrl || null,
+        imageHash: mediaData.imageHash || null,
+        audioHash: mediaData.audioHash || null,
+        hasForensic: !!(mediaData.imageHash || mediaData.audioHash),
+
+        // === Batch 1 new fields ===
+        evidencePack: firestorePack,
+        packCoreHash: packCoreHash || null,
+        hasEvidencePack: true,
+        bodyHash: bodyHash
+    };
+
+    // 2. Add testimony to Firestore
+    await addDoc(collection(db, "testimonies"), testimonyData);
+
+    // Smart, non-court language
+    showToast("🛡️ Report sealed and published", "success");
+
+    if (textarea) textarea.value = '';
+    mediaModule.resetMediaState?.();
+    initFeed?.(db, channel);
+
+} catch (err) {
+    console.error("Publish error detail:", err);
+    if (err.code === 'permission-denied') {
+        showToast("⚠️ Permission denied: Please wait 30s before posting again or re-login.", "error");
+    } else {
+        showToast("Failed to publish. Please try again.", "error");
+    }
+} finally {
+    if (postBtn) {
+        postBtn.disabled = false;
+        postBtn.classList.remove('publishing', 'opacity-50', 'cursor-not-allowed');
+    }
+}
 // ====================== EVIDENCE LEDGER ======================
 async function loadEvidenceLedger() {
     const container = document.getElementById('ledgerContainer');
