@@ -3,39 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="privacyPageTitle">Privacy Policy • VocalWitness</title>
+    <title data-i18n="safetyPageTitle">Safety & Your Rights • VocalWitness</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { 
-            font-family: 'Inter', system-ui, sans-serif; 
-            background: #0a0f1c; 
-            color: #e4e4e7; 
-        }
-        .glass { 
-            background: rgba(17, 24, 39, 0.95); 
-            backdrop-filter: blur(20px); 
-            border: 1px solid rgba(16, 185, 129, 0.25); 
-        }
-        .badge-glass { 
-            background: rgba(31, 41, 55, 0.6); 
-            border: 1px solid rgba(255, 255, 255, 0.1); 
-        }
-        .panic-btn { 
-            background: linear-gradient(135deg, #dc2626, #991b1b); 
-        }
+        body { background-color: #0a0f1c; color: #e4e4e7; font-family: 'Inter', system-ui, sans-serif; }
+        .glass { background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(16, 185, 129, 0.25); }
+        .badge-glass { background: rgba(31, 41, 55, 0.6); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .panic-btn { background: linear-gradient(135deg, #dc2626, #991b1b); }
     </style>
 </head>
 <body class="min-h-screen p-6 md:p-12 pb-24">
-
     <div class="max-w-3xl mx-auto">
         
-        <div class="flex items-center justify-between mb-10 glass rounded-3xl p-4">
+        <!-- Header with Quick Exit -->
+        <div class="flex items-center justify-between mb-8 glass rounded-3xl p-4">
             <div class="flex items-center gap-3">
-                <a href="index.html" class="w-10 h-10 bg-emerald-500/20 rounded-2xl flex items-center justify-center text-xl hover:bg-emerald-500/30 transition" aria-label="Back to home">⬅️</a>
+                <a href="index.html" class="w-10 h-10 bg-emerald-500/20 rounded-2xl flex items-center justify-center text-xl hover:bg-emerald-500/30 transition">⬅️</a>
                 <h1 class="text-2xl font-bold tracking-tight text-white" data-i18n="appTitle">VocalWitness</h1>
             </div>
             <div class="flex items-center gap-2 md:gap-3">
-                <button id="panicButton" class="panic-btn text-white text-xs md:text-sm font-bold px-3 py-2 rounded-2xl shadow-lg hover:opacity-90 transition flex items-center gap-1.5" title="Instantly clear local history and exit">
+                <button id="panicButton" class="panic-btn text-white text-xs md:text-sm font-bold px-3 py-2 rounded-2xl shadow-lg hover:opacity-90 transition flex items-center gap-1.5">
                     🚨 <span data-i18n="panicExit">Quick Exit</span>
                 </button>
                 <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
@@ -48,185 +35,133 @@
             </div>
         </div>
 
-        <header class="mb-10">
-            <div class="flex items-center gap-4 mb-4">
-                <div class="w-12 h-12 bg-emerald-500/20 rounded-3xl flex items-center justify-center text-4xl">🔐</div>
-                <h1 class="text-4xl md:text-5xl font-bold tracking-tighter text-white" data-i18n="privacyTitle">Privacy Policy</h1>
-            </div>
-            <p class="text-sm text-zinc-400 mb-2" data-i18n="privacyLastUpdated">Last updated: August 25, 2026</p>
-            <p class="text-xl text-zinc-400" data-i18n="privacySubtitle">Your privacy is protected by strong technology — not just promises.</p>
-        </header>
+        <div class="flex items-center gap-4 mb-6">
+            <div class="w-12 h-12 bg-emerald-500/20 rounded-3xl flex items-center justify-center text-4xl">🛡️</div>
+            <h1 class="text-4xl font-bold tracking-tight text-white">Safety & Your Rights</h1>
+        </div>
 
-        <section class="glass rounded-3xl p-8 mb-10 border-emerald-500/40 space-y-4">
-            <div class="flex items-center gap-3 text-emerald-400 font-bold text-xl">
-                <span class="text-2xl">🛡️</span>
-                <span data-i18n="zkSubpoenaTitle">We Cannot Give What We Do Not Have</span>
-            </div>
-            <p class="text-zinc-200 leading-relaxed text-sm md:text-base" data-i18n="zkSubpoenaDesc">
-                <strong>VocalWitness is built so that your personal identity never reaches our servers.</strong>  
-                If any authority asks for your private information, our answer is simple: We have nothing to give.
+        <!-- Friendly Banner -->
+        <div class="glass rounded-3xl p-8 mb-10 space-y-4">
+            <h2 class="text-xl font-bold text-emerald-400">Your Right to Speak the Truth</h2>
+            <p class="text-zinc-200 leading-relaxed text-sm md:text-base">
+                Every person has the right to share what they have witnessed.  
+                This right is protected under Article 19 of the Universal Declaration of Human Rights.
             </p>
             <div class="pt-2 flex flex-wrap items-center gap-3 text-xs text-zinc-300">
-                <span class="text-zinc-400 font-medium" data-i18n="privacyArchitectureBy">Protected by:</span>
-                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-emerald-400">Client-Side Protection</span>
-                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-cyan-400">Automatic Metadata Removal</span>
-                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-amber-400">No IP Logging</span>
+                <span class="text-zinc-400 font-medium">Protected by:</span>
+                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-emerald-400">Google Cloud / Firebase</span>
+                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-amber-400">Cloudflare Edge Shield</span>
+                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-cyan-400">Strong Cryptography</span>
+            </div>
+        </div>
+
+        <div class="space-y-12 text-zinc-300 leading-relaxed">
+
+            <!-- 1 -->
+            <section>
+                <h2 class="text-2xl font-semibold text-white mb-4">1. Strong Protection by Design</h2>
+                <div class="glass rounded-3xl p-6 md:p-8 space-y-3">
+                    <p class="text-sm md:text-base text-zinc-300">
+                        We cannot give away information that we never collected. Your identity stays protected.
+                    </p>
+                    <ul class="space-y-2 text-sm md:text-base text-zinc-300 list-disc pl-5">
+                        <li><strong>No identity logs</strong> linked to your public posts.</li>
+                        <li><strong>Location and device details</strong> are removed in your browser before upload.</li>
+                        <li><strong>Strong technical protection</strong> for anonymous reporters.</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- 2 -->
+            <section>
+                <h2 class="text-2xl font-semibold text-white mb-4">2. Extra Safety Tips for High-Risk Situations</h2>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="glass rounded-3xl p-6">
+                        <div class="text-3xl mb-3">📡</div>
+                        <h3 class="font-semibold text-white mb-2">Safer Internet Connection</h3>
+                        <p class="text-sm text-zinc-400">
+                            In restrictive areas, use Tor or a trusted VPN. Avoid publishing on networks linked to your official ID.
+                        </p>
+                    </div>
+                    <div class="glass rounded-3xl p-6">
+                        <div class="text-3xl mb-3">📱</div>
+                        <h3 class="font-semibold text-white mb-2">Device Safety & Quick Exit</h3>
+                        <p class="text-sm text-zinc-400">
+                            Use a strong passcode. If you feel in danger, press the red <strong>Quick Exit</strong> button — it clears local data and leaves the site.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3 -->
+            <section>
+                <h2 class="text-2xl font-semibold text-white mb-4">3. What Is Not Allowed</h2>
+                <p class="mb-4 text-zinc-400">These actions are strictly forbidden:</p>
+                <ul class="space-y-4 text-zinc-300">
+                    <li class="flex gap-3"><span class="text-red-400 font-bold">✕</span> <span><strong>Doxxing:</strong> Sharing someone’s private details without permission.</span></li>
+                    <li class="flex gap-3"><span class="text-red-400 font-bold">✕</span> <span><strong>Harassment & Threats.</strong></span></li>
+                    <li class="flex gap-3"><span class="text-red-400 font-bold">✕</span> <span><strong>Fake or Altered Evidence</strong> meant to harm others.</span></li>
+                    <li class="flex gap-3"><span class="text-red-400 font-bold">✕</span> <span><strong>Spam & Fake Accounts.</strong></span></li>
+                </ul>
+            </section>
+
+            <!-- 4 -->
+            <section>
+                <h2 class="text-2xl font-semibold text-white mb-4">4. How We Keep the Community Safe</h2>
+                <p class="mb-4 text-zinc-400">Safety comes from community reporting and clear verification levels:</p>
+                <div class="space-y-2 text-zinc-400 text-sm">
+                    <p>• <strong>Open Talk</strong> — Open discussion for everyone.</p>
+                    <p>• <strong>Higher Trust</strong> — Stronger protection and reputation.</p>
+                </div>
+            </section>
+
+            <section class="pt-8 border-t border-zinc-800 text-sm">
+                <p class="text-emerald-400 font-medium text-base mb-1">Our Goal:</p>
+                <p class="text-zinc-400">A safe public square where real reports can be shared and people are protected by design.</p>
+            </section>
+        </div>
+
+        <!-- ===================== TECHNICAL DETAILS ===================== -->
+        <section class="glass rounded-3xl p-6 md:p-8 mt-16 border border-zinc-700">
+            <h2 class="text-xl font-bold text-zinc-300 mb-6 flex items-center gap-2">
+                <span>⚙️</span> Technical & Operational Details
+            </h2>
+            
+            <div class="space-y-6 text-sm text-zinc-400 leading-relaxed">
+                <div>
+                    <h3 class="font-semibold text-emerald-400 mb-1">Cryptographic & Subpoena Defense</h3>
+                    <p>
+                        VocalWitness uses client-side SHA-256 hashing and zero-knowledge proofs (zk-SNARKs).  
+                        • Zero identity storage: IP addresses are not logged alongside public posts.<br>
+                        • Automatic EXIF scrubbing: Camera identifiers and GPS are stripped in the browser before upload.<br>
+                        • Mathematical protection: No central private keys exist that can unmask anonymous witnesses.
+                    </p>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold text-emerald-400 mb-1">High-Risk Operational Advice</h3>
+                    <p>
+                        Prefer Tor or trusted VPNs in restrictive environments. Avoid mobile networks tied to government-issued SIMs.  
+                        Use a strong device passcode (not only biometrics). The Quick Exit button immediately clears localStorage/sessionStorage and redirects to a neutral site.
+                    </p>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold text-emerald-400 mb-1">Moderation Tiers</h3>
+                    <p>
+                        • <strong>Open Talk / Citizen Talk</strong> — Open discourse with community reporting.<br>
+                        • <strong>Higher Trust / True Witness</strong> — Cryptographically notarized evidence with reputation scores.
+                    </p>
+                </div>
             </div>
         </section>
 
-        <div class="space-y-10 text-zinc-300 leading-relaxed">
-
-            <section class="glass rounded-3xl p-6 md:p-8">
-                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec1Title">1. Everything Important Happens on Your Device</h2>
-                <div class="space-y-3 text-sm md:text-base text-zinc-300">
-                    <p data-i18n="privacySec1Para1">
-                        When you upload a photo, voice note, or document, the sensitive work is done inside your own browser before anything leaves your device:
-                    </p>
-                    <ul class="list-disc pl-5 space-y-2 text-zinc-400">
-                        <li data-i18n="privacySec1Bullet1"><strong>Metadata is removed:</strong> Camera model, GPS location, and other private details are automatically stripped.</li>
-                        <li data-i18n="privacySec1Bullet2"><strong>Digital fingerprint is created:</strong> Your browser makes a unique fingerprint of the file. Only this and the cleaned media are sent.</li>
-                        <li data-i18n="privacySec1Bullet3"><strong>Strong verification:</strong> You can prove you are a real person without revealing private identity details.</li>
-                    </ul>
-                </div>
-            </section>
-
-            <section class="glass rounded-3xl p-6 md:p-8">
-                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec2Title">2. What We Never Collect or Store</h2>
-                <div class="space-y-3 text-sm md:text-base text-zinc-300">
-                    <p data-i18n="privacySec2Intro">For maximum safety we deliberately do not keep:</p>
-                    <ul class="space-y-2 text-zinc-400">
-                        <li class="flex items-start gap-2">
-                            <span class="text-red-400 font-bold">✕</span>
-                            <span data-i18n="privacySec2Item1"><strong>Your real IP address</strong> — requests go through protection layers so your location is not linked to your posts.</span>
-                        </li>
-                        <li class="flex items-start gap-2">
-                            <span class="text-red-400 font-bold">✕</span>
-                            <span data-i18n="privacySec2Item2"><strong>Phone numbers on any public record</strong> — phone checks are only temporary to stop spam and are never saved or shown.</span>
-                        </li>
-                        <li class="flex items-start gap-2">
-                            <span class="text-red-400 font-bold">✕</span>
-                            <span data-i18n="privacySec2Item3">Government IDs, passports, biometrics, or your personal contact list.</span>
-                        </li>
-                    </ul>
-                </div>
-            </section>
-
-            <section class="glass rounded-3xl p-6 md:p-8">
-                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec3Title">3. What We Do Process (Only What’s Needed)</h2>
-                <div class="grid md:grid-cols-2 gap-6 mt-4">
-                    <div class="glass rounded-3xl p-6">
-                        <h3 class="font-semibold text-emerald-400 mb-2" data-i18n="privacyAccountInfoTitle">Account Basics</h3>
-                        <p class="text-sm text-zinc-400" data-i18n="privacyAccountInfoDesc">Your chosen username, security keys, and any trust badges you earn.</p>
-                    </div>
-                    <div class="glass rounded-3xl p-6">
-                        <h3 class="font-semibold text-emerald-400 mb-2" data-i18n="privacyContentTitle">Published Content</h3>
-                        <p class="text-sm text-zinc-400" data-i18n="privacyContentDesc">Your reports, cleaned media, digital fingerprints, and timestamps.</p>
-                    </div>
-                    <div class="glass rounded-3xl p-6">
-                        <h3 class="font-semibold text-emerald-400 mb-2" data-i18n="privacyVerificationTitle">Anti-Spam Checks</h3>
-                        <p class="text-sm text-zinc-400" data-i18n="privacyVerificationDesc">Proof that you are a real person — without revealing who you are.</p>
-                    </div>
-                    <div class="glass rounded-3xl p-6">
-                        <h3 class="font-semibold text-emerald-400 mb-2" data-i18n="privacyTechnicalTitle">Security Protection</h3>
-                        <p class="text-sm text-zinc-400" data-i18n="privacyTechnicalDesc">Anonymous technical data used only to block attacks and bots.</p>
-                    </div>
-                </div>
-            </section>
-
-            <section class="glass rounded-3xl p-6 md:p-8">
-                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec4Title">4. Aligned with Universal Human Rights</h2>
-                <p class="text-sm md:text-base text-zinc-300 leading-relaxed" data-i18n="privacySec4Text">
-                    Our design follows Articles 12 and 19 of the Universal Declaration of Human Rights: everyone has the right to privacy and the freedom to share information without interference.
-                </p>
-            </section>
-
-            <section class="glass rounded-3xl p-6 md:p-8">
-                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec5Title">5. We Are a Neutral Platform</h2>
-                <p class="mb-3 text-sm md:text-base text-zinc-300" data-i18n="privacySec5Text1">
-                    VocalWitness is only a technical host. We do not write, approve, or fact-check the content people post.
-                </p>
-                <p class="text-zinc-400 text-sm leading-relaxed" data-i18n="privacySec5Text2">
-                    Each person is fully responsible for what they choose to publish.
-                </p>
-            </section>
-
-            <section class="glass rounded-3xl p-6 md:p-8">
-                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec6Title">6. What Is Not Allowed & How to Report</h2>
-                <p class="mb-3 text-sm md:text-base text-zinc-300" data-i18n="privacySec6Text1">
-                    Harassment, sharing someone’s private personal details without consent, child sexual abuse material, and deliberately fake harmful media are strictly forbidden.
-                </p>
-                <p class="text-zinc-400 text-sm leading-relaxed" data-i18n="privacySec6Text2">
-                    If you see content that breaks these rules, please report it using the in-app button.
-                </p>
-            </section>
-
-            <section class="glass rounded-3xl p-6 md:p-8">
-                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec7Title">7. Quick Exit & Permanent Records</h2>
-                <p class="text-sm md:text-base text-zinc-300 leading-relaxed" data-i18n="privacySec7Text">
-                    You can instantly clear your local browser data with the Quick Exit button.  
-                    However, once a report is published and locked, it becomes a permanent record.
-                </p>
-            </section>
-
-            <section class="glass rounded-3xl p-6 md:p-8">
-              <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec8Title">8. Intellectual Property</h2>
-              <p class="text-sm md:text-base text-zinc-300 leading-relaxed" data-i18n="privacySec8Text">
-                The VocalWitness platform, including its software, design, name, and logo, is the exclusive intellectual property of VocalWitness.  
-                You may not copy or reuse it without permission.
-              </p>
-            </section>
-
-        </div>
-        <!-- ===================== TECHNICAL DETAILS ===================== -->
-<section class="glass rounded-3xl p-6 md:p-8 mt-10 border border-zinc-700">
-    <h2 class="text-xl font-bold text-zinc-300 mb-6 flex items-center gap-2">
-        <span>⚙️</span> Technical & Legal Details
-    </h2>
-    
-    <div class="space-y-5 text-sm text-zinc-400 leading-relaxed">
-        <div>
-            <h3 class="font-semibold text-emerald-400 mb-1">Client-Side Processing</h3>
-            <p>EXIF metadata, GPS coordinates and device identifiers are stripped in-browser using Canvas / Web Crypto APIs before any upload occurs. Only the cleaned media + SHA-256 digest leave the device.</p>
-        </div>
-        
-        <div>
-            <h3 class="font-semibold text-emerald-400 mb-1">Zero-Knowledge Architecture</h3>
-            <p>Verification uses client-side zk-SNARKs so standing can be proven without revealing underlying credentials or identity. No private keys or identity logs exist on VocalWitness servers.</p>
-        </div>
-
-        <div>
-            <h3 class="font-semibold text-emerald-400 mb-1">What is never stored</h3>
-            <ul class="list-disc pl-5 space-y-1">
-                <li>Origin IP addresses (purged at Cloudflare Edge)</li>
-                <li>Phone numbers on any public or permanent ledger</li>
-                <li>Government IDs, biometrics, or contact graphs</li>
-            </ul>
-        </div>
-
-        <div>
-            <h3 class="font-semibold text-emerald-400 mb-1">Intellectual Property</h3>
-            <p>The VocalWitness platform (software, cryptographic systems, hashing methods, Zero-Knowledge implementation, Evidence Ledger design, interface, branding, name and logo) is the exclusive intellectual property of VocalWitness and is protected by copyright and applicable laws.</p>
-        </div>
-    </div>
-</section>
-
-        <section class="pt-8 border-t border-zinc-800 text-center mt-12">
+        <div class="mt-16 text-center">
             <a href="index.html" 
-               class="inline-block px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-3xl font-medium transition-all shadow-lg shadow-emerald-900/30" 
-               data-i18n="backToSquare">
-                ← Back to VocalWitness
+               class="inline-block px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-3xl font-medium transition-all shadow-lg shadow-emerald-900/30">
+                ← Back to the Square
             </a>
-        </section>
-
-        <footer class="text-center pt-8 border-t border-zinc-800 text-xs text-zinc-500 mt-12">
-            <p data-i18n="footerCopyright">© 2026 VocalWitness • Citizen Reporting • Real Evidence</p>
-            <p class="mt-2">
-                <a href="terms.html" class="hover:text-zinc-300" data-i18n="terms">Terms</a> • 
-                <a href="about.html" class="hover:text-zinc-300" data-i18n="about">About</a> • 
-                <a href="safety.html" class="hover:text-zinc-300" data-i18n="safety">Safety</a>
-            </p>
-        </footer>
-
+        </div>
     </div>
 
     <script>
@@ -239,9 +174,7 @@
 
     <script type="module">
         import { initLanguage } from './js/i18n.js';
-        document.addEventListener('DOMContentLoaded', () => {
-            initLanguage();
-        });
+        document.addEventListener('DOMContentLoaded', () => initLanguage());
     </script>
 </body>
 </html>
