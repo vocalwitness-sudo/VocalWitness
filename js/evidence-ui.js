@@ -17,39 +17,35 @@ export function renderSealedBadge(hasPack) {
 
 /**
  * Renders the Download button
+ * Uses data-action so it works with the existing feed event delegation
  */
 export function renderDownloadPackButton(testimonyId) {
   return `
     <button type="button"
-            class="download-evidence-pack-btn text-[11px] text-emerald-400 hover:text-emerald-300 underline-offset-2 hover:underline"
-            data-testimony-id="${testimonyId}">
+            data-action="download-pack"
+            data-id="${testimonyId}"
+            class="download-evidence-pack-btn text-[11px] text-emerald-400 hover:text-emerald-300 transition">
       Download Evidence Pack
     </button>
   `;
 }
 
 /**
- * Global click handler (call once on app init)
+ * Optional global click handler.
+ * Prefer handling the action inside feed.js (cleaner).
+ * Keep this only if you want a fallback.
  */
 export function initEvidencePackUI() {
   document.addEventListener('click', async (e) => {
     const btn = e.target.closest('.download-evidence-pack-btn');
     if (!btn) return;
 
-    const id = btn.dataset.testimonyId;
+    // If feed.js already handled it via data-action, do nothing
+    if (btn.dataset.handledByFeed) return;
+
+    const id = btn.dataset.id || btn.dataset.testimonyId;
     if (!id) return;
 
-    try {
-      // You will later fetch the testimony + reconstruct the full pack.
-      // For now we can show a clear message.
-      showToast('Preparing evidence pack…', 'info');
-
-      // Placeholder – we will wire the real fetch in the next step
-      // once feed.js / createPost returns the data.
-      showToast('Evidence pack download will be fully wired next', 'info');
-    } catch (err) {
-      console.error(err);
-      showToast('Could not prepare evidence pack', 'error');
-    }
+    showToast('Use the feed download handler for full pack support', 'info');
   });
 }
