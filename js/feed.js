@@ -595,6 +595,13 @@ async function handleDownloadEvidencePack(postId) {
             }
         };
 
+        window.addEventListener('feed-set-sort', (e) => {
+    const sort = e.detail?.sort;
+    if (!sort) return;
+    const btn = document.querySelector(`#sortBtnGroup .sort-btn[data-sort="${sort}"]`);
+    btn?.click();
+});
+
         if (post.imageUrl && post.imageHash) {
             core.media.push({
                 role: 'image',
