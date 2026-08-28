@@ -51,7 +51,7 @@ export function showToast(message, type = "success", duration = null) {
 
     toast.innerHTML = `
         <span class="text-base shrink-0">${style.icon}</span>
-        <span class="flex-1 leading-snug">${message}</span>
+        <span class="flex-1 leading-snug">${escapeHTML(message)}</span>
         <div class="toast-progress-bar absolute bottom-0 left-0 h-1 bg-white/40 w-full transition-all linear"></div>
     `;
 
@@ -125,11 +125,22 @@ export async function executeAction(actionFn, buttonEl, loadingText = "Processin
 }
 
 /* ====================== CRYPTO & FORENSICS ====================== */
+
+/**
+ * Computes SHA-256 hash for raw strings, Blob, or ArrayBuffer inputs.
+ */
 export async function generateSha256Hash(input) {
     try {
-        const data = (typeof input === 'string')
-            ? new TextEncoder().encode(input)
-            : await input.arrayBuffer();
+        let data;
+        if (typeof input === 'string') {
+            data = new TextEncoder().encode(input);
+        } else if (input instanceof ArrayBuffer) {
+            data = input;
+        } else if (input && typeof input.arrayBuffer === 'function') {
+            data = await input.arrayBuffer();
+        } else {
+            data = new TextEncoder().encode(String(input));
+        }
 
         const hashBuffer = await crypto.subtle.digest('SHA-256', data);
         return Array.from(new Uint8Array(hashBuffer))
@@ -139,6 +150,21 @@ export async function generateSha256Hash(input) {
         console.error("Hash generation failed:", e);
         return null;
     }
+}
+
+// ALIAS EXPORTS FOR COMPATIBILITY (Fixes corroboration.js named import crash)
+export const computeSHA256 = generateSha256Hash;
+export const computeSha256 = generateSha256Hash;
+
+/* ====================== SANITIZATION & DOM UTILS ====================== */
+export function escapeHTML(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
 }
 
 /* ====================== PEER VOTING ====================== */
@@ -333,7 +359,7 @@ export function getTier(trustScore = 0) {
     if (trustScore >= 100) return { name: 'Premium', color: '#FFD700', canDownload: true, badge: '🌟 Verified Truth-Bearer', level: 4 };
     if (trustScore >= 80)  return { name: 'Gold',    color: '#FFD700', canDownload: true, badge: 'Elite Witness',         level: 3 };
     if (trustScore >= 60)  return { name: 'Silver',  color: '#C0C0C0', canDownload: true, badge: 'Trusted Witness',       level: 2 };
-    if (trustScore >= 40)  return { name: 'Bronze',  color: '#CD7F32', canDownload: true, badge: 'Verified Citizen',      level: 1 };
+    if (trustScore >= 40)  return { name: 'Bronze',  color: '#CD7F32', canDownload: true, badge: 'Verified Citizen',       level: 1 };
     return { name: 'Explorer', color: '#808080', canDownload: false, badge: 'New Citizen', level: 0 };
 }
 
@@ -363,6 +389,9 @@ export async function escalatePost(postId) {
 /* ====================== GLOBAL EXPORTS ====================== */
 window.submitPeerVote = submitPeerVote;
 window.showToast = showToast;
+window.computeSHA256 = computeSHA256;
+window.generateSha256Hash = generateSha256Hash;
+window.escapeHTML = escapeHTML;
 window.goBack = function () {
     if (window.history.length > 1) {
         window.history.back();
