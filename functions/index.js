@@ -2,6 +2,7 @@
  * Cloud Functions for Firebase / Cloudflare R2 Integration
  * Stack: Firebase Functions v2 • AWS SDK v3 • SnarkJS • Paystack • Cloud Tasks • Gemini API
  */
+const functions = require("firebase-functions");
 const { onRequest, onCall, HttpsError } = require("firebase-functions/v2/https");
 const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 const { GoogleGenAI, Type } = require("@google/genai");
@@ -27,6 +28,7 @@ const perspectiveApiKey = defineSecret("PERSPECTIVE_API_KEY");
 const r2AccessKeyId = defineSecret("R2_ACCESS_KEY_ID");
 const r2SecretAccessKey = defineSecret("R2_SECRET_ACCESS_KEY");
 const paystackSecretKey = defineSecret("PAYSTACK_SECRET_KEY");
+const geminiApiKey = defineSecret("GEMINI_API_KEY");
 
 // ======================================================
 // INITIALIZE & SINGLETONS
@@ -47,6 +49,7 @@ const allowedOrigins = [
   "https://vocalwitness.com",
   "https://www.vocalwitness.com"
 ];
+
 // Reusable S3 / R2 Client Instance
 let r2ClientInstance = null;
 function getR2Client(accessKeyId, secretAccessKey) {
@@ -572,7 +575,7 @@ exports.moderatedDelete = onCall(
 );
 
 // ======================================================
-// 5. TOXICITY HELPERS & ENDPOINT
+// 5. TOXICITY HELPERS & GEMINI AI MODERATION
 // ======================================================
 async function analyzeToxicityWithPerspective(content = "") {
   const apiKey = perspectiveApiKey.value() || process.env.PERSPECTIVE_API_KEY;
@@ -635,6 +638,80 @@ exports.analyzeToxicity = onRequest(
         res.status(500).json({ error: error.message });
       }
     });
+  }
+);
+
+exports.moderatePostContent = onCall(
+  {
+    cors: allowedOrigins,
+    secrets: [geminiApiKey]
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Authentication required to run moderation.");
+    }
+
+    const { title = "", text = "" } = request.data || {};
+    const fullContent = `${title}\n${text}`.trim();
+
+    if (!fullContent) {
+      return { flagged: false, reason: "Empty content", categories: [], safetyScore: 1.0 };
+    }
+
+    try {
+      const apiKey = geminiApiKey.value() || process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        console.warn("GEMINI_API_KEY is not set. Falling back to local check.");
+        const fallback = gentleModerationCheck(fullContent);
+        return {
+          flagged: !fallback.safe,
+          reason: fallback.note,
+          categories: fallback.safe ? [] : ["toxic_content"],
+          safetyScore: 1 - fallback.toxicityScore
+        };
+      }
+
+      const ai = new GoogleGenAI({ apiKey });
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: [
+          {
+            role: "user",
+            parts: [
+              {
+                text: `Analyze the following user-submitted post for illegal content, severe hate speech, explicit violence, harassment, or dangerous misinformation. 
+
+Post Content:
+"${fullContent}"`
+              }
+            ]
+          }
+        ],
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              flagged: { type: Type.BOOLEAN },
+              reason: { type: Type.STRING },
+              categories: { type: Type.ARRAY, items: { type: Type.STRING } },
+              safetyScore: { type: Type.NUMBER }
+            },
+            required: ["flagged", "reason", "categories", "safetyScore"]
+          }
+        }
+      });
+
+      const resultText = response.response?.text?.();
+      if (!resultText) {
+        return { flagged: false, reason: "No response from model", categories: [], safetyScore: 1.0 };
+      }
+
+      return JSON.parse(resultText);
+    } catch (error) {
+      console.error("Error in moderatePostContent function:", error);
+      return { flagged: false, reason: "Moderation system error fallback", categories: [], safetyScore: 1.0 };
+    }
   }
 );
 
@@ -913,7 +990,7 @@ exports.verifyMediaPipeline = onDocumentCreated(
 );
 
 // ======================================================
-// 10. EVIDENCE PACK — PLATFORM TIMESTAMP (hash only)
+// 10. EVIDENCE PACK — PLATFORM TIMESTAMP
 // ======================================================
 exports.requestTimestamp = onCall(
   { cors: allowedOrigins },
@@ -933,28 +1010,19 @@ exports.requestTimestamp = onCall(
     const uid = request.auth.uid;
     const requestedAt = new Date().toISOString();
 
-    // Per-user rate limit (10 timestamps / hour)
     const rateRef = db.collection("rateLimits").doc(`${uid}_requestTimestamp`);
     try {
       const allowed = await db.runTransaction(async (tx) => {
         const doc = await tx.get(rateRef);
         const now = admin.firestore.Timestamp.now();
-        const windowStartMs = Date.now() - 3600000; // 1 hour ago
+        const windowStartMs = Date.now() - 3600000;
 
-        if (!doc.exists) {
-          tx.set(rateRef, { count: 1, lastRequest: now, windowStartedAt: now });
+        if (!doc.exists || doc.data().lastRequest.toMillis() < windowStartMs) {
+          tx.set(rateRef, { count: 1, lastRequest: now });
           return true;
         }
 
-        const data = doc.data();
-        const windowStartedAtMs = data.windowStartedAt ? data.windowStartedAt.toMillis() : 0;
-
-        if (windowStartedAtMs < windowStartMs) {
-          tx.set(rateRef, { count: 1, lastRequest: now, windowStartedAt: now });
-          return true;
-        }
-
-        if ((data.count || 0) >= 10) return false;
+        if (doc.data().count >= 10) return false;
 
         tx.update(rateRef, {
           count: admin.firestore.FieldValue.increment(1),
@@ -964,61 +1032,32 @@ exports.requestTimestamp = onCall(
       });
 
       if (!allowed) {
-        throw new HttpsError(
-          "resource-exhausted",
-          "Too many timestamp requests. Try again later."
-        );
+        throw new HttpsError("resource-exhausted", "Rate limit exceeded for timestamp requests.");
       }
-    } catch (err) {
-      if (err instanceof HttpsError) throw err;
-      console.warn("requestTimestamp rate limit skipped:", err.message);
-    }
 
-    // Secure HMAC-SHA256 signature
-    const hmacSecret = process.env.TIMESTAMP_HMAC_SECRET || "default-secret-change-in-env";
-    const receipt = crypto
-      .createHmac("sha256", hmacSecret)
-      .update(`vocalwitness|${hash}|${requestedAt}|${uid}`)
-      .digest("hex");
-
-    const payload = {
-      hash,
-      requestedAt,
-      receipt,
-      uid,
-      authority: "vocalwitness-platform"
-    };
-
-    const tokenBase64 = Buffer.from(JSON.stringify(payload)).toString("base64");
-
-    // Save timestamp record in Firestore
-    await db.collection("evidence_timestamps").doc(hash).set(
-      {
+      const timestampDoc = {
         hash,
-        receipt,
-        requestedAt,
-        submittedBy: uid,
-        createdAt: admin.firestore.FieldValue.serverTimestamp()
-      },
-      { merge: true }
-    );
+        requestedBy: uid,
+        timestamp: requestedAt,
+        serverTimestamp: admin.firestore.FieldValue.serverTimestamp()
+      };
 
-    await writeAuditLog({
-      action: "evidence_timestamp",
-      performedBy: uid,
-      targetId: hash.slice(0, 16),
-      targetType: "packCoreHash",
-      details: { authority: "vocalwitness-platform", qualified: false },
-      severity: "info"
-    });
+      await db.collection("timestamps").add(timestampDoc);
 
-    return {
-      authority: "vocalwitness-platform",
-      qualified: false,
-      hashedMessage: hash,
-      tokenBase64,
-      requestedAt,
-      note: "Platform integrity receipt. Not an eIDAS qualified timestamp. Replace with RFC 3161 TSA when ready."
-    };
+      await writeAuditLog({
+        action: "timestamp_requested",
+        performedBy: uid,
+        targetId: hash,
+        targetType: "evidence_hash",
+        details: { timestamp: requestedAt },
+        severity: "info"
+      });
+
+      return { success: true, hash, timestamp: requestedAt };
+    } catch (error) {
+      console.error("Timestamp request error:", error);
+      if (error instanceof HttpsError) throw error;
+      throw new HttpsError("internal", "Failed to generate platform timestamp.");
+    }
   }
 );
