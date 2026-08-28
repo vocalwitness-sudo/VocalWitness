@@ -1,4 +1,3 @@
-js/notifications.js
 // js/notifications.js - Real-time Notification Listener & Fallback Engine
 import { db } from './firebase-config.js';
 import { getAuth } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
@@ -8,23 +7,30 @@ let unsubscribeNotifs = null;
 let currentSubscribedUid = null;
 
 export function initNotifications(targetUid) {
-    stopNotificationListener();
     if (!targetUid) {
+        stopNotificationListener();
         updateNotificationBadge(0);
         renderNotificationList([]);
         return;
     }
+
     const auth = getAuth();
     const currentUser = auth.currentUser;
+
     // GUARD: Ensure user is signed in AND matches targetUid before listening
     if (!currentUser || currentUser.uid !== targetUid) {
+        stopNotificationListener();
         updateNotificationBadge(0);
         renderNotificationList([]);
         return;
     }
+
+    // Already active for this user
     if (unsubscribeNotifs && currentSubscribedUid === targetUid) {
         return;
     }
+
+    stopNotificationListener();
     attachNotificationListener(targetUid);
 }
 
@@ -32,6 +38,7 @@ function attachNotificationListener(uid) {
     currentSubscribedUid = uid;
     const notificationsRef = collection(db, "users", uid, "notifications");
     const q = query(notificationsRef, orderBy("createdAt", "desc"));
+
     unsubscribeNotifs = onSnapshot(q, (snapshot) => {
         handleSnapshot(snapshot);
     }, (error) => {
@@ -41,48 +48,53 @@ function attachNotificationListener(uid) {
             return;
         }
         console.warn("🔔 Notification ordered query failed or requires index. Activating fallback...", error.code);
-        if (unsubscribeNotifs) {
-            unsubscribeNotifs();
-            unsubscribeNotifs = null;
-        }
+        
+        // Clean up primary listener before starting fallback
+        stopNotificationListener();
         fallbackUnorderedListener(uid);
     });
 }
 
 function updateNotificationBadge(count) {
-  const badge = document.getElementById('notification-badge');
-  const badgeMobile = document.getElementById('notification-badge-mobile');
-  const tag = document.getElementById('notification-count-tag');
-  const display = count > 99 ? '99+' : count;
-  if (badge) {
-    badge.textContent = display;
-    badge.classList.toggle('hidden', count === 0);
-  }
-  if (badgeMobile) {
-    badgeMobile.textContent = display;
-    badgeMobile.classList.toggle('hidden', count === 0);
-  }
-  if (tag) {
-    tag.textContent = `${count} new`;
-  }
+    const badge = document.getElementById('notification-badge');
+    const badgeMobile = document.getElementById('notification-badge-mobile');
+    const tag = document.getElementById('notification-count-tag');
+    const display = count > 99 ? '99+' : count;
+
+    if (badge) {
+        badge.textContent = display;
+        badge.classList.toggle('hidden', count === 0);
+    }
+    if (badgeMobile) {
+        badgeMobile.textContent = display;
+        badgeMobile.classList.toggle('hidden', count === 0);
+    }
+    if (tag) {
+        tag.textContent = `${count} new`;
+    }
 }
 
 function fallbackUnorderedListener(uid) {
     currentSubscribedUid = uid;
     const notificationsRef = collection(db, "users", uid, "notifications");
+    
     unsubscribeNotifs = onSnapshot(notificationsRef, (snapshot) => {
         const notifications = [];
         let unreadCount = 0;
+
         snapshot.forEach((docSnap) => {
             const data = docSnap.data();
             if (!data.read) unreadCount++;
             notifications.push({ id: docSnap.id, ...data });
         });
+
+        // In-memory sort fallback
         notifications.sort((a, b) => {
-            const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : new Date(a.createdAt || 0).getTime();
-            const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : new Date(b.createdAt || 0).getTime();
+            const timeA = parseTime(a.createdAt);
+            const timeB = parseTime(b.createdAt);
             return timeB - timeA;
         });
+
         updateNotificationBadge(unreadCount);
         renderNotificationList(notifications);
     }, (err) => {
@@ -115,9 +127,18 @@ function handleSnapshot(snapshot) {
     renderNotificationList(notifications);
 }
 
+function parseTime(createdAt) {
+    if (!createdAt) return 0;
+    if (createdAt.toMillis) return createdAt.toMillis();
+    if (createdAt.toDate) return createdAt.toDate().getTime();
+    const parsed = new Date(createdAt).getTime();
+    return isNaN(parsed) ? 0 : parsed;
+}
+
 function renderNotificationList(notifications) {
     const listContainer = document.getElementById('notification-list');
     if (!listContainer) return;
+
     if (!notifications || notifications.length === 0) {
         listContainer.innerHTML = `
             <div class="p-8 text-center text-zinc-500">
@@ -126,10 +147,19 @@ function renderNotificationList(notifications) {
             </div>`;
         return;
     }
+
     let html = '<div class="divide-y divide-zinc-800/60">';
     notifications.forEach((item) => {
         const isUnread = !item.read;
-        const timeStr = item.createdAt?.toDate ? item.createdAt.toDate().toLocaleString() : 'Recently';
+        
+        let timeStr = 'Recently';
+        if (item.createdAt?.toDate) {
+            timeStr = item.createdAt.toDate().toLocaleString();
+        } else if (item.createdAt) {
+            const parsed = new Date(item.createdAt);
+            if (!isNaN(parsed.getTime())) timeStr = parsed.toLocaleString();
+        }
+
         html += `
             <div class="p-4 hover:bg-zinc-800/40 transition ${isUnread ? 'bg-emerald-950/20' : ''}">
                 <div class="flex items-start justify-between gap-2">
@@ -151,73 +181,4 @@ function escapeHTML(str) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
-}
-
-
-js/navigation.js
-// js/navigation.js - Single Page App Integrated Version
-import { db, auth } from './firebase-config.js';
-import { navigateTo } from './router.js';
-
-export const menuItems = [
-    { id: "citizen-talk", icon: "💬", label: "Citizen Talk", route: "citizen-talk" },
-    { id: "witness-voice", icon: "🔬", label: "Witness Voice", route: "witness-voice" },
-    { id: "arena", icon: "🏟️", label: "Live Arena", route: "arena" },
-    { id: "audit-log", icon: "📊", label: "Forensic Ledger", route: "audit-log" },
-    { id: "dao", icon: "🏛️", label: "DAO Governance", route: "dao" },          // ← NEW
-    { id: "my-testimonies", icon: "📜", label: "My Testimonies", route: "profile" }
-];
-
-export function loadDynamicNavigation() {
-    function tryLoadNav() {
-        const navContainer = document.getElementById('main-sidebar-nav');
-        if (!navContainer) return false;
-
-        navContainer.innerHTML = '';
-
-        const currentHash = window.location.hash.slice(1) || 'citizen-talk';
-
-        menuItems.forEach(item => {
-            const isActive = currentHash === item.route;
-
-            const link = document.createElement('a');
-            link.href = `#${item.route}`;
-            link.setAttribute('data-route', item.route);
-            link.className = `flex items-center gap-3 px-4 py-3 rounded-2xl transition-all group cursor-pointer ${
-                isActive ?
-                'bg-emerald-500 text-black font-semibold' :
-                'text-zinc-400 hover:text-white hover:bg-zinc-900'
-            }`;
-           
-            link.innerHTML = `
-                <span class="text-xl transition-transform group-hover:scale-110">${item.icon}</span>
-                <span>${item.label}</span>
-            `;
-
-            // Intercept click to trigger client router directly
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                navigateTo(item.route);
-            });
-
-            navContainer.appendChild(link);
-        });
-
-        console.log("✅ Sidebar SPA navigation loaded");
-        return true;
-    }
-
-    if (!tryLoadNav()) {
-        setTimeout(() => {
-            if (!tryLoadNav()) setTimeout(tryLoadNav, 600);
-        }, 400);
-    }
-}
-
-export function initMobileMenu() {
-    const mobileBtn = document.getElementById('mobile-menu-btn');
-    const sidebar = document.getElementById('sidebar');
-    if (mobileBtn && sidebar) {
-        mobileBtn.addEventListener('click', () => sidebar.classList.toggle('hidden'));
-    }
 }
