@@ -549,36 +549,113 @@ export async function canCorroborate(user = null) {
   return tier === TIERS.CITIZEN_CIRCLE || tier === TIERS.WITNESS_CIRCLE;
 }
 
-/**
- * Can the current user corroborate a report?
- * Requirement: phone-verified or higher (CITIZEN_CIRCLE / WITNESS_CIRCLE)
- */
-export async function canCorroborate(user = null) {
-  const u = user || auth.currentUser;
-  if (!u) return false;
+// ======================================================
+// 10. EVIDENCE PACK — PLATFORM TIMESTAMP (hash only)
+// ======================================================
+exports.requestTimestamp = onCall(
+  { cors: allowedOrigins },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Sign in required.");
+    }
 
-  const tier = await getCurrentUserTier();
-  return tier === TIERS.CITIZEN_CIRCLE || tier === TIERS.WITNESS_CIRCLE;
-}
+    const hash = String(request.data?.hash || "").toLowerCase().trim();
+    if (!/^[a-f0-9]{64}$/.test(hash)) {
+      throw new HttpsError(
+        "invalid-argument",
+        "SHA-256 hex digest required (64 characters)."
+      );
+    }
 
-/**
- * Weight used for Corroboration Score
- * CITIZEN_CIRCLE = 2, WITNESS_CIRCLE = 3 (or higher based on reputation)
- */
-export async function getUserTierWeight(user = null) {
-  const u = user || auth.currentUser;
-  if (!u) return 1;
+    const uid = request.auth.uid;
+    const requestedAt = new Date().toISOString();
 
-  const tier = await getCurrentUserTier();
+    // Per-user rate limit (10 timestamps / hour)
+    const rateRef = db.collection("rateLimits").doc(`${uid}_requestTimestamp`);
+    try {
+      const allowed = await db.runTransaction(async (tx) => {
+        const doc = await tx.get(rateRef);
+        const now = admin.firestore.Timestamp.now();
+        const windowStartMs = Date.now() - 3600000; // 1 hour ago
 
-  if (tier === TIERS.WITNESS_CIRCLE) {
-    // Optional: scale a bit with reputation for Witness Circle
-    const data = await getUserProfile();
-    const rep = Math.max(0, data?.reputation || 0);
-    return Math.max(3, Math.min(5, Math.floor(rep / 100) + 3)); // 3–5
+        if (!doc.exists) {
+          tx.set(rateRef, { count: 1, lastRequest: now, windowStartedAt: now });
+          return true;
+        }
+
+        const data = doc.data();
+        const windowStartedAtMs = data.windowStartedAt ? data.windowStartedAt.toMillis() : 0;
+
+        if (windowStartedAtMs < windowStartMs) {
+          tx.set(rateRef, { count: 1, lastRequest: now, windowStartedAt: now });
+          return true;
+        }
+
+        if ((data.count || 0) >= 10) return false;
+
+        tx.update(rateRef, {
+          count: admin.firestore.FieldValue.increment(1),
+          lastRequest: now
+        });
+        return true;
+      });
+
+      if (!allowed) {
+        throw new HttpsError(
+          "resource-exhausted",
+          "Too many timestamp requests. Try again later."
+        );
+      }
+    } catch (err) {
+      if (err instanceof HttpsError) throw err;
+      console.warn("requestTimestamp rate limit skipped:", err.message);
+    }
+
+    // Secure HMAC-SHA256 signature
+    const hmacSecret = process.env.TIMESTAMP_HMAC_SECRET || "default-secret-change-in-env";
+    const receipt = crypto
+      .createHmac("sha256", hmacSecret)
+      .update(`vocalwitness|${hash}|${requestedAt}|${uid}`)
+      .digest("hex");
+
+    const payload = {
+      hash,
+      requestedAt,
+      receipt,
+      uid,
+      authority: "vocalwitness-platform"
+    };
+
+    const tokenBase64 = Buffer.from(JSON.stringify(payload)).toString("base64");
+
+    // Save timestamp record in Firestore
+    await db.collection("evidence_timestamps").doc(hash).set(
+      {
+        hash,
+        receipt,
+        requestedAt,
+        submittedBy: uid,
+        createdAt: admin.firestore.FieldValue.serverTimestamp()
+      },
+      { merge: true }
+    );
+
+    await writeAuditLog({
+      action: "evidence_timestamp",
+      performedBy: uid,
+      targetId: hash.slice(0, 16),
+      targetType: "packCoreHash",
+      details: { authority: "vocalwitness-platform", qualified: false },
+      severity: "info"
+    });
+
+    return {
+      authority: "vocalwitness-platform",
+      qualified: false,
+      hashedMessage: hash,
+      tokenBase64,
+      requestedAt,
+      note: "Platform integrity receipt. Not an eIDAS qualified timestamp. Replace with RFC 3161 TSA when ready."
+    };
   }
-
-  if (tier === TIERS.CITIZEN_CIRCLE) return 2;
-
-  return 1; // plain Citizen (should never reach here because of canCorroborate)
-}
+);
