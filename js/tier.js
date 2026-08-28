@@ -534,3 +534,6 @@ export async function canCorroborate(user = null) {
   const tier = await getCurrentUserTier();
   return tier === TIERS.CITIZEN_CIRCLE || tier === TIERS.WITNESS_CIRCLE;
 }
+
+// Alias for backwards compatibility with corroboration.js and other modules
+export const getUserTierWeight = getUserVotingWeight;
