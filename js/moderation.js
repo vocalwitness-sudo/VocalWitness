@@ -78,26 +78,53 @@ function fallbackToxicityScan(content) {
     return { score: Math.min(1, score), flagged: score > 0.5, reasons };
 }
 
+// ====================== STANDALONE CONTENT ANALYSIS ======================
+/**
+ * Evaluates raw text/title prior to submission or saving.
+ * Used by composer handlers to block toxic/harmful content before hitting Firestore.
+ */
+export async function analyzeReportContent(text = '', title = '') {
+    if (!text && !title) {
+        return { flagged: false, isToxic: false, score: 0, reason: '', categories: [] };
+    }
+
+    const [geminiResult, toxicityResult] = await Promise.all([
+        runGeminiModeration(title, text),
+        scanForToxicity(text)
+    ]);
+
+    const reasons = [...(toxicityResult.reasons || [])];
+    if (geminiResult.flagged && geminiResult.reason) {
+        reasons.push(`AI Moderation: ${geminiResult.reason}`);
+    }
+
+    const isFlagged = geminiResult.flagged || toxicityResult.flagged || (geminiResult.safetyScore < 0.6);
+
+    return {
+        flagged: isFlagged,
+        isToxic: toxicityResult.flagged,
+        score: toxicityResult.score,
+        reason: reasons.length > 0 ? reasons.join(' | ') : 'Content failed automated safety check.',
+        categories: geminiResult.categories || [],
+        safetyScore: geminiResult.safetyScore || 1.0,
+        geminiResult,
+        toxicityResult
+    };
+}
+
 // ====================== PUBLISH WITH HYBRID MODERATION ======================
 export async function publishWithModeration(content, mediaData, currentUser, title = '') {
     const tier = await getCurrentUserTier();
 
-    // Run parallel checks: Gemini 2.5 Flash Cloud Function + Perspective/Fallback scan
-    const [geminiResult, toxicity] = await Promise.all([
-        runGeminiModeration(title, content),
-        scanForToxicity(content)
-    ]);
+    // Run combined moderation analysis
+    const analysis = await analyzeReportContent(content, title);
+    const { geminiResult, toxicityResult } = analysis;
 
     let moderationStatus = "approved";
-    const combinedReasons = [...(toxicity.reasons || [])];
-
-    if (geminiResult.flagged) {
-        combinedReasons.push(`Gemini AI: ${geminiResult.reason || 'Flagged'}`);
-    }
+    const combinedReasons = [...(analysis.reason ? [analysis.reason] : [])];
 
     // Auto-flag condition for citizens or high toxicity / AI safety triggers
-    const isHighRisk = geminiResult.flagged || toxicity.flagged || (geminiResult.safetyScore < 0.6);
-    const requiresReview = isHighRisk && (tier === TIERS.CITIZEN || tier === 'citizen' || !tier);
+    const requiresReview = analysis.flagged && (tier === TIERS.CITIZEN || tier === 'citizen' || !tier);
 
     if (requiresReview) {
         moderationStatus = "needs_review";
@@ -118,9 +145,9 @@ export async function publishWithModeration(content, mediaData, currentUser, tit
         createdAt: serverTimestamp(),
         feedVisibility: "citizen-talk",
         moderationStatus,
-        toxicityScore: toxicity.score,
-        geminiSafetyScore: geminiResult.safetyScore || 1.0,
-        geminiCategories: geminiResult.categories || [],
+        toxicityScore: toxicityResult?.score || 0,
+        geminiSafetyScore: geminiResult?.safetyScore || 1.0,
+        geminiCategories: geminiResult?.categories || [],
         autoFlaggedReasons: combinedReasons,
         authorTier: tier
     };
@@ -141,7 +168,7 @@ export async function publishWithModeration(content, mediaData, currentUser, tit
         success: true, 
         postId: docRef.id, 
         moderationStatus, 
-        toxicity,
+        toxicity: toxicityResult,
         geminiResult 
     };
 }
