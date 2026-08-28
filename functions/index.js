@@ -1,12 +1,10 @@
 /**
  * Cloud Functions for Firebase / Cloudflare R2 Integration
- * Stack: Firebase Functions v2 • AWS SDK v3 • SnarkJS • Paystack • Cloud Tasks
+ * Stack: Firebase Functions v2 • AWS SDK v3 • SnarkJS • Paystack • Cloud Tasks • Gemini API
  */
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const { GoogleGenAI, Type } = require("@google/genai");
-const functions = require("firebase-functions");
 const { onRequest, onCall, HttpsError } = require("firebase-functions/v2/https");
 const { onDocumentCreated } = require("firebase-functions/v2/firestore");
+const { GoogleGenAI, Type } = require("@google/genai");
 const { defineSecret } = require("firebase-functions/params");
 const { CloudTasksClient } = require("@google-cloud/tasks");
 const admin = require("firebase-admin");
@@ -49,7 +47,6 @@ const allowedOrigins = [
   "https://vocalwitness.com",
   "https://www.vocalwitness.com"
 ];
-
 // Reusable S3 / R2 Client Instance
 let r2ClientInstance = null;
 function getR2Client(accessKeyId, secretAccessKey) {
