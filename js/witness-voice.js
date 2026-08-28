@@ -1,6 +1,7 @@
 // js/witness-voice.js - Witness Voice Channel & Structured Evidence Intake Assistant
 import { initFeed } from './feed.js';
 import { sanitizeUserPII } from './onboarding.js';
+import { transcribeAudioWitness } from './ai-services.js';
 
 const INTAKE_SYSTEM_PROMPT = `You are the VocalWitness Evidence Intake Assistant.
 Your objective is to guide witnesses to frame their claims into court-admissible testimony structures.
@@ -10,6 +11,32 @@ Rules:
 2. Establish chronological timeframes, location landmarks, and verifiable facts.
 3. If input contains [REDACTED PII], remind the witness that identity/location identifiers have been automatically protected.
 4. Structure final outputs in clear forensic format: [Direct Observation Status, Timeline, Fact Summary].`;
+
+function escapeHTML(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+/**
+ * Converts a Blob or File object to a clean Base64 string for AI processing
+ */
+function blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const dataUrl = reader.result;
+            const base64Data = dataUrl.split(',')[1];
+            resolve(base64Data);
+        };
+        reader.onerror = (err) => reject(err);
+        reader.readAsDataURL(blob);
+    });
+}
 
 /**
  * Renders the Evidence Intake Assistant UI inside the Witness Voice portal
@@ -24,17 +51,24 @@ export function renderEvidenceIntakeAssistant(container) {
                     <span>⚖️</span>
                     <span>Evidence Intake Assistant</span>
                 </div>
-                <span class="text-[10px] bg-emerald-950 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-800">Court-Admissible Guide</span>
+                <span class="text-[10px] bg-emerald-950 text-emerald-300 px-2.5 py-0.5 rounded-full border border-emerald-800 font-medium">Court-Admissible Guide</span>
             </div>
 
             <div id="intake-chat-history" class="space-y-3 max-h-[220px] overflow-y-auto p-2 bg-zinc-900/60 rounded-2xl text-xs text-zinc-300">
                 <div class="p-2.5 bg-zinc-800/80 rounded-xl border border-zinc-700/50">
-                    <strong class="text-emerald-400">Assistant:</strong> Welcome. To ensure your testimony holds high legal integrity, did you witness this event directly with your own senses, or learn of it through a third party?
+                    <strong class="text-emerald-400">Assistant:</strong> Welcome. To ensure your testimony holds high legal integrity, did you witness this event directly with your own senses, or learn of it through a third party? You may type your response or attach audio evidence below.
                 </div>
             </div>
 
             <div class="flex gap-2">
-                <input type="text" id="intake-user-input" placeholder="Type your testimony details..." class="flex-1 bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500" />
+                <input type="text" id="intake-user-input" placeholder="Type or attach audio testimony..." class="flex-1 bg-zinc-900 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500 transition" />
+                
+                <!-- Audio Attachment Button -->
+                <button type="button" id="intake-audio-btn" title="Attach Audio Evidence" class="bg-zinc-800 hover:bg-zinc-700 text-emerald-400 border border-emerald-900/50 text-xs px-3 py-2.5 rounded-xl font-semibold transition flex items-center justify-center">
+                    🎙️
+                </button>
+                <input type="file" id="intake-audio-input" accept="audio/*" class="hidden" />
+
                 <button type="button" id="intake-send-btn" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-4 py-2.5 rounded-xl font-semibold transition flex items-center gap-1">
                     <span>Send</span>
                 </button>
@@ -45,6 +79,8 @@ export function renderEvidenceIntakeAssistant(container) {
     const sendBtn = container.querySelector('#intake-send-btn');
     const userInput = container.querySelector('#intake-user-input');
     const chatHistory = container.querySelector('#intake-chat-history');
+    const audioBtn = container.querySelector('#intake-audio-btn');
+    const audioInput = container.querySelector('#intake-audio-input');
 
     let intakeStep = 0;
     const structuredTestimony = {
@@ -53,8 +89,64 @@ export function renderEvidenceIntakeAssistant(container) {
         factSummary: ''
     };
 
+    // Trigger audio file picker
+    if (audioBtn && audioInput) {
+        audioBtn.addEventListener('click', () => audioInput.click());
+
+        // Process selected audio file with transcribeAudioWitness
+        audioInput.addEventListener('change', async (e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+
+            try {
+                if (typeof window.showToast === 'function') {
+                    window.showToast('Transcribing audio testimony...', 'info');
+                }
+
+                // Render processing indicator
+                chatHistory.innerHTML += `
+                    <div id="audio-transcribing-loader" class="p-2.5 bg-zinc-800/50 rounded-xl border border-zinc-700/50 text-xs text-emerald-400 flex items-center gap-2">
+                        <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                        Transcribing audio witness file...
+                    </div>
+                `;
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+
+                const base64Audio = await blobToBase64(file);
+                const mimeType = file.type || 'audio/webm';
+                
+                // Execute audio transcription
+                const transcript = await transcribeAudioWitness(base64Audio, mimeType);
+
+                // Remove loading indicator
+                const loader = document.getElementById('audio-transcribing-loader');
+                if (loader) loader.remove();
+
+                if (transcript && transcript.trim()) {
+                    userInput.value = transcript.trim();
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('Audio transcribed successfully!', 'success');
+                    }
+                } else {
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('Could not transcribe audio. Please type details manually.', 'warning');
+                    }
+                }
+            } catch (err) {
+                console.error('Audio transcription error in intake assistant:', err);
+                const loader = document.getElementById('audio-transcribing-loader');
+                if (loader) loader.remove();
+                if (typeof window.showToast === 'function') {
+                    window.showToast('Audio transcription failed.', 'error');
+                }
+            } finally {
+                audioInput.value = '';
+            }
+        });
+    }
+
     if (sendBtn && userInput && chatHistory) {
-        sendBtn.addEventListener('click', async () => {
+        const processInput = async () => {
             const rawText = userInput.value.trim();
             if (!rawText) return;
 
@@ -65,7 +157,7 @@ export function renderEvidenceIntakeAssistant(container) {
             // Render User Message
             chatHistory.innerHTML += `
                 <div class="p-2.5 bg-emerald-950/40 rounded-xl border border-emerald-800/50 text-right">
-                    <span class="text-zinc-200">${sanitizedText}</span>
+                    <span class="text-zinc-200">${escapeHTML(sanitizedText)}</span>
                 </div>
             `;
             chatHistory.scrollTop = chatHistory.scrollHeight;
@@ -91,10 +183,10 @@ export function renderEvidenceIntakeAssistant(container) {
                     assistantReply = `
                         <div class="space-y-2">
                             <span class="text-emerald-400 font-bold">✅ Court-Admissible Testimony Structure Ready:</span>
-                            <div class="p-2 bg-zinc-950 border border-zinc-800 rounded-lg text-[11px] font-mono text-zinc-300">
-                                <div>• <strong>Type:</strong> ${structuredTestimony.observationType}</div>
-                                <div>• <strong>Timeline:</strong> ${structuredTestimony.timeline}</div>
-                                <div>• <strong>Facts:</strong> ${structuredTestimony.factSummary}</div>
+                            <div class="p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-[11px] font-mono text-zinc-300 space-y-1">
+                                <div>• <strong>Type:</strong> ${escapeHTML(structuredTestimony.observationType)}</div>
+                                <div>• <strong>Timeline:</strong> ${escapeHTML(structuredTestimony.timeline)}</div>
+                                <div>• <strong>Facts:</strong> ${escapeHTML(structuredTestimony.factSummary)}</div>
                             </div>
                             <button type="button" onclick="window.applyStructuredTestimonyToForm('${structuredTestimony.observationType}', '${encodeURIComponent(structuredTestimony.timeline)}', '${encodeURIComponent(structuredTestimony.factSummary)}')" class="mt-2 w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-1.5 rounded-lg text-xs transition">
                                 Insert Formatted Testimony into Post
@@ -109,7 +201,15 @@ export function renderEvidenceIntakeAssistant(container) {
                     </div>
                 `;
                 chatHistory.scrollTop = chatHistory.scrollHeight;
-            }, 500);
+            }, 400);
+        };
+
+        sendBtn.addEventListener('click', processInput);
+        userInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                processInput();
+            }
         });
     }
 }
@@ -121,12 +221,25 @@ window.applyStructuredTestimonyToForm = (type, encodedTimeline, encodedFacts) =>
     const timeline = decodeURIComponent(encodedTimeline);
     const facts = decodeURIComponent(encodedFacts);
 
-    const postInput = document.getElementById('post-content') || document.querySelector('textarea[name="content"]');
+    const postInput = document.getElementById('mainInput') ||
+                      document.getElementById('postBody') ||
+                      document.getElementById('testimonyBody') ||
+                      document.getElementById('post-content') || 
+                      document.querySelector('textarea[name="content"]');
+
     if (postInput) {
-        postInput.value = `[STRUCTURED WITNESS TESTIMONY]\n- Admissibility Type: ${type}\n- Timeline: ${timeline}\n- Verified Facts: ${facts}`;
+        postInput.value = `[STRUCTURED WITNESS TESTIMONY]\n• Admissibility Type: ${type}\n• Timeline: ${timeline}\n• Verified Facts: ${facts}`;
+        
+        // Dispatch event so real-time AI category classifier triggers automatically
+        postInput.dispatchEvent(new Event('input', { bubbles: true }));
+
         if (typeof window.showToast === 'function') {
             window.showToast('Structured testimony loaded into submission form!', 'success');
+        } else {
+            alert('Structured testimony loaded into submission form!');
         }
+    } else {
+        console.warn('Composer post input element not found.');
     }
 };
 
@@ -137,7 +250,8 @@ window.applyStructuredTestimonyToForm = (type, encodedTimeline, encodedFacts) =>
 export async function initWitnessVoice() {
     try {
         // 1. Initialize the Intake Assistant if container exists
-        const intakeContainer = document.getElementById('witness-intake-assistant-container');
+        const intakeContainer = document.getElementById('witness-intake-assistant-container') ||
+                                document.getElementById('intakeAssistantContainer');
         if (intakeContainer) {
             renderEvidenceIntakeAssistant(intakeContainer);
         }
