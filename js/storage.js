@@ -40,10 +40,8 @@ export function updateUser(user) {
         });
         return;
     }
-
     const trustScore = user.trustCircle || calculateTrustScore(user);
     const tierInfo = getTier(trustScore);
-
     updateState({
         user: user,
         isWitnessVerified: user.role === 'witness' || user.role === 'trusted_witness' || !!user.isPhoneVerified,
@@ -52,7 +50,6 @@ export function updateUser(user) {
         trustScore: trustScore,
         language: user.preferredLanguage || 'en'
     });
-
     console.log(`👤 User updated → ${tierInfo.name} Tier (${trustScore} trust)`);
 }
 
@@ -121,12 +118,10 @@ export async function uploadToR2(fileBlob, fileName = "media.webp", folder = "po
     if (!auth.currentUser) {
         throw new Error("Authentication required for media uploads.");
     }
-
     const token = await auth.currentUser.getIdToken();
     const fileExt = fileName.split('.').pop() || 'webp';
     const timestamp = Date.now();
     const uniqueKey = `${folder}/${auth.currentUser.uid}_${timestamp}.${fileExt}`;
-
     const response = await fetch(`${R2_UPLOAD_ENDPOINT}/${uniqueKey}`, {
         method: 'PUT',
         headers: {
@@ -135,12 +130,10 @@ export async function uploadToR2(fileBlob, fileName = "media.webp", folder = "po
         },
         body: fileBlob
     });
-
     if (!response.ok) {
         const errText = await response.text().catch(() => 'Upload failed');
         throw new Error(`Cloudflare R2 Upload Failed [${response.status}]: ${errText}`);
     }
-
     // Return direct, secure CDN URL matching Firestore Security Rules pattern
     return `${R2_PUBLIC_BASE_URL}/${uniqueKey}`;
 }
@@ -153,21 +146,31 @@ export async function uploadToR2(fileBlob, fileName = "media.webp", folder = "po
  */
 export async function deleteFromR2(mediaUrl) {
     if (!auth.currentUser || !mediaUrl) return false;
-
     try {
         const token = await auth.currentUser.getIdToken();
         const objectKey = mediaUrl.replace(`${R2_PUBLIC_BASE_URL}/`, '');
-
         const response = await fetch(`${R2_UPLOAD_ENDPOINT}/${objectKey}`, {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${token}`
             }
         });
-
         return response.ok;
     } catch (err) {
         console.warn("Failed to delete media from R2:", err);
         return false;
     }
+}
+
+/**
+ * Compatibility alias used by corroboration.js
+ * @param {Blob|File} file
+ * @param {'image'|'audio'} mediaType
+ * @returns {Promise<string>} public media URL
+ */
+export async function uploadEvidenceMedia(file, mediaType = 'image') {
+    const folder = mediaType === 'audio' ? 'corroborations/audio' : 'corroborations/images';
+    const ext = mediaType === 'audio' ? 'webm' : 'webp';
+    const name = file.name || `evidence.${ext}`;
+    return uploadToR2(file, name, folder);
 }
