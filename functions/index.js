@@ -2,7 +2,8 @@
  * Cloud Functions for Firebase / Cloudflare R2 Integration
  * Stack: Firebase Functions v2 • AWS SDK v3 • SnarkJS • Paystack • Cloud Tasks
  */
-
+const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { GoogleGenAI, Type } = require("@google/genai");
 const functions = require("firebase-functions");
 const { onRequest, onCall, HttpsError } = require("firebase-functions/v2/https");
 const { onDocumentCreated } = require("firebase-functions/v2/firestore");
