@@ -1,4 +1,3 @@
-// js/auth.js - Social Auth Only (Google + Twitter + GitHub)
 import {
   signInWithPopup,
   signInWithRedirect,
@@ -8,7 +7,7 @@ import {
   browserLocalPersistence,
   browserSessionPersistence,
   onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+} from "https://unpkg.com/firebase@11.0.0/firebase-auth.js";
 
 import { 
   auth, 
@@ -28,12 +27,11 @@ import {
   setDoc, 
   updateDoc, 
   serverTimestamp 
-} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+} from "https://unpkg.com/firebase@11.0.0/firebase-firestore.js";
 
 const DEFAULT_TIER = "citizen";
 let authActionInProgress = false;
 let authInitialized = false;
-
 // ====================== HELPERS ======================
 
 function refreshTierUI() {
