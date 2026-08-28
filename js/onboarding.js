@@ -20,20 +20,25 @@ export function sanitizeUserPII(text) {
 
   let cleanText = text;
 
+  // Emails
   cleanText = cleanText.replace(
     /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g,
     '[REDACTED PII]'
   );
 
+  // Phone numbers
   cleanText = cleanText.replace(
     /(?:\+?\d{1,3}[-.\s]?)?\(?\d{2,4}\)?[-.\s]?\d{3,4}[-.\s]?\d{3,4}/g,
     '[REDACTED PII]'
   );
 
+  // Physical Street Addresses
   cleanText = cleanText.replace(
     /\b\d{1,5}\s+(?:[A-Za-z0-9#.]+\s+){1,4}(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln|Way|Court|Ct)\b/gi,
     '[REDACTED PII]'
   );
+
+  // Exact Coordinates (GPS)
   cleanText = cleanText.replace(
     /[-+]?\d{1,2}\.\d{4,},\s*[-+]?\d{1,3}\.\d{4,}/g,
     '[REDACTED PII]'
@@ -436,4 +441,12 @@ async function processPlatformQAQuery(sanitizedQuery) {
   if (q.includes('hash') || q.includes('metadata') || q.includes('exif')) {
     return '<strong>Media Scrubbing &amp; Hashing:</strong> Images go through an HTML5 Canvas locally to strip EXIF/GPS. A SHA-256 digest anchors the asset.';
   }
-  if (q.includes('ledger') ||
+  if (q.includes('ledger') || q.includes('public') || q.includes('blockchain')) {
+    return '<strong>Immutable Ledger:</strong> Reports published to the public ledger receive a unique hash digest ensuring evidence remains tamper-evident.';
+  }
+  if (q.includes('panic') || q.includes('exit') || q.includes('clear')) {
+    return '<strong>Panic / Quick Exit:</strong> Triggering Quick Exit instantly purges local storage, cached drafts, and ephemeral keys on your device.';
+  }
+
+  return '<strong>Security Assistant:</strong> VocalWitness is designed around zero-registration, client-side EXIF metadata scrubbing, and local cryptographic hashing for maximum witness safety.';
+}
