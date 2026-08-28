@@ -1,6 +1,5 @@
 // js/tier.js - Enhanced Tier, Progression & Governance System
 // Integrated with ZK Paid Features, Fixed Duplicate TIERS, and Cached Firebase Access
-
 import { 
   doc, 
   getDoc, 
@@ -225,14 +224,12 @@ export function clearProfileCache() {
  */
 export async function getCurrentUserTier() {
   if (!auth.currentUser) return TIERS.CITIZEN;
-
   const data = await getUserProfile();
   if (!data) return TIERS.CITIZEN;
 
   if (data.zkVerified === true || data.tier === TIERS.WITNESS_CIRCLE) {
     return TIERS.WITNESS_CIRCLE;
   }
-
   if (
     data.isPhoneVerified === true ||
     data.hasVerifiedPhone === true ||
@@ -240,7 +237,6 @@ export async function getCurrentUserTier() {
   ) {
     return TIERS.CITIZEN_CIRCLE;
   }
-
   return TIERS.CITIZEN;
 }
 
@@ -278,11 +274,9 @@ export async function canAdvanceTier(uid, timeoutMs = 10000) {
     if (!data) {
       return { canAdvance: false, reason: "User profile not found" };
     }
-
     if (!data.isPhoneVerified && !data.hasVerifiedPhone) {
       return { canAdvance: false, reason: "Phone verification is required first" };
     }
-
     return { canAdvance: true };
   } catch (error) {
     console.error("canAdvanceTier error:", error);
@@ -324,7 +318,6 @@ export async function canAccessFeature(feature) {
   if (feature === 'review_queue' || feature === 'steward_apartment') {
     return await hasStewardAccess();
   }
-
   if (feature === 'post_boost') {
     return userLevel && userLevel.level >= WITNESS_LEVELS.SILVER.level;
   }
@@ -340,7 +333,6 @@ export async function canAccessFeature(feature) {
 
   const allowedTiers = permissions[feature];
   if (!allowedTiers) return true;
-
   return allowedTiers.includes(userTier);
 }
 
@@ -410,7 +402,6 @@ export function refreshTierAndUI() {
 }
 
 // ====================== WEEKLY LEADERBOARD ======================
-
 export async function loadWeeklyLeaderboard() {
   const leaderboardEl = document.getElementById('weekly-leaderboard');
   if (!leaderboardEl) return;
@@ -421,16 +412,14 @@ export async function loadWeeklyLeaderboard() {
       orderBy("weeklyPoints", "desc"),
       limit(5)
     );
-
     const querySnapshot = await getDocs(q);
+
     let html = '';
     let rank = 1;
-
     querySnapshot.forEach((docSnap) => {
       const user = docSnap.data();
       const badgeColor = rank === 1 ? 'text-amber-400' : 'text-emerald-400';
       const name = escapeHTML(user.displayName || 'Anonymous Witness');
-
       html += `
         <div class="flex items-center justify-between py-2 border-b border-slate-800 text-sm">
           <div class="flex items-center gap-2">
@@ -459,18 +448,15 @@ export async function requireCitizenCirclePermission(actionCallback) {
 
   if (userTier === TIERS.CITIZEN) {
     showToast("Phone verification required to unlock this feature.", "info");
-
     const modal = document.getElementById('phoneVerificationModal') || 
                   document.getElementById('phone-upgrade-modal') || 
                   document.getElementById('verificationModal');
-
     if (modal) {
       modal.classList.remove('hidden');
       modal.style.display = 'flex';
     } else if (typeof window.startPhoneVerification === 'function') {
       window.startPhoneVerification();
     }
-
     return false;
   }
 
@@ -548,114 +534,3 @@ export async function canCorroborate(user = null) {
   const tier = await getCurrentUserTier();
   return tier === TIERS.CITIZEN_CIRCLE || tier === TIERS.WITNESS_CIRCLE;
 }
-
-// ======================================================
-// 10. EVIDENCE PACK — PLATFORM TIMESTAMP (hash only)
-// ======================================================
-exports.requestTimestamp = onCall(
-  { cors: allowedOrigins },
-  async (request) => {
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "Sign in required.");
-    }
-
-    const hash = String(request.data?.hash || "").toLowerCase().trim();
-    if (!/^[a-f0-9]{64}$/.test(hash)) {
-      throw new HttpsError(
-        "invalid-argument",
-        "SHA-256 hex digest required (64 characters)."
-      );
-    }
-
-    const uid = request.auth.uid;
-    const requestedAt = new Date().toISOString();
-
-    // Per-user rate limit (10 timestamps / hour)
-    const rateRef = db.collection("rateLimits").doc(`${uid}_requestTimestamp`);
-    try {
-      const allowed = await db.runTransaction(async (tx) => {
-        const doc = await tx.get(rateRef);
-        const now = admin.firestore.Timestamp.now();
-        const windowStartMs = Date.now() - 3600000; // 1 hour ago
-
-        if (!doc.exists) {
-          tx.set(rateRef, { count: 1, lastRequest: now, windowStartedAt: now });
-          return true;
-        }
-
-        const data = doc.data();
-        const windowStartedAtMs = data.windowStartedAt ? data.windowStartedAt.toMillis() : 0;
-
-        if (windowStartedAtMs < windowStartMs) {
-          tx.set(rateRef, { count: 1, lastRequest: now, windowStartedAt: now });
-          return true;
-        }
-
-        if ((data.count || 0) >= 10) return false;
-
-        tx.update(rateRef, {
-          count: admin.firestore.FieldValue.increment(1),
-          lastRequest: now
-        });
-        return true;
-      });
-
-      if (!allowed) {
-        throw new HttpsError(
-          "resource-exhausted",
-          "Too many timestamp requests. Try again later."
-        );
-      }
-    } catch (err) {
-      if (err instanceof HttpsError) throw err;
-      console.warn("requestTimestamp rate limit skipped:", err.message);
-    }
-
-    // Secure HMAC-SHA256 signature
-    const hmacSecret = process.env.TIMESTAMP_HMAC_SECRET || "default-secret-change-in-env";
-    const receipt = crypto
-      .createHmac("sha256", hmacSecret)
-      .update(`vocalwitness|${hash}|${requestedAt}|${uid}`)
-      .digest("hex");
-
-    const payload = {
-      hash,
-      requestedAt,
-      receipt,
-      uid,
-      authority: "vocalwitness-platform"
-    };
-
-    const tokenBase64 = Buffer.from(JSON.stringify(payload)).toString("base64");
-
-    // Save timestamp record in Firestore
-    await db.collection("evidence_timestamps").doc(hash).set(
-      {
-        hash,
-        receipt,
-        requestedAt,
-        submittedBy: uid,
-        createdAt: admin.firestore.FieldValue.serverTimestamp()
-      },
-      { merge: true }
-    );
-
-    await writeAuditLog({
-      action: "evidence_timestamp",
-      performedBy: uid,
-      targetId: hash.slice(0, 16),
-      targetType: "packCoreHash",
-      details: { authority: "vocalwitness-platform", qualified: false },
-      severity: "info"
-    });
-
-    return {
-      authority: "vocalwitness-platform",
-      qualified: false,
-      hashedMessage: hash,
-      tokenBase64,
-      requestedAt,
-      note: "Platform integrity receipt. Not an eIDAS qualified timestamp. Replace with RFC 3161 TSA when ready."
-    };
-  }
-);
