@@ -1,5 +1,4 @@
 // js/main.js - Core Handlers, Tab Switching & Application Entry Setup
-
 // 1. Static Module Imports
 import { state, updateAppState, isUserAuthenticated } from './app-state.js';
 import { initAuth, requireAuth, updateUIForAuthState, bindHeaderEvents } from "./auth.js";
@@ -14,9 +13,7 @@ import { showToast } from './utils.js';
 import { initBookmarks, initBookmarksView } from './bookmarks.js';
 import { loadWeeklyLeaderboard, refreshTierAndUI } from './tier.js';
 import './composer.js';
-import {
-  createEvidencePack
-} from './evidence-pack.js';
+import { createEvidencePack } from './evidence-pack.js';
 import { generateSha256Hash } from './utils.js';
 import {
     collection,
@@ -44,7 +41,7 @@ export function initDataSaver() {
 export function toggleDataSaver() {
     const currentState = state.dataSaver || false;
     const newState = !currentState;
-   
+
     updateAppState({ dataSaver: newState });
     localStorage.setItem('vocalwitness_data_saver', String(newState));
     updateDataSaverUI(newState);
@@ -57,14 +54,12 @@ export function toggleDataSaver() {
 }
 
 function updateDataSaverUI(enabled) {
-    // Desktop Status Indicator
     const statusEl = document.getElementById('data-saver-status');
     if (statusEl) {
         statusEl.textContent = enabled ? "On" : "Off";
         statusEl.style.color = enabled ? "#10b981" : "#34d399";
     }
 
-    // Desktop Button Styling
     const desktopBtn = document.getElementById('data-saver-btn');
     if (desktopBtn) {
         if (enabled) {
@@ -74,7 +69,6 @@ function updateDataSaverUI(enabled) {
         }
     }
 
-    // Mobile Button Styling
     const mobileBtn = document.getElementById('data-saver-btn-mobile');
     if (mobileBtn) {
         if (enabled) {
@@ -89,7 +83,7 @@ function updateDataSaverUI(enabled) {
 
 window.toggleDataSaver = toggleDataSaver;
 
-// ====================== TAB SWITCHING (FIXED) ======================
+// ====================== TAB SWITCHING ======================
 window.switchTab = async (tab) => {
     if (isSwitchingTab) return;
     isSwitchingTab = true;
@@ -101,7 +95,6 @@ window.switchTab = async (tab) => {
         btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
         btn.classList.toggle('active', isActive);
 
-        // Reset common classes
         btn.classList.remove(
             'bg-emerald-500', 'border-emerald-400/50', 'text-black',
             'bg-emerald-950/70', 'text-emerald-300', 'border-emerald-700/60',
@@ -123,7 +116,6 @@ window.switchTab = async (tab) => {
                 btn.classList.add('bg-zinc-900', 'text-zinc-200', 'border-zinc-700');
             }
         } else {
-            // inactive base style
             if (btn.dataset.tab === 'ledger') {
                 btn.classList.add('bg-emerald-950/70', 'text-emerald-300', 'border-emerald-700/60');
             } else if (btn.dataset.tab === 'arena') {
@@ -137,13 +129,7 @@ window.switchTab = async (tab) => {
     });
 
     // 2. Hide all tab panels
-    const panels = [
-        'public-square',
-        'evidence-ledger',
-        'live-arena',
-        'mycircle',
-        'witness'
-    ];
+    const panels = ['public-square', 'evidence-ledger', 'live-arena', 'mycircle', 'witness'];
     panels.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.add('hidden');
@@ -154,27 +140,21 @@ window.switchTab = async (tab) => {
         if (tab === 'square' || tab === 'citizen') {
             const panel = document.getElementById('public-square');
             if (panel) panel.classList.remove('hidden');
-
-            // Feed is already in the HTML – just refresh it
             const feedEl = document.getElementById('testimonies-feed') || document.getElementById('feed-container');
             if (feedEl && typeof initFeed === 'function') {
                 initFeed(db, 'citizen-talk');
             }
-        }
-        else if (tab === 'ledger') {
+        } else if (tab === 'ledger') {
             const panel = document.getElementById('evidence-ledger');
             if (panel) panel.classList.remove('hidden');
             await loadEvidenceLedger();
-        }
-        else if (tab === 'arena') {
+        } else if (tab === 'arena') {
             const panel = document.getElementById('live-arena');
             if (panel) panel.classList.remove('hidden');
-        }
-        else if (tab === 'mycircle') {
+        } else if (tab === 'mycircle') {
             const panel = document.getElementById('mycircle');
             if (panel) panel.classList.remove('hidden');
-        }
-        else if (tab === 'witness') {
+        } else if (tab === 'witness') {
             const panel = document.getElementById('witness');
             if (panel) panel.classList.remove('hidden');
             if (typeof initFeed === 'function') {
@@ -191,8 +171,9 @@ window.switchTab = async (tab) => {
 };
 
 window.refreshLedger = () => loadEvidenceLedger();
+
 // ====================== PAYMENT GATEWAYS ======================
-window.initiatePayment = function(amount, email = null, metadata = {}) {
+window.initiatePayment = function (amount, email = null, metadata = {}) {
     if (!requireAuth("Sign in to support VocalWitness")) return;
 
     if (typeof PaystackPop === 'undefined') {
@@ -204,7 +185,7 @@ window.initiatePayment = function(amount, email = null, metadata = {}) {
         const handler = PaystackPop.setup({
             key: 'pk_live_5d13a6db326f02375127aae9d0fb03678ed1d923',
             email: email || auth.currentUser?.email || '',
-            amount: amount * 100, // Amount in kobo
+            amount: amount * 100,
             currency: "NGN",
             metadata: {
                 source: "VocalWitness",
@@ -289,94 +270,81 @@ window.publishTestimony = async () => {
     }
 
     try {
-    const mediaData = (typeof mediaModule.uploadForensicMedia === 'function')
-        ? await mediaModule.uploadForensicMedia()
-        : {};
+        const mediaData = (typeof mediaModule.uploadForensicMedia === 'function')
+            ? await mediaModule.uploadForensicMedia()
+            : {};
 
-    const clientCaptureMs = Date.now();
-    const channel = state.currentMode === 'witness' ? 'witness-voice' : 'citizen-talk';
+        const clientCaptureMs = Date.now();
+        const channel = state.currentMode === 'witness' ? 'witness-voice' : 'citizen-talk';
 
-    // Body hash (text integrity)
-    const bodyHash = content
-        ? await generateSha256Hash(content)
-        : null;
+        const bodyHash = content ? await generateSha256Hash(content) : null;
 
-    // Prepare media object for the evidence pack
-    const mediaForPack = {};
-    if (mediaData.imageUrl && mediaData.imageHash) {
-        mediaForPack.imageUrl = mediaData.imageUrl;
-        mediaForPack.imageHash = mediaData.imageHash;
+        const mediaForPack = {};
+        if (mediaData.imageUrl && mediaData.imageHash) {
+            mediaForPack.imageUrl = mediaData.imageUrl;
+            mediaForPack.imageHash = mediaData.imageHash;
+        }
+        if (mediaData.audioUrl && mediaData.audioHash) {
+            mediaForPack.audioUrl = mediaData.audioUrl;
+            mediaForPack.audioHash = mediaData.audioHash;
+        }
+
+        const identity = {
+            mode: 'IDENTIFIED',
+            authorId: currentUser.uid,
+            displayName: currentUser.displayName || null
+        };
+
+        const { firestorePack, packCoreHash } = await createEvidencePack({
+            content,
+            bodyHash,
+            media: mediaForPack,
+            identity,
+            channel,
+            clientCaptureMs
+        });
+
+        const testimonyData = {
+            authorId: currentUser.uid,
+            author: currentUser.displayName || "Registered Witness",
+            content: content,
+            createdAt: serverTimestamp(),
+            timestamp: clientCaptureMs,
+            isPublic: true,
+            moderationStatus: "approved",
+            feedVisibility: channel,
+            imageUrl: mediaData.imageUrl || null,
+            audioUrl: mediaData.audioUrl || null,
+            imageHash: mediaData.imageHash || null,
+            audioHash: mediaData.audioHash || null,
+            hasForensic: !!(mediaData.imageHash || mediaData.audioHash),
+            evidencePack: firestorePack,
+            packCoreHash: packCoreHash || null,
+            hasEvidencePack: true,
+            bodyHash: bodyHash
+        };
+
+        await addDoc(collection(db, "testimonies"), testimonyData);
+
+        showToast("🛡️ Report sealed and published", "success");
+        if (textarea) textarea.value = '';
+        mediaModule.resetMediaState?.();
+        initFeed?.(db, channel);
+    } catch (err) {
+        console.error("Publish error detail:", err);
+        if (err.code === 'permission-denied') {
+            showToast("⚠️ Permission denied: Please wait 30s before posting again or re-login.", "error");
+        } else {
+            showToast("Failed to publish. Please try again.", "error");
+        }
+    } finally {
+        if (postBtn) {
+            postBtn.disabled = false;
+            postBtn.classList.remove('publishing', 'opacity-50', 'cursor-not-allowed');
+        }
     }
-    if (mediaData.audioUrl && mediaData.audioHash) {
-        mediaForPack.audioUrl = mediaData.audioUrl;
-        mediaForPack.audioHash = mediaData.audioHash;
-    }
+};
 
-    // Identity
-    const identity = {
-        mode: 'IDENTIFIED',
-        authorId: currentUser.uid,
-        displayName: currentUser.displayName || null
-    };
-
-    // === Automatic Evidence Pack (invisible to user) ===
-    const { firestorePack, packCoreHash } = await createEvidencePack({
-        content,
-        bodyHash,
-        media: mediaForPack,
-        identity,
-        channel,
-        clientCaptureMs
-    });
-
-    // 1. Construct testimony payload
-    const testimonyData = {
-        authorId: currentUser.uid,
-        author: currentUser.displayName || "Registered Witness",
-        content: content,
-        createdAt: serverTimestamp(),
-        timestamp: clientCaptureMs,
-        isPublic: true,
-        moderationStatus: "approved",
-        feedVisibility: channel,
-
-        // Existing media fields (backward compatible)
-        imageUrl: mediaData.imageUrl || null,
-        audioUrl: mediaData.audioUrl || null,
-        imageHash: mediaData.imageHash || null,
-        audioHash: mediaData.audioHash || null,
-        hasForensic: !!(mediaData.imageHash || mediaData.audioHash),
-
-        // === Batch 1 new fields ===
-        evidencePack: firestorePack,
-        packCoreHash: packCoreHash || null,
-        hasEvidencePack: true,
-        bodyHash: bodyHash
-    };
-
-    // 2. Add testimony to Firestore
-    await addDoc(collection(db, "testimonies"), testimonyData);
-
-    // Smart, non-court language
-    showToast("🛡️ Report sealed and published", "success");
-
-    if (textarea) textarea.value = '';
-    mediaModule.resetMediaState?.();
-    initFeed?.(db, channel);
-
-} catch (err) {
-    console.error("Publish error detail:", err);
-    if (err.code === 'permission-denied') {
-        showToast("⚠️ Permission denied: Please wait 30s before posting again or re-login.", "error");
-    } else {
-        showToast("Failed to publish. Please try again.", "error");
-    }
-} finally {
-    if (postBtn) {
-        postBtn.disabled = false;
-        postBtn.classList.remove('publishing', 'opacity-50', 'cursor-not-allowed');
-    }
-}
 // ====================== EVIDENCE LEDGER ======================
 async function loadEvidenceLedger() {
     const container = document.getElementById('ledgerContainer');
@@ -451,7 +419,6 @@ async function loadEvidenceLedger() {
 
         html += `</tbody></table>`;
         innerWrapper.innerHTML = html;
-
     } catch (err) {
         console.error("Ledger fetch error:", err);
         innerWrapper.innerHTML = `<div class="text-red-400 text-center py-8">Failed to load ledger records. Please check permissions.</div>`;
@@ -471,17 +438,15 @@ async function fetchCuratedNews() {
         const res = await fetch(RSS_URL);
         if (!res.ok) throw new Error(`HTTP network error: ${res.status}`);
         const data = await res.json();
-       
+
         if (data.status === 'ok' && Array.isArray(data.items) && data.items.length > 0) {
             const headlines = data.items.slice(0, 8).map(item => {
                 const safeTitle = escapeHtml(item.title || '');
                 return `<span class="ticker-item"><strong class="text-emerald-400">•</strong> ${safeTitle}</span>`;
             }).join(' &nbsp;&nbsp;&nbsp; ');
-
             tickerEl.innerHTML = headlines;
             return;
         }
-
         throw new Error('Malformed RSS payload structure');
     } catch (err) {
         console.warn("News ticker fallback active:", err.message);
@@ -506,13 +471,11 @@ function setupEventListeners() {
     listenersInitialized = true;
     console.log("✅ Wiring application listeners...");
 
-    // Data Delegation Handling for Header & Navigation Controls
     document.addEventListener('click', (e) => {
         const actionTarget = e.target.closest('[data-action]');
         if (!actionTarget) return;
 
         const action = actionTarget.dataset.action;
-
         switch (action) {
             case 'toggle-data-saver':
                 e.preventDefault();
@@ -552,26 +515,18 @@ function setupEventListeners() {
         }
     });
 
-    // Handle change events for select elements or input controls that use data-action
     document.addEventListener('change', (e) => {
         const actionTarget = e.target.closest('[data-action]');
         if (!actionTarget) return;
-
         const action = actionTarget.dataset.action;
-
-        switch (action) {
-            case 'change-language':
-                const langCode = actionTarget.value;
-                if (langCode && typeof window.changeLanguage === 'function') {
-                    window.changeLanguage(langCode);
-                }
-                break;
-            default:
-                break;
+        if (action === 'change-language') {
+            const langCode = actionTarget.value;
+            if (langCode && typeof window.changeLanguage === 'function') {
+                window.changeLanguage(langCode);
+            }
         }
     });
 
-    // Event Delegation for Navigation Tabs
     const mainNav = document.getElementById('main-nav');
     if (mainNav) {
         mainNav.addEventListener('click', (e) => {
@@ -583,10 +538,8 @@ function setupEventListeners() {
         });
     }
 
-    // Auth & Header Bindings
     bindHeaderEvents();
 
-    // Support Modal Paystack Payment Binding
     document.getElementById('paystackPayBtn')?.addEventListener('click', (e) => {
         e.preventDefault();
         const amountInput = document.getElementById('customSupportAmount');
@@ -594,97 +547,80 @@ function setupEventListeners() {
         window.initiatePayment(amount);
     });
 
-    // Media Controls (Photo / Voice / Publish) are now handled by wireTestimonyComposer()
     console.log("✅ Application listeners active");
 }
 
 // ====================== NOTIFICATION DROPDOWN ======================
-window.toggleNotificationDropdown = function(event) {
-  event.stopPropagation();
-  const dropdown = document.getElementById('notification-dropdown');
-  if (!dropdown) return;
-
-  // Close other open menus first
-  document.getElementById('more-menu')?.classList.add('hidden');
-
-  dropdown.classList.toggle('hidden');
+window.toggleNotificationDropdown = function (event) {
+    event.stopPropagation();
+    const dropdown = document.getElementById('notification-dropdown');
+    if (!dropdown) return;
+    document.getElementById('more-menu')?.classList.add('hidden');
+    dropdown.classList.toggle('hidden');
 };
 
-// Close dropdown when clicking outside
 document.addEventListener('click', (e) => {
-  const dropdown = document.getElementById('notification-dropdown');
-  const container = document.getElementById('notification-container');
-  const mobileBtn = document.getElementById('notification-btn-mobile');
-
-  if (dropdown && !dropdown.classList.contains('hidden')) {
-    if (!container?.contains(e.target) && !mobileBtn?.contains(e.target)) {
-      dropdown.classList.add('hidden');
+    const dropdown = document.getElementById('notification-dropdown');
+    const container = document.getElementById('notification-container');
+    const mobileBtn = document.getElementById('notification-btn-mobile');
+    if (dropdown && !dropdown.classList.contains('hidden')) {
+        if (!container?.contains(e.target) && !mobileBtn?.contains(e.target)) {
+            dropdown.classList.add('hidden');
+        }
     }
-  }
 });
 
 // ====================== MOBILE + GLOBAL SEARCH LOGIC ======================
 function initHeaderSearch() {
-  const mobileSearch = document.getElementById('searchInputMobile');
-  const feedSearch = document.getElementById('feedSearchInput'); // from feed.js
+    const mobileSearch = document.getElementById('searchInputMobile');
+    const feedSearch = document.getElementById('feedSearchInput');
 
-  const performSearch = (query) => {
-    // Sync with feed search if it exists
-    if (feedSearch && feedSearch.value !== query) {
-      feedSearch.value = query;
-      feedSearch.dispatchEvent(new Event('input', { bubbles: true }));
+    const performSearch = (query) => {
+        if (feedSearch && feedSearch.value !== query) {
+            feedSearch.value = query;
+            feedSearch.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        if (typeof window.applySearchAndFilter === 'function') {
+            window.applySearchAndFilter();
+        }
+    };
+
+    if (mobileSearch) {
+        let debounce;
+        mobileSearch.addEventListener('input', (e) => {
+            clearTimeout(debounce);
+            debounce = setTimeout(() => {
+                performSearch(e.target.value.trim());
+            }, 280);
+        });
+        mobileSearch.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                performSearch(e.target.value.trim());
+            }
+        });
     }
-
-    // Fallback: trigger feed filter directly if available
-    if (typeof window.applySearchAndFilter === 'function') {
-      window.applySearchAndFilter();
-    }
-  };
-
-  if (mobileSearch) {
-    let debounce;
-    mobileSearch.addEventListener('input', (e) => {
-      clearTimeout(debounce);
-      debounce = setTimeout(() => {
-        performSearch(e.target.value.trim());
-      }, 280);
-    });
-
-    // Also support Enter key
-    mobileSearch.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        performSearch(e.target.value.trim());
-      }
-    });
-  }
 }
 
-// Call this after DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-  initHeaderSearch();
-});
-
-  // ====================== FOCUS BANNER (Batch 1) ======================
+// ====================== FOCUS BANNER ======================
 function initFocusBanner() {
     const banner = document.getElementById('focus-banner');
-    const dismiss = document.getElementById('dismiss-focus-banner');
     if (!banner) return;
 
-    if (localStorage.getItem('vw_focus_banner_dismissed') === '1') {
-        banner.classList.add('hidden');
+    const key = 'vw_focus_banner_dismissed';
+    if (localStorage.getItem(key) === '1') {
+        banner.remove();
         return;
     }
 
-    dismiss?.addEventListener('click', () => {
-        banner.classList.add('hidden');
-        localStorage.setItem('vw_focus_banner_dismissed', '1');
+    document.getElementById('dismiss-focus-banner')?.addEventListener('click', () => {
+        localStorage.setItem(key, '1');
+        banner.remove();
     });
 }
 
-// ====================== COMPOSER WIRING (matches current index.html IDs) ======================
+// ====================== COMPOSER WIRING ======================
 function wireTestimonyComposer() {
-    // Create hidden file input if it doesn't exist
     let fileInput = document.getElementById('media-input');
     if (!fileInput) {
         fileInput = document.createElement('input');
@@ -695,14 +631,12 @@ function wireTestimonyComposer() {
         document.body.appendChild(fileInput);
     }
 
-    // Photo button → open file picker
     const btnPhoto = document.getElementById('btn-photo');
     if (btnPhoto && !btnPhoto.dataset.wired) {
         btnPhoto.addEventListener('click', () => fileInput.click());
         btnPhoto.dataset.wired = 'true';
     }
 
-    // When a file is selected → show preview
     if (fileInput && !fileInput.dataset.wired) {
         fileInput.addEventListener('change', async (e) => {
             const previewArea = document.getElementById('preview-area');
@@ -718,7 +652,6 @@ function wireTestimonyComposer() {
         fileInput.dataset.wired = 'true';
     }
 
-    // Voice button
     const btnVoice = document.getElementById('btn-voice');
     if (btnVoice && !btnVoice.dataset.wired) {
         btnVoice.addEventListener('click', () => {
@@ -727,7 +660,6 @@ function wireTestimonyComposer() {
         btnVoice.dataset.wired = 'true';
     }
 
-    // Publish button
     const postBtn = document.getElementById('postButton');
     if (postBtn && !postBtn.dataset.wired) {
         postBtn.addEventListener('click', () => {
@@ -739,23 +671,6 @@ function wireTestimonyComposer() {
     console.log('✅ Testimony composer wired (btn-photo / btn-voice / postButton)');
 }
 
-// ====================== FOCUS BANNER ======================
-function initFocusBanner() {
-    const banner = document.getElementById('focus-banner');
-    if (!banner) return;
-
-    const key = 'vw_focus_banner_dismissed';
-    if (localStorage.getItem(key) === '1') {
-        banner.remove();
-        return;
-    }
-
-    document.getElementById('dismiss-focus-banner')?.addEventListener('click', () => {
-        localStorage.setItem(key, '1'); // remember forever
-        banner.remove();
-    });
-}
-
 // ====================== BOOTSTRAP ======================
 async function bootstrap() {
     if (isInitialized) return;
@@ -763,32 +678,26 @@ async function bootstrap() {
     console.log("🚀 VocalWitness Bootstrap started");
 
     try {
-        // 1. Initialize tier systems & data saver
         initDataSaver();
         refreshTierAndUI();
         loadWeeklyLeaderboard();
 
-        // 2. Wire global listeners before firing auth check
         window.addEventListener('auth-changed', (e) => {
             const user = e.detail?.user;
             console.log("🔐 Auth state confirmed:", user ? `Logged in as ${user.uid}` : "Guest session");
-
             if (typeof updateUIForAuthState === 'function') {
                 updateUIForAuthState(user);
             }
-
-            // Default to 'square' tab on cold load
             if (!state.currentTab) {
                 window.switchTab('square');
             }
             showWelcomeNote();
         });
 
-        // 3. Static module setups
         setupEventListeners();
         initLanguage?.();
         initProfile?.();
-        initFocusBanner();   // ← dismissible focus banner (persists via localStorage)
+        initFocusBanner();
 
         if (typeof CitizenTalkEngine === 'function') {
             engineInstance = new CitizenTalkEngine(db, storage);
@@ -799,9 +708,7 @@ async function bootstrap() {
         loadDynamicNavigation?.();
         fetchCuratedNews();
 
-        // 4. Trigger auth initialization
         await initAuth();
-
         console.log("✅ Bootstrap finished successfully");
     } catch (e) {
         console.error("Bootstrap error:", e);
@@ -811,6 +718,6 @@ async function bootstrap() {
 
 document.addEventListener('DOMContentLoaded', async () => {
     await bootstrap();
-    // Give the media engine a short moment to initialise
     setTimeout(wireTestimonyComposer, 600);
+    initHeaderSearch();
 });
