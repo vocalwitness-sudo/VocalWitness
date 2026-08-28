@@ -575,7 +575,7 @@ exports.moderatedDelete = onCall(
 );
 
 // ======================================================
-// 5. TOXICITY HELPERS & GEMINI AI MODERATION
+// 5. TOXICITY HELPERS, GEMINI AI MODERATION & AI TOOLS
 // ======================================================
 async function analyzeToxicityWithPerspective(content = "") {
   const apiKey = perspectiveApiKey.value() || process.env.PERSPECTIVE_API_KEY;
@@ -714,6 +714,78 @@ Post Content:
     }
   }
 );
+
+// 1. Multi-Language Feed Translation
+exports.translateTestimony = onCall(
+  { cors: allowedOrigins, secrets: [geminiApiKey] },
+  async (request) => {
+    const { text, targetLanguage } = request.data || {};
+    if (!text || !targetLanguage) {
+      throw new HttpsError("invalid-argument", "Text and targetLanguage are required.");
+    }
+
+    const apiKey = geminiApiKey.value() || process.env.GEMINI_API_KEY;
+    const ai = new GoogleGenAI({ apiKey });
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: `Translate the following report accurately into ${targetLanguage}, preserving tone and essential detail:\n\n"${text}"`
+    });
+
+    const translatedText = response.text ? response.text.trim() : "";
+    return { translatedText };
+  }
+);
+
+// 2. Audio-to-Text Witness Transcriptions (Base64 Audio Input)
+exports.transcribeAudioWitness = onCall(
+  { cors: allowedOrigins, secrets: [geminiApiKey] },
+  async (request) => {
+    const { audioBase64, mimeType } = request.data || {};
+    if (!audioBase64 || !mimeType) {
+      throw new HttpsError("invalid-argument", "audioBase64 and mimeType are required.");
+    }
+
+    const apiKey = geminiApiKey.value() || process.env.GEMINI_API_KEY;
+    const ai = new GoogleGenAI({ apiKey });
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: [
+        {
+          inlineData: {
+            mimeType: mimeType, // e.g., "audio/mp3", "audio/wav", "audio/ogg"
+            data: audioBase64
+          }
+        },
+        "Provide a precise, verbatim transcription of this voice witness submission. Do not add intro or outro prose."
+      ]
+    });
+
+    const transcription = response.text ? response.text.trim() : "";
+    return { transcription };
+  }
+);
+
+// 3. Compact Report Summarization
+exports.summarizeReport = onCall(
+  { cors: allowedOrigins, secrets: [geminiApiKey] },
+  async (request) => {
+    const { text } = request.data || {};
+    if (!text) {
+      throw new HttpsError("invalid-argument", "Text is required.");
+    }
+
+    const apiKey = geminiApiKey.value() || process.env.GEMINI_API_KEY;
+    const ai = new GoogleGenAI({ apiKey });
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: `Summarize this citizen report into a single concise sentence (under 25 words) suitable for a compact feed card:\n\n"${text}"`
+    });
+
+    const summary = response.text ? response.text.trim() : "";
+    return { summary };
+  }
+);
+
 // ======================================================
 // 6. PAYSTACK
 // ======================================================
