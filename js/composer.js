@@ -1,8 +1,8 @@
 // js/composer.js - Hardened Post & Testimony Composer
 import { prepareMediaForUpload } from './media-pipeline.js';
-import { uploadMedia } from './upload.js'; // or uploadForensicMedia from ./upload.js
+import { uploadMedia } from './upload.js';
 import { showToast } from './utils.js';
-import { getCurrentUserTier } from './tier.js';
+import { getCurrentUserTier, TIERS } from './tier.js';
 import { db, auth } from './firebase-config.js';
 import {
     collection,
@@ -20,17 +20,16 @@ import { publishTestimonyOrQueue } from './db.js';
 let isSubmitting = false;
 
 /**
- * Safely get user tier
+ * Safely get user tier string
+ * Returns: 'citizen' | 'citizen_circle' | 'witness_circle'
  */
-async function getUserTier(uid) {
+async function getUserTier() {
     try {
-        if (typeof getCurrentUserTier === 'function') {
-            return await getCurrentUserTier(uid);
-        }
+        return await getCurrentUserTier();
     } catch (e) {
-        console.warn('Failed to fetch tier, falling back to level 0:', e);
+        console.warn('Failed to fetch tier, falling back to citizen:', e);
+        return TIERS.CITIZEN;
     }
-    return { level: 0 };
 }
 
 /**
@@ -71,15 +70,11 @@ export function initComposer() {
         fileInput.addEventListener('change', async (e) => {
             const previewArea = document.getElementById('preview-area') ||
                                 document.getElementById('media-preview');
-
             if (!e.target.files?.[0]) return;
 
             const originalFile = e.target.files[0];
-
             try {
                 showToast('Processing image...', 'info');
-
-                // Pipeline handles EXIF scrubbing & compression
                 const preparedFile = await prepareMediaForUpload(originalFile);
 
                 // Pass prepared file to preview UI renderer
@@ -88,18 +83,14 @@ export function initComposer() {
                     preventDefault: () => {},
                     stopPropagation: () => {}
                 };
-
                 await handleImageSelect(syntheticEvent, previewArea);
                 showToast('Image ready', 'success');
-
             } catch (err) {
                 console.error('Media processing error:', err);
                 showToast('Image processing failed – using original', 'warning');
-                // Fallback to original file
                 await handleImageSelect(e, previewArea);
             }
         });
-
         fileInput.dataset.listenerAttached = 'true';
     }
 
@@ -133,25 +124,19 @@ async function handleComposerSubmit(e) {
     const bodyInput = document.getElementById('mainInput') ||
                       document.getElementById('postBody') ||
                       document.getElementById('testimonyBody');
-
     const headlineInput = document.getElementById('testimonyTitle') ||
                           document.getElementById('headlineInput') ||
                           document.getElementById('testimonyHeadline');
-
     const categorySelect = document.getElementById('categorySelect') ||
                            document.getElementById('testimonyCategory');
-
     const fileInput = document.getElementById('media-input') ||
                       document.getElementById('photoInput');
-
     const targetFeedSelect = document.getElementById('targetFeedSelect');
     const channelToggle = document.getElementById('channelToggle') ||
                           document.getElementById('isWitnessVoice');
-
     const submitBtn = document.getElementById('postButton') ||
                       document.getElementById('submitBtn') ||
                       document.querySelector('button[type="submit"]');
-
     const anonymousCheckbox = document.getElementById('post-anonymously') ||
                               document.getElementById('isAnonymous');
 
@@ -167,7 +152,6 @@ async function handleComposerSubmit(e) {
     } else if (channelToggle?.checked) {
         targetFeed = 'witness_voice';
     }
-
     const isWitnessVoice = targetFeed === 'witness_voice';
 
     // Validation
@@ -184,8 +168,15 @@ async function handleComposerSubmit(e) {
     if (submitBtn) submitBtn.disabled = true;
 
     try {
-        const userTier = await getUserTier(user.uid);
-        let mediaData = { imageUrl: null, mediaHash: null, forensicHash: null, audioUrl: null, audioHash: null };
+        const userTier = await getUserTier();   // string: 'citizen' | 'citizen_circle' | 'witness_circle'
+
+        let mediaData = {
+            imageUrl: null,
+            imageHash: null,
+            audioUrl: null,
+            audioHash: null,
+            forensicHash: null
+        };
 
         // Upload media if present
         if (fileInput?.files?.[0]) {
@@ -194,21 +185,25 @@ async function handleComposerSubmit(e) {
 
             mediaData = {
                 imageUrl: typeof uploaded === 'string' ? uploaded : (uploaded?.imageUrl || null),
-                imageHash: typeof uploaded?.mediaHash === 'string' ? uploaded.mediaHash : null,
+                imageHash: uploaded?.mediaHash || uploaded?.imageHash || null,
                 audioUrl: uploaded?.audioUrl || null,
                 audioHash: uploaded?.audioHash || null,
                 forensicHash: uploaded?.forensicHash || uploaded?.mediaHash || null
             };
         }
 
-        // Unverified users targeting Witness Voice -> Draft flow
-        if (isWitnessVoice && userTier.level < 1) {
+        // Unverified users targeting Witness Voice → save as draft
+        // Only citizens (no phone/ZK) are blocked from direct Witness Voice publish
+        if (isWitnessVoice && userTier === TIERS.CITIZEN) {
             await addDoc(collection(db, `users/${user.uid}/drafts`), {
                 headline: headline || null,
                 body,
                 category,
                 imageUrl: mediaData.imageUrl,
                 imageHash: mediaData.imageHash,
+                audioUrl: mediaData.audioUrl,
+                audioHash: mediaData.audioHash,
+                forensicHash: mediaData.forensicHash,
                 targetChannel: 'witness_voice',
                 isAnonymous: anonymous,
                 createdAt: serverTimestamp()
@@ -246,7 +241,6 @@ async function handleComposerSubmit(e) {
 
         showToast('Testimony published successfully!', 'success');
         resetForm();
-
     } catch (error) {
         console.error('Composer error:', error);
         showToast('Failed to submit post. Please try again.', 'error');
