@@ -1,14 +1,32 @@
 // js/moderation.js - Enhanced Moderation Engine & Review Queue
-import { db, auth } from './firebase-config.js';
+import { db, auth, app } from './firebase-config.js';
 import { showToast } from './utils.js';
 import { logSecurityAudit, logAIFlaggedContent } from './audit.js';
 import { 
     collection, addDoc, updateDoc, doc, query, where, getDocs, getDoc,
-    serverTimestamp, increment, deleteDoc, runTransaction 
+    serverTimestamp, increment, runTransaction 
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
 import { getCurrentUserTier, TIERS, hasStewardAccess } from './tier.js';
 
-const PERSPECTIVE_API_KEY = "AIzaSyATxYekXgjdLP2SfR42FG8rEdajq_pIEb0";
+// Initialize Cloud Functions instance
+const functions = getFunctions(app, "us-central1");
+const moderatePostContentFn = httpsCallable(functions, "moderatePostContent");
+
+// ====================== GEMINI AI CALLABLE MODERATION ======================
+export async function runGeminiModeration(title = '', text = '') {
+    if (!auth.currentUser) {
+        return { flagged: false, reason: "Unauthenticated", categories: [], safetyScore: 1.0 };
+    }
+
+    try {
+        const response = await moderatePostContentFn({ title, text });
+        return response.data || { flagged: false, reason: "No response data", categories: [], safetyScore: 1.0 };
+    } catch (err) {
+        console.error("Gemini AI Callable Moderation error:", err);
+        return { flagged: false, reason: "Moderation connection failure fallback", categories: [], safetyScore: 1.0 };
+    }
+}
 
 // ====================== PERSPECTIVE API TOXICITY SCAN ======================
 export async function scanForToxicity(content) {
@@ -17,58 +35,28 @@ export async function scanForToxicity(content) {
     }
 
     try {
-        const response = await fetch(
-            `https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze?key=${AIzaSyATxYekXgjdLP2SfR42FG8rEdajq_pIEb0}`,
-            {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    comment: { text: content },
-                    languages: ["en"],
-                    requestedAttributes: {
-                        TOXICITY: {},
-                        SEVERE_TOXICITY: {},
-                        IDENTITY_ATTACK: {},
-                        INSULT: {},
-                        PROFANITY: {},
-                        THREAT: {}
-                    }
-                })
-            }
-        );
+        // Calls backend onRequest proxy to avoid leaking client-side API keys
+        const response = await fetch("https://us-central1-vocalwitness-3affa.cloudfunctions.net/analyzeToxicity", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text: content })
+        });
 
         if (!response.ok) {
-            console.warn(`Perspective API responded with status ${response.status}`);
             return fallbackToxicityScan(content);
         }
 
         const data = await response.json();
-
-        if (data.error) {
-            console.warn("Perspective API payload error:", data.error);
-            return fallbackToxicityScan(content);
-        }
-
-        const attributes = data.attributeScores;
-        const toxicityScore = attributes?.TOXICITY?.summaryScore?.value || 0;
-        const severeScore = attributes?.SEVERE_TOXICITY?.summaryScore?.value || 0;
-
-        const reasons = [];
-        if (severeScore > 0.6) reasons.push("Severe Toxicity");
-        if (attributes?.IDENTITY_ATTACK?.summaryScore?.value > 0.7) reasons.push("Identity Attack");
-        if (attributes?.INSULT?.summaryScore?.value > 0.7) reasons.push("Insult");
-        if (attributes?.THREAT?.summaryScore?.value > 0.6) reasons.push("Threat");
-
-        const finalScore = Math.max(toxicityScore, severeScore);
+        const toxicityScore = data.toxicityScore || 0;
+        const isToxic = !data.safe;
 
         return {
-            score: finalScore,
-            flagged: finalScore > 0.65 || severeScore > 0.5,
-            reasons
+            score: toxicityScore,
+            flagged: isToxic,
+            reasons: isToxic ? [data.note || "Flagged for toxicity"] : []
         };
-
     } catch (err) {
-        console.warn("Perspective API connection failure, engaging fallback scanner:", err);
+        console.warn("Toxicity endpoint connection failure, engaging fallback scanner:", err);
         return fallbackToxicityScan(content);
     }
 }
@@ -90,15 +78,28 @@ function fallbackToxicityScan(content) {
     return { score: Math.min(1, score), flagged: score > 0.5, reasons };
 }
 
-// ====================== PUBLISH WITH MODERATION ======================
-export async function publishWithModeration(content, mediaData, currentUser) {
-    const toxicity = await scanForToxicity(content);
+// ====================== PUBLISH WITH HYBRID MODERATION ======================
+export async function publishWithModeration(content, mediaData, currentUser, title = '') {
     const tier = await getCurrentUserTier();
 
-    let moderationStatus = "approved";
+    // Run parallel checks: Gemini 2.5 Flash Cloud Function + Perspective/Fallback scan
+    const [geminiResult, toxicity] = await Promise.all([
+        runGeminiModeration(title, content),
+        scanForToxicity(content)
+    ]);
 
-    // Auto-flag for toxicity or high synthetic confidence
-    if (toxicity.flagged && (tier === TIERS.CITIZEN || tier === 'citizen')) {
+    let moderationStatus = "approved";
+    const combinedReasons = [...(toxicity.reasons || [])];
+
+    if (geminiResult.flagged) {
+        combinedReasons.push(`Gemini AI: ${geminiResult.reason || 'Flagged'}`);
+    }
+
+    // Auto-flag condition for citizens or high toxicity / AI safety triggers
+    const isHighRisk = geminiResult.flagged || toxicity.flagged || (geminiResult.safetyScore < 0.6);
+    const requiresReview = isHighRisk && (tier === TIERS.CITIZEN || tier === 'citizen' || !tier);
+
+    if (requiresReview) {
         moderationStatus = "needs_review";
         showToast("⚠️ Content flagged for steward review", "warning");
     }
@@ -106,6 +107,7 @@ export async function publishWithModeration(content, mediaData, currentUser) {
     const postData = {
         authorId: currentUser.uid,
         author: currentUser.displayName || "Anonymous Witness",
+        title: title || "",
         content,
         imageUrl: mediaData?.imageUrl || null,
         audioUrl: mediaData?.audioUrl || null,
@@ -117,13 +119,15 @@ export async function publishWithModeration(content, mediaData, currentUser) {
         feedVisibility: "citizen-talk",
         moderationStatus,
         toxicityScore: toxicity.score,
-        autoFlaggedReasons: toxicity.reasons,
+        geminiSafetyScore: geminiResult.safetyScore || 1.0,
+        geminiCategories: geminiResult.categories || [],
+        autoFlaggedReasons: combinedReasons,
         authorTier: tier
     };
 
     const docRef = await addDoc(collection(db, "testimonies"), postData);
 
-    // If media was detected as synthetic, record in AI audit collection
+    // Record deepfake / synthetic media detections in audit collection
     if (mediaData?.isSynthetic && mediaData?.mediaHash) {
         await logAIFlaggedContent({
             mediaHash: mediaData.mediaHash,
@@ -133,7 +137,13 @@ export async function publishWithModeration(content, mediaData, currentUser) {
         });
     }
 
-    return { success: true, postId: docRef.id, moderationStatus, toxicity };
+    return { 
+        success: true, 
+        postId: docRef.id, 
+        moderationStatus, 
+        toxicity,
+        geminiResult 
+    };
 }
 
 // ====================== REPORT CONTENT ======================
