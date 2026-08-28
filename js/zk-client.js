@@ -1,6 +1,6 @@
 // js/zk-client.js - ZK Proof Engine with Hybrid Cloud Offloading & Fallback Guard
 import { showToast } from './utils.js';
-import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
+import { getFunctions, httpsCallable } from "https://unpkg.com/firebase@11.0.0/firebase-functions.js";
 
 /**
  * Generates standard signature fallback when ZK WASM fails, times out, or OOMs
