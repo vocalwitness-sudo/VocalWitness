@@ -1,5 +1,5 @@
 // js/firebase-config.js - Centralized Firebase Initialization & Config
-import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { initializeApp, getApps, getApp } from "https://unpkg.com/firebase@11.0.0/firebase-app.js";
 import { 
   getAuth, 
   GoogleAuthProvider, 
@@ -7,9 +7,9 @@ import {
   GithubAuthProvider, 
   setPersistence, 
   browserLocalPersistence 
-} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-import { getStorage } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
+} from "https://unpkg.com/firebase@11.0.0/firebase-auth.js";
+import { getFirestore } from "https://unpkg.com/firebase@11.0.0/firebase-firestore.js";
+import { getStorage } from "https://unpkg.com/firebase@11.0.0/firebase-storage.js";
 
 // Dynamically target auth domain for seamless custom domain or web.app execution
 const hostDomain = window.location.hostname;
