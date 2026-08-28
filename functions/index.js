@@ -573,7 +573,6 @@ exports.moderatedDelete = onCall(
     }
   }
 );
-
 // ======================================================
 // 5. TOXICITY HELPERS, GEMINI AI MODERATION & AI TOOLS
 // ======================================================
@@ -641,6 +640,7 @@ exports.analyzeToxicity = onRequest(
   }
 );
 
+// 1. Post Content Moderation
 exports.moderatePostContent = onCall(
   {
     cors: allowedOrigins,
@@ -679,10 +679,7 @@ exports.moderatePostContent = onCall(
             role: "user",
             parts: [
               {
-                text: `Analyze the following user-submitted post for illegal content, severe hate speech, explicit violence, harassment, or dangerous misinformation. 
-
-Post Content:
-"${fullContent}"`
+                text: `Analyze the following user-submitted post for illegal content, severe hate speech, explicit violence, harassment, or dangerous misinformation.\n\nPost Content:\n"${fullContent}"`
               }
             ]
           }
@@ -702,7 +699,7 @@ Post Content:
         }
       });
 
-      const resultText = response.response?.text?.();
+      const resultText = response.text ? response.text.trim() : null;
       if (!resultText) {
         return { flagged: false, reason: "No response from model", categories: [], safetyScore: 1.0 };
       }
@@ -715,7 +712,7 @@ Post Content:
   }
 );
 
-// 1. Multi-Language Feed Translation
+// 2. Multi-Language Feed Translation
 exports.translateTestimony = onCall(
   { cors: allowedOrigins, secrets: [geminiApiKey] },
   async (request) => {
@@ -736,7 +733,7 @@ exports.translateTestimony = onCall(
   }
 );
 
-// 2. Audio-to-Text Witness Transcriptions (Base64 Audio Input)
+// 3. Audio-to-Text Witness Transcriptions (Base64 Audio Input)
 exports.transcribeAudioWitness = onCall(
   { cors: allowedOrigins, secrets: [geminiApiKey] },
   async (request) => {
@@ -765,7 +762,7 @@ exports.transcribeAudioWitness = onCall(
   }
 );
 
-// 3. Compact Report Summarization
+// 4. Compact Report Summarization
 exports.summarizeReport = onCall(
   { cors: allowedOrigins, secrets: [geminiApiKey] },
   async (request) => {
