@@ -1,5 +1,5 @@
 // js/feed.js - Public Square Feed with Search, Filtering & Dynamic Interactivity
-// + Corroboration Engine (Batch 2)
+// + Corroboration Engine & AI Features (Translation, Summarization)
 
 import { 
     collection, 
@@ -20,7 +20,7 @@ import { showToast } from './utils.js';
 import { renderTierCircle } from './ui-components.js';
 import { hasStewardAccess, canCorroborate } from './tier.js';
 import { toggleReaction, bindReactionEvents } from './reactions.js';
-import { reportContent } from './moderation.js';
+import { reportContent, translateTestimony, summarizeReport } from './moderation.js';
 import { applyPostDoorDecorations } from './door-ui.js';
 import { state } from './app-state.js';
 import { 
@@ -93,6 +93,14 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
             <div class="animate-pulse text-zinc-400">Loading testimonies...</div>
         </div>`;
 
+    // Global event listener setup for set-sort
+    window.addEventListener('feed-set-sort', (e) => {
+        const sort = e.detail?.sort;
+        if (!sort) return;
+        const btn = document.querySelector(`#sortBtnGroup .sort-btn[data-sort="${sort}"]`);
+        btn?.click();
+    });
+
     // Event delegation (attached only once)
     if (!feedContainer.dataset.listenerAttached) {
         feedContainer.dataset.listenerAttached = "true";
@@ -101,11 +109,18 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
             const btn = e.target.closest('button[data-action]');
             if (!btn || btn.disabled) return;
 
-            btn.disabled = true;
-            btn.classList.add('opacity-50', 'cursor-not-allowed');
-
             const action = btn.getAttribute('data-action');
             const id = btn.getAttribute('data-id');
+
+            // Quick toggle for UI expansion panels (no button disable needed)
+            if (action === 'toggle-translate') {
+                const box = document.getElementById(`translate-box-${id}`);
+                if (box) box.classList.toggle('hidden');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
 
             try {
                 if (action === 'like') {
@@ -149,6 +164,10 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                     showPostMenu(id);
                 } else if (action === 'corroborate') {
                     await handleCorroborate(id, btn);
+                } else if (action === 'execute-translate') {
+                    await handleTranslateAction(id, btn);
+                } else if (action === 'summarize') {
+                    await handleSummarizeAction(id, btn);
                 }
             } catch (err) {
                 console.error(`Action ${action} failed:`, err);
@@ -373,6 +392,13 @@ function renderSinglePostDOM(id, data, container) {
            </span>`
         : '';
 
+    // Summary Trigger Button (Show for longer posts)
+    const showSummaryBtn = (data.content && data.content.length > 300);
+    const summaryBtnHTML = showSummaryBtn ? `
+        <button data-action="summarize" data-id="${id}" class="text-xs text-amber-400 hover:underline flex items-center gap-1 mt-2">
+            ⚡ AI Summary
+        </button>` : '';
+
     postEl.innerHTML = `
         <div class="flex justify-between items-start">
             <div class="flex items-center gap-3">
@@ -393,9 +419,32 @@ function renderSinglePostDOM(id, data, container) {
             </div>
         </div>
 
-        ${data.content ? `<p class="mt-5 mb-4 text-zinc-100 leading-relaxed">${escapeHTML(data.content)}</p>` : ''}
+        ${data.content ? `<p id="post-text-${id}" class="mt-5 mb-4 text-zinc-100 leading-relaxed">${escapeHTML(data.content)}</p>` : ''}
+        ${summaryBtnHTML}
+        <div id="summary-container-${id}" class="hidden mt-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-200"></div>
+
         ${mediaHTML}
         ${audioHTML}
+
+        <!-- Interactive Translation Controls -->
+        <div id="translate-box-${id}" class="hidden mt-4 p-3 bg-zinc-950 border border-zinc-800 rounded-xl flex flex-col sm:flex-row items-center gap-2">
+            <select id="lang-select-${id}" class="bg-zinc-900 text-xs text-zinc-200 border border-zinc-700 rounded-lg px-2 py-1.5 focus:outline-none focus:border-emerald-500 w-full sm:w-auto">
+                <option value="English">English</option>
+                <option value="Pidgin">Nigerian Pidgin</option>
+                <option value="Hausa">Hausa</option>
+                <option value="Yoruba">Yorùbá</option>
+                <option value="Igbo">Igbo</option>
+                <option value="Swahili">Swahili</option>
+                <option value="French">French</option>
+                <option value="Spanish">Spanish</option>
+                <option value="Portuguese">Portuguese</option>
+                <option value="Arabic">Arabic</option>
+            </select>
+            <button data-action="execute-translate" data-id="${id}" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition w-full sm:w-auto">
+                Translate Text
+            </button>
+        </div>
+        <div id="translated-result-${id}" class="hidden mt-3 p-3 bg-emerald-950/40 border border-emerald-500/20 rounded-xl text-xs text-emerald-300 leading-relaxed"></div>
 
         <div class="flex items-center justify-between mt-6 pt-5 border-t border-zinc-800 text-xs flex-wrap gap-3">
             <div class="flex gap-2 sm:gap-3 flex-wrap items-center">
@@ -407,6 +456,10 @@ function renderSinglePostDOM(id, data, container) {
                 </button>
                 <button data-action="comment" data-id="${id}" class="comment-trigger-btn flex items-center gap-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 px-3 py-1.5 rounded-xl text-zinc-300 transition">
                     💬 <span>${data.commentsCount || 0}</span>
+                </button>
+
+                <button data-action="toggle-translate" data-id="${id}" class="flex items-center gap-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 px-3 py-1.5 rounded-xl text-zinc-300 transition">
+                    🌐 <span>Translate</span>
                 </button>
 
                 <button data-action="corroborate" data-id="${id}"
@@ -432,6 +485,66 @@ function renderSinglePostDOM(id, data, container) {
     applyPostDoorDecorations(postEl, data, currentUser);
     container.appendChild(postEl);
 }
+
+// ====================== AI ACTION HANDLERS ======================
+
+async function handleTranslateAction(postId, btn) {
+    const langSelect = document.getElementById(`lang-select-${postId}`);
+    const resultBox = document.getElementById(`translated-result-${postId}`);
+    const textEl = document.getElementById(`post-text-${postId}`);
+
+    if (!langSelect || !resultBox || !textEl) return;
+
+    const targetLanguage = langSelect.value;
+    const textToTranslate = textEl.textContent;
+
+    if (!textToTranslate || textToTranslate.trim() === '') {
+        showToast("No text content available to translate", "warning");
+        return;
+    }
+
+    try {
+        btn.textContent = "Translating...";
+        const translatedText = await translateTestimony(textToTranslate, targetLanguage);
+
+        resultBox.innerHTML = `<strong>🌐 ${escapeHTML(targetLanguage)}:</strong> ${escapeHTML(translatedText)}`;
+        resultBox.classList.remove('hidden');
+        showToast(`Translated to ${targetLanguage}`, "success");
+    } catch (err) {
+        console.error("Translation request failed:", err);
+        showToast("Translation failed. Please try again.", "error");
+    } finally {
+        btn.textContent = "Translate Text";
+    }
+}
+
+async function handleSummarizeAction(postId, btn) {
+    const summaryBox = document.getElementById(`summary-container-${postId}`);
+    const textEl = document.getElementById(`post-text-${postId}`);
+
+    if (!summaryBox || !textEl) return;
+
+    if (!summaryBox.classList.contains('hidden')) {
+        summaryBox.classList.add('hidden');
+        return;
+    }
+
+    try {
+        btn.textContent = "⚡ Summarizing...";
+        const summary = await summarizeReport(textEl.textContent);
+
+        summaryBox.innerHTML = `<strong>⚡ Key Summary:</strong> ${escapeHTML(summary)}`;
+        summaryBox.classList.remove('hidden');
+    } catch (err) {
+        console.error("Summarization failed:", err);
+        showToast("Could not generate summary", "error");
+    } finally {
+        btn.textContent = "⚡ AI Summary";
+    }
+}
+
+// ====================== FEED INTERACTION ACTIONS ======================
+
 async function handleUpvote(postId) {
     if (!auth.currentUser) {
         showToast("Please log in to support testimonies.", "error");
@@ -534,7 +647,6 @@ async function handleCorroborate(postId, btnEl) {
         const post = allPostsCache.find(p => p.id === postId);
         if (post) {
             post.corroborationCount = (post.corroborationCount || 0) + 1;
-            // Real score is updated by the backend increment
         }
 
         btnEl.textContent = "👁️ You corroborated";
@@ -552,7 +664,6 @@ async function handleCorroborate(postId, btnEl) {
         console.error("Corroboration failed:", err);
         btnEl.disabled = false;
         btnEl.textContent = "👁️ I saw this too";
-        // Toast is already shown inside submitCorroboration
     }
 }
 
@@ -594,13 +705,6 @@ async function handleDownloadEvidencePack(postId) {
                 hashApi: 'WebCrypto.subtle.digest SHA-256'
             }
         };
-
-        window.addEventListener('feed-set-sort', (e) => {
-    const sort = e.detail?.sort;
-    if (!sort) return;
-    const btn = document.querySelector(`#sortBtnGroup .sort-btn[data-sort="${sort}"]`);
-    btn?.click();
-});
 
         if (post.imageUrl && post.imageHash) {
             core.media.push({
