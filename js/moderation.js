@@ -305,3 +305,32 @@ export async function initModeration() {
 
     return queue;
 }
+
+// ====================== ADDITIONAL GEMINI HELPER CALLABLES ======================
+
+// 1. Post Moderation Check Helper
+export async function moderatePost(title, text) {
+    const result = await moderatePostContentFn({ title, text });
+    return result.data;
+}
+
+// 2. On-Demand Feed Translation
+export async function translateTestimony(text, targetLanguage) {
+    const translateFn = httpsCallable(functions, "translateTestimony");
+    const result = await translateFn({ text, targetLanguage });
+    return result.data.translatedText;
+}
+
+// 3. Audio-to-Text Transcription for Voice Notes
+export async function transcribeAudioWitness(audioBase64, mimeType = "audio/wav") {
+    const transcribeFn = httpsCallable(functions, "transcribeAudioWitness");
+    const result = await transcribeFn({ audioBase64, mimeType });
+    return result.data.transcription;
+}
+
+// 4. Compact Summary Generation for Feed Cards
+export async function summarizeReport(text) {
+    const summarizeFn = httpsCallable(functions, "summarizeReport");
+    const result = await summarizeFn({ text });
+    return result.data.summary;
+}
