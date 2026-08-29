@@ -242,9 +242,8 @@ function showWelcomeNote() {
 }
 
 // ====================== PUBLISH TESTIMONY ======================
-// ====================== PUBLISH TESTIMONY ======================
 window.publishTestimony = async () => {
-    if (!requireAuth("Please sign in to share your testimony in Citizen Talk.")) return;
+    if (!requireAuth("Please sign in to share your testimony.")) return;
 
     const currentUser = auth.currentUser;
     if (!currentUser) {
@@ -276,7 +275,8 @@ window.publishTestimony = async () => {
             : {};
 
         const clientCaptureMs = Date.now();
-        const channel = state.currentMode === 'witness' ? 'witness-voice' : 'citizen-talk';
+        // Determine explicit collection target matching firestore.rules
+        const targetCollection = state.currentMode === 'witness' ? 'witness_voice' : 'citizen_talk';
 
         const bodyHash = content ? await generateSha256Hash(content) : null;
 
@@ -301,13 +301,11 @@ window.publishTestimony = async () => {
             bodyHash,
             media: mediaForPack,
             identity,
-            channel,
+            channel: targetCollection,
             clientCaptureMs
         });
 
-        // FIXED PAYLOAD: Explicitly set both authorUid/authorId and feed/feedVisibility
         const testimonyData = {
-            authorUid: currentUser.uid,
             authorId: currentUser.uid,
             author: currentUser.displayName || "Registered Witness",
             content: content,
@@ -315,8 +313,7 @@ window.publishTestimony = async () => {
             timestamp: clientCaptureMs,
             isPublic: true,
             moderationStatus: "approved",
-            feed: channel,
-            feedVisibility: channel,
+            feedVisibility: targetCollection,
             imageUrl: mediaData.imageUrl || null,
             audioUrl: mediaData.audioUrl || null,
             imageHash: mediaData.imageHash || null,
@@ -328,16 +325,20 @@ window.publishTestimony = async () => {
             bodyHash: bodyHash
         };
 
+        // Write directly to the corresponding feed collection
+        await addDoc(collection(db, targetCollection), testimonyData);
+
+        // Also update legacy/global testimonies collection for unified ledger
         await addDoc(collection(db, "testimonies"), testimonyData);
 
         showToast("🛡️ Report sealed and published", "success");
         if (textarea) textarea.value = '';
         mediaModule.resetMediaState?.();
-        initFeed?.(db, channel);
+        initFeed?.(db, targetCollection);
     } catch (err) {
         console.error("Publish error detail:", err);
         if (err.code === 'permission-denied') {
-            showToast("⚠️ Permission denied: Please verify authorization rules or re-login.", "error");
+            showToast("⚠️ Permission denied: Wait 30 seconds between posts or verify Witness Circle status.", "error");
         } else {
             showToast("Failed to publish. Please try again.", "error");
         }
@@ -348,6 +349,7 @@ window.publishTestimony = async () => {
         }
     }
 };
+
 // ====================== EVIDENCE LEDGER ======================
 async function loadEvidenceLedger() {
     const container = document.getElementById('ledgerContainer');
