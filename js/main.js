@@ -242,6 +242,7 @@ function showWelcomeNote() {
 }
 
 // ====================== PUBLISH TESTIMONY ======================
+// ====================== PUBLISH TESTIMONY ======================
 window.publishTestimony = async () => {
     if (!requireAuth("Please sign in to share your testimony in Citizen Talk.")) return;
 
@@ -304,7 +305,9 @@ window.publishTestimony = async () => {
             clientCaptureMs
         });
 
+        // FIXED PAYLOAD: Explicitly set both authorUid/authorId and feed/feedVisibility
         const testimonyData = {
+            authorUid: currentUser.uid,
             authorId: currentUser.uid,
             author: currentUser.displayName || "Registered Witness",
             content: content,
@@ -312,6 +315,7 @@ window.publishTestimony = async () => {
             timestamp: clientCaptureMs,
             isPublic: true,
             moderationStatus: "approved",
+            feed: channel,
             feedVisibility: channel,
             imageUrl: mediaData.imageUrl || null,
             audioUrl: mediaData.audioUrl || null,
@@ -333,7 +337,7 @@ window.publishTestimony = async () => {
     } catch (err) {
         console.error("Publish error detail:", err);
         if (err.code === 'permission-denied') {
-            showToast("⚠️ Permission denied: Please wait 30s before posting again or re-login.", "error");
+            showToast("⚠️ Permission denied: Please verify authorization rules or re-login.", "error");
         } else {
             showToast("Failed to publish. Please try again.", "error");
         }
@@ -344,7 +348,6 @@ window.publishTestimony = async () => {
         }
     }
 };
-
 // ====================== EVIDENCE LEDGER ======================
 async function loadEvidenceLedger() {
     const container = document.getElementById('ledgerContainer');
