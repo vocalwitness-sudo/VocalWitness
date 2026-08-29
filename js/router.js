@@ -1,28 +1,30 @@
 // js/router.js - Clean Client-Side Router with pushState + Web Component ready structure
 import { showToast } from './utils.js';
 
-// Central view mapping for alias normalization across different naming styles
+// Central view mapping — values must match real element ids in index.html
 const VIEW_MAP = {
-    'square': 'citizenTalkView',
-    'public_square': 'citizenTalkView',
-    'public-square': 'citizenTalkView',
-    'citizen-talk': 'citizenTalkView',
-    'citizen_talk': 'citizenTalkView',
-    'witness-voice': 'witnessVoiceView',
-    'witness_voice': 'witnessVoiceView',
+    'square': 'public-square',
+    'public_square': 'public-square',
+    'public-square': 'public-square',
+    'citizen-talk': 'public-square',
+    'citizen_talk': 'public-square',
+    'witness-voice': 'witness',
+    'witness_voice': 'witness',
     'moderation': 'moderationView',
-    'profile': 'profileView',
-    'audit-log': 'auditLogView',
-    'audit_log': 'auditLogView',
-    'arena': 'arenaView',
+    'profile': 'profileModal',
+    'audit-log': 'evidence-ledger',
+    'audit_log': 'evidence-ledger',
+    'arena': 'live-arena',
     'quadratic-vote': 'quadraticVoteView',
     'quadratic_vote': 'quadraticVoteView',
-    'dao': 'daoView'
+    'dao': 'daoView',
+    'mycircle': 'mycircle',
+    'ledger': 'evidence-ledger'
 };
 
 const ROUTES = {
     'citizen-talk': {
-        viewId: 'citizenTalkView',
+        viewId: 'public-square',
         title: 'Citizen Talk',
         init: async () => {
             const { initFeed } = await import('./feed.js');
@@ -30,7 +32,7 @@ const ROUTES = {
         }
     },
     'witness-voice': {
-        viewId: 'witnessVoiceView',
+        viewId: 'witness',
         title: 'Witness Voice',
         init: async () => {
             const { initFeed } = await import('./feed.js');
@@ -46,7 +48,7 @@ const ROUTES = {
         }
     },
     'profile': {
-        viewId: 'profileView',
+        viewId: 'profileModal',
         title: 'Witness Profile',
         init: async () => {
             const { initProfile } = await import('./profile.js');
@@ -54,7 +56,7 @@ const ROUTES = {
         }
     },
     'audit-log': {
-        viewId: 'auditLogView',
+        viewId: 'evidence-ledger',
         title: 'Forensic Audit Log',
         init: async () => {
             const auditModule = await import('./audit.js').catch(() => null);
@@ -62,12 +64,16 @@ const ROUTES = {
         }
     },
     'arena': {
-        viewId: 'arenaView',
+        viewId: 'live-arena',
         title: 'Live Arena',
         init: async () => {
-            const container = document.getElementById('arenaView');
+            const container = document.getElementById('live-arena');
             if (container) {
-                container.innerHTML = `<div class="text-center py-16 text-emerald-400 animate-pulse">Initializing Live Arena & ZK Workers...</div>`;
+                // Don't wipe the whole panel if main.js already owns it
+                const slot = container.querySelector('[data-arena-root]') || container;
+                if (!container.querySelector('[data-arena-initialized]')) {
+                    // optional loading hint only if empty
+                }
             }
             const arenaModule = await import('./arena.js').catch((err) => {
                 console.error("Failed to load Arena module:", err);
@@ -99,6 +105,21 @@ const ROUTES = {
             if (!container) return;
             container.innerHTML = `<div class="text-center py-16 text-emerald-400 animate-pulse">Loading DAO Governance...</div>`;
         }
+    },
+    'mycircle': {
+        viewId: 'mycircle',
+        title: 'My Circle',
+        init: async () => {
+            const circleModule = await import('./circle.js').catch(() => null);
+            circleModule?.loadCircle?.();
+        }
+    },
+    'ledger': {
+        viewId: 'evidence-ledger',
+        title: 'Public Record',
+        init: async () => {
+            // main.js also loads ledger; safe no-op if already active
+        }
     }
 };
 
@@ -110,7 +131,11 @@ const ROUTE_ALIASES = {
     'citizen_talk': 'citizen-talk',
     'witness_voice': 'witness-voice',
     'audit_log': 'audit-log',
-    'quadratic_vote': 'quadratic-vote'
+    'quadratic_vote': 'quadratic-vote',
+    'my-circle': 'mycircle',
+    'my_circle': 'mycircle',
+    'public-record': 'ledger',
+    'public_record': 'ledger'
 };
 
 /**
@@ -125,17 +150,11 @@ function normalizeRouteKey(rawKey) {
  * Hide every registered view panel
  */
 function hideAllViews() {
-    Object.values(ROUTES).forEach(route => {
-        if (!route.viewId) return;
-        const panel = document.getElementById(route.viewId);
-        if (panel) {
-            panel.classList.add('hidden');
-            panel.classList.remove('block');
-        }
-    });
-
-    // Clean up any views directly referenced in VIEW_MAP
-    Object.values(VIEW_MAP).forEach(viewId => {
+    const ids = new Set([
+        ...Object.values(ROUTES).map(r => r.viewId).filter(Boolean),
+        ...Object.values(VIEW_MAP)
+    ]);
+    ids.forEach(viewId => {
         const panel = document.getElementById(viewId);
         if (panel) {
             panel.classList.add('hidden');
@@ -151,7 +170,6 @@ function updateNavActiveState(routeKey, rawInputKey) {
     document.querySelectorAll('[data-route]').forEach(navBtn => {
         const routeAttr = navBtn.getAttribute('data-route');
         const isActive = routeAttr === routeKey || routeAttr === rawInputKey;
-
         navBtn.classList.toggle('bg-zinc-800', isActive);
         navBtn.classList.toggle('text-emerald-400', isActive);
         navBtn.classList.toggle('text-zinc-400', !isActive);
@@ -168,6 +186,11 @@ export async function navigateTo(routeKey, { replace = false } = {}) {
     const finalKey = normalizeRouteKey(routeKey);
     const targetRoute = ROUTES[finalKey];
 
+    if (!targetRoute) {
+        console.warn(`Unknown route: ${routeKey} → ${finalKey}`);
+        return;
+    }
+
     // 1. Hide all views
     hideAllViews();
 
@@ -182,7 +205,7 @@ export async function navigateTo(routeKey, { replace = false } = {}) {
         window.location.href = targetRoute.fallbackUrl;
         return;
     } else {
-        console.warn(`No view found for route: ${finalKey}`);
+        console.warn(`No view found for route: ${finalKey} (expected #${targetViewId})`);
     }
 
     // 3. Update navigation UI
@@ -191,7 +214,6 @@ export async function navigateTo(routeKey, { replace = false } = {}) {
     // 4. History management (pushState with hash fallback)
     const newHash = `#${finalKey}`;
     const title = targetRoute.title || 'VocalWitness';
-
     try {
         if (replace) {
             window.history.replaceState({ route: finalKey }, title, newHash);
@@ -217,7 +239,6 @@ export async function navigateTo(routeKey, { replace = false } = {}) {
  * Initialize the router
  */
 export function initRouter() {
-    // Handle browser back / forward
     window.addEventListener('popstate', (event) => {
         const routeFromState = event.state?.route;
         const routeFromHash = window.location.hash.slice(1);
@@ -225,7 +246,6 @@ export function initRouter() {
         navigateTo(route, { replace: true });
     });
 
-    // Support classic hash changes (fallback)
     window.addEventListener('hashchange', () => {
         const hash = window.location.hash.slice(1);
         if (hash && hash !== (history.state?.route || '')) {
@@ -233,17 +253,14 @@ export function initRouter() {
         }
     });
 
-    // Click handler for any element with data-route
     document.addEventListener('click', (e) => {
         const trigger = e.target.closest('[data-route]');
         if (!trigger) return;
-
         e.preventDefault();
         const routeKey = trigger.getAttribute('data-route');
         navigateTo(routeKey);
     });
 
-    // Initial load
     const initial = window.location.hash.slice(1) || 'citizen-talk';
     navigateTo(initial, { replace: true });
 }
