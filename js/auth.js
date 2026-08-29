@@ -7,7 +7,7 @@ import {
   browserLocalPersistence,
   browserSessionPersistence,
   onAuthStateChanged
-} from "https://unpkg.com/firebase@11.0.0/firebase-auth.js";
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 
 import { 
   auth, 
@@ -21,13 +21,14 @@ import { showToast } from './utils.js';
 import { updateAppState } from './app-state.js';
 import { applyTierTheme, updateTierBadge, clearProfileCache } from './tier.js';
 import { initNotifications } from './notifications.js';
+
 import { 
   doc, 
   getDoc, 
   setDoc, 
   updateDoc, 
   serverTimestamp 
-} from "https://unpkg.com/firebase@11.0.0/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 const DEFAULT_TIER = "citizen";
 let authActionInProgress = false;
