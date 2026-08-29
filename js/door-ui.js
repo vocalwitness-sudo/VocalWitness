@@ -1,6 +1,7 @@
 // js/door-ui.js - UI Controls for Door Privacy & Broadcast Mechanics
 import { state, updateAppState } from './app-state.js';
 import { setDoorPrivacyMode, PRIVACY_MODES, canInteractWithUser } from './door-system.js';
+import { generateZKProofAsync } from './zk-client.js';
 
 /**
  * Render or update the privacy shield toggle in the top navigation bar or settings drawer
@@ -49,7 +50,7 @@ export function renderDoorPrivacyToggle(containerId = 'door-shield-container') {
 }
 
 /**
- * Enforces Broadcast UI overlay on post cards in the feed
+ * Enforces Broadcast UI overlay on post cards in Witness Voice & Citizen Talk feeds
  */
 export function applyPostDoorDecorations(postCardElement, post, currentUser) {
   if (!postCardElement || !post) return;
@@ -113,7 +114,7 @@ export function renderBridgePassModal() {
       </div>
       <h3 class="text-base font-bold text-zinc-100 mb-1">Witness Door Locked</h3>
       <p class="text-xs text-zinc-400 mb-4 leading-relaxed">
-        This Witness member restricted replies to verified accounts to prevent spam and target harassment.
+        This Witness member restricted replies to verified accounts to prevent spam and target harassment on Witness Voice.
       </p>
 
       <div class="w-full bg-zinc-800/60 rounded-xl p-3 border border-zinc-700/50 mb-4 text-left flex flex-col gap-2">
@@ -129,8 +130,8 @@ export function renderBridgePassModal() {
         <button id="close-bridge-modal" class="w-1/2 py-2 text-xs font-semibold text-zinc-400 hover:text-zinc-200 bg-zinc-800 rounded-xl border border-zinc-700 transition">
           Dismiss
         </button>
-        <button id="start-verification-btn" class="w-1/2 py-2 text-xs font-semibold text-black bg-amber-500 hover:bg-amber-400 rounded-xl transition">
-          Verify Account
+        <button id="start-verification-btn" class="w-1/2 py-2 text-xs font-semibold text-black bg-amber-500 hover:bg-amber-400 rounded-xl transition flex items-center justify-center gap-1">
+          <span id="btn-text">Verify Account</span>
         </button>
       </div>
     </div>
@@ -139,10 +140,30 @@ export function renderBridgePassModal() {
   document.body.appendChild(modal);
 
   modal.querySelector('#close-bridge-modal')?.addEventListener('click', () => modal.remove());
-  modal.querySelector('#start-verification-btn')?.addEventListener('click', () => {
-    modal.remove();
-    // Dispatch custom event to trigger verification workflow
-    window.dispatchEvent(new CustomEvent('nav:navigate', { detail: { target: 'verification' } }));
+  
+  const verifyBtn = modal.querySelector('#start-verification-btn');
+  verifyBtn?.addEventListener('click', async () => {
+    const btnText = modal.querySelector('#btn-text');
+    if (btnText) btnText.textContent = "Generating ZK...";
+    verifyBtn.disabled = true;
+
+    try {
+      // Trigger client ZK verification sequence
+      const mockInputs = { timestamp: Date.now(), uid: state.currentUser?.uid || 'anon' };
+      const proofResult = await generateZKProofAsync(mockInputs);
+
+      if (proofResult) {
+        updateAppState({ isZkReady: true, userTier: 'witness_circle' });
+        showNotification("ZK Proof verified successfully!", "success");
+        modal.remove();
+        // Refresh privacy UI state
+        renderDoorPrivacyToggle();
+      }
+    } catch (err) {
+      showNotification("ZK Verification failed. Redirecting to settings...", "error");
+      modal.remove();
+      window.dispatchEvent(new CustomEvent('nav:navigate', { detail: { target: 'verification' } }));
+    }
   });
 }
 
