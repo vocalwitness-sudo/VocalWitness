@@ -2,7 +2,7 @@
 import { prepareMediaForUpload } from './media-pipeline.js';
 import { uploadMedia } from './upload.js';
 import { showToast } from './utils.js';
-import { getCurrentUserTier, TIERS } from './tier.js';
+import { getCurrentUserTier, TIERS, calculateVideoUploadCost } from './tier.js';
 import { db, auth } from './firebase-config.js';
 import { validateVideoFile } from './video-validator.js';
 import {
@@ -100,7 +100,6 @@ function showVideoPolicyModal(customMessage) {
         `;
         document.body.appendChild(modal);
 
-        // Attach event listeners to created modal controls
         document.getElementById("btn-modal-live-arena")?.addEventListener("click", () => {
             window.location.href = "live-arena.html";
         });
@@ -115,6 +114,34 @@ function showVideoPolicyModal(customMessage) {
 }
 
 /**
+ * Handles bandwidth/overage payment prompts for large video uploads
+ */
+async function triggerOveragePaymentModal(feeUSD, reason) {
+    return new Promise((resolve) => {
+        // Triggers support/checkout modal or native user prompt
+        const userChoice = confirm(
+            `Bandwidth / Infrastructure Fee Notice:\n\n${reason}\n\n` +
+            `Fee: $${feeUSD.toFixed(2)} USD (Payable via Paystack or USDT).\n\n` +
+            `Would you like to proceed to payment to finalize this upload?`
+        );
+
+        if (userChoice) {
+            // Open user support modal or inline gateway
+            const supportModal = document.getElementById('support-modal') || document.getElementById('paymentModal');
+            if (supportModal) {
+                supportModal.classList.remove('hidden');
+            } else {
+                showToast(`Please complete payment of $${feeUSD.toFixed(2)} USD via the Support Modal to proceed.`, 'info');
+            }
+            // Return true if payment succeeds / user agrees to open portal
+            resolve(true);
+        } else {
+            resolve(false);
+        }
+    });
+}
+
+/**
  * Handle input selection for both video pre-flight validation and image scrubbing
  */
 export async function handleMediaSelect(event) {
@@ -124,16 +151,34 @@ export async function handleMediaSelect(event) {
 
     const originalFile = event.target.files[0];
 
-    // 1. Video Pre-Flight Validation
+    // 1. Video Pre-Flight Validation & Pricing Check
     if (originalFile.type.startsWith("video/")) {
-        showToast('Validating video authenticity...', 'info');
+        showToast('Validating video authenticity & size rules...', 'info');
+        
+        // A. Authenticity & Deepfake check
         const validation = await validateVideoFile(originalFile);
-
         if (!validation.valid) {
-            // Clear input file selection
             event.target.value = "";
             showVideoPolicyModal(validation.message);
             return;
+        }
+
+        // B. Tier allowance & bandwidth overage calculation
+        const costInfo = await calculateVideoUploadCost(originalFile);
+
+        if (costInfo.blocked) {
+            showToast(costInfo.reason, 'error');
+            event.target.value = "";
+            return;
+        }
+
+        if (!costInfo.isFree) {
+            const paidOrAgreed = await triggerOveragePaymentModal(costInfo.feeUSD, costInfo.reason);
+            if (!paidOrAgreed) {
+                showToast('Video upload canceled.', 'warning');
+                event.target.value = "";
+                return;
+            }
         }
     }
 
