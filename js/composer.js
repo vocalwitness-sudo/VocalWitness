@@ -113,13 +113,11 @@ function showVideoPolicyModal(customMessage) {
     modal.classList.remove("hidden");
 }
 
-
 /**
  * Handles bandwidth/overage payment prompts for large video uploads
  */
 async function triggerOveragePaymentModal(feeUSD, reason) {
     return new Promise((resolve) => {
-        // Triggers support/checkout modal or native user prompt
         const userChoice = confirm(
             `Bandwidth / Infrastructure Fee Notice:\n\n${reason}\n\n` +
             `Fee: $${feeUSD.toFixed(2)} USD (Payable via Paystack or USDT).\n\n` +
@@ -127,14 +125,12 @@ async function triggerOveragePaymentModal(feeUSD, reason) {
         );
 
         if (userChoice) {
-            // Open user support modal or inline gateway
             const supportModal = document.getElementById('support-modal') || document.getElementById('paymentModal');
             if (supportModal) {
                 supportModal.classList.remove('hidden');
             } else {
                 showToast(`Please complete payment of $${feeUSD.toFixed(2)} USD via the Support Modal to proceed.`, 'info');
             }
-            // Return true if payment succeeds / user agrees to open portal
             resolve(true);
         } else {
             resolve(false);
@@ -191,7 +187,6 @@ export async function handleMediaSelect(event) {
             }
         }
     } else {
-        // Clear badge if an image or non-video is chosen
         clearMediaQuotaBadge();
     }
 
@@ -200,7 +195,6 @@ export async function handleMediaSelect(event) {
         showToast('Processing media payload...', 'info');
         const preparedFile = await prepareMediaForUpload(originalFile);
 
-        // Pass prepared file to preview UI renderer
         const syntheticEvent = {
             target: { files: [preparedFile] },
             preventDefault: () => {},
@@ -250,7 +244,9 @@ export function initComposer() {
         bodyInput.addEventListener('input', (e) => {
             const text = e.target.value.trim();
             if (text.length < 25) {
+                clearTimeout(aiAnalysisDebounceTimer);
                 clearAiFeedback();
+                lastAnalyzedText = '';
                 return;
             }
 
@@ -258,7 +254,10 @@ export function initComposer() {
             aiAnalysisDebounceTimer = setTimeout(async () => {
                 if (text === lastAnalyzedText) return;
                 lastAnalyzedText = text;
-                await runRealtimeAiAnalysis(text);
+
+                if (bodyInput.value.trim().length >= 25) {
+                    await runRealtimeAiAnalysis(text);
+                }
             }, 800);
         });
         bodyInput.dataset.aiListenerAttached = 'true';
@@ -510,6 +509,7 @@ async function handleComposerSubmit(e) {
         showToast('Checking content compliance...', 'info');
         const preflightCheck = await analyzeReportContent(body);
         
+        let needsModerationReview = false;
         if (preflightCheck?.isToxic) {
             const proceed = confirm(`AI Moderation Notice:\n\n${preflightCheck.reason || 'Your testimony may contain sensitive or flagged content.'}\n\nDo you still wish to submit for review?`);
             if (!proceed) {
@@ -517,9 +517,10 @@ async function handleComposerSubmit(e) {
                 if (submitBtn) submitBtn.disabled = false;
                 return;
             }
+            needsModerationReview = true;
         }
 
-        const userTier = await getUserTier();   // string: 'citizen' | 'citizen_circle' | 'witness_circle'
+        const userTier = await getUserTier();
 
         let mediaData = {
             imageUrl: null,
@@ -575,7 +576,8 @@ async function handleComposerSubmit(e) {
                 audioUrl: mediaData.audioUrl,
                 imageHash: mediaData.imageHash,
                 audioHash: mediaData.audioHash,
-                forensicHash: mediaData.forensicHash
+                forensicHash: mediaData.forensicHash,
+                requiresReview: needsModerationReview
             },
             { anonymous }
         );
@@ -586,10 +588,11 @@ async function handleComposerSubmit(e) {
         await logAuditEvent(user.uid, 'POST_CREATED', {
             docId: result?.id || null,
             channel: targetFeed,
-            isAnonymous: anonymous
+            isAnonymous: anonymous,
+            flaggedForReview: needsModerationReview
         });
 
-        showToast('Testimony published successfully!', 'success');
+        showToast(needsModerationReview ? 'Testimony submitted for moderator review.' : 'Testimony published successfully!', 'success');
         resetForm();
     } catch (error) {
         console.error('Composer error:', error);
@@ -622,11 +625,10 @@ function resetForm() {
     }
 
     clearAiFeedback();
+    clearMediaQuotaBadge();
     lastAnalyzedText = '';
 
     if (typeof resetMediaState === 'function') {
         resetMediaState();
     }
 }
-// Add to the end of resetForm()
-clearMediaQuotaBadge();
