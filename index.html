@@ -489,62 +489,63 @@
     </div>
   </div>
 
-  <!-- ========== 1. PUBLIC SQUARE ========== -->
-  <section id="public-square" data-view="citizenTalkView"role="tabpanel" aria-label="Public Square">
-    <div class="glass mb-10 rounded-3xl border border-zinc-800/80 p-5 shadow-xl sm:p-8">
-      <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 class="flex items-center gap-2 text-lg font-semibold text-white sm:text-xl" data-i18n="shareTestimonyTitle">
-          Share what you saw
-        </h2>
-        <div class="flex items-center gap-2">
-          <label for="targetFeedSelect" class="hidden text-xs text-zinc-400 sm:inline" data-i18n="feedLabel">Post to:</label>
-          <select id="targetFeedSelect"
-                  class="cursor-pointer rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs font-medium text-emerald-400 focus:border-emerald-500 focus:outline-none sm:text-sm"
-                  aria-label="Select target feed">
-            <option value="citizen-talk" data-i18n="feedCitizenTalk">🗣️ Open Talk</option>
-            <option value="witness-voice" data-i18n="feedWitnessVoice">🛡️ Verified Reports</option>
-          </select>
-        </div>
+ <!-- ========== 1. PUBLIC SQUARE ========== -->
+<section id="public-square" data-view="citizenTalkView" role="tabpanel" aria-label="Public Square">
+  <div class="glass mb-10 rounded-3xl border border-zinc-800/80 p-5 shadow-xl sm:p-8">
+    
+    <!-- Hidden File Inputs -->
+    <input type="file" id="media-input" accept="image/*,video/mp4,video/webm,video/quicktime" class="hidden" multiple aria-hidden="true">
+    <input type="file" id="voiceInput" accept="audio/*" class="hidden" aria-hidden="true">
+
+    <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <h2 class="flex items-center gap-2 text-lg font-semibold text-white sm:text-xl" data-i18n="shareTestimonyTitle">
+        Share what you saw
+      </h2>
+      <div class="flex items-center gap-2">
+        <label for="targetFeedSelect" class="hidden text-xs text-zinc-400 sm:inline" data-i18n="feedLabel">Post to:</label>
+        <select id="targetFeedSelect"
+                class="cursor-pointer rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs font-medium text-emerald-400 focus:border-emerald-500 focus:outline-none sm:text-sm"
+                aria-label="Select target feed">
+          <option value="citizen-talk" data-i18n="feedCitizenTalk">🗣️ Citizen Talk</option>
+          <option value="witness-voice" data-i18n="feedWitnessVoice">🛡️ Witness Voice</option>
+        </select>
       </div>
+    </div>
 
-      <input type="file" id="photoInput" accept="image/*" class="hidden" multiple aria-hidden="true">
-      <input type="file" id="voiceInput" accept="audio/*" class="hidden" aria-hidden="true">
+    <label for="testimonyTitle" class="sr-only">Report title</label>
+    <input type="text" id="testimonyTitle" maxlength="120"
+           placeholder="Add a short title (optional)"
+           class="mb-4 w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3.5 text-base text-white placeholder-zinc-500 transition focus:border-emerald-500 focus:outline-none sm:px-5"
+           data-i18n-placeholder="testimonyTitlePlaceholder">
 
-      <label for="testimonyTitle" class="sr-only">Report title</label>
-      <input type="text" id="testimonyTitle" maxlength="120"
-             placeholder="Add a short title (optional)"
-             class="mb-4 w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3.5 text-base text-white placeholder-zinc-500 transition focus:border-emerald-500 focus:outline-none sm:px-5"
-             data-i18n-placeholder="testimonyTitlePlaceholder">
+    <label for="mainInput" class="sr-only">Report content</label>
+    <textarea id="mainInput" rows="5" maxlength="2000"
+              class="w-full resize-none rounded-2xl border border-zinc-700 bg-zinc-900 p-4 text-base text-white placeholder-zinc-500 transition focus:border-emerald-500 focus:outline-none sm:p-5 sm:text-lg"
+              data-i18n-placeholder="mainInputPlaceholder"
+              placeholder="What did you see or experience? Share the facts..."></textarea>
+    <div class="mb-2 mt-1 flex justify-end">
+      <span id="char-count" class="text-xs text-zinc-500">0 / 2000</span>
+    </div>
 
-      <label for="mainInput" class="sr-only">Report content</label>
-      <textarea id="mainInput" rows="5" maxlength="2000"
-                class="w-full resize-none rounded-2xl border border-zinc-700 bg-zinc-900 p-4 text-base text-white placeholder-zinc-500 transition focus:border-emerald-500 focus:outline-none sm:p-5 sm:text-lg"
-                data-i18n-placeholder="mainInputPlaceholder"
-                placeholder="What did you see or experience? Share the facts..."></textarea>
-      <div class="mb-2 mt-1 flex justify-end">
-        <span id="char-count" class="text-xs text-zinc-500">0 / 2000</span>
-      </div>
-
-      <div class="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <button id="btn-photo" type="button"
-                class="flex items-center justify-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-800 px-4 py-3.5 font-medium text-emerald-400 transition hover:border-emerald-500 hover:bg-zinc-700 active:scale-95"
-                aria-label="Add photo">
-          <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
-          </svg>
-          <span data-i18n="addPhotoEvidence">Add Photo</span>
-        </button>
-        <button id="btn-voice" type="button"
-                class="flex items-center justify-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-800 px-4 py-3.5 font-medium text-amber-400 transition hover:border-emerald-500 hover:bg-zinc-700 active:scale-95"
-                aria-label="Record voice">
-          <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z"/>
-          </svg>
-          <span data-i18n="recordVoiceMessage">Record Voice</span>
-        </button>
-      </div>
-
+    <div class="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <button id="btn-photo" type="button"
+              class="flex items-center justify-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-800 px-4 py-3.5 font-medium text-emerald-400 transition hover:border-emerald-500 hover:bg-zinc-700 active:scale-95"
+              aria-label="Add media">
+        <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+        <span data-i18n="addPhotoEvidence">Add Media</span>
+      </button>
+      <button id="btn-voice" type="button"
+              class="flex items-center justify-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-800 px-4 py-3.5 font-medium text-amber-400 transition hover:border-emerald-500 hover:bg-zinc-700 active:scale-95"
+              aria-label="Record voice">
+        <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z"/>
+        </svg>
+        <span data-i18n="recordVoiceMessage">Record Voice</span>
+      </button>
+    </div>
       <div id="preview-area"
            class="mt-6 flex min-h-[100px] flex-wrap items-center justify-center gap-4 rounded-2xl border border-dashed border-zinc-700 bg-zinc-900/40 p-4 text-sm text-zinc-500"
            aria-live="polite">
@@ -1268,5 +1269,56 @@
     initLiveArena();
   }
 </script>
+
+  <!-- Video Policy & Authenticity Modal -->
+<div id="video-policy-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden">
+  <div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-md w-full p-6 text-slate-100 shadow-2xl">
+    
+    <!-- Modal Header -->
+    <div class="flex items-center space-x-3 mb-4">
+      <div class="p-3 bg-amber-500/10 rounded-full border border-amber-500/30 text-amber-400">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+      </div>
+      <h3 class="text-xl font-bold tracking-tight">Authenticity Requirement</h3>
+    </div>
+
+    <!-- Dynamic Error / Notice Message -->
+    <p id="video-policy-msg" class="text-slate-300 text-sm leading-relaxed mb-4">
+      To maintain evidence integrity, AI-generated or heavily edited videos are prohibited.
+    </p>
+
+    <!-- Policy Badges -->
+    <div class="bg-slate-800 border border-slate-700/60 rounded-xl p-3 mb-5 space-y-2 text-xs text-slate-400">
+      <div class="flex justify-between">
+        <span>Daily Upload Quota:</span>
+        <span class="font-mono text-amber-400 font-semibold">Max 2 Videos / Day</span>
+      </div>
+      <div class="flex justify-between">
+        <span>Max File Size:</span>
+        <span class="font-mono text-amber-400 font-semibold">25 MB (Raw Clip)</span>
+      </div>
+      <div class="flex justify-between">
+        <span>AI / Deepfake Policy:</span>
+        <span class="text-red-400 font-medium">Strictly Banned (C2PA Enforced)</span>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="space-y-3">
+      <a href="live-arena.html" class="w-full py-3 px-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 text-slate-950 font-bold rounded-xl shadow-lg transition flex items-center justify-center space-x-2">
+        <span>Go to Live Arena for True Reality</span>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+      </a>
+
+      <button type="button" onclick="document.getElementById('video-policy-modal').classList.add('hidden')" class="w-full py-2.5 px-4 bg-slate-800 text-slate-300 text-xs font-semibold rounded-xl transition border border-slate-700 hover:bg-slate-700">
+        I understand, cancel video upload
+      </button>
+    </div>
+
+  </div>
+</div>
+  
 </body>
 </html>
