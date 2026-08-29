@@ -379,7 +379,7 @@ export async function updateTierBadge() {
     badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold shadow-sm text-white transition-all duration-200";
     badge.style.backgroundColor = level.color;
   } else if (tier === TIERS.CITIZEN_CIRCLE) {
-    badge.innerHTML = '🛡️ Citizen Circle';
+    badge.innerHTML = '🛡️ Field Witness';
     badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
     badge.style.backgroundColor = '';
   } else {
@@ -440,33 +440,27 @@ export async function loadWeeklyLeaderboard() {
   }
 }
 
-
 // ====================== VIDEO & STORAGE PRICING CONFIG ======================
 export const UPLOAD_COST_CONFIG = {
-  // Free Size Thresholds (MB)
   FREE_MB_LIMITS: {
     [TIERS.CITIZEN]: 15,
     [TIERS.CITIZEN_CIRCLE]: 25,
     [TIERS.WITNESS_CIRCLE]: 50
   },
-  // Daily Free Upload Count
   DAILY_FREE_QUOTA: {
     [TIERS.CITIZEN]: 1,
     [TIERS.CITIZEN_CIRCLE]: 2,
     [TIERS.WITNESS_CIRCLE]: 5
   },
-  // Pricing Tiers (USD)
   OVERAGE_RATES: {
-    SMALL_OVERAGE: 0.50,  // e.g. 15MB - 50MB
-    MEDIUM_OVERAGE: 1.00, // e.g. 50MB - 100MB
-    LARGE_OVERAGE: 2.00   // e.g. 100MB - 500MB
+    SMALL_OVERAGE: 0.50,
+    MEDIUM_OVERAGE: 1.00,
+    LARGE_OVERAGE: 2.00
   }
 };
 
 /**
  * Calculates the upload cost for a video file based on user tier and file size.
- * @param {File} file 
- * @returns {Promise<{ isFree: boolean, feeUSD: number, reason: string }>}
  */
 export async function calculateVideoUploadCost(file) {
   if (!file || !file.type.startsWith('video/')) {
@@ -478,7 +472,6 @@ export async function calculateVideoUploadCost(file) {
   const freeLimit = UPLOAD_COST_CONFIG.FREE_MB_LIMITS[userTier] || 15;
   const maxAllowed = TIER_METADATA[userTier]?.maxUploadMB || 15;
 
-  // 1. Exceeds max allowed tier capacity
   if (fileMB > maxAllowed) {
     return {
       isFree: false,
@@ -488,7 +481,6 @@ export async function calculateVideoUploadCost(file) {
     };
   }
 
-  // 2. Within free tier allocation
   if (fileMB <= freeLimit) {
     return {
       isFree: true,
@@ -497,7 +489,6 @@ export async function calculateVideoUploadCost(file) {
     };
   }
 
-  // 3. Overage calculation
   let fee = UPLOAD_COST_CONFIG.OVERAGE_RATES.SMALL_OVERAGE;
   if (fileMB > 50 && fileMB <= 100) {
     fee = UPLOAD_COST_CONFIG.OVERAGE_RATES.MEDIUM_OVERAGE;
@@ -512,9 +503,8 @@ export async function calculateVideoUploadCost(file) {
   };
 }
 
-
 /**
- * Gate restricted actions – automatically opens phone verification if needed
+ * Gate restricted actions – automatically opens phone verification modal if needed
  */
 export async function requireCitizenCirclePermission(actionCallback) {
   const userTier = await getCurrentUserTier();
@@ -539,7 +529,6 @@ export async function requireCitizenCirclePermission(actionCallback) {
   return true;
 }
 
-// Setup profile modal listeners
 function setupProfileModalListeners() {
   const editBtn = document.getElementById('editProfileBtn');
   if (editBtn) {
@@ -598,7 +587,6 @@ export async function getUserTierData(uid = null) {
 
 /**
  * Can the current user corroborate a report?
- * Requirement: phone-verified or higher (CITIZEN_CIRCLE / WITNESS_CIRCLE)
  */
 export async function canCorroborate(user = null) {
   const u = user || auth.currentUser;
@@ -608,5 +596,7 @@ export async function canCorroborate(user = null) {
   return tier === TIERS.CITIZEN_CIRCLE || tier === TIERS.WITNESS_CIRCLE;
 }
 
-// Alias for backwards compatibility with corroboration.js and other modules
+// Exports for backward compatibility across modules
 export const getUserTierWeight = getUserVotingWeight;
+export const getUserTier = getCurrentUserTier;
+export const canUserCorroborate = canCorroborate;
