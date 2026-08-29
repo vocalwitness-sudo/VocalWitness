@@ -440,6 +440,79 @@ export async function loadWeeklyLeaderboard() {
   }
 }
 
+
+// ====================== VIDEO & STORAGE PRICING CONFIG ======================
+export const UPLOAD_COST_CONFIG = {
+  // Free Size Thresholds (MB)
+  FREE_MB_LIMITS: {
+    [TIERS.CITIZEN]: 15,
+    [TIERS.CITIZEN_CIRCLE]: 25,
+    [TIERS.WITNESS_CIRCLE]: 50
+  },
+  // Daily Free Upload Count
+  DAILY_FREE_QUOTA: {
+    [TIERS.CITIZEN]: 1,
+    [TIERS.CITIZEN_CIRCLE]: 2,
+    [TIERS.WITNESS_CIRCLE]: 5
+  },
+  // Pricing Tiers (USD)
+  OVERAGE_RATES: {
+    SMALL_OVERAGE: 0.50,  // e.g. 15MB - 50MB
+    MEDIUM_OVERAGE: 1.00, // e.g. 50MB - 100MB
+    LARGE_OVERAGE: 2.00   // e.g. 100MB - 500MB
+  }
+};
+
+/**
+ * Calculates the upload cost for a video file based on user tier and file size.
+ * @param {File} file 
+ * @returns {Promise<{ isFree: boolean, feeUSD: number, reason: string }>}
+ */
+export async function calculateVideoUploadCost(file) {
+  if (!file || !file.type.startsWith('video/')) {
+    return { isFree: true, feeUSD: 0, reason: 'Image/Audio uploads are free.' };
+  }
+
+  const userTier = await getCurrentUserTier();
+  const fileMB = file.size / (1024 * 1024);
+  const freeLimit = UPLOAD_COST_CONFIG.FREE_MB_LIMITS[userTier] || 15;
+  const maxAllowed = TIER_METADATA[userTier]?.maxUploadMB || 15;
+
+  // 1. Exceeds max allowed tier capacity
+  if (fileMB > maxAllowed) {
+    return {
+      isFree: false,
+      feeUSD: 0,
+      blocked: true,
+      reason: `File size (${fileMB.toFixed(1)}MB) exceeds maximum limit for your tier (${maxAllowed}MB). Please upgrade your tier.`
+    };
+  }
+
+  // 2. Within free tier allocation
+  if (fileMB <= freeLimit) {
+    return {
+      isFree: true,
+      feeUSD: 0,
+      reason: `Included in daily free quota (${fileMB.toFixed(1)}MB / ${freeLimit}MB free).`
+    };
+  }
+
+  // 3. Overage calculation
+  let fee = UPLOAD_COST_CONFIG.OVERAGE_RATES.SMALL_OVERAGE;
+  if (fileMB > 50 && fileMB <= 100) {
+    fee = UPLOAD_COST_CONFIG.OVERAGE_RATES.MEDIUM_OVERAGE;
+  } else if (fileMB > 100) {
+    fee = UPLOAD_COST_CONFIG.OVERAGE_RATES.LARGE_OVERAGE;
+  }
+
+  return {
+    isFree: false,
+    feeUSD: fee,
+    reason: `Video size (${fileMB.toFixed(1)}MB) exceeds free tier threshold (${freeLimit}MB). Infrastructure fee applies.`
+  };
+}
+
+
 /**
  * Gate restricted actions – automatically opens phone verification if needed
  */
