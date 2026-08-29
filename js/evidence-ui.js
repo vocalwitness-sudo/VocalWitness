@@ -29,6 +29,24 @@ export function renderSealedBadge(hasPack) {
 }
 
 /**
+ * Renders the download button for a sealed evidence pack.
+ * Used by feed.js: ${hasPack ? renderDownloadPackButton(id) : ''}
+ * @param {string} testimonyId
+ * @returns {string} HTML string
+ */
+export function renderDownloadPackButton(testimonyId) {
+  if (!testimonyId) return '';
+  return `
+    <button type="button"
+            data-action="download-pack"
+            data-id="${testimonyId}"
+            class="download-evidence-pack-btn inline-flex items-center gap-1 text-emerald-400 hover:text-emerald-300 transition text-xs font-medium">
+      📥 Download Pack
+    </button>
+  `;
+}
+
+/**
  * Renders the primary action toolbar for Evidence & Newsroom export.
  * @param {string} testimonyId
  * @returns {string} HTML string
@@ -43,18 +61,14 @@ export function renderEvidenceToolbar(testimonyId) {
               class="download-evidence-pack-btn inline-flex items-center gap-1 text-emerald-400 hover:text-emerald-300 transition font-medium">
         📥 Download Evidence Pack
       </button>
-
       <span class="text-slate-600">•</span>
-
       <button type="button"
               data-action="share-testimony"
               data-id="${testimonyId}"
               class="inline-flex items-center gap-1 text-slate-400 hover:text-slate-200 transition">
         🔗 Share Verifiable Link
       </button>
-
       <span class="text-slate-600">•</span>
-
       <button type="button"
               data-action="export-newsroom"
               data-id="${testimonyId}"
@@ -82,10 +96,10 @@ export async function handleEvidenceAction(e, post) {
       case 'download-pack': {
         btn.classList.add('opacity-50', 'pointer-events-none');
         showToast('Generating Cryptographic Evidence Pack...', 'info');
-        
+
         const fullPack = await toFullEvidencePack(post);
         downloadEvidencePack(fullPack, `evidence-pack-${post.id || 'report'}.json`);
-        
+
         showToast('✅ Evidence Pack downloaded', 'success');
         return true;
       }
