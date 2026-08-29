@@ -4,6 +4,7 @@ import { uploadMedia } from './upload.js';
 import { showToast } from './utils.js';
 import { getCurrentUserTier, TIERS } from './tier.js';
 import { db, auth } from './firebase-config.js';
+import { validateVideoFile } from './video-validator.js';
 import {
     collection,
     addDoc,
@@ -132,6 +133,23 @@ export function initComposer() {
         composerForm.dataset.listenerAttached = 'true';
     }
 }
+
+// Call this function inside your file selection event listener in composer.js
+export async function handleMediaSelect(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  if (file.type.startsWith("video/")) {
+    const validation = await validateVideoFile(file);
+
+    if (!validation.valid) {
+      // Clear file input
+      event.target.value = "";
+      // Show Friendly Policy Modal
+      showVideoPolicyModal(validation.message);
+      return;
+    }
+  }
 
 /**
  * Executes background AI analysis on composer text input
