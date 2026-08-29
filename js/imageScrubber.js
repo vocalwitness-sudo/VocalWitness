@@ -1,5 +1,5 @@
 // js/imageScrubber.js - VocalWitness Client-Side EXIF & Metadata Scrubber
-import { AppState } from './app-state.js';
+import { state, getActiveIdentityConfig } from './app-state.js';
 import { logAuditEvent } from './audit.js';
 
 /**
@@ -27,18 +27,24 @@ export async function scrubImageMetadata(imageFile, options = {}) {
         throw new Error('Invalid input: A valid image File or Blob must be provided.');
     }
 
-   // Batch 1 policy: always scrub by default.
-// Only skip if caller explicitly sets forceScrub = false.
-const shouldScrub = forceScrub !== false;
+    // Batch 1 policy: always scrub by default.
+    // Only skip if caller explicitly sets forceScrub = false.
+    // Identity config can also request scrub (anonymous / non-bold modes).
+    const identity = typeof getActiveIdentityConfig === 'function'
+        ? getActiveIdentityConfig()
+        : { mode: state?.profileMode || 'ANONYMOUS', scrubMetadata: true };
 
-if (!shouldScrub) {
-    await logAuditEvent?.("MEDIA_METADATA_PRESERVED", {
-        filename: imageFile.name || 'unnamed',
-        reason: 'forceScrub=false',
-        size: imageFile.size
-    });
-    return imageFile;
-}
+    const shouldScrub = forceScrub !== false && (forceScrub === true || identity.scrubMetadata !== false);
+
+    if (!shouldScrub) {
+        await logAuditEvent?.("MEDIA_METADATA_PRESERVED", {
+            filename: imageFile.name || 'unnamed',
+            reason: 'forceScrub=false or identity allows preserve',
+            mode: identity.mode || 'unknown',
+            size: imageFile.size
+        });
+        return imageFile;
+    }
 
     try {
         // 2. Load image into ImageBitmap
@@ -77,7 +83,6 @@ if (!shouldScrub) {
         ctx.clearRect(0, 0, width, height);
         ctx.drawImage(bitmap, 0, 0, width, height);
 
-        // Release GPU resources as early as possible
         if (typeof bitmap.close === 'function') {
             bitmap.close();
         }
@@ -100,7 +105,6 @@ if (!shouldScrub) {
         try {
             cleanBlob = await exportBlob(outputType);
         } catch {
-            // Fallback for older browsers that don't support WebP export
             cleanBlob = await exportBlob('image/jpeg');
         }
 
@@ -115,10 +119,10 @@ if (!shouldScrub) {
             lastModified: Date.now()
         });
 
-        // 7. Audit
+        // 7. Audit — use identity.mode (was undefined activeMode)
         await logAuditEvent("MEDIA_METADATA_SCRUBBED", {
             filename: imageFile.name || 'unnamed',
-            mode: activeMode,
+            mode: identity.mode || state?.profileMode || 'scrub',
             originalSize: imageFile.size,
             cleanSize: cleanFile.size,
             outputType: cleanBlob.type
