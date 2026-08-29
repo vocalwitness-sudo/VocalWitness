@@ -361,3 +361,28 @@ export async function summarizeReport(text) {
     const result = await summarizeFn({ text });
     return result.data.summary;
 }
+// ====================== CATEGORY CLASSIFIER (used by composer.js) ======================
+/**
+ * Lightweight client-side category classifier for the composer.
+ * Returns a string that should match one of the <select> option values.
+ * @param {string} text
+ * @returns {Promise<string>}
+ */
+export async function classifyCategory(text = '') {
+  const t = (text || '').toLowerCase();
+
+  if (!t.trim()) return 'General';
+
+  if (/\b(election|ballot|vote|polling|rigging|result)\b/.test(t)) return 'Elections';
+  if (/\b(police|arrest|detention|brutality|security force|military)\b/.test(t)) return 'Security / Police';
+  if (/\b(protest|demonstration|rally|march|crowd)\b/.test(t)) return 'Protest';
+  if (/\b(corruption|bribe|embezzle|fraud|kickback)\b/.test(t)) return 'Corruption';
+  if (/\b(flood|fire|accident|disaster|collapse|explosion)\b/.test(t)) return 'Disaster / Accident';
+  if (/\b(health|hospital|clinic|disease|outbreak|medical)\b/.test(t)) return 'Health';
+  if (/\b(school|university|student|education|exam)\b/.test(t)) return 'Education';
+  if (/\b(road|traffic|transport|bridge|infrastructure)\b/.test(t)) return 'Infrastructure';
+  if (/\b(rights|human rights|freedom|speech|detention without)\b/.test(t)) return 'Human Rights';
+  if (/\b(violence|assault|attack|killed|shot|injured)\b/.test(t)) return 'Violence';
+
+  return 'General';
+}
