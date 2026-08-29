@@ -1,4 +1,4 @@
-// js/composer.js - Hardened Post & Testimony Composer + Real-time AI Analysis
+// js/composer.js - Hardened Post & Testimony Composer + Real-time AI Analysis & Video Security
 import { prepareMediaForUpload } from './media-pipeline.js';
 import { uploadMedia } from './upload.js';
 import { showToast } from './utils.js';
@@ -50,6 +50,114 @@ async function logAuditEvent(uid, eventType, metadata = {}) {
 }
 
 /**
+ * Render Video Policy & Authenticity Guidance Modal
+ */
+function showVideoPolicyModal(customMessage) {
+    let modal = document.getElementById("video-policy-modal");
+    
+    if (!modal) {
+        modal = document.createElement("div");
+        modal.id = "video-policy-modal";
+        modal.className = "fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50";
+        modal.innerHTML = `
+            <div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-md w-full p-6 text-slate-100 shadow-2xl">
+                <div class="flex items-center space-x-3 mb-4">
+                    <div class="p-3 bg-amber-500/10 rounded-full border border-amber-500/30 text-amber-400">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold tracking-tight">Authenticity Requirement</h3>
+                </div>
+                
+                <p id="video-policy-msg" class="text-slate-300 text-sm leading-relaxed mb-4"></p>
+                
+                <div class="bg-slate-800 border border-slate-700/60 rounded-xl p-3 mb-5 space-y-2 text-xs text-slate-400">
+                    <div class="flex justify-between">
+                        <span>Daily Upload Quota:</span>
+                        <span class="font-mono text-amber-400 font-semibold">Max 2 Videos / Day</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Max Size per Clip:</span>
+                        <span class="font-mono text-amber-400 font-semibold">25 MB (Raw Clip)</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>AI / Deepfake Policy:</span>
+                        <span class="text-red-400 font-medium">Strictly Banned (C2PA Enforced)</span>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <button id="btn-modal-live-arena" class="w-full py-3 px-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 text-slate-950 font-bold rounded-xl shadow-lg transition flex items-center justify-center space-x-2">
+                        <span>Go to Live Arena for True Reality</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                    </button>
+                    <button id="btn-modal-cancel" class="w-full py-2.5 px-4 bg-slate-800 text-slate-300 text-xs font-semibold rounded-xl transition border border-slate-700 hover:bg-slate-700">
+                        I understand, cancel video upload
+                    </button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        // Attach event listeners to created modal controls
+        document.getElementById("btn-modal-live-arena")?.addEventListener("click", () => {
+            window.location.href = "live-arena.html";
+        });
+        document.getElementById("btn-modal-cancel")?.addEventListener("click", () => {
+            modal.classList.add("hidden");
+        });
+    }
+
+    const msgElement = document.getElementById("video-policy-msg");
+    if (msgElement) msgElement.innerText = customMessage;
+    modal.classList.remove("hidden");
+}
+
+/**
+ * Handle input selection for both video pre-flight validation and image scrubbing
+ */
+export async function handleMediaSelect(event) {
+    const previewArea = document.getElementById('preview-area') ||
+                        document.getElementById('media-preview');
+    if (!event.target?.files?.[0]) return;
+
+    const originalFile = event.target.files[0];
+
+    // 1. Video Pre-Flight Validation
+    if (originalFile.type.startsWith("video/")) {
+        showToast('Validating video authenticity...', 'info');
+        const validation = await validateVideoFile(originalFile);
+
+        if (!validation.valid) {
+            // Clear input file selection
+            event.target.value = "";
+            showVideoPolicyModal(validation.message);
+            return;
+        }
+    }
+
+    // 2. Image Processing & EXIF Scrubbing Pipeline
+    try {
+        showToast('Processing media payload...', 'info');
+        const preparedFile = await prepareMediaForUpload(originalFile);
+
+        // Pass prepared file to preview UI renderer
+        const syntheticEvent = {
+            target: { files: [preparedFile] },
+            preventDefault: () => {},
+            stopPropagation: () => {}
+        };
+        await handleImageSelect(syntheticEvent, previewArea);
+        showToast('Media ready for submission', 'success');
+    } catch (err) {
+        console.error('Media processing error:', err);
+        showToast('Media processing failed – using original clip', 'warning');
+        await handleImageSelect(event, previewArea);
+    }
+}
+
+/**
  * Initialize composer listeners and real-time AI analysis
  */
 export function initComposer() {
@@ -64,7 +172,7 @@ export function initComposer() {
                       document.getElementById('postBody') ||
                       document.getElementById('testimonyBody');
 
-    // Photo button → open file picker
+    // Photo/Media button → trigger file picker
     if (btnPhoto && fileInput && !btnPhoto.dataset.listenerAttached) {
         btnPhoto.addEventListener('click', (e) => {
             e.preventDefault();
@@ -73,32 +181,9 @@ export function initComposer() {
         btnPhoto.dataset.listenerAttached = 'true';
     }
 
-    // File selected → prepare media (scrub metadata + compress) + show preview
+    // File selection listener
     if (fileInput && !fileInput.dataset.listenerAttached) {
-        fileInput.addEventListener('change', async (e) => {
-            const previewArea = document.getElementById('preview-area') ||
-                                document.getElementById('media-preview');
-            if (!e.target.files?.[0]) return;
-
-            const originalFile = e.target.files[0];
-            try {
-                showToast('Processing image...', 'info');
-                const preparedFile = await prepareMediaForUpload(originalFile);
-
-                // Pass prepared file to preview UI renderer
-                const syntheticEvent = {
-                    target: { files: [preparedFile] },
-                    preventDefault: () => {},
-                    stopPropagation: () => {}
-                };
-                await handleImageSelect(syntheticEvent, previewArea);
-                showToast('Image ready', 'success');
-            } catch (err) {
-                console.error('Media processing error:', err);
-                showToast('Image processing failed – using original', 'warning');
-                await handleImageSelect(e, previewArea);
-            }
-        });
+        fileInput.addEventListener('change', handleMediaSelect);
         fileInput.dataset.listenerAttached = 'true';
     }
 
@@ -133,23 +218,6 @@ export function initComposer() {
         composerForm.dataset.listenerAttached = 'true';
     }
 }
-
-// Call this function inside your file selection event listener in composer.js
-export async function handleMediaSelect(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  if (file.type.startsWith("video/")) {
-    const validation = await validateVideoFile(file);
-
-    if (!validation.valid) {
-      // Clear file input
-      event.target.value = "";
-      // Show Friendly Policy Modal
-      showVideoPolicyModal(validation.message);
-      return;
-    }
-  }
 
 /**
  * Executes background AI analysis on composer text input
@@ -354,7 +422,6 @@ async function handleComposerSubmit(e) {
         }
 
         // Unverified users targeting Witness Voice → save as draft
-        // Only citizens (no phone/ZK) are blocked from direct Witness Voice publish
         if (isWitnessVoice && userTier === TIERS.CITIZEN) {
             await addDoc(collection(db, `users/${user.uid}/drafts`), {
                 headline: headline || null,
