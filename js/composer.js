@@ -113,6 +113,7 @@ function showVideoPolicyModal(customMessage) {
     modal.classList.remove("hidden");
 }
 
+
 /**
  * Handles bandwidth/overage payment prompts for large video uploads
  */
@@ -145,9 +146,13 @@ async function triggerOveragePaymentModal(feeUSD, reason) {
  * Handle input selection for both video pre-flight validation and image scrubbing
  */
 export async function handleMediaSelect(event) {
-    const previewArea = document.getElementById('preview-area') ||
+    const previewArea = document.getElementById('preview-area') || 
                         document.getElementById('media-preview');
-    if (!event.target?.files?.[0]) return;
+                        
+    if (!event.target?.files?.[0]) {
+        clearMediaQuotaBadge();
+        return;
+    }
 
     const originalFile = event.target.files[0];
 
@@ -159,12 +164,16 @@ export async function handleMediaSelect(event) {
         const validation = await validateVideoFile(originalFile);
         if (!validation.valid) {
             event.target.value = "";
+            clearMediaQuotaBadge();
             showVideoPolicyModal(validation.message);
             return;
         }
 
         // B. Tier allowance & bandwidth overage calculation
         const costInfo = await calculateVideoUploadCost(originalFile);
+
+        // Render quota feedback badge immediately
+        renderMediaQuotaBadge(costInfo, originalFile);
 
         if (costInfo.blocked) {
             showToast(costInfo.reason, 'error');
@@ -177,9 +186,13 @@ export async function handleMediaSelect(event) {
             if (!paidOrAgreed) {
                 showToast('Video upload canceled.', 'warning');
                 event.target.value = "";
+                clearMediaQuotaBadge();
                 return;
             }
         }
+    } else {
+        // Clear badge if an image or non-video is chosen
+        clearMediaQuotaBadge();
     }
 
     // 2. Image Processing & EXIF Scrubbing Pipeline
@@ -369,6 +382,70 @@ function clearAiFeedback() {
 }
 
 /**
+ * Renders or updates a live quota badge under the media picker
+ */
+function renderMediaQuotaBadge(costInfo, file) {
+    let container = document.getElementById('media-quota-badge');
+    
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'media-quota-badge';
+        container.className = 'mt-2 p-3 rounded-xl border text-xs transition-all duration-300';
+        
+        const fileInput = document.getElementById('media-input') || document.getElementById('photoInput');
+        if (fileInput && fileInput.parentNode) {
+            fileInput.parentNode.insertBefore(container, fileInput.nextSibling);
+        }
+    }
+
+    if (!file || !costInfo) {
+        container.classList.add('hidden');
+        return;
+    }
+
+    const fileMB = (file.size / (1024 * 1024)).toFixed(1);
+
+    if (costInfo.blocked) {
+        container.className = 'mt-2 p-3 rounded-xl border border-red-500/40 bg-red-950/20 text-red-300 text-xs';
+        container.innerHTML = `
+            <div class="flex items-center justify-between">
+                <span class="font-semibold text-red-400">⚠️ Upload Limit Exceeded</span>
+                <span class="font-mono text-[11px]">${fileMB} MB</span>
+            </div>
+            <p class="mt-1 text-slate-300">${costInfo.reason}</p>
+        `;
+    } else if (costInfo.isFree) {
+        container.className = 'mt-2 p-3 rounded-xl border border-emerald-500/40 bg-emerald-950/20 text-emerald-300 text-xs';
+        container.innerHTML = `
+            <div class="flex items-center justify-between">
+                <span class="font-semibold text-emerald-400">✓ Free Daily Quota</span>
+                <span class="font-mono text-[11px]">${fileMB} MB</span>
+            </div>
+            <p class="mt-1 text-emerald-200/80">${costInfo.reason}</p>
+        `;
+    } else {
+        container.className = 'mt-2 p-3 rounded-xl border border-amber-500/40 bg-amber-950/20 text-amber-300 text-xs';
+        container.innerHTML = `
+            <div class="flex items-center justify-between">
+                <span class="font-semibold text-amber-400">⚡ Overage Infrastructure Fee Applies</span>
+                <span class="font-mono text-amber-300 font-bold">$${costInfo.feeUSD.toFixed(2)} USD</span>
+            </div>
+            <p class="mt-1 text-slate-300">${costInfo.reason}</p>
+        `;
+    }
+
+    container.classList.remove('hidden');
+}
+
+function clearMediaQuotaBadge() {
+    const container = document.getElementById('media-quota-badge');
+    if (container) {
+        container.classList.add('hidden');
+        container.innerHTML = '';
+    }
+}
+
+/**
  * Main submit handler
  */
 async function handleComposerSubmit(e) {
@@ -551,3 +628,5 @@ function resetForm() {
         resetMediaState();
     }
 }
+// Add to the end of resetForm()
+clearMediaQuotaBadge();
