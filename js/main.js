@@ -243,7 +243,7 @@ function showWelcomeNote() {
 
 // ====================== PUBLISH TESTIMONY ======================
 window.publishTestimony = async () => {
-    if (!requireAuth("Please sign in to share your testimony.")) return;
+    if (!requireAuth("Please sign in to share your testimony in Citizen Talk.")) return;
 
     const currentUser = auth.currentUser;
     if (!currentUser) {
@@ -275,8 +275,7 @@ window.publishTestimony = async () => {
             : {};
 
         const clientCaptureMs = Date.now();
-        // Determine explicit collection target matching firestore.rules
-        const targetCollection = state.currentMode === 'witness' ? 'witness_voice' : 'citizen_talk';
+        const channel = state.currentMode === 'witness' ? 'witness-voice' : 'citizen-talk';
 
         const bodyHash = content ? await generateSha256Hash(content) : null;
 
@@ -284,10 +283,6 @@ window.publishTestimony = async () => {
         if (mediaData.imageUrl && mediaData.imageHash) {
             mediaForPack.imageUrl = mediaData.imageUrl;
             mediaForPack.imageHash = mediaData.imageHash;
-        }
-        if (mediaData.audioUrl && mediaData.audioHash) {
-            mediaForPack.audioUrl = mediaData.audioUrl;
-            mediaForPack.audioHash = mediaData.audioHash;
         }
 
         const identity = {
@@ -301,19 +296,19 @@ window.publishTestimony = async () => {
             bodyHash,
             media: mediaForPack,
             identity,
-            channel: targetCollection,
+            channel,
             clientCaptureMs
         });
 
         const testimonyData = {
-            authorId: currentUser.uid,
+            authorId: currentUser.uid, // Required by firestore.rules
             author: currentUser.displayName || "Registered Witness",
             content: content,
-            createdAt: serverTimestamp(),
+            createdAt: serverTimestamp(), // Required by firestore.rules
             timestamp: clientCaptureMs,
             isPublic: true,
             moderationStatus: "approved",
-            feedVisibility: targetCollection,
+            feedVisibility: channel,
             imageUrl: mediaData.imageUrl || null,
             audioUrl: mediaData.audioUrl || null,
             imageHash: mediaData.imageHash || null,
@@ -325,20 +320,23 @@ window.publishTestimony = async () => {
             bodyHash: bodyHash
         };
 
-        // Write directly to the corresponding feed collection
-        await addDoc(collection(db, targetCollection), testimonyData);
-
-        // Also update legacy/global testimonies collection for unified ledger
+        // Write directly to testimonies
         await addDoc(collection(db, "testimonies"), testimonyData);
+
+        // Update lastTestimonyAt to keep throttle sync healthy
+        const userRef = doc(db, "users", currentUser.uid);
+        await updateDoc(userRef, {
+            lastTestimonyAt: serverTimestamp()
+        }).catch(() => {/* non-critical if user profile rule restricts */});
 
         showToast("🛡️ Report sealed and published", "success");
         if (textarea) textarea.value = '';
         mediaModule.resetMediaState?.();
-        initFeed?.(db, targetCollection);
+        initFeed?.(db, channel);
     } catch (err) {
         console.error("Publish error detail:", err);
         if (err.code === 'permission-denied') {
-            showToast("⚠️ Permission denied: Wait 30 seconds between posts or verify Witness Circle status.", "error");
+            showToast("⚠️ Permission denied: Please wait 30 seconds before posting again.", "error");
         } else {
             showToast("Failed to publish. Please try again.", "error");
         }
@@ -349,7 +347,6 @@ window.publishTestimony = async () => {
         }
     }
 };
-
 // ====================== EVIDENCE LEDGER ======================
 async function loadEvidenceLedger() {
     const container = document.getElementById('ledgerContainer');
