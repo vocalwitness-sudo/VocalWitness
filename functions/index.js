@@ -885,22 +885,30 @@ exports.paystackWebhook = onRequest(
 // ======================================================
 // 7. RATE LIMITING
 // ======================================================
+// Hardcoded server-side configuration for action limits
+const RATE_LIMIT_CONFIGS = {
+  general_action: { maxCalls: 5, windowMinutes: 60 },
+  create_post: { maxCalls: 3, windowMinutes: 10 },
+  submit_comment: { maxCalls: 10, windowMinutes: 5 }
+};
+
 exports.checkRateLimit = onCall(
   { cors: allowedOrigins },
   async (request) => {
+    // 1. Determine user identity (Auth UID or IP address)
     let userId = request.auth?.uid;
     if (!userId) {
-      const ip = request.rawRequest?.ip || "unknown";
-      userId = "anonymous_" + String(ip).replace(/[.:]/g, "_");
+      const rawIp = request.rawRequest?.headers["x-forwarded-for"] || request.rawRequest?.ip || "unknown";
+      const ip = String(rawIp).split(",")[0].trim().replace(/[.:]/g, "_");
+      userId = "anonymous_" + ip;
     }
 
+    // 2. Validate action and get server-enforced limits
     const action = request.data?.action || "general_action";
-    const maxCalls = Number(request.data?.maxCalls) || 5;
-    const windowMinutes = Number(request.data?.windowMinutes) || 60;
-
-    if (typeof action !== "string" || action.length > 64) {
-      throw new HttpsError("invalid-argument", "Invalid action name.");
-    }
+    const limitConfig = RATE_LIMIT_CONFIGS[action] || RATE_LIMIT_CONFIGS["general_action"];
+    
+    const maxCalls = limitConfig.maxCalls;
+    const windowMinutes = limitConfig.windowMinutes;
 
     const rateDocRef = db.collection("rateLimits").doc(`${userId}_${action}`);
 
@@ -919,7 +927,9 @@ exports.checkRateLimit = onCall(
           return true;
         }
 
-        if (doc.data().count >= maxCalls) return false;
+        if (doc.data().count >= maxCalls) {
+          return false;
+        }
 
         transaction.update(rateDocRef, {
           count: admin.firestore.FieldValue.increment(1),
@@ -931,11 +941,11 @@ exports.checkRateLimit = onCall(
       return { allowed: isAllowed };
     } catch (error) {
       console.error("Rate limit check failed:", error);
-      return { allowed: true };
+      // Fail CLOSED (deny request) or throw an explicit HTTPS Error
+      throw new HttpsError("internal", "Unable to verify rate limits at this time.");
     }
   }
 );
-
 // ======================================================
 // 8. ZERO-KNOWLEDGE PROOFS
 // ======================================================
