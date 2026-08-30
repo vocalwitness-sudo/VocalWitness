@@ -1,264 +1,468 @@
-// js/audit.js - Forensic Tracking & Immutable Audit Log
-import { db, auth } from './firebase-config.js';
-import { 
-    collection, 
-    addDoc, 
-    serverTimestamp, 
-    query, 
-    orderBy, 
-    limit, 
-    getDocs 
-} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+// js/media.js - Forensic Media Handler (Production R2 Version)
+import { showToast, generateSha256Hash } from './utils.js';
+import { auth } from './firebase-config.js';
+import { uploadSecurePhoto } from './upload.js';
+import { prepareMediaForUpload } from './media-pipeline.js';
 
-let memoryLastHash = null;
+export let selectedImageFile = null;
+let engineInstance = null;
+let waveAnimationId = null;
+let replayUrl = null;
 
-// Reset memory cache on auth changes to prevent cross-session leaks
-if (auth) {
-    auth.onAuthStateChanged(() => {
-        memoryLastHash = null;
+const R2_UPLOAD_ENDPOINT = 'https://media.vocalwitness.com/upload';
+
+export function setEngine(engine) {
+    engineInstance = engine;
+    console.log("✅ Media Engine Connected");
+    setTimeout(() => initVoiceControls(), 300);
+}
+
+// ====================== HELPERS ======================
+function formatTime(ms) {
+    const totalSec = Math.floor(ms / 1000);
+    const m = String(Math.floor(totalSec / 60)).padStart(2, '0');
+    const s = String(totalSec % 60).padStart(2, '0');
+    return `${m}:${s}`;
+}
+
+function showRecorderBar(show = true) {
+    const bar = document.getElementById('voice-recorder-bar');
+    if (bar) bar.classList.toggle('hidden', !show);
+}
+
+function updateTimer() {
+    if (!engineInstance) return;
+    const timerEl = document.getElementById('rec-timer');
+    if (timerEl && typeof engineInstance.getElapsedMs === 'function') {
+        timerEl.textContent = formatTime(engineInstance.getElapsedMs());
+    }
+}
+
+function drawWaveform() {
+    const canvas = document.getElementById('rec-waveform');
+    if (!canvas || !engineInstance) return;
+
+    const ctx = canvas.getContext('2d');
+    const data = typeof engineInstance.getWaveformData === 'function'
+        ? engineInstance.getWaveformData()
+        : null;
+
+    ctx.fillStyle = '#0a0f1c';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    if (!data) {
+        waveAnimationId = requestAnimationFrame(drawWaveform);
+        return;
+    }
+
+    const barWidth = 3;
+    const gap = 2;
+    const bars = Math.floor(canvas.width / (barWidth + gap));
+    const step = Math.max(1, Math.floor(data.length / bars));
+
+    ctx.fillStyle = '#10b981';
+    for (let i = 0; i < bars; i++) {
+        const value = data[i * step] || 0;
+        const h = Math.max(2, (value / 255) * canvas.height * 0.85);
+        const x = i * (barWidth + gap);
+        const y = (canvas.height - h) / 2;
+        ctx.fillRect(x, y, barWidth, h);
+    }
+    waveAnimationId = requestAnimationFrame(drawWaveform);
+}
+
+function startWaveAndTimer() {
+    stopWaveAndTimer();
+    updateTimer();
+    waveAnimationId = requestAnimationFrame(function tick() {
+        updateTimer();
+        drawWaveform();
     });
 }
 
-/**
- * Deterministically sorts object keys for reliable canonical hashing.
- */
-function canonicalizeJSON(obj) {
-    if (obj === null || typeof obj !== 'object') return JSON.stringify(obj);
-    if (Array.isArray(obj)) return `[${obj.map(canonicalizeJSON).join(',')}]`;
-    const sortedKeys = Object.keys(obj).sort();
-    const keyValues = sortedKeys.map(key => `${JSON.stringify(key)}:${canonicalizeJSON(obj[key])}`);
-    return `{${keyValues.join(',')}}`;
-}
-
-/**
- * Generates a SHA-256 forensic hash for string data.
- */
-export async function generateForensicHash(dataString) {
-    try {
-        const encoder = new TextEncoder();
-        const data = encoder.encode(dataString);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    } catch (e) {
-        console.error("Forensic hashing failed:", e);
-        return null;
+function stopWaveAndTimer() {
+    if (waveAnimationId) {
+        cancelAnimationFrame(waveAnimationId);
+        waveAnimationId = null;
     }
 }
 
 /**
- * Fetches the most recent log's hash to maintain hash-chain continuity.
- * Gracefully falls back to GENESIS_BLOCK if the user lacks read permissions.
+ * Verifies that an uploaded media URL is publicly accessible before attaching it to Firestore.
+ * Performs a HEAD check with a single retry to accommodate edge replication delays.
  */
-async function getLastLogHash() {
-    if (memoryLastHash) return memoryLastHash;
-
-    try {
-        const q = query(collection(db, "audit_logs"), orderBy("clientTimestamp", "desc"), limit(1));
-        const snapshot = await getDocs(q);
-        if (!snapshot.empty) {
-            const hash = snapshot.docs[0].data().forensicHash;
-            if (hash) {
-                memoryLastHash = hash;
-                return hash;
-            }
+async function verifyMediaUrl(url, retries = 2, delayMs = 1000) {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+        try {
+            const res = await fetch(url, { method: 'HEAD', cache: 'no-store' });
+            if (res.ok) return true;
+        } catch (e) {
+            console.warn(`Attempt ${attempt}: Verification fetch failed for ${url}`);
         }
-    } catch (e) {
-        memoryLastHash = "GENESIS_BLOCK";
+        if (attempt < retries) {
+            await new Promise(resolve => setTimeout(resolve, delayMs));
+        }
     }
-    return memoryLastHash || "GENESIS_BLOCK";
+    return false;
 }
 
-/**
- * Records a cryptographically chained audit log entry into Firestore.
- * Conforms directly to hardened Firestore Security Rules.
- */
-export async function logSecurityAudit(actionType, targetId, details = {}) {
-    try {
-        const userId = auth?.currentUser ? auth.currentUser.uid : 'anonymous';
-        const timestamp = Date.now();
-        const previousHash = memoryLastHash || await getLastLogHash();
+// ====================== QUICK-CHECK HELPER ======================
+export function validateMediaFile(file, options = {}) {
+    const {
+        maxSizeBytes = 10 * 1024 * 1024,
+        allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic']
+    } = options;
 
-        const canonicalPayload = canonicalizeJSON({
-            action: actionType,
-            details,
-            previousHash,
-            targetId,
-            timestamp,
-            userId
-        });
-
-        const forensicHash = await generateForensicHash(canonicalPayload);
-
-        await addDoc(collection(db, "audit_logs"), {
-            userId,
-            action: actionType,
-            actionType,
-            targetId: targetId || 'N/A',
-            details,
-            previousHash,
-            forensicHash,
-            clientTimestamp: timestamp,
-            timestamp: serverTimestamp(),
-            createdAt: serverTimestamp()
-        });
-
-        memoryLastHash = forensicHash;
-        console.log(`🛡️ Audit Log Chained [${actionType}]:`, forensicHash ? `${forensicHash.substring(0, 12)}...` : 'no-hash');
-        return forensicHash;
-    } catch (e) {
-        console.warn(`🛡️ Audit log write bypassed [${actionType}]:`, e.message);
-        return memoryLastHash || "CLIENT_LOCAL_HASH";
+    if (!file) {
+        return { valid: false, error: 'No file selected.' };
     }
+
+    if (file.size === 0) {
+        return { valid: false, error: 'Selected file is empty or corrupted.' };
+    }
+
+    if (file.size > maxSizeBytes) {
+        const maxSizeMB = Math.round(maxSizeBytes / (1024 * 1024));
+        return { valid: false, error: `File size exceeds the ${maxSizeMB}MB limit.` };
+    }
+
+    if (!file.type || !file.type.startsWith('image/') || (allowedTypes.length > 0 && !allowedTypes.includes(file.type))) {
+        return { valid: false, error: 'Unsupported file type. Please upload a valid image (JPEG, PNG, WebP).' };
+    }
+
+    return { valid: true };
 }
 
-/* ==========================================================================
-   AI FLAG AUDIT LOGS & APPEAL WORKFLOWS
-   ========================================================================== */
+// ====================== STATE RESET ======================
+export function resetMediaState() {
+    selectedImageFile = null;
 
-export async function logAIFlaggedContent({ mediaHash, confidenceScore, detectorModel = 'Synthetic Detector Engine', details = {} }) {
-    try {
-        const scoreFormatted = parseFloat(confidenceScore.toFixed(4));
-        const forensicHash = await logSecurityAudit('AI_SYNTHETIC_MEDIA_FLAGGED', mediaHash, {
-            confidenceScore: scoreFormatted,
-            detectorModel,
-            status: 'QUARANTINED',
-            ...details
-        });
-
-        console.log(`⚠️ [AI Flag Logged] Hash: ${mediaHash} | Score: ${scoreFormatted}`);
-        return { mediaHash, confidenceScore: scoreFormatted, forensicHash };
-    } catch (e) {
-        console.error("Failed to log AI flag audit:", e);
-        return null;
+    if (replayUrl) {
+        URL.revokeObjectURL(replayUrl);
+        replayUrl = null;
     }
-}
 
-export async function fetchAIFlagAuditLogs(limitCount = 50) {
-    try {
-        const q = query(
-            collection(db, "audit_logs"), 
-            orderBy("clientTimestamp", "desc"), 
-            limit(limitCount)
-        );
-        const snapshot = await getDocs(q);
-        return snapshot.docs
-            .map(docSnap => ({ id: docSnap.id, ...docSnap.data() }))
-            .filter(log => log.action === 'AI_SYNTHETIC_MEDIA_FLAGGED');
-    } catch (e) {
-        console.warn("Unable to fetch AI flag audit logs (restricted access):", e.message);
-        return [];
+    const audioEl = document.getElementById('rec-replay-audio');
+    if (audioEl) {
+        audioEl.pause();
+        audioEl.removeAttribute('src');
+        audioEl.load();
+    }
+
+    if (engineInstance) {
+        if (typeof engineInstance.stopVoiceRecording === 'function' && engineInstance.mediaRecorder?.state === 'recording') {
+            engineInstance.stopVoiceRecording().catch(() => {});
+        }
+        engineInstance.currentAudioBlob = null;
+    }
+
+    stopWaveAndTimer();
+    showRecorderBar(false);
+
+    const previewArea = document.getElementById('preview-area');
+    if (previewArea) {
+        previewArea.innerHTML = '';
+        previewArea.classList.remove('has-content');
+    }
+
+    const voiceBtn = document.getElementById('btn-voice');
+    if (voiceBtn) {
+        voiceBtn.classList.remove('recording-active', 'animate-pulse');
     }
 }
 
-export async function submitFlagAppeal(mediaHash, justification) {
-    try {
-        const resultHash = await logSecurityAudit('AI_FLAG_APPEAL_SUBMITTED', mediaHash, { 
-            justification,
-            status: 'APPEAL_PENDING'
-        });
+// ====================== REMOVE IMAGE (CANCEL) ======================
+export function removeImage(previewArea) {
+    selectedImageFile = null;
 
-        console.log(`⚖️ [Appeal Submitted] Hash: ${mediaHash}`);
-        return !!resultHash;
-    } catch (e) {
-        console.error("Failed to submit appeal:", e);
-        return false;
+    if (previewArea) {
+        previewArea.innerHTML = '';
+        previewArea.classList.remove('has-content');
     }
+
+    showToast('Image removed', 'info');
 }
 
-export async function getHashChainHealth(sampleSize = 40) {
-    try {
-        const q = query(
-            collection(db, 'audit_logs'),
-            orderBy('clientTimestamp', 'desc'),
-            limit(sampleSize)
-        );
-        const snapshot = await getDocs(q);
-        const logs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+// ====================== PHOTO ======================
+export async function handleImageSelect(event, previewArea) {
+    const file = event.target?.files?.[0];
+    if (!file) return;
 
-        if (logs.length < 2) {
-            return {
-                ok: true,
-                checked: logs.length,
-                breaks: 0,
-                headHash: logs[0]?.forensicHash || null,
-                status: logs.length ? 'HEALTHY_SHORT' : 'EMPTY',
+    const check = validateMediaFile(file, {
+        maxSizeBytes: 10 * 1024 * 1024,
+        allowedTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic']
+    });
+
+    if (!check.valid) {
+        showToast(check.error, "error");
+        if (event.target) event.target.value = '';
+        return;
+    }
+
+    selectedImageFile = null;
+    if (previewArea) {
+        previewArea.innerHTML = '';
+        previewArea.classList.remove('has-content');
+    }
+
+    selectedImageFile = file;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        if (!previewArea) return;
+
+        previewArea.innerHTML = `
+            <div class="relative mt-4 rounded-2xl overflow-hidden border border-emerald-500/40 bg-zinc-950 shadow-xl inline-block">
+                <img src="${e.target.result}" class="h-32 w-32 object-cover" alt="Evidence Preview">
+                <button type="button" id="removeImgBtn"
+                        class="absolute top-2 right-2 bg-red-600/90 hover:bg-red-700 text-white rounded-full p-1.5 shadow-lg transition flex items-center justify-center cursor-pointer"
+                        title="Remove Image">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>`;
+        previewArea.classList.add('has-content');
+
+        const removeBtn = document.getElementById('removeImgBtn');
+        if (removeBtn) {
+            removeBtn.onclick = (ev) => {
+                ev.stopPropagation();
+                removeImage(previewArea);
             };
         }
+    };
 
-        let breaks = 0;
-        for (let i = 0; i < logs.length - 1; i++) {
-            const newer = logs[i];
-            const older = logs[i + 1];
-            if (newer.previousHash && older.forensicHash && newer.previousHash !== older.forensicHash) {
-                breaks++;
+    reader.onerror = () => {
+        showToast("Failed to read selected image", "error");
+        selectedImageFile = null;
+    };
+
+    reader.readAsDataURL(file);
+
+    if (event.target) event.target.value = '';
+}
+
+// ====================== VOICE ======================
+export async function toggleVoiceRecording(voiceBtn) {
+    if (!engineInstance) {
+        return showToast("Voice engine not ready yet", "error");
+    }
+
+    const isActive = engineInstance.mediaRecorder &&
+        (engineInstance.mediaRecorder.state === "recording" ||
+         engineInstance.mediaRecorder.state === "paused");
+
+    if (!isActive) {
+        try {
+            await engineInstance.startVoiceRecording(300000);
+            voiceBtn?.classList.add('recording-active', 'animate-pulse');
+            showRecorderBar(true);
+
+            const pauseBtn = document.getElementById('rec-pause-btn');
+            const stopBtn = document.getElementById('rec-stop-btn');
+            const replayBtn = document.getElementById('rec-replay-btn');
+            const indicator = document.getElementById('rec-indicator');
+
+            if (pauseBtn) {
+                pauseBtn.textContent = '⏸ Pause';
+                pauseBtn.classList.remove('hidden');
             }
+            if (stopBtn) stopBtn.classList.remove('hidden');
+            if (replayBtn) replayBtn.classList.add('hidden');
+            if (indicator) {
+                indicator.classList.add('animate-pulse', 'bg-red-500');
+                indicator.classList.remove('bg-emerald-500');
+            }
+
+            startWaveAndTimer();
+            showToast("🎤 Recording started... Speak clearly", "info");
+        } catch (err) {
+            console.error(err);
+            showToast("Microphone access denied or unavailable", "error");
+        }
+    } else {
+        const blob = await engineInstance.stopVoiceRecording();
+        voiceBtn?.classList.remove('recording-active', 'animate-pulse');
+        stopWaveAndTimer();
+
+        const indicator = document.getElementById('rec-indicator');
+        const pauseBtn = document.getElementById('rec-pause-btn');
+        const stopBtn = document.getElementById('rec-stop-btn');
+        const replayBtn = document.getElementById('rec-replay-btn');
+
+        if (indicator) {
+            indicator.classList.remove('animate-pulse', 'bg-red-500');
+            indicator.classList.add('bg-emerald-500');
+        }
+        if (pauseBtn) pauseBtn.classList.add('hidden');
+        if (stopBtn) stopBtn.classList.add('hidden');
+
+        if (!blob || blob.size === 0) {
+            showToast("Recording is empty. Please try again.", "error");
+            showRecorderBar(false);
+            return;
         }
 
-        return {
-            ok: breaks === 0,
-            checked: logs.length,
-            breaks,
-            headHash: logs[0]?.forensicHash || null,
-            status: breaks === 0 ? 'HEALTHY' : 'BREAKS_DETECTED',
-        };
-    } catch (e) {
-        return { ok: true, checked: 0, breaks: 0, headHash: memoryLastHash, status: 'RESTRICTED_ACCESS' };
+        if (replayUrl) URL.revokeObjectURL(replayUrl);
+        replayUrl = URL.createObjectURL(blob);
+
+        const audioEl = document.getElementById('rec-replay-audio');
+        if (audioEl) audioEl.src = replayUrl;
+
+        if (replayBtn) replayBtn.classList.remove('hidden');
+        showToast("✅ Recording saved. You can replay or publish.", "success");
     }
 }
 
-export async function getTransparencyMetrics() {
-    try {
-        const [testimoniesSnap, disputesSnap, chain] = await Promise.all([
-            getDocs(query(collection(db, 'testimonies'), orderBy('createdAt', 'desc'), limit(100))).catch(() => ({ docs: [], size: 0 })),
-            getDocs(query(collection(db, 'reports'), limit(100))).catch(() => ({ docs: [], size: 0 })),
-            getHashChainHealth(30),
-        ]);
+export function initVoiceControls() {
+    const pauseBtn = document.getElementById('rec-pause-btn');
+    const stopBtn = document.getElementById('rec-stop-btn');
+    const replayBtn = document.getElementById('rec-replay-btn');
 
-        let sealed = 0;
-        (testimoniesSnap.docs || []).forEach((d) => {
-            const x = d.data();
-            if (x.status === 'published' || x.forensicHash || x.hasForensic) sealed++;
-        });
+    if (pauseBtn) {
+        pauseBtn.onclick = () => {
+            if (!engineInstance) return;
 
-        const disputes = (disputesSnap.docs || []).map((d) => ({ id: d.id, ...d.data() }));
-        const outcomes = {
-            open: disputes.filter((x) => x.status === 'OPEN' || x.status === 'PENDING').length,
-            upheld: disputes.filter((x) => x.status === 'UPHELD' || x.status === 'CHALLENGE_SUCCESS').length,
-            rejected: disputes.filter((x) => x.status === 'REJECTED' || x.status === 'CHALLENGE_FAILED').length,
-            total: disputes.length,
+            if (engineInstance.isPaused) {
+                engineInstance.resumeVoiceRecording?.();
+                pauseBtn.textContent = '⏸ Pause';
+                document.getElementById('rec-indicator')?.classList.add('animate-pulse', 'bg-red-500');
+                startWaveAndTimer();
+            } else {
+                engineInstance.pauseVoiceRecording?.();
+                pauseBtn.textContent = '▶️ Resume';
+                document.getElementById('rec-indicator')?.classList.remove('animate-pulse');
+                stopWaveAndTimer();
+                updateTimer();
+            }
         };
+    }
 
-        return {
-            sealedReports: sealed,
-            sampledTestimonies: testimoniesSnap.size || 0,
-            chain,
-            disputes: outcomes,
-            updatedAt: new Date().toISOString(),
+    if (stopBtn) {
+        stopBtn.onclick = () => {
+            const voiceBtn = document.getElementById('btn-voice');
+            toggleVoiceRecording(voiceBtn);
         };
-    } catch (e) {
-        console.warn("Failed to fetch full transparency metrics:", e.message);
-        return null;
+    }
+
+    if (replayBtn) {
+        replayBtn.onclick = () => {
+            const audioEl = document.getElementById('rec-replay-audio');
+            if (audioEl && audioEl.src) {
+                audioEl.currentTime = 0;
+                audioEl.play().catch(() => {});
+            }
+        };
     }
 }
 
-/* ==========================================================================
-   ALIAS EXPORTS
-   ========================================================================== */
+// ====================== UPLOAD ======================
+export async function uploadForensicMedia() {
+    const mediaData = {
+        imageUrl: null,
+        audioUrl: null,
+        imageHash: null,
+        audioHash: null
+    };
 
-export async function logAuditEvent(actionType, targetId, details = {}) {
-    return await logSecurityAudit(actionType, targetId, details);
+    const userId = auth.currentUser?.uid || "anonymous";
+
+    // 1. Photo Upload (Scrubbed EXIF via R2 & Hashed Clean Bytes)
+    if (selectedImageFile) {
+        try {
+            if (selectedImageFile.size === 0) {
+                throw new Error("Selected image is empty");
+            }
+
+            // Scrub EXIF metadata and compress first
+            const cleanedFile = await prepareMediaForUpload(selectedImageFile, {
+                maxWidth: 1920,
+                maxHeight: 1080
+            });
+
+            // Hash the cleaned file (matches what is uploaded)
+            const hash = await generateSha256Hash(cleanedFile);
+
+            // Upload the cleaned file to storage
+            const uploadedUrl = await uploadSecurePhoto(cleanedFile, 'evidence');
+
+            // Verify file actually exists at edge endpoint before assigning
+            const isAccessible = await verifyMediaUrl(uploadedUrl);
+            if (!isAccessible) {
+                throw new Error(`Media uploaded but return URL is unreachable (404/Network Error): ${uploadedUrl}`);
+            }
+
+            mediaData.imageUrl = uploadedUrl;
+            mediaData.imageHash = hash;
+
+            console.log("✅ Image scrubbed, hashed & verified:", mediaData.imageUrl);
+        } catch (e) {
+            console.error("Image upload failed:", e);
+            showToast(e.message || "Image upload failed", "error");
+            throw e;
+        }
+    }
+
+    // 2. Audio Upload (Direct to R2)
+    if (engineInstance?.currentAudioBlob) {
+        try {
+            const blob = engineInstance.currentAudioBlob;
+
+            if (!blob || blob.size === 0) {
+                console.warn("Audio blob is empty – skipping upload");
+                showToast("Recording is empty. Please record again.", "error");
+            } else {
+                const hash = await generateSha256Hash(blob);
+                const fileId = crypto.randomUUID();
+                const keyPath = `evidence/${userId}/${fileId}_voice.webm`;
+
+                const uploadedUrl = await new Promise((resolve, reject) => {
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('PUT', `${R2_UPLOAD_ENDPOINT}?key=${encodeURIComponent(keyPath)}`, true);
+                    xhr.setRequestHeader('Content-Type', blob.type || 'audio/webm');
+
+                    if (auth.currentUser) {
+                        auth.currentUser.getIdToken().then(token => {
+                            xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+                            xhr.send(blob);
+                        }).catch(reject);
+                    } else {
+                        xhr.send(blob);
+                    }
+
+                    xhr.onload = () => {
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            try {
+                                const res = JSON.parse(xhr.responseText);
+                                resolve(res.url || `https://media.vocalwitness.com/${keyPath}`);
+                            } catch (_) {
+                                resolve(`https://media.vocalwitness.com/${keyPath}`);
+                            }
+                        } else {
+                            reject(new Error(`Audio upload failed: ${xhr.status}`));
+                        }
+                    };
+
+                    xhr.onerror = () => reject(new Error('Network error during audio upload.'));
+                });
+
+                // Verify voice recording URL before accepting
+                const isAccessible = await verifyMediaUrl(uploadedUrl);
+                if (!isAccessible) {
+                    throw new Error(`Audio uploaded but public URL is unreachable: ${uploadedUrl}`);
+                }
+
+                mediaData.audioUrl = uploadedUrl;
+                mediaData.audioHash = hash;
+                console.log("✅ Audio uploaded and verified on R2:", mediaData.audioUrl);
+            }
+        } catch (e) {
+            console.error("Audio upload failed:", e);
+            showToast(e.message || "Audio upload failed", "error");
+            throw e;
+        }
+    }
+
+    return mediaData;
 }
-
-export const AuditEngine = {
-    logSecurityAudit,
-    logAuditEvent,
-    logAIFlaggedContent,
-    fetchAIFlagAuditLogs,
-    submitFlagAppeal,
-    getHashChainHealth,
-    getTransparencyMetrics,
-    generateForensicHash
-};
-
-export default AuditEngine;
