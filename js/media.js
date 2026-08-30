@@ -85,22 +85,32 @@ function stopWaveAndTimer() {
     }
 }
 
-// Verify URL reachable at edge before saving record
-export async function verifyMediaUrl(url, maxRetries = 5, delayMs = 800) {
+/**
+ * Verifies that an uploaded media URL is publicly accessible at the edge before saving records.
+ * Uses GET with a 1-byte Range header to bypass HEAD preflight locks on Cloudflare Custom Domains.
+ */
+export async function verifyMediaUrl(url, maxRetries = 6, delayMs = 1000) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      // Append cache buster so Cloudflare doesn't return cached 404 during propagation
+      // Append timestamp cache buster
       const cacheBustUrl = `${url}?t=${Date.now()}`;
-      const response = await fetch(cacheBustUrl, { method: 'HEAD', cache: 'no-store' });
       
-      if (response.ok) {
+      // Use GET with 1-byte range to avoid downloading full file while bypassing HEAD CORS locks
+      const response = await fetch(cacheBustUrl, { 
+        method: 'GET',
+        headers: { 'Range': 'bytes=0-0' },
+        cache: 'no-store' 
+      });
+
+      // 200 (OK) or 206 (Partial Content) means the file exists at edge
+      if (response.ok || response.status === 206) {
         return true;
       }
     } catch (err) {
-      // Ignore initial network drops during edge propagation
+      console.warn(`[Edge Check Attempt ${attempt}] Media propagation pending...`);
     }
-    
-    // Wait before retrying (800ms, 1600ms, 2400ms...)
+
+    // Incremental backoff delay (1s, 2s, 3s...)
     await new Promise((resolve) => setTimeout(resolve, delayMs * attempt));
   }
 
