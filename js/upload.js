@@ -57,6 +57,9 @@ export async function prepareMediaForUpload(file, options = {}) {
 /**
  * Scrubs + compresses + uploads an image to Cloudflare R2
  */
+/**
+ * Scrubs + compresses + uploads an image to Cloudflare R2
+ */
 export async function uploadSecurePhoto(file, folderPath = 'evidence', onProgress = null) {
     if (!file || !file.type.startsWith('image/')) {
         throw new Error('Invalid input: Please select a valid image file.');
@@ -77,11 +80,12 @@ export async function uploadSecurePhoto(file, folderPath = 'evidence', onProgres
                 maxHeight: 1080
             });
 
+        const uid = auth.currentUser?.uid || 'anonymous';
         const fileId = crypto.randomUUID();
         const ext = preparedFile.type === 'image/webp' ? 'webp' : 'jpg';
 
-        // Flat key path where the file is written in R2 by the Worker
-        const keyPath = `${folderPath}/${fileId}.${ext}`;
+        // UPDATED: Now includes ${uid} in the keyPath
+        const keyPath = `${folderPath}/${uid}/${fileId}.${ext}`;
 
         const publicUrl = await executeUpload(
             preparedFile,
@@ -102,24 +106,6 @@ export async function uploadSecurePhoto(file, folderPath = 'evidence', onProgres
         showToast('❌ Image privacy processing failed', 'error');
         throw err;
     }
-}
-
-/**
- * Uploads audio evidence
- */
-export async function uploadSecureAudio(audioBlob, folderPath = 'evidence', onProgress = null) {
-    if (!audioBlob) throw new Error('Invalid audio file');
-
-    showToast('🛡️ Preparing secure audio upload...', 'info');
-
-    const mimeType = audioBlob.type || 'audio/webm';
-    const ext = mimeType.includes('mp3') ? 'mp3' : mimeType.includes('wav') ? 'wav' : 'webm';
-
-    const uid = auth.currentUser?.uid || 'anonymous';
-    const fileId = crypto.randomUUID();
-    const keyPath = `${folderPath}/${uid}/${fileId}.${ext}`;
-
-    return await executeUpload(audioBlob, keyPath, mimeType, onProgress);
 }
 
 /**
