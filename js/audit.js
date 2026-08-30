@@ -1,12 +1,29 @@
 // js/audit.js - Forensic Tracking & Immutable Audit Log
 import { db, auth } from './firebase-config.js';
-import { collection, addDoc, doc, setDoc, updateDoc, serverTimestamp, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { 
+    collection, 
+    addDoc, 
+    doc, 
+    setDoc, 
+    updateDoc, 
+    serverTimestamp, 
+    query, 
+    orderBy, 
+    limit, 
+    getDocs 
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
-// In-memory hash tracking to eliminate Firestore fetch delays between consecutive actions
 let memoryLastHash = null;
 
+// Reset memory cache on auth changes to prevent cross-session leaks
+if (auth) {
+    auth.onAuthStateChanged(() => {
+        memoryLastHash = null;
+    });
+}
+
 /**
- * Deterministically sorts object keys to ensure reliable hashing across platforms.
+ * Deterministically sorts object keys for reliable canonical hashing.
  */
 function canonicalizeJSON(obj) {
     if (obj === null || typeof obj !== 'object') return JSON.stringify(obj);
@@ -56,6 +73,7 @@ async function getLastLogHash() {
 
 /**
  * Records a cryptographically chained audit log entry into Firestore.
+ * Conforms directly to hardened Firestore Security Rules.
  */
 export async function logSecurityAudit(actionType, targetId, details = {}) {
     try {
@@ -63,9 +81,9 @@ export async function logSecurityAudit(actionType, targetId, details = {}) {
         const timestamp = Date.now();
         const previousHash = await getLastLogHash();
 
-        // Standardized canonical payload
+        // Canonical payload for cryptographic verification
         const canonicalPayload = canonicalizeJSON({
-            actionType,
+            action: actionType,
             details,
             previousHash,
             targetId,
@@ -74,16 +92,19 @@ export async function logSecurityAudit(actionType, targetId, details = {}) {
         });
 
         const forensicHash = await generateForensicHash(canonicalPayload);
-        memoryLastHash = forensicHash; // Update memory cache
+        memoryLastHash = forensicHash;
 
+        // Matches rule requirement: keys.hasAll(['userId', 'action', 'timestamp'])
         await addDoc(collection(db, "audit_logs"), {
             userId,
-            actionType,
-            targetId,
+            action: actionType, // Fixed key name for Firestore rules
+            actionType,        // Retained for legacy backwards compatibility
+            targetId: targetId || 'N/A',
             details,
             previousHash,
             forensicHash,
             clientTimestamp: timestamp,
+            timestamp: serverTimestamp(), // Fixed key name for Firestore rules
             createdAt: serverTimestamp()
         });
 
@@ -99,39 +120,23 @@ export async function logSecurityAudit(actionType, targetId, details = {}) {
    AI FLAG AUDIT LOGS & APPEAL WORKFLOWS
    ========================================================================== */
 
-const AI_FLAG_COLLECTION = 'ai_flag_audit_logs';
-
 /**
- * Records cryptographic content hashes, timestamp entries, and confidence scores when media is marked synthetic.
+ * Logs AI synthetic media flags into the rule-compliant audit_logs collection.
  */
 export async function logAIFlaggedContent({ mediaHash, confidenceScore, detectorModel = 'Synthetic Detector Engine', details = {} }) {
     try {
-        const userId = auth.currentUser ? auth.currentUser.uid : 'anonymous';
-        const timestamp = Date.now();
-
-        const auditEntry = {
-            mediaHash,
-            confidenceScore: parseFloat(confidenceScore.toFixed(4)),
+        const scoreFormatted = parseFloat(confidenceScore.toFixed(4));
+        
+        // Writes through primary security-ruled audit chain
+        const forensicHash = await logSecurityAudit('AI_SYNTHETIC_MEDIA_FLAGGED', mediaHash, {
+            confidenceScore: scoreFormatted,
             detectorModel,
-            userId,
             status: 'QUARANTINED',
-            details,
-            clientTimestamp: timestamp,
-            createdAt: serverTimestamp()
-        };
-
-        // Add to AI-specific flag audit log collection
-        const docRef = doc(db, AI_FLAG_COLLECTION, mediaHash);
-        await setDoc(docRef, auditEntry, { merge: true });
-
-        // Chain into global forensic security chain
-        await logSecurityAudit('AI_SYNTHETIC_MEDIA_FLAGGED', mediaHash, {
-            confidenceScore: auditEntry.confidenceScore,
-            detectorModel
+            ...details
         });
 
-        console.log(`⚠️ [AI Flag Logged] Hash: ${mediaHash} | Score: ${confidenceScore}`);
-        return auditEntry;
+        console.log(`⚠️ [AI Flag Logged] Hash: ${mediaHash} | Score: ${scoreFormatted}`);
+        return { mediaHash, confidenceScore: scoreFormatted, forensicHash };
     } catch (e) {
         console.error("Failed to log AI flag audit:", e);
         return null;
@@ -139,13 +144,19 @@ export async function logAIFlaggedContent({ mediaHash, confidenceScore, detector
 }
 
 /**
- * Fetches recent AI flag audit logs for transparency views.
+ * Fetches recent AI flag audit logs directly from audit_logs collection.
  */
 export async function fetchAIFlagAuditLogs(limitCount = 50) {
     try {
-        const q = query(collection(db, AI_FLAG_COLLECTION), orderBy("clientTimestamp", "desc"), limit(limitCount));
+        const q = query(
+            collection(db, "audit_logs"), 
+            orderBy("clientTimestamp", "desc"), 
+            limit(limitCount)
+        );
         const snapshot = await getDocs(q);
-        return snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+        return snapshot.docs
+            .map(docSnap => ({ id: docSnap.id, ...docSnap.data() }))
+            .filter(log => log.action === 'AI_SYNTHETIC_MEDIA_FLAGGED');
     } catch (e) {
         console.error("Error fetching AI flag audit logs:", e);
         return [];
@@ -153,26 +164,17 @@ export async function fetchAIFlagAuditLogs(limitCount = 50) {
 }
 
 /**
- * Allows users to challenge false positives by submitting an appeal for community/admin review.
+ * Submits an appeal for flagged media through the audit pipeline.
  */
 export async function submitFlagAppeal(mediaHash, justification) {
     try {
-        const userId = auth.currentUser ? auth.currentUser.uid : 'anonymous';
-        const docRef = doc(db, AI_FLAG_COLLECTION, mediaHash);
-
-        const appealData = {
-            status: 'APPEAL_PENDING',
-            appealSubmittedAt: serverTimestamp(),
-            appealUserId: userId,
-            justification
-        };
-
-        await updateDoc(docRef, appealData);
-
-        await logSecurityAudit('AI_FLAG_APPEAL_SUBMITTED', mediaHash, { justification });
+        const resultHash = await logSecurityAudit('AI_FLAG_APPEAL_SUBMITTED', mediaHash, { 
+            justification,
+            status: 'APPEAL_PENDING'
+        });
 
         console.log(`⚖️ [Appeal Submitted] Hash: ${mediaHash}`);
-        return true;
+        return !!resultHash;
     } catch (e) {
         console.error("Failed to submit appeal:", e);
         return false;
@@ -180,87 +182,92 @@ export async function submitFlagAppeal(mediaHash, justification) {
 }
 
 /**
- * Hash-chain health: sample recent audit_logs, verify previousHash links.
+ * Verifies hash-chain integrity across sampled audit blocks.
  */
 export async function getHashChainHealth(sampleSize = 40) {
-  const q = query(
-    collection(db, 'audit_logs'),
-    orderBy('clientTimestamp', 'desc'),
-    limit(sampleSize)
-  );
-  const snapshot = await getDocs(q);
-  const logs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+    try {
+        const q = query(
+            collection(db, 'audit_logs'),
+            orderBy('clientTimestamp', 'desc'),
+            limit(sampleSize)
+        );
+        const snapshot = await getDocs(q);
+        const logs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 
-  if (logs.length < 2) {
-    return {
-      ok: true,
-      checked: logs.length,
-      breaks: 0,
-      headHash: logs[0]?.forensicHash || null,
-      status: logs.length ? 'HEALTHY_SHORT' : 'EMPTY',
-    };
-  }
+        if (logs.length < 2) {
+            return {
+                ok: true,
+                checked: logs.length,
+                breaks: 0,
+                headHash: logs[0]?.forensicHash || null,
+                status: logs.length ? 'HEALTHY_SHORT' : 'EMPTY',
+            };
+        }
 
-  // logs[0] is newest; chain points backward via previousHash
-  let breaks = 0;
-  for (let i = 0; i < logs.length - 1; i++) {
-    const newer = logs[i];
-    const older = logs[i + 1];
-    if (newer.previousHash && older.forensicHash && newer.previousHash !== older.forensicHash) {
-      breaks++;
+        let breaks = 0;
+        for (let i = 0; i < logs.length - 1; i++) {
+            const newer = logs[i];
+            const older = logs[i + 1];
+            if (newer.previousHash && older.forensicHash && newer.previousHash !== older.forensicHash) {
+                breaks++;
+            }
+        }
+
+        return {
+            ok: breaks === 0,
+            checked: logs.length,
+            breaks,
+            headHash: logs[0]?.forensicHash || null,
+            status: breaks === 0 ? 'HEALTHY' : 'BREAKS_DETECTED',
+        };
+    } catch (e) {
+        console.error("Error verifying hash chain health:", e);
+        return { ok: false, checked: 0, breaks: 0, headHash: null, status: 'ERROR' };
     }
-  }
-
-  return {
-    ok: breaks === 0,
-    checked: logs.length,
-    breaks,
-    headHash: logs[0]?.forensicHash || null,
-    status: breaks === 0 ? 'HEALTHY' : 'BREAKS_DETECTED',
-  };
 }
 
 /**
- * Public counts for transparency dashboard.
+ * Public metrics for transparency dashboard.
  */
 export async function getTransparencyMetrics() {
-  const [testimoniesSnap, disputesSnap, chain] = await Promise.all([
-    getDocs(query(collection(db, 'testimonies'), orderBy('createdAt', 'desc'), limit(500))),
-    getDocs(query(collection(db, 'disputes'), orderBy('createdAt', 'desc'), limit(200))).catch(() => ({ docs: [], size: 0 })),
-    getHashChainHealth(50),
-  ]);
+    try {
+        const [testimoniesSnap, disputesSnap, chain] = await Promise.all([
+            getDocs(query(collection(db, 'testimonies'), orderBy('createdAt', 'desc'), limit(100))),
+            getDocs(query(collection(db, 'reports'), limit(100))).catch(() => ({ docs: [], size: 0 })),
+            getHashChainHealth(30),
+        ]);
 
-  let sealed = 0;
-  testimoniesSnap.forEach((d) => {
-    const x = d.data();
-    if (x.status === 'published' || x.forensicHash || x.hasForensic) sealed++;
-  });
+        let sealed = 0;
+        testimoniesSnap.forEach((d) => {
+            const x = d.data();
+            if (x.status === 'published' || x.forensicHash || x.hasForensic) sealed++;
+        });
 
-  const disputes = (disputesSnap.docs || []).map((d) => ({ id: d.id, ...d.data() }));
-  const outcomes = {
-    open: disputes.filter((x) => x.status === 'OPEN' || x.status === 'PENDING').length,
-    upheld: disputes.filter((x) => x.status === 'UPHELD' || x.status === 'CHALLENGE_SUCCESS').length,
-    rejected: disputes.filter((x) => x.status === 'REJECTED' || x.status === 'CHALLENGE_FAILED').length,
-    total: disputes.length,
-  };
+        const disputes = (disputesSnap.docs || []).map((d) => ({ id: d.id, ...d.data() }));
+        const outcomes = {
+            open: disputes.filter((x) => x.status === 'OPEN' || x.status === 'PENDING').length,
+            upheld: disputes.filter((x) => x.status === 'UPHELD' || x.status === 'CHALLENGE_SUCCESS').length,
+            rejected: disputes.filter((x) => x.status === 'REJECTED' || x.status === 'CHALLENGE_FAILED').length,
+            total: disputes.length,
+        };
 
-  return {
-    sealedReports: sealed,
-    sampledTestimonies: testimoniesSnap.size,
-    chain,
-    disputes: outcomes,
-    updatedAt: new Date().toISOString(),
-  };
+        return {
+            sealedReports: sealed,
+            sampledTestimonies: testimoniesSnap.size,
+            chain,
+            disputes: outcomes,
+            updatedAt: new Date().toISOString(),
+        };
+    } catch (e) {
+        console.error("Error fetching transparency metrics:", e);
+        return null;
+    }
 }
 
-
 /* ==========================================================================
-   COMPATIBILITY ALIAS EXPORTS FOR IMAGESCRUBBER & MEDIA MODULES
+   ALIAS EXPORTS
    ========================================================================== */
 
-/**
- * Legacy/Module Alias mapping `logAuditEvent` to `logSecurityAudit`
- */
 export async function logAuditEvent(actionType, targetId, details = {}) {
     return await logSecurityAudit(actionType, targetId, details);
 }
@@ -271,6 +278,8 @@ export const AuditEngine = {
     logAIFlaggedContent,
     fetchAIFlagAuditLogs,
     submitFlagAppeal,
+    getHashChainHealth,
+    getTransparencyMetrics,
     generateForensicHash
 };
 
