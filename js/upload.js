@@ -77,9 +77,11 @@ export async function uploadSecurePhoto(file, folderPath = 'evidence', onProgres
                 maxHeight: 1080
             });
 
-        const uid = auth.currentUser?.uid || 'anonymous';
         const fileId = crypto.randomUUID();
-        const keyPath = `${folderPath}/${uid}/${fileId}.webp`;
+        const ext = preparedFile.type === 'image/webp' ? 'webp' : 'jpg';
+
+        // Flat key path where the file is written in R2 by the Worker
+        const keyPath = `${folderPath}/${fileId}.${ext}`;
 
         const publicUrl = await executeUpload(
             preparedFile,
@@ -163,7 +165,7 @@ function executeUpload(blob, keyPath, mimeType, onProgress) {
 
         xhr.onload = () => {
             if (xhr.status >= 200 && xhr.status < 300) {
-                // Always construct canonical path to prevent server response overrides from duplicating UUID directories
+                // Construct canonical path matching the worker target
                 const canonicalUrl = `${R2_PUBLIC_BASE}/${keyPath}`;
                 resolve(canonicalUrl);
             } else {
