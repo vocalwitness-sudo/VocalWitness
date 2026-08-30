@@ -133,6 +133,13 @@ service cloud.firestore {
       return !affected.hasAny(forbidden);
     }
 
+    function canCommentOnPost(postId) {
+      let post = get(/databases/$(database)/documents/posts/$(postId)).data;
+      return post.authorDoorPrivacy == 'open' ||
+             (post.authorDoorPrivacy == 'zk_only' && isWitnessCircle()) ||
+             request.auth.uid == post.authorId;
+    }
+
     // ==========================================
     // INTERNAL & SYSTEM COLLECTIONS
     // ==========================================
@@ -289,12 +296,7 @@ service cloud.firestore {
 
       match /comments/{commentId} {
         allow read: if true;
-        allow create: if isNotBanned() && (
-          let post = get(/databases/$(database)/documents/posts/$(postId)).data;
-          return post.authorDoorPrivacy == 'open' ||
-                 (post.authorDoorPrivacy == 'zk_only' && isWitnessCircle()) ||
-                 request.auth.uid == post.authorId
-        );
+        allow create: if isNotBanned() && canCommentOnPost(postId);
       }
     }
 
