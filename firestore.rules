@@ -48,11 +48,13 @@ service cloud.firestore {
     }
 
 function isNotBanned() {
-      let userExists = exists(/databases/$(database)/documents/users/$(request.auth.uid));
-      return isAuthenticated() 
-        && request.auth.token.banned != true
-        && (!userExists || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('isBanned', false) != true);
-    }
+  return isAuthenticated() 
+    && request.auth.token.banned != true
+    && (
+      !exists(/databases/$(database)/documents/users/$(request.auth.uid))
+      || getUserData().get('isBanned', false) != true
+    );
+}
 
     function isNotThrottled() {
       let userExists = exists(/databases/$(database)/documents/users/$(request.auth.uid));
