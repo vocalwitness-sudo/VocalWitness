@@ -213,9 +213,7 @@ service cloud.firestore {
 
       // TEMP: only require login + own authorId
       // After one successful publish, replace with the STRICT block below
-      allow create: if request.auth != null
-        && request.resource.data.authorId == request.auth.uid;
-
+     
       allow update: if isModerator()
         || (
              isNotBanned()
