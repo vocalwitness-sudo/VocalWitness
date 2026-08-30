@@ -244,6 +244,8 @@ function showWelcomeNote() {
 }
 
 // ====================== PUBLISH TESTIMONY ======================
+// Replace the window.publishTestimony function in js/main.js
+
 window.publishTestimony = async () => {
     if (!requireAuth("Please sign in to share your testimony in Citizen Talk.")) return;
 
@@ -277,9 +279,10 @@ window.publishTestimony = async () => {
             : {};
 
         const clientCaptureMs = Date.now();
-        const channel = (state.currentTab === 'witness' || state.currentMode === 'witness') 
-            ? 'witness-voice' 
-            : 'citizen-talk';
+        // Determine channel mapping
+        const isWitness = state.currentTab === 'witness' || state.currentMode === 'witness';
+        const channel = isWitness ? 'witness-voice' : 'citizen-talk';
+        const feedMode = isWitness ? 'witness' : 'citizen';
 
         const bodyHash = content ? await generateSha256Hash(content) : null;
 
@@ -305,14 +308,16 @@ window.publishTestimony = async () => {
         });
 
         const testimonyData = {
-            authorId: currentUser.uid, // Required by firestore.rules
+            authorId: currentUser.uid,
+            uid: currentUser.uid,
             author: currentUser.displayName || "Registered Witness",
             content: content,
-            createdAt: serverTimestamp(), // Required by firestore.rules
+            createdAt: serverTimestamp(),
             timestamp: clientCaptureMs,
             isPublic: true,
             moderationStatus: "approved",
             feedVisibility: channel,
+            feedMode: feedMode,
             imageUrl: mediaData.imageUrl || null,
             audioUrl: mediaData.audioUrl || null,
             imageHash: mediaData.imageHash || null,
@@ -327,7 +332,7 @@ window.publishTestimony = async () => {
         // Write directly to testimonies collection
         await addDoc(collection(db, "testimonies"), testimonyData);
 
-        // Sync lastTestimonyAt to update user throttle status smoothly
+        // Sync lastTestimonyAt to update user throttle status
         const userRef = doc(db, "users", currentUser.uid);
         await updateDoc(userRef, {
             lastTestimonyAt: serverTimestamp()
@@ -340,7 +345,7 @@ window.publishTestimony = async () => {
     } catch (err) {
         console.error("Publish error detail:", err);
         if (err.code === 'permission-denied') {
-            showToast("⚠️ Permission denied: Please wait 30 seconds before posting again.", "error");
+            showToast("⚠️ Permission denied: Check security rule requirements or 30s rate limits.", "error");
         } else {
             showToast("Failed to publish. Please try again.", "error");
         }
