@@ -326,9 +326,10 @@
   </div>
 
   <!-- Navigation: 5 tabs + More -->
+  <!-- Navigation: 5 tabs + More -->
   <div class="mb-6 flex items-center gap-2">
-    <div class="no-scrollbar min-w-0 flex-1 overflow-x-auto">
-      <nav id="main-nav" class="flex min-w-max items-center gap-2 pb-1" role="tablist" aria-label="Main navigation">
+    <div class="no-scrollbar overflow-x-auto">
+      <nav id="main-nav" class="flex items-center gap-2 pb-1" role="tablist" aria-label="Main navigation">
         <button type="button" data-tab="square" role="tab" aria-selected="true" aria-controls="public-square" class="nav-tab active flex h-11 min-w-[110px] shrink-0 flex-col items-center justify-center rounded-2xl border border-emerald-400/50 bg-emerald-500 px-4 text-xs font-semibold text-black shadow-md transition hover:scale-[1.02] sm:text-sm">
           <span data-i18n="publicSquareTab">Public Square</span>
           <span class="hidden text-[10px] font-normal opacity-90 sm:block" data-i18n="publicSquareDesc">Share what you see</span>
@@ -373,7 +374,6 @@
   </div>
 
   <!-- ========== 1. PUBLIC SQUARE ========== -->
-<!-- ========== 1. PUBLIC SQUARE ========== -->
 <section id="public-square" data-view="citizenTalkView" role="tabpanel" aria-label="Public Square">
   <div class="glass mb-8 rounded-3xl border border-zinc-800/80 p-5 shadow-xl sm:p-8">
     <input type="file" id="media-input" accept="image/*,video/mp4,video/webm,video/quicktime" class="hidden" multiple aria-hidden="true">
