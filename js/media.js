@@ -87,25 +87,27 @@ function stopWaveAndTimer() {
     }
 }
 
-/**
- * Verifies that an uploaded media URL is publicly accessible before attaching it to Firestore.
- * Implements exponential backoff to handle CDN replication delays.
- */
-async function verifyMediaUrl(url, maxRetries = 5, delayMs = 1000) {
-    for (let i = 0; i < maxRetries; i++) {
-        try {
-            const response = await fetch(url, { method: 'HEAD', cache: 'no-store' });
-            if (response.ok) return true;
-        } catch (err) {
-            console.warn(`Attempt ${i + 1}: Verification fetch failed for ${url}`);
-        }
-        
-        // Wait using linear multiplier exponential delay: 1s, 2s, 3s, 4s...
-        await new Promise((resolve) => setTimeout(resolve, delayMs * (i + 1)));
+// js/media.js (verifyMediaUrl)
+export async function verifyMediaUrl(url, maxRetries = 5, delayMs = 800) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      // Append cache buster so Cloudflare doesn't return a cached 404 during propagation
+      const cacheBustUrl = `${url}?t=${Date.now()}`;
+      const response = await fetch(cacheBustUrl, { method: 'HEAD', cache: 'no-store' });
+      
+      if (response.ok) {
+        return true;
+      }
+    } catch (err) {
+      // Ignore initial network drops during propagation
     }
-    throw new Error(`Media uploaded but return URL is unreachable (404/Network Error): ${url}`);
-}
+    
+    // Wait before retrying (800ms, 1600ms, 2400ms...)
+    await new Promise((resolve) => setTimeout(resolve, delayMs * attempt));
+  }
 
+  throw new Error(`Media uploaded but return URL is unreachable (404/Network Error): ${url}`);
+}
 // ====================== QUICK-CHECK HELPER ======================
 export function validateMediaFile(file, options = {}) {
     const {
