@@ -81,8 +81,10 @@ export async function uploadSecurePhoto(file, folderPath = 'evidence', onProgres
         const fileId = crypto.randomUUID();
         const ext = preparedFile.type === 'image/webp' ? 'webp' : 'jpg';
 
-        // Included ${uid} in the keyPath to resolve 404 mismatch
-        const keyPath = `${folderPath}/${uid}/${fileId}.${ext}`;
+        // Prevents nested /UID/UID/ duplication if folderPath already includes uid
+        const keyPath = folderPath.includes(uid)
+            ? `${folderPath}/${fileId}.${ext}`
+            : `${folderPath}/${uid}/${fileId}.${ext}`;
 
         const publicUrl = await executeUpload(
             preparedFile,
@@ -118,7 +120,11 @@ export async function uploadSecureAudio(audioBlob, folderPath = 'evidence', onPr
 
     const uid = auth.currentUser?.uid || 'anonymous';
     const fileId = crypto.randomUUID();
-    const keyPath = `${folderPath}/${uid}/${fileId}.${ext}`;
+
+    // Prevents nested /UID/UID/ duplication if folderPath already includes uid
+    const keyPath = folderPath.includes(uid)
+        ? `${folderPath}/${fileId}.${ext}`
+        : `${folderPath}/${uid}/${fileId}.${ext}`;
 
     return await executeUpload(audioBlob, keyPath, mimeType, onProgress);
 }
