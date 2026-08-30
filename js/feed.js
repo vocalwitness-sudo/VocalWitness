@@ -518,31 +518,6 @@ async function handleTranslateAction(postId, btn) {
     }
 }
 
-async function handleSummarizeAction(postId, btn) {
-    const summaryBox = document.getElementById(`summary-container-${postId}`);
-    const textEl = document.getElementById(`post-text-${postId}`);
-
-    if (!summaryBox || !textEl) return;
-
-    if (!summaryBox.classList.contains('hidden')) {
-        summaryBox.classList.add('hidden');
-        return;
-    }
-
-    try {
-        btn.textContent = "⚡ Summarizing...";
-        const summary = await summarizeReport(textEl.textContent);
-
-        summaryBox.innerHTML = `<strong>⚡ Key Summary:</strong> ${escapeHTML(summary)}`;
-        summaryBox.classList.remove('hidden');
-    } catch (err) {
-        console.error("Summarization failed:", err);
-        showToast("Could not generate summary", "error");
-    } finally {
-        btn.textContent = "⚡ AI Summary";
-    }
-}
-
 // ====================== FEED INTERACTION ACTIONS ======================
 
 async function handleUpvote(postId) {
