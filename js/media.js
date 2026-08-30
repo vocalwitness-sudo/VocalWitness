@@ -89,21 +89,21 @@ function stopWaveAndTimer() {
 
 /**
  * Verifies that an uploaded media URL is publicly accessible before attaching it to Firestore.
- * Performs a HEAD check with a single retry to accommodate edge replication delays.
+ * Implements exponential backoff to handle CDN replication delays.
  */
-async function verifyMediaUrl(url, retries = 2, delayMs = 1000) {
-    for (let attempt = 1; attempt <= retries; attempt++) {
+async function verifyMediaUrl(url, maxRetries = 5, delayMs = 1000) {
+    for (let i = 0; i < maxRetries; i++) {
         try {
-            const res = await fetch(url, { method: 'HEAD', cache: 'no-store' });
-            if (res.ok) return true;
-        } catch (e) {
-            console.warn(`Attempt ${attempt}: Verification fetch failed for ${url}`);
+            const response = await fetch(url, { method: 'HEAD', cache: 'no-store' });
+            if (response.ok) return true;
+        } catch (err) {
+            console.warn(`Attempt ${i + 1}: Verification fetch failed for ${url}`);
         }
-        if (attempt < retries) {
-            await new Promise(resolve => setTimeout(resolve, delayMs));
-        }
+        
+        // Wait using linear multiplier exponential delay: 1s, 2s, 3s, 4s...
+        await new Promise((resolve) => setTimeout(resolve, delayMs * (i + 1)));
     }
-    return false;
+    throw new Error(`Media uploaded but return URL is unreachable (404/Network Error): ${url}`);
 }
 
 // ====================== QUICK-CHECK HELPER ======================
@@ -387,11 +387,8 @@ export async function uploadForensicMedia() {
             // Upload the cleaned file to storage
             const uploadedUrl = await uploadSecurePhoto(cleanedFile, 'evidence');
 
-            // Verify file actually exists at edge endpoint before assigning
-            const isAccessible = await verifyMediaUrl(uploadedUrl);
-            if (!isAccessible) {
-                throw new Error(`Media uploaded but return URL is unreachable (404/Network Error): ${uploadedUrl}`);
-            }
+            // Verify file actually exists at edge endpoint before assigning (throws on failure)
+            await verifyMediaUrl(uploadedUrl);
 
             mediaData.imageUrl = uploadedUrl;
             mediaData.imageHash = hash;
@@ -447,11 +444,8 @@ export async function uploadForensicMedia() {
                     xhr.onerror = () => reject(new Error('Network error during audio upload.'));
                 });
 
-                // Verify voice recording URL before accepting
-                const isAccessible = await verifyMediaUrl(uploadedUrl);
-                if (!isAccessible) {
-                    throw new Error(`Audio uploaded but public URL is unreachable: ${uploadedUrl}`);
-                }
+                // Verify voice recording URL before accepting (throws on failure)
+                await verifyMediaUrl(uploadedUrl);
 
                 mediaData.audioUrl = uploadedUrl;
                 mediaData.audioHash = hash;
