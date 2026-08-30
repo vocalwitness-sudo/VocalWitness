@@ -17,26 +17,25 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.token.admin == true;
     }
 
-    // Single-fetch helper: Returns null if document does not exist, avoiding double-get charges
-    function getUserDoc() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    // Cached single fetch for user profile fallback
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
     function isWitnessCircle() {
-      let userDoc = getUserDoc();
       return isAuthenticated() && (
         request.auth.token.tier == 'witness_circle' ||
         request.auth.token.zkVerified == true ||
-        (userDoc.data != null && (userDoc.data.tier == 'witness_circle' || userDoc.data.zkVerified == true))
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+          (getUserData().tier == 'witness_circle' || getUserData().zkVerified == true))
       );
     }
 
     function isSteward() {
-      let userDoc = getUserDoc();
       return isAuthenticated() && (
         request.auth.token.tier == 'steward' ||
         request.auth.token.steward == true ||
-        (userDoc.data != null && userDoc.data.tier == 'steward')
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getUserData().tier == 'steward')
       );
     }
 
@@ -49,18 +48,16 @@ service cloud.firestore {
     }
 
     function isNotBanned() {
-      let userDoc = getUserDoc();
-      return isAuthenticated()
+      return isAuthenticated() 
         && request.auth.token.banned != true
-        && (userDoc.data == null || userDoc.data.isBanned != true);
+        && (!exists(/databases/$(database)/documents/users/$(request.auth.uid)) || getUserData().isBanned != true);
     }
 
     function isNotThrottled() {
-      let userDoc = getUserDoc();
-      return userDoc.data == null
-        || !('lastTestimonyAt' in userDoc.data)
-        || userDoc.data.lastTestimonyAt == null
-        || request.time > userDoc.data.lastTestimonyAt + duration.value(30, 's');
+      return !exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        || !('lastTestimonyAt' in getUserData())
+        || getUserData().lastTestimonyAt == null
+        || request.time > getUserData().lastTestimonyAt + duration.value(30, 's');
     }
 
     function isValidMediaUrl(url) {
@@ -293,12 +290,10 @@ service cloud.firestore {
       match /comments/{commentId} {
         allow read: if true;
         allow create: if isNotBanned() && (
-          get(/databases/$(database)/documents/posts/$(postId)).data.authorDoorPrivacy == 'open' ||
-          (
-            get(/databases/$(database)/documents/posts/$(postId)).data.authorDoorPrivacy == 'zk_only' && 
-            isWitnessCircle()
-          ) ||
-          request.auth.uid == get(/databases/$(database)/documents/posts/$(postId)).data.authorId
+          let post = get(/databases/$(database)/documents/posts/$(postId)).data;
+          return post.authorDoorPrivacy == 'open' ||
+                 (post.authorDoorPrivacy == 'zk_only' && isWitnessCircle()) ||
+                 request.auth.uid == post.authorId
         );
       }
     }
@@ -316,7 +311,11 @@ service cloud.firestore {
 
     match /audit_logs/{auditId} {
       allow read: if isModerator();
-      allow create: if isAuthenticated();
+      allow create: if isNotBanned()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.keys().hasAll(['userId', 'action', 'timestamp'])
+        && request.resource.data.action is string
+        && request.resource.data.timestamp is timestamp;
       allow update, delete: if false;
     }
 
