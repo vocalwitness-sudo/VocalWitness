@@ -18,6 +18,8 @@ import { generateSha256Hash } from './utils.js';
 import {
     collection,
     addDoc,
+    doc,
+    updateDoc,
     serverTimestamp,
     query,
     getDocs,
@@ -275,7 +277,9 @@ window.publishTestimony = async () => {
             : {};
 
         const clientCaptureMs = Date.now();
-        const channel = state.currentMode === 'witness' ? 'witness-voice' : 'citizen-talk';
+        const channel = (state.currentTab === 'witness' || state.currentMode === 'witness') 
+            ? 'witness-voice' 
+            : 'citizen-talk';
 
         const bodyHash = content ? await generateSha256Hash(content) : null;
 
@@ -320,14 +324,14 @@ window.publishTestimony = async () => {
             bodyHash: bodyHash
         };
 
-        // Write directly to testimonies
+        // Write directly to testimonies collection
         await addDoc(collection(db, "testimonies"), testimonyData);
 
-        // Update lastTestimonyAt to keep throttle sync healthy
+        // Sync lastTestimonyAt to update user throttle status smoothly
         const userRef = doc(db, "users", currentUser.uid);
         await updateDoc(userRef, {
             lastTestimonyAt: serverTimestamp()
-        }).catch(() => {/* non-critical if user profile rule restricts */});
+        }).catch(() => {/* non-critical fallback */});
 
         showToast("🛡️ Report sealed and published", "success");
         if (textarea) textarea.value = '';
@@ -347,6 +351,7 @@ window.publishTestimony = async () => {
         }
     }
 };
+
 // ====================== EVIDENCE LEDGER ======================
 async function loadEvidenceLedger() {
     const container = document.getElementById('ledgerContainer');
