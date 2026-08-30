@@ -57,7 +57,7 @@ export async function prepareMediaForUpload(file, options = {}) {
 /**
  * Scrubs + compresses + uploads an image to Cloudflare R2
  */
-export async function uploadSecurePhoto(file, folderPath = 'witness_evidence', onProgress = null) {
+export async function uploadSecurePhoto(file, folderPath = 'evidence', onProgress = null) {
     if (!file || !file.type.startsWith('image/')) {
         throw new Error('Invalid input: Please select a valid image file.');
     }
@@ -105,7 +105,7 @@ export async function uploadSecurePhoto(file, folderPath = 'witness_evidence', o
 /**
  * Uploads audio evidence
  */
-export async function uploadSecureAudio(audioBlob, folderPath = 'witness_audio', onProgress = null) {
+export async function uploadSecureAudio(audioBlob, folderPath = 'evidence', onProgress = null) {
     if (!audioBlob) throw new Error('Invalid audio file');
 
     showToast('🛡️ Preparing secure audio upload...', 'info');
@@ -123,7 +123,7 @@ export async function uploadSecureAudio(audioBlob, folderPath = 'witness_audio',
 /**
  * Universal upload helper
  */
-export async function uploadMedia(file, folderPath = 'witness_evidence', onProgress = null) {
+export async function uploadMedia(file, folderPath = 'evidence', onProgress = null) {
     if (file.type.startsWith('image/')) {
         return await uploadSecurePhoto(file, folderPath, onProgress);
     }
@@ -163,12 +163,9 @@ function executeUpload(blob, keyPath, mimeType, onProgress) {
 
         xhr.onload = () => {
             if (xhr.status >= 200 && xhr.status < 300) {
-                try {
-                    const response = JSON.parse(xhr.responseText);
-                    resolve(response.url || `${R2_PUBLIC_BASE}/${keyPath}`);
-                } catch {
-                    resolve(`${R2_PUBLIC_BASE}/${keyPath}`);
-                }
+                // Always construct canonical path to prevent server response overrides from duplicating UUID directories
+                const canonicalUrl = `${R2_PUBLIC_BASE}/${keyPath}`;
+                resolve(canonicalUrl);
             } else {
                 reject(new Error(`Upload failed with status ${xhr.status}`));
             }
