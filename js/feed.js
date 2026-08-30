@@ -156,19 +156,17 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                             showToast("Failed to share testimony link", "error");
                         }
                     }
-                } else if (action === 'pin') {
-                    await handlePinPost(id);
-                } else if (action === 'delete') {
-                    await handleDeletePost(id);
-                } else if (action === 'menu') {
-                    showPostMenu(id);
-                } else if (action === 'corroborate') {
-                    await handleCorroborate(id, btn);
-                } else if (action === 'execute-translate') {
-                    await handleTranslateAction(id, btn);
-                } else if (action === 'summarize') {
-                    await handleSummarizeAction(id, btn);
-                }
+              } else if (action === 'pin') {
+    await handlePinPost(id);
+} else if (action === 'delete') {
+    await handleDeletePost(id);
+} else if (action === 'menu') {
+    showPostMenu(id);
+} else if (action === 'corroborate') {
+    await handleCorroborate(id, btn);
+} else if (action === 'execute-translate') {
+    await handleTranslateAction(id, btn);
+}
             } catch (err) {
                 console.error(`Action ${action} failed:`, err);
             } finally {
