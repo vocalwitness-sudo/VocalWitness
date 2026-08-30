@@ -313,13 +313,19 @@ service cloud.firestore {
     }
 
     match /audit_logs/{auditId} {
-      allow read: if isModerator();
-      allow create: if isNotBanned()
-        && request.resource.data.userId == request.auth.uid
-        && request.resource.data.action is string;
-      allow update, delete: if false;
-    }
+  // Allow read access for authenticated users or moderators
+  allow read: if isAuthenticated();
 
+  // Allow log creation if valid action or actionType strings and client timestamps are provided
+  allow create: if (
+      ('actionType' in request.resource.data && request.resource.data.actionType is string) ||
+      ('action' in request.resource.data && request.resource.data.action is string)
+    )
+    && request.resource.data.clientTimestamp is number;
+
+  // Audit logs must remain strictly immutable
+  allow update, delete: if false;
+}
     // ==========================================
     // DAO PROPOSALS
     // ==========================================
