@@ -47,22 +47,20 @@ service cloud.firestore {
       );
     }
 
-function isNotBanned() {
-  return isAuthenticated() 
-    && request.auth.token.banned != true
-    && (
-      !exists(/databases/$(database)/documents/users/$(request.auth.uid))
-      || getUserData().get('isBanned', false) != true
-    );
-}
+    function isNotBanned() {
+      return isAuthenticated() 
+        && request.auth.token.banned != true
+        && (
+          !exists(/databases/$(database)/documents/users/$(request.auth.uid))
+          || getUserData().get('isBanned', false) != true
+        );
+    }
 
     function isNotThrottled() {
-      let userExists = exists(/databases/$(database)/documents/users/$(request.auth.uid));
-      if (!userExists) { return true; }
-      let userData = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-      return !('lastTestimonyAt' in userData)
-        || userData.lastTestimonyAt == null
-        || request.time > userData.lastTestimonyAt + duration.value(30, 's');
+      return !exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        || !('lastTestimonyAt' in getUserData())
+        || getUserData().lastTestimonyAt == null
+        || request.time > getUserData().lastTestimonyAt + duration.value(30, 's');
     }
 
     function isValidMediaUrl(url) {
@@ -77,15 +75,13 @@ function isNotBanned() {
     }
 
     function isSafeUserCreation() {
-      let data = request.resource.data;
-      let keys = data.keys();
-      return data.uid == request.auth.uid
-        && data.uid is string
-        && data.email is string
-        && data.displayName is string
-        && (data.tier == 'citizen' || data.tier == 'citizen_circle')
-        && data.isVerified == false
-        && !keys.hasAny([
+      return request.resource.data.uid == request.auth.uid
+        && request.resource.data.uid is string
+        && request.resource.data.email is string
+        && request.resource.data.displayName is string
+        && (request.resource.data.tier == 'citizen' || request.resource.data.tier == 'citizen_circle')
+        && request.resource.data.isVerified == false
+        && !request.resource.data.keys().hasAny([
              'role', 'isBanned', 'badges', 'admin', 'moderator', 'score', 'steward',
              'isPhoneVerified', 'hasVerifiedPhone', 'phoneVerifiedAt', 'reputation', 
              'credibilityScore', 'zkVerified'
@@ -93,56 +89,48 @@ function isNotBanned() {
     }
 
     function isSafeUserUpdate() {
-      let affected = request.resource.data.diff(resource.data).affectedKeys();
-      let data = request.resource.data;
-      let forbidden = [
-        'role', 'isBanned', 'badges', 'admin', 'moderator',
-        'zkVerified', 'score', 'isVerified', 'uid', 'tier',
-        'hasVerifiedPhone', 'isPhoneVerified', 'phoneVerifiedAt',
-        'reputation', 'credibilityScore', 'weeklyPoints'
-      ];
-      let allowed = [
-        'email', 'displayName', 'photoURL', 'bio',
-        'location', 'website', 'updatedAt', 'lastLoginAt',
-        'theme', 'language', 'interestedInArena', 'arenaNotifyAt', 'lastNameChange',
-        'lastTestimonyAt', 'following', 'trusted', 'followers'
-      ];
-      return !affected.hasAny(forbidden)
-        && affected.hasOnly(allowed)
-        && (!('email' in data) || data.email is string)
-        && (!('displayName' in data) || data.displayName is string)
-        && (!('photoURL' in data) || isValidMediaUrl(data.photoURL))
-        && (!('bio' in data) || data.bio is string)
-        && (!('interestedInArena' in data) || data.interestedInArena is bool)
-        && (!('following' in data) || data.following is list)
-        && (!('trusted' in data) || data.trusted is list)
-        && (!('followers' in data) || data.followers is list);
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+          'role', 'isBanned', 'badges', 'admin', 'moderator',
+          'zkVerified', 'score', 'isVerified', 'uid', 'tier',
+          'hasVerifiedPhone', 'isPhoneVerified', 'phoneVerifiedAt',
+          'reputation', 'credibilityScore', 'weeklyPoints'
+        ])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'email', 'displayName', 'photoURL', 'bio',
+          'location', 'website', 'updatedAt', 'lastLoginAt',
+          'theme', 'language', 'interestedInArena', 'arenaNotifyAt', 'lastNameChange',
+          'lastTestimonyAt', 'following', 'trusted', 'followers'
+        ])
+        && (!('email' in request.resource.data) || request.resource.data.email is string)
+        && (!('displayName' in request.resource.data) || request.resource.data.displayName is string)
+        && (!('photoURL' in request.resource.data) || isValidMediaUrl(request.resource.data.photoURL))
+        && (!('bio' in request.resource.data) || request.resource.data.bio is string)
+        && (!('interestedInArena' in request.resource.data) || request.resource.data.interestedInArena is bool)
+        && (!('following' in request.resource.data) || request.resource.data.following is list)
+        && (!('trusted' in request.resource.data) || request.resource.data.trusted is list)
+        && (!('followers' in request.resource.data) || request.resource.data.followers is list);
     }
 
     function isValidNotification() {
-      let data = request.resource.data;
-      return data.keys().hasAll(['senderId', 'type', 'timestamp'])
-        && data.senderId == request.auth.uid
-        && data.senderId is string
-        && data.type is string
-        && data.type in ['mention', 'reply', 'vote', 'system', 'witness_alert']
-        && data.timestamp is timestamp;
+      return request.resource.data.keys().hasAll(['senderId', 'type', 'timestamp'])
+        && request.resource.data.senderId == request.auth.uid
+        && request.resource.data.senderId is string
+        && request.resource.data.type is string
+        && request.resource.data.type in ['mention', 'reply', 'vote', 'system', 'witness_alert']
+        && request.resource.data.timestamp is timestamp;
     }
 
     function isSafeAuthorTestimonyUpdate() {
-      let affected = request.resource.data.diff(resource.data).affectedKeys();
-      let forbidden = [
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny([
         'moderationStatus', 'toxicityScore', 'autoFlaggedReasons',
         'isSynthetic', 'syntheticScore', 'authorTier', 'reviewedBy', 'reviewedAt', 'reviewNotes'
-      ];
-      return !affected.hasAny(forbidden);
+      ]);
     }
 
     function canCommentOnPost(postId) {
-      let post = get(/databases/$(database)/documents/posts/$(postId)).data;
-      return post.authorDoorPrivacy == 'open' ||
-             (post.authorDoorPrivacy == 'zk_only' && isWitnessCircle()) ||
-             request.auth.uid == post.authorId;
+      return get(/databases/$(database)/documents/posts/$(postId)).data.authorDoorPrivacy == 'open' ||
+             (get(/databases/$(database)/documents/posts/$(postId)).data.authorDoorPrivacy == 'zk_only' && isWitnessCircle()) ||
+             request.auth.uid == get(/databases/$(database)/documents/posts/$(postId)).data.authorId;
     }
 
     // ==========================================
@@ -215,7 +203,6 @@ function isNotBanned() {
     }
 
     // Unified & Global Testimonies Ledger
-// Unified & Global Testimonies Ledger
     match /testimonies/{testimonyId} {
       allow read: if true;
 
@@ -301,8 +288,7 @@ function isNotBanned() {
       }
     }
 
-   
-// ==========================================
+    // ==========================================
     // REPORTS & AUDIT LOGS
     // ==========================================
     match /reports/{reportId} {
@@ -314,19 +300,17 @@ function isNotBanned() {
     }
 
     match /audit_logs/{auditId} {
-  // Allow read access for authenticated users or moderators
-  allow read: if isAuthenticated();
+      allow read: if isAuthenticated();
 
-  // Allow log creation if valid action or actionType strings and client timestamps are provided
-  allow create: if (
-      ('actionType' in request.resource.data && request.resource.data.actionType is string) ||
-      ('action' in request.resource.data && request.resource.data.action is string)
-    )
-    && request.resource.data.clientTimestamp is number;
+      allow create: if (
+          ('actionType' in request.resource.data && request.resource.data.actionType is string) ||
+          ('action' in request.resource.data && request.resource.data.action is string)
+        )
+        && request.resource.data.clientTimestamp is number;
 
-  // Audit logs must remain strictly immutable
-  allow update, delete: if false;
-}
+      allow update, delete: if false;
+    }
+
     // ==========================================
     // DAO PROPOSALS
     // ==========================================
