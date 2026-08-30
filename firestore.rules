@@ -17,29 +17,26 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.token.admin == true;
     }
 
-    function userExists() {
-      return exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    // Single-fetch helper: Returns null if document does not exist, avoiding double-get charges
+    function getUserDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
     }
 
-    // Single evaluation fetch helper to prevent multi-get execution bill traps
-    function getUserData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-    }
-
-    // Check token claims first for 0-latency & 0-read-cost checks
     function isWitnessCircle() {
+      let userDoc = getUserDoc();
       return isAuthenticated() && (
         request.auth.token.tier == 'witness_circle' ||
         request.auth.token.zkVerified == true ||
-        (userExists() && (getUserData().tier == 'witness_circle' || getUserData().zkVerified == true))
+        (userDoc.data != null && (userDoc.data.tier == 'witness_circle' || userDoc.data.zkVerified == true))
       );
     }
 
     function isSteward() {
+      let userDoc = getUserDoc();
       return isAuthenticated() && (
         request.auth.token.tier == 'steward' ||
         request.auth.token.steward == true ||
-        (userExists() && getUserData().tier == 'steward')
+        (userDoc.data != null && userDoc.data.tier == 'steward')
       );
     }
 
@@ -52,15 +49,18 @@ service cloud.firestore {
     }
 
     function isNotBanned() {
+      let userDoc = getUserDoc();
       return isAuthenticated()
         && request.auth.token.banned != true
-        && (!userExists() || getUserData().isBanned != true);
+        && (userDoc.data == null || userDoc.data.isBanned != true);
     }
 
     function isNotThrottled() {
-      return !userExists()
-        || !('lastTestimonyAt' in getUserData())
-        || request.time > getUserData().lastTestimonyAt + duration.value(30, 's');
+      let userDoc = getUserDoc();
+      return userDoc.data == null
+        || !('lastTestimonyAt' in userDoc.data)
+        || userDoc.data.lastTestimonyAt == null
+        || request.time > userDoc.data.lastTestimonyAt + duration.value(30, 's');
     }
 
     function isValidMediaUrl(url) {
@@ -68,6 +68,8 @@ service cloud.firestore {
         url == '' ||
         url.matches('^https://media\\.vocalwitness\\.com/.*') ||
         url.matches('^https://lh[0-9]+\\.googleusercontent\\.com/.*') ||
+        url.matches('^https://firebasestorage\\.googleapis\\.com/.*') ||
+        url.matches('^https://.*\\.r2\\.cloudflarestorage\\.com/.*') ||
         url.matches('^data:image/svg\\+xml;.*')
       );
     }
@@ -81,7 +83,6 @@ service cloud.firestore {
         && data.displayName is string
         && (data.tier == 'citizen' || data.tier == 'citizen_circle')
         && data.isVerified == false
-        // Block zkVerified during raw client-side doc creation
         && !keys.hasAny([
              'role', 'isBanned', 'badges', 'admin', 'moderator', 'score', 'steward',
              'isPhoneVerified', 'hasVerifiedPhone', 'phoneVerifiedAt', 'reputation', 
@@ -175,8 +176,6 @@ service cloud.firestore {
     // ==========================================
     // PRIMARY FEEDS: WITNESS VOICE & CITIZEN TALK
     // ==========================================
-    
-    // Witness Voice Feed: STRICTLY Protected for ZK Verified / Witness Circle
     match /witness_voice/{postId} {
       allow read: if true;
       allow create: if isNotBanned()
@@ -192,7 +191,6 @@ service cloud.firestore {
       allow delete: if (resource.data.authorId == request.auth.uid) || isModerator();
     }
 
-    // Citizen Talk Feed: Open for all authentic Citizens
     match /citizen_talk/{postId} {
       allow read: if true;
       allow create: if isNotBanned()
