@@ -87,16 +87,29 @@ function stopWaveAndTimer() {
     }
 }
 
-// ====================== QUICK-CHECK HELPER ======================
 /**
- * Performs immediate client-side quick checks on media files before processing/upload.
- * @param {File} file - The file object to validate.
- * @param {Object} options - Validation constraints.
- * @returns {{ valid: boolean, error?: string }}
+ * Verifies that an uploaded media URL is publicly accessible before attaching it to Firestore.
+ * Performs a HEAD check with a single retry to accommodate edge replication delays.
  */
+async function verifyMediaUrl(url, retries = 2, delayMs = 1000) {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+        try {
+            const res = await fetch(url, { method: 'HEAD', cache: 'no-store' });
+            if (res.ok) return true;
+        } catch (e) {
+            console.warn(`Attempt ${attempt}: Verification fetch failed for ${url}`);
+        }
+        if (attempt < retries) {
+            await new Promise(resolve => setTimeout(resolve, delayMs));
+        }
+    }
+    return false;
+}
+
+// ====================== QUICK-CHECK HELPER ======================
 export function validateMediaFile(file, options = {}) {
     const {
-        maxSizeBytes = 10 * 1024 * 1024, // Default 10MB
+        maxSizeBytes = 10 * 1024 * 1024,
         allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic']
     } = options;
 
@@ -122,10 +135,8 @@ export function validateMediaFile(file, options = {}) {
 
 // ====================== STATE RESET ======================
 export function resetMediaState() {
-    // 1. Reset Image File Reference
     selectedImageFile = null;
 
-    // 2. Clean Up Replay URL & Audio Elements
     if (replayUrl) {
         URL.revokeObjectURL(replayUrl);
         replayUrl = null;
@@ -138,7 +149,6 @@ export function resetMediaState() {
         audioEl.load();
     }
 
-    // 3. Clear Voice Engine Memory
     if (engineInstance) {
         if (typeof engineInstance.stopVoiceRecording === 'function' && engineInstance.mediaRecorder?.state === 'recording') {
             engineInstance.stopVoiceRecording().catch(() => {});
@@ -146,10 +156,7 @@ export function resetMediaState() {
         engineInstance.currentAudioBlob = null;
     }
 
-    // 4. Reset Animations & Timers
     stopWaveAndTimer();
-
-    // 5. Reset UI Elements
     showRecorderBar(false);
 
     const previewArea = document.getElementById('preview-area');
@@ -181,7 +188,6 @@ export async function handleImageSelect(event, previewArea) {
     const file = event.target?.files?.[0];
     if (!file) return;
 
-    // Client-side validation
     const check = validateMediaFile(file, {
         maxSizeBytes: 10 * 1024 * 1024,
         allowedTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic']
@@ -193,7 +199,6 @@ export async function handleImageSelect(event, previewArea) {
         return;
     }
 
-    // Clear previous image first (enforces single image)
     selectedImageFile = null;
     if (previewArea) {
         previewArea.innerHTML = '';
@@ -235,7 +240,6 @@ export async function handleImageSelect(event, previewArea) {
 
     reader.readAsDataURL(file);
 
-    // Allow selecting the same file again later
     if (event.target) event.target.value = '';
 }
 
@@ -383,13 +387,20 @@ export async function uploadForensicMedia() {
             // Upload the cleaned file to storage
             const uploadedUrl = await uploadSecurePhoto(cleanedFile, 'evidence');
 
+            // Verify file actually exists at edge endpoint before assigning
+            const isAccessible = await verifyMediaUrl(uploadedUrl);
+            if (!isAccessible) {
+                throw new Error(`Media uploaded but return URL is unreachable (404/Network Error): ${uploadedUrl}`);
+            }
+
             mediaData.imageUrl = uploadedUrl;
             mediaData.imageHash = hash;
 
-            console.log("✅ Image scrubbed, hashed & uploaded:", mediaData.imageUrl);
+            console.log("✅ Image scrubbed, hashed & verified:", mediaData.imageUrl);
         } catch (e) {
-            console.error("Image upload failed", e);
-            showToast("Image upload failed", "error");
+            console.error("Image upload failed:", e);
+            showToast(e.message || "Image upload failed", "error");
+            throw e; // Reraise error so parent publish process halts on failure
         }
     }
 
@@ -436,13 +447,20 @@ export async function uploadForensicMedia() {
                     xhr.onerror = () => reject(new Error('Network error during audio upload.'));
                 });
 
+                // Verify voice recording URL before accepting
+                const isAccessible = await verifyMediaUrl(uploadedUrl);
+                if (!isAccessible) {
+                    throw new Error(`Audio uploaded but public URL is unreachable: ${uploadedUrl}`);
+                }
+
                 mediaData.audioUrl = uploadedUrl;
                 mediaData.audioHash = hash;
-                console.log("✅ Audio uploaded to R2:", mediaData.audioUrl);
+                console.log("✅ Audio uploaded and verified on R2:", mediaData.audioUrl);
             }
         } catch (e) {
-            console.error("Audio upload failed", e);
-            showToast("Audio upload failed", "error");
+            console.error("Audio upload failed:", e);
+            showToast(e.message || "Audio upload failed", "error");
+            throw e;
         }
     }
 
