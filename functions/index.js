@@ -893,7 +893,10 @@ const RATE_LIMIT_CONFIGS = {
 };
 
 exports.checkRateLimit = onCall(
-  { cors: allowedOrigins },
+  {
+    cors: allowedOrigins,
+    enforceAppCheck: true // Prevents unauthorized scripts and bots from triggering checks
+  },
   async (request) => {
     // 1. Determine user identity (Auth UID or IP address)
     let userId = request.auth?.uid;
@@ -903,10 +906,14 @@ exports.checkRateLimit = onCall(
       userId = "anonymous_" + ip;
     }
 
-    // 2. Validate action and get server-enforced limits
+    // 2. Extract and validate action input
     const action = request.data?.action || "general_action";
+    if (typeof action !== "string" || action.length > 64) {
+      throw new HttpsError("invalid-argument", "Invalid action name.");
+    }
+
+    // 3. Get server-enforced limits (client cannot override maxCalls or windowMinutes)
     const limitConfig = RATE_LIMIT_CONFIGS[action] || RATE_LIMIT_CONFIGS["general_action"];
-    
     const maxCalls = limitConfig.maxCalls;
     const windowMinutes = limitConfig.windowMinutes;
 
@@ -941,7 +948,11 @@ exports.checkRateLimit = onCall(
       return { allowed: isAllowed };
     } catch (error) {
       console.error("Rate limit check failed:", error);
-      // Fail CLOSED (deny request) or throw an explicit HTTPS Error
+      // Re-throw if it's already an HttpsError (e.g. invalid argument)
+      if (error instanceof HttpsError) {
+        throw error;
+      }
+      // Fail CLOSED (deny request with a generic error)
       throw new HttpsError("internal", "Unable to verify rate limits at this time.");
     }
   }
