@@ -300,7 +300,8 @@ service cloud.firestore {
       }
     }
 
-    // ==========================================
+   
+// ==========================================
     // REPORTS & AUDIT LOGS
     // ==========================================
     match /reports/{reportId} {
@@ -315,9 +316,7 @@ service cloud.firestore {
       allow read: if isModerator();
       allow create: if isNotBanned()
         && request.resource.data.userId == request.auth.uid
-        && request.resource.data.keys().hasAll(['userId', 'action', 'timestamp'])
-        && request.resource.data.action is string
-        && request.resource.data.timestamp is timestamp;
+        && request.resource.data.action is string;
       allow update, delete: if false;
     }
 
