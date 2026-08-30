@@ -18,24 +18,12 @@
 }
 
 /* ====================== BASE ====================== */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
-html {
-  color-scheme: dark;
-  height: 100%;
-}
-
 body {
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background-color: var(--color-bg-dark);
   color: #ffffff;
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  /* Removed display: flex on body so it doesn't force vertical expansion */
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   margin: 0;
@@ -45,21 +33,21 @@ body {
 /* ====================== MAIN CONTENT SPACING ====================== */
 #main-content {
   padding-top: var(--header-height-mobile);
-  flex: 1 0 auto; /* Ensures main takes remaining space without pushing extra whitespace */
-  margin-bottom: 0 !important;
+  /* Use fit-content so empty tab views don't create massive empty spaces */
+  min-height: calc(100vh - var(--header-height-mobile) - 200px);
 }
 
 @media (min-width: 768px) {
   #main-content {
     padding-top: var(--header-height-desktop);
+    min-height: calc(100vh - var(--header-height-desktop) - 200px);
   }
 }
 
-/* ====================== FOOTER FLUSH ATTACHMENT ====================== */
+/* Remove footer margin-top: auto if present */
 footer {
-  margin-top: auto; /* Keeps footer strictly attached to the bottom of main content */
+  margin-top: 2rem;
 }
-
 /* ====================== GLASS ====================== */
 .glass {
   background-color: var(--color-glass);
