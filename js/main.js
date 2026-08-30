@@ -279,10 +279,13 @@ window.publishTestimony = async () => {
             : {};
 
         const clientCaptureMs = Date.now();
-        // Determine channel mapping
-        const isWitness = state.currentTab === 'witness' || state.currentMode === 'witness';
-        const channel = isWitness ? 'witness-voice' : 'citizen-talk';
-        const feedMode = isWitness ? 'witness' : 'citizen';
+
+        // FORCE citizen-talk until Witness Circle publish is wired correctly
+        // (avoids accidental witness-voice + permission-denied)
+        const channel = 'citizen-talk';
+        const feedMode = 'citizen';
+
+        console.log('[publish] uid=', currentUser.uid, 'channel=', channel, 'tab=', state.currentTab);
 
         const bodyHash = content ? await generateSha256Hash(content) : null;
 
@@ -298,24 +301,29 @@ window.publishTestimony = async () => {
             displayName: currentUser.displayName || null
         };
 
-        const { firestorePack, packCoreHash } = await createEvidencePack({
-            content,
-            bodyHash,
-            media: mediaForPack,
-            identity,
-            channel,
-            clientCaptureMs
-        });
+        let firestorePack = null;
+        let packCoreHash = null;
+        try {
+            const packResult = await createEvidencePack({
+                content,
+                bodyHash,
+                media: mediaForPack,
+                identity,
+                channel,
+                clientCaptureMs
+            });
+            firestorePack = packResult.firestorePack;
+            packCoreHash = packResult.packCoreHash;
+        } catch (packErr) {
+            console.warn('Evidence pack skipped:', packErr);
+        }
 
         const testimonyData = {
             authorId: currentUser.uid,
-            uid: currentUser.uid,
             author: currentUser.displayName || "Registered Witness",
             content: content,
             createdAt: serverTimestamp(),
             timestamp: clientCaptureMs,
-            isPublic: true,
-            moderationStatus: "approved",
             feedVisibility: channel,
             feedMode: feedMode,
             imageUrl: mediaData.imageUrl || null,
@@ -323,29 +331,36 @@ window.publishTestimony = async () => {
             imageHash: mediaData.imageHash || null,
             audioHash: mediaData.audioHash || null,
             hasForensic: !!(mediaData.imageHash || mediaData.audioHash),
+            bodyHash: bodyHash,
+            hasEvidencePack: !!firestorePack,
             evidencePack: firestorePack,
-            packCoreHash: packCoreHash || null,
-            hasEvidencePack: true,
-            bodyHash: bodyHash
+            packCoreHash: packCoreHash || null
         };
 
-        // Write directly to testimonies collection
+        console.log('[publish] writing testimony...', {
+            authorId: testimonyData.authorId,
+            feedVisibility: testimonyData.feedVisibility,
+            contentLen: testimonyData.content.length
+        });
+
         await addDoc(collection(db, "testimonies"), testimonyData);
 
-        // Sync lastTestimonyAt to update user throttle status
-        const userRef = doc(db, "users", currentUser.uid);
-        await updateDoc(userRef, {
-            lastTestimonyAt: serverTimestamp()
-        }).catch(() => {/* non-critical fallback */});
+        try {
+            await updateDoc(doc(db, "users", currentUser.uid), {
+                lastTestimonyAt: serverTimestamp()
+            });
+        } catch (_) {
+            /* non-critical */
+        }
 
         showToast("🛡️ Report sealed and published", "success");
         if (textarea) textarea.value = '';
         mediaModule.resetMediaState?.();
-        initFeed?.(db, channel);
+        initFeed?.(db, 'citizen-talk');
     } catch (err) {
         console.error("Publish error detail:", err);
         if (err.code === 'permission-denied') {
-            showToast("⚠️ Permission denied: Check security rule requirements or 30s rate limits.", "error");
+            showToast("Permission denied. Stay on Citizen Talk tab; check Console logs.", "error");
         } else {
             showToast("Failed to publish. Please try again.", "error");
         }
