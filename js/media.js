@@ -1,15 +1,13 @@
 // js/media.js - Forensic Media Handler (Production R2 Version)
 import { showToast, generateSha256Hash } from './utils.js';
 import { auth } from './firebase-config.js';
-import { uploadSecurePhoto } from './upload.js';
+import { uploadSecurePhoto, uploadSecureAudio } from './upload.js';
 import { prepareMediaForUpload } from './media-pipeline.js';
 
 export let selectedImageFile = null;
 let engineInstance = null;
 let waveAnimationId = null;
 let replayUrl = null;
-
-const R2_UPLOAD_ENDPOINT = 'https://media.vocalwitness.com/upload';
 
 export function setEngine(engine) {
     engineInstance = engine;
@@ -87,11 +85,11 @@ function stopWaveAndTimer() {
     }
 }
 
-// js/media.js (verifyMediaUrl)
+// Verify URL reachable at edge before saving record
 export async function verifyMediaUrl(url, maxRetries = 5, delayMs = 800) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      // Append cache buster so Cloudflare doesn't return a cached 404 during propagation
+      // Append cache buster so Cloudflare doesn't return cached 404 during propagation
       const cacheBustUrl = `${url}?t=${Date.now()}`;
       const response = await fetch(cacheBustUrl, { method: 'HEAD', cache: 'no-store' });
       
@@ -99,7 +97,7 @@ export async function verifyMediaUrl(url, maxRetries = 5, delayMs = 800) {
         return true;
       }
     } catch (err) {
-      // Ignore initial network drops during propagation
+      // Ignore initial network drops during edge propagation
     }
     
     // Wait before retrying (800ms, 1600ms, 2400ms...)
@@ -108,6 +106,7 @@ export async function verifyMediaUrl(url, maxRetries = 5, delayMs = 800) {
 
   throw new Error(`Media uploaded but return URL is unreachable (404/Network Error): ${url}`);
 }
+
 // ====================== QUICK-CHECK HELPER ======================
 export function validateMediaFile(file, options = {}) {
     const {
@@ -368,8 +367,6 @@ export async function uploadForensicMedia() {
         audioHash: null
     };
 
-    const userId = auth.currentUser?.uid || "anonymous";
-
     // 1. Photo Upload (Scrubbed EXIF via R2 & Hashed Clean Bytes)
     if (selectedImageFile) {
         try {
@@ -383,13 +380,13 @@ export async function uploadForensicMedia() {
                 maxHeight: 1080
             });
 
-            // Hash the cleaned file (matches what is uploaded)
+            // Hash the cleaned file
             const hash = await generateSha256Hash(cleanedFile);
 
-            // Upload the cleaned file to storage
+            // Upload the cleaned file via secure uploader to target folder "evidence"
             const uploadedUrl = await uploadSecurePhoto(cleanedFile, 'evidence');
 
-            // Verify file actually exists at edge endpoint before assigning (throws on failure)
+            // Verify file actually exists at edge endpoint before assigning
             await verifyMediaUrl(uploadedUrl);
 
             mediaData.imageUrl = uploadedUrl;
@@ -403,7 +400,7 @@ export async function uploadForensicMedia() {
         }
     }
 
-    // 2. Audio Upload (Direct to R2)
+    // 2. Audio Upload (Direct to R2 via unified uploadSecureAudio)
     if (engineInstance?.currentAudioBlob) {
         try {
             const blob = engineInstance.currentAudioBlob;
@@ -413,40 +410,11 @@ export async function uploadForensicMedia() {
                 showToast("Recording is empty. Please record again.", "error");
             } else {
                 const hash = await generateSha256Hash(blob);
-                const fileId = crypto.randomUUID();
-                const keyPath = `evidence/${userId}/${fileId}_voice.webm`;
 
-                const uploadedUrl = await new Promise((resolve, reject) => {
-                    const xhr = new XMLHttpRequest();
-                    xhr.open('PUT', `${R2_UPLOAD_ENDPOINT}?key=${encodeURIComponent(keyPath)}`, true);
-                    xhr.setRequestHeader('Content-Type', blob.type || 'audio/webm');
+                // Upload audio through unified pipeline to folder "evidence"
+                const uploadedUrl = await uploadSecureAudio(blob, 'evidence');
 
-                    if (auth.currentUser) {
-                        auth.currentUser.getIdToken().then(token => {
-                            xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-                            xhr.send(blob);
-                        }).catch(reject);
-                    } else {
-                        xhr.send(blob);
-                    }
-
-                    xhr.onload = () => {
-                        if (xhr.status >= 200 && xhr.status < 300) {
-                            try {
-                                const res = JSON.parse(xhr.responseText);
-                                resolve(res.url || `https://media.vocalwitness.com/${keyPath}`);
-                            } catch (_) {
-                                resolve(`https://media.vocalwitness.com/${keyPath}`);
-                            }
-                        } else {
-                            reject(new Error(`Audio upload failed: ${xhr.status}`));
-                        }
-                    };
-
-                    xhr.onerror = () => reject(new Error('Network error during audio upload.'));
-                });
-
-                // Verify voice recording URL before accepting (throws on failure)
+                // Verify voice recording URL before accepting
                 await verifyMediaUrl(uploadedUrl);
 
                 mediaData.audioUrl = uploadedUrl;
