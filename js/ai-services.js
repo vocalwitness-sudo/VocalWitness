@@ -2,6 +2,7 @@
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
 import { app } from "./firebase-config.js";
 import { logAuditEvent } from './audit.js';
+import { calculateSyntheticScoreFromMetadata } from './ai-services.js';
 
 const functions = getFunctions(app, "us-central1");
 
