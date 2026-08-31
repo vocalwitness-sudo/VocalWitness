@@ -257,13 +257,25 @@ window.publishTestimony = async () => {
     const titleInput = document.getElementById('testimonyTitle');
     const textarea = document.getElementById('mainInput');
     
-    const title = titleInput ? titleInput.value.trim() : '';
+    let title = titleInput ? titleInput.value.trim() : ''; // Changed to let
     const content = textarea ? textarea.value.trim() : '';
 
     if (!content) {
         showToast("Please write something before publishing", "error");
         return;
     }
+
+    // Auto-generate title if blank from the first ~80-100 characters of the body
+    if (!title && content) {
+        if (content.length <= 80) {
+            title = content;
+        } else {
+            const truncated = content.slice(0, 80);
+            const lastSpace = truncated.lastIndexOf(' ');
+            title = (lastSpace > 0 ? truncated.slice(0, lastSpace) : truncated) + '...';
+        }
+    }
+
     if (content.length > 2000) {
         showToast("Testimony is too long (max 2000 characters)", "error");
         return;
@@ -321,7 +333,7 @@ window.publishTestimony = async () => {
         }
 
         const testimonyData = {
-            title: title,
+            title: title, // Now properly catches the fallback title
             authorId: currentUser.uid,
             author: currentUser.displayName || "Registered Witness",
             content: content,
