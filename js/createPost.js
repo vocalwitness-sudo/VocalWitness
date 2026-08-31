@@ -1,4 +1,4 @@
-// js/createPost.js - Testimony Submission Engine with Client-Side Hashing
+// js/createPost.js - Testimony Submission Engine with Client-Side Hashing & AI Moderation
 import { 
     collection, 
     addDoc, 
@@ -13,6 +13,7 @@ import {
 import { db, storage, auth } from './firebase-config.js';
 import { showToast } from './utils.js';
 import { getUserTier } from './tier.js';
+import { analyzeReportContent } from './composer.js';
 
 /**
  * Computes a SHA-256 hash of a file or text buffer using native Web Crypto API.
@@ -80,6 +81,37 @@ export async function submitTestimony({
         throw new Error("Empty testimony payload.");
     }
 
+    // -------------------------------------------------------------
+    // AI Content Moderation Pre-Flight Check
+    // -------------------------------------------------------------
+    let moderationResult = { flagged: false, category: 'general', status: 'approved', flags: [] };
+    
+    if (content.trim().length > 0 && typeof analyzeReportContent === 'function') {
+        try {
+            const aiCheck = await analyzeReportContent(content.trim());
+            if (aiCheck) {
+                // If content triggers severe flags or policy violations
+                if (aiCheck.isBlocked || aiCheck.flagged) {
+                    showToast("Submission contains content that violates community standards.", "error");
+                    throw new Error("Submission blocked by AI moderation rules.");
+                }
+
+                moderationResult = {
+                    flagged: aiCheck.flagged || false,
+                    category: aiCheck.category || 'general',
+                    status: aiCheck.requiresReview ? 'pending_review' : 'approved',
+                    flags: aiCheck.flags || []
+                };
+            }
+        } catch (err) {
+            // Re-throw if explicitly blocked above, otherwise warn and allow pipeline to continue
+            if (err.message.includes("blocked by AI moderation")) {
+                throw err;
+            }
+            console.warn("AI moderation check failed or skipped:", err);
+        }
+    }
+
     showToast("Processing cryptographic seal...", "info");
 
     let forensicHash = null;
@@ -112,11 +144,11 @@ export async function submitTestimony({
         }
     }
 
-    // 3. Assemble Firestore Payload
+    // 3. Assemble Firestore Payload (Enriched with Moderation Data)
     const payload = {
         content: content.trim(),
         channel: channel,
-        feedVisibility: channel,
+        feedVisibility: moderationResult.status === 'pending_review' ? 'review_queue' : channel,
         authorId: user ? user.uid : null,
         author: isAnonymous ? "Anonymous Witness" : (user?.displayName || "Citizen Witness"),
         authorTier: authorTier,
@@ -130,13 +162,24 @@ export async function submitTestimony({
         commentsCount: 0,
         isPinned: false,
         isDeleted: false,
+
+        // Moderation fields
+        moderationStatus: moderationResult.status,
+        moderationFlags: moderationResult.flags,
+        aiCategory: moderationResult.category,
+
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
     };
 
     // 4. Commit to Firestore
     const docRef = await addDoc(collection(db, "testimonies"), payload);
-    showToast("🛡️ Testimony cryptographically sealed and published!", "success");
+    
+    if (moderationResult.status === 'pending_review') {
+        showToast("⚠️ Testimony submitted and queued for community review.", "warning");
+    } else {
+        showToast("🛡️ Testimony cryptographically sealed and published!", "success");
+    }
 
     return docRef.id;
 }
