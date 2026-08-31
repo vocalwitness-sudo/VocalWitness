@@ -41,7 +41,7 @@ export function openOfflineDB() {
 }
 
 /**
- * 2. TRANSACTION SAFETY: Save pending testimony when offline.
+ * Save pending testimony when offline.
  */
 export async function saveDraftOffline(payload) {
   try {
@@ -110,7 +110,7 @@ export async function clearOfflineQueue() {
 }
 
 /**
- * 3. COMPREHENSIVE PANIC CLEAR: Force drops the entire IndexedDB instance.
+ * Force drops the entire IndexedDB instance.
  */
 export async function dropOfflineDatabase() {
   return new Promise((resolve) => {
@@ -122,6 +122,17 @@ export async function dropOfflineDatabase() {
 }
 
 /**
+ * Helper to normalize feed names across historical and renamed keys.
+ */
+function normalizeFeedTarget(feedInput) {
+  const raw = (feedInput || '').toLowerCase().trim();
+  if (raw === 'vocal_truth' || raw === 'true_witness' || raw === 'witness_voice') {
+    return 'witness_voice';
+  }
+  return 'citizen_talk';
+}
+
+/**
  * Single entry point for composer: online → publish; offline → queue.
  */
 export async function publishTestimonyOrQueue(prepared) {
@@ -129,12 +140,13 @@ export async function publishTestimonyOrQueue(prepared) {
   const privateData = prepared.private || prepared._private || null;
 
   if (!navigator.onLine) {
+    const targetFeed = normalizeFeedTarget(publicData.targetFeed);
     const ok = await saveDraftOffline({
-      public: publicData,
+      public: { ...publicData, targetFeed },
       private: privateData,
       content: publicData.content,
       headline: publicData.headline,
-      targetFeed: publicData.targetFeed,
+      targetFeed,
       imageUrl: publicData.imageUrl,
       audioUrl: publicData.audioUrl,
       imageHash: publicData.imageHash,
@@ -162,11 +174,7 @@ export async function publishTestimonyOrQueue(prepared) {
  * Write public testimony + optional private tier contribution.
  */
 export async function publishTestimonyNow(publicData, privateData = null) {
-  let rawFeed = publicData.targetFeed || 'citizen_talk';
-  const targetFeed =
-    rawFeed === 'vocal_truth' || rawFeed === 'true_witness'
-      ? 'witness_voice'
-      : rawFeed;
+  const targetFeed = normalizeFeedTarget(publicData.targetFeed);
   const isWitnessVoice =
     publicData.isWitnessVoice !== undefined
       ? publicData.isWitnessVoice
@@ -185,6 +193,12 @@ export async function publishTestimonyNow(publicData, privateData = null) {
     } catch (_) {}
   }
 
+  const forensicHash =
+    publicData.forensicHash ||
+    publicData.imageHash ||
+    publicData.audioHash ||
+    null;
+
   const testimonyRef = await addDoc(collection(db, 'testimonies'), {
     headline: publicData.headline || null,
     content: publicData.content || '',
@@ -193,11 +207,7 @@ export async function publishTestimonyNow(publicData, privateData = null) {
     isWitnessVoice,
     imageUrl: publicData.imageUrl || null,
     audioUrl: publicData.audioUrl || null,
-    forensicHash:
-      publicData.forensicHash ||
-      publicData.imageHash ||
-      publicData.audioHash ||
-      null,
+    forensicHash,
     imageHash: publicData.imageHash || null,
     audioHash: publicData.audioHash || null,
     authorId: isAnonymous ? null : publicData.authorId || user?.uid || null,
@@ -209,11 +219,7 @@ export async function publishTestimonyNow(publicData, privateData = null) {
     authorTier: isAnonymous ? null : authorTier,
     authorWitnessLevel: isAnonymous ? null : authorWitnessLevel,
     createdAt: serverTimestamp(),
-    hasForensic: !!(
-      publicData.forensicHash ||
-      publicData.imageHash ||
-      publicData.audioHash
-    ),
+    hasForensic: Boolean(forensicHash),
     syncedFromOffline: Boolean(publicData.syncedFromOffline),
     originalOfflineTimestamp: publicData.originalOfflineTimestamp || null,
     status: 'published',
@@ -373,7 +379,7 @@ export const submitPeerVote = async (postId, type, collectionName = 'testimonies
 
 // ==================== OFFLINE SYNC ENGINE ====================
 let isSyncing = false;
-const activeSyncIds = new Set(); // 1. HARDENED SYNC LOCKING TRACKER
+const activeSyncIds = new Set();
 
 export async function syncOfflineDrafts() {
   if (isSyncing || !navigator.onLine) return;
@@ -388,7 +394,6 @@ export async function syncOfflineDrafts() {
   showToast(`Syncing ${drafts.length} offline draft(s)...`, 'info');
 
   for (const draft of drafts) {
-    // Prevent duplicate submission loops across rapid auth/network state triggers
     if (activeSyncIds.has(draft.id)) continue;
     activeSyncIds.add(draft.id);
 
@@ -435,8 +440,16 @@ window.addEventListener('online', () => {
 
 if (auth) {
   auth.onAuthStateChanged((user) => {
-    if (navigator.onLine) {
+    if (navigator.onLine && user) {
       syncOfflineDrafts();
     }
   });
 }
+
+// Global window bindings for legacy modules
+window.saveDraftOffline = saveDraftOffline;
+window.getOfflineDrafts = getOfflineDrafts;
+window.publishTestimonyOrQueue = publishTestimonyOrQueue;
+window.publishTestimonyNow = publishTestimonyNow;
+window.getUserData = getUserData;
+window.syncOfflineDrafts = syncOfflineDrafts;
