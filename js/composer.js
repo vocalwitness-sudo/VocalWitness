@@ -371,7 +371,6 @@ export function initComposer() {
     }
 
     if (bodyInput && !bodyInput.dataset.aiListenerAttached) {
-        console.log("Composer AI Moderation listener attached to:", bodyInput);
         bodyInput.addEventListener('input', (e) => {
             const text = e.target.value.trim();
             if (text.length < 25) {
@@ -387,14 +386,11 @@ export function initComposer() {
                 lastAnalyzedText = text;
 
                 if (bodyInput.value.trim().length >= 25) {
-                    console.log("Executing real-time AI moderation check on input text...");
                     await runRealtimeAiAnalysis(text);
                 }
             }, 800);
         });
         bodyInput.dataset.aiListenerAttached = 'true';
-    } else if (!bodyInput) {
-        console.warn("Composer AI Moderation: No input textarea element found on the DOM.");
     }
 
     if (postButton && !postButton.dataset.listenerAttached) {
