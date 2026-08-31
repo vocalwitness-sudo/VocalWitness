@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="myProfileTitle">My Profile | VocalWitness</title>
-   
+
     <!-- Styling Dependencies -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
-   
+
     <!-- PDF Export Dependency -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 </head>
@@ -23,12 +23,12 @@
                 </div>
                 <span class="font-bold text-xl tracking-tight text-white" data-i18n="appTitle">VocalWitness</span>
             </a>
-           
+
             <div class="flex items-center gap-4">
                 <a href="index.html" class="text-sm font-medium text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-1">
                     <span>←</span> <span data-i18n="backToSquareText">Back to Square</span>
                 </a>
-                <button onclick="toggleDarkMode()" aria-label="Toggle Theme"
+                <button type="button" onclick="toggleDarkMode()" aria-label="Toggle Theme"
                         class="p-2.5 rounded-2xl bg-zinc-900/50 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500">
                     🌙
                 </button>
@@ -39,7 +39,7 @@
     <!-- Main Page Content -->
     <main class="max-w-4xl mx-auto p-4 sm:p-6">
         <div class="glass rounded-3xl border border-zinc-800/80 overflow-hidden min-h-[600px] flex flex-col shadow-2xl">
-            <!-- Dynamic profile mount point -->
+            <!-- Dynamic profile mount point (filled by renderProfileUI) -->
             <div id="mainProfileContent" class="flex-1 p-6 sm:p-8 overflow-y-auto custom-scroll">
                 <div class="flex flex-col items-center justify-center py-24 space-y-4">
                     <div class="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
@@ -53,13 +53,13 @@
     <div id="editProfileModal" role="dialog" aria-modal="true" aria-labelledby="editProfileTitle"
          class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[10001] p-4">
         <div class="glass rounded-3xl p-6 max-w-md w-full border border-zinc-800 space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto custom-scroll">
-            
+
             <div class="flex justify-between items-center border-b border-zinc-800/80 pb-3">
                 <h3 id="editProfileTitle" class="text-xl font-bold text-white" data-i18n="editProfile">Edit Profile</h3>
-                <button onclick="closeEditProfile()" aria-label="Close modal"
+                <button type="button" onclick="closeEditProfile()" aria-label="Close modal"
                         class="text-2xl text-zinc-400 hover:text-white transition-colors">&times;</button>
             </div>
-           
+
             <form id="editProfileForm" onsubmit="handleSaveProfile(event)" class="space-y-5">
 
                 <!-- Avatar Upload -->
@@ -130,18 +130,20 @@
                               class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all resize-none"></textarea>
                 </div>
 
-                <!-- Privacy Shield -->
-                <div class="bg-zinc-900/60 p-4 rounded-2xl border border-zinc-800 flex items-center justify-between">
-                    <div>
+                <!-- Privacy Shield (default ON = private) -->
+                <div class="bg-zinc-900/60 p-4 rounded-2xl border border-zinc-800 flex items-center justify-between gap-3">
+                    <div class="min-w-0">
                         <div class="font-medium text-white text-sm flex items-center gap-2">
                             🛡️ Privacy Shield
                         </div>
-                        <div class="text-xs text-zinc-400 mt-0.5">
-                            Hide real name & location from public view
+                        <div class="text-xs text-zinc-400 mt-0.5 leading-relaxed">
+                            On by default. Hides real name &amp; location from others.
+                            Separate from Bold Witness posting mode.
                         </div>
                     </div>
                     <input type="checkbox" id="toggleHidePublicInfo" checked
-                           class="w-5 h-5 accent-emerald-500 rounded cursor-pointer">
+                           class="w-5 h-5 accent-emerald-500 rounded cursor-pointer shrink-0"
+                           aria-label="Hide real name and location from public view">
                 </div>
 
                 <div class="flex gap-3 pt-2">
@@ -162,12 +164,12 @@
     <div id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle"
          class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[10001] p-4">
         <div class="glass rounded-3xl p-6 max-w-lg w-full max-h-[85vh] overflow-y-auto custom-scroll border border-zinc-800 space-y-6 shadow-2xl">
-            
+
             <div class="flex justify-between items-center border-b border-zinc-800/80 pb-3">
                 <h3 id="settingsTitle" class="text-xl font-bold text-white flex items-center gap-2">
                     ⚙️ <span data-i18n="accountSettings">Account Settings</span>
                 </h3>
-                <button onclick="closeSettings()" aria-label="Close settings"
+                <button type="button" onclick="closeSettings()" aria-label="Close settings"
                         class="text-2xl text-zinc-400 hover:text-white transition-colors">&times;</button>
             </div>
 
@@ -176,26 +178,26 @@
                 <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wider" data-i18n="securityHeader">
                     Security & Access
                 </h4>
-               
-                <div class="bg-zinc-900/60 p-4 rounded-2xl border border-zinc-800/80 flex justify-between items-center">
-                    <div>
+
+                <div class="bg-zinc-900/60 p-4 rounded-2xl border border-zinc-800/80 flex justify-between items-center gap-3">
+                    <div class="min-w-0">
                         <div class="font-medium text-white text-sm" data-i18n="passwordLabel">Password</div>
                         <div class="text-xs text-zinc-400" data-i18n="passwordSub">Send password reset email</div>
                     </div>
-                    <button onclick="triggerPasswordReset()"
-                            class="px-3.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-zinc-200 rounded-xl transition border border-zinc-700/50"
+                    <button type="button" onclick="triggerPasswordReset()"
+                            class="shrink-0 px-3.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-zinc-200 rounded-xl transition border border-zinc-700/50"
                             data-i18n="resetBtn">
                         Reset
                     </button>
                 </div>
 
-                <div class="bg-zinc-900/60 p-4 rounded-2xl border border-zinc-800/80 flex justify-between items-center">
-                    <div>
+                <div class="bg-zinc-900/60 p-4 rounded-2xl border border-zinc-800/80 flex justify-between items-center gap-3">
+                    <div class="min-w-0">
                         <div class="font-medium text-white text-sm" data-i18n="2faLabel">Two-Factor Auth (2FA)</div>
                         <div class="text-xs text-zinc-400" data-i18n="2faSub">Require phone verification on sign-in</div>
                     </div>
                     <input type="checkbox" id="toggle2FA"
-                           class="w-5 h-5 accent-emerald-500 rounded cursor-pointer">
+                           class="w-5 h-5 accent-emerald-500 rounded cursor-pointer shrink-0">
                 </div>
             </div>
 
@@ -204,7 +206,7 @@
                 <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wider" data-i18n="preferencesHeader">
                     Preferences
                 </h4>
-               
+
                 <div class="bg-zinc-900/60 p-4 rounded-2xl border border-zinc-800/80 space-y-2">
                     <label for="defaultDoorSelect" class="text-xs font-medium text-zinc-400 block" data-i18n="defaultDoorLabel">
                         Default Entrance Door
@@ -218,37 +220,76 @@
                 </div>
             </div>
 
+            <!-- Verification shortcuts (matches profile ladder) -->
+            <div class="space-y-3">
+                <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wider">
+                    Verification
+                </h4>
+
+                <div class="bg-zinc-900/60 p-4 rounded-2xl border border-zinc-800/80 flex justify-between items-center gap-3">
+                    <div class="min-w-0">
+                        <div class="font-medium text-white text-sm">Phone verification</div>
+                        <div class="text-xs text-zinc-400">Unlock Citizen Circle</div>
+                    </div>
+                    <button type="button" onclick="startPhoneVerification()"
+                            class="shrink-0 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-black rounded-xl transition">
+                        Verify
+                    </button>
+                </div>
+
+                <div class="bg-zinc-900/60 p-4 rounded-2xl border border-zinc-800/80 flex justify-between items-center gap-3">
+                    <div class="min-w-0">
+                        <div class="font-medium text-white text-sm">ZK / Higher Trust</div>
+                        <div class="text-xs text-zinc-400">Sealed proofs • True Witness path</div>
+                    </div>
+                    <a href="/verify.html"
+                       class="shrink-0 px-3.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-zinc-200 rounded-xl transition border border-zinc-700/50">
+                        Start
+                    </a>
+                </div>
+            </div>
+
             <!-- Data & Identity -->
             <div class="space-y-3 pt-2">
                 <h4 class="text-xs font-bold text-red-400 uppercase tracking-wider" data-i18n="dangerZoneHeader">
                     Data & Identity
                 </h4>
-               
-                <div class="bg-zinc-900/60 p-4 rounded-2xl border border-zinc-800/80 flex justify-between items-center">
-                    <div>
+
+                <div class="bg-zinc-900/60 p-4 rounded-2xl border border-zinc-800/80 flex justify-between items-center gap-3">
+                    <div class="min-w-0">
                         <div class="font-medium text-white text-sm" data-i18n="exportLabel">Export Profile Record</div>
                         <div class="text-xs text-zinc-400" data-i18n="exportSub">Download identity summary PDF</div>
                     </div>
-                    <button onclick="exportUserDataPDF()"
-                            class="px-3.5 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 text-xs font-semibold rounded-xl transition"
+                    <button type="button" onclick="exportUserDataPDF()"
+                            class="shrink-0 px-3.5 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 text-xs font-semibold rounded-xl transition"
                             data-i18n="exportBtn">
                         Download PDF
                     </button>
                 </div>
+
+                <!-- Sign out also available here -->
+                <button type="button" onclick="handleSignOut()"
+                        class="w-full py-3 px-4 bg-red-950/40 hover:bg-red-900/60 border border-red-500/40 text-red-400 hover:text-red-300 text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
+                    🚪 Sign Out
+                </button>
             </div>
         </div>
     </div>
 
     <!-- ====================== PROFILE MODAL (optional overlay view) ====================== -->
-    <div id="profileModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9000] p-4">
+    <div id="profileModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9000] p-4"
+         aria-hidden="true">
         <div class="glass rounded-3xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto custom-scroll border border-zinc-800 shadow-2xl relative">
-            <button onclick="closeProfile()" aria-label="Close profile"
+            <button type="button" onclick="closeProfile()" aria-label="Close profile"
                     class="absolute top-4 right-4 text-2xl text-zinc-400 hover:text-white transition-colors z-10">
                 &times;
             </button>
             <div id="modalProfileContent" class="pt-2"></div>
         </div>
     </div>
+
+    <!-- Optional dual-identity card mount (ProfileManager) -->
+    <div id="profileCard" class="hidden"></div>
 
     <!-- Application Initialization Scripts -->
     <script type="module">
@@ -257,10 +298,9 @@
         import './js/profile.js';
 
         document.addEventListener('DOMContentLoaded', () => {
-            initLanguage();
-            initDarkMode();
+            if (typeof initLanguage === 'function') initLanguage();
+            if (typeof initDarkMode === 'function') initDarkMode();
 
-            // Keyboard support
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') {
                     if (typeof window.closeEditProfile === 'function') window.closeEditProfile();
