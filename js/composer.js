@@ -213,16 +213,24 @@ export async function handleMediaSelect(event) {
  * Initialize composer listeners and real-time AI analysis
  */
 export function initComposer() {
-    const fileInput = document.getElementById('media-input') || document.getElementById('photoInput');
+    const fileInput = document.getElementById('media-input') || 
+                      document.getElementById('photoInput');
+                      
     const btnPhoto = document.getElementById('btn-attach-photo') ||
                      document.getElementById('btnPhoto') ||
                      document.getElementById('btn-photo');
-    const postButton = document.getElementById('postButton') || document.getElementById('submitBtn');
-    const composerForm = document.getElementById('composer-form') || document.getElementById('testimonyForm');
+                     
+    const postButton = document.getElementById('postButton') || 
+                       document.getElementById('submitBtn');
+                       
+    const composerForm = document.getElementById('composer-form') || 
+                         document.getElementById('testimonyForm');
 
+    // Updated with querySelector fallback to ensure active textareas are caught
     const bodyInput = document.getElementById('mainInput') ||
                       document.getElementById('postBody') ||
-                      document.getElementById('testimonyBody');
+                      document.getElementById('testimonyBody') ||
+                      document.querySelector('textarea');
 
     // Photo/Media button → trigger file picker
     if (btnPhoto && fileInput && !btnPhoto.dataset.listenerAttached) {
@@ -241,6 +249,8 @@ export function initComposer() {
 
     // Real-time AI Content Analysis & Auto-Classification
     if (bodyInput && !bodyInput.dataset.aiListenerAttached) {
+        console.log("Composer AI Moderation listener attached to:", bodyInput);
+
         bodyInput.addEventListener('input', (e) => {
             const text = e.target.value.trim();
             if (text.length < 25) {
@@ -256,11 +266,14 @@ export function initComposer() {
                 lastAnalyzedText = text;
 
                 if (bodyInput.value.trim().length >= 25) {
+                    console.log("Executing real-time AI moderation check on input text...");
                     await runRealtimeAiAnalysis(text);
                 }
             }, 800);
         });
         bodyInput.dataset.aiListenerAttached = 'true';
+    } else if (!bodyInput) {
+        console.warn("Composer AI Moderation: No input textarea element found on the DOM.");
     }
 
     // Submit button
@@ -275,7 +288,6 @@ export function initComposer() {
         composerForm.dataset.listenerAttached = 'true';
     }
 }
-
 /**
  * Executes background AI analysis on composer text input
  */
