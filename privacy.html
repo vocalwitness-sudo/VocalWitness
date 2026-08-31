@@ -5,25 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="privacyPageTitle">Privacy Policy • VocalWitness</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { 
-            font-family: 'Inter', system-ui, sans-serif; 
-            background: #0a0f1c; 
-            color: #e4e4e7; 
-        }
-        .glass { 
-            background: rgba(17, 24, 39, 0.95); 
-            backdrop-filter: blur(20px); 
-            border: 1px solid rgba(16, 185, 129, 0.25); 
-        }
-        .badge-glass { 
-            background: rgba(31, 41, 55, 0.6); 
-            border: 1px solid rgba(255, 255, 255, 0.1); 
-        }
-        .panic-btn { 
-            background: linear-gradient(135deg, #dc2626, #991b1b); 
-        }
-    </style>
+    <link rel="stylesheet" href="./style.css">
 </head>
 <body class="min-h-screen p-6 md:p-12 pb-24">
 
@@ -54,161 +36,160 @@
                 <h1 class="text-4xl md:text-5xl font-bold tracking-tighter text-white" data-i18n="privacyTitle">Privacy Policy</h1>
             </div>
             <p class="text-sm text-zinc-400 mb-2" data-i18n="privacyLastUpdated">Last updated: August 25, 2026</p>
-            <p class="text-xl text-zinc-400" data-i18n="privacySubtitle">Your privacy is protected by strong technology — not just promises.</p>
+            <p class="text-xl text-zinc-400" data-i18n="privacySubtitle">Protected by zero-knowledge architecture and verifiable technical neutrality.</p>
         </header>
 
         <section class="glass rounded-3xl p-8 mb-10 border-emerald-500/40 space-y-4">
             <div class="flex items-center gap-3 text-emerald-400 font-bold text-xl">
                 <span class="text-2xl">🛡️</span>
-                <span data-i18n="zkSubpoenaTitle">We Cannot Give What We Do Not Have</span>
+                <span data-i18n="zkSubpoenaTitle">Architectural Data Minimization</span>
             </div>
             <p class="text-zinc-200 leading-relaxed text-sm md:text-base" data-i18n="zkSubpoenaDesc">
-                <strong>VocalWitness is built so that your personal identity never reaches our servers.</strong>  
-                If any authority asks for your private information, our answer is simple: We have nothing to give.
+                <strong>VocalWitness is engineered so that unencrypted user identities and private device data never transit to or persist on our infrastructure.</strong> 
+                Because user identification layers are decoupled from published records via client-side processing, our system state inherently maintains no centralized identity ledger to query or disclose.
             </p>
             <div class="pt-2 flex flex-wrap items-center gap-3 text-xs text-zinc-300">
                 <span class="text-zinc-400 font-medium" data-i18n="privacyArchitectureBy">Protected by:</span>
-                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-emerald-400">Client-Side Protection</span>
-                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-cyan-400">Automatic Metadata Removal</span>
-                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-amber-400">No IP Logging</span>
+                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-emerald-400">Client-Side Zero-Knowledge Verification</span>
+                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-cyan-400">Automated EXIF Sanitization</span>
+                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-amber-400">Edge IP Anonymization</span>
             </div>
         </section>
 
         <div class="space-y-10 text-zinc-300 leading-relaxed">
 
             <section class="glass rounded-3xl p-6 md:p-8">
-                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec1Title">1. Everything Important Happens on Your Device</h2>
+                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec1Title">1. Client-Bound Processing Pipeline</h2>
                 <div class="space-y-3 text-sm md:text-base text-zinc-300">
                     <p data-i18n="privacySec1Para1">
-                        When you upload a photo, voice note, or document, the sensitive work is done inside your own browser before anything leaves your device:
+                        When media or documents are ingested, payload preparation occurs entirely within the local runtime environment prior to transmission:
                     </p>
                     <ul class="list-disc pl-5 space-y-2 text-zinc-400">
-                        <li data-i18n="privacySec1Bullet1"><strong>Metadata is removed:</strong> Camera model, GPS location, and other private details are automatically stripped.</li>
-                        <li data-i18n="privacySec1Bullet2"><strong>Digital fingerprint is created:</strong> Your browser makes a unique fingerprint of the file. Only this and the cleaned media are sent.</li>
-                        <li data-i18n="privacySec1Bullet3"><strong>Strong verification:</strong> You can prove you are a real person without revealing private identity details.</li>
+                        <li data-i18n="privacySec1Bullet1"><strong>Metadata Sanitization:</strong> EXIF data, device signatures, and geolocation tags are scrubbed in-browser.</li>
+                        <li data-i18n="privacySec1Bullet2"><strong>Cryptographic Hashing:</strong> Files are mapped to strict cryptographic fingerprints to ensure ledger immutability.</li>
+                        <li data-i18n="privacySec1Bullet3"><strong>Zero-Knowledge Proofs:</strong> Verification assertions are computed locally using zk-SNARK protocols to preserve user confidentiality.</li>
                     </ul>
                 </div>
             </section>
 
             <section class="glass rounded-3xl p-6 md:p-8">
-                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec2Title">2. What We Never Collect or Store</h2>
+                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec2Title">2. Data Non-Retention Policy</h2>
                 <div class="space-y-3 text-sm md:text-base text-zinc-300">
-                    <p data-i18n="privacySec2Intro">For maximum safety we deliberately do not keep:</p>
+                    <p data-i18n="privacySec2Intro">To ensure uncompromising operational security, our systems strictly omit the collection or retention of:</p>
                     <ul class="space-y-2 text-zinc-400">
                         <li class="flex items-start gap-2">
                             <span class="text-red-400 font-bold">✕</span>
-                            <span data-i18n="privacySec2Item1"><strong>Your real IP address</strong> — requests go through protection layers so your location is not linked to your posts.</span>
+                            <span data-i18n="privacySec2Item1"><strong>Origin IP Addresses</strong> — network connections are terminated and stripped of identifying telemetry at the edge proxy layer.</span>
                         </li>
                         <li class="flex items-start gap-2">
                             <span class="text-red-400 font-bold">✕</span>
-                            <span data-i18n="privacySec2Item2"><strong>Phone numbers on any public record</strong> — phone checks are only temporary to stop spam and are never saved or shown.</span>
+                            <span data-i18n="privacySec2Item2"><strong>Permanent Telephony Records</strong> — anti-spam verification checks are stateless and never mapped to public publication logs.</span>
                         </li>
                         <li class="flex items-start gap-2">
                             <span class="text-red-400 font-bold">✕</span>
-                            <span data-i18n="privacySec2Item3">Government IDs, passports, biometrics, or your personal contact list.</span>
+                            <span data-i18n="privacySec2Item3">Government identifiers, cryptographic seed phrases, biometric profiles, or address books.</span>
                         </li>
                     </ul>
                 </div>
             </section>
 
             <section class="glass rounded-3xl p-6 md:p-8">
-                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec3Title">3. What We Do Process (Only What’s Needed)</h2>
+                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec3Title">3. Permitted System State Data</h2>
                 <div class="grid md:grid-cols-2 gap-6 mt-4">
                     <div class="glass rounded-3xl p-6">
-                        <h3 class="font-semibold text-emerald-400 mb-2" data-i18n="privacyAccountInfoTitle">Account Basics</h3>
-                        <p class="text-sm text-zinc-400" data-i18n="privacyAccountInfoDesc">Your chosen username, security keys, and any trust badges you earn.</p>
+                        <h3 class="font-semibold text-emerald-400 mb-2" data-i18n="privacyAccountInfoTitle">Session Parameters</h3>
+                        <p class="text-sm text-zinc-400" data-i18n="privacyAccountInfoDesc">Pseudonymous identifiers and locally maintained cryptographic session credentials.</p>
                     </div>
                     <div class="glass rounded-3xl p-6">
-                        <h3 class="font-semibold text-emerald-400 mb-2" data-i18n="privacyContentTitle">Published Content</h3>
-                        <p class="text-sm text-zinc-400" data-i18n="privacyContentDesc">Your reports, cleaned media, digital fingerprints, and timestamps.</p>
+                        <h3 class="font-semibold text-emerald-400 mb-2" data-i18n="privacyContentTitle">Ledger Artifacts</h3>
+                        <p class="text-sm text-zinc-400" data-i18n="privacyContentDesc">Sanitized media payloads, public cryptographic digests, and deterministic timestamps.</p>
                     </div>
                     <div class="glass rounded-3xl p-6">
-                        <h3 class="font-semibold text-emerald-400 mb-2" data-i18n="privacyVerificationTitle">Anti-Spam Checks</h3>
-                        <p class="text-sm text-zinc-400" data-i18n="privacyVerificationDesc">Proof that you are a real person — without revealing who you are.</p>
+                        <h3 class="font-semibold text-emerald-400 mb-2" data-i18n="privacyVerificationTitle">Integrity Tokens</h3>
+                        <p class="text-sm text-zinc-400" data-i18n="privacyVerificationDesc">Anonymous proof validation tokens used to deter automated platform abuse.</p>
                     </div>
                     <div class="glass rounded-3xl p-6">
-                        <h3 class="font-semibold text-emerald-400 mb-2" data-i18n="privacyTechnicalTitle">Security Protection</h3>
-                        <p class="text-sm text-zinc-400" data-i18n="privacyTechnicalDesc">Anonymous technical data used only to block attacks and bots.</p>
+                        <h3 class="font-semibold text-emerald-400 mb-2" data-i18n="privacyTechnicalTitle">Infrastructure Metrics</h3>
+                        <p class="text-sm text-zinc-400" data-i18n="privacyTechnicalDesc">Aggregated, non-attributable telemetry strictly utilized for threat mitigation.</p>
                     </div>
                 </div>
             </section>
 
             <section class="glass rounded-3xl p-6 md:p-8">
-                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec4Title">4. Aligned with Universal Human Rights</h2>
+                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec4Title">4. Alignment with International Human Rights Standards</h2>
                 <p class="text-sm md:text-base text-zinc-300 leading-relaxed" data-i18n="privacySec4Text">
-                    Our design follows Articles 12 and 19 of the Universal Declaration of Human Rights: everyone has the right to privacy and the freedom to share information without interference.
+                    VocalWitness operations align directly with Articles 12 and 19 of the Universal Declaration of Human Rights, safeguarding secure communication channels, information integrity, and the fundamental right to unhindered expression.
                 </p>
             </section>
 
             <section class="glass rounded-3xl p-6 md:p-8">
-                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec5Title">5. We Are a Neutral Platform</h2>
+                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec5Title">5. Platform Neutrality & Technical Governance</h2>
                 <p class="mb-3 text-sm md:text-base text-zinc-300" data-i18n="privacySec5Text1">
-                    VocalWitness is only a technical host. We do not write, approve, or fact-check the content people post.
+                    VocalWitness functions strictly as an immutable technical verification layer and neutral host. The platform does not author, curate, or editorially endorse published records.
                 </p>
                 <p class="text-zinc-400 text-sm leading-relaxed" data-i18n="privacySec5Text2">
-                    Each person is fully responsible for what they choose to publish.
+                    Publishing entities retain sole responsibility for the factual verification, legal compliance, and distribution context of their submissions.
                 </p>
             </section>
 
             <section class="glass rounded-3xl p-6 md:p-8">
-                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec6Title">6. What Is Not Allowed & How to Report</h2>
+                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec6Title">6. Content Moderation & Abuse Protocols</h2>
                 <p class="mb-3 text-sm md:text-base text-zinc-300" data-i18n="privacySec6Text1">
-                    Harassment, sharing someone’s private personal details without consent, child sexual abuse material, and deliberately fake harmful media are strictly forbidden.
+                    To maintain protocol stability and protect network integrity, malicious vectors including non-consensual private media exposure, automated harassment feeds, synthetic impersonation vectors, and exploitation material are strictly prohibited.
                 </p>
                 <p class="text-zinc-400 text-sm leading-relaxed" data-i18n="privacySec6Text2">
-                    If you see content that breaks these rules, please report it using the in-app button.
+                    Flagging mechanisms are available via the client interface to trigger automated review against predefined safety heuristics.
                 </p>
             </section>
 
             <section class="glass rounded-3xl p-6 md:p-8">
-                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec7Title">7. Quick Exit & Permanent Records</h2>
+                <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec7Title">7. State Persistence & Sanitization Controls</h2>
                 <p class="text-sm md:text-base text-zinc-300 leading-relaxed" data-i18n="privacySec7Text">
-                    You can instantly clear your local browser data with the Quick Exit button.  
-                    However, once a report is published and locked, it becomes a permanent record.
+                    Client state can be instantaneously purged using the Quick Exit protocol, clearing all local browser storage traces. Once an evidentiary record is committed to the public ledger, it remains cryptographically sealed and permanent.
                 </p>
             </section>
 
             <section class="glass rounded-3xl p-6 md:p-8">
               <h2 class="text-2xl font-semibold text-white mb-4" data-i18n="privacySec8Title">8. Intellectual Property</h2>
               <p class="text-sm md:text-base text-zinc-300 leading-relaxed" data-i18n="privacySec8Text">
-                The VocalWitness platform, including its software, design, name, and logo, is the exclusive intellectual property of VocalWitness.  
-                You may not copy or reuse it without permission.
+                The VocalWitness software architecture, user interface design, cryptographic modules, and brand assets remain the exclusive property of VocalWitness, protected under international copyright law.
               </p>
             </section>
 
         </div>
+
         <!-- ===================== TECHNICAL DETAILS ===================== -->
-<section class="glass rounded-3xl p-6 md:p-8 mt-10 border border-zinc-700">
-    <h2 class="text-xl font-bold text-zinc-300 mb-6 flex items-center gap-2">
-        <span>⚙️</span> Technical & Legal Details
-    </h2>
-    
-    <div class="space-y-5 text-sm text-zinc-400 leading-relaxed">
-        <div>
-            <h3 class="font-semibold text-emerald-400 mb-1">Client-Side Processing</h3>
-            <p>EXIF metadata, GPS coordinates and device identifiers are stripped in-browser using Canvas / Web Crypto APIs before any upload occurs. Only the cleaned media + SHA-256 digest leave the device.</p>
-        </div>
-        
-        <div>
-            <h3 class="font-semibold text-emerald-400 mb-1">Zero-Knowledge Architecture</h3>
-            <p>Verification uses client-side zk-SNARKs so standing can be proven without revealing underlying credentials or identity. No private keys or identity logs exist on VocalWitness servers.</p>
-        </div>
+        <section class="glass rounded-3xl p-6 md:p-8 mt-10 border border-zinc-700">
+            <h2 class="text-xl font-bold text-zinc-300 mb-6 flex items-center gap-2">
+                <span>⚙️</span> Technical & Legal Specifications
+            </h2>
+            
+            <div class="space-y-5 text-sm text-zinc-400 leading-relaxed">
+                <div>
+                    <h3 class="font-semibold text-emerald-400 mb-1">Client-Side Processing Pipeline</h3>
+                    <p>EXIF parameters, coordinate points, and device markers are systematically eliminated in-browser via Canvas and Web Crypto routines prior to payload transmission. Only sanitized media and SHA-256 validation strings are passed outward.</p>
+                </div>
+                
+                <div>
+                    <h3 class="font-semibold text-emerald-400 mb-1">Zero-Knowledge Verification Architecture</h3>
+                    <p>Trust assertions are validated utilizing client-side zk-SNARK circuits, ensuring proof of validity without exposing operational or personal identity tokens. No persistent credentials reside on server nodes.</p>
+                </div>
 
-        <div>
-            <h3 class="font-semibold text-emerald-400 mb-1">What is never stored</h3>
-            <ul class="list-disc pl-5 space-y-1">
-                <li>Origin IP addresses (purged at Cloudflare Edge)</li>
-                <li>Phone numbers on any public or permanent ledger</li>
-                <li>Government IDs, biometrics, or contact graphs</li>
-            </ul>
-        </div>
+                <div>
+                    <h3 class="font-semibold text-emerald-400 mb-1">Data Exclusions</h3>
+                    <ul class="list-disc pl-5 space-y-1">
+                        <li>Origin IP logs (flushed at the Cloudflare edge network)</li>
+                        <li>Temporary telephony validation vectors (retained strictly in volatile cache)</li>
+                        <li>Biometric, governmental, or social network mapping artifacts</li>
+                    </ul>
+                </div>
 
-        <div>
-            <h3 class="font-semibold text-emerald-400 mb-1">Intellectual Property</h3>
-            <p>The VocalWitness platform (software, cryptographic systems, hashing methods, Zero-Knowledge implementation, Evidence Ledger design, interface, branding, name and logo) is the exclusive intellectual property of VocalWitness and is protected by copyright and applicable laws.</p>
-        </div>
-    </div>
-</section>
+                <div>
+                    <h3 class="font-semibold text-emerald-400 mb-1">Proprietary Assets</h3>
+                    <p>All core protocol logic, smart contract interfaces, user interface elements, graphic branding, and system architecture are protected intellectual property.</p>
+                </div>
+            </div>
+        </section>
 
         <section class="pt-8 border-t border-zinc-800 text-center mt-12">
             <a href="index.html" 
