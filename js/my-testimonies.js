@@ -90,6 +90,7 @@ function renderTestimonies(snapshot, container) {
             ...data 
         });
 
+        const postTitle = data.title || '';
         const textContent = data.content || data.text || '';
         const dateStr = data.createdAt?.toDate
             ? data.createdAt.toDate().toLocaleString()
@@ -112,6 +113,7 @@ function renderTestimonies(snapshot, container) {
                         ${!hasPack && hasHash ? '<span class="text-[10px] text-emerald-400 border border-emerald-700/40 rounded-full px-2 py-0.5">🔒 Hashed</span>' : ''}
                         ${corrobCount > 0 ? `<span class="text-[10px] text-cyan-400 border border-cyan-700/40 rounded-full px-2 py-0.5">🤝 ${corrobCount} Corroboration${corrobCount > 1 ? 's' : ''}</span>` : ''}
                     </div>
+                    ${postTitle ? `<h3 class="text-lg font-bold text-white mb-1.5 leading-snug">${escapeHTML(postTitle)}</h3>` : ''}
                     <p class="text-zinc-100 leading-relaxed" id="content-${testimonyId}">${escapeHTML(textContent)}</p>
                     <div class="flex flex-wrap items-center gap-3 mt-4 text-xs text-zinc-400">
                         <span class="text-emerald-500">${dateStr}</span>
