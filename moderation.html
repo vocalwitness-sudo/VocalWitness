@@ -143,13 +143,19 @@
                     card.id = `post-${item.id}`;
                     card.className = "bg-slate-950/60 border border-slate-800 rounded-xl p-4 sm:p-6 shadow-sm hover:border-slate-700 transition";
 
-                    let reasonsBadge = (item.autoFlaggedReasons || [])
-                        .map(r => `<span class="bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded text-xs">${escapeHTML(r)}</span>`)
+                    // Map auto-flagged reasons and format user-facing report codes (like suspected_synthetic)
+                    let reasonsBadge = (item.autoFlaggedReasons || item.reportReasons || [])
+                        .map(r => {
+                            if (r === 'suspected_synthetic') {
+                                return `<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded text-xs">🤖 Suspected Synthetic Media</span>`;
+                            }
+                            return `<span class="bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded text-xs">${escapeHTML(r)}</span>`;
+                        })
                         .join(' ');
 
-                    if (item.isSynthetic || item.syntheticLikelihood > 50) {
-                        const score = Math.round((item.syntheticScore || (item.syntheticLikelihood ? item.syntheticLikelihood / 100 : 0)) * 100);
-                        reasonsBadge += ` <span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded text-xs">🤖 Suspected Synthetic Media (${score}%)</span>`;
+                    if ((item.isSynthetic || item.syntheticLikelihood > 50 || item.reportReason === 'suspected_synthetic') && !reasonsBadge.includes('Suspected Synthetic')) {
+                        const score = Math.round((item.syntheticScore || (item.syntheticLikelihood ? item.syntheticLikelihood / 100 : 0.85)) * 100);
+                        reasonsBadge += ` <span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded text-xs">🤖 Suspected Synthetic / Deepfake (${score}%)</span>`;
                     }
 
                     const safeAuthor = escapeHTML(item.author || 'Anonymous Witness');
