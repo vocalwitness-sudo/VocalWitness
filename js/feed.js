@@ -23,7 +23,6 @@ import {
     submitCorroboration, 
     getCorroborationScoreFromDoc 
 } from './corroboration.js';
-import { reportContent, translateTestimony } from './moderation.js';
 
 let activeFeedListener = null;
 let allPostsCache = [];
