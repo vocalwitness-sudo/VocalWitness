@@ -121,3 +121,14 @@ export async function inspectAndValidateVideo(file) {
         };
     });
 }
+
+/**
+ * Primary interface for composer modules.
+ * Alias wrapper around inspectAndValidateVideo.
+ * 
+ * @param {File} file 
+ * @returns {Promise<Object>}
+ */
+export async function validateVideoFile(file) {
+    return await inspectAndValidateVideo(file);
+}
