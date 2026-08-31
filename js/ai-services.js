@@ -60,22 +60,6 @@ export async function transcribeAudioWitness(audioBase64, mimeType = "audio/wav"
     }
 }
 
-/**
- * Compact Summary Generation for Feed Cards
- * @param {string} text 
- * @returns {Promise<string>} Concise summary
- */
-export async function summarizeReport(text) {
-    try {
-        const summarizeFn = httpsCallable(functions, "summarizeReport");
-        const result = await summarizeFn({ text });
-        return result.data.summary;
-    } catch (error) {
-        console.error("AI Summarization Error:", error);
-        throw error;
-    }
-}
-
 /* ==========================================================================
    2. SYNTHETIC SCORING & AUDIT QUEUE ADVISORY LAYER (BATCH 3)
    ========================================================================== */
@@ -84,7 +68,7 @@ export async function summarizeReport(text) {
  * High-risk score thresholds for advisory action.
  */
 export const SYNTHETIC_THRESHOLDS = {
-    ADVISORY_LABEL_ONLY: 45,       // 45-74: Add informational synthetic label
+    ADVISORY_LABEL_ONLY: 45,        // 45-74: Add informational synthetic label
     STEWARD_REVIEW_TRIGGER: 75    // 75+: Queue for human steward review
 };
 
@@ -174,7 +158,6 @@ export default {
     moderatePost,
     translateTestimony,
     transcribeAudioWitness,
-    summarizeReport,
     calculateSyntheticScoreFromMetadata,
     evaluateClientSyntheticAdvisory,
     SYNTHETIC_THRESHOLDS
