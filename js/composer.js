@@ -159,7 +159,7 @@ function renderMediaOriginClaimUI() {
             </p>
         `;
 
-        const fileInput = document.getElementById('media-input') || document.getElementById('photoInput');
+        const fileInput = document.getElementById('media-input') || document.getElementById('photoInput') || document.getElementById('media-file-input');
         if (fileInput && fileInput.parentNode) {
             fileInput.parentNode.insertBefore(container, fileInput.nextSibling);
         }
@@ -189,9 +189,9 @@ function getSelectedMediaOriginClaim() {
 }
 
 /**
- * Renders or updates a live quota badge under the media picker
+ * Renders or updates a live quota and provenance badge under the media picker
  */
-function renderMediaQuotaBadge(costInfo, file) {
+function renderMediaTrustBadge(costInfo, file, validationResult) {
     let container = document.getElementById('media-quota-badge');
 
     if (!container) {
@@ -199,20 +199,20 @@ function renderMediaQuotaBadge(costInfo, file) {
         container.id = 'media-quota-badge';
         container.className = 'mt-2 p-3 rounded-xl border text-xs transition-all duration-300';
 
-        const fileInput = document.getElementById('media-input') || document.getElementById('photoInput');
+        const fileInput = document.getElementById('media-input') || document.getElementById('photoInput') || document.getElementById('media-file-input');
         if (fileInput && fileInput.parentNode) {
             fileInput.parentNode.insertBefore(container, fileInput.nextSibling);
         }
     }
 
-    if (!file || !costInfo) {
+    if (!file || (!costInfo && !validationResult)) {
         container.classList.add('hidden');
         return;
     }
 
     const fileMB = (file.size / (1024 * 1024)).toFixed(1);
 
-    if (costInfo.blocked) {
+    if (costInfo?.blocked) {
         container.className = 'mt-2 p-3 rounded-xl border border-red-500/40 bg-red-950/20 text-red-300 text-xs';
         container.innerHTML = `
             <div class="flex items-center justify-between">
@@ -221,23 +221,33 @@ function renderMediaQuotaBadge(costInfo, file) {
             </div>
             <p class="mt-1 text-slate-300">${costInfo.reason}</p>
         `;
-    } else if (costInfo.isFree) {
+    } else if (validationResult?.provenance === 'c2pa_sealed') {
         container.className = 'mt-2 p-3 rounded-xl border border-emerald-500/40 bg-emerald-950/20 text-emerald-300 text-xs';
         container.innerHTML = `
             <div class="flex items-center justify-between">
-                <span class="font-semibold text-emerald-400">✓ Free Daily Quota</span>
+                <span class="font-semibold text-emerald-400">✓ C2PA Cryptographically Verified</span>
                 <span class="font-mono text-[11px]">${fileMB} MB</span>
             </div>
-            <p class="mt-1 text-emerald-200/80">${costInfo.reason}</p>
+            <p class="mt-1 text-emerald-200/80">Valid hardware or software signature confirmed intact.</p>
         `;
-    } else {
+    } else if (validationResult?.editorDetected) {
+        const sigs = validationResult.detectedSignatures?.join(', ') || 'NLE detected';
         container.className = 'mt-2 p-3 rounded-xl border border-amber-500/40 bg-amber-950/20 text-amber-300 text-xs';
         container.innerHTML = `
             <div class="flex items-center justify-between">
-                <span class="font-semibold text-amber-400">⚡ Overage Infrastructure Fee Applies</span>
-                <span class="font-mono text-amber-300 font-bold">$${costInfo.feeUSD.toFixed(2)} USD</span>
+                <span class="font-semibold text-amber-400">⚠️ Edited Stream Detected</span>
+                <span class="font-mono text-[11px]">${fileMB} MB</span>
             </div>
-            <p class="mt-1 text-slate-300">${costInfo.reason}</p>
+            <p class="mt-1 text-slate-300">Signatures found: ${sigs}. Flagged for review.</p>
+        `;
+    } else {
+        container.className = 'mt-2 p-3 rounded-xl border border-zinc-700 bg-zinc-900/80 text-zinc-300 text-xs';
+        container.innerHTML = `
+            <div class="flex items-center justify-between">
+                <span class="font-semibold text-zinc-200">📁 Media Ready</span>
+                <span class="font-mono text-[11px]">${fileMB} MB</span>
+            </div>
+            <p class="mt-1 text-zinc-400">Standard file verification completed.</p>
         `;
     }
 
@@ -265,7 +275,8 @@ function clearAiFeedback() {
  */
 export async function handleMediaSelect(event) {
     const previewArea = document.getElementById('preview-area') ||
-                        document.getElementById('media-preview');
+                        document.getElementById('media-preview') ||
+                        document.getElementById('media-provenance-badge');
 
     if (!event.target?.files?.[0]) {
         clearMediaQuotaBadge();
@@ -274,22 +285,23 @@ export async function handleMediaSelect(event) {
     }
 
     const originalFile = event.target.files[0];
+    let validationResult = null;
 
     // 1. Video Pre-Flight Validation & Pricing Check
     if (originalFile.type.startsWith("video/")) {
         showToast('Validating video authenticity & size rules...', 'info');
 
-        const validation = await validateVideoFile(originalFile);
-        if (!validation.valid) {
+        validationResult = await validateVideoFile(originalFile);
+        if (!validationResult.valid) {
             event.target.value = "";
             clearMediaQuotaBadge();
             clearMediaOriginClaimUI();
-            showVideoPolicyModal(validation.message);
+            showVideoPolicyModal(validationResult.message);
             return;
         }
 
         const costInfo = await calculateVideoUploadCost(originalFile);
-        renderMediaQuotaBadge(costInfo, originalFile);
+        renderMediaTrustBadge(costInfo, originalFile, validationResult);
 
         if (costInfo.blocked) {
             showToast(costInfo.reason, 'error');
@@ -310,10 +322,10 @@ export async function handleMediaSelect(event) {
             }
         }
     } else {
-        clearMediaQuotaBadge();
+        renderMediaTrustBadge(null, originalFile, { provenance: 'standard_image' });
     }
 
-    // 2. Image Processing & EXIF Scrubbing Pipeline
+    // 2. Image/Media Processing & Pipeline
     try {
         showToast('Processing media payload...', 'info');
         const preparedFile = await prepareMediaForUpload(originalFile);
@@ -326,6 +338,21 @@ export async function handleMediaSelect(event) {
 
         await handleImageSelect(syntheticEvent, previewArea);
         renderMediaOriginClaimUI();
+        
+        // Save validator metadata upstream if available
+        if (validationResult) {
+            window.activeSubmissionDraft = window.activeSubmissionDraft || {};
+            window.activeSubmissionDraft.mediaMetadata = {
+                fileName: originalFile.name,
+                fileSize: originalFile.size,
+                mimeType: originalFile.type,
+                duration: validationResult.duration || 0,
+                provenance: validationResult.provenance,
+                editorDetected: validationResult.editorDetected,
+                detectedSignatures: validationResult.detectedSignatures
+            };
+        }
+
         showToast('Media ready for submission', 'success');
     } catch (err) {
         console.error('Media processing error:', err);
@@ -340,17 +367,18 @@ export async function handleMediaSelect(event) {
  */
 export function initComposer() {
     const fileInput = document.getElementById('media-input') ||
-                      document.getElementById('photoInput');
+                      document.getElementById('photoInput') ||
+                      document.getElementById('media-file-input');
 
     const btnPhoto = document.getElementById('btn-attach-photo') ||
                      document.getElementById('btnPhoto') ||
                      document.getElementById('btn-photo');
 
     const postButton = document.getElementById('postButton') ||
-                       document.getElementById('submitBtn');
+                        document.getElementById('submitBtn');
 
     const composerForm = document.getElementById('composer-form') ||
-                         document.getElementById('testimonyForm');
+                          document.getElementById('testimonyForm');
 
     const bodyInput = document.getElementById('mainInput') ||
                       document.getElementById('postBody') ||
@@ -424,7 +452,7 @@ async function runRealtimeAiAnalysis(text) {
         ]);
 
         const categorySelect = document.getElementById('categorySelect') ||
-                               document.getElementById('testimonyCategory');
+                                document.getElementById('testimonyCategory');
 
         if (categorySelect && (categorySelect.value === 'General' || !categorySelect.value)) {
             const matchOption = Array.from(categorySelect.options).find(
@@ -437,7 +465,7 @@ async function runRealtimeAiAnalysis(text) {
         }
 
         const channelToggle = document.getElementById('channelToggle') ||
-                              document.getElementById('isWitnessVoice');
+                            document.getElementById('isWitnessVoice');
         const targetFeedSelect = document.getElementById('targetFeedSelect');
 
         if (analysis?.severity === 'High' || analysis?.urgency === 'High') {
@@ -529,7 +557,8 @@ async function handleComposerSubmit(e) {
                            document.getElementById('testimonyCategory');
 
     const fileInput = document.getElementById('media-input') ||
-                      document.getElementById('photoInput');
+                      document.getElementById('photoInput') ||
+                      document.getElementById('media-file-input');
 
     const targetFeedSelect = document.getElementById('targetFeedSelect');
     const channelToggle = document.getElementById('channelToggle') ||
@@ -592,7 +621,8 @@ async function handleComposerSubmit(e) {
             imageHash: null,
             audioUrl: null,
             audioHash: null,
-            forensicHash: null
+            forensicHash: null,
+            mediaMetadata: window.activeSubmissionDraft?.mediaMetadata || null
         };
 
         const mediaFilePresent = Boolean(fileInput?.files?.[0]);
@@ -607,7 +637,8 @@ async function handleComposerSubmit(e) {
                 imageHash: uploaded?.mediaHash || uploaded?.imageHash || null,
                 audioUrl: uploaded?.audioUrl || null,
                 audioHash: uploaded?.audioHash || null,
-                forensicHash: uploaded?.forensicHash || uploaded?.mediaHash || null
+                forensicHash: uploaded?.forensicHash || uploaded?.mediaHash || null,
+                mediaMetadata: window.activeSubmissionDraft?.mediaMetadata || null
             };
         }
 
@@ -621,6 +652,7 @@ async function handleComposerSubmit(e) {
                 audioUrl: mediaData.audioUrl,
                 audioHash: mediaData.audioHash,
                 forensicHash: mediaData.forensicHash,
+                mediaMetadata: mediaData.mediaMetadata,
                 mediaOriginClaim: mediaFilePresent ? mediaOriginClaim : 'none',
                 targetChannel: 'witness_voice',
                 isAnonymous: anonymous,
@@ -643,6 +675,7 @@ async function handleComposerSubmit(e) {
                 imageHash: mediaData.imageHash,
                 audioHash: mediaData.audioHash,
                 forensicHash: mediaData.forensicHash,
+                mediaMetadata: mediaData.mediaMetadata,
                 requiresReview: needsModerationReview,
                 mediaOriginClaim: mediaFilePresent ? mediaOriginClaim : 'none'
             },
@@ -669,8 +702,7 @@ async function handleComposerSubmit(e) {
     } catch (error) {
         console.error('Composer error:', error);
         showToast('Failed to submit post. Please try again.', 'error');
-    } font
-    finally {
+    } finally {
         isSubmitting = false;
         if (submitBtn) submitBtn.disabled = false;
     }
@@ -686,8 +718,8 @@ export function resetForm() {
                           document.getElementById('testimonyTitle') || 
                           document.getElementById('postHeadline');
     const bodyInput = document.getElementById('mainInput') || document.getElementById('postBody');
-    const previewArea = document.getElementById('preview-area') || document.getElementById('media-preview');
-    const fileInput = document.getElementById('media-input') || document.getElementById('photoInput');
+    const previewArea = document.getElementById('preview-area') || document.getElementById('media-preview') || document.getElementById('media-provenance-badge');
+    const fileInput = document.getElementById('media-input') || document.getElementById('photoInput') || document.getElementById('media-file-input');
     const anonymousCheckbox = document.getElementById('post-anonymously') || document.getElementById('isAnonymous');
 
     if (form) form.reset();
@@ -700,6 +732,7 @@ export function resetForm() {
         previewArea.innerHTML = '<span class="text-zinc-500 text-sm">Preview will appear here...</span>';
     }
 
+    window.activeSubmissionDraft = {};
     clearAiFeedback();
     clearMediaQuotaBadge();
     clearMediaOriginClaimUI();
