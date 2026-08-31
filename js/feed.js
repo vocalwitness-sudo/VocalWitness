@@ -20,7 +20,6 @@ import { showToast } from './utils.js';
 import { renderTierCircle } from './ui-components.js';
 import { hasStewardAccess, canCorroborate } from './tier.js';
 import { toggleReaction, bindReactionEvents } from './reactions.js';
-import { reportContent, translateTestimony, summarizeReport } from './moderation.js';
 import { applyPostDoorDecorations } from './door-ui.js';
 import { state } from './app-state.js';
 import { 
@@ -390,12 +389,6 @@ function renderSinglePostDOM(id, data, container) {
            </span>`
         : '';
 
-    // Summary Trigger Button (Show for longer posts)
-    const showSummaryBtn = (data.content && data.content.length > 300);
-    const summaryBtnHTML = showSummaryBtn ? `
-        <button data-action="summarize" data-id="${id}" class="text-xs text-amber-400 hover:underline flex items-center gap-1 mt-2">
-            ⚡ AI Summary
-        </button>` : '';
 
     postEl.innerHTML = `
         <div class="flex justify-between items-start">
