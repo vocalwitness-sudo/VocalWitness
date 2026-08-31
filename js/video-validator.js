@@ -17,7 +17,8 @@ const VIDEO_CONSTRAINTS = {
  * @param {File} file 
  * @returns {Promise<{
  *   valid: boolean, 
- *   reason?: string, 
+ *   reason?: string,
+ *   message?: string,
  *   provenance: string, 
  *   editorDetected: boolean, 
  *   detectedSignatures: string[],
@@ -28,7 +29,8 @@ export async function inspectAndValidateVideo(file) {
     if (!file) {
         return { 
             valid: false, 
-            reason: "NO_FILE", 
+            reason: "NO_FILE",
+            message: "No video file was selected for inspection.",
             provenance: "unverified", 
             editorDetected: false, 
             detectedSignatures: [] 
@@ -40,21 +42,29 @@ export async function inspectAndValidateVideo(file) {
         return { 
             valid: false, 
             reason: "UNSUPPORTED_FORMAT",
+            message: `Unsupported format (${file.type || 'unknown'}). Please upload MP4, WebM, or MOV formats.`,
             provenance: "unverified",
             editorDetected: false,
             detectedSignatures: []
         };
     }
 
-    // 2. Read first 64KB chunk for header inspection (C2PA & NLE Signatures)
+    // 2. Read Header (First 64KB) and Trailer (Last 64KB) for C2PA & NLE Signatures
     let provenanceStatus = "unverified";
     let editorDetected = false;
     const detectedSignatures = [];
 
     try {
-        const headerSlice = await file.slice(0, 65536).arrayBuffer();
+        const chunkSize = 65536; // 64KB
+        const headerSlice = await file.slice(0, chunkSize).arrayBuffer();
+        
+        // MP4 moov atoms and metadata are often stored at the tail of the file
+        const trailerSlice = file.size > chunkSize 
+            ? await file.slice(Math.max(0, file.size - chunkSize), file.size).arrayBuffer() 
+            : new ArrayBuffer(0);
+
         const decoder = new TextDecoder("ascii", { fatal: false });
-        const headerText = decoder.decode(headerSlice);
+        const headerText = decoder.decode(headerSlice) + decoder.decode(trailerSlice);
 
         // Scan C2PA / Content Credentials markers
         const c2paKeywords = ["trainedAlgorithmicMedia", "c2pa.assertions", "c2pa.actions", "c2pa", "jumb", "c2ma"];
@@ -70,12 +80,14 @@ export async function inspectAndValidateVideo(file) {
         editorKeywords.forEach(kw => {
             if (headerText.includes(kw)) {
                 editorDetected = true;
-                detectedSignatures.push(kw);
+                if (!detectedSignatures.includes(kw)) {
+                    detectedSignatures.push(kw);
+                }
             }
         });
 
     } catch (err) {
-        console.warn("Video header inspection warning (bypassed safely):", err);
+        console.warn("Video header/trailer inspection warning (bypassed safely):", err);
     }
 
     // 3. Inspect Stream Metadata (Duration check)
@@ -86,14 +98,38 @@ export async function inspectAndValidateVideo(file) {
         const objectUrl = URL.createObjectURL(file);
         videoElement.src = objectUrl;
 
-        videoElement.onloadedmetadata = () => {
-            URL.revokeObjectURL(objectUrl);
+        let resolved = false;
 
+        const cleanup = () => {
+            if (!resolved) {
+                resolved = true;
+                URL.revokeObjectURL(objectUrl);
+                videoElement.removeAttribute('src');
+                videoElement.load();
+            }
+        };
+
+        // Safety fallback timer for corrupt video streams
+        const timeoutId = setTimeout(() => {
+            cleanup();
+            resolve({
+                valid: true,
+                provenance: provenanceStatus,
+                editorDetected,
+                detectedSignatures
+            });
+        }, 5000);
+
+        videoElement.onloadedmetadata = () => {
+            clearTimeout(timeoutId);
             const duration = videoElement.duration;
+            cleanup();
+
             if (duration > VIDEO_CONSTRAINTS.MAX_DURATION_SECONDS) {
                 return resolve({
                     valid: false,
                     reason: "DURATION_EXCEEDED",
+                    message: `Video exceeds maximum length of 5 minutes (current: ${Math.round(duration)}s).`,
                     provenance: provenanceStatus,
                     editorDetected,
                     detectedSignatures
@@ -110,7 +146,8 @@ export async function inspectAndValidateVideo(file) {
         };
 
         videoElement.onerror = () => {
-            URL.revokeObjectURL(objectUrl);
+            clearTimeout(timeoutId);
+            cleanup();
             // Non-blocking fallback: pass stream but flag for server check
             resolve({
                 valid: true,
