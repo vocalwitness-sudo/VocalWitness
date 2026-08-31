@@ -244,7 +244,6 @@ function showWelcomeNote() {
 }
 
 // ====================== PUBLISH TESTIMONY ======================
-// Replace the window.publishTestimony function in js/main.js
 
 window.publishTestimony = async () => {
     if (!requireAuth("Please sign in to share your testimony in Citizen Talk.")) return;
@@ -255,7 +254,10 @@ window.publishTestimony = async () => {
         return;
     }
 
+    const titleInput = document.getElementById('testimonyTitle');
     const textarea = document.getElementById('mainInput');
+    
+    const title = titleInput ? titleInput.value.trim() : '';
     const content = textarea ? textarea.value.trim() : '';
 
     if (!content) {
@@ -319,6 +321,7 @@ window.publishTestimony = async () => {
         }
 
         const testimonyData = {
+            title: title,
             authorId: currentUser.uid,
             author: currentUser.displayName || "Registered Witness",
             content: content,
@@ -354,6 +357,7 @@ window.publishTestimony = async () => {
         }
 
         showToast("🛡️ Report sealed and published", "success");
+        if (titleInput) titleInput.value = '';
         if (textarea) textarea.value = '';
         mediaModule.resetMediaState?.();
         initFeed?.(db, 'citizen-talk');
