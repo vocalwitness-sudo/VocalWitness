@@ -161,6 +161,11 @@ export async function publishTestimonyOrQueue(prepared) {
       imageHash: publicData.imageHash,
       audioHash: publicData.audioHash,
       forensicHash: publicData.forensicHash,
+      mediaMetadata: publicData.mediaMetadata || null,
+      mediaOriginClaim: publicData.mediaOriginClaim || 'none',
+      syntheticScore: publicData.syntheticScore ?? 0,
+      syntheticAdvisory: publicData.syntheticAdvisory || 'LOW_SYNTHETIC_PROBABILITY',
+      provenance: publicData.mediaMetadata?.provenance || publicData.provenance || 'unverified',
       isAnonymous: publicData.isAnonymous,
       authorId: publicData.authorId,
       publicNullifier: publicData.publicNullifier,
@@ -180,7 +185,7 @@ export async function publishTestimonyOrQueue(prepared) {
 }
 
 /**
- * Write public testimony + optional private tier contribution.
+ * Write public testimony + optional private tier contribution with full metadata persistence.
  */
 export async function publishTestimonyNow(publicData, privateData = null) {
   const targetFeed = normalizeFeedTarget(publicData.targetFeed);
@@ -211,6 +216,14 @@ export async function publishTestimonyNow(publicData, privateData = null) {
     publicData.audioHash ||
     null;
 
+  // Extract persistence values securely with safe defaults
+  const mediaOriginClaim = publicData.mediaOriginClaim || 'none';
+  const syntheticScore = typeof publicData.syntheticScore === 'number' ? publicData.syntheticScore : 0;
+  const syntheticAdvisory = publicData.syntheticAdvisory || 'LOW_SYNTHETIC_PROBABILITY';
+  const syntheticRequiresReview = Boolean(publicData.syntheticRequiresReview);
+  const provenance = publicData.mediaMetadata?.provenance || publicData.provenance || 'unverified';
+  const mediaMetadata = publicData.mediaMetadata || null;
+
   const testimonyRef = await addDoc(collection(db, 'testimonies'), {
     title: headingText,
     headline: headingText,
@@ -223,6 +236,15 @@ export async function publishTestimonyNow(publicData, privateData = null) {
     forensicHash,
     imageHash: publicData.imageHash || null,
     audioHash: publicData.audioHash || null,
+    
+    // 🛡️ Explicitly persisted authenticity & synthetic metadata properties
+    mediaOriginClaim,
+    syntheticScore,
+    syntheticAdvisory,
+    syntheticRequiresReview,
+    provenance,
+    mediaMetadata,
+
     authorId: isAnonymous ? null : publicData.authorId || user?.uid || null,
     author: isAnonymous
       ? 'Anonymous Witness'
@@ -258,6 +280,8 @@ export async function publishTestimonyNow(publicData, privateData = null) {
       targetFeed,
       isAnonymous,
       offline: Boolean(publicData.syncedFromOffline),
+      syntheticScore,
+      provenance,
     });
   } catch (_) {}
 
