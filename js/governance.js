@@ -1,7 +1,11 @@
 /**
  * js/governance.js
- * Multi-sig attestation + Batch 5 testimony challenge / dispute flow.
- * AI false-positive appeals stay in audit.js (submitFlagAppeal).
+ * Governance, Synthetic Media Reports, Multi-Sig Attestation & Steward Consensus Engine.
+ * 
+ * - Multi-sig attestation + Batch 5 testimony challenge / dispute flow.
+ * - Flagging with explicit "Suspected synthetic / deceptive deepfake" category.
+ * - Steward consensus voting & quorum execution for removals/bans.
+ * - AI false-positive appeals stay in audit.js (submitFlagAppeal).
  */
 
 import {
@@ -11,19 +15,37 @@ import {
   addDoc,
   collection,
   query,
+  where,
   orderBy,
   limit,
   getDocs,
   arrayUnion,
   serverTimestamp,
+  increment
 } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
 import { db, auth } from './firebase-config.js';
 import { showToast } from './utils.js';
-import { logSecurityAudit } from './audit.js';
+import { logAuditEvent, logSecurityAudit } from './audit.js';
+import { assertStewardAuthority, isHumanSteward } from './rbac.js';
+
+/* ==========================================================================
+   CONFIG & CONSTANTS
+   ========================================================================== */
 
 export const MINIMUM_MULTISIG_THRESHOLD = 3;
 export const DISPUTES_COLLECTION = 'disputes';
+export const REPORTS_COLLECTION = 'moderation_reports';
+export const TESTIMONIES_COLLECTION = 'testimonies';
 export const MIN_CHALLENGE_REASON_LENGTH = 20;
+export const QUORUM_REQUIRED = 3; // Minimum steward votes required for consensus
+
+export const REPORT_CATEGORIES = {
+  SYNTHETIC_DECEPTIVE: 'suspected_synthetic_deepfake',
+  MISINFORMATION: 'misinformation_disinformation',
+  VIOLENCE_EXPLICIT: 'violence_graphic_content',
+  HARASSMENT: 'harassment_doxxing',
+  OTHER: 'other'
+};
 
 /* ==========================================================================
    MULTI-SIG ATTESTATION
@@ -39,7 +61,7 @@ export async function submitMultiSigAttestation(testimonyId, proofData) {
   }
 
   try {
-    const testimonyRef = doc(db, 'testimonies', testimonyId);
+    const testimonyRef = doc(db, TESTIMONIES_COLLECTION, testimonyId);
 
     const attestationRecord = {
       witnessUid: auth.currentUser.uid,
@@ -93,6 +115,161 @@ export function evaluateMultiSigStatus(testimonyData) {
 }
 
 /* ==========================================================================
+   BATCH 5 — REPORTING & HUMAN STEWARD REVIEW PANEL
+   ========================================================================== */
+
+/**
+ * Flag a testimony with a specific report category (e.g. "Suspected synthetic / deceptive deepfake")
+ */
+export async function reportTestimony(testimonyId, category, reasonDetails = "") {
+  const user = auth.currentUser;
+  if (!user) {
+    showToast("Sign in required to submit a report", "error");
+    throw new Error("Unauthenticated");
+  }
+
+  if (!Object.values(REPORT_CATEGORIES).includes(category)) {
+    showToast("Invalid report category", "error");
+    throw new Error("Invalid category");
+  }
+
+  // Check for duplicate pending reports by the same user on this testimony
+  const existing = await getDocs(query(
+    collection(db, REPORTS_COLLECTION),
+    where("testimonyId", "==", testimonyId),
+    where("reporterId", "==", user.uid),
+    where("status", "==", "pending")
+  ));
+
+  if (!existing.empty) {
+    showToast("You have already reported this content", "info");
+    return null;
+  }
+
+  const reportData = {
+    testimonyId,
+    reporterId: user.uid,
+    category,
+    reasonDetails: reasonDetails.trim().slice(0, 500),
+    status: 'pending',
+    isSyntheticFlag: category === REPORT_CATEGORIES.SYNTHETIC_DECEPTIVE,
+    createdAt: serverTimestamp()
+  };
+
+  const docRef = await addDoc(collection(db, REPORTS_COLLECTION), reportData);
+
+  // Route testimony into review queue state
+  const testimonyRef = doc(db, TESTIMONIES_COLLECTION, testimonyId);
+  await updateDoc(testimonyRef, {
+    feedVisibility: 'review_queue',
+    moderationStatus: 'pending_steward_review',
+    flagCount: increment(1)
+  });
+
+  await logAuditEvent({
+    testimonyId,
+    eventType: 'TESTIMONY_FLAGGED_FOR_REVIEW',
+    actionTaken: 'routed_to_steward_queue',
+    details: { category, reporterId: user.uid }
+  });
+
+  showToast("Report submitted to Human Steward Panel", "success");
+  return docRef.id;
+}
+
+/**
+ * Fetch items queued for moderation review
+ */
+export async function fetchModerationQueue(max = 20) {
+  const q = query(
+    collection(db, TESTIMONIES_COLLECTION),
+    where("moderationStatus", "==", "pending_steward_review"),
+    orderBy("flagCount", "desc"),
+    limit(max)
+  );
+
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+}
+
+/**
+ * Record a steward's consensus vote on a flagged item.
+ * Restricts permanent removal / ban actions strictly to human steward consensus.
+ */
+export async function submitStewardVote(testimonyId, voteAction, notes = "") {
+  const user = auth.currentUser;
+  if (!user) throw new Error("Unauthenticated");
+  
+  // Enforce Steward role check for notifications
+  const stewardStatus = await isHumanSteward();
+  if (!stewardStatus) {
+    showToast("Reviewers can vote; final action requires Steward authority", "info");
+  }
+
+  const testimonyRef = doc(db, TESTIMONIES_COLLECTION, testimonyId);
+  const testimonySnap = await getDoc(testimonyRef);
+  if (!testimonySnap.exists()) throw new Error("Testimony not found");
+
+  const testimony = testimonySnap.data();
+  const currentVotes = testimony.stewardVotes || [];
+
+  // Prevent double voting by the same reviewer/steward
+  if (currentVotes.some(v => v.stewardId === user.uid)) {
+    showToast("You have already recorded your vote on this item", "info");
+    return;
+  }
+
+  const newVote = {
+    stewardId: user.uid,
+    action: voteAction, // 'approve_keep', 'label_synthetic', 'remove_content', 'ban_author'
+    notes: notes.trim(),
+    votedAt: new Date().toISOString()
+  };
+
+  const updatedVotes = [...currentVotes, newVote];
+  const updatePayload = { stewardVotes: updatedVotes };
+
+  // Calculate quorum consensus
+  const removalVotes = updatedVotes.filter(v => v.action === 'remove_content' || v.action === 'ban_author').length;
+  const labelVotes = updatedVotes.filter(v => v.action === 'label_synthetic').length;
+  const approveVotes = updatedVotes.filter(v => v.action === 'approve_keep').length;
+
+  let decisionReached = null;
+
+  if (removalVotes >= QUORUM_REQUIRED) {
+    await assertStewardAuthority(); // Guard restriction: Must be human steward to execute permanent removal
+    updatePayload.isDeleted = true;
+    updatePayload.moderationStatus = 'removed_by_steward_consensus';
+    updatePayload.feedVisibility = 'hidden';
+    decisionReached = 'REMOVED_BY_CONSENSUS';
+  } else if (labelVotes >= QUORUM_REQUIRED) {
+    updatePayload.syntheticLikelihood = 90;
+    updatePayload.provenanceStatus = 'steward_labeled_synthetic';
+    updatePayload.moderationStatus = 'resolved_labeled';
+    updatePayload.feedVisibility = 'public';
+    decisionReached = 'LABELED_SYNTHETIC';
+  } else if (approveVotes >= QUORUM_REQUIRED) {
+    updatePayload.moderationStatus = 'approved_by_steward_consensus';
+    updatePayload.feedVisibility = 'public';
+    decisionReached = 'APPROVED_PUBLIC';
+  }
+
+  await updateDoc(testimonyRef, updatePayload);
+
+  if (decisionReached) {
+    await logAuditEvent({
+      testimonyId,
+      eventType: 'STEWARD_CONSENSUS_DECISION',
+      actionTaken: decisionReached,
+      details: { removalVotes, labelVotes, approveVotes, totalVotes: updatedVotes.length }
+    });
+    showToast(`Consensus reached: ${decisionReached}`, "success");
+  } else {
+    showToast("Vote recorded. Awaiting consensus quorum.", "info");
+  }
+}
+
+/* ==========================================================================
    BATCH 5 — TESTIMONY CHALLENGE / DISPUTE
    ========================================================================== */
 
@@ -125,7 +302,7 @@ export async function openTestimonyChallenge(testimonyId, reason) {
   }
 
   try {
-    const testimonyRef = doc(db, 'testimonies', testimonyId);
+    const testimonyRef = doc(db, TESTIMONIES_COLLECTION, testimonyId);
     const testimonySnap = await getDoc(testimonyRef);
 
     if (!testimonySnap.exists()) {
@@ -136,7 +313,7 @@ export async function openTestimonyChallenge(testimonyId, reason) {
     const tData = testimonySnap.data();
     if (tData.authorId && tData.authorId === auth.currentUser.uid) {
       showToast('You cannot challenge your own report.', 'error');
-      return null; // Fixed: returned null instead of false
+      return null;
     }
 
     const disputeDoc = {
@@ -256,7 +433,6 @@ export async function listRecentDisputes(limitCount = 25) {
         query(collection(db, DISPUTES_COLLECTION), limit(limitCount))
       );
       const docs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-      // Client-side sort fallback if composite index is missing
       return docs.sort(
         (a, b) => (b.createdAtClient || 0) - (a.createdAtClient || 0)
       );
@@ -273,22 +449,23 @@ export async function listRecentDisputes(limitCount = 25) {
 export async function getDisputeOutcomeCounts(limitCount = 200) {
   const rows = await listRecentDisputes(limitCount);
   return {
-    open: rows.filter((x) => x.status === 'OPEN' || x.status === 'PENDING')
-      .length,
-    upheld: rows.filter(
-      (x) => x.status === 'UPHELD' || x.resolution === 'UPHELD'
-    ).length,
-    rejected: rows.filter(
-      (x) => x.status === 'REJECTED' || x.resolution === 'REJECTED'
-    ).length,
+    open: rows.filter((x) => x.status === 'OPEN' || x.status === 'PENDING').length,
+    upheld: rows.filter((x) => x.status === 'UPHELD' || x.resolution === 'UPHELD').length,
+    rejected: rows.filter((x) => x.status === 'REJECTED' || x.resolution === 'REJECTED').length,
     total: rows.length,
   };
 }
 
-// Window exports for inline handlers
+/* ==========================================================================
+   WINDOW BINDINGS FOR INLINE HANDLERS & LEGACY SCRIPTS
+   ========================================================================== */
+
 if (typeof window !== 'undefined') {
   window.submitMultiSigAttestation = submitMultiSigAttestation;
   window.evaluateMultiSigStatus = evaluateMultiSigStatus;
+  window.reportTestimony = reportTestimony;
+  window.fetchModerationQueue = fetchModerationQueue;
+  window.submitStewardVote = submitStewardVote;
   window.openTestimonyChallenge = openTestimonyChallenge;
   window.resolveTestimonyChallenge = resolveTestimonyChallenge;
   window.listRecentDisputes = listRecentDisputes;
