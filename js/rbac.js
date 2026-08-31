@@ -1,17 +1,21 @@
 // js/rbac.js - Advanced Role-Based & Attribute-Based Access Control (RBAC/ABAC)
 import { getCurrentUserTier, TIERS } from './tier.js';
 import { showToast } from './utils.js';
-import { auth } from './firebase-config.js';
+import { auth, db } from './firebase-config.js';
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js';
 
 /**
  * Platform Roles
  */
 export const ROLES = {
-  CITIZEN: TIERS.CITIZEN,
-  CITIZEN_CIRCLE: TIERS.CITIZEN_CIRCLE,
-  WITNESS_CIRCLE: TIERS.WITNESS_CIRCLE,
-  STEWARD: 'steward'
+  ANONYMOUS: 'anonymous',
+  CITIZEN: TIERS.CITIZEN || 'citizen',
+  CITIZEN_CIRCLE: TIERS.CITIZEN_CIRCLE || 'citizen_circle',
+  WITNESS_CIRCLE: TIERS.WITNESS_CIRCLE || 'witness_circle',
+  COMMUNITY_REVIEWER: 'reviewer',
+  STEWARD: 'steward',
+  ADMIN: 'admin'
 };
 
 /**
@@ -39,7 +43,8 @@ export const PERMISSIONS = {
   // Steward Capabilities (Governance / Moderation)
   MODERATE_CONTENT: 'moderate_content',
   PIN_POST: 'pin_post',
-  DELETE_POST: 'delete_post'
+  DELETE_POST: 'delete_post',
+  PERMANENT_BAN: 'permanent_ban'
 };
 
 /**
@@ -73,8 +78,19 @@ const ROLE_PERMISSIONS_MATRIX = {
     PERMISSIONS.GATE_DOOR_ACCESS,
     PERMISSIONS.REVIEW_QUEUE
   ],
+  [ROLES.COMMUNITY_REVIEWER]: [
+    PERMISSIONS.READ_FEEDS,
+    PERMISSIONS.POST_CITIZEN_TALK,
+    PERMISSIONS.COMMENT_AND_REACT,
+    PERMISSIONS.UPVOTE_DOWNVOTE,
+    PERMISSIONS.POST_WITNESS_VOICE,
+    PERMISSIONS.REVIEW_QUEUE
+  ],
   [ROLES.STEWARD]: [
     // Stewards inherit all capabilities across the platform
+    ...Object.values(PERMISSIONS)
+  ],
+  [ROLES.ADMIN]: [
     ...Object.values(PERMISSIONS)
   ]
 };
@@ -104,14 +120,14 @@ let cachedUserTier = null;
 export async function initRBAC(forceRefresh = false) {
   if (!auth.currentUser) {
     cachedUserClaims = null;
-    cachedUserTier = ROLES.CITIZEN;
+    cachedUserTier = ROLES.ANONYMOUS;
     return cachedUserTier;
   }
 
   try {
     const tokenResult = await auth.currentUser.getIdTokenResult(forceRefresh);
     cachedUserClaims = tokenResult.claims;
-    cachedUserTier = tokenResult.claims?.tier || (await getCurrentUserTier());
+    cachedUserTier = tokenResult.claims?.role || tokenResult.claims?.tier || (await getCurrentUserTier());
   } catch (err) {
     console.warn('Failed to pre-warm RBAC token claims:', err);
     cachedUserTier = await getCurrentUserTier();
@@ -128,13 +144,35 @@ export function getCachedRole() {
 }
 
 /**
+ * Async role lookup reading directly from Auth Token or Firestore Profile
+ */
+export async function getCurrentUserRole() {
+  if (!auth.currentUser) return ROLES.ANONYMOUS;
+
+  if (cachedUserClaims?.role) return cachedUserClaims.role;
+
+  try {
+    const userRef = doc(db, "users", auth.currentUser.uid);
+    const userSnap = await getDoc(userRef);
+    if (userSnap.exists()) {
+      const data = userSnap.data();
+      return data.role || data.tier || ROLES.CITIZEN;
+    }
+  } catch (err) {
+    console.warn("Failed to fetch user role from Firestore, fallback to cached tier:", err);
+  }
+
+  return cachedUserTier || ROLES.CITIZEN;
+}
+
+/**
  * Checks if the current user has permission to execute a given feature/permission.
  * @param {string} permissionOrFeature - Key from PERMISSIONS or FEATURE_MAP
  * @returns {Promise<boolean>}
  */
 export async function canAccess(permissionOrFeature) {
   const permission = FEATURE_MAP[permissionOrFeature] || permissionOrFeature;
-  const userTier = cachedUserTier || (await getCurrentUserTier());
+  const userTier = cachedUserTier || (await getCurrentUserRole());
 
   const allowedPermissions = ROLE_PERMISSIONS_MATRIX[userTier] || ROLE_PERMISSIONS_MATRIX[ROLES.CITIZEN];
   return allowedPermissions.includes(permission);
@@ -147,8 +185,38 @@ export async function canAccess(permissionOrFeature) {
 export async function assertPermission(permissionOrFeature, actionLabel = 'perform this action') {
   const allowed = await canAccess(permissionOrFeature);
   if (!allowed) {
-    const msg = `Access Restricted: Your current account tier (${cachedUserTier || 'Citizen'}) cannot ${actionLabel}.`;
+    const msg = `Access Restricted: Your current account role (${cachedUserTier || 'Citizen'}) cannot ${actionLabel}.`;
     if (typeof showToast === 'function') showToast(msg, 'warning');
+    throw new Error(msg);
+  }
+  return true;
+}
+
+/**
+ * Evaluates whether the user has access to the Moderation Panel
+ */
+export async function canAccessModerationPanel() {
+  const role = await getCurrentUserRole();
+  return role === ROLES.COMMUNITY_REVIEWER || role === ROLES.STEWARD || role === ROLES.ADMIN;
+}
+
+/**
+ * Checks if the user holds full Human Steward authority (required for bans and permanent removals)
+ */
+export async function isHumanSteward() {
+  const role = await getCurrentUserRole();
+  return role === ROLES.STEWARD || role === ROLES.ADMIN;
+}
+
+/**
+ * Guard check before executing destructive operations (Bans / Permanent Removals)
+ * Ensures only human steward consensus can invoke final actions.
+ */
+export async function assertStewardAuthority() {
+  const authorized = await isHumanSteward();
+  if (!authorized) {
+    const msg = "UNAUTHORIZED: Permanent removal or ban authority is exclusively restricted to human steward consensus.";
+    if (typeof showToast === 'function') showToast(msg, 'error');
     throw new Error(msg);
   }
   return true;
@@ -180,11 +248,12 @@ export async function showIfCanAccess(permissionOrFeature, elementIdOrSelector) 
 
   elements.forEach(el => {
     if (el) {
-      el.style.display = hasAccess ? '' : 'none';
       if (!hasAccess) {
+        el.style.display = 'none';
         el.setAttribute('aria-hidden', 'true');
         el.classList.add('hidden');
       } else {
+        el.style.display = '';
         el.removeAttribute('aria-hidden');
         el.classList.remove('hidden');
       }
@@ -205,7 +274,7 @@ export async function checkForStewardPromotion(userData) {
                         ((userData.successfulEscalations || 0) * 5) +
                         ((userData.communityEndorsements || 0) * 3);
 
-  if (activityScore > 500 && userData.tier !== ROLES.STEWARD) {
+  if (activityScore > 500 && userData.role !== ROLES.STEWARD) {
     try {
       const functions = getFunctions();
       const promoteUser = httpsCallable(functions, 'promoteToSteward');
@@ -236,4 +305,8 @@ export async function checkForStewardPromotion(userData) {
 window.initRBAC = initRBAC;
 window.canAccess = canAccess;
 window.getCachedRole = getCachedRole;
+window.getCurrentUserRole = getCurrentUserRole;
+window.isHumanSteward = isHumanSteward;
+window.canAccessModerationPanel = canAccessModerationPanel;
+window.assertStewardAuthority = assertStewardAuthority;
 window.showIfCanAccess = showIfCanAccess;
