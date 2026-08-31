@@ -6,6 +6,7 @@ import { showToast } from './utils.js';
 import { getCurrentUserTier, TIERS, calculateVideoUploadCost } from './tier.js';
 import { db, auth } from './firebase-config.js';
 import { validateVideoFile } from './video-validator.js';
+import { calculateSyntheticScoreFromMetadata } from './ai-services.js';
 import {
     collection,
     addDoc,
