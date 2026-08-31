@@ -19,6 +19,7 @@ import { hasStewardAccess, canCorroborate } from './tier.js';
 import { toggleReaction } from './reactions.js';
 import { applyPostDoorDecorations } from './door-ui.js';
 import { state } from './app-state.js';
+import { reportContent } from './moderation.js';
 import { 
     submitCorroboration, 
     getCorroborationScoreFromDoc 
