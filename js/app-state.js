@@ -41,7 +41,7 @@ export const state = {
   userRole: 'guest',
   currentTab: 'square',
   currentMode: 'citizen',
-  activeFeed: 'citizen_talk',
+  activeFeed: 'Citizen Talk',
   selectedLanguage: localStorage.getItem('vw_lang') || 'en',
   
   // Tier & Progression
@@ -79,11 +79,11 @@ export function isUserAuthenticated() {
 export function canAccessFeed(feedName) {
   const currentRank = getTierRank(state.userTier);
 
-  if (feedName === 'citizen-talk' || feedName === 'citizen_talk') return true;
+  if (feedName === 'Citizen Talk' || feedName === 'citizen_talk') return true;
   if (feedName === 'citizen-circle') {
     return state.isPhoneVerified || currentRank >= 2;
   }
-  if (feedName === 'witness-voice' || feedName === 'witness-circle') {
+  if (feedName === 'Witness Voice' || feedName === 'witness-circle') {
     return state.isZkReady && currentRank >= 3;
   }
   return false;
@@ -126,6 +126,24 @@ export function updateAppState(newState = {}) {
     window.dispatchEvent(new CustomEvent('app-state-changed', { detail: state }));
   }
 }
+
+// Global App Event & State Interface for cross-module consumption
+export const appState = {
+  getUser: () => state.currentUser,
+  setUser: (user) => updateAppState({ currentUser: user }),
+  getRole: () => state.userRole,
+  setRole: (role) => updateAppState({ userRole: role }),
+  emit: (eventName, data) => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent(eventName, { detail: data }));
+    }
+  },
+  on: (eventName, callback) => {
+    if (typeof window !== 'undefined') {
+      window.addEventListener(eventName, (e) => callback(e.detail));
+    }
+  }
+};
 
 // ====================== MEDIA PREVIEW HELPERS ======================
 
