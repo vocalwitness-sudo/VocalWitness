@@ -16,6 +16,50 @@ import { getUserTier } from './tier.js';
 import { analyzeReportContent } from './composer.js';
 
 /**
+ * Strips EXIF/GPS metadata from image files by redrawing onto an offscreen HTML5 canvas.
+ * Audio files or unhandled non-image formats pass through untouched.
+ * @param {File|Blob} file 
+ * @returns {Promise<File|Blob>}
+ */
+async function scrubImageMetadata(file) {
+    if (!file || !file.type || !file.type.startsWith('image/')) {
+        return file; // Pass audio or non-image files directly through
+    }
+
+    return new Promise((resolve) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+
+            canvas.toBlob((blob) => {
+                URL.revokeObjectURL(url);
+                if (blob) {
+                    const sanitizedFile = new File([blob], file.name || 'evidence.jpg', {
+                        type: file.type || 'image/jpeg'
+                    });
+                    resolve(sanitizedFile);
+                } else {
+                    resolve(file); // Fallback to original file if blob encoding fails
+                }
+            }, file.type || 'image/jpeg', 0.92);
+        };
+
+        img.onerror = () => {
+            URL.revokeObjectURL(url);
+            resolve(file); // Fallback to original file if image fails to render
+        };
+
+        img.src = url;
+    });
+}
+
+/**
  * Computes a SHA-256 hash of a file or text buffer using native Web Crypto API.
  * @param {Blob|File|ArrayBuffer|string} data 
  * @returns {Promise<string>} Hexadecimal SHA-256 hash
@@ -118,8 +162,14 @@ export async function submitTestimony({
     let mediaUrl = null;
     let mediaType = null;
 
-    // 1. Process Media & Forensic Hashing
+    // 1. Process Media, Scrub Metadata & Forensic Hashing
     if (mediaFile) {
+        // Scrub EXIF/GPS metadata prior to SHA-256 seal generation and upload
+        if (mediaFile.type && mediaFile.type.startsWith('image/')) {
+            showToast("Scrubbing media metadata...", "info");
+            mediaFile = await scrubImageMetadata(mediaFile);
+        }
+
         forensicHash = await computeSHA256(mediaFile);
         mediaType = mediaFile.type.startsWith('audio/') ? 'audio' : 'image';
         
@@ -149,7 +199,7 @@ export async function submitTestimony({
         content: content.trim(),
         channel: channel,
         feedVisibility: moderationResult.status === 'pending_review' ? 'review_queue' : channel,
-        authorId: user ? user.uid : null,
+        authorId: isAnonymous ? null : (user ? user.uid : null),
         author: isAnonymous ? "Anonymous Witness" : (user?.displayName || "Citizen Witness"),
         authorTier: authorTier,
         reputation: reputation,
