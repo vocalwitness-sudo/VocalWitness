@@ -1,3 +1,4 @@
+// js/auth.js - Authentication Engine & Identity Handlers
 import {
   signInWithPopup,
   signInWithRedirect,
@@ -6,7 +7,8 @@ import {
   setPersistence,
   browserLocalPersistence,
   browserSessionPersistence,
-  onAuthStateChanged
+  onAuthStateChanged,
+  signInAnonymously
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 
 import { 
@@ -33,6 +35,7 @@ import {
 const DEFAULT_TIER = "citizen";
 let authActionInProgress = false;
 let authInitialized = false;
+
 // ====================== HELPERS ======================
 
 function refreshTierUI() {
@@ -57,7 +60,7 @@ async function createOrUpdateUser(user) {
     const snap = await getDoc(userRef);
 
     const safeEmail = user.email || "";
-    const safeDisplayName = user.displayName || "Anonymous Witness";
+    const safeDisplayName = user.displayName || (user.isAnonymous ? "Anonymous Citizen" : "Anonymous Witness");
     const safePhotoURL = user.photoURL || "";
 
     if (!snap.exists()) {
@@ -67,6 +70,7 @@ async function createOrUpdateUser(user) {
         email: safeEmail,
         displayName: safeDisplayName,
         photoURL: safePhotoURL,
+        isAnonymous: !!user.isAnonymous,
         tier: DEFAULT_TIER,               // always "citizen"
         isVerified: false,
         isPhoneVerified: false,
@@ -76,7 +80,9 @@ async function createOrUpdateUser(user) {
       });
 
       updateVerificationUI(false);
-      showToast("🎉 Account created! Welcome to the Public Square.", "success");
+      if (!user.isAnonymous) {
+        showToast("🎉 Account created! Welcome to the Public Square.", "success");
+      }
     } else {
       // Existing user → update ONLY client-safe fields
       const existing = snap.data() || {};
@@ -177,6 +183,28 @@ function handleAuthError(error) {
       return "An account already exists with this email address using a different login provider.";
     default:
       return error?.message || "Authentication failed. Please try again.";
+  }
+}
+
+// ====================== ANONYMOUS AUTH ======================
+
+export async function loginAnonymously() {
+  if (authActionInProgress) return;
+  authActionInProgress = true;
+
+  try {
+    savePendingDraft();
+    const result = await signInAnonymously(auth);
+    if (result?.user) {
+      showToast("🛡️ Signed in anonymously", "info");
+      closeLoginModal();
+      restorePendingDraft();
+    }
+  } catch (error) {
+    console.error("Anonymous login error:", error);
+    showToast("Anonymous authentication failed", "error");
+  } finally {
+    authActionInProgress = false;
   }
 }
 
@@ -465,6 +493,13 @@ export function bindHeaderEvents() {
       return;
     }
 
+    // Anonymous Auth Trigger
+    if (e.target.closest('#anonAuthBtn, [data-action="anon-login"], .anon-auth-btn')) {
+      e.preventDefault();
+      loginAnonymously();
+      return;
+    }
+
     // Logout Trigger
     if (e.target.closest('#logoutBtn, #logout-btn, [data-action="logout"], .logout-btn')) {
       e.preventDefault();
@@ -581,6 +616,7 @@ window.logout = logout;
 window.googleLogin = googleLogin;
 window.twitterLogin = twitterLogin;
 window.githubLogin = githubLogin;
+window.loginAnonymously = loginAnonymously;
 window.openVerificationModal = openVerificationModal;
 window.closeVerificationModal = closeVerificationModal;
 window.toggleProfileMenu = toggleProfileMenu;
