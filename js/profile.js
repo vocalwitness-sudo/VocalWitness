@@ -1,7 +1,6 @@
-// js/profile.js - Integrated, Refactored & Extended Version
+// js/profile.js - Full upgraded profile (privacy default, verification ladder, sign out)
 // Handles modal layering, multi-field form persistence, image upload preview,
-// bio editing, dual-identity mode, and legacy alias bindings
-// Updated: Better Bio editing + Safe Edit/Settings buttons + ProfileManager
+// bio editing, dual-identity mode, Privacy Shield, Verification progression
 
 import {
     onAuthStateChanged,
@@ -48,6 +47,11 @@ function sanitize(str) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+}
+
+function isPrivacyPrivate(userData) {
+    // Default private when field is missing
+    return !userData || userData.hidePublicInfo !== false;
 }
 
 // ====================== OPEN / CLOSE MAIN PROFILE MODAL ======================
@@ -101,7 +105,7 @@ export function initProfile() {
 }
 
 /**
- * Ensures user document exists in Firestore
+ * Ensures user document exists in Firestore (privacy default ON)
  */
 async function ensureUserProfile(user) {
     try {
@@ -126,7 +130,7 @@ async function ensureUserProfile(user) {
                 hasVerifiedPhone: false,
                 zkVerified: false,
                 activeWitnessCycle: false,
-                hidePublicInfo: true,
+                hidePublicInfo: true, // Privacy Shield ON by default
                 tier: "citizen",
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp()
@@ -183,10 +187,12 @@ export function renderProfileUI(userData, retryCount = 0) {
 
     witnessPromise.then(level => {
         const isWitness = level !== null;
-        const isCitizenCircle = userData.isPhoneVerified || userData.hasVerifiedPhone || userData.tier === 'citizen_circle';
-
+        const isCitizenCircle =
+            userData.isPhoneVerified ||
+            userData.hasVerifiedPhone ||
+            userData.tier === 'citizen_circle';
         const fullName = [userData.firstName, userData.lastName].filter(Boolean).join(" ");
-        const isPrivacyShieldActive = userData.hidePublicInfo !== false;
+        const isPrivacyShieldActive = isPrivacyPrivate(userData);
 
         const html = `
             <div class="space-y-5 p-1 text-white">
@@ -209,13 +215,23 @@ export function renderProfileUI(userData, retryCount = 0) {
                             ${sanitize(fullName)}
                             ${isPrivacyShieldActive
                                 ? '<span class="text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full ml-1">🛡️ Private</span>'
-                                : ''
+                                : '<span class="text-[10px] text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full ml-1">👁 Public</span>'
                             }
                         </p>
-                    ` : ''}
+                    ` : `
+                        <p class="text-xs mt-0.5">
+                            ${isPrivacyShieldActive
+                                ? '<span class="text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">🛡️ Private profile</span>'
+                                : '<span class="text-[10px] text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">👁 Public profile</span>'
+                            }
+                        </p>
+                    `}
 
                     <p class="text-emerald-400 font-mono text-sm mt-1">@${sanitize(userData.username) || 'anonymous'}</p>
-                    ${userData.region ? `<p class="text-xs text-zinc-400 mt-1">📍 ${sanitize(userData.region)}</p>` : ''}
+                    ${userData.region && !isPrivacyShieldActive
+                        ? `<p class="text-xs text-zinc-400 mt-1">📍 ${sanitize(userData.region)}</p>`
+                        : ''
+                    }
 
                     <!-- Tier Badge -->
                     <div class="mt-3 flex flex-wrap justify-center gap-2">
@@ -262,17 +278,17 @@ export function renderProfileUI(userData, retryCount = 0) {
                             ${userData.activeWitnessCycle ? 'Active' : 'Inactive'}
                         </span>
                     </div>
-                    <button onclick="handleProfileStartCycle()"
+                    <button type="button" onclick="handleProfileStartCycle()"
                             class="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-black font-semibold rounded-xl transition text-sm">
                         ${userData.activeWitnessCycle ? 'End Witness Cycle' : 'Start Witness Cycle'}
                     </button>
                 </div>
 
-                <!-- ========== IMPROVED BIO SECTION ========== -->
+                <!-- Bio -->
                 <div class="bg-zinc-900/80 border border-zinc-700 rounded-2xl p-4">
                     <div class="flex items-center justify-between mb-2">
                         <h4 class="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Bio</h4>
-                        <button onclick="toggleBioEdit()"
+                        <button type="button" onclick="toggleBioEdit()"
                                 class="text-xs text-emerald-400 hover:text-emerald-300 font-medium transition">
                             Edit
                         </button>
@@ -290,13 +306,13 @@ export function renderProfileUI(userData, retryCount = 0) {
                                   rows="3"
                                   maxlength="280"
                                   class="w-full bg-zinc-950 border border-zinc-700 rounded-xl p-3 text-sm text-zinc-200 focus:outline-none focus:border-emerald-500 resize-none"
-                                  placeholder="Write a short bio about yourself... What do you stand for?">${sanitize(userData.bio || '')}</textarea>
+                                  placeholder="Write a short bio about yourself...">${sanitize(userData.bio || '')}</textarea>
                         <div class="flex gap-2">
-                            <button onclick="saveUserBio()"
+                            <button type="button" onclick="saveUserBio()"
                                     class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-black text-xs font-semibold rounded-xl transition">
                                 Save Bio
                             </button>
-                            <button onclick="cancelBioEdit()"
+                            <button type="button" onclick="cancelBioEdit()"
                                     class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs rounded-xl transition">
                                 Cancel
                             </button>
@@ -320,26 +336,81 @@ export function renderProfileUI(userData, retryCount = 0) {
                     </div>
                 </div>
 
+                <!-- Verification Channel -->
+                <div class="bg-zinc-900 rounded-2xl p-4 border border-zinc-700 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h4 class="font-semibold text-sm text-white flex items-center gap-2">
+                            <span>🛡️</span> Verification
+                        </h4>
+                        <span class="text-[10px] text-zinc-500 uppercase tracking-wider">Progression</span>
+                    </div>
+
+                    <!-- Step 1: Phone -->
+                    <div class="flex items-center justify-between gap-3 p-3 rounded-xl bg-zinc-950/80 border border-zinc-800">
+                        <div class="min-w-0">
+                            <div class="text-sm font-medium text-zinc-200">1. Phone verification</div>
+                            <div class="text-xs text-zinc-500">Citizen Circle • anti-spam • corroboration</div>
+                        </div>
+                        ${isCitizenCircle
+                            ? `<span class="shrink-0 text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 rounded-full">✅ Done</span>`
+                            : `<button type="button" onclick="window.startPhoneVerification()"
+                                    class="shrink-0 text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-black px-3 py-1.5 rounded-xl">
+                                    Verify
+                               </button>`
+                        }
+                    </div>
+
+                    <!-- Step 2: ZK -->
+                    <div class="flex items-center justify-between gap-3 p-3 rounded-xl bg-zinc-950/80 border border-zinc-800">
+                        <div class="min-w-0">
+                            <div class="text-sm font-medium text-zinc-200">2. ZK / Higher Trust</div>
+                            <div class="text-xs text-zinc-500">Sealed proofs • True Witness path</div>
+                        </div>
+                        ${userData.zkVerified
+                            ? `<span class="shrink-0 text-xs font-semibold text-teal-400 bg-teal-500/10 border border-teal-500/30 px-2.5 py-1 rounded-full">🔑 Verified</span>`
+                            : `<button type="button" onclick="window.location.href='/verify.html'"
+                                    class="shrink-0 text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 px-3 py-1.5 rounded-xl">
+                                    Start
+                               </button>`
+                        }
+                    </div>
+
+                    <!-- Step 3: Public profile (optional) -->
+                    <div class="flex items-center justify-between gap-3 p-3 rounded-xl bg-zinc-950/80 border border-zinc-800">
+                        <div class="min-w-0">
+                            <div class="text-sm font-medium text-zinc-200">3. Public profile</div>
+                            <div class="text-xs text-zinc-500">Optional. Default private. Separate from Bold Witness posting mode.</div>
+                        </div>
+                        <button type="button" onclick="togglePrivacyShield()"
+                                class="shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full border transition
+                                ${isPrivacyShieldActive
+                                    ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30 hover:bg-emerald-500/20'
+                                    : 'text-amber-400 bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/20'}">
+                            ${isPrivacyShieldActive ? '🛡️ Private' : '👁 Public'}
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Action Buttons -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
                     ${!isCitizenCircle && !isWitness ? `
-                        <button onclick="window.startPhoneVerification()"
+                        <button type="button" onclick="window.startPhoneVerification()"
                                 class="col-span-1 sm:col-span-2 py-3 px-4 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
                             🛡️ Get Verified — Unlock Citizen Circle
                         </button>
                     ` : ''}
 
-                    <button onclick="openEditProfileSafe()"
+                    <button type="button" onclick="openEditProfileSafe()"
                             class="py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-black text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
                         ✏️ Edit Profile
                     </button>
 
-                    <button onclick="openSettingsSafe()"
+                    <button type="button" onclick="openSettingsSafe()"
                             class="py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
                         ⚙️ Settings & Security
                     </button>
 
-                    <button onclick="handleSignOut()"
+                    <button type="button" onclick="handleSignOut()"
                             class="col-span-1 sm:col-span-2 py-3 px-4 bg-red-950/40 hover:bg-red-900/60 border border-red-500/40 text-red-400 hover:text-red-300 text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
                         🚪 Sign Out
                     </button>
@@ -401,6 +472,40 @@ window.saveUserBio = async function () {
     }
 };
 
+// ====================== PRIVACY SHIELD TOGGLE ======================
+window.togglePrivacyShield = async function () {
+    if (!auth.currentUser) {
+        showToast("You must be signed in", "error");
+        return;
+    }
+
+    const currentlyPrivate = isPrivacyPrivate(currentUserData);
+    const nextPrivate = !currentlyPrivate;
+
+    try {
+        showToast(nextPrivate ? "Switching to private…" : "Making profile public…", "info");
+        await updateDoc(doc(db, "users", auth.currentUser.uid), {
+            hidePublicInfo: nextPrivate,
+            updatedAt: serverTimestamp()
+        });
+
+        if (currentUserData) {
+            currentUserData.hidePublicInfo = nextPrivate;
+            window.currentUserData = currentUserData;
+        }
+
+        showToast(
+            nextPrivate
+                ? "🛡️ Profile is private (name & location hidden from others)"
+                : "👁 Profile is public (display info can appear on the Square)",
+            "success"
+        );
+    } catch (err) {
+        console.error("Privacy toggle failed:", err);
+        showToast("Could not update privacy setting", "error");
+    }
+};
+
 // ====================== SAFE MODAL OPENERS ======================
 window.openEditProfileSafe = function () {
     const modal = document.getElementById('editProfileModal');
@@ -459,7 +564,6 @@ export function handleImagePreview(event) {
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, width, height);
 
-            // Compress to JPEG Base64 (keeps Firestore docs small)
             pendingAvatarBase64 = canvas.toDataURL('image/jpeg', 0.8);
 
             const imgPreview = document.getElementById('avatarPreview');
@@ -541,7 +645,7 @@ export function openEditProfile() {
         if (usernameInput) usernameInput.value = currentUserData.username || '';
         if (regionInput) regionInput.value = currentUserData.region || '';
         if (bioInput) bioInput.value = currentUserData.bio || '';
-        if (hidePublicToggle) hidePublicToggle.checked = currentUserData.hidePublicInfo !== false;
+        if (hidePublicToggle) hidePublicToggle.checked = isPrivacyPrivate(currentUserData);
 
         if (currentUserData.photoURL && imgPreview) {
             imgPreview.src = currentUserData.photoURL;
@@ -675,7 +779,7 @@ export async function exportUserDataPDF() {
         pdf.text(`Display Name: ${currentUserData.displayName || 'N/A'}`, 20, 44);
         pdf.text(`Username: @${currentUserData.username || 'anonymous'}`, 20, 52);
         pdf.text(`Region: ${currentUserData.region || 'N/A'}`, 20, 60);
-        pdf.text(`Privacy Shield Active: ${currentUserData.hidePublicInfo !== false ? 'Yes' : 'No'}`, 20, 68);
+        pdf.text(`Privacy Shield Active: ${isPrivacyPrivate(currentUserData) ? 'Yes' : 'No'}`, 20, 68);
         pdf.text(`Reputation: ${currentUserData.reputation || 0} REP`, 20, 76);
         pdf.text(`Phone Verified: ${currentUserData.isPhoneVerified || currentUserData.hasVerifiedPhone ? 'Yes' : 'No'}`, 20, 84);
         pdf.text(`ZK Verified: ${currentUserData.zkVerified ? 'Yes' : 'No'}`, 20, 92);
@@ -741,9 +845,6 @@ export class ProfileManager {
         this.modeToggleBtn = document.getElementById('identityModeToggleBtn');
     }
 
-    /**
-     * Initializes the profile view and identity mode bindings.
-     */
     async init() {
         if (!auth.currentUser) {
             this.renderLoggedOutState();
@@ -758,9 +859,6 @@ export class ProfileManager {
         this.bindEvents(user, tierData);
     }
 
-    /**
-     * Renders the dynamic dual-identity profile card.
-     */
     renderProfileCard(user, tierData, mode) {
         if (!this.profileContainer) return;
 
@@ -780,7 +878,6 @@ export class ProfileManager {
 
         this.profileContainer.innerHTML = `
             <div class="bg-zinc-950 border border-zinc-800 rounded-3xl p-6 shadow-2xl space-y-6">
-                <!-- Header / Identity Overview -->
                 <div class="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
                     <img src="${avatarUrl}" alt="Avatar" class="w-20 h-20 rounded-full border-2 border-zinc-700 object-cover" />
                     <div class="space-y-1">
@@ -795,7 +892,6 @@ export class ProfileManager {
 
                 <hr class="border-zinc-800" />
 
-                <!-- Identity Mode Switcher -->
                 <div class="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-4 flex items-center justify-between">
                     <div>
                         <h4 class="text-sm font-semibold text-zinc-200">Active Identity Mode</h4>
@@ -806,13 +902,12 @@ export class ProfileManager {
                             }
                         </p>
                     </div>
-                    <button id="switchModeBtn"
+                    <button id="switchModeBtn" type="button"
                             class="bg-zinc-800 hover:bg-zinc-700 text-zinc-100 px-4 py-2 rounded-xl text-xs font-semibold transition border border-zinc-700">
                         ${isBold ? 'Switch to Anonymous' : 'Enable Bold Witness'}
                     </button>
                 </div>
 
-                <!-- Forensic Settings & Preferences -->
                 <div class="space-y-3">
                     <h4 class="text-xs font-mono uppercase tracking-wider text-zinc-500">Forensic Pipeline Defaults</h4>
                     <div class="space-y-2">
@@ -834,9 +929,6 @@ export class ProfileManager {
         `;
     }
 
-    /**
-     * Binds interactions for mode switching and preferences.
-     */
     bindEvents(user, tierData) {
         const switchBtn = document.getElementById('switchModeBtn');
         if (switchBtn) {
@@ -885,7 +977,6 @@ export class ProfileManager {
 // ====================== AUTO-INIT ======================
 initProfile();
 
-// Also initialize ProfileManager if the card exists on the page
 document.addEventListener('DOMContentLoaded', () => {
     const manager = new ProfileManager();
     if (manager.profileContainer) {
