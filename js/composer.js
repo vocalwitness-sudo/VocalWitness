@@ -139,6 +139,75 @@ async function triggerOveragePaymentModal(feeUSD, reason) {
 }
 
 /**
+ * Renders or reveals the mandatory Media Origin Claim dropdown
+ */
+export function renderMediaOriginClaimUI() {
+    let container = document.getElementById('media-claim-container');
+    
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'media-claim-container';
+        container.className = 'mt-3 p-3 rounded-xl border border-zinc-700/60 bg-zinc-900/80 text-zinc-300 text-xs transition-all duration-300';
+        container.innerHTML = `
+            <div class="flex items-center gap-1.5 font-semibold text-emerald-400 mb-1">
+                🛡️ Mandatory Media Origin Claim
+            </div>
+            <select id="mediaOriginClaim" class="w-full bg-zinc-800 border border-zinc-700 text-zinc-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-emerald-500">
+                <option value="filmed_by_me">Direct Capture (Filmed / Recorded by me)</option>
+                <option value="received">Received / Forwarded (From messaging / web)</option>
+                <option value="unknown">Unknown Source / Unverified</option>
+                <option value="synthetic">AI Assisted / Generated Media</option>
+            </select>
+            <p class="text-[10px] text-zinc-400 mt-1.5 leading-tight">
+                Accurate origin claims preserve cryptographic trust scores. False claims route posts to steward review.
+            </p>
+        `;
+
+        const fileInput = document.getElementById('media-input') || document.getElementById('photoInput');
+        if (fileInput && fileInput.parentNode) {
+            fileInput.parentNode.insertBefore(container, fileInput.nextSibling);
+        }
+    }
+
+    container.classList.remove('hidden');
+}
+
+/**
+ * Hides and resets the Media Origin Claim UI
+ */
+export function clearMediaOriginClaimUI() {
+    const container = document.getElementById('media-claim-container');
+    if (container) {
+        container.classList.add('hidden');
+        const select = document.getElementById('mediaOriginClaim');
+        if (select) select.value = 'filmed_by_me';
+    }
+}
+
+/**
+ * Utility to extract the selected origin claim value safely
+ */
+export function getSelectedMediaOriginClaim() {
+    const claimSelect = document.getElementById('mediaOriginClaim');
+    return claimSelect ? claimSelect.value : 'unknown';
+}
+
+import { showToast } from './utils.js';
+import { 
+    clearMediaQuotaBadge, 
+    renderMediaQuotaBadge, 
+    validateVideoFile, 
+    calculateVideoUploadCost, 
+    triggerOveragePaymentModal 
+} from './media-validator.js';
+import { prepareMediaForUpload, handleImageSelect } from './media-processor.js';
+import { 
+    clearMediaOriginClaimUI, 
+    renderMediaOriginClaimUI 
+} from './media-origin-ui.js';
+import { clearAiFeedback } from './ai-feedback-ui.js';
+
+/**
  * Handle input selection for both video pre-flight validation and image scrubbing
  */
 export async function handleMediaSelect(event) {
@@ -147,6 +216,7 @@ export async function handleMediaSelect(event) {
                         
     if (!event.target?.files?.[0]) {
         clearMediaQuotaBadge();
+        clearMediaOriginClaimUI();
         return;
     }
 
@@ -161,6 +231,7 @@ export async function handleMediaSelect(event) {
         if (!validation.valid) {
             event.target.value = "";
             clearMediaQuotaBadge();
+            clearMediaOriginClaimUI();
             showVideoPolicyModal(validation.message);
             return;
         }
@@ -174,6 +245,8 @@ export async function handleMediaSelect(event) {
         if (costInfo.blocked) {
             showToast(costInfo.reason, 'error');
             event.target.value = "";
+            clearMediaQuotaBadge();
+            clearMediaOriginClaimUI();
             return;
         }
 
@@ -183,6 +256,7 @@ export async function handleMediaSelect(event) {
                 showToast('Video upload canceled.', 'warning');
                 event.target.value = "";
                 clearMediaQuotaBadge();
+                clearMediaOriginClaimUI();
                 return;
             }
         }
@@ -201,11 +275,36 @@ export async function handleMediaSelect(event) {
             stopPropagation: () => {}
         };
         await handleImageSelect(syntheticEvent, previewArea);
+
+        // Render origin claim UI after successful processing
+        renderMediaOriginClaimUI();
         showToast('Media ready for submission', 'success');
     } catch (err) {
         console.error('Media processing error:', err);
         showToast('Media processing failed – using original clip', 'warning');
         await handleImageSelect(event, previewArea);
+
+        // Render origin claim UI on fallback path
+        renderMediaOriginClaimUI();
+    }
+}
+
+/**
+ * Resets form state and clears associated media badges and UI elements
+ */
+export function resetForm() {
+    clearAiFeedback();
+    clearMediaQuotaBadge();
+    clearMediaOriginClaimUI();
+
+    const mediaInput = document.getElementById('media-input') || document.getElementById('image-input');
+    if (mediaInput) {
+        mediaInput.value = '';
+    }
+
+    const previewArea = document.getElementById('preview-area') || document.getElementById('media-preview');
+    if (previewArea) {
+        previewArea.innerHTML = '';
     }
 }
 
@@ -457,6 +556,9 @@ function clearMediaQuotaBadge() {
 }
 
 /**
+import { getSelectedMediaOriginClaim } from './media-origin-ui.js';
+
+/**
  * Main submit handler
  */
 async function handleComposerSubmit(e) {
@@ -542,8 +644,11 @@ async function handleComposerSubmit(e) {
             forensicHash: null
         };
 
+        const mediaFilePresent = Boolean(fileInput?.files?.[0]);
+        const mediaOriginClaim = getSelectedMediaOriginClaim();
+
         // Upload media if present
-        if (fileInput?.files?.[0]) {
+        if (mediaFilePresent) {
             const preparedFile = await prepareMediaForUpload(fileInput.files[0]);
             const uploaded = await uploadMedia(preparedFile);
 
@@ -567,6 +672,7 @@ async function handleComposerSubmit(e) {
                 audioUrl: mediaData.audioUrl,
                 audioHash: mediaData.audioHash,
                 forensicHash: mediaData.forensicHash,
+                mediaOriginClaim: mediaFilePresent ? mediaOriginClaim : 'none',
                 targetChannel: 'witness_voice',
                 isAnonymous: anonymous,
                 createdAt: serverTimestamp()
@@ -589,7 +695,10 @@ async function handleComposerSubmit(e) {
                 imageHash: mediaData.imageHash,
                 audioHash: mediaData.audioHash,
                 forensicHash: mediaData.forensicHash,
-                requiresReview: needsModerationReview
+                requiresReview: needsModerationReview,
+                
+                // --- BATCH 1 ADDITION ---
+                mediaOriginClaim: mediaFilePresent ? mediaOriginClaim : 'none'
             },
             { anonymous }
         );
@@ -638,6 +747,7 @@ function resetForm() {
 
     clearAiFeedback();
     clearMediaQuotaBadge();
+    clearMediaOriginClaimUI(); // <--- ADD THIS LINE
     lastAnalyzedText = '';
 
     if (typeof resetMediaState === 'function') {
