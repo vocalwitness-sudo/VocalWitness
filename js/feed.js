@@ -79,9 +79,10 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
 
     ensureSearchAndFilterUI(feedContainer);
 
+    // Initial loading skeleton state
     feedContainer.innerHTML = `
-        <div class="text-center py-12" id="feed-loading">
-            <div class="animate-pulse text-zinc-400">Loading testimonies...</div>
+        <div class="text-center py-12 text-zinc-500 animate-pulse" id="feed-loading">
+            Loading testimonies...
         </div>`;
 
     // Global event listener setup for set-sort
@@ -204,7 +205,11 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
         applySearchAndFilter(feedContainer);
     }, (error) => {
         console.error("Feed error:", error);
-        feedContainer.innerHTML = `<div class="text-red-400 text-center py-8">Failed to load feed. Check your connection or Firestore rules.</div>`;
+        // Clears "Loading..." with error state
+        feedContainer.innerHTML = `
+            <div class="text-center py-8 text-red-400 bg-red-950/20 rounded-2xl border border-red-900/40">
+                Failed to load feed items. Please refresh or try again later.
+            </div>`;
     });
 }
 
@@ -269,6 +274,7 @@ function applySearchAndFilter(container) {
         if (post.moderationStatus === "removed" || post.isDeleted) return false;
 
         const matchesSearch = !queryText || 
+            (post.title && post.title.toLowerCase().includes(queryText)) ||
             (post.content && post.content.toLowerCase().includes(queryText)) ||
             (post.author && post.author.toLowerCase().includes(queryText)) ||
             (post.authorId && post.authorId.toLowerCase().includes(queryText));
@@ -297,18 +303,16 @@ function renderFilteredPosts(posts, container) {
 
     if (!feedContainer) return;
 
+    // Clears loading/skeleton or previous content cleanly
     feedContainer.innerHTML = '';
 
     if (posts.length === 0) {
-        const emptyDiv = document.createElement('div');
-        emptyDiv.id = 'feed-empty-state';
-        emptyDiv.innerHTML = `
-            <div class="text-center py-20 text-zinc-400">
-                <div class="text-6xl mb-4">🌍</div>
-                <p class="text-xl font-medium">No testimonies match your criteria...</p>
-                <p class="text-sm mt-2 text-zinc-500">Try adjusting your search terms or filters</p>
+        // Replaces loading state with empty feed UI
+        feedContainer.innerHTML = `
+            <div class="text-center py-12 border border-dashed border-zinc-800 rounded-2xl" id="feed-empty-state">
+                <p class="text-zinc-400 font-medium">No reports published in this channel yet.</p>
+                <p class="text-xs mt-1 text-zinc-500">Try adjusting your search terms or filters</p>
             </div>`;
-        feedContainer.appendChild(emptyDiv);
         return;
     }
 
@@ -322,6 +326,11 @@ function renderSinglePostDOM(id, data, container) {
     const postEl = document.createElement('div');
     postEl.className = 'post-card glass rounded-3xl p-6 mb-6 hover:border-emerald-500/35 transition-all duration-300 border border-zinc-800 bg-zinc-900/50 relative';
     postEl.setAttribute('data-post-id', id);
+
+    // Extract title or create fallback headline
+    const headline = data.title && data.title.trim() !== '' 
+        ? data.title 
+        : (data.content ? (data.content.length > 80 ? data.content.slice(0, 80) + '...' : data.content) : 'Untitled Witness Report');
 
     const pinnedBadge = data.isPinned
         ? `<span class="bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px] px-2.5 py-0.5 rounded-full font-medium flex items-center gap-1">📌 Pinned</span>`
@@ -406,7 +415,11 @@ function renderSinglePostDOM(id, data, container) {
             </div>
         </div>
 
-        ${data.content ? `<p id="post-text-${id}" class="mt-5 mb-4 text-zinc-100 leading-relaxed">${escapeHTML(data.content)}</p>` : ''}
+        <h3 class="text-lg font-bold text-white mt-4 mb-2 leading-snug">
+            ${escapeHTML(headline)}
+        </h3>
+
+        ${data.content ? `<p id="post-text-${id}" class="text-zinc-300 text-sm mb-4 whitespace-pre-line leading-relaxed">${escapeHTML(data.content)}</p>` : ''}
 
         ${mediaHTML}
         ${audioHTML}
