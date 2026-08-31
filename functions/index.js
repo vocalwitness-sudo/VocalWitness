@@ -1045,8 +1045,12 @@ exports.verifyZKProof = onCall(
 );
 
 // ======================================================
-// 9. MEDIA FORENSIC PIPELINE
+// 9. MEDIA FORENSIC PIPELINE & ASYNCHRONOUS SYNTHETIC SCORING
 // ======================================================
+
+/**
+ * 9A. Initial Document Creation Pipeline: Toxicity Moderation
+ */
 exports.verifyMediaPipeline = onDocumentCreated(
   {
     region: "us-central1",
@@ -1074,6 +1078,110 @@ exports.verifyMediaPipeline = onDocumentCreated(
       );
     } catch (error) {
       console.error(`Media pipeline error for ${postId}:`, error);
+    }
+  }
+);
+
+/**
+ * 9B. Batch 3: Asynchronous Synthetic Likelihood Scoring & Audit Queue
+ * Triggers when testimonies are created or updated with media artifacts.
+ * Generates an advisory syntheticLikelihood score (0-100). NEVER auto-deletes.
+ */
+exports.processMediaSyntheticScoring = onDocumentWritten(
+  {
+    region: "us-central1",
+    document: "testimonies/{postId}",
+    secrets: [geminiApiKey]
+  },
+  async (event) => {
+    const afterSnap = event.data?.after;
+    if (!afterSnap || !afterSnap.exists) return; // Ignore deletions
+
+    const data = afterSnap.data() || {};
+    const postId = event.params.postId;
+
+    // Run only if media is present and syntheticLikelihood has not been evaluated yet
+    const hasMedia = data.mediaUrl || (data.mediaArtifacts && data.mediaArtifacts.length > 0);
+    if (!hasMedia || typeof data.syntheticLikelihood === "number") {
+      return;
+    }
+
+    try {
+      const apiKey = geminiApiKey.value();
+      const ai = new GoogleGenAI({ apiKey });
+
+      const prompt = `
+        Analyze the following testimony media metadata for indicators of AI synthesis, deepfake visual artifacts, audio manipulation, or synthetic voice generation.
+        
+        Metadata:
+        - Title: ${data.title || "N/A"}
+        - Content: ${data.content || "N/A"}
+        - Media Type: ${data.mediaType || "video"}
+        - Media URL: ${data.mediaUrl || "N/A"}
+        - Artifact Hashes: ${JSON.stringify(data.mediaArtifacts || [])}
+
+        Return a JSON object with:
+        - syntheticLikelihood: integer between 0 (fully organic/authentic) and 100 (definitive deepfake/synthetic).
+        - confidence: float between 0.0 and 1.0.
+        - reasons: array of string explanations for the score.
+      `;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              syntheticLikelihood: { type: Type.NUMBER },
+              confidence: { type: Type.NUMBER },
+              reasons: { type: Type.ARRAY, items: { type: Type.STRING } }
+            },
+            required: ["syntheticLikelihood", "confidence", "reasons"]
+          }
+        }
+      });
+
+      const result = JSON.parse(response.text);
+      const score = Math.min(100, Math.max(0, Math.round(result.syntheticLikelihood || 0)));
+      const HIGH_RISK_THRESHOLD = 75;
+      const isHighRisk = score >= HIGH_RISK_THRESHOLD;
+
+      const updatePayload = {
+        syntheticLikelihood: score,
+        syntheticAnalysis: {
+          confidence: result.confidence || 0.8,
+          reasons: result.reasons || [],
+          evaluatedAt: admin.firestore.FieldValue.serverTimestamp()
+        }
+      };
+
+      // Set status to pending_steward_review if high risk (NO HARD DELETE)
+      if (isHighRisk) {
+        updatePayload.status = "pending_steward_review";
+        updatePayload.moderationNote = `High synthetic likelihood score (${score}/100) flagged for steward review.`;
+      }
+
+      await afterSnap.ref.set(updatePayload, { merge: true });
+
+      // Record high-risk cases in audit queue
+      if (isHighRisk) {
+        await writeAuditLog({
+          action: "synthetic_flagged_for_review",
+          performedBy: "system_synthetic_scorer",
+          targetId: postId,
+          targetType: "testimony",
+          details: {
+            syntheticLikelihood: score,
+            reasons: result.reasons,
+            previousStatus: data.status || "published"
+          },
+          severity: "warning"
+        });
+      }
+    } catch (error) {
+      console.error(`Error processing synthetic score for ${postId}:`, error);
     }
   }
 );
