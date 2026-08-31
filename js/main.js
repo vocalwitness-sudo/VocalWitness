@@ -55,25 +55,39 @@ export function toggleDataSaver() {
     }
 }
 
-function updateDataSaverUI(enabled) {
-    const statusEl = document.getElementById('data-saver-status');
-    if (statusEl) {
-        statusEl.textContent = enabled ? "On" : "Off";
-        statusEl.style.color = enabled ? "#10b981" : "#34d399";
-    }
+function updateDataSaverUI(isOn) {
+    const statusText = isOn ? 'On' : 'Off';
+    const statusClass = isOn ? 'text-emerald-400 font-bold' : 'text-zinc-400';
 
+    // Desktop + mobile + footer status labels
+    const statusIds = [
+        'data-saver-status',
+        'data-saver-status-mobile',
+        'footer-data-saver-status'
+    ];
+
+    statusIds.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.textContent = statusText;
+            el.className = statusClass;
+        }
+    });
+
+    // Desktop button visual state
     const desktopBtn = document.getElementById('data-saver-btn');
     if (desktopBtn) {
-        if (enabled) {
+        if (isOn) {
             desktopBtn.classList.add('border-emerald-500', 'bg-emerald-950/40');
         } else {
             desktopBtn.classList.remove('border-emerald-500', 'bg-emerald-950/40');
         }
     }
 
+    // Mobile button visual state
     const mobileBtn = document.getElementById('data-saver-btn-mobile');
     if (mobileBtn) {
-        if (enabled) {
+        if (isOn) {
             mobileBtn.classList.add('border-emerald-500', 'text-emerald-400', 'bg-emerald-950/40');
             mobileBtn.classList.remove('border-zinc-800', 'text-zinc-300', 'bg-zinc-900');
         } else {
