@@ -7,8 +7,11 @@
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://vocalwitness.com/">
 
+  <!-- PWA / icons: upload icon-192.png + icon-512.png to site root -->
   <link rel="manifest" href="./manifest.json">
-  <link rel="apple-touch-icon" href="./logo.png">
+  <link rel="icon" href="./icon-192.png" type="image/png" sizes="192x192">
+  <link rel="apple-touch-icon" href="./icon-192.png" sizes="192x192">
+  <!-- fallback if icons not deployed yet -->
   <link rel="icon" href="./logo.png" type="image/png">
 
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -27,7 +30,7 @@
   <meta name="twitter:description" content="Privacy First Public Square for Truth and Evidence">
   <meta name="twitter:image" content="https://vocalwitness.com/logo.png">
 
- <!-- Hardened Content Security Policy -->
+  <!-- Hardened Content Security Policy (no frame-ancestors in meta) -->
   <meta http-equiv="Content-Security-Policy" content="
     default-src 'self' https: wss: blob: data:;
     script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https://accounts.google.com https://vocalwitness.com https://www.vocalwitness.com https://www.gstatic.com https://unpkg.com https://cdnjs.cloudflare.com https://apis.google.com https://js.paystack.co https://*.paystack.co https://checkout.paystack.com https://esm.sh https://cdn.jsdelivr.net https://static.cloudflareinsights.com https://*.cloudflare.com https://challenges.cloudflare.com https://www.google.com https://www.recaptcha.net https://*.cloudfunctions.net https://*.firebaseapp.com https://*.web.app blob:;
@@ -43,6 +46,7 @@
     base-uri 'self';
     upgrade-insecure-requests;
   ">
+
   <title data-i18n="pageTitle">VocalWitness • Truth • Evidence • Public Square</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -51,7 +55,6 @@
   <link rel="stylesheet" href="./style.css">
 
   <script src="https://accounts.google.com/gsi/client" defer></script>
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" defer></script>
@@ -99,6 +102,7 @@
     }
   </style>
 </head>
+
 <!-- ====================== HEADER ====================== -->
 <header id="main-header" class="fixed top-0 left-0 right-0 z-50 border-b border-emerald-500/30 bg-zinc-950/95 shadow-lg backdrop-blur-md">
   <div class="mx-auto max-w-6xl px-3 sm:px-4">
