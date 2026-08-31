@@ -497,7 +497,7 @@ function renderAiFeedback(container, analysis, category) {
                     Urgency: ${analysis.urgency || 'Normal'}
                 </span>
             </div>
-            ${analysis.summary ? `<p class="mt-1 text-zinc-400 text-[11px]"><strong>AI Summary:</strong> ${analysis.summary}</p>` : ''}
+            ${analysis.summary ? `<p class="mt-1 text-zinc-400 text-[11px]">${analysis.summary}</p>` : ''}
         `;
     }
     container.classList.remove('hidden');
@@ -669,7 +669,8 @@ async function handleComposerSubmit(e) {
     } catch (error) {
         console.error('Composer error:', error);
         showToast('Failed to submit post. Please try again.', 'error');
-    } finally {
+    } font
+    finally {
         isSubmitting = false;
         if (submitBtn) submitBtn.disabled = false;
     }
