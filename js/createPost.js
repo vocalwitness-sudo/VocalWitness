@@ -17,7 +17,7 @@ import { analyzeReportContent } from './composer.js';
 
 /**
  * Computes a SHA-256 hash of a file or text buffer using native Web Crypto API.
- * @param {Blob|File|ArrayBuffer} data 
+ * @param {Blob|File|ArrayBuffer|string} data 
  * @returns {Promise<string>} Hexadecimal SHA-256 hash
  */
 export async function computeSHA256(data) {
@@ -105,7 +105,7 @@ export async function submitTestimony({
             }
         } catch (err) {
             // Re-throw if explicitly blocked above, otherwise warn and allow pipeline to continue
-            if (err.message.includes("blocked by AI moderation")) {
+            if (err.message && err.message.includes("blocked by AI moderation")) {
                 throw err;
             }
             console.warn("AI moderation check failed or skipped:", err);
