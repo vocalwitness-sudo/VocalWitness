@@ -1,8 +1,9 @@
 // js/composer.js - Hardened Post & Testimony Composer + Real-time AI Analysis & Video Security
+
 import { prepareMediaForUpload } from './media-pipeline.js';
 import { uploadMedia } from './upload.js';
 import { showToast } from './utils.js';
-import { getCurrentUserTier, TIERS, calculateVideoUploadCost } from './tier.js';
+import { getCurrentUserTier, TIERS } from './tier.js';
 import { db, auth } from './firebase-config.js';
 import { validateVideoFile } from './video-validator.js';
 import {
@@ -10,14 +11,27 @@ import {
     addDoc,
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-import {
-    resetMediaState,
-    handleImageSelect
-} from './media.js';
+import { resetMediaState, handleImageSelect } from './media.js';
 import { logSecurityAudit } from './audit.js';
 import { prepareAnonymousSubmission } from './onboarding.js';
 import { publishTestimonyOrQueue } from './db.js';
 import { analyzeReportContent, classifyCategory } from './moderation.js';
+
+// Media helpers – keep these in one place (or move to dedicated modules later)
+import {
+    clearMediaQuotaBadge,
+    renderMediaQuotaBadge,
+    calculateVideoUploadCost,
+    triggerOveragePaymentModal
+} from './media-validator.js';
+
+import {
+    clearMediaOriginClaimUI,
+    renderMediaOriginClaimUI,
+    getSelectedMediaOriginClaim
+} from './media-origin-ui.js';
+
+import { clearAiFeedback } from './ai-feedback-ui.js';
 
 let isSubmitting = false;
 let aiAnalysisDebounceTimer = null;
@@ -54,7 +68,7 @@ async function logAuditEvent(uid, eventType, metadata = {}) {
  */
 function showVideoPolicyModal(customMessage) {
     let modal = document.getElementById("video-policy-modal");
-    
+
     if (!modal) {
         modal = document.createElement("div");
         modal.id = "video-policy-modal";
@@ -86,7 +100,6 @@ function showVideoPolicyModal(customMessage) {
                         <span class="text-red-400 font-medium">Strictly Banned (C2PA Enforced)</span>
                     </div>
                 </div>
-
                 <div class="space-y-3">
                     <button id="btn-modal-live-arena" class="w-full py-3 px-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 text-slate-950 font-bold rounded-xl shadow-lg transition flex items-center justify-center space-x-2">
                         <span>Go to Live Arena for True Reality</span>
@@ -114,104 +127,12 @@ function showVideoPolicyModal(customMessage) {
 }
 
 /**
- * Handles bandwidth/overage payment prompts for large video uploads
- */
-async function triggerOveragePaymentModal(feeUSD, reason) {
-    return new Promise((resolve) => {
-        const userChoice = confirm(
-            `Bandwidth / Infrastructure Fee Notice:\n\n${reason}\n\n` +
-            `Fee: $${feeUSD.toFixed(2)} USD (Payable via Paystack or USDT).\n\n` +
-            `Would you like to proceed to payment to finalize this upload?`
-        );
-
-        if (userChoice) {
-            const supportModal = document.getElementById('support-modal') || document.getElementById('paymentModal');
-            if (supportModal) {
-                supportModal.classList.remove('hidden');
-            } else {
-                showToast(`Please complete payment of $${feeUSD.toFixed(2)} USD via the Support Modal to proceed.`, 'info');
-            }
-            resolve(true);
-        } else {
-            resolve(false);
-        }
-    });
-}
-
-/**
- * Renders or reveals the mandatory Media Origin Claim dropdown
- */
-export function renderMediaOriginClaimUI() {
-    let container = document.getElementById('media-claim-container');
-    
-    if (!container) {
-        container = document.createElement('div');
-        container.id = 'media-claim-container';
-        container.className = 'mt-3 p-3 rounded-xl border border-zinc-700/60 bg-zinc-900/80 text-zinc-300 text-xs transition-all duration-300';
-        container.innerHTML = `
-            <div class="flex items-center gap-1.5 font-semibold text-emerald-400 mb-1">
-                🛡️ Mandatory Media Origin Claim
-            </div>
-            <select id="mediaOriginClaim" class="w-full bg-zinc-800 border border-zinc-700 text-zinc-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-emerald-500">
-                <option value="filmed_by_me">Direct Capture (Filmed / Recorded by me)</option>
-                <option value="received">Received / Forwarded (From messaging / web)</option>
-                <option value="unknown">Unknown Source / Unverified</option>
-                <option value="synthetic">AI Assisted / Generated Media</option>
-            </select>
-            <p class="text-[10px] text-zinc-400 mt-1.5 leading-tight">
-                Accurate origin claims preserve cryptographic trust scores. False claims route posts to steward review.
-            </p>
-        `;
-
-        const fileInput = document.getElementById('media-input') || document.getElementById('photoInput');
-        if (fileInput && fileInput.parentNode) {
-            fileInput.parentNode.insertBefore(container, fileInput.nextSibling);
-        }
-    }
-
-    container.classList.remove('hidden');
-}
-
-/**
- * Hides and resets the Media Origin Claim UI
- */
-export function clearMediaOriginClaimUI() {
-    const container = document.getElementById('media-claim-container');
-    if (container) {
-        container.classList.add('hidden');
-        const select = document.getElementById('mediaOriginClaim');
-        if (select) select.value = 'filmed_by_me';
-    }
-}
-
-/**
- * Utility to extract the selected origin claim value safely
- */
-export function getSelectedMediaOriginClaim() {
-    const claimSelect = document.getElementById('mediaOriginClaim');
-    return claimSelect ? claimSelect.value : 'unknown';
-}
-
-import { 
-    clearMediaQuotaBadge, 
-    renderMediaQuotaBadge, 
-    calculateVideoUploadCost, 
-    triggerOveragePaymentModal 
-} from './media-validator.js';
-import { prepareMediaForUpload, handleImageSelect } from './media-processor.js';
-import { 
-    clearMediaOriginClaimUI, 
-    renderMediaOriginClaimUI 
-} from './media-origin-ui.js';
-import { clearAiFeedback } from './ai-feedback-ui.js';
-
-/**
  * Handle input selection for both video pre-flight validation and image scrubbing
  */
 export async function handleMediaSelect(event) {
-    const previewArea = document.getElementById('preview-area') || 
+    const previewArea = document.getElementById('preview-area') ||
                         document.getElementById('media-preview');
-                        
+
     if (!event.target?.files?.[0]) {
         clearMediaQuotaBadge();
         clearMediaOriginClaimUI();
@@ -223,7 +144,7 @@ export async function handleMediaSelect(event) {
     // 1. Video Pre-Flight Validation & Pricing Check
     if (originalFile.type.startsWith("video/")) {
         showToast('Validating video authenticity & size rules...', 'info');
-        
+
         // A. Authenticity & Deepfake check
         const validation = await validateVideoFile(originalFile);
         if (!validation.valid) {
@@ -272,6 +193,7 @@ export async function handleMediaSelect(event) {
             preventDefault: () => {},
             stopPropagation: () => {}
         };
+
         await handleImageSelect(syntheticEvent, previewArea);
 
         // Render origin claim UI after successful processing
@@ -281,28 +203,7 @@ export async function handleMediaSelect(event) {
         console.error('Media processing error:', err);
         showToast('Media processing failed – using original clip', 'warning');
         await handleImageSelect(event, previewArea);
-
-        // Render origin claim UI on fallback path
         renderMediaOriginClaimUI();
-    }
-}
-
-/**
- * Resets form state and clears associated media badges and UI elements
- */
-export function resetForm() {
-    clearAiFeedback();
-    clearMediaQuotaBadge();
-    clearMediaOriginClaimUI();
-
-    const mediaInput = document.getElementById('media-input') || document.getElementById('image-input');
-    if (mediaInput) {
-        mediaInput.value = '';
-    }
-
-    const previewArea = document.getElementById('preview-area') || document.getElementById('media-preview');
-    if (previewArea) {
-        previewArea.innerHTML = '';
     }
 }
 
@@ -310,20 +211,19 @@ export function resetForm() {
  * Initialize composer listeners and real-time AI analysis
  */
 export function initComposer() {
-    const fileInput = document.getElementById('media-input') || 
+    const fileInput = document.getElementById('media-input') ||
                       document.getElementById('photoInput');
-                      
+
     const btnPhoto = document.getElementById('btn-attach-photo') ||
                      document.getElementById('btnPhoto') ||
                      document.getElementById('btn-photo');
-                     
-    const postButton = document.getElementById('postButton') || 
+
+    const postButton = document.getElementById('postButton') ||
                        document.getElementById('submitBtn');
-                       
-    const composerForm = document.getElementById('composer-form') || 
+
+    const composerForm = document.getElementById('composer-form') ||
                          document.getElementById('testimonyForm');
 
-    // Updated with querySelector fallback to ensure active textareas are caught
     const bodyInput = document.getElementById('mainInput') ||
                       document.getElementById('postBody') ||
                       document.getElementById('testimonyBody') ||
@@ -347,7 +247,6 @@ export function initComposer() {
     // Real-time AI Content Analysis & Auto-Classification
     if (bodyInput && !bodyInput.dataset.aiListenerAttached) {
         console.log("Composer AI Moderation listener attached to:", bodyInput);
-
         bodyInput.addEventListener('input', (e) => {
             const text = e.target.value.trim();
             if (text.length < 25) {
@@ -385,6 +284,7 @@ export function initComposer() {
         composerForm.dataset.listenerAttached = 'true';
     }
 }
+
 /**
  * Executes background AI analysis on composer text input
  */
@@ -407,9 +307,11 @@ async function runRealtimeAiAnalysis(text) {
         // Auto-select category if default or empty
         const categorySelect = document.getElementById('categorySelect') ||
                                document.getElementById('testimonyCategory');
+
         if (categorySelect && (categorySelect.value === 'General' || !categorySelect.value)) {
             const matchOption = Array.from(categorySelect.options).find(
-                opt => opt.value.toLowerCase() === category.toLowerCase() || opt.text.toLowerCase().includes(category.toLowerCase())
+                opt => opt.value.toLowerCase() === category.toLowerCase() ||
+                       opt.text.toLowerCase().includes(category.toLowerCase())
             );
             if (matchOption) {
                 categorySelect.value = matchOption.value;
@@ -417,8 +319,10 @@ async function runRealtimeAiAnalysis(text) {
         }
 
         // Recommend channel toggle if high severity
-        const channelToggle = document.getElementById('channelToggle') || document.getElementById('isWitnessVoice');
+        const channelToggle = document.getElementById('channelToggle') ||
+                              document.getElementById('isWitnessVoice');
         const targetFeedSelect = document.getElementById('targetFeedSelect');
+
         if (analysis?.severity === 'High' || analysis?.urgency === 'High') {
             if (targetFeedSelect) targetFeedSelect.value = 'witness_voice';
             if (channelToggle) channelToggle.checked = true;
@@ -437,10 +341,11 @@ function ensureAiFeedbackContainer() {
         box = document.createElement('div');
         box.id = 'composer-ai-feedback';
         box.className = 'mt-3 p-3 rounded-xl border text-xs transition-all duration-300 hidden';
-        
+
         const bodyInput = document.getElementById('mainInput') ||
                           document.getElementById('postBody') ||
                           document.getElementById('testimonyBody');
+
         if (bodyInput && bodyInput.parentNode) {
             bodyInput.parentNode.insertBefore(box, bodyInput.nextSibling);
         }
@@ -455,7 +360,7 @@ function renderAiFeedback(container, analysis, category) {
     }
 
     const isFlagged = analysis.isToxic || analysis.flagged;
-    
+
     if (isFlagged) {
         container.className = 'mt-3 p-3 rounded-xl border border-red-500/30 bg-red-950/20 text-red-300 text-xs';
         container.innerHTML = `
@@ -481,81 +386,6 @@ function renderAiFeedback(container, analysis, category) {
     container.classList.remove('hidden');
 }
 
-function clearAiFeedback() {
-    const box = document.getElementById('composer-ai-feedback');
-    if (box) {
-        box.classList.add('hidden');
-        box.innerHTML = '';
-    }
-}
-
-/**
- * Renders or updates a live quota badge under the media picker
- */
-function renderMediaQuotaBadge(costInfo, file) {
-    let container = document.getElementById('media-quota-badge');
-    
-    if (!container) {
-        container = document.createElement('div');
-        container.id = 'media-quota-badge';
-        container.className = 'mt-2 p-3 rounded-xl border text-xs transition-all duration-300';
-        
-        const fileInput = document.getElementById('media-input') || document.getElementById('photoInput');
-        if (fileInput && fileInput.parentNode) {
-            fileInput.parentNode.insertBefore(container, fileInput.nextSibling);
-        }
-    }
-
-    if (!file || !costInfo) {
-        container.classList.add('hidden');
-        return;
-    }
-
-    const fileMB = (file.size / (1024 * 1024)).toFixed(1);
-
-    if (costInfo.blocked) {
-        container.className = 'mt-2 p-3 rounded-xl border border-red-500/40 bg-red-950/20 text-red-300 text-xs';
-        container.innerHTML = `
-            <div class="flex items-center justify-between">
-                <span class="font-semibold text-red-400">⚠️ Upload Limit Exceeded</span>
-                <span class="font-mono text-[11px]">${fileMB} MB</span>
-            </div>
-            <p class="mt-1 text-slate-300">${costInfo.reason}</p>
-        `;
-    } else if (costInfo.isFree) {
-        container.className = 'mt-2 p-3 rounded-xl border border-emerald-500/40 bg-emerald-950/20 text-emerald-300 text-xs';
-        container.innerHTML = `
-            <div class="flex items-center justify-between">
-                <span class="font-semibold text-emerald-400">✓ Free Daily Quota</span>
-                <span class="font-mono text-[11px]">${fileMB} MB</span>
-            </div>
-            <p class="mt-1 text-emerald-200/80">${costInfo.reason}</p>
-        `;
-    } else {
-        container.className = 'mt-2 p-3 rounded-xl border border-amber-500/40 bg-amber-950/20 text-amber-300 text-xs';
-        container.innerHTML = `
-            <div class="flex items-center justify-between">
-                <span class="font-semibold text-amber-400">⚡ Overage Infrastructure Fee Applies</span>
-                <span class="font-mono text-amber-300 font-bold">$${costInfo.feeUSD.toFixed(2)} USD</span>
-            </div>
-            <p class="mt-1 text-slate-300">${costInfo.reason}</p>
-        `;
-    }
-
-    container.classList.remove('hidden');
-}
-
-function clearMediaQuotaBadge() {
-    const container = document.getElementById('media-quota-badge');
-    if (container) {
-        container.classList.add('hidden');
-        container.innerHTML = '';
-    }
-}
-
-/**
-import { getSelectedMediaOriginClaim } from './media-origin-ui.js';
-
 /**
  * Main submit handler
  */
@@ -573,19 +403,25 @@ async function handleComposerSubmit(e) {
     const bodyInput = document.getElementById('mainInput') ||
                       document.getElementById('postBody') ||
                       document.getElementById('testimonyBody');
+
     const headlineInput = document.getElementById('testimonyTitle') ||
                           document.getElementById('headlineInput') ||
                           document.getElementById('testimonyHeadline');
+
     const categorySelect = document.getElementById('categorySelect') ||
                            document.getElementById('testimonyCategory');
+
     const fileInput = document.getElementById('media-input') ||
                       document.getElementById('photoInput');
+
     const targetFeedSelect = document.getElementById('targetFeedSelect');
     const channelToggle = document.getElementById('channelToggle') ||
                           document.getElementById('isWitnessVoice');
+
     const submitBtn = document.getElementById('postButton') ||
                       document.getElementById('submitBtn') ||
                       document.querySelector('button[type="submit"]');
+
     const anonymousCheckbox = document.getElementById('post-anonymously') ||
                               document.getElementById('isAnonymous');
 
@@ -601,6 +437,7 @@ async function handleComposerSubmit(e) {
     } else if (channelToggle?.checked) {
         targetFeed = 'witness_voice';
     }
+
     const isWitnessVoice = targetFeed === 'witness_voice';
 
     // Validation
@@ -620,10 +457,12 @@ async function handleComposerSubmit(e) {
         // Pre-flight AI Safety Verification
         showToast('Checking content compliance...', 'info');
         const preflightCheck = await analyzeReportContent(body);
-        
+
         let needsModerationReview = false;
         if (preflightCheck?.isToxic) {
-            const proceed = confirm(`AI Moderation Notice:\n\n${preflightCheck.reason || 'Your testimony may contain sensitive or flagged content.'}\n\nDo you still wish to submit for review?`);
+            const proceed = confirm(
+                `AI Moderation Notice:\n\n${preflightCheck.reason || 'Your testimony may contain sensitive or flagged content.'}\n\nDo you still wish to submit for review?`
+            );
             if (!proceed) {
                 isSubmitting = false;
                 if (submitBtn) submitBtn.disabled = false;
@@ -694,8 +533,6 @@ async function handleComposerSubmit(e) {
                 audioHash: mediaData.audioHash,
                 forensicHash: mediaData.forensicHash,
                 requiresReview: needsModerationReview,
-                
-                // --- BATCH 1 ADDITION ---
                 mediaOriginClaim: mediaFilePresent ? mediaOriginClaim : 'none'
             },
             { anonymous }
@@ -711,7 +548,13 @@ async function handleComposerSubmit(e) {
             flaggedForReview: needsModerationReview
         });
 
-        showToast(needsModerationReview ? 'Testimony submitted for moderator review.' : 'Testimony published successfully!', 'success');
+        showToast(
+            needsModerationReview
+                ? 'Testimony submitted for moderator review.'
+                : 'Testimony published successfully!',
+            'success'
+        );
+
         resetForm();
     } catch (error) {
         console.error('Composer error:', error);
@@ -725,7 +568,7 @@ async function handleComposerSubmit(e) {
 /**
  * Reset form UI
  */
-function resetForm() {
+export function resetForm() {
     const form = document.getElementById('composer-form') || document.getElementById('testimonyForm');
     const headlineInput = document.getElementById('testimonyTitle') || document.getElementById('headlineInput');
     const bodyInput = document.getElementById('mainInput') || document.getElementById('postBody');
@@ -745,7 +588,7 @@ function resetForm() {
 
     clearAiFeedback();
     clearMediaQuotaBadge();
-    clearMediaOriginClaimUI(); // <--- ADD THIS LINE
+    clearMediaOriginClaimUI();
     lastAnalyzedText = '';
 
     if (typeof resetMediaState === 'function') {
