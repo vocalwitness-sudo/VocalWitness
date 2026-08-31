@@ -204,29 +204,46 @@ service cloud.firestore {
       );
       allow delete: if (resource.data.authorId == request.auth.uid) || isModerator();
     }
-
-    // ==========================================
-    // TESTIMONIES  ★ TEMP open create for debugging
+// ==========================================
+    // TESTIMONIES (Production Secure)
     // ==========================================
     match /testimonies/{testimonyId} {
       allow read: if true;
 
-      // TEMP: only require login + own authorId
-      // After one successful publish, replace with the STRICT block below
-     
+      allow create: if (
+          // Case 1: Authenticated User Submission
+          (isAuthenticated() 
+            && isNotBanned() 
+            && isNotThrottled() 
+            && request.resource.data.authorId == request.auth.uid)
+          || 
+          // Case 2: Explicit Anonymous Submission
+          (request.resource.data.isAnonymous == true 
+            && request.resource.data.authorId == null)
+        )
+        && request.resource.data.keys().hasAll(['content', 'channel', 'createdAt', 'feedVisibility'])
+        && request.resource.data.content is string
+        && request.resource.data.content.size() <= 4000
+        && request.resource.data.channel in ['citizen-talk', 'witness-voice', 'citizen-circle', 'witness-circle']
+        && (!('imageUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.imageUrl))
+        && (!('audioUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.audioUrl))
+        && (!('forensicHash' in request.resource.data) || request.resource.data.forensicHash == null || (request.resource.data.forensicHash is string && request.resource.data.forensicHash.size() == 64));
+
       allow update: if isModerator()
         || (
              isNotBanned()
+             && resource.data.authorId != null
              && resource.data.authorId == request.auth.uid
              && isSafeAuthorTestimonyUpdate()
            )
         || (
+             // Public non-author updates restricted strictly to counters & reactions
              isNotBanned()
              && request.resource.data.diff(resource.data).affectedKeys()
-                 .hasOnly(['corroborationCount', 'corroborationScore', 'lastCorroboratedAt'])
+                 .hasOnly(['corroborationCount', 'corroborationScore', 'lastCorroboratedAt', 'reactions', 'commentsCount', 'updatedAt'])
            );
 
-      allow delete: if (resource.data.authorId == request.auth.uid) || isModerator();
+      allow delete: if (resource.data.authorId != null && resource.data.authorId == request.auth.uid) || isModerator();
     }
 
     // ==========================================
