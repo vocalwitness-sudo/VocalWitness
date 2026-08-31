@@ -139,13 +139,22 @@ export async function publishTestimonyOrQueue(prepared) {
   const publicData = prepared.public || prepared;
   const privateData = prepared.private || prepared._private || null;
 
+  // Canonical title/headline resolution
+  const resolvedHeading = publicData.title || publicData.headline || null;
+
   if (!navigator.onLine) {
     const targetFeed = normalizeFeedTarget(publicData.targetFeed);
     const ok = await saveDraftOffline({
-      public: { ...publicData, targetFeed },
+      public: { 
+        ...publicData, 
+        targetFeed,
+        title: resolvedHeading,
+        headline: resolvedHeading,
+      },
       private: privateData,
       content: publicData.content,
-      headline: publicData.headline,
+      title: resolvedHeading,
+      headline: resolvedHeading,
       targetFeed,
       imageUrl: publicData.imageUrl,
       audioUrl: publicData.audioUrl,
@@ -183,6 +192,9 @@ export async function publishTestimonyNow(publicData, privateData = null) {
   const isAnonymous = Boolean(publicData.isAnonymous);
   const user = auth?.currentUser;
 
+  // Canonical title/headline resolution
+  const headingText = publicData.title || publicData.headline || null;
+
   let authorTier = 'citizen';
   let authorWitnessLevel = null;
   if (user && !isAnonymous) {
@@ -200,7 +212,8 @@ export async function publishTestimonyNow(publicData, privateData = null) {
     null;
 
   const testimonyRef = await addDoc(collection(db, 'testimonies'), {
-    headline: publicData.headline || null,
+    title: headingText,
+    headline: headingText,
     content: publicData.content || '',
     targetFeed,
     channel: targetFeed,
