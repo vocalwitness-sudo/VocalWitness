@@ -1,10 +1,11 @@
-// js/audit.js - Forensic Tracking & Immutable Audit Log
+// js/audit.js - Forensic Tracking, Cryptographic Chaining & Immutable Audit Log
 import { db, auth } from './firebase-config.js';
 import { 
     collection, 
     addDoc, 
     serverTimestamp, 
     query, 
+    where,
     orderBy, 
     limit, 
     getDocs 
@@ -12,7 +13,7 @@ import {
 
 let memoryLastHash = null;
 
-// Reset memory cache on auth changes to prevent cross-session leaks
+// Reset memory cache on auth changes to prevent cross-session hash leaks
 if (auth) {
     auth.onAuthStateChanged(() => {
         memoryLastHash = null;
@@ -31,7 +32,7 @@ function canonicalizeJSON(obj) {
 }
 
 /**
- * Generates a SHA-256 forensic hash for string data.
+ * Generates a SHA-256 forensic hash for string data using native Web Crypto API.
  */
 export async function generateForensicHash(dataString) {
     try {
@@ -70,8 +71,12 @@ async function getLastLogHash() {
 }
 
 /**
- * Records a cryptographically chained audit log entry into Firestore.
- * Conforms directly to hardened Firestore Security Rules.
+ * Records a cryptographically chained security audit log entry into Firestore.
+ * 
+ * @param {string} actionType 
+ * @param {string} targetId 
+ * @param {Object} details 
+ * @returns {Promise<string>} Forensic hash of the log block
  */
 export async function logSecurityAudit(actionType, targetId, details = {}) {
     try {
@@ -94,6 +99,7 @@ export async function logSecurityAudit(actionType, targetId, details = {}) {
             userId,
             action: actionType,
             actionType,
+            testimonyId: targetId || 'N/A',
             targetId: targetId || 'N/A',
             details,
             previousHash,
@@ -109,6 +115,61 @@ export async function logSecurityAudit(actionType, targetId, details = {}) {
     } catch (e) {
         console.warn(`🛡️ Audit log write bypassed [${actionType}]:`, e.message);
         return memoryLastHash || "CLIENT_LOCAL_HASH";
+    }
+}
+
+/**
+ * Log an audit event. Supports both Batch 3 object signature and positional action arguments.
+ * 
+ * @param {Object|string} actionOrParams 
+ * @param {string} [targetId] 
+ * @param {Object} [details] 
+ */
+export async function logAuditEvent(actionOrParams, targetId, details = {}) {
+    if (typeof actionOrParams === 'object' && actionOrParams !== null) {
+        const {
+            testimonyId,
+            eventType = 'SYNTHETIC_SCORE_EXCEEDED',
+            syntheticScore = 0,
+            actionTaken = 'pending_steward_review',
+            details: customDetails = {}
+        } = actionOrParams;
+
+        return await logSecurityAudit(eventType, testimonyId, {
+            syntheticScore,
+            actionTaken,
+            ...customDetails
+        });
+    }
+
+    return await logSecurityAudit(actionOrParams, targetId, details);
+}
+
+/**
+ * Retrieves audit logs associated with a specific testimony ID.
+ * 
+ * @param {string} testimonyId 
+ * @returns {Promise<Array<Object>>}
+ */
+export async function getAuditLogsForTestimony(testimonyId) {
+    if (!testimonyId) return [];
+
+    try {
+        const q = query(
+            collection(db, "audit_logs"),
+            where("testimonyId", "==", testimonyId),
+            orderBy("createdAt", "desc"),
+            limit(50)
+        );
+
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+    } catch (err) {
+        console.error(`Failed to fetch audit logs for ${testimonyId}:`, err);
+        return [];
     }
 }
 
@@ -144,7 +205,7 @@ export async function fetchAIFlagAuditLogs(limitCount = 50) {
         const snapshot = await getDocs(q);
         return snapshot.docs
             .map(docSnap => ({ id: docSnap.id, ...docSnap.data() }))
-            .filter(log => log.action === 'AI_SYNTHETIC_MEDIA_FLAGGED');
+            .filter(log => log.action === 'AI_SYNTHETIC_MEDIA_FLAGGED' || log.actionType === 'AI_SYNTHETIC_MEDIA_FLAGGED');
     } catch (e) {
         console.warn("Unable to fetch AI flag audit logs (restricted access):", e.message);
         return [];
@@ -243,16 +304,13 @@ export async function getTransparencyMetrics() {
 }
 
 /* ==========================================================================
-   ALIAS EXPORTS
+   MODULE AGGREGATOR & EXPORTS
    ========================================================================== */
-
-export async function logAuditEvent(actionType, targetId, details = {}) {
-    return await logSecurityAudit(actionType, targetId, details);
-}
 
 export const AuditEngine = {
     logSecurityAudit,
     logAuditEvent,
+    getAuditLogsForTestimony,
     logAIFlaggedContent,
     fetchAIFlagAuditLogs,
     submitFlagAppeal,
