@@ -42,9 +42,10 @@ const DEFAULT_FALLBACK_DICTIONARY = {
     goldenRuleTitle: "The Golden Rule of Citizen Witnessing",
     goldenRuleText: "Never put yourself in immediate physical danger to capture evidence. Secure your physical safety first. Once you are in a protected location, use cryptographic tools to notarize and share your record with the world."
 };
+
 const supportedLanguages = [
-    { code: 'en',  name: 'English',     flag: '🇬🇧', native: 'English',      rtl: false },
-    { code: 'pcm', name: 'Naija Pidgin', flag: '🇳🇬', native: 'Pidgin',       rtl: false },
+    { code: 'en',  name: 'English',     flag: '🇬🇧', native: 'English',     rtl: false },
+    { code: 'pcm', name: 'Naija Pidgin', flag: '🇳🇬', native: 'Pidgin',        rtl: false },
     { code: 'ha',  name: 'Hausa',        flag: '🇳🇬', native: 'Hausa',        rtl: false },
     { code: 'yo',  name: 'Yorùbá',       flag: '🇳🇬', native: 'Yorùbá',       rtl: false },
     { code: 'ig',  name: 'Igbo',         flag: '🇳🇬', native: 'Igbo',         rtl: false },
@@ -59,17 +60,11 @@ const supportedLanguages = [
 // 2. HELPER FUNCTIONS & ENGINE
 // ==========================================
 
-/**
- * Safely resolves nested keys using dot-notation (e.g., 'supportModal.title')
- */
 function getNestedTranslation(obj, path) {
     if (!obj || !path) return null;
     return path.split('.').reduce((acc, part) => (acc && acc[part] !== undefined ? acc[part] : null), obj);
 }
 
-/**
- * Main translation lookup with fallback logic
- */
 export function t(key, fallback = "") {
     const val = getNestedTranslation(currentTranslations, key);
     if (val !== null && val !== "") return val;
@@ -99,7 +94,6 @@ export function applyTranslations() {
             return;
         }
 
-        // If the element has a specific i18n span wrapper, update only that
         const labelSpan = el.querySelector(':scope > .i18n-label');
         if (labelSpan) {
             labelSpan.textContent = text;
@@ -137,7 +131,9 @@ export function applyTranslations() {
 function syncSelectors(langCode) {
     const selectors = document.querySelectorAll('#languageSelector, #languageSelector-desktop, #languageSelector-mobile, [data-i18n-selector], .lang-select');
     selectors.forEach(sel => {
-        if (sel.value !== langCode) sel.value = langCode;
+        if (sel.value !== langCode) {
+            sel.value = langCode;
+        }
     });
 }
 
@@ -154,7 +150,6 @@ export async function loadTranslations(langCode = 'en') {
                 const fallbackRes = await fetch('./translations/en.json');
                 if (fallbackRes.ok) fallbackTranslations = await fallbackRes.json();
             } catch (_) {
-                console.warn('[i18n] Could not load base fallback translations file. Using inline default.');
                 fallbackTranslations = DEFAULT_FALLBACK_DICTIONARY;
             }
         }
@@ -166,14 +161,16 @@ export async function loadTranslations(langCode = 'en') {
             currentLang = targetLang;
             if (targetLang === 'en') fallbackTranslations = currentTranslations;
         } else {
-            console.warn(`[i18n] Translation file for ${targetLang} missing. Preserving fallback state.`);
-            if (targetLang === 'en') currentTranslations = fallbackTranslations;
+            console.warn(`[i18n] Translation file for ${targetLang}.json not found (HTTP ${response.status}). Falling back to English.`);
+            // If the translation file doesn't exist yet, fallback to English so the UI doesn't break
+            const fallbackRes = await fetch('./translations/en.json');
+            if (fallbackRes.ok) currentTranslations = await fallbackRes.json();
+            currentLang = 'en';
         }
     } catch (e) {
-        console.warn(`[i18n] Network/Fetch error loading ${targetLang}. Using fallback cache.`, e);
-        if (Object.keys(fallbackTranslations).length === 0) {
-            fallbackTranslations = DEFAULT_FALLBACK_DICTIONARY;
-        }
+        console.warn(`[i18n] Network/Fetch error loading ${targetLang}.`, e);
+        currentTranslations = DEFAULT_FALLBACK_DICTIONARY;
+        currentLang = 'en';
     }
 
     localStorage.setItem('preferredLang', currentLang);
@@ -192,12 +189,11 @@ export async function updateUILanguage(langCode) {
 export function initLanguage() {
     const savedLang = localStorage.getItem('preferredLang') || 'en';
 
-    // Global Listener: Automatically handles language dropdown changes anywhere in the DOM
+    // Global Listener with selection check protection
     document.addEventListener('change', (e) => {
-        if (
-            e.target.matches('#languageSelector, #languageSelector-desktop, #languageSelector-mobile, [data-i18n-selector], .lang-select')
-        ) {
-            loadTranslations(e.target.value);
+        if (e.target.matches('#languageSelector, #languageSelector-desktop, #languageSelector-mobile, [data-i18n-selector], .lang-select')) {
+            const selectedLang = e.target.value;
+            loadTranslations(selectedLang);
         }
     });
 
@@ -239,14 +235,12 @@ const observer = new MutationObserver((mutations) => {
 
 observer.observe(document.body, { childList: true, subtree: true });
 
-// Auto-initialize on DOM ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initLanguage);
 } else {
     initLanguage();
 }
 
-// Global exposure for non-module inline scripts
 window.initLanguage = initLanguage;
 window.changeLanguage = loadTranslations;
 window.setLanguage = loadTranslations;
