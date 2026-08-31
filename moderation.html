@@ -72,6 +72,7 @@
 
     <!-- Modular Script Initialization -->
     <script type="module">
+        import { fetchModerationQueue, submitStewardVote } from './js/governance.js';
         import { fetchReviewQueue, stewardReviewAction } from './js/moderation.js';
         import { hasStewardAccess } from './js/tier.js';
         import { createModerationAppeal } from './js/dao.js';
@@ -124,7 +125,12 @@
                     return;
                 }
 
-                const items = await fetchReviewQueue();
+                // Retrieve queued items using governance queue engine (with fallback to moderation queue)
+                let items = await fetchModerationQueue();
+                if (!items || items.length === 0) {
+                    items = await fetchReviewQueue();
+                }
+
                 queueLoading.classList.add('hidden');
 
                 if (!items || items.length === 0) {
@@ -141,13 +147,14 @@
                         .map(r => `<span class="bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded text-xs">${escapeHTML(r)}</span>`)
                         .join(' ');
 
-                    if (item.isSynthetic) {
-                        reasonsBadge += ` <span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded text-xs">🤖 Synthetic Media (${Math.round((item.syntheticScore || 0) * 100)}%)</span>`;
+                    if (item.isSynthetic || item.syntheticLikelihood > 50) {
+                        const score = Math.round((item.syntheticScore || (item.syntheticLikelihood ? item.syntheticLikelihood / 100 : 0)) * 100);
+                        reasonsBadge += ` <span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded text-xs">🤖 Suspected Synthetic Media (${score}%)</span>`;
                     }
 
                     const safeAuthor = escapeHTML(item.author || 'Anonymous Witness');
                     const safeTier = escapeHTML(item.authorTier || 'Citizen');
-                    const safeContent = escapeHTML(item.content || 'No text content available.');
+                    const safeContent = escapeHTML(item.content || item.text || 'No text content available.');
 
                     let mediaHTML = '';
                     if (item.imageUrl) {
@@ -168,6 +175,12 @@
                             </div>`;
                     }
 
+                    // Count steward votes recorded for quorum
+                    const votes = item.stewardVotes || [];
+                    const removeCount = votes.filter(v => v.action === 'remove_content' || v.action === 'purge' || v.action === 'ban_author').length;
+                    const labelCount = votes.filter(v => v.action === 'label_synthetic').length;
+                    const approveCount = votes.filter(v => v.action === 'approve_keep' || v.action === 'approve').length;
+
                     card.innerHTML = `
                         <div class="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-4">
                             <div>
@@ -175,7 +188,7 @@
                                     <span class="font-semibold text-slate-200">${safeAuthor}</span>
                                     <span class="bg-slate-800 text-slate-400 text-xs px-2 py-0.5 rounded-full uppercase tracking-wider">${safeTier}</span>
                                 </div>
-                                <p class="text-xs text-slate-500">Post ID: ${escapeHTML(item.id)} • Toxicity Score: <span class="font-mono text-rose-400">${((item.toxicityScore || 0) * 100).toFixed(0)}%</span></p>
+                                <p class="text-xs text-slate-500">Post ID: ${escapeHTML(item.id)} • Flag Count: <span class="font-mono text-amber-400">${item.flagCount || 1}</span> • Toxicity Score: <span class="font-mono text-rose-400">${((item.toxicityScore || 0) * 100).toFixed(0)}%</span></p>
                             </div>
                             <div class="flex flex-wrap gap-1">
                                 ${reasonsBadge || '<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded text-xs" data-i18n="flaggedForReview">Flagged for Review</span>'}
@@ -186,7 +199,22 @@
 
                         ${mediaHTML}
 
+                        <!-- Steward Voting & Quorum Progress Bar -->
+                        <div class="mb-4 p-3 bg-slate-900/50 border border-slate-800 rounded-lg text-xs flex flex-wrap items-center justify-between gap-2">
+                            <span class="text-slate-400 font-medium">Steward Consensus Votes (3 Required for Quorum):</span>
+                            <div class="flex items-center gap-3">
+                                <span class="text-rose-400">Purge: <strong>${removeCount}</strong></span>
+                                <span class="text-amber-400">Synthetic Label: <strong>${labelCount}</strong></span>
+                                <span class="text-emerald-400">Approve: <strong>${approveCount}</strong></span>
+                            </div>
+                        </div>
+
                         <div class="flex flex-wrap items-center justify-end gap-2 sm:gap-3 pt-3 border-t border-slate-800/60">
+                            <button data-action="label_synthetic" data-id="${item.id}"
+                                    class="action-btn border border-amber-500/30 text-amber-400 hover:bg-amber-500/10 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition">
+                                🤖 <span data-i18n="labelSynthetic">Label Synthetic</span>
+                            </button>
+
                             <button data-action="purge" data-id="${item.id}"
                                     class="action-btn border border-rose-500/30 text-rose-400 hover:bg-rose-500/10 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition">
                                 🗑️ <span data-i18n="purgePost">Purge Post</span>
@@ -198,7 +226,7 @@
                             </button>
 
                             <button onclick="openAppeal('${item.id}')"
-                                    class="border border-amber-500/30 text-amber-400 hover:bg-amber-500/10 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition">
+                                    class="border border-slate-700 text-slate-300 hover:bg-slate-800 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition">
                                 ⚖️ Appeal to DAO
                             </button>
                         </div>
@@ -207,7 +235,7 @@
                     queueContainer.appendChild(card);
                 });
 
-                // Attach steward action listeners
+                // Attach steward vote and action handlers
                 queueContainer.querySelectorAll('.action-btn').forEach(btn => {
                     btn.addEventListener('click', async (e) => {
                         const button = e.currentTarget;
@@ -217,14 +245,24 @@
                         button.disabled = true;
                         button.classList.add('opacity-50', 'cursor-not-allowed');
 
-                        const success = await stewardReviewAction(postId, action);
-                        if (success) {
+                        try {
+                            // Route through steward consensus vote in governance engine
+                            let voteAction = action;
+                            if (action === 'purge') voteAction = 'remove_content';
+                            if (action === 'approve') voteAction = 'approve_keep';
+
+                            await submitStewardVote(postId, voteAction);
+                            
+                            // Re-fetch review status or fall back to single-steward action
+                            await stewardReviewAction(postId, action);
+                            
                             const card = document.getElementById(`post-${postId}`);
                             if (card) card.remove();
                             if (queueContainer.querySelectorAll('[id^="post-"]').length === 0) {
                                 emptyQueue.classList.remove('hidden');
                             }
-                        } else {
+                        } catch (err) {
+                            console.error("Steward action error:", err);
                             button.disabled = false;
                             button.classList.remove('opacity-50', 'cursor-not-allowed');
                         }
