@@ -1,6 +1,4 @@
 // js/feed.js - Public Square Feed with Search, Filtering & Dynamic Interactivity
-// + Corroboration Engine & AI Features (Translation, Summarization)
-
 import { 
     collection, 
     query, 
@@ -12,26 +10,20 @@ import {
     deleteDoc, 
     serverTimestamp 
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-
-import { renderSealedBadge, renderDownloadPackButton } from './evidence-ui.js';
+import { renderDownloadPackButton } from './evidence-ui.js';
 import { toFullEvidencePack, downloadEvidencePack } from './evidence-pack.js';
 import { db, auth } from './firebase-config.js';
 import { showToast } from './utils.js';
 import { renderTierCircle } from './ui-components.js';
 import { hasStewardAccess, canCorroborate } from './tier.js';
-import { toggleReaction, bindReactionEvents } from './reactions.js';
+import { toggleReaction } from './reactions.js';
 import { applyPostDoorDecorations } from './door-ui.js';
 import { state } from './app-state.js';
 import { 
     submitCorroboration, 
     getCorroborationScoreFromDoc 
 } from './corroboration.js';
-import {
-    loadCircle,
-    getCircleAuthorIds,
-    hasCircle,
-    circleEmptyMessage
-} from './circle.js';
+import { reportContent, translateTestimony } from './moderation.js';
 
 let activeFeedListener = null;
 let allPostsCache = [];
@@ -155,17 +147,17 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                             showToast("Failed to share testimony link", "error");
                         }
                     }
-              } else if (action === 'pin') {
-    await handlePinPost(id);
-} else if (action === 'delete') {
-    await handleDeletePost(id);
-} else if (action === 'menu') {
-    showPostMenu(id);
-} else if (action === 'corroborate') {
-    await handleCorroborate(id, btn);
-} else if (action === 'execute-translate') {
-    await handleTranslateAction(id, btn);
-}
+                } else if (action === 'pin') {
+                    await handlePinPost(id);
+                } else if (action === 'delete') {
+                    await handleDeletePost(id);
+                } else if (action === 'menu') {
+                    showPostMenu(id);
+                } else if (action === 'corroborate') {
+                    await handleCorroborate(id, btn);
+                } else if (action === 'execute-translate') {
+                    await handleTranslateAction(id, btn);
+                }
             } catch (err) {
                 console.error(`Action ${action} failed:`, err);
             } finally {
@@ -194,6 +186,7 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
         snapshot.forEach((docSnap) => {
             const data = docSnap.data();
             const postVisibility = data.feedVisibility || data.channel;
+
             if (!postVisibility || postVisibility === currentChannel) {
                 allPostsCache.push({ id: docSnap.id, ...data });
             }
@@ -202,6 +195,7 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
         allPostsCache.sort((a, b) => {
             if (a.isPinned && !b.isPinned) return -1;
             if (!a.isPinned && b.isPinned) return 1;
+
             const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : new Date(a.createdAt || 0).getTime();
             const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : new Date(b.createdAt || 0).getTime();
             return timeB - timeA;
@@ -267,6 +261,7 @@ function ensureSearchAndFilterUI(container) {
 function applySearchAndFilter(container) {
     const searchInput = document.getElementById('feedSearchInput');
     const queryText = searchInput ? searchInput.value.toLowerCase().trim() : "";
+
     const activeFilterBtn = document.querySelector('#filterBtnGroup .filter-btn[data-active="true"]');
     const filterType = activeFilterBtn ? activeFilterBtn.getAttribute('data-filter') : 'all';
 
@@ -333,6 +328,7 @@ function renderSinglePostDOM(id, data, container) {
         : '';
 
     let trustBadgesHTML = '';
+
     if (data.authorTier && data.authorTier !== 'unverified') {
         trustBadgesHTML += `<span class="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] px-2 py-0.5 rounded flex items-center gap-1" title="Verified Witness">📱 Verified</span>`;
     }
@@ -347,6 +343,7 @@ function renderSinglePostDOM(id, data, container) {
     }
 
     const trustContainer = trustBadgesHTML ? `<div class="flex flex-wrap gap-1 mt-1">${trustBadgesHTML}</div>` : '';
+
     const reactions = data.reactions || { respect: 0, truth: 0, concern: 0, impact: 0 };
     const hasPack = Boolean(data.evidencePack || data.packCoreHash || data.imageHash || data.audioHash || data.forensicHash);
 
@@ -389,7 +386,6 @@ function renderSinglePostDOM(id, data, container) {
            </span>`
         : '';
 
-
     postEl.innerHTML = `
         <div class="flex justify-between items-start">
             <div class="flex items-center gap-3">
@@ -411,8 +407,6 @@ function renderSinglePostDOM(id, data, container) {
         </div>
 
         ${data.content ? `<p id="post-text-${id}" class="mt-5 mb-4 text-zinc-100 leading-relaxed">${escapeHTML(data.content)}</p>` : ''}
-        ${summaryBtnHTML}
-        <div id="summary-container-${id}" class="hidden mt-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-200"></div>
 
         ${mediaHTML}
         ${audioHTML}
@@ -448,18 +442,15 @@ function renderSinglePostDOM(id, data, container) {
                 <button data-action="comment" data-id="${id}" class="comment-trigger-btn flex items-center gap-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 px-3 py-1.5 rounded-xl text-zinc-300 transition">
                     💬 <span>${data.commentsCount || 0}</span>
                 </button>
-
                 <button data-action="toggle-translate" data-id="${id}" class="flex items-center gap-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 px-3 py-1.5 rounded-xl text-zinc-300 transition">
                     🌐 <span>Translate</span>
                 </button>
-
                 <button data-action="corroborate" data-id="${id}"
                     class="corroborate-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium
                            bg-emerald-600/15 text-emerald-400 border border-emerald-500/30 
                            hover:bg-emerald-600/25 transition">
                     👁️ I saw this too
                 </button>
-
                 ${corrScoreHTML}
             </div>
 
@@ -477,7 +468,7 @@ function renderSinglePostDOM(id, data, container) {
     container.appendChild(postEl);
 }
 
-// ====================== AI ACTION HANDLERS ======================
+// ====================== ACTION HANDLERS ======================
 
 async function handleTranslateAction(postId, btn) {
     const langSelect = document.getElementById(`lang-select-${postId}`);
@@ -509,13 +500,12 @@ async function handleTranslateAction(postId, btn) {
     }
 }
 
-// ====================== FEED INTERACTION ACTIONS ======================
-
 async function handleUpvote(postId) {
     if (!auth.currentUser) {
         showToast("Please log in to support testimonies.", "error");
         return;
     }
+
     try {
         const postRef = doc(db, "testimonies", postId);
         await updateDoc(postRef, { likes: increment(1) });
@@ -531,6 +521,7 @@ async function handleDeletePost(postId) {
         showToast("Authentication required.", "error");
         return;
     }
+
     if (!confirm("Are you sure you want to delete this testimony?")) return;
 
     try {
@@ -546,6 +537,7 @@ async function handleDeletePost(postId) {
         } else {
             await deleteDoc(postRef);
         }
+
         showToast("Testimony deleted.", "info");
     } catch (e) {
         console.error("Delete failed:", e);
@@ -559,16 +551,19 @@ async function handlePinPost(postId) {
         showToast("Only Stewards can pin testimonies.", "error");
         return;
     }
+
     try {
         const post = allPostsCache.find(p => p.id === postId);
         if (!post) return;
 
         const newPinnedState = !post.isPinned;
         const postRef = doc(db, "testimonies", postId);
+
         await updateDoc(postRef, {
             isPinned: newPinnedState,
             pinnedAt: newPinnedState ? serverTimestamp() : null
         });
+
         showToast(newPinnedState ? "📌 Post pinned to top" : "📌 Post unpinned", "info");
     } catch (e) {
         console.error("Pin operation failed:", e);
@@ -625,7 +620,6 @@ async function handleCorroborate(postId, btnEl) {
             const { count, score } = getCorroborationScoreFromDoc(post);
             scoreEl.textContent = `${score || count} pts · ${count} saw this`;
         }
-
     } catch (err) {
         console.error("Corroboration failed:", err);
         btnEl.disabled = false;
