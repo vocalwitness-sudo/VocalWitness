@@ -19,7 +19,6 @@ import { hasStewardAccess, canCorroborate } from './tier.js';
 import { toggleReaction } from './reactions.js';
 import { applyPostDoorDecorations } from './door-ui.js';
 import { state } from './app-state.js';
-import { reportContent } from './moderation.js';
 import { 
     submitCorroboration, 
     getCorroborationScoreFromDoc 
@@ -126,11 +125,17 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                 } else if (action === 'download-pack') {
                     await handleDownloadEvidencePack(id);
                 } else if (action === 'report') {
-                    try {
-                        await reportContent(id, "other");
-                    } catch (err) {
-                        console.error("Report action failed:", err);
-                        showToast("Failed to submit report.", "error");
+                    // Prefer modal so user can choose reason (incl. suspected_synthetic)
+                    if (typeof window.openReportModal === 'function') {
+                        window.openReportModal(id);
+                    } else {
+                        try {
+                            await reportContent(id, "other");
+                            showToast("Report submitted to Stewards.", "success");
+                        } catch (err) {
+                            console.error("Report action failed:", err);
+                            showToast("Failed to submit report.", "error");
+                        }
                     }
                 } else if (action === 'share') {
                     try {
@@ -206,7 +211,6 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
         applySearchAndFilter(feedContainer);
     }, (error) => {
         console.error("Feed error:", error);
-        // Clears "Loading..." with error state
         feedContainer.innerHTML = `
             <div class="text-center py-8 text-red-400 bg-red-950/20 rounded-2xl border border-red-900/40">
                 Failed to load feed items. Please refresh or try again later.
@@ -275,6 +279,7 @@ function applySearchAndFilter(container) {
         if (post.moderationStatus === "removed" || post.isDeleted) return false;
 
         const matchesSearch = !queryText || 
+            (post.headline && post.headline.toLowerCase().includes(queryText)) ||
             (post.title && post.title.toLowerCase().includes(queryText)) ||
             (post.content && post.content.toLowerCase().includes(queryText)) ||
             (post.author && post.author.toLowerCase().includes(queryText)) ||
@@ -285,11 +290,10 @@ function applySearchAndFilter(container) {
         if (filterType === 'verified') {
             return post.authorTier && post.authorTier !== 'citizen' && post.authorTier !== 'unverified';
         } else if (filterType === 'media') {
-            return !!(post.imageUrl || post.audioUrl);
+            return !!(post.imageUrl || post.audioUrl || post.videoUrl);
         } else if (filterType === 'corroborated') {
             return (post.corroborationCount || 0) >= 1;
         }
-
         return true;
     });
 
@@ -304,11 +308,9 @@ function renderFilteredPosts(posts, container) {
 
     if (!feedContainer) return;
 
-    // Clears loading/skeleton or previous content cleanly
     feedContainer.innerHTML = '';
 
     if (posts.length === 0) {
-        // Replaces loading state with empty feed UI
         feedContainer.innerHTML = `
             <div class="text-center py-12 border border-dashed border-zinc-800 rounded-2xl" id="feed-empty-state">
                 <p class="text-zinc-400 font-medium">No reports published in this channel yet.</p>
@@ -328,11 +330,15 @@ function renderSinglePostDOM(id, data, container) {
     postEl.className = 'post-card glass rounded-3xl p-6 mb-6 hover:border-emerald-500/35 transition-all duration-300 border border-zinc-800 bg-zinc-900/50 relative';
     postEl.setAttribute('data-post-id', id);
 
-    // Extract title or headline preference, falling back to truncated content or default title
-    const preferredTitle = (data.headline && data.headline.trim() !== '') ? data.headline : data.title;
+    // Prefer headline (what composer writes), then title, then truncated content
+    const preferredTitle = (data.headline && data.headline.trim() !== '')
+        ? data.headline
+        : data.title;
     const headline = preferredTitle && preferredTitle.trim() !== ''
         ? preferredTitle
-        : (data.content ? (data.content.length > 80 ? data.content.slice(0, 80) + '...' : data.content) : 'Untitled Witness Report');
+        : (data.content
+            ? (data.content.length > 80 ? data.content.slice(0, 80) + '...' : data.content)
+            : 'Untitled Witness Report');
 
     const pinnedBadge = data.isPinned
         ? `<span class="bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px] px-2.5 py-0.5 rounded-full font-medium flex items-center gap-1">📌 Pinned</span>`
@@ -346,17 +352,26 @@ function renderSinglePostDOM(id, data, container) {
         trustBadgesHTML += `<span class="bg-zinc-800 text-zinc-400 border border-zinc-700/50 text-[10px] px-2 py-0.5 rounded flex items-center gap-1" title="Unverified Author Profile">⚠️ Unverified Source</span>`;
     }
 
-    // Origin Claim & Synthetic Advisory Logic
-    const originType = data.originType || data.provenanceType || 'human-original';
-    if (originType === 'synthetic-ai' || data.isSynthetic || data.aiGenerated) {
-        trustBadgesHTML += `<span class="bg-amber-500/10 text-amber-300 border border-amber-500/30 text-[10px] px-2 py-0.5 rounded flex items-center gap-1" title="Synthetic or AI-Assisted Content Advisory">🤖 Synthetic Advisory</span>`;
-    } else if (originType === 'reposted') {
-        trustBadgesHTML += `<span class="bg-purple-500/10 text-purple-300 border border-purple-500/20 text-[10px] px-2 py-0.5 rounded flex items-center gap-1" title="Reposted / Curated Content">🔄 Reposted</span>`;
+    // Origin Claim & Synthetic Advisory — matches composer mediaOriginClaim values
+    const claim = data.mediaOriginClaim || data.originType || data.provenanceType || 'unknown';
+    const isSynthetic =
+        claim === 'synthetic' ||
+        claim === 'synthetic-ai' ||
+        data.isSynthetic === true ||
+        data.aiGenerated === true ||
+        (data.syntheticScore != null && Number(data.syntheticScore) >= 70);
+
+    if (isSynthetic) {
+        trustBadgesHTML += `<span class="bg-amber-500/10 text-amber-300 border border-amber-500/30 text-[10px] px-2 py-0.5 rounded flex items-center gap-1" title="Author or system flagged synthetic / AI-assisted media">🤖 Synthetic Advisory</span>`;
+    } else if (claim === 'received' || claim === 'reposted') {
+        trustBadgesHTML += `<span class="bg-purple-500/10 text-purple-300 border border-purple-500/20 text-[10px] px-2 py-0.5 rounded flex items-center gap-1" title="Received or forwarded media">🔄 Received / Forwarded</span>`;
+    } else if (claim === 'filmed_by_me') {
+        trustBadgesHTML += `<span class="bg-emerald-950/40 text-emerald-400 border border-emerald-500/20 text-[10px] px-2 py-0.5 rounded flex items-center gap-1" title="Author claims direct capture">✍️ Direct Capture</span>`;
     } else {
-        trustBadgesHTML += `<span class="bg-emerald-950/40 text-emerald-400 border border-emerald-500/20 text-[10px] px-2 py-0.5 rounded flex items-center gap-1" title="Original Human Capture">✍️ Direct Capture</span>`;
+        trustBadgesHTML += `<span class="bg-zinc-800 text-zinc-400 border border-zinc-700/50 text-[10px] px-2 py-0.5 rounded flex items-center gap-1" title="Origin not declared">❓ Unverified Origin</span>`;
     }
 
-    const activeHash = data.forensicHash || data.imageHash || data.audioHash;
+    const activeHash = data.forensicHash || data.imageHash || data.audioHash || data.videoHash;
     if (activeHash) {
         trustBadgesHTML += `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] px-2 py-0.5 rounded flex items-center gap-1" title="Hash: ${escapeHTML(activeHash)}">🛡️ ZK Sealed</span>`;
     }
@@ -365,14 +380,32 @@ function renderSinglePostDOM(id, data, container) {
         trustBadgesHTML += `<a href="https://ipfs.io/ipfs/${escapeHTML(data.ipfsCid)}" target="_blank" rel="noopener noreferrer" class="bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px] px-2 py-0.5 rounded flex items-center gap-1 hover:bg-purple-500/20 transition">📦 IPFS</a>`;
     }
 
-    const trustContainer = trustBadgesHTML ? `<div class="flex flex-wrap gap-1 mt-1">${trustBadgesHTML}</div>` : '';
+    const trustContainer = trustBadgesHTML
+        ? `<div class="flex flex-wrap gap-1 mt-1">${trustBadgesHTML}</div>`
+        : '';
 
-    const reactions = data.reactions || { respect: 0, truth: 0, concern: 0, impact: 0 };
-    const hasPack = Boolean(data.evidencePack || data.packCoreHash || data.imageHash || data.audioHash || data.forensicHash);
+    const reactions = data.reactions || { respect: 0, truth: 0, solidarity: 0, impact: 0 };
+    const hasPack = Boolean(
+        data.evidencePack ||
+        data.packCoreHash ||
+        data.imageHash ||
+        data.audioHash ||
+        data.videoHash ||
+        data.forensicHash
+    );
 
     const mediaHTML = data.imageUrl
         ? `<img src="${escapeHTML(data.imageUrl)}" class="mt-5 rounded-2xl w-full max-h-96 object-cover border border-zinc-700" alt="Evidence" loading="lazy">`
         : '';
+
+    let videoHTML = '';
+    if (data.videoUrl) {
+        videoHTML = `
+            <div class="mt-5 rounded-2xl overflow-hidden border border-zinc-700">
+                <video controls playsinline class="w-full max-h-96 bg-black" preload="metadata"
+                       src="${escapeHTML(data.videoUrl)}"></video>
+            </div>`;
+    }
 
     let audioHTML = '';
     if (data.audioUrl) {
@@ -394,13 +427,15 @@ function renderSinglePostDOM(id, data, container) {
     if (data.createdAt?.toDate) formattedDate = data.createdAt.toDate().toLocaleString();
     else if (data.createdAt) formattedDate = new Date(data.createdAt).toLocaleString();
 
-    const authorDisplayName = escapeHTML(data.author || (data.authorId ? `Witness (${data.authorId.substring(0, 6)}...)` : 'Anonymous Witness'));
+    const authorDisplayName = escapeHTML(
+        data.author ||
+        (data.authorId ? `Witness (${data.authorId.substring(0, 6)}...)` : 'Anonymous Witness')
+    );
 
-    const deleteBtnHTML = isOwner || isStewardUserCache 
-        ? `<button data-action="delete" data-id="${id}" title="Delete Testimony" class="text-zinc-500 hover:text-red-400 text-xs transition">🗑️</button>` 
+    const deleteBtnHTML = isOwner || isStewardUserCache
+        ? `<button data-action="delete" data-id="${id}" title="Delete Testimony" class="text-zinc-500 hover:text-red-400 text-xs transition">🗑️</button>`
         : '';
 
-    // Corroboration score
     const corrCount = data.corroborationCount || 0;
     const corrScore = data.corroborationScore || corrCount;
     const corrScoreHTML = corrCount > 0
@@ -436,6 +471,7 @@ function renderSinglePostDOM(id, data, container) {
         ${data.content ? `<p id="post-text-${id}" class="text-zinc-300 text-sm mb-4 whitespace-pre-line leading-relaxed">${escapeHTML(data.content)}</p>` : ''}
 
         ${mediaHTML}
+        ${videoHTML}
         ${audioHTML}
 
         <!-- Interactive Translation Controls -->
@@ -480,7 +516,6 @@ function renderSinglePostDOM(id, data, container) {
                 </button>
                 ${corrScoreHTML}
             </div>
-
             <div class="flex gap-4 items-center">
                 ${hasPack ? renderDownloadPackButton(id) : ''}
                 <button data-action="report" data-id="${id}" class="text-red-400 hover:text-red-500 transition">Report</button>
@@ -555,7 +590,7 @@ async function handleDeletePost(postId) {
         const post = allPostsCache.find(p => p.id === postId);
         const postRef = doc(db, "testimonies", postId);
 
-        if (post && (post.forensicHash || post.imageHash || post.audioHash)) {
+        if (post && (post.forensicHash || post.imageHash || post.audioHash || post.videoHash)) {
             await updateDoc(postRef, {
                 isDeleted: true,
                 content: "[This testimony was deleted by the user]",
@@ -564,7 +599,6 @@ async function handleDeletePost(postId) {
         } else {
             await deleteDoc(postRef);
         }
-
         showToast("Testimony deleted.", "info");
     } catch (e) {
         console.error("Delete failed:", e);
@@ -610,7 +644,7 @@ async function handleCorroborate(postId, btnEl) {
     const allowed = await canCorroborate();
     if (!allowed) {
         showToast("Phone verification required to corroborate reports.", "info");
-        const modal = document.getElementById('phoneVerificationModal') || 
+        const modal = document.getElementById('phoneVerificationModal') ||
                     document.getElementById('phone-upgrade-modal') ||
                     document.getElementById('verificationModal');
         if (modal) {
@@ -641,7 +675,6 @@ async function handleCorroborate(postId, btnEl) {
         btnEl.classList.add('opacity-60', 'cursor-default');
         btnEl.disabled = true;
 
-        // Update score text if it exists
         const scoreEl = btnEl.parentElement?.querySelector('.corr-score');
         if (scoreEl && post) {
             const { count, score } = getCorroborationScoreFromDoc(post);
@@ -712,6 +745,17 @@ async function handleDownloadEvidencePack(postId) {
                 hashAlg: 'SHA-256',
                 hashCapture: post.audioHash,
                 hashAfterUpload: post.audioHash,
+                hashMatch: true
+            });
+        }
+
+        if (post.videoUrl && post.videoHash) {
+            core.media.push({
+                role: 'video',
+                url: post.videoUrl,
+                hashAlg: 'SHA-256',
+                hashCapture: post.videoHash,
+                hashAfterUpload: post.videoHash,
                 hashMatch: true
             });
         }
