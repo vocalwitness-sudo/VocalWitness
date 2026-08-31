@@ -5,52 +5,100 @@ service firebase.storage {
     // ==========================================
     // HELPER FUNCTIONS
     // ==========================================
-    function isAuthenticated() {
+    function isSignedIn() {
       return request.auth != null;
     }
 
     function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
+      return isSignedIn() && request.auth.uid == userId;
     }
 
-    function isSupportedImageType() {
+    function isModerator() {
+      return isSignedIn() && (
+        request.auth.token.moderator == true || 
+        request.auth.token.admin == true
+      );
+    }
+
+    function isValidImage() {
       return request.resource.contentType.matches('image/(jpeg|png|webp|gif|svg\\+xml)');
     }
 
-    function isSupportedAudioType() {
-      return request.resource.contentType.matches('audio/(mpeg|wav|ogg|webm|mp4|aac|x-m4a)');
+    function isValidAudio() {
+      return request.resource.contentType.matches('audio/(webm|ogg|mp4|mpeg|wav|x-wav|x-m4a)')
+          || request.resource.contentType.matches('audio/webm;codecs=opus');
+    }
+
+    function isValidMedia() {
+      return isValidImage() || isValidAudio();
+    }
+
+    function isValidPayload(maxMb) {
+      return request.resource.size > 0 
+          && request.resource.size <= maxMb * 1024 * 1024;
     }
 
     // ==========================================
-    // EVIDENCE MEDIA UPLOADS
+    // PATH MATCHERS
     // ==========================================
-    match /evidence/{filename} {
-      // Public read access for published evidence attached to testimonies
+
+    // Profile Avatars & User Directory
+    match /avatars/{userId}/{allPaths=**} {
       allow read: if true;
-
-      // Allow upload if authenticated OR explicitly marked as anonymous in metadata
-      // Restricts maximum file size to 25MB and ensures valid MIME types
-      allow create: if (isAuthenticated() || request.resource.metadata.isAnonymous == "true")
-                    && request.resource.size <= 25 * 1024 * 1024
-                    && (isSupportedImageType() || isSupportedAudioType());
-
-      // Cryptographic evidence artifacts are immutable once uploaded
-      allow update, delete: if false;
+      allow write: if isOwner(userId) && isValidImage() && isValidPayload(5);
+      allow delete: if isOwner(userId) || isModerator();
     }
 
-    // ==========================================
-    // USER PROFILE AVATARS & ASSETS
-    // ==========================================
     match /users/{userId}/{filename} {
       allow read: if true;
+      allow create, update: if isOwner(userId) && isValidImage() && isValidPayload(5);
+      allow delete: if isOwner(userId) || isModerator();
+    }
 
-      // Only profile owner can upload or update their avatar/banner media
-      // Enforces a 5MB maximum limit and image-only uploads
-      allow create, update: if isOwner(userId)
-                            && request.resource.size <= 5 * 1024 * 1024
-                            && isSupportedImageType();
+    // Single Evidence Path (from js/createPost.js)
+    match /evidence/{filename} {
+      allow read: if true;
+      allow create: if (isSignedIn() || request.resource.metadata.isAnonymous == "true")
+                    && isValidMedia() 
+                    && isValidPayload(25);
+      allow update: if false;
+      allow delete: if isModerator();
+    }
 
-      allow delete: if isOwner(userId);
+    // Nested User Evidence Directory
+    match /evidence/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isOwner(userId) && isValidMedia() && isValidPayload(25);
+      allow delete: if isOwner(userId) || isModerator();
+    }
+
+    // Witness Evidence Path
+    match /witness_evidence/{fileId} {
+      allow read: if true;
+      allow create: if (isSignedIn() || request.resource.metadata.isAnonymous == "true")
+                    && isValidMedia() 
+                    && isValidPayload(25);
+      allow update: if false;
+      allow delete: if isModerator();
+    }
+
+    // Audio Recordings
+    match /audio/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isOwner(userId) && isValidAudio() && isValidPayload(25);
+      allow delete: if isOwner(userId) || isModerator();
+    }
+
+    // General Uploads
+    match /uploads/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isOwner(userId) && isValidMedia() && isValidPayload(15);
+      allow delete: if isOwner(userId) || isModerator();
+    }
+
+    // Fallback Security Lock
+    match /{allPaths=**} {
+      allow read, write: if false;
     }
   }
 }
