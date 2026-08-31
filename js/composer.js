@@ -192,7 +192,6 @@ export function getSelectedMediaOriginClaim() {
     return claimSelect ? claimSelect.value : 'unknown';
 }
 
-import { showToast } from './utils.js';
 import { 
     clearMediaQuotaBadge, 
     renderMediaQuotaBadge, 
