@@ -6,7 +6,7 @@ import { showToast } from './utils.js';
 import { getCurrentUserTier, TIERS, calculateVideoUploadCost } from './tier.js';
 import { db, auth } from './firebase-config.js';
 import { validateVideoFile } from './video-validator.js';
-import { calculateSyntheticScoreFromMetadata } from './ai-services.js';
+import { calculateSyntheticScoreFromMetadata, evaluateClientSyntheticAdvisory } from './ai-services.js';
 import {
     collection,
     addDoc,
@@ -533,7 +533,7 @@ function renderAiFeedback(container, analysis, category) {
 }
 
 /**
- * Main submit handler
+ * Main submit handler with integrated synthetic media assessment
  */
 async function handleComposerSubmit(e) {
     if (e?.preventDefault) e.preventDefault();
@@ -643,8 +643,17 @@ async function handleComposerSubmit(e) {
             };
         }
 
+        // 🛡️ Evaluate Synthetic Score & Advisory Flags from Metadata
+        const syntheticAssessment = calculateSyntheticScoreFromMetadata(mediaData.mediaMetadata || {});
+        
+        // Automatically route to review queue if synthetic score hits the steward review threshold (75+)
+        if (syntheticAssessment.requiresReview) {
+            needsModerationReview = true;
+        }
+
+        // Handle Draft path for Citizen tier on Witness Voice
         if (isWitnessVoice && userTier === TIERS.CITIZEN) {
-            await addDoc(collection(db, `users/${user.uid}/drafts`), {
+            const draftRef = await addDoc(collection(db, `users/${user.uid}/drafts`), {
                 headline: headline || null,
                 body,
                 category,
@@ -654,17 +663,29 @@ async function handleComposerSubmit(e) {
                 audioHash: mediaData.audioHash,
                 forensicHash: mediaData.forensicHash,
                 mediaMetadata: mediaData.mediaMetadata,
+                
+                // 📊 Stored Synthetic Score & Advisory Fields on Draft
+                syntheticScore: syntheticAssessment.score,
+                syntheticAdvisory: syntheticAssessment.advisory,
+                syntheticRequiresReview: syntheticAssessment.requiresReview,
+
                 mediaOriginClaim: mediaFilePresent ? mediaOriginClaim : 'none',
                 targetChannel: 'witness_voice',
                 isAnonymous: anonymous,
                 createdAt: serverTimestamp()
             });
 
+            // Log high synthetic risk event for drafts if applicable
+            if (syntheticAssessment.requiresReview) {
+                await evaluateClientSyntheticAdvisory(draftRef.id, mediaData.mediaMetadata || {});
+            }
+
             showToast('Testimony saved as draft. Complete verification to publish.', 'info');
             resetForm();
             return;
         }
 
+        // Prepare standard/anonymous submission including synthetic assessment fields
         const prepared = await prepareAnonymousSubmission(
             {
                 content: body,
@@ -677,6 +698,12 @@ async function handleComposerSubmit(e) {
                 audioHash: mediaData.audioHash,
                 forensicHash: mediaData.forensicHash,
                 mediaMetadata: mediaData.mediaMetadata,
+                
+                // 📊 Stored Synthetic Score & Advisory Fields passed to payload
+                syntheticScore: syntheticAssessment.score,
+                syntheticAdvisory: syntheticAssessment.advisory,
+                syntheticRequiresReview: syntheticAssessment.requiresReview,
+
                 requiresReview: needsModerationReview,
                 mediaOriginClaim: mediaFilePresent ? mediaOriginClaim : 'none'
             },
@@ -684,17 +711,24 @@ async function handleComposerSubmit(e) {
         );
 
         const result = await publishTestimonyOrQueue(prepared);
+        const docId = result?.id || null;
+
+        // Trigger client-side audit log entry if high synthetic risk detected
+        if (syntheticAssessment.requiresReview && docId) {
+            await evaluateClientSyntheticAdvisory(docId, mediaData.mediaMetadata || {});
+        }
 
         await logAuditEvent(user.uid, 'POST_CREATED', {
-            docId: result?.id || null,
+            docId: docId,
             channel: targetFeed,
             isAnonymous: anonymous,
-            flaggedForReview: needsModerationReview
+            flaggedForReview: needsModerationReview,
+            syntheticScore: syntheticAssessment.score
         });
 
         showToast(
             needsModerationReview
-                ? 'Testimony submitted for moderator review.'
+                ? 'Testimony submitted for moderator review (Synthetic/Content flag).'
                 : 'Testimony published successfully!',
             'success'
         );
@@ -708,7 +742,6 @@ async function handleComposerSubmit(e) {
         if (submitBtn) submitBtn.disabled = false;
     }
 }
-
 /**
  * Reset form UI
  */
