@@ -1,6 +1,6 @@
 // js/media-pipeline.js
 // Unified pre-upload media pipeline for VocalWitness
-// Handles image EXIF scrubbing + audio normalization based on identity mode
+// Handles image EXIF scrubbing, audio normalization, and video pass-through
 
 import { scrubImageMetadata } from './imageScrubber.js';
 import { normalizeAudioBlob } from './audio-normalize.js';
@@ -20,7 +20,14 @@ export async function prepareMediaForUpload(file, options = {}) {
         throw new Error('No media file provided');
     }
 
-    const type = file.type || '';
+    // Infer type if file.type is blank (edge-case for some mobile pickers)
+    let type = file.type || '';
+    if (!type && file.name) {
+        const ext = file.name.split('.').pop().toLowerCase();
+        if (['jpg', 'jpeg', 'png', 'webp', 'heic'].includes(ext)) type = 'image/' + ext;
+        if (['mp3', 'wav', 'ogg', 'm4a'].includes(ext)) type = 'audio/' + ext;
+        if (['mp4', 'webm', 'mov', 'mkv'].includes(ext)) type = 'video/' + ext;
+    }
 
     // ========== IMAGE PATH ==========
     if (type.startsWith('image/')) {
@@ -42,6 +49,15 @@ export async function prepareMediaForUpload(file, options = {}) {
                     maxWidth: options.maxWidth || 1600,
                     maxHeight: options.maxHeight || 1600,
                     quality: 0.82
+                });
+            }
+
+            // Ensure we return a File object retaining name/metadata interface
+            if (processed instanceof Blob && !(processed instanceof File)) {
+                const baseName = (file.name || 'image').replace(/\.[^/.]+$/, '');
+                return new File([processed], `${baseName}_scrubbed.webp`, {
+                    type: 'image/webp',
+                    lastModified: Date.now()
                 });
             }
 
@@ -82,6 +98,13 @@ export async function prepareMediaForUpload(file, options = {}) {
         }
     }
 
-    // Unsupported type
+    // ========== VIDEO PATH (Pass-through for video-validator) ==========
+    if (type.startsWith('video/')) {
+        // Videos are validated via video-validator.js during selection.
+        // Direct pass-through avoids breaking video payload pipelines.
+        return file;
+    }
+
+    // Fallback for unsupported media types
     throw new Error(`Unsupported media type: ${type || 'unknown'}`);
 }
