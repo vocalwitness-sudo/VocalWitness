@@ -12,7 +12,7 @@ import { loadDynamicNavigation } from './navigation.js';
 import { showToast } from './utils.js';
 import { initBookmarks, initBookmarksView } from './bookmarks.js';
 import { loadWeeklyLeaderboard, refreshTierAndUI } from './tier.js';
-import './composer.js';
+import { initComposer } from './composer.js';
 import { createEvidencePack } from './evidence-pack.js';
 import { generateSha256Hash } from './utils.js';
 import {
@@ -558,7 +558,7 @@ function setupEventListeners() {
         }
     });
 
-    document.addEventListener('change', (e) => {
+  document.addEventListener('change', (e) => {
         const actionTarget = e.target.closest('[data-action]');
         if (!actionTarget) return;
         const action = actionTarget.dataset.action;
@@ -582,6 +582,11 @@ function setupEventListeners() {
     }
 
     bindHeaderEvents();
+
+    // Initialize composer event listeners & AI moderation pipeline
+    if (typeof initComposer === 'function') {
+        initComposer();
+    }
 
     document.getElementById('paystackPayBtn')?.addEventListener('click', (e) => {
         e.preventDefault();
