@@ -327,9 +327,10 @@ function renderSinglePostDOM(id, data, container) {
     postEl.className = 'post-card glass rounded-3xl p-6 mb-6 hover:border-emerald-500/35 transition-all duration-300 border border-zinc-800 bg-zinc-900/50 relative';
     postEl.setAttribute('data-post-id', id);
 
-    // Extract title or create fallback headline
-    const headline = data.title && data.title.trim() !== '' 
-        ? data.title 
+    // Extract title or headline preference, falling back to truncated content or default title
+    const preferredTitle = (data.headline && data.headline.trim() !== '') ? data.headline : data.title;
+    const headline = preferredTitle && preferredTitle.trim() !== ''
+        ? preferredTitle
         : (data.content ? (data.content.length > 80 ? data.content.slice(0, 80) + '...' : data.content) : 'Untitled Witness Report');
 
     const pinnedBadge = data.isPinned
