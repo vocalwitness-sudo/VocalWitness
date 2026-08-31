@@ -174,11 +174,25 @@ export async function publishWithModeration(content, mediaData, currentUser, tit
 }
 
 // ====================== REPORT CONTENT ======================
+// ====================== REPORT CONTENT ======================
 export async function reportContent(postId, reason, details = '') {
     if (!auth.currentUser) {
         showToast("Sign in required to report content", "error");
         return false;
     }
+
+    // Map legacy or shorthand reasons, ensuring 'suspected_synthetic' is fully supported
+    const validReasons = [
+        "spam", 
+        "harassment", 
+        "misinformation", 
+        "suspected_synthetic", 
+        "hate_speech", 
+        "violence", 
+        "other"
+    ];
+    
+    const normalizedReason = validReasons.includes(reason) ? reason : "other";
 
     try {
         const reportRef = collection(db, "reports");
@@ -194,7 +208,7 @@ export async function reportContent(postId, reason, details = '') {
             transaction.set(newReportRef, {
                 postId,
                 reportedBy: auth.currentUser.uid,
-                reason: reason || "other",
+                reason: normalizedReason,
                 details: details || "",
                 status: "pending",
                 timestamp: serverTimestamp()
@@ -206,12 +220,16 @@ export async function reportContent(postId, reason, details = '') {
         });
 
         try {
-            await logSecurityAudit("REPORT_CONTENT", postId, { reason, details });
+            await logSecurityAudit("REPORT_CONTENT", postId, { reason: normalizedReason, details });
         } catch (auditErr) {
             console.warn("Audit logging failed:", auditErr);
         }
 
-        showToast("🚩 Content reported to Stewards", "success");
+        const successMessage = normalizedReason === "suspected_synthetic" 
+            ? "🤖 Suspected deepfake / synthetic report logged for review" 
+            : "🚩 Content reported to Stewards";
+
+        showToast(successMessage, "success");
         return true;
     } catch (e) {
         console.error("Report failed:", e);
@@ -219,7 +237,6 @@ export async function reportContent(postId, reason, details = '') {
         return false;
     }
 }
-
 // ====================== STEWARD REVIEW ACTIONS ======================
 export async function stewardReviewAction(postId, actionType, notes = '') {
     const isSteward = await hasStewardAccess();
