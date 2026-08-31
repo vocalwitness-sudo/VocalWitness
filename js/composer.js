@@ -195,7 +195,6 @@ export function getSelectedMediaOriginClaim() {
 import { 
     clearMediaQuotaBadge, 
     renderMediaQuotaBadge, 
-    validateVideoFile, 
     calculateVideoUploadCost, 
     triggerOveragePaymentModal 
 } from './media-validator.js';
