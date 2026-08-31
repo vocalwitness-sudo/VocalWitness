@@ -66,9 +66,9 @@ function showVideoPolicyModal(customMessage) {
                     </div>
                     <h3 class="text-xl font-bold tracking-tight">Authenticity Requirement</h3>
                 </div>
-                
+
                 <p id="video-policy-msg" class="text-slate-300 text-sm leading-relaxed mb-4"></p>
-                
+
                 <div class="bg-slate-800 border border-slate-700/60 rounded-xl p-3 mb-5 space-y-2 text-xs text-slate-400">
                     <div class="flex justify-between">
                         <span>Daily Upload Quota:</span>
@@ -520,9 +520,10 @@ async function handleComposerSubmit(e) {
                       document.getElementById('postBody') ||
                       document.getElementById('testimonyBody');
 
-    const headlineInput = document.getElementById('testimonyTitle') ||
-                          document.getElementById('headlineInput') ||
-                          document.getElementById('testimonyHeadline');
+    const headlineInput = document.getElementById('headlineInput') ||
+                          document.getElementById('testimonyHeadline') ||
+                          document.getElementById('testimonyTitle') ||
+                          document.getElementById('postHeadline');
 
     const categorySelect = document.getElementById('categorySelect') ||
                            document.getElementById('testimonyCategory');
@@ -556,7 +557,7 @@ async function handleComposerSubmit(e) {
     const isWitnessVoice = targetFeed === 'witness_voice';
 
     if (!headline) {
-        showToast('Please add a heading for your testimony.', 'error');
+        showToast('Please add a headline for your testimony.', 'error');
         return;
     }
     if (!body) {
@@ -679,7 +680,10 @@ async function handleComposerSubmit(e) {
  */
 export function resetForm() {
     const form = document.getElementById('composer-form') || document.getElementById('testimonyForm');
-    const headlineInput = document.getElementById('testimonyTitle') || document.getElementById('headlineInput');
+    const headlineInput = document.getElementById('headlineInput') || 
+                          document.getElementById('testimonyHeadline') || 
+                          document.getElementById('testimonyTitle') || 
+                          document.getElementById('postHeadline');
     const bodyInput = document.getElementById('mainInput') || document.getElementById('postBody');
     const previewArea = document.getElementById('preview-area') || document.getElementById('media-preview');
     const fileInput = document.getElementById('media-input') || document.getElementById('photoInput');
