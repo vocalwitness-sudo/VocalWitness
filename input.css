@@ -1,18 +1,18 @@
 @import "tailwindcss";
 
-/* ====================== CUSTOM THEME VARIABLES ====================== */
+/* ====================== TAILWIND v4 DESIGN TOKENS ====================== */
 @theme {
-  --color-bg-dark: #0a0f1c;
-  --color-glass: rgba(17, 24, 39, 0.92);
-  --color-glass-border: rgba(16, 185, 129, 0.22);
   --color-primary: #10b981;
   --color-primary-dark: #059669;
   --color-accent-blue: #2563eb;
   --color-accent-red: #ef4444;
 }
 
-/* ====================== HEADER HEIGHT (must match index.html critical CSS) ====================== */
+/* ====================== CUSTOM THEME VARIABLES & ROOT ====================== */
 :root {
+  --color-bg-dark: #0a0f1c;
+  --color-glass: rgba(17, 24, 39, 0.92);
+  --color-glass-border: rgba(16, 185, 129, 0.22);
   --header-height-mobile: 112px;
   --header-height-desktop: 72px;
 }
@@ -23,7 +23,6 @@ body {
   background-color: var(--color-bg-dark);
   color: #ffffff;
   min-height: 100vh;
-  /* Removed display: flex on body so it doesn't force vertical expansion */
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   margin: 0;
@@ -33,7 +32,6 @@ body {
 /* ====================== MAIN CONTENT SPACING ====================== */
 #main-content {
   padding-top: var(--header-height-mobile);
-  /* Use fit-content so empty tab views don't create massive empty spaces */
   min-height: calc(100vh - var(--header-height-mobile) - 200px);
 }
 
@@ -44,10 +42,10 @@ body {
   }
 }
 
-/* Remove footer margin-top: auto if present */
 footer {
   margin-top: 2rem;
 }
+
 /* ====================== GLASS ====================== */
 .glass {
   background-color: var(--color-glass);
@@ -62,7 +60,6 @@ footer {
 }
 
 /* ====================== NAV TABS ====================== */
-/* Horizontal scroll lives on the parent (.scrollbar-hide), not on #main-nav */
 #main-nav {
   display: flex;
   align-items: center;
@@ -242,7 +239,6 @@ header h1 {
   transform: scale(1.02);
 }
 
-/* Publish button */
 #postButton {
   display: flex !important;
   background-color: #059669 !important;
