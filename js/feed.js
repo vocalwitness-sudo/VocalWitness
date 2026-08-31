@@ -341,6 +341,18 @@ function renderSinglePostDOM(id, data, container) {
 
     if (data.authorTier && data.authorTier !== 'unverified') {
         trustBadgesHTML += `<span class="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] px-2 py-0.5 rounded flex items-center gap-1" title="Verified Witness">📱 Verified</span>`;
+    } else {
+        trustBadgesHTML += `<span class="bg-zinc-800 text-zinc-400 border border-zinc-700/50 text-[10px] px-2 py-0.5 rounded flex items-center gap-1" title="Unverified Author Profile">⚠️ Unverified Source</span>`;
+    }
+
+    // Origin Claim & Synthetic Advisory Logic
+    const originType = data.originType || data.provenanceType || 'human-original';
+    if (originType === 'synthetic-ai' || data.isSynthetic || data.aiGenerated) {
+        trustBadgesHTML += `<span class="bg-amber-500/10 text-amber-300 border border-amber-500/30 text-[10px] px-2 py-0.5 rounded flex items-center gap-1" title="Synthetic or AI-Assisted Content Advisory">🤖 Synthetic Advisory</span>`;
+    } else if (originType === 'reposted') {
+        trustBadgesHTML += `<span class="bg-purple-500/10 text-purple-300 border border-purple-500/20 text-[10px] px-2 py-0.5 rounded flex items-center gap-1" title="Reposted / Curated Content">🔄 Reposted</span>`;
+    } else {
+        trustBadgesHTML += `<span class="bg-emerald-950/40 text-emerald-400 border border-emerald-500/20 text-[10px] px-2 py-0.5 rounded flex items-center gap-1" title="Original Human Capture">✍️ Direct Capture</span>`;
     }
 
     const activeHash = data.forensicHash || data.imageHash || data.audioHash;
@@ -598,8 +610,8 @@ async function handleCorroborate(postId, btnEl) {
     if (!allowed) {
         showToast("Phone verification required to corroborate reports.", "info");
         const modal = document.getElementById('phoneVerificationModal') || 
-                      document.getElementById('phone-upgrade-modal') ||
-                      document.getElementById('verificationModal');
+                    document.getElementById('phone-upgrade-modal') ||
+                    document.getElementById('verificationModal');
         if (modal) {
             modal.classList.remove('hidden');
             modal.style.display = 'flex';
