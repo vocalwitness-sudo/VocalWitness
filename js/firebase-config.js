@@ -11,15 +11,15 @@ import {
 import { getFirestore } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { getStorage } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
 
-// Dynamically target auth domain for seamless custom domain or web.app execution
+// Dynamically target auth domain for custom domain or web.app execution
 const hostDomain = window.location.hostname;
 const isCustomDomain = hostDomain.includes("vocalwitness.com");
 
 const firebaseConfig = {
   apiKey: "AIzaSyATxYekXgjdLP2SfR42FG8rEdajq_pIEb0",
-  // Route auth traffic safely through canonical web.app target unless custom domain handler is active
   authDomain: isCustomDomain ? "vocalwitness.com" : "vocalwitness-3affa.firebaseapp.com",
   projectId: "vocalwitness-3affa",
+  storageBucket: "vocalwitness-3affa.appspot.com",
   messagingSenderId: "108466981866",
   appId: "1:108466981866:web:b53360ad44012a576c8093"
 };
