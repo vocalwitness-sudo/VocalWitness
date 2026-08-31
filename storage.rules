@@ -1,0 +1,56 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ==========================================
+    // HELPER FUNCTIONS
+    // ==========================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isSupportedImageType() {
+      return request.resource.contentType.matches('image/(jpeg|png|webp|gif|svg\\+xml)');
+    }
+
+    function isSupportedAudioType() {
+      return request.resource.contentType.matches('audio/(mpeg|wav|ogg|webm|mp4|aac|x-m4a)');
+    }
+
+    // ==========================================
+    // EVIDENCE MEDIA UPLOADS
+    // ==========================================
+    match /evidence/{filename} {
+      // Public read access for published evidence attached to testimonies
+      allow read: if true;
+
+      // Allow upload if authenticated OR explicitly marked as anonymous in metadata
+      // Restricts maximum file size to 25MB and ensures valid MIME types
+      allow create: if (isAuthenticated() || request.resource.metadata.isAnonymous == "true")
+                    && request.resource.size <= 25 * 1024 * 1024
+                    && (isSupportedImageType() || isSupportedAudioType());
+
+      // Cryptographic evidence artifacts are immutable once uploaded
+      allow update, delete: if false;
+    }
+
+    // ==========================================
+    // USER PROFILE AVATARS & ASSETS
+    // ==========================================
+    match /users/{userId}/{filename} {
+      allow read: if true;
+
+      // Only profile owner can upload or update their avatar/banner media
+      // Enforces a 5MB maximum limit and image-only uploads
+      allow create, update: if isOwner(userId)
+                            && request.resource.size <= 5 * 1024 * 1024
+                            && isSupportedImageType();
+
+      allow delete: if isOwner(userId);
+    }
+  }
+}
