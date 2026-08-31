@@ -7,7 +7,6 @@
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://vocalwitness.com/">
 
-  <!-- PWA / Mobile -->
   <link rel="manifest" href="./manifest.json">
   <link rel="apple-touch-icon" href="./logo.png">
   <link rel="icon" href="./logo.png" type="image/png">
@@ -23,13 +22,11 @@
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="VocalWitness">
 
-  <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="VocalWitness • Truth • Evidence • Public Square">
   <meta name="twitter:description" content="Privacy First Public Square for Truth and Evidence">
   <meta name="twitter:image" content="https://vocalwitness.com/logo.png">
 
-  <!-- Hardened Content Security Policy (no frame-ancestors in meta) -->
   <meta http-equiv="Content-Security-Policy" content="
     default-src 'self' https: wss: blob: data:;
     script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https://accounts.google.com https://vocalwitness.com https://www.vocalwitness.com https://www.gstatic.com https://unpkg.com https://cdnjs.cloudflare.com https://apis.google.com https://js.paystack.co https://*.paystack.co https://checkout.paystack.com https://esm.sh https://cdn.jsdelivr.net https://static.cloudflareinsights.com https://*.cloudflare.com https://challenges.cloudflare.com https://www.google.com https://www.recaptcha.net https://*.cloudfunctions.net https://*.firebaseapp.com https://*.web.app blob:;
@@ -48,23 +45,19 @@
 
   <title data-i18n="pageTitle">VocalWitness • Truth • Evidence • Public Square</title>
 
-  <!-- Fonts & Styles -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./style.css">
 
-  <!-- Google Identity Services (needed for Google login) -->
   <script src="https://accounts.google.com/gsi/client" defer></script>
 
-  <!-- External CDNs (defer) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" defer></script>
   <script src="https://js.paystack.co/v2/inline.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/snarkjs@0.7.0/build/snarkjs.min.js" defer></script>
 
-  <!-- Critical Styles -->
   <style>
     :root {
       --header-height-mobile: 102px;
