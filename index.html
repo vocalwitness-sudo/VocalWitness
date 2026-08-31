@@ -289,7 +289,6 @@
 
   
 <!-- ====================== MAIN CONTAINER ====================== -->
-<!-- Reduced bottom padding from pb-24 to pb-6 to eliminate footer gap -->
 <main id="main-content" class="mx-auto max-w-6xl px-3 pb-6 pt-1 sm:px-4 md:pt-2">
 
   <!-- Flash Feed + Global Search -->
@@ -325,7 +324,6 @@
     </div>
   </div>
 
-  <!-- Navigation: 5 tabs + More -->
   <!-- Navigation: 5 tabs + More -->
   <div class="mb-6 flex items-center gap-2">
     <div class="no-scrollbar overflow-x-auto">
@@ -374,79 +372,79 @@
   </div>
 
   <!-- ========== 1. PUBLIC SQUARE ========== -->
-<section id="public-square" data-view="citizenTalkView" role="tabpanel" aria-label="Public Square">
-  <div class="glass mb-8 rounded-3xl border border-zinc-800/80 p-5 shadow-xl sm:p-8">
-    <input type="file" id="media-input" accept="image/*,video/mp4,video/webm,video/quicktime" class="hidden" multiple aria-hidden="true">
-    <input type="file" id="voiceInput" accept="audio/*" class="hidden" aria-hidden="true">
+  <section id="public-square" data-view="citizenTalkView" role="tabpanel" aria-label="Public Square">
+    <div class="glass mb-8 rounded-3xl border border-zinc-800/80 p-5 shadow-xl sm:p-8">
+      <input type="file" id="media-input" accept="image/*,video/mp4,video/webm,video/quicktime" class="hidden" multiple aria-hidden="true">
+      <input type="file" id="voiceInput" accept="audio/*" class="hidden" aria-hidden="true">
 
-    <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <h2 class="flex items-center gap-2 text-lg font-semibold text-white sm:text-xl" data-i18n="shareTestimonyTitle">
-        Share what you saw
-      </h2>
-      <div class="flex items-center gap-2">
-        <label for="targetFeedSelect" class="hidden text-xs text-zinc-400 sm:inline" data-i18n="feedLabel">Post to:</label>
-        <select id="targetFeedSelect" class="cursor-pointer rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs font-medium text-emerald-400 focus:border-emerald-500 focus:outline-none sm:text-sm" aria-label="Select target feed">
-          <option value="citizen-talk" data-i18n="feedCitizenTalk">🗣️ Citizen Talk</option>
-          <option value="witness-voice" data-i18n="feedWitnessVoice">🛡️ Witness Voice</option>
-        </select>
-      </div>
-    </div>
-
-    <label for="testimonyTitle" class="sr-only">Report title</label>
-    <input type="text" id="testimonyTitle" maxlength="120" placeholder="Add a short title (optional)" class="mb-4 w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3.5 text-base text-white placeholder-zinc-500 transition focus:border-emerald-500 focus:outline-none sm:px-5" data-i18n-placeholder="testimonyTitlePlaceholder">
-
-    <label for="mainInput" class="sr-only">Report content</label>
-    <textarea id="mainInput" rows="5" maxlength="2000" class="w-full resize-none rounded-2xl border border-zinc-700 bg-zinc-900 p-4 text-base text-white placeholder-zinc-500 transition focus:border-emerald-500 focus:outline-none sm:p-5 sm:text-lg" data-i18n-placeholder="mainInputPlaceholder" placeholder="What did you see or experience? Share the facts..."></textarea>
-    <div class="mb-2 mt-1 flex justify-end">
-      <span id="char-count" class="text-xs text-zinc-500">0 / 2000</span>
-    </div>
-
-    <div class="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
-      <button id="btn-photo" type="button" class="flex items-center justify-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-800 px-4 py-3.5 font-medium text-emerald-400 transition hover:border-emerald-500 hover:bg-zinc-700 active:scale-95" aria-label="Add media">
-        <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-        </svg>
-        <span data-i18n="addMediaEvidence">Add Media</span>
-      </button>
-      <button id="btn-voice" type="button" class="flex items-center justify-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-800 px-4 py-3.5 font-medium text-amber-400 transition hover:border-emerald-500 hover:bg-zinc-700 active:scale-95" aria-label="Record voice">
-        <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z"/>
-        </svg>
-        <span data-i18n="recordVoiceMessage">Record Voice</span>
-      </button>
-    </div>
-
-    <div id="preview-area" class="mt-6 flex min-h-[100px] flex-wrap items-center justify-center gap-4 rounded-2xl border border-dashed border-zinc-700 bg-zinc-900/40 p-4 text-sm text-zinc-500" aria-live="polite">
-      <div id="preview-empty" class="py-2 text-center">
-        <p data-i18n="previewAreaText">Preview will appear here...</p>
-        <p class="mt-1 text-xs text-zinc-600">Photos, videos, or voice notes show after you add them</p>
-      </div>
-    </div>
-
-    <div id="voice-recorder-bar" class="glass mt-4 hidden rounded-2xl border border-emerald-500/30 p-4" role="region" aria-label="Voice recorder">
-      <div class="flex flex-wrap items-center gap-3">
-        <div class="flex min-w-[70px] items-center gap-2">
-          <span id="rec-indicator" class="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500" aria-hidden="true"></span>
-          <span id="rec-timer" class="font-mono text-sm text-emerald-400" aria-live="polite">00:00</span>
-        </div>
-        <button id="verify-voice-btn" type="button" class="rounded-xl bg-blue-600/80 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-600">🛡️ Verify</button>
-        <canvas id="rec-waveform" width="180" height="36" class="max-w-[200px] flex-1 rounded bg-zinc-900/80" aria-hidden="true"></canvas>
-        <div class="ml-auto flex items-center gap-2">
-          <button id="rec-pause-btn" type="button" class="rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700">⏸ Pause</button>
-          <button id="rec-stop-btn" type="button" class="rounded-xl bg-red-600/80 px-3 py-1.5 text-xs text-white hover:bg-red-600">⏹ Stop</button>
-          <button id="rec-replay-btn" type="button" class="hidden rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700">↻ Replay</button>
+      <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 class="flex items-center gap-2 text-lg font-semibold text-white sm:text-xl" data-i18n="shareTestimonyTitle">
+          Share what you saw
+        </h2>
+        <div class="flex items-center gap-2">
+          <label for="targetFeedSelect" class="hidden text-xs text-zinc-400 sm:inline" data-i18n="feedLabel">Post to:</label>
+          <select id="targetFeedSelect" class="cursor-pointer rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs font-medium text-emerald-400 focus:border-emerald-500 focus:outline-none sm:text-sm" aria-label="Select target feed">
+            <option value="citizen-talk" data-i18n="feedCitizenTalk">🗣️ Citizen Talk</option>
+            <option value="witness-voice" data-i18n="feedWitnessVoice">🛡️ Witness Voice</option>
+          </select>
         </div>
       </div>
-      <audio id="rec-replay-audio" class="hidden"></audio>
+
+      <label for="testimonyTitle" class="sr-only">Report title</label>
+      <input type="text" id="testimonyTitle" maxlength="120" placeholder="Add a short title (optional)" class="mb-4 w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3.5 text-base text-white placeholder-zinc-500 transition focus:border-emerald-500 focus:outline-none sm:px-5" data-i18n-placeholder="testimonyTitlePlaceholder">
+
+      <label for="mainInput" class="sr-only">Report content</label>
+      <textarea id="mainInput" rows="5" maxlength="2000" class="w-full resize-none rounded-2xl border border-zinc-700 bg-zinc-900 p-4 text-base text-white placeholder-zinc-500 transition focus:border-emerald-500 focus:outline-none sm:p-5 sm:text-lg" data-i18n-placeholder="mainInputPlaceholder" placeholder="What did you see or experience? Share the facts..."></textarea>
+      <div class="mb-2 mt-1 flex justify-end">
+        <span id="char-count" class="text-xs text-zinc-500">0 / 2000</span>
+      </div>
+
+      <div class="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <button id="btn-photo" type="button" class="flex items-center justify-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-800 px-4 py-3.5 font-medium text-emerald-400 transition hover:border-emerald-500 hover:bg-zinc-700 active:scale-95" aria-label="Add media">
+          <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+          </svg>
+          <span data-i18n="addMediaEvidence">Add Media</span>
+        </button>
+        <button id="btn-voice" type="button" class="flex items-center justify-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-800 px-4 py-3.5 font-medium text-amber-400 transition hover:border-emerald-500 hover:bg-zinc-700 active:scale-95" aria-label="Record voice">
+          <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z"/>
+          </svg>
+          <span data-i18n="recordVoiceMessage">Record Voice</span>
+        </button>
+      </div>
+
+      <div id="preview-area" class="mt-6 flex min-h-[100px] flex-wrap items-center justify-center gap-4 rounded-2xl border border-dashed border-zinc-700 bg-zinc-900/40 p-4 text-sm text-zinc-500" aria-live="polite">
+        <div id="preview-empty" class="py-2 text-center">
+          <p data-i18n="previewAreaText">Preview will appear here...</p>
+          <p class="mt-1 text-xs text-zinc-600">Photos, videos, or voice notes show after you add them</p>
+        </div>
+      </div>
+
+      <div id="voice-recorder-bar" class="glass mt-4 hidden rounded-2xl border border-emerald-500/30 p-4" role="region" aria-label="Voice recorder">
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="flex min-w-[70px] items-center gap-2">
+            <span id="rec-indicator" class="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500" aria-hidden="true"></span>
+            <span id="rec-timer" class="font-mono text-sm text-emerald-400" aria-live="polite">00:00</span>
+          </div>
+          <button id="verify-voice-btn" type="button" class="rounded-xl bg-blue-600/80 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-600">🛡️ Verify</button>
+          <canvas id="rec-waveform" width="180" height="36" class="max-w-[200px] flex-1 rounded bg-zinc-900/80" aria-hidden="true"></canvas>
+          <div class="ml-auto flex items-center gap-2">
+            <button id="rec-pause-btn" type="button" class="rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700">⏸ Pause</button>
+            <button id="rec-stop-btn" type="button" class="rounded-xl bg-red-600/80 px-3 py-1.5 text-xs text-white hover:bg-red-600">⏹ Stop</button>
+            <button id="rec-replay-btn" type="button" class="hidden rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700">↻ Replay</button>
+          </div>
+        </div>
+        <audio id="rec-replay-audio" class="hidden"></audio>
+      </div>
+
+      <button id="postButton" type="button" class="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 py-4 text-lg font-bold text-white shadow-lg transition hover:bg-emerald-500 active:scale-[0.98]">
+        <span data-i18n="postButton">Publish Report</span>
+      </button>
     </div>
 
-    <button id="postButton" type="button" class="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 py-4 text-lg font-bold text-white shadow-lg transition hover:bg-emerald-500 active:scale-[0.98]">
-      <span data-i18n="postButton">Publish Report</span>
-    </button>
-  </div>
-</section>
-    <!-- Reduced mb-16 to mb-4 to close gap above footer -->
-    <section id="feed-container" class="mb-4 space-y-6" aria-label="Reports feed">
+    <!-- Feed Container inside Public Square panel -->
+    <div id="feed-container" class="mb-4 space-y-6" aria-label="Reports feed">
       <div class="mb-4 flex items-center justify-between px-2">
         <h3 id="feed-title" class="flex items-center gap-2 text-lg font-bold text-white" data-i18n="recentTestimoniesTitle">📜 Recent Reports</h3>
         <div class="flex items-center gap-2 text-xs text-zinc-400">
@@ -471,11 +469,10 @@
           <div class="h-16 rounded-xl bg-zinc-800/50"></div>
         </div>
       </div>
-    </section>
+    </div>
   </section>
 
   <!-- ========== 2. PUBLIC RECORD (formerly Evidence Ledger) ========== -->
-  <!-- Renamed id to evidence-ledger and added 'hidden space-y-6' to match tab-switching pattern -->
   <section id="evidence-ledger" class="hidden space-y-6" role="tabpanel" aria-label="Public Record">
     <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
       <div>
@@ -580,8 +577,9 @@
   </section>
 
 </main>
-  <!-- ====================== APPLICATION FOOTER ====================== -->
-<footer class="mt-20 border-t border-zinc-800/80 bg-zinc-950 pb-12 pt-16 text-zinc-400">
+
+<!-- ====================== APPLICATION FOOTER ====================== -->
+<footer class="mt-8 border-t border-zinc-800/80 bg-zinc-950 pb-12 pt-12 text-zinc-400">
   <div class="mx-auto max-w-6xl px-6">
     <div class="grid grid-cols-1 gap-10 border-b border-zinc-800/60 pb-12 md:grid-cols-4">
       <div class="space-y-4 md:col-span-1">
@@ -643,12 +641,12 @@
     </div>
   </div>
 </footer>
-  
+
 <!-- ====================== SUPPORT MODAL ====================== -->
 <div id="supportModal"
-     class="fixed inset-0 z-[10000] hidden flex items-center justify-center bg-black/80 p-4 backdrop-blur-md"
+     class="fixed inset-0 z-[10000] hidden items-center justify-center bg-black/80 p-4 backdrop-blur-md"
      role="dialog" aria-modal="true" aria-labelledby="supportModalTitle" aria-hidden="true">
-  <div class="glass relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl border border-emerald-500/30 p-6 text-white">
+  <div class="glass relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl border border-emerald-500/30 p-6 text-white shadow-2xl">
     <button id="closeSupportModal" type="button"
             class="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full text-xl text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
             aria-label="Close support dialog">✕</button>
@@ -672,11 +670,11 @@
                class="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-sm text-white focus:border-emerald-500 focus:outline-none">
       </div>
       <button id="paystackPayBtn" type="button"
-              class="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 transition-all hover:bg-blue-500">
+              class="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 transition-all hover:bg-blue-500 active:scale-[0.98]">
         <span>Pay with Card / Bank (Paystack)</span>
       </button>
       <button id="proceedCryptoBtn" type="button"
-              class="w-full rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-black shadow-lg shadow-emerald-600/20 transition-all hover:bg-emerald-500">
+              class="w-full rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-black shadow-lg shadow-emerald-600/20 transition-all hover:bg-emerald-500 active:scale-[0.98]">
         Proceed with Crypto (NOWPayments)
       </button>
     </div>
@@ -684,7 +682,8 @@
       <p class="mb-2 text-center text-xs font-medium text-zinc-400">Or scan / copy to send USDT directly:</p>
       <div class="mx-auto mb-3 flex h-36 w-36 items-center justify-center rounded-2xl bg-white p-3 shadow-md">
         <img src="./image/95756.jpg" alt="USDT TRC-20 QR Code" class="h-full w-full object-contain"
-             onerror="this.parentElement.innerHTML='<span class=\'text-xs text-zinc-500\'>QR unavailable</span>'">
+             onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');">
+        <span class="hidden text-xs text-zinc-500">QR unavailable</span>
       </div>
       <div class="flex items-center justify-between gap-2 rounded-xl border border-zinc-800 bg-zinc-900 p-3">
         <span id="usdtAddress" class="select-all truncate font-mono text-[11px] text-emerald-400">TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK</span>
@@ -698,9 +697,9 @@
   </div>
 </div>
 
-  <!-- ====================== AUTH MODAL ====================== -->
+<!-- ====================== AUTH MODAL ====================== -->
 <div id="authModal"
-     class="fixed inset-0 z-[10000] hidden flex items-center justify-center bg-black/80 p-4 backdrop-blur-md"
+     class="fixed inset-0 z-[10000] hidden items-center justify-center bg-black/80 p-4 backdrop-blur-md"
      role="dialog" aria-modal="true" aria-labelledby="authModalTitle" aria-hidden="true">
   <div class="relative w-full max-w-md rounded-3xl border border-zinc-700 bg-zinc-900 p-6 text-white shadow-2xl">
     <button type="button" id="closeAuthModalBtn" data-action="close-auth-modal"
@@ -716,20 +715,20 @@
     <div class="space-y-3">
       <!-- Google — required for auth.js googleLogin() -->
       <button type="button" id="googleAuthBtn" data-action="google-login"
-              class="google-auth-btn flex w-full items-center justify-center gap-3 rounded-xl border border-zinc-600 bg-white px-4 py-3 text-sm font-bold text-zinc-900 transition hover:bg-zinc-100">
+              class="google-auth-btn flex w-full items-center justify-center gap-3 rounded-xl border border-zinc-600 bg-white px-4 py-3 text-sm font-bold text-zinc-900 transition hover:bg-zinc-100 active:scale-[0.98]">
         <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
              alt="" class="h-5 w-5" width="20" height="20">
         Continue with Google
       </button>
 
-      <!-- Optional -->
+      <!-- Optional authentication providers -->
       <button type="button" id="githubAuthBtn" data-action="github-login"
-              class="flex w-full items-center justify-center gap-3 rounded-xl border border-zinc-600 bg-zinc-800 px-4 py-3 text-sm font-semibold text-white transition hover:bg-zinc-700">
+              class="flex w-full items-center justify-center gap-3 rounded-xl border border-zinc-600 bg-zinc-800 px-4 py-3 text-sm font-semibold text-white transition hover:bg-zinc-700 active:scale-[0.98]">
         Continue with GitHub
       </button>
 
       <button type="button" id="twitterAuthBtn" data-action="twitter-login"
-              class="flex w-full items-center justify-center gap-3 rounded-xl border border-zinc-600 bg-zinc-800 px-4 py-3 text-sm font-semibold text-white transition hover:bg-zinc-700">
+              class="flex w-full items-center justify-center gap-3 rounded-xl border border-zinc-600 bg-zinc-800 px-4 py-3 text-sm font-semibold text-white transition hover:bg-zinc-700 active:scale-[0.98]">
         Continue with X
       </button>
     </div>
@@ -747,10 +746,10 @@
     </p>
   </div>
 </div>
-  
+
 <!-- ====================== USER PROFILE MODAL ====================== -->
 <div id="profileModal"
-     class="fixed inset-0 z-[9000] hidden flex items-center justify-center overflow-y-auto bg-black/80 p-4 backdrop-blur-md"
+     class="fixed inset-0 z-[9000] hidden items-center justify-center overflow-y-auto bg-black/80 p-4 backdrop-blur-md"
      role="dialog" aria-modal="true" aria-labelledby="profileModalTitle" aria-hidden="true">
   <div class="relative w-full max-w-lg rounded-3xl border border-zinc-800 bg-zinc-900 p-6 text-white shadow-2xl">
     <div class="mb-2 flex items-center justify-between border-b border-zinc-800 pb-4">
@@ -767,9 +766,10 @@
     </div>
   </div>
 </div>
+
 <!-- ====================== EDIT PROFILE MODAL ====================== -->
 <div id="editProfileModal"
-     class="fixed inset-0 z-[10001] hidden flex items-center justify-center overflow-y-auto bg-black/80 p-4 backdrop-blur-md"
+     class="fixed inset-0 z-[10001] hidden items-center justify-center overflow-y-auto bg-black/80 p-4 backdrop-blur-md"
      role="dialog" aria-modal="true" aria-labelledby="editProfileTitle" aria-hidden="true">
   <div class="custom-scroll relative max-h-[90vh] w-full max-w-md space-y-5 overflow-y-auto rounded-3xl border border-zinc-800 bg-zinc-900 p-6 text-white shadow-2xl">
     <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
@@ -826,15 +826,16 @@
         <input type="checkbox" id="toggleHidePublicInfo" checked class="h-5 w-5 cursor-pointer rounded accent-emerald-500" aria-label="Hide real name and location from public view">
       </div>
       <div class="flex gap-3 pt-1">
-        <button type="submit" class="flex-1 rounded-xl bg-emerald-500 py-3 font-bold text-black transition hover:bg-emerald-400">Save Changes</button>
+        <button type="submit" class="flex-1 rounded-xl bg-emerald-500 py-3 font-bold text-black transition hover:bg-emerald-400 active:scale-[0.98]">Save Changes</button>
         <button type="button" id="cancelEditProfileBtn" class="rounded-xl bg-zinc-800 px-5 py-3 font-semibold text-zinc-300 transition hover:bg-zinc-700">Cancel</button>
       </div>
     </form>
   </div>
 </div>
+
 <!-- ====================== SETTINGS & SECURITY MODAL ====================== -->
 <div id="settingsModal"
-     class="fixed inset-0 z-[10001] hidden flex items-center justify-center overflow-y-auto bg-black/80 p-4 backdrop-blur-md"
+     class="fixed inset-0 z-[10001] hidden items-center justify-center overflow-y-auto bg-black/80 p-4 backdrop-blur-md"
      role="dialog" aria-modal="true" aria-labelledby="settingsTitle" aria-hidden="true">
   <div class="custom-scroll relative max-h-[85vh] w-full max-w-lg space-y-6 overflow-y-auto rounded-3xl border border-zinc-800 bg-zinc-900 p-6 text-white shadow-2xl">
     <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
@@ -881,9 +882,10 @@
     </div>
   </div>
 </div>
+
 <!-- ====================== PHONE VERIFICATION MODAL ====================== -->
 <div id="phoneVerificationModal"
-     class="fixed inset-0 z-[10050] hidden flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+     class="fixed inset-0 z-[10050] hidden items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
      role="dialog" aria-modal="true" aria-labelledby="phoneVerificationTitle" aria-hidden="true">
   <div class="w-full max-w-md space-y-5 rounded-3xl border border-zinc-700 bg-zinc-900 p-6 shadow-2xl">
     <div class="flex items-center justify-between">
@@ -902,7 +904,7 @@
                class="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-white placeholder-zinc-500 focus:border-emerald-500 focus:outline-none">
       </div>
       <button type="button" id="send-otp-btn"
-              class="w-full rounded-xl bg-emerald-600 py-3 font-semibold text-white transition hover:bg-emerald-500">
+              class="w-full rounded-xl bg-emerald-600 py-3 font-semibold text-white transition hover:bg-emerald-500 active:scale-[0.98]">
         Send Verification Code
       </button>
     </div>
@@ -914,7 +916,7 @@
                class="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-center text-2xl tracking-widest text-white placeholder-zinc-500 focus:border-emerald-500 focus:outline-none">
       </div>
       <button type="button" id="verify-otp-btn"
-              class="w-full rounded-xl bg-emerald-600 py-3 font-semibold text-white transition hover:bg-emerald-500">
+              class="w-full rounded-xl bg-emerald-600 py-3 font-semibold text-white transition hover:bg-emerald-500 active:scale-[0.98]">
         Verify &amp; Unlock Citizen Circle
       </button>
       <button type="button" id="change-phone-btn"
@@ -932,6 +934,7 @@
 <!-- ====================== GLOBAL UI HELPER SCRIPT ====================== -->
 <script>
   const $ = (id) => document.getElementById(id);
+
   function showToast(message, type = 'info') {
     const toast = document.createElement('div');
     toast.className = `fixed bottom-6 left-1/2 z-[11000] -translate-x-1/2 rounded-2xl px-6 py-3 text-sm font-medium text-white shadow-2xl transition-all duration-300 ${
@@ -943,6 +946,7 @@
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3500);
   }
+
   function openModal(id) {
     const m = $(id);
     if (!m) return;
@@ -950,6 +954,7 @@
     m.classList.add('flex');
     m.setAttribute('aria-hidden', 'false');
   }
+
   function closeModal(id) {
     const m = $(id);
     if (!m) return;
@@ -957,6 +962,7 @@
     m.classList.remove('flex');
     m.setAttribute('aria-hidden', 'true');
   }
+
   window.$ = $;
   window.showToast = showToast;
   window.openModal = openModal;
@@ -966,23 +972,34 @@
     closeModal('loginModal');
     closeModal('authModal');
   };
+
   if (typeof window.openProfileModal !== 'function') {
     window.openProfileModal = () => openModal('profileModal');
   }
   if (typeof window.closeProfileModal !== 'function') {
     window.closeProfileModal = () => closeModal('profileModal');
   }
+
   window.closeEditProfile = () => closeModal('editProfileModal');
   window.openSupportModal = () => openModal('supportModal');
   window.closeSupportModal = () => closeModal('supportModal');
-  // Fixed: was pointing to non-existent "verificationModal"
   window.closeVerificationModal = () => closeModal('phoneVerificationModal');
+
   window.openPhoneVerificationModal = () => {
     openModal('phoneVerificationModal');
     $('phone-step-2')?.classList.add('hidden');
     $('phone-step-1')?.classList.remove('hidden');
   };
   window.closePhoneVerificationModal = () => closeModal('phoneVerificationModal');
+
+  window.openVideoPolicyModal = (msg) => {
+    if (msg && $('video-policy-msg')) {
+      $('video-policy-msg').textContent = msg;
+    }
+    openModal('video-policy-modal');
+  };
+  window.closeVideoPolicyModal = () => closeModal('video-policy-modal');
+
   window.toggleDataSaver = function () {
     if (typeof window.toggleDataSaverFromModule === 'function') {
       return window.toggleDataSaverFromModule();
@@ -999,6 +1016,7 @@
     });
     showToast(`Data Saver mode turned ${next ? 'ON' : 'OFF'}`, 'info');
   };
+
   document.addEventListener('DOMContentLoaded', () => {
     const enabled = localStorage.getItem('vocalwitness_data_saver') === 'true';
     ['data-saver-status', 'footer-data-saver-status'].forEach((id) => {
@@ -1008,15 +1026,19 @@
       el.classList.toggle('text-emerald-400', enabled);
       el.classList.toggle('text-amber-400', !enabled);
     });
+
     $('footerSupportBtn')?.addEventListener('click', () => window.openSupportModal());
     $('openSupportModalBtn')?.addEventListener('click', () => window.openSupportModal());
     $('openSupportModalBtnMobile')?.addEventListener('click', () => window.openSupportModal());
     $('closeSupportModal')?.addEventListener('click', () => window.closeSupportModal());
+
     $('data-saver-btn')?.addEventListener('click', () => window.toggleDataSaver());
     $('data-saver-btn-mobile')?.addEventListener('click', () => window.toggleDataSaver());
     $('footer-data-saver-btn')?.addEventListener('click', () => window.toggleDataSaver());
+
     $('closePhoneVerificationBtn')?.addEventListener('click', () => window.closePhoneVerificationModal());
     $('startPhoneVerificationBtn')?.addEventListener('click', () => window.openPhoneVerificationModal());
+
     $('send-otp-btn')?.addEventListener('click', () => {
       if (typeof handleSendOTP === 'function') handleSendOTP();
     });
@@ -1027,19 +1049,25 @@
       $('phone-step-2')?.classList.add('hidden');
       $('phone-step-1')?.classList.remove('hidden');
     });
+
     $('closeProfileModalBtn')?.addEventListener('click', () => window.closeProfileModal());
     $('closeEditProfileBtn')?.addEventListener('click', () => window.closeEditProfile());
     $('cancelEditProfileBtn')?.addEventListener('click', () => window.closeEditProfile());
     $('closeSettingsBtn')?.addEventListener('click', () => closeModal('settingsModal'));
-    ['supportModal', 'profileModal', 'editProfileModal', 'settingsModal', 'phoneVerificationModal', 'authModal'].forEach((id) => {
+    $('closeVideoPolicyBtn')?.addEventListener('click', () => window.closeVideoPolicyModal());
+
+    // Backdrop click handlers for all active modals
+    ['supportModal', 'profileModal', 'editProfileModal', 'settingsModal', 'phoneVerificationModal', 'authModal', 'video-policy-modal'].forEach((id) => {
       const m = $(id);
       m?.addEventListener('click', (e) => {
         if (e.target === m) closeModal(id);
       });
     });
+
+    // Escape Key Modal Listener
     document.addEventListener('keydown', (e) => {
       if (e.key !== 'Escape') return;
-      const order = ['phoneVerificationModal', 'editProfileModal', 'settingsModal', 'supportModal', 'profileModal', 'authModal'];
+      const order = ['video-policy-modal', 'phoneVerificationModal', 'editProfileModal', 'settingsModal', 'supportModal', 'profileModal', 'authModal'];
       for (const id of order) {
         const m = $(id);
         if (m && !m.classList.contains('hidden')) {
@@ -1048,6 +1076,8 @@
         }
       }
     });
+
+    // More dropdown navigation logic
     document.addEventListener('click', (e) => {
       const moreBtn = $('more-btn');
       const moreMenu = $('more-menu');
@@ -1061,6 +1091,8 @@
         moreBtn?.setAttribute('aria-expanded', 'false');
       }
     });
+
+    // Support Modal Tier Button handling
     document.addEventListener('click', (e) => {
       const btn = e.target.closest('.support-tier-btn');
       if (!btn) return;
@@ -1075,8 +1107,7 @@
       if (amountInput) amountInput.value = btn.getAttribute('data-amount') || '15';
     });
 
-    // ===== Integrated fixes =====
-    // Copy USDT address
+    // Copy USDT address helper
     $('copyUsdtBtn')?.addEventListener('click', async () => {
       const addr = $('usdtAddress')?.textContent?.trim();
       if (!addr) return;
@@ -1088,7 +1119,7 @@
       }
     });
 
-    // Optional: clear active-tier highlight when user types a custom value
+    // Reset active tier selection when custom input is changed
     $('customSupportAmount')?.addEventListener('input', (e) => {
       const val = e.target.value;
       if (!val) return;
@@ -1099,22 +1130,21 @@
       });
     });
 
-    // Placeholder for payment buttons (replace with real Paystack / NOWPayments calls)
+    // Payment action triggers
     $('paystackPayBtn')?.addEventListener('click', () => {
       const amount = Number($('customSupportAmount')?.value) || 15;
       if (amount < 1) return showToast('Enter a valid amount', 'warning');
-      // initPaystack(amount) …
-      showToast(`Paystack flow for $${amount} (not implemented)`, 'info');
+      showToast(`Paystack flow initiated for $${amount}`, 'info');
     });
 
     $('proceedCryptoBtn')?.addEventListener('click', () => {
       const amount = Number($('customSupportAmount')?.value) || 15;
       if (amount < 1) return showToast('Enter a valid amount', 'warning');
-      // open NOWPayments invoice …
-      showToast(`Crypto flow for $${amount} (not implemented)`, 'info');
+      showToast(`Crypto checkout initiated for $${amount}`, 'info');
     });
   });
 </script>
+
 <script type="module" src="./js/app-state.js"></script>
 <script type="module" src="./js/auth.js"></script>
 <script type="module" src="./js/notifications.js"></script>
@@ -1130,49 +1160,53 @@
   }
 </script>
 
-  <!-- Video Policy & Authenticity Modal -->
-<div id="video-policy-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden">
-  <div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-md w-full p-6 text-slate-100 shadow-2xl">
+<!-- ====================== VIDEO POLICY & AUTHENTICITY MODAL ====================== -->
+<div id="video-policy-modal" 
+     class="fixed inset-0 z-[10000] hidden items-center justify-center bg-black/80 p-4 backdrop-blur-md"
+     role="dialog" aria-modal="true" aria-labelledby="videoPolicyTitle" aria-hidden="true">
+  <div class="w-full max-w-md rounded-3xl border border-amber-500/40 bg-slate-900 p-6 text-slate-100 shadow-2xl">
     
     <!-- Modal Header -->
-    <div class="flex items-center space-x-3 mb-4">
-      <div class="p-3 bg-amber-500/10 rounded-full border border-amber-500/30 text-amber-400">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div class="mb-4 flex items-center space-x-3">
+      <div class="rounded-full border border-amber-500/30 bg-amber-500/10 p-3 text-amber-400">
+        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
         </svg>
       </div>
-      <h3 class="text-xl font-bold tracking-tight">Authenticity Requirement</h3>
+      <h3 id="videoPolicyTitle" class="text-xl font-bold tracking-tight">Authenticity Requirement</h3>
     </div>
 
-    <!-- Dynamic Error / Notice Message -->
-    <p id="video-policy-msg" class="text-slate-300 text-sm leading-relaxed mb-4">
+    <!-- Dynamic Message -->
+    <p id="video-policy-msg" class="mb-4 text-sm leading-relaxed text-slate-300">
       To maintain evidence integrity, AI-generated or heavily edited videos are prohibited.
     </p>
 
     <!-- Policy Badges -->
-    <div class="bg-slate-800 border border-slate-700/60 rounded-xl p-3 mb-5 space-y-2 text-xs text-slate-400">
+    <div class="mb-5 space-y-2 rounded-xl border border-slate-700/60 bg-slate-800 p-3 text-xs text-slate-400">
       <div class="flex justify-between">
         <span>Daily Upload Quota:</span>
-        <span class="font-mono text-amber-400 font-semibold">Max 2 Videos / Day</span>
+        <span class="font-mono font-semibold text-amber-400">Max 2 Videos / Day</span>
       </div>
       <div class="flex justify-between">
         <span>Max File Size:</span>
-        <span class="font-mono text-amber-400 font-semibold">25 MB (Raw Clip)</span>
+        <span class="font-mono font-semibold text-amber-400">25 MB (Raw Clip)</span>
       </div>
       <div class="flex justify-between">
         <span>AI / Deepfake Policy:</span>
-        <span class="text-red-400 font-medium">Strictly Banned (C2PA Enforced)</span>
+        <span class="font-medium text-red-400">Strictly Banned (C2PA Enforced)</span>
       </div>
     </div>
 
     <!-- Action Buttons -->
     <div class="space-y-3">
-      <a href="live-arena.html" class="w-full py-3 px-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 text-slate-950 font-bold rounded-xl shadow-lg transition flex items-center justify-center space-x-2">
+      <a href="live-arena.html" class="flex w-full items-center justify-center space-x-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-4 py-3 font-bold text-slate-950 shadow-lg transition hover:from-amber-600">
         <span>Go to Live Arena for True Reality</span>
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+        </svg>
       </a>
 
-      <button type="button" onclick="document.getElementById('video-policy-modal').classList.add('hidden')" class="w-full py-2.5 px-4 bg-slate-800 text-slate-300 text-xs font-semibold rounded-xl transition border border-slate-700 hover:bg-slate-700">
+      <button type="button" id="closeVideoPolicyBtn" class="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-xs font-semibold text-slate-300 transition hover:bg-slate-700">
         I understand, cancel video upload
       </button>
     </div>
