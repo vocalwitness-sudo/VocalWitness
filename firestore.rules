@@ -1,26 +1,21 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
     // ==========================================
     // HELPER FUNCTIONS
     // ==========================================
     function isAuthenticated() {
       return request.auth != null;
     }
-
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
-
     function isAdmin() {
       return isAuthenticated() && request.auth.token.admin == true;
     }
-
     function getUserData() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
-
     function isWitnessCircle() {
       return isAuthenticated() && (
         request.auth.token.tier == 'witness_circle' ||
@@ -29,7 +24,6 @@ service cloud.firestore {
           (getUserData().tier == 'witness_circle' || getUserData().zkVerified == true))
       );
     }
-
     function isSteward() {
       return isAuthenticated() && (
         request.auth.token.tier == 'steward' ||
@@ -37,7 +31,6 @@ service cloud.firestore {
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getUserData().tier == 'steward')
       );
     }
-
     function isModerator() {
       return isAuthenticated() && (
         request.auth.token.moderator == true ||
@@ -45,7 +38,6 @@ service cloud.firestore {
         isSteward()
       );
     }
-
     function isNotBanned() {
       return isAuthenticated()
         && request.auth.token.banned != true
@@ -54,7 +46,6 @@ service cloud.firestore {
           || getUserData().get('isBanned', false) != true
         );
     }
-
     // SAFE throttle: if lastTestimonyAt is missing or not a timestamp, allow
     function isNotThrottled() {
       return !exists(/databases/$(database)/documents/users/$(request.auth.uid))
@@ -62,7 +53,6 @@ service cloud.firestore {
         || !(getUserData().lastTestimonyAt is timestamp)
         || request.time > getUserData().lastTestimonyAt + duration.value(30, 's');
     }
-
     function isValidMediaUrl(url) {
       return url is string && (
         url == '' ||
@@ -73,7 +63,6 @@ service cloud.firestore {
         url.matches('^data:image/svg\\+xml;.*')
       );
     }
-
     function isSafeUserCreation() {
       return request.resource.data.uid == request.auth.uid
         && request.resource.data.uid is string
@@ -87,7 +76,6 @@ service cloud.firestore {
              'credibilityScore', 'zkVerified'
            ]);
     }
-
     function isSafeUserUpdate() {
       return !request.resource.data.diff(resource.data).affectedKeys().hasAny([
           'role', 'isBanned', 'badges', 'admin', 'moderator',
@@ -113,45 +101,39 @@ service cloud.firestore {
         && (!('followers' in request.resource.data) || request.resource.data.followers is list)
         && (!('privacyMode' in request.resource.data) || request.resource.data.privacyMode is string);
     }
-
-   function isValidNotification() {
-  return request.resource.data.keys().hasAll(['type', 'createdAt'])
-    && request.resource.data.type is string
-    && request.resource.data.type in [
-         'mention', 'reply', 'vote', 'system', 'witness_alert', 'corroboration'
-       ]
-    && request.resource.data.createdAt is timestamp
-    && (
-         // either classic senderId style
-         ('senderId' in request.resource.data && request.resource.data.senderId == request.auth.uid)
-         ||
-         // or the fromUid style used by notifyCorroboration
-         ('fromUid' in request.resource.data && request.resource.data.fromUid == request.auth.uid)
-       );
-}
-
-
+    function isValidNotification() {
+      return request.resource.data.keys().hasAll(['type', 'createdAt'])
+        && request.resource.data.type is string
+        && request.resource.data.type in [
+             'mention', 'reply', 'vote', 'system', 'witness_alert', 'corroboration'
+           ]
+        && request.resource.data.createdAt is timestamp
+        && (
+             // either classic senderId style
+             ('senderId' in request.resource.data && request.resource.data.senderId == request.auth.uid)
+             ||
+             // or the fromUid style used by notifyCorroboration
+             ('fromUid' in request.resource.data && request.resource.data.fromUid == request.auth.uid)
+           );
+    }
     function isSafeAuthorTestimonyUpdate() {
       return !request.resource.data.diff(resource.data).affectedKeys().hasAny([
         'moderationStatus', 'toxicityScore', 'autoFlaggedReasons',
         'isSynthetic', 'syntheticScore', 'authorTier', 'reviewedBy', 'reviewedAt', 'reviewNotes'
       ]);
     }
-
     function canCommentOnPost(postId) {
       let post = get(/databases/$(database)/documents/posts/$(postId)).data;
       return post.authorDoorPrivacy == 'open'
         || (post.authorDoorPrivacy == 'zk_only' && isWitnessCircle())
         || request.auth.uid == post.authorId;
     }
-
     // ==========================================
     // INTERNAL
     // ==========================================
     match /rateLimits/{rateLimitId} {
       allow read, write: if false;
     }
-
     // ==========================================
     // USERS
     // ==========================================
@@ -160,7 +142,6 @@ service cloud.firestore {
       allow create: if isOwner(userId) && isSafeUserCreation();
       allow update: if (isOwner(userId) && isSafeUserUpdate()) || isAdmin();
       allow delete: if isAdmin();
-
       match /drafts/{draftId} {
         allow read, write: if isOwner(userId);
       }
@@ -181,7 +162,6 @@ service cloud.firestore {
         allow write: if isOwner(userId) || request.auth.uid == targetUid;
       }
     }
-
     // ==========================================
     // WITNESS VOICE & CITIZEN TALK
     // ==========================================
@@ -199,7 +179,6 @@ service cloud.firestore {
       );
       allow delete: if (resource.data.authorId == request.auth.uid) || isModerator();
     }
-
     match /citizen_talk/{postId} {
       allow read: if true;
       allow create: if isNotBanned()
@@ -213,13 +192,11 @@ service cloud.firestore {
       );
       allow delete: if (resource.data.authorId == request.auth.uid) || isModerator();
     }
-
     // ==========================================
     // TESTIMONIES (Production Secure)
     // ==========================================
     match /testimonies/{testimonyId} {
       allow read: if true;
-
       allow create: if (
           // Case 1: Authenticated User Submission
           (isAuthenticated() 
@@ -238,7 +215,6 @@ service cloud.firestore {
         && (!('imageUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.imageUrl))
         && (!('audioUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.audioUrl))
         && (!('forensicHash' in request.resource.data) || request.resource.data.forensicHash == null || (request.resource.data.forensicHash is string && request.resource.data.forensicHash.size() == 64));
-
       allow update: if isModerator()
         || (
              isNotBanned()
@@ -252,10 +228,8 @@ service cloud.firestore {
              && request.resource.data.diff(resource.data).affectedKeys()
                 .hasOnly(['corroborationCount', 'corroborationScore', 'lastCorroboratedAt', 'reactions', 'commentsCount', 'updatedAt'])
            );
-
       allow delete: if (resource.data.authorId != null && resource.data.authorId == request.auth.uid) || isModerator();
     }
-
     // ==========================================
     // CORROBORATIONS & FORENSIC LEDGER
     // ==========================================
@@ -273,7 +247,6 @@ service cloud.firestore {
             (request.resource.data.note is string && request.resource.data.note.size() <= 280));
       allow update, delete: if false;
     }
-
     match /forensic_ledger/{ledgerId} {
       allow read: if true;
       allow create: if isNotBanned()
@@ -283,7 +256,6 @@ service cloud.firestore {
         && request.resource.data.hash.size() == 64;
       allow update, delete: if false;
     }
-
     // ==========================================
     // POSTS
     // ==========================================
@@ -291,25 +263,20 @@ service cloud.firestore {
       allow read: if resource.data.visibilityDoor == 'public_square' ||
                     (resource.data.visibilityDoor == 'citizen_circle' && isAuthenticated()) ||
                     (resource.data.visibilityDoor == 'witness_circle' && isWitnessCircle());
-
       allow create: if isNotBanned()
         && request.resource.data.authorId == request.auth.uid
         && request.resource.data.content is string
         && request.resource.data.content.size() <= 2000
         && (request.resource.data.createdAt is timestamp || request.resource.data.createdAt == request.time);
-
       allow update: if isModerator() || (
         isNotBanned() && resource.data.authorId == request.auth.uid
       );
-
       allow delete: if (resource.data.authorId == request.auth.uid) || isModerator();
-
       match /comments/{commentId} {
         allow read: if true;
         allow create: if isNotBanned() && canCommentOnPost(postId);
       }
     }
-
     // ==========================================
     // REPORTS & AUDIT
     // ==========================================
@@ -320,7 +287,6 @@ service cloud.firestore {
         && request.resource.data.reason is string;
       allow update, delete: if isModerator();
     }
-
     match /audit_logs/{auditId} {
       allow read: if isAuthenticated();
       allow create: if (
@@ -330,7 +296,6 @@ service cloud.firestore {
         && request.resource.data.clientTimestamp is number;
       allow update, delete: if false;
     }
-
     // ==========================================
     // DAO
     // ==========================================
@@ -349,33 +314,5 @@ service cloud.firestore {
       );
       allow delete: if false;
     }
-  }
-}
-
-{
-  "hosting": {
-    "public": "public",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
-    "rewrites": [
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
-    ],
-    "headers": [
-      {
-        "source": "**",
-        "headers": [
-          {
-            "key": "Content-Security-Policy",
-            "value": "default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; img-src 'self' data: https:;"
-          }
-        ]
-      }
-    ]
   }
 }
