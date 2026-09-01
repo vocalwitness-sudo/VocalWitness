@@ -1,6 +1,5 @@
 // js/notifications.js - Real-time Notification Listener & Fallback Engine
-import { db } from './firebase-config.js';
-import { getAuth } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { db, auth } from './firebase-config.js';   // ← use the shared auth
 import {
   collection,
   query,
@@ -142,7 +141,6 @@ export function stopNotificationListener() {
  */
 export async function notifyCorroboration(ownerId, corroboratorId, testimonyId) {
   if (!ownerId || !corroboratorId || !testimonyId) return;
-
   try {
     const notifRef = doc(collection(db, "users", ownerId, "notifications"));
     await setDoc(notifRef, {
@@ -155,11 +153,9 @@ export async function notifyCorroboration(ownerId, corroboratorId, testimonyId) 
       createdAt: serverTimestamp()
     });
   } catch (err) {
-    // Non-fatal – corroboration itself already succeeded
     console.warn("notifyCorroboration failed:", err);
   }
 }
-
 function handleSnapshot(snapshot) {
   const notifications = [];
   let unreadCount = 0;
