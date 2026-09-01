@@ -1,5 +1,5 @@
 // js/notifications.js - Real-time Notification Listener & Fallback Engine
-import { db, auth } from './firebase-config.js';   // ← use the shared auth
+import { db, auth } from './firebase-config.js';
 import {
   collection,
   query,
@@ -21,7 +21,6 @@ export function initNotifications(targetUid) {
     return;
   }
 
-  const auth = getAuth();
   const currentUser = auth.currentUser;
 
   // GUARD: Ensure user is signed in AND matches targetUid before listening
@@ -61,7 +60,6 @@ function attachNotificationListener(uid) {
         "🔔 Notification ordered query failed or requires index. Activating fallback...",
         error.code
       );
-
       // Clean up primary listener before starting fallback
       stopNotificationListener();
       fallbackUnorderedListener(uid);
@@ -141,6 +139,7 @@ export function stopNotificationListener() {
  */
 export async function notifyCorroboration(ownerId, corroboratorId, testimonyId) {
   if (!ownerId || !corroboratorId || !testimonyId) return;
+
   try {
     const notifRef = doc(collection(db, "users", ownerId, "notifications"));
     await setDoc(notifRef, {
@@ -153,9 +152,11 @@ export async function notifyCorroboration(ownerId, corroboratorId, testimonyId) 
       createdAt: serverTimestamp()
     });
   } catch (err) {
+    // Non-fatal – corroboration itself already succeeded
     console.warn("notifyCorroboration failed:", err);
   }
 }
+
 function handleSnapshot(snapshot) {
   const notifications = [];
   let unreadCount = 0;
@@ -192,10 +193,11 @@ function renderNotificationList(notifications) {
   }
 
   let html = '<div class="divide-y divide-zinc-800/60">';
+
   notifications.forEach((item) => {
     const isUnread = !item.read;
-
     let timeStr = "Recently";
+
     if (item.createdAt?.toDate) {
       timeStr = item.createdAt.toDate().toLocaleString();
     } else if (item.createdAt) {
@@ -218,6 +220,7 @@ function renderNotificationList(notifications) {
                 )}</p>
             </div>`;
   });
+
   html += "</div>";
   listContainer.innerHTML = html;
 }
