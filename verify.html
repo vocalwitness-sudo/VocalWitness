@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#10b981">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; img-src 'self' data: https:;">
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="/logo.png" type="image/png">
     <title data-i18n="verifyPageTitle">VocalWitness • Evidence Verification Portal</title>
@@ -129,19 +130,20 @@
 </head>
 <body>
     <div class="container">
-        <div class="flex items-center justify-between mb-6 glass p-4 rounded-3xl">
-            <div class="flex items-center gap-3">
-                <a href="index.html" class="w-10 h-10 bg-emerald-500/20 rounded-2xl flex items-center justify-center text-xl hover:bg-emerald-500/30 transition" aria-label="Back">⬅️</a>
-                <span class="font-bold text-white" data-i18n="appTitle">VocalWitness</span>
-            </div>
-            <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-4 py-2 text-sm focus:outline-none focus:border-emerald-500">
+        <!-- Top Navigation Bar for Verify Page (Ensures users can exit back to main square) -->
+        <header class="w-full max-w-4xl mx-auto px-4 py-3 mb-4 flex items-center justify-between glass rounded-2xl">
+            <a href="index.html" class="inline-flex items-center gap-2 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-medium rounded-xl transition border border-zinc-700">
+                <span>←</span> Back to Square
+            </a>
+            <div class="text-xs text-zinc-400 font-mono">VocalWitness Verifier</div>
+            <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-emerald-500">
                 <option value="en">🇬🇧 English</option>
                 <option value="ar">🇸🇦 العربية</option>
                 <option value="es">🇪🇸 Español</option>
                 <option value="fr">🇫🇷 Français</option>
                 <option value="sw">🇹🇿 Kiswahili</option>
             </select>
-        </div>
+        </header>
 
         <div class="legal-banner">
             <strong data-i18n="legalLabel">Legal:</strong>
