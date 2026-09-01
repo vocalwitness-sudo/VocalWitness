@@ -99,7 +99,7 @@ service cloud.firestore {
           'email', 'displayName', 'photoURL', 'bio',
           'location', 'website', 'updatedAt', 'lastLoginAt',
           'theme', 'language', 'interestedInArena', 'arenaNotifyAt', 'lastNameChange',
-          'lastTestimonyAt', 'following', 'trusted', 'followers'
+          'lastTestimonyAt', 'following', 'trusted', 'followers', 'privacyMode'
         ])
         && (!('email' in request.resource.data) || request.resource.data.email is string)
         && (!('displayName' in request.resource.data) || request.resource.data.displayName is string)
@@ -110,7 +110,8 @@ service cloud.firestore {
         && (!('interestedInArena' in request.resource.data) || request.resource.data.interestedInArena is bool)
         && (!('following' in request.resource.data) || request.resource.data.following is list)
         && (!('trusted' in request.resource.data) || request.resource.data.trusted is list)
-        && (!('followers' in request.resource.data) || request.resource.data.followers is list);
+        && (!('followers' in request.resource.data) || request.resource.data.followers is list)
+        && (!('privacyMode' in request.resource.data) || request.resource.data.privacyMode is string);
     }
 
     function isValidNotification() {
@@ -204,7 +205,8 @@ service cloud.firestore {
       );
       allow delete: if (resource.data.authorId == request.auth.uid) || isModerator();
     }
-// ==========================================
+
+    // ==========================================
     // TESTIMONIES (Production Secure)
     // ==========================================
     match /testimonies/{testimonyId} {
@@ -240,7 +242,7 @@ service cloud.firestore {
              // Public non-author updates restricted strictly to counters & reactions
              isNotBanned()
              && request.resource.data.diff(resource.data).affectedKeys()
-                 .hasOnly(['corroborationCount', 'corroborationScore', 'lastCorroboratedAt', 'reactions', 'commentsCount', 'updatedAt'])
+                .hasOnly(['corroborationCount', 'corroborationScore', 'lastCorroboratedAt', 'reactions', 'commentsCount', 'updatedAt'])
            );
 
       allow delete: if (resource.data.authorId != null && resource.data.authorId == request.auth.uid) || isModerator();
