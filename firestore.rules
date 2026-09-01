@@ -114,14 +114,22 @@ service cloud.firestore {
         && (!('privacyMode' in request.resource.data) || request.resource.data.privacyMode is string);
     }
 
-    function isValidNotification() {
-      return request.resource.data.keys().hasAll(['senderId', 'type', 'timestamp'])
-        && request.resource.data.senderId == request.auth.uid
-        && request.resource.data.senderId is string
-        && request.resource.data.type is string
-        && request.resource.data.type in ['mention', 'reply', 'vote', 'system', 'witness_alert']
-        && request.resource.data.timestamp is timestamp;
-    }
+   function isValidNotification() {
+  return request.resource.data.keys().hasAll(['type', 'createdAt'])
+    && request.resource.data.type is string
+    && request.resource.data.type in [
+         'mention', 'reply', 'vote', 'system', 'witness_alert', 'corroboration'
+       ]
+    && request.resource.data.createdAt is timestamp
+    && (
+         // either classic senderId style
+         ('senderId' in request.resource.data && request.resource.data.senderId == request.auth.uid)
+         ||
+         // or the fromUid style used by notifyCorroboration
+         ('fromUid' in request.resource.data && request.resource.data.fromUid == request.auth.uid)
+       );
+}
+
 
     function isSafeAuthorTestimonyUpdate() {
       return !request.resource.data.diff(resource.data).affectedKeys().hasAny([
