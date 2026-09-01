@@ -757,7 +757,7 @@ export async function triggerPasswordReset() {
         showToast("📧 Password reset email sent!", "success");
     } catch (error) {
         console.error("Password reset error:", error);
-        showToast("Failed to send reset email", "error");
+        showToast("Failed to send password reset email", "error");
     }
 }
 
