@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "build:css": "npx @tailwindcss/cli -i ./input.css -o ./style.css --minify",
+    "watch:css": "npx @tailwindcss/cli -i ./input.css -o ./style.css --watch",
     "lint": "eslint js/**/*.js functions/**/*.js",
     "emulators": "firebase emulators:start",
     "deploy": "firebase deploy",
