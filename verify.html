@@ -255,6 +255,44 @@
             }
         }
 
+        function handleAutoPilotVerification() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('action') === 'zk-auto') {
+                const mainContainer = document.querySelector('main');
+                if (!mainContainer) return;
+
+                const guideBanner = document.createElement('div');
+                guideBanner.className = 'glass mb-4';
+                guideBanner.style.borderColor = 'var(--emerald-accent)';
+                guideBanner.style.marginBottom = '1.5rem';
+                guideBanner.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <div style="font-size: 1.5rem;">🛡️</div>
+                        <div>
+                            <h3 style="color: var(--emerald-accent); font-weight: 600; font-size: 0.95rem;">Automated ZK Verification Assistant</h3>
+                            <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.2rem;">Preparing your cryptographic verification context. Please follow any wallet or environment prompts if requested.</p>
+                        </div>
+                    </div>
+                    <div style="margin-top: 1rem; background: rgba(0,0,0,0.3); border-radius: 0.5rem; height: 6px; overflow: hidden;">
+                        <div id="autoProgressBar" style="background: var(--emerald-accent); width: 40%; height: 100%; transition: width 0.6s ease;"></div>
+                    </div>
+                `;
+                mainContainer.prepend(guideBanner);
+
+                // Advance progress after initialization checks complete
+                setTimeout(() => {
+                    const progressBar = document.getElementById('autoProgressBar');
+                    if (progressBar) progressBar.style.width = '100%';
+                }, 1200);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initLanguage();
+            hydrateFromQuery();
+            handleAutoPilotVerification(); // 👈 Add this line to trigger auto-pilot mode
+        });
+
         function showResult(ok, title, html) {
             resultBox.className = 'glass ' + (ok ? 'result-valid' : 'result-invalid');
             resultBox.classList.remove('hidden');
