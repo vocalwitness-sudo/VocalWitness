@@ -23,9 +23,10 @@
             </a>
 
             <div class="flex items-center gap-4">
-                <a href="index.html" class="text-sm font-medium text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-1 bg-emerald-500/10 px-3 py-1.5 rounded-xl border border-emerald-500/20">
+                <!-- Updated with data-action="back" for unified history handling -->
+                <button type="button" data-action="back" class="text-sm font-medium text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-1 bg-emerald-500/10 px-3 py-1.5 rounded-xl border border-emerald-500/20">
                     <span>←</span> <span data-i18n="backToSquareText">Back to Square</span>
-                </a>
+                </button>
                 <button type="button" onclick="toggleDarkMode()" aria-label="Toggle Theme"
                         class="p-2.5 rounded-2xl bg-zinc-900/50 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500">
                     🌙
@@ -40,9 +41,9 @@
             
             <!-- Guaranteed Active Close/Back Sub-Bar -->
             <div class="bg-zinc-900/80 border-b border-zinc-800 px-6 py-3 flex items-center justify-between text-xs">
-                <a href="index.html" class="text-zinc-400 hover:text-white flex items-center gap-1.5 font-semibold transition-colors">
+                <button type="button" data-action="back" class="text-zinc-400 hover:text-white flex items-center gap-1.5 font-semibold transition-colors bg-transparent border-none cursor-pointer">
                     <span class="text-emerald-400 font-bold">✕</span> Close &amp; Return to Square
-                </a>
+                </button>
                 <span class="text-emerald-400 font-mono tracking-wider">ACTIVE SECURE PROFILE</span>
             </div>
 
@@ -230,6 +231,19 @@
         document.addEventListener('DOMContentLoaded', () => {
             if (typeof initLanguage === 'function') initLanguage();
             if (typeof initDarkMode === 'function') initDarkMode();
+
+            // Setup global click fallback for data-action="back" on standalone pages
+            document.addEventListener('click', (e) => {
+                const backTrigger = e.target.closest('[data-action="back"]');
+                if (backTrigger) {
+                    e.preventDefault();
+                    if (window.history.length > 1) {
+                        window.history.back();
+                    } else {
+                        window.location.href = 'index.html';
+                    }
+                }
+            });
 
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') {
