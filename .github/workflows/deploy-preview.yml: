@@ -1,8 +1,7 @@
 name: Deploy to Preview Channel
 
 on:
-  workflow_dispatch:          # Manual trigger only
-  # pull_request:             # Uncomment later if you want auto-preview on PRs
+  workflow_dispatch:
 
 permissions:
   contents: read
