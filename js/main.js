@@ -770,11 +770,20 @@ async function bootstrap() {
         loadDynamicNavigation?.();
         fetchCuratedNews();
 
+        // Initialize Firebase Auth (Dispatches 'auth-changed' when resolved)
         await initAuth();
+
         console.log("✅ Bootstrap finished successfully");
     } catch (e) {
         console.error("Bootstrap error:", e);
         showToast?.("Failed to initialize app. Please refresh.", "error");
+    } finally {
+        // Smoothly fade out and remove the global splash screen once everything is settled
+        const splash = document.getElementById('app-splash-screen');
+        if (splash) {
+            splash.style.opacity = '0';
+            setTimeout(() => splash.remove(), 300);
+        }
     }
 }
 
