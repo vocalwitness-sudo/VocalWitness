@@ -1,12 +1,12 @@
 name: Deploy to Production (Live)
 
 on:
-  workflow_dispatch:          # Only manual
+  workflow_dispatch:          # Only manual — never automatic
 
 jobs:
   deploy-live:
     runs-on: ubuntu-latest
-    environment: production   # ← This is the key protection
+    environment: production   # ← This protects the live site
 
     steps:
       - name: Checkout Code
