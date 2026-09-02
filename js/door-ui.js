@@ -107,8 +107,13 @@ export function renderBridgePassModal() {
   modal.id = 'bridge-pass-modal';
   modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4';
   
- modal.innerHTML = `
-    <div class="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-2xl p-5 shadow-2xl flex flex-col items-center text-center">
+  modal.innerHTML = `
+    <div class="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-2xl p-5 shadow-2xl flex flex-col items-center text-center relative">
+      <!-- Close / Exit Button -->
+      <button type="button" id="close-bridge-modal-top" class="absolute top-3 right-3 text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-zinc-800 transition" aria-label="Close modal">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+
       <div class="w-12 h-12 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-2xl mb-3">
         🛡️
       </div>
@@ -139,13 +144,48 @@ export function renderBridgePassModal() {
 
   document.body.appendChild(modal);
 
-  modal.querySelector('#close-bridge-modal')?.addEventListener('click', () => modal.remove());
+  const closeModal = () => modal.remove();
+
+  modal.querySelector('#close-bridge-modal')?.addEventListener('click', closeModal);
+  modal.querySelector('#close-bridge-modal-top')?.addEventListener('click', closeModal);
+  
+  // Close on background backdrop click
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+
+  // Close on Escape key press
+  const onKey = (e) => {
+    if (e.key === 'Escape') {
+      closeModal();
+      document.removeEventListener('keydown', onKey);
+    }
+  };
+  document.addEventListener('keydown', onKey);
   
   const verifyBtn = modal.querySelector('#start-verification-btn');
   verifyBtn?.addEventListener('click', async () => {
     const btnText = modal.querySelector('#btn-text');
     if (btnText) btnText.textContent = "Generating ZK...";
     verifyBtn.disabled = true;
+
+    try {
+      const mockInputs = { timestamp: Date.now(), uid: state.currentUser?.uid || 'anon' };
+      const proofResult = await generateZKProofAsync(mockInputs);
+
+      if (proofResult) {
+        updateAppState({ isZkReady: true, userTier: 'witness_circle' });
+        showNotification("ZK Proof verified successfully!", "success");
+        modal.remove();
+        renderDoorPrivacyToggle();
+      }
+    } catch (err) {
+      showNotification("ZK Verification failed. Redirecting to settings...", "error");
+      modal.remove();
+      window.dispatchEvent(new CustomEvent('nav:navigate', { detail: { target: 'verification' } }));
+    }
+  });
+}
 
     try {
       // Trigger client ZK verification sequence
