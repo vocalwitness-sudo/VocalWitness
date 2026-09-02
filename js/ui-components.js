@@ -223,8 +223,13 @@ export function showBoldWitnessModal(onConfirm) {
     modal.setAttribute('aria-labelledby', 'boldWitnessTitle');
 
     modal.innerHTML = `
-      <div class="w-full max-w-md rounded-3xl border border-amber-500/40 bg-zinc-900 p-6 text-white shadow-2xl">
-        <div class="mb-4 flex items-start gap-3">
+      <div class="w-full max-w-md rounded-3xl border border-amber-500/40 bg-zinc-900 p-6 text-white shadow-2xl relative">
+        <!-- Close / Exit Button -->
+        <button type="button" id="boldWitnessCloseTop" class="absolute top-4 right-4 text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-zinc-800 transition" aria-label="Close modal">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+
+        <div class="mb-4 flex items-start gap-3 pr-6">
           <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-500/20 text-2xl" aria-hidden="true">👁️</div>
           <div>
             <h3 id="boldWitnessTitle" class="text-lg font-bold text-amber-400">Switch to Bold Witness?</h3>
@@ -241,11 +246,11 @@ export function showBoldWitnessModal(onConfirm) {
         </ul>
         <div class="flex gap-3">
           <button type="button" id="boldWitnessConfirm"
-                  class="flex-1 rounded-xl bg-amber-500 py-3 text-sm font-bold text-black transition hover:bg-amber-400">
+                class="flex-1 rounded-xl bg-amber-500 py-3 text-sm font-bold text-black transition hover:bg-amber-400">
             Activate Bold Witness
           </button>
           <button type="button" id="boldWitnessCancel"
-                  class="rounded-xl bg-zinc-800 px-5 py-3 text-sm font-semibold text-zinc-300 transition hover:bg-zinc-700">
+                class="rounded-xl bg-zinc-800 px-5 py-3 text-sm font-semibold text-zinc-300 transition hover:bg-zinc-700">
             Cancel
           </button>
         </div>
@@ -265,6 +270,7 @@ export function showBoldWitnessModal(onConfirm) {
     document.addEventListener('keydown', onKey);
 
     modal.querySelector('#boldWitnessCancel')?.addEventListener('click', close);
+    modal.querySelector('#boldWitnessCloseTop')?.addEventListener('click', close); // Added listener
     modal.addEventListener('click', (e) => {
         if (e.target === modal) close();
     });
@@ -280,7 +286,6 @@ export function showBoldWitnessModal(onConfirm) {
         }
     });
 }
-
 // Global window exports
 if (typeof window !== 'undefined') {
     window.renderTierBadge = renderTierBadge;
