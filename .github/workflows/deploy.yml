@@ -4,10 +4,12 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:   # Allows manual trigger too
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: production   # ← This is the key (requires approval)
 
     steps:
       - name: Checkout Code
