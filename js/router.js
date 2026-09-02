@@ -265,6 +265,26 @@ export function initRouter() {
     navigateTo(initial, { replace: true });
 }
 
+/**
+ * Safe back navigation handler
+ */
+export function goBack() {
+    // 1. If any modal or drawer is open, close it first instead of changing routes
+    const openModal = document.querySelector('.fixed.inset-0:not(.hidden)');
+    if (openModal) {
+        openModal.remove();
+        return;
+    }
+
+    // 2. If there's history within the app session, step back
+    if (window.history.length > 1) {
+        window.history.back();
+    } else {
+        // 3. Default fallback if history is exhausted
+        navigateTo('citizen-talk');
+    }
+}
+
 // Boot
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initRouter);
