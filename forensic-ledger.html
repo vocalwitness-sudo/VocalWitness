@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#10b981">
-   
+    
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="/logo.png" type="image/png">
     <title data-i18n="forensicLedgerPageTitle">Forensic Ledger • VocalWitness</title>
@@ -46,8 +46,11 @@
         <!-- HEADER -->
         <header class="flex items-center justify-between mb-8">
             <div class="flex items-center gap-3">
-                <button onclick="window.goBack()"
-                        class="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center gap-2 text-sm font-medium transition">
+                <!-- Upgraded to data-action="back" for unified history routing -->
+                <button type="button"
+                        data-action="back"
+                        class="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center gap-2 text-sm font-medium transition text-zinc-200 hover:text-white"
+                        aria-label="Go back">
                     <span data-i18n="backButton">← Back</span>
                 </button>
                 <div class="flex items-center gap-3">
@@ -219,6 +222,19 @@
             console.log("📜 Forensic Ledger initialized");
             if (typeof initLanguage === 'function') initLanguage();
             loadForensicLedger();
+
+            // Unified history router hook for data-action="back"
+            document.addEventListener('click', (e) => {
+                const backTrigger = e.target.closest('[data-action="back"]');
+                if (backTrigger) {
+                    e.preventDefault();
+                    if (window.history.length > 1) {
+                        window.history.back();
+                    } else {
+                        window.location.href = 'index.html';
+                    }
+                }
+            });
         });
 
         window.addEventListener('beforeunload', () => {
@@ -227,15 +243,5 @@
     </script>
 
     <script type="module" src="js/main.js"></script>
-
-    <script>
-        window.goBack = function() {
-            if (window.history.length > 1) {
-                window.history.back();
-            } else {
-                window.location.href = 'index.html';
-            }
-        };
-    </script>
 </body>
 </html>
