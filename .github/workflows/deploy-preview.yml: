@@ -2,8 +2,12 @@ name: Deploy to Preview Channel
 
 on:
   workflow_dispatch:          # Manual trigger only
-  # Optional: also run on every PR
-  # pull_request:
+  # pull_request:             # Uncomment later if you want auto-preview on PRs
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
 
 jobs:
   deploy-preview:
@@ -32,8 +36,5 @@ jobs:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           projectId: vocalwitness-3affa
-          # Leave channelId empty → Firebase creates a temporary preview URL
-          # OR set a fixed one for longer testing:
-          # channelId: staging
-          expires: 14d          # Preview lives for 14 days
+          expires: 14d
           entryPoint: .
