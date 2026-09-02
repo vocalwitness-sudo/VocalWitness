@@ -1,0 +1,39 @@
+name: Deploy to Preview Channel
+
+on:
+  workflow_dispatch:          # Manual trigger only
+  # Optional: also run on every PR
+  # pull_request:
+
+jobs:
+  deploy-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Tailwind CLI
+        run: npm install -D tailwindcss @tailwindcss/cli
+
+      - name: Build production CSS
+        run: npx @tailwindcss/cli -i ./input.css -o ./style.css --minify
+
+      - name: Deploy to Firebase Preview Channel
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: vocalwitness-3affa
+          # Leave channelId empty → Firebase creates a temporary preview URL
+          # OR set a fixed one for longer testing:
+          # channelId: staging
+          expires: 14d          # Preview lives for 14 days
+          entryPoint: .
