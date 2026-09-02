@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#10b981">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; img-src 'self' data: https:;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://www.gstatic.com https://unpkg.com https://static.cloudflareinsights.com; connect-src 'self' https:; img-src 'self' data: https:;">
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="/logo.png" type="image/png">
     <title data-i18n="verifyPageTitle">VocalWitness • Evidence Verification Portal</title>
@@ -130,9 +130,9 @@
 </head>
 <body>
     <div class="container">
-        <!-- Top Navigation Bar for Verify Page (Ensures users can exit back to main square) -->
+        <!-- Top Navigation Bar with Exit/Back Link -->
         <header class="w-full max-w-4xl mx-auto px-4 py-3 mb-4 flex items-center justify-between glass rounded-2xl">
-            <a href="index.html" class="inline-flex items-center gap-2 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-medium rounded-xl transition border border-zinc-700">
+            <a href="index.html#square" class="inline-flex items-center gap-2 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-medium rounded-xl transition border border-zinc-700">
                 <span>←</span> Back to Square
             </a>
             <div class="text-xs text-zinc-400 font-mono">VocalWitness Verifier</div>
@@ -163,7 +163,6 @@
                     <button type="button" id="tabJSON" class="tab-btn" data-i18n="tabJSONProof">📜 JSON proof</button>
                 </div>
 
-                <!-- Batch 6: ledger id + hash -->
                 <div id="ledgerSection">
                     <label for="ledgerIdInput">Testimony ID</label>
                     <input type="text" id="ledgerIdInput" placeholder="Firestore testimony id" autocomplete="off" />
@@ -331,7 +330,6 @@
             verifyLedger(id, h);
         });
 
-        // C2PA (unchanged behaviour)
         const dropZone = document.getElementById('dropZone');
         const mediaInput = document.getElementById('mediaInput');
         const dropZoneText = document.getElementById('dropZoneText');
@@ -402,7 +400,6 @@
                 const id = proofObj.packId || proofObj.testimony?.id || null;
                 const verifyUrl = proofObj.verifyUrl || null;
 
-                // Prefer ledger check when pack includes id
                 if (id && hash) {
                     document.getElementById('ledgerIdInput').value = id;
                     document.getElementById('ledgerHashInput').value = hash;
