@@ -378,7 +378,7 @@ export async function summarizeReport(text) {
     const result = await summarizeFn({ text });
     return result.data.summary;
 }
-// ====================== CATEGORY CLASSIFIER (used by composer.js) ======================
+
 // ====================== CATEGORY CLASSIFIER (used by composer.js) ======================
 /**
  * Lightweight client-side category classifier for the composer.
