@@ -207,11 +207,6 @@
         import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
         import { resolveLedgerHash, buildShareUrl } from './js/evidence-pack.js';
 
-        document.addEventListener('DOMContentLoaded', () => {
-            initLanguage();
-            hydrateFromQuery();
-        });
-
         const tabLedger = document.getElementById('tabLedger');
         const tabC2PA = document.getElementById('tabC2PA');
         const tabJSON = document.getElementById('tabJSON');
@@ -279,7 +274,6 @@
                 `;
                 mainContainer.prepend(guideBanner);
 
-                // Advance progress after initialization checks complete
                 setTimeout(() => {
                     const progressBar = document.getElementById('autoProgressBar');
                     if (progressBar) progressBar.style.width = '100%';
@@ -290,7 +284,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             initLanguage();
             hydrateFromQuery();
-            handleAutoPilotVerification(); // 👈 Add this line to trigger auto-pilot mode
+            handleAutoPilotVerification();
         });
 
         function showResult(ok, title, html) {
@@ -334,7 +328,6 @@
                 }
 
                 const share = buildShareUrl(data);
-                const ok = match === true || (match === null && !!storedNorm);
 
                 const title =
                     match === true
