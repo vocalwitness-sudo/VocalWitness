@@ -140,10 +140,10 @@ function isSafeUserCreation() {
     // USERS
     // ==========================================
     match /users/{userId} {
-      allow read: if true;
-      allow create: if isOwner(userId) && isSafeUserCreation();
-      allow update: if (isOwner(userId) && isSafeUserUpdate()) || isAdmin();
-      allow delete: if isAdmin();
+  allow read: if true;
+  allow create: if isOwner(userId) && isSafeUserCreation();
+  allow update: if (isOwner(userId) && isSafeUserUpdate()) || isAdmin();
+  allow delete: if isAdmin();
       match /drafts/{draftId} {
         allow read, write: if isOwner(userId);
       }
