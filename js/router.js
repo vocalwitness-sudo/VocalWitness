@@ -238,6 +238,9 @@ export async function navigateTo(routeKey, { replace = false } = {}) {
 /**
  * Initialize the router
  */
+/**
+ * Initialize the router
+ */
 export function initRouter() {
     window.addEventListener('popstate', (event) => {
         const routeFromState = event.state?.route;
@@ -254,17 +257,26 @@ export function initRouter() {
     });
 
     document.addEventListener('click', (e) => {
+        // 1. Handle standard data-route navigation clicks
         const trigger = e.target.closest('[data-route]');
-        if (!trigger) return;
-        e.preventDefault();
-        const routeKey = trigger.getAttribute('data-route');
-        navigateTo(routeKey);
+        if (trigger) {
+            e.preventDefault();
+            const routeKey = trigger.getAttribute('data-route');
+            navigateTo(routeKey);
+            return;
+        }
+
+        // 2. Handle data-action="back" clicks safely
+        const backTrigger = e.target.closest('[data-action="back"]');
+        if (backTrigger) {
+            e.preventDefault();
+            goBack();
+        }
     });
 
     const initial = window.location.hash.slice(1) || 'citizen-talk';
     navigateTo(initial, { replace: true });
 }
-
 /**
  * Safe back navigation handler
  */
