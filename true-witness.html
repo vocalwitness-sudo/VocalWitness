@@ -23,8 +23,10 @@
         <!-- HEADER -->
         <header class="flex items-center justify-between mb-8">
             <div class="flex items-center gap-3">
-                <button id="back-btn" 
-                        class="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center gap-2 text-sm"
+                <!-- Upgraded to data-action="back" for unified history router behavior -->
+                <button type="button" 
+                        data-action="back"
+                        class="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center gap-2 text-sm text-zinc-200 hover:text-white transition-colors"
                         data-i18n="backButton">
                     ← Back
                 </button>
@@ -60,9 +62,17 @@
         import { initWitnessVoice } from './js/witness-voice.js';
         import { initLanguage } from './js/i18n.js';
 
-        document.getElementById('back-btn')?.addEventListener('click', () => {
-            if (window.history.length > 1) window.history.back();
-            else window.location.href = 'index.html';
+        // Global unified router fallback for data-action="back" elements
+        document.addEventListener('click', (e) => {
+            const backTrigger = e.target.closest('[data-action="back"]');
+            if (backTrigger) {
+                e.preventDefault();
+                if (window.history.length > 1) {
+                    window.history.back();
+                } else {
+                    window.location.href = 'index.html';
+                }
+            }
         });
 
         document.addEventListener('DOMContentLoaded', () => {
