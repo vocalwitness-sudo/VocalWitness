@@ -304,7 +304,7 @@ function showWelcomeOnboarding() {
           <div class="text-2xl">🛡️</div>
           <div>
             <strong class="text-white">Post Anonymously</strong>
-            <p class="text-sm text-zinc-400">Hide your public identity. If signed in, your trust tier still grows privately.</p>
+            <p class="text-sm text-zinc-400">Share what you saw safely. Your identity is protected, and your report can never be secretly deleted or edited by anyone, thus zk technology do it for us. (If signed in, your trust tier still grows privately).</p>
           </div>
         </div>
         <div class="flex gap-4">
