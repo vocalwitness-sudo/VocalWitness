@@ -1,15 +1,11 @@
 name: Deploy to Firebase
 
 on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:   # Allows manual trigger too
+  workflow_dispatch:   # Only runs when you manually click "Run workflow"
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: production   # ← This is the key (requires approval)
 
     steps:
       - name: Checkout Code
