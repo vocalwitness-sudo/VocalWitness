@@ -107,14 +107,14 @@ export function renderBridgePassModal() {
   modal.id = 'bridge-pass-modal';
   modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4';
   
-  modal.innerHTML = `
+ modal.innerHTML = `
     <div class="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-2xl p-5 shadow-2xl flex flex-col items-center text-center">
       <div class="w-12 h-12 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-2xl mb-3">
         🛡️
       </div>
       <h3 class="text-base font-bold text-zinc-100 mb-1">Witness Door Locked</h3>
       <p class="text-xs text-zinc-400 mb-4 leading-relaxed">
-        This Witness member restricted replies to verified accounts to prevent spam and target harassment on Witness Voice.
+        This Witness member restricted replies to verified accounts to prevent spam and target harassment on Witness Voice. Your identity remains fully protected, and your report can never be secretly deleted or edited by anyone, thus zk technology do it for us.
       </p>
 
       <div class="w-full bg-zinc-800/60 rounded-xl p-3 border border-zinc-700/50 mb-4 text-left flex flex-col gap-2">
