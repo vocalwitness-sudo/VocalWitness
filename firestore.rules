@@ -216,7 +216,7 @@ match /testimonies/{testimonyId} {
          'citizen_talk', 'witness_voice'
        ];
 
-  allow update, delete: if false;   // keep immutable for now
+  allow update, delete: if false;
 }
     // ==========================================
     // CORROBORATIONS & FORENSIC LEDGER
