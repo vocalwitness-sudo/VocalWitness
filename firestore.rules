@@ -201,23 +201,64 @@ service cloud.firestore {
     // ==========================================
     // TESTIMONIES (main production collection)
     // ==========================================
-match /testimonies/{testimonyId} {
-  allow read: if true;
+   // ==========================================
+    // TESTIMONIES (main production collection)
+    // ==========================================
 
-  allow create: if request.auth != null
-    && request.resource.data.authorId == request.auth.uid
-    && request.resource.data.keys().hasAll(['content', 'createdAt'])
-    && request.resource.data.content is string
-    && request.resource.data.content.size() > 0
-    && request.resource.data.content.size() <= 4000
-    && request.resource.data.channel in [
-         'citizen-talk', 'witness-voice',
-         'citizen-circle', 'witness-circle',
-         'citizen_talk', 'witness_voice'
-       ];
 
-  allow update, delete: if false;
-}
+    match /testimonies/{testimonyId} {
+      allow read: if true;
+
+      allow create: if (
+          // Authenticated user
+          (isAuthenticated()
+            && isNotBanned()
+            && isNotThrottled()
+            && request.resource.data.authorId == request.auth.uid)
+          ||
+          // Explicit anonymous
+          (request.resource.data.isAnonymous == true
+            && request.resource.data.authorId == null)
+        )
+        && request.resource.data.keys().hasAll(['content', 'createdAt'])
+        && request.resource.data.content is string
+        && request.resource.data.content.size() > 0
+        && request.resource.data.content.size() <= 4000
+        && request.resource.data.channel in [
+             'citizen-talk', 'witness-voice',
+             'citizen-circle', 'witness-circle',
+             'citizen_talk', 'witness_voice'
+           ]
+        && (!('imageUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.imageUrl))
+        && (!('audioUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.audioUrl))
+        && (!('videoUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.videoUrl))
+        // forensicHash: allow missing, null, empty string, or exactly 64 chars
+        && (
+             !('forensicHash' in request.resource.data)
+             || request.resource.data.forensicHash == null
+             || request.resource.data.forensicHash == ''
+             || (request.resource.data.forensicHash is string
+                 && request.resource.data.forensicHash.size() == 64)
+           );
+
+      allow update: if isModerator()
+        || (
+             isNotBanned()
+             && resource.data.authorId != null
+             && resource.data.authorId == request.auth.uid
+             && isSafeAuthorTestimonyUpdate()
+           )
+        || (
+             isNotBanned()
+             && request.resource.data.diff(resource.data).affectedKeys()
+                .hasOnly(['corroborationCount', 'corroborationScore', 'lastCorroboratedAt',
+                          'reactions', 'commentsCount', 'updatedAt'])
+           );
+
+      allow delete: if (resource.data.authorId != null && resource.data.authorId == request.auth.uid)
+                    || isModerator();
+    }
+
     // ==========================================
     // CORROBORATIONS & FORENSIC LEDGER
     // ==========================================
