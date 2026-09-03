@@ -347,10 +347,11 @@ window.publishTestimony = async () => {
         }
 
         const testimonyData = {
-            title: title, // Now properly catches the fallback title
+            title: title,
             authorId: currentUser.uid,
             author: currentUser.displayName || "Registered Witness",
             content: content,
+            channel: channel, // Crucial for Firestore security rule compliance
             createdAt: serverTimestamp(),
             timestamp: clientCaptureMs,
             feedVisibility: channel,
@@ -360,7 +361,6 @@ window.publishTestimony = async () => {
             imageHash: mediaData.imageHash || null,
             audioHash: mediaData.audioHash || null,
             hasForensic: !!(mediaData.imageHash || mediaData.audioHash),
-            bodyHash: bodyHash,
             hasEvidencePack: !!firestorePack,
             evidencePack: firestorePack,
             packCoreHash: packCoreHash || null
