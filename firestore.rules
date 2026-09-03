@@ -194,7 +194,7 @@ function isSafeUserCreation() {
       );
       allow delete: if (resource.data.authorId == request.auth.uid) || isModerator();
     }
-    // ==========================================
+ // ==========================================
     // TESTIMONIES (Production Secure)
     // ==========================================
     match /testimonies/{testimonyId} {
@@ -210,13 +210,14 @@ function isSafeUserCreation() {
           (request.resource.data.isAnonymous == true 
             && request.resource.data.authorId == null)
         )
-        && request.resource.data.keys().hasAll(['content', 'channel', 'createdAt', 'feedVisibility'])
+        && request.resource.data.keys().hasAll(['content', 'createdAt'])
         && request.resource.data.content is string
         && request.resource.data.content.size() <= 4000
-        && request.resource.data.channel in ['citizen-talk', 'witness-voice', 'citizen-circle', 'witness-circle']
+        // Allow both hyphenated and underscored channel naming conventions
+        && request.resource.data.channel in ['citizen-talk', 'witness-voice', 'citizen-circle', 'witness-circle', 'citizen_talk', 'witness_voice']
         && (!('imageUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.imageUrl))
         && (!('audioUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.audioUrl))
-        && (!('videoUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.videoUrl)) // Added videoUrl check
+        && (!('videoUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.videoUrl))
         && (!('forensicHash' in request.resource.data) || request.resource.data.forensicHash == null || (request.resource.data.forensicHash is string && request.resource.data.forensicHash.size() == 64));
       allow update: if isModerator()
         || (
