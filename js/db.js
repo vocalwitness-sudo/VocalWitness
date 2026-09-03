@@ -210,11 +210,9 @@ export async function publishTestimonyNow(publicData, privateData = null) {
     } catch (_) {}
   }
 
-  const forensicHash =
-    publicData.forensicHash ||
-    publicData.imageHash ||
-    publicData.audioHash ||
-    null;
+  // 🛡️ Sanitize forensicHash: Must be null or exactly 64 chars (never an empty string)
+  const rawHash = publicData.forensicHash || publicData.imageHash || publicData.audioHash || null;
+  const forensicHash = (typeof rawHash === 'string' && rawHash.trim().length === 64) ? rawHash.trim() : null;
 
   // Extract persistence values securely with safe defaults
   const mediaOriginClaim = publicData.mediaOriginClaim || 'none';
@@ -224,20 +222,23 @@ export async function publishTestimonyNow(publicData, privateData = null) {
   const provenance = publicData.mediaMetadata?.provenance || publicData.provenance || 'unverified';
   const mediaMetadata = publicData.mediaMetadata || null;
 
-  const testimonyRef = await addDoc(collection(db, 'testimonies'), {
+  // Ensure channel format aligns with rules: ['citizen-talk', 'witness-voice', etc.]
+  const channel = targetFeed === 'witness_voice' ? 'witness-voice' : 'citizen-talk';
+
+  const testimonyPayload = {
     title: headingText,
     headline: headingText,
     content: publicData.content || '',
     targetFeed,
-    channel: targetFeed,
+    channel, // Matches rule validation array
     isWitnessVoice,
     imageUrl: publicData.imageUrl || null,
     audioUrl: publicData.audioUrl || null,
-    forensicHash,
+    forensicHash, // Guaranteed null or 64-char string
     imageHash: publicData.imageHash || null,
     audioHash: publicData.audioHash || null,
     
-    // 🛡️ Explicitly persisted authenticity & synthetic metadata properties
+    // Authenticity & synthetic metadata properties
     mediaOriginClaim,
     syntheticScore,
     syntheticAdvisory,
@@ -253,12 +254,14 @@ export async function publishTestimonyNow(publicData, privateData = null) {
     publicNullifier: isAnonymous ? publicData.publicNullifier || null : null,
     authorTier: isAnonymous ? null : authorTier,
     authorWitnessLevel: isAnonymous ? null : authorWitnessLevel,
-    createdAt: serverTimestamp(),
+    createdAt: serverTimestamp(), // Satisfies rules keys().hasAll(['content', 'createdAt'])
     hasForensic: Boolean(forensicHash),
     syncedFromOffline: Boolean(publicData.syncedFromOffline),
     originalOfflineTimestamp: publicData.originalOfflineTimestamp || null,
     status: 'published',
-  });
+  };
+
+  const testimonyRef = await addDoc(collection(db, 'testimonies'), testimonyPayload);
 
   if (privateData?.countsTowardTier && user) {
     try {
@@ -271,7 +274,7 @@ export async function publishTestimonyNow(publicData, privateData = null) {
         createdAt: serverTimestamp(),
       });
     } catch (err) {
-      console.warn('Private contribution write failed (tier may lag):', err);
+      console.warn('Private contribution write failed:', err);
     }
   }
 
