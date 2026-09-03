@@ -688,7 +688,8 @@ function wireTestimonyComposer() {
         fileInput = document.createElement('input');
         fileInput.type = 'file';
         fileInput.id = 'media-input';
-        fileInput.accept = 'image/jpeg,image/png,image/webp,image/heic,image/gif';
+        // Expanded to accept images, videos, and audio files
+        fileInput.accept = 'image/jpeg,image/png,image/webp,image/heic,image/gif,video/mp4,video/quicktime,video/webm,audio/mpeg,audio/wav,audio/ogg,audio/webm';
         fileInput.className = 'hidden';
         document.body.appendChild(fileInput);
     }
@@ -699,20 +700,31 @@ function wireTestimonyComposer() {
         btnPhoto.dataset.wired = 'true';
     }
 
-    if (fileInput && !fileInput.dataset.wired) {
+    // REMOVED duplicate change listener binding here! 
+    // We let media.js handle the file change event exclusively to prevent double loading.
+    // If media.js has an initializer, call it instead:
+    if (typeof mediaModule.initMediaUploader === 'function' && !fileInput.dataset.wired) {
+        mediaModule.initMediaUploader(fileInput);
+    } else if (!fileInput.dataset.wired) {
+        // Fallback single listener if media.js doesn't have an init method
         fileInput.addEventListener('change', async (e) => {
             const previewArea = document.getElementById('preview-area');
             if (e.target.files?.[0]) {
                 try {
-                    await mediaModule.handleImageSelect(e, previewArea);
+                    // Use a generalized media handler if available, supporting all formats
+                    if (typeof mediaModule.handleMediaSelect === 'function') {
+                        await mediaModule.handleMediaSelect(e, previewArea);
+                    } else if (typeof mediaModule.handleImageSelect === 'function') {
+                        await mediaModule.handleImageSelect(e, previewArea);
+                    }
                 } catch (err) {
                     console.error(err);
-                    showToast('Failed to load image', 'error');
+                    showToast('Failed to load media file', 'error');
                 }
             }
         });
-        fileInput.dataset.wired = 'true';
     }
+    fileInput.dataset.wired = 'true';
 
     const btnVoice = document.getElementById('btn-voice');
     if (btnVoice && !btnVoice.dataset.wired) {
@@ -730,9 +742,8 @@ function wireTestimonyComposer() {
         postBtn.dataset.wired = 'true';
     }
 
-    console.log('✅ Testimony composer wired (btn-photo / btn-voice / postButton)');
+    console.log('✅ Testimony composer wired for multi-format media without duplication');
 }
-
 // ====================== BOOTSTRAP ======================
 async function bootstrap() {
     if (isInitialized) return;
