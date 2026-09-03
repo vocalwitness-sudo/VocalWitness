@@ -792,6 +792,43 @@ export async function exportUserDataPDF() {
     }
 }
 
+// ====================== SETTINGS CONTROLS & PREFERENCES ======================
+
+// 1. Handle Default Starting Page Selection
+document.addEventListener('change', (e) => {
+    if (e.target && e.target.id === 'defaultStartingPageSelect') {
+        const selectedPage = e.target.value;
+        localStorage.setItem('vw_default_page', selectedPage);
+        showToast(`Default starting page set to ${e.target.options[e.target.selectedIndex].text}`, 'success');
+    }
+});
+
+// 2. Handle 2FA Toggle Checkbox
+document.addEventListener('change', async (e) => {
+    if (e.target && e.target.id === 'twoFactorToggle') {
+        const isEnabled = e.target.checked;
+        if (!auth.currentUser) {
+            showToast("You must be logged in", "error");
+            e.target.checked = !isEnabled; // revert UI state
+            return;
+        }
+
+        try {
+            showToast("Updating 2FA settings...", "info");
+            const userRef = doc(db, "users", auth.currentUser.uid);
+            await updateDoc(userRef, {
+                twoFactorEnabled: isEnabled,
+                updatedAt: serverTimestamp()
+            });
+            showToast(isEnabled ? "✅ Two-Factor Authentication enabled" : "🛡️ Two-Factor Authentication disabled", "success");
+        } catch (error) {
+            console.error("2FA update error:", error);
+            showToast("Failed to update 2FA settings", "error");
+            e.target.checked = !isEnabled; // revert UI state
+        }
+    }
+});
+
 // ====================== LANGUAGE CHANGE SUPPORT ======================
 window.addEventListener('languageChanged', () => {
     if (currentUserData) renderProfileUI(currentUserData);
