@@ -108,3 +108,34 @@ export async function prepareMediaForUpload(file, options = {}) {
     // Fallback for unsupported media types
     throw new Error(`Unsupported media type: ${type || 'unknown'}`);
 }
+
+import { uploadMedia } from './upload.js';
+
+/**
+ * Complete Pipeline: Prepares (scrubs/normalizes) and securely uploads any media file to Cloudflare R2.
+ * 
+ * @param {File|Blob} file - The raw file selected by the user.
+ * @param {string} [folderPath='evidence'] - Destination directory in R2.
+ * @param {Function} [onProgress] - Callback for real-time progress percentage (0-100).
+ * @param {Object} [options] - Optional pipeline settings.
+ * @returns {Promise<string>} - Resolves with the public Cloudflare R2 canonical URL.
+ */
+export async function processAndUploadMedia(file, folderPath = 'evidence', onProgress = null, options = {}) {
+    if (!file) {
+        throw new Error('No media file provided for upload pipeline.');
+    }
+
+    try {
+        // 1. Run through the universal preparation pipeline (EXIF scrubbing, audio normalization, pass-through)
+        const preparedFile = await prepareMediaForUpload(file, options);
+
+        // 2. Hand off to the secure R2 upload module
+        const publicUrl = await uploadMedia(preparedFile, folderPath, onProgress);
+
+        return publicUrl;
+
+    } catch (error) {
+        console.error('[MediaPipeline] Processing and upload sequence failed:', error);
+        throw error;
+    }
+}
