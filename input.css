@@ -289,3 +289,69 @@ select[data-action="change-language"] option {
   background-color: #09090b;
   color: #e4e4e7;
 }
+
+/* ====================== MODAL FIX & CROSS-BROWSER SCROLLBARS ====================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 1rem;
+}
+
+.modal-container,
+.modal {
+  position: relative;
+  width: 100%;
+  max-width: 42rem; /* max-w-2xl equivalent */
+  max-height: 85vh;
+  background-color: var(--color-glass, #111827);
+  border: 1px solid var(--color-glass-border, rgba(16, 185, 129, 0.22));
+  border-radius: 1rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Ensure modal header stays fixed at top */
+.modal-header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+/* Enforce Firefox & WebKit smooth internal scrolling with min-h-0 fix */
+.modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1 1 0%;
+  min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
