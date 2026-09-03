@@ -1,6 +1,7 @@
 /**
  * VocalWitness Upload Module (js/upload.js)
  * Handles client-side EXIF scrubbing, compression, and secure uploads to Cloudflare R2.
+ * Supports: Images, Audio, and Video.
  */
 import { scrubImageMetadata } from './imageScrubber.js';
 import { compressImage } from './media-compression.js';
@@ -51,7 +52,17 @@ export async function prepareMediaForUpload(file, options = {}) {
         return file;
     }
 
-    throw new Error('Unsupported media type');
+    // Video path
+    if (file.type.startsWith('video/')) {
+        // Optional size check for safety (e.g., max 250MB)
+        const maxVideoSize = 250 * 1024 * 1024;
+        if (file.size > maxVideoSize) {
+            throw new Error('Video file size exceeds the 250MB limit.');
+        }
+        return file;
+    }
+
+    throw new Error('Unsupported media type. Only image, audio, and video files are supported.');
 }
 
 /**
@@ -63,7 +74,6 @@ export async function uploadSecurePhoto(file, folderPath = 'evidence', onProgres
     }
 
     try {
-        // Guard: Check if the file is already scrubbed/cleaned to avoid double-processing
         const isAlreadyClean = Boolean(file.isCleaned) || Boolean(file.name && file.name.includes('_clean'));
 
         if (!isAlreadyClean) {
@@ -81,7 +91,6 @@ export async function uploadSecurePhoto(file, folderPath = 'evidence', onProgres
         const fileId = crypto.randomUUID();
         const ext = preparedFile.type === 'image/webp' ? 'webp' : 'jpg';
 
-        // Prevents nested /UID/UID/ duplication if folderPath already includes uid
         const keyPath = folderPath.includes(uid)
             ? `${folderPath}/${fileId}.${ext}`
             : `${folderPath}/${uid}/${fileId}.${ext}`;
@@ -108,7 +117,7 @@ export async function uploadSecurePhoto(file, folderPath = 'evidence', onProgres
 }
 
 /**
- * Uploads audio evidence
+ * Uploads audio evidence to Cloudflare R2
  */
 export async function uploadSecureAudio(audioBlob, folderPath = 'evidence', onProgress = null) {
     if (!audioBlob) throw new Error('Invalid audio file');
@@ -121,29 +130,84 @@ export async function uploadSecureAudio(audioBlob, folderPath = 'evidence', onPr
     const uid = auth.currentUser?.uid || 'anonymous';
     const fileId = crypto.randomUUID();
 
-    // Prevents nested /UID/UID/ duplication if folderPath already includes uid
     const keyPath = folderPath.includes(uid)
         ? `${folderPath}/${fileId}.${ext}`
         : `${folderPath}/${uid}/${fileId}.${ext}`;
 
-    return await executeUpload(audioBlob, keyPath, mimeType, onProgress);
+    const publicUrl = await executeUpload(audioBlob, keyPath, mimeType, onProgress);
+
+    await logAuditEvent?.('MEDIA_UPLOADED', {
+        type: 'audio',
+        path: keyPath,
+        size: audioBlob.size
+    });
+
+    return publicUrl;
 }
 
 /**
- * Universal upload helper
+ * Uploads video evidence to Cloudflare R2
+ */
+export async function uploadSecureVideo(videoFile, folderPath = 'evidence', onProgress = null) {
+    if (!videoFile || !videoFile.type.startsWith('video/')) {
+        throw new Error('Invalid input: Please select a valid video file.');
+    }
+
+    try {
+        showToast('🛡️ Preparing secure video upload...', 'info');
+
+        const mimeType = videoFile.type || 'video/mp4';
+        const ext = mimeType.includes('webm') ? 'webm' : mimeType.includes('quicktime') ? 'mov' : 'mp4';
+
+        const uid = auth.currentUser?.uid || 'anonymous';
+        const fileId = crypto.randomUUID();
+
+        const keyPath = folderPath.includes(uid)
+            ? `${folderPath}/${fileId}.${ext}`
+            : `${folderPath}/${uid}/${fileId}.${ext}`;
+
+        const publicUrl = await executeUpload(
+            videoFile,
+            keyPath,
+            mimeType,
+            onProgress
+        );
+
+        await logAuditEvent?.('MEDIA_UPLOADED', {
+            type: 'video',
+            path: keyPath,
+            size: videoFile.size
+        });
+
+        return publicUrl;
+    } catch (err) {
+        console.error('[Upload] Secure video processing failed:', err);
+        showToast('❌ Video upload failed', 'error');
+        throw err;
+    }
+}
+
+/**
+ * Universal upload helper routing images, audio, and videos properly
  */
 export async function uploadMedia(file, folderPath = 'evidence', onProgress = null) {
+    if (!file) throw new Error('No file provided for upload.');
+
     if (file.type.startsWith('image/')) {
         return await uploadSecurePhoto(file, folderPath, onProgress);
     }
     if (file.type.startsWith('audio/')) {
         return await uploadSecureAudio(file, folderPath, onProgress);
     }
-    throw new Error('Unsupported media type. Only image and audio are allowed.');
+    if (file.type.startsWith('video/')) {
+        return await uploadSecureVideo(file, folderPath, onProgress);
+    }
+    
+    throw new Error('Unsupported media type. Only image, audio, and video files are allowed.');
 }
 
 /**
- * Low-level upload to R2
+ * Low-level upload to R2 via XHR with progress tracking and authorization headers
  */
 function executeUpload(blob, keyPath, mimeType, onProgress) {
     return new Promise(async (resolve, reject) => {
@@ -172,7 +236,6 @@ function executeUpload(blob, keyPath, mimeType, onProgress) {
 
         xhr.onload = () => {
             if (xhr.status >= 200 && xhr.status < 300) {
-                // Construct canonical path matching the worker target
                 const canonicalUrl = `${R2_PUBLIC_BASE}/${keyPath}`;
                 resolve(canonicalUrl);
             } else {
