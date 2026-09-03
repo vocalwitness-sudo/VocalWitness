@@ -393,26 +393,22 @@ function renderSinglePostDOM(id, data, container) {
         data.forensicHash
     );
 
-    const mediaHTML = data.imageUrl
-        ? `<img src="${escapeHTML(data.imageUrl)}" class="mt-5 rounded-2xl w-full max-h-96 object-cover border border-zinc-700" alt="Evidence" loading="lazy">`
-        : '';
-
-    let videoHTML = '';
+    // Mutually exclusive media rendering block
+    let mediaHTML = '';
     if (data.videoUrl) {
-        videoHTML = `
-            <div class="mt-5 rounded-2xl overflow-hidden border border-zinc-700">
-                <video controls playsinline class="w-full max-h-96 bg-black" preload="metadata"
+        mediaHTML = `
+            <div class="mt-5 rounded-2xl overflow-hidden border border-zinc-700 bg-black">
+                <video controls playsinline class="w-full max-h-96 object-cover" preload="metadata"
                        src="${escapeHTML(data.videoUrl)}"></video>
             </div>`;
-    }
-
-    let audioHTML = '';
-    if (data.audioUrl) {
+    } else if (data.imageUrl) {
+        mediaHTML = `<img src="${escapeHTML(data.imageUrl)}" class="mt-5 rounded-2xl w-full max-h-96 object-cover border border-zinc-700" alt="Evidence" loading="lazy">`;
+    } else if (data.audioUrl) {
         let safeAudioUrl = data.audioUrl;
         if (!safeAudioUrl.includes('alt=media')) {
             safeAudioUrl += safeAudioUrl.includes('?') ? '&alt=media' : '?alt=media';
         }
-        audioHTML = `
+        mediaHTML = `
             <div class="mt-5 bg-zinc-900 rounded-2xl p-4 border border-zinc-700">
                 <audio controls preload="metadata" class="w-full" crossorigin="anonymous">
                     <source src="${escapeHTML(safeAudioUrl)}" type="audio/webm">
@@ -439,7 +435,7 @@ function renderSinglePostDOM(id, data, container) {
     const corrScore = data.corroborationScore || corrCount;
     const corrScoreHTML = corrCount > 0
         ? `<span class="corr-score text-[11px] text-emerald-400/90 font-medium tracking-tight">
-               ${corrScore} pts · ${corrCount} saw this
+                ${corrScore} pts · ${corrCount} saw this
            </span>`
         : '';
 
@@ -470,8 +466,6 @@ function renderSinglePostDOM(id, data, container) {
         ${data.content ? `<p id="post-text-${id}" class="text-zinc-300 text-sm mb-4 whitespace-pre-line leading-relaxed">${escapeHTML(data.content)}</p>` : ''}
 
         ${mediaHTML}
-        ${videoHTML}
-        ${audioHTML}
 
         <!-- Interactive Translation Controls -->
         <div id="translate-box-${id}" class="hidden mt-4 p-3 bg-zinc-950 border border-zinc-800 rounded-xl flex flex-col sm:flex-row items-center gap-2">
