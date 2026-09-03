@@ -345,34 +345,35 @@ window.publishTestimony = async () => {
         } catch (packErr) {
             console.warn('Evidence pack skipped:', packErr);
         }
+// Build the payload that matches your firestore.rules exactly
+const testimonyData = {
+    content: content,
+    title: title,
+    authorId: currentUser.uid,
+    authorName: currentUser.displayName || 'Anonymous Citizen',
+    authorEmail: currentUser.email || '',
+    channel: 'citizen-talk', // Must match one of: ['citizen-talk', 'witness-voice', 'citizen-circle', 'witness-circle', 'citizen_talk', 'witness_voice']
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    isAnonymous: false
+};
 
-        const testimonyData = {
-            title: title,
-            authorId: currentUser.uid,
-            author: currentUser.displayName || "Registered Witness",
-            content: content,
-            channel: channel, // Crucial for Firestore security rule compliance
-            createdAt: serverTimestamp(),
-            timestamp: clientCaptureMs,
-            feedVisibility: channel,
-            feedMode: feedMode,
-            imageUrl: mediaData.imageUrl || null,
-            audioUrl: mediaData.audioUrl || null,
-            imageHash: mediaData.imageHash || null,
-            audioHash: mediaData.audioHash || null,
-            hasForensic: !!(mediaData.imageHash || mediaData.audioHash),
-            hasEvidencePack: !!firestorePack,
-            evidencePack: firestorePack,
-            packCoreHash: packCoreHash || null
-        };
+// Include media URLs if they exist from your media upload step
+if (window.currentUploadedMediaUrl) {
+    if (window.currentMediaType === 'video') {
+        testimonyData.videoUrl = window.currentUploadedMediaUrl;
+    } else if (window.currentMediaType === 'audio') {
+        testimonyData.audioUrl = window.currentUploadedMediaUrl;
+    } else {
+        testimonyData.imageUrl = window.currentUploadedMediaUrl;
+    }
+}
 
-        console.log('[publish] writing testimony...', {
-            authorId: testimonyData.authorId,
-            feedVisibility: testimonyData.feedVisibility,
-            contentLen: testimonyData.content.length
-        });
+if (window.currentForensicHash) {
+    testimonyData.forensicHash = window.currentForensicHash;
+}
 
-        await addDoc(collection(db, "testimonies"), testimonyData);
+// Write directly to testimonies collection
+await db.collection('testimonies').add(testimonyData);
 
         try {
             await updateDoc(doc(db, "users", currentUser.uid), {
