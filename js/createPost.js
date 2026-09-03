@@ -4,60 +4,12 @@ import {
     addDoc, 
     serverTimestamp 
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-import { 
-    ref, 
-    uploadBytes, 
-    getDownloadURL 
-} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
 
-import { db, storage, auth } from './firebase-config.js';
+import { db, auth } from './firebase-config.js';
 import { showToast } from './utils.js';
 import { getUserTier } from './tier.js';
 import { analyzeReportContent } from './composer.js';
-
-/**
- * Strips EXIF/GPS metadata from image files by redrawing onto an offscreen HTML5 canvas.
- * Audio files or unhandled non-image formats pass through untouched.
- * @param {File|Blob} file 
- * @returns {Promise<File|Blob>}
- */
-async function scrubImageMetadata(file) {
-    if (!file || !file.type || !file.type.startsWith('image/')) {
-        return file; // Pass audio or non-image files directly through
-    }
-
-    return new Promise((resolve) => {
-        const img = new Image();
-        const url = URL.createObjectURL(file);
-
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0);
-
-            canvas.toBlob((blob) => {
-                URL.revokeObjectURL(url);
-                if (blob) {
-                    const sanitizedFile = new File([blob], file.name || 'evidence.jpg', {
-                        type: file.type || 'image/jpeg'
-                    });
-                    resolve(sanitizedFile);
-                } else {
-                    resolve(file); // Fallback to original file if blob encoding fails
-                }
-            }, file.type || 'image/jpeg', 0.92);
-        };
-
-        img.onerror = () => {
-            URL.revokeObjectURL(url);
-            resolve(file); // Fallback to original file if image fails to render
-        };
-
-        img.src = url;
-    });
-}
+import { processAndUploadMedia } from './media-pipeline.js';
 
 /**
  * Computes a SHA-256 hash of a file or text buffer using native Web Crypto API.
@@ -82,29 +34,14 @@ export async function computeSHA256(data) {
 }
 
 /**
- * Uploads media file to Firebase Storage under user or evidence path
- * @param {File|Blob} file 
- * @param {string} pathPrefix 
- * @returns {Promise<string>} Download URL
- */
-async function uploadEvidenceMedia(file, pathPrefix = 'evidence') {
-    const uid = auth.currentUser ? auth.currentUser.uid : 'anon';
-    const timestamp = Date.now();
-    const filename = `${pathPrefix}_${uid}_${timestamp}`;
-    const storageRef = ref(storage, `${pathPrefix}/${filename}`);
-
-    const snapshot = await uploadBytes(storageRef, file);
-    return await getDownloadURL(snapshot.ref);
-}
-
-/**
- * Handles the complete testimony submission workflow.
+ * Handles the complete testimony submission workflow utilizing the unified media pipeline.
  * @param {Object} params
  * @param {string} params.content - Text content of the testimony
  * @param {string} params.channel - 'citizen-talk' | 'witness-voice'
- * @param {File|Blob|null} params.mediaFile - Attached image or recorded audio blob
+ * @param {File|Blob|null} params.mediaFile - Attached image, video, or recorded audio file
  * @param {boolean} params.isAnonymous - Whether user hides public identity
  * @param {boolean} params.isZkVerified - Optional ZK proof indicator
+ * @param {Function} [params.onProgress] - Optional progress callback (0-100)
  * @returns {Promise<string>} Created Firestore document ID
  */
 export async function submitTestimony({
@@ -112,7 +49,8 @@ export async function submitTestimony({
     channel = 'citizen-talk',
     mediaFile = null,
     isAnonymous = false,
-    isZkVerified = false
+    isZkVerified = false,
+    onProgress = null
 }) {
     const user = auth.currentUser;
     if (!user && !isAnonymous) {
@@ -134,7 +72,6 @@ export async function submitTestimony({
         try {
             const aiCheck = await analyzeReportContent(content.trim());
             if (aiCheck) {
-                // If content triggers severe flags or policy violations
                 if (aiCheck.isBlocked || aiCheck.flagged) {
                     showToast("Submission contains content that violates community standards.", "error");
                     throw new Error("Submission blocked by AI moderation rules.");
@@ -148,7 +85,6 @@ export async function submitTestimony({
                 };
             }
         } catch (err) {
-            // Re-throw if explicitly blocked above, otherwise warn and allow pipeline to continue
             if (err.message && err.message.includes("blocked by AI moderation")) {
                 throw err;
             }
@@ -160,21 +96,26 @@ export async function submitTestimony({
 
     let forensicHash = null;
     let mediaUrl = null;
-    let mediaType = null;
+    let mediaType = null; // 'image', 'video', or 'audio'
 
-    // 1. Process Media, Scrub Metadata & Forensic Hashing
+    // 1. Process Media via Unified Pipeline (Scrubbing/Normalization + R2 Upload)
     if (mediaFile) {
-        // Scrub EXIF/GPS metadata prior to SHA-256 seal generation and upload
-        if (mediaFile.type && mediaFile.type.startsWith('image/')) {
-            showToast("Scrubbing media metadata...", "info");
-            mediaFile = await scrubImageMetadata(mediaFile);
-        }
+        // Determine primary media type bucket
+        const mime = mediaFile.type || '';
+        if (mime.startsWith('image/')) mediaType = 'image';
+        else if (mime.startsWith('video/')) mediaType = 'video';
+        else if (mime.startsWith('audio/')) mediaType = 'audio';
+        else mediaType = 'evidence';
 
+        // Compute hash of original file for cryptographic verification integrity
         forensicHash = await computeSHA256(mediaFile);
-        mediaType = mediaFile.type.startsWith('audio/') ? 'audio' : 'image';
-        
-        showToast("Uploading evidence artifact...", "info");
-        mediaUrl = await uploadEvidenceMedia(mediaFile, mediaType);
+
+        showToast("🛡️ Preparing and uploading media artifact...", "info");
+
+        // Route through unified pipeline: scrubs EXIF/normalizes audio, then uploads to Cloudflare R2
+        const folderDestination = channel === 'witness-voice' ? 'witness-vault' : 'evidence';
+        mediaUrl = await processAndUploadMedia(mediaFile, folderDestination, onProgress);
+
     } else if (content.length > 0) {
         // Compute text integrity hash if no media is attached
         forensicHash = await computeSHA256(content);
@@ -194,7 +135,7 @@ export async function submitTestimony({
         }
     }
 
-    // 3. Assemble Firestore Payload (Enriched with Moderation Data)
+    // 3. Assemble Firestore Payload
     const payload = {
         content: content.trim(),
         channel: channel,
@@ -207,6 +148,7 @@ export async function submitTestimony({
         forensicHash: forensicHash,
         zkVerified: isZkVerified,
         imageUrl: mediaType === 'image' ? mediaUrl : null,
+        videoUrl: mediaType === 'video' ? mediaUrl : null,
         audioUrl: mediaType === 'audio' ? mediaUrl : null,
         reactions: { respect: 0, truth: 0, concern: 0, impact: 0 },
         commentsCount: 0,
