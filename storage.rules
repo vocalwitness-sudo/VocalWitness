@@ -29,8 +29,13 @@ service firebase.storage {
           || request.resource.contentType.matches('audio/webm;codecs=opus');
     }
 
+    // Added Video Support to align with media-pipeline.js
+    function isValidVideo() {
+      return request.resource.contentType.matches('video/(mp4|webm|quicktime|x-m4v|mkv)');
+    }
+
     function isValidMedia() {
-      return isValidImage() || isValidAudio();
+      return isValidImage() || isValidAudio() || isValidVideo();
     }
 
     function isValidPayload(maxMb) {
