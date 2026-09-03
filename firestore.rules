@@ -1,6 +1,7 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
     // ==========================================
     // HELPER FUNCTIONS
     // ==========================================
@@ -19,10 +20,10 @@ service cloud.firestore {
         : {};
     }
     function isNotThrottled() {
-      let userDoc = getUserData();
-      return !('lastTestimonyAt' in userDoc)
-        || !(userDoc.lastTestimonyAt is timestamp)
-        || request.time > userDoc.lastTestimonyAt + duration.value(30, 's');
+      return !exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        || !('lastTestimonyAt' in getUserData())
+        || !(getUserData().lastTestimonyAt is timestamp)
+        || request.time > getUserData().lastTestimonyAt + duration.value(30, 's');
     }
     function isWitnessCircle() {
       return isAuthenticated() && (
@@ -54,13 +55,6 @@ service cloud.firestore {
           || getUserData().get('isBanned', false) != true
         );
     }
-    // SAFE throttle: if lastTestimonyAt is missing or not a timestamp, allow
-    function isNotThrottled() {
-      return !exists(/databases/$(database)/documents/users/$(request.auth.uid))
-        || !('lastTestimonyAt' in getUserData())
-        || !(getUserData().lastTestimonyAt is timestamp)
-        || request.time > getUserData().lastTestimonyAt + duration.value(30, 's');
-    }
     function isValidMediaUrl(url) {
       return url is string && (
         url == '' ||
@@ -71,21 +65,20 @@ service cloud.firestore {
         url.matches('^data:image/svg\\+xml;.*')
       );
     }
-function isSafeUserCreation() {
-  return request.resource.data.uid == request.auth.uid
-    && request.resource.data.uid is string
-    && request.resource.data.keys().hasAll(['uid', 'email', 'displayName', 'createdAt'])
-    && request.resource.data.email is string
-    && request.resource.data.displayName is string
-    && (!('tier' in request.resource.data) || request.resource.data.tier in ['citizen', 'citizen_circle'])
-    && (!('isVerified' in request.resource.data) || request.resource.data.isVerified == false)
-    // Still block dangerous privilege fields
-    && !request.resource.data.keys().hasAny([
-         'role', 'isBanned', 'badges', 'admin', 'moderator', 'score', 'steward',
-         'isPhoneVerified', 'hasVerifiedPhone', 'phoneVerifiedAt', 'reputation',
-         'credibilityScore', 'zkVerified', 'weeklyPoints'
-       ]);
-}
+    function isSafeUserCreation() {
+      return request.resource.data.uid == request.auth.uid
+        && request.resource.data.uid is string
+        && request.resource.data.keys().hasAll(['uid', 'email', 'displayName', 'createdAt'])
+        && request.resource.data.email is string
+        && request.resource.data.displayName is string
+        && (!('tier' in request.resource.data) || request.resource.data.tier in ['citizen', 'citizen_circle'])
+        && (!('isVerified' in request.resource.data) || request.resource.data.isVerified == false)
+        && !request.resource.data.keys().hasAny([
+             'role', 'isBanned', 'badges', 'admin', 'moderator', 'score', 'steward',
+             'isPhoneVerified', 'hasVerifiedPhone', 'phoneVerifiedAt', 'reputation',
+             'credibilityScore', 'zkVerified', 'weeklyPoints'
+           ]);
+    }
     function isSafeUserUpdate() {
       return !request.resource.data.diff(resource.data).affectedKeys().hasAny([
           'role', 'isBanned', 'badges', 'admin', 'moderator',
@@ -119,10 +112,8 @@ function isSafeUserCreation() {
            ]
         && request.resource.data.createdAt is timestamp
         && (
-             // either classic senderId style
              ('senderId' in request.resource.data && request.resource.data.senderId == request.auth.uid)
              ||
-             // or the fromUid style used by notifyCorroboration
              ('fromUid' in request.resource.data && request.resource.data.fromUid == request.auth.uid)
            );
     }
@@ -138,20 +129,23 @@ function isSafeUserCreation() {
         || (post.authorDoorPrivacy == 'zk_only' && isWitnessCircle())
         || request.auth.uid == post.authorId;
     }
+
     // ==========================================
     // INTERNAL
     // ==========================================
     match /rateLimits/{rateLimitId} {
       allow read, write: if false;
     }
+
     // ==========================================
     // USERS
     // ==========================================
     match /users/{userId} {
-  allow read: if true;
-  allow create: if isOwner(userId) && isSafeUserCreation();
-  allow update: if (isOwner(userId) && isSafeUserUpdate()) || isAdmin();
-  allow delete: if isAdmin();
+      allow read: if true;
+      allow create: if isOwner(userId) && isSafeUserCreation();
+      allow update: if (isOwner(userId) && isSafeUserUpdate()) || isAdmin();
+      allow delete: if isAdmin();
+
       match /drafts/{draftId} {
         allow read, write: if isOwner(userId);
       }
@@ -172,8 +166,9 @@ function isSafeUserCreation() {
         allow write: if isOwner(userId) || request.auth.uid == targetUid;
       }
     }
+
     // ==========================================
-    // WITNESS VOICE & CITIZEN TALK
+    // WITNESS VOICE & CITIZEN TALK (legacy collections)
     // ==========================================
     match /witness_voice/{postId} {
       allow read: if true;
@@ -202,31 +197,45 @@ function isSafeUserCreation() {
       );
       allow delete: if (resource.data.authorId == request.auth.uid) || isModerator();
     }
- // ==========================================
-    // TESTIMONIES (Production Secure)
+
+    // ==========================================
+    // TESTIMONIES (main production collection)
     // ==========================================
     match /testimonies/{testimonyId} {
       allow read: if true;
+
       allow create: if (
-          // Case 1: Authenticated User Submission
-          (isAuthenticated() 
-            && isNotBanned() 
-            && isNotThrottled() 
+          // Authenticated user
+          (isAuthenticated()
+            && isNotBanned()
+            && isNotThrottled()
             && request.resource.data.authorId == request.auth.uid)
-          || 
-          // Case 2: Explicit Anonymous Submission
-          (request.resource.data.isAnonymous == true 
+          ||
+          // Explicit anonymous
+          (request.resource.data.isAnonymous == true
             && request.resource.data.authorId == null)
         )
         && request.resource.data.keys().hasAll(['content', 'createdAt'])
         && request.resource.data.content is string
+        && request.resource.data.content.size() > 0
         && request.resource.data.content.size() <= 4000
-        // Allow both hyphenated and underscored channel naming conventions
-        && request.resource.data.channel in ['citizen-talk', 'witness-voice', 'citizen-circle', 'witness-circle', 'citizen_talk', 'witness_voice']
+        && request.resource.data.channel in [
+             'citizen-talk', 'witness-voice',
+             'citizen-circle', 'witness-circle',
+             'citizen_talk', 'witness_voice'
+           ]
         && (!('imageUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.imageUrl))
         && (!('audioUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.audioUrl))
         && (!('videoUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.videoUrl))
-        && (!('forensicHash' in request.resource.data) || request.resource.data.forensicHash == null || (request.resource.data.forensicHash is string && request.resource.data.forensicHash.size() == 64));
+        // forensicHash: allow missing, null, empty string, or exactly 64 chars
+        && (
+             !('forensicHash' in request.resource.data)
+             || request.resource.data.forensicHash == null
+             || request.resource.data.forensicHash == ''
+             || (request.resource.data.forensicHash is string
+                 && request.resource.data.forensicHash.size() == 64)
+           );
+
       allow update: if isModerator()
         || (
              isNotBanned()
@@ -235,12 +244,14 @@ function isSafeUserCreation() {
              && isSafeAuthorTestimonyUpdate()
            )
         || (
-             // Public non-author updates restricted strictly to counters & reactions
              isNotBanned()
              && request.resource.data.diff(resource.data).affectedKeys()
-                .hasOnly(['corroborationCount', 'corroborationScore', 'lastCorroboratedAt', 'reactions', 'commentsCount', 'updatedAt'])
+                .hasOnly(['corroborationCount', 'corroborationScore', 'lastCorroboratedAt',
+                          'reactions', 'commentsCount', 'updatedAt'])
            );
-      allow delete: if (resource.data.authorId != null && resource.data.authorId == request.auth.uid) || isModerator();
+
+      allow delete: if (resource.data.authorId != null && resource.data.authorId == request.auth.uid)
+                    || isModerator();
     }
 
     // ==========================================
@@ -269,6 +280,7 @@ function isSafeUserCreation() {
         && request.resource.data.hash.size() == 64;
       allow update, delete: if false;
     }
+
     // ==========================================
     // POSTS
     // ==========================================
@@ -290,6 +302,7 @@ function isSafeUserCreation() {
         allow create: if isNotBanned() && canCommentOnPost(postId);
       }
     }
+
     // ==========================================
     // REPORTS & AUDIT
     // ==========================================
@@ -309,6 +322,7 @@ function isSafeUserCreation() {
         && request.resource.data.clientTimestamp is number;
       allow update, delete: if false;
     }
+
     // ==========================================
     // DAO
     // ==========================================
