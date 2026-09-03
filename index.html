@@ -98,6 +98,7 @@
   </style>
 </head>
 <body class="theme-citizen tier-citizen">
+  
 <!-- ====================== HEADER ====================== -->
 <header id="main-header" class="fixed top-0 left-0 right-0 z-50 border-b border-emerald-500/30 bg-zinc-950/95 shadow-lg backdrop-blur-md">
   <div class="mx-auto max-w-6xl px-3 sm:px-4">
@@ -156,11 +157,11 @@
         </button>
 
         <button id="data-saver-btn" type="button" onclick="toggleDataSaver()"
-        class="flex h-9 items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-3 text-xs font-semibold text-zinc-300 hover:text-white"
-        aria-label="Toggle Data Saver">
-  <span aria-hidden="true">⚡</span>
-  <span>Data Saver: <strong id="data-saver-status" class="text-zinc-400">Off</strong></span>
-</button>
+                class="flex h-9 items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-3 text-xs font-semibold text-zinc-300 hover:text-white"
+                aria-label="Toggle Data Saver">
+          <span aria-hidden="true">⚡</span>
+          <span>Data Saver: <strong id="data-saver-status" class="text-zinc-400">Off</strong></span>
+        </button>
 
         <button id="bookmarks-nav-btn" type="button" aria-label="Saved Items"
                 class="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-300 hover:border-emerald-500/50 hover:text-white">
@@ -194,6 +195,7 @@
             </div>
           </div>
         </div>
+
       </div>
     </div>
 
@@ -212,17 +214,17 @@
           </div>
         </a>
 
-      <div class="flex items-center gap-1.5">
-  <button id="openAuthModalBtnMobile" type="button"
-          class="flex h-8 items-center gap-1.5 rounded-lg bg-white px-2.5 text-xs font-bold text-zinc-900 shadow-sm transition hover:bg-zinc-100">
-    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-         class="h-3.5 w-3.5" alt="" width="14" height="14">
-    <span>Sign In</span>
-  </button>
-  <button id="userProfileBtnMobile" type="button"
-          class="hidden h-8 w-8 items-center justify-center rounded-lg border border-zinc-700 bg-zinc-900 text-sm text-emerald-400"
-          aria-label="Open profile">👤</button>
-</div>
+        <div class="flex items-center gap-1.5">
+          <button id="openAuthModalBtnMobile" type="button"
+                  class="flex h-8 items-center gap-1.5 rounded-lg bg-white px-2.5 text-xs font-bold text-zinc-900 shadow-sm transition hover:bg-zinc-100">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                 class="h-3.5 w-3.5" alt="" width="14" height="14">
+            <span>Sign In</span>
+          </button>
+          <button id="userProfileBtnMobile" type="button"
+                  class="hidden h-8 w-8 items-center justify-center rounded-lg border border-zinc-700 bg-zinc-900 text-sm text-emerald-400"
+                  aria-label="Open profile">👤</button>
+        </div>
       </div>
 
       <div class="flex items-center justify-between gap-2 border-t border-zinc-800/70 pt-1.5">
@@ -245,12 +247,13 @@
                   class="h-8 rounded-lg border border-emerald-500/70 bg-emerald-500/15 px-2.5 text-[11px] font-bold text-emerald-400 transition hover:border-emerald-400 hover:bg-emerald-500/25"
                   data-i18n="supportBtn">Support</button>
 
-<button id="data-saver-btn-mobile" type="button" onclick="toggleDataSaver()"
-        class="flex h-8 items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 text-[11px] font-semibold text-zinc-300 hover:text-white"
-        aria-label="Toggle Data Saver">
-  <span aria-hidden="true">⚡</span>
-  <span>Data Saver: <strong id="data-saver-status-mobile" class="text-zinc-400">Off</strong></span>
-</button>
+          <button id="data-saver-btn-mobile" type="button" onclick="toggleDataSaver()"
+                  class="flex h-8 items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 text-[11px] font-semibold text-zinc-300 hover:text-white"
+                  aria-label="Toggle Data Saver">
+            <span aria-hidden="true">⚡</span>
+            <span>Data Saver: <strong id="data-saver-status-mobile" class="text-zinc-400">Off</strong></span>
+          </button>
+        </div>
 
         <div class="flex items-center gap-1">
           <button id="bookmarks-nav-btn-mobile" type="button" aria-label="Saved"
@@ -274,7 +277,9 @@
           <a href="/privacy" class="flex h-8 items-center px-2 text-[11px] font-medium text-emerald-400/90 hover:text-emerald-300">Privacy</a>
         </div>
       </div>
+
     </div>
+
   </div>
 </header>
 
