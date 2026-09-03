@@ -260,147 +260,122 @@ function showWelcomeNote() {
 // ====================== PUBLISH TESTIMONY ======================
 
 window.publishTestimony = async () => {
-    if (!requireAuth("Please sign in to share your testimony in Citizen Talk.")) return;
+  if (typeof requireAuth === 'function' && !requireAuth("Please sign in to share your testimony in Citizen Talk.")) {
+    return;
+  }
 
-    const currentUser = auth.currentUser;
-    if (!currentUser) {
-        showToast("Session expired. Please re-authenticate.", "error");
-        return;
+  // Use the same modular instances your app already has
+  const { getAuth } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js");
+  const { getFirestore, collection, addDoc, serverTimestamp, doc, updateDoc } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
+  const { getApps } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js");
+
+  const app = getApps()[0];
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    showToast("Session expired. Please re-authenticate.", "error");
+    return;
+  }
+
+  const titleInput = document.getElementById('testimonyTitle');
+  const textarea = document.getElementById('mainInput');
+
+  let title = titleInput ? titleInput.value.trim() : '';
+  const content = textarea ? textarea.value.trim() : '';
+
+  if (!content) {
+    showToast("Please write something before publishing", "error");
+    return;
+  }
+
+  if (!title && content) {
+    title = content.length <= 80
+      ? content
+      : content.slice(0, 80).replace(/\s+\S*$/, '') + '...';
+  }
+
+  if (content.length > 2000) {
+    showToast("Testimony is too long (max 2000 characters)", "error");
+    return;
+  }
+
+  const postBtn = document.getElementById('postButton');
+  if (postBtn) {
+    postBtn.disabled = true;
+    postBtn.classList.add('publishing', 'opacity-50', 'cursor-not-allowed');
+  }
+
+  try {
+    // Build a payload that matches the current rules exactly
+    const testimonyData = {
+      content: content,
+      title: title || null,
+      authorId: currentUser.uid,
+      authorName: currentUser.displayName || 'Anonymous Citizen',
+      channel: 'citizen-talk',
+      createdAt: serverTimestamp(),
+      isAnonymous: false
+    };
+
+    // Optional media (only if valid)
+    if (window.currentUploadedMediaUrl) {
+      const url = window.currentUploadedMediaUrl;
+      if (window.currentMediaType === 'video') {
+        testimonyData.videoUrl = url;
+      } else if (window.currentMediaType === 'audio') {
+        testimonyData.audioUrl = url;
+      } else {
+        testimonyData.imageUrl = url;
+      }
     }
 
-    const titleInput = document.getElementById('testimonyTitle');
-    const textarea = document.getElementById('mainInput');
-    
-    let title = titleInput ? titleInput.value.trim() : ''; // Changed to let
-    const content = textarea ? textarea.value.trim() : '';
-
-    if (!content) {
-        showToast("Please write something before publishing", "error");
-        return;
+    if (window.currentForensicHash && window.currentForensicHash.length === 64) {
+      testimonyData.forensicHash = window.currentForensicHash;
     }
 
-    // Auto-generate title if blank from the first ~80-100 characters of the body
-    if (!title && content) {
-        if (content.length <= 80) {
-            title = content;
-        } else {
-            const truncated = content.slice(0, 80);
-            const lastSpace = truncated.lastIndexOf(' ');
-            title = (lastSpace > 0 ? truncated.slice(0, lastSpace) : truncated) + '...';
-        }
-    }
+    console.log('[publish] writing testimony...', {
+      authorId: testimonyData.authorId,
+      channel: testimonyData.channel,
+      contentLen: content.length
+    });
 
-    if (content.length > 2000) {
-        showToast("Testimony is too long (max 2000 characters)", "error");
-        return;
-    }
+    const docRef = await addDoc(collection(db, 'testimonies'), testimonyData);
+    console.log('[publish] SUCCESS:', docRef.id);
 
-    const postBtn = document.getElementById('postButton');
-    if (postBtn) {
-        postBtn.disabled = true;
-        postBtn.classList.add('publishing', 'opacity-50', 'cursor-not-allowed');
-    }
-
+    // Non-critical: update lastTestimonyAt
     try {
-        const mediaData = (typeof mediaModule.uploadForensicMedia === 'function')
-            ? await mediaModule.uploadForensicMedia()
-            : {};
+      await updateDoc(doc(db, 'users', currentUser.uid), {
+        lastTestimonyAt: serverTimestamp()
+      });
+    } catch (_) {}
 
-        const clientCaptureMs = Date.now();
+    showToast("🛡️ Report sealed and published", "success");
 
-        // FORCE citizen-talk until Witness Circle publish is wired correctly
-        // (avoids accidental witness-voice + permission-denied)
-        const channel = 'citizen-talk';
-        const feedMode = 'citizen';
-
-        console.log('[publish] uid=', currentUser.uid, 'channel=', channel, 'tab=', state.currentTab);
-
-        const bodyHash = content ? await generateSha256Hash(content) : null;
-
-        const mediaForPack = {};
-        if (mediaData.imageUrl && mediaData.imageHash) {
-            mediaForPack.imageUrl = mediaData.imageUrl;
-            mediaForPack.imageHash = mediaData.imageHash;
-        }
-
-        const identity = {
-            mode: 'IDENTIFIED',
-            authorId: currentUser.uid,
-            displayName: currentUser.displayName || null
-        };
-
-        let firestorePack = null;
-        let packCoreHash = null;
-        try {
-            const packResult = await createEvidencePack({
-                content,
-                bodyHash,
-                media: mediaForPack,
-                identity,
-                channel,
-                clientCaptureMs
-            });
-            firestorePack = packResult.firestorePack;
-            packCoreHash = packResult.packCoreHash;
-        } catch (packErr) {
-            console.warn('Evidence pack skipped:', packErr);
-        }
-// Build the payload that matches your firestore.rules exactly
-const testimonyData = {
-    content: content,
-    title: title,
-    authorId: currentUser.uid,
-    authorName: currentUser.displayName || 'Anonymous Citizen',
-    authorEmail: currentUser.email || '',
-    channel: 'citizen-talk', // Must match one of: ['citizen-talk', 'witness-voice', 'citizen-circle', 'witness-circle', 'citizen_talk', 'witness_voice']
-    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-    isAnonymous: false
-};
-
-// Include media URLs if they exist from your media upload step
-if (window.currentUploadedMediaUrl) {
-    if (window.currentMediaType === 'video') {
-        testimonyData.videoUrl = window.currentUploadedMediaUrl;
-    } else if (window.currentMediaType === 'audio') {
-        testimonyData.audioUrl = window.currentUploadedMediaUrl;
-    } else {
-        testimonyData.imageUrl = window.currentUploadedMediaUrl;
+    if (titleInput) titleInput.value = '';
+    if (textarea) textarea.value = '';
+    if (typeof mediaModule !== 'undefined' && mediaModule.resetMediaState) {
+      mediaModule.resetMediaState();
     }
-}
-
-if (window.currentForensicHash) {
-    testimonyData.forensicHash = window.currentForensicHash;
-}
-
-// Write directly to testimonies collection
-await db.collection('testimonies').add(testimonyData);
-
-        try {
-            await updateDoc(doc(db, "users", currentUser.uid), {
-                lastTestimonyAt: serverTimestamp()
-            });
-        } catch (_) {
-            /* non-critical */
-        }
-
-        showToast("🛡️ Report sealed and published", "success");
-        if (titleInput) titleInput.value = '';
-        if (textarea) textarea.value = '';
-        mediaModule.resetMediaState?.();
-        initFeed?.(db, 'citizen-talk');
-    } catch (err) {
-        console.error("Publish error detail:", err);
-        if (err.code === 'permission-denied') {
-            showToast("Permission denied. Stay on Citizen Talk tab; check Console logs.", "error");
-        } else {
-            showToast("Failed to publish. Please try again.", "error");
-        }
-    } finally {
-        if (postBtn) {
-            postBtn.disabled = false;
-            postBtn.classList.remove('publishing', 'opacity-50', 'cursor-not-allowed');
-        }
+    if (typeof initFeed === 'function') {
+      initFeed(db, 'citizen-talk');
     }
+
+  } catch (err) {
+    console.error("Publish error detail:", err);
+    showToast(
+      err.code === 'permission-denied'
+        ? "Permission denied. Check Console logs."
+        : "Failed to publish. Please try again.",
+      "error"
+    );
+  } finally {
+    if (postBtn) {
+      postBtn.disabled = false;
+      postBtn.classList.remove('publishing', 'opacity-50', 'cursor-not-allowed');
+    }
+  }
 };
 
 // ====================== EVIDENCE LEDGER ======================
