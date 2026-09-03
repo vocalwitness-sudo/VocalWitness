@@ -216,6 +216,7 @@ function isSafeUserCreation() {
         && request.resource.data.channel in ['citizen-talk', 'witness-voice', 'citizen-circle', 'witness-circle']
         && (!('imageUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.imageUrl))
         && (!('audioUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.audioUrl))
+        && (!('videoUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.videoUrl)) // Added videoUrl check
         && (!('forensicHash' in request.resource.data) || request.resource.data.forensicHash == null || (request.resource.data.forensicHash is string && request.resource.data.forensicHash.size() == 64));
       allow update: if isModerator()
         || (
@@ -232,6 +233,7 @@ function isSafeUserCreation() {
            );
       allow delete: if (resource.data.authorId != null && resource.data.authorId == request.auth.uid) || isModerator();
     }
+
     // ==========================================
     // CORROBORATIONS & FORENSIC LEDGER
     // ==========================================
