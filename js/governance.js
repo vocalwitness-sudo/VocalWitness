@@ -412,6 +412,54 @@ export async function resolveTestimonyChallenge(
   }
 }
 
+// Attach this to your challenge submission form or modal button
+export function setupChallengeModalListeners() {
+  const challengeForm = document.getElementById('testimony-challenge-form');
+  if (!challengeForm) return;
+
+  challengeForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const testimonyId = document.getElementById('challenge-testimony-id').value;
+    const reasonInput = document.getElementById('challenge-reason-input').value;
+    const submitBtn = challengeForm.querySelector('button[type="submit"]');
+
+    if (!testimonyId || !reasonInput) {
+      showToast('Please provide a reason for the challenge.', 'error');
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting Challenge...';
+
+    try {
+      // Calls the function from js/governance.js
+      const disputeId = await window.openTestimonyChallenge(testimonyId, reasonInput);
+
+      if (disputeId) {
+        challengeForm.reset();
+        // Close your modal here
+        const modal = document.getElementById('challenge-modal');
+        if (modal) modal.style.display = 'none';
+        
+        showToast('Challenge successfully registered in transparency ledger.', 'success');
+      }
+    } catch (err) {
+      console.error('UI Challenge Error:', err);
+      showToast('Failed to submit challenge.', 'error');
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Submit Challenge';
+    }
+  });
+}
+
+// Auto-initialize if DOM is ready
+if (typeof window !== 'undefined') {
+  document.addEventListener('DOMContentLoaded', setupChallengeModalListeners);
+}
+
+
 /**
  * List recent disputes for transparency dashboard.
  * @param {number} limitCount
