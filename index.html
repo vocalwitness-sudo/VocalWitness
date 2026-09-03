@@ -444,6 +444,16 @@
         <span data-i18n="postButton">Publish Report</span>
       </button>
     </div>
+    <!-- Upload Progress Bar (Place inside your Public Square posting form) -->
+<div id="upload-progress-container" class="mt-4 hidden" aria-hidden="true">
+    <div class="flex justify-between text-xs text-zinc-400 mb-1">
+        <span id="upload-status-text">Uploading media...</span>
+        <span id="upload-progress-pct">0%</span>
+    </div>
+    <div class="h-2 w-full overflow-hidden rounded-full bg-zinc-800">
+        <div id="upload-progress-bar" class="h-full bg-emerald-500 transition-all duration-300" style="width: 0%"></div>
+    </div>
+</div>
 
     <!-- Feed Container inside Public Square panel -->
     <div id="feed-container" class="mb-4 space-y-6" aria-label="Reports feed">
