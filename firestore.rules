@@ -210,59 +210,39 @@ service cloud.firestore {
       allow delete: if (resource.data.authorId == request.auth.uid) || isModerator();
     }
 
-    // ==========================================
-    // TESTIMONIES (main production collection)
-    // ==========================================
-    match /testimonies/{testimonyId} {
-      allow read: if true;
+ match /testimonies/{testimonyId} {
+  allow read: if true;
 
-      allow create: if isAuthenticated()
-        && isNotBanned()
-        && (
-             // Normal authenticated post
-             (request.resource.data.authorId == request.auth.uid)
-             ||
-             // Explicit anonymous
-             (request.resource.data.isAnonymous == true && request.resource.data.authorId == null)
-           )
-        && request.resource.data.keys().hasAll(['content', 'createdAt', 'channel'])
-        && request.resource.data.content is string
-        && request.resource.data.content.size() > 0
-        && request.resource.data.content.size() <= 4000
-        && request.resource.data.createdAt is timestamp
-        && request.resource.data.channel is string
-        && request.resource.data.channel in [
-             'citizen-talk', 'witness-voice',
-             'citizen-circle', 'witness-circle',
-             'citizen_talk', 'witness_voice'
-           ]
-        // Optional but recommended fields
-        && (!('feedVisibility' in request.resource.data) || request.resource.data.feedVisibility is string)
-        && (!('imageUrl' in request.resource.data) 
-            || request.resource.data.imageUrl == null 
-            || isValidMediaUrl(request.resource.data.imageUrl))
-        && (!('audioUrl' in request.resource.data) 
-            || request.resource.data.audioUrl == null 
-            || isValidMediaUrl(request.resource.data.audioUrl));
+  allow create: if request.auth != null
+    && request.resource.data.keys().hasAll(['content', 'createdAt', 'channel'])
+    && request.resource.data.content is string
+    && request.resource.data.content.size() > 0
+    && request.resource.data.content.size() <= 4000
+    && request.resource.data.createdAt is timestamp
+    && request.resource.data.channel is string
+    && request.resource.data.channel in [
+         'citizen-talk', 'witness-voice',
+         'citizen-circle', 'witness-circle',
+         'citizen_talk', 'witness_voice'
+       ];
 
-      allow update: if isModerator()
-        || (
-             isNotBanned()
-             && resource.data.authorId != null
-             && resource.data.authorId == request.auth.uid
-             && isSafeAuthorTestimonyUpdate()
-           )
-        || (
-             isNotBanned()
-             && request.resource.data.diff(resource.data).affectedKeys()
-                .hasOnly(['corroborationCount', 'corroborationScore', 'lastCorroboratedAt',
-                          'reactions', 'commentsCount', 'updatedAt'])
-           );
+  allow update: if isModerator()
+    || (
+         isNotBanned()
+         && resource.data.authorId != null
+         && resource.data.authorId == request.auth.uid
+         && isSafeAuthorTestimonyUpdate()
+       )
+    || (
+         isNotBanned()
+         && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['corroborationCount', 'corroborationScore', 'lastCorroboratedAt',
+                      'reactions', 'commentsCount', 'updatedAt'])
+       );
 
-      allow delete: if (resource.data.authorId != null && resource.data.authorId == request.auth.uid)
-                    || isModerator();
-    }
-
+  allow delete: if (resource.data.authorId != null && resource.data.authorId == request.auth.uid)
+                || isModerator();
+}
     // ==========================================
     // CORROBORATIONS & FORENSIC LEDGER
     // ==========================================
