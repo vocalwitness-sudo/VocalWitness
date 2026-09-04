@@ -292,6 +292,37 @@
   </div>
 </header>
 
+  <!-- ====================== FEED FILTER PILLS ====================== -->
+<div class="sticky top-[72px] z-40 mx-auto max-w-6xl px-3 sm:px-4 py-3 bg-zinc-950/90 backdrop-blur-md border-b border-zinc-800/80">
+  <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+    
+    <button type="button" data-filter="all"
+            class="feed-pill active rounded-full bg-emerald-500 px-4 py-1.5 text-xs font-bold text-black transition shrink-0 shadow-sm">
+      All Evidence
+    </button>
+    
+    <button type="button" data-filter="witness-voice"
+            class="feed-pill rounded-full border border-zinc-800 bg-zinc-900 px-4 py-1.5 text-xs font-semibold text-zinc-300 hover:border-emerald-500/50 hover:text-white transition shrink-0">
+      📢 Witness Voice
+    </button>
+    
+    <button type="button" data-filter="citizen-talk"
+            class="feed-pill rounded-full border border-zinc-800 bg-zinc-900 px-4 py-1.5 text-xs font-semibold text-zinc-300 hover:border-emerald-500/50 hover:text-white transition shrink-0">
+      💬 Citizen Talk
+    </button>
+    
+    <button type="button" data-filter="zk-verified"
+            class="feed-pill rounded-full border border-emerald-500/40 bg-emerald-500/10 px-4 py-1.5 text-xs font-bold text-emerald-400 hover:bg-emerald-500/20 transition shrink-0 flex items-center gap-1.5">
+      <svg class="h-3.5 w-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+      </svg>
+      <span>ZK Verified Only</span>
+    </button>
+
+  </div>
+</div>
+  
+
   
 <!-- ====================== MAIN CONTAINER ====================== -->
 <main id="main-content" class="mx-auto max-w-6xl px-3 pb-6 pt-1 sm:px-4 md:pt-2">
