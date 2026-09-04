@@ -205,7 +205,7 @@ service cloud.firestore {
           // Authenticated user
           (isAuthenticated()
             && isNotBanned()
-            && isNotThrottled()
+           // && isNotThrottled()
             && request.resource.data.authorId == request.auth.uid)
           ||
           // Explicit anonymous
