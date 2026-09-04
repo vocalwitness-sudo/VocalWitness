@@ -1,7 +1,6 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
     // ==========================================
     // HELPER FUNCTIONS
     // ==========================================
@@ -145,7 +144,6 @@ service cloud.firestore {
       allow create: if isOwner(userId) && isSafeUserCreation();
       allow update: if (isOwner(userId) && isSafeUserUpdate()) || isAdmin();
       allow delete: if isAdmin();
-
       match /drafts/{draftId} {
         allow read, write: if isOwner(userId);
       }
@@ -199,16 +197,10 @@ service cloud.firestore {
     }
 
     // ==========================================
-    // TESTIMONIES (main production collection)
+    // TESTIMONIES (main production collection) - FIXED
     // ==========================================
-   // ==========================================
-    // TESTIMONIES (main production collection)
-    // ==========================================
-
-
     match /testimonies/{testimonyId} {
       allow read: if true;
-
       allow create: if (
           // Authenticated user
           (isAuthenticated()
@@ -220,26 +212,42 @@ service cloud.firestore {
           (request.resource.data.isAnonymous == true
             && request.resource.data.authorId == null)
         )
-        && request.resource.data.keys().hasAll(['content', 'createdAt'])
+        // Required core fields only
+        && request.resource.data.keys().hasAll([
+             'authorId', 'content', 'createdAt', 'channel', 'feedVisibility'
+           ])
+        // Type & value validations
         && request.resource.data.content is string
         && request.resource.data.content.size() > 0
         && request.resource.data.content.size() <= 4000
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.channel is string
         && request.resource.data.channel in [
              'citizen-talk', 'witness-voice',
              'citizen-circle', 'witness-circle',
              'citizen_talk', 'witness_voice'
            ]
-        && (!('imageUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.imageUrl))
-        && (!('audioUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.audioUrl))
-        && (!('videoUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.videoUrl))
-        // forensicHash: allow missing, null, empty string, or exactly 64 chars
-        && (
-             !('forensicHash' in request.resource.data)
-             || request.resource.data.forensicHash == null
-             || request.resource.data.forensicHash == ''
-             || (request.resource.data.forensicHash is string
-                 && request.resource.data.forensicHash.size() == 64)
-           );
+        && request.resource.data.feedVisibility is string
+        // Media fields are optional – allow null or valid URL
+        && (!('imageUrl' in request.resource.data) 
+            || request.resource.data.imageUrl == null 
+            || isValidMediaUrl(request.resource.data.imageUrl))
+        && (!('audioUrl' in request.resource.data) 
+            || request.resource.data.audioUrl == null 
+            || isValidMediaUrl(request.resource.data.audioUrl))
+        // Optional hash / pack fields
+        && (!('imageHash' in request.resource.data) 
+            || request.resource.data.imageHash == null 
+            || request.resource.data.imageHash is string)
+        && (!('audioHash' in request.resource.data) 
+            || request.resource.data.audioHash == null 
+            || request.resource.data.audioHash is string)
+        && (!('bodyHash' in request.resource.data) 
+            || request.resource.data.bodyHash == null 
+            || request.resource.data.bodyHash is string)
+        && (!('packCoreHash' in request.resource.data) 
+            || request.resource.data.packCoreHash == null 
+            || request.resource.data.packCoreHash is string);
 
       allow update: if isModerator()
         || (
@@ -254,7 +262,6 @@ service cloud.firestore {
                 .hasOnly(['corroborationCount', 'corroborationScore', 'lastCorroboratedAt',
                           'reactions', 'commentsCount', 'updatedAt'])
            );
-
       allow delete: if (resource.data.authorId != null && resource.data.authorId == request.auth.uid)
                     || isModerator();
     }
