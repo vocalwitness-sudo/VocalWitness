@@ -366,14 +366,17 @@ export async function handleMediaSelect(event) {
 /**
  * Initialize composer listeners and real-time AI analysis
  */
+/**
+ * Initialize composer listeners and real-time AI analysis
+ */
 export function initComposer() {
     const fileInput = document.getElementById('media-input') ||
                       document.getElementById('photoInput') ||
                       document.getElementById('media-file-input');
 
     const btnPhoto = document.getElementById('btn-attach-photo') ||
-                     document.getElementById('btnPhoto') ||
-                     document.getElementById('btn-photo');
+                       document.getElementById('btnPhoto') ||
+                       document.getElementById('btn-photo');
 
     const postButton = document.getElementById('postButton') ||
                         document.getElementById('submitBtn');
@@ -423,13 +426,30 @@ export function initComposer() {
     }
 
     if (postButton && !postButton.dataset.listenerAttached) {
-        postButton.addEventListener('click', handleComposerSubmit);
         postButton.dataset.listenerAttached = 'true';
+        postButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            // Prefer the main.js path if it exists
+            if (typeof window.publishTestimony === 'function') {
+                window.publishTestimony();
+            } else {
+                handleComposerSubmit(e);
+            }
+        });
     }
 
     if (composerForm && !composerForm.dataset.listenerAttached) {
-        composerForm.addEventListener('submit', handleComposerSubmit);
         composerForm.dataset.listenerAttached = 'true';
+        composerForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            if (typeof window.publishTestimony === 'function') {
+                window.publishTestimony();
+            } else {
+                handleComposerSubmit(e);
+            }
+        });
     }
 }
 
