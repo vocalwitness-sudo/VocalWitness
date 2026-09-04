@@ -258,20 +258,10 @@ function showWelcomeNote() {
 }
 
 // ====================== PUBLISH TESTIMONY ======================
-
 window.publishTestimony = async () => {
   if (typeof requireAuth === 'function' && !requireAuth("Please sign in to share your testimony in Citizen Talk.")) {
     return;
   }
-
-  // Use the same modular instances your app already has
-  const { getAuth } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js");
-  const { getFirestore, collection, addDoc, serverTimestamp, doc, updateDoc } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js");
-  const { getApps } = await import("https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js");
-
-  const app = getApps()[0];
-  const auth = getAuth(app);
-  const db = getFirestore(app);
 
   const currentUser = auth.currentUser;
   if (!currentUser) {
@@ -281,7 +271,6 @@ window.publishTestimony = async () => {
 
   const titleInput = document.getElementById('testimonyTitle');
   const textarea = document.getElementById('mainInput');
-
   let title = titleInput ? titleInput.value.trim() : '';
   const content = textarea ? textarea.value.trim() : '';
 
@@ -296,8 +285,8 @@ window.publishTestimony = async () => {
       : content.slice(0, 80).replace(/\s+\S*$/, '') + '...';
   }
 
-  if (content.length > 2000) {
-    showToast("Testimony is too long (max 2000 characters)", "error");
+  if (content.length > 4000) {
+    showToast("Testimony is too long (max 4000 characters)", "error");
     return;
   }
 
@@ -308,43 +297,52 @@ window.publishTestimony = async () => {
   }
 
   try {
-    // Build a payload that matches the current rules exactly
+    // Prefer mediaModule if available, otherwise fall back to global variables
+    const mediaData = (typeof mediaModule?.getCurrentMediaData === 'function')
+      ? mediaModule.getCurrentMediaData()
+      : {
+          imageUrl: window.currentUploadedMediaUrl && window.currentMediaType === 'image' ? window.currentUploadedMediaUrl : null,
+          audioUrl: window.currentUploadedMediaUrl && window.currentMediaType === 'audio' ? window.currentUploadedMediaUrl : null,
+          imageHash: window.currentMediaType === 'image' ? (window.currentForensicHash || null) : null,
+          audioHash: window.currentMediaType === 'audio' ? (window.currentForensicHash || null) : null,
+          bodyHash: window.currentBodyHash || null,
+          hasEvidencePack: !!window.currentEvidencePack,
+          evidencePack: window.currentEvidencePack || null,
+          packCoreHash: window.currentPackCoreHash || null,
+        };
+
     const testimonyData = {
-      content: content,
       title: title || null,
       authorId: currentUser.uid,
-      authorName: currentUser.displayName || 'Anonymous Citizen',
-      channel: 'citizen-talk',
+      author: currentUser.displayName || "Registered Witness",
+      content: content,
       createdAt: serverTimestamp(),
-      isAnonymous: false
+      timestamp: Date.now(),
+      channel: 'citizen-talk',
+      feedVisibility: 'citizen-talk',
+      feedMode: window.currentFeedMode || 'standard',
+      imageUrl: mediaData.imageUrl || null,
+      audioUrl: mediaData.audioUrl || null,
+      imageHash: mediaData.imageHash || null,
+      audioHash: mediaData.audioHash || null,
+      hasForensic: !!(mediaData.imageHash || mediaData.audioHash),
+      bodyHash: mediaData.bodyHash || null,
+      hasEvidencePack: !!mediaData.hasEvidencePack,
+      evidencePack: mediaData.evidencePack || null,
+      packCoreHash: mediaData.packCoreHash || null
     };
-
-    // Optional media (only if valid)
-    if (window.currentUploadedMediaUrl) {
-      const url = window.currentUploadedMediaUrl;
-      if (window.currentMediaType === 'video') {
-        testimonyData.videoUrl = url;
-      } else if (window.currentMediaType === 'audio') {
-        testimonyData.audioUrl = url;
-      } else {
-        testimonyData.imageUrl = url;
-      }
-    }
-
-    if (window.currentForensicHash && window.currentForensicHash.length === 64) {
-      testimonyData.forensicHash = window.currentForensicHash;
-    }
 
     console.log('[publish] writing testimony...', {
       authorId: testimonyData.authorId,
       channel: testimonyData.channel,
-      contentLen: content.length
+      contentLen: content.length,
+      hasMedia: !!(testimonyData.imageUrl || testimonyData.audioUrl)
     });
 
     const docRef = await addDoc(collection(db, 'testimonies'), testimonyData);
     console.log('[publish] SUCCESS:', docRef.id);
 
-    // Non-critical: update lastTestimonyAt
+    // Non-critical update
     try {
       await updateDoc(doc(db, 'users', currentUser.uid), {
         lastTestimonyAt: serverTimestamp()
@@ -353,11 +351,19 @@ window.publishTestimony = async () => {
 
     showToast("🛡️ Report sealed and published", "success");
 
+    // Reset UI
     if (titleInput) titleInput.value = '';
     if (textarea) textarea.value = '';
-    if (typeof mediaModule !== 'undefined' && mediaModule.resetMediaState) {
-      mediaModule.resetMediaState();
-    }
+    mediaModule?.resetMediaState?.();
+    
+    // Clear any leftover globals
+    window.currentUploadedMediaUrl = null;
+    window.currentMediaType = null;
+    window.currentForensicHash = null;
+    window.currentBodyHash = null;
+    window.currentEvidencePack = null;
+    window.currentPackCoreHash = null;
+
     if (typeof initFeed === 'function') {
       initFeed(db, 'citizen-talk');
     }
