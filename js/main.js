@@ -34,67 +34,38 @@ let listenersInitialized = false;
 let isSwitchingTab = false;
 
 // ====================== DATA SAVER HANDLER ======================
-export function initDataSaver() {
-    const savedState = localStorage.getItem('vocalwitness_data_saver') === 'true';
-    updateAppState({ dataSaver: savedState });
-    updateDataSaverUI(savedState);
-}
-
-export function toggleDataSaver() {
-    const currentState = state.dataSaver || false;
-    const newState = !currentState;
-
-    updateAppState({ dataSaver: newState });
-    localStorage.setItem('vocalwitness_data_saver', String(newState));
-    updateDataSaverUI(newState);
-
-    if (newState) {
-        showToast("⚡ Data Saver Activated: High-res media preloading paused.", "info");
-    } else {
-        showToast("⚡ Data Saver Deactivated: Full quality media enabled.", "info");
-    }
-}
-
 function updateDataSaverUI(isOn) {
-    const statusText = isOn ? 'On' : 'Off';
-    const statusClass = isOn ? 'text-emerald-400 font-bold' : 'text-zinc-400';
+  const statusText = isOn ? 'On' : 'Off';
+  const statusClass = isOn ? 'text-emerald-400 font-bold' : 'text-zinc-400';
 
-    // Desktop + mobile + footer status labels
-    const statusIds = [
-        'data-saver-status',
-        'data-saver-status-mobile',
-        'footer-data-saver-status'
-    ];
-
-    statusIds.forEach((id) => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.textContent = statusText;
-            el.className = statusClass;
-        }
-    });
-
-    // Desktop button visual state
-    const desktopBtn = document.getElementById('data-saver-btn');
-    if (desktopBtn) {
-        if (isOn) {
-            desktopBtn.classList.add('border-emerald-500', 'bg-emerald-950/40');
-        } else {
-            desktopBtn.classList.remove('border-emerald-500', 'bg-emerald-950/40');
-        }
+  // Update status text
+  ['data-saver-status', 'data-saver-status-mobile', 'footer-data-saver-status'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.textContent = statusText;
+      el.className = statusClass;
     }
+  });
 
-    // Mobile button visual state
-    const mobileBtn = document.getElementById('data-saver-btn-mobile');
-    if (mobileBtn) {
-        if (isOn) {
-            mobileBtn.classList.add('border-emerald-500', 'text-emerald-400', 'bg-emerald-950/40');
-            mobileBtn.classList.remove('border-zinc-800', 'text-zinc-300', 'bg-zinc-900');
-        } else {
-            mobileBtn.classList.remove('border-emerald-500', 'text-emerald-400', 'bg-emerald-950/40');
-            mobileBtn.classList.add('border-zinc-800', 'text-zinc-300', 'bg-zinc-900');
-        }
-    }
+  // Desktop button
+  const desktopBtn = document.getElementById('data-saver-btn');
+  if (desktopBtn) {
+    desktopBtn.classList.toggle('border-emerald-500', isOn);
+    desktopBtn.classList.toggle('bg-emerald-950/40', isOn);
+    desktopBtn.classList.toggle('border-zinc-800', !isOn);
+    desktopBtn.classList.toggle('bg-zinc-900', !isOn);
+  }
+
+  // Mobile button
+  const mobileBtn = document.getElementById('data-saver-btn-mobile');
+  if (mobileBtn) {
+    mobileBtn.classList.toggle('border-emerald-500', isOn);
+    mobileBtn.classList.toggle('bg-emerald-950/40', isOn);
+    mobileBtn.classList.toggle('text-emerald-400', isOn);
+    mobileBtn.classList.toggle('border-zinc-800', !isOn);
+    mobileBtn.classList.toggle('bg-zinc-900', !isOn);
+    mobileBtn.classList.toggle('text-zinc-300', !isOn);
+  }
 }
 
 window.toggleDataSaver = toggleDataSaver;
