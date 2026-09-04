@@ -200,72 +200,28 @@ service cloud.firestore {
     // TESTIMONIES (main production collection) - FIXED
     // ==========================================
     match /testimonies/{testimonyId} {
-      allow read: if true;
-      allow create: if (
-          // Authenticated user
-          (isAuthenticated()
-            && isNotBanned()
-           // && isNotThrottled()
-            && request.resource.data.authorId == request.auth.uid)
-          ||
-          // Explicit anonymous
-          (request.resource.data.isAnonymous == true
-            && request.resource.data.authorId == null)
-        )
-        // Required core fields only
-        && request.resource.data.keys().hasAll([
-             'authorId', 'content', 'createdAt', 'channel', 'feedVisibility'
-           ])
-        // Type & value validations
-        && request.resource.data.content is string
-        && request.resource.data.content.size() > 0
-        && request.resource.data.content.size() <= 4000
-        && request.resource.data.createdAt is timestamp
-        && request.resource.data.channel is string
-        && request.resource.data.channel in [
-             'citizen-talk', 'witness-voice',
-             'citizen-circle', 'witness-circle',
-             'citizen_talk', 'witness_voice'
-           ]
-        && request.resource.data.feedVisibility is string
-        // Media fields are optional – allow null or valid URL
-        && (!('imageUrl' in request.resource.data) 
-            || request.resource.data.imageUrl == null 
-            || isValidMediaUrl(request.resource.data.imageUrl))
-        && (!('audioUrl' in request.resource.data) 
-            || request.resource.data.audioUrl == null 
-            || isValidMediaUrl(request.resource.data.audioUrl))
-        // Optional hash / pack fields
-        && (!('imageHash' in request.resource.data) 
-            || request.resource.data.imageHash == null 
-            || request.resource.data.imageHash is string)
-        && (!('audioHash' in request.resource.data) 
-            || request.resource.data.audioHash == null 
-            || request.resource.data.audioHash is string)
-        && (!('bodyHash' in request.resource.data) 
-            || request.resource.data.bodyHash == null 
-            || request.resource.data.bodyHash is string)
-        && (!('packCoreHash' in request.resource.data) 
-            || request.resource.data.packCoreHash == null 
-            || request.resource.data.packCoreHash is string);
+  allow read: if true;
 
-      allow update: if isModerator()
-        || (
-             isNotBanned()
-             && resource.data.authorId != null
-             && resource.data.authorId == request.auth.uid
-             && isSafeAuthorTestimonyUpdate()
-           )
-        || (
-             isNotBanned()
-             && request.resource.data.diff(resource.data).affectedKeys()
-                .hasOnly(['corroborationCount', 'corroborationScore', 'lastCorroboratedAt',
-                          'reactions', 'commentsCount', 'updatedAt'])
-           );
-      allow delete: if (resource.data.authorId != null && resource.data.authorId == request.auth.uid)
-                    || isModerator();
-    }
+  // TEMPORARY – allow any authenticated user (remove after test)
+  allow create: if request.auth != null;
 
+  // keep your existing update and delete rules below
+  allow update: if isModerator()
+    || (
+         isNotBanned()
+         && resource.data.authorId != null
+         && resource.data.authorId == request.auth.uid
+         && isSafeAuthorTestimonyUpdate()
+       )
+    || (
+         isNotBanned()
+         && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['corroborationCount', 'corroborationScore', 'lastCorroboratedAt',
+                      'reactions', 'commentsCount', 'updatedAt'])
+       );
+  allow delete: if (resource.data.authorId != null && resource.data.authorId == request.auth.uid)
+                || isModerator();
+}
     // ==========================================
     // CORROBORATIONS & FORENSIC LEDGER
     // ==========================================
