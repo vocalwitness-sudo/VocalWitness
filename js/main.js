@@ -229,14 +229,24 @@ function showWelcomeNote() {
 }
 
 // ====================== PUBLISH TESTIMONY ======================
+// ====================== PUBLISH TESTIMONY (HARDENED) ======================
 window.publishTestimony = async () => {
-  if (typeof requireAuth === 'function' && !requireAuth("Please sign in to share your testimony in Citizen Talk.")) {
+  // Global lock to stop double clicks
+  if (window.__isPublishing) {
+    console.warn('[publish] Already publishing – ignored');
+    return;
+  }
+  window.__isPublishing = true;
+
+  if (typeof requireAuth === 'function' && !requireAuth("Please sign in to share your testimony.")) {
+    window.__isPublishing = false;
     return;
   }
 
   const currentUser = auth.currentUser;
   if (!currentUser) {
     showToast("Session expired. Please re-authenticate.", "error");
+    window.__isPublishing = false;
     return;
   }
 
@@ -247,28 +257,22 @@ window.publishTestimony = async () => {
 
   if (!content) {
     showToast("Please write something before publishing", "error");
+    window.__isPublishing = false;
     return;
   }
 
   if (!title && content) {
-    title = content.length <= 80
-      ? content
-      : content.slice(0, 80).replace(/\s+\S*$/, '') + '...';
-  }
-
-  if (content.length > 4000) {
-    showToast("Testimony is too long (max 4000 characters)", "error");
-    return;
+    title = content.length <= 80 ? content : content.slice(0, 80).replace(/\s+\S*$/, '') + '...';
   }
 
   const postBtn = document.getElementById('postButton');
   if (postBtn) {
     postBtn.disabled = true;
-    postBtn.classList.add('publishing', 'opacity-50', 'cursor-not-allowed');
+    postBtn.classList.add('opacity-50', 'cursor-not-allowed');
   }
 
   try {
-    // Prefer mediaModule if available, otherwise fall back to global variables
+    // Media handling (safe)
     let mediaData = {
       imageUrl: null,
       audioUrl: null,
@@ -281,32 +285,23 @@ window.publishTestimony = async () => {
     };
 
     if (typeof mediaModule?.uploadForensicMedia === 'function') {
-      // Preferred path – uploads + hashes media
-      const uploaded = await mediaModule.uploadForensicMedia();
-      mediaData = {
-        imageUrl: uploaded?.imageUrl || null,
-        audioUrl: uploaded?.audioUrl || null,
-        imageHash: uploaded?.imageHash || null,
-        audioHash: uploaded?.audioHash || null,
-        bodyHash: uploaded?.bodyHash || null,
-        hasEvidencePack: !!uploaded?.evidencePack,
-        evidencePack: uploaded?.evidencePack || null,
-        packCoreHash: uploaded?.packCoreHash || null
-      };
-    } else if (typeof mediaModule?.getCurrentMediaData === 'function') {
-      mediaData = mediaModule.getCurrentMediaData() || mediaData;
-    } else {
-      // Fallback to globals
-      mediaData = {
-        imageUrl: window.currentUploadedMediaUrl && window.currentMediaType === 'image' ? window.currentUploadedMediaUrl : null,
-        audioUrl: window.currentUploadedMediaUrl && window.currentMediaType === 'audio' ? window.currentUploadedMediaUrl : null,
-        imageHash: window.currentMediaType === 'image' ? (window.currentForensicHash || null) : null,
-        audioHash: window.currentMediaType === 'audio' ? (window.currentForensicHash || null) : null,
-        bodyHash: window.currentBodyHash || null,
-        hasEvidencePack: !!window.currentEvidencePack,
-        evidencePack: window.currentEvidencePack || null,
-        packCoreHash: window.currentPackCoreHash || null
-      };
+      try {
+        const uploaded = await mediaModule.uploadForensicMedia();
+        if (uploaded) {
+          mediaData = {
+            imageUrl: uploaded.imageUrl || null,
+            audioUrl: uploaded.audioUrl || null,
+            imageHash: uploaded.imageHash || null,
+            audioHash: uploaded.audioHash || null,
+            bodyHash: uploaded.bodyHash || null,
+            hasEvidencePack: !!uploaded.evidencePack,
+            evidencePack: uploaded.evidencePack || null,
+            packCoreHash: uploaded.packCoreHash || null
+          };
+        }
+      } catch (mediaErr) {
+        console.warn('[publish] Media upload failed, continuing without media:', mediaErr);
+      }
     }
 
     const testimonyData = {
@@ -316,32 +311,32 @@ window.publishTestimony = async () => {
       content: content,
       createdAt: serverTimestamp(),
       timestamp: Date.now(),
-      channel: 'citizen-talk',                 // ← required by rules
+      channel: 'citizen-talk',
       feedVisibility: 'citizen-talk',
       feedMode: window.currentFeedMode || 'standard',
-      imageUrl: mediaData.imageUrl || null,
-      audioUrl: mediaData.audioUrl || null,
-      imageHash: mediaData.imageHash || null,
-      audioHash: mediaData.audioHash || null,
+      imageUrl: mediaData.imageUrl,
+      audioUrl: mediaData.audioUrl,
+      imageHash: mediaData.imageHash,
+      audioHash: mediaData.audioHash,
       hasForensic: !!(mediaData.imageHash || mediaData.audioHash),
-      bodyHash: mediaData.bodyHash || null,
-      hasEvidencePack: !!mediaData.hasEvidencePack,
-      evidencePack: mediaData.evidencePack || null,
-      packCoreHash: mediaData.packCoreHash || null
+      bodyHash: mediaData.bodyHash,
+      hasEvidencePack: mediaData.hasEvidencePack,
+      evidencePack: mediaData.evidencePack,
+      packCoreHash: mediaData.packCoreHash
     };
 
-    console.log('[publish] writing testimony...', {
+    console.log('[publish] FINAL PAYLOAD KEYS:', Object.keys(testimonyData));
+    console.log('[publish] writing to testimonies...', {
       authorId: testimonyData.authorId,
       channel: testimonyData.channel,
       feedVisibility: testimonyData.feedVisibility,
-      contentLen: content.length,
-      hasMedia: !!(testimonyData.imageUrl || testimonyData.audioUrl)
+      contentLen: content.length
     });
 
     const docRef = await addDoc(collection(db, 'testimonies'), testimonyData);
-    console.log('[publish] SUCCESS:', docRef.id);
+    console.log('[publish] SUCCESS →', docRef.id);
 
-    // Non-critical update
+    // Non-critical
     try {
       await updateDoc(doc(db, 'users', currentUser.uid), {
         lastTestimonyAt: serverTimestamp()
@@ -350,18 +345,12 @@ window.publishTestimony = async () => {
 
     showToast("🛡️ Report sealed and published", "success");
 
-    // Reset UI
+    // Reset
     if (titleInput) titleInput.value = '';
     if (textarea) textarea.value = '';
-    mediaModule?.resetMediaState?.();
-
-    // Clear leftover globals
-    window.currentUploadedMediaUrl = null;
-    window.currentMediaType = null;
-    window.currentForensicHash = null;
-    window.currentBodyHash = null;
-    window.currentEvidencePack = null;
-    window.currentPackCoreHash = null;
+    if (typeof mediaModule?.resetMediaState === 'function') {
+      mediaModule.resetMediaState();
+    }
 
     if (typeof initFeed === 'function') {
       initFeed(db, 'citizen-talk');
@@ -371,17 +360,19 @@ window.publishTestimony = async () => {
     console.error("Publish error detail:", err);
     showToast(
       err.code === 'permission-denied'
-        ? "Permission denied. Check Console logs."
-        : "Failed to publish. Please try again.",
+        ? "Permission denied. Rules are still blocking."
+        : "Failed to publish. Check console.",
       "error"
     );
   } finally {
+    window.__isPublishing = false;
     if (postBtn) {
       postBtn.disabled = false;
-      postBtn.classList.remove('publishing', 'opacity-50', 'cursor-not-allowed');
+      postBtn.classList.remove('opacity-50', 'cursor-not-allowed');
     }
   }
 };
+
 // ====================== EVIDENCE LEDGER ======================
 async function loadEvidenceLedger() {
     const container = document.getElementById('ledgerContainer');
