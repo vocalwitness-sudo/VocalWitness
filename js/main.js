@@ -269,18 +269,45 @@ window.publishTestimony = async () => {
 
   try {
     // Prefer mediaModule if available, otherwise fall back to global variables
-    const mediaData = (typeof mediaModule?.getCurrentMediaData === 'function')
-      ? mediaModule.getCurrentMediaData()
-      : {
-          imageUrl: window.currentUploadedMediaUrl && window.currentMediaType === 'image' ? window.currentUploadedMediaUrl : null,
-          audioUrl: window.currentUploadedMediaUrl && window.currentMediaType === 'audio' ? window.currentUploadedMediaUrl : null,
-          imageHash: window.currentMediaType === 'image' ? (window.currentForensicHash || null) : null,
-          audioHash: window.currentMediaType === 'audio' ? (window.currentForensicHash || null) : null,
-          bodyHash: window.currentBodyHash || null,
-          hasEvidencePack: !!window.currentEvidencePack,
-          evidencePack: window.currentEvidencePack || null,
-          packCoreHash: window.currentPackCoreHash || null,
-        };
+    let mediaData = {
+      imageUrl: null,
+      audioUrl: null,
+      imageHash: null,
+      audioHash: null,
+      bodyHash: null,
+      hasEvidencePack: false,
+      evidencePack: null,
+      packCoreHash: null
+    };
+
+    if (typeof mediaModule?.uploadForensicMedia === 'function') {
+      // Preferred path – uploads + hashes media
+      const uploaded = await mediaModule.uploadForensicMedia();
+      mediaData = {
+        imageUrl: uploaded?.imageUrl || null,
+        audioUrl: uploaded?.audioUrl || null,
+        imageHash: uploaded?.imageHash || null,
+        audioHash: uploaded?.audioHash || null,
+        bodyHash: uploaded?.bodyHash || null,
+        hasEvidencePack: !!uploaded?.evidencePack,
+        evidencePack: uploaded?.evidencePack || null,
+        packCoreHash: uploaded?.packCoreHash || null
+      };
+    } else if (typeof mediaModule?.getCurrentMediaData === 'function') {
+      mediaData = mediaModule.getCurrentMediaData() || mediaData;
+    } else {
+      // Fallback to globals
+      mediaData = {
+        imageUrl: window.currentUploadedMediaUrl && window.currentMediaType === 'image' ? window.currentUploadedMediaUrl : null,
+        audioUrl: window.currentUploadedMediaUrl && window.currentMediaType === 'audio' ? window.currentUploadedMediaUrl : null,
+        imageHash: window.currentMediaType === 'image' ? (window.currentForensicHash || null) : null,
+        audioHash: window.currentMediaType === 'audio' ? (window.currentForensicHash || null) : null,
+        bodyHash: window.currentBodyHash || null,
+        hasEvidencePack: !!window.currentEvidencePack,
+        evidencePack: window.currentEvidencePack || null,
+        packCoreHash: window.currentPackCoreHash || null
+      };
+    }
 
     const testimonyData = {
       title: title || null,
@@ -289,7 +316,7 @@ window.publishTestimony = async () => {
       content: content,
       createdAt: serverTimestamp(),
       timestamp: Date.now(),
-      channel: 'citizen-talk',
+      channel: 'citizen-talk',                 // ← required by rules
       feedVisibility: 'citizen-talk',
       feedMode: window.currentFeedMode || 'standard',
       imageUrl: mediaData.imageUrl || null,
@@ -306,6 +333,7 @@ window.publishTestimony = async () => {
     console.log('[publish] writing testimony...', {
       authorId: testimonyData.authorId,
       channel: testimonyData.channel,
+      feedVisibility: testimonyData.feedVisibility,
       contentLen: content.length,
       hasMedia: !!(testimonyData.imageUrl || testimonyData.audioUrl)
     });
@@ -326,8 +354,8 @@ window.publishTestimony = async () => {
     if (titleInput) titleInput.value = '';
     if (textarea) textarea.value = '';
     mediaModule?.resetMediaState?.();
-    
-    // Clear any leftover globals
+
+    // Clear leftover globals
     window.currentUploadedMediaUrl = null;
     window.currentMediaType = null;
     window.currentForensicHash = null;
@@ -354,7 +382,6 @@ window.publishTestimony = async () => {
     }
   }
 };
-
 // ====================== EVIDENCE LEDGER ======================
 async function loadEvidenceLedger() {
     const container = document.getElementById('ledgerContainer');
