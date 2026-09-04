@@ -553,214 +553,43 @@ function renderAiFeedback(container, analysis, category) {
 }
 
 /**
- * Main submit handler with integrated synthetic media assessment
+ * Main submit handler - simplified to use only the main.js path
+ * This eliminates the double-publish and permission conflicts.
  */
 async function handleComposerSubmit(e) {
-    if (e?.preventDefault) e.preventDefault();
-    if (isSubmitting) return;
+  if (e?.preventDefault) e.preventDefault();
+  if (e?.stopImmediatePropagation) e.stopImmediatePropagation();
 
-    const user = auth.currentUser;
-    if (!user) {
-        showToast('You must be signed in to submit.', 'error');
-        return;
-    }
+  if (isSubmitting) {
+    console.warn('[composer] Already submitting – ignored');
+    return;
+  }
 
-    const bodyInput = document.getElementById('mainInput') ||
-                      document.getElementById('postBody') ||
-                      document.getElementById('testimonyBody');
-
-    const headlineInput = document.getElementById('headlineInput') ||
-                          document.getElementById('testimonyHeadline') ||
-                          document.getElementById('testimonyTitle') ||
-                          document.getElementById('postHeadline');
-
-    const categorySelect = document.getElementById('categorySelect') ||
-                           document.getElementById('testimonyCategory');
-
-    const fileInput = document.getElementById('media-input') ||
-                      document.getElementById('photoInput') ||
-                      document.getElementById('media-file-input');
-
-    const targetFeedSelect = document.getElementById('targetFeedSelect');
-    const channelToggle = document.getElementById('channelToggle') ||
-                          document.getElementById('isWitnessVoice');
+  // Prefer the hardened path in main.js
+  if (typeof window.publishTestimony === 'function') {
+    console.log('[composer] Redirecting to window.publishTestimony()');
+    isSubmitting = true;
 
     const submitBtn = document.getElementById('postButton') ||
-                      document.getElementById('submitBtn') ||
-                      document.querySelector('button[type="submit"]');
+                      document.getElementById('submitBtn');
 
-    const anonymousCheckbox = document.getElementById('post-anonymously') ||
-                              document.getElementById('isAnonymous');
-
-    const body = bodyInput?.value.trim() || '';
-    const headline = headlineInput?.value.trim() || '';
-    const category = categorySelect?.value || 'General';
-    const anonymous = anonymousCheckbox?.checked === true;
-
-    let targetFeed = 'citizen_talk';
-    if (targetFeedSelect) {
-        targetFeed = targetFeedSelect.value;
-    } else if (channelToggle?.checked) {
-        targetFeed = 'witness_voice';
-    }
-
-    const isWitnessVoice = targetFeed === 'witness_voice';
-
-    if (!headline) {
-        showToast('Please add a headline for your testimony.', 'error');
-        return;
-    }
-    if (!body) {
-        showToast('Please enter your post content.', 'error');
-        return;
-    }
-
-    isSubmitting = true;
     if (submitBtn) submitBtn.disabled = true;
 
     try {
-        showToast('Checking content compliance...', 'info');
-        const preflightCheck = await analyzeReportContent(body);
-
-        let needsModerationReview = false;
-        if (preflightCheck?.isToxic) {
-            const proceed = confirm(
-                `AI Moderation Notice:\n\n${preflightCheck.reason || 'Your testimony may contain sensitive or flagged content.'}\n\nDo you still wish to submit for review?`
-            );
-            if (!proceed) {
-                isSubmitting = false;
-                if (submitBtn) submitBtn.disabled = false;
-                return;
-            }
-            needsModerationReview = true;
-        }
-
-        const userTier = await getUserTier();
-
-        let mediaData = {
-            imageUrl: null,
-            imageHash: null,
-            audioUrl: null,
-            audioHash: null,
-            forensicHash: null,
-            mediaMetadata: window.activeSubmissionDraft?.mediaMetadata || null
-        };
-
-        const mediaFilePresent = Boolean(fileInput?.files?.[0]);
-        const mediaOriginClaim = getSelectedMediaOriginClaim();
-
-        if (mediaFilePresent) {
-            const preparedFile = await prepareMediaForUpload(fileInput.files[0]);
-            const uploaded = await uploadMedia(preparedFile);
-
-            mediaData = {
-                imageUrl: typeof uploaded === 'string' ? uploaded : (uploaded?.imageUrl || null),
-                imageHash: uploaded?.mediaHash || uploaded?.imageHash || null,
-                audioUrl: uploaded?.audioUrl || null,
-                audioHash: uploaded?.audioHash || null,
-                forensicHash: uploaded?.forensicHash || uploaded?.mediaHash || null,
-                mediaMetadata: window.activeSubmissionDraft?.mediaMetadata || null
-            };
-        }
-
-        // 🛡️ Evaluate Synthetic Score & Advisory Flags from Metadata
-        const syntheticAssessment = calculateSyntheticScoreFromMetadata(mediaData.mediaMetadata || {});
-        
-        // Automatically route to review queue if synthetic score hits the steward review threshold (75+)
-        if (syntheticAssessment.requiresReview) {
-            needsModerationReview = true;
-        }
-
-        // Handle Draft path for Citizen tier on Witness Voice
-        if (isWitnessVoice && userTier === TIERS.CITIZEN) {
-            const draftRef = await addDoc(collection(db, `users/${user.uid}/drafts`), {
-                headline: headline || null,
-                body,
-                category,
-                imageUrl: mediaData.imageUrl,
-                imageHash: mediaData.imageHash,
-                audioUrl: mediaData.audioUrl,
-                audioHash: mediaData.audioHash,
-                forensicHash: mediaData.forensicHash,
-                mediaMetadata: mediaData.mediaMetadata,
-                
-                // 📊 Stored Synthetic Score & Advisory Fields on Draft
-                syntheticScore: syntheticAssessment.score,
-                syntheticAdvisory: syntheticAssessment.advisory,
-                syntheticRequiresReview: syntheticAssessment.requiresReview,
-
-                mediaOriginClaim: mediaFilePresent ? mediaOriginClaim : 'none',
-                targetChannel: 'witness_voice',
-                isAnonymous: anonymous,
-                createdAt: serverTimestamp()
-            });
-
-            // Log high synthetic risk event for drafts if applicable
-            if (syntheticAssessment.requiresReview) {
-                await evaluateClientSyntheticAdvisory(draftRef.id, mediaData.mediaMetadata || {});
-            }
-
-            showToast('Testimony saved as draft. Complete verification to publish.', 'info');
-            resetForm();
-            return;
-        }
-
-        // Prepare standard/anonymous submission including synthetic assessment fields
-        const prepared = await prepareAnonymousSubmission(
-            {
-                content: body,
-                headline: headline || null,
-                category,
-                targetFeed,
-                imageUrl: mediaData.imageUrl,
-                audioUrl: mediaData.audioUrl,
-                imageHash: mediaData.imageHash,
-                audioHash: mediaData.audioHash,
-                forensicHash: mediaData.forensicHash,
-                mediaMetadata: mediaData.mediaMetadata,
-                
-                // 📊 Stored Synthetic Score & Advisory Fields passed to payload
-                syntheticScore: syntheticAssessment.score,
-                syntheticAdvisory: syntheticAssessment.advisory,
-                syntheticRequiresReview: syntheticAssessment.requiresReview,
-
-                requiresReview: needsModerationReview,
-                mediaOriginClaim: mediaFilePresent ? mediaOriginClaim : 'none'
-            },
-            { anonymous }
-        );
-
-        const result = await publishTestimonyOrQueue(prepared);
-        const docId = result?.id || null;
-
-        // Trigger client-side audit log entry if high synthetic risk detected
-        if (syntheticAssessment.requiresReview && docId) {
-            await evaluateClientSyntheticAdvisory(docId, mediaData.mediaMetadata || {});
-        }
-
-        await logAuditEvent(user.uid, 'POST_CREATED', {
-            docId: docId,
-            channel: targetFeed,
-            isAnonymous: anonymous,
-            flaggedForReview: needsModerationReview,
-            syntheticScore: syntheticAssessment.score
-        });
-
-        showToast(
-            needsModerationReview
-                ? 'Testimony submitted for moderator review (Synthetic/Content flag).'
-                : 'Testimony published successfully!',
-            'success'
-        );
-
-        resetForm();
-    } catch (error) {
-        console.error('Composer error:', error);
-        showToast('Failed to submit post. Please try again.', 'error');
+      await window.publishTestimony();
+    } catch (err) {
+      console.error('[composer] Redirected publish failed:', err);
+      showToast('Failed to publish. Please try again.', 'error');
     } finally {
-        isSubmitting = false;
-        if (submitBtn) submitBtn.disabled = false;
+      isSubmitting = false;
+      if (submitBtn) submitBtn.disabled = false;
     }
+    return;
+  }
+
+  // Fallback only if main.js path is missing
+  console.warn('[composer] window.publishTestimony not found – using old path');
+  showToast('Publish system not ready. Please refresh the page.', 'error');
 }
 /**
  * Reset form UI
