@@ -808,3 +808,20 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 });
+
+function renderTrustBadge(post) {
+  // Check if the post is ZK verified
+  if (post.isZkVerified || post.zkVerified || post.channel === 'witness-voice') {
+    return `
+      <span class="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 border border-emerald-500/40 px-2 py-0.5 text-[11px] font-bold text-emerald-400">
+        ✓ ZK Verified
+      </span>
+    `;
+  }
+
+  return `
+    <span class="inline-flex items-center gap-1 rounded-full bg-zinc-800 border border-zinc-700 px-2 py-0.5 text-[11px] text-zinc-400">
+      Standard
+    </span>
+  `;
+}
