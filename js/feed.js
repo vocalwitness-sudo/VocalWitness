@@ -767,3 +767,44 @@ async function handleDownloadEvidencePack(postId) {
         showToast('Could not prepare evidence pack', 'error');
     }
 }
+
+// ====================== FEED FILTER PILLS ======================
+document.addEventListener('DOMContentLoaded', () => {
+  const pills = document.querySelectorAll('.feed-pill');
+
+  pills.forEach(button => {
+    button.addEventListener('click', () => {
+      // 1. Reset all pills to inactive style
+      pills.forEach(btn => {
+        btn.classList.remove(
+          'active', 'bg-emerald-500', 'text-black',
+          'bg-emerald-500/10', 'border-emerald-500/40', 'text-emerald-400'
+        );
+        btn.classList.add('border', 'border-zinc-800', 'bg-zinc-900', 'text-zinc-300');
+      });
+
+      // 2. Style the clicked pill
+      button.classList.remove('border', 'border-zinc-800', 'bg-zinc-900', 'text-zinc-300');
+      button.classList.add('active');
+
+      if (button.dataset.filter === 'zk-verified') {
+        button.classList.add('bg-emerald-500/10', 'border-emerald-500/40', 'text-emerald-400');
+      } else {
+        button.classList.add('bg-emerald-500', 'text-black');
+      }
+
+      // 3. Filter the feed
+      const filter = button.dataset.filter;
+      console.log('Filtering feed by:', filter);
+
+      // Call your existing feed function
+      if (typeof initFeed === 'function') {
+        if (filter === 'all') {
+          initFeed(db, 'all');
+        } else {
+          initFeed(db, filter);
+        }
+      }
+    });
+  });
+});
