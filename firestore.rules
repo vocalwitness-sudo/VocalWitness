@@ -1,6 +1,7 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
     // ==========================================
     // HELPER FUNCTIONS
     // ==========================================
@@ -144,6 +145,7 @@ service cloud.firestore {
       allow create: if isOwner(userId) && isSafeUserCreation();
       allow update: if (isOwner(userId) && isSafeUserUpdate()) || isAdmin();
       allow delete: if isAdmin();
+
       match /drafts/{draftId} {
         allow read, write: if isOwner(userId);
       }
@@ -166,7 +168,19 @@ service cloud.firestore {
     }
 
     // ==========================================
-    // WITNESS VOICE & CITIZEN TALK (legacy collections)
+    // USER CONTRIBUTIONS (tier tracking)
+    // ==========================================
+    match /userContributions/{contribId} {
+      allow read: if isAuthenticated() && resource.data.uid == request.auth.uid;
+      allow create: if isAuthenticated()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.keys().hasAll(['uid', 'testimonyId', 'createdAt'])
+        && request.resource.data.createdAt is timestamp;
+      allow update, delete: if false;
+    }
+
+    // ==========================================
+    // WITNESS VOICE & CITIZEN TALK (legacy)
     // ==========================================
     match /witness_voice/{postId} {
       allow read: if true;
@@ -196,44 +210,59 @@ service cloud.firestore {
       allow delete: if (resource.data.authorId == request.auth.uid) || isModerator();
     }
 
-// ==========================================
-// USER CONTRIBUTIONS (for tier tracking)
-// ==========================================
-match /userContributions/{contribId} {
-  allow read: if isAuthenticated() && resource.data.uid == request.auth.uid;
-  allow create: if isAuthenticated()
-    && request.resource.data.uid == request.auth.uid
-    && request.resource.data.keys().hasAll(['uid', 'testimonyId', 'createdAt'])
-    && request.resource.data.createdAt is timestamp;
-  allow update, delete: if false;   // immutable
-}
-
     // ==========================================
-    // TESTIMONIES (main production collection) - FIXED
+    // TESTIMONIES (main production collection)
     // ==========================================
     match /testimonies/{testimonyId} {
-  allow read: if true;
+      allow read: if true;
 
-  // TEMPORARY – allow any authenticated user (remove after test)
-  allow create: if request.auth != null;
+      allow create: if isAuthenticated()
+        && isNotBanned()
+        && (
+             // Normal authenticated post
+             (request.resource.data.authorId == request.auth.uid)
+             ||
+             // Explicit anonymous
+             (request.resource.data.isAnonymous == true && request.resource.data.authorId == null)
+           )
+        && request.resource.data.keys().hasAll(['content', 'createdAt', 'channel'])
+        && request.resource.data.content is string
+        && request.resource.data.content.size() > 0
+        && request.resource.data.content.size() <= 4000
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.channel is string
+        && request.resource.data.channel in [
+             'citizen-talk', 'witness-voice',
+             'citizen-circle', 'witness-circle',
+             'citizen_talk', 'witness_voice'
+           ]
+        // Optional but recommended fields
+        && (!('feedVisibility' in request.resource.data) || request.resource.data.feedVisibility is string)
+        && (!('imageUrl' in request.resource.data) 
+            || request.resource.data.imageUrl == null 
+            || isValidMediaUrl(request.resource.data.imageUrl))
+        && (!('audioUrl' in request.resource.data) 
+            || request.resource.data.audioUrl == null 
+            || isValidMediaUrl(request.resource.data.audioUrl));
 
-  // keep your existing update and delete rules below
-  allow update: if isModerator()
-    || (
-         isNotBanned()
-         && resource.data.authorId != null
-         && resource.data.authorId == request.auth.uid
-         && isSafeAuthorTestimonyUpdate()
-       )
-    || (
-         isNotBanned()
-         && request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['corroborationCount', 'corroborationScore', 'lastCorroboratedAt',
-                      'reactions', 'commentsCount', 'updatedAt'])
-       );
-  allow delete: if (resource.data.authorId != null && resource.data.authorId == request.auth.uid)
-                || isModerator();
-}
+      allow update: if isModerator()
+        || (
+             isNotBanned()
+             && resource.data.authorId != null
+             && resource.data.authorId == request.auth.uid
+             && isSafeAuthorTestimonyUpdate()
+           )
+        || (
+             isNotBanned()
+             && request.resource.data.diff(resource.data).affectedKeys()
+                .hasOnly(['corroborationCount', 'corroborationScore', 'lastCorroboratedAt',
+                          'reactions', 'commentsCount', 'updatedAt'])
+           );
+
+      allow delete: if (resource.data.authorId != null && resource.data.authorId == request.auth.uid)
+                    || isModerator();
+    }
+
     // ==========================================
     // CORROBORATIONS & FORENSIC LEDGER
     // ==========================================
