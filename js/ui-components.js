@@ -291,3 +291,28 @@ if (typeof window !== 'undefined') {
     window.renderTierBadge = renderTierBadge;
     window.showBoldWitnessModal = showBoldWitnessModal;
 }
+
+/**
+ * Shows a small trust badge on each post
+ */
+function renderTrustBadge(post) {
+  // Check different possible ways the post can be marked as verified
+  const isVerified = post.isZkVerified === true || 
+                     post.zkVerified === true || 
+                     post.hasZkProof === true ||
+                     post.channel === 'witness-voice';
+
+  if (isVerified) {
+    return `
+      <span class="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 border border-emerald-500/40 px-2.5 py-0.5 text-[11px] font-bold text-emerald-400">
+        ✓ ZK Verified
+      </span>
+    `;
+  }
+
+  return `
+    <span class="inline-flex items-center gap-1 rounded-full bg-zinc-800 border border-zinc-700 px-2.5 py-0.5 text-[11px] font-medium text-zinc-400">
+      Standard Report
+    </span>
+  `;
+}
