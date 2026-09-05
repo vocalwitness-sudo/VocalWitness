@@ -553,42 +553,51 @@ function renderAiFeedback(container, analysis, category) {
 }
 
 /**
- * Main submit handler - simplified to use only the main.js path
- * This eliminates the double-publish and permission conflicts.
+ * Main submit handler – refactored to use the existing window.publishTestimony()
+ * This eliminates double-publish and permission conflicts.
  */
 async function handleComposerSubmit(e) {
+  // Always stop the event
   if (e?.preventDefault) e.preventDefault();
   if (e?.stopImmediatePropagation) e.stopImmediatePropagation();
 
+  // Prevent double submission
   if (isSubmitting) {
     console.warn('[composer] Already submitting – ignored');
     return;
   }
 
-  // Prefer the hardened path in main.js
+  // Prefer the hardened path from main.js
   if (typeof window.publishTestimony === 'function') {
-    console.log('[composer] Redirecting to window.publishTestimony()');
+    console.log('[composer] Using existing window.publishTestimony()');
+
     isSubmitting = true;
-
     const submitBtn = document.getElementById('postButton') ||
-                      document.getElementById('submitBtn');
+                      document.getElementById('submitBtn') ||
+                      document.querySelector('button[type="submit"]');
 
-    if (submitBtn) submitBtn.disabled = true;
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    }
 
     try {
       await window.publishTestimony();
     } catch (err) {
-      console.error('[composer] Redirected publish failed:', err);
+      console.error('[composer] publishTestimony failed:', err);
       showToast('Failed to publish. Please try again.', 'error');
     } finally {
       isSubmitting = false;
-      if (submitBtn) submitBtn.disabled = false;
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+      }
     }
     return;
   }
 
-  // Fallback only if main.js path is missing
-  console.warn('[composer] window.publishTestimony not found – using old path');
+  // Fallback only if main.js is not loaded
+  console.error('[composer] window.publishTestimony is not available');
   showToast('Publish system not ready. Please refresh the page.', 'error');
 }
 /**
