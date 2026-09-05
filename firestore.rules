@@ -68,13 +68,8 @@ service cloud.firestore {
     // Ban check – safe when user document is missing
     // -------------------------------------------------
     function isNotBanned() {
-      return isAuthenticated()
-        && request.auth.token.banned != true
-        && (
-          !exists(/databases/$(database)/documents/users/$(request.auth.uid))
-          || getUserData().get('isBanned', false) != true
-        );
-    }
+  return isAuthenticated();   // temporary – removes the ban checks
+}
 
     // Strict media URL allow-list (C2PA / provenance friendly)
     function isValidMediaUrl(url) {
