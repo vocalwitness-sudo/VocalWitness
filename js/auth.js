@@ -60,29 +60,31 @@ async function createOrUpdateUser(user) {
     const snap = await getDoc(userRef);
 
     const safeEmail = user.email || "";
-    const safeDisplayName = user.displayName || (user.isAnonymous ? "Anonymous Citizen" : "Anonymous Witness");
-    const safePhotoURL = user.photoURL || "";
+    const safeDisplayName = user.displayName || (user.isAnonymous ? "Anonymous Citizen" : "Citizen Witness");
+    const safePhotoURL = user.photoURL || null;
 
     if (!snap.exists()) {
-      // Brand-new user → start as basic citizen (unverified)
+      // Brand-new user – MUST satisfy isSafeUserCreation()
+      // Forbidden on create: isPhoneVerified, hasVerifiedPhone, phoneVerifiedAt,
+      // role, isBanned, badges, admin, moderator, score, steward, reputation, etc.
       await setDoc(userRef, {
         uid: user.uid,
         email: safeEmail,
         displayName: safeDisplayName,
         photoURL: safePhotoURL,
         isAnonymous: !!user.isAnonymous,
-        tier: DEFAULT_TIER,               // always "citizen"
-        isVerified: false,
-        isPhoneVerified: false,
-        hasVerifiedPhone: false,
+        tier: DEFAULT_TIER,               // "citizen" – allowed
+        isVerified: false,                // allowed only when false
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
+        // Do NOT include isPhoneVerified / hasVerifiedPhone here
       });
 
       updateVerificationUI(false);
       if (!user.isAnonymous) {
         showToast("🎉 Account created! Welcome to the Public Square.", "success");
       }
+      console.log('[auth] Created user document for', user.uid);
     } else {
       // Existing user → update ONLY client-safe fields
       const existing = snap.data() || {};
@@ -91,15 +93,18 @@ async function createOrUpdateUser(user) {
       if (safeDisplayName && safeDisplayName !== existing.displayName) {
         changes.displayName = safeDisplayName;
       }
-      if (safePhotoURL && safePhotoURL !== existing.photoURL) {
+      if (safePhotoURL !== existing.photoURL) {
         changes.photoURL = safePhotoURL;
       }
       if (safeEmail && safeEmail !== existing.email) {
         changes.email = safeEmail;
       }
 
+      // Always refresh last login
+      changes.lastLoginAt = serverTimestamp();
+      changes.updatedAt = serverTimestamp();
+
       if (Object.keys(changes).length > 0) {
-        changes.updatedAt = serverTimestamp();
         await updateDoc(userRef, changes);
       }
 
@@ -112,9 +117,13 @@ async function createOrUpdateUser(user) {
     }
   } catch (e) {
     console.error("User document update error:", e);
-    if (e?.code !== 'permission-denied') {
-      showToast("Error updating profile state.", "error");
-    }
+    // Still show a toast for permission errors so we notice them
+    showToast(
+      e?.code === 'permission-denied'
+        ? "Could not create/update profile (rules blocked it)."
+        : "Error updating profile state.",
+      "error"
+    );
   }
 }
 
