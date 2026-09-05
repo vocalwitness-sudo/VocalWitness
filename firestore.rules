@@ -8,23 +8,29 @@ service cloud.firestore {
     function isAuthenticated() {
       return request.auth != null;
     }
+
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
+
     function isAdmin() {
       return isAuthenticated() && request.auth.token.admin == true;
     }
+
     function getUserData() {
       return exists(/databases/$(database)/documents/users/$(request.auth.uid))
         ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data
         : {};
     }
+
+    // 30-second throttle between testimonies
     function isNotThrottled() {
       return !exists(/databases/$(database)/documents/users/$(request.auth.uid))
         || !('lastTestimonyAt' in getUserData())
         || !(getUserData().lastTestimonyAt is timestamp)
         || request.time > getUserData().lastTestimonyAt + duration.value(30, 's');
     }
+
     function isWitnessCircle() {
       return isAuthenticated() && (
         request.auth.token.tier == 'witness_circle' ||
@@ -33,13 +39,16 @@ service cloud.firestore {
           (getUserData().tier == 'witness_circle' || getUserData().zkVerified == true))
       );
     }
+
     function isSteward() {
       return isAuthenticated() && (
         request.auth.token.tier == 'steward' ||
         request.auth.token.steward == true ||
-        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getUserData().tier == 'steward')
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+          getUserData().tier == 'steward')
       );
     }
+
     function isModerator() {
       return isAuthenticated() && (
         request.auth.token.moderator == true ||
@@ -47,6 +56,7 @@ service cloud.firestore {
         isSteward()
       );
     }
+
     function isNotBanned() {
       return isAuthenticated()
         && request.auth.token.banned != true
@@ -55,6 +65,8 @@ service cloud.firestore {
           || getUserData().get('isBanned', false) != true
         );
     }
+
+    // Strict media URL allow-list (C2PA / provenance friendly)
     function isValidMediaUrl(url) {
       return url is string && (
         url == '' ||
@@ -65,6 +77,7 @@ service cloud.firestore {
         url.matches('^data:image/svg\\+xml;.*')
       );
     }
+
     function isSafeUserCreation() {
       return request.resource.data.uid == request.auth.uid
         && request.resource.data.uid is string
@@ -79,6 +92,7 @@ service cloud.firestore {
              'credibilityScore', 'zkVerified', 'weeklyPoints'
            ]);
     }
+
     function isSafeUserUpdate() {
       return !request.resource.data.diff(resource.data).affectedKeys().hasAny([
           'role', 'isBanned', 'badges', 'admin', 'moderator',
@@ -104,6 +118,7 @@ service cloud.firestore {
         && (!('followers' in request.resource.data) || request.resource.data.followers is list)
         && (!('privacyMode' in request.resource.data) || request.resource.data.privacyMode is string);
     }
+
     function isValidNotification() {
       return request.resource.data.keys().hasAll(['type', 'createdAt'])
         && request.resource.data.type is string
@@ -117,12 +132,17 @@ service cloud.firestore {
              ('fromUid' in request.resource.data && request.resource.data.fromUid == request.auth.uid)
            );
     }
+
+    // Authors cannot touch moderation / synthetic / review fields
     function isSafeAuthorTestimonyUpdate() {
       return !request.resource.data.diff(resource.data).affectedKeys().hasAny([
         'moderationStatus', 'toxicityScore', 'autoFlaggedReasons',
-        'isSynthetic', 'syntheticScore', 'authorTier', 'reviewedBy', 'reviewedAt', 'reviewNotes'
+        'isSynthetic', 'syntheticScore', 'authorTier',
+        'reviewedBy', 'reviewedAt', 'reviewNotes',
+        'c2paStatus', 'c2paManifest'
       ]);
     }
+
     function canCommentOnPost(postId) {
       let post = get(/databases/$(database)/documents/posts/$(postId)).data;
       return post.authorDoorPrivacy == 'open'
@@ -180,7 +200,7 @@ service cloud.firestore {
     }
 
     // ==========================================
-    // WITNESS VOICE & CITIZEN TALK (legacy)
+    // LEGACY COLLECTIONS (keep for compatibility)
     // ==========================================
     match /witness_voice/{postId} {
       allow read: if true;
@@ -196,6 +216,7 @@ service cloud.firestore {
       );
       allow delete: if (resource.data.authorId == request.auth.uid) || isModerator();
     }
+
     match /citizen_talk/{postId} {
       allow read: if true;
       allow create: if isNotBanned()
@@ -210,39 +231,50 @@ service cloud.firestore {
       allow delete: if (resource.data.authorId == request.auth.uid) || isModerator();
     }
 
- match /testimonies/{testimonyId} {
-  allow read: if true;
+    // ==========================================
+    // MAIN TESTIMONIES COLLECTION (hardened)
+    // ==========================================
+    match /testimonies/{testimonyId} {
+      allow read: if true;
 
-  allow create: if request.auth != null
-    && request.resource.data.keys().hasAll(['content', 'createdAt', 'channel'])
-    && request.resource.data.content is string
-    && request.resource.data.content.size() > 0
-    && request.resource.data.content.size() <= 4000
-    && request.resource.data.createdAt is timestamp
-    && request.resource.data.channel is string
-    && request.resource.data.channel in [
-         'citizen-talk', 'witness-voice',
-         'citizen-circle', 'witness-circle',
-         'citizen_talk', 'witness_voice'
-       ];
+      // CRITICAL FIX: authorId must match the authenticated user
+      allow create: if isNotBanned()
+        && isNotThrottled()
+        && request.resource.data.authorId == request.auth.uid
+        && request.resource.data.keys().hasAll(['content', 'createdAt', 'channel', 'authorId'])
+        && request.resource.data.content is string
+        && request.resource.data.content.size() > 0
+        && request.resource.data.content.size() <= 4000
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.channel is string
+        && request.resource.data.channel in [
+             'citizen-talk', 'witness-voice',
+             'citizen-circle', 'witness-circle',
+             'citizen_talk', 'witness_voice'
+           ]
+        // Optional media fields (C2PA / provenance friendly)
+        && (!('mediaUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.mediaUrl))
+        && (!('mediaUrls' in request.resource.data) || request.resource.data.mediaUrls is list);
 
-  allow update: if isModerator()
-    || (
-         isNotBanned()
-         && resource.data.authorId != null
-         && resource.data.authorId == request.auth.uid
-         && isSafeAuthorTestimonyUpdate()
-       )
-    || (
-         isNotBanned()
-         && request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['corroborationCount', 'corroborationScore', 'lastCorroboratedAt',
-                      'reactions', 'commentsCount', 'updatedAt'])
-       );
+      allow update: if isModerator()
+        || (
+             isNotBanned()
+             && resource.data.authorId == request.auth.uid
+             && isSafeAuthorTestimonyUpdate()
+           )
+        || (
+             // Allow limited reaction / corroboration updates by any authenticated non-banned user
+             isNotBanned()
+             && request.resource.data.diff(resource.data).affectedKeys()
+                .hasOnly([
+                  'corroborationCount', 'corroborationScore', 'lastCorroboratedAt',
+                  'reactions', 'commentsCount', 'updatedAt'
+                ])
+           );
 
-  allow delete: if (resource.data.authorId != null && resource.data.authorId == request.auth.uid)
-                || isModerator();
-}
+      allow delete: if (resource.data.authorId == request.auth.uid) || isModerator();
+    }
+
     // ==========================================
     // CORROBORATIONS & FORENSIC LEDGER
     // ==========================================
@@ -260,6 +292,7 @@ service cloud.firestore {
             (request.resource.data.note is string && request.resource.data.note.size() <= 280));
       allow update, delete: if false;
     }
+
     match /forensic_ledger/{ledgerId} {
       allow read: if true;
       allow create: if isNotBanned()
@@ -277,15 +310,19 @@ service cloud.firestore {
       allow read: if resource.data.visibilityDoor == 'public_square' ||
                     (resource.data.visibilityDoor == 'citizen_circle' && isAuthenticated()) ||
                     (resource.data.visibilityDoor == 'witness_circle' && isWitnessCircle());
+
       allow create: if isNotBanned()
         && request.resource.data.authorId == request.auth.uid
         && request.resource.data.content is string
         && request.resource.data.content.size() <= 2000
-        && (request.resource.data.createdAt is timestamp || request.resource.data.createdAt == request.time);
+        && (request.resource.data.createdAt is timestamp || request.resource.data.createdAt == request.time)
+        && (!('mediaUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.mediaUrl));
+
       allow update: if isModerator() || (
         isNotBanned() && resource.data.authorId == request.auth.uid
       );
       allow delete: if (resource.data.authorId == request.auth.uid) || isModerator();
+
       match /comments/{commentId} {
         allow read: if true;
         allow create: if isNotBanned() && canCommentOnPost(postId);
@@ -302,6 +339,7 @@ service cloud.firestore {
         && request.resource.data.reason is string;
       allow update, delete: if isModerator();
     }
+
     match /audit_logs/{auditId} {
       allow read: if isAuthenticated();
       allow create: if (
