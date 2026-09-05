@@ -365,92 +365,70 @@ export async function handleMediaSelect(event) {
 
 /**
  * Initialize composer listeners and real-time AI analysis
- */
-/**
- * Initialize composer listeners and real-time AI analysis
+ * Hardened with null checks + double-binding protection
  */
 export function initComposer() {
-    const fileInput = document.getElementById('media-input') ||
-                      document.getElementById('photoInput') ||
-                      document.getElementById('media-file-input');
+  // Helper for safer element selection
+  const $ = (id) => document.getElementById(id);
 
-    const btnPhoto = document.getElementById('btn-attach-photo') ||
-                       document.getElementById('btnPhoto') ||
-                       document.getElementById('btn-photo');
+  const fileInput = $('media-input') || $('photoInput') || $('media-file-input') || $('mediaFileInput');
+  const btnPhoto  = $('btn-attach-photo') || $('btnPhoto') || $('btn-photo');
+  const postButton = $('postButton') || $('submitBtn');
+  const composerForm = $('composer-form') || $('testimonyForm');
+  const bodyInput = $('mainInput') || $('postBody') || $('testimonyBody') || document.querySelector('textarea');
 
-    const postButton = document.getElementById('postButton') ||
-                        document.getElementById('submitBtn');
+  // ===== Photo / Media button =====
+  if (btnPhoto && fileInput && !btnPhoto.dataset.listenerAttached) {
+    btnPhoto.dataset.listenerAttached = 'true';
+    btnPhoto.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      fileInput.click();
+    });
+  }
 
-    const composerForm = document.getElementById('composer-form') ||
-                          document.getElementById('testimonyForm');
+  // ===== File input change =====
+  if (fileInput && !fileInput.dataset.listenerAttached) {
+    fileInput.dataset.listenerAttached = 'true';
+    fileInput.addEventListener('change', handleMediaSelect);
+  }
 
-    const bodyInput = document.getElementById('mainInput') ||
-                      document.getElementById('postBody') ||
-                      document.getElementById('testimonyBody') ||
-                      document.querySelector('textarea');
+  // ===== Real-time AI analysis =====
+  if (bodyInput && !bodyInput.dataset.aiListenerAttached) {
+    bodyInput.dataset.aiListenerAttached = 'true';
+    bodyInput.addEventListener('input', (e) => {
+      const text = e.target.value.trim();
+      if (text.length < 25) {
+        clearTimeout(aiAnalysisDebounceTimer);
+        clearAiFeedback();
+        lastAnalyzedText = '';
+        return;
+      }
 
-    if (btnPhoto && fileInput && !btnPhoto.dataset.listenerAttached) {
-        btnPhoto.addEventListener('click', (e) => {
-            e.preventDefault();
-            fileInput.click();
-        });
-        btnPhoto.dataset.listenerAttached = 'true';
-    }
+      clearTimeout(aiAnalysisDebounceTimer);
+      aiAnalysisDebounceTimer = setTimeout(async () => {
+        if (text === lastAnalyzedText) return;
+        lastAnalyzedText = text;
+        if (bodyInput.value.trim().length >= 25) {
+          await runRealtimeAiAnalysis(text);
+        }
+      }, 800);
+    });
+  }
 
-    if (fileInput && !fileInput.dataset.listenerAttached) {
-        fileInput.addEventListener('change', handleMediaSelect);
-        fileInput.dataset.listenerAttached = 'true';
-    }
+  // ===== Post button (most important) =====
+  if (postButton && !postButton.dataset.listenerAttached) {
+    postButton.dataset.listenerAttached = 'true';
+    postButton.addEventListener('click', handleComposerSubmit);
+  }
 
-    if (bodyInput && !bodyInput.dataset.aiListenerAttached) {
-        bodyInput.addEventListener('input', (e) => {
-            const text = e.target.value.trim();
-            if (text.length < 25) {
-                clearTimeout(aiAnalysisDebounceTimer);
-                clearAiFeedback();
-                lastAnalyzedText = '';
-                return;
-            }
+  // ===== Form submit (backup) =====
+  if (composerForm && !composerForm.dataset.listenerAttached) {
+    composerForm.dataset.listenerAttached = 'true';
+    composerForm.addEventListener('submit', handleComposerSubmit);
+  }
 
-            clearTimeout(aiAnalysisDebounceTimer);
-            aiAnalysisDebounceTimer = setTimeout(async () => {
-                if (text === lastAnalyzedText) return;
-                lastAnalyzedText = text;
-
-                if (bodyInput.value.trim().length >= 25) {
-                    await runRealtimeAiAnalysis(text);
-                }
-            }, 800);
-        });
-        bodyInput.dataset.aiListenerAttached = 'true';
-    }
-
-    if (postButton && !postButton.dataset.listenerAttached) {
-        postButton.dataset.listenerAttached = 'true';
-        postButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopImmediatePropagation();
-            // Prefer the main.js path if it exists
-            if (typeof window.publishTestimony === 'function') {
-                window.publishTestimony();
-            } else {
-                handleComposerSubmit(e);
-            }
-        });
-    }
-
-    if (composerForm && !composerForm.dataset.listenerAttached) {
-        composerForm.dataset.listenerAttached = 'true';
-        composerForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            e.stopImmediatePropagation();
-            if (typeof window.publishTestimony === 'function') {
-                window.publishTestimony();
-            } else {
-                handleComposerSubmit(e);
-            }
-        });
-    }
+  console.log('✅ Testimony composer wired (hardened)');
 }
 
 /**
