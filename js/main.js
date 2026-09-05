@@ -304,14 +304,15 @@ window.publishTestimony = async () => {
       }
     }
 
+    // FINAL payload that satisfies the current rules
     const testimonyData = {
       title: title || null,
-      authorId: currentUser.uid,
+      authorId: currentUser.uid,                    // REQUIRED – must match request.auth.uid
       author: currentUser.displayName || "Registered Witness",
-      content: content,
-      createdAt: serverTimestamp(),
+      content: content,                             // REQUIRED
+      createdAt: serverTimestamp(),                 // REQUIRED – must be timestamp
       timestamp: Date.now(),
-      channel: 'citizen-talk',
+      channel: 'citizen-talk',                      // REQUIRED – must be in the allowed list
       feedVisibility: 'citizen-talk',
       feedMode: window.currentFeedMode || 'standard',
       imageUrl: mediaData.imageUrl,
@@ -336,7 +337,7 @@ window.publishTestimony = async () => {
     const docRef = await addDoc(collection(db, 'testimonies'), testimonyData);
     console.log('[publish] SUCCESS →', docRef.id);
 
-    // Non-critical
+    // Update throttle (non-critical)
     try {
       await updateDoc(doc(db, 'users', currentUser.uid), {
         lastTestimonyAt: serverTimestamp()
@@ -345,7 +346,7 @@ window.publishTestimony = async () => {
 
     showToast("🛡️ Report sealed and published", "success");
 
-    // Reset
+    // Reset UI
     if (titleInput) titleInput.value = '';
     if (textarea) textarea.value = '';
     if (typeof mediaModule?.resetMediaState === 'function') {
@@ -360,7 +361,7 @@ window.publishTestimony = async () => {
     console.error("Publish error detail:", err);
     showToast(
       err.code === 'permission-denied'
-        ? "Permission denied. Rules are still blocking."
+        ? "Permission denied. Rules are still blocking (check isNotThrottled / isNotBanned)."
         : "Failed to publish. Check console.",
       "error"
     );
