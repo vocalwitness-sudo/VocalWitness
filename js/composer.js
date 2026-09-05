@@ -1,4 +1,5 @@
 // js/composer.js - Hardened Post & Testimony Composer + Real-time AI Analysis & Video Security
+// Updated: Event Delegation strategy, C2PA-aware UI, robust null checks, single-binding protection
 
 import { prepareMediaForUpload } from './media-pipeline.js';
 import { uploadMedia } from './upload.js';
@@ -97,16 +98,20 @@ function showVideoPolicyModal(customMessage) {
         `;
         document.body.appendChild(modal);
 
-        document.getElementById("btn-modal-live-arena")?.addEventListener("click", () => {
-            window.location.href = "live-arena.html";
-        });
-        document.getElementById("btn-modal-cancel")?.addEventListener("click", () => {
-            modal.classList.add("hidden");
+        // Use event delegation for modal buttons (safe even if recreated)
+        modal.addEventListener('click', (e) => {
+            const liveBtn = e.target.closest('#btn-modal-live-arena');
+            const cancelBtn = e.target.closest('#btn-modal-cancel');
+            if (liveBtn) {
+                window.location.href = "live-arena.html";
+            } else if (cancelBtn) {
+                modal.classList.add("hidden");
+            }
         });
     }
 
     const msgElement = document.getElementById("video-policy-msg");
-    if (msgElement) msgElement.innerText = customMessage;
+    if (msgElement) msgElement.innerText = customMessage || '';
     modal.classList.remove("hidden");
 }
 
@@ -147,7 +152,7 @@ function renderMediaOriginClaimUI() {
         container.className = 'mt-3 p-3 rounded-xl border border-zinc-700/60 bg-zinc-900/80 text-zinc-300 text-xs transition-all duration-300';
         container.innerHTML = `
             <div class="flex items-center gap-1.5 font-semibold text-emerald-400 mb-1">
-                🛡️ Mandatory Media Origin Claim
+                🛡️ Mandatory Media Origin Claim (C2PA Aligned)
             </div>
             <select id="mediaOriginClaim" class="w-full bg-zinc-800 border border-zinc-700 text-zinc-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-emerald-500">
                 <option value="filmed_by_me">Direct Capture (Filmed / Recorded by me)</option>
@@ -156,11 +161,14 @@ function renderMediaOriginClaimUI() {
                 <option value="synthetic">AI Assisted / Generated Media</option>
             </select>
             <p class="text-[10px] text-zinc-400 mt-1.5 leading-tight">
-                Accurate origin claims preserve cryptographic trust scores. False claims route posts to steward review.
+                Accurate origin claims preserve cryptographic trust scores. False claims route posts to steward review. Aligns with C2PA Content Credentials principles.
             </p>
         `;
 
-        const fileInput = document.getElementById('media-input') || document.getElementById('photoInput') || document.getElementById('media-file-input');
+        const fileInput = document.getElementById('media-input') ||
+                          document.getElementById('photoInput') ||
+                          document.getElementById('media-file-input') ||
+                          document.getElementById('mediaFileInput');
         if (fileInput && fileInput.parentNode) {
             fileInput.parentNode.insertBefore(container, fileInput.nextSibling);
         }
@@ -200,7 +208,10 @@ function renderMediaTrustBadge(costInfo, file, validationResult) {
         container.id = 'media-quota-badge';
         container.className = 'mt-2 p-3 rounded-xl border text-xs transition-all duration-300';
 
-        const fileInput = document.getElementById('media-input') || document.getElementById('photoInput') || document.getElementById('media-file-input');
+        const fileInput = document.getElementById('media-input') ||
+                          document.getElementById('photoInput') ||
+                          document.getElementById('media-file-input') ||
+                          document.getElementById('mediaFileInput');
         if (fileInput && fileInput.parentNode) {
             fileInput.parentNode.insertBefore(container, fileInput.nextSibling);
         }
@@ -220,7 +231,7 @@ function renderMediaTrustBadge(costInfo, file, validationResult) {
                 <span class="font-semibold text-red-400">⚠️ Upload Limit Exceeded</span>
                 <span class="font-mono text-[11px]">${fileMB} MB</span>
             </div>
-            <p class="mt-1 text-slate-300">${costInfo.reason}</p>
+            <p class="mt-1 text-slate-300">${costInfo.reason || ''}</p>
         `;
     } else if (validationResult?.provenance === 'c2pa_sealed') {
         container.className = 'mt-2 p-3 rounded-xl border border-emerald-500/40 bg-emerald-950/20 text-emerald-300 text-xs';
@@ -229,7 +240,7 @@ function renderMediaTrustBadge(costInfo, file, validationResult) {
                 <span class="font-semibold text-emerald-400">✓ C2PA Cryptographically Verified</span>
                 <span class="font-mono text-[11px]">${fileMB} MB</span>
             </div>
-            <p class="mt-1 text-emerald-200/80">Valid hardware or software signature confirmed intact.</p>
+            <p class="mt-1 text-emerald-200/80">Valid hardware or software signature confirmed intact (Content Credentials).</p>
         `;
     } else if (validationResult?.editorDetected) {
         const sigs = validationResult.detectedSignatures?.join(', ') || 'NLE detected';
@@ -248,7 +259,7 @@ function renderMediaTrustBadge(costInfo, file, validationResult) {
                 <span class="font-semibold text-zinc-200">📁 Media Ready</span>
                 <span class="font-mono text-[11px]">${fileMB} MB</span>
             </div>
-            <p class="mt-1 text-zinc-400">Standard file verification completed.</p>
+            <p class="mt-1 text-zinc-400">Standard file verification completed. Consider C2PA signing for stronger provenance.</p>
         `;
     }
 
@@ -339,7 +350,7 @@ export async function handleMediaSelect(event) {
 
         await handleImageSelect(syntheticEvent, previewArea);
         renderMediaOriginClaimUI();
-        
+
         // Save validator metadata upstream if available
         if (validationResult) {
             window.activeSubmissionDraft = window.activeSubmissionDraft || {};
@@ -364,71 +375,97 @@ export async function handleMediaSelect(event) {
 }
 
 /**
- * Initialize composer listeners and real-time AI analysis
- * Hardened with null checks + double-binding protection
+ * Initialize composer using Event Delegation on a stable root.
+ * Hardened with null checks + double-binding protection.
+ * Prefer a single listener on the closest stable container instead of many individual bindings.
  */
 export function initComposer() {
-  // Helper for safer element selection
-  const $ = (id) => document.getElementById(id);
+    // Find the most stable root for the composer UI
+    const root = document.getElementById('composer-form') ||
+                 document.getElementById('testimonyForm') ||
+                 document.getElementById('composer-root') ||
+                 document.querySelector('.composer-container') ||
+                 document.body;
 
-  const fileInput = $('media-input') || $('photoInput') || $('media-file-input') || $('mediaFileInput');
-  const btnPhoto  = $('btn-attach-photo') || $('btnPhoto') || $('btn-photo');
-  const postButton = $('postButton') || $('submitBtn');
-  const composerForm = $('composer-form') || $('testimonyForm');
-  const bodyInput = $('mainInput') || $('postBody') || $('testimonyBody') || document.querySelector('textarea');
-
-  // ===== Photo / Media button =====
-  if (btnPhoto && fileInput && !btnPhoto.dataset.listenerAttached) {
-    btnPhoto.dataset.listenerAttached = 'true';
-    btnPhoto.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      fileInput.click();
-    });
-  }
-
-  // ===== File input change =====
-  if (fileInput && !fileInput.dataset.listenerAttached) {
-    fileInput.dataset.listenerAttached = 'true';
-    fileInput.addEventListener('change', handleMediaSelect);
-  }
-
-  // ===== Real-time AI analysis =====
-  if (bodyInput && !bodyInput.dataset.aiListenerAttached) {
-    bodyInput.dataset.aiListenerAttached = 'true';
-    bodyInput.addEventListener('input', (e) => {
-      const text = e.target.value.trim();
-      if (text.length < 25) {
-        clearTimeout(aiAnalysisDebounceTimer);
-        clearAiFeedback();
-        lastAnalyzedText = '';
+    // Prevent multiple initializations
+    if (root.dataset.composerInitialized === 'true') {
+        console.log('[composer] Already initialized – skipping');
         return;
-      }
+    }
+    root.dataset.composerInitialized = 'true';
 
-      clearTimeout(aiAnalysisDebounceTimer);
-      aiAnalysisDebounceTimer = setTimeout(async () => {
-        if (text === lastAnalyzedText) return;
-        lastAnalyzedText = text;
-        if (bodyInput.value.trim().length >= 25) {
-          await runRealtimeAiAnalysis(text);
+    // ===== EVENT DELEGATION: One listener for clicks =====
+    root.addEventListener('click', (e) => {
+        // Photo / Media attach button
+        const btnPhoto = e.target.closest('#btn-attach-photo, #btnPhoto, #btn-photo, [data-action="attach-photo"]');
+        if (btnPhoto) {
+            e.preventDefault();
+            e.stopPropagation();
+            const fileInput = document.getElementById('media-input') ||
+                              document.getElementById('photoInput') ||
+                              document.getElementById('media-file-input') ||
+                              document.getElementById('mediaFileInput');
+            if (fileInput) fileInput.click();
+            return;
         }
-      }, 800);
+
+        // Post / Submit button
+        const postButton = e.target.closest('#postButton, #submitBtn, button[type="submit"]');
+        if (postButton && (postButton.id === 'postButton' || postButton.id === 'submitBtn' || postButton.type === 'submit')) {
+            // Let the form submit handler also catch it, but we can trigger here if needed
+            // For safety we still call the shared handler
+            handleComposerSubmit(e);
+            return;
+        }
     });
-  }
 
-  // ===== Post button (most important) =====
-  if (postButton && !postButton.dataset.listenerAttached) {
-    postButton.dataset.listenerAttached = 'true';
-    postButton.addEventListener('click', handleComposerSubmit);
-  }
+    // ===== File input change (still direct – change does not bubble the same way) =====
+    const fileInput = document.getElementById('media-input') ||
+                      document.getElementById('photoInput') ||
+                      document.getElementById('media-file-input') ||
+                      document.getElementById('mediaFileInput');
 
-  // ===== Form submit (backup) =====
-  if (composerForm && !composerForm.dataset.listenerAttached) {
-    composerForm.dataset.listenerAttached = 'true';
-    composerForm.addEventListener('submit', handleComposerSubmit);
-  }
+    if (fileInput && !fileInput.dataset.listenerAttached) {
+        fileInput.dataset.listenerAttached = 'true';
+        fileInput.addEventListener('change', handleMediaSelect);
+    }
 
-  console.log('✅ Testimony composer wired (hardened)');
+    // ===== Real-time AI analysis (input events) =====
+    const bodyInput = document.getElementById('mainInput') ||
+                      document.getElementById('postBody') ||
+                      document.getElementById('testimonyBody') ||
+                      document.querySelector('textarea');
+
+    if (bodyInput && !bodyInput.dataset.aiListenerAttached) {
+        bodyInput.dataset.aiListenerAttached = 'true';
+        bodyInput.addEventListener('input', (e) => {
+            const text = e.target.value.trim();
+            if (text.length < 25) {
+                clearTimeout(aiAnalysisDebounceTimer);
+                clearAiFeedback();
+                lastAnalyzedText = '';
+                return;
+            }
+
+            clearTimeout(aiAnalysisDebounceTimer);
+            aiAnalysisDebounceTimer = setTimeout(async () => {
+                if (text === lastAnalyzedText) return;
+                lastAnalyzedText = text;
+                if (bodyInput.value.trim().length >= 25) {
+                    await runRealtimeAiAnalysis(text);
+                }
+            }, 800);
+        });
+    }
+
+    // ===== Form submit (backup + primary for keyboard enter) =====
+    const composerForm = document.getElementById('composer-form') || document.getElementById('testimonyForm');
+    if (composerForm && !composerForm.dataset.listenerAttached) {
+        composerForm.dataset.listenerAttached = 'true';
+        composerForm.addEventListener('submit', handleComposerSubmit);
+    }
+
+    console.log('✅ Testimony composer wired with Event Delegation (hardened + C2PA-aware)');
 }
 
 /**
@@ -531,65 +568,65 @@ function renderAiFeedback(container, analysis, category) {
 }
 
 /**
- * Main submit handler – refactored to use the existing window.publishTestimony()
- * This eliminates double-publish and permission conflicts.
+ * Main submit handler – prefers window.publishTestimony() when available
  */
 async function handleComposerSubmit(e) {
-  // Always stop the event
-  if (e?.preventDefault) e.preventDefault();
-  if (e?.stopImmediatePropagation) e.stopImmediatePropagation();
+    if (e?.preventDefault) e.preventDefault();
+    if (e?.stopImmediatePropagation) e.stopImmediatePropagation();
 
-  // Prevent double submission
-  if (isSubmitting) {
-    console.warn('[composer] Already submitting – ignored');
-    return;
-  }
-
-  // Prefer the hardened path from main.js
-  if (typeof window.publishTestimony === 'function') {
-    console.log('[composer] Using existing window.publishTestimony()');
-
-    isSubmitting = true;
-    const submitBtn = document.getElementById('postButton') ||
-                      document.getElementById('submitBtn') ||
-                      document.querySelector('button[type="submit"]');
-
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    if (isSubmitting) {
+        console.warn('[composer] Already submitting – ignored');
+        return;
     }
 
-    try {
-      await window.publishTestimony();
-    } catch (err) {
-      console.error('[composer] publishTestimony failed:', err);
-      showToast('Failed to publish. Please try again.', 'error');
-    } finally {
-      isSubmitting = false;
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-      }
-    }
-    return;
-  }
+    if (typeof window.publishTestimony === 'function') {
+        console.log('[composer] Using existing window.publishTestimony()');
 
-  // Fallback only if main.js is not loaded
-  console.error('[composer] window.publishTestimony is not available');
-  showToast('Publish system not ready. Please refresh the page.', 'error');
+        isSubmitting = true;
+        const submitBtn = document.getElementById('postButton') ||
+                          document.getElementById('submitBtn') ||
+                          document.querySelector('button[type="submit"]');
+
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+
+        try {
+            // Optionally enrich draft with origin claim before publish
+            window.activeSubmissionDraft = window.activeSubmissionDraft || {};
+            window.activeSubmissionDraft.mediaOriginClaim = getSelectedMediaOriginClaim();
+
+            await window.publishTestimony();
+        } catch (err) {
+            console.error('[composer] publishTestimony failed:', err);
+            showToast('Failed to publish. Please try again.', 'error');
+        } finally {
+            isSubmitting = false;
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+        return;
+    }
+
+    console.error('[composer] window.publishTestimony is not available');
+    showToast('Publish system not ready. Please refresh the page.', 'error');
 }
+
 /**
  * Reset form UI
  */
 export function resetForm() {
     const form = document.getElementById('composer-form') || document.getElementById('testimonyForm');
-    const headlineInput = document.getElementById('headlineInput') || 
-                          document.getElementById('testimonyHeadline') || 
-                          document.getElementById('testimonyTitle') || 
+    const headlineInput = document.getElementById('headlineInput') ||
+                          document.getElementById('testimonyHeadline') ||
+                          document.getElementById('testimonyTitle') ||
                           document.getElementById('postHeadline');
-    const bodyInput = document.getElementById('mainInput') || document.getElementById('postBody');
+    const bodyInput = document.getElementById('mainInput') || document.getElementById('postBody') || document.getElementById('testimonyBody');
     const previewArea = document.getElementById('preview-area') || document.getElementById('media-preview') || document.getElementById('media-provenance-badge');
-    const fileInput = document.getElementById('media-input') || document.getElementById('photoInput') || document.getElementById('media-file-input');
+    const fileInput = document.getElementById('media-input') || document.getElementById('photoInput') || document.getElementById('media-file-input') || document.getElementById('mediaFileInput');
     const anonymousCheckbox = document.getElementById('post-anonymously') || document.getElementById('isAnonymous');
 
     if (form) form.reset();
