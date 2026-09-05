@@ -2,7 +2,9 @@
 import { 
     collection, 
     addDoc, 
-    serverTimestamp 
+    serverTimestamp,
+    doc,
+    updateDoc
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 import { db, auth } from './firebase-config.js';
@@ -39,7 +41,7 @@ export async function computeSHA256(data) {
  * @param {string} params.content - Text content of the testimony
  * @param {string} params.channel - 'citizen-talk' | 'witness-voice'
  * @param {File|Blob|null} params.mediaFile - Attached image, video, or recorded audio file
- * @param {boolean} params.isAnonymous - Whether user hides public identity
+ * @param {boolean} params.isAnonymous - Whether user hides public identity (UI only)
  * @param {boolean} params.isZkVerified - Optional ZK proof indicator
  * @param {Function} [params.onProgress] - Optional progress callback (0-100)
  * @returns {Promise<string>} Created Firestore document ID
@@ -53,14 +55,26 @@ export async function submitTestimony({
     onProgress = null
 }) {
     const user = auth.currentUser;
-    if (!user && !isAnonymous) {
-        showToast("Please log in or select Anonymous Mode to submit.", "error");
+
+    // Must be authenticated – rules require authorId == request.auth.uid
+    if (!user) {
+        showToast("Please log in to submit a testimony.", "error");
         throw new Error("Unauthorized submission attempt.");
     }
 
     if (!content.trim() && !mediaFile) {
         showToast("Testimony must contain text content or evidence media.", "error");
         throw new Error("Empty testimony payload.");
+    }
+
+    // Normalize channel to one of the values allowed by the rules
+    const allowedChannels = [
+        'citizen-talk', 'witness-voice',
+        'citizen-circle', 'witness-circle',
+        'citizen_talk', 'witness_voice'
+    ];
+    if (!allowedChannels.includes(channel)) {
+        channel = 'citizen-talk';
     }
 
     // -------------------------------------------------------------
@@ -100,24 +114,19 @@ export async function submitTestimony({
 
     // 1. Process Media via Unified Pipeline (Scrubbing/Normalization + R2 Upload)
     if (mediaFile) {
-        // Determine primary media type bucket
         const mime = mediaFile.type || '';
         if (mime.startsWith('image/')) mediaType = 'image';
         else if (mime.startsWith('video/')) mediaType = 'video';
         else if (mime.startsWith('audio/')) mediaType = 'audio';
         else mediaType = 'evidence';
 
-        // Compute hash of original file for cryptographic verification integrity
         forensicHash = await computeSHA256(mediaFile);
 
         showToast("🛡️ Preparing and uploading media artifact...", "info");
 
-        // Route through unified pipeline: scrubs EXIF/normalizes audio, then uploads to Cloudflare R2
         const folderDestination = channel === 'witness-voice' ? 'witness-vault' : 'evidence';
         mediaUrl = await processAndUploadMedia(mediaFile, folderDestination, onProgress);
-
     } else if (content.length > 0) {
-        // Compute text integrity hash if no media is attached
         forensicHash = await computeSHA256(content);
     }
 
@@ -125,28 +134,25 @@ export async function submitTestimony({
     let authorTier = 'citizen';
     let reputation = 0;
 
-    if (user) {
-        try {
-            const tierData = await getUserTier(user.uid);
-            authorTier = tierData.tier || 'citizen';
-            reputation = tierData.reputation || 0;
-        } catch (err) {
-            console.warn("Could not fetch tier, defaulting to citizen:", err);
-        }
+    try {
+        const tierData = await getUserTier(user.uid);
+        authorTier = tierData.tier || 'citizen';
+        reputation = tierData.reputation || 0;
+    } catch (err) {
+        console.warn("Could not fetch tier, defaulting to citizen:", err);
     }
 
-    // 3. Assemble Firestore Payload
+    // 3. Assemble Firestore Payload – MUST satisfy the create rules
     const payload = {
         content: content.trim(),
-        channel: channel,
-        feedVisibility: moderationResult.status === 'pending_review' ? 'review_queue' : channel,
-        authorId: isAnonymous ? null : (user ? user.uid : null),
-        author: isAnonymous ? "Anonymous Witness" : (user?.displayName || "Citizen Witness"),
+        channel: channel,                          // required by rules
+        authorId: user.uid,                        // CRITICAL: must equal request.auth.uid
+        isAnonymous: !!isAnonymous,                // UI flag only
+        author: isAnonymous ? "Anonymous Witness" : (user.displayName || "Citizen Witness"),
         authorTier: authorTier,
         reputation: reputation,
-        isAnonymous: isAnonymous,
         forensicHash: forensicHash,
-        zkVerified: isZkVerified,
+        zkVerified: !!isZkVerified,
         imageUrl: mediaType === 'image' ? mediaUrl : null,
         videoUrl: mediaType === 'video' ? mediaUrl : null,
         audioUrl: mediaType === 'audio' ? mediaUrl : null,
@@ -159,13 +165,24 @@ export async function submitTestimony({
         moderationStatus: moderationResult.status,
         moderationFlags: moderationResult.flags,
         aiCategory: moderationResult.category,
+        feedVisibility: moderationResult.status === 'pending_review' ? 'review_queue' : channel,
 
-        createdAt: serverTimestamp(),
+        createdAt: serverTimestamp(),              // required – must be timestamp
         updatedAt: serverTimestamp()
     };
 
     // 4. Commit to Firestore
     const docRef = await addDoc(collection(db, "testimonies"), payload);
+
+    // 5. Update throttle timestamp (required by isNotThrottled())
+    try {
+        await updateDoc(doc(db, "users", user.uid), {
+            lastTestimonyAt: serverTimestamp()
+        });
+    } catch (err) {
+        console.warn("Could not update lastTestimonyAt:", err);
+        // Non-fatal – the testimony was already written
+    }
     
     if (moderationResult.status === 'pending_review') {
         showToast("⚠️ Testimony submitted and queued for community review.", "warning");
