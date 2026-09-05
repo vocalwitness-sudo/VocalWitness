@@ -52,43 +52,66 @@ function refreshTierUI() {
   }
 }
 
+/**
+ * Creates or updates the users/{uid} document.
+ * Must satisfy isSafeUserCreation() on first write.
+ */
 async function createOrUpdateUser(user) {
   if (!user?.uid) return;
 
+  const userRef = doc(db, "users", user.uid);
+
   try {
-    const userRef = doc(db, "users", user.uid);
     const snap = await getDoc(userRef);
 
-    const safeEmail = user.email || "";
-    const safeDisplayName = user.displayName || (user.isAnonymous ? "Anonymous Citizen" : "Citizen Witness");
-    const safePhotoURL = user.photoURL || null;
+    const safeEmail = (user.email || "").trim();
+    const safeDisplayName = (user.displayName || (user.isAnonymous ? "Anonymous Citizen" : "Citizen Witness")).trim();
+    // Rules prefer null over empty string for photoURL
+    const safePhotoURL = user.photoURL && user.photoURL.trim() ? user.photoURL.trim() : null;
 
     if (!snap.exists()) {
-      // Brand-new user – MUST satisfy isSafeUserCreation()
-      // Forbidden on create: isPhoneVerified, hasVerifiedPhone, phoneVerifiedAt,
-      // role, isBanned, badges, admin, moderator, score, steward, reputation, etc.
-      await setDoc(userRef, {
+      // ---------- Brand-new user ----------
+      // Only fields allowed by isSafeUserCreation()
+      const newUserData = {
         uid: user.uid,
         email: safeEmail,
         displayName: safeDisplayName,
         photoURL: safePhotoURL,
         isAnonymous: !!user.isAnonymous,
-        tier: DEFAULT_TIER,               // "citizen" – allowed
-        isVerified: false,                // allowed only when false
+        tier: DEFAULT_TIER,          // "citizen" – allowed
+        isVerified: false,           // must be false on create
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
-        // Do NOT include isPhoneVerified / hasVerifiedPhone here
-      });
+        // NEVER include: isPhoneVerified, hasVerifiedPhone, phoneVerifiedAt,
+        // role, isBanned, badges, admin, moderator, score, steward, etc.
+      };
+
+      try {
+        await setDoc(userRef, newUserData);
+        console.log("[auth] Created user document for", user.uid);
+      } catch (createErr) {
+        // Extremely rare fallback – try the absolute minimum
+        console.warn("[auth] Full create failed, trying minimal payload:", createErr);
+        await setDoc(userRef, {
+          uid: user.uid,
+          email: safeEmail,
+          displayName: safeDisplayName,
+          createdAt: serverTimestamp()
+        });
+        console.log("[auth] Created minimal user document for", user.uid);
+      }
 
       updateVerificationUI(false);
       if (!user.isAnonymous) {
         showToast("🎉 Account created! Welcome to the Public Square.", "success");
       }
-      console.log('[auth] Created user document for', user.uid);
     } else {
-      // Existing user → update ONLY client-safe fields
+      // ---------- Existing user ----------
       const existing = snap.data() || {};
-      const changes = {};
+      const changes = {
+        lastLoginAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
 
       if (safeDisplayName && safeDisplayName !== existing.displayName) {
         changes.displayName = safeDisplayName;
@@ -100,13 +123,7 @@ async function createOrUpdateUser(user) {
         changes.email = safeEmail;
       }
 
-      // Always refresh last login
-      changes.lastLoginAt = serverTimestamp();
-      changes.updatedAt = serverTimestamp();
-
-      if (Object.keys(changes).length > 0) {
-        await updateDoc(userRef, changes);
-      }
+      await updateDoc(userRef, changes);
 
       const isVerified = Boolean(
         existing.isVerified === true ||
@@ -116,17 +133,19 @@ async function createOrUpdateUser(user) {
       updateVerificationUI(isVerified);
     }
   } catch (e) {
-    console.error("User document update error:", e);
-    // Still show a toast for permission errors so we notice them
+    console.error("[auth] User document error:", e);
     showToast(
-      e?.code === 'permission-denied'
-        ? "Could not create/update profile (rules blocked it)."
+      e?.code === "permission-denied"
+        ? "Could not create/update profile (rules blocked it). Check console."
         : "Error updating profile state.",
       "error"
     );
   }
 }
 
+// Optional – make it available to other modules
+export { createOrUpdateUser };
+window.createOrUpdateUser = createOrUpdateUser;
 export function updateVerificationUI(isVerified = false) {
   const statusEl = document.getElementById('verification-status');
   const verifyBtn = document.getElementById('request-verification-btn');
