@@ -229,7 +229,7 @@ function showWelcomeNote() {
 }
 
 // ====================== PUBLISH TESTIMONY ======================
-// ====================== PUBLISH TESTIMONY (HARDENED) ======================
+
 window.publishTestimony = async () => {
   // Global lock to stop double clicks
   if (window.__isPublishing) {
