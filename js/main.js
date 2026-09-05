@@ -228,20 +228,13 @@ function showWelcomeNote() {
     localStorage.setItem('hasSeenWelcome', 'true');
 }
 
-// ====================== PUBLISH TESTIMONY ======================
-
+// ====================== PUBLISH TESTIMONY (HARDENED) ======================
 window.publishTestimony = async () => {
-  // Global lock to stop double clicks
   if (window.__isPublishing) {
     console.warn('[publish] Already publishing – ignored');
     return;
   }
   window.__isPublishing = true;
-
-  if (typeof requireAuth === 'function' && !requireAuth("Please sign in to share your testimony.")) {
-    window.__isPublishing = false;
-    return;
-  }
 
   const currentUser = auth.currentUser;
   if (!currentUser) {
@@ -272,7 +265,23 @@ window.publishTestimony = async () => {
   }
 
   try {
-    // Media handling (safe)
+    // ---------- 1. Ensure user document exists (safe creation) ----------
+    const userRef = doc(db, 'users', currentUser.uid);
+    const userSnap = await getDoc(userRef);
+
+    if (!userSnap.exists()) {
+      console.log('[publish] Creating missing user document...');
+      await setDoc(userRef, {
+        uid: currentUser.uid,
+        email: currentUser.email || '',
+        displayName: currentUser.displayName || 'Registered Witness',
+        createdAt: serverTimestamp(),
+        tier: 'citizen',
+        isVerified: false
+      }, { merge: true });
+    }
+
+    // ---------- 2. Media (non-blocking) ----------
     let mediaData = {
       imageUrl: null,
       audioUrl: null,
@@ -287,84 +296,73 @@ window.publishTestimony = async () => {
     if (typeof mediaModule?.uploadForensicMedia === 'function') {
       try {
         const uploaded = await mediaModule.uploadForensicMedia();
-        if (uploaded) {
-          mediaData = {
-            imageUrl: uploaded.imageUrl || null,
-            audioUrl: uploaded.audioUrl || null,
-            imageHash: uploaded.imageHash || null,
-            audioHash: uploaded.audioHash || null,
-            bodyHash: uploaded.bodyHash || null,
-            hasEvidencePack: !!uploaded.evidencePack,
-            evidencePack: uploaded.evidencePack || null,
-            packCoreHash: uploaded.packCoreHash || null
-          };
-        }
+        if (uploaded) mediaData = { ...mediaData, ...uploaded };
       } catch (mediaErr) {
         console.warn('[publish] Media upload failed, continuing without media:', mediaErr);
       }
     }
 
-    // FINAL payload that satisfies the current rules
+    // ---------- 3. STRICT payload that matches the rules exactly ----------
+    // Only required fields + a few safe optional ones.
+    // No 'mediaUrl' / 'mediaUrls' keys so the optional checks stay true.
     const testimonyData = {
+      authorId: currentUser.uid,                    // REQUIRED
+      content: content,                             // REQUIRED (1-4000)
+      createdAt: serverTimestamp(),                 // REQUIRED (timestamp)
+      channel: 'citizen-talk',                      // REQUIRED (allowed value)
+
+      // Safe optional fields (rules do not reject them)
       title: title || null,
-      authorId: currentUser.uid,                    // REQUIRED – must match request.auth.uid
-      author: currentUser.displayName || "Registered Witness",
-      content: content,                             // REQUIRED
-      createdAt: serverTimestamp(),                 // REQUIRED – must be timestamp
-      timestamp: Date.now(),
-      channel: 'citizen-talk',                      // REQUIRED – must be in the allowed list
+      author: currentUser.displayName || 'Registered Witness',
       feedVisibility: 'citizen-talk',
-      feedMode: window.currentFeedMode || 'standard',
-      imageUrl: mediaData.imageUrl,
-      audioUrl: mediaData.audioUrl,
-      imageHash: mediaData.imageHash,
-      audioHash: mediaData.audioHash,
+      timestamp: Date.now(),
+
+      // Media fields that rules do not restrict
+      imageUrl: mediaData.imageUrl || null,
+      audioUrl: mediaData.audioUrl || null,
+      imageHash: mediaData.imageHash || null,
+      audioHash: mediaData.audioHash || null,
+      bodyHash: mediaData.bodyHash || null,
       hasForensic: !!(mediaData.imageHash || mediaData.audioHash),
-      bodyHash: mediaData.bodyHash,
-      hasEvidencePack: mediaData.hasEvidencePack,
-      evidencePack: mediaData.evidencePack,
-      packCoreHash: mediaData.packCoreHash
+      hasEvidencePack: !!mediaData.hasEvidencePack,
+      evidencePack: mediaData.evidencePack || null,
+      packCoreHash: mediaData.packCoreHash || null
     };
 
-    console.log('[publish] FINAL PAYLOAD KEYS:', Object.keys(testimonyData));
-    console.log('[publish] writing to testimonies...', {
-      authorId: testimonyData.authorId,
-      channel: testimonyData.channel,
-      feedVisibility: testimonyData.feedVisibility,
+    console.log('[publish] FINAL PAYLOAD:', JSON.stringify({
+      ...testimonyData,
+      createdAt: '[serverTimestamp]',
       contentLen: content.length
-    });
+    }, null, 2));
 
+    // ---------- 4. The write ----------
     const docRef = await addDoc(collection(db, 'testimonies'), testimonyData);
     console.log('[publish] SUCCESS →', docRef.id);
 
-    // Update throttle (non-critical)
-    try {
-      await updateDoc(doc(db, 'users', currentUser.uid), {
-        lastTestimonyAt: serverTimestamp()
-      });
-    } catch (_) {}
+    // ---------- 5. Update throttle (safe) ----------
+    await setDoc(userRef, {
+      lastTestimonyAt: serverTimestamp()
+    }, { merge: true });
 
     showToast("🛡️ Report sealed and published", "success");
 
     // Reset UI
     if (titleInput) titleInput.value = '';
     if (textarea) textarea.value = '';
-    if (typeof mediaModule?.resetMediaState === 'function') {
-      mediaModule.resetMediaState();
-    }
-
-    if (typeof initFeed === 'function') {
-      initFeed(db, 'citizen-talk');
-    }
+    if (typeof mediaModule?.resetMediaState === 'function') mediaModule.resetMediaState();
+    if (typeof initFeed === 'function') initFeed(db, 'citizen-talk');
 
   } catch (err) {
-    console.error("Publish error detail:", err);
-    showToast(
-      err.code === 'permission-denied'
-        ? "Permission denied. Rules are still blocking (check isNotThrottled / isNotBanned)."
-        : "Failed to publish. Check console.",
-      "error"
-    );
+    console.error('[publish] FULL ERROR:', err);
+    console.error('[publish] code:', err.code, 'message:', err.message);
+
+    if (err.code === 'permission-denied') {
+      showToast("Permission denied. Check console for exact rule failure.", "error");
+      // Force a rules playground-style debug
+      console.warn('→ Open Firestore Rules Playground and simulate create on /testimonies/{id} with the payload above as this UID');
+    } else {
+      showToast("Failed to publish. See console.", "error");
+    }
   } finally {
     window.__isPublishing = false;
     if (postBtn) {
