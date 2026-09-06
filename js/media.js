@@ -398,92 +398,142 @@ export function initVoiceControls() {
     }
 }
 
+// ====================== PENDING MEDIA HELPERS ======================
+/**
+ * Returns true if the user has selected any media
+ * (image, video or audio) that still needs to be handled.
+ * Used by publishTestimony to decide whether a failed upload
+ * should abort the whole publish (fail-closed).
+ */
+export function hasPendingMedia() {
+  return !!(
+    selectedImageFile ||
+    selectedVideoFile ||
+    selectedAudioFile ||
+    engineInstance?.currentAudioBlob
+  );
+}
+
+/**
+ * Returns a simple snapshot of the currently selected media.
+ * Useful for debugging or for the composer.
+ */
+export function getPendingMedia() {
+  return {
+    image: selectedImageFile,
+    video: selectedVideoFile,
+    audio: selectedAudioFile || engineInstance?.currentAudioBlob || null
+  };
+}
+
 // ====================== UNIFIED UPLOAD ROUTER (Single Meeting Point) ======================
 /**
- * Main upload entry point.
+ * Main forensic upload entry point.
+ *
  * Prefer passing the active files from composer.js for clean isolation.
+ * Falls back to the internal selected* variables if nothing is passed.
+ *
+ * Flow for each media type:
+ *   1. Prepare / scrub (images)
+ *   2. Compute SHA-256 hash of the final data (forensic fingerprint)
+ *   3. Upload via the specialised secure function
+ *   4. Verify the public URL is reachable
+ *
+ * Always throws on failure so publishTestimony can abort cleanly.
  */
 export async function uploadForensicMedia(
-    activeImageFile = null,
-    activeVideoFile = null,
-    activeAudioBlob = null
+  activeImageFile = null,
+  activeVideoFile = null,
+  activeAudioBlob = null
 ) {
-    const mediaData = {
-        imageUrl: null,
-        videoUrl: null,
-        audioUrl: null,
-        imageHash: null,
-        videoHash: null,
-        audioHash: null
-    };
+  const mediaData = {
+    imageUrl: null,
+    videoUrl: null,
+    audioUrl: null,
+    imageHash: null,
+    videoHash: null,
+    audioHash: null,
+    bodyHash: null,          // will be filled by publishTestimony
+    hasEvidencePack: false,
+    evidencePack: null,
+    packCoreHash: null
+  };
 
-    // Prefer explicitly passed values (from composer isolation)
-    // Fallback to internal state only if needed
-    const targetImage = activeImageFile || selectedImageFile;
-    const targetVideo = activeVideoFile || selectedVideoFile;
-    const targetAudio = activeAudioBlob || selectedAudioFile || engineInstance?.currentAudioBlob;
+  // Prefer values passed from composer, otherwise use internal state
+  const targetImage = activeImageFile || selectedImageFile;
+  const targetVideo = activeVideoFile || selectedVideoFile;
+  const targetAudio = activeAudioBlob || selectedAudioFile || engineInstance?.currentAudioBlob;
 
-    // 1. Image Path (Protected + Scrubbed)
-    if (targetImage) {
-        try {
-            if (targetImage.size === 0) throw new Error("Selected image is empty");
-
-            const cleanedFile = await prepareMediaForUpload(targetImage, {
-                maxWidth: 1920,
-                maxHeight: 1080
-            });
-
-            const hash = await generateSha256Hash(cleanedFile);
-            const uploadedUrl = await uploadSecurePhoto(cleanedFile, 'evidence');
-            await verifyMediaUrl(uploadedUrl);
-
-            mediaData.imageUrl = uploadedUrl;
-            mediaData.imageHash = hash;
-            console.log("✅ Image scrubbed, hashed & verified:", mediaData.imageUrl);
-        } catch (e) {
-            console.error("Image upload failed:", e);
-            showToast(e.message || "Image upload failed", "error");
-            throw e;
-        }
-    }
-
-    // 2. Video Path (Isolated)
-    if (targetVideo) {
-        try {
-            if (targetVideo.size === 0) throw new Error("Selected video is empty");
-
-            const hash = await generateSha256Hash(targetVideo);
-            const uploadedUrl = await uploadSecureVideo(targetVideo, 'evidence');
-            await verifyMediaUrl(uploadedUrl);
-
-            mediaData.videoUrl = uploadedUrl;
-            mediaData.videoHash = hash;
-            console.log("✅ Video uploaded and verified:", mediaData.videoUrl);
-        } catch (e) {
-            console.error("Video upload failed:", e);
-            showToast(e.message || "Video upload failed", "error");
-            throw e;
-        }
-    }
-
-    // 3. Audio Path (Isolated)
-    if (targetAudio) {
-        try {
-            if (targetAudio.size > 0) {
-                const hash = await generateSha256Hash(targetAudio);
-                const uploadedUrl = await uploadSecureAudio(targetAudio, 'evidence');
-                await verifyMediaUrl(uploadedUrl);
-
-                mediaData.audioUrl = uploadedUrl;
-                mediaData.audioHash = hash;
-                console.log("✅ Audio uploaded and verified:", mediaData.audioUrl);
-            }
-        } catch (e) {
-            console.error("Audio upload failed:", e);
-            showToast(e.message || "Audio upload failed", "error");
-            throw e;
-        }
-    }
-
+  // Nothing selected → return empty object (text-only post is allowed)
+  if (!targetImage && !targetVideo && !targetAudio) {
     return mediaData;
+  }
+
+  // ---------- 1. Image Path (Protected + Scrubbed) ----------
+  if (targetImage) {
+    try {
+      if (targetImage.size === 0) throw new Error("Selected image is empty");
+
+      // Scrub EXIF / GPS and optionally compress
+      const cleanedFile = await prepareMediaForUpload(targetImage, {
+        maxWidth: 1920,
+        maxHeight: 1080
+      });
+
+      // Forensic hash of the cleaned file
+      const hash = await generateSha256Hash(cleanedFile);
+
+      // Upload
+      const uploadedUrl = await uploadSecurePhoto(cleanedFile, 'evidence');
+      await verifyMediaUrl(uploadedUrl);
+
+      mediaData.imageUrl = uploadedUrl;
+      mediaData.imageHash = hash;
+      console.log("✅ Image scrubbed, hashed & verified:", mediaData.imageUrl);
+    } catch (e) {
+      console.error("Image upload failed:", e);
+      showToast(e.message || "Image upload failed", "error");
+      throw e; // critical – let publish abort
+    }
+  }
+
+  // ---------- 2. Video Path (Isolated) ----------
+  if (targetVideo) {
+    try {
+      if (targetVideo.size === 0) throw new Error("Selected video is empty");
+
+      const hash = await generateSha256Hash(targetVideo);
+      const uploadedUrl = await uploadSecureVideo(targetVideo, 'evidence');
+      await verifyMediaUrl(uploadedUrl);
+
+      mediaData.videoUrl = uploadedUrl;
+      mediaData.videoHash = hash;
+      console.log("✅ Video uploaded and verified:", mediaData.videoUrl);
+    } catch (e) {
+      console.error("Video upload failed:", e);
+      showToast(e.message || "Video upload failed", "error");
+      throw e;
+    }
+  }
+
+  // ---------- 3. Audio Path (Isolated) ----------
+  if (targetAudio) {
+    try {
+      if (targetAudio.size === 0) throw new Error("Selected audio is empty");
+
+      const hash = await generateSha256Hash(targetAudio);
+      const uploadedUrl = await uploadSecureAudio(targetAudio, 'evidence');
+      await verifyMediaUrl(uploadedUrl);
+
+      mediaData.audioUrl = uploadedUrl;
+      mediaData.audioHash = hash;
+      console.log("✅ Audio uploaded and verified:", mediaData.audioUrl);
+    } catch (e) {
+      console.error("Audio upload failed:", e);
+      showToast(e.message || "Audio upload failed", "error");
+      throw e;
+    }
+  }
+
+  return mediaData;
 }
