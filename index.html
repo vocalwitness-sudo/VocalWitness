@@ -306,8 +306,7 @@
 </div>
   
 
-  
-<!-- ====================== MAIN CONTAINER ====================== -->
+  <!-- ====================== MAIN CONTAINER ====================== -->
 <main id="main-content" class="mx-auto max-w-6xl px-3 pb-6 pt-1 sm:px-4 md:pt-2">
 
   <!-- Flash Feed + Global Search -->
@@ -397,8 +396,23 @@
   <!-- ========== 1. PUBLIC SQUARE ========== -->
   <section id="public-square" data-view="citizenTalkView" role="tabpanel" aria-label="Public Square">
     <div class="glass mb-8 rounded-3xl border border-zinc-800/80 p-5 shadow-xl sm:p-8">
-      <input type="file" id="mediaFileInput" accept="image/*,video/*,audio/*" class="hidden" multiple aria-hidden="true">
-      
+
+      <!-- ====================== FULLY ISOLATED MEDIA INPUTS ====================== -->
+      <input type="file" id="photoInput" 
+             accept="image/jpeg,image/png,image/webp" 
+             class="hidden" 
+             aria-hidden="true">
+
+      <input type="file" id="videoInput" 
+             accept="video/mp4,video/webm,video/quicktime" 
+             class="hidden" 
+             aria-hidden="true">
+
+      <input type="file" id="audioInput" 
+             accept="audio/webm,audio/mp3,audio/mpeg,audio/wav,audio/ogg" 
+             class="hidden" 
+             aria-hidden="true">
+
       <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 class="flex items-center gap-2 text-lg font-semibold text-white sm:text-xl" data-i18n="shareTestimonyTitle">
           Share what you saw
@@ -421,18 +435,40 @@
         <span id="char-count" class="text-xs text-zinc-500">0 / 2000</span>
       </div>
 
-      <div class="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <button id="btn-photo" type="button" class="flex items-center justify-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-800 px-4 py-3.5 font-medium text-emerald-400 transition hover:border-emerald-500 hover:bg-zinc-700 active:scale-95" aria-label="Add media">
+      <!-- ====================== SEPARATED MEDIA BUTTONS ====================== -->
+      <div class="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        
+        <!-- Photo (Protected working path) -->
+        <button id="btn-photo" type="button" 
+                class="flex items-center justify-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-800 px-4 py-3.5 font-medium text-emerald-400 transition hover:border-emerald-500 hover:bg-zinc-700 active:scale-95"
+                aria-label="Add photo">
           <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
           </svg>
-          <span data-i18n="addMediaEvidence">Add Media</span>
+          <span>Add Photo</span>
         </button>
-        <button id="btn-voice" type="button" class="flex items-center justify-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-800 px-4 py-3.5 font-medium text-amber-400 transition hover:border-emerald-500 hover:bg-zinc-700 active:scale-95" aria-label="Record voice">
+
+        <!-- Video (New isolated path) -->
+        <button id="btn-video" type="button" 
+                class="flex items-center justify-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-800 px-4 py-3.5 font-medium text-sky-400 transition hover:border-sky-500 hover:bg-zinc-700 active:scale-95"
+                aria-label="Add video">
           <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                  d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
           </svg>
-          <span data-i18n="recordVoiceMessage">Record Voice</span>
+          <span>Add Video</span>
+        </button>
+
+        <!-- Voice / Audio -->
+        <button id="btn-voice" type="button" 
+                class="flex items-center justify-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-800 px-4 py-3.5 font-medium text-amber-400 transition hover:border-amber-500 hover:bg-zinc-700 active:scale-95"
+                aria-label="Record or add voice">
+          <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                  d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z"/>
+          </svg>
+          <span>Record Voice</span>
         </button>
       </div>
 
@@ -464,16 +500,17 @@
         <span data-i18n="postButton">Publish Report</span>
       </button>
     </div>
-    <!-- Upload Progress Bar (Place inside your Public Square posting form) -->
-<div id="upload-progress-container" class="mt-4 hidden" aria-hidden="true">
-    <div class="flex justify-between text-xs text-zinc-400 mb-1">
+
+    <!-- Upload Progress Bar -->
+    <div id="upload-progress-container" class="mt-4 hidden" aria-hidden="true">
+      <div class="flex justify-between text-xs text-zinc-400 mb-1">
         <span id="upload-status-text">Uploading media...</span>
         <span id="upload-progress-pct">0%</span>
-    </div>
-    <div class="h-2 w-full overflow-hidden rounded-full bg-zinc-800">
+      </div>
+      <div class="h-2 w-full overflow-hidden rounded-full bg-zinc-800">
         <div id="upload-progress-bar" class="h-full bg-emerald-500 transition-all duration-300" style="width: 0%"></div>
+      </div>
     </div>
-</div>
 
     <!-- Feed Container inside Public Square panel -->
     <div id="feed-container" class="mb-4 space-y-6" aria-label="Reports feed">
@@ -504,7 +541,7 @@
     </div>
   </section>
 
-  <!-- ========== 2. PUBLIC RECORD (formerly Evidence Ledger) ========== -->
+  <!-- ========== 2. PUBLIC RECORD ========== -->
   <section id="evidence-ledger" class="hidden space-y-6" role="tabpanel" aria-label="Public Record">
     <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
       <div>
