@@ -812,3 +812,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     setTimeout(wireTestimonyComposer, 600);
     initHeaderSearch();
 });
+
+// bookmark
+document.getElementById('bookmarks-nav-btn')?.addEventListener('click', (e) => {
+  // If you are using a router function, call it here:
+  if (typeof handleRoute === 'function') {
+    handleRoute({ preventDefault: () => {}, target: { dataset: { action: 'open-bookmarks' } } });
+  } else if (typeof initBookmarksView === 'function') {
+    initBookmarksView();
+  }
+});
