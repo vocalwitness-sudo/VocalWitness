@@ -137,6 +137,27 @@ async function triggerOveragePaymentModal(feeUSD, reason) {
     });
 }
 
+// Isolated Media State Variables (Only one should be active at a time)
+let activeImageFile = null;
+let activeVideoFile = null;
+let activeAudioFile = null;
+
+// Helper to reset all states when a new one is picked
+function clearAllMediaStates() {
+    activeImageFile = null;
+    activeVideoFile = null;
+    activeAudioFile = null;
+    
+    // Clear the respective file inputs so they don't hold ghost values
+    ['media-input', 'photoInput', 'videoInput', 'audioInput', 'media-file-input', 'mediaFileInput'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+    
+    clearMediaQuotaBadge();
+    clearMediaOriginClaimUI();
+    if (typeof resetMediaState === 'function') resetMediaState();
+}
 /**
  * Renders or reveals the mandatory Media Origin Claim dropdown
  */
@@ -280,101 +301,127 @@ function clearAiFeedback() {
 }
 
 /**
- * Handle input selection for both video pre-flight validation and image scrubbing
+ * Distinct handler for Image/Photo Selection
  */
-export async function handleMediaSelect(event) {
-    const previewArea = document.getElementById('preview-area') ||
-                        document.getElementById('media-preview') ||
-                        document.getElementById('media-provenance-badge');
+export async function handleImageSelectAction(event) {
+    const previewArea = document.getElementById('preview-area') || document.getElementById('media-preview');
+    const file = event.target?.files?.[0];
 
-    if (!event.target?.files?.[0]) {
-        clearMediaQuotaBadge();
-        clearMediaOriginClaimUI();
-        return;
-    }
+    if (!file) return;
 
-    const originalFile = event.target.files[0];
-    let validationResult = null;
+    // Enforce exclusivity: Clear video and audio states
+    clearAllMediaStates();
+    activeImageFile = file;
 
-    // 1. Video Pre-Flight Validation & Pricing Check
-    if (originalFile.type.startsWith("video/")) {
-        showToast('Validating video authenticity & size rules...', 'info');
+    renderMediaTrustBadge(null, activeImageFile, { provenance: 'standard_image' });
 
-        validationResult = await validateVideoFile(originalFile);
-        if (!validationResult.valid) {
-            event.target.value = "";
-            clearMediaQuotaBadge();
-            clearMediaOriginClaimUI();
-            showVideoPolicyModal(validationResult.message);
-            return;
-        }
-
-        const costInfo = await calculateVideoUploadCost(originalFile);
-        renderMediaTrustBadge(costInfo, originalFile, validationResult);
-
-        if (costInfo.blocked) {
-            showToast(costInfo.reason, 'error');
-            event.target.value = "";
-            clearMediaQuotaBadge();
-            clearMediaOriginClaimUI();
-            return;
-        }
-
-        if (!costInfo.isFree) {
-            const paidOrAgreed = await triggerOveragePaymentModal(costInfo.feeUSD, costInfo.reason);
-            if (!paidOrAgreed) {
-                showToast('Video upload canceled.', 'warning');
-                event.target.value = "";
-                clearMediaQuotaBadge();
-                clearMediaOriginClaimUI();
-                return;
-            }
-        }
-    } else {
-        renderMediaTrustBadge(null, originalFile, { provenance: 'standard_image' });
-    }
-
-    // 2. Image/Media Processing & Pipeline
     try {
-        showToast('Processing media payload...', 'info');
-        const preparedFile = await prepareMediaForUpload(originalFile);
-
-        const syntheticEvent = {
-            target: { files: [preparedFile] },
-            preventDefault: () => {},
-            stopPropagation: () => {}
-        };
-
-        await handleImageSelect(syntheticEvent, previewArea);
-        renderMediaOriginClaimUI();
-
-        // Save validator metadata upstream if available
-        if (validationResult) {
-            window.activeSubmissionDraft = window.activeSubmissionDraft || {};
-            window.activeSubmissionDraft.mediaMetadata = {
-                fileName: originalFile.name,
-                fileSize: originalFile.size,
-                mimeType: originalFile.type,
-                duration: validationResult.duration || 0,
-                provenance: validationResult.provenance,
-                editorDetected: validationResult.editorDetected,
-                detectedSignatures: validationResult.detectedSignatures
-            };
-        }
-
-        showToast('Media ready for submission', 'success');
-    } catch (err) {
-        console.error('Media processing error:', err);
-        showToast('Media processing failed – using original clip', 'warning');
+        showToast('Processing photo payload...', 'info');
         await handleImageSelect(event, previewArea);
         renderMediaOriginClaimUI();
+        showToast('Photo ready for submission', 'success');
+    } catch (err) {
+        console.error('Image processing error:', err);
+        showToast('Photo processing failed', 'error');
+        activeImageFile = null;
     }
 }
 
 /**
+ * Distinct handler for Video Selection (includes pre-flight validation & pricing)
+ */
+export async function handleVideoSelectAction(event) {
+    const previewArea = document.getElementById('preview-area') || document.getElementById('media-preview');
+    const file = event.target?.files?.[0];
+
+    if (!file) return;
+
+    // Enforce exclusivity: Clear image and audio states
+    clearAllMediaStates();
+
+    showToast('Validating video authenticity & size rules...', 'info');
+    const validationResult = await validateVideoFile(file);
+
+    if (!validationResult.valid) {
+        event.target.value = "";
+        showVideoPolicyModal(validationResult.message);
+        return;
+    }
+
+    const costInfo = await calculateVideoUploadCost(file);
+    renderMediaTrustBadge(costInfo, file, validationResult);
+
+    if (costInfo.blocked) {
+        showToast(costInfo.reason, 'error');
+        event.target.value = "";
+        clearMediaQuotaBadge();
+        return;
+    }
+
+    if (!costInfo.isFree) {
+        const paidOrAgreed = await triggerOveragePaymentModal(costInfo.feeUSD, costInfo.reason);
+        if (!paidOrAgreed) {
+            showToast('Video upload canceled.', 'warning');
+            event.target.value = "";
+            clearMediaQuotaBadge();
+            return;
+        }
+    }
+
+    // Assign to isolated video state
+    activeVideoFile = file;
+
+    try {
+        await handleImageSelect(event, previewArea); // Re-use preview mapper safely
+        renderMediaOriginClaimUI();
+
+        window.activeSubmissionDraft = window.activeSubmissionDraft || {};
+        window.activeSubmissionDraft.mediaMetadata = {
+            fileName: file.name,
+            fileSize: file.size,
+            mimeType: file.type,
+            duration: validationResult.duration || 0,
+            provenance: validationResult.provenance,
+            editorDetected: validationResult.editorDetected,
+            detectedSignatures: validationResult.detectedSignatures
+        };
+
+        showToast('Video ready for submission', 'success');
+    } catch (err) {
+        console.error('Video preview error:', err);
+        showToast('Video preview failed', 'error');
+        activeVideoFile = null;
+    }
+}
+
+/**
+ * Distinct handler for Audio Selection
+ */
+export async function handleAudioSelectAction(event) {
+    const previewArea = document.getElementById('preview-area') || document.getElementById('media-preview');
+    const file = event.target?.files?.[0];
+
+    if (!file) return;
+
+    // Enforce exclusivity: Clear image and video states
+    clearAllMediaStates();
+    activeAudioFile = file;
+
+    renderMediaTrustBadge(null, activeAudioFile, { provenance: 'audio_recording' });
+
+    try {
+        showToast('Processing audio payload...', 'info');
+        await handleImageSelect(event, previewArea);
+        renderMediaOriginClaimUI();
+        showToast('Audio ready for submission', 'success');
+    } catch (err) {
+        console.error('Audio processing error:', err);
+        showToast('Audio processing failed', 'error');
+        activeAudioFile = null;
+    }
+}/**
  * Initialize composer using Event Delegation on a stable root.
- * Hardened with null checks + double-binding protection.
- * Prefer a single listener on the closest stable container instead of many individual bindings.
+ * Hardened with null checks + isolated multi-media bindings.
  */
 export function initComposer() {
     // Find the most stable root for the composer UI
@@ -409,22 +456,35 @@ export function initComposer() {
         // Post / Submit button
         const postButton = e.target.closest('#postButton, #submitBtn, button[type="submit"]');
         if (postButton && (postButton.id === 'postButton' || postButton.id === 'submitBtn' || postButton.type === 'submit')) {
-            // Let the form submit handler also catch it, but we can trigger here if needed
-            // For safety we still call the shared handler
             handleComposerSubmit(e);
             return;
         }
     });
 
-    // ===== File input change (still direct – change does not bubble the same way) =====
-    const fileInput = document.getElementById('media-input') ||
-                      document.getElementById('photoInput') ||
-                      document.getElementById('media-file-input') ||
-                      document.getElementById('mediaFileInput');
+    // ===== SEPARATE MEDIA INPUT BINDINGS (Enforcing Isolation) =====
+    
+    // 1. Photo / Standard Media Input
+    const photoInput = document.getElementById('media-input') ||
+                       document.getElementById('photoInput') ||
+                       document.getElementById('media-file-input') ||
+                       document.getElementById('mediaFileInput');
+    if (photoInput && !photoInput.dataset.listenerAttached) {
+        photoInput.dataset.listenerAttached = 'true';
+        photoInput.addEventListener('change', handleImageSelectAction);
+    }
 
-    if (fileInput && !fileInput.dataset.listenerAttached) {
-        fileInput.dataset.listenerAttached = 'true';
-        fileInput.addEventListener('change', handleMediaSelect);
+    // 2. Video Input
+    const videoInput = document.getElementById('videoInput') || document.getElementById('video-input');
+    if (videoInput && !videoInput.dataset.listenerAttached) {
+        videoInput.dataset.listenerAttached = 'true';
+        videoInput.addEventListener('change', handleVideoSelectAction);
+    }
+
+    // 3. Audio Input
+    const audioInput = document.getElementById('audioInput') || document.getElementById('audio-input');
+    if (audioInput && !audioInput.dataset.listenerAttached) {
+        audioInput.dataset.listenerAttached = 'true';
+        audioInput.addEventListener('change', handleAudioSelectAction);
     }
 
     // ===== Real-time AI analysis (input events) =====
@@ -462,7 +522,7 @@ export function initComposer() {
         composerForm.addEventListener('submit', handleComposerSubmit);
     }
 
-    console.log('✅ Testimony composer wired with Event Delegation (hardened + C2PA-aware)');
+    console.log('✅ Testimony composer wired with isolated multi-media pathways');
 }
 
 /**
