@@ -34,11 +34,23 @@ let listenersInitialized = false;
 let isSwitchingTab = false;
 
 // ====================== DATA SAVER HANDLER ======================
+const DATA_SAVER_KEY = 'vw_data_saver';
+
+/**
+ * Read current state from localStorage
+ */
+function getDataSaverState() {
+  return localStorage.getItem(DATA_SAVER_KEY) === 'true';
+}
+
+/**
+ * Update all status texts + button styles
+ */
 function updateDataSaverUI(isOn) {
   const statusText = isOn ? 'On' : 'Off';
   const statusClass = isOn ? 'text-emerald-400 font-bold' : 'text-zinc-400';
 
-  // Update status text
+  // Update every status element that exists
   ['data-saver-status', 'data-saver-status-mobile', 'footer-data-saver-status'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
@@ -68,8 +80,34 @@ function updateDataSaverUI(isOn) {
   }
 }
 
+/**
+ * Main toggle function (called by both desktop & mobile buttons)
+ */
+function toggleDataSaver() {
+  const current = getDataSaverState();
+  const next = !current;
+
+  // Save new state
+  localStorage.setItem(DATA_SAVER_KEY, String(next));
+
+  // Update UI immediately
+  updateDataSaverUI(next);
+
+  // Optional: let other parts of the app know
+  window.dispatchEvent(new CustomEvent('data-saver-changed', {
+    detail: { enabled: next }
+  }));
+
+  console.log('[Data Saver]', next ? 'ON' : 'OFF');
+}
+
+// Expose for the onclick="toggleDataSaver()" in HTML
 window.toggleDataSaver = toggleDataSaver;
 
+// Initialise the correct state when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+  updateDataSaverUI(getDataSaverState());
+});
 // ====================== TAB SWITCHING ======================
 window.switchTab = async (tab) => {
     if (isSwitchingTab) return;
