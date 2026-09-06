@@ -138,15 +138,51 @@ export async function handleEvidenceAction(e, post) {
 
 /**
  * Global fallback click handler for standalone usage.
+ * Used when a download button is clicked outside the main feed handler.
  */
 export function initEvidencePackUI() {
   document.addEventListener('click', async (e) => {
-    const btn = e.target.closest('.download-evidence-pack-btn');
+    const btn = e.target.closest('.download-evidence-pack-btn, [data-action="download-pack"]');
     if (!btn || btn.dataset.handledByFeed) return;
 
     const id = btn.dataset.id || btn.dataset.testimonyId;
     if (!id) return;
 
-    showToast('Fetching full pack context...', 'info');
+    e.preventDefault();
+    e.stopPropagation();
+
+    try {
+      btn.classList.add('opacity-50', 'pointer-events-none');
+      showToast('Fetching full pack context...', 'info');
+
+      // Try to find the post data from the nearest card
+      const card = btn.closest('[data-post-id], .post-card, .testimony-card, article');
+      let post = null;
+
+      if (card && card.__postData) {
+        // Some feeds attach the full object directly
+        post = card.__postData;
+      } else if (window.__testimoniesCache && window.__testimoniesCache[id]) {
+        // Fallback to global cache if available
+        post = window.__testimoniesCache[id];
+      }
+
+      if (!post) {
+        showToast('Could not locate full report data. Please try again from the feed.', 'error');
+        return;
+      }
+
+      // Re-use the main evidence action handler
+      await handleEvidenceAction(
+        { target: btn, preventDefault() {}, stopPropagation() {} },
+        post
+      );
+
+    } catch (err) {
+      console.error('[evidence-ui] Fallback download failed:', err);
+      showToast('Failed to generate Evidence Pack.', 'error');
+    } finally {
+      btn.classList.remove('opacity-50', 'pointer-events-none');
+    }
   });
 }
