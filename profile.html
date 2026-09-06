@@ -57,85 +57,85 @@
         </div>
     </main>
 
-    <!-- ====================== EDIT PROFILE MODAL ====================== -->
-    <div id="editProfileModal" role="dialog" aria-modal="true" aria-labelledby="editProfileTitle"
-         class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[10001] p-4">
-        <div class="glass rounded-3xl p-6 max-w-md w-full border border-zinc-800 space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto custom-scroll">
-
-            <div class="flex justify-between items-center border-b border-zinc-800/80 pb-3">
-                <h3 id="editProfileTitle" class="text-xl font-bold text-white" data-i18n="editProfile">Edit Profile</h3>
-                <button type="button" onclick="closeEditProfile()" aria-label="Close modal"
-                        class="text-2xl text-zinc-400 hover:text-white transition-colors">&times;</button>
-            </div>
-
-            <form id="editProfileForm" onsubmit="handleSaveProfile(event)" class="space-y-5">
-
-                <!-- Avatar Upload with event stopPropagation to prevent sign-out bugs -->
-                <div class="flex flex-col items-center gap-3">
-                    <div class="relative">
-                        <div class="w-24 h-24 rounded-3xl overflow-hidden border-4 border-zinc-700 bg-zinc-800 shadow-xl">
-                            <img id="avatarPreview" src="" alt="Avatar Preview" class="w-full h-full object-cover hidden">
-                            <div id="avatarFallback" class="w-full h-full flex items-center justify-center text-5xl">
-                                👤
-                            </div>
-                        </div>
-                    </div>
-                    <label class="cursor-pointer text-sm text-emerald-400 hover:text-emerald-300 font-medium transition" onclick="event.stopPropagation()">
-                        Change Photo
-                        <input type="file" accept="image/*" class="hidden" onchange="safeHandleImagePreview(event)">
-                    </label>
-                    <p class="text-[11px] text-zinc-500">Max 2MB • Auto-compressed</p>
-                </div>
-
-                <!-- Name Fields -->
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label for="editFirstName" class="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5">First Name</label>
-                        <input type="text" id="editFirstName" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
-                    </div>
-                    <div>
-                        <label for="editLastName" class="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5">Last Name</label>
-                        <input type="text" id="editLastName" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
-                    </div>
-                </div>
-
-                <div>
-                    <label for="editDisplayName" class="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5" data-i18n="displayName">Display Name</label>
-                    <input type="text" id="editDisplayName" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
-                </div>
-
-                <div>
-                    <label for="editUsername" class="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5" data-i18n="username">Username</label>
-                    <input type="text" id="editUsername" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
-                </div>
-
-                <div>
-                    <label for="editRegion" class="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5" data-i18n="region">Region / Location</label>
-                    <input type="text" id="editRegion" placeholder="e.g. West Africa" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
-                </div>
-
-                <div>
-                    <label for="editBio" class="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5" data-i18n="bio">Bio</label>
-                    <textarea id="editBio" rows="3" maxlength="280" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 resize-none"></textarea>
-                </div>
-
-                <!-- Privacy Shield -->
-                <div class="bg-zinc-900/60 p-4 rounded-2xl border border-zinc-800 flex items-center justify-between gap-3">
-                    <div class="min-w-0">
-                        <div class="font-medium text-white text-sm flex items-center gap-2">🛡️ Privacy Shield</div>
-                        <div class="text-xs text-zinc-400 mt-0.5 leading-relaxed">Hides real name &amp; location from others.</div>
-                    </div>
-                    <input type="checkbox" id="toggleHidePublicInfo" checked class="w-5 h-5 accent-emerald-500 rounded cursor-pointer shrink-0">
-                </div>
-
-                <div class="flex gap-3 pt-2">
-                    <button type="submit" class="flex-1 py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition shadow-lg shadow-emerald-500/20">Save Changes</button>
-                    <button type="button" onclick="closeEditProfile()" class="py-3 px-5 bg-zinc-800 text-zinc-300 font-semibold rounded-xl hover:bg-zinc-700 transition">Cancel</button>
-                </div>
-            </form>
-        </div>
+<!-- ====================== EDIT PROFILE MODAL ====================== -->
+<div id="editProfileModal" role="dialog" aria-modal="true" aria-labelledby="editProfileTitle"
+     class="hidden fixed inset-0 bg-black/85 flex items-center justify-center z-[10001] p-4">
+  <div class="rounded-3xl p-6 max-w-md w-full border border-zinc-800 space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto custom-scroll bg-[#111827]">
+    
+    <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
+      <h3 id="editProfileTitle" class="text-xl font-bold text-white" data-i18n="editProfile">Edit Profile</h3>
+      <button type="button" id="btn-close-edit-profile" aria-label="Close modal"
+              class="text-2xl text-zinc-400 hover:text-white transition-colors">&times;</button>
     </div>
 
+    <form id="editProfileForm" class="space-y-5">
+      <!-- Avatar -->
+      <div class="flex flex-col items-center gap-3">
+        <div class="relative">
+          <div class="w-24 h-24 rounded-3xl overflow-hidden border-4 border-zinc-700 bg-zinc-800 shadow-xl">
+            <img id="avatarPreview" src="" alt="Avatar Preview" class="w-full h-full object-cover hidden">
+            <div id="avatarFallback" class="w-full h-full flex items-center justify-center text-5xl">👤</div>
+          </div>
+        </div>
+        <label class="cursor-pointer text-sm text-emerald-400 hover:text-emerald-300 font-medium transition">
+          Change Photo
+          <input type="file" id="avatarInput" accept="image/*" class="hidden">
+        </label>
+        <p class="text-[11px] text-zinc-500">Max 2MB • Auto-compressed</p>
+      </div>
+
+      <!-- Name Fields -->
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label for="editFirstName" class="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5">First Name</label>
+          <input type="text" id="editFirstName" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+        </div>
+        <div>
+          <label for="editLastName" class="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5">Last Name</label>
+          <input type="text" id="editLastName" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+        </div>
+      </div>
+
+      <div>
+        <label for="editDisplayName" class="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5" data-i18n="displayName">Display Name</label>
+        <input type="text" id="editDisplayName" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+      </div>
+
+      <div>
+        <label for="editUsername" class="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5" data-i18n="username">Username</label>
+        <input type="text" id="editUsername" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+      </div>
+
+      <div>
+        <label for="editRegion" class="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5" data-i18n="region">Region / Location</label>
+        <input type="text" id="editRegion" placeholder="e.g. West Africa" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+      </div>
+
+      <div>
+        <label for="editBio" class="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5" data-i18n="bio">Bio</label>
+        <textarea id="editBio" rows="3" maxlength="280" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 resize-none"></textarea>
+      </div>
+
+      <!-- Privacy Shield -->
+      <div class="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 flex items-center justify-between gap-3">
+        <div class="min-w-0">
+          <div class="font-medium text-white text-sm flex items-center gap-2">🛡️ Privacy Shield</div>
+          <div class="text-xs text-zinc-400 mt-0.5 leading-relaxed">Hides real name &amp; location from others.</div>
+        </div>
+        <input type="checkbox" id="toggleHidePublicInfo" checked class="w-5 h-5 accent-emerald-500 rounded cursor-pointer shrink-0">
+      </div>
+
+      <div class="flex gap-3 pt-2">
+        <button type="submit" class="flex-1 py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition shadow-lg shadow-emerald-500/20">
+          Save Changes
+        </button>
+        <button type="button" id="btn-cancel-edit" class="py-3 px-5 bg-zinc-800 text-zinc-300 font-semibold rounded-xl hover:bg-zinc-700 transition">
+          Cancel
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
     <!-- ====================== SETTINGS & SECURITY MODAL ====================== -->
     <div id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle"
          class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[10001] p-4">
