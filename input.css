@@ -432,3 +432,48 @@ select[data-action="change-language"] option {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
+
+/* ============================================================
+   PROFILE PAGE + MODALS – FORCE SOLID BACKGROUNDS
+   ============================================================ */
+
+/* Main profile card and header on this page */
+.glass {
+  background-color: #111827 !important;          /* solid */
+  background-image: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-color: #27272a !important;
+}
+
+/* Keep a very subtle glass only on the sticky header if you want */
+header.glass {
+  background-color: rgba(17, 24, 39, 0.97) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+/* Edit Profile Modal + Settings Modal – solid panels */
+#editProfileModal > div,
+#settingsModal > div {
+  background-color: #111827 !important;
+  background-image: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid #27272a !important;
+  opacity: 1 !important;
+}
+
+/* Nested cards inside the modals */
+#editProfileModal .bg-zinc-900\/60,
+#settingsModal .bg-zinc-900\/60,
+#editProfileModal .rounded-2xl,
+#settingsModal .rounded-2xl {
+  background-color: #18181b !important;
+}
+
+/* Overlay behind the modals */
+#editProfileModal,
+#settingsModal {
+  background-color: rgba(0, 0, 0, 0.85) !important;
+}
