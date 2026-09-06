@@ -377,3 +377,58 @@ select[data-action="change-language"] option {
 #profileModal .rounded-xl {
   background-color: #18181b !important;
 }
+
+/* ============================================================
+   FORCE SOLID BACKGROUNDS ON ALL MODALS
+   Fixes transparency issues in modern Chrome / Edge
+   ============================================================ */
+
+/* Overlay (the dark backdrop behind every modal) */
+.modal-overlay,
+#profileModal,
+[id$="Modal"],
+[class*="modal-overlay"],
+.fixed.inset-0.z-\[9000\],
+.fixed.inset-0.z-\[9999\] {
+  background-color: rgba(0, 0, 0, 0.85) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+}
+
+/* The actual modal panel (the card itself) */
+.modal-container,
+.modal,
+#profileModal > div,
+[id$="Modal"] > div,
+.modal-overlay > div {
+  background-color: #111827 !important;          /* solid zinc-900 */
+  background-image: none !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid #27272a !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75) !important;
+}
+
+/* Nested cards / sections inside modals */
+#profileModal .rounded-3xl,
+#profileModal .rounded-2xl,
+#profileModal .rounded-xl,
+.modal .rounded-3xl,
+.modal .rounded-2xl,
+.modal .rounded-xl,
+.modal-container .rounded-3xl,
+.modal-container .rounded-2xl,
+.modal-container .rounded-xl {
+  background-color: #18181b !important;
+  background-image: none !important;
+}
+
+/* Extra safety for any element that still tries to be glass */
+.modal .glass,
+.modal-container .glass,
+#profileModal .glass {
+  background-color: #18181b !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
