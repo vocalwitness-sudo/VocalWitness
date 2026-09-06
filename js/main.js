@@ -285,22 +285,21 @@ window.publishTestimony = async () => {
     // ---------- 2. Media (STRICT – fail closed if user selected media) ----------
     let mediaData = {
       imageUrl: null,
+      videoUrl: null,
       audioUrl: null,
-      videoUrl: null,          // added for future consistency with upload.js video support
       imageHash: null,
-      audioHash: null,
       videoHash: null,
+      audioHash: null,
       bodyHash: null,
       hasEvidencePack: false,
       evidencePack: null,
       packCoreHash: null
     };
 
-    // Detect whether the user actually selected files
-    const userSelectedMedia =
-      (typeof mediaModule?.hasPendingMedia === 'function' && mediaModule.hasPendingMedia()) ||
-      (typeof mediaModule?.getPendingFiles === 'function' && (mediaModule.getPendingFiles()?.length > 0)) ||
-      (window.__pendingMediaFiles && window.__pendingMediaFiles.length > 0);
+    // Detect whether the user actually selected media
+    const userSelectedMedia = typeof mediaModule?.hasPendingMedia === 'function'
+      ? mediaModule.hasPendingMedia()
+      : false;
 
     if (typeof mediaModule?.uploadForensicMedia === 'function') {
       try {
@@ -309,13 +308,12 @@ window.publishTestimony = async () => {
         if (uploaded) {
           mediaData = { ...mediaData, ...uploaded };
         } else if (userSelectedMedia) {
-          // User picked files but upload returned nothing → treat as failure
+          // User picked media but upload returned nothing → treat as failure
           throw new Error('Media upload returned empty result');
         }
       } catch (mediaErr) {
         console.error('[publish] Media upload failed – aborting publish to protect ledger:', mediaErr);
 
-        // Clearer message for the known CORS case
         const isCorsLike = mediaErr?.message?.includes('Network error') ||
                            mediaErr?.message?.includes('CORS') ||
                            mediaErr?.name === 'NetworkError';
@@ -332,8 +330,20 @@ window.publishTestimony = async () => {
           postBtn.disabled = false;
           postBtn.classList.remove('opacity-50', 'cursor-not-allowed');
         }
-        return; // ← HARD STOP – no testimony is written
+        return; // HARD STOP – no testimony is written
       }
+    }
+
+    // ---------- 2b. Body hash (forensic fingerprint of the written text) ----------
+    // Proves the text content has not been altered after publish.
+    try {
+      if (content && typeof generateSha256Hash === 'function') {
+        const textBlob = new Blob([content], { type: 'text/plain' });
+        mediaData.bodyHash = await generateSha256Hash(textBlob);
+      }
+    } catch (hashErr) {
+      console.warn('[publish] Could not compute bodyHash:', hashErr);
+      // Non-fatal – we still publish, just without the body hash
     }
 
     // ---------- 3. STRICT payload that matches the rules exactly ----------
@@ -349,14 +359,14 @@ window.publishTestimony = async () => {
       timestamp: Date.now(),
 
       imageUrl: mediaData.imageUrl || null,
-      audioUrl: mediaData.audioUrl || null,
       videoUrl: mediaData.videoUrl || null,
+      audioUrl: mediaData.audioUrl || null,
       imageHash: mediaData.imageHash || null,
-      audioHash: mediaData.audioHash || null,
       videoHash: mediaData.videoHash || null,
+      audioHash: mediaData.audioHash || null,
       bodyHash: mediaData.bodyHash || null,
 
-      hasForensic: !!(mediaData.imageHash || mediaData.audioHash || mediaData.videoHash),
+      hasForensic: !!(mediaData.imageHash || mediaData.videoHash || mediaData.audioHash || mediaData.bodyHash),
       hasEvidencePack: !!mediaData.hasEvidencePack,
       evidencePack: mediaData.evidencePack || null,
       packCoreHash: mediaData.packCoreHash || null
