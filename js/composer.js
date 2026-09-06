@@ -1,7 +1,4 @@
 // js/composer.js - Hardened Post & Testimony Composer + Real-time AI Analysis & Video Security
-// Updated: Event Delegation strategy, C2PA-aware UI, robust null checks, single-binding protection
-
-import { prepareMediaForUpload } from './media-pipeline.js';
 import { uploadMedia } from './upload.js';
 import { showToast } from './utils.js';
 import { getCurrentUserTier, TIERS, calculateVideoUploadCost } from './tier.js';
