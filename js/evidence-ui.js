@@ -30,7 +30,6 @@ export function renderSealedBadge(hasPack) {
 
 /**
  * Renders the download button for a sealed evidence pack.
- * Used by feed.js: ${hasPack ? renderDownloadPackButton(id) : ''}
  * @param {string} testimonyId
  * @returns {string} HTML string
  */
