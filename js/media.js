@@ -1,10 +1,21 @@
-// js/media.js - Forensic Media Handler (Production R2 Version)
+/**
+ * js/media.js
+ * Forensic Media Handler (Production R2 Version - Fully Isolated Multi-Media)
+ * Aligned with isolation plan: separate paths for Image, Video, and Audio
+ */
+
 import { showToast, generateSha256Hash } from './utils.js';
 import { auth } from './firebase-config.js';
-import { uploadSecurePhoto, uploadSecureAudio } from './upload.js';
+import { uploadSecurePhoto, uploadSecureAudio, uploadSecureVideo } from './upload.js';
 import { prepareMediaForUpload } from './media-pipeline.js';
 
+// ====================== ISOLATED MEDIA STATE ======================
+// These act as fallback / internal state.
+// Prefer passing values from composer.js (activeImageFile, activeVideoFile, activeAudioFile)
 export let selectedImageFile = null;
+export let selectedVideoFile = null;
+export let selectedAudioFile = null;
+
 let engineInstance = null;
 let waveAnimationId = null;
 let replayUrl = null;
@@ -86,42 +97,36 @@ function stopWaveAndTimer() {
 }
 
 /**
- * Verifies that an uploaded media URL is publicly accessible at the edge before saving records.
- * Uses GET with a 1-byte Range header to bypass HEAD preflight locks on Cloudflare Custom Domains.
+ * Verifies that an uploaded media URL is publicly accessible at the edge
  */
 export async function verifyMediaUrl(url, maxRetries = 6, delayMs = 1000) {
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      // Append timestamp cache buster
-      const cacheBustUrl = `${url}?t=${Date.now()}`;
-      
-      // Use GET with 1-byte range to avoid downloading full file while bypassing HEAD CORS locks
-      const response = await fetch(cacheBustUrl, { 
-        method: 'GET',
-        headers: { 'Range': 'bytes=0-0' },
-        cache: 'no-store' 
-      });
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            const cacheBustUrl = `${url}?t=${Date.now()}`;
+            const response = await fetch(cacheBustUrl, {
+                method: 'GET',
+                headers: { 'Range': 'bytes=0-0' },
+                cache: 'no-store'
+            });
 
-      // 200 (OK) or 206 (Partial Content) means the file exists at edge
-      if (response.ok || response.status === 206) {
-        return true;
-      }
-    } catch (err) {
-      console.warn(`[Edge Check Attempt ${attempt}] Media propagation pending...`);
+            if (response.ok || response.status === 206) {
+                return true;
+            }
+        } catch (err) {
+            console.warn(`[Edge Check Attempt ${attempt}] Media propagation pending...`);
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, delayMs * attempt));
     }
 
-    // Incremental backoff delay (1s, 2s, 3s...)
-    await new Promise((resolve) => setTimeout(resolve, delayMs * attempt));
-  }
-
-  throw new Error(`Media uploaded but return URL is unreachable (404/Network Error): ${url}`);
+    throw new Error(`Media uploaded but return URL is unreachable: ${url}`);
 }
 
-// ====================== QUICK-CHECK HELPER ======================
+// ====================== VALIDATION ======================
 export function validateMediaFile(file, options = {}) {
     const {
-        maxSizeBytes = 10 * 1024 * 1024,
-        allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic']
+        maxSizeBytes = 25 * 1024 * 1024, // default 25MB
+        allowedTypes = null
     } = options;
 
     if (!file) {
@@ -137,8 +142,17 @@ export function validateMediaFile(file, options = {}) {
         return { valid: false, error: `File size exceeds the ${maxSizeMB}MB limit.` };
     }
 
-    if (!file.type || !file.type.startsWith('image/') || (allowedTypes.length > 0 && !allowedTypes.includes(file.type))) {
-        return { valid: false, error: 'Unsupported file type. Please upload a valid image (JPEG, PNG, WebP).' };
+    if (allowedTypes && Array.isArray(allowedTypes)) {
+        if (!allowedTypes.includes(file.type)) {
+            return { valid: false, error: 'Unsupported file type.' };
+        }
+    } else {
+        // Fallback: allow image, video, audio
+        if (!file.type.startsWith('image/') &&
+            !file.type.startsWith('video/') &&
+            !file.type.startsWith('audio/')) {
+            return { valid: false, error: 'Unsupported media type.' };
+        }
     }
 
     return { valid: true };
@@ -147,6 +161,8 @@ export function validateMediaFile(file, options = {}) {
 // ====================== STATE RESET ======================
 export function resetMediaState() {
     selectedImageFile = null;
+    selectedVideoFile = null;
+    selectedAudioFile = null;
 
     if (replayUrl) {
         URL.revokeObjectURL(replayUrl);
@@ -161,7 +177,8 @@ export function resetMediaState() {
     }
 
     if (engineInstance) {
-        if (typeof engineInstance.stopVoiceRecording === 'function' && engineInstance.mediaRecorder?.state === 'recording') {
+        if (typeof engineInstance.stopVoiceRecording === 'function' &&
+            engineInstance.mediaRecorder?.state === 'recording') {
             engineInstance.stopVoiceRecording().catch(() => {});
         }
         engineInstance.currentAudioBlob = null;
@@ -172,7 +189,15 @@ export function resetMediaState() {
 
     const previewArea = document.getElementById('preview-area');
     if (previewArea) {
-        previewArea.innerHTML = '';
+        if (previewArea.dataset.objectUrl) {
+            URL.revokeObjectURL(previewArea.dataset.objectUrl);
+            delete previewArea.dataset.objectUrl;
+        }
+        previewArea.innerHTML = `
+            <div id="preview-empty" class="py-2 text-center">
+                <p>Preview will appear here...</p>
+                <p class="mt-1 text-xs text-zinc-600">Photos, videos, or voice notes show after you add them</p>
+            </div>`;
         previewArea.classList.remove('has-content');
     }
 
@@ -182,19 +207,29 @@ export function resetMediaState() {
     }
 }
 
-// ====================== REMOVE IMAGE (CANCEL) ======================
-export function removeImage(previewArea) {
+// ====================== REMOVE MEDIA ======================
+export function removeMedia(previewArea) {
     selectedImageFile = null;
+    selectedVideoFile = null;
+    selectedAudioFile = null;
 
     if (previewArea) {
-        previewArea.innerHTML = '';
+        if (previewArea.dataset.objectUrl) {
+            URL.revokeObjectURL(previewArea.dataset.objectUrl);
+            delete previewArea.dataset.objectUrl;
+        }
+        previewArea.innerHTML = `
+            <div id="preview-empty" class="py-2 text-center">
+                <p>Preview will appear here...</p>
+                <p class="mt-1 text-xs text-zinc-600">Photos, videos, or voice notes show after you add them</p>
+            </div>`;
         previewArea.classList.remove('has-content');
     }
 
-    showToast('Image removed', 'info');
+    showToast('Media removed', 'info');
 }
 
-// ====================== PHOTO ======================
+// ====================== IMAGE SELECT (Protected Path) ======================
 export async function handleImageSelect(event, previewArea) {
     const file = event.target?.files?.[0];
     if (!file) return;
@@ -210,24 +245,22 @@ export async function handleImageSelect(event, previewArea) {
         return;
     }
 
-    selectedImageFile = null;
-    if (previewArea) {
-        previewArea.innerHTML = '';
-        previewArea.classList.remove('has-content');
-    }
-
+    // Enforce exclusivity
     selectedImageFile = file;
+    selectedVideoFile = null;
+    selectedAudioFile = null;
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        if (!previewArea) return;
+    // Simple preview (composer.js will normally handle preview with renderGenericMediaPreview)
+    if (previewArea) {
+        const objectUrl = URL.createObjectURL(file);
+        previewArea.dataset.objectUrl = objectUrl;
 
         previewArea.innerHTML = `
             <div class="relative mt-4 rounded-2xl overflow-hidden border border-emerald-500/40 bg-zinc-950 shadow-xl inline-block">
-                <img src="${e.target.result}" class="h-32 w-32 object-cover" alt="Evidence Preview">
-                <button type="button" id="removeImgBtn"
+                <img src="${objectUrl}" class="h-32 w-32 object-cover" alt="Evidence Preview">
+                <button type="button" id="removeMediaBtn"
                         class="absolute top-2 right-2 bg-red-600/90 hover:bg-red-700 text-white rounded-full p-1.5 shadow-lg transition flex items-center justify-center cursor-pointer"
-                        title="Remove Image">
+                        title="Remove Media">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -235,26 +268,19 @@ export async function handleImageSelect(event, previewArea) {
             </div>`;
         previewArea.classList.add('has-content');
 
-        const removeBtn = document.getElementById('removeImgBtn');
+        const removeBtn = document.getElementById('removeMediaBtn');
         if (removeBtn) {
             removeBtn.onclick = (ev) => {
                 ev.stopPropagation();
-                removeImage(previewArea);
+                removeMedia(previewArea);
             };
         }
-    };
-
-    reader.onerror = () => {
-        showToast("Failed to read selected image", "error");
-        selectedImageFile = null;
-    };
-
-    reader.readAsDataURL(file);
+    }
 
     if (event.target) event.target.value = '';
 }
 
-// ====================== VOICE ======================
+// ====================== VOICE RECORDING ======================
 export async function toggleVoiceRecording(voiceBtn) {
     if (!engineInstance) {
         return showToast("Voice engine not ready yet", "error");
@@ -266,6 +292,10 @@ export async function toggleVoiceRecording(voiceBtn) {
 
     if (!isActive) {
         try {
+            // Clear other media when starting voice recording
+            selectedImageFile = null;
+            selectedVideoFile = null;
+
             await engineInstance.startVoiceRecording(300000);
             voiceBtn?.classList.add('recording-active', 'animate-pulse');
             showRecorderBar(true);
@@ -368,40 +398,47 @@ export function initVoiceControls() {
     }
 }
 
-// ====================== UPLOAD ======================
-export async function uploadForensicMedia() {
+// ====================== UNIFIED UPLOAD ROUTER (Single Meeting Point) ======================
+/**
+ * Main upload entry point.
+ * Prefer passing the active files from composer.js for clean isolation.
+ */
+export async function uploadForensicMedia(
+    activeImageFile = null,
+    activeVideoFile = null,
+    activeAudioBlob = null
+) {
     const mediaData = {
         imageUrl: null,
+        videoUrl: null,
         audioUrl: null,
         imageHash: null,
+        videoHash: null,
         audioHash: null
     };
 
-    // 1. Photo Upload (Scrubbed EXIF via R2 & Hashed Clean Bytes)
-    if (selectedImageFile) {
-        try {
-            if (selectedImageFile.size === 0) {
-                throw new Error("Selected image is empty");
-            }
+    // Prefer explicitly passed values (from composer isolation)
+    // Fallback to internal state only if needed
+    const targetImage = activeImageFile || selectedImageFile;
+    const targetVideo = activeVideoFile || selectedVideoFile;
+    const targetAudio = activeAudioBlob || selectedAudioFile || engineInstance?.currentAudioBlob;
 
-            // Scrub EXIF metadata and compress first
-            const cleanedFile = await prepareMediaForUpload(selectedImageFile, {
+    // 1. Image Path (Protected + Scrubbed)
+    if (targetImage) {
+        try {
+            if (targetImage.size === 0) throw new Error("Selected image is empty");
+
+            const cleanedFile = await prepareMediaForUpload(targetImage, {
                 maxWidth: 1920,
                 maxHeight: 1080
             });
 
-            // Hash the cleaned file
             const hash = await generateSha256Hash(cleanedFile);
-
-            // Upload the cleaned file via secure uploader to target folder "evidence"
             const uploadedUrl = await uploadSecurePhoto(cleanedFile, 'evidence');
-
-            // Verify file actually exists at edge endpoint before assigning
             await verifyMediaUrl(uploadedUrl);
 
             mediaData.imageUrl = uploadedUrl;
             mediaData.imageHash = hash;
-
             console.log("✅ Image scrubbed, hashed & verified:", mediaData.imageUrl);
         } catch (e) {
             console.error("Image upload failed:", e);
@@ -410,26 +447,36 @@ export async function uploadForensicMedia() {
         }
     }
 
-    // 2. Audio Upload (Direct to R2 via unified uploadSecureAudio)
-    if (engineInstance?.currentAudioBlob) {
+    // 2. Video Path (Isolated)
+    if (targetVideo) {
         try {
-            const blob = engineInstance.currentAudioBlob;
+            if (targetVideo.size === 0) throw new Error("Selected video is empty");
 
-            if (!blob || blob.size === 0) {
-                console.warn("Audio blob is empty – skipping upload");
-                showToast("Recording is empty. Please record again.", "error");
-            } else {
-                const hash = await generateSha256Hash(blob);
+            const hash = await generateSha256Hash(targetVideo);
+            const uploadedUrl = await uploadSecureVideo(targetVideo, 'evidence');
+            await verifyMediaUrl(uploadedUrl);
 
-                // Upload audio through unified pipeline to folder "evidence"
-                const uploadedUrl = await uploadSecureAudio(blob, 'evidence');
+            mediaData.videoUrl = uploadedUrl;
+            mediaData.videoHash = hash;
+            console.log("✅ Video uploaded and verified:", mediaData.videoUrl);
+        } catch (e) {
+            console.error("Video upload failed:", e);
+            showToast(e.message || "Video upload failed", "error");
+            throw e;
+        }
+    }
 
-                // Verify voice recording URL before accepting
+    // 3. Audio Path (Isolated)
+    if (targetAudio) {
+        try {
+            if (targetAudio.size > 0) {
+                const hash = await generateSha256Hash(targetAudio);
+                const uploadedUrl = await uploadSecureAudio(targetAudio, 'evidence');
                 await verifyMediaUrl(uploadedUrl);
 
                 mediaData.audioUrl = uploadedUrl;
                 mediaData.audioHash = hash;
-                console.log("✅ Audio uploaded and verified on R2:", mediaData.audioUrl);
+                console.log("✅ Audio uploaded and verified:", mediaData.audioUrl);
             }
         } catch (e) {
             console.error("Audio upload failed:", e);
