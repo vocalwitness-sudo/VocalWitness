@@ -56,7 +56,10 @@ export function applyPostDoorDecorations(postCardElement, post, currentUser) {
   if (!postCardElement || !post) return;
 
   const authorPrivacy = post.authorDoorPrivacy || PRIVACY_MODES.OPEN;
-  const canInteract = canInteractWithUser({ doorPrivacyMode: authorPrivacy, uid: post.authorId }, currentUser);
+  const canInteract = canInteractWithUser(
+    { doorPrivacyMode: authorPrivacy, uid: post.authorId },
+    currentUser
+  );
 
   // 1. Add "Witness Broadcast" badge if post author has ZK_ONLY active
   if (authorPrivacy === PRIVACY_MODES.ZK_ONLY) {
@@ -111,7 +114,9 @@ export function renderBridgePassModal() {
     <div class="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-2xl p-5 shadow-2xl flex flex-col items-center text-center relative">
       <!-- Close / Exit Button -->
       <button type="button" id="close-bridge-modal-top" class="absolute top-3 right-3 text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-zinc-800 transition" aria-label="Close modal">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
       </button>
 
       <div class="w-12 h-12 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-2xl mb-3">
@@ -119,7 +124,7 @@ export function renderBridgePassModal() {
       </div>
       <h3 class="text-base font-bold text-zinc-100 mb-1">Witness Door Locked</h3>
       <p class="text-xs text-zinc-400 mb-4 leading-relaxed">
-        This Witness member restricted replies to verified accounts to prevent spam and target harassment on Witness Voice. Your identity remains fully protected, and your report can never be secretly deleted or edited by anyone, thus zk technology do it for us.
+        This Witness member restricted replies to verified accounts to prevent spam and target harassment on Witness Voice. Your identity remains fully protected, and your report can never be secretly deleted or edited by anyone.
       </p>
 
       <div class="w-full bg-zinc-800/60 rounded-xl p-3 border border-zinc-700/50 mb-4 text-left flex flex-col gap-2">
@@ -187,26 +192,6 @@ export function renderBridgePassModal() {
   });
 }
 
-    try {
-      // Trigger client ZK verification sequence
-      const mockInputs = { timestamp: Date.now(), uid: state.currentUser?.uid || 'anon' };
-      const proofResult = await generateZKProofAsync(mockInputs);
-
-      if (proofResult) {
-        updateAppState({ isZkReady: true, userTier: 'witness_circle' });
-        showNotification("ZK Proof verified successfully!", "success");
-        modal.remove();
-        // Refresh privacy UI state
-        renderDoorPrivacyToggle();
-      }
-    } catch (err) {
-      showNotification("ZK Verification failed. Redirecting to settings...", "error");
-      modal.remove();
-      window.dispatchEvent(new CustomEvent('nav:navigate', { detail: { target: 'verification' } }));
-    }
-  });
-}
-
 function getModeLabel(mode) {
   switch (mode) {
     case PRIVACY_MODES.ZK_ONLY: return 'ZK Shield (Verified Only)';
@@ -217,4 +202,6 @@ function getModeLabel(mode) {
 
 function showNotification(msg, type = 'info') {
   console.log(`[${type.toUpperCase()}] ${msg}`);
+  // Optional: replace with your real toast system later
+  // showToast(msg, type);
 }
