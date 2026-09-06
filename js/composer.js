@@ -300,6 +300,95 @@ function clearAiFeedback() {
     }
 }
 
+// ======================================================
+// UPDATED: Isolated Media State + Neutral Preview
+// ======================================================
+let activeImageFile = null;
+let activeVideoFile = null;
+let activeAudioFile = null;
+
+/**
+ * Type-neutral preview renderer for images, videos, and audio clips
+ * Includes proper object URL cleanup to prevent memory leaks
+ */
+function renderGenericMediaPreview(file, previewArea) {
+    if (!previewArea) return;
+
+    // Revoke previous object URL if it exists
+    if (previewArea.dataset.objectUrl) {
+        URL.revokeObjectURL(previewArea.dataset.objectUrl);
+        delete previewArea.dataset.objectUrl;
+    }
+
+    previewArea.innerHTML = '';
+
+    const objectUrl = URL.createObjectURL(file);
+    previewArea.dataset.objectUrl = objectUrl;
+
+    let previewElement;
+
+    if (file.type.startsWith('image/')) {
+        previewElement = document.createElement('img');
+        previewElement.src = objectUrl;
+        previewElement.className = 'max-h-48 rounded-xl object-cover border border-zinc-700 mx-auto';
+        previewElement.alt = 'Media preview';
+    } else if (file.type.startsWith('video/')) {
+        previewElement = document.createElement('video');
+        previewElement.src = objectUrl;
+        previewElement.controls = true;
+        previewElement.preload = 'metadata';
+        previewElement.className = 'max-h-48 rounded-xl w-full object-cover border border-zinc-700';
+    } else if (file.type.startsWith('audio/')) {
+        previewElement = document.createElement('audio');
+        previewElement.src = objectUrl;
+        previewElement.controls = true;
+        previewElement.preload = 'metadata';
+        previewElement.className = 'w-full mt-2';
+    } else {
+        previewElement = document.createElement('div');
+        previewElement.className = 'text-xs text-zinc-400 p-2';
+        previewElement.innerText = `File attached: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)} MB)`;
+    }
+
+    previewArea.appendChild(previewElement);
+}
+
+/**
+ * Helper to fully reset all media states and UI
+ */
+function clearAllMediaStates() {
+    activeImageFile = null;
+    activeVideoFile = null;
+    activeAudioFile = null;
+
+    // Clear the respective file inputs
+    ['media-input', 'photoInput', 'videoInput', 'audioInput', 'media-file-input', 'mediaFileInput'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+
+    // Clean up preview area + object URL
+    const previewArea = document.getElementById('preview-area') || document.getElementById('media-preview');
+    if (previewArea) {
+        if (previewArea.dataset.objectUrl) {
+            URL.revokeObjectURL(previewArea.dataset.objectUrl);
+            delete previewArea.dataset.objectUrl;
+        }
+        previewArea.innerHTML = '<span class="text-zinc-500 text-sm">Preview will appear here...</span>';
+    }
+
+    clearMediaQuotaBadge();
+    clearMediaOriginClaimUI();
+
+    if (typeof resetMediaState === 'function') {
+        resetMediaState();
+    }
+}
+
+// ======================================================
+// UPDATED: Distinct Media Handlers (Safe Version)
+// ======================================================
+
 /**
  * Distinct handler for Image/Photo Selection
  */
@@ -309,7 +398,7 @@ export async function handleImageSelectAction(event) {
 
     if (!file) return;
 
-    // Enforce exclusivity: Clear video and audio states
+    // Enforce exclusivity
     clearAllMediaStates();
     activeImageFile = file;
 
@@ -317,7 +406,15 @@ export async function handleImageSelectAction(event) {
 
     try {
         showToast('Processing photo payload...', 'info');
-        await handleImageSelect(event, previewArea);
+
+        // Safe neutral preview
+        renderGenericMediaPreview(file, previewArea);
+
+        // Keep existing image-specific processing if still needed
+        if (typeof handleImageSelect === 'function') {
+            await handleImageSelect(event, previewArea);
+        }
+
         renderMediaOriginClaimUI();
         showToast('Photo ready for submission', 'success');
     } catch (err) {
@@ -328,7 +425,7 @@ export async function handleImageSelectAction(event) {
 }
 
 /**
- * Distinct handler for Video Selection (includes pre-flight validation & pricing)
+ * Distinct handler for Video Selection
  */
 export async function handleVideoSelectAction(event) {
     const previewArea = document.getElementById('preview-area') || document.getElementById('media-preview');
@@ -336,14 +433,14 @@ export async function handleVideoSelectAction(event) {
 
     if (!file) return;
 
-    // Enforce exclusivity: Clear image and audio states
+    // Enforce exclusivity
     clearAllMediaStates();
 
     showToast('Validating video authenticity & size rules...', 'info');
     const validationResult = await validateVideoFile(file);
 
     if (!validationResult.valid) {
-        event.target.value = "";
+        event.target.value = '';
         showVideoPolicyModal(validationResult.message);
         return;
     }
@@ -353,7 +450,7 @@ export async function handleVideoSelectAction(event) {
 
     if (costInfo.blocked) {
         showToast(costInfo.reason, 'error');
-        event.target.value = "";
+        event.target.value = '';
         clearMediaQuotaBadge();
         return;
     }
@@ -362,7 +459,7 @@ export async function handleVideoSelectAction(event) {
         const paidOrAgreed = await triggerOveragePaymentModal(costInfo.feeUSD, costInfo.reason);
         if (!paidOrAgreed) {
             showToast('Video upload canceled.', 'warning');
-            event.target.value = "";
+            event.target.value = '';
             clearMediaQuotaBadge();
             return;
         }
@@ -372,7 +469,8 @@ export async function handleVideoSelectAction(event) {
     activeVideoFile = file;
 
     try {
-        await handleImageSelect(event, previewArea); // Re-use preview mapper safely
+        // Safe neutral preview – NEVER call handleImageSelect here
+        renderGenericMediaPreview(file, previewArea);
         renderMediaOriginClaimUI();
 
         window.activeSubmissionDraft = window.activeSubmissionDraft || {};
@@ -403,7 +501,7 @@ export async function handleAudioSelectAction(event) {
 
     if (!file) return;
 
-    // Enforce exclusivity: Clear image and video states
+    // Enforce exclusivity
     clearAllMediaStates();
     activeAudioFile = file;
 
@@ -411,15 +509,20 @@ export async function handleAudioSelectAction(event) {
 
     try {
         showToast('Processing audio payload...', 'info');
-        await handleImageSelect(event, previewArea);
+
+        // Safe neutral preview – NEVER call handleImageSelect here
+        renderGenericMediaPreview(file, previewArea);
         renderMediaOriginClaimUI();
+
         showToast('Audio ready for submission', 'success');
     } catch (err) {
         console.error('Audio processing error:', err);
         showToast('Audio processing failed', 'error');
         activeAudioFile = null;
     }
-}/**
+}
+
+/**
  * Initialize composer using Event Delegation on a stable root.
  * Hardened with null checks + isolated multi-media bindings.
  */
@@ -672,6 +775,9 @@ async function handleComposerSubmit(e) {
     showToast('Publish system not ready. Please refresh the page.', 'error');
 }
 
+// ======================================================
+// UPDATED: resetForm with full media cleanup
+// ======================================================
 /**
  * Reset form UI
  */
@@ -682,27 +788,17 @@ export function resetForm() {
                           document.getElementById('testimonyTitle') ||
                           document.getElementById('postHeadline');
     const bodyInput = document.getElementById('mainInput') || document.getElementById('postBody') || document.getElementById('testimonyBody');
-    const previewArea = document.getElementById('preview-area') || document.getElementById('media-preview') || document.getElementById('media-provenance-badge');
-    const fileInput = document.getElementById('media-input') || document.getElementById('photoInput') || document.getElementById('media-file-input') || document.getElementById('mediaFileInput');
     const anonymousCheckbox = document.getElementById('post-anonymously') || document.getElementById('isAnonymous');
 
     if (form) form.reset();
     if (headlineInput) headlineInput.value = '';
     if (bodyInput) bodyInput.value = '';
-    if (fileInput) fileInput.value = '';
     if (anonymousCheckbox) anonymousCheckbox.checked = false;
 
-    if (previewArea) {
-        previewArea.innerHTML = '<span class="text-zinc-500 text-sm">Preview will appear here...</span>';
-    }
+    // Full media cleanup (variables + preview + object URLs + badges)
+    clearAllMediaStates();
 
     window.activeSubmissionDraft = {};
     clearAiFeedback();
-    clearMediaQuotaBadge();
-    clearMediaOriginClaimUI();
     lastAnalyzedText = '';
-
-    if (typeof resetMediaState === 'function') {
-        resetMediaState();
-    }
 }
