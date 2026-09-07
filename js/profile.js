@@ -7,7 +7,6 @@ import {
     sendPasswordResetEmail,
     signOut
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-
 import {
     doc,
     getDoc,
@@ -16,7 +15,6 @@ import {
     updateDoc,
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-
 import { auth, db } from './firebase-config.js';
 import { AppState } from './app-state.js';
 import {
@@ -35,7 +33,6 @@ import { startPhoneVerification as startPhoneVerificationModule } from './verifi
 let currentUserData = null;
 let userUnsubscribe = null;
 let pendingAvatarBase64 = null;
-
 window.currentUserData = null;
 
 // ====================== HELPERS ======================
@@ -62,12 +59,12 @@ export function openProfile() {
         return;
     }
 
-    // Always render latest data
     if (currentUserData) {
         renderProfileUI(currentUserData);
     } else {
-        // Show loading state if data not ready yet
-        const content = document.getElementById('profileContent');
+        const content = document.getElementById('profileContent') ||
+                        document.getElementById('mainProfileContent') ||
+                        document.getElementById('modalProfileContent');
         if (content) {
             content.innerHTML = `
                 <div class="flex flex-col items-center justify-center space-y-4 py-16">
@@ -77,7 +74,6 @@ export function openProfile() {
         }
     }
 
-    // Clean open
     modal.classList.remove('hidden');
     modal.classList.add('flex');
     modal.setAttribute('aria-hidden', 'false');
@@ -87,7 +83,6 @@ export function openProfile() {
 export function closeProfile() {
     const modal = document.getElementById('profileModal');
     if (!modal) return;
-
     modal.classList.add('hidden');
     modal.classList.remove('flex');
     modal.setAttribute('aria-hidden', 'true');
@@ -175,7 +170,7 @@ function listenToUserProfile(userId) {
 export function renderProfileUI(userData, retryCount = 0) {
     if (!userData) return;
 
-    const content = document.getElementById('profileContent') || 
+    const content = document.getElementById('profileContent') ||
                     document.getElementById('mainProfileContent') ||
                     document.getElementById('modalProfileContent');
 
@@ -185,7 +180,7 @@ export function renderProfileUI(userData, retryCount = 0) {
         }
         return;
     }
-    
+
     const witnessPromise = typeof getCurrentWitnessLevel === 'function'
         ? getCurrentWitnessLevel()
         : Promise.resolve(null);
@@ -196,6 +191,7 @@ export function renderProfileUI(userData, retryCount = 0) {
             userData.isPhoneVerified ||
             userData.hasVerifiedPhone ||
             userData.tier === 'citizen_circle';
+
         const fullName = [userData.firstName, userData.lastName].filter(Boolean).join(" ");
         const isPrivacyShieldActive = isPrivacyPrivate(userData);
 
@@ -233,6 +229,7 @@ export function renderProfileUI(userData, retryCount = 0) {
                     `}
 
                     <p class="text-emerald-400 font-mono text-sm mt-1">@${sanitize(userData.username) || 'anonymous'}</p>
+
                     ${userData.region && !isPrivacyShieldActive
                         ? `<p class="text-xs text-zinc-400 mt-1">📍 ${sanitize(userData.region)}</p>`
                         : ''
@@ -298,14 +295,12 @@ export function renderProfileUI(userData, retryCount = 0) {
                             Edit
                         </button>
                     </div>
-
                     <div id="bioDisplay" class="text-sm text-zinc-300 leading-relaxed min-h-[52px]">
                         ${userData.bio
                             ? sanitize(userData.bio)
                             : `<span class="text-zinc-500 italic">Tell the Square who you are... Share your story, values, or what truth means to you.</span>`
                         }
                     </div>
-
                     <div id="bioEditSection" class="hidden space-y-3 mt-2">
                         <textarea id="profileBioTextarea"
                                   rows="3"
@@ -365,44 +360,43 @@ export function renderProfileUI(userData, retryCount = 0) {
                         }
                     </div>
 
-                   <!-- Step 2: Higher Trust (ZK) -->
-<div class="p-3 rounded-xl bg-zinc-950/80 border border-zinc-800 space-y-3">
-  <div class="flex items-center justify-between gap-3">
-    <div class="min-w-0">
-      <div class="text-sm font-medium text-zinc-200 flex items-center gap-1.5">
-        2. Higher Trust Verification
-        <span class="text-[10px] bg-teal-500/15 text-teal-400 px-1.5 py-0.5 rounded-full">Recommended</span>
-      </div>
-      <div class="text-xs text-zinc-500 mt-1 leading-relaxed">
-        Prove your evidence is real and unchanged — without revealing who you are.
-      </div>
-    </div>
+                    <!-- Step 2: Higher Trust (ZK) -->
+                    <div class="p-3 rounded-xl bg-zinc-950/80 border border-zinc-800 space-y-3">
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="min-w-0">
+                                <div class="text-sm font-medium text-zinc-200 flex items-center gap-1.5">
+                                    2. Higher Trust Verification
+                                    <span class="text-[10px] bg-teal-500/15 text-teal-400 px-1.5 py-0.5 rounded-full">Recommended</span>
+                                </div>
+                                <div class="text-xs text-zinc-500 mt-1 leading-relaxed">
+                                    Prove your evidence is real and unchanged — without revealing who you are.
+                                </div>
+                            </div>
+                            ${userData.zkVerified
+                                ? `<span class="shrink-0 text-xs font-semibold text-teal-400 bg-teal-500/10 border border-teal-500/30 px-2.5 py-1 rounded-full">
+                                     🔑 Verified
+                                   </span>`
+                                : `<button type="button"
+                                           onclick="window.location.href='/verify.html?action=zk'"
+                                           class="shrink-0 text-xs font-semibold bg-teal-600 hover:bg-teal-500 text-white px-3.5 py-1.5 rounded-xl transition">
+                                     Start Verification
+                                   </button>`
+                            }
+                        </div>
 
-    ${userData.zkVerified
-      ? `<span class="shrink-0 text-xs font-semibold text-teal-400 bg-teal-500/10 border border-teal-500/30 px-2.5 py-1 rounded-full">
-           🔑 Verified
-         </span>`
-      : `<button type="button"
-                 onclick="window.location.href='/verify.html?action=zk'"
-                 class="shrink-0 text-xs font-semibold bg-teal-600 hover:bg-teal-500 text-white px-3.5 py-1.5 rounded-xl transition">
-           Start Verification
-         </button>`
-    }
-  </div>
+                        ${!userData.zkVerified ? `
+                        <div class="text-[11px] text-zinc-400 bg-zinc-900/60 border border-zinc-800 rounded-lg p-2.5 leading-relaxed">
+                            <div class="font-medium text-zinc-300 mb-1">Quick Guide:</div>
+                            <ul class="list-disc pl-4 space-y-0.5">
+                                <li>Takes about 1–2 minutes</li>
+                                <li>Works fully on your phone or computer</li>
+                                <li>Does <strong>not</strong> reveal your real identity</li>
+                                <li>Gives your future reports stronger trust weight</li>
+                            </ul>
+                        </div>
+                        ` : ''}
+                    </div>
 
-  <!-- Guide Tips (only show if not yet verified) -->
-  ${!userData.zkVerified ? `
-  <div class="text-[11px] text-zinc-400 bg-zinc-900/60 border border-zinc-800 rounded-lg p-2.5 leading-relaxed">
-    <div class="font-medium text-zinc-300 mb-1">Quick Guide:</div>
-    <ul class="list-disc pl-4 space-y-0.5">
-      <li>Takes about 1–2 minutes</li>
-      <li>Works fully on your phone or computer</li>
-      <li>Does <strong>not</strong> reveal your real identity</li>
-      <li>Gives your future reports stronger trust weight</li>
-    </ul>
-  </div>
-  ` : ''}
-</div>
                     <!-- Step 3: Public profile (optional) -->
                     <div class="flex items-center justify-between gap-3 p-3 rounded-xl bg-zinc-950/80 border border-zinc-800">
                         <div class="min-w-0">
@@ -446,9 +440,7 @@ export function renderProfileUI(userData, retryCount = 0) {
             </div>
         `;
 
-        targets.forEach(container => {
-            container.innerHTML = html;
-        });
+        content.innerHTML = html;
     }).catch(err => {
         console.error("Error computing witness level:", err);
     });
@@ -489,7 +481,6 @@ window.saveUserBio = async function () {
         });
         showToast("✅ Bio saved successfully!", "success");
         cancelBioEdit();
-
         if (currentUserData) {
             currentUserData.bio = bioText;
             renderProfileUI(currentUserData);
@@ -645,7 +636,7 @@ export async function handleProfileStartCycle() {
 
 export function openEditProfile() {
     const modal = document.getElementById('editProfileModal');
-    
+
     if (!modal) {
         showToast("Edit Profile modal not found. Using quick bio editor instead.", "info");
         openProfile();
@@ -655,20 +646,18 @@ export function openEditProfile() {
         return;
     }
 
-    // Reset pending avatar
     pendingAvatarBase64 = null;
 
-    // Fill form with current user data
     if (currentUserData) {
-        const firstNameInput     = document.getElementById('editFirstName');
-        const lastNameInput      = document.getElementById('editLastName');
-        const displayNameInput   = document.getElementById('editDisplayName');
-        const usernameInput      = document.getElementById('editUsername');
-        const regionInput        = document.getElementById('editRegion');
-        const bioInput           = document.getElementById('editBio');
-        const hidePublicToggle   = document.getElementById('toggleHidePublicInfo');
-        const imgPreview         = document.getElementById('avatarPreview');
-        const avatarFallback     = document.getElementById('avatarFallback');
+        const firstNameInput   = document.getElementById('editFirstName');
+        const lastNameInput    = document.getElementById('editLastName');
+        const displayNameInput = document.getElementById('editDisplayName');
+        const usernameInput    = document.getElementById('editUsername');
+        const regionInput      = document.getElementById('editRegion');
+        const bioInput         = document.getElementById('editBio');
+        const hidePublicToggle = document.getElementById('toggleHidePublicInfo');
+        const imgPreview       = document.getElementById('avatarPreview');
+        const avatarFallback   = document.getElementById('avatarFallback');
 
         if (firstNameInput)   firstNameInput.value   = currentUserData.firstName || '';
         if (lastNameInput)    lastNameInput.value    = currentUserData.lastName || '';
@@ -678,7 +667,6 @@ export function openEditProfile() {
         if (bioInput)         bioInput.value         = currentUserData.bio || '';
         if (hidePublicToggle) hidePublicToggle.checked = isPrivacyPrivate(currentUserData);
 
-        // Avatar handling
         if (currentUserData.photoURL && imgPreview) {
             imgPreview.src = currentUserData.photoURL;
             imgPreview.classList.remove('hidden');
@@ -689,20 +677,20 @@ export function openEditProfile() {
         }
     }
 
-    // Open the modal cleanly
     modal.classList.remove('hidden');
     modal.classList.add('flex');
     modal.setAttribute('aria-hidden', 'false');
-    
-    // Optional: close the main profile modal so only one is open
-    // Comment the next line if you prefer to keep both open (layered)
+
+    // Close main profile so only one modal is open
     closeProfile();
 }
+
 export function closeEditProfile() {
     const modal = document.getElementById('editProfileModal');
     if (modal) {
         modal.classList.add('hidden');
-        modal.style.display = 'none';
+        modal.classList.remove('flex');
+        modal.setAttribute('aria-hidden', 'true');
     }
 }
 
@@ -711,8 +699,9 @@ export function openSettings() {
     const modal = document.getElementById('settingsModal');
     if (modal) {
         modal.classList.remove('hidden');
-        modal.style.display = 'flex';
+        modal.classList.add('flex');
         modal.style.zIndex = '10000';
+        modal.setAttribute('aria-hidden', 'false');
     } else {
         showToast("Settings panel coming soon!", "info");
     }
@@ -722,7 +711,8 @@ export function closeSettings() {
     const modal = document.getElementById('settingsModal');
     if (modal) {
         modal.classList.add('hidden');
-        modal.style.display = 'none';
+        modal.classList.remove('flex');
+        modal.setAttribute('aria-hidden', 'true');
     }
 }
 
@@ -735,20 +725,20 @@ export async function saveProfileChanges(event) {
     if (event) event.preventDefault();
     if (!auth.currentUser) return showToast("You must be logged in", "error");
 
-    const firstNameEl = document.getElementById('editFirstName');
-    const lastNameEl = document.getElementById('editLastName');
+    const firstNameEl   = document.getElementById('editFirstName');
+    const lastNameEl    = document.getElementById('editLastName');
     const displayNameEl = document.getElementById('editDisplayName');
-    const usernameEl = document.getElementById('editUsername');
-    const regionEl = document.getElementById('editRegion');
-    const bioEl = document.getElementById('editBio');
-    const hidePublicEl = document.getElementById('toggleHidePublicInfo');
+    const usernameEl    = document.getElementById('editUsername');
+    const regionEl      = document.getElementById('editRegion');
+    const bioEl         = document.getElementById('editBio');
+    const hidePublicEl  = document.getElementById('toggleHidePublicInfo');
 
-    const firstName = firstNameEl?.value?.trim() || "";
-    const lastName = lastNameEl?.value?.trim() || "";
-    const displayName = displayNameEl?.value?.trim();
-    const username = usernameEl?.value?.trim();
-    const region = regionEl?.value?.trim();
-    const bio = bioEl?.value?.trim();
+    const firstName     = firstNameEl?.value?.trim() || "";
+    const lastName      = lastNameEl?.value?.trim() || "";
+    const displayName   = displayNameEl?.value?.trim();
+    const username      = usernameEl?.value?.trim();
+    const region        = regionEl?.value?.trim();
+    const bio           = bioEl?.value?.trim();
     const hidePublicInfo = hidePublicEl ? hidePublicEl.checked : true;
 
     if (!displayName) return showToast("Display name is required", "error");
@@ -773,9 +763,9 @@ export async function saveProfileChanges(event) {
         }
 
         await updateDoc(userRef, updatePayload);
+
         showToast("✅ Profile updated successfully!", "success");
         closeEditProfile();
-
         if (typeof refreshTierAndUI === 'function') refreshTierAndUI();
     } catch (error) {
         console.error("Save profile error:", error);
@@ -787,7 +777,6 @@ export async function triggerPasswordReset() {
     if (!auth.currentUser || !auth.currentUser.email) {
         return showToast("No email associated with this account", "error");
     }
-
     try {
         await sendPasswordResetEmail(auth, auth.currentUser.email);
         showToast("📧 Password reset email sent!", "success");
@@ -801,7 +790,6 @@ export async function exportUserDataPDF() {
     if (!currentUserData) return showToast("Profile data not loaded", "error");
 
     showToast("Generating identity PDF...", "info");
-
     try {
         const jsPDF = window.jspdf?.jsPDF || window.jsPDF;
         if (!jsPDF) throw new Error("jsPDF library not initialized");
@@ -809,7 +797,6 @@ export async function exportUserDataPDF() {
         const pdf = new jsPDF();
         pdf.setFontSize(20);
         pdf.text("VocalWitness Identity & Profile Record", 20, 20);
-
         pdf.setFontSize(12);
         pdf.text(`Generated: ${new Date().toLocaleString()}`, 20, 32);
         pdf.text(`Display Name: ${currentUserData.displayName || 'N/A'}`, 20, 44);
@@ -829,8 +816,6 @@ export async function exportUserDataPDF() {
 }
 
 // ====================== SETTINGS CONTROLS & PREFERENCES ======================
-
-// 1. Handle Default Starting Page Selection
 document.addEventListener('change', (e) => {
     if (e.target && e.target.id === 'defaultStartingPageSelect') {
         const selectedPage = e.target.value;
@@ -839,16 +824,14 @@ document.addEventListener('change', (e) => {
     }
 });
 
-// 2. Handle 2FA Toggle Checkbox
 document.addEventListener('change', async (e) => {
     if (e.target && e.target.id === 'twoFactorToggle') {
         const isEnabled = e.target.checked;
         if (!auth.currentUser) {
             showToast("You must be logged in", "error");
-            e.target.checked = !isEnabled; // revert UI state
+            e.target.checked = !isEnabled;
             return;
         }
-
         try {
             showToast("Updating 2FA settings...", "info");
             const userRef = doc(db, "users", auth.currentUser.uid);
@@ -860,7 +843,7 @@ document.addEventListener('change', async (e) => {
         } catch (error) {
             console.error("2FA update error:", error);
             showToast("Failed to update 2FA settings", "error");
-            e.target.checked = !isEnabled; // revert UI state
+            e.target.checked = !isEnabled;
         }
     }
 });
@@ -879,7 +862,7 @@ window.startPhoneVerification = function () {
         const verifModal = document.getElementById('verificationModal') || document.getElementById('phoneVerificationModal');
         if (verifModal) {
             verifModal.classList.remove('hidden');
-            verifModal.style.display = 'flex';
+            verifModal.classList.add('flex');
             verifModal.style.zIndex = '10000';
         } else {
             showToast("Verification module unavailable", "error");
@@ -927,7 +910,6 @@ export class ProfileManager {
         const user = auth.currentUser;
         const tierData = await getUserTierData(user.uid);
         const currentMode = AppState.getIdentityMode(); // 'ANONYMOUS' or 'BOLD_WITNESS'
-
         this.renderProfileCard(user, tierData, currentMode);
         this.bindEvents(user, tierData);
     }
@@ -936,7 +918,6 @@ export class ProfileManager {
         if (!this.profileContainer) return;
 
         const isBold = mode === 'BOLD_WITNESS';
-
         const displayName = isBold
             ? (user.displayName || 'Verified Witness')
             : `Witness #${user.uid.slice(0, 6)}`;
@@ -1007,7 +988,6 @@ export class ProfileManager {
         if (switchBtn) {
             switchBtn.addEventListener('click', () => {
                 const currentMode = AppState.getIdentityMode();
-
                 if (currentMode === 'ANONYMOUS') {
                     showBoldWitnessModal(async () => {
                         AppState.setIdentityMode('BOLD_WITNESS');
@@ -1067,7 +1047,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('profileModal')?.addEventListener('click', (e) => {
         if (e.target.id === 'profileModal') closeProfile();
     });
-
     document.getElementById('editProfileModal')?.addEventListener('click', (e) => {
         if (e.target.id === 'editProfileModal') closeEditProfile();
     });
