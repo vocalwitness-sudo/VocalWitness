@@ -499,6 +499,11 @@ function attachProfileEventListeners(userData, isCitizenCircle, isWitness) {
             openEditProfile();
         }
     });
+    document.getElementById('theme-toggle-btn')?.addEventListener('click', () => {
+    if (typeof window.toggleDarkMode === 'function') {
+        window.toggleDarkMode();
+    }
+});
 
     // Settings
     document.getElementById('btnOpenSettings')?.addEventListener('click', () => {
