@@ -208,12 +208,22 @@ export async function initBookmarksView() {
                         <h4 class="text-base font-semibold text-white">${escapeHtml(item.title || 'Saved Item')}</h4>
                         <p class="text-xs text-zinc-500">Saved on ${savedDate}</p>
                     </div>
-                    <button onclick="window.removeBookmarkItem('${item.id}')" class="px-3 py-1.5 bg-red-950/40 hover:bg-red-900/60 border border-red-800 text-red-300 text-xs rounded-xl transition">
+                    <button data-remove-id="${item.id}" class="btn-remove-bookmark px-3 py-1.5 bg-red-950/40 hover:bg-red-900/60 border border-red-800 text-red-300 text-xs rounded-xl transition cursor-pointer">
                         Remove
                     </button>
                 </div>`;
         });
         listEl.innerHTML = html;
+
+        // Programmatically bind click events to eliminate CSP violations
+        listEl.querySelectorAll('.btn-remove-bookmark').forEach(button => {
+            button.addEventListener('click', async (e) => {
+                const itemId = e.currentTarget.dataset.removeId;
+                if (itemId) {
+                    await window.removeBookmarkItem(itemId);
+                }
+            });
+        });
 
     } catch (err) {
         console.error("Error loading bookmarks view:", err);
