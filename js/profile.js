@@ -518,6 +518,76 @@ function attachProfileEventListeners(userData, isCitizenCircle, isWitness) {
         }
     });
 }
+/**
+ * Attach all event listeners after the profile HTML is injected.
+ * This is the CSP-safe replacement for the old onclick attributes.
+ */
+function attachProfileEventListeners(userData, isCitizenCircle, isWitness) {
+    // Witness Cycle
+    document.getElementById('btnStartWitnessCycle')?.addEventListener('click', () => {
+        if (typeof handleProfileStartCycle === 'function') {
+            handleProfileStartCycle();
+        } else if (typeof window.handleProfileStartCycle === 'function') {
+            window.handleProfileStartCycle();
+        }
+    });
+
+    // Bio editing
+    document.getElementById('btnToggleBioEdit')?.addEventListener('click', () => {
+        if (typeof window.toggleBioEdit === 'function') window.toggleBioEdit();
+    });
+    document.getElementById('btnSaveBio')?.addEventListener('click', () => {
+        if (typeof window.saveUserBio === 'function') window.saveUserBio();
+    });
+    document.getElementById('btnCancelBioEdit')?.addEventListener('click', () => {
+        if (typeof window.cancelBioEdit === 'function') window.cancelBioEdit();
+    });
+
+    // Phone verification
+    document.getElementById('btnStartPhoneVerify')?.addEventListener('click', () => {
+        if (typeof window.startPhoneVerification === 'function') window.startPhoneVerification();
+    });
+    document.getElementById('btnGetVerifiedCta')?.addEventListener('click', () => {
+        if (typeof window.startPhoneVerification === 'function') window.startPhoneVerification();
+    });
+
+    // ZK / Higher Trust
+    document.getElementById('btnStartZkVerify')?.addEventListener('click', () => {
+        window.location.href = '/verify.html?action=zk';
+    });
+
+    // Privacy Shield
+    document.getElementById('btnTogglePrivacyShield')?.addEventListener('click', () => {
+        if (typeof window.togglePrivacyShield === 'function') window.togglePrivacyShield();
+    });
+
+    // Edit Profile
+    document.getElementById('btnOpenEditProfile')?.addEventListener('click', () => {
+        if (typeof window.openEditProfileSafe === 'function') {
+            window.openEditProfileSafe();
+        } else if (typeof openEditProfile === 'function') {
+            openEditProfile();
+        }
+    });
+
+    // Settings
+    document.getElementById('btnOpenSettings')?.addEventListener('click', () => {
+        if (typeof window.openSettingsSafe === 'function') {
+            window.openSettingsSafe();
+        } else if (typeof openSettings === 'function') {
+            openSettings();
+        }
+    });
+
+    // Sign Out
+    document.getElementById('btnSignOut')?.addEventListener('click', () => {
+        if (typeof handleSignOut === 'function') {
+            handleSignOut();
+        } else if (typeof window.handleSignOut === 'function') {
+            window.handleSignOut();
+        }
+    });
+}
 // ====================== BIO EDIT HELPERS ======================
 window.toggleBioEdit = function () {
     const display = document.getElementById('bioDisplay');
