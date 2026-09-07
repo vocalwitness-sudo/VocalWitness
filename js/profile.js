@@ -280,7 +280,7 @@ export function renderProfileUI(userData, retryCount = 0) {
                             ${userData.activeWitnessCycle ? 'Active' : 'Inactive'}
                         </span>
                     </div>
-                    <button type="button" onclick="handleProfileStartCycle()"
+                    <button type="button" id="btnStartWitnessCycle"
                             class="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-black font-semibold rounded-xl transition text-sm">
                         ${userData.activeWitnessCycle ? 'End Witness Cycle' : 'Start Witness Cycle'}
                     </button>
@@ -290,7 +290,7 @@ export function renderProfileUI(userData, retryCount = 0) {
                 <div class="bg-zinc-900/80 border border-zinc-700 rounded-2xl p-4">
                     <div class="flex items-center justify-between mb-2">
                         <h4 class="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Bio</h4>
-                        <button type="button" onclick="toggleBioEdit()"
+                        <button type="button" id="btnToggleBioEdit"
                                 class="text-xs text-emerald-400 hover:text-emerald-300 font-medium transition">
                             Edit
                         </button>
@@ -308,11 +308,11 @@ export function renderProfileUI(userData, retryCount = 0) {
                                   class="w-full bg-zinc-950 border border-zinc-700 rounded-xl p-3 text-sm text-zinc-200 focus:outline-none focus:border-emerald-500 resize-none"
                                   placeholder="Write a short bio about yourself...">${sanitize(userData.bio || '')}</textarea>
                         <div class="flex gap-2">
-                            <button type="button" onclick="saveUserBio()"
+                            <button type="button" id="btnSaveBio"
                                     class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-black text-xs font-semibold rounded-xl transition">
                                 Save Bio
                             </button>
-                            <button type="button" onclick="cancelBioEdit()"
+                            <button type="button" id="btnCancelBioEdit"
                                     class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs rounded-xl transition">
                                 Cancel
                             </button>
@@ -353,7 +353,7 @@ export function renderProfileUI(userData, retryCount = 0) {
                         </div>
                         ${isCitizenCircle
                             ? `<span class="shrink-0 text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 rounded-full">✅ Done</span>`
-                            : `<button type="button" onclick="window.startPhoneVerification()"
+                            : `<button type="button" id="btnStartPhoneVerify"
                                     class="shrink-0 text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-black px-3 py-1.5 rounded-xl">
                                     Verify
                                </button>`
@@ -376,8 +376,7 @@ export function renderProfileUI(userData, retryCount = 0) {
                                 ? `<span class="shrink-0 text-xs font-semibold text-teal-400 bg-teal-500/10 border border-teal-500/30 px-2.5 py-1 rounded-full">
                                      🔑 Verified
                                    </span>`
-                                : `<button type="button"
-                                           onclick="window.location.href='/verify.html?action=zk'"
+                                : `<button type="button" id="btnStartZkVerify"
                                            class="shrink-0 text-xs font-semibold bg-teal-600 hover:bg-teal-500 text-white px-3.5 py-1.5 rounded-xl transition">
                                      Start Verification
                                    </button>`
@@ -403,7 +402,7 @@ export function renderProfileUI(userData, retryCount = 0) {
                             <div class="text-sm font-medium text-zinc-200">3. Public profile</div>
                             <div class="text-xs text-zinc-500">Optional. Default private. Separate from Bold Witness posting mode.</div>
                         </div>
-                        <button type="button" onclick="togglePrivacyShield()"
+                        <button type="button" id="btnTogglePrivacyShield"
                                 class="shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full border transition
                                 ${isPrivacyShieldActive
                                     ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30 hover:bg-emerald-500/20'
@@ -416,23 +415,23 @@ export function renderProfileUI(userData, retryCount = 0) {
                 <!-- Action Buttons -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
                     ${!isCitizenCircle && !isWitness ? `
-                        <button type="button" onclick="window.startPhoneVerification()"
+                        <button type="button" id="btnGetVerifiedCta"
                                 class="col-span-1 sm:col-span-2 py-3 px-4 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
                             🛡️ Get Verified — Unlock Citizen Circle
                         </button>
                     ` : ''}
 
-                    <button type="button" onclick="openEditProfileSafe()"
+                    <button type="button" id="btnOpenEditProfile"
                             class="py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-black text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
                         ✏️ Edit Profile
                     </button>
 
-                    <button type="button" onclick="openSettingsSafe()"
+                    <button type="button" id="btnOpenSettings"
                             class="py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
                         ⚙️ Settings & Security
                     </button>
 
-                    <button type="button" onclick="handleSignOut()"
+                    <button type="button" id="btnSignOut"
                             class="col-span-1 sm:col-span-2 py-3 px-4 bg-red-950/40 hover:bg-red-900/60 border border-red-500/40 text-red-400 hover:text-red-300 text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
                         🚪 Sign Out
                     </button>
@@ -441,11 +440,84 @@ export function renderProfileUI(userData, retryCount = 0) {
         `;
 
         content.innerHTML = html;
+
+        // CSP-safe wiring
+        attachProfileEventListeners(userData, isCitizenCircle, isWitness);
     }).catch(err => {
         console.error("Error computing witness level:", err);
     });
 }
 
+/**
+ * Attach all event listeners after the profile HTML is injected.
+ * This is the CSP-safe replacement for the old onclick attributes.
+ */
+function attachProfileEventListeners(userData, isCitizenCircle, isWitness) {
+    // Witness Cycle
+    document.getElementById('btnStartWitnessCycle')?.addEventListener('click', () => {
+        if (typeof handleProfileStartCycle === 'function') {
+            handleProfileStartCycle();
+        } else if (typeof window.handleProfileStartCycle === 'function') {
+            window.handleProfileStartCycle();
+        }
+    });
+
+    // Bio editing
+    document.getElementById('btnToggleBioEdit')?.addEventListener('click', () => {
+        if (typeof window.toggleBioEdit === 'function') window.toggleBioEdit();
+    });
+    document.getElementById('btnSaveBio')?.addEventListener('click', () => {
+        if (typeof window.saveUserBio === 'function') window.saveUserBio();
+    });
+    document.getElementById('btnCancelBioEdit')?.addEventListener('click', () => {
+        if (typeof window.cancelBioEdit === 'function') window.cancelBioEdit();
+    });
+
+    // Phone verification
+    document.getElementById('btnStartPhoneVerify')?.addEventListener('click', () => {
+        if (typeof window.startPhoneVerification === 'function') window.startPhoneVerification();
+    });
+    document.getElementById('btnGetVerifiedCta')?.addEventListener('click', () => {
+        if (typeof window.startPhoneVerification === 'function') window.startPhoneVerification();
+    });
+
+    // ZK / Higher Trust
+    document.getElementById('btnStartZkVerify')?.addEventListener('click', () => {
+        window.location.href = '/verify.html?action=zk';
+    });
+
+    // Privacy Shield
+    document.getElementById('btnTogglePrivacyShield')?.addEventListener('click', () => {
+        if (typeof window.togglePrivacyShield === 'function') window.togglePrivacyShield();
+    });
+
+    // Edit Profile
+    document.getElementById('btnOpenEditProfile')?.addEventListener('click', () => {
+        if (typeof window.openEditProfileSafe === 'function') {
+            window.openEditProfileSafe();
+        } else if (typeof openEditProfile === 'function') {
+            openEditProfile();
+        }
+    });
+
+    // Settings
+    document.getElementById('btnOpenSettings')?.addEventListener('click', () => {
+        if (typeof window.openSettingsSafe === 'function') {
+            window.openSettingsSafe();
+        } else if (typeof openSettings === 'function') {
+            openSettings();
+        }
+    });
+
+    // Sign Out
+    document.getElementById('btnSignOut')?.addEventListener('click', () => {
+        if (typeof handleSignOut === 'function') {
+            handleSignOut();
+        } else if (typeof window.handleSignOut === 'function') {
+            window.handleSignOut();
+        }
+    });
+}
 // ====================== BIO EDIT HELPERS ======================
 window.toggleBioEdit = function () {
     const display = document.getElementById('bioDisplay');
