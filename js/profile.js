@@ -1069,3 +1069,80 @@ document.getElementById('panicClearBtn')?.addEventListener('click', async () => 
   showToast("Clearing device...", "info");
   await panicClearDevice();
 });
+
+// ====================== FINAL EVENT WIRING ======================
+document.addEventListener('DOMContentLoaded', () => {
+  // Close buttons
+  document.getElementById('closeSettingsBtn')?.addEventListener('click', () => {
+    if (typeof closeSettings === 'function') closeSettings();
+    else {
+      const m = document.getElementById('settingsModal');
+      if (m) {
+        m.classList.add('hidden');
+        m.classList.remove('flex');
+      }
+    }
+  });
+
+  // Password Reset
+  document.getElementById('triggerPasswordResetBtn')?.addEventListener('click', () => {
+    if (typeof triggerPasswordReset === 'function') triggerPasswordReset();
+    else if (typeof window.safeTriggerPasswordReset === 'function') window.safeTriggerPasswordReset();
+  });
+
+  // Export PDF
+  document.getElementById('exportUserDataPdfBtn')?.addEventListener('click', () => {
+    if (typeof exportUserDataPDF === 'function') exportUserDataPDF();
+    else if (typeof window.safeExportUserDataPDF === 'function') window.safeExportUserDataPDF();
+  });
+
+  // Sign Out from Settings
+  document.getElementById('settingsSignOutBtn')?.addEventListener('click', () => {
+    if (typeof handleSignOut === 'function') handleSignOut();
+  });
+
+  // Panic Clear
+  document.getElementById('panicClearBtn')?.addEventListener('click', async () => {
+    const confirmed = confirm("⚠️ EMERGENCY CLEAR\n\nThis will immediately erase all VocalWitness data from THIS device and sign you out.\n\nThe public ledger will NOT be affected.\n\nContinue?");
+    if (!confirmed) return;
+
+    showToast("Clearing device...", "info");
+    if (typeof panicClearDevice === 'function') {
+      await panicClearDevice();
+    } else {
+      // Fallback clear
+      localStorage.clear();
+      sessionStorage.clear();
+      if (typeof handleSignOut === 'function') handleSignOut();
+      else window.location.href = '/';
+    }
+  });
+
+  // 2FA toggle
+  document.getElementById('toggle2FA')?.addEventListener('change', async (e) => {
+    const isEnabled = e.target.checked;
+    if (!auth.currentUser) {
+      showToast("You must be logged in", "error");
+      e.target.checked = !isEnabled;
+      return;
+    }
+    try {
+      showToast("Updating 2FA settings...", "info");
+      await updateDoc(doc(db, "users", auth.currentUser.uid), {
+        twoFactorEnabled: isEnabled,
+        updatedAt: serverTimestamp()
+      });
+      showToast(isEnabled ? "✅ Two-Factor Authentication enabled" : "🛡️ Two-Factor Authentication disabled", "success");
+    } catch (err) {
+      console.error(err);
+      showToast("Failed to update 2FA", "error");
+      e.target.checked = !isEnabled;
+    }
+  });
+
+  // Default door select
+  document.getElementById('defaultDoorSelect')?.addEventListener('change', (e) => {
+    localStorage.setItem('vw_default_page', e.target.value);
+    showToast(`Default page set to ${e.target.options[e.target.selectedIndex].text}`, "success");
+  });
+});
