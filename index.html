@@ -849,25 +849,18 @@
 <!-- ====================== EDIT PROFILE MODAL ====================== -->
 <div id="editProfileModal"
      class="fixed inset-0 z-[10001] hidden items-center justify-center overflow-y-auto bg-black/85 p-4"
-     role="dialog"
-     aria-modal="true"
-     aria-labelledby="editProfileTitle"
-     aria-hidden="true">
+     role="dialog" aria-modal="true" aria-labelledby="editProfileTitle" aria-hidden="true">
   <div class="custom-scroll relative max-h-[90vh] w-full max-w-md space-y-5 overflow-y-auto rounded-3xl border border-zinc-700 bg-[#111827] p-6 text-white shadow-2xl">
     
     <div class="flex items-center justify-between border-b border-zinc-700 pb-3">
       <h3 id="editProfileTitle" class="text-xl font-bold">Edit Profile</h3>
-      <button id="closeEditProfileBtn"
-              type="button"
+      <button id="closeEditProfileBtn" type="button"
               class="rounded-full p-2 text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
-              aria-label="Close edit profile">
-        ✕
-      </button>
+              aria-label="Close edit profile">✕</button>
     </div>
 
-    <form id="editProfileForm" class="space-y-5" onsubmit="handleSaveProfile(event)">
-      
-      <!-- Avatar Upload + Preview -->
+    <form id="editProfileForm" class="space-y-5">
+      <!-- Avatar -->
       <div class="flex flex-col items-center gap-3">
         <div class="relative">
           <div class="w-24 h-24 rounded-3xl overflow-hidden border-4 border-zinc-700 bg-zinc-800 shadow-xl">
@@ -877,12 +870,11 @@
         </div>
         <label class="cursor-pointer text-sm text-emerald-400 hover:text-emerald-300 font-medium transition">
           Change Photo
-          <input type="file" id="avatarInput" accept="image/*" class="hidden" onchange="handleImagePreview(event)">
+          <input type="file" id="avatarInput" accept="image/*" class="hidden">
         </label>
         <p class="text-[11px] text-zinc-500">Max 2MB • Auto-compressed to 256×256</p>
       </div>
 
-      <!-- Name Fields -->
       <div class="grid grid-cols-2 gap-3">
         <div>
           <label for="editFirstName" class="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5">First Name</label>
@@ -911,23 +903,22 @@
 
       <div>
         <label for="editBio" class="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5">Bio</label>
-        <textarea id="editBio" rows="3" maxlength="280" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 resize-none" placeholder="Tell the Square who you are..."></textarea>
+        <textarea id="editBio" rows="3" maxlength="280" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 resize-none"></textarea>
       </div>
 
-      <!-- Privacy Shield -->
       <div class="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 flex items-center justify-between gap-3">
         <div class="min-w-0">
           <div class="font-medium text-white text-sm flex items-center gap-2">🛡️ Privacy Shield</div>
-          <div class="text-xs text-zinc-400 mt-0.5 leading-relaxed">Hides real name & location from others (default: ON)</div>
+          <div class="text-xs text-zinc-400 mt-0.5">Hides real name & location from others</div>
         </div>
         <input type="checkbox" id="toggleHidePublicInfo" checked class="w-5 h-5 accent-emerald-500 rounded cursor-pointer shrink-0">
       </div>
 
       <div class="flex gap-3 pt-2">
-        <button type="submit" class="flex-1 py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition shadow-lg shadow-emerald-500/20">
+        <button type="submit" class="flex-1 py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition">
           Save Changes
         </button>
-        <button type="button" id="btn-cancel-edit" onclick="closeEditProfile()" class="py-3 px-5 bg-zinc-800 text-zinc-300 font-semibold rounded-xl hover:bg-zinc-700 transition">
+        <button type="button" id="btn-cancel-edit" class="py-3 px-5 bg-zinc-800 text-zinc-300 font-semibold rounded-xl hover:bg-zinc-700 transition">
           Cancel
         </button>
       </div>
