@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* ====================== TAILWIND v4 DESIGN TOKENS ====================== */
+/* ===== Design Tokens ===== */
 @theme {
   --color-primary: #10b981;
   --color-primary-dark: #059669;
@@ -8,370 +8,113 @@
   --color-accent-red: #ef4444;
 }
 
-/* ====================== CUSTOM THEME VARIABLES ====================== */
+/* ===== Base ===== */
 :root {
   --color-bg-dark: #0a0f1c;
-  --color-glass: #111827;                    /* changed to solid for safety */
-  --color-glass-border: rgba(16, 185, 129, 0.22);
-  --header-height-mobile: 112px;
-  --header-height-desktop: 72px;
+  --header-height-mobile: 102px;
+  --header-height-desktop: 64px;
 }
 
-/* ====================== BASE ====================== */
 body {
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background-color: #0a0f1c;
   color: #ffffff;
   min-height: 100vh;
-  overflow-x: hidden;
-  -webkit-font-smoothing: antialiased;
   margin: 0;
   padding: 0;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
-/* ====================== MAIN CONTENT SPACING ====================== */
-#main-content {
-  padding-top: var(--header-height-mobile);
-  min-height: calc(100vh - var(--header-height-mobile) - 200px);
-}
-
-@media (min-width: 768px) {
-  #main-content {
-    padding-top: var(--header-height-desktop);
-    min-height: calc(100vh - var(--header-height-desktop) - 200px);
-  }
-}
-
-footer {
-  margin-top: 2rem;
-}
-
-/* ====================== GLASS → SOLID (critical for old browsers) ====================== */
-.glass {
+/* ===== Critical solid backgrounds (old browser safe) ===== */
+.glass,
+[class*="backdrop-blur"],
+.bg-zinc-950\/95,
+.bg-zinc-900\/95,
+.bg-zinc-900\/80,
+.bg-zinc-900\/60,
+.bg-zinc-900\/50,
+.bg-black\/85,
+.bg-black\/80,
+.bg-black\/75 {
   background-color: #111827 !important;
   background-image: none !important;
-  border: 1px solid #27272a !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
 
-/* Header can keep a tiny bit of transparency if wanted, but still solid fallback */
-header.glass {
-  background-color: #111827 !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-
-/* ====================== PROFILE PAGE + ALL MODALS – FORCE SOLID ====================== */
-#mainProfileContent,
-#editProfileModal,
-#settingsModal,
-#profileModal,
-[id$="Modal"],
-.modal,
-.modal-container {
-  background-color: transparent; /* overlay itself */
-}
-
-/* The actual cards / panels */
+/* Main cards & modals – solid + keep border */
+.rounded-3xl,
+.rounded-2xl,
 #editProfileModal > div,
 #settingsModal > div,
-#profileModal > div,
-.modal > div,
-.modal-container,
-main > div.rounded-3xl,
-.rounded-3xl.border.border-zinc-800 {
+#mainProfileContent,
+main > div.rounded-3xl {
   background-color: #111827 !important;
-  background-image: none !important;
-  opacity: 1 !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
+  border: 1px solid #27272a !important;   /* ← border restored */
 }
 
 /* Nested cards (BIO, Verification, settings rows, etc.) */
-#editProfileModal .rounded-2xl,
-#editProfileModal .rounded-3xl,
-#settingsModal .rounded-2xl,
-#settingsModal .rounded-3xl,
-#settingsModal .bg-zinc-900\/60,
-#mainProfileContent .rounded-2xl,
-#mainProfileContent .rounded-3xl,
-#mainProfileContent .rounded-xl,
 .bg-zinc-900\/60,
 .bg-zinc-900\/50,
-.bg-zinc-900\/40 {
+.bg-zinc-900,
+#settingsModal .rounded-2xl,
+#editProfileModal .rounded-2xl,
+#mainProfileContent .rounded-2xl,
+#mainProfileContent .rounded-xl {
   background-color: #18181b !important;
-  background-image: none !important;
+  border: 1px solid #27272a !important;
 }
 
-/* ====================== OVERLAYS ====================== */
+/* Overlays */
 #editProfileModal,
 #settingsModal,
-#profileModal,
-.modal-overlay,
 .fixed.inset-0 {
   background-color: rgba(0, 0, 0, 0.85) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
 
-/* ====================== NAV TABS ====================== */
-#main-nav {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: nowrap;
-  min-width: max-content;
-  padding: 0.5rem 0;
-  position: relative;
-  z-index: 30;
-  overflow: visible;
+/* Header */
+#main-header {
+  background-color: #09090b !important;
+  border-bottom: 1px solid rgba(16, 185, 129, 0.3) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
+/* ===== Layout (unchanged sizes) ===== */
+#main-content {
+  padding-top: var(--header-height-mobile);
+}
+
+@media (min-width: 768px) {
+  #main-content {
+    padding-top: var(--header-height-desktop);
+  }
+}
+
+/* ===== Nav tabs ===== */
 .nav-tab {
-  min-width: 110px;
-  max-width: 180px;
-  height: 44px;
-  display: inline-flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  white-space: nowrap;
-  padding: 6px 14px;
-  border-radius: 1rem;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  z-index: 20;
-  pointer-events: auto;
-  cursor: pointer;
-  user-select: none;
   background-color: #18181b;
   border: 1px solid #3f3f46;
   color: #a1a1aa;
 }
 
-#main-nav button.nav-tab.active,
-#main-nav button[data-tab].active {
+#main-nav button.nav-tab.active {
   background-color: #10b981 !important;
   color: #000000 !important;
   border-color: #059669 !important;
   font-weight: 700;
-  box-shadow: 0 0 14px rgba(16, 185, 129, 0.4);
 }
 
-#main-nav button[data-tab="arena"]:not(.active) {
-  background-color: #0c4a6e;
-  color: #7dd3fc;
-  border-color: #0369a1;
-}
-
-#main-nav button[data-tab="witness"]:not(.active) {
-  background-color: #78350f;
-  color: #fcd34d;
-  border-color: #b45309;
-}
-
-#main-nav button.nav-tab.active::after {
-  content: '';
-  position: absolute;
-  bottom: 4px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 4px;
-  height: 4px;
-  background-color: currentColor;
-  border-radius: 50%;
-}
-
-/* ====================== SCROLLBAR HIDE ====================== */
-.scrollbar-hide::-webkit-scrollbar,
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
-.scrollbar-hide,
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-  overflow-x: auto;
-  overflow-y: visible;
-}
-
-/* ====================== HEADER ====================== */
-#main-header {
-  z-index: 50;
-}
-
-header button,
-header input,
-header select,
-header a {
-  pointer-events: auto;
-  cursor: pointer;
-}
-
-header h1 {
-  letter-spacing: -0.025em;
-}
-
-@media (max-width: 767px) {
-  #main-header {
-    padding-top: env(safe-area-inset-top);
-  }
-}
-
-/* ====================== DATA SAVER ====================== */
-#data-saver-btn.data-saver-on,
-#data-saver-btn-mobile.data-saver-on,
-.data-saver-on {
-  background-color: rgba(16, 185, 129, 0.15) !important;
-  border-color: #10b981 !important;
-  color: #10b981 !important;
-}
-
-#data-saver-btn.data-saver-off,
-#data-saver-btn-mobile.data-saver-off,
-.data-saver-off {
-  background-color: #1f2937 !important;
-  border-color: #4b5563 !important;
-  color: #9ca3af !important;
-}
-
-/* ====================== FLASH TICKER ====================== */
-.ticker-wrap {
-  height: 42px;
-}
-
-.ticker-track {
-  display: inline-block;
-  padding-left: 100%;
-  animation: ticker-scroll 40s linear infinite;
-}
-
-.ticker-track:hover {
-  animation-play-state: paused;
-}
-
-.ticker-item {
-  display: inline-block;
-  padding-right: 3rem;
-}
-
-@keyframes ticker-scroll {
-  0%   { transform: translateX(0); }
-  100% { transform: translateX(-100%); }
-}
-
-/* ====================== MORE MENU ====================== */
-#more-menu {
-  z-index: 9999;
-}
-
-/* ====================== ACTION BUTTONS ====================== */
-#btn-photo,
-#btn-voice {
-  background-color: #18181b !important;
-  border: 1px solid #3f3f46 !important;
-  color: #ffffff !important;
-  font-weight: 600 !important;
-  opacity: 1 !important;
-  transition: all 0.2s ease;
-}
-
-#btn-photo {
-  border-color: #10b981 !important;
-  color: #34d399 !important;
-}
-
-#btn-voice {
-  border-color: #f59e0b !important;
-  color: #fbbf24 !important;
-}
-
-#btn-photo:hover,
-#btn-voice:hover {
-  background-color: #27272a !important;
-  transform: scale(1.02);
-}
-
-#postButton {
-  display: flex !important;
-  background-color: #059669 !important;
-  color: #ffffff !important;
-  font-weight: 700 !important;
-  font-size: 1.125rem !important;
-  padding: 1rem !important;
-  margin-top: 1.5rem !important;
-  border: none !important;
-  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.45) !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  transition: background-color 0.2s ease, transform 0.1s ease;
-}
-
-#postButton:hover {
-  background-color: #10b981 !important;
-}
-
-#postButton:disabled {
-  opacity: 0.6 !important;
-  cursor: not-allowed !important;
-}
-
-/* ====================== LANGUAGE SELECTOR ====================== */
-#language-select,
-select[data-action="change-language"],
-.language-select,
-select[aria-label*="language" i],
-select[aria-label*="Language" i] {
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  background-color: #09090b !important;
-  color: #e4e4e7 !important;
-  border: 1px solid #3f3f46 !important;
-  border-radius: 0.75rem;
-  padding: 0.5rem 2rem 0.5rem 0.75rem;
-  font-size: 0.875rem;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23a1a1aa'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 0.6rem center;
-  background-size: 1rem;
-}
-
-#language-select option,
-select[data-action="change-language"] option {
-  background-color: #09090b;
-  color: #e4e4e7;
-}
-
-/* ============================================================
-   FINAL OLD-BROWSER SAFETY NET (must stay at the bottom)
-   Windows 7 Chrome + weak WebViews
-   ============================================================ */
+/* ===== Performance helpers (safe) ===== */
 .glass,
-[class*="backdrop-blur"],
-.bg-black\/85,
-.bg-black\/80,
-.bg-black\/75,
-.bg-zinc-900\/60,
-.bg-zinc-900\/50,
-.bg-zinc-900\/40,
-.bg-zinc-900\/30 {
-  background-color: #111827 !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-
-#settingsModal > div.glass,
-#editProfileModal > div,
-main .rounded-3xl {
-  background-color: #111827 !important;
-}
-
-#settingsModal .bg-zinc-900\/60,
-#editProfileModal .bg-zinc-900,
-#mainProfileContent .rounded-2xl {
-  background-color: #18181b !important;
+.rounded-3xl,
+.rounded-2xl,
+#main-header {
+  contain: layout style;
+  /* optional hardware acceleration – only if needed later
+  transform: translateZ(0);
+  */
 }
