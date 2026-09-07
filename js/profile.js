@@ -25,6 +25,7 @@ import { t } from './i18n.js';
 import { showToast } from './utils.js';
 import { startWitnessCycle } from './witnessCycle.js';
 import { startPhoneVerification as startPhoneVerificationModule } from './verification.js';
+import { generateAndDownloadPDF } from './pdf.js';
 
 // ====================== STATE ======================
 let currentUserData = null;
@@ -597,7 +598,6 @@ function attachProfileEventListeners(userData, isCitizenCircle, isWitness) {
         }
     });
 }
-
 // ====================== BIO EDIT HELPERS ======================
 window.toggleBioEdit = function () {
     const display = document.getElementById('bioDisplay');
@@ -621,9 +621,7 @@ window.cancelBioEdit = function () {
 window.saveUserBio = async function () {
     const textarea = document.getElementById('profileBioTextarea');
     if (!textarea || !auth.currentUser) return;
-
     const bioText = textarea.value.trim().slice(0, 280);
-
     try {
         showToast("Saving bio...", "info");
         const userRef = doc(db, "users", auth.currentUser.uid);
@@ -649,22 +647,18 @@ window.togglePrivacyShield = async function () {
         showToast("You must be signed in", "error");
         return;
     }
-
     const currentlyPrivate = isPrivacyPrivate(currentUserData);
     const nextPrivate = !currentlyPrivate;
-
     try {
         showToast(nextPrivate ? "Switching to private…" : "Making profile public…", "info");
         await updateDoc(doc(db, "users", auth.currentUser.uid), {
             hidePublicInfo: nextPrivate,
             updatedAt: serverTimestamp()
         });
-
         if (currentUserData) {
             currentUserData.hidePublicInfo = nextPrivate;
             window.currentUserData = currentUserData;
         }
-
         showToast(
             nextPrivate
                 ? "🛡️ Profile is private (name & location hidden from others)"
@@ -701,13 +695,11 @@ window.openSettingsSafe = function () {
 export function handleImagePreview(event) {
     const file = event?.target?.files?.[0];
     if (!file) return;
-
     if (file.size > 2 * 1024 * 1024) {
         showToast("Image size must be under 2MB", "error");
         event.target.value = '';
         return;
     }
-
     const reader = new FileReader();
     reader.onload = (e) => {
         const img = new Image();
@@ -717,7 +709,6 @@ export function handleImagePreview(event) {
             const MAX_HEIGHT = 256;
             let width = img.width;
             let height = img.height;
-
             if (width > height) {
                 if (width > MAX_WIDTH) {
                     height *= MAX_WIDTH / width;
@@ -729,17 +720,13 @@ export function handleImagePreview(event) {
                     height = MAX_HEIGHT;
                 }
             }
-
             canvas.width = width;
             canvas.height = height;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, width, height);
-
             pendingAvatarBase64 = canvas.toDataURL('image/jpeg', 0.8);
-
             const imgPreview = document.getElementById('avatarPreview');
             const fallback = document.getElementById('avatarFallback');
-
             if (imgPreview) {
                 imgPreview.src = pendingAvatarBase64;
                 imgPreview.classList.remove('hidden');
@@ -755,20 +742,16 @@ export function handleImagePreview(event) {
 export async function handleSignOut() {
     try {
         showToast("Signing out...", "info");
-
         if (userUnsubscribe) {
             userUnsubscribe();
             userUnsubscribe = null;
         }
-
         document.querySelectorAll('.modal, [id$="Modal"]').forEach(modal => {
             modal.classList.add('hidden');
             modal.style.display = 'none';
         });
-
         currentUserData = null;
         window.currentUserData = null;
-
         await signOut(auth);
         window.location.href = '/';
     } catch (error) {
@@ -788,7 +771,6 @@ export async function handleProfileStartCycle() {
 
 export function openEditProfile() {
     const modal = document.getElementById('editProfileModal');
-
     if (!modal) {
         showToast("Edit Profile modal not found. Using quick bio editor instead.", "info");
         openProfile();
@@ -797,9 +779,7 @@ export function openEditProfile() {
         }, 300);
         return;
     }
-
     pendingAvatarBase64 = null;
-
     if (currentUserData) {
         const firstNameInput   = document.getElementById('editFirstName');
         const lastNameInput    = document.getElementById('editLastName');
@@ -810,7 +790,6 @@ export function openEditProfile() {
         const hidePublicToggle = document.getElementById('toggleHidePublicInfo');
         const imgPreview       = document.getElementById('avatarPreview');
         const avatarFallback   = document.getElementById('avatarFallback');
-
         if (firstNameInput)   firstNameInput.value   = currentUserData.firstName || '';
         if (lastNameInput)    lastNameInput.value    = currentUserData.lastName || '';
         if (displayNameInput) displayNameInput.value = currentUserData.displayName || '';
@@ -818,7 +797,6 @@ export function openEditProfile() {
         if (regionInput)      regionInput.value      = currentUserData.region || '';
         if (bioInput)         bioInput.value         = currentUserData.bio || '';
         if (hidePublicToggle) hidePublicToggle.checked = isPrivacyPrivate(currentUserData);
-
         if (currentUserData.photoURL && imgPreview) {
             imgPreview.src = currentUserData.photoURL;
             imgPreview.classList.remove('hidden');
@@ -828,12 +806,9 @@ export function openEditProfile() {
             if (avatarFallback) avatarFallback.classList.remove('hidden');
         }
     }
-
     modal.classList.remove('hidden');
     modal.classList.add('flex');
     modal.setAttribute('aria-hidden', 'false');
-
-    // Close main profile so only one modal is open
     closeProfile();
 }
 
@@ -898,7 +873,6 @@ export async function saveProfileChanges(event) {
     try {
         showToast("Saving changes...", "info");
         const userRef = doc(db, "users", auth.currentUser.uid);
-
         const updatePayload = {
             firstName,
             lastName,
@@ -909,13 +883,10 @@ export async function saveProfileChanges(event) {
             hidePublicInfo,
             updatedAt: serverTimestamp()
         };
-
         if (pendingAvatarBase64) {
             updatePayload.photoURL = pendingAvatarBase64;
         }
-
         await updateDoc(userRef, updatePayload);
-
         showToast("✅ Profile updated successfully!", "success");
         closeEditProfile();
         if (typeof refreshTierAndUI === 'function') refreshTierAndUI();
@@ -937,68 +908,6 @@ export async function triggerPasswordReset() {
         showToast("Failed to send password reset email", "error");
     }
 }
-
-export async function exportUserDataPDF() {
-    if (!currentUserData) return showToast("Profile data not loaded", "error");
-
-    showToast("Generating identity PDF...", "info");
-    try {
-        const jsPDF = window.jspdf?.jsPDF || window.jsPDF;
-        if (!jsPDF) throw new Error("jsPDF library not initialized");
-
-        const pdf = new jsPDF();
-        pdf.setFontSize(20);
-        pdf.text("VocalWitness Identity & Profile Record", 20, 20);
-        pdf.setFontSize(12);
-        pdf.text(`Generated: ${new Date().toLocaleString()}`, 20, 32);
-        pdf.text(`Display Name: ${currentUserData.displayName || 'N/A'}`, 20, 44);
-        pdf.text(`Username: @${currentUserData.username || 'anonymous'}`, 20, 52);
-        pdf.text(`Region: ${currentUserData.region || 'N/A'}`, 20, 60);
-        pdf.text(`Privacy Shield Active: ${isPrivacyPrivate(currentUserData) ? 'Yes' : 'No'}`, 20, 68);
-        pdf.text(`Reputation: ${currentUserData.reputation || 0} REP`, 20, 76);
-        pdf.text(`Phone Verified: ${currentUserData.isPhoneVerified || currentUserData.hasVerifiedPhone ? 'Yes' : 'No'}`, 20, 84);
-        pdf.text(`ZK Verified: ${currentUserData.zkVerified ? 'Yes' : 'No'}`, 20, 92);
-
-        pdf.save(`vocalwitness-identity-${auth.currentUser?.uid || 'user'}.pdf`);
-        showToast("✅ Identity PDF Exported!", "success");
-    } catch (e) {
-        console.error("Export error:", e);
-        showToast("PDF generation requires jsPDF", "error");
-    }
-}
-
-// ====================== SETTINGS CONTROLS & PREFERENCES ======================
-document.addEventListener('change', (e) => {
-    if (e.target && e.target.id === 'defaultStartingPageSelect') {
-        const selectedPage = e.target.value;
-        localStorage.setItem('vw_default_page', selectedPage);
-        showToast(`Default starting page set to ${e.target.options[e.target.selectedIndex].text}`, 'success');
-    }
-});
-
-document.addEventListener('change', async (e) => {
-    if (e.target && e.target.id === 'twoFactorToggle') {
-        const isEnabled = e.target.checked;
-        if (!auth.currentUser) {
-            showToast("You must be logged in", "error");
-            e.target.checked = !isEnabled;
-            return;
-        }
-        try {
-            showToast("Updating 2FA settings...", "info");
-            const userRef = doc(db, "users", auth.currentUser.uid);
-            await updateDoc(userRef, {
-                twoFactorEnabled: isEnabled,
-                updatedAt: serverTimestamp()
-            });
-            showToast(isEnabled ? "✅ Two-Factor Authentication enabled" : "🛡️ Two-Factor Authentication disabled", "success");
-        } catch (error) {
-            console.error("2FA update error:", error);
-            showToast("Failed to update 2FA settings", "error");
-            e.target.checked = !isEnabled;
-        }
-    }
-});
 
 // ====================== LANGUAGE CHANGE SUPPORT ======================
 window.addEventListener('languageChanged', () => {
@@ -1036,7 +945,6 @@ window.handleImagePreview = handleImagePreview;
 window.handleSignOut = handleSignOut;
 window.handleProfileStartCycle = handleProfileStartCycle;
 window.triggerPasswordReset = triggerPasswordReset;
-window.exportUserDataPDF = exportUserDataPDF;
 window.renderProfileUI = renderProfileUI;
 window.initProfile = initProfile;
 
@@ -1058,26 +966,22 @@ export class ProfileManager {
             this.renderLoggedOutState();
             return;
         }
-
         const user = auth.currentUser;
         const tierData = await getUserTierData(user.uid);
-        const currentMode = AppState.getIdentityMode(); // 'ANONYMOUS' or 'BOLD_WITNESS'
+        const currentMode = AppState.getIdentityMode();
         this.renderProfileCard(user, tierData, currentMode);
         this.bindEvents(user, tierData);
     }
 
     renderProfileCard(user, tierData, mode) {
         if (!this.profileContainer) return;
-
         const isBold = mode === 'BOLD_WITNESS';
         const displayName = isBold
             ? (user.displayName || 'Verified Witness')
             : `Witness #${user.uid.slice(0, 6)}`;
-
         const avatarUrl = isBold
             ? (user.photoURL || 'assets/default-avatar.png')
             : 'assets/zk-shield-avatar.png';
-
         const identityBadge = isBold
             ? `<span class="bg-amber-500/10 text-amber-400 border border-amber-500/30 text-xs px-2.5 py-1 rounded-full font-mono">⚡ Bold Witness</span>`
             : `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-xs px-2.5 py-1 rounded-full font-mono">🛡️ ZK-Anonymous</span>`;
@@ -1095,9 +999,7 @@ export class ProfileManager {
                         <div class="pt-1">${identityBadge}</div>
                     </div>
                 </div>
-
                 <hr class="border-zinc-800" />
-
                 <div class="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-4 flex items-center justify-between">
                     <div>
                         <h4 class="text-sm font-semibold text-zinc-200">Active Identity Mode</h4>
@@ -1113,7 +1015,6 @@ export class ProfileManager {
                         ${isBold ? 'Switch to Anonymous' : 'Enable Bold Witness'}
                     </button>
                 </div>
-
                 <div class="space-y-3">
                     <h4 class="text-xs font-mono uppercase tracking-wider text-zinc-500">Forensic Pipeline Defaults</h4>
                     <div class="space-y-2">
@@ -1153,14 +1054,12 @@ export class ProfileManager {
                 }
             });
         }
-
         const voiceToggle = document.getElementById('prefVoiceObfuscation');
         if (voiceToggle) {
             voiceToggle.addEventListener('change', (e) => {
                 AppState.setPref('voiceObfuscate', e.target.checked);
             });
         }
-
         const exifToggle = document.getElementById('prefExifScrub');
         if (exifToggle) {
             exifToggle.addEventListener('change', (e) => {
@@ -1189,13 +1088,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// ====================== EVENT LISTENERS ======================
+// ====================== CLOSE / ESCAPE LISTENERS ======================
 document.addEventListener('DOMContentLoaded', () => {
-    // Close buttons
     document.getElementById('closeProfileModalBtn')?.addEventListener('click', closeProfile);
     document.getElementById('closeEditProfileBtn')?.addEventListener('click', closeEditProfile);
 
-    // Click outside to close
     document.getElementById('profileModal')?.addEventListener('click', (e) => {
         if (e.target.id === 'profileModal') closeProfile();
     });
@@ -1203,7 +1100,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.id === 'editProfileModal') closeEditProfile();
     });
 
-    // Escape key
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             closeProfile();
@@ -1212,192 +1108,80 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
-document.addEventListener('DOMContentLoaded', () => {
-  initProfileModals();
-});
 
-// ===========danger zone ======
-document.getElementById('panicClearBtn')?.addEventListener('click', async () => {
-  const confirmed = confirm("⚠️ EMERGENCY CLEAR\n\nThis will immediately erase all VocalWitness data from THIS device and sign you out.\n\nThe public ledger will NOT be affected.\n\nContinue?");
-  if (!confirmed) return;
-
-  showToast("Clearing device...", "info");
-  await panicClearDevice();
-});
-
-// ====================== INIT PROFILE MODALS (CSP-safe, runs once) ======================
+// ====================== INIT PROFILE MODALS (CSP-safe – SINGLE SOURCE OF TRUTH) ======================
 export function initProfileModals() {
-  // Cancel buttons (both possible IDs)
-  document.getElementById('cancelEditProfileBtn')?.addEventListener('click', closeEditProfile);
-  document.getElementById('btn-cancel-edit')?.addEventListener('click', closeEditProfile);
+    // Cancel buttons
+    document.getElementById('cancelEditProfileBtn')?.addEventListener('click', closeEditProfile);
+    document.getElementById('btn-cancel-edit')?.addEventListener('click', closeEditProfile);
 
-  // Avatar preview
-  document.getElementById('avatarInput')?.addEventListener('change', handleImagePreview);
+    // Avatar
+    document.getElementById('avatarInput')?.addEventListener('change', handleImagePreview);
 
-  // Edit Profile form submit
-  document.getElementById('editProfileForm')?.addEventListener('submit', handleSaveProfile);
+    // Edit Profile form
+    document.getElementById('editProfileForm')?.addEventListener('submit', handleSaveProfile);
 
-  // Close Settings
-  document.getElementById('closeSettingsBtn')?.addEventListener('click', closeSettings);
+    // Close Settings
+    document.getElementById('closeSettingsBtn')?.addEventListener('click', closeSettings);
 
-  // Password Reset
-  document.getElementById('triggerPasswordResetBtn')?.addEventListener('click', triggerPasswordReset);
+    // Password Reset
+    document.getElementById('triggerPasswordResetBtn')?.addEventListener('click', triggerPasswordReset);
 
-  // Download Identity PDF (correct name)
-  document.getElementById('exportUserDataPdfBtn')?.addEventListener('click', exportUserDataPDF);
+    // ========== DOWNLOAD IDENTITY PDF (NEW DUAL SYSTEM) ==========
+    document.getElementById('exportUserDataPdfBtn')?.addEventListener('click', () => {
+        if (!currentUserData) {
+            showToast("Profile data not loaded", "error");
+            return;
+        }
+        // This calls the new dual system (Standard + Premium)
+        generateAndDownloadPDF(currentUserData, db);
+    });
 
-  // Settings Sign Out
-  document.getElementById('settingsSignOutBtn')?.addEventListener('click', handleSignOut);
+    // Settings Sign Out
+    document.getElementById('settingsSignOutBtn')?.addEventListener('click', handleSignOut);
 
-  // Emergency Clear
-  document.getElementById('panicClearBtn')?.addEventListener('click', async () => {
-    const confirmed = confirm(
-      "⚠️ EMERGENCY CLEAR\n\nThis will immediately erase all VocalWitness data from THIS device and sign you out.\n\nThe public ledger will NOT be affected.\n\nContinue?"
-    );
-    if (!confirmed) return;
+    // Emergency Clear
+    document.getElementById('panicClearBtn')?.addEventListener('click', async () => {
+        const confirmed = confirm(
+            "⚠️ EMERGENCY CLEAR\n\nThis will immediately erase all VocalWitness data from THIS device and sign you out.\n\nThe public ledger will NOT be affected.\n\nContinue?"
+        );
+        if (!confirmed) return;
 
-    showToast("Clearing device...", "info");
-    localStorage.clear();
-    sessionStorage.clear();
-    await handleSignOut();
-  });
+        showToast("Clearing device...", "info");
+        localStorage.clear();
+        sessionStorage.clear();
+        await handleSignOut();
+    });
 
-  // 2FA toggle (matches your HTML id)
-  document.getElementById('toggle2FA')?.addEventListener('change', async (e) => {
-    const isEnabled = e.target.checked;
-    if (!auth.currentUser) {
-      showToast("You must be logged in", "error");
-      e.target.checked = !isEnabled;
-      return;
-    }
-    try {
-      await updateDoc(doc(db, "users", auth.currentUser.uid), {
-        twoFactorEnabled: isEnabled,
-        updatedAt: serverTimestamp()
-      });
-      showToast(isEnabled ? "✅ 2FA enabled" : "🛡️ 2FA disabled", "success");
-    } catch (err) {
-      console.error(err);
-      showToast("Failed to update 2FA", "error");
-      e.target.checked = !isEnabled;
-    }
-  });
+    // 2FA toggle
+    document.getElementById('toggle2FA')?.addEventListener('change', async (e) => {
+        const isEnabled = e.target.checked;
+        if (!auth.currentUser) {
+            showToast("You must be logged in", "error");
+            e.target.checked = !isEnabled;
+            return;
+        }
+        try {
+            await updateDoc(doc(db, "users", auth.currentUser.uid), {
+                twoFactorEnabled: isEnabled,
+                updatedAt: serverTimestamp()
+            });
+            showToast(isEnabled ? "✅ 2FA enabled" : "🛡️ 2FA disabled", "success");
+        } catch (err) {
+            console.error(err);
+            showToast("Failed to update 2FA", "error");
+            e.target.checked = !isEnabled;
+        }
+    });
 
-  // Default page select (matches your HTML id)
-  document.getElementById('defaultDoorSelect')?.addEventListener('change', (e) => {
-    localStorage.setItem('vw_default_page', e.target.value);
-    showToast("Default page saved", "success");
-  });
+    // Default page select
+    document.getElementById('defaultDoorSelect')?.addEventListener('change', (e) => {
+        localStorage.setItem('vw_default_page', e.target.value);
+        showToast("Default page saved", "success");
+    });
 }
 
-// Call it once
+// Call the modal initializer once
 document.addEventListener('DOMContentLoaded', () => {
-  initProfileModals();
+    initProfileModals();
 });
-
-
-// ====================== EVENT WIRING (CSP SAFE) ======================
-
-// --- Edit Profile Modal ---
-  document.getElementById('closeEditProfileBtn')?.addEventListener('click', closeEditProfile);
-  document.getElementById('btn-cancel-edit')?.addEventListener('click', closeEditProfile);
-  document.getElementById('avatarInput')?.addEventListener('change', handleImagePreview);
-  document.getElementById('editProfileForm')?.addEventListener('submit', handleSaveProfile);
-
-  // --- Settings Modal ---
-  document.getElementById('closeSettingsBtn')?.addEventListener('click', () => {
-    if (typeof closeSettings === 'function') closeSettings();
-  });
-
-  document.getElementById('triggerPasswordResetBtn')?.addEventListener('click', () => {
-    if (typeof triggerPasswordReset === 'function') triggerPasswordReset();
-  });
-
-  document.getElementById('exportUserDataPdfBtn')?.addEventListener('click', () => {
-    if (typeof exportUserDataPDF === 'function') exportUserDataPDF();
-  });
-
-  document.getElementById('settingsSignOutBtn')?.addEventListener('click', () => {
-    if (typeof handleSignOut === 'function') handleSignOut();
-  });
-
-  // Panic Clear
-  document.getElementById('panicClearBtn')?.addEventListener('click', async () => {
-    const confirmed = confirm("⚠️ EMERGENCY CLEAR\n\nThis will immediately erase all VocalWitness data from THIS device and sign you out.\n\nThe public ledger will NOT be affected.\n\nContinue?");
-    if (!confirmed) return;
-
-    showToast("Clearing device...", "info");
-    
-    // Clear local data
-    localStorage.clear();
-    sessionStorage.clear();
-    
-    if (typeof handleSignOut === 'function') {
-      await handleSignOut();
-    } else {
-      window.location.href = '/';
-    }
-  });
-
-  // 2FA
-  document.getElementById('toggle2FA')?.addEventListener('change', async (e) => {
-    const isEnabled = e.target.checked;
-    if (!auth.currentUser) {
-      showToast("You must be logged in", "error");
-      e.target.checked = !isEnabled;
-      return;
-    }
-    try {
-      await updateDoc(doc(db, "users", auth.currentUser.uid), {
-        twoFactorEnabled: isEnabled,
-        updatedAt: serverTimestamp()
-      });
-      showToast(isEnabled ? "✅ 2FA enabled" : "🛡️ 2FA disabled", "success");
-    } catch (err) {
-      console.error(err);
-      showToast("Failed to update 2FA", "error");
-      e.target.checked = !isEnabled;
-    }
-  });
-
-  // Default door
-  document.getElementById('defaultDoorSelect')?.addEventListener('change', (e) => {
-    localStorage.setItem('vw_default_page', e.target.value);
-    showToast(`Default page set`, "success");
-  });
-});
-
-// Put this near the bottom of profile.js (runs once)
-
-  // Download Identity PDF  ← this is the one that currently does nothing
-  document.getElementById('exportUserDataPdfBtn')?.addEventListener('click', () => {
-    if (typeof window.exportUserDataPdf === 'function') {
-      window.exportUserDataPdf();
-    } else {
-      showToast('PDF export not ready yet', 'warning');
-    }
-  });
-
-  // Settings Sign Out
-  document.getElementById('settingsSignOutBtn')?.addEventListener('click', () => {
-    if (typeof window.handleSignOut === 'function') {
-      window.handleSignOut();
-    }
-  });
-
-
-  // Password Reset
-  document.getElementById('triggerPasswordResetBtn')?.addEventListener('click', () => {
-    if (typeof window.triggerPasswordReset === 'function') {
-      window.triggerPasswordReset();
-    } else {
-      showToast('Password reset not wired yet', 'info');
-    }
-  });
-
-  // 2FA toggle (example)
-  document.getElementById('toggle2FA')?.addEventListener('change', (e) => {
-    // your real 2FA logic here
-    showToast(`2FA ${e.target.checked ? 'enabled' : 'disabled'}`, 'info');
-  });
-}
