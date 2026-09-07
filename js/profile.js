@@ -575,6 +575,13 @@ function attachProfileEventListeners(userData, isCitizenCircle, isWitness) {
         }
     });
 
+    // Dark Mode Toggle
+    document.getElementById('theme-toggle-btn')?.addEventListener('click', () => {
+        if (typeof window.toggleDarkMode === 'function') {
+            window.toggleDarkMode();
+        }
+    });
+
     // Settings
     document.getElementById('btnOpenSettings')?.addEventListener('click', () => {
         if (typeof window.openSettingsSafe === 'function') {
@@ -593,6 +600,7 @@ function attachProfileEventListeners(userData, isCitizenCircle, isWitness) {
         }
     });
 }
+
 // ====================== BIO EDIT HELPERS ======================
 window.toggleBioEdit = function () {
     const display = document.getElementById('bioDisplay');
