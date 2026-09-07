@@ -621,37 +621,41 @@ export async function handleProfileStartCycle() {
 }
 
 export function openEditProfile() {
-    closeProfile();
-
     const modal = document.getElementById('editProfileModal');
+    
     if (!modal) {
         showToast("Edit Profile modal not found. Using quick bio editor instead.", "info");
         openProfile();
-        setTimeout(() => toggleBioEdit(), 300);
+        setTimeout(() => {
+            if (typeof toggleBioEdit === 'function') toggleBioEdit();
+        }, 300);
         return;
     }
 
+    // Reset pending avatar
     pendingAvatarBase64 = null;
 
+    // Fill form with current user data
     if (currentUserData) {
-        const firstNameInput = document.getElementById('editFirstName');
-        const lastNameInput = document.getElementById('editLastName');
-        const displayNameInput = document.getElementById('editDisplayName');
-        const usernameInput = document.getElementById('editUsername');
-        const regionInput = document.getElementById('editRegion');
-        const bioInput = document.getElementById('editBio');
-        const hidePublicToggle = document.getElementById('toggleHidePublicInfo');
-        const imgPreview = document.getElementById('avatarPreview');
-        const avatarFallback = document.getElementById('avatarFallback');
+        const firstNameInput     = document.getElementById('editFirstName');
+        const lastNameInput      = document.getElementById('editLastName');
+        const displayNameInput   = document.getElementById('editDisplayName');
+        const usernameInput      = document.getElementById('editUsername');
+        const regionInput        = document.getElementById('editRegion');
+        const bioInput           = document.getElementById('editBio');
+        const hidePublicToggle   = document.getElementById('toggleHidePublicInfo');
+        const imgPreview         = document.getElementById('avatarPreview');
+        const avatarFallback     = document.getElementById('avatarFallback');
 
-        if (firstNameInput) firstNameInput.value = currentUserData.firstName || '';
-        if (lastNameInput) lastNameInput.value = currentUserData.lastName || '';
+        if (firstNameInput)   firstNameInput.value   = currentUserData.firstName || '';
+        if (lastNameInput)    lastNameInput.value    = currentUserData.lastName || '';
         if (displayNameInput) displayNameInput.value = currentUserData.displayName || '';
-        if (usernameInput) usernameInput.value = currentUserData.username || '';
-        if (regionInput) regionInput.value = currentUserData.region || '';
-        if (bioInput) bioInput.value = currentUserData.bio || '';
+        if (usernameInput)    usernameInput.value    = currentUserData.username || '';
+        if (regionInput)      regionInput.value      = currentUserData.region || '';
+        if (bioInput)         bioInput.value         = currentUserData.bio || '';
         if (hidePublicToggle) hidePublicToggle.checked = isPrivacyPrivate(currentUserData);
 
+        // Avatar handling
         if (currentUserData.photoURL && imgPreview) {
             imgPreview.src = currentUserData.photoURL;
             imgPreview.classList.remove('hidden');
@@ -662,11 +666,15 @@ export function openEditProfile() {
         }
     }
 
+    // Open the modal cleanly
     modal.classList.remove('hidden');
-    modal.style.display = 'flex';
-    modal.style.zIndex = '10000';
+    modal.classList.add('flex');
+    modal.setAttribute('aria-hidden', 'false');
+    
+    // Optional: close the main profile modal so only one is open
+    // Comment the next line if you prefer to keep both open (layered)
+    closeProfile();
 }
-
 export function closeEditProfile() {
     const modal = document.getElementById('editProfileModal');
     if (modal) {
@@ -1024,4 +1032,29 @@ document.addEventListener('DOMContentLoaded', () => {
     if (manager.profileContainer) {
         manager.init();
     }
+});
+
+// ====================== EVENT LISTENERS ======================
+document.addEventListener('DOMContentLoaded', () => {
+    // Close buttons
+    document.getElementById('closeProfileModalBtn')?.addEventListener('click', closeProfile);
+    document.getElementById('closeEditProfileBtn')?.addEventListener('click', closeEditProfile);
+
+    // Click outside to close
+    document.getElementById('profileModal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'profileModal') closeProfile();
+    });
+
+    document.getElementById('editProfileModal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'editProfileModal') closeEditProfile();
+    });
+
+    // Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeProfile();
+            closeEditProfile();
+            closeSettings();
+        }
+    });
 });
