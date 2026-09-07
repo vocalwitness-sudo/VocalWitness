@@ -1070,33 +1070,28 @@ document.getElementById('panicClearBtn')?.addEventListener('click', async () => 
   await panicClearDevice();
 });
 
-// ====================== FINAL EVENT WIRING ======================
+// ====================== EVENT WIRING (CSP SAFE) ======================
 document.addEventListener('DOMContentLoaded', () => {
-  // Close buttons
+
+  // --- Edit Profile Modal ---
+  document.getElementById('closeEditProfileBtn')?.addEventListener('click', closeEditProfile);
+  document.getElementById('btn-cancel-edit')?.addEventListener('click', closeEditProfile);
+  document.getElementById('avatarInput')?.addEventListener('change', handleImagePreview);
+  document.getElementById('editProfileForm')?.addEventListener('submit', handleSaveProfile);
+
+  // --- Settings Modal ---
   document.getElementById('closeSettingsBtn')?.addEventListener('click', () => {
     if (typeof closeSettings === 'function') closeSettings();
-    else {
-      const m = document.getElementById('settingsModal');
-      if (m) {
-        m.classList.add('hidden');
-        m.classList.remove('flex');
-      }
-    }
   });
 
-  // Password Reset
   document.getElementById('triggerPasswordResetBtn')?.addEventListener('click', () => {
     if (typeof triggerPasswordReset === 'function') triggerPasswordReset();
-    else if (typeof window.safeTriggerPasswordReset === 'function') window.safeTriggerPasswordReset();
   });
 
-  // Export PDF
   document.getElementById('exportUserDataPdfBtn')?.addEventListener('click', () => {
     if (typeof exportUserDataPDF === 'function') exportUserDataPDF();
-    else if (typeof window.safeExportUserDataPDF === 'function') window.safeExportUserDataPDF();
   });
 
-  // Sign Out from Settings
   document.getElementById('settingsSignOutBtn')?.addEventListener('click', () => {
     if (typeof handleSignOut === 'function') handleSignOut();
   });
@@ -1107,18 +1102,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!confirmed) return;
 
     showToast("Clearing device...", "info");
-    if (typeof panicClearDevice === 'function') {
-      await panicClearDevice();
+    
+    // Clear local data
+    localStorage.clear();
+    sessionStorage.clear();
+    
+    if (typeof handleSignOut === 'function') {
+      await handleSignOut();
     } else {
-      // Fallback clear
-      localStorage.clear();
-      sessionStorage.clear();
-      if (typeof handleSignOut === 'function') handleSignOut();
-      else window.location.href = '/';
+      window.location.href = '/';
     }
   });
 
-  // 2FA toggle
+  // 2FA
   document.getElementById('toggle2FA')?.addEventListener('change', async (e) => {
     const isEnabled = e.target.checked;
     if (!auth.currentUser) {
@@ -1127,12 +1123,11 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     try {
-      showToast("Updating 2FA settings...", "info");
       await updateDoc(doc(db, "users", auth.currentUser.uid), {
         twoFactorEnabled: isEnabled,
         updatedAt: serverTimestamp()
       });
-      showToast(isEnabled ? "✅ Two-Factor Authentication enabled" : "🛡️ Two-Factor Authentication disabled", "success");
+      showToast(isEnabled ? "✅ 2FA enabled" : "🛡️ 2FA disabled", "success");
     } catch (err) {
       console.error(err);
       showToast("Failed to update 2FA", "error");
@@ -1140,9 +1135,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Default door select
+  // Default door
   document.getElementById('defaultDoorSelect')?.addEventListener('change', (e) => {
     localStorage.setItem('vw_default_page', e.target.value);
-    showToast(`Default page set to ${e.target.options[e.target.selectedIndex].text}`, "success");
+    showToast(`Default page set`, "success");
   });
 });
