@@ -159,7 +159,7 @@
         <div class="relative" id="notification-container">
           <button id="notification-btn" type="button" aria-label="Notifications"
                   class="relative flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-300 hover:border-emerald-500/50 hover:text-white"
-                  onclick="toggleNotificationDropdown(event)">
+                
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
             </svg>
@@ -745,8 +745,10 @@
     <div class="mt-5 border-t border-zinc-800 pt-4">
       <p class="mb-2 text-center text-xs font-medium text-zinc-400">Or scan / copy to send USDT directly:</p>
       <div class="mx-auto mb-3 flex h-36 w-36 items-center justify-center rounded-2xl bg-white p-3 shadow-md">
-        <img src="./image/95756.jpg" alt="USDT TRC-20 QR Code" class="h-full w-full object-contain"
-             onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');">
+        <<img src="./image/95756.jpg" 
+     alt="USDT TRC-20 QR Code" 
+     class="h-full w-full object-contain" 
+     id="usdt-qr-img">
         <span class="hidden text-xs text-zinc-500">QR unavailable</span>
       </div>
       <div class="flex items-center justify-between gap-2 rounded-xl border border-zinc-800 bg-zinc-900 p-3">
