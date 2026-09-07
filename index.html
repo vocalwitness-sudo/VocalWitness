@@ -872,56 +872,95 @@
     </form>
   </div>
 </div>
+  
 <!-- ====================== SETTINGS & SECURITY MODAL ====================== -->
 <div id="settingsModal"
-     class="fixed inset-0 z-[10001] hidden items-center justify-center overflow-y-auto bg-black/80 p-4 backdrop-blur-md"
+     class="fixed inset-0 z-[10001] hidden items-center justify-center overflow-y-auto bg-black/85 p-4"
      role="dialog" aria-modal="true" aria-labelledby="settingsTitle" aria-hidden="true">
-  <div class="custom-scroll relative max-h-[85vh] w-full max-w-lg space-y-6 overflow-y-auto rounded-3xl border border-zinc-800 bg-zinc-900 p-6 text-white shadow-2xl">
-    <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
-      <h3 id="settingsTitle" class="flex items-center gap-2 text-xl font-bold">⚙️ <span data-i18n="accountSettings">Account Settings</span></h3>
-      <button id="closeSettingsBtn" type="button" class="rounded-full p-2 text-zinc-400 transition hover:bg-zinc-800 hover:text-white" aria-label="Close settings">✕</button>
+  
+  <div class="custom-scroll relative max-h-[90vh] w-full max-w-lg space-y-6 overflow-y-auto rounded-3xl border border-zinc-700 bg-[#111827] p-6 text-white shadow-2xl">
+    
+    <!-- Header -->
+    <div class="flex items-center justify-between border-b border-zinc-700 pb-4">
+      <h3 id="settingsTitle" class="flex items-center gap-2 text-xl font-bold">
+        ⚙️ Account Settings & Security
+      </h3>
+      <button id="closeSettingsBtn" type="button"
+              class="rounded-full p-2 text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+              aria-label="Close settings">✕</button>
     </div>
+
+    <!-- Security Section -->
     <div class="space-y-3">
-      <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400" data-i18n="securityHeader">Security &amp; Access</h4>
-      <div class="flex items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4">
+      <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400">Security & Access</h4>
+
+      <!-- Password Reset -->
+      <div class="flex items-center justify-between rounded-2xl border border-zinc-700 bg-zinc-900 p-4">
         <div>
-          <div class="text-sm font-medium" data-i18n="passwordLabel">Password</div>
-          <div class="text-xs text-zinc-400" data-i18n="passwordSub">Send password reset email</div>
+          <div class="text-sm font-medium">Password</div>
+          <div class="text-xs text-zinc-400 mt-0.5">Send a secure password reset link to your email</div>
         </div>
-        <button id="triggerPasswordResetBtn" type="button" class="rounded-xl border border-zinc-700 bg-zinc-800 px-3.5 py-1.5 text-xs font-semibold hover:bg-zinc-700" data-i18n="resetBtn">Reset</button>
+        <button id="triggerPasswordResetBtn" type="button"
+                class="rounded-xl bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 px-4 py-2 text-xs font-semibold transition">
+          Reset Password
+        </button>
       </div>
-      <div class="flex items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4">
+
+      <!-- 2FA -->
+      <div class="flex items-center justify-between rounded-2xl border border-zinc-700 bg-zinc-900 p-4">
         <div>
-          <div class="text-sm font-medium" data-i18n="2faLabel">Two-Factor Auth (2FA)</div>
-          <div class="text-xs text-zinc-400" data-i18n="2faSub">Require phone verification on sign-in</div>
+          <div class="text-sm font-medium">Two-Factor Protection</div>
+          <div class="text-xs text-zinc-400 mt-0.5">Require phone verification every time you sign in</div>
         </div>
-        <input type="checkbox" id="toggle2FA" class="h-5 w-5 cursor-pointer rounded accent-emerald-500" aria-label="Enable two-factor authentication">
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" id="toggle2FA" class="sr-only peer">
+          <div class="w-11 h-6 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+        </label>
       </div>
     </div>
+
+    <!-- Preferences -->
     <div class="space-y-3">
-      <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400" data-i18n="preferencesHeader">Preferences</h4>
-      <div class="space-y-2 rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4">
-        <label for="defaultDoorSelect" class="block text-xs font-medium text-zinc-400" data-i18n="defaultDoorLabel">Default Entrance Door</label>
-        <select id="defaultDoorSelect" class="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
-          <option value="public_square" data-i18n="doorPublicSquare">Public Square</option>
-          <option value="citizen_talk" data-i18n="doorCitizenTalk">Citizen Talk</option>
-          <option value="witness_voice" data-i18n="doorWitnessVoice">Witness Voice</option>
+      <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400">Preferences</h4>
+      
+      <div class="rounded-2xl border border-zinc-700 bg-zinc-900 p-4 space-y-2">
+        <label for="defaultDoorSelect" class="block text-xs font-medium text-zinc-400">
+          Default Entrance (where you land after login)
+        </label>
+        <select id="defaultDoorSelect"
+                class="w-full rounded-xl border border-zinc-700 bg-zinc-950 p-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+          <option value="public_square">Public Square</option>
+          <option value="citizen_talk">Citizen Talk</option>
+          <option value="witness_voice">Witness Voice</option>
         </select>
       </div>
     </div>
+
+    <!-- Data & Identity -->
     <div class="space-y-3">
-      <h4 class="text-xs font-bold uppercase tracking-wider text-red-400" data-i18n="dangerZoneHeader">Data &amp; Identity</h4>
-      <div class="flex items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4">
+      <h4 class="text-xs font-bold uppercase tracking-wider text-red-400">Data & Identity</h4>
+
+      <div class="flex items-center justify-between rounded-2xl border border-zinc-700 bg-zinc-900 p-4">
         <div>
-          <div class="text-sm font-medium" data-i18n="exportLabel">Export Profile Record</div>
-          <div class="text-xs text-zinc-400" data-i18n="exportSub">Download identity summary PDF</div>
+          <div class="text-sm font-medium">Export My Identity Record</div>
+          <div class="text-xs text-zinc-400 mt-0.5">Download a PDF summary of your profile & verification status</div>
         </div>
-        <button id="exportUserDataPdfBtn" type="button" class="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-1.5 text-xs font-semibold text-emerald-400 hover:bg-emerald-500/20" data-i18n="exportBtn">Download PDF</button>
+        <button id="exportUserDataPdfBtn" type="button"
+                class="rounded-xl border border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 px-4 py-2 text-xs font-semibold text-emerald-400 transition">
+          Download PDF
+        </button>
       </div>
+
+      <!-- Sign Out -->
+      <button id="settingsSignOutBtn" type="button"
+              class="w-full py-3.5 rounded-2xl border border-red-500/40 bg-red-950/40 hover:bg-red-900/50 text-red-400 hover:text-red-300 text-sm font-semibold transition flex items-center justify-center gap-2">
+        🚪 Sign Out of VocalWitness
+      </button>
     </div>
+
   </div>
 </div>
-
+  
 <!-- ====================== PHONE VERIFICATION MODAL ====================== -->
 <div id="phoneVerificationModal"
      class="fixed inset-0 z-[10050] hidden items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
