@@ -465,7 +465,8 @@ async function loadEvidenceLedger() {
                     </h2>
                     <p class="text-sm text-zinc-400 mt-1">Permanent, immutable record of public testimonies.</p>
                 </div>
-                <button id="syncLedgerBtn" onclick="window.refreshLedger()" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-2xl text-xs font-medium text-emerald-400 transition flex items-center gap-2">
+                <button id="syncLedgerBtn" type="button"
+                        class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-2xl text-xs font-medium text-emerald-400 transition flex items-center gap-2">
                     🔄 Sync Ledger
                 </button>
             </div>
@@ -476,7 +477,19 @@ async function loadEvidenceLedger() {
 
     const innerWrapper = document.getElementById('ledgerTableInnerWrapper');
     const syncBtn = document.getElementById('syncLedgerBtn');
-    if (syncBtn) syncBtn.disabled = true;
+
+    // CSP-safe listener
+    if (syncBtn) {
+        syncBtn.addEventListener('click', () => {
+            if (typeof window.refreshLedger === 'function') {
+                window.refreshLedger();
+            } else {
+                // fallback – just reload this ledger
+                loadEvidenceLedger();
+            }
+        });
+        syncBtn.disabled = true;   // disable while loading
+    }
 
     try {
         const q = query(
