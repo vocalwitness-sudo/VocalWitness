@@ -188,7 +188,7 @@ export function renderEvidenceIntakeAssistant(container) {
                                 <div>• <strong>Timeline:</strong> ${escapeHTML(structuredTestimony.timeline)}</div>
                                 <div>• <strong>Facts:</strong> ${escapeHTML(structuredTestimony.factSummary)}</div>
                             </div>
-                            <button type="button" onclick="window.applyStructuredTestimonyToForm('${structuredTestimony.observationType}', '${encodeURIComponent(structuredTestimony.timeline)}', '${encodeURIComponent(structuredTestimony.factSummary)}')" class="mt-2 w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-1.5 rounded-lg text-xs transition">
+                            <button type="button" id="insert-testimony-btn" data-type="${escapeHTML(structuredTestimony.observationType)}" data-timeline="${encodeURIComponent(structuredTestimony.timeline)}" data-facts="${encodeURIComponent(structuredTestimony.factSummary)}" class="mt-2 w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-1.5 rounded-lg text-xs transition">
                                 Insert Formatted Testimony into Post
                             </button>
                         </div>
@@ -201,6 +201,18 @@ export function renderEvidenceIntakeAssistant(container) {
                     </div>
                 `;
                 chatHistory.scrollTop = chatHistory.scrollHeight;
+
+                // Bind the event listener to the dynamically injected button safely
+                const insertBtn = chatHistory.querySelector('#insert-testimony-btn');
+                if (insertBtn) {
+                    insertBtn.addEventListener('click', () => {
+                        window.applyStructuredTestimonyToForm(
+                            insertBtn.dataset.type,
+                            insertBtn.dataset.timeline,
+                            insertBtn.dataset.facts
+                        );
+                    });
+                }
             }, 400);
         };
 
