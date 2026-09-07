@@ -1,7 +1,4 @@
 // js/profile.js - Full upgraded profile (privacy default, verification ladder, sign out)
-// Handles modal layering, multi-field form persistence, image upload preview,
-// bio editing, dual-identity mode, Privacy Shield, Verification progression
-
 import {
     onAuthStateChanged,
     sendPasswordResetEmail,
@@ -1215,6 +1212,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+document.addEventListener('DOMContentLoaded', () => {
+  initProfileModals();
+});
 
 // ===========danger zone ======
 document.getElementById('panicClearBtn')?.addEventListener('click', async () => {
@@ -1225,10 +1225,80 @@ document.getElementById('panicClearBtn')?.addEventListener('click', async () => 
   await panicClearDevice();
 });
 
-// ====================== EVENT WIRING (CSP SAFE) ======================
-document.addEventListener('DOMContentLoaded', () => {
+// ====================== INIT PROFILE MODALS (CSP-safe, runs once) ======================
+export function initProfileModals() {
+  // Cancel buttons (both possible IDs)
+  document.getElementById('cancelEditProfileBtn')?.addEventListener('click', closeEditProfile);
+  document.getElementById('btn-cancel-edit')?.addEventListener('click', closeEditProfile);
 
-  // --- Edit Profile Modal ---
+  // Avatar preview
+  document.getElementById('avatarInput')?.addEventListener('change', handleImagePreview);
+
+  // Edit Profile form submit
+  document.getElementById('editProfileForm')?.addEventListener('submit', handleSaveProfile);
+
+  // Close Settings
+  document.getElementById('closeSettingsBtn')?.addEventListener('click', closeSettings);
+
+  // Password Reset
+  document.getElementById('triggerPasswordResetBtn')?.addEventListener('click', triggerPasswordReset);
+
+  // Download Identity PDF (correct name)
+  document.getElementById('exportUserDataPdfBtn')?.addEventListener('click', exportUserDataPDF);
+
+  // Settings Sign Out
+  document.getElementById('settingsSignOutBtn')?.addEventListener('click', handleSignOut);
+
+  // Emergency Clear
+  document.getElementById('panicClearBtn')?.addEventListener('click', async () => {
+    const confirmed = confirm(
+      "⚠️ EMERGENCY CLEAR\n\nThis will immediately erase all VocalWitness data from THIS device and sign you out.\n\nThe public ledger will NOT be affected.\n\nContinue?"
+    );
+    if (!confirmed) return;
+
+    showToast("Clearing device...", "info");
+    localStorage.clear();
+    sessionStorage.clear();
+    await handleSignOut();
+  });
+
+  // 2FA toggle (matches your HTML id)
+  document.getElementById('toggle2FA')?.addEventListener('change', async (e) => {
+    const isEnabled = e.target.checked;
+    if (!auth.currentUser) {
+      showToast("You must be logged in", "error");
+      e.target.checked = !isEnabled;
+      return;
+    }
+    try {
+      await updateDoc(doc(db, "users", auth.currentUser.uid), {
+        twoFactorEnabled: isEnabled,
+        updatedAt: serverTimestamp()
+      });
+      showToast(isEnabled ? "✅ 2FA enabled" : "🛡️ 2FA disabled", "success");
+    } catch (err) {
+      console.error(err);
+      showToast("Failed to update 2FA", "error");
+      e.target.checked = !isEnabled;
+    }
+  });
+
+  // Default page select (matches your HTML id)
+  document.getElementById('defaultDoorSelect')?.addEventListener('change', (e) => {
+    localStorage.setItem('vw_default_page', e.target.value);
+    showToast("Default page saved", "success");
+  });
+}
+
+// Call it once
+document.addEventListener('DOMContentLoaded', () => {
+  initProfileModals();
+});
+
+
+// ====================== EVENT WIRING (CSP SAFE) ======================
+
+// --- Edit Profile Modal ---
   document.getElementById('closeEditProfileBtn')?.addEventListener('click', closeEditProfile);
   document.getElementById('btn-cancel-edit')?.addEventListener('click', closeEditProfile);
   document.getElementById('avatarInput')?.addEventListener('change', handleImagePreview);
@@ -1298,15 +1368,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Put this near the bottom of profile.js (runs once)
-export function initProfileModals() {
-  // Cancel Edit Profile
-  document.getElementById('cancelEditProfileBtn')?.addEventListener('click', () => {
-    window.closeEditProfile?.();
-  });
-  // also keep the old id just in case
-  document.getElementById('btn-cancel-edit')?.addEventListener('click', () => {
-    window.closeEditProfile?.();
-  });
 
   // Download Identity PDF  ← this is the one that currently does nothing
   document.getElementById('exportUserDataPdfBtn')?.addEventListener('click', () => {
@@ -1324,17 +1385,6 @@ export function initProfileModals() {
     }
   });
 
-  // Emergency Clear
-  document.getElementById('panicClearBtn')?.addEventListener('click', () => {
-    if (typeof window.panicClearDevice === 'function') {
-      window.panicClearDevice();
-    } else {
-      localStorage.clear();
-      sessionStorage.clear();
-      showToast('Local data cleared on this device', 'success');
-      setTimeout(() => location.reload(), 800);
-    }
-  });
 
   // Password Reset
   document.getElementById('triggerPasswordResetBtn')?.addEventListener('click', () => {
