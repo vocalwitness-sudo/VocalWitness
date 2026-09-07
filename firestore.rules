@@ -362,6 +362,36 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+// ==========================================
+// SUPPORT / REPUTATION LOG
+// ==========================================
+match /support_log/{logId} {
+  // Users can read logs where they are the giver or the receiver
+  allow read: if isAuthenticated() && 
+    (resource.data.giverId == request.auth.uid || 
+     resource.data.targetId == request.auth.uid);
+
+  // Only the authenticated user can create a support entry as the giver
+  allow create: if isAuthenticated() &&
+    isNotBanned() &&
+    request.resource.data.giverId == request.auth.uid &&
+    request.resource.data.targetId is string &&
+    request.resource.data.targetId != request.auth.uid &&
+    request.resource.data.strength is number &&
+    request.resource.data.strength >= 1 &&
+    request.resource.data.strength <= 5 &&
+    request.resource.data.cost is number &&
+    request.resource.data.reputationGiven is number &&
+    request.resource.data.keys().hasAll([
+      'giverId', 'targetId', 'strength', 'cost', 
+      'reputationGiven', 'createdAt'
+    ]);
+
+  // Immutable log – no updates or deletes
+  allow update, delete: if false;
+}
+
+
     // ==========================================
     // DAO
     // ==========================================
