@@ -586,23 +586,40 @@ function escapeHtml(str) {
 
 // ====================== SETUP EVENT LISTENERS ======================
 function setupEventListeners() {
-    if (listenersInitialized) return;
-    listenersInitialized = true;
+    if (window.listenersInitialized) return;
+    window.listenersInitialized = true;
     console.log("✅ Wiring application listeners...");
 
+    // 1. Global Click Delegation for [data-action] and specific buttons
     document.addEventListener('click', (e) => {
         const actionTarget = e.target.closest('[data-action]');
-        if (!actionTarget) return;
+        
+        // Handle explicit ID lookups if data-action is missing
+        if (!actionTarget) {
+            if (e.target.closest('#data-saver-btn') || e.target.closest('#data-saver-btn-mobile')) {
+                e.preventDefault();
+                if (typeof toggleDataSaver === 'function') toggleDataSaver();
+            }
+            if (e.target.closest('#openSupportModalBtn') || e.target.closest('#openSupportModalBtnMobile')) {
+                e.preventDefault();
+                if (typeof window.openSupportModal === 'function') window.openSupportModal();
+            }
+            return;
+        }
 
         const action = actionTarget.dataset.action;
         switch (action) {
             case 'toggle-data-saver':
                 e.preventDefault();
-                toggleDataSaver();
+                if (typeof toggleDataSaver === 'function') toggleDataSaver();
                 break;
             case 'open-support-modal':
                 e.preventDefault();
-                window.openSupportModal();
+                if (typeof window.openSupportModal === 'function') window.openSupportModal();
+                break;
+            case 'open-auth-modal':
+                e.preventDefault();
+                if (typeof window.openAuthModal === 'function') window.openAuthModal();
                 break;
             case 'open-profile':
                 e.preventDefault();
@@ -616,61 +633,68 @@ function setupEventListeners() {
                 e.preventDefault();
                 document.querySelectorAll('.tab-view').forEach(view => view.classList.add('hidden'));
                 document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
-                initBookmarksView?.();
+                if (typeof initBookmarksView === 'function') initBookmarksView();
                 break;
             case 'open-notifications':
                 e.preventDefault();
-                showToast("🔔 Notification center coming online...", "info");
-                break;
-            case 'change-language':
-                e.preventDefault();
-                const langCode = actionTarget.value || actionTarget.dataset.lang;
-                if (langCode && typeof window.changeLanguage === 'function') {
-                    window.changeLanguage(langCode);
-                }
+                if (typeof showToast === 'function') showToast("🔔 Notification center coming online...", "info");
                 break;
             default:
                 break;
         }
     });
 
-    document.getElementById('notification-btn')?.addEventListener('click', window.toggleNotificationDropdown);
+    // 2. Notification Dropdown Toggle
+    const notifBtn = document.getElementById('notification-btn') || document.getElementById('notification-btn-mobile');
+    if (notifBtn && typeof window.toggleNotificationDropdown === 'function') {
+        notifBtn.addEventListener('click', window.toggleNotificationDropdown);
+    }
 
-  document.addEventListener('change', (e) => {
-        const actionTarget = e.target.closest('[data-action]');
-        if (!actionTarget) return;
-        const action = actionTarget.dataset.action;
-        if (action === 'change-language') {
-            const langCode = actionTarget.value;
-            if (langCode && typeof window.changeLanguage === 'function') {
-                window.changeLanguage(langCode);
-            }
+    // 3. Language Selection Changes (supporting both desktop & mobile IDs)
+    ['languageSelect', 'languageSelectMobile'].forEach(id => {
+        const selectEl = document.getElementById(id);
+        if (selectEl) {
+            selectEl.addEventListener('change', (e) => {
+                const langCode = e.target.value;
+                if (langCode && typeof window.changeLanguage === 'function') {
+                    window.changeLanguage(langCode);
+                }
+            });
         }
     });
 
+    // 4. Main Navigation Tab Switching
     const mainNav = document.getElementById('main-nav');
     if (mainNav) {
         mainNav.addEventListener('click', (e) => {
             const btn = e.target.closest('button[data-tab]');
             if (btn) {
                 e.preventDefault();
-                window.switchTab(btn.dataset.tab);
+                if (typeof window.switchTab === 'function') {
+                    window.switchTab(btn.dataset.tab);
+                }
             }
         });
     }
 
-    bindHeaderEvents();
+    // 5. Bind Header Specific Events
+    if (typeof bindHeaderEvents === 'function') {
+        bindHeaderEvents();
+    }
 
-    // Initialize composer event listeners & AI moderation pipeline
+    // 6. Initialize Composer Event Listeners & AI Moderation Pipeline
     if (typeof initComposer === 'function') {
         initComposer();
     }
 
+    // 7. Paystack Support Button
     document.getElementById('paystackPayBtn')?.addEventListener('click', (e) => {
         e.preventDefault();
         const amountInput = document.getElementById('customSupportAmount');
         const amount = amountInput ? parseFloat(amountInput.value) || 1000 : 1000;
-        window.initiatePayment(amount);
+        if (typeof window.initiatePayment === 'function') {
+            window.initiatePayment(amount);
+        }
     });
 
     console.log("✅ Application listeners active");
