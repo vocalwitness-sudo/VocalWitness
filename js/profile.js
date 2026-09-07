@@ -1296,3 +1296,58 @@ document.addEventListener('DOMContentLoaded', () => {
     showToast(`Default page set`, "success");
   });
 });
+
+// Put this near the bottom of profile.js (runs once)
+export function initProfileModals() {
+  // Cancel Edit Profile
+  document.getElementById('cancelEditProfileBtn')?.addEventListener('click', () => {
+    window.closeEditProfile?.();
+  });
+  // also keep the old id just in case
+  document.getElementById('btn-cancel-edit')?.addEventListener('click', () => {
+    window.closeEditProfile?.();
+  });
+
+  // Download Identity PDF  ← this is the one that currently does nothing
+  document.getElementById('exportUserDataPdfBtn')?.addEventListener('click', () => {
+    if (typeof window.exportUserDataPdf === 'function') {
+      window.exportUserDataPdf();
+    } else {
+      showToast('PDF export not ready yet', 'warning');
+    }
+  });
+
+  // Settings Sign Out
+  document.getElementById('settingsSignOutBtn')?.addEventListener('click', () => {
+    if (typeof window.handleSignOut === 'function') {
+      window.handleSignOut();
+    }
+  });
+
+  // Emergency Clear
+  document.getElementById('panicClearBtn')?.addEventListener('click', () => {
+    if (typeof window.panicClearDevice === 'function') {
+      window.panicClearDevice();
+    } else {
+      localStorage.clear();
+      sessionStorage.clear();
+      showToast('Local data cleared on this device', 'success');
+      setTimeout(() => location.reload(), 800);
+    }
+  });
+
+  // Password Reset
+  document.getElementById('triggerPasswordResetBtn')?.addEventListener('click', () => {
+    if (typeof window.triggerPasswordReset === 'function') {
+      window.triggerPasswordReset();
+    } else {
+      showToast('Password reset not wired yet', 'info');
+    }
+  });
+
+  // 2FA toggle (example)
+  document.getElementById('toggle2FA')?.addEventListener('change', (e) => {
+    // your real 2FA logic here
+    showToast(`2FA ${e.target.checked ? 'enabled' : 'disabled'}`, 'info');
+  });
+}
