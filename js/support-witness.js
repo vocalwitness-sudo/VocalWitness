@@ -1,27 +1,37 @@
-// js/support-modal.js
+// js/support-witness.js
+// UI Modal for giving reputation support ("Shine") to other witnesses
+// Uses the logic from reputation.js
+
 import { giveSupport, getRemainingSupportBudget } from './reputation.js';
 import { showToast } from './utils.js';
 
-export async function showSupportModal(targetUserId, targetDisplayName = "this Witness") {
-  // Remove existing modal if any
-  document.getElementById('supportModal')?.remove();
+/**
+ * Opens the Support Witness modal
+ * @param {string} targetUserId 
+ * @param {string} targetDisplayName 
+ */
+export async function showSupportWitnessModal(targetUserId, targetDisplayName = "this Witness") {
+  // Remove any existing modal
+  document.getElementById('supportWitnessModal')?.remove();
 
   const remainingBudget = await getRemainingSupportBudget();
 
   const modal = document.createElement('div');
-  modal.id = 'supportModal';
+  modal.id = 'supportWitnessModal';
   modal.className = 'fixed inset-0 z-[10060] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm';
-  
+
   modal.innerHTML = `
     <div class="relative w-full max-w-md rounded-3xl border border-emerald-500/30 bg-zinc-900 p-6 shadow-2xl text-white">
-      <button id="closeSupportModal" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl leading-none">&times;</button>
+      <button id="closeSupportWitnessModal" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl leading-none">&times;</button>
 
       <div class="text-center mb-5">
         <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 mb-3">
           <span class="text-2xl">✨</span>
         </div>
         <h3 class="text-xl font-bold text-emerald-400">Support this Witness</h3>
-        <p class="text-sm text-zinc-400 mt-1">Speak for the shine of <span class="text-white font-medium">${targetDisplayName}</span></p>
+        <p class="text-sm text-zinc-400 mt-1">
+          Speak for the shine of <span class="text-white font-medium">${targetDisplayName}</span>
+        </p>
       </div>
 
       <div class="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 mb-5 text-center">
@@ -55,10 +65,10 @@ export async function showSupportModal(targetUserId, targetDisplayName = "this W
       </div>
 
       <div class="flex flex-col gap-3">
-        <button id="confirmSupportBtn" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-black font-bold transition">
+        <button id="confirmSupportWitnessBtn" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-black font-bold transition">
           Support with Strength 3
         </button>
-        <button id="cancelSupportBtn" class="w-full py-2.5 rounded-xl border border-zinc-700 text-zinc-300 hover:bg-zinc-800 text-sm transition">
+        <button id="cancelSupportWitnessBtn" class="w-full py-2.5 rounded-xl border border-zinc-700 text-zinc-300 hover:bg-zinc-800 text-sm transition">
           Cancel
         </button>
       </div>
@@ -73,7 +83,7 @@ export async function showSupportModal(targetUserId, targetDisplayName = "this W
   modal.querySelectorAll('.strength-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       selectedStrength = parseInt(btn.dataset.s);
-      
+
       modal.querySelectorAll('.strength-btn').forEach(b => {
         b.classList.remove('bg-emerald-600', 'text-white');
         b.classList.add('bg-zinc-800');
@@ -81,27 +91,28 @@ export async function showSupportModal(targetUserId, targetDisplayName = "this W
       btn.classList.add('bg-emerald-600', 'text-white');
       btn.classList.remove('bg-zinc-800');
 
-      document.getElementById('confirmSupportBtn').textContent = `Support with Strength ${selectedStrength}`;
+      document.getElementById('confirmSupportWitnessBtn').textContent = `Support with Strength ${selectedStrength}`;
     });
   });
 
-  // Close buttons
-  document.getElementById('closeSupportModal').onclick = () => modal.remove();
-  document.getElementById('cancelSupportBtn').onclick = () => modal.remove();
+  // Close handlers
+  const closeModal = () => modal.remove();
+  document.getElementById('closeSupportWitnessModal').onclick = closeModal;
+  document.getElementById('cancelSupportWitnessBtn').onclick = closeModal;
   modal.addEventListener('click', (e) => {
-    if (e.target === modal) modal.remove();
+    if (e.target === modal) closeModal();
   });
 
-  // Confirm
-  document.getElementById('confirmSupportBtn').onclick = async () => {
-    const btn = document.getElementById('confirmSupportBtn');
+  // Confirm support
+  document.getElementById('confirmSupportWitnessBtn').onclick = async () => {
+    const btn = document.getElementById('confirmSupportWitnessBtn');
     btn.disabled = true;
     btn.textContent = "Supporting...";
 
     const success = await giveSupport(targetUserId, selectedStrength);
-    
+
     if (success) {
-      modal.remove();
+      closeModal();
     } else {
       btn.disabled = false;
       btn.textContent = `Support with Strength ${selectedStrength}`;
