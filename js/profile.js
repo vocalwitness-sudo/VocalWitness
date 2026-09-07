@@ -365,21 +365,44 @@ export function renderProfileUI(userData, retryCount = 0) {
                         }
                     </div>
 
-                    <!-- Step 2: ZK -->
-                    <div class="flex items-center justify-between gap-3 p-3 rounded-xl bg-zinc-950/80 border border-zinc-800">
-                        <div class="min-w-0">
-                            <div class="text-sm font-medium text-zinc-200">2. ZK / Higher Trust</div>
-                            <div class="text-xs text-zinc-500">Sealed proofs • True Witness path</div>
-                        </div>
-                        ${userData.zkVerified
-                            ? `<span class="shrink-0 text-xs font-semibold text-teal-400 bg-teal-500/10 border border-teal-500/30 px-2.5 py-1 rounded-full">🔑 Verified</span>`
-                            : `<button type="button" onclick="window.location.href='/verify.html'"
-                                    class="shrink-0 text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 px-3 py-1.5 rounded-xl">
-                                    Start
-                               </button>`
-                        }
-                    </div>
+                   <!-- Step 2: Higher Trust (ZK) -->
+<div class="p-3 rounded-xl bg-zinc-950/80 border border-zinc-800 space-y-3">
+  <div class="flex items-center justify-between gap-3">
+    <div class="min-w-0">
+      <div class="text-sm font-medium text-zinc-200 flex items-center gap-1.5">
+        2. Higher Trust Verification
+        <span class="text-[10px] bg-teal-500/15 text-teal-400 px-1.5 py-0.5 rounded-full">Recommended</span>
+      </div>
+      <div class="text-xs text-zinc-500 mt-1 leading-relaxed">
+        Prove your evidence is real and unchanged — without revealing who you are.
+      </div>
+    </div>
 
+    ${userData.zkVerified
+      ? `<span class="shrink-0 text-xs font-semibold text-teal-400 bg-teal-500/10 border border-teal-500/30 px-2.5 py-1 rounded-full">
+           🔑 Verified
+         </span>`
+      : `<button type="button"
+                 onclick="window.location.href='/verify.html?action=zk'"
+                 class="shrink-0 text-xs font-semibold bg-teal-600 hover:bg-teal-500 text-white px-3.5 py-1.5 rounded-xl transition">
+           Start Verification
+         </button>`
+    }
+  </div>
+
+  <!-- Guide Tips (only show if not yet verified) -->
+  ${!userData.zkVerified ? `
+  <div class="text-[11px] text-zinc-400 bg-zinc-900/60 border border-zinc-800 rounded-lg p-2.5 leading-relaxed">
+    <div class="font-medium text-zinc-300 mb-1">Quick Guide:</div>
+    <ul class="list-disc pl-4 space-y-0.5">
+      <li>Takes about 1–2 minutes</li>
+      <li>Works fully on your phone or computer</li>
+      <li>Does <strong>not</strong> reveal your real identity</li>
+      <li>Gives your future reports stronger trust weight</li>
+    </ul>
+  </div>
+  ` : ''}
+</div>
                     <!-- Step 3: Public profile (optional) -->
                     <div class="flex items-center justify-between gap-3 p-3 rounded-xl bg-zinc-950/80 border border-zinc-800">
                         <div class="min-w-0">
