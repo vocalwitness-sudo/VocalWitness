@@ -165,11 +165,22 @@ service cloud.firestore {
     // ==========================================
     // USERS
     // ==========================================
-    match /users/{userId} {
-      allow read: if true;
-      allow create: if isOwner(userId) && isSafeUserCreation();
-      allow update: if (isOwner(userId) && isSafeUserUpdate()) || isAdmin();
-      allow delete: if isAdmin();
+  match /users/{userId} {
+  allow read: if true;
+  allow create: if isOwner(userId) && isSafeUserCreation();
+  
+  allow update: if isAdmin() || 
+    (isOwner(userId) && isSafeUserUpdate()) ||
+    // Allow reputation increments from the support system
+    (isAuthenticated() && 
+     request.resource.data.diff(resource.data).affectedKeys()
+       .hasOnly(['reputation', 'credibilityScore', 'lastSupportedAt', 'totalSupportsReceived']) &&
+     // Only allow increase, never decrease from client
+     request.resource.data.reputation >= resource.data.get('reputation', 0) &&
+     request.resource.data.credibilityScore >= resource.data.get('credibilityScore', 0)
+    );
+
+  allow delete: if isAdmin();
 
       match /drafts/{draftId} {
         allow read, write: if isOwner(userId);
@@ -366,12 +377,10 @@ service cloud.firestore {
 // SUPPORT / REPUTATION LOG
 // ==========================================
 match /support_log/{logId} {
-  // Users can read logs where they are the giver or the receiver
   allow read: if isAuthenticated() && 
     (resource.data.giverId == request.auth.uid || 
      resource.data.targetId == request.auth.uid);
 
-  // Only the authenticated user can create a support entry as the giver
   allow create: if isAuthenticated() &&
     isNotBanned() &&
     request.resource.data.giverId == request.auth.uid &&
@@ -387,10 +396,8 @@ match /support_log/{logId} {
       'reputationGiven', 'createdAt'
     ]);
 
-  // Immutable log – no updates or deletes
   allow update, delete: if false;
 }
-
 
     // ==========================================
     // DAO
