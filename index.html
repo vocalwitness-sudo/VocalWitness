@@ -878,57 +878,55 @@
      class="fixed inset-0 z-[10001] hidden items-center justify-center overflow-y-auto bg-black/85 p-4"
      role="dialog" aria-modal="true" aria-labelledby="settingsTitle" aria-hidden="true">
   
-  <div class="custom-scroll relative max-h-[90vh] w-full max-w-lg space-y-6 overflow-y-auto rounded-3xl border border-zinc-700 bg-[#111827] p-6 text-white shadow-2xl">
+  <div class="custom-scroll relative max-h-[92vh] w-full max-w-lg space-y-6 overflow-y-auto rounded-3xl border border-zinc-700 bg-[#111827] p-6 text-white shadow-2xl">
     
     <!-- Header -->
     <div class="flex items-center justify-between border-b border-zinc-700 pb-4">
-      <h3 id="settingsTitle" class="flex items-center gap-2 text-xl font-bold">
-        ⚙️ Account Settings & Security
+      <h3 id="settingsTitle" class="text-xl font-bold flex items-center gap-2">
+        ⚙️ Security & Account Settings
       </h3>
       <button id="closeSettingsBtn" type="button"
-              class="rounded-full p-2 text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
-              aria-label="Close settings">✕</button>
+              class="rounded-full p-2 text-zinc-400 hover:bg-zinc-800 hover:text-white transition">
+        ✕
+      </button>
     </div>
 
-    <!-- Security Section -->
+    <!-- ===== Security Controls ===== -->
     <div class="space-y-3">
-      <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400">Security & Access</h4>
+      <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400">Security Controls</h4>
 
-      <!-- Password Reset -->
       <div class="flex items-center justify-between rounded-2xl border border-zinc-700 bg-zinc-900 p-4">
         <div>
           <div class="text-sm font-medium">Password</div>
-          <div class="text-xs text-zinc-400 mt-0.5">Send a secure password reset link to your email</div>
+          <div class="text-xs text-zinc-400">Send password reset email</div>
         </div>
         <button id="triggerPasswordResetBtn" type="button"
-                class="rounded-xl bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 px-4 py-2 text-xs font-semibold transition">
+                class="px-4 py-2 text-xs font-semibold rounded-xl bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 transition">
           Reset Password
         </button>
       </div>
 
-      <!-- 2FA -->
       <div class="flex items-center justify-between rounded-2xl border border-zinc-700 bg-zinc-900 p-4">
         <div>
           <div class="text-sm font-medium">Two-Factor Protection</div>
-          <div class="text-xs text-zinc-400 mt-0.5">Require phone verification every time you sign in</div>
+          <div class="text-xs text-zinc-400">Require phone check on every sign-in</div>
         </div>
         <label class="relative inline-flex items-center cursor-pointer">
           <input type="checkbox" id="toggle2FA" class="sr-only peer">
-          <div class="w-11 h-6 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+          <div class="w-11 h-6 bg-zinc-700 rounded-full peer peer-checked:bg-emerald-500 
+                      after:content-[''] after:absolute after:top-[2px] after:left-[2px] 
+                      after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all 
+                      peer-checked:after:translate-x-full"></div>
         </label>
       </div>
     </div>
 
-    <!-- Preferences -->
+    <!-- ===== Preferences ===== -->
     <div class="space-y-3">
       <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400">Preferences</h4>
-      
-      <div class="rounded-2xl border border-zinc-700 bg-zinc-900 p-4 space-y-2">
-        <label for="defaultDoorSelect" class="block text-xs font-medium text-zinc-400">
-          Default Entrance (where you land after login)
-        </label>
-        <select id="defaultDoorSelect"
-                class="w-full rounded-xl border border-zinc-700 bg-zinc-950 p-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+      <div class="rounded-2xl border border-zinc-700 bg-zinc-900 p-4">
+        <label class="block text-xs text-zinc-400 mb-2">Default page after login</label>
+        <select id="defaultDoorSelect" class="w-full bg-zinc-950 border border-zinc-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
           <option value="public_square">Public Square</option>
           <option value="citizen_talk">Citizen Talk</option>
           <option value="witness_voice">Witness Voice</option>
@@ -936,26 +934,28 @@
       </div>
     </div>
 
-    <!-- Data & Identity -->
-    <div class="space-y-3">
+    <!-- ===== Danger Zone ===== -->
+    <div class="space-y-3 pt-2">
       <h4 class="text-xs font-bold uppercase tracking-wider text-red-400">Data & Identity</h4>
 
-      <div class="flex items-center justify-between rounded-2xl border border-zinc-700 bg-zinc-900 p-4">
-        <div>
-          <div class="text-sm font-medium">Export My Identity Record</div>
-          <div class="text-xs text-zinc-400 mt-0.5">Download a PDF summary of your profile & verification status</div>
-        </div>
-        <button id="exportUserDataPdfBtn" type="button"
-                class="rounded-xl border border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 px-4 py-2 text-xs font-semibold text-emerald-400 transition">
-          Download PDF
-        </button>
-      </div>
-
-      <!-- Sign Out -->
-      <button id="settingsSignOutBtn" type="button"
-              class="w-full py-3.5 rounded-2xl border border-red-500/40 bg-red-950/40 hover:bg-red-900/50 text-red-400 hover:text-red-300 text-sm font-semibold transition flex items-center justify-center gap-2">
-        🚪 Sign Out of VocalWitness
+      <button id="exportUserDataPdfBtn" type="button"
+              class="w-full py-3 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 text-sm font-semibold hover:bg-emerald-500/20 transition">
+        📄 Download Identity PDF
       </button>
+
+      <button id="settingsSignOutBtn" type="button"
+              class="w-full py-3.5 rounded-2xl border border-red-500/40 bg-red-950/40 text-red-400 text-sm font-semibold hover:bg-red-900/50 transition">
+        🚪 Sign Out of All Sessions
+      </button>
+
+      <!-- Emergency Clear -->
+      <button id="panicClearBtn" type="button"
+              class="w-full py-3.5 rounded-2xl border border-red-600 bg-red-950/60 hover:bg-red-900/70 text-red-300 text-sm font-semibold transition flex items-center justify-center gap-2">
+        🚨 Emergency Clear This Device
+      </button>
+      <p class="text-[11px] text-zinc-500 text-center -mt-1">
+        Instantly removes all local data from this device only. The public record stays safe.
+      </p>
     </div>
 
   </div>
