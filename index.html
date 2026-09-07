@@ -39,46 +39,41 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" defer></script>
   <script src="https://js.paystack.co/v2/inline.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/snarkjs@0.7.0/build/snarkjs.min.js" defer></script>
-  <style>
-    :root {
-      --header-height-mobile: 102px;
-      --header-height-desktop: 64px;
-    }
-    body {
-      background-color: #0a0f1c !important;
-      color: #ffffff !important;
-      font-family: 'Inter', sans-serif;
-      margin: 0;
-      padding: 0;
-    }
-    .glass {
-      background-color: #111827 !important;
-      border: 1px solid rgba(16, 185, 129, 0.22) !important;
-    }
-    #main-nav button.nav-tab.active {
-      background-color: #10b981 !important;
-      color: #000000 !important;
-      font-weight: 700;
-    }
-    #main-content {
-      padding-top: var(--header-height-mobile);
-    }
-    @media (min-width: 768px) {
-      #main-content {
-        padding-top: var(--header-height-desktop);
-      }
-    }
-    @supports not (color: rgb(0 0 0 / 0.5)) {
-      .bg-zinc-950 { background-color: #09090b !important; }
-      .bg-zinc-900 { background-color: #18181b !important; }
-      .bg-zinc-800 { background-color: #27272a !important; }
-      .border-zinc-800 { border-color: #27272a !important; }
-      .border-zinc-700 { border-color: #3f3f46 !important; }
-      .text-zinc-400 { color: #a1a1aa !important; }
-      .text-emerald-400 { color: #34d399 !important; }
-      .glass { background-color: #111827 !important; }
-    }
-  </style>
+ <style>
+  :root {
+    --header-height-mobile: 102px;
+    --header-height-desktop: 64px;
+  }
+  body {
+    background-color: #0a0f1c !important;
+    color: #ffffff !important;
+  }
+  .glass,
+  [class*="backdrop-blur"] {
+    background-color: #111827 !important;
+    border: 1px solid #27272a !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  #main-header {
+    background-color: #09090b !important;
+    border-bottom: 1px solid rgba(16, 185, 129, 0.3) !important;
+  }
+  .rounded-3xl, .rounded-2xl {
+    background-color: #111827 !important;
+    border: 1px solid #27272a !important;
+  }
+  /* Old browser color fallback */
+  @supports not (color: rgb(0 0 0 / 0.5)) {
+    .bg-zinc-950 { background-color: #09090b !important; }
+    .bg-zinc-900 { background-color: #18181b !important; }
+    .bg-zinc-800 { background-color: #27272a !important; }
+    .border-zinc-800 { border-color: #27272a !important; }
+    .border-zinc-700 { border-color: #3f3f46 !important; }
+    .text-zinc-400 { color: #a1a1aa !important; }
+    .text-emerald-400 { color: #34d399 !important; }
+  }
+</style>
 </head>
 <body class="theme-citizen tier-citizen">
 
