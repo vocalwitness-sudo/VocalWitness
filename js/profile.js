@@ -62,17 +62,26 @@ export function openProfile() {
         return;
     }
 
+    // Always render latest data
     if (currentUserData) {
         renderProfileUI(currentUserData);
+    } else {
+        // Show loading state if data not ready yet
+        const content = document.getElementById('profileContent');
+        if (content) {
+            content.innerHTML = `
+                <div class="flex flex-col items-center justify-center space-y-4 py-16">
+                    <div class="h-8 w-8 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent"></div>
+                    <p class="text-sm text-zinc-400">Loading profile...</p>
+                </div>`;
+        }
     }
 
+    // Clean open
     modal.classList.remove('hidden');
     modal.classList.add('flex');
-    modal.style.display = 'flex';
-    modal.style.visibility = 'visible';
-    modal.style.opacity = '1';
-    modal.style.zIndex = '9000';
     modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
 }
 
 export function closeProfile() {
@@ -81,9 +90,8 @@ export function closeProfile() {
 
     modal.classList.add('hidden');
     modal.classList.remove('flex');
-    modal.style.display = 'none';
-    modal.style.visibility = 'hidden';
     modal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
 }
 
 // ====================== INITIALIZATION ======================
@@ -167,20 +175,17 @@ function listenToUserProfile(userId) {
 export function renderProfileUI(userData, retryCount = 0) {
     if (!userData) return;
 
-    const targets = [
-        document.getElementById('mainProfileContent'),
-        document.getElementById('modalProfileContent'),
-        document.getElementById('profileContent')
-    ].filter(Boolean);
+    const content = document.getElementById('profileContent') || 
+                    document.getElementById('mainProfileContent') ||
+                    document.getElementById('modalProfileContent');
 
-    if (targets.length === 0) {
-        if (retryCount < 3) {
-            setTimeout(() => renderProfileUI(userData, retryCount + 1), 50);
-            return;
+    if (!content) {
+        if (retryCount < 5) {
+            setTimeout(() => renderProfileUI(userData, retryCount + 1), 80);
         }
         return;
     }
-
+    
     const witnessPromise = typeof getCurrentWitnessLevel === 'function'
         ? getCurrentWitnessLevel()
         : Promise.resolve(null);
