@@ -14,6 +14,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { auth, db } from './firebase-config.js';
 import { AppState } from './app-state.js';
+import { giveSupport, getRemainingSupportBudget } from './reputation.js';
 import {
     getUserTierData,
     hasStewardAccess,
@@ -535,7 +536,7 @@ function attachProfileEventListeners(userData, isCitizenCircle, isWitness) {
         }
     });
 
-    // Bio editing
+ 
     document.getElementById('btnToggleBioEdit')?.addEventListener('click', () => {
         if (typeof window.toggleBioEdit === 'function') window.toggleBioEdit();
     });
@@ -572,6 +573,15 @@ function attachProfileEventListeners(userData, isCitizenCircle, isWitness) {
             openEditProfile();
         }
     });
+    document.getElementById('supportBtn')?.addEventListener('click', async () => {
+  const targetUserId = currentProfileUserId; // the user being viewed
+  const strength = 3; // or let user choose 1-5
+
+  const success = await giveSupport(targetUserId, strength);
+  if (success) {
+    // Optionally refresh reputation display
+  }
+});
 
     // Dark Mode Toggle
     document.getElementById('theme-toggle-btn')?.addEventListener('click', () => {
