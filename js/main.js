@@ -634,6 +634,8 @@ function setupEventListeners() {
         }
     });
 
+    document.getElementById('notification-btn')?.addEventListener('click', window.toggleNotificationDropdown);
+
   document.addEventListener('change', (e) => {
         const actionTarget = e.target.closest('[data-action]');
         if (!actionTarget) return;
