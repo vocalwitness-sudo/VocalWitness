@@ -1,5 +1,4 @@
-// js/main.js - Core Handlers, Tab Switching & Application Entry Setup
-// 1. Static Module Imports
+// js/main.js -
 import { state, updateAppState, isUserAuthenticated } from './app-state.js';
 import { initAuth, requireAuth, updateUIForAuthState, bindHeaderEvents } from "./auth.js";
 import { initFeed } from './feed.js';
@@ -18,19 +17,8 @@ import {
     collection,
     addDoc,
     doc,
-    getDoc,          // ← add
-    setDoc,          // ← add
-    updateDoc,
-    serverTimestamp,
-    query,
-    getDocs,
-    orderBy,
-    limit
-} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-import {
-    collection,
-    addDoc,
-    doc,
+    getDoc,
+    setDoc,
     updateDoc,
     serverTimestamp,
     query,
