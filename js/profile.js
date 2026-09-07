@@ -1060,3 +1060,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+// ===========danger zone ======
+document.getElementById('panicClearBtn')?.addEventListener('click', async () => {
+  const confirmed = confirm("⚠️ EMERGENCY CLEAR\n\nThis will immediately erase all VocalWitness data from THIS device and sign you out.\n\nThe public ledger will NOT be affected.\n\nContinue?");
+  if (!confirmed) return;
+
+  showToast("Clearing device...", "info");
+  await panicClearDevice();
+});
