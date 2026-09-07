@@ -3,7 +3,6 @@
 import { state, updateAppState, isUserAuthenticated } from './app-state.js';
 import { initAuth, requireAuth, updateUIForAuthState, bindHeaderEvents } from "./auth.js";
 import { initFeed } from './feed.js';
-import { db, auth, storage } from './firebase-config.js';
 import { initLanguage } from './i18n.js';
 import * as mediaModule from './media.js';
 import { CitizenTalkEngine } from './vocalWitnessEngine.js';
@@ -15,6 +14,19 @@ import { loadWeeklyLeaderboard, refreshTierAndUI } from './tier.js';
 import { initComposer } from './composer.js';
 import { createEvidencePack } from './evidence-pack.js';
 import { generateSha256Hash } from './utils.js';
+import {
+    collection,
+    addDoc,
+    doc,
+    getDoc,          // ← add
+    setDoc,          // ← add
+    updateDoc,
+    serverTimestamp,
+    query,
+    getDocs,
+    orderBy,
+    limit
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import {
     collection,
     addDoc,
