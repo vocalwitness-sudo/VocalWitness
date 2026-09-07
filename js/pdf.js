@@ -1,9 +1,11 @@
 // js/pdf.js - Complete Dual System (Standard + Premium)
-// Features: Real QR, Avatar, Supporter gate, Upgrade modal
+// Features: Real QR, Avatar, Soft limits, 1 free Premium/month for Gold+, $2.99 paid
 
-import { consumePdfToken } from './resource-meter.js';
 import { showToast } from './utils.js';
-import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { 
+  doc, setDoc, collection, query, where, getDocs, 
+  serverTimestamp, Timestamp 
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 /* ============================================================
    TIER + ACCESS LOGIC
@@ -19,23 +21,50 @@ export function getTier(trustScore = 0) {
 function resolveCertificateType(userData) {
   const trustScore = userData?.trustScore || userData?.reputation || 0;
   const tier = getTier(trustScore);
-
   const isZkVerified = !!(userData?.zkVerified);
-  const isSupporter  = !!(userData?.isSupporter || userData?.supporter || userData?.tier === 'premium' || userData?.tier === 'supporter');
 
   if (!isZkVerified) {
     return { allowed: false, reason: 'zk', tier };
   }
 
-  if (isSupporter || tier.level >= 3) {
-    return { allowed: true, type: 'premium', tier, isSupporter };
-  }
+  return { 
+    allowed: true, 
+    canPremiumFree: tier.level >= 3, // Gold+ get 1 free Premium / month
+    tier, 
+    isSupporter: !!(userData?.isSupporter || userData?.supporter)
+  };
+}
 
-  if (tier.level >= 1) {
-    return { allowed: true, type: 'standard', tier, isSupporter: false };
-  }
+/* ============================================================
+   QUOTA HELPERS
+   ============================================================ */
+async function getMonthlyUsage(db, userId, type) {
+  if (!db || !userId) return 0;
 
-  return { allowed: false, reason: 'trust', tier };
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
+
+  const q = query(
+    collection(db, "verifiable_docs"),
+    where("userId", "==", userId),
+    where("type", "==", type),
+    where("createdAt", ">=", Timestamp.fromDate(startOfMonth))
+  );
+
+  const snapshot = await getDocs(q);
+  return snapshot.size;
+}
+
+async function canGenerateStandard(db, userId) {
+  const used = await getMonthlyUsage(db, userId, "standard");
+  return used < 3; // Max 3 Standard per month
+}
+
+async function canGenerateFreePremium(db, userId, canPremiumFree) {
+  if (!canPremiumFree) return false;
+  const used = await getMonthlyUsage(db, userId, "premium");
+  return used < 1; // Only 1 free Premium per month for Gold+
 }
 
 /* ============================================================
@@ -49,39 +78,40 @@ export async function generateAndDownloadPDF(userData, db, preferredType = null)
 
   const decision = resolveCertificateType(userData);
 
-  // Not allowed at all
   if (!decision.allowed) {
-    if (decision.reason === 'zk') {
-      showToast("🔒 Identity Certificate requires ZK Verification first", "warning");
-    } else {
-      showToast("Reach Bronze tier (40+ reputation) to unlock certificates", "warning");
-    }
+    showToast("🔒 Identity Certificate requires ZK Verification first", "warning");
     return;
   }
 
-  // User wants Premium but only has Standard access → show upgrade modal
-  if (preferredType === 'premium' && decision.type === 'standard') {
-    showPremiumUpgradeModal();
-    return;
-  }
+  const userId = userData.uid || userData.authorId || "anonymous";
+  const wantsPremium = preferredType === 'premium';
 
-  const type = preferredType === 'premium' && decision.type === 'premium'
-    ? 'premium'
-    : decision.type;
-
-  // Token only for Standard
-  if (type === 'standard') {
-    try {
-      const allowed = await consumePdfToken();
-      if (!allowed) {
-        showToast("Insufficient utility tokens for Standard Passport", "error");
-        return;
-      }
-    } catch (err) {
-      console.warn("Token check:", err);
+  // ========== STANDARD ==========
+  if (!wantsPremium) {
+    const allowed = await canGenerateStandard(db, userId);
+    if (!allowed) {
+      showToast("Monthly limit of 3 Standard Passports reached. Try again next month or get Premium.", "warning");
+      return;
     }
+    return await proceedGeneration(userData, db, decision, "standard");
   }
 
+  // ========== PREMIUM ==========
+  const hasFreeQuota = await canGenerateFreePremium(db, userId, decision.canPremiumFree);
+
+  if (hasFreeQuota) {
+    // Free by merit (Gold+)
+    return await proceedGeneration(userData, db, decision, "premium");
+  }
+
+  // No free quota left → show payment modal
+  showPremiumUpgradeModal(userData, db);
+}
+
+/* ============================================================
+   SHARED GENERATION
+   ============================================================ */
+async function proceedGeneration(userData, db, decision, type) {
   const message = type === 'premium'
     ? "Premium Certificate Notice:\n\nThis is an official high-grade VocalWitness Identity Certificate. It is cryptographically linked to the public ledger. Any alteration will invalidate it."
     : "Standard Passport Notice:\n\nThis document is cryptographically linked to your VocalWitness record. Any alteration will invalidate its authenticity.";
@@ -103,8 +133,9 @@ export async function generateAndDownloadPDF(userData, db, preferredType = null)
         tier: decision.tier.name,
         trustScore: userData.trustScore || userData.reputation || 0,
         username: userData.username || null,
-        zkVerified: !!userData.zkVerified,
-        isSupporter: !!decision.isSupporter
+        zkVerified: true,
+        isSupporter: !!decision.isSupporter,
+        paid: type === "premium" // useful for analytics
       });
     }
 
@@ -129,11 +160,9 @@ export async function generateAndDownloadPDF(userData, db, preferredType = null)
 }
 
 /* ============================================================
-   HELPERS: QR Code + Avatar
+   HELPERS: QR + Avatar
    ============================================================ */
 async function generateQRCodeDataUrl(text, size = 120) {
-  // Uses a free public QR API (reliable and simple)
-  // You can later replace with a local library if you prefer
   const url = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(text)}&margin=8`;
   try {
     const response = await fetch(url);
@@ -144,7 +173,7 @@ async function generateQRCodeDataUrl(text, size = 120) {
       reader.readAsDataURL(blob);
     });
   } catch (err) {
-    console.warn("QR generation failed, continuing without QR:", err);
+    console.warn("QR generation failed:", err);
     return null;
   }
 }
@@ -190,7 +219,7 @@ async function generateStandardPassport(userData, tier, docId, verificationUrl) 
   pdf.setTextColor(148, 163, 184);
   pdf.text(`ID: ${docId}`, 20, 36);
 
-  // Avatar (optional)
+  // Avatar
   let y = 55;
   const avatarData = await loadImageAsDataUrl(userData.photoURL);
   if (avatarData) {
@@ -199,7 +228,6 @@ async function generateStandardPassport(userData, tier, docId, verificationUrl) 
     } catch (e) {}
   }
 
-  // Profile info
   const textX = avatarData ? 48 : 20;
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(13);
@@ -230,12 +258,10 @@ async function generateStandardPassport(userData, tier, docId, verificationUrl) 
     y += 7.5;
   });
 
-  // Divider
   y += 6;
   pdf.setDrawColor(226, 232, 240);
   pdf.line(20, y, 190, y);
 
-  // Integrity
   y += 12;
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(11);
@@ -249,7 +275,6 @@ async function generateStandardPassport(userData, tier, docId, verificationUrl) 
   pdf.text("This document is bound to the VocalWitness public ledger.", 20, y);
   pdf.text("Any alteration invalidates the verification seal.", 20, y + 6);
 
-  // QR Code
   const qrData = await generateQRCodeDataUrl(verificationUrl, 110);
   if (qrData) {
     try {
@@ -257,7 +282,6 @@ async function generateStandardPassport(userData, tier, docId, verificationUrl) 
     } catch (e) {}
   }
 
-  // Footer
   pdf.setFillColor(241, 245, 249);
   pdf.roundedRect(20, 235, 120, 28, 3, 3, 'F');
 
@@ -303,7 +327,6 @@ async function generatePremiumCertificate(userData, tier, docId, verificationUrl
   pdf.setTextColor(161, 161, 170);
   pdf.text(`Certificate ID: ${docId}`, 20, 45);
 
-  // Official seal text
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(9);
   pdf.setTextColor(52, 211, 153);
@@ -349,13 +372,11 @@ async function generatePremiumCertificate(userData, tier, docId, verificationUrl
     y += 8.2;
   });
 
-  // Gold divider
   y += 6;
   pdf.setDrawColor(234, 179, 8);
   pdf.setLineWidth(0.7);
   pdf.line(20, y, 190, y);
 
-  // Forensic guarantee
   y += 12;
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(11);
@@ -371,7 +392,6 @@ async function generatePremiumCertificate(userData, tier, docId, verificationUrl
   pdf.text("standing and zero-knowledge verification within the network.", 20, y + 12);
   pdf.text("Any modification of this file voids the cryptographic seal.", 20, y + 18);
 
-  // Large QR
   const qrData = await generateQRCodeDataUrl(verificationUrl, 140);
   if (qrData) {
     try {
@@ -379,7 +399,6 @@ async function generatePremiumCertificate(userData, tier, docId, verificationUrl
     } catch (e) {}
   }
 
-  // Premium footer
   pdf.setFillColor(24, 24, 27);
   pdf.roundedRect(20, 230, 120, 38, 4, 4, 'F');
 
@@ -402,10 +421,9 @@ async function generatePremiumCertificate(userData, tier, docId, verificationUrl
 }
 
 /* ============================================================
-   BEAUTIFUL UPGRADE MODAL
+   UPGRADE MODAL ($2.99)
    ============================================================ */
-export function showPremiumUpgradeModal() {
-  // Remove existing modal if any
+export function showPremiumUpgradeModal(userData, db) {
   document.getElementById('premiumUpgradeModal')?.remove();
 
   const modal = document.createElement('div');
@@ -419,80 +437,71 @@ export function showPremiumUpgradeModal() {
         <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 mb-3">
           <span class="text-2xl">🎖️</span>
         </div>
-        <h3 class="text-xl font-bold text-amber-400">Upgrade to Premium Certificate</h3>
-        <p class="text-sm text-zinc-400 mt-1">Unlock the official high-grade identity document</p>
+        <h3 class="text-xl font-bold text-amber-400">Get Premium Certificate</h3>
+        <p class="text-sm text-zinc-400 mt-1">High-quality official identity document</p>
       </div>
 
       <div class="space-y-3 mb-6 text-sm">
         <div class="flex items-start gap-3">
           <span class="text-emerald-400 mt-0.5">✓</span>
-          <span>Larger QR code + Official ZK Seal</span>
+          <span>Larger QR + Official ZK Seal</span>
         </div>
         <div class="flex items-start gap-3">
           <span class="text-emerald-400 mt-0.5">✓</span>
-          <span>Your profile photo embedded</span>
+          <span>Profile photo + Luxury dark/gold design</span>
         </div>
         <div class="flex items-start gap-3">
           <span class="text-emerald-400 mt-0.5">✓</span>
-          <span>Luxury dark + gold design</span>
+          <span>Higher visual authority • No watermark</span>
         </div>
         <div class="flex items-start gap-3">
           <span class="text-emerald-400 mt-0.5">✓</span>
-          <span>No watermark • Higher visual authority</span>
-        </div>
-        <div class="flex items-start gap-3">
-          <span class="text-emerald-400 mt-0.5">✓</span>
-          <span>Supports the future of VocalWitness</span>
+          <span>Supports VocalWitness infrastructure</span>
         </div>
       </div>
 
       <div class="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 mb-5 text-center">
-        <div class="text-2xl font-bold text-white">$4.99</div>
-        <div class="text-xs text-zinc-400 mt-1">One-time • Lifetime Premium Certificate access</div>
+        <div class="text-2xl font-bold text-white">$2.99</div>
+        <div class="text-xs text-zinc-400 mt-1">One-time download • Does not change your membership tier</div>
       </div>
 
       <div class="flex flex-col gap-3">
         <button id="upgradeToPremiumBtn" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold transition">
-          Upgrade Now — $4.99
+          Pay $2.99 & Download Premium
         </button>
         <button id="downloadStandardInstead" class="w-full py-2.5 rounded-xl border border-zinc-700 text-zinc-300 hover:bg-zinc-800 text-sm transition">
-          Download Standard Passport instead
+          Download Standard Passport (Free)
         </button>
       </div>
 
       <p class="text-[11px] text-zinc-500 text-center mt-4">
-        Your support helps keep the public ledger and verification infrastructure running.
+        Gold & Steward members get 1 free Premium certificate every month.
       </p>
     </div>
   `;
 
   document.body.appendChild(modal);
 
-  // Close
   document.getElementById('closePremiumModal')?.addEventListener('click', () => modal.remove());
   modal.addEventListener('click', (e) => {
     if (e.target === modal) modal.remove();
   });
 
-  // Upgrade button (you can later connect to Paystack / Stripe)
   document.getElementById('upgradeToPremiumBtn')?.addEventListener('click', () => {
     modal.remove();
     showToast("Redirecting to secure payment...", "info");
-    // Later: window.initiatePayment(4.99, null, { purpose: 'premium_certificate' });
-    // For now just open support modal
+
+    // TODO: Connect your real payment here
+    // After successful payment → call:
+    // proceedGeneration(userData, db, resolveCertificateType(userData), "premium");
+
     if (typeof window.openSupportModal === 'function') {
       window.openSupportModal();
     }
   });
 
-  // Download Standard instead
-  document.getElementById('downloadStandardInstead')?.addEventListener('click', async () => {
+  document.getElementById('downloadStandardInstead')?.addEventListener('click', () => {
     modal.remove();
-    // Call again forcing standard
-    const { generateAndDownloadPDF } = await import('./pdf.js');
-    // You need currentUserData + db available
-    if (window.currentUserData) {
-      generateAndDownloadPDF(window.currentUserData, window.db || null, 'standard');
-    }
+    generateAndDownloadPDF(userData, db, 'standard');
   });
 }
