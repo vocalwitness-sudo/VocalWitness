@@ -129,3 +129,173 @@ if (document.readyState === 'loading') {
 } else {
   wireIndexPage();
 }
+
+// -------------------------------------------------
+// Full index.html event wiring (no inline handlers)
+// -------------------------------------------------
+
+export function wireIndexPage() {
+  // ========== 1. PUBLIC SQUARE – COMPOSER ==========
+
+  // Character counter
+  const mainInput = document.getElementById('mainInput');
+  const charCount = document.getElementById('char-count');
+  if (mainInput && charCount) {
+    mainInput.addEventListener('input', () => {
+      charCount.textContent = `${mainInput.value.length} / 2000`;
+    });
+  }
+
+  // Media buttons → hidden file inputs
+  document.getElementById('btn-photo')?.addEventListener('click', () => {
+    document.getElementById('photoInput')?.click();
+  });
+  document.getElementById('btn-video')?.addEventListener('click', () => {
+    document.getElementById('videoInput')?.click();
+  });
+  document.getElementById('btn-voice')?.addEventListener('click', () => {
+    // If you have a dedicated voice UI toggle, call it here
+    // otherwise fall back to the audio file input
+    if (typeof window.startVoiceRecording === 'function') {
+      window.startVoiceRecording();
+    } else {
+      document.getElementById('audioInput')?.click();
+    }
+  });
+
+  // File inputs change
+  document.getElementById('photoInput')?.addEventListener('change', (e) => {
+    window.handleMediaSelect?.(e, 'photo');
+  });
+  document.getElementById('videoInput')?.addEventListener('change', (e) => {
+    window.handleMediaSelect?.(e, 'video');
+  });
+  document.getElementById('audioInput')?.addEventListener('change', (e) => {
+    window.handleMediaSelect?.(e, 'audio');
+  });
+
+  // Voice recorder controls
+  document.getElementById('rec-pause-btn')?.addEventListener('click', () => window.pauseRecording?.());
+  document.getElementById('rec-stop-btn')?.addEventListener('click', () => window.stopRecording?.());
+  document.getElementById('rec-replay-btn')?.addEventListener('click', () => window.replayRecording?.());
+  document.getElementById('verify-voice-btn')?.addEventListener('click', () => window.verifyVoiceRecording?.());
+
+  // Publish button
+  document.getElementById('postButton')?.addEventListener('click', () => {
+    window.publishTestimony?.();
+  });
+
+  // Feed sort
+  document.getElementById('feedSortSelect')?.addEventListener('change', (e) => {
+    window.applyFeedSort?.(e.target.value);
+  });
+
+  // Target feed select (Citizen Talk / Witness Voice)
+  document.getElementById('targetFeedSelect')?.addEventListener('change', (e) => {
+    window.setTargetFeed?.(e.target.value);
+  });
+
+  // ========== 2. PUBLIC RECORD (LEDGER) ==========
+  document.getElementById('refreshLedgerBtn')?.addEventListener('click', () => {
+    window.refreshLedger?.();
+  });
+
+  // ========== 3. LIVE ARENA ==========
+  document.getElementById('notifyArenaBtn')?.addEventListener('click', () => {
+    window.notifyLiveArena?.();
+  });
+
+  // ========== 4. MY CIRCLE ==========
+  document.getElementById('startPhoneVerificationBtn')?.addEventListener('click', () => {
+    window.startPhoneVerification?.();
+  });
+  document.getElementById('startZKVerificationBtn')?.addEventListener('click', () => {
+    window.startZKUpgrade?.() || window.startZKVerification?.();
+  });
+
+  // Circle sub-tabs (Following / Followers / Trusted)
+  document.querySelectorAll('[data-circle-tab]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tab = btn.dataset.circleTab;
+      // visual state
+      document.querySelectorAll('[data-circle-tab]').forEach(b => {
+        b.classList.remove('border-b-2', 'border-emerald-500', 'text-emerald-400');
+        b.classList.add('text-zinc-400');
+      });
+      btn.classList.add('border-b-2', 'border-emerald-500', 'text-emerald-400');
+      btn.classList.remove('text-zinc-400');
+
+      window.switchCircleTab?.(tab);
+    });
+  });
+
+  // ========== 5. TRUSTED VOICES ==========
+  document.getElementById('witness-search')?.addEventListener('input', (e) => {
+    window.filterTrustedVoices?.(e.target.value);
+  });
+
+  document.querySelectorAll('#witness-filters [data-filter]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const filter = btn.dataset.filter;
+      // visual state
+      document.querySelectorAll('#witness-filters [data-filter]').forEach(b => {
+        b.classList.remove('border-amber-500/40', 'bg-amber-500/20', 'text-amber-400');
+        b.classList.add('border-zinc-700', 'bg-zinc-800', 'text-zinc-300');
+      });
+      btn.classList.add('border-amber-500/40', 'bg-amber-500/20', 'text-amber-400');
+      btn.classList.remove('border-zinc-700', 'bg-zinc-800', 'text-zinc-300');
+
+      window.applyWitnessFilter?.(filter);
+    });
+  });
+
+  // ========== FOOTER ==========
+  document.getElementById('footerSupportBtn')?.addEventListener('click', () => {
+    window.openSupportPackagesModal?.();
+  });
+  document.getElementById('footer-data-saver-btn')?.addEventListener('click', () => {
+    window.toggleDataSaver?.();
+  });
+
+  // ========== SUPPORT MODAL ==========
+  document.getElementById('closeSupportModal')?.addEventListener('click', () => {
+    window.closeSupportModal?.();
+  });
+
+  // Tier buttons
+  document.querySelectorAll('.support-tier-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const amount = btn.dataset.amount;
+      document.querySelectorAll('.support-tier-btn').forEach(b => b.classList.remove('active-tier', 'border-emerald-500', 'bg-emerald-600/20'));
+      btn.classList.add('active-tier', 'border-emerald-500', 'bg-emerald-600/20');
+
+      const customInput = document.getElementById('customSupportAmount');
+      if (customInput) customInput.value = amount;
+
+      window.setSupportAmount?.(Number(amount));
+    });
+  });
+
+  // Custom amount
+  document.getElementById('customSupportAmount')?.addEventListener('input', (e) => {
+    window.setSupportAmount?.(Number(e.target.value) || 0);
+  });
+
+  // Payment buttons
+  document.getElementById('paystackPayBtn')?.addEventListener('click', () => {
+    window.startPaystackPayment?.();
+  });
+  document.getElementById('proceedCryptoBtn')?.addEventListener('click', () => {
+    window.startCryptoPayment?.();
+  });
+  document.getElementById('copyUsdtBtn')?.addEventListener('click', () => {
+    window.copyUsdtAddress?.();
+  });
+
+  // Close modal on backdrop click
+  document.getElementById('supportModal')?.addEventListener('click', (e) => {
+    if (e.target.id === 'supportModal') {
+      window.closeSupportModal?.();
+    }
+  });
+}
