@@ -693,7 +693,7 @@ export async function handleSignOut() {
         currentUserData = null;
         window.currentUserData = null;
         await signOut(auth);
-        window.location.href = '/';
+          window.location.href = window.location.origin + '/' || '/';
     } catch (error) {
         console.error("Sign out error:", error);
         showToast("Error signing out", "error");
@@ -807,6 +807,13 @@ export async function saveProfileChanges(event) {
     const region        = regionEl?.value?.trim();
     const bio           = bioEl?.value?.trim();
     const hidePublicInfo = hidePublicEl ? hidePublicEl.checked : true;
+    
+    if (!displayNameEl) {
+        showToast("Edit form not ready", "error");
+        return;
+    }
+
+    const firstName     = firstNameEl?.value?.trim() || "";
 
     if (!displayName) return showToast("Display name is required", "error");
 
@@ -835,6 +842,7 @@ export async function saveProfileChanges(event) {
         showToast("Failed to save profile", "error");
     }
 }
+
 
 export async function triggerPasswordReset() {
     if (!auth.currentUser || !auth.currentUser.email) {
@@ -1093,35 +1101,69 @@ export function initProfileModals() {
         await handleSignOut();
     });
 
-    // 2FA toggle
-    document.getElementById('toggle2FA')?.addEventListener('change', async (e) => {
-        const isEnabled = e.target.checked;
-        if (!auth.currentUser) {
-            showToast("You must be logged in", "error");
-            e.target.checked = !isEnabled;
-            return;
+    
+   // 2FA toggle – open MFA modal instead of directly saving
+document.getElementById('toggle2FA')?.addEventListener('change', (e) => {
+    const mfaModal = document.getElementById('mfaModal');
+    if (e.target.checked) {
+        e.target.checked = false; // wait until verified
+        if (mfaModal) {
+            mfaModal.classList.remove('hidden');
+        } else {
+            showToast("2FA setup is not available yet", "info");
         }
-        try {
-            await updateDoc(doc(db, "users", auth.currentUser.uid), {
-                twoFactorEnabled: isEnabled,
+    } else {
+        // User is turning 2FA off
+        if (auth.currentUser) {
+            updateDoc(doc(db, "users", auth.currentUser.uid), {
+                twoFactorEnabled: false,
                 updatedAt: serverTimestamp()
+            }).then(() => {
+                showToast("🛡️ 2FA disabled", "success");
+            }).catch(err => {
+                console.error(err);
+                showToast("Failed to disable 2FA", "error");
+                e.target.checked = true;
             });
-            showToast(isEnabled ? "✅ 2FA enabled" : "🛡️ 2FA disabled", "success");
-        } catch (err) {
-            console.error(err);
-            showToast("Failed to update 2FA", "error");
-            e.target.checked = !isEnabled;
         }
-    });
+    }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    // ProfileManager
+    const manager = new ProfileManager();
+    if (manager.profileContainer) {
+        manager.init();
+    }
+
+    // Modal wiring
+    initProfileModals();
 
     // Default page select
     document.getElementById('defaultDoorSelect')?.addEventListener('change', (e) => {
         localStorage.setItem('vw_default_page', e.target.value);
-        showToast("Default page saved", "success");
+        if (typeof showToast === 'function') {
+            showToast("Default page saved", "success");
+        }
     });
-}
 
-// Call the modal initializer once
-document.addEventListener('DOMContentLoaded', () => {
-    initProfileModals();
+    // Close / Escape listeners
+    document.getElementById('closeProfileModalBtn')?.addEventListener('click', closeProfile);
+    document.getElementById('closeEditProfileBtn')?.addEventListener('click', closeEditProfile);
+    document.getElementById('btn-close-edit-profile')?.addEventListener('click', closeEditProfile);
+
+    document.getElementById('profileModal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'profileModal') closeProfile();
+    });
+    document.getElementById('editProfileModal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'editProfileModal') closeEditProfile();
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            if (typeof closeProfile === 'function') closeProfile();
+            if (typeof closeEditProfile === 'function') closeEditProfile();
+            if (typeof closeSettings === 'function') closeSettings();
+        }
+    });
 });
