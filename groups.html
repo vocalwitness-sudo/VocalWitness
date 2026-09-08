@@ -61,7 +61,7 @@
     </div>
 
     <div class="fixed bottom-6 left-0 right-0 z-40 px-4">
-      <button type="button" onclick="showGroupCreationModal()"
+      <button type="button" id="openCreateModalBtn"
               class="mx-auto block w-full max-w-md rounded-2xl bg-emerald-500 py-4 font-semibold text-black shadow-lg shadow-emerald-900/30 transition hover:bg-emerald-400 active:scale-[0.98]">
         ➕ Create New Group
       </button>
@@ -110,9 +110,9 @@
         </div>
       </div>
       <div class="flex gap-3 border-t border-zinc-700 p-6">
-        <button type="button" onclick="closeGroupModal()"
+        <button type="button" id="closeCreateModalBtn"
                 class="flex-1 rounded-2xl bg-zinc-800 py-3.5 text-sm font-medium text-white hover:bg-zinc-700">Cancel</button>
-        <button type="button" onclick="createGroup()"
+        <button type="button" id="submitCreateGroupBtn"
                 class="flex-1 rounded-2xl bg-emerald-600 py-3.5 text-sm font-semibold text-black hover:bg-emerald-500">Create Group</button>
       </div>
     </div>
@@ -134,11 +134,11 @@
           <div class="flex items-center gap-2"><span class="text-cyan-400">→</span> Complete ZK verification for full tools</div>
         </div>
         <div class="flex flex-col gap-3">
-          <button type="button" onclick="startZKUpgradeFromGroups()"
+          <button type="button" id="startZkUpgradeBtn"
                   class="w-full rounded-2xl bg-gradient-to-r from-cyan-600 to-teal-500 py-3.5 font-semibold text-white hover:from-cyan-500 hover:to-teal-400">
             🔑 Start ZK Verification
           </button>
-          <button type="button" onclick="closeUpgradeModal()"
+          <button type="button" id="closeUpgradeModalBtn"
                   class="w-full rounded-2xl bg-zinc-800 py-3 text-sm text-zinc-300 hover:bg-zinc-700">Maybe later</button>
         </div>
       </div>
@@ -148,9 +148,31 @@
   <script type="module">
     import { initGroups } from './js/groups.js';
     import { initLanguage } from './js/i18n.js';
+    
     document.addEventListener('DOMContentLoaded', () => {
       initLanguage();
       initGroups('group-container');
+
+      // Secure event bindings (CSP-compliant replacement for inline onclick)
+      document.getElementById('openCreateModalBtn')?.addEventListener('click', () => {
+        if (typeof window.showGroupCreationModal === 'function') window.showGroupCreationModal();
+      });
+
+      document.getElementById('closeCreateModalBtn')?.addEventListener('click', () => {
+        if (typeof window.closeGroupModal === 'function') window.closeGroupModal();
+      });
+
+      document.getElementById('submitCreateGroupBtn')?.addEventListener('click', () => {
+        if (typeof window.createGroup === 'function') window.createGroup();
+      });
+
+      document.getElementById('startZkUpgradeBtn')?.addEventListener('click', () => {
+        if (typeof window.startZKUpgradeFromGroups === 'function') window.startZKUpgradeFromGroups();
+      });
+
+      document.getElementById('closeUpgradeModalBtn')?.addEventListener('click', () => {
+        if (typeof window.closeUpgradeModal === 'function') window.closeUpgradeModal();
+      });
     });
   </script>
 </body>
