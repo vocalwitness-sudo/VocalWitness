@@ -82,8 +82,10 @@
         <div class="glass rounded-3xl p-6 mb-8">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-xl font-semibold" data-i18n="recentVerifiedTestimonies">Recent Verified Testimonies</h2>
-                <button onclick="refreshLedger()"
-                        class="px-4 py-2 text-sm bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center gap-2 transition">
+                <!-- Removed inline onclick, added id="refreshBtn" -->
+                <button type="button"
+                        id="refreshBtn"
+                        class="px-4 py-2 text-sm bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center gap-2 transition cursor-pointer">
                     🔄 <span data-i18n="refreshButton">Refresh</span>
                 </button>
             </div>
@@ -190,8 +192,12 @@
                                     <span data-i18n="hashLabel">Hash:</span> 
                                     <span class="font-mono text-[10px] text-emerald-400/80">${data.hash ? data.hash.substring(0, 14) + '…' : 'N/A'}</span>
                                 </div>
-                                <button onclick="viewFullEntry('${docSnap.id}')"
-                                        class="text-emerald-400 hover:text-emerald-300 transition" data-i18n="viewFullProof">
+                                <!-- Replaced inline onclick with data attributes for safe event delegation -->
+                                <button type="button"
+                                        data-action="view-proof"
+                                        data-id="${docSnap.id}"
+                                        class="text-emerald-400 hover:text-emerald-300 transition cursor-pointer" 
+                                        data-i18n="viewFullProof">
                                     View Full Proof →
                                 </button>
                             </div>
@@ -208,22 +214,12 @@
             }
         }
 
-        window.refreshLedger = () => {
-            if (unsubscribe) unsubscribe();
-            loadForensicLedger();
-            showToast("Ledger refreshed", "success");
-        };
-
-        window.viewFullEntry = (id) => {
-            showToast("Opening full forensic record for ID: " + id, "info");
-        };
-
         document.addEventListener('DOMContentLoaded', () => {
             console.log("📜 Forensic Ledger initialized");
             if (typeof initLanguage === 'function') initLanguage();
             loadForensicLedger();
 
-            // Unified history router hook for data-action="back"
+            // 1. Unified history router hook for data-action="back"
             document.addEventListener('click', (e) => {
                 const backTrigger = e.target.closest('[data-action="back"]');
                 if (backTrigger) {
@@ -235,6 +231,27 @@
                     }
                 }
             });
+
+            // 2. Safe refresh button handler
+            const refreshBtn = document.getElementById('refreshBtn');
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', () => {
+                    if (unsubscribe) unsubscribe();
+                    loadForensicLedger();
+                    showToast("Ledger refreshed", "success");
+                });
+            }
+
+            // 3. Safe event delegation for dynamic "View Full Proof" buttons
+            if (ledgerContainer) {
+                ledgerContainer.addEventListener('click', (e) => {
+                    const viewBtn = e.target.closest('[data-action="view-proof"]');
+                    if (viewBtn) {
+                        const id = viewBtn.getAttribute('data-id');
+                        showToast("Opening full forensic record for ID: " + id, "info");
+                    }
+                });
+            }
         });
 
         window.addEventListener('beforeunload', () => {
