@@ -127,7 +127,7 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                     // Prefer modal so user can choose reason (incl. suspected_synthetic)
                     if (typeof window.openReportModal === 'function') {
                         window.openReportModal(id);
-                    } else {
+                    } else if (typeof reportContent === 'function') {
                         try {
                             await reportContent(id, "other");
                             showToast("Report submitted to Stewards.", "success");
@@ -135,21 +135,43 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                             console.error("Report action failed:", err);
                             showToast("Failed to submit report.", "error");
                         }
+                    } else {
+                        // Temporary fallback until reportContent / openReportModal is fully wired
+                        console.warn("reportContent / openReportModal not available yet");
+                        showToast("Report feature is temporarily unavailable. Please try again later.", "info");
                     }
                 } else if (action === 'share') {
                     try {
+                        const post = allPostsCache.find(p => p.id === id);
                         const shareUrl = `${window.location.origin}?post=${encodeURIComponent(id)}`;
+                        const title = post?.headline || post?.title || 'VocalWitness Testimony';
+                        const text = post?.content
+                            ? (post.content.length > 120 ? post.content.slice(0, 117) + '…' : post.content)
+                            : 'Witness report shared via VocalWitness';
+
                         if (navigator.share) {
                             await navigator.share({
-                                title: 'VocalWitness Testimony',
+                                title: title,
+                                text: text,
                                 url: shareUrl
                             });
-                        } else {
+                            showToast("Shared successfully", "success");
+                        } else if (navigator.clipboard?.writeText) {
                             await navigator.clipboard.writeText(shareUrl);
+                            showToast("Link copied to clipboard", "success");
+                        } else {
+                            // Ultimate fallback for older browsers
+                            const tempInput = document.createElement('input');
+                            tempInput.value = shareUrl;
+                            document.body.appendChild(tempInput);
+                            tempInput.select();
+                            document.execCommand('copy');
+                            document.body.removeChild(tempInput);
                             showToast("Link copied to clipboard", "success");
                         }
                     } catch (err) {
                         if (err.name !== 'AbortError') {
+                            console.error("Share failed:", err);
                             showToast("Failed to share testimony link", "error");
                         }
                     }
@@ -165,9 +187,12 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                     await handleTranslateAction(id, btn);
                 }
             } catch (err) {
-                console.error(`Action ${action} failed:`, err);
+                console.error(`Action "${action}" failed:`, err);
+                if (action !== 'share' && action !== 'corroborate') {
+                    showToast("Something went wrong. Please try again.", "error");
+                }
             } finally {
-                // Only re-enable if it wasn't permanently disabled by corroboration success
+                // Only re-enable if it wasn't permanently disabled by successful corroboration
                 if (action !== 'corroborate' || !btn.classList.contains('cursor-default')) {
                     btn.disabled = false;
                     btn.classList.remove('opacity-50', 'cursor-not-allowed');
@@ -675,6 +700,15 @@ async function handleCorroborate(postId, btnEl) {
         }
     } catch (err) {
         console.error("Corroboration failed:", err);
+
+        // Friendly message for the intentional self-corroboration block
+        const msg = (err?.message || String(err)).toLowerCase();
+        if (msg.includes("self-corroboration") || msg.includes("self corroboration")) {
+            showToast("You can’t corroborate your own post", "info");
+        } else {
+            showToast(err.message || "Corroboration failed. Please try again.", "error");
+        }
+
         btnEl.disabled = false;
         btnEl.textContent = "👁️ I saw this too";
     }
