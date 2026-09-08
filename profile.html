@@ -135,37 +135,36 @@
     </div>
 
     <!-- ====================== MFA SETUP WIZARD MODAL ====================== -->
-<div id="mfaModal" role="dialog" aria-modal="true" aria-labelledby="mfaModalTitle"
-     class="hidden fixed inset-0 bg-black/85 flex items-center justify-center z-[10002] p-4">
-    <div class="rounded-3xl p-6 sm:p-8 max-w-md w-full border border-zinc-800 space-y-6 shadow-2xl bg-[#111827] text-white">
-        <div class="flex justify-between items-center border-b border-zinc-800 pb-4">
-            <h3 id="mfaModalTitle" class="text-xl font-bold flex items-center gap-2">🛡️ Two-Factor Setup</h3>
-            <button type="button" id="closeMfaBtn" class="text-2xl text-zinc-400 hover:text-white transition-colors cursor-pointer">&times;</button>
-        </div>
-        <div class="space-y-4 text-center">
-            <p class="text-xs text-zinc-400">Scan this QR code with your Authenticator app (Google Authenticator, Authy, etc.) to complete 2FA enrollment.</p>
-            <div class="w-40 h-40 mx-auto bg-white p-3 rounded-2xl flex items-center justify-center shadow-lg">
-                <!-- Mock QR Code visual representation -->
-                <div class="w-full h-full bg-zinc-950 rounded-xl flex items-center justify-center text-xs font-mono text-emerald-400 p-2 text-center">
-                    [ TOTP QR CODE ]
+    <div id="mfaModal" role="dialog" aria-modal="true" aria-labelledby="mfaModalTitle"
+         class="hidden fixed inset-0 bg-black/85 flex items-center justify-center z-[10002] p-4">
+        <div class="rounded-3xl p-6 sm:p-8 max-w-md w-full border border-zinc-800 space-y-6 shadow-2xl bg-[#111827] text-white">
+            <div class="flex justify-between items-center border-b border-zinc-800 pb-4">
+                <h3 id="mfaModalTitle" class="text-xl font-bold flex items-center gap-2">🛡️ Two-Factor Setup</h3>
+                <button type="button" id="closeMfaBtn" class="text-2xl text-zinc-400 hover:text-white transition-colors cursor-pointer">&times;</button>
+            </div>
+            <div class="space-y-4 text-center">
+                <p class="text-xs text-zinc-400">Scan this QR code with your Authenticator app (Google Authenticator, Authy, etc.) to complete 2FA enrollment.</p>
+                <div class="w-40 h-40 mx-auto bg-white p-3 rounded-2xl flex items-center justify-center shadow-lg">
+                    <!-- Mock QR Code visual representation -->
+                    <div class="w-full h-full bg-zinc-950 rounded-xl flex items-center justify-center text-xs font-mono text-emerald-400 p-2 text-center">
+                        [ TOTP QR CODE ]
+                    </div>
+                </div>
+                <div>
+                    <label for="mfaCodeInput" class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Enter 6-Digit Verification Code</label>
+                    <input type="text" id="mfaCodeInput" maxlength="6" placeholder="123456" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-center text-xl font-mono tracking-widest text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
                 </div>
             </div>
-            <div>
-                <label for="mfaCodeInput" class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Enter 6-Digit Verification Code</label>
-                <input type="text" id="mfaCodeInput" maxlength="6" placeholder="123456" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-center text-xl font-mono tracking-widest text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+            <div class="flex gap-3 pt-2">
+                <button type="button" id="verifyMfaBtn" class="flex-1 py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition shadow-lg shadow-emerald-500/20 cursor-pointer">
+                    Verify &amp; Enable
+                </button>
+                <button type="button" id="cancelMfaBtn" class="py-3 px-5 bg-zinc-800 text-zinc-300 font-semibold rounded-xl hover:bg-zinc-700 transition cursor-pointer">
+                    Cancel
+                </button>
             </div>
         </div>
-        <div class="flex gap-3 pt-2">
-            <button type="button" id="verifyMfaBtn" class="flex-1 py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition shadow-lg shadow-emerald-500/20 cursor-pointer">
-                Verify &amp; Enable
-            </button>
-            <button type="button" id="cancelMfaBtn" class="py-3 px-5 bg-zinc-800 text-zinc-300 font-semibold rounded-xl hover:bg-zinc-700 transition cursor-pointer">
-                Cancel
-            </button>
-        </div>
     </div>
-</div>
-    
 
     <!-- ====================== SETTINGS & SECURITY MODAL ====================== -->
     <div id="settingsModal"
@@ -302,7 +301,7 @@
       </div>
     </div>
 
-    <!-- CSP-Compliant Event Wiring & Initialization -->
+    <!-- ====================== CSP-COMPLIANT SCRIPT ====================== -->
     <script type="module">
         import { initLanguage } from './js/i18n.js';
         import { initDarkMode } from './js/utils.js';
@@ -314,7 +313,7 @@
             if (typeof initLanguage === 'function') initLanguage();
             if (typeof initDarkMode === 'function') initDarkMode();
 
-            // Safe Event Delegation for Back/Close buttons
+            // ===== Back / Close buttons (event delegation) =====
             document.addEventListener('click', (e) => {
                 const backTrigger = e.target.closest('[data-action="back"]');
                 if (backTrigger) {
@@ -327,7 +326,7 @@
                 }
             });
 
-            // Safe Theme Toggle Wiring
+            // ===== Theme Toggle =====
             const themeBtn = document.getElementById('theme-toggle-btn');
             if (themeBtn) {
                 themeBtn.addEventListener('click', () => {
@@ -341,7 +340,7 @@
                 });
             }
 
-            // Safe Avatar Preview Wiring
+            // ===== Avatar Preview =====
             const avatarInput = document.getElementById('avatarInput');
             if (avatarInput) {
                 avatarInput.addEventListener('change', (event) => {
@@ -370,7 +369,7 @@
                 });
             }
 
-            // Safe Password Reset Wiring
+            // ===== Password Reset =====
             const resetBtn = document.getElementById('triggerPasswordResetBtn');
             if (resetBtn) {
                 resetBtn.addEventListener('click', async () => {
@@ -387,7 +386,7 @@
                 });
             }
 
-            // Safe PDF Export Wiring
+            // ===== PDF Export =====
             const exportPdfBtn = document.getElementById('exportUserDataPdfBtn');
             if (exportPdfBtn) {
                 exportPdfBtn.addEventListener('click', () => {
@@ -413,11 +412,64 @@
                 });
             }
 
-            // Escape Key Handler
+            // ===== Wallet Linking =====
+            const linkWalletBtn = document.getElementById('linkWalletBtn');
+            if (linkWalletBtn) {
+                linkWalletBtn.addEventListener('click', () => {
+                    const mockAddress = "0x71C...3a99" + Math.floor(Math.random() * 8999 + 1000);
+                    const display = document.getElementById('connectedWalletDisplay');
+                    const badge = document.getElementById('walletStatusBadge');
+                    if (display) display.textContent = mockAddress;
+                    if (badge) {
+                        badge.textContent = "VERIFIED";
+                        badge.className = "px-2.5 py-1 bg-emerald-500/20 text-emerald-400 text-[10px] font-mono rounded-lg border border-emerald-500/30";
+                    }
+                    alert("Wallet successfully linked to your profile ledger!");
+                });
+            }
+
+            // ===== MFA Modal Wiring =====
+            const toggle2FA = document.getElementById('toggle2FA');
+            const mfaModal = document.getElementById('mfaModal');
+            const closeMfaBtn = document.getElementById('closeMfaBtn');
+            const cancelMfaBtn = document.getElementById('cancelMfaBtn');
+            const verifyMfaBtn = document.getElementById('verifyMfaBtn');
+
+            const closeMfaModal = () => {
+                if (mfaModal) mfaModal.classList.add('hidden');
+            };
+
+            if (toggle2FA && mfaModal) {
+                toggle2FA.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        e.target.checked = false; // Prevent toggle until verified
+                        mfaModal.classList.remove('hidden');
+                    }
+                });
+            }
+
+            if (closeMfaBtn) closeMfaBtn.addEventListener('click', closeMfaModal);
+            if (cancelMfaBtn) cancelMfaBtn.addEventListener('click', closeMfaModal);
+
+            if (verifyMfaBtn) {
+                verifyMfaBtn.addEventListener('click', () => {
+                    const code = document.getElementById('mfaCodeInput')?.value || '';
+                    if (code.length === 6) {
+                        if (toggle2FA) toggle2FA.checked = true;
+                        closeMfaModal();
+                        alert("Two-Factor Authentication successfully enabled!");
+                    } else {
+                        alert("Please enter a valid 6-digit verification code.");
+                    }
+                });
+            }
+
+            // ===== Escape Key Handler =====
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') {
                     if (typeof window.closeEditProfile === 'function') window.closeEditProfile();
                     if (typeof window.closeSettings === 'function') window.closeSettings();
+                    closeMfaModal();
                 }
             });
         });
