@@ -63,6 +63,7 @@ export function loadForensicLedger() {
                 const entry = document.createElement('div');
                 entry.className = "ledger-entry glass rounded-3xl p-5 border border-emerald-500/20";
 
+                // Using data-action and data-id instead of onclick=
                 entry.innerHTML = `
                     <div class="flex justify-between items-start">
                         <div class="flex items-center gap-3">
@@ -85,7 +86,9 @@ export function loadForensicLedger() {
                     
                     <div class="flex items-center justify-between text-xs mt-5 pt-4 border-t border-zinc-700 text-zinc-400">
                         <div>Hash: <span class="font-mono text-[10px]">${data.hash ? data.hash.substring(0, 12) + '...' : 'N/A'}</span></div>
-                        <button onclick="viewFullEntry('${docSnap.id}')" 
+                        <button type="button" 
+                                data-action="view-proof" 
+                                data-id="${docSnap.id}" 
                                 class="text-emerald-400 hover:text-emerald-300">View Full Proof →</button>
                     </div>
                 `;
@@ -132,11 +135,30 @@ export function cleanupLedger() {
     isInitialized = false;
 }
 
-// Global scope attachments for inline DOM event triggers
-window.refreshLedger = refreshLedger;
-window.viewFullEntry = viewFullEntry;
-
 // Auto-initialize when file is imported directly as module on ledger page
 if (document.getElementById('ledgerContainer')) {
-    document.addEventListener('DOMContentLoaded', loadForensicLedger);
+    document.addEventListener('DOMContentLoaded', () => {
+        loadForensicLedger();
+
+        // 1. Back Button Listener
+        document.getElementById('backBtn')?.addEventListener('click', () => {
+            if (window.history.length > 1) window.history.back();
+            else window.location.href = 'index.html';
+        });
+
+        // 2. Refresh Button Listener (ensure your refresh button has id="refreshBtn")
+        document.getElementById('refreshBtn')?.addEventListener('click', () => {
+            refreshLedger();
+        });
+
+        // 3. Event Delegation for dynamically created "View Full Proof" buttons
+        const container = document.getElementById('ledgerContainer');
+        container.addEventListener('click', (e) => {
+            const viewBtn = e.target.closest('[data-action="view-proof"]');
+            if (viewBtn) {
+                const id = viewBtn.getAttribute('data-id');
+                viewFullEntry(id);
+            }
+        });
+    });
 }
