@@ -119,11 +119,11 @@ function renderGroups() {
                         ${group.visibility === 'witness_circle' || group.creatorTier === 'witness_circle' ? 
                             '<span class="text-[10px] bg-cyan-500/15 text-cyan-400 px-2 py-0.5 rounded-full border border-cyan-500/30">🔐 High Trust</span>' : ''}
                     </div>
-                    
+                     
                     <p class="text-zinc-400 text-sm line-clamp-2 mb-3">
                         ${escapeHtml(group.description || 'No description provided')}
                     </p>
-                    
+                     
                     <div class="flex flex-wrap items-center gap-3 text-xs text-zinc-500">
                         <span>👥 ${group.memberCount || 1} members</span>
                         <span class="px-2.5 py-1 bg-zinc-800 rounded-full capitalize">
@@ -148,15 +148,15 @@ function renderGroups() {
 
             <!-- Tools row -->
             <div class="mt-4 pt-3 border-t border-zinc-800 flex flex-wrap gap-2 items-center">
-                <button onclick="handleToolClick('evidence')" 
+                <button data-action="tool" data-tool="evidence"
                         class="text-[11px] px-2.5 py-1 bg-emerald-500/10 text-emerald-400 rounded-full hover:bg-emerald-500/20 transition">
                     Evidence Locker
                 </button>
-                <button onclick="handleToolClick('attestation')" 
+                <button data-action="tool" data-tool="attestation"
                         class="text-[11px] px-2.5 py-1 bg-amber-500/10 text-amber-400 rounded-full hover:bg-amber-500/20 transition">
                     Attestation
                 </button>
-                <button onclick="handleToolClick('timeline')" 
+                <button data-action="tool" data-tool="timeline"
                         class="text-[11px] px-2.5 py-1 bg-cyan-500/10 text-cyan-400 rounded-full hover:bg-cyan-500/20 transition">
                     Timeline
                 </button>
@@ -172,6 +172,16 @@ function renderGroups() {
     container.querySelectorAll('.join-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
             await joinGroup(btn.dataset.id);
+        });
+    });
+
+    // Re-bind tool buttons (CSP compliant replacement for inline onclick)
+    container.querySelectorAll('button[data-action="tool"]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const toolName = btn.getAttribute('data-tool');
+            if (typeof handleToolClick === 'function') {
+                await handleToolClick(toolName);
+            }
         });
     });
 }
@@ -206,7 +216,7 @@ export async function createNewGroup(name, description, visibility) {
     }
 
     const tier = await getCurrentUserTier();
-    
+     
     if (tier === TIERS.CITIZEN) {
         return showToast("You must be at least Citizen Circle to create groups", "error");
     }
@@ -232,7 +242,7 @@ export async function createNewGroup(name, description, visibility) {
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp()
         });
-        
+         
         showToast(`🎉 Group "${name}" created successfully!`, "success");
         return true;
     } catch (err) {
