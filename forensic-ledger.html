@@ -82,9 +82,9 @@
         <div class="glass rounded-3xl p-6 mb-8">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-xl font-semibold" data-i18n="recentVerifiedTestimonies">Recent Verified Testimonies</h2>
-                <!-- Removed inline onclick, added id="refreshBtn" -->
+                <!-- Updated ID to refreshLedgerBtn -->
                 <button type="button"
-                        id="refreshBtn"
+                        id="refreshLedgerBtn"
                         class="px-4 py-2 text-sm bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center gap-2 transition cursor-pointer">
                     🔄 <span data-i18n="refreshButton">Refresh</span>
                 </button>
@@ -232,10 +232,10 @@
                 }
             });
 
-            // 2. Safe refresh button handler
-            const refreshBtn = document.getElementById('refreshBtn');
-            if (refreshBtn) {
-                refreshBtn.addEventListener('click', () => {
+            // 2. Safe refresh button handler (updated to look for refreshLedgerBtn)
+            const refreshLedgerBtn = document.getElementById('refreshLedgerBtn');
+            if (refreshLedgerBtn) {
+                refreshLedgerBtn.addEventListener('click', () => {
                     if (unsubscribe) unsubscribe();
                     loadForensicLedger();
                     showToast("Ledger refreshed", "success");
