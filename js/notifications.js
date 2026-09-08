@@ -7,11 +7,14 @@ import {
   onSnapshot,
   doc,
   setDoc,
+  updateDoc,
+  getDocs,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 let unsubscribeNotifs = null;
 let currentSubscribedUid = null;
+let cachedNotifications = [];
 
 export function initNotifications(targetUid) {
   if (!targetUid) {
@@ -38,6 +41,7 @@ export function initNotifications(targetUid) {
 
   stopNotificationListener();
   attachNotificationListener(targetUid);
+  setupNotificationEventListeners();
 }
 
 function attachNotificationListener(uid) {
@@ -60,7 +64,6 @@ function attachNotificationListener(uid) {
         "🔔 Notification ordered query failed or requires index. Activating fallback...",
         error.code
       );
-      // Clean up primary listener before starting fallback
       stopNotificationListener();
       fallbackUnorderedListener(uid);
     }
@@ -109,14 +112,13 @@ function fallbackUnorderedListener(uid) {
         return timeB - timeA;
       });
 
+      cachedNotifications = notifications;
       updateNotificationBadge(unreadCount);
       renderNotificationList(notifications);
     },
     (err) => {
       if (err.code === "permission-denied") {
-        console.warn(
-          `🔔 Fallback listener permission-denied for users/${uid}/notifications`
-        );
+        console.warn(`🔔 Fallback listener permission-denied for users/${uid}/notifications`);
         stopNotificationListener();
       } else {
         console.error("🔔 Fallback Notification Listener Error:", err);
@@ -131,11 +133,11 @@ export function stopNotificationListener() {
     unsubscribeNotifs = null;
   }
   currentSubscribedUid = null;
+  cachedNotifications = [];
 }
 
 /**
  * Write a corroboration notification for the report owner.
- * Called by corroboration.js after a successful corroboration.
  */
 export async function notifyCorroboration(ownerId, corroboratorId, testimonyId) {
   if (!ownerId || !corroboratorId || !testimonyId) return;
@@ -152,7 +154,6 @@ export async function notifyCorroboration(ownerId, corroboratorId, testimonyId) 
       createdAt: serverTimestamp()
     });
   } catch (err) {
-    // Non-fatal – corroboration itself already succeeded
     console.warn("notifyCorroboration failed:", err);
   }
 }
@@ -167,6 +168,7 @@ function handleSnapshot(snapshot) {
     notifications.push({ id: docSnap.id, ...data });
   });
 
+  cachedNotifications = notifications;
   updateNotificationBadge(unreadCount);
   renderNotificationList(notifications);
 }
@@ -185,10 +187,10 @@ function renderNotificationList(notifications) {
 
   if (!notifications || notifications.length === 0) {
     listContainer.innerHTML = `
-            <div class="p-8 text-center text-zinc-500">
-                <p class="text-2xl mb-1">🔔</p>
-                <p class="text-sm">No notifications yet</p>
-            </div>`;
+      <div class="p-8 text-center text-zinc-500">
+          <p class="text-2xl mb-1">🔔</p>
+          <p class="text-sm">No notifications yet</p>
+      </div>`;
     return;
   }
 
@@ -206,23 +208,66 @@ function renderNotificationList(notifications) {
     }
 
     html += `
-            <div class="p-4 hover:bg-zinc-800/40 transition ${
-              isUnread ? "bg-emerald-950/20" : ""
-            }">
-                <div class="flex items-start justify-between gap-2">
-                    <p class="text-xs font-semibold text-zinc-200">${escapeHTML(
-                      item.title || "System Notification"
-                    )}</p>
-                    <span class="text-[10px] text-zinc-500 whitespace-nowrap">${timeStr}</span>
-                </div>
-                <p class="text-xs text-zinc-400 mt-1">${escapeHTML(
-                  item.message || item.body || ""
-                )}</p>
-            </div>`;
+      <div data-notif-id="${escapeHTML(item.id)}" class="p-4 hover:bg-zinc-800/40 transition cursor-pointer ${
+        isUnread ? "bg-emerald-950/20 border-l-2 border-emerald-500" : ""
+      }">
+          <div class="flex items-start justify-between gap-2">
+              <p class="text-xs font-semibold text-zinc-200">${escapeHTML(
+                item.title || "System Notification"
+              )}</p>
+              <span class="text-[10px] text-zinc-500 whitespace-nowrap">${timeStr}</span>
+          </div>
+          <p class="text-xs text-zinc-400 mt-1">${escapeHTML(
+            item.message || item.body || ""
+          )}</p>
+      </div>`;
   });
 
   html += "</div>";
   listContainer.innerHTML = html;
+}
+
+// CSP-Compliant Event Delegation for Notification Clicks
+function setupNotificationEventListeners() {
+  const listContainer = document.getElementById("notification-list");
+  if (!listContainer) return;
+
+  // Prevent duplicate event listeners
+  if (listContainer.dataset.listenerAttached === "true") return;
+  listContainer.dataset.listenerAttached = "true";
+
+  listContainer.addEventListener("click", async (e) => {
+    const card = e.target.closest("[data-notif-id]");
+    if (!card) return;
+
+    const notifId = card.getAttribute("data-notif-id");
+    if (!notifId || !auth.currentUser) return;
+
+    try {
+      const notifRef = doc(db, "users", auth.currentUser.uid, "notifications", notifId);
+      await updateDoc(notifRef, { read: true });
+      card.classList.remove("bg-emerald-950/20", "border-l-2", "border-emerald-500");
+    } catch (err) {
+      console.warn("Failed to mark notification as read:", err);
+    }
+  });
+}
+
+export async function markAllNotificationsAsRead() {
+  if (!auth.currentUser || cachedNotifications.length === 0) return;
+  const uid = auth.currentUser.uid;
+
+  try {
+    const unreadItems = cachedNotifications.filter(n => !n.read);
+    await Promise.all(
+      unreadItems.map(item => 
+        updateDoc(doc(db, "users", uid, "notifications", item.id), { read: true })
+      )
+    );
+    updateNotificationBadge(0);
+  } catch (err) {
+    console.warn("Failed to mark all notifications as read:", err);
+  }
 }
 
 function escapeHTML(str) {
