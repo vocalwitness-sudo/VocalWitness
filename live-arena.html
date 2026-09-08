@@ -31,8 +31,10 @@
         <!-- HEADER -->
         <header class="flex items-center justify-between mb-8">
             <div class="flex items-center gap-3">
-                <button onclick="window.goBack()"
-                        class="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center gap-2 text-sm font-medium transition">
+                <button type="button"
+                        id="backBtn"
+                        class="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center gap-2 text-sm font-medium transition cursor-pointer"
+                        aria-label="Go back">
                     ← Back
                 </button>
                 <div class="flex items-center gap-3">
@@ -86,9 +88,9 @@
                 </div>
 
                 <!-- Notify Button -->
-                <button id="notifyArenaBtn"
-                        onclick="notifyLiveArena()"
-                        class="px-10 py-4 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-black font-bold rounded-3xl text-lg shadow-xl transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed">
+                <button type="button"
+                        id="notifyArenaBtn"
+                        class="px-10 py-4 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-black font-bold rounded-3xl text-lg shadow-xl transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer">
                     🔔 Notify Me When Arena Goes Live
                 </button>
             </div>
@@ -137,63 +139,61 @@
             }
         });
 
-        // ========== Notify Me ==========
-        window.notifyLiveArena = async function () {
-            const btn = document.getElementById('notifyArenaBtn');
-
-            if (!requireAuth("Please sign in to get notified when the Live Arena launches.")) {
-                return;
-            }
-
-            if (btn) {
-                btn.disabled = true;
-                btn.textContent = "Saving...";
-            }
-
-            try {
-                const user = auth.currentUser;
-                if (!user) {
-                    showToast("Please sign in first.", "error");
-                    return;
+        document.addEventListener('DOMContentLoaded', () => {
+            // ========== Back Button Handler ==========
+            document.getElementById('backBtn')?.addEventListener('click', () => {
+                if (window.history.length > 1) {
+                    window.history.back();
+                } else {
+                    window.location.href = '../index.html';
                 }
+            });
 
-                const userRef = doc(db, "users", user.uid);
-                await updateDoc(userRef, {
-                    interestedInArena: true,
-                    arenaNotifyAt: serverTimestamp()
+            // ========== Notify Me Button Handler ==========
+            const notifyBtn = document.getElementById('notifyArenaBtn');
+            if (notifyBtn) {
+                notifyBtn.addEventListener('click', async () => {
+                    if (!requireAuth("Please sign in to get notified when the Live Arena launches.")) {
+                        return;
+                    }
+
+                    notifyBtn.disabled = true;
+                    notifyBtn.textContent = "Saving...";
+
+                    try {
+                        const user = auth.currentUser;
+                        if (!user) {
+                            showToast("Please sign in first.", "error");
+                            notifyBtn.disabled = false;
+                            notifyBtn.textContent = "🔔 Notify Me When Arena Goes Live";
+                            return;
+                        }
+
+                        const userRef = doc(db, "users", user.uid);
+                        await updateDoc(userRef, {
+                            interestedInArena: true,
+                            arenaNotifyAt: serverTimestamp()
+                        });
+
+                        showToast("✅ You're on the list! We'll notify you when the Arena goes live.", "success");
+
+                        notifyBtn.textContent = "✅ You're on the list";
+                        notifyBtn.classList.remove("from-rose-500", "to-pink-500", "hover:from-rose-600", "hover:to-pink-600");
+                        notifyBtn.classList.add("from-emerald-500", "to-teal-500");
+                    } catch (error) {
+                        console.error("Failed to save arena interest:", error);
+                        showToast("Something went wrong. Please try again.", "error");
+
+                        notifyBtn.disabled = false;
+                        notifyBtn.textContent = "🔔 Notify Me When Arena Goes Live";
+                    }
                 });
-
-                showToast("✅ You're on the list! We'll notify you when the Arena goes live.", "success");
-
-                if (btn) {
-                    btn.textContent = "✅ You're on the list";
-                    btn.classList.remove("from-rose-500", "to-pink-500", "hover:from-rose-600", "hover:to-pink-600");
-                    btn.classList.add("from-emerald-500", "to-teal-500");
-                }
-            } catch (error) {
-                console.error("Failed to save arena interest:", error);
-                showToast("Something went wrong. Please try again.", "error");
-
-                if (btn) {
-                    btn.disabled = false;
-                    btn.textContent = "🔔 Notify Me When Arena Goes Live";
-                }
             }
-        };
 
-        // ========== Go Back ==========
-        window.goBack = function () {
-            if (window.history.length > 1) {
-                window.history.back();
-            } else {
-                window.location.href = 'index.html';
-            }
-        };
-
-        console.log("✅ Live Arena loaded successfully");
+            console.log("✅ Live Arena loaded successfully");
+        });
     </script>
 
-    <!-- Optional: keep if you still need global app features -->
     <script type="module" src="../js/main.js"></script>
 </body>
 </html>
