@@ -54,32 +54,40 @@
         </div>
     </main>
 
-    <!-- ====================== EDIT PROFILE MODAL ====================== -->
-    <div id="editProfileModal" role="dialog" aria-modal="true" aria-labelledby="editProfileTitle"
-         class="hidden fixed inset-0 bg-black/85 flex items-center justify-center z-[10001] p-4">
-        <div class="rounded-3xl p-6 max-w-md w-full border border-zinc-800 space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto custom-scroll bg-[#111827]">
-            
-            <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
-                <h3 id="editProfileTitle" class="text-xl font-bold text-white" data-i18n="editProfile">Edit Profile</h3>
-                <button type="button" id="btn-close-edit-profile" aria-label="Close modal"
-                        class="text-2xl text-zinc-400 hover:text-white transition-colors">&times;</button>
+ <!-- ====================== EDIT PROFILE MODAL ====================== -->
+<div id="editProfileModal" role="dialog" aria-modal="true" aria-labelledby="editProfileTitle"
+     class="hidden fixed inset-0 bg-black/85 flex items-center justify-center z-[10001] p-4">
+    <div class="rounded-3xl p-6 max-w-md w-full border border-zinc-800 space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto custom-scroll bg-[#111827]">
+        
+        <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
+            <h3 id="editProfileTitle" class="text-xl font-bold text-white" data-i18n="editProfile">Edit Profile</h3>
+            <!-- Added id="btn-close-edit-profile" to match your initProfileModals() listener -->
+            <button type="button" id="btn-close-edit-profile" aria-label="Close modal"
+                    class="text-2xl text-zinc-400 hover:text-white transition-colors">&times;</button>
+        </div>
+
+        <form id="editProfileForm" class="space-y-5">
+            <!-- Avatar Section -->
+            <div class="flex flex-col items-center gap-3">
+                <div class="relative">
+                    <div class="w-24 h-24 rounded-3xl overflow-hidden border-4 border-zinc-700 bg-zinc-800 shadow-xl">
+                        <!-- Preview Image Container (Handled by handleImagePreview) -->
+                        <img id="avatarPreview" src="" alt="Avatar Preview" class="w-full h-full object-cover hidden">
+                        <!-- Fallback Placeholder -->
+                        <div id="avatarFallback" class="w-full h-full flex items-center justify-center text-5xl">👤</div>
+                    </div>
+                </div>
+                <label class="cursor-pointer text-sm text-emerald-400 hover:text-emerald-300 font-medium transition">
+                    Change Photo
+                    <input type="file" id="avatarInput" accept="image/*" class="hidden">
+                </label>
+                <p class="text-[11px] text-zinc-500">Max 2MB • Auto-compressed</p>
             </div>
 
-            <form id="editProfileForm" class="space-y-5">
-                <!-- Avatar -->
-                <div class="flex flex-col items-center gap-3">
-                    <div class="relative">
-                        <div class="w-24 h-24 rounded-3xl overflow-hidden border-4 border-zinc-700 bg-zinc-800 shadow-xl">
-                            <img id="avatarPreview" src="" alt="Avatar Preview" class="w-full h-full object-cover hidden">
-                            <div id="avatarFallback" class="w-full h-full flex items-center justify-center text-5xl">👤</div>
-                        </div>
-                    </div>
-                    <label class="cursor-pointer text-sm text-emerald-400 hover:text-emerald-300 font-medium transition">
-                        Change Photo
-                        <input type="file" id="avatarInput" accept="image/*" class="hidden">
-                    </label>
-                    <p class="text-[11px] text-zinc-500">Max 2MB • Auto-compressed</p>
-                </div>
+            <!-- Rest of your form inputs go here (e.g. editFirstName, editLastName, etc.) -->
+        </form>
+    </div>
+</div>
 
                 <!-- Name Fields -->
                 <div class="grid grid-cols-2 gap-3">
