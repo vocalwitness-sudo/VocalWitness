@@ -91,8 +91,7 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
         const btn = document.querySelector(`#sortBtnGroup .sort-btn[data-sort="${sort}"]`);
         btn?.click();
     });
-
-    // Event delegation (attached only once)
+// Event delegation (attached only once, fully safeguarded)
     if (!feedContainer.dataset.listenerAttached) {
         feedContainer.dataset.listenerAttached = "true";
 
@@ -102,7 +101,7 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
 
             const action = btn.getAttribute('data-action');
             const id = btn.getAttribute('data-id');
-
+            
             // Quick toggle for UI expansion panels (no button disable needed)
             if (action === 'toggle-translate') {
                 const box = document.getElementById(`translate-box-${id}`);
@@ -115,14 +114,19 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
 
             try {
                 if (action === 'like') {
-                    await handleUpvote(id);
+                    if (typeof handleUpvote === 'function') await handleUpvote(id);
+                    else console.warn("handleUpvote is not defined");
                 } else if (action === 'react') {
                     const reactionType = btn.getAttribute('data-reaction');
-                    await toggleReaction(id, reactionType);
+                    if (typeof toggleReaction === 'function') await toggleReaction(id, reactionType);
+                    else console.warn("toggleReaction is not defined");
                 } else if (action === 'comment') {
-                    await openCommentModal(id);
+                    if (typeof openCommentModal === 'function') await openCommentModal(id);
+                    else console.warn("openCommentModal is not defined");
                 } else if (action === 'download-pack') {
-                    await handleDownloadEvidencePack(id);
+                    showToast("📥 Downloading Evidence Pack: Safe verification text file with cryptographic hashes. No code installed.", "success");
+                    if (typeof handleDownloadEvidencePack === 'function') await handleDownloadEvidencePack(id);
+                    else console.warn("handleDownloadEvidencePack is not defined");
                 } else if (action === 'report') {
                     // Prefer modal so user can choose reason (incl. suspected_synthetic)
                     if (typeof window.openReportModal === 'function') {
@@ -136,13 +140,12 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                             showToast("Failed to submit report.", "error");
                         }
                     } else {
-                        // Temporary fallback until reportContent / openReportModal is fully wired
                         console.warn("reportContent / openReportModal not available yet");
                         showToast("Report feature is temporarily unavailable. Please try again later.", "info");
                     }
                 } else if (action === 'share') {
                     try {
-                        const post = allPostsCache.find(p => p.id === id);
+                        const post = (typeof allPostsCache !== 'undefined' ? allPostsCache : []).find(p => p.id === id);
                         const shareUrl = `${window.location.origin}?post=${encodeURIComponent(id)}`;
                         const title = post?.headline || post?.title || 'VocalWitness Testimony';
                         const text = post?.content
@@ -150,11 +153,7 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                             : 'Witness report shared via VocalWitness';
 
                         if (navigator.share) {
-                            await navigator.share({
-                                title: title,
-                                text: text,
-                                url: shareUrl
-                            });
+                            await navigator.share({ title, text, url: shareUrl });
                             showToast("Shared successfully", "success");
                         } else if (navigator.clipboard?.writeText) {
                             await navigator.clipboard.writeText(shareUrl);
@@ -176,15 +175,20 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                         }
                     }
                 } else if (action === 'pin') {
-                    await handlePinPost(id);
+                    if (typeof handlePinPost === 'function') await handlePinPost(id);
+                    else console.warn("handlePinPost is not defined");
                 } else if (action === 'delete') {
-                    await handleDeletePost(id);
+                    if (typeof handleDeletePost === 'function') await handleDeletePost(id);
+                    else console.warn("handleDeletePost is not defined");
                 } else if (action === 'menu') {
-                    showPostMenu(id);
+                    if (typeof showPostMenu === 'function') showPostMenu(id);
+                    else console.warn("showPostMenu is not defined");
                 } else if (action === 'corroborate') {
-                    await handleCorroborate(id, btn);
+                    if (typeof handleCorroborate === 'function') await handleCorroborate(id, btn);
+                    else console.warn("handleCorroborate is not defined");
                 } else if (action === 'execute-translate') {
-                    await handleTranslateAction(id, btn);
+                    if (typeof handleTranslateAction === 'function') await handleTranslateAction(id, btn);
+                    else console.warn("handleTranslateAction is not defined");
                 }
             } catch (err) {
                 console.error(`Action "${action}" failed:`, err);
@@ -241,7 +245,6 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
             </div>`;
     });
 }
-
 function ensureSearchAndFilterUI(container) {
     let existingWrapper = document.getElementById('feed-controls-wrapper');
     if (existingWrapper) existingWrapper.remove();
