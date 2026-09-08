@@ -8,86 +8,78 @@
     <!-- PDF Export Dependency -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 </head>
-<body class="min-h-screen bg-[#0a0f1c] text-zinc-200 antialiased selection:bg-emerald-500 selection:text-black pt-4 sm:pt-6">
+<body class="min-h-screen bg-[#0a0f1c] text-zinc-200 antialiased selection:bg-emerald-500 selection:text-black pt-12 sm:pt-16 px-4 pb-16">
 
-    <!-- Header Navigation -->
-    <header class="glass sticky top-0 z-50 p-4 border-b border-zinc-800/80 backdrop-blur-md">
-        <div class="max-w-4xl mx-auto flex items-center justify-between">
+    <!-- Header Navigation with generous breathing room -->
+    <header class="glass sticky top-4 z-50 max-w-4xl mx-auto mb-8 p-4 sm:p-5 rounded-3xl border border-zinc-800/80 backdrop-blur-md shadow-xl">
+        <div class="flex items-center justify-between">
             <a href="index.html" class="flex items-center gap-3 group">
-                <div class="w-9 h-9 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-emerald-500/10 group-hover:scale-105 transition-transform">
+                <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-emerald-500/10 group-hover:scale-105 transition-transform">
                     🔊
                 </div>
                 <span class="font-bold text-xl tracking-tight text-white" data-i18n="appTitle">VocalWitness</span>
             </a>
-            <div class="flex items-center gap-4">
-                <button type="button" data-action="back" class="text-sm font-medium text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-1 bg-emerald-500/10 px-3 py-1.5 rounded-xl border border-emerald-500/20">
+            <div class="flex items-center gap-3">
+                <button type="button" data-action="back" class="text-sm font-medium text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-1 bg-emerald-500/10 px-3.5 py-2 rounded-xl border border-emerald-500/20">
                     <span>←</span> <span data-i18n="backToSquareText">Back to Square</span>
                 </button>
-              <button type="button" id="theme-toggle-btn" aria-label="Toggle Theme"
-        class="p-2.5 rounded-2xl bg-zinc-900/50 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500">
-    🌙
-</button>
+                <button type="button" id="theme-toggle-btn" aria-label="Toggle Theme"
+                        class="p-2.5 rounded-2xl bg-zinc-900/50 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    🌙
+                </button>
             </div>
         </div>
     </header>
 
-    <!-- Main Page Content -->
-    <main class="max-w-4xl mx-auto p-4 sm:p-6">
-        <div class="rounded-3xl bg-[#111827] border border-zinc-800 overflow-hidden min-h-[600px] flex flex-col shadow-2xl">
+    <!-- Main Page Content Container -->
+    <main class="max-w-4xl mx-auto">
+        <div class="rounded-3xl bg-[#111827] border border-zinc-800 overflow-hidden min-h-[650px] flex flex-col shadow-2xl">
             
             <!-- Active Close/Back Sub-Bar -->
-            <div class="bg-zinc-900 border-b border-zinc-800 px-6 py-3 flex items-center justify-between text-xs">
+            <div class="bg-zinc-900/90 border-b border-zinc-800 px-6 py-4 flex items-center justify-between text-xs">
                 <button type="button" data-action="back"
-                        class="px-3 py-1.5 bg-emerald-400 hover:bg-emerald-300 text-black font-bold flex items-center gap-1.5 transition-colors rounded-xl shadow-md cursor-pointer">
+                        class="px-3.5 py-2 bg-emerald-400 hover:bg-emerald-300 text-black font-bold flex items-center gap-1.5 transition-colors rounded-xl shadow-md cursor-pointer">
                     <span>✕</span> Close &amp; Return to Square
                 </button>
-                <span class="text-emerald-400 font-mono tracking-wider">ACTIVE SECURE PROFILE</span>
+                <span class="text-emerald-400 font-mono tracking-wider font-semibold">ACTIVE SECURE PROFILE</span>
             </div>
 
-            <!-- Dynamic profile mount point (filled by renderProfileUI) -->
-            <div id="mainProfileContent" class="flex-1 p-6 sm:p-8 overflow-y-auto custom-scroll">
-                <div class="flex flex-col items-center justify-center py-24 space-y-4">
-                    <div class="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+            <!-- Dynamic profile mount point -->
+            <div id="mainProfileContent" class="flex-1 p-6 sm:p-10 overflow-y-auto custom-scroll space-y-6">
+                <div class="flex flex-col items-center justify-center py-28 space-y-4">
+                    <div class="w-10 h-10 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
                     <div class="text-sm font-medium text-zinc-400" data-i18n="loadingProfile">Loading your profile...</div>
                 </div>
             </div>
         </div>
     </main>
 
- <!-- ====================== EDIT PROFILE MODAL ====================== -->
-<div id="editProfileModal" role="dialog" aria-modal="true" aria-labelledby="editProfileTitle"
-     class="hidden fixed inset-0 bg-black/85 flex items-center justify-center z-[10001] p-4">
-    <div class="rounded-3xl p-6 max-w-md w-full border border-zinc-800 space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto custom-scroll bg-[#111827]">
-        
-        <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
-            <h3 id="editProfileTitle" class="text-xl font-bold text-white" data-i18n="editProfile">Edit Profile</h3>
-            <!-- Added id="btn-close-edit-profile" to match your initProfileModals() listener -->
-            <button type="button" id="btn-close-edit-profile" aria-label="Close modal"
-                    class="text-2xl text-zinc-400 hover:text-white transition-colors">&times;</button>
-        </div>
-
-        <form id="editProfileForm" class="space-y-5">
-            <!-- Avatar Section -->
-            <div class="flex flex-col items-center gap-3">
-                <div class="relative">
-                    <div class="w-24 h-24 rounded-3xl overflow-hidden border-4 border-zinc-700 bg-zinc-800 shadow-xl">
-                        <!-- Preview Image Container (Handled by handleImagePreview) -->
-                        <img id="avatarPreview" src="" alt="Avatar Preview" class="w-full h-full object-cover hidden">
-                        <!-- Fallback Placeholder -->
-                        <div id="avatarFallback" class="w-full h-full flex items-center justify-center text-5xl">👤</div>
-                    </div>
-                </div>
-                <label class="cursor-pointer text-sm text-emerald-400 hover:text-emerald-300 font-medium transition">
-                    Change Photo
-                    <input type="file" id="avatarInput" accept="image/*" class="hidden">
-                </label>
-                <p class="text-[11px] text-zinc-500">Max 2MB • Auto-compressed</p>
+    <!-- ====================== EDIT PROFILE MODAL ====================== -->
+    <div id="editProfileModal" role="dialog" aria-modal="true" aria-labelledby="editProfileTitle"
+         class="hidden fixed inset-0 bg-black/85 flex items-center justify-center z-[10001] p-4">
+        <div class="rounded-3xl p-6 sm:p-8 max-w-md w-full border border-zinc-800 space-y-6 shadow-2xl max-h-[90vh] overflow-y-auto custom-scroll bg-[#111827]">
+            
+            <div class="flex justify-between items-center border-b border-zinc-800 pb-4">
+                <h3 id="editProfileTitle" class="text-xl font-bold text-white" data-i18n="editProfile">Edit Profile</h3>
+                <button type="button" id="btn-close-edit-profile" aria-label="Close modal"
+                        class="text-2xl text-zinc-400 hover:text-white transition-colors">&times;</button>
             </div>
 
-            <!-- Rest of your form inputs go here (e.g. editFirstName, editLastName, etc.) -->
-        </form>
-    </div>
-</div>
+            <form id="editProfileForm" class="space-y-5">
+                <!-- Avatar Section -->
+                <div class="flex flex-col items-center gap-3">
+                    <div class="relative">
+                        <div class="w-24 h-24 rounded-3xl overflow-hidden border-4 border-zinc-700 bg-zinc-800 shadow-xl">
+                            <img id="avatarPreview" src="" alt="Avatar Preview" class="w-full h-full object-cover hidden">
+                            <div id="avatarFallback" class="w-full h-full flex items-center justify-center text-5xl">👤</div>
+                        </div>
+                    </div>
+                    <label class="cursor-pointer text-sm text-emerald-400 hover:text-emerald-300 font-medium transition">
+                        Change Photo
+                        <input type="file" id="avatarInput" accept="image/*" class="hidden">
+                    </label>
+                    <p class="text-[11px] text-zinc-500">Max 2MB • Auto-compressed</p>
+                </div>
 
                 <!-- Name Fields -->
                 <div class="grid grid-cols-2 gap-3">
@@ -131,10 +123,10 @@
                 </div>
 
                 <div class="flex gap-3 pt-2">
-                    <button type="submit" class="flex-1 py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition shadow-lg shadow-emerald-500/20">
+                    <button type="submit" class="flex-1 py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition shadow-lg shadow-emerald-500/20 cursor-pointer">
                         Save Changes
                     </button>
-                    <button type="button" id="btn-cancel-edit" class="py-3 px-5 bg-zinc-800 text-zinc-300 font-semibold rounded-xl hover:bg-zinc-700 transition">
+                    <button type="button" id="btn-cancel-edit" class="py-3 px-5 bg-zinc-800 text-zinc-300 font-semibold rounded-xl hover:bg-zinc-700 transition cursor-pointer">
                         Cancel
                     </button>
                 </div>
@@ -146,8 +138,7 @@
     <div id="settingsModal"
          class="fixed inset-0 z-[10001] hidden items-center justify-center overflow-y-auto bg-black/85 p-4"
          role="dialog" aria-modal="true" aria-labelledby="settingsTitle" aria-hidden="true">
-      
-      <div class="custom-scroll relative max-h-[92vh] w-full max-w-lg space-y-6 overflow-y-auto rounded-3xl border border-zinc-700 bg-[#111827] p-6 text-white shadow-2xl">
+      <div class="custom-scroll relative max-h-[92vh] w-full max-w-lg space-y-6 overflow-y-auto rounded-3xl border border-zinc-700 bg-[#111827] p-6 sm:p-8 text-white shadow-2xl">
         
         <!-- Header -->
         <div class="flex items-center justify-between border-b border-zinc-700 pb-4">
@@ -155,28 +146,25 @@
             ⚙️ Security & Account Settings
           </h3>
           <button id="closeSettingsBtn" type="button"
-                  class="rounded-full p-2 text-zinc-400 hover:bg-zinc-800 hover:text-white transition">
+                  class="rounded-full p-2 text-zinc-400 hover:bg-zinc-800 hover:text-white transition cursor-pointer">
             ✕
           </button>
         </div>
 
-        <!-- ===== Security Controls ===== -->
+        <!-- Security Controls -->
         <div class="space-y-3">
           <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400">Security Controls</h4>
-
-          <!-- Password -->
           <div class="flex items-center justify-between rounded-2xl border border-zinc-700 bg-zinc-900 p-4">
             <div>
               <div class="text-sm font-medium">Password</div>
               <div class="text-xs text-zinc-400">Send password reset email</div>
             </div>
             <button id="triggerPasswordResetBtn" type="button"
-                    class="px-4 py-2 text-xs font-semibold rounded-xl bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 transition">
+                    class="px-4 py-2 text-xs font-semibold rounded-xl bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 transition cursor-pointer">
               Reset Password
             </button>
           </div>
 
-          <!-- 2FA -->
           <div class="flex items-center justify-between rounded-2xl border border-zinc-700 bg-zinc-900 p-4">
             <div>
               <div class="text-sm font-medium">Two-Factor Protection</div>
@@ -184,34 +172,31 @@
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" id="toggle2FA" class="sr-only peer">
-              <div class="w-11 h-6 bg-zinc-700 rounded-full peer peer-checked:bg-emerald-500 
-                          after:content-[''] after:absolute after:top-[2px] after:left-[2px] 
-                          after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all 
-                          peer-checked:after:translate-x-full"></div>
+              <div class="w-11 h-6 bg-zinc-700 rounded-full peer peer-checked:bg-emerald-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
             </label>
           </div>
         </div>
 
-        <!-- ===== Active Sessions ===== -->
+        <!-- Active Sessions -->
         <div class="space-y-3">
           <div class="flex items-center justify-between">
             <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400">Active Sessions</h4>
-            <button id="refreshSessionsBtn" type="button" class="text-xs text-emerald-400 hover:underline">Refresh</button>
+            <button id="refreshSessionsBtn" type="button" class="text-xs text-emerald-400 hover:underline cursor-pointer">Refresh</button>
           </div>
           <div id="activeSessionsList" class="space-y-2 text-sm">
             <div class="text-zinc-500 text-xs py-4 text-center">Loading sessions...</div>
           </div>
         </div>
 
-        <!-- ===== Login History ===== -->
+        <!-- Login History -->
         <div class="space-y-3">
           <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400">Recent Login History</h4>
-          <div id="loginHistoryList" class="space-y-2 text-sm max-h-48 overflow-y-auto">
+          <div id="loginHistoryList" class="space-y-2 text-sm max-h-48 overflow-y-auto custom-scroll">
             <div class="text-zinc-500 text-xs py-4 text-center">Loading history...</div>
           </div>
         </div>
 
-        <!-- ===== Preferences ===== -->
+        <!-- Preferences -->
         <div class="space-y-3">
           <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400">Preferences</h4>
           <div class="rounded-2xl border border-zinc-700 bg-zinc-900 p-4">
@@ -224,23 +209,19 @@
           </div>
         </div>
 
-        <!-- ===== Danger Zone ===== -->
+        <!-- Danger Zone -->
         <div class="space-y-3 pt-2">
           <h4 class="text-xs font-bold uppercase tracking-wider text-red-400">Data & Identity</h4>
-
           <button id="exportUserDataPdfBtn" type="button"
-                  class="w-full py-3 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 text-sm font-semibold hover:bg-emerald-500/20 transition">
+                  class="w-full py-3 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 text-sm font-semibold hover:bg-emerald-500/20 transition cursor-pointer">
             📄 Download Identity PDF
           </button>
-
           <button id="settingsSignOutBtn" type="button"
-                  class="w-full py-3.5 rounded-2xl border border-red-500/40 bg-red-950/40 text-red-400 text-sm font-semibold hover:bg-red-900/50 transition">
+                  class="w-full py-3.5 rounded-2xl border border-red-500/40 bg-red-950/40 text-red-400 text-sm font-semibold hover:bg-red-900/50 transition cursor-pointer">
             🚪 Sign Out of All Sessions
           </button>
-
-          <!-- Emergency Clear -->
           <button id="panicClearBtn" type="button"
-                  class="w-full py-3.5 rounded-2xl border border-red-600 bg-red-950/60 hover:bg-red-900/70 text-red-300 text-sm font-semibold transition flex items-center justify-center gap-2">
+                  class="w-full py-3.5 rounded-2xl border border-red-600 bg-red-950/60 hover:bg-red-900/70 text-red-300 text-sm font-semibold transition flex items-center justify-center gap-2 cursor-pointer">
             🚨 Emergency Clear This Device
           </button>
           <p class="text-[11px] text-zinc-500 text-center -mt-1">
@@ -251,7 +232,7 @@
       </div>
     </div>
 
-    <!-- Application Initialization Scripts -->
+    <!-- CSP-Compliant Event Wiring & Initialization -->
     <script type="module">
         import { initLanguage } from './js/i18n.js';
         import { initDarkMode } from './js/utils.js';
@@ -263,7 +244,7 @@
             if (typeof initLanguage === 'function') initLanguage();
             if (typeof initDarkMode === 'function') initDarkMode();
 
-            // Setup global click fallback for data-action="back"
+            // Safe Event Delegation for Back/Close buttons
             document.addEventListener('click', (e) => {
                 const backTrigger = e.target.closest('[data-action="back"]');
                 if (backTrigger) {
@@ -276,6 +257,93 @@
                 }
             });
 
+            // Safe Theme Toggle Wiring
+            const themeBtn = document.getElementById('theme-toggle-btn');
+            if (themeBtn) {
+                themeBtn.addEventListener('click', () => {
+                    const current = document.documentElement.getAttribute('data-theme') || 'dark';
+                    const next = current === 'dark' ? 'light' : 'dark';
+                    document.documentElement.setAttribute('data-theme', next);
+                    localStorage.setItem('theme', next);
+                    if (typeof window.showToast === 'function') {
+                        window.showToast(next === 'dark' ? '🌙 Dark Mode' : '☀️ Light Mode');
+                    }
+                });
+            }
+
+            // Safe Avatar Preview Wiring
+            const avatarInput = document.getElementById('avatarInput');
+            if (avatarInput) {
+                avatarInput.addEventListener('change', (event) => {
+                    try {
+                        const file = event.target.files[0];
+                        if (!file) return;
+                        if (file.size > 2 * 1024 * 1024) {
+                            alert("File size exceeds 2MB limit.");
+                            event.target.value = '';
+                            return;
+                        }
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            const preview = document.getElementById('avatarPreview');
+                            const fallback = document.getElementById('avatarFallback');
+                            if (preview && fallback) {
+                                preview.src = e.target.result;
+                                preview.classList.remove('hidden');
+                                fallback.classList.add('hidden');
+                            }
+                        };
+                        reader.readAsDataURL(file);
+                    } catch (err) {
+                        console.error("Image preview error:", err);
+                    }
+                });
+            }
+
+            // Safe Password Reset Wiring
+            const resetBtn = document.getElementById('triggerPasswordResetBtn');
+            if (resetBtn) {
+                resetBtn.addEventListener('click', async () => {
+                    try {
+                        const user = auth.currentUser;
+                        const email = user ? user.email : prompt("Enter account email address:");
+                        if (!email) return;
+                        await sendPasswordResetEmail(auth, email);
+                        alert("Password reset email sent successfully to: " + email);
+                    } catch (err) {
+                        console.error("Password reset error:", err);
+                        alert("Could not send password reset: " + err.message);
+                    }
+                });
+            }
+
+            // Safe PDF Export Wiring
+            const exportPdfBtn = document.getElementById('exportUserDataPdfBtn');
+            if (exportPdfBtn) {
+                exportPdfBtn.addEventListener('click', () => {
+                    try {
+                        const { jsPDF } = window.jspdf || {};
+                        if (!jsPDF) {
+                            alert("PDF module still loading. Try again in 2 seconds.");
+                            return;
+                        }
+                        const doc = new jsPDF();
+                        doc.setFont("helvetica", "bold");
+                        doc.setFontSize(18);
+                        doc.text("VocalWitness - User Profile Record", 15, 20);
+                        doc.setFont("helvetica", "normal");
+                        doc.setFontSize(11);
+                        doc.text("Export Date: " + new Date().toUTCString(), 15, 30);
+                        doc.text("User Identity UID: " + (auth.currentUser ? auth.currentUser.uid : "Guest"), 15, 40);
+                        doc.save("VocalWitness-Profile.pdf");
+                    } catch (err) {
+                        console.error("PDF export error:", err);
+                        alert("PDF generation failed. Check console logs.");
+                    }
+                });
+            }
+
+            // Escape Key Handler
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') {
                     if (typeof window.closeEditProfile === 'function') window.closeEditProfile();
@@ -283,79 +351,6 @@
                 }
             });
         });
-
-        window.toggleDarkMode = () => {
-            const current = document.documentElement.getAttribute('data-theme') || 'dark';
-            const next = current === 'dark' ? 'light' : 'dark';
-            document.documentElement.setAttribute('data-theme', next);
-            localStorage.setItem('theme', next);
-            if (typeof window.showToast === 'function') {
-                window.showToast(next === 'dark' ? '🌙 Dark Mode' : '☀️ Light Mode');
-            }
-        };
-
-        // Safe Image Preview fallback helper
-        window.safeHandleImagePreview = (event) => {
-            try {
-                const file = event.target.files[0];
-                if (!file) return;
-                if (file.size > 2 * 1024 * 1024) {
-                    alert("File size exceeds 2MB limit.");
-                    event.target.value = '';
-                    return;
-                }
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const preview = document.getElementById('avatarPreview');
-                    const fallback = document.getElementById('avatarFallback');
-                    if (preview && fallback) {
-                        preview.src = e.target.result;
-                        preview.classList.remove('hidden');
-                        fallback.classList.add('hidden');
-                    }
-                };
-                reader.readAsDataURL(file);
-            } catch (err) {
-                console.error("Image preview error:", err);
-            }
-        };
-
-        // Safe Password Reset Handler
-        window.safeTriggerPasswordReset = async () => {
-            try {
-                const user = auth.currentUser;
-                const email = user ? user.email : prompt("Enter account email address:");
-                if (!email) return;
-                await sendPasswordResetEmail(auth, email);
-                alert("Password reset email sent successfully to: " + email);
-            } catch (err) {
-                console.error("Password reset error:", err);
-                alert("Could not send password reset: " + err.message);
-            }
-        };
-
-        // Safe PDF Export Handler
-        window.safeExportUserDataPDF = () => {
-            try {
-                const { jsPDF } = window.jspdf || {};
-                if (!jsPDF) {
-                    alert("PDF module still loading. Try again in 2 seconds.");
-                    return;
-                }
-                const doc = new jsPDF();
-                doc.setFont("helvetica", "bold");
-                doc.setFontSize(18);
-                doc.text("VocalWitness - User Profile Record", 15, 20);
-                doc.setFont("helvetica", "normal");
-                doc.setFontSize(11);
-                doc.text("Export Date: " + new Date().toUTCString(), 15, 30);
-                doc.text("User Identity UID: " + (auth.currentUser ? auth.currentUser.uid : "Guest"), 15, 40);
-                doc.save("VocalWitness-Profile.pdf");
-            } catch (err) {
-                console.error("PDF export error:", err);
-                alert("PDF generation failed. Check console logs.");
-            }
-        };
     </script>
 </body>
 </html>
