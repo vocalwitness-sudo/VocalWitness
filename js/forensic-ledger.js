@@ -63,7 +63,6 @@ export function loadForensicLedger() {
                 const entry = document.createElement('div');
                 entry.className = "ledger-entry glass rounded-3xl p-5 border border-emerald-500/20";
 
-                // Using data-action and data-id instead of onclick=
                 entry.innerHTML = `
                     <div class="flex justify-between items-start">
                         <div class="flex items-center gap-3">
@@ -146,19 +145,19 @@ if (document.getElementById('ledgerContainer')) {
             else window.location.href = 'index.html';
         });
 
-        // 2. Refresh Button Listener (ensure your refresh button has id="refreshBtn")
-        document.getElementById('refreshBtn')?.addEventListener('click', () => {
-            refreshLedger();
-        });
+        // 2. Refresh Button Listener (matched to refreshLedgerBtn)
+        document.getElementById('refreshLedgerBtn')?.addEventListener('click', refreshLedger);
 
         // 3. Event Delegation for dynamically created "View Full Proof" buttons
         const container = document.getElementById('ledgerContainer');
-        container.addEventListener('click', (e) => {
-            const viewBtn = e.target.closest('[data-action="view-proof"]');
-            if (viewBtn) {
-                const id = viewBtn.getAttribute('data-id');
-                viewFullEntry(id);
-            }
-        });
+        if (container) {
+            container.addEventListener('click', (e) => {
+                const viewBtn = e.target.closest('[data-action="view-proof"]');
+                if (viewBtn) {
+                    const id = viewBtn.getAttribute('data-id');
+                    viewFullEntry(id);
+                }
+            });
+        }
     });
 }
