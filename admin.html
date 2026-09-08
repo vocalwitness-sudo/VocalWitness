@@ -83,13 +83,13 @@
 
     <!-- Navigation Tabs -->
     <div class="flex border-b border-slate-800 mb-6 gap-6 overflow-x-auto">
-      <button id="tab-btn-users" onclick="switchAdminTab('users')" class="pb-3 border-b-2 border-emerald-500 font-medium text-emerald-400 text-sm flex items-center gap-2 whitespace-nowrap">
+      <button id="tab-btn-users" class="pb-3 border-b-2 border-emerald-500 font-medium text-emerald-400 text-sm flex items-center gap-2 whitespace-nowrap">
         <span>👥 User & Role Management</span>
       </button>
-      <button id="tab-btn-verification" onclick="switchAdminTab('verification')" class="pb-3 border-b-2 border-transparent font-medium text-slate-400 hover:text-slate-200 text-sm flex items-center gap-2 whitespace-nowrap">
+      <button id="tab-btn-verification" class="pb-3 border-b-2 border-transparent font-medium text-slate-400 hover:text-slate-200 text-sm flex items-center gap-2 whitespace-nowrap">
         <span>🔑 Witness Verification Requests</span>
       </button>
-      <button id="tab-btn-audit" onclick="switchAdminTab('audit')" class="pb-3 border-b-2 border-transparent font-medium text-slate-400 hover:text-slate-200 text-sm flex items-center gap-2 whitespace-nowrap">
+      <button id="tab-btn-audit" class="pb-3 border-b-2 border-transparent font-medium text-slate-400 hover:text-slate-200 text-sm flex items-center gap-2 whitespace-nowrap">
         <span>🛡️ Security Audit Logs</span>
       </button>
     </div>
@@ -158,7 +158,7 @@
     const userTableBody = document.getElementById('admin-user-table-body');
 
     // Tab switcher logic
-    window.switchAdminTab = function(tabName) {
+    function switchAdminTab(tabName) {
       const usersTab = document.getElementById('tab-content-users');
       const verificationTab = document.getElementById('tab-content-verification');
       const auditTab = document.getElementById('tab-content-audit');
@@ -190,7 +190,7 @@
         btnAudit.className = activeClass;
         loadAuditLogs();
       }
-    };
+    }
 
     // Load Metrics & User List
     async function initAdminDashboard() {
@@ -324,6 +324,11 @@
         auditContainer.innerHTML = `<p class="text-rose-400">Unable to load audit logs.</p>`;
       }
     }
+
+    // ========== NEW: Proper event listeners (no more inline onclick) ==========
+    document.getElementById('tab-btn-users')?.addEventListener('click', () => switchAdminTab('users'));
+    document.getElementById('tab-btn-verification')?.addEventListener('click', () => switchAdminTab('verification'));
+    document.getElementById('tab-btn-audit')?.addEventListener('click', () => switchAdminTab('audit'));
 
     document.addEventListener('DOMContentLoaded', initAdminDashboard);
     document.getElementById('refresh-users-btn')?.addEventListener('click', initAdminDashboard);
