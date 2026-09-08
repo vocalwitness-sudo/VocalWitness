@@ -1,4 +1,4 @@
-// js/my-testimonies.js - With Optimistic UI + Batch 1 Evidence Pack UI
+// js/my-testimonies.js - With Optimistic UI + Batch 1 Evidence Pack UI (CSP Compliant)
 import { db, auth } from './firebase-config.js';
 import {
     collection, query, where, onSnapshot, orderBy,
@@ -19,14 +19,28 @@ export function initMyTestimonies(containerId) {
 
     container.innerHTML = `<div class="text-center py-12 text-zinc-400">Loading your testimonies...</div>`;
 
-    // Event delegation for download
+    // Event delegation handling all actions (download-pack, edit, delete)
     if (!container.dataset.listenerAttached) {
         container.dataset.listenerAttached = 'true';
         container.addEventListener('click', async (e) => {
-            const btn = e.target.closest('button[data-action="download-pack"]');
+            const btn = e.target.closest('button[data-action]');
             if (!btn) return;
+
+            const action = btn.getAttribute('data-action');
             const id = btn.getAttribute('data-id');
-            if (id) await handleDownloadEvidencePack(id);
+            if (!id) return;
+
+            if (action === 'download-pack') {
+                await handleDownloadEvidencePack(id);
+            } else if (action === 'edit') {
+                if (typeof window.editTestimony === 'function') {
+                    await window.editTestimony(id);
+                }
+            } else if (action === 'delete') {
+                if (typeof window.deleteTestimony === 'function') {
+                    await window.deleteTestimony(id);
+                }
+            }
         });
     }
 
@@ -123,9 +137,9 @@ function renderTestimonies(snapshot, container) {
                 <div class="flex flex-col gap-2 text-sm shrink-0">
                     ${hasPack
                         ? `<span class="text-[11px] text-zinc-500 px-2 py-1" title="Sealed reports cannot be edited">Locked</span>`
-                        : `<button type="button" onclick="editTestimony('${testimonyId}')" class="text-blue-400 hover:text-blue-300 px-4 py-1">Edit</button>`
+                        : `<button type="button" data-action="edit" data-id="${testimonyId}" class="text-blue-400 hover:text-blue-300 px-4 py-1">Edit</button>`
                     }
-                    <button type="button" onclick="deleteTestimony('${testimonyId}')"
+                    <button type="button" data-action="delete" data-id="${testimonyId}"
                             class="text-red-400 hover:text-red-300 px-4 py-1">Delete</button>
                 </div>
             </div>
