@@ -12,7 +12,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { renderDownloadPackButton } from './evidence-ui.js';
 import { toFullEvidencePack, downloadEvidencePack } from './evidence-pack.js';
-import { db, auth } from './firebase-config.js';
+import { db, auth } from './firebase-config.js?v=2';
 import { showToast } from './utils.js';
 import { renderTierCircle } from './ui-components.js';
 import { hasStewardAccess, canCorroborate } from './tier.js';
