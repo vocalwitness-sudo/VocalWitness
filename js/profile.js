@@ -813,7 +813,6 @@ export async function saveProfileChanges(event) {
         return;
     }
 
-    const firstName     = firstNameEl?.value?.trim() || "";
 
     if (!displayName) return showToast("Display name is required", "error");
 
