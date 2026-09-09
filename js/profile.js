@@ -1145,7 +1145,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Close / Escape listeners
+        // Close / Escape listeners
     document.getElementById('closeProfileModalBtn')?.addEventListener('click', closeProfile);
     document.getElementById('closeEditProfileBtn')?.addEventListener('click', closeEditProfile);
     document.getElementById('btn-close-edit-profile')?.addEventListener('click', closeEditProfile);
@@ -1164,4 +1164,4 @@ document.addEventListener('DOMContentLoaded', () => {
             if (typeof closeSettings === 'function') closeSettings();
         }
     });
-}
+});  
