@@ -1165,4 +1165,3 @@ document.addEventListener('DOMContentLoaded', () => {
             if (typeof closeSettings === 'function') closeSettings();
         }
     });
-});
