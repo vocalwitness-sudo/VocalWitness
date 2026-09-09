@@ -813,7 +813,6 @@ export async function saveProfileChanges(event) {
         return;
     }
 
-
     if (!displayName) return showToast("Display name is required", "error");
 
     try {
