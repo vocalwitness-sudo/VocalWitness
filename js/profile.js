@@ -703,16 +703,7 @@ export async function handleProfileStartCycle() {
     }
 }
 
-export function openEditProfile() {
-    const modal = document.getElementById('editProfileModal');
-    if (!modal) {
-        showToast("Edit Profile modal not found. Using quick bio editor instead.", "info");
-        openProfile();
-        setTimeout(() => {
-            if (typeof toggleBioEdit === 'function') toggleBioEdit();
-        }, 300);
-        return;
-    }
+
     pendingAvatarBase64 = null;
     if (currentUserData) {
         const firstNameInput   = document.getElementById('editFirstName');
@@ -747,27 +738,6 @@ export function openEditProfile() {
 }
 
 
-export function openSettings() {
-    closeProfile();
-    const modal = document.getElementById('settingsModal');
-    if (modal) {
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        modal.style.zIndex = '10000';
-        modal.setAttribute('aria-hidden', 'false');
-    } else {
-        showToast("Settings panel coming soon!", "info");
-    }
-}
-
-export function closeSettings() {
-    const modal = document.getElementById('settingsModal');
-    if (modal) {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-        modal.setAttribute('aria-hidden', 'true');
-    }
-}
 
 export function handleSaveProfile(event) {
     if (event) event.preventDefault();
