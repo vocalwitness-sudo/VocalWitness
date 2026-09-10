@@ -1,4 +1,5 @@
 // js/profile.js - Full upgraded profile (privacy default, verification ladder, sign out)
+import { initProfileModals, closeProfile, closeEditProfile, closeSettings } from './modals.js';
 import {
     onAuthStateChanged,
     sendPasswordResetEmail,
