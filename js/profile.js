@@ -738,7 +738,54 @@ export async function handleProfileStartCycle() {
 }
 
 
+// ====================== EDIT PROFILE FORM POPULATION ======================
+export function populateEditProfileForm() {
+    const modal = document.getElementById('editProfileModal');
+    if (!modal) return;
 
+    pendingAvatarBase64 = null;
+
+    if (currentUserData) {
+        const firstNameInput   = document.getElementById('editFirstName');
+        const lastNameInput    = document.getElementById('editLastName');
+        const displayNameInput = document.getElementById('editDisplayName');
+        const usernameInput    = document.getElementById('editUsername');
+        const regionInput      = document.getElementById('editRegion');
+        const bioInput         = document.getElementById('editBio');
+        const hidePublicToggle = document.getElementById('toggleHidePublicInfo');
+        const imgPreview       = document.getElementById('avatarPreview');
+        const avatarFallback   = document.getElementById('avatarFallback');
+
+        if (firstNameInput)   firstNameInput.value   = currentUserData.firstName || '';
+        if (lastNameInput)    lastNameInput.value    = currentUserData.lastName || '';
+        if (displayNameInput) displayNameInput.value = currentUserData.displayName || '';
+        if (usernameInput)    usernameInput.value    = currentUserData.username || '';
+        if (regionInput)      regionInput.value      = currentUserData.region || '';
+        if (bioInput)         bioInput.value         = currentUserData.bio || '';
+        if (hidePublicToggle) hidePublicToggle.checked = isPrivacyPrivate(currentUserData);
+
+        if (currentUserData.photoURL && imgPreview) {
+            imgPreview.src = currentUserData.photoURL;
+            imgPreview.classList.remove('hidden');
+            if (avatarFallback) avatarFallback.classList.add('hidden');
+        } else {
+            if (imgPreview) imgPreview.classList.add('hidden');
+            if (avatarFallback) avatarFallback.classList.remove('hidden');
+        }
+    }
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    modal.setAttribute('aria-hidden', 'false');
+    
+    if (typeof closeProfile === 'function') {
+        closeProfile();
+    }
+}
+
+window.populateEditProfileForm = populateEditProfileForm;
+
+// ====================== SAVE PROFILE CHANGES ======================
 export function handleSaveProfile(event) {
     if (event) event.preventDefault();
     saveProfileChanges();
@@ -1030,3 +1077,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+
+// Make sure it's exported for modals.js to hook into
+window.populateEditProfileForm = populateEditProfileForm;
