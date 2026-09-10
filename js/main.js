@@ -816,7 +816,9 @@ async function bootstrap() {
             showWelcomeNote();
         });
 
-        setupEventListeners();
+        if (typeof wireIndexPage === 'function') {
+            wireIndexPage();
+        }
         initLanguage?.();
         initProfile?.();
         initFocusBanner();
