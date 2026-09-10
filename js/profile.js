@@ -80,14 +80,7 @@ export function openProfile() {
     document.body.style.overflow = 'hidden';
 }
 
-export function closeProfile() {
-    const modal = document.getElementById('profileModal');
-    if (!modal) return;
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
-    modal.setAttribute('aria-hidden', 'true');
-    document.body.style.overflow = '';
-}
+
 
 // ====================== INITIALIZATION ======================
 export function initProfile() {
