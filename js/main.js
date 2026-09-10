@@ -59,6 +59,28 @@ function updateDataSaverUI(isOn) {
       el.className = statusClass;
     }
   });
+    
+    /**
+ * Initialize Data Saver toggle listeners and initial UI state
+ */
+function initDataSaver() {
+  const isOn = getDataSaverState();
+  updateDataSaverUI(isOn);
+
+  // Wire up desktop and mobile toggle buttons
+  ['data-saver-btn', 'data-saver-btn-mobile'].forEach(id => {
+    const btn = document.getElementById(id);
+    btn?.addEventListener('click', () => {
+      const currentState = getDataSaverState();
+      const newState = !currentState;
+      localStorage.setItem(DATA_SAVER_KEY, String(newState));
+      updateDataSaverUI(newState);
+      if (typeof showToast === 'function') {
+        showToast(`Data Saver ${newState ? 'Enabled' : 'Disabled'}`, 'success');
+      }
+    });
+  });
+}
 
   // Desktop button
   const desktopBtn = document.getElementById('data-saver-btn');
