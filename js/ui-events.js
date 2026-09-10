@@ -35,7 +35,6 @@ export function wireIndexPage() {
     if (desktop && !desktop.contains(e.target) && !notifBtn?.contains(e.target)) {
       desktop.classList.add('hidden');
     }
-    // add mobile close logic if you have a separate mobile dropdown
   });
 
   // ---------- Support buttons ----------
@@ -80,7 +79,6 @@ export function wireIndexPage() {
   document.querySelectorAll('.feed-pill[data-filter]').forEach(pill => {
     pill.addEventListener('click', () => {
       const filter = pill.dataset.filter;
-      // remove active from siblings
       document.querySelectorAll('.feed-pill').forEach(p => p.classList.remove('active', 'bg-emerald-500', 'text-black'));
       pill.classList.add('active', 'bg-emerald-500', 'text-black');
       window.applyFeedFilter?.(filter);
@@ -91,7 +89,6 @@ export function wireIndexPage() {
   document.querySelectorAll('.nav-tab[data-tab]').forEach(tab => {
     tab.addEventListener('click', () => {
       const target = tab.dataset.tab;
-      // visual state
       document.querySelectorAll('.nav-tab').forEach(t => {
         t.classList.remove('active', 'bg-emerald-500', 'text-black', 'border-emerald-400/50');
         t.setAttribute('aria-selected', 'false');
@@ -99,7 +96,7 @@ export function wireIndexPage() {
       tab.classList.add('active', 'bg-emerald-500', 'text-black', 'border-emerald-400/50');
       tab.setAttribute('aria-selected', 'true');
 
-      window.switchMainTab?.(target);   // your existing router / tab switcher
+      window.switchMainTab?.(target);
     });
   });
 
@@ -115,29 +112,13 @@ export function wireIndexPage() {
       moreBtn.setAttribute('aria-expanded', String(!isOpen));
     });
 
-    // close on outside click
     document.addEventListener('click', () => {
       moreMenu.classList.add('hidden');
       moreBtn.setAttribute('aria-expanded', 'false');
     });
   }
-}
 
-// Call this after DOM is ready / after your bootstrap
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', wireIndexPage);
-} else {
-  wireIndexPage();
-}
-
-// -------------------------------------------------
-// Full index.html event wiring (no inline handlers)
-// -------------------------------------------------
-
-export function wireIndexPage() {
   // ========== 1. PUBLIC SQUARE – COMPOSER ==========
-
-  // Character counter
   const mainInput = document.getElementById('mainInput');
   const charCount = document.getElementById('char-count');
   if (mainInput && charCount) {
@@ -146,7 +127,6 @@ export function wireIndexPage() {
     });
   }
 
-  // Media buttons → hidden file inputs
   document.getElementById('btn-photo')?.addEventListener('click', () => {
     document.getElementById('photoInput')?.click();
   });
@@ -154,8 +134,6 @@ export function wireIndexPage() {
     document.getElementById('videoInput')?.click();
   });
   document.getElementById('btn-voice')?.addEventListener('click', () => {
-    // If you have a dedicated voice UI toggle, call it here
-    // otherwise fall back to the audio file input
     if (typeof window.startVoiceRecording === 'function') {
       window.startVoiceRecording();
     } else {
@@ -163,7 +141,6 @@ export function wireIndexPage() {
     }
   });
 
-  // File inputs change
   document.getElementById('photoInput')?.addEventListener('change', (e) => {
     window.handleMediaSelect?.(e, 'photo');
   });
@@ -174,23 +151,19 @@ export function wireIndexPage() {
     window.handleMediaSelect?.(e, 'audio');
   });
 
-  // Voice recorder controls
   document.getElementById('rec-pause-btn')?.addEventListener('click', () => window.pauseRecording?.());
   document.getElementById('rec-stop-btn')?.addEventListener('click', () => window.stopRecording?.());
   document.getElementById('rec-replay-btn')?.addEventListener('click', () => window.replayRecording?.());
   document.getElementById('verify-voice-btn')?.addEventListener('click', () => window.verifyVoiceRecording?.());
 
-  // Publish button
   document.getElementById('postButton')?.addEventListener('click', () => {
     window.publishTestimony?.();
   });
 
-  // Feed sort
   document.getElementById('feedSortSelect')?.addEventListener('change', (e) => {
     window.applyFeedSort?.(e.target.value);
   });
 
-  // Target feed select (Citizen Talk / Witness Voice)
   document.getElementById('targetFeedSelect')?.addEventListener('change', (e) => {
     window.setTargetFeed?.(e.target.value);
   });
@@ -213,11 +186,9 @@ export function wireIndexPage() {
     window.startZKUpgrade?.() || window.startZKVerification?.();
   });
 
-  // Circle sub-tabs (Following / Followers / Trusted)
   document.querySelectorAll('[data-circle-tab]').forEach(btn => {
     btn.addEventListener('click', () => {
       const tab = btn.dataset.circleTab;
-      // visual state
       document.querySelectorAll('[data-circle-tab]').forEach(b => {
         b.classList.remove('border-b-2', 'border-emerald-500', 'text-emerald-400');
         b.classList.add('text-zinc-400');
@@ -237,7 +208,6 @@ export function wireIndexPage() {
   document.querySelectorAll('#witness-filters [data-filter]').forEach(btn => {
     btn.addEventListener('click', () => {
       const filter = btn.dataset.filter;
-      // visual state
       document.querySelectorAll('#witness-filters [data-filter]').forEach(b => {
         b.classList.remove('border-amber-500/40', 'bg-amber-500/20', 'text-amber-400');
         b.classList.add('border-zinc-700', 'bg-zinc-800', 'text-zinc-300');
@@ -262,7 +232,6 @@ export function wireIndexPage() {
     window.closeSupportModal?.();
   });
 
-  // Tier buttons
   document.querySelectorAll('.support-tier-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const amount = btn.dataset.amount;
@@ -276,12 +245,10 @@ export function wireIndexPage() {
     });
   });
 
-  // Custom amount
   document.getElementById('customSupportAmount')?.addEventListener('input', (e) => {
     window.setSupportAmount?.(Number(e.target.value) || 0);
   });
 
-  // Payment buttons
   document.getElementById('paystackPayBtn')?.addEventListener('click', () => {
     window.startPaystackPayment?.();
   });
@@ -292,10 +259,16 @@ export function wireIndexPage() {
     window.copyUsdtAddress?.();
   });
 
-  // Close modal on backdrop click
   document.getElementById('supportModal')?.addEventListener('click', (e) => {
     if (e.target.id === 'supportModal') {
       window.closeSupportModal?.();
     }
   });
+}
+
+// Call this after DOM is ready / after your bootstrap
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', wireIndexPage);
+} else {
+  wireIndexPage();
 }
