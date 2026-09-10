@@ -1127,25 +1127,6 @@ export function initProfileModals() {
     });
 }   // closes initProfileModals()
 
-document.addEventListener('DOMContentLoaded', () => {
-    // ProfileManager
-    const manager = new ProfileManager();
-    if (manager.profileContainer) {
-        manager.init();
-    }
-
-    // Modal wiring
-    initProfileModals();
-
-    // Default page select
-    document.getElementById('defaultDoorSelect')?.addEventListener('change', (e) => {
-        localStorage.setItem('vw_default_page', e.target.value);
-        if (typeof showToast === 'function') {
-            showToast("Default page saved", "success");
-        }
-    });
-
-        // Close / Escape listeners
     document.getElementById('closeProfileModalBtn')?.addEventListener('click', closeProfile);
     document.getElementById('closeEditProfileBtn')?.addEventListener('click', closeEditProfile);
     document.getElementById('btn-close-edit-profile')?.addEventListener('click', closeEditProfile);
@@ -1163,5 +1144,4 @@ document.addEventListener('DOMContentLoaded', () => {
             if (typeof closeEditProfile === 'function') closeEditProfile();
             if (typeof closeSettings === 'function') closeSettings();
         }
-    });
-});  
+});
