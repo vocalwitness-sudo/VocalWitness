@@ -10,7 +10,7 @@ import { loadDynamicNavigation } from './navigation.js';
 import { showToast } from './utils.js';
 import { initBookmarks, initBookmarksView } from './bookmarks.js';
 import { loadWeeklyLeaderboard, refreshTierAndUI } from './tier.js';
-import { wireIndexPage } from './js/ui-events.js';
+import { wireIndexPage } from './ui-events.js';
 import { initComposer } from './composer.js';
 import { createEvidencePack } from './evidence-pack.js';
 import { generateSha256Hash } from './utils.js';
