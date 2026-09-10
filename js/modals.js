@@ -1,6 +1,8 @@
 // js/modals.js
 // Central Profile & Settings Modal Controller + Phone Verification UI
 
+import { populateEditProfileForm } from './profile.js';
+
 function showModal(id) {
   const modal = document.getElementById(id);
   if (!modal) return;
@@ -43,6 +45,10 @@ export function openProfile() {
 }
 
 export function openEditProfile() {
+  // Populate form fields with current user state before showing the modal
+  if (typeof populateEditProfileForm === 'function') {
+    populateEditProfileForm();
+  }
   showModal('editProfileModal');
 }
 
