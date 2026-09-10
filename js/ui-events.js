@@ -271,4 +271,3 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', wireIndexPage);
 } else {
   wireIndexPage();
-  
