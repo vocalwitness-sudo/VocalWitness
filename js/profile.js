@@ -1036,97 +1036,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ====================== CLOSE / ESCAPE LISTENERS ======================
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('closeProfileModalBtn')?.addEventListener('click', closeProfile);
-    document.getElementById('closeEditProfileBtn')?.addEventListener('click', closeEditProfile);
+    // ProfileManager
+    const manager = new ProfileManager();
+    if (manager.profileContainer) {
+        manager.init();
+    }
 
-    document.getElementById('profileModal')?.addEventListener('click', (e) => {
-        if (e.target.id === 'profileModal') closeProfile();
-    });
-    document.getElementById('editProfileModal')?.addEventListener('click', (e) => {
-        if (e.target.id === 'editProfileModal') closeEditProfile();
-    });
+    // Modal wiring
+    initProfileModals();
 
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            closeProfile();
-            closeEditProfile();
-            closeSettings();
+    // Default page select
+    document.getElementById('defaultDoorSelect')?.addEventListener('change', (e) => {
+        localStorage.setItem('vw_default_page', e.target.value);
+        if (typeof showToast === 'function') {
+            showToast("Default page saved", "success");
         }
     });
-});
 
-// ====================== INIT PROFILE MODALS (CSP-safe – SINGLE SOURCE OF TRUTH) ======================
-export function initProfileModals() {
-    // Cancel buttons
-    document.getElementById('cancelEditProfileBtn')?.addEventListener('click', closeEditProfile);
-    document.getElementById('btn-cancel-edit')?.addEventListener('click', closeEditProfile);
-
-    // Avatar
-    document.getElementById('avatarInput')?.addEventListener('change', handleImagePreview);
-
-    // Edit Profile form
-    document.getElementById('editProfileForm')?.addEventListener('submit', handleSaveProfile);
-
-    // Close Settings
-    document.getElementById('closeSettingsBtn')?.addEventListener('click', closeSettings);
-
-    // Password Reset
-    document.getElementById('triggerPasswordResetBtn')?.addEventListener('click', triggerPasswordReset);
-
-    // ========== DOWNLOAD IDENTITY PDF (NEW DUAL SYSTEM) ==========
-    document.getElementById('exportUserDataPdfBtn')?.addEventListener('click', () => {
-        if (!currentUserData) {
-            showToast("Profile data not loaded", "error");
-            return;
-        }
-        // This calls the new dual system (Standard + Premium)
-        generateAndDownloadPDF(currentUserData, db);
-    });
-
-    // Settings Sign Out
-    document.getElementById('settingsSignOutBtn')?.addEventListener('click', handleSignOut);
-
-    // Emergency Clear
-    document.getElementById('panicClearBtn')?.addEventListener('click', async () => {
-        const confirmed = confirm(
-            "⚠️ EMERGENCY CLEAR\n\nThis will immediately erase all VocalWitness data from THIS device and sign you out.\n\nThe public ledger will NOT be affected.\n\nContinue?"
-        );
-        if (!confirmed) return;
-
-        showToast("Clearing device...", "info");
-        localStorage.clear();
-        sessionStorage.clear();
-        await handleSignOut();
-    });
-
-      // 2FA toggle – open MFA modal instead of directly saving
-    document.getElementById('toggle2FA')?.addEventListener('change', (e) => {
-        const mfaModal = document.getElementById('mfaModal');
-        if (e.target.checked) {
-            e.target.checked = false; // wait until verified
-            if (mfaModal) {
-                mfaModal.classList.remove('hidden');
-            } else {
-                showToast("2FA setup is not available yet", "info");
-            }
-        } else {
-            // User is turning 2FA off
-            if (auth.currentUser) {
-                updateDoc(doc(db, "users", auth.currentUser.uid), {
-                    twoFactorEnabled: false,
-                    updatedAt: serverTimestamp()
-                }).then(() => {
-                    showToast("🛡️ 2FA disabled", "success");
-                }).catch(err => {
-                    console.error(err);
-                    showToast("Failed to disable 2FA", "error");
-                    e.target.checked = true;
-                });
-            }
-        }
-    });
-}   // closes initProfileModals()
-
+    // Close / Escape listeners
     document.getElementById('closeProfileModalBtn')?.addEventListener('click', closeProfile);
     document.getElementById('closeEditProfileBtn')?.addEventListener('click', closeEditProfile);
     document.getElementById('btn-close-edit-profile')?.addEventListener('click', closeEditProfile);
@@ -1134,6 +1061,7 @@ export function initProfileModals() {
     document.getElementById('profileModal')?.addEventListener('click', (e) => {
         if (e.target.id === 'profileModal') closeProfile();
     });
+
     document.getElementById('editProfileModal')?.addEventListener('click', (e) => {
         if (e.target.id === 'editProfileModal') closeEditProfile();
     });
@@ -1144,4 +1072,5 @@ export function initProfileModals() {
             if (typeof closeEditProfile === 'function') closeEditProfile();
             if (typeof closeSettings === 'function') closeSettings();
         }
+    });
 });
