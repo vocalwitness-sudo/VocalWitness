@@ -300,12 +300,6 @@ function clearAiFeedback() {
     }
 }
 
-// ======================================================
-// UPDATED: Isolated Media State + Neutral Preview
-// ======================================================
-let activeImageFile = null;
-let activeVideoFile = null;
-let activeAudioFile = null;
 
 /**
  * Type-neutral preview renderer for images, videos, and audio clips
