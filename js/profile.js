@@ -746,14 +746,6 @@ export function openEditProfile() {
     closeProfile();
 }
 
-export function closeEditProfile() {
-    const modal = document.getElementById('editProfileModal');
-    if (modal) {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-        modal.setAttribute('aria-hidden', 'true');
-    }
-}
 
 export function openSettings() {
     closeProfile();
