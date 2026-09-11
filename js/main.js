@@ -37,22 +37,14 @@ let isSwitchingTab = false;
 // ====================== DATA SAVER HANDLER ======================
 const DATA_SAVER_KEY = 'vw_data_saver';
 
-/**
- * Read current state from localStorage
- */
 function getDataSaverState() {
   return localStorage.getItem(DATA_SAVER_KEY) === 'true';
 }
 
-
-/**
- * Update all status texts + button styles
- */
 function updateDataSaverUI(isOn) {
   const statusText = isOn ? 'On' : 'Off';
   const statusClass = isOn ? 'text-emerald-400 font-bold' : 'text-zinc-400';
 
-  // Update every status element that exists
   ['data-saver-status', 'data-saver-status-mobile', 'footer-data-saver-status'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
@@ -60,30 +52,8 @@ function updateDataSaverUI(isOn) {
       el.className = statusClass;
     }
   });
-}
 
-/**
- * Initialize Data Saver toggle listeners and initial UI state
- */
-function initDataSaver() {
-  const isOn = getDataSaverState();
-  updateDataSaverUI(isOn);
-
-  // Wire up desktop and mobile toggle buttons
-  ['data-saver-btn', 'data-saver-btn-mobile'].forEach(id => {
-    const btn = document.getElementById(id);
-    btn?.addEventListener('click', () => {
-      const currentState = getDataSaverState();
-      const newState = !currentState;
-      localStorage.setItem(DATA_SAVER_KEY, String(newState));
-      updateDataSaverUI(newState);
-      if (typeof showToast === 'function') {
-        showToast(`Data Saver ${newState ? 'Enabled' : 'Disabled'}`, 'success');
-      }
-    });
-  });
-
-  // Desktop button styling
+  // Optional: also update button styles here if you prefer
   const desktopBtn = document.getElementById('data-saver-btn');
   if (desktopBtn) {
     desktopBtn.classList.toggle('border-emerald-500', isOn);
@@ -92,7 +62,6 @@ function initDataSaver() {
     desktopBtn.classList.toggle('bg-zinc-900', !isOn);
   }
 
-  // Mobile button styling
   const mobileBtn = document.getElementById('data-saver-btn-mobile');
   if (mobileBtn) {
     mobileBtn.classList.toggle('border-emerald-500', isOn);
@@ -104,34 +73,42 @@ function initDataSaver() {
   }
 }
 
-/**
- * Main toggle function (called by both desktop & mobile buttons)
- */
+function initDataSaver() {
+  const isOn = getDataSaverState();
+  updateDataSaverUI(isOn);
+
+  ['data-saver-btn', 'data-saver-btn-mobile'].forEach(id => {
+    const btn = document.getElementById(id);
+    btn?.addEventListener('click', () => {
+      const newState = !getDataSaverState();
+      localStorage.setItem(DATA_SAVER_KEY, String(newState));
+      updateDataSaverUI(newState);
+      if (typeof showToast === 'function') {
+        showToast(`Data Saver ${newState ? 'Enabled' : 'Disabled'}`, 'success');
+      }
+      window.dispatchEvent(new CustomEvent('data-saver-changed', {
+        detail: { enabled: newState }
+      }));
+    });
+  });
+}
+
 function toggleDataSaver() {
-  const current = getDataSaverState();
-  const next = !current;
-
-  // Save new state
+  const next = !getDataSaverState();
   localStorage.setItem(DATA_SAVER_KEY, String(next));
-
-  // Update UI immediately
   updateDataSaverUI(next);
-
-  // Optional: let other parts of the app know
   window.dispatchEvent(new CustomEvent('data-saver-changed', {
     detail: { enabled: next }
   }));
-
   console.log('[Data Saver]', next ? 'ON' : 'OFF');
 }
 
-// Expose for the onclick="toggleDataSaver()" in HTML
 window.toggleDataSaver = toggleDataSaver;
 
-// Initialise the correct state when the page loads
 document.addEventListener('DOMContentLoaded', () => {
-  updateDataSaverUI(getDataSaverState());
+  initDataSaver();          // or just updateDataSaverUI(getDataSaverState());
 });
+
 // ====================== TAB SWITCHING ======================
 window.switchTab = async (tab) => {
     if (isSwitchingTab) return;
