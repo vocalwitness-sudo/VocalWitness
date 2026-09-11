@@ -109,126 +109,136 @@ document.addEventListener('DOMContentLoaded', () => {
   initDataSaver();          // or just updateDataSaverUI(getDataSaverState());
 });
 
+
 // ====================== TAB SWITCHING ======================
+let isSwitchingTab = false; // make sure this exists at module scope
+
 window.switchTab = async (tab) => {
-    if (isSwitchingTab) return;
-    isSwitchingTab = true;
-    console.log(`Switching to tab: ${tab}`);
+  if (isSwitchingTab) return;
+  isSwitchingTab = true;
+  console.log(`Switching to tab: ${tab}`);
 
-    // 1. Update nav button visual state
-    document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
-        const isActive = btn.dataset.tab === tab;
-        btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
-        btn.classList.toggle('active', isActive);
+  // 1. Update nav button visual state
+  document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
+    const isActive = btn.dataset.tab === tab;
+    btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    btn.classList.toggle('active', isActive);
 
-        btn.classList.remove(
-            'bg-emerald-500', 'border-emerald-400/50', 'text-black',
-            'bg-emerald-950/70', 'text-emerald-300', 'border-emerald-700/60',
-            'bg-sky-900/70', 'text-sky-300', 'border-sky-700',
-            'bg-amber-900/70', 'text-amber-300', 'border-amber-700',
-            'bg-zinc-900', 'text-zinc-200', 'border-zinc-700'
-        );
+    // Reset all color classes
+    btn.classList.remove(
+      'bg-emerald-500', 'border-emerald-400/50', 'text-black',
+      'bg-emerald-950/70', 'text-emerald-300', 'border-emerald-700/60',
+      'bg-sky-900/70', 'text-sky-300', 'border-sky-700',
+      'bg-amber-900/70', 'text-amber-300', 'border-amber-700',
+      'bg-zinc-900', 'text-zinc-200', 'border-zinc-700'
+    );
 
-        if (isActive) {
-            if (tab === 'square') {
-                btn.classList.add('bg-emerald-500', 'border-emerald-400/50', 'text-black');
-            } else if (tab === 'ledger') {
-                btn.classList.add('bg-emerald-950/70', 'text-emerald-300', 'border-emerald-700/60');
-            } else if (tab === 'arena') {
-                btn.classList.add('bg-sky-900/70', 'text-sky-300', 'border-sky-700');
-            } else if (tab === 'witness') {
-                btn.classList.add('bg-amber-900/70', 'text-amber-300', 'border-amber-700');
-            } else {
-                btn.classList.add('bg-zinc-900', 'text-zinc-200', 'border-zinc-700');
-            }
-        } else {
-            if (btn.dataset.tab === 'ledger') {
-                btn.classList.add('bg-emerald-950/70', 'text-emerald-300', 'border-emerald-700/60');
-            } else if (btn.dataset.tab === 'arena') {
-                btn.classList.add('bg-sky-900/70', 'text-sky-300', 'border-sky-700');
-            } else if (btn.dataset.tab === 'witness') {
-                btn.classList.add('bg-amber-900/70', 'text-amber-300', 'border-amber-700');
-            } else {
-                btn.classList.add('bg-zinc-900', 'text-zinc-200', 'border-zinc-700');
-            }
-        }
-    });
-
-    // 2. Hide all tab panels
-    const panels = ['public-square', 'evidence-ledger', 'live-arena', 'mycircle', 'witness'];
-    panels.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.classList.add('hidden');
-    });
-
-    // 3. Show the correct panel and load data
-    try {
-        if (tab === 'square' || tab === 'citizen') {
-            const panel = document.getElementById('public-square');
-            if (panel) panel.classList.remove('hidden');
-            const feedEl = document.getElementById('testimonies-feed') || document.getElementById('feed-container');
-            if (feedEl && typeof initFeed === 'function') {
-                initFeed(db, 'citizen-talk');
-            }
-        } else if (tab === 'ledger') {
-            const panel = document.getElementById('evidence-ledger');
-            if (panel) panel.classList.remove('hidden');
-            await loadEvidenceLedger();
-        } else if (tab === 'arena') {
-            const panel = document.getElementById('live-arena');
-            if (panel) panel.classList.remove('hidden');
-        } else if (tab === 'mycircle') {
-            const panel = document.getElementById('mycircle');
-            if (panel) panel.classList.remove('hidden');
-        } else if (tab === 'witness') {
-            const panel = document.getElementById('witness');
-            if (panel) panel.classList.remove('hidden');
-            if (typeof initFeed === 'function') {
-                initFeed(db, 'witness-voice');
-            }
-        }
-    } catch (e) {
-        console.error('Tab switch error:', e);
-        showToast('Failed to load tab', 'error');
-    } finally {
-        isSwitchingTab = false;
-        state.currentTab = tab;
+    if (isActive) {
+      // Active styles
+      if (tab === 'square' || tab === 'citizen') {
+        btn.classList.add('bg-emerald-500', 'border-emerald-400/50', 'text-black');
+      } else if (tab === 'ledger') {
+        btn.classList.add('bg-emerald-950/70', 'text-emerald-300', 'border-emerald-700/60');
+      } else if (tab === 'arena') {
+        btn.classList.add('bg-sky-900/70', 'text-sky-300', 'border-sky-700');
+      } else if (tab === 'witness') {
+        btn.classList.add('bg-amber-900/70', 'text-amber-300', 'border-amber-700');
+      } else {
+        btn.classList.add('bg-zinc-900', 'text-zinc-200', 'border-zinc-700');
+      }
+    } else {
+      // Inactive style (same for all)
+      btn.classList.add('bg-zinc-900', 'text-zinc-200', 'border-zinc-700');
     }
+  });
+
+  // 2. Hide all panels
+  const panels = ['public-square', 'evidence-ledger', 'live-arena', 'mycircle', 'witness'];
+  panels.forEach(id => {
+    document.getElementById(id)?.classList.add('hidden');
+  });
+
+  // 3. Show the correct panel + load data
+  try {
+    if (tab === 'square' || tab === 'citizen') {
+      document.getElementById('public-square')?.classList.remove('hidden');
+      if (typeof initFeed === 'function') {
+        initFeed(db, 'citizen-talk');
+      }
+    } else if (tab === 'ledger') {
+      document.getElementById('evidence-ledger')?.classList.remove('hidden');
+      await loadEvidenceLedger();
+    } else if (tab === 'arena') {
+      document.getElementById('live-arena')?.classList.remove('hidden');
+    } else if (tab === 'mycircle') {
+      document.getElementById('mycircle')?.classList.remove('hidden');
+    } else if (tab === 'witness') {
+      document.getElementById('witness')?.classList.remove('hidden');
+      if (typeof initFeed === 'function') {
+        initFeed(db, 'witness-voice');
+      }
+    }
+
+    // Keep global state in sync
+    if (typeof state !== 'undefined') {
+      state.currentTab = tab;
+    }
+  } catch (e) {
+    console.error('Tab switch error:', e);
+    showToast?.('Failed to load tab', 'error');
+  } finally {
+    isSwitchingTab = false;
+  }
 };
 
 window.refreshLedger = () => loadEvidenceLedger();
 
+
 // ====================== PAYMENT GATEWAYS ======================
+const PAYSTACK_PUBLIC_KEY = 'pk_live_5d13a6db326f02375127aae9d0fb03678ed1d923'; // TODO: move to env / Remote Config later
+
 window.initiatePayment = function (amount, email = null, metadata = {}) {
-    if (!requireAuth("Sign in to support VocalWitness")) return;
+  if (!requireAuth?.("Sign in to support VocalWitness")) return;
 
-    if (typeof PaystackPop === 'undefined') {
-        showToast("Payment gateway library not loaded. Please refresh.", "error");
-        return;
-    }
+  if (typeof PaystackPop === 'undefined') {
+    showToast?.("Payment gateway library not loaded. Please refresh.", "error");
+    return;
+  }
 
-    try {
-        const handler = PaystackPop.setup({
-            key: 'pk_live_5d13a6db326f02375127aae9d0fb03678ed1d923',
-            email: email || auth.currentUser?.email || '',
-            amount: amount * 100,
-            currency: "NGN",
-            metadata: {
-                source: "VocalWitness",
-                userId: auth.currentUser?.uid,
-                ...metadata
-            },
-            onSuccess: (transaction) => {
-                showToast(`✅ Payment successful! Ref: ${transaction.reference}`, "success");
-                window.closeSupportModal();
-            },
-            onCancel: () => showToast("Payment was cancelled", "info")
-        });
-        handler.openIframe();
-    } catch (err) {
-        console.error("Paystack startup error:", err);
-        showToast("Unable to open payment gateway", "error");
-    }
+  // Basic validation
+  const finalAmount = Number(amount);
+  if (!finalAmount || finalAmount < 100) {
+    showToast?.("Minimum support amount is ₦100", "error");
+    return;
+  }
+
+  try {
+    const handler = PaystackPop.setup({
+      key: PAYSTACK_PUBLIC_KEY,
+      email: email || auth?.currentUser?.email || 'guest@vocalwitness.com',
+      amount: Math.round(finalAmount * 100), // kobo
+      currency: "NGN",
+      metadata: {
+        source: "VocalWitness",
+        userId: auth?.currentUser?.uid || null,
+        ...metadata
+      },
+      onSuccess: (transaction) => {
+        console.log('[Paystack] Success:', transaction);
+        showToast?.(`✅ Payment successful! Ref: ${transaction.reference}`, "success");
+        window.closeSupportModal?.();
+        // Optional: record the donation in Firestore here
+      },
+      onCancel: () => {
+        showToast?.("Payment was cancelled", "info");
+      }
+    });
+
+    handler.openIframe();
+  } catch (err) {
+    console.error("Paystack startup error:", err);
+    showToast?.("Unable to open payment gateway", "error");
+  }
 };
 
 // Global click outside for dropdowns
