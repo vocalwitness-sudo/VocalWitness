@@ -59,8 +59,26 @@ function updateDataSaverUI(isOn) {
       el.className = statusClass;
     }
   });
-    
-    /**
+}
+
+/**
+ * Update all status texts + button styles
+ */
+function updateDataSaverUI(isOn) {
+  const statusText = isOn ? 'On' : 'Off';
+  const statusClass = isOn ? 'text-emerald-400 font-bold' : 'text-zinc-400';
+
+  // Update every status element that exists
+  ['data-saver-status', 'data-saver-status-mobile', 'footer-data-saver-status'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.textContent = statusText;
+      el.className = statusClass;
+    }
+  });
+}
+
+/**
  * Initialize Data Saver toggle listeners and initial UI state
  */
 function initDataSaver() {
@@ -80,9 +98,8 @@ function initDataSaver() {
       }
     });
   });
-}
 
-  // Desktop button
+  // Desktop button styling
   const desktopBtn = document.getElementById('data-saver-btn');
   if (desktopBtn) {
     desktopBtn.classList.toggle('border-emerald-500', isOn);
@@ -91,7 +108,7 @@ function initDataSaver() {
     desktopBtn.classList.toggle('bg-zinc-900', !isOn);
   }
 
-  // Mobile button
+  // Mobile button styling
   const mobileBtn = document.getElementById('data-saver-btn-mobile');
   if (mobileBtn) {
     mobileBtn.classList.toggle('border-emerald-500', isOn);
