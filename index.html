@@ -33,12 +33,14 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./style.css">
+  
   <script src="https://accounts.google.com/gsi/client" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" defer></script>
   <script src="https://js.paystack.co/v2/inline.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/snarkjs@0.7.0/build/snarkjs.min.js" defer></script>
+  <script type="module" src="./js/main.js?v=2.0"></script>
  <style>
   :root {
     --header-height-mobile: 102px;
@@ -1285,7 +1287,6 @@
 <script type="module" src="./js/zk-client.js"></script>
 <script type="module" src="./js/feed.js"></script>
 <script type="module" src="./js/witness-voice.js"></script>
-<script type="module" src="./js/main.js"></script>
 <script type="module">
   import { initLiveArena } from './js/live-arena.js';
   if (document.querySelector('[data-tab="arena"], #live-arena')) {
