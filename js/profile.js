@@ -1168,14 +1168,5 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
-<<<<<<< HEAD
 
-
-// Make sure it's exported for modals.js to hook into
-<<<<<<< HEAD
 window.populateEditProfileForm = populateEditProfileForm;
-=======
-window.populateEditProfileForm = populateEditProfileForm;
->>>>>>> c24386d (Refactor profile edit modal population and clean up module wiring)
-=======
->>>>>>> 72f7668 (Resolve merge conflict in profile.js and finalize modal wiring)
