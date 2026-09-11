@@ -44,22 +44,6 @@ function getDataSaverState() {
   return localStorage.getItem(DATA_SAVER_KEY) === 'true';
 }
 
-/**
- * Update all status texts + button styles
- */
-function updateDataSaverUI(isOn) {
-  const statusText = isOn ? 'On' : 'Off';
-  const statusClass = isOn ? 'text-emerald-400 font-bold' : 'text-zinc-400';
-
-  // Update every status element that exists
-  ['data-saver-status', 'data-saver-status-mobile', 'footer-data-saver-status'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.textContent = statusText;
-      el.className = statusClass;
-    }
-  });
-}
 
 /**
  * Update all status texts + button styles
