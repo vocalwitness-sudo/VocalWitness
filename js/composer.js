@@ -142,22 +142,6 @@ let activeImageFile = null;
 let activeVideoFile = null;
 let activeAudioFile = null;
 
-// Helper to reset all states when a new one is picked
-function clearAllMediaStates() {
-    activeImageFile = null;
-    activeVideoFile = null;
-    activeAudioFile = null;
-    
-    // Clear the respective file inputs so they don't hold ghost values
-    ['media-input', 'photoInput', 'videoInput', 'audioInput', 'media-file-input', 'mediaFileInput'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = '';
-    });
-    
-    clearMediaQuotaBadge();
-    clearMediaOriginClaimUI();
-    if (typeof resetMediaState === 'function') resetMediaState();
-}
 /**
  * Renders or reveals the mandatory Media Origin Claim dropdown
  */
@@ -299,7 +283,6 @@ function clearAiFeedback() {
         box.innerHTML = '';
     }
 }
-
 
 /**
  * Type-neutral preview renderer for images, videos, and audio clips
