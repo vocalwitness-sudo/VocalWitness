@@ -118,7 +118,7 @@
 
     <!-- ========== DESKTOP HEADER ========== -->
     <div class="hidden h-[68px] items-center justify-between gap-6 md:flex">
-
+      
       <!-- Logo + Brand -->
       <a href="/" class="group flex shrink-0 items-center gap-3.5" aria-label="VocalWitness Home">
         <div class="relative">
@@ -127,7 +127,7 @@
                class="relative h-10 w-10 rounded-2xl border border-emerald-400/40 bg-zinc-900 object-cover shadow-lg">
         </div>
         <div class="leading-tight">
-          <h1 class="text-[22px] font-bold tracking-tight text-white group-hover:text-emerald-300 transition" data-i18n="appTitle">
+          <h1 class="text-[22px] font-bold tracking-tight text-white transition group-hover:text-emerald-300" data-i18n="appTitle">
             VocalWitness
           </h1>
           <p class="text-[11px] font-medium tracking-wide text-emerald-400/80" data-i18n="appSubtitle">
@@ -137,10 +137,11 @@
       </a>
 
       <!-- Right side controls -->
-      <div class="flex shrink-0 items-center gap-2.5">
-
+      <div class="flex shrink-0 items-center gap-2">
+        
+        <!-- Language (quiet utility) -->
         <select id="languageSelect" aria-label="Language"
-                class="h-9 rounded-xl border border-zinc-700/80 bg-zinc-900/80 px-3 text-xs font-medium text-zinc-200 focus:border-emerald-500 focus:outline-none transition">
+                class="h-9 rounded-xl border border-zinc-700/80 bg-zinc-900/80 px-3 text-xs font-medium text-zinc-300 transition focus:border-emerald-500 focus:outline-none hover:border-zinc-600">
           <option value="en" selected>English</option>
           <option value="pcm">Naija Pidgin</option>
           <option value="ha">Hausa</option>
@@ -153,14 +154,16 @@
           <option value="ar">العربية</option>
         </select>
 
+        <!-- Support (secondary accent) -->
         <button id="openSupportModalBtn" type="button"
-                class="h-9 rounded-xl border border-emerald-500/50 bg-emerald-500/10 px-4 text-xs font-semibold text-emerald-400 transition hover:bg-emerald-500/20 hover:border-emerald-400"
+                class="h-9 rounded-xl border border-emerald-500/50 bg-emerald-500/10 px-4 text-xs font-semibold text-emerald-400 transition-all duration-200 hover:bg-emerald-500/20 hover:border-emerald-400 active:scale-[0.97]"
                 data-i18n="supportBtn">
           Support
         </button>
 
+        <!-- Primary CTA: Join -->
         <button id="openAuthModalBtn" type="button"
-                class="flex h-9 items-center gap-2 rounded-xl bg-white px-4 text-xs font-semibold text-zinc-900 shadow-sm transition hover:bg-zinc-100 active:scale-[0.97]"
+                class="flex h-9 items-center gap-2 rounded-xl bg-white px-4 text-xs font-semibold text-zinc-900 shadow-sm transition-all duration-200 hover:bg-zinc-100 active:scale-[0.97]"
                 data-action="open-auth-modal">
           <svg class="h-4 w-4 shrink-0 pointer-events-none" viewBox="0 0 24 24" aria-hidden="true">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -171,32 +174,38 @@
           <span class="pointer-events-none" data-i18n="joinBtn">Join</span>
         </button>
 
+        <!-- Profile (shown when logged in) -->
         <button id="userProfileBtn" type="button"
-                class="hidden h-9 items-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-900 px-3.5 text-xs font-semibold text-emerald-400"
+                class="hidden h-9 items-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-900 px-3.5 text-xs font-semibold text-emerald-400 transition-all duration-200 hover:border-emerald-500/50 hover:bg-zinc-800 active:scale-[0.97]"
                 aria-label="Open profile">
           <img id="user-avatar-desktop" src="" alt="" class="hidden h-4 w-4 rounded-full object-cover">
           <span id="default-avatar-icon-desktop" aria-hidden="true">👤</span>
           <span id="user-name-desktop" data-i18n="profileBtn">Profile</span>
         </button>
 
+        <!-- Divider -->
+        <div class="mx-1 h-5 w-px bg-zinc-800"></div>
+
+        <!-- Data Saver (lowest priority) -->
         <button id="data-saver-btn" type="button"
-                class="flex h-9 items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900/80 px-3 text-xs font-medium text-zinc-400 hover:text-white transition"
+                class="flex h-9 items-center gap-1.5 rounded-xl border border-zinc-800/80 bg-zinc-900/60 px-3 text-xs font-medium text-zinc-500 transition-all duration-200 hover:border-zinc-700 hover:text-zinc-300 active:scale-[0.97]"
                 aria-label="Toggle Data Saver">
           <span aria-hidden="true">⚡</span>
-          <span>Data Saver: <strong id="data-saver-status" class="text-zinc-500">Off</strong></span>
+          <span>Data: <strong id="data-saver-status" class="text-zinc-400">Off</strong></span>
         </button>
 
+        <!-- Bookmarks -->
         <button id="bookmarks-nav-btn" type="button" aria-label="Saved Items" data-action="open-bookmarks"
-                class="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/80 text-zinc-400 hover:border-emerald-500/40 hover:text-white transition">
+                class="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-800/80 bg-zinc-900/60 text-zinc-500 transition-all duration-200 hover:border-emerald-500/40 hover:text-white active:scale-[0.97]">
           <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
           </svg>
         </button>
 
-        <!-- Notification -->
+        <!-- Notifications -->
         <div class="relative" id="notification-container">
           <button id="notification-btn" type="button" aria-label="Notifications"
-                  class="relative flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/80 text-zinc-400 hover:border-emerald-500/40 hover:text-white transition">
+                  class="relative flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-800/80 bg-zinc-900/60 text-zinc-500 transition-all duration-200 hover:border-emerald-500/40 hover:text-white active:scale-[0.97]">
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
             </svg>
@@ -204,7 +213,7 @@
           </button>
 
           <div id="notification-dropdown"
-               class="absolute right-0 top-full z-50 mt-2 hidden max-h-96 w-80 overflow-y-auto rounded-2xl border border-zinc-700/80 bg-zinc-900/95 backdrop-blur-xl shadow-2xl"
+               class="absolute right-0 top-full z-50 mt-2 hidden max-h-96 w-80 overflow-y-auto rounded-2xl border border-zinc-700/80 bg-zinc-900/95 shadow-2xl backdrop-blur-xl"
                role="region" aria-label="Notifications">
             <div class="sticky top-0 flex items-center justify-between border-b border-zinc-800 bg-zinc-900/95 px-4 py-3">
               <h3 class="text-sm font-semibold text-white">Notifications</h3>
@@ -223,7 +232,7 @@
 
     <!-- ========== MOBILE HEADER ========== -->
     <div class="flex flex-col gap-2.5 py-3 md:hidden">
-
+      
       <!-- Top row -->
       <div class="flex items-center justify-between">
         <a href="/" class="flex shrink-0 items-center gap-2.5" aria-label="VocalWitness Home">
@@ -238,15 +247,18 @@
         </a>
 
         <div class="flex items-center gap-1.5">
+          <!-- Primary CTA -->
           <button id="openAuthModalBtnMobile" type="button"
-                  class="flex h-8 items-center gap-1.5 rounded-lg bg-white px-2.5 text-xs font-semibold text-zinc-900 shadow-sm transition active:scale-95"
+                  class="flex h-8 items-center gap-1.5 rounded-lg bg-white px-2.5 text-xs font-semibold text-zinc-900 shadow-sm transition-all duration-200 active:scale-95"
                   data-action="open-auth-modal">
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
                  class="h-3.5 w-3.5 pointer-events-none" alt="" width="14" height="14">
             <span class="pointer-events-none">Sign In</span>
           </button>
+
+          <!-- Profile (when logged in) -->
           <button id="userProfileBtnMobile" type="button"
-                  class="hidden h-8 w-8 items-center justify-center rounded-lg border border-zinc-700 bg-zinc-900 text-sm text-emerald-400"
+                  class="hidden h-8 w-8 items-center justify-center rounded-lg border border-zinc-700 bg-zinc-900 text-sm text-emerald-400 transition-all duration-200 active:scale-95"
                   aria-label="Open profile">👤</button>
         </div>
       </div>
@@ -255,7 +267,7 @@
       <div class="flex items-center justify-between gap-2 border-t border-zinc-800/60 pt-2">
         <div class="flex items-center gap-1.5">
           <select id="languageSelectMobile" aria-label="Language"
-                  class="h-8 rounded-lg border border-zinc-700 bg-zinc-900 px-2 text-[11px] font-medium text-zinc-200 focus:border-emerald-500 focus:outline-none">
+                  class="h-8 rounded-lg border border-zinc-700 bg-zinc-900 px-2 text-[11px] font-medium text-zinc-300 focus:border-emerald-500 focus:outline-none">
             <option value="en">EN</option>
             <option value="pcm">PCM</option>
             <option value="ha">HA</option>
@@ -269,22 +281,22 @@
           </select>
 
           <button id="openSupportModalBtnMobile" type="button"
-                  class="h-8 rounded-lg border border-emerald-500/50 bg-emerald-500/10 px-2.5 text-[11px] font-semibold text-emerald-400 transition hover:bg-emerald-500/20"
+                  class="h-8 rounded-lg border border-emerald-500/50 bg-emerald-500/10 px-2.5 text-[11px] font-semibold text-emerald-400 transition-all duration-200 hover:bg-emerald-500/20 active:scale-95"
                   data-i18n="supportBtn">
             Support
           </button>
 
           <button id="data-saver-btn-mobile" type="button"
-                  class="flex items-center gap-1 rounded-lg border border-zinc-800 bg-zinc-900 px-2 py-1 text-[10px] font-medium text-zinc-400"
+                  class="flex items-center gap-1 rounded-lg border border-zinc-800/80 bg-zinc-900/70 px-2 py-1 text-[10px] font-medium text-zinc-500 transition-all duration-200 active:scale-95"
                   aria-label="Toggle Data Saver" title="Data Saver">
             <span aria-hidden="true">⚡</span>
-            <span>Data: <strong id="data-saver-status-mobile" class="text-zinc-500">Off</strong></span>
+            <span>Data: <strong id="data-saver-status-mobile" class="text-zinc-400">Off</strong></span>
           </button>
         </div>
 
         <div class="flex items-center gap-1">
           <button id="bookmarks-nav-btn-mobile" type="button" aria-label="Saved" data-action="open-bookmarks"
-                  class="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-400">
+                  class="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-800/80 bg-zinc-900/70 text-zinc-500 transition-all duration-200 active:scale-95">
             <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
             </svg>
@@ -292,7 +304,7 @@
 
           <div class="relative" id="notification-container-mobile">
             <button id="notification-btn-mobile" type="button" aria-label="Notifications"
-                    class="relative flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-400"
+                    class="relative flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-800/80 bg-zinc-900/70 text-zinc-500 transition-all duration-200 active:scale-95"
                     data-action="open-notifications">
               <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
@@ -300,16 +312,13 @@
               <span id="notification-badge-mobile" class="absolute -right-0.5 -top-0.5 hidden min-w-[14px] rounded-full bg-emerald-500 px-1 text-center text-[8px] font-bold text-black">0</span>
             </button>
           </div>
-
-          <a href="/privacy" class="flex h-8 items-center px-2 text-[11px] font-medium text-emerald-400/80 hover:text-emerald-300 transition">
-            Privacy
-          </a>
         </div>
       </div>
     </div>
-
   </div>
-</header> 
+</header>
+
+  
   <!-- Main Navigation Tabs -->
 <!-- Main Navigation -->
 <div class="mb-6 sm:mb-8 flex items-center gap-2">
