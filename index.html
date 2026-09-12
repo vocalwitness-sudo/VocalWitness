@@ -310,515 +310,210 @@
 
   </div>
 </header> 
-  
-<!-- ====================== FEED FILTER PILLS ====================== -->
-<div class="sticky top-[68px] z-40 border-b border-zinc-800/60 bg-zinc-950/90 backdrop-blur-xl">
-  <div class="mx-auto max-w-6xl px-4 py-3 sm:px-6">
-    <div class="flex items-center gap-2 overflow-x-auto no-scrollbar">
-      <button type="button" data-filter="all"
-              class="feed-pill active shrink-0 rounded-full bg-emerald-500 px-4 py-1.5 text-xs font-bold text-black shadow-sm transition">
-        All Evidence
+  <!-- Main Navigation Tabs -->
+<!-- Main Navigation -->
+<div class="mb-6 sm:mb-8 flex items-center gap-2">
+  <div class="no-scrollbar flex-1 overflow-x-auto">
+    <nav id="main-nav" class="flex items-center gap-1.5 sm:gap-2" role="tablist">
+      
+      <!-- Primary -->
+      <button type="button" data-tab="square" role="tab" aria-selected="true"
+              class="nav-tab active group flex h-11 sm:h-12 min-w-[108px] sm:min-w-[120px] shrink-0 flex-col items-center justify-center rounded-xl sm:rounded-2xl bg-emerald-500 px-3 sm:px-4 text-xs font-semibold text-black shadow-md shadow-emerald-500/25 transition-all duration-200 hover:bg-emerald-400 active:scale-[0.98]">
+        <span data-i18n="publicSquareTab">Public Square</span>
+        <span class="hidden text-[10px] font-normal opacity-80 sm:block">Share what you see</span>
       </button>
-      <button type="button" data-filter="witness-voice"
-              class="feed-pill shrink-0 rounded-full border border-zinc-700 bg-zinc-900 px-4 py-1.5 text-xs font-medium text-zinc-300 transition hover:border-emerald-500/50 hover:text-white">
-        📢 Witness Voice
+
+      <!-- Core Trust -->
+      <button type="button" data-tab="ledger" role="tab"
+              class="nav-tab group flex h-11 sm:h-12 min-w-[108px] sm:min-w-[120px] shrink-0 flex-col items-center justify-center rounded-xl sm:rounded-2xl border border-zinc-700 bg-zinc-900 px-3 sm:px-4 text-xs font-medium text-zinc-300 transition-all duration-200 hover:border-zinc-500 hover:bg-zinc-800 hover:text-white active:scale-[0.98]">
+        <span data-i18n="evidenceLedgerTab">Public Record</span>
+        <span class="hidden text-[10px] text-zinc-500 group-hover:text-zinc-400 sm:block">Protected reports</span>
       </button>
-      <button type="button" data-filter="citizen-talk"
-              class="feed-pill shrink-0 rounded-full border border-zinc-700 bg-zinc-900 px-4 py-1.5 text-xs font-medium text-zinc-300 transition hover:border-emerald-500/50 hover:text-white">
-        💬 Citizen Talk
+
+      <!-- Real-time -->
+      <button type="button" data-tab="arena" role="tab"
+              class="nav-tab group flex h-11 sm:h-12 min-w-[100px] sm:min-w-[110px] shrink-0 flex-col items-center justify-center rounded-xl sm:rounded-2xl border border-sky-700/60 bg-sky-950/40 px-3 sm:px-4 text-xs font-medium text-sky-300 transition-all duration-200 hover:border-sky-500 hover:bg-sky-950/70 hover:text-sky-200 active:scale-[0.98]">
+        <span data-i18n="liveArenaTab">Live Arena</span>
+        <span class="hidden text-[10px] text-sky-400/70 group-hover:text-sky-300/80 sm:block">Live reporting</span>
       </button>
-      <button type="button" data-filter="zk-verified"
-              class="feed-pill shrink-0 flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-4 py-1.5 text-xs font-semibold text-emerald-400 transition hover:bg-emerald-500/20">
-        <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-        </svg>
-        ZK Verified Only
+
+      <!-- Social -->
+      <button type="button" data-tab="mycircle" role="tab"
+              class="nav-tab group flex h-11 sm:h-12 min-w-[100px] sm:min-w-[110px] shrink-0 flex-col items-center justify-center rounded-xl sm:rounded-2xl border border-zinc-700 bg-zinc-900 px-3 sm:px-4 text-xs font-medium text-zinc-300 transition-all duration-200 hover:border-zinc-500 hover:bg-zinc-800 hover:text-white active:scale-[0.98]">
+        <span data-i18n="myCircleTab">My Circle</span>
+        <span class="hidden text-[10px] text-zinc-500 group-hover:text-zinc-400 sm:block">People you trust</span>
       </button>
-    </div>
+
+      <!-- Specialized -->
+      <button type="button" data-tab="witness" role="tab"
+              class="nav-tab group flex h-11 sm:h-12 min-w-[108px] sm:min-w-[120px] shrink-0 flex-col items-center justify-center rounded-xl sm:rounded-2xl border border-amber-700/50 bg-amber-950/30 px-3 sm:px-4 text-xs font-medium text-amber-300 transition-all duration-200 hover:border-amber-500 hover:bg-amber-950/60 hover:text-amber-200 active:scale-[0.98]">
+        <span data-i18n="verifiedWitnessesTab">Trusted Voices</span>
+        <span class="hidden text-[10px] text-amber-400/70 group-hover:text-amber-300/80 sm:block">Verified reporters</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- More -->
+  <div class="relative shrink-0">
+    <button id="more-btn" type="button"
+            class="flex h-11 sm:h-12 items-center gap-1.5 rounded-xl sm:rounded-2xl border border-zinc-700 bg-zinc-900 px-3 sm:px-4 text-xs font-medium text-zinc-300 transition-all duration-200 hover:border-emerald-500/50 hover:bg-zinc-800 hover:text-white active:scale-[0.98]">
+      <span data-i18n="moreOptionsBtn">More</span>
+      <svg class="h-3.5 w-3.5 text-zinc-500 transition group-hover:text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+      </svg>
+    </button>
+    <!-- menu stays the same -->
   </div>
 </div>
 
-<!-- ====================== MAIN CONTAINER ====================== -->
-<main id="main-content" class="mx-auto max-w-6xl px-4 pb-16 pt-6 sm:px-6">
+  <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar pb-1">
+  
+  <!-- Default -->
+  <button type="button" data-filter="all"
+          class="feed-pill active shrink-0 rounded-full bg-emerald-500 px-3.5 sm:px-4 py-1.5 text-xs font-bold text-black shadow-sm transition-all duration-200 hover:bg-emerald-400 active:scale-95">
+    All Evidence
+  </button>
 
-  <!-- Breaking + Banner + Search -->
-  <div class="mb-6 space-y-4">
-    <!-- Breaking Ticker -->
-    <div class="ticker-wrap relative overflow-hidden rounded-2xl border border-emerald-500/20 bg-zinc-900/80">
-      <div class="absolute bottom-0 left-0 top-0 z-10 flex items-center border-r border-emerald-500/20 bg-zinc-900 px-4">
-        <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">⚡ Breaking</span>
-      </div>
-      <div class="overflow-hidden whitespace-nowrap py-3 pl-28">
-        <div id="ticker-content" class="ticker-track inline-block text-sm text-zinc-300" aria-live="polite">
-          <span class="ticker-item">Loading latest headlines...</span>
-        </div>
-      </div>
-    </div>
+  <!-- Broad -->
+  <button type="button" data-filter="citizen-talk"
+          class="feed-pill shrink-0 rounded-full border border-zinc-700 bg-zinc-900 px-3.5 sm:px-4 py-1.5 text-xs font-medium text-zinc-300 transition-all duration-200 hover:border-emerald-500/60 hover:bg-zinc-800 hover:text-white active:scale-95">
+    💬 Citizen Talk
+  </button>
 
-    <!-- Focus Banner -->
-    <div id="focus-banner" class="flex items-center gap-3 rounded-xl border border-emerald-500/20 bg-emerald-950/20 px-4 py-3 text-sm">
-      <span class="shrink-0 text-emerald-400">🎯</span>
-      <p class="min-w-0 flex-1 leading-snug text-zinc-300">
-        <span class="font-medium text-emerald-300">Social citizen journalism.</span>
-        <span class="text-zinc-400"> Anyone can report · only sealed records stay public.</span>
-      </p>
-      <button type="button" id="dismiss-focus-banner" class="shrink-0 rounded-lg p-1.5 text-zinc-500 transition hover:bg-zinc-800 hover:text-white" aria-label="Dismiss">✕</button>
-    </div>
+  <!-- Higher signal -->
+  <button type="button" data-filter="witness-voice"
+          class="feed-pill shrink-0 rounded-full border border-zinc-700 bg-zinc-900 px-3.5 sm:px-4 py-1.5 text-xs font-medium text-zinc-300 transition-all duration-200 hover:border-emerald-500/60 hover:bg-zinc-800 hover:text-white active:scale-95">
+    📢 Witness Voice
+  </button>
 
-    <!-- Search -->
-    <div class="relative">
-      <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-zinc-500">
-        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-        </svg>
-      </div>
-      <input type="search" id="global-search" 
-             placeholder="Search reports, news, hashtags, or people..."
-             class="w-full rounded-2xl border border-zinc-700 bg-zinc-900/80 py-3.5 pl-11 pr-4 text-sm text-white placeholder-zinc-500 transition focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/20"
-             autocomplete="off">
-    </div>
-  </div>
+  <!-- Highest trust -->
+  <button type="button" data-filter="zk-verified"
+          class="feed-pill shrink-0 flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-3.5 sm:px-4 py-1.5 text-xs font-semibold text-emerald-400 transition-all duration-200 hover:border-emerald-500/70 hover:bg-emerald-500/20 active:scale-95">
+    <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
+      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+    </svg>
+    ZK Verified
+  </button>
+</div>
 
-  <!-- Main Navigation Tabs -->
-  <div class="mb-8 flex items-center gap-2">
-    <div class="no-scrollbar flex-1 overflow-x-auto">
-      <nav id="main-nav" class="flex items-center gap-2" role="tablist">
-        <button type="button" data-tab="square" role="tab" aria-selected="true"
-                class="nav-tab active flex h-12 min-w-[120px] shrink-0 flex-col items-center justify-center rounded-2xl bg-emerald-500 px-4 text-xs font-semibold text-black shadow-lg shadow-emerald-500/20 transition sm:text-sm">
-          <span data-i18n="publicSquareTab">Public Square</span>
-          <span class="hidden text-[10px] font-normal opacity-80 sm:block">Share what you see</span>
-        </button>
-        <button type="button" data-tab="ledger" role="tab"
-                class="nav-tab flex h-12 min-w-[120px] shrink-0 flex-col items-center justify-center rounded-2xl border border-zinc-700 bg-zinc-900 px-4 text-xs font-medium text-zinc-300 transition hover:border-zinc-500 sm:text-sm">
-          <span data-i18n="evidenceLedgerTab">Public Record</span>
-          <span class="hidden text-[10px] text-zinc-500 sm:block">Protected reports</span>
-        </button>
-        <button type="button" data-tab="arena" role="tab"
-                class="nav-tab flex h-12 min-w-[110px] shrink-0 flex-col items-center justify-center rounded-2xl border border-sky-700/60 bg-sky-950/50 px-4 text-xs font-medium text-sky-300 transition hover:border-sky-500 sm:text-sm">
-          <span data-i18n="liveArenaTab">Live Arena</span>
-          <span class="hidden text-[10px] text-sky-400/70 sm:block">Live reporting</span>
-        </button>
-        <button type="button" data-tab="mycircle" role="tab"
-                class="nav-tab flex h-12 min-w-[110px] shrink-0 flex-col items-center justify-center rounded-2xl border border-zinc-700 bg-zinc-900 px-4 text-xs font-medium text-zinc-300 transition hover:border-zinc-500 sm:text-sm">
-          <span data-i18n="myCircleTab">My Circle</span>
-          <span class="hidden text-[10px] text-zinc-500 sm:block">People you trust</span>
-        </button>
-        <button type="button" data-tab="witness" role="tab"
-                class="nav-tab flex h-12 min-w-[120px] shrink-0 flex-col items-center justify-center rounded-2xl border border-amber-700/50 bg-amber-950/40 px-4 text-xs font-medium text-amber-300 transition hover:border-amber-500 sm:text-sm">
-          <span data-i18n="verifiedWitnessesTab">Trusted Voices</span>
-          <span class="hidden text-[10px] text-amber-400/70 sm:block">Verified reporters</span>
-        </button>
-      </nav>
-    </div>
+  <div class="grid grid-cols-1 gap-2.5 sm:grid-cols-3 sm:gap-3">
+  
+  <button id="btn-photo" type="button"
+          class="flex items-center justify-center gap-2 rounded-xl sm:rounded-2xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 font-medium text-emerald-400 transition-all duration-200 hover:border-emerald-500 hover:bg-zinc-800 hover:text-emerald-300 active:scale-[0.98]">
+    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+    </svg>
+    Add Photo
+  </button>
 
-    <!-- More menu -->
-    <div class="relative shrink-0">
-      <button id="more-btn" type="button"
-              class="flex h-12 items-center gap-1.5 rounded-2xl border border-zinc-700 bg-zinc-900 px-4 text-xs font-medium text-zinc-300 transition hover:border-emerald-500/40 sm:text-sm">
-        <span data-i18n="moreOptionsBtn">More</span>
-        <svg class="h-3.5 w-3.5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
-        </svg>
-      </button>
-      <div id="more-menu" class="absolute right-0 top-full z-50 mt-2 hidden w-52 rounded-2xl border border-zinc-700 bg-zinc-900/95 py-1.5 shadow-2xl backdrop-blur-xl">
-        <a href="/my-testimonies" class="block rounded-lg px-4 py-2.5 text-sm text-zinc-200 hover:bg-zinc-800">My Reports</a>
-        <a href="/groups" class="block rounded-lg px-4 py-2.5 text-sm text-zinc-200 hover:bg-zinc-800">Groups</a>
-        <a href="/witness-voice" class="block rounded-lg px-4 py-2.5 text-sm text-zinc-200 hover:bg-zinc-800">Witness Voice</a>
-        <div class="my-1 border-t border-zinc-800"></div>
-        <a href="/about" class="block rounded-lg px-4 py-2.5 text-sm text-zinc-200 hover:bg-zinc-800">About</a>
-        <a href="/privacy" class="block rounded-lg px-4 py-2.5 text-sm text-zinc-200 hover:bg-zinc-800">Privacy</a>
-        <a href="/terms" class="block rounded-lg px-4 py-2.5 text-sm text-zinc-200 hover:bg-zinc-800">Terms</a>
-        <a href="/safety" class="block rounded-lg px-4 py-2.5 text-sm text-zinc-200 hover:bg-zinc-800">Safety</a>
-      </div>
-    </div>
-  </div>
+  <button id="btn-video" type="button"
+          class="flex items-center justify-center gap-2 rounded-xl sm:rounded-2xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 font-medium text-sky-400 transition-all duration-200 hover:border-sky-500 hover:bg-zinc-800 hover:text-sky-300 active:scale-[0.98]">
+    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+    </svg>
+    Add Video
+  </button>
 
-  <!-- ========== PUBLIC SQUARE ========== -->
-  <section id="public-square" data-view="citizenTalkView" role="tabpanel">
-    <div class="glass mb-10 rounded-3xl border border-zinc-800/80 p-6 shadow-xl sm:p-8">
-      
-      <input type="file" id="photoInput" accept="image/jpeg,image/png,image/webp" class="hidden">
-      <input type="file" id="videoInput" accept="video/mp4,video/webm,video/quicktime" class="hidden">
-      <input type="file" id="audioInput" accept="audio/webm,audio/mp3,audio/mpeg,audio/wav,audio/ogg" class="hidden">
-
-      <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h2 class="text-xl font-bold text-white" data-i18n="shareTestimonyTitle">Share what you saw</h2>
-        <select id="targetFeedSelect" class="rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-emerald-400 focus:border-emerald-500 focus:outline-none">
-          <option value="citizen-talk">🗣️ Citizen Talk</option>
-          <option value="witness-voice">🛡️ Witness Voice</option>
-        </select>
-      </div>
-
-      <input type="text" id="testimonyTitle" maxlength="120" 
-             placeholder="Add a short title (optional)"
-             class="mb-4 w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-5 py-3.5 text-base text-white placeholder-zinc-500 focus:border-emerald-500 focus:outline-none transition">
-
-      <textarea id="mainInput" rows="5" maxlength="2000"
-                placeholder="What did you see or experience? Share the facts..."
-                class="w-full resize-none rounded-2xl border border-zinc-700 bg-zinc-900 p-5 text-base text-white placeholder-zinc-500 focus:border-emerald-500 focus:outline-none transition"></textarea>
-      <div class="mb-5 mt-1.5 flex justify-end">
-        <span id="char-count" class="text-xs text-zinc-500">0 / 2000</span>
-      </div>
-
-      <!-- Media Buttons -->
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <button id="btn-photo" type="button"
-                class="flex items-center justify-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 font-medium text-emerald-400 transition hover:border-emerald-500 hover:bg-zinc-800">
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-          </svg>
-          Add Photo
-        </button>
-        <button id="btn-video" type="button"
-                class="flex items-center justify-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 font-medium text-sky-400 transition hover:border-sky-500 hover:bg-zinc-800">
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-          </svg>
-          Add Video
-        </button>
-        <button id="btn-voice" type="button"
-                class="flex items-center justify-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 font-medium text-amber-400 transition hover:border-amber-500 hover:bg-zinc-800">
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z"/>
-          </svg>
-          Record Voice
-        </button>
-      </div>
-
-      <!-- Preview -->
-      <div id="preview-area" class="mt-6 flex min-h-[100px] flex-wrap items-center justify-center gap-4 rounded-2xl border border-dashed border-zinc-700 bg-zinc-900/40 p-5 text-sm text-zinc-500">
-        <div id="preview-empty" class="text-center">
-          <p>Preview will appear here...</p>
-          <p class="mt-1 text-xs text-zinc-600">Photos, videos, or voice notes show after you add them</p>
-        </div>
-      </div>
-
-      <!-- Voice Recorder -->
-      <div id="voice-recorder-bar" class="mt-4 hidden rounded-2xl border border-emerald-500/30 bg-zinc-900/60 p-4">
-        <div class="flex flex-wrap items-center gap-3">
-          <div class="flex min-w-[70px] items-center gap-2">
-            <span id="rec-indicator" class="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500"></span>
-            <span id="rec-timer" class="font-mono text-sm text-emerald-400">00:00</span>
-          </div>
-          <button id="verify-voice-btn" type="button" class="rounded-xl bg-blue-600/80 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-600">🛡️ Verify</button>
-          <canvas id="rec-waveform" width="180" height="36" class="max-w-[200px] flex-1 rounded bg-zinc-950"></canvas>
-          <div class="ml-auto flex items-center gap-2">
-            <button id="rec-pause-btn" type="button" class="rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700">⏸ Pause</button>
-            <button id="rec-stop-btn" type="button" class="rounded-xl bg-red-600/80 px-3 py-1.5 text-xs text-white hover:bg-red-600">⏹ Stop</button>
-            <button id="rec-replay-btn" type="button" class="hidden rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700">↻ Replay</button>
-          </div>
-        </div>
-        <audio id="rec-replay-audio" class="hidden"></audio>
-      </div>
-
-      <button id="postButton" type="button"
-              class="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 py-4 text-base font-bold text-black shadow-lg shadow-emerald-500/25 transition hover:bg-emerald-400 active:scale-[0.98]">
-        <span data-i18n="postButton">Publish Report</span>
-      </button>
-    </div>
-
-    <!-- Upload Progress -->
-    <div id="upload-progress-container" class="mb-6 hidden">
-      <div class="mb-1 flex justify-between text-xs text-zinc-400">
-        <span id="upload-status-text">Uploading media...</span>
-        <span id="upload-progress-pct">0%</span>
-      </div>
-      <div class="h-2 w-full overflow-hidden rounded-full bg-zinc-800">
-        <div id="upload-progress-bar" class="h-full bg-emerald-500 transition-all duration-300" style="width: 0%"></div>
-      </div>
-    </div>
-
-    <!-- Recent Reports -->
-    <div id="feed-container" class="space-y-6">
-      <div class="flex items-center justify-between">
-        <h3 id="feed-title" class="text-lg font-bold text-white" data-i18n="recentTestimoniesTitle">📜 Recent Reports</h3>
-        <div class="flex items-center gap-2 text-xs text-zinc-400">
-          <span>Sort:</span>
-          <select id="feedSortSelect" class="rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 py-1.5 text-zinc-300 focus:border-emerald-500 focus:outline-none">
-            <option value="latest">Latest</option>
-            <option value="verified">Verified First</option>
-            <option value="trending">Trending</option>
-          </select>
-        </div>
-      </div>
-      <div id="testimonies-feed" class="space-y-4">
-        <!-- Loading skeleton -->
-        <div class="animate-pulse space-y-4 rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6">
-          <div class="flex items-center gap-3">
-            <div class="h-10 w-10 rounded-full bg-zinc-800"></div>
-            <div class="flex-1 space-y-2">
-              <div class="h-3 w-1/4 rounded bg-zinc-800"></div>
-              <div class="h-2 w-1/6 rounded bg-zinc-800/60"></div>
-            </div>
-          </div>
-          <div class="h-4 w-3/4 rounded bg-zinc-800"></div>
-          <div class="h-16 rounded-xl bg-zinc-800/50"></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-
-<!-- ========== 2. PUBLIC RECORD ========== -->
-<section id="evidence-ledger" class="hidden space-y-6" role="tabpanel" aria-label="Public Record">
-  <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-    <div>
-      <h2 class="text-2xl font-bold text-emerald-400">Public Record</h2>
-      <p class="mt-1 text-sm text-zinc-400">Protected • Timestamped • Cannot be changed</p>
-    </div>
-    <div class="flex flex-wrap items-center gap-3">
-      <span id="ledger-chain-status" class="rounded-full border border-zinc-700 bg-zinc-900 px-3.5 py-1.5 text-xs font-medium text-zinc-400">
-        Chain: —
-      </span>
-      <button id="refreshLedgerBtn" type="button"
-              class="flex h-10 items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 px-4 text-sm font-medium text-zinc-300 transition hover:border-emerald-500/50 hover:bg-zinc-800">
-        🔄 Refresh
-      </button>
-    </div>
-  </div>
-
-  <div class="glass flex items-start gap-4 rounded-2xl border border-emerald-500/25 p-5">
-    <div class="text-2xl" aria-hidden="true">🛡️</div>
-    <div>
-      <p class="font-medium text-emerald-400">Your reports stay safe</p>
-      <p class="mt-1 text-sm text-zinc-400 leading-relaxed">
-        Every report is automatically sealed and linked. Once published, the original cannot be edited or deleted.
-      </p>
-    </div>
-  </div>
-
-  <div id="ledger-list" class="space-y-4">
-    <!-- content loads dynamically -->
-  </div>
-</section>
-
-<!-- ========== 3. LIVE ARENA ========== -->
-<section id="live-arena" class="hidden" role="tabpanel" aria-label="Live Arena">
-  <div class="mx-auto max-w-lg space-y-8 text-center">
-    <div>
-      <h2 class="text-3xl font-bold text-sky-400">Live Arena</h2>
-      <p class="mt-2 text-sm text-zinc-400">Real-time community reporting</p>
-    </div>
-
-    <div class="glass rounded-3xl border border-sky-500/20 p-7">
-      <div class="mb-3 flex justify-between text-sm">
-        <span class="text-zinc-300">Verified participants</span>
-        <span class="font-mono text-sky-400">
-          <span id="verifiedCount">0</span> / 500
-        </span>
-      </div>
-      <div class="h-3 overflow-hidden rounded-full bg-zinc-800">
-        <div id="verifiedProgress" class="h-full bg-gradient-to-r from-sky-500 to-cyan-400 transition-all duration-700" style="width: 0%"></div>
-      </div>
-      <p id="progressText" class="mt-4 text-xs text-zinc-400">Loading progress…</p>
-    </div>
-
-    <button id="notifyArenaBtn" type="button"
-            class="w-full rounded-2xl bg-gradient-to-r from-rose-500 to-pink-500 px-8 py-4 font-bold text-white shadow-lg shadow-rose-500/25 transition hover:from-rose-400 hover:to-pink-400 active:scale-[0.98] sm:w-auto">
-      🔔 Notify me when Arena opens
-    </button>
-  </div>
-</section>
-
-<!-- ========== 4. MY CIRCLE ========== -->
-<section id="mycircle" class="hidden space-y-6" role="tabpanel" aria-label="My Circle">
-  <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-    <div>
-      <h2 class="text-2xl font-bold text-white">My Circle</h2>
-      <p class="mt-1 text-sm text-zinc-400">People you follow and trust</p>
-    </div>
-    <span id="circle-tier-badge" class="inline-flex items-center rounded-full border border-zinc-700 bg-zinc-800 px-3.5 py-1.5 text-xs font-semibold text-zinc-300">
-      Standard
-    </span>
-  </div>
-
-  <div id="circle-upgrade-prompt" class="glass space-y-4 rounded-2xl border border-zinc-700/70 p-6">
-    <p class="text-sm text-zinc-300">Verify your account to unlock stronger circle features.</p>
-    <div class="flex flex-wrap gap-3">
-      <button type="button" id="startPhoneVerificationBtn"
-              class="rounded-xl border border-emerald-500/50 bg-emerald-600/15 px-4 py-2.5 text-sm font-medium text-emerald-400 transition hover:bg-emerald-600/25">
-        📱 Phone → Citizen Circle
-      </button>
-      <button type="button" id="startZKVerificationBtn"
-              class="rounded-xl border border-amber-500/50 bg-amber-600/15 px-4 py-2.5 text-sm font-medium text-amber-400 transition hover:bg-amber-600/25">
-        🛡️ Higher Trust → Witness Circle
-      </button>
-    </div>
-  </div>
-
-  <div class="flex gap-1 border-b border-zinc-800" role="tablist">
-    <button type="button" data-circle-tab="following"
-            class="border-b-2 border-emerald-500 px-5 py-2.5 text-sm font-medium text-emerald-400">
-      Following
-    </button>
-    <button type="button" data-circle-tab="followers"
-            class="px-5 py-2.5 text-sm font-medium text-zinc-400 transition hover:text-white">
-      Followers
-    </button>
-    <button type="button" data-circle-tab="trusted"
-            class="px-5 py-2.5 text-sm font-medium text-zinc-400 transition hover:text-white">
-      Trusted
-    </button>
-  </div>
-
-  <div id="circle-list" class="space-y-3">
-    <div class="py-16 text-center text-sm text-zinc-500">
-      Your circle is empty. Follow voices you trust.
-    </div>
-  </div>
-</section>
-
-<!-- ========== 5. TRUSTED VOICES ========== -->
-<section id="witness" class="hidden space-y-6" role="tabpanel" aria-label="Trusted Voices">
-  <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-    <div>
-      <h2 class="text-2xl font-bold text-amber-400">Trusted Voices</h2>
-      <p class="mt-1 text-sm text-zinc-400">Verified reporters and higher-trust accounts</p>
-    </div>
-    <input type="search" id="witness-search"
-           placeholder="Search trusted voices…"
-           class="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:border-amber-500 focus:outline-none sm:w-72">
-  </div>
-
-  <div class="flex flex-wrap gap-2" id="witness-filters">
-    <button type="button" data-filter="all"
-            class="rounded-full border border-amber-500/40 bg-amber-500/15 px-4 py-1.5 text-xs font-medium text-amber-400">
-      All
-    </button>
-    <button type="button" data-filter="zk"
-            class="rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs font-medium text-zinc-300 transition hover:border-amber-500/50">
-      Higher Trust
-    </button>
-    <button type="button" data-filter="phone"
-            class="rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs font-medium text-zinc-300 transition hover:border-amber-500/50">
-      Phone verified
-    </button>
-  </div>
-
-  <div id="verified-witnesses-grid" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-    <!-- content loads dynamically -->
-  </div>
-</section>
-
-</main>
-<!-- ====================== APPLICATION FOOTER ====================== -->
-<footer class="mt-8 border-t border-zinc-800/80 bg-zinc-950 pb-12 pt-12 text-zinc-400">
-  <div class="mx-auto max-w-6xl px-6">
-    <div class="grid grid-cols-1 gap-10 border-b border-zinc-800/60 pb-12 md:grid-cols-4">
-      <div class="space-y-4 md:col-span-1">
-        <div class="flex items-center gap-2">
-          <span class="text-xl font-bold tracking-wider text-white">Vocal<span class="text-emerald-500">Witness</span></span>
-        </div>
-        <p class="text-xs leading-relaxed text-zinc-400" data-i18n="footerMission">
-          A decentralized public square empowering citizens with immutable testimony, voice verification, and transparent reporting.
-        </p>
-        <button type="button" id="footerSupportBtn"
-                class="mt-2 inline-flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-600/10 px-4 py-2 text-xs font-semibold text-emerald-400 transition-all hover:bg-emerald-600/20">
-          <span aria-hidden="true">♥</span>
-          <span data-i18n="sustainSquareBtn">Sustain the Platform</span>
-        </button>
-      </div>
-      <div class="space-y-3">
-        <h3 class="text-xs font-bold uppercase tracking-wider text-white" data-i18n="footerPlatformHeader">Platform</h3>
-        <ul class="space-y-2 text-xs">
-          <li><a href="/" class="transition hover:text-emerald-400" data-i18n="publicSquareFeed">Public Square</a></li>
-          <li><a href="/my-testimonies" class="transition hover:text-emerald-400" data-i18n="myTestimoniesMenu">My Testimonies</a></li>
-          <li><a href="/groups" class="transition hover:text-emerald-400" data-i18n="groupsMenu">Groups</a></li>
-          <li><a href="/witness-voice" class="transition hover:text-emerald-400" data-i18n="witnessVoiceMenu">Witness Voice</a></li>
-        </ul>
-      </div>
-      <div class="space-y-3">
-        <h3 class="text-xs font-bold uppercase tracking-wider text-white" data-i18n="footerGovernanceHeader">Governance &amp; Legal</h3>
-        <ul class="footer-links space-y-2 text-xs">
-          <li><a href="/about" class="transition hover:text-emerald-400" data-i18n="about">About Us</a></li>
-          <li><a href="/privacy" class="transition hover:text-emerald-400" data-i18n="privacy">Privacy Policy</a></li>
-          <li><a href="/terms" class="transition hover:text-emerald-400" data-i18n="terms">Terms of Service</a></li>
-          <li><a href="/safety" class="transition hover:text-emerald-400" data-i18n="safety">Safety Guidelines</a></li>
-        </ul>
-      </div>
-      <div class="space-y-3">
-        <h3 class="text-xs font-bold uppercase tracking-wider text-white" data-i18n="footerSystemHeader">System Status</h3>
-        <div class="space-y-2 rounded-2xl border border-zinc-800 bg-zinc-900 p-3">
-          <div class="flex items-center justify-between text-xs">
-            <span class="text-zinc-500">Storage Rail:</span>
-            <span class="font-mono text-[11px] text-emerald-400">Firestore Active</span>
-          </div>
-          <div class="flex items-center justify-between text-xs">
-            <span class="text-zinc-500">Verification:</span>
-            <span class="font-mono text-[11px] text-emerald-400">TRC-20 / Direct</span>
-          </div>
-          <div class="flex items-center justify-between text-xs">
-            <span class="text-zinc-500">Data Saver:</span>
-            <button type="button" id="footer-data-saver-btn" class="text-xs font-medium text-amber-400 hover:underline" aria-label="Toggle Data Saver">
-              <span id="footer-data-saver-status">Off</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="flex flex-col items-center justify-between gap-4 pt-8 text-xs text-zinc-500 sm:flex-row">
-      <p data-i18n="footerCopyright">© 2026 VocalWitness • Built for Truth • Evidence • Public Square</p>
-      <p class="rounded-full border border-zinc-800 bg-zinc-900/50 px-3 py-1 font-mono text-[11px] text-zinc-600">
-        Non-custodial infrastructure • Zero tracking
-      </p>
-    </div>
-  </div>
-</footer>
+  <button id="btn-voice" type="button"
+          class="flex items-center justify-center gap-2 rounded-xl sm:rounded-2xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 font-medium text-amber-400 transition-all duration-200 hover:border-amber-500 hover:bg-zinc-800 hover:text-amber-300 active:scale-[0.98]">
+    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z"/>
+    </svg>
+    Record Voice
+  </button>
+</div>
 
 <!-- ====================== SUPPORT MODAL ====================== -->
 <div id="supportModal"
      class="fixed inset-0 z-[10000] hidden items-center justify-center bg-black/80 p-4 backdrop-blur-md"
      role="dialog" aria-modal="true" aria-labelledby="supportModalTitle" aria-hidden="true">
-  <div class="glass relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl border border-emerald-500/30 p-6 text-white shadow-2xl">
+  
+  <div class="glass relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl border border-emerald-500/30 p-5 sm:p-6 text-white shadow-2xl">
+    
+    <!-- Close -->
     <button id="closeSupportModal" type="button"
-            class="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full text-xl text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+            class="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full text-xl text-zinc-400 transition-all duration-200 hover:bg-zinc-800 hover:text-white active:scale-90"
             aria-label="Close support dialog">✕</button>
-    <div class="mb-5 text-center">
+
+    <!-- Header -->
+    <div class="mb-6 text-center">
       <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/20 text-2xl font-bold text-emerald-400" aria-hidden="true">♥</div>
       <h3 id="supportModalTitle" class="text-xl font-bold text-white">Sustain the Public Square</h3>
-      <p class="mt-1 text-xs text-emerald-300">VocalWitness stays free, independent, and un-manipulated through voluntary community backing.</p>
+      <p class="mt-1.5 text-xs leading-relaxed text-emerald-300/90">
+        VocalWitness stays free, independent, and un-manipulated through voluntary community backing.
+      </p>
     </div>
-    <div class="space-y-4">
+
+    <div class="space-y-5">
+      <!-- Amount Selection -->
       <div>
-        <label class="mb-2 block text-xs text-zinc-400">Select Contribution Amount (USD)</label>
+        <label class="mb-2.5 block text-xs font-medium text-zinc-400">Select Contribution Amount (USD)</label>
         <div id="supportTierContainer" class="grid grid-cols-3 gap-2" role="group" aria-label="Contribution amount">
-          <button type="button" class="support-tier-btn rounded-xl border border-zinc-700 bg-zinc-800 py-2 text-sm font-medium transition-all hover:bg-emerald-600/30" data-amount="5">$5</button>
-          <button type="button" class="support-tier-btn active-tier rounded-xl border border-emerald-500 bg-emerald-600/20 py-2 text-sm font-medium transition-all" data-amount="15">$15</button>
-          <button type="button" class="support-tier-btn rounded-xl border border-zinc-700 bg-zinc-800 py-2 text-sm font-medium transition-all hover:bg-emerald-600/30" data-amount="50">$50</button>
+          <button type="button" 
+                  class="support-tier-btn rounded-xl border border-zinc-700 bg-zinc-800/80 py-2.5 text-sm font-medium text-zinc-300 transition-all duration-200 hover:border-emerald-500/50 hover:bg-emerald-600/20 hover:text-white active:scale-95"
+                  data-amount="5">$5</button>
+          
+          <button type="button" 
+                  class="support-tier-btn active-tier rounded-xl border border-emerald-500 bg-emerald-600/25 py-2.5 text-sm font-semibold text-emerald-300 shadow-sm transition-all duration-200 active:scale-95"
+                  data-amount="15">$15</button>
+          
+          <button type="button" 
+                  class="support-tier-btn rounded-xl border border-zinc-700 bg-zinc-800/80 py-2.5 text-sm font-medium text-zinc-300 transition-all duration-200 hover:border-emerald-500/50 hover:bg-emerald-600/20 hover:text-white active:scale-95"
+                  data-amount="50">$50</button>
         </div>
       </div>
+
+      <!-- Custom Amount -->
       <div>
-        <label for="customSupportAmount" class="mb-1 block text-xs text-zinc-400">Custom Amount ($ USD)</label>
+        <label for="customSupportAmount" class="mb-1.5 block text-xs font-medium text-zinc-400">Custom Amount ($ USD)</label>
         <input type="number" id="customSupportAmount" placeholder="Enter amount" min="1" value="15"
-               class="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-sm text-white focus:border-emerald-500 focus:outline-none">
+               class="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm text-white placeholder-zinc-500 transition focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/30">
       </div>
+
+      <!-- Primary Action -->
       <button id="paystackPayBtn" type="button"
-              class="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 transition-all hover:bg-blue-500 active:scale-[0.98]">
-        <span>Pay with Card / Bank (Paystack)</span>
+              class="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue-600/25 transition-all duration-200 hover:bg-blue-500 active:scale-[0.98]">
+        Pay with Card / Bank (Paystack)
       </button>
+
+      <!-- Secondary Action -->
       <button id="proceedCryptoBtn" type="button"
-              class="w-full rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-black shadow-lg shadow-emerald-600/20 transition-all hover:bg-emerald-500 active:scale-[0.98]">
+              class="w-full rounded-xl border border-emerald-500/40 bg-emerald-600/15 py-3.5 text-sm font-semibold text-emerald-300 transition-all duration-200 hover:bg-emerald-600/25 hover:border-emerald-500/60 active:scale-[0.98]">
         Proceed with Crypto (NOWPayments)
       </button>
     </div>
-    <div class="mt-5 border-t border-zinc-800 pt-4">
-      <p class="mb-2 text-center text-xs font-medium text-zinc-400">Or scan / copy to send USDT directly:</p>
-      <div class="mx-auto mb-3 flex h-36 w-36 items-center justify-center rounded-2xl bg-white p-3 shadow-md">
+
+    <!-- Direct USDT -->
+    <div class="mt-6 border-t border-zinc-800 pt-5">
+      <p class="mb-3 text-center text-xs font-medium text-zinc-400">Or send USDT directly</p>
+      
+      <div class="mx-auto mb-4 flex h-36 w-36 items-center justify-center rounded-2xl bg-white p-3 shadow-md">
         <img src="./image/95756.jpg" 
-     alt="USDT TRC-20 QR Code" 
-     class="h-full w-full object-contain" 
-     id="usdt-qr-img">
+             alt="USDT TRC-20 QR Code" 
+             class="h-full w-full object-contain" 
+             id="usdt-qr-img">
         <span class="hidden text-xs text-zinc-500">QR unavailable</span>
       </div>
-      <div class="flex items-center justify-between gap-2 rounded-xl border border-zinc-800 bg-zinc-900 p-3">
-        <span id="usdtAddress" class="select-all truncate font-mono text-[11px] text-emerald-400">TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK</span>
+
+      <div class="flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 p-2.5">
+        <span id="usdtAddress" class="min-w-0 flex-1 select-all truncate font-mono text-[11px] text-emerald-400">
+          TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK
+        </span>
         <button id="copyUsdtBtn" type="button"
-                class="shrink-0 rounded-lg bg-zinc-800 px-3 py-1.5 text-xs font-medium text-white transition-all hover:bg-zinc-700"
-                aria-label="Copy USDT address">Copy</button>
+                class="shrink-0 rounded-lg bg-zinc-800 px-3.5 py-2 text-xs font-medium text-white transition-all duration-200 hover:bg-zinc-700 active:scale-95"
+                aria-label="Copy USDT address">
+          Copy
+        </button>
       </div>
-      <p class="mt-1.5 text-center text-[10px] text-zinc-500">Network: <strong class="text-zinc-400">Tron (TRC-20)</strong> • Send USDT only</p>
+      
+      <p class="mt-2 text-center text-[10px] text-zinc-500">
+        Network: <strong class="text-zinc-400">Tron (TRC-20)</strong> • Send USDT only
+      </p>
     </div>
-    <p class="mt-4 text-center text-[10px] text-zinc-500">Powered by non-custodial rails. No tracking, no intrusive data collection.</p>
+
+    <p class="mt-5 text-center text-[10px] text-zinc-500">
+      Powered by non-custodial rails. No tracking, no intrusive data collection.
+    </p>
   </div>
 </div>
 
@@ -826,40 +521,42 @@
 <div id="authModal"
      class="fixed inset-0 z-[10000] hidden items-center justify-center bg-black/80 p-4 backdrop-blur-md"
      role="dialog" aria-modal="true" aria-labelledby="authModalTitle" aria-hidden="true">
-  <div class="relative w-full max-w-md rounded-3xl border border-zinc-700 bg-zinc-900 p-6 text-white shadow-2xl">
+  
+  <div class="relative w-full max-w-md rounded-3xl border border-zinc-700 bg-zinc-900 p-5 sm:p-6 text-white shadow-2xl">
+    
     <button type="button" id="closeAuthModalBtn" data-action="close-auth-modal"
-            class="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full text-xl text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+            class="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full text-xl text-zinc-400 transition-all duration-200 hover:bg-zinc-800 hover:text-white active:scale-90"
             aria-label="Close sign in">✕</button>
 
     <div class="mb-6 text-center">
       <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/20 text-2xl" aria-hidden="true">🛡️</div>
       <h3 id="authModalTitle" class="text-xl font-bold text-white">Join the Public Square</h3>
-      <p class="mt-1 text-sm text-zinc-400">Sign in to publish reports, corroborate, and build trust.</p>
+      <p class="mt-1.5 text-sm text-zinc-400">Sign in to publish reports, corroborate, and build trust.</p>
     </div>
 
     <div class="space-y-3">
-      <!-- Google — required for auth.js googleLogin() -->
+      <!-- Primary Auth -->
       <button type="button" id="googleAuthBtn" data-action="google-login"
-              class="google-auth-btn flex w-full items-center justify-center gap-3 rounded-xl border border-zinc-600 bg-white px-4 py-3 text-sm font-bold text-zinc-900 transition hover:bg-zinc-100 active:scale-[0.98]">
+              class="google-auth-btn flex w-full items-center justify-center gap-3 rounded-xl border border-zinc-600 bg-white px-4 py-3.5 text-sm font-bold text-zinc-900 shadow-sm transition-all duration-200 hover:bg-zinc-100 active:scale-[0.98]">
         <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
              alt="" class="h-5 w-5" width="20" height="20">
         Continue with Google
       </button>
 
-      <!-- Optional authentication providers -->
+      <!-- Secondary Auth -->
       <button type="button" id="githubAuthBtn" data-action="github-login"
-              class="flex w-full items-center justify-center gap-3 rounded-xl border border-zinc-600 bg-zinc-800 px-4 py-3 text-sm font-semibold text-white transition hover:bg-zinc-700 active:scale-[0.98]">
+              class="flex w-full items-center justify-center gap-3 rounded-xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 text-sm font-semibold text-white transition-all duration-200 hover:border-zinc-500 hover:bg-zinc-700 active:scale-[0.98]">
         Continue with GitHub
       </button>
 
       <button type="button" id="twitterAuthBtn" data-action="twitter-login"
-              class="flex w-full items-center justify-center gap-3 rounded-xl border border-zinc-600 bg-zinc-800 px-4 py-3 text-sm font-semibold text-white transition hover:bg-zinc-700 active:scale-[0.98]">
+              class="flex w-full items-center justify-center gap-3 rounded-xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 text-sm font-semibold text-white transition-all duration-200 hover:border-zinc-500 hover:bg-zinc-700 active:scale-[0.98]">
         Continue with X
       </button>
     </div>
 
-    <label class="mt-4 flex cursor-pointer items-center gap-2 text-xs text-zinc-400">
-      <input type="checkbox" id="rememberMe" checked class="rounded accent-emerald-500">
+    <label class="mt-5 flex cursor-pointer items-center gap-2.5 text-xs text-zinc-400">
+      <input type="checkbox" id="rememberMe" checked class="h-4 w-4 rounded accent-emerald-500">
       Stay signed in on this device
     </label>
 
@@ -879,8 +576,8 @@
      aria-modal="true"
      aria-labelledby="profileModalTitle"
      aria-hidden="true">
-
-  <div class="relative w-full max-w-lg rounded-3xl border border-zinc-700 bg-[#111827] p-6 text-white shadow-2xl">
+  
+  <div class="relative w-full max-w-lg rounded-3xl border border-zinc-700 bg-[#111827] p-5 sm:p-6 text-white shadow-2xl">
     
     <!-- Header -->
     <div class="mb-5 flex items-center justify-between border-b border-zinc-700 pb-4">
@@ -889,7 +586,7 @@
       </h3>
       <button id="closeProfileModalBtn"
               type="button"
-              class="rounded-full p-2 text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+              class="flex h-10 w-10 items-center justify-center rounded-full text-zinc-400 transition-all duration-200 hover:bg-zinc-800 hover:text-white active:scale-90"
               aria-label="Close profile">
         ✕
       </button>
@@ -903,7 +600,6 @@
         <p class="text-sm text-zinc-400" data-i18n="loadingProfile">Loading profile...</p>
       </div>
     </div>
-
   </div>
 </div>
 
@@ -911,12 +607,13 @@
 <div id="editProfileModal"
      class="fixed inset-0 z-[10001] hidden items-center justify-center overflow-y-auto bg-black/85 p-4"
      role="dialog" aria-modal="true" aria-labelledby="editProfileTitle" aria-hidden="true">
-  <div class="custom-scroll relative max-h-[90vh] w-full max-w-md space-y-5 overflow-y-auto rounded-3xl border border-zinc-700 bg-[#111827] p-6 text-white shadow-2xl">
+  
+  <div class="custom-scroll relative max-h-[90vh] w-full max-w-md space-y-5 overflow-y-auto rounded-3xl border border-zinc-700 bg-[#111827] p-5 sm:p-6 text-white shadow-2xl">
     
     <div class="flex items-center justify-between border-b border-zinc-700 pb-3">
       <h3 id="editProfileTitle" class="text-xl font-bold">Edit Profile</h3>
       <button id="closeEditProfileBtn" type="button"
-              class="rounded-full p-2 text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+              class="flex h-10 w-10 items-center justify-center rounded-full text-zinc-400 transition-all duration-200 hover:bg-zinc-800 hover:text-white active:scale-90"
               aria-label="Close edit profile">✕</button>
     </div>
 
@@ -924,12 +621,12 @@
       <!-- Avatar -->
       <div class="flex flex-col items-center gap-3">
         <div class="relative">
-          <div class="w-24 h-24 rounded-3xl overflow-hidden border-4 border-zinc-700 bg-zinc-800 shadow-xl">
-            <img id="avatarPreview" src="" alt="Avatar Preview" class="w-full h-full object-cover hidden">
-            <div id="avatarFallback" class="w-full h-full flex items-center justify-center text-5xl">👤</div>
+          <div class="h-24 w-24 overflow-hidden rounded-3xl border-4 border-zinc-700 bg-zinc-800 shadow-xl">
+            <img id="avatarPreview" src="" alt="Avatar Preview" class="hidden h-full w-full object-cover">
+            <div id="avatarFallback" class="flex h-full w-full items-center justify-center text-5xl">👤</div>
           </div>
         </div>
-        <label class="cursor-pointer text-sm text-emerald-400 hover:text-emerald-300 font-medium transition">
+        <label class="cursor-pointer text-sm font-medium text-emerald-400 transition hover:text-emerald-300">
           Change Photo
           <input type="file" id="avatarInput" accept="image/*" class="hidden">
         </label>
@@ -938,48 +635,59 @@
 
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label for="editFirstName" class="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5">First Name</label>
-          <input type="text" id="editFirstName" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+          <label for="editFirstName" class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">First Name</label>
+          <input type="text" id="editFirstName" 
+                 class="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
         </div>
         <div>
-          <label for="editLastName" class="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5">Last Name</label>
-          <input type="text" id="editLastName" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+          <label for="editLastName" class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">Last Name</label>
+          <input type="text" id="editLastName" 
+                 class="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
         </div>
       </div>
 
       <div>
-        <label for="editDisplayName" class="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5">Display Name *</label>
-        <input type="text" id="editDisplayName" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+        <label for="editDisplayName" class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">Display Name *</label>
+        <input type="text" id="editDisplayName" required 
+               class="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
       </div>
 
       <div>
-        <label for="editUsername" class="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5">Username</label>
-        <input type="text" id="editUsername" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+        <label for="editUsername" class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">Username</label>
+        <input type="text" id="editUsername" 
+               class="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
       </div>
 
       <div>
-        <label for="editRegion" class="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5">Region / Location</label>
-        <input type="text" id="editRegion" placeholder="e.g. West Africa" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+        <label for="editRegion" class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">Region / Location</label>
+        <input type="text" id="editRegion" placeholder="e.g. West Africa" 
+               class="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
       </div>
 
       <div>
-        <label for="editBio" class="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5">Bio</label>
-        <textarea id="editBio" rows="3" maxlength="280" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 resize-none"></textarea>
+        <label for="editBio" class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">Bio</label>
+        <textarea id="editBio" rows="3" maxlength="280" 
+                  class="w-full resize-none rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"></textarea>
       </div>
 
-      <div class="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 flex items-center justify-between gap-3">
+      <div class="flex items-center justify-between gap-3 rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
         <div class="min-w-0">
-          <div class="font-medium text-white text-sm flex items-center gap-2">🛡️ Privacy Shield</div>
-          <div class="text-xs text-zinc-400 mt-0.5">Hides real name & location from others</div>
+          <div class="flex items-center gap-2 text-sm font-medium text-white">🛡️ Privacy Shield</div>
+          <div class="mt-0.5 text-xs text-zinc-400">Hides real name & location from others</div>
         </div>
-        <input type="checkbox" id="toggleHidePublicInfo" checked class="w-5 h-5 accent-emerald-500 rounded cursor-pointer shrink-0">
+        <input type="checkbox" id="toggleHidePublicInfo" checked 
+               class="h-5 w-5 shrink-0 cursor-pointer rounded accent-emerald-500">
       </div>
 
-      <div class="flex gap-3 pt-2">
-        <button type="submit" class="flex-1 py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition">
+      <!-- Actions -->
+      <div class="flex gap-3 pt-3">
+        <button type="submit"
+                class="flex-1 rounded-xl bg-emerald-500 py-3.5 text-sm font-bold text-black shadow-md shadow-emerald-500/20 transition-all duration-200 hover:bg-emerald-400 active:scale-[0.98]">
           Save Changes
         </button>
-        <button type="button" id="cancelEditProfileBtn" class="py-3 px-5 bg-zinc-800 text-zinc-300 font-semibold rounded-xl hover:bg-zinc-700 transition">
+        
+        <button type="button" id="cancelEditProfileBtn"
+                class="rounded-xl border border-zinc-700 bg-zinc-800/80 px-5 py-3.5 text-sm font-semibold text-zinc-300 transition-all duration-200 hover:border-zinc-500 hover:bg-zinc-700 hover:text-white active:scale-[0.98]">
           Cancel
         </button>
       </div>
