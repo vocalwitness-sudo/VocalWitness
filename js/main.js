@@ -1,4 +1,7 @@
+<<<<<<< HEAD
+=======
 import { db, auth, storage } from './firebase-config.js';
+>>>>>>> 44e292d (fix: remove global CSS selectors to restore Tailwind layout integrity)
 import { state, updateAppState, isUserAuthenticated } from './app-state.js';
 import { initAuth, requireAuth, updateUIForAuthState, bindHeaderEvents } from "./auth.js";
 import { initFeed } from './feed.js';
@@ -14,6 +17,7 @@ import { wireIndexPage } from './ui-events.js';
 import { initComposer } from './composer.js';
 import { createEvidencePack } from './evidence-pack.js';
 import { generateSha256Hash } from './utils.js';
+import { db, auth, storage } from './firebase-config.js';   // ← add auth here
 import {
     collection, addDoc, doc, getDoc, setDoc, updateDoc,
     serverTimestamp, query, getDocs, orderBy, limit

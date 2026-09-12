@@ -17,8 +17,13 @@ import { auth } from './firebase-config.js';
 import {
   collection,
   addDoc,
+  query,
+  where,
+  getDocs,
+  orderBy,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { parsePostMetadata } from './utils/parser.js';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -110,6 +115,33 @@ export async function uploadMediaAsset(file, folder, uid, onProgress = null) {
     xhr.onerror = () => reject(new Error('Network error during asset upload.'));
     xhr.send(file);
   });
+}
+
+/**
+ * Fetch testimonies filtered by a specific hashtag
+ * @param {Object} db - Firestore database instance
+ * @param {string} tag - The hashtag to search for (e.g., 'VocalWitness' or '#truth')
+ */
+export async function fetchPostsByHashtag(db, tag) {
+  if (!tag) return [];
+  
+  // Ensure the tag starts with '#' and is lowercase to match stored array items
+  const cleanTag = tag.trim().toLowerCase();
+  const normalizedTag = cleanTag.startsWith('#') ? cleanTag : `#${cleanTag}`;
+  
+  try {
+    const q = query(
+      collection(db, 'testimonies'),
+      where('hashtags', 'array-contains', normalizedTag),
+      orderBy('createdAt', 'desc')
+    );
+
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error('Error fetching posts by hashtag:', error);
+    return [];
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -471,10 +503,14 @@ export class CitizenTalkEngine extends BaseEngine {
       );
     }
 
+    const { hashtags, mentions, cleanedContent } = parsePostMetadata(text);
+
     const docData = {
       authorId: uid,
       author: auth.currentUser.displayName || 'Anonymous Witness',
-      content: text || '',
+      content: cleanedContent || '',
+      hashtags,
+      mentions,
       category,
       targetFeed: 'citizen_talk',
       audioUrl,
@@ -540,13 +576,16 @@ export class WitnessVoiceEngine extends BaseEngine {
     }
 
     const forensicHash = audioHash || this.pendingImageHash || null;
+    const { hashtags, mentions, cleanedContent } = parsePostMetadata(content);
 
     const docData = {
       authorId: uid,
       author: auth.currentUser.displayName || 'Anonymous Witness',
       title,
       category,
-      content: content || '',
+      content: cleanedContent || '',
+      hashtags,
+      mentions,
       targetFeed: 'witness_voice',
       audioUrl,
       imageUrl,

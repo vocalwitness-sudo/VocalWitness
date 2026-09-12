@@ -1,4 +1,4 @@
-// js/my-testimonies.js - With Optimistic UI + Batch 1 Evidence Pack UI (CSP Compliant)
+// js/my-testimonies.js - With Optimistic UI, Batch 1 Evidence Pack UI & Hashtag/Mention Parsing
 import { db, auth } from './firebase-config.js';
 import {
     collection, query, where, onSnapshot, orderBy,
@@ -7,6 +7,7 @@ import {
 import { showToast } from './utils.js';
 import { renderSealedBadge, renderDownloadPackButton } from './evidence-ui.js';
 import { toFullEvidencePack, downloadEvidencePack } from './evidence-pack.js';
+import { parsePostMetadata } from './utils/parser.js';
 
 let currentSnapshotUnsubscribe = null;
 let myPostsCache = []; // for download handler
@@ -124,7 +125,7 @@ function renderTestimonies(snapshot, container) {
                 <div class="flex-1 min-w-0">
                     <div class="flex flex-wrap items-center gap-2 mb-2">
                         ${hasPack ? renderSealedBadge(true) : ''}
-                        ${!hasPack && hasHash ? '<span class="text-[10px] text-emerald-400 border border-emerald-700/40 rounded-full px-2 py-0.5">🔒 Hashed</span>' : ''}
+                        {!hasPack && hasHash ? '<span class="text-[10px] text-emerald-400 border border-emerald-700/40 rounded-full px-2 py-0.5">🔒 Hashed</span>' : ''}
                         ${corrobCount > 0 ? `<span class="text-[10px] text-cyan-400 border border-cyan-700/40 rounded-full px-2 py-0.5">🤝 ${corrobCount} Corroboration${corrobCount > 1 ? 's' : ''}</span>` : ''}
                     </div>
                     ${postTitle ? `<h3 class="text-lg font-bold text-white mb-1.5 leading-snug">${escapeHTML(postTitle)}</h3>` : ''}
@@ -240,10 +241,15 @@ window.editTestimony = async (testimonyId) => {
     const originalHTML = contentEl.innerHTML;
     contentEl.innerHTML = escapeHTML(newText) + ' <span class="text-amber-400 text-xs">(saving...)</span>';
 
+    // Re-parse hashtags and mentions for the edited content
+    const { hashtags, mentions, cleanedContent } = parsePostMetadata(newText);
+
     try {
         await updateDoc(doc(db, 'testimonies', testimonyId), {
-            content: newText.trim(),
-            text: newText.trim(),
+            content: cleanedContent,
+            text: cleanedContent,
+            hashtags: hashtags,
+            mentions: mentions,
             updatedAt: serverTimestamp()
         });
         showToast('Updated successfully', 'success');

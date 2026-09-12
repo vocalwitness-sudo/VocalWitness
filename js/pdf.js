@@ -514,4 +514,8 @@ export function showPremiumUpgradeModal(userData, db) {
     modal.remove();
     generateAndDownloadPDF(userData, db, 'standard');
   });
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 44e292d (fix: remove global CSS selectors to restore Tailwind layout integrity)

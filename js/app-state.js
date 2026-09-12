@@ -25,14 +25,34 @@ function getTierRank(tierInput) {
   return TIER_RANKS[tierInput] || 1;
 }
 
-// ====================== ENGINE INSTANTIATION ======================
-export const citizenEngine = new CitizenTalkEngine(db);
-export const witnessEngine = new WitnessVoiceEngine(db);
+// ====================== LAZY ENGINE INSTANTIATION ======================
+let _citizenEngine = null;
+let _witnessEngine = null;
 
-if (typeof window !== 'undefined') {
-  window.citizenEngine = citizenEngine;
-  window.witnessEngine = witnessEngine;
+export function getCitizenEngine() {
+  if (!_citizenEngine && db) {
+    _citizenEngine = new CitizenTalkEngine(db);
+    if (typeof window !== 'undefined') window.citizenEngine = _citizenEngine;
+  }
+  return _citizenEngine;
 }
+
+export function getWitnessEngine() {
+  if (!_witnessEngine && db) {
+    _witnessEngine = new WitnessVoiceEngine(db);
+    if (typeof window !== 'undefined') window.witnessEngine = _witnessEngine;
+  }
+  return _witnessEngine;
+}
+
+// Keep the old names working for compatibility via getter proxies
+export const citizenEngine = {
+  get instance() { return getCitizenEngine(); }
+};
+
+export const witnessEngine = {
+  get instance() { return getWitnessEngine(); }
+};
 
 // ====================== CENTRAL STATE OBJECT ======================
 export const state = {
@@ -163,8 +183,10 @@ export function clearMediaPreviews() {
     previewContainer.classList.remove('hidden');
   }
 
-  if (typeof citizenEngine?.clearPendingMedia === 'function') citizenEngine.clearPendingMedia();
-  if (typeof witnessEngine?.clearPendingMedia === 'function') witnessEngine.clearPendingMedia();
+  const cEngine = getCitizenEngine();
+  const wEngine = getWitnessEngine();
+  if (typeof cEngine?.clearPendingMedia === 'function') cEngine.clearPendingMedia();
+  if (typeof wEngine?.clearPendingMedia === 'function') wEngine.clearPendingMedia();
 }
 
 export function renderAudioPreview(blob) {
@@ -235,8 +257,10 @@ export function renderImagePreview(files = []) {
     
     removeBtn.addEventListener('click', () => {
       const updatedFiles = validFiles.filter((_, fIndex) => fIndex !== index);
-      if (typeof citizenEngine?.setPendingImages === 'function') citizenEngine.setPendingImages(updatedFiles);
-      if (typeof witnessEngine?.setPendingImages === 'function') witnessEngine.setPendingImages(updatedFiles);
+      const cEngine = getCitizenEngine();
+      const wEngine = getWitnessEngine();
+      if (typeof cEngine?.setPendingImages === 'function') cEngine.setPendingImages(updatedFiles);
+      if (typeof wEngine?.setPendingImages === 'function') wEngine.setPendingImages(updatedFiles);
       renderImagePreview(updatedFiles);
     });
 

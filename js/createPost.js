@@ -12,6 +12,8 @@ import { showToast } from './utils.js';
 import { getUserTier } from './tier.js';
 import { analyzeReportContent } from './composer.js';
 import { processAndUploadMedia } from './media-pipeline.js';
+import { parsePostMetadata } from './utils/parser.js';
+import { state } from './app-state.js';
 
 /**
  * Computes a SHA-256 hash of a file or text buffer using native Web Crypto API.
@@ -124,7 +126,7 @@ export async function submitTestimony({
 
         showToast("🛡️ Preparing and uploading media artifact...", "info");
 
-        const folderDestination = channel === 'witness-voice' ? 'witness-vault' : 'evidence';
+        const folderDestination = (channel === 'witness-voice' || channel === 'witness-circle') ? 'witness-vault' : 'evidence';
         mediaUrl = await processAndUploadMedia(mediaFile, folderDestination, onProgress);
     } else if (content.length > 0) {
         forensicHash = await computeSHA256(content);
@@ -142,12 +144,17 @@ export async function submitTestimony({
         console.warn("Could not fetch tier, defaulting to citizen:", err);
     }
 
-    // 3. Assemble Firestore Payload – MUST satisfy the create rules
+    // 3. Parse hashtags and mentions from content text
+    const { hashtags, mentions, cleanedContent } = parsePostMetadata(content);
+
+    // 4. Assemble Firestore Payload – MUST satisfy the create rules
     const payload = {
-        content: content.trim(),
-        channel: channel,                          // required by rules
-        authorId: user.uid,                        // CRITICAL: must equal request.auth.uid
-        isAnonymous: !!isAnonymous,                // UI flag only
+        content: cleanedContent || '',
+        hashtags: hashtags || [],
+        mentions: mentions || [],
+        channel: channel,
+        authorId: user.uid,
+        isAnonymous: !!isAnonymous,
         author: isAnonymous ? "Anonymous Witness" : (user.displayName || "Citizen Witness"),
         authorTier: authorTier,
         reputation: reputation,
@@ -160,6 +167,7 @@ export async function submitTestimony({
         commentsCount: 0,
         isPinned: false,
         isDeleted: false,
+        profileMode: state.profileMode || 'ANONYMOUS',
 
         // Moderation fields
         moderationStatus: moderationResult.status,
@@ -167,21 +175,20 @@ export async function submitTestimony({
         aiCategory: moderationResult.category,
         feedVisibility: moderationResult.status === 'pending_review' ? 'review_queue' : channel,
 
-        createdAt: serverTimestamp(),              // required – must be timestamp
+        createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
     };
 
-    // 4. Commit to Firestore
+    // 5. Commit to Firestore
     const docRef = await addDoc(collection(db, "testimonies"), payload);
 
-    // 5. Update throttle timestamp (required by isNotThrottled())
+    // 6. Update throttle timestamp (required by isNotThrottled())
     try {
         await updateDoc(doc(db, "users", user.uid), {
             lastTestimonyAt: serverTimestamp()
         });
     } catch (err) {
         console.warn("Could not update lastTestimonyAt:", err);
-        // Non-fatal – the testimony was already written
     }
     
     if (moderationResult.status === 'pending_review') {

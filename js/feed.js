@@ -354,7 +354,7 @@ function renderSinglePostDOM(id, data, container) {
     const isOwner = currentUser && currentUser.uid === data.authorId;
 
     const postEl = document.createElement('div');
-    postEl.className = 'post-card glass rounded-3xl p-6 mb-6 hover:border-emerald-500/35 transition-all duration-300 border border-zinc-800 bg-zinc-900/50 relative';
+    postEl.className = 'post-card group relative mb-5 rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 transition-all duration-200 hover:border-emerald-500/30 hover:bg-zinc-900/80 sm:p-6';
     postEl.setAttribute('data-post-id', id);
 
     // Prefer headline (what composer writes), then title, then truncated content
@@ -467,86 +467,129 @@ function renderSinglePostDOM(id, data, container) {
            </span>`
         : '';
 
-    postEl.innerHTML = `
-        <div class="flex justify-between items-start">
-            <div class="flex items-center gap-3">
-                ${typeof renderTierCircle === 'function' ? renderTierCircle(data.authorTier || 'citizen', data.reputation || 0) : '<span class="text-2xl">👤</span>'}
-                <div>
-                    <div class="flex items-center gap-2 flex-wrap">
-                        <p class="font-semibold text-zinc-100">${authorDisplayName}</p>
-                        ${pinnedBadge}
-                    </div>
-                    ${trustContainer}
-                    <p class="text-xs text-zinc-500 mt-1">${formattedDate}</p>
-                </div>
-            </div>
-            <div class="flex items-center gap-2">
-                <button data-action="pin" data-id="${id}" title="Pin Post" class="text-zinc-500 hover:text-amber-400 text-xs transition">📌</button>
-                ${deleteBtnHTML}
-                <button data-action="menu" data-id="${id}" class="text-zinc-400 hover:text-white text-2xl transition">⋯</button>
-            </div>
+ postEl.innerHTML = `
+  <!-- Header -->
+  <div class="flex items-start justify-between gap-3">
+    <div class="flex items-center gap-3 min-w-0">
+      ${typeof renderTierCircle === 'function' 
+        ? renderTierCircle(data.authorTier || 'citizen', data.reputation || 0) 
+        : '<div class="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-800 text-lg">👤</div>'}
+      
+      <div class="min-w-0">
+        <div class="flex flex-wrap items-center gap-2">
+          <p class="font-semibold text-zinc-100 truncate">${authorDisplayName}</p>
+          ${pinnedBadge}
         </div>
+        <p class="text-xs text-zinc-500 mt-0.5">${formattedDate}</p>
+      </div>
+    </div>
 
-        <h3 class="text-lg font-bold text-white mt-4 mb-2 leading-snug">
-            ${escapeHTML(headline)}
-        </h3>
+    <div class="flex items-center gap-1.5 shrink-0">
+      <button data-action="pin" data-id="${id}" title="Pin Post" 
+              class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-amber-400 transition">
+        📌
+      </button>
+      ${deleteBtnHTML}
+      <button data-action="menu" data-id="${id}" 
+              class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-white transition text-lg leading-none">
+        ⋯
+      </button>
+    </div>
+  </div>
 
-        ${data.content ? `<p id="post-text-${id}" class="text-zinc-300 text-sm mb-4 whitespace-pre-line leading-relaxed">${escapeHTML(data.content)}</p>` : ''}
+  <!-- Trust Badges -->
+  ${trustContainer ? `
+    <div class="mt-3 flex flex-wrap gap-1.5">
+      ${trustBadgesHTML}
+    </div>
+  ` : ''}
 
-        ${mediaHTML}
+  <!-- Title -->
+  <h3 class="mt-4 text-lg font-bold text-white leading-snug">
+    ${escapeHTML(headline)}
+  </h3>
 
-        <!-- Interactive Translation Controls -->
-        <div id="translate-box-${id}" class="hidden mt-4 p-3 bg-zinc-950 border border-zinc-800 rounded-xl flex flex-col sm:flex-row items-center gap-2">
-            <select id="lang-select-${id}" class="bg-zinc-900 text-xs text-zinc-200 border border-zinc-700 rounded-lg px-2 py-1.5 focus:outline-none focus:border-emerald-500 w-full sm:w-auto">
-                <option value="English">English</option>
-                <option value="Pidgin">Nigerian Pidgin</option>
-                <option value="Hausa">Hausa</option>
-                <option value="Yoruba">Yorùbá</option>
-                <option value="Igbo">Igbo</option>
-                <option value="Swahili">Swahili</option>
-                <option value="French">French</option>
-                <option value="Spanish">Spanish</option>
-                <option value="Portuguese">Portuguese</option>
-                <option value="Arabic">Arabic</option>
-            </select>
-            <button data-action="execute-translate" data-id="${id}" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition w-full sm:w-auto">
-                Translate Text
-            </button>
-        </div>
-        <div id="translated-result-${id}" class="hidden mt-3 p-3 bg-emerald-950/40 border border-emerald-500/20 rounded-xl text-xs text-emerald-300 leading-relaxed"></div>
+  <!-- Content -->
+  ${data.content ? `
+    <p id="post-text-${id}" class="mt-2 text-sm text-zinc-300 leading-relaxed whitespace-pre-line">
+      ${escapeHTML(data.content)}
+    </p>
+  ` : ''}
 
-        <div class="flex items-center justify-between mt-6 pt-5 border-t border-zinc-800 text-xs flex-wrap gap-3">
-            <div class="flex gap-2 sm:gap-3 flex-wrap items-center">
-                <button data-action="react" data-id="${id}" data-reaction="respect" class="flex items-center gap-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 px-3 py-1.5 rounded-xl text-zinc-300 transition">
-                    👍 <span>${reactions.respect || 0}</span>
-                </button>
-                <button data-action="react" data-id="${id}" data-reaction="truth" class="flex items-center gap-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 px-3 py-1.5 rounded-xl text-zinc-300 transition">
-                    💡 <span>${reactions.truth || 0}</span>
-                </button>
-                <button data-action="comment" data-id="${id}" class="comment-trigger-btn flex items-center gap-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 px-3 py-1.5 rounded-xl text-zinc-300 transition">
-                    💬 <span>${data.commentsCount || 0}</span>
-                </button>
-                <button data-action="toggle-translate" data-id="${id}" class="flex items-center gap-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 px-3 py-1.5 rounded-xl text-zinc-300 transition">
-                    🌐 <span>Translate</span>
-                </button>
-                <button data-action="corroborate" data-id="${id}"
-                    class="corroborate-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium
-                           bg-emerald-600/15 text-emerald-400 border border-emerald-500/30 
-                           hover:bg-emerald-600/25 transition">
-                    👁️ I saw this too
-                </button>
-                ${corrScoreHTML}
-            </div>
-            <div class="flex gap-4 items-center">
-                ${hasPack ? renderDownloadPackButton(id) : ''}
-                <button data-action="report" data-id="${id}" class="text-red-400 hover:text-red-500 transition">Report</button>
-                <button data-action="share" data-id="${id}" class="text-emerald-400 hover:text-emerald-500 transition">Share</button>
-            </div>
-        </div>
+  <!-- Media -->
+  ${mediaHTML}
 
-        <div class="reply-input-area mt-3"></div>
-    `;
+  <!-- Translation Box -->
+  <div id="translate-box-${id}" class="mt-4 hidden rounded-xl border border-zinc-800 bg-zinc-950 p-3">
+    <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+      <select id="lang-select-${id}" 
+              class="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs text-zinc-200 focus:border-emerald-500 focus:outline-none sm:w-auto">
+        <option value="English">English</option>
+        <option value="Pidgin">Nigerian Pidgin</option>
+        <option value="Hausa">Hausa</option>
+        <option value="Yoruba">Yorùbá</option>
+        <option value="Igbo">Igbo</option>
+        <option value="Swahili">Swahili</option>
+        <option value="French">French</option>
+        <option value="Spanish">Spanish</option>
+        <option value="Portuguese">Portuguese</option>
+        <option value="Arabic">Arabic</option>
+      </select>
+      <button data-action="execute-translate" data-id="${id}"
+              class="rounded-lg bg-emerald-600 px-4 py-2 text-xs font-medium text-white transition hover:bg-emerald-500">
+        Translate Text
+      </button>
+    </div>
+  </div>
 
+  <div id="translated-result-${id}" 
+       class="mt-3 hidden rounded-xl border border-emerald-500/20 bg-emerald-950/30 p-3 text-xs leading-relaxed text-emerald-300">
+  </div>
+
+  <!-- Action Bar -->
+  <div class="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-zinc-800 pt-4">
+    <div class="flex flex-wrap items-center gap-2">
+      <button data-action="react" data-id="${id}" data-reaction="respect"
+              class="flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300 transition hover:bg-zinc-800">
+        👍 <span>${reactions.respect || 0}</span>
+      </button>
+
+      <button data-action="react" data-id="${id}" data-reaction="truth"
+              class="flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300 transition hover:bg-zinc-800">
+        💡 <span>${reactions.truth || 0}</span>
+      </button>
+
+      <button data-action="comment" data-id="${id}"
+              class="comment-trigger-btn flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300 transition hover:bg-zinc-800">
+        💬 <span>${data.commentsCount || 0}</span>
+      </button>
+
+      <button data-action="toggle-translate" data-id="${id}"
+              class="flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300 transition hover:bg-zinc-800">
+        🌐 Translate
+      </button>
+
+      <button data-action="corroborate" data-id="${id}"
+              class="corroborate-btn flex items-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-600/15 px-3 py-1.5 text-xs font-medium text-emerald-400 transition hover:bg-emerald-600/25">
+        👁️ I saw this too
+      </button>
+
+      ${corrScoreHTML}
+    </div>
+
+    <div class="flex items-center gap-4 text-xs">
+      ${hasPack ? renderDownloadPackButton(id) : ''}
+      <button data-action="report" data-id="${id}" class="text-red-400/80 transition hover:text-red-400">
+        Report
+      </button>
+      <button data-action="share" data-id="${id}" class="text-emerald-400 transition hover:text-emerald-300">
+        Share
+      </button>
+    </div>
+  </div>
+
+  <div class="reply-input-area mt-3"></div>
+`;
     applyPostDoorDecorations(postEl, data, currentUser);
     container.appendChild(postEl);
 }
