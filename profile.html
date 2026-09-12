@@ -303,13 +303,14 @@
 
     <!-- ====================== CSP-COMPLIANT SCRIPT ====================== -->
     <script type="module">
-        import { initLanguage } from './js/i18n.js';
-        import { initDarkMode } from './js/utils.js';
-        import { auth } from './js/firebase.js';
-        import { sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import './js/profile.js';
+    import { initLanguage } from './js/i18n.js';
+    import { initDarkMode } from './js/utils.js';
+    import { auth } from './js/firebase-config.js';   // ← FIXED
+    import { sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+    import './js/profile.js';
 
-        document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', () => {
+        
             if (typeof initLanguage === 'function') initLanguage();
             if (typeof initDarkMode === 'function') initDarkMode();
 

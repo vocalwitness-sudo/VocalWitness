@@ -6,15 +6,17 @@
   <meta name="description" content="VocalWitness - Privacy First Public Square for Truth and Evidence">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://vocalwitness.com/">
-  <!-- PWA / icons: upload icon-192.png + icon-512.png to site root -->
+
+  <!-- PWA / icons -->
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" href="./icon-192.png" type="image/png" sizes="192x192">
   <link rel="apple-touch-icon" href="./icon-192.png" sizes="192x192">
-  <!-- fallback if icons not deployed yet -->
   <link rel="icon" href="./logo.png" type="image/png">
+
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
+
   <meta property="og:title" content="VocalWitness • Truth • Evidence • Public Square">
   <meta property="og:description" content="Privacy First Public Square for Truth and Evidence">
   <meta property="og:image" content="https://vocalwitness.com/logo.png">
@@ -25,89 +27,103 @@
   <meta name="twitter:title" content="VocalWitness • Truth • Evidence • Public Square">
   <meta name="twitter:description" content="Privacy First Public Square for Truth and Evidence">
   <meta name="twitter:image" content="https://vocalwitness.com/logo.png">
-  
 
-  
   <title data-i18n="pageTitle">VocalWitness • Truth • Evidence • Public Square</title>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./style.css">
-  
+
   <script src="https://accounts.google.com/gsi/client" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" defer></script>
   <script src="https://js.paystack.co/v2/inline.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/snarkjs@0.7.0/build/snarkjs.min.js" defer></script>
-  <script type="module" src="./js/main.js?v=2.0"></script>
- <style>
-  :root {
-    --header-height-mobile: 102px;
-    --header-height-desktop: 64px;
-  }
-  body {
-    background-color: #0a0f1c !important;
-    color: #ffffff !important;
-  }
-  .glass,
-  [class*="backdrop-blur"] {
-    background-color: #111827 !important;
-    border: 1px solid #27272a !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-  }
-  #main-header {
-    background-color: #09090b !important;
-    border-bottom: 1px solid rgba(16, 185, 129, 0.3) !important;
-  }
-  .rounded-3xl, .rounded-2xl {
-    background-color: #111827 !important;
-    border: 1px solid #27272a !important;
-  }
-  /* Old browser color fallback */
-  @supports not (color: rgb(0 0 0 / 0.5)) {
-    .bg-zinc-950 { background-color: #09090b !important; }
-    .bg-zinc-900 { background-color: #18181b !important; }
-    .bg-zinc-800 { background-color: #27272a !important; }
-    .border-zinc-800 { border-color: #27272a !important; }
-    .border-zinc-700 { border-color: #3f3f46 !important; }
-    .text-zinc-400 { color: #a1a1aa !important; }
-    .text-emerald-400 { color: #34d399 !important; }
-  }
-</style>
+  <script type="module" src="./js/main.js?v=2.1"></script>
+
+  <style>
+    :root {
+      --header-height-mobile: 102px;
+      --header-height-desktop: 72px;
+    }
+
+    html, body {
+      height: 100%;
+      min-height: 100dvh;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #0a0f1c !important;
+      color: #ffffff !important;
+      padding-top: var(--header-height-mobile);
+    }
+
+    @media (min-width: 768px) {
+      body {
+        padding-top: var(--header-height-desktop);
+      }
+    }
+
+    /* Safe, specific utility fallback instead of global overrides */
+    .no-backdrop-support .glass {
+      background-color: #111827;
+      border: 1px solid #27272a;
+    }
+
+    #main-header {
+      background-color: #09090b !important;
+      border-bottom: 1px solid rgba(16, 185, 129, 0.3) !important;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
 </head>
+
 <body class="theme-citizen tier-citizen">
 
-    <!-- loader Inside index.html -->
-<div id="app-splash-screen" style="position: fixed; inset: 0; background: #0f172a; display: flex; align-items: center; justify-content: center; z-index: 99999; color: white; font-family: sans-serif; transition: opacity 0.3s ease;">
-  <div style="text-align: center;">
-    <div class="spinner" style="width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.2); border-top-color: #38bdf8; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px;"></div>
-    <p style="font-size: 14px; letter-spacing: 0.05em;">Loading Vocal Witness...</p>
+  <!-- Splash Screen -->
+  <div id="app-splash-screen" style="position: fixed; inset: 0; background: #0f172a; display: flex; align-items: center; justify-content: center; z-index: 99999; color: white; font-family: sans-serif; transition: opacity 0.3s ease;">
+    <div style="text-align: center;">
+      <div class="spinner" style="width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.2); border-top-color: #38bdf8; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px;"></div>
+      <p style="font-size: 14px; letter-spacing: 0.05em;">Loading Vocal Witness...</p>
+    </div>
   </div>
-</div>
-<!-- ====================== HEADER ====================== -->
-<header id="main-header" class="fixed top-0 left-0 right-0 z-50 border-b border-emerald-500/30 bg-zinc-950/95 shadow-lg backdrop-blur-md">
-  <div class="mx-auto max-w-6xl px-3 sm:px-4">
+
+  <!-- ====================== HEADER ====================== -->
+<header id="main-header" dir="ltr" class="fixed top-0 left-0 right-0 z-50 border-b border-emerald-500/20 bg-zinc-950/90 backdrop-blur-xl shadow-xl">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6">
 
     <!-- ========== DESKTOP HEADER ========== -->
-    <div class="hidden h-[72px] items-center justify-between gap-4 md:flex">
+    <div class="hidden h-[68px] items-center justify-between gap-6 md:flex">
 
-      <a href="/" class="group flex shrink-0 items-center gap-3" aria-label="VocalWitness Home">
-        <div class="relative flex items-center justify-center">
-          <div class="absolute -inset-1 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-400 opacity-40 blur-md transition duration-300 group-hover:opacity-80"></div>
+      <!-- Logo + Brand -->
+      <a href="/" class="group flex shrink-0 items-center gap-3.5" aria-label="VocalWitness Home">
+        <div class="relative">
+          <div class="absolute -inset-1 rounded-2xl bg-gradient-to-br from-emerald-500/40 to-teal-400/30 opacity-60 blur-md transition duration-300 group-hover:opacity-100"></div>
           <img src="./logo.png" alt="VocalWitness"
-               class="relative h-11 w-11 rounded-2xl border border-emerald-400/50 bg-zinc-900 object-cover shadow-lg">
+               class="relative h-10 w-10 rounded-2xl border border-emerald-400/40 bg-zinc-900 object-cover shadow-lg">
         </div>
         <div class="leading-tight">
-          <h1 class="text-2xl font-black tracking-tight text-emerald-400 transition group-hover:text-emerald-300" data-i18n="appTitle">VocalWitness</h1>
-          <p class="text-[12px] font-bold tracking-wide text-emerald-300/90" data-i18n="appSubtitle">Citizen Reporting • Real Evidence</p>
+          <h1 class="text-[22px] font-bold tracking-tight text-white group-hover:text-emerald-300 transition" data-i18n="appTitle">
+            VocalWitness
+          </h1>
+          <p class="text-[11px] font-medium tracking-wide text-emerald-400/80" data-i18n="appSubtitle">
+            Citizen Reporting • Real Evidence
+          </p>
         </div>
       </a>
 
-      <div class="flex shrink-0 items-center gap-2">
+      <!-- Right side controls -->
+      <div class="flex shrink-0 items-center gap-2.5">
+
         <select id="languageSelect" aria-label="Language"
-                class="h-9 rounded-xl border border-zinc-700 bg-zinc-900 px-3 text-xs font-medium text-zinc-100 focus:border-emerald-500 focus:outline-none">
+                class="h-9 rounded-xl border border-zinc-700/80 bg-zinc-900/80 px-3 text-xs font-medium text-zinc-200 focus:border-emerald-500 focus:outline-none transition">
           <option value="en" selected>English</option>
           <option value="pcm">Naija Pidgin</option>
           <option value="ha">Hausa</option>
@@ -121,11 +137,13 @@
         </select>
 
         <button id="openSupportModalBtn" type="button"
-                class="h-9 rounded-xl border border-emerald-500/70 bg-emerald-500/15 px-4 text-xs font-bold text-emerald-400 shadow-sm transition hover:border-emerald-400 hover:bg-emerald-500/25"
-                data-i18n="supportBtn">Support</button>
+                class="h-9 rounded-xl border border-emerald-500/50 bg-emerald-500/10 px-4 text-xs font-semibold text-emerald-400 transition hover:bg-emerald-500/20 hover:border-emerald-400"
+                data-i18n="supportBtn">
+          Support
+        </button>
 
         <button id="openAuthModalBtn" type="button"
-                class="flex h-9 items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 text-xs font-bold text-zinc-900 shadow-sm transition hover:bg-zinc-100 active:scale-95"
+                class="flex h-9 items-center gap-2 rounded-xl bg-white px-4 text-xs font-semibold text-zinc-900 shadow-sm transition hover:bg-zinc-100 active:scale-[0.97]"
                 data-action="open-auth-modal">
           <svg class="h-4 w-4 shrink-0 pointer-events-none" viewBox="0 0 24 24" aria-hidden="true">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -137,31 +155,31 @@
         </button>
 
         <button id="userProfileBtn" type="button"
-                class="hidden h-9 items-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-900 px-4 text-xs font-bold text-emerald-400"
+                class="hidden h-9 items-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-900 px-3.5 text-xs font-semibold text-emerald-400"
                 aria-label="Open profile">
           <img id="user-avatar-desktop" src="" alt="" class="hidden h-4 w-4 rounded-full object-cover">
           <span id="default-avatar-icon-desktop" aria-hidden="true">👤</span>
           <span id="user-name-desktop" data-i18n="profileBtn">Profile</span>
         </button>
 
-    <button id="data-saver-btn" type="button"
-        class="flex h-9 items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-3 text-xs font-semibold text-zinc-300 hover:text-white"
-        aria-label="Toggle Data Saver">
-  <span aria-hidden="true">⚡</span>
-  <span>Data Saver: <strong id="data-saver-status" class="text-zinc-400">Off</strong></span>
-</button>
+        <button id="data-saver-btn" type="button"
+                class="flex h-9 items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900/80 px-3 text-xs font-medium text-zinc-400 hover:text-white transition"
+                aria-label="Toggle Data Saver">
+          <span aria-hidden="true">⚡</span>
+          <span>Data Saver: <strong id="data-saver-status" class="text-zinc-500">Off</strong></span>
+        </button>
 
         <button id="bookmarks-nav-btn" type="button" aria-label="Saved Items" data-action="open-bookmarks"
-        class="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-300 hover:border-emerald-500/50 hover:text-white">
-  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
-  </svg>
-</button>
+                class="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/80 text-zinc-400 hover:border-emerald-500/40 hover:text-white transition">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
+          </svg>
+        </button>
 
+        <!-- Notification -->
         <div class="relative" id="notification-container">
           <button id="notification-btn" type="button" aria-label="Notifications"
-                  class="relative flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-300 hover:border-emerald-500/50 hover:text-white"
-                
+                  class="relative flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/80 text-zinc-400 hover:border-emerald-500/40 hover:text-white transition">
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
             </svg>
@@ -169,10 +187,10 @@
           </button>
 
           <div id="notification-dropdown"
-               class="absolute right-0 top-full z-50 mt-2 hidden max-h-96 w-80 overflow-y-auto rounded-2xl border border-zinc-700 bg-zinc-900/95 shadow-2xl backdrop-blur-xl"
+               class="absolute right-0 top-full z-50 mt-2 hidden max-h-96 w-80 overflow-y-auto rounded-2xl border border-zinc-700/80 bg-zinc-900/95 backdrop-blur-xl shadow-2xl"
                role="region" aria-label="Notifications">
             <div class="sticky top-0 flex items-center justify-between border-b border-zinc-800 bg-zinc-900/95 px-4 py-3">
-              <h3 class="text-sm font-bold text-white">Notifications</h3>
+              <h3 class="text-sm font-semibold text-white">Notifications</h3>
               <span id="notification-count-tag" class="text-[11px] font-medium text-emerald-400">0 new</span>
             </div>
             <div id="notification-list">
@@ -183,28 +201,28 @@
             </div>
           </div>
         </div>
-
       </div>
     </div>
 
     <!-- ========== MOBILE HEADER ========== -->
-    <div class="flex flex-col gap-2 py-2.5 md:hidden">
+    <div class="flex flex-col gap-2.5 py-3 md:hidden">
 
+      <!-- Top row -->
       <div class="flex items-center justify-between">
         <a href="/" class="flex shrink-0 items-center gap-2.5" aria-label="VocalWitness Home">
           <div class="relative">
-            <div class="absolute inset-0 rounded-xl bg-emerald-500 opacity-40 blur"></div>
-            <img src="./logo.png" alt="VocalWitness" class="relative h-9 w-9 rounded-xl border border-emerald-500/40 object-contain">
+            <div class="absolute inset-0 rounded-xl bg-emerald-500/40 blur"></div>
+            <img src="./logo.png" alt="VocalWitness" class="relative h-9 w-9 rounded-xl border border-emerald-500/30 object-cover">
           </div>
           <div class="leading-none">
-            <h1 class="text-base font-black tracking-tight text-emerald-400" data-i18n="appTitle">VocalWitness</h1>
-            <p class="mt-0.5 text-[10px] font-bold tracking-tight text-emerald-300" data-i18n="appSubtitle">Citizen Reporting</p>
+            <h1 class="text-[15px] font-bold tracking-tight text-white" data-i18n="appTitle">VocalWitness</h1>
+            <p class="mt-0.5 text-[10px] font-medium text-emerald-400/80" data-i18n="appSubtitle">Citizen Reporting</p>
           </div>
         </a>
 
         <div class="flex items-center gap-1.5">
           <button id="openAuthModalBtnMobile" type="button"
-                  class="flex h-8 items-center gap-1.5 rounded-lg bg-white px-2.5 text-xs font-bold text-zinc-900 shadow-sm transition hover:bg-zinc-100 active:scale-95"
+                  class="flex h-8 items-center gap-1.5 rounded-lg bg-white px-2.5 text-xs font-semibold text-zinc-900 shadow-sm transition active:scale-95"
                   data-action="open-auth-modal">
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
                  class="h-3.5 w-3.5 pointer-events-none" alt="" width="14" height="14">
@@ -216,10 +234,11 @@
         </div>
       </div>
 
-      <div class="flex items-center justify-between gap-2 border-t border-zinc-800/70 pt-1.5">
+      <!-- Bottom row -->
+      <div class="flex items-center justify-between gap-2 border-t border-zinc-800/60 pt-2">
         <div class="flex items-center gap-1.5">
           <select id="languageSelectMobile" aria-label="Language"
-                  class="h-8 rounded-lg border border-zinc-700 bg-zinc-900 px-2 text-[11px] font-medium text-zinc-100 focus:border-emerald-500 focus:outline-none">
+                  class="h-8 rounded-lg border border-zinc-700 bg-zinc-900 px-2 text-[11px] font-medium text-zinc-200 focus:border-emerald-500 focus:outline-none">
             <option value="en">EN</option>
             <option value="pcm">PCM</option>
             <option value="ha">HA</option>
@@ -233,257 +252,239 @@
           </select>
 
           <button id="openSupportModalBtnMobile" type="button"
-                  class="h-8 rounded-lg border border-emerald-500/70 bg-emerald-500/15 px-2.5 text-[11px] font-bold text-emerald-400 transition hover:border-emerald-400 hover:bg-emerald-500/25"
-                  data-i18n="supportBtn">Support</button>
+                  class="h-8 rounded-lg border border-emerald-500/50 bg-emerald-500/10 px-2.5 text-[11px] font-semibold text-emerald-400 transition hover:bg-emerald-500/20"
+                  data-i18n="supportBtn">
+            Support
+          </button>
 
-      <button id="data-saver-btn-mobile" type="button"
-        class="flex items-center gap-1 whitespace-nowrap rounded-lg border border-zinc-800 bg-zinc-900 px-2 py-1 text-[10px] font-semibold text-zinc-300 hover:text-white"
-        aria-label="Toggle Data Saver"
-        title="Data Saver">
-  <span aria-hidden="true">⚡</span>
-  <span>Data: <strong id="data-saver-status-mobile" class="text-zinc-400">Off</strong></span>
-</button>
-          
+          <button id="data-saver-btn-mobile" type="button"
+                  class="flex items-center gap-1 rounded-lg border border-zinc-800 bg-zinc-900 px-2 py-1 text-[10px] font-medium text-zinc-400"
+                  aria-label="Toggle Data Saver" title="Data Saver">
+            <span aria-hidden="true">⚡</span>
+            <span>Data: <strong id="data-saver-status-mobile" class="text-zinc-500">Off</strong></span>
+          </button>
+        </div>
+
         <div class="flex items-center gap-1">
           <button id="bookmarks-nav-btn-mobile" type="button" aria-label="Saved" data-action="open-bookmarks"
-        class="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-300">
-  <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
-  </svg>
-</button>
+                  class="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-400">
+            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
+            </svg>
+          </button>
 
-<div class="relative" id="notification-container-mobile">
-  <button id="notification-btn-mobile" type="button" aria-label="Notifications"
-          class="relative flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-300"
-          data-action="open-notifications">
-    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-    </svg>
-    <span id="notification-badge-mobile" class="absolute -right-0.5 -top-0.5 hidden min-w-[14px] rounded-full bg-emerald-500 px-1 text-center text-[8px] font-bold text-black">0</span>
-  </button>
-</div>
+          <div class="relative" id="notification-container-mobile">
+            <button id="notification-btn-mobile" type="button" aria-label="Notifications"
+                    class="relative flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-400"
+                    data-action="open-notifications">
+              <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+              </svg>
+              <span id="notification-badge-mobile" class="absolute -right-0.5 -top-0.5 hidden min-w-[14px] rounded-full bg-emerald-500 px-1 text-center text-[8px] font-bold text-black">0</span>
+            </button>
+          </div>
 
-          <a href="/privacy" class="flex h-8 items-center px-2 text-[11px] font-medium text-emerald-400/90 hover:text-emerald-300">Privacy</a>
+          <a href="/privacy" class="flex h-8 items-center px-2 text-[11px] font-medium text-emerald-400/80 hover:text-emerald-300 transition">
+            Privacy
+          </a>
         </div>
       </div>
-
     </div>
 
   </div>
 </header>
-
   <!-- ====================== FEED FILTER PILLS ====================== -->
-<div class="sticky top-[72px] z-40 mx-auto max-w-6xl px-3 sm:px-4 py-3 bg-zinc-950/90 backdrop-blur-md border-b border-zinc-800/80">
-  <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
-    
-    <button type="button" data-filter="all"
-            class="feed-pill active rounded-full bg-emerald-500 px-4 py-1.5 text-xs font-bold text-black transition shrink-0 shadow-sm">
-      All Evidence
-    </button>
-    
-    <button type="button" data-filter="witness-voice"
-            class="feed-pill rounded-full border border-zinc-800 bg-zinc-900 px-4 py-1.5 text-xs font-semibold text-zinc-300 hover:border-emerald-500/50 hover:text-white transition shrink-0">
-      📢 Witness Voice
-    </button>
-    
-    <button type="button" data-filter="citizen-talk"
-            class="feed-pill rounded-full border border-zinc-800 bg-zinc-900 px-4 py-1.5 text-xs font-semibold text-zinc-300 hover:border-emerald-500/50 hover:text-white transition shrink-0">
-      💬 Citizen Talk
-    </button>
-    
-    <button type="button" data-filter="zk-verified"
-            class="feed-pill rounded-full border border-emerald-500/40 bg-emerald-500/10 px-4 py-1.5 text-xs font-bold text-emerald-400 hover:bg-emerald-500/20 transition shrink-0 flex items-center gap-1.5">
-      <svg class="h-3.5 w-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-      </svg>
-      <span>ZK Verified Only</span>
-    </button>
-
+<!-- ====================== FEED FILTER PILLS ====================== -->
+<div class="sticky top-[68px] z-40 border-b border-zinc-800/60 bg-zinc-950/90 backdrop-blur-xl">
+  <div class="mx-auto max-w-6xl px-4 py-3 sm:px-6">
+    <div class="flex items-center gap-2 overflow-x-auto no-scrollbar">
+      <button type="button" data-filter="all"
+              class="feed-pill active shrink-0 rounded-full bg-emerald-500 px-4 py-1.5 text-xs font-bold text-black shadow-sm transition">
+        All Evidence
+      </button>
+      <button type="button" data-filter="witness-voice"
+              class="feed-pill shrink-0 rounded-full border border-zinc-700 bg-zinc-900 px-4 py-1.5 text-xs font-medium text-zinc-300 transition hover:border-emerald-500/50 hover:text-white">
+        📢 Witness Voice
+      </button>
+      <button type="button" data-filter="citizen-talk"
+              class="feed-pill shrink-0 rounded-full border border-zinc-700 bg-zinc-900 px-4 py-1.5 text-xs font-medium text-zinc-300 transition hover:border-emerald-500/50 hover:text-white">
+        💬 Citizen Talk
+      </button>
+      <button type="button" data-filter="zk-verified"
+              class="feed-pill shrink-0 flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-4 py-1.5 text-xs font-semibold text-emerald-400 transition hover:bg-emerald-500/20">
+        <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+        </svg>
+        ZK Verified Only
+      </button>
+    </div>
   </div>
 </div>
-  
 
-  <!-- ====================== MAIN CONTAINER ====================== -->
-<main id="main-content" class="mx-auto max-w-6xl px-3 pb-6 pt-1 sm:px-4 md:pt-2">
+<!-- ====================== MAIN CONTAINER ====================== -->
+<main id="main-content" class="mx-auto max-w-6xl px-4 pb-16 pt-6 sm:px-6">
 
-  <!-- Flash Feed + Global Search -->
-  <div class="mb-3 space-y-2">
-    <div class="ticker-wrap relative overflow-hidden rounded-2xl border border-emerald-500/20 bg-zinc-900/90">
-      <div class="absolute bottom-0 left-0 top-0 z-10 flex items-center border-r border-emerald-500/20 bg-zinc-900 px-3">
+  <!-- Breaking + Banner + Search -->
+  <div class="mb-6 space-y-4">
+    <!-- Breaking Ticker -->
+    <div class="ticker-wrap relative overflow-hidden rounded-2xl border border-emerald-500/20 bg-zinc-900/80">
+      <div class="absolute bottom-0 left-0 top-0 z-10 flex items-center border-r border-emerald-500/20 bg-zinc-900 px-4">
         <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">⚡ Breaking</span>
       </div>
-      <div class="overflow-hidden whitespace-nowrap py-2.5 pl-28">
+      <div class="overflow-hidden whitespace-nowrap py-3 pl-28">
         <div id="ticker-content" class="ticker-track inline-block text-sm text-zinc-300" aria-live="polite">
           <span class="ticker-item">Loading latest headlines...</span>
         </div>
       </div>
     </div>
-    
-    <div id="focus-banner" class="mb-2 flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-950/30 px-3 py-2 text-xs text-zinc-300 sm:text-sm">
-      <span class="shrink-0" aria-hidden="true">🎯</span>
-      <p class="min-w-0 flex-1 leading-snug">
+
+    <!-- Focus Banner -->
+    <div id="focus-banner" class="flex items-center gap-3 rounded-xl border border-emerald-500/20 bg-emerald-950/20 px-4 py-3 text-sm">
+      <span class="shrink-0 text-emerald-400">🎯</span>
+      <p class="min-w-0 flex-1 leading-snug text-zinc-300">
         <span class="font-medium text-emerald-300">Social citizen journalism.</span>
         <span class="text-zinc-400"> Anyone can report · only sealed records stay public.</span>
       </p>
-      <button type="button" id="dismiss-focus-banner" class="shrink-0 rounded-md p-1 text-zinc-500 hover:bg-zinc-800 hover:text-white" aria-label="Dismiss">✕</button>
+      <button type="button" id="dismiss-focus-banner" class="shrink-0 rounded-lg p-1.5 text-zinc-500 transition hover:bg-zinc-800 hover:text-white" aria-label="Dismiss">✕</button>
     </div>
 
-    <div class="relative w-full">
-      <label for="global-search" class="sr-only">Search</label>
+    <!-- Search -->
+    <div class="relative">
       <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-zinc-500">
-        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
         </svg>
       </div>
-      <input type="search" id="global-search" placeholder="Search reports, news, hashtags, or people..." class="w-full rounded-2xl border border-zinc-700 bg-zinc-900/90 py-3 pl-12 pr-4 text-sm text-white placeholder-zinc-500 transition hover:border-emerald-500/50 focus:border-emerald-500 focus:outline-none" autocomplete="off" aria-label="Search reports, news, hashtags, or people">
+      <input type="search" id="global-search" 
+             placeholder="Search reports, news, hashtags, or people..."
+             class="w-full rounded-2xl border border-zinc-700 bg-zinc-900/80 py-3.5 pl-11 pr-4 text-sm text-white placeholder-zinc-500 transition focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/20"
+             autocomplete="off">
     </div>
   </div>
 
-<style>
-  @keyframes spin { to { transform: rotate(360deg); } }
-</style>
-
-  <!-- Navigation: 5 tabs + More -->
-  <div class="mb-6 flex items-center gap-2">
-    <div class="no-scrollbar overflow-x-auto">
-      <nav id="main-nav" class="flex items-center gap-2 pb-1" role="tablist" aria-label="Main navigation">
-        <button type="button" data-tab="square" role="tab" aria-selected="true" aria-controls="public-square" class="nav-tab active flex h-11 min-w-[110px] shrink-0 flex-col items-center justify-center rounded-2xl border border-emerald-400/50 bg-emerald-500 px-4 text-xs font-semibold text-black shadow-md transition hover:scale-[1.02] sm:text-sm">
+  <!-- Main Navigation Tabs -->
+  <div class="mb-8 flex items-center gap-2">
+    <div class="no-scrollbar flex-1 overflow-x-auto">
+      <nav id="main-nav" class="flex items-center gap-2" role="tablist">
+        <button type="button" data-tab="square" role="tab" aria-selected="true"
+                class="nav-tab active flex h-12 min-w-[120px] shrink-0 flex-col items-center justify-center rounded-2xl bg-emerald-500 px-4 text-xs font-semibold text-black shadow-lg shadow-emerald-500/20 transition sm:text-sm">
           <span data-i18n="publicSquareTab">Public Square</span>
-          <span class="hidden text-[10px] font-normal opacity-90 sm:block" data-i18n="publicSquareDesc">Share what you see</span>
+          <span class="hidden text-[10px] font-normal opacity-80 sm:block">Share what you see</span>
         </button>
-        <button type="button" data-tab="ledger" role="tab" aria-selected="false" aria-controls="evidence-ledger" class="nav-tab flex h-11 min-w-[110px] shrink-0 flex-col items-center justify-center rounded-2xl border border-emerald-700/60 bg-emerald-950/70 px-4 text-xs font-semibold text-emerald-300 transition hover:scale-[1.02] hover:bg-emerald-900/50 sm:text-sm">
+        <button type="button" data-tab="ledger" role="tab"
+                class="nav-tab flex h-12 min-w-[120px] shrink-0 flex-col items-center justify-center rounded-2xl border border-zinc-700 bg-zinc-900 px-4 text-xs font-medium text-zinc-300 transition hover:border-zinc-500 sm:text-sm">
           <span data-i18n="evidenceLedgerTab">Public Record</span>
-          <span class="hidden text-[10px] font-normal text-emerald-400/80 sm:block" data-i18n="evidenceLedgerDesc">Protected reports</span>
+          <span class="hidden text-[10px] text-zinc-500 sm:block">Protected reports</span>
         </button>
-        <button type="button" data-tab="arena" role="tab" aria-selected="false" aria-controls="live-arena" class="nav-tab flex h-11 min-w-[100px] shrink-0 flex-col items-center justify-center rounded-2xl border border-sky-700 bg-sky-900/70 px-4 text-xs font-semibold text-sky-300 transition hover:scale-[1.02] hover:bg-sky-800 sm:text-sm">
+        <button type="button" data-tab="arena" role="tab"
+                class="nav-tab flex h-12 min-w-[110px] shrink-0 flex-col items-center justify-center rounded-2xl border border-sky-700/60 bg-sky-950/50 px-4 text-xs font-medium text-sky-300 transition hover:border-sky-500 sm:text-sm">
           <span data-i18n="liveArenaTab">Live Arena</span>
-          <span class="hidden text-[10px] font-normal text-sky-400 sm:block" data-i18n="liveArenaDesc">Live reporting</span>
+          <span class="hidden text-[10px] text-sky-400/70 sm:block">Live reporting</span>
         </button>
-        <button type="button" data-tab="mycircle" role="tab" aria-selected="false" aria-controls="mycircle" class="nav-tab flex h-11 min-w-[100px] shrink-0 flex-col items-center justify-center rounded-2xl border border-zinc-700 bg-zinc-900 px-4 text-xs font-semibold text-zinc-200 transition hover:scale-[1.02] hover:border-zinc-500 sm:text-sm">
+        <button type="button" data-tab="mycircle" role="tab"
+                class="nav-tab flex h-12 min-w-[110px] shrink-0 flex-col items-center justify-center rounded-2xl border border-zinc-700 bg-zinc-900 px-4 text-xs font-medium text-zinc-300 transition hover:border-zinc-500 sm:text-sm">
           <span data-i18n="myCircleTab">My Circle</span>
-          <span class="hidden text-[10px] font-normal text-zinc-400 sm:block" data-i18n="myCircleDesc">People you trust</span>
+          <span class="hidden text-[10px] text-zinc-500 sm:block">People you trust</span>
         </button>
-        <button type="button" data-tab="witness" role="tab" aria-selected="false" aria-controls="witness" class="nav-tab flex h-11 min-w-[110px] shrink-0 flex-col items-center justify-center rounded-2xl border border-amber-700 bg-amber-900/70 px-4 text-xs font-semibold text-amber-300 transition hover:scale-[1.02] hover:bg-amber-800 sm:text-sm">
+        <button type="button" data-tab="witness" role="tab"
+                class="nav-tab flex h-12 min-w-[120px] shrink-0 flex-col items-center justify-center rounded-2xl border border-amber-700/50 bg-amber-950/40 px-4 text-xs font-medium text-amber-300 transition hover:border-amber-500 sm:text-sm">
           <span data-i18n="verifiedWitnessesTab">Trusted Voices</span>
-          <span class="hidden text-[10px] font-normal text-amber-400 sm:block" data-i18n="verifiedWitnessesDesc">Verified reporters</span>
+          <span class="hidden text-[10px] text-amber-400/70 sm:block">Verified reporters</span>
         </button>
       </nav>
     </div>
 
+    <!-- More menu -->
     <div class="relative shrink-0">
-      <button id="more-btn" type="button" aria-expanded="false" aria-haspopup="true" class="flex h-11 items-center gap-1.5 rounded-2xl border border-zinc-700 bg-zinc-900 px-4 text-xs font-semibold text-zinc-200 transition hover:scale-[1.02] hover:border-emerald-500/50 hover:bg-zinc-800 sm:text-sm">
+      <button id="more-btn" type="button"
+              class="flex h-12 items-center gap-1.5 rounded-2xl border border-zinc-700 bg-zinc-900 px-4 text-xs font-medium text-zinc-300 transition hover:border-emerald-500/40 sm:text-sm">
         <span data-i18n="moreOptionsBtn">More</span>
-        <svg class="h-3.5 w-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <svg class="h-3.5 w-3.5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
         </svg>
       </button>
-      <div id="more-menu" class="absolute right-0 top-full z-[9999] mt-2 hidden w-52 rounded-2xl border border-zinc-700 bg-zinc-900/95 py-1.5 shadow-2xl backdrop-blur-xl" role="menu">
-        <a href="/my-testimonies" class="mx-1 block rounded-lg px-4 py-2.5 text-sm text-white hover:bg-zinc-800" role="menuitem">My Reports</a>
-        <a href="/groups" class="mx-1 block rounded-lg px-4 py-2.5 text-sm text-white hover:bg-zinc-800" role="menuitem">Groups</a>
-        <a href="/witness-voice" class="mx-1 block rounded-lg px-4 py-2.5 text-sm text-white hover:bg-zinc-800" role="menuitem">Witness Voice</a>
-        <div class="mx-3 my-1 h-px bg-zinc-800" role="separator"></div>
-        <a href="/about" class="mx-1 block rounded-lg px-4 py-2.5 text-sm text-white hover:bg-zinc-800" role="menuitem">About</a>
-        <a href="/privacy" class="mx-1 block rounded-lg px-4 py-2.5 text-sm text-white hover:bg-zinc-800" role="menuitem">Privacy</a>
-        <a href="/terms" class="mx-1 block rounded-lg px-4 py-2.5 text-sm text-white hover:bg-zinc-800" role="menuitem">Terms</a>
-        <a href="/safety" class="mx-1 block rounded-lg px-4 py-2.5 text-sm text-white hover:bg-zinc-800" role="menuitem">Safety</a>
+      <div id="more-menu" class="absolute right-0 top-full z-50 mt-2 hidden w-52 rounded-2xl border border-zinc-700 bg-zinc-900/95 py-1.5 shadow-2xl backdrop-blur-xl">
+        <a href="/my-testimonies" class="block rounded-lg px-4 py-2.5 text-sm text-zinc-200 hover:bg-zinc-800">My Reports</a>
+        <a href="/groups" class="block rounded-lg px-4 py-2.5 text-sm text-zinc-200 hover:bg-zinc-800">Groups</a>
+        <a href="/witness-voice" class="block rounded-lg px-4 py-2.5 text-sm text-zinc-200 hover:bg-zinc-800">Witness Voice</a>
+        <div class="my-1 border-t border-zinc-800"></div>
+        <a href="/about" class="block rounded-lg px-4 py-2.5 text-sm text-zinc-200 hover:bg-zinc-800">About</a>
+        <a href="/privacy" class="block rounded-lg px-4 py-2.5 text-sm text-zinc-200 hover:bg-zinc-800">Privacy</a>
+        <a href="/terms" class="block rounded-lg px-4 py-2.5 text-sm text-zinc-200 hover:bg-zinc-800">Terms</a>
+        <a href="/safety" class="block rounded-lg px-4 py-2.5 text-sm text-zinc-200 hover:bg-zinc-800">Safety</a>
       </div>
     </div>
   </div>
 
-  <!-- ========== 1. PUBLIC SQUARE ========== -->
-  <section id="public-square" data-view="citizenTalkView" role="tabpanel" aria-label="Public Square">
-    <div class="glass mb-8 rounded-3xl border border-zinc-800/80 p-5 shadow-xl sm:p-8">
+  <!-- ========== PUBLIC SQUARE ========== -->
+  <section id="public-square" data-view="citizenTalkView" role="tabpanel">
+    <div class="glass mb-10 rounded-3xl border border-zinc-800/80 p-6 shadow-xl sm:p-8">
+      
+      <input type="file" id="photoInput" accept="image/jpeg,image/png,image/webp" class="hidden">
+      <input type="file" id="videoInput" accept="video/mp4,video/webm,video/quicktime" class="hidden">
+      <input type="file" id="audioInput" accept="audio/webm,audio/mp3,audio/mpeg,audio/wav,audio/ogg" class="hidden">
 
-      <!-- ====================== FULLY ISOLATED MEDIA INPUTS ====================== -->
-      <input type="file" id="photoInput" 
-             accept="image/jpeg,image/png,image/webp" 
-             class="hidden" 
-             aria-hidden="true">
-
-      <input type="file" id="videoInput" 
-             accept="video/mp4,video/webm,video/quicktime" 
-             class="hidden" 
-             aria-hidden="true">
-
-      <input type="file" id="audioInput" 
-             accept="audio/webm,audio/mp3,audio/mpeg,audio/wav,audio/ogg" 
-             class="hidden" 
-             aria-hidden="true">
-
-      <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 class="flex items-center gap-2 text-lg font-semibold text-white sm:text-xl" data-i18n="shareTestimonyTitle">
-          Share what you saw
-        </h2>
-        <div class="flex items-center gap-2">
-          <label for="targetFeedSelect" class="hidden text-xs text-zinc-400 sm:inline" data-i18n="feedLabel">Post to:</label>
-          <select id="targetFeedSelect" class="cursor-pointer rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs font-medium text-emerald-400 focus:border-emerald-500 focus:outline-none sm:text-sm" aria-label="Select target feed">
-            <option value="citizen-talk" data-i18n="feedCitizenTalk">🗣️ Citizen Talk</option>
-            <option value="witness-voice" data-i18n="feedWitnessVoice">🛡️ Witness Voice</option>
-          </select>
-        </div>
+      <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <h2 class="text-xl font-bold text-white" data-i18n="shareTestimonyTitle">Share what you saw</h2>
+        <select id="targetFeedSelect" class="rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-emerald-400 focus:border-emerald-500 focus:outline-none">
+          <option value="citizen-talk">🗣️ Citizen Talk</option>
+          <option value="witness-voice">🛡️ Witness Voice</option>
+        </select>
       </div>
 
-      <label for="testimonyTitle" class="sr-only">Report title</label>
-      <input type="text" id="testimonyTitle" maxlength="120" placeholder="Add a short title (optional)" class="mb-4 w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3.5 text-base text-white placeholder-zinc-500 transition focus:border-emerald-500 focus:outline-none sm:px-5" data-i18n-placeholder="testimonyTitlePlaceholder">
+      <input type="text" id="testimonyTitle" maxlength="120" 
+             placeholder="Add a short title (optional)"
+             class="mb-4 w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-5 py-3.5 text-base text-white placeholder-zinc-500 focus:border-emerald-500 focus:outline-none transition">
 
-      <label for="mainInput" class="sr-only">Report content</label>
-      <textarea id="mainInput" rows="5" maxlength="2000" class="w-full resize-none rounded-2xl border border-zinc-700 bg-zinc-900 p-4 text-base text-white placeholder-zinc-500 transition focus:border-emerald-500 focus:outline-none sm:p-5 sm:text-lg" data-i18n-placeholder="mainInputPlaceholder" placeholder="What did you see or experience? Share the facts..."></textarea>
-      <div class="mb-2 mt-1 flex justify-end">
+      <textarea id="mainInput" rows="5" maxlength="2000"
+                placeholder="What did you see or experience? Share the facts..."
+                class="w-full resize-none rounded-2xl border border-zinc-700 bg-zinc-900 p-5 text-base text-white placeholder-zinc-500 focus:border-emerald-500 focus:outline-none transition"></textarea>
+      <div class="mb-5 mt-1.5 flex justify-end">
         <span id="char-count" class="text-xs text-zinc-500">0 / 2000</span>
       </div>
 
-      <!-- ====================== SEPARATED MEDIA BUTTONS ====================== -->
-      <div class="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
-        
-        <!-- Photo (Protected working path) -->
-        <button id="btn-photo" type="button" 
-                class="flex items-center justify-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-800 px-4 py-3.5 font-medium text-emerald-400 transition hover:border-emerald-500 hover:bg-zinc-700 active:scale-95"
-                aria-label="Add photo">
-          <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+      <!-- Media Buttons -->
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <button id="btn-photo" type="button"
+                class="flex items-center justify-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 font-medium text-emerald-400 transition hover:border-emerald-500 hover:bg-zinc-800">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
           </svg>
-          <span>Add Photo</span>
+          Add Photo
         </button>
-
-        <!-- Video (New isolated path) -->
-        <button id="btn-video" type="button" 
-                class="flex items-center justify-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-800 px-4 py-3.5 font-medium text-sky-400 transition hover:border-sky-500 hover:bg-zinc-700 active:scale-95"
-                aria-label="Add video">
-          <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                  d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+        <button id="btn-video" type="button"
+                class="flex items-center justify-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 font-medium text-sky-400 transition hover:border-sky-500 hover:bg-zinc-800">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
           </svg>
-          <span>Add Video</span>
+          Add Video
         </button>
-
-        <!-- Voice / Audio -->
-        <button id="btn-voice" type="button" 
-                class="flex items-center justify-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-800 px-4 py-3.5 font-medium text-amber-400 transition hover:border-amber-500 hover:bg-zinc-700 active:scale-95"
-                aria-label="Record or add voice">
-          <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                  d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z"/>
+        <button id="btn-voice" type="button"
+                class="flex items-center justify-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 font-medium text-amber-400 transition hover:border-amber-500 hover:bg-zinc-800">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z"/>
           </svg>
-          <span>Record Voice</span>
+          Record Voice
         </button>
       </div>
 
-      <div id="preview-area" class="mt-6 flex min-h-[100px] flex-wrap items-center justify-center gap-4 rounded-2xl border border-dashed border-zinc-700 bg-zinc-900/40 p-4 text-sm text-zinc-500" aria-live="polite">
-        <div id="preview-empty" class="py-2 text-center">
-          <p data-i18n="previewAreaText">Preview will appear here...</p>
+      <!-- Preview -->
+      <div id="preview-area" class="mt-6 flex min-h-[100px] flex-wrap items-center justify-center gap-4 rounded-2xl border border-dashed border-zinc-700 bg-zinc-900/40 p-5 text-sm text-zinc-500">
+        <div id="preview-empty" class="text-center">
+          <p>Preview will appear here...</p>
           <p class="mt-1 text-xs text-zinc-600">Photos, videos, or voice notes show after you add them</p>
         </div>
       </div>
 
-      <div id="voice-recorder-bar" class="glass mt-4 hidden rounded-2xl border border-emerald-500/30 p-4" role="region" aria-label="Voice recorder">
+      <!-- Voice Recorder -->
+      <div id="voice-recorder-bar" class="mt-4 hidden rounded-2xl border border-emerald-500/30 bg-zinc-900/60 p-4">
         <div class="flex flex-wrap items-center gap-3">
           <div class="flex min-w-[70px] items-center gap-2">
-            <span id="rec-indicator" class="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500" aria-hidden="true"></span>
-            <span id="rec-timer" class="font-mono text-sm text-emerald-400" aria-live="polite">00:00</span>
+            <span id="rec-indicator" class="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500"></span>
+            <span id="rec-timer" class="font-mono text-sm text-emerald-400">00:00</span>
           </div>
           <button id="verify-voice-btn" type="button" class="rounded-xl bg-blue-600/80 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-600">🛡️ Verify</button>
-          <canvas id="rec-waveform" width="180" height="36" class="max-w-[200px] flex-1 rounded bg-zinc-900/80" aria-hidden="true"></canvas>
+          <canvas id="rec-waveform" width="180" height="36" class="max-w-[200px] flex-1 rounded bg-zinc-950"></canvas>
           <div class="ml-auto flex items-center gap-2">
             <button id="rec-pause-btn" type="button" class="rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700">⏸ Pause</button>
             <button id="rec-stop-btn" type="button" class="rounded-xl bg-red-600/80 px-3 py-1.5 text-xs text-white hover:bg-red-600">⏹ Stop</button>
@@ -493,14 +494,15 @@
         <audio id="rec-replay-audio" class="hidden"></audio>
       </div>
 
-      <button id="postButton" type="button" class="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 py-4 text-lg font-bold text-white shadow-lg transition hover:bg-emerald-500 active:scale-[0.98]">
+      <button id="postButton" type="button"
+              class="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 py-4 text-base font-bold text-black shadow-lg shadow-emerald-500/25 transition hover:bg-emerald-400 active:scale-[0.98]">
         <span data-i18n="postButton">Publish Report</span>
       </button>
     </div>
 
-    <!-- Upload Progress Bar -->
-    <div id="upload-progress-container" class="mt-4 hidden" aria-hidden="true">
-      <div class="flex justify-between text-xs text-zinc-400 mb-1">
+    <!-- Upload Progress -->
+    <div id="upload-progress-container" class="mb-6 hidden">
+      <div class="mb-1 flex justify-between text-xs text-zinc-400">
         <span id="upload-status-text">Uploading media...</span>
         <span id="upload-progress-pct">0%</span>
       </div>
@@ -509,21 +511,22 @@
       </div>
     </div>
 
-    <!-- Feed Container inside Public Square panel -->
-    <div id="feed-container" class="mb-4 space-y-6" aria-label="Reports feed">
-      <div class="mb-4 flex items-center justify-between px-2">
-        <h3 id="feed-title" class="flex items-center gap-2 text-lg font-bold text-white" data-i18n="recentTestimoniesTitle">📜 Recent Reports</h3>
+    <!-- Recent Reports -->
+    <div id="feed-container" class="space-y-6">
+      <div class="flex items-center justify-between">
+        <h3 id="feed-title" class="text-lg font-bold text-white" data-i18n="recentTestimoniesTitle">📜 Recent Reports</h3>
         <div class="flex items-center gap-2 text-xs text-zinc-400">
-          <span data-i18n="sortLabel">Sort:</span>
-          <select id="feedSortSelect" class="cursor-pointer rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 py-1.5 text-zinc-300 focus:border-emerald-500 focus:outline-none" aria-label="Sort feed">
-            <option value="latest" data-i18n="sortLatest">Latest</option>
-            <option value="verified" data-i18n="sortVerified">Verified First</option>
-            <option value="trending" data-i18n="sortTrending">Trending</option>
+          <span>Sort:</span>
+          <select id="feedSortSelect" class="rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 py-1.5 text-zinc-300 focus:border-emerald-500 focus:outline-none">
+            <option value="latest">Latest</option>
+            <option value="verified">Verified First</option>
+            <option value="trending">Trending</option>
           </select>
         </div>
       </div>
       <div id="testimonies-feed" class="space-y-4">
-        <div class="glass animate-pulse space-y-4 rounded-2xl border border-zinc-800/80 p-6" aria-hidden="true">
+        <!-- Loading skeleton -->
+        <div class="animate-pulse space-y-4 rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6">
           <div class="flex items-center gap-3">
             <div class="h-10 w-10 rounded-full bg-zinc-800"></div>
             <div class="flex-1 space-y-2">
@@ -538,112 +541,149 @@
     </div>
   </section>
 
-  <!-- ========== 2. PUBLIC RECORD ========== -->
-  <section id="evidence-ledger" class="hidden space-y-6" role="tabpanel" aria-label="Public Record">
-    <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-      <div>
-        <h2 class="text-xl font-bold text-emerald-400 sm:text-2xl">Public Record</h2>
-        <p class="mt-0.5 text-xs text-zinc-400">Protected • Timestamped • Cannot be changed</p>
-      </div>
-      <div class="flex flex-wrap items-center gap-2">
-        <span id="ledger-chain-status" class="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1 text-xs font-medium text-zinc-400">
-          Chain: —
-        </span>
-        <button id="refreshLedgerBtn" type="button" class="flex h-10 items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 px-4 text-sm font-medium transition hover:border-emerald-500/50 hover:bg-zinc-800">
-          🔄 Refresh
-        </button>
-      </div>
-    </div>
-    <div class="glass flex items-start gap-3 rounded-2xl border border-emerald-500/30 p-4">
-      <div class="mt-0.5 text-xl" aria-hidden="true">🛡️</div>
-      <div class="text-sm leading-relaxed text-zinc-300">
-        <p class="mb-1 font-medium text-emerald-400">Your reports stay safe</p>
-        <p class="text-xs text-zinc-400">
-          Every report is automatically sealed and linked. Once published, the original cannot be edited or deleted.
-        </p>
-      </div>
-    </div>
-    <div id="ledger-list" class="space-y-4">
-      <!-- content loads dynamically -->
-    </div>
-  </section>
 
-  <!-- ========== 3. LIVE ARENA ========== -->
-  <section id="live-arena" class="hidden space-y-8" role="tabpanel" aria-label="Live Arena">
-    <div class="mx-auto max-w-lg space-y-5 text-center">
-      <div>
-        <h2 class="text-2xl font-bold text-sky-400 sm:text-3xl">Live Arena</h2>
-        <p class="mt-1 text-sm text-zinc-400">Real-time community reporting</p>
-      </div>
-      <div class="glass rounded-3xl border border-sky-500/20 p-6">
-        <div class="mb-2 flex justify-between text-sm">
-          <span class="text-zinc-300">Verified participants</span>
-          <span class="font-mono text-sky-400"><span id="verifiedCount">0</span> / 500</span>
-        </div>
-        <div class="h-3 overflow-hidden rounded-full bg-zinc-800">
-          <div id="verifiedProgress" class="h-full bg-gradient-to-r from-sky-500 to-cyan-400 transition-all duration-700" style="width: 0%"></div>
-        </div>
-        <p id="progressText" class="mt-3 text-xs text-zinc-400">Loading progress…</p>
-      </div>
-      <button id="notifyArenaBtn" type="button" class="w-full rounded-2xl bg-gradient-to-r from-rose-500 to-pink-500 px-8 py-3.5 font-bold text-white shadow-lg transition hover:from-rose-400 hover:to-pink-400 active:scale-[0.98] sm:w-auto">
-        🔔 Notify me when Arena opens
+<!-- ========== 2. PUBLIC RECORD ========== -->
+<section id="evidence-ledger" class="hidden space-y-6" role="tabpanel" aria-label="Public Record">
+  <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+    <div>
+      <h2 class="text-2xl font-bold text-emerald-400">Public Record</h2>
+      <p class="mt-1 text-sm text-zinc-400">Protected • Timestamped • Cannot be changed</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-3">
+      <span id="ledger-chain-status" class="rounded-full border border-zinc-700 bg-zinc-900 px-3.5 py-1.5 text-xs font-medium text-zinc-400">
+        Chain: —
+      </span>
+      <button id="refreshLedgerBtn" type="button"
+              class="flex h-10 items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 px-4 text-sm font-medium text-zinc-300 transition hover:border-emerald-500/50 hover:bg-zinc-800">
+        🔄 Refresh
       </button>
     </div>
-  </section>
+  </div>
 
-  <!-- ========== 4. MY CIRCLE ========== -->
-  <section id="mycircle" class="hidden space-y-6" role="tabpanel" aria-label="My Circle">
-    <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-      <div>
-        <h2 class="text-xl font-bold text-white sm:text-2xl">My Circle</h2>
-        <p class="mt-0.5 text-xs text-zinc-400">People you follow and trust</p>
-      </div>
-      <span id="circle-tier-badge" class="inline-flex items-center rounded-full border border-zinc-700 bg-zinc-800 px-3 py-1 text-xs font-semibold text-zinc-300">
-        Standard
-      </span>
+  <div class="glass flex items-start gap-4 rounded-2xl border border-emerald-500/25 p-5">
+    <div class="text-2xl" aria-hidden="true">🛡️</div>
+    <div>
+      <p class="font-medium text-emerald-400">Your reports stay safe</p>
+      <p class="mt-1 text-sm text-zinc-400 leading-relaxed">
+        Every report is automatically sealed and linked. Once published, the original cannot be edited or deleted.
+      </p>
     </div>
-    <div id="circle-upgrade-prompt" class="glass space-y-4 rounded-2xl border border-zinc-700/80 p-5">
-      <p class="text-sm text-zinc-300">Verify your account to unlock stronger circle features.</p>
-      <div class="flex flex-wrap gap-2">
-        <button type="button" id="startPhoneVerificationBtn" class="rounded-xl border border-emerald-500/50 bg-emerald-600/20 px-4 py-2 text-sm font-medium text-emerald-400 transition hover:bg-emerald-600/30">
-          📱 Phone → Citizen Circle
-        </button>
-        <button type="button" id="startZKVerificationBtn" class="rounded-xl border border-amber-500/50 bg-amber-600/20 px-4 py-2 text-sm font-medium text-amber-400 transition hover:bg-amber-600/30">
-          🛡️ Higher Trust → Witness Circle
-        </button>
-      </div>
-    </div>
-    <div class="flex gap-2 border-b border-zinc-800 pb-1" role="tablist" aria-label="Circle filters">
-      <button type="button" data-circle-tab="following" class="border-b-2 border-emerald-500 px-4 py-2 text-sm font-medium text-emerald-400">Following</button>
-      <button type="button" data-circle-tab="followers" class="px-4 py-2 text-sm font-medium text-zinc-400 hover:text-white">Followers</button>
-      <button type="button" data-circle-tab="trusted" class="px-4 py-2 text-sm font-medium text-zinc-400 hover:text-white">Trusted</button>
-    </div>
-    <div id="circle-list" class="space-y-3">
-      <div class="py-12 text-center text-sm text-zinc-500">Your circle is empty. Follow voices you trust.</div>
-    </div>
-  </section>
+  </div>
 
-  <!-- ========== 5. TRUSTED VOICES ========== -->
-  <section id="witness" class="hidden space-y-6" role="tabpanel" aria-label="Trusted Voices">
-    <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-      <div>
-        <h2 class="text-xl font-bold text-amber-400 sm:text-2xl">Trusted Voices</h2>
-        <p class="mt-0.5 text-xs text-zinc-400">Verified reporters and higher-trust accounts</p>
+  <div id="ledger-list" class="space-y-4">
+    <!-- content loads dynamically -->
+  </div>
+</section>
+
+<!-- ========== 3. LIVE ARENA ========== -->
+<section id="live-arena" class="hidden" role="tabpanel" aria-label="Live Arena">
+  <div class="mx-auto max-w-lg space-y-8 text-center">
+    <div>
+      <h2 class="text-3xl font-bold text-sky-400">Live Arena</h2>
+      <p class="mt-2 text-sm text-zinc-400">Real-time community reporting</p>
+    </div>
+
+    <div class="glass rounded-3xl border border-sky-500/20 p-7">
+      <div class="mb-3 flex justify-between text-sm">
+        <span class="text-zinc-300">Verified participants</span>
+        <span class="font-mono text-sky-400">
+          <span id="verifiedCount">0</span> / 500
+        </span>
       </div>
-      <input type="search" id="witness-search" placeholder="Search trusted voices…" class="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:border-amber-500 focus:outline-none sm:w-64" aria-label="Search trusted voices">
+      <div class="h-3 overflow-hidden rounded-full bg-zinc-800">
+        <div id="verifiedProgress" class="h-full bg-gradient-to-r from-sky-500 to-cyan-400 transition-all duration-700" style="width: 0%"></div>
+      </div>
+      <p id="progressText" class="mt-4 text-xs text-zinc-400">Loading progress…</p>
     </div>
-    <div class="flex flex-wrap gap-2" id="witness-filters" role="group" aria-label="Verification filters">
-      <button type="button" data-filter="all" class="rounded-full border border-amber-500/40 bg-amber-500/20 px-3 py-1.5 text-xs font-medium text-amber-400">All</button>
-      <button type="button" data-filter="zk" class="rounded-full border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-300 hover:border-amber-500/50">Higher Trust</button>
-      <button type="button" data-filter="phone" class="rounded-full border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-300 hover:border-amber-500/50">Phone verified</button>
+
+    <button id="notifyArenaBtn" type="button"
+            class="w-full rounded-2xl bg-gradient-to-r from-rose-500 to-pink-500 px-8 py-4 font-bold text-white shadow-lg shadow-rose-500/25 transition hover:from-rose-400 hover:to-pink-400 active:scale-[0.98] sm:w-auto">
+      🔔 Notify me when Arena opens
+    </button>
+  </div>
+</section>
+
+<!-- ========== 4. MY CIRCLE ========== -->
+<section id="mycircle" class="hidden space-y-6" role="tabpanel" aria-label="My Circle">
+  <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+    <div>
+      <h2 class="text-2xl font-bold text-white">My Circle</h2>
+      <p class="mt-1 text-sm text-zinc-400">People you follow and trust</p>
     </div>
-    <div id="verified-witnesses-grid" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      <!-- content loads dynamically -->
+    <span id="circle-tier-badge" class="inline-flex items-center rounded-full border border-zinc-700 bg-zinc-800 px-3.5 py-1.5 text-xs font-semibold text-zinc-300">
+      Standard
+    </span>
+  </div>
+
+  <div id="circle-upgrade-prompt" class="glass space-y-4 rounded-2xl border border-zinc-700/70 p-6">
+    <p class="text-sm text-zinc-300">Verify your account to unlock stronger circle features.</p>
+    <div class="flex flex-wrap gap-3">
+      <button type="button" id="startPhoneVerificationBtn"
+              class="rounded-xl border border-emerald-500/50 bg-emerald-600/15 px-4 py-2.5 text-sm font-medium text-emerald-400 transition hover:bg-emerald-600/25">
+        📱 Phone → Citizen Circle
+      </button>
+      <button type="button" id="startZKVerificationBtn"
+              class="rounded-xl border border-amber-500/50 bg-amber-600/15 px-4 py-2.5 text-sm font-medium text-amber-400 transition hover:bg-amber-600/25">
+        🛡️ Higher Trust → Witness Circle
+      </button>
     </div>
-  </section>
+  </div>
+
+  <div class="flex gap-1 border-b border-zinc-800" role="tablist">
+    <button type="button" data-circle-tab="following"
+            class="border-b-2 border-emerald-500 px-5 py-2.5 text-sm font-medium text-emerald-400">
+      Following
+    </button>
+    <button type="button" data-circle-tab="followers"
+            class="px-5 py-2.5 text-sm font-medium text-zinc-400 transition hover:text-white">
+      Followers
+    </button>
+    <button type="button" data-circle-tab="trusted"
+            class="px-5 py-2.5 text-sm font-medium text-zinc-400 transition hover:text-white">
+      Trusted
+    </button>
+  </div>
+
+  <div id="circle-list" class="space-y-3">
+    <div class="py-16 text-center text-sm text-zinc-500">
+      Your circle is empty. Follow voices you trust.
+    </div>
+  </div>
+</section>
+
+<!-- ========== 5. TRUSTED VOICES ========== -->
+<section id="witness" class="hidden space-y-6" role="tabpanel" aria-label="Trusted Voices">
+  <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+    <div>
+      <h2 class="text-2xl font-bold text-amber-400">Trusted Voices</h2>
+      <p class="mt-1 text-sm text-zinc-400">Verified reporters and higher-trust accounts</p>
+    </div>
+    <input type="search" id="witness-search"
+           placeholder="Search trusted voices…"
+           class="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:border-amber-500 focus:outline-none sm:w-72">
+  </div>
+
+  <div class="flex flex-wrap gap-2" id="witness-filters">
+    <button type="button" data-filter="all"
+            class="rounded-full border border-amber-500/40 bg-amber-500/15 px-4 py-1.5 text-xs font-medium text-amber-400">
+      All
+    </button>
+    <button type="button" data-filter="zk"
+            class="rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs font-medium text-zinc-300 transition hover:border-amber-500/50">
+      Higher Trust
+    </button>
+    <button type="button" data-filter="phone"
+            class="rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs font-medium text-zinc-300 transition hover:border-amber-500/50">
+      Phone verified
+    </button>
+  </div>
+
+  <div id="verified-witnesses-grid" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <!-- content loads dynamically -->
+  </div>
+</section>
 
 </main>
-
 <!-- ====================== APPLICATION FOOTER ====================== -->
 <footer class="mt-8 border-t border-zinc-800/80 bg-zinc-950 pb-12 pt-12 text-zinc-400">
   <div class="mx-auto max-w-6xl px-6">

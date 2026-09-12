@@ -8,7 +8,12 @@ import {
   setPersistence, 
   browserLocalPersistence 
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { 
+  initializeFirestore, 
+  getFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { getStorage } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
 
 // Dynamically target auth domain for custom domain or web.app execution
@@ -27,17 +32,30 @@ const firebaseConfig = {
 // Safe singleton initialization
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// Authentication Instance & Local Persistence Setup
+// Authentication
 const auth = getAuth(app);
 setPersistence(auth, browserLocalPersistence).catch((err) => {
   console.warn("Firebase local persistence fallback:", err?.message || err);
 });
 
-// Database & Storage Instances
-const db = getFirestore(app);
+// ========== SAFE FIRESTORE INITIALIZATION ==========
+let db;
+try {
+  // First try to get already initialized instance
+  db = getFirestore(app);
+} catch (e) {
+  // Not initialized yet → initialize with preferred settings
+  db = initializeFirestore(app, {
+    localCache: persistentLocalCache({
+      tabManager: persistentMultipleTabManager()
+    }),
+    experimentalForceLongPolling: true
+  });
+}
+
 const storage = getStorage(app);
 
-// OAuth Providers Configuration
+// OAuth Providers
 const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({
   prompt: 'select_account'

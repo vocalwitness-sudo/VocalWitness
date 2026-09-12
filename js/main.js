@@ -1,4 +1,4 @@
-// js/main.js -
+import { db, auth, storage } from './firebase-config.js';
 import { state, updateAppState, isUserAuthenticated } from './app-state.js';
 import { initAuth, requireAuth, updateUIForAuthState, bindHeaderEvents } from "./auth.js";
 import { initFeed } from './feed.js';
@@ -15,24 +15,14 @@ import { initComposer } from './composer.js';
 import { createEvidencePack } from './evidence-pack.js';
 import { generateSha256Hash } from './utils.js';
 import {
-    collection,
-    addDoc,
-    doc,
-    getDoc,
-    setDoc,
-    updateDoc,
-    serverTimestamp,
-    query,
-    getDocs,
-    orderBy,
-    limit
+    collection, addDoc, doc, getDoc, setDoc, updateDoc,
+    serverTimestamp, query, getDocs, orderBy, limit
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-
 // Global Module State
 let engineInstance = null;
 let isInitialized = false;
 let listenersInitialized = false;
-let isSwitchingTab = false;
+
 
 // ====================== DATA SAVER HANDLER ======================
 const DATA_SAVER_KEY = 'vw_data_saver';
@@ -803,6 +793,8 @@ function wireTestimonyComposer() {
 
     console.log('✅ Testimony composer wired (photo button handled by composer.js)');
 }
+
+
 // ====================== BOOTSTRAP ======================
 async function bootstrap() {
     if (isInitialized) return;
@@ -833,12 +825,15 @@ async function bootstrap() {
         initProfile?.();
         initFocusBanner();
 
-        if (typeof CitizenTalkEngine === 'function') {
-            engineInstance = new CitizenTalkEngine(db, storage);
-            window.engineInstance = engineInstance;
-            mediaModule.setEngine?.(engineInstance);
-        }
-
+        // Safe engine initialization
+if (typeof CitizenTalkEngine === 'function' && db && storage) {
+    engineInstance = new CitizenTalkEngine(db, storage);
+    window.engineInstance = engineInstance;
+    mediaModule.setEngine?.(engineInstance);
+} else {
+    console.warn("CitizenTalkEngine / db / storage not ready — engine skipped");
+}
+        
         loadDynamicNavigation?.();
         fetchCuratedNews();
 
@@ -858,7 +853,6 @@ async function bootstrap() {
         }
     }
 }
-
 document.addEventListener('DOMContentLoaded', async () => {
     await bootstrap();
     setTimeout(wireTestimonyComposer, 600);
