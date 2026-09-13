@@ -499,110 +499,91 @@ export async function handleAudioSelectAction(event) {
     }
 }
 
-/**
- * Initialize composer using Event Delegation on a stable root.
- * Hardened with null checks + isolated multi-media bindings.
- */
+// ====================== INIT COMPOSER ======================
 export function initComposer() {
-    // Find the most stable root for the composer UI
-    const root = document.getElementById('composer-form') ||
-                 document.getElementById('testimonyForm') ||
-                 document.getElementById('composer-root') ||
-                 document.querySelector('.composer-container') ||
-                 document.body;
+  const root = document.getElementById('composer-form') ||
+               document.getElementById('testimonyForm') ||
+               document.getElementById('public-square') ||
+               document.body;
 
-    // Prevent multiple initializations
-    if (root.dataset.composerInitialized === 'true') {
-        console.log('[composer] Already initialized – skipping');
+  if (root.dataset.composerInitialized === 'true') {
+    console.log('[composer] Already initialized – skipping');
+    return;
+  }
+  root.dataset.composerInitialized = 'true';
+
+  // ===== CLICK DELEGATION =====
+  root.addEventListener('click', (e) => {
+    // Photo button
+    if (e.target.closest('#btn-photo, #btn-attach-photo, [data-action="attach-photo"]')) {
+      e.preventDefault();
+      const input = document.getElementById('photoInput') || document.getElementById('media-input');
+      if (input) input.click();
+      return;
+    }
+
+    // Video button
+    if (e.target.closest('#btn-video, [data-action="attach-video"]')) {
+      e.preventDefault();
+      const input = document.getElementById('videoInput');
+      if (input) input.click();
+      return;
+    }
+
+    // Voice / Audio button
+    if (e.target.closest('#btn-voice, [data-action="record-voice"]')) {
+      e.preventDefault();
+      // Let media.js or main.js handle recording if available
+      if (typeof window.toggleVoiceRecording === 'function') {
+        window.toggleVoiceRecording();
+      }
+      return;
+    }
+
+    // Publish button
+    if (e.target.closest('#postButton, #submitBtn')) {
+      handleComposerSubmit(e);
+    }
+  });
+
+  // ===== FILE INPUT LISTENERS =====
+  const photoInput = document.getElementById('photoInput') || document.getElementById('media-input');
+  if (photoInput && !photoInput.dataset.listenerAttached) {
+    photoInput.dataset.listenerAttached = 'true';
+    photoInput.addEventListener('change', handleImageSelectAction);
+  }
+
+  const videoInput = document.getElementById('videoInput');
+  if (videoInput && !videoInput.dataset.listenerAttached) {
+    videoInput.dataset.listenerAttached = 'true';
+    videoInput.addEventListener('change', handleVideoSelectAction);
+  }
+
+  const audioInput = document.getElementById('audioInput');
+  if (audioInput && !audioInput.dataset.listenerAttached) {
+    audioInput.dataset.listenerAttached = 'true';
+    audioInput.addEventListener('change', handleAudioSelectAction);
+  }
+
+  // ===== AI Analysis (debounced) =====
+  const bodyInput = document.getElementById('mainInput');
+  if (bodyInput && !bodyInput.dataset.aiListenerAttached) {
+    bodyInput.dataset.aiListenerAttached = 'true';
+    bodyInput.addEventListener('input', (e) => {
+      const text = e.target.value.trim();
+      if (text.length < 30) {
+        clearTimeout(aiAnalysisDebounceTimer);
+        clearAiFeedback();
         return;
-    }
-    root.dataset.composerInitialized = 'true';
-
-    // ===== EVENT DELEGATION: One listener for clicks =====
-    root.addEventListener('click', (e) => {
-        // Photo / Media attach button
-        const btnPhoto = e.target.closest('#btn-attach-photo, #btnPhoto, #btn-photo, [data-action="attach-photo"]');
-        if (btnPhoto) {
-            e.preventDefault();
-            e.stopPropagation();
-            const fileInput = document.getElementById('media-input') ||
-                              document.getElementById('photoInput') ||
-                              document.getElementById('media-file-input') ||
-                              document.getElementById('mediaFileInput');
-            if (fileInput) fileInput.click();
-            return;
-        }
-
-        // Post / Submit button
-        const postButton = e.target.closest('#postButton, #submitBtn, button[type="submit"]');
-        if (postButton && (postButton.id === 'postButton' || postButton.id === 'submitBtn' || postButton.type === 'submit')) {
-            handleComposerSubmit(e);
-            return;
-        }
+      }
+      clearTimeout(aiAnalysisDebounceTimer);
+      aiAnalysisDebounceTimer = setTimeout(() => {
+        runRealtimeAiAnalysis(text);
+      }, 900);
     });
+  }
 
-    // ===== SEPARATE MEDIA INPUT BINDINGS (Enforcing Isolation) =====
-    
-    // 1. Photo / Standard Media Input
-    const photoInput = document.getElementById('media-input') ||
-                       document.getElementById('photoInput') ||
-                       document.getElementById('media-file-input') ||
-                       document.getElementById('mediaFileInput');
-    if (photoInput && !photoInput.dataset.listenerAttached) {
-        photoInput.dataset.listenerAttached = 'true';
-        photoInput.addEventListener('change', handleImageSelectAction);
-    }
-
-    // 2. Video Input
-    const videoInput = document.getElementById('videoInput') || document.getElementById('video-input');
-    if (videoInput && !videoInput.dataset.listenerAttached) {
-        videoInput.dataset.listenerAttached = 'true';
-        videoInput.addEventListener('change', handleVideoSelectAction);
-    }
-
-    // 3. Audio Input
-    const audioInput = document.getElementById('audioInput') || document.getElementById('audio-input');
-    if (audioInput && !audioInput.dataset.listenerAttached) {
-        audioInput.dataset.listenerAttached = 'true';
-        audioInput.addEventListener('change', handleAudioSelectAction);
-    }
-
-    // ===== Real-time AI analysis (input events) =====
-    const bodyInput = document.getElementById('mainInput') ||
-                      document.getElementById('postBody') ||
-                      document.getElementById('testimonyBody') ||
-                      document.querySelector('textarea');
-
-    if (bodyInput && !bodyInput.dataset.aiListenerAttached) {
-        bodyInput.dataset.aiListenerAttached = 'true';
-        bodyInput.addEventListener('input', (e) => {
-            const text = e.target.value.trim();
-            if (text.length < 25) {
-                clearTimeout(aiAnalysisDebounceTimer);
-                clearAiFeedback();
-                lastAnalyzedText = '';
-                return;
-            }
-
-            clearTimeout(aiAnalysisDebounceTimer);
-            aiAnalysisDebounceTimer = setTimeout(async () => {
-                if (text === lastAnalyzedText) return;
-                lastAnalyzedText = text;
-                if (bodyInput.value.trim().length >= 25) {
-                    await runRealtimeAiAnalysis(text);
-                }
-            }, 800);
-        });
-    }
-
-    // ===== Form submit (backup + primary for keyboard enter) =====
-    const composerForm = document.getElementById('composer-form') || document.getElementById('testimonyForm');
-    if (composerForm && !composerForm.dataset.listenerAttached) {
-        composerForm.dataset.listenerAttached = 'true';
-        composerForm.addEventListener('submit', handleComposerSubmit);
-    }
-
-    console.log('✅ Testimony composer wired with isolated multi-media pathways');
+  console.log('✅ Composer initialized with isolated media handlers');
 }
 
 /**
