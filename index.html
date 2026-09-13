@@ -908,19 +908,18 @@
   if (typeof window.closeProfileModal !== 'function') {
     window.closeProfileModal = () => closeModal('profileModal');
   }
+window.closeEditProfile = () => closeModal('editProfileModal');
+window.openSupportModal = () => openModal('supportModal');
+window.closeSupportModal = () => closeModal('supportModal');
+window.closeVerificationModal = () => closeModal('phoneVerificationModal');
 
-  window.closeEditProfile = () => closeModal('editProfileModal');
-  window.openSupportModal = () => openModal('supportModal');
-  window.closeSupportModal = () => closeModal('supportModal');
-  window.closeVerificationModal = () => closeModal('phoneVerificationModal');
+window.openPhoneVerificationModal = () => {
+  openModal('phoneVerificationModal');
+  $('phone-step-2')?.classList.add('hidden');
+  $('phone-step-1')?.classList.remove('hidden');
+};
 
-  window.openPhoneVerificationModal = () => {
-    openModal('phoneVerificationModal');
-    $('phone-step-2')?.classList.add('hidden');
-    $('phone-step-1')?.classList.remove('hidden');
-  
-  window.closePhoneVerificationModal = () => closeModal('phoneVerificationModal');
-
+window.closePhoneVerificationModal = () => closeModal('phoneVerificationModal');
   window.openVideoPolicyModal = (msg) => {
     if (msg && $('video-policy-msg')) {
       $('video-policy-msg').textContent = msg;
