@@ -450,6 +450,7 @@ window.publishTestimony = async () => {
       postBtn.classList.remove('opacity-50', 'cursor-not-allowed');
     }
   }
+  };
 
 
 /* ====================== EVIDENCE LEDGER ====================== */
