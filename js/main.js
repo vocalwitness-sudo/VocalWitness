@@ -911,8 +911,18 @@ async function bootstrap() {
   }
 }
 
-/* ====================== DOM READY ====================== */
+  /* ====================== DOM READY ====================== */
 document.addEventListener('DOMContentLoaded', async () => {
-  await bootstrap();
-  setTimeout(wireTestimonyComposer, 500);
+  try {
+    await bootstrap();
+  } catch (err) {
+    console.error('Bootstrap failed:', err);
+  }
+
+  // Wire composer after a short delay to ensure all elements exist
+  setTimeout(() => {
+    if (typeof wireTestimonyComposer === 'function') {
+      wireTestimonyComposer();
+    }
+  }, 500);
 });
