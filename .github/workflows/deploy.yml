@@ -1,12 +1,15 @@
 name: Deploy to Production (Live)
 
 on:
-  workflow_dispatch:          # Only manual — never automatic
+  push:
+    branches:
+      - main
+  workflow_dispatch:          # Still allows manual runs if you want
 
 jobs:
   deploy-live:
     runs-on: ubuntu-latest
-    environment: production   # ← This protects the live site
+    # NO "environment: production"  ← this removes the approval gate
 
     steps:
       - name: Checkout Code
