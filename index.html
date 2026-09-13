@@ -12,11 +12,11 @@
   <link rel="icon" href="./icon-192.png" type="image/png" sizes="192x192">
   <link rel="apple-touch-icon" href="./icon-192.png" sizes="192x192">
   <link rel="icon" href="./logo.png" type="image/png">
-
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
 
+  <!-- Open Graph / Twitter -->
   <meta property="og:title" content="VocalWitness • Truth • Evidence • Public Square">
   <meta property="og:description" content="Privacy First Public Square for Truth and Evidence">
   <meta property="og:image" content="https://vocalwitness.com/logo.png">
@@ -30,21 +30,39 @@
 
   <title data-i18n="pageTitle">VocalWitness • Truth • Evidence • Public Square</title>
 
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="./style.css">
 
+  <!-- External scripts -->
   <script src="https://accounts.google.com/gsi/client" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" defer></script>
   <script src="https://js.paystack.co/v2/inline.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/snarkjs@0.7.0/build/snarkjs.min.js" defer></script>
-  <script type="module" src="./js/main.js?v=2.1"></script>
+
+  <script type="module" src="./js/main.js?v=2.2"></script>
 
   <style>
     :root {
+      /* === Core Palette === */
+      --bg-dark: #0b1120;
+      --bg-elevated: #111827;
+      --bg-card: #1e293b;
+      --primary: #10b981;
+      --primary-hover: #34d399;
+      --primary-glow: rgba(16, 185, 129, 0.25);
+      --border: #1e293b;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+
+      --text-primary: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+
       --header-height-mobile: 102px;
       --header-height-desktop: 72px;
     }
@@ -57,9 +75,11 @@
     }
 
     body {
-      background-color: #0a0f1c !important;
-      color: #ffffff !important;
+      background-color: var(--bg-dark) !important;
+      color: var(--text-primary) !important;
       padding-top: var(--header-height-mobile);
+      font-family: 'Inter', system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
     }
 
     @media (min-width: 768px) {
@@ -68,36 +88,36 @@
       }
     }
 
+    /* Glass / Cards */
     .glass,
     [class*="backdrop-blur"] {
-      background-color: #111827 !important;
-      border: 1px solid #27272a !important;
+      background-color: var(--bg-elevated) !important;
+      border: 1px solid var(--border) !important;
       backdrop-filter: none !important;
       -webkit-backdrop-filter: none !important;
     }
 
     #main-header {
-      background-color: #09090b !important;
-      border-bottom: 1px solid rgba(16, 185, 129, 0.3) !important;
+      background-color: rgba(11, 17, 32, 0.95) !important;
+      border-bottom: 1px solid rgba(16, 185, 129, 0.25) !important;
+      backdrop-filter: blur(12px);
     }
 
-    .rounded-3xl, .rounded-2xl {
-      background-color: #111827 !important;
-      border: 1px solid #27272a !important;
+    .rounded-3xl,
+    .rounded-2xl {
+      background-color: var(--bg-elevated) !important;
+      border: 1px solid var(--border) !important;
     }
 
+    /* Fallback for older browsers */
     @supports not (color: rgb(0 0 0 / 0.5)) {
-      .bg-zinc-950 { background-color: #09090b !important; }
-      .bg-zinc-900 { background-color: #18181b !important; }
-      .bg-zinc-800 { background-color: #27272a !important; }
-      .border-zinc-800 { border-color: #27272a !important; }
-      .border-zinc-700 { border-color: #3f3f46 !important; }
-      .text-zinc-400 { color: #a1a1aa !important; }
+      .bg-zinc-950 { background-color: #0b1120 !important; }
+      .bg-zinc-900 { background-color: #111827 !important; }
+      .bg-zinc-800 { background-color: #1e293b !important; }
+      .border-zinc-800 { border-color: #1e293b !important; }
+      .border-zinc-700 { border-color: #334155 !important; }
+      .text-zinc-400 { color: #94a3b8 !important; }
       .text-emerald-400 { color: #34d399 !important; }
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
     }
   </style>
 </head>
