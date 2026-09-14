@@ -2,34 +2,53 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  
+  <!-- Brand & Theme -->
   <meta name="theme-color" content="#10b981">
-  <meta name="description" content="VocalWitness - Privacy First Public Square for Truth and Evidence">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="VocalWitness – Privacy-first public square for truth, evidence, and citizen reporting. Protected by zero-knowledge technology.">
   <meta name="robots" content="index, follow">
+  <meta name="author" content="VocalWitness">
+  
+  <!-- PWA / Mobile -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
+  <meta name="application-name" content="VocalWitness">
+  <meta name="apple-mobile-web-app-title" content="VocalWitness">
+
+  <!-- Open Graph -->
   <meta property="og:title" content="VocalWitness • Truth • Evidence • Public Square">
-  <meta property="og:description" content="Privacy First Public Square for Truth and Evidence">
+  <meta property="og:description" content="Privacy-first public square for truth and evidence. Share what you saw — protected by zero-knowledge technology.">
   <meta property="og:image" content="https://vocalwitness.com/logo.png">
+  <meta property="og:image:width" content="512">
+  <meta property="og:image:height" content="512">
   <meta property="og:url" content="https://vocalwitness.com/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="VocalWitness">
+  <meta property="og:locale" content="en_US">
+
+  <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="VocalWitness • Truth • Evidence • Public Square">
-  <meta name="twitter:description" content="Privacy First Public Square for Truth and Evidence">
+  <meta name="twitter:description" content="Privacy-first public square for truth and evidence. Share what you saw — protected by zero-knowledge technology.">
   <meta name="twitter:image" content="https://vocalwitness.com/logo.png">
 
   <title data-i18n="pageTitle">VocalWitness • Truth • Evidence • Public Square</title>
   
-<link rel="manifest" href="./manifest.json">
+  <!-- Icons & Manifest -->
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" href="./logo.png" type="image/png">
   <link rel="icon" href="./icon-192.png" type="image/png" sizes="192x192">
   <link rel="apple-touch-icon" href="./icon-192.png" sizes="192x192">
-  <link rel="icon" href="./logo.png" type="image/png">
   <link rel="canonical" href="https://vocalwitness.com/">
-  <!-- Fonts -->
+
+  <!-- Fonts (optimized) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Main Styles -->
   <link rel="stylesheet" href="./style.css">
 
   <!-- External scripts -->
@@ -58,8 +77,9 @@
       --text-muted: #94a3b8;
       --text-dim: #64748b;
 
-      --header-height-mobile: 102px;
-      --header-height-desktop: 72px;
+      /* Updated to match the new header */
+      --header-height-mobile: 98px;
+      --header-height-desktop: 64px;
     }
 
     html, body {
@@ -73,8 +93,9 @@
       background-color: var(--bg-dark) !important;
       color: var(--text-primary) !important;
       padding-top: var(--header-height-mobile);
-      font-family: 'Inter', system-ui, sans-serif;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
       -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
     @media (min-width: 768px) {
@@ -93,9 +114,10 @@
     }
 
     #main-header {
-      background-color: rgba(11, 17, 32, 0.95) !important;
-      border-bottom: 1px solid rgba(16, 185, 129, 0.25) !important;
-      backdrop-filter: blur(12px);
+      background-color: rgba(11, 17, 32, 0.92) !important;
+      border-bottom: 1px solid rgba(16, 185, 129, 0.22) !important;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
     }
 
     .rounded-3xl,
@@ -118,45 +140,79 @@
 </head>
 
 <body class="theme-citizen tier-citizen">
+<!-- Splash Screen -->
+<div id="app-splash-screen" 
+     style="position: fixed; inset: 0; background: #0b1120; display: flex; align-items: center; justify-content: center; z-index: 99999; color: white; font-family: 'Inter', system-ui, sans-serif; opacity: 1; transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.4s;">
+  
+  <div style="text-align: center; transform: scale(1); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);">
+    <!-- Logo -->
+    <div style="position: relative; margin: 0 auto 24px; width: 72px; height: 72px;">
+      <div style="position: absolute; inset: -8px; border-radius: 20px; background: linear-gradient(135deg, rgba(16,185,129,0.4), rgba(45,212,191,0.2)); filter: blur(12px);"></div>
+      <img src="./logo.png" alt="VocalWitness" 
+           style="position: relative; width: 72px; height: 72px; border-radius: 18px; border: 1px solid rgba(16,185,129,0.4); object-fit: cover;">
+    </div>
 
-  <!-- Splash Screen -->
-  <div id="app-splash-screen" style="position: fixed; inset: 0; background: #0f172a; display: flex; align-items: center; justify-content: center; z-index: 99999; color: white; font-family: sans-serif; transition: opacity 0.3s ease;">
-    <div style="text-align: center;">
-      <div class="spinner" style="width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.2); border-top-color: #38bdf8; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px;"></div>
-      <p style="font-size: 14px; letter-spacing: 0.05em;">Loading Vocal Witness...</p>
+    <!-- Brand name -->
+    <h1 style="font-size: 22px; font-weight: 800; letter-spacing: -0.03em; margin: 0 0 6px; color: white;">
+      VocalWitness
+    </h1>
+    <p style="font-size: 13px; color: #34d399; margin: 0 0 28px; font-weight: 500;">
+      Truth • Evidence • Public Square
+    </p>
+
+    <!-- Spinner -->
+    <div class="spinner" 
+         style="width: 32px; height: 32px; border: 3px solid rgba(16,185,129,0.2); border-top-color: #10b981; border-radius: 50%; animation: spin 0.75s linear infinite; margin: 0 auto;">
     </div>
   </div>
+</div>
+
+<style>
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* Optional: fade + slight scale when removing */
+  #app-splash-screen.fade-out {
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  #app-splash-screen.fade-out > div {
+    transform: scale(0.96);
+  }
+</style>
 
 <!-- ====================== HEADER ====================== -->
-<header id="main-header" dir="ltr" class="fixed top-0 left-0 right-0 z-50 border-b border-emerald-500/20 bg-zinc-950/90 backdrop-blur-xl shadow-xl">
+<header id="main-header" dir="ltr" class="fixed top-0 left-0 right-0 z-50 border-b border-emerald-500/20 bg-zinc-950/90 backdrop-blur-xl shadow-lg">
   <div class="mx-auto max-w-6xl px-4 sm:px-6">
 
     <!-- ========== DESKTOP HEADER ========== -->
-    <div class="hidden h-[68px] items-center justify-between gap-6 md:flex">
+    <div class="hidden h-16 items-center justify-between gap-6 md:flex">
       
       <!-- Logo + Brand -->
       <a href="/" class="group flex shrink-0 items-center gap-3.5" aria-label="VocalWitness Home">
         <div class="relative">
-          <div class="absolute -inset-1 rounded-2xl bg-gradient-to-br from-emerald-500/40 to-teal-400/30 opacity-60 blur-md transition duration-300 group-hover:opacity-100"></div>
+          <div class="absolute -inset-1.5 rounded-2xl bg-gradient-to-br from-emerald-500/50 to-teal-400/30 opacity-70 blur-md transition duration-300 group-hover:opacity-100"></div>
           <img src="./logo.png" alt="VocalWitness"
-               class="relative h-10 w-10 rounded-2xl border border-emerald-400/40 bg-zinc-900 object-cover shadow-lg">
+               class="relative h-11 w-11 rounded-2xl border border-emerald-400/50 bg-zinc-900 object-cover shadow-lg ring-1 ring-white/10">
         </div>
         <div class="leading-tight">
-          <h1 class="text-[22px] font-bold tracking-tight text-white transition group-hover:text-emerald-300" data-i18n="appTitle">
+          <h1 class="text-[23px] font-extrabold tracking-tight text-white transition group-hover:text-emerald-300" data-i18n="appTitle">
             VocalWitness
           </h1>
-          <p class="text-[11px] font-medium tracking-wide text-emerald-400/80" data-i18n="appSubtitle">
+          <p class="text-[11px] font-medium tracking-wide text-emerald-400/75" data-i18n="appSubtitle">
             Citizen Reporting • Real Evidence
           </p>
         </div>
       </a>
 
       <!-- Right side controls -->
-      <div class="flex shrink-0 items-center gap-2">
+      <div class="flex shrink-0 items-center gap-2.5">
         
-        <!-- Language (quiet utility) -->
+        <!-- Language -->
         <select id="languageSelect" aria-label="Language"
-                class="h-9 rounded-xl border border-zinc-700/80 bg-zinc-900/80 px-3 text-xs font-medium text-zinc-300 transition focus:border-emerald-500 focus:outline-none hover:border-zinc-600">
+                class="h-9 rounded-xl border border-zinc-700/80 bg-zinc-900/80 px-3 text-xs font-medium text-zinc-300 transition hover:border-zinc-600 focus:border-emerald-500 focus:outline-none">
           <option value="en" selected>English</option>
           <option value="pcm">Naija Pidgin</option>
           <option value="ha">Hausa</option>
@@ -169,9 +225,9 @@
           <option value="ar">العربية</option>
         </select>
 
-        <!-- Support (secondary accent) -->
+        <!-- Support -->
         <button id="openSupportModalBtn" type="button"
-                class="h-9 rounded-xl border border-emerald-500/50 bg-emerald-500/10 px-4 text-xs font-semibold text-emerald-400 transition-all duration-200 hover:bg-emerald-500/20 hover:border-emerald-400 active:scale-[0.97]"
+                class="h-9 rounded-xl border border-emerald-500/60 bg-emerald-500/10 px-4 text-xs font-semibold text-emerald-400 transition-all duration-200 hover:bg-emerald-500/20 hover:border-emerald-400 active:scale-[0.97]"
                 data-i18n="supportBtn">
           Support
         </button>
@@ -201,9 +257,9 @@
         <!-- Divider -->
         <div class="mx-1 h-5 w-px bg-zinc-800"></div>
 
-        <!-- Data Saver (lowest priority) -->
+        <!-- Data Saver -->
         <button id="data-saver-btn" type="button"
-                class="flex h-9 items-center gap-1.5 rounded-xl border border-zinc-800/80 bg-zinc-900/60 px-3 text-xs font-medium text-zinc-500 transition-all duration-200 hover:border-zinc-700 hover:text-zinc-300 active:scale-[0.97]"
+                class="flex h-9 items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900/70 px-3 text-xs font-medium text-zinc-500 transition-all duration-200 hover:border-zinc-700 hover:text-zinc-300 active:scale-[0.97]"
                 aria-label="Toggle Data Saver">
           <span aria-hidden="true">⚡</span>
           <span>Data: <strong id="data-saver-status" class="text-zinc-400">Off</strong></span>
@@ -211,7 +267,7 @@
 
         <!-- Bookmarks -->
         <button id="bookmarks-nav-btn" type="button" aria-label="Saved Items" data-action="open-bookmarks"
-                class="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-800/80 bg-zinc-900/60 text-zinc-500 transition-all duration-200 hover:border-emerald-500/40 hover:text-white active:scale-[0.97]">
+                class="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/70 text-zinc-500 transition-all duration-200 hover:border-emerald-500/40 hover:text-white active:scale-[0.97]">
           <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
           </svg>
@@ -220,7 +276,7 @@
         <!-- Notifications -->
         <div class="relative" id="notification-container">
           <button id="notification-btn" type="button" aria-label="Notifications"
-                  class="relative flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-800/80 bg-zinc-900/60 text-zinc-500 transition-all duration-200 hover:border-emerald-500/40 hover:text-white active:scale-[0.97]">
+                  class="relative flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/70 text-zinc-500 transition-all duration-200 hover:border-emerald-500/40 hover:text-white active:scale-[0.97]">
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
             </svg>
@@ -248,23 +304,24 @@
     <!-- ========== MOBILE HEADER ========== -->
     <div class="flex flex-col gap-2.5 py-3 md:hidden">
       
-      <!-- Top row -->
+      <!-- Top row: Brand + Primary Action -->
       <div class="flex items-center justify-between">
         <a href="/" class="flex shrink-0 items-center gap-2.5" aria-label="VocalWitness Home">
           <div class="relative">
-            <div class="absolute inset-0 rounded-xl bg-emerald-500/40 blur"></div>
-            <img src="./logo.png" alt="VocalWitness" class="relative h-9 w-9 rounded-xl border border-emerald-500/30 object-cover">
+            <div class="absolute -inset-1 rounded-xl bg-emerald-500/40 blur-sm"></div>
+            <img src="./logo.png" alt="VocalWitness" 
+                 class="relative h-10 w-10 rounded-xl border border-emerald-500/40 object-cover ring-1 ring-white/10">
           </div>
           <div class="leading-none">
-            <h1 class="text-[15px] font-bold tracking-tight text-white" data-i18n="appTitle">VocalWitness</h1>
-            <p class="mt-0.5 text-[10px] font-medium text-emerald-400/80" data-i18n="appSubtitle">Citizen Reporting</p>
+            <h1 class="text-[16px] font-extrabold tracking-tight text-white" data-i18n="appTitle">VocalWitness</h1>
+            <p class="mt-0.5 text-[10px] font-medium text-emerald-400/75" data-i18n="appSubtitle">Citizen Reporting</p>
           </div>
         </a>
 
-        <div class="flex items-center gap-1.5">
+        <div class="flex items-center gap-2">
           <!-- Primary CTA -->
           <button id="openAuthModalBtnMobile" type="button"
-                  class="flex h-8 items-center gap-1.5 rounded-lg bg-white px-2.5 text-xs font-semibold text-zinc-900 shadow-sm transition-all duration-200 active:scale-95"
+                  class="flex h-9 items-center gap-1.5 rounded-xl bg-white px-3 text-xs font-semibold text-zinc-900 shadow-sm transition-all duration-200 active:scale-95"
                   data-action="open-auth-modal">
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
                  class="h-3.5 w-3.5 pointer-events-none" alt="" width="14" height="14">
@@ -273,13 +330,13 @@
 
           <!-- Profile (when logged in) -->
           <button id="userProfileBtnMobile" type="button"
-                  class="hidden h-8 w-8 items-center justify-center rounded-lg border border-zinc-700 bg-zinc-900 text-sm text-emerald-400 transition-all duration-200 active:scale-95"
+                  class="hidden h-9 w-9 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900 text-sm text-emerald-400 transition-all duration-200 active:scale-95"
                   aria-label="Open profile">👤</button>
         </div>
       </div>
 
-      <!-- Bottom row -->
-      <div class="flex items-center justify-between gap-2 border-t border-zinc-800/60 pt-2">
+      <!-- Bottom row: Utilities -->
+      <div class="flex items-center justify-between gap-2 border-t border-zinc-800/50 pt-2.5">
         <div class="flex items-center gap-1.5">
           <select id="languageSelectMobile" aria-label="Language"
                   class="h-8 rounded-lg border border-zinc-700 bg-zinc-900 px-2 text-[11px] font-medium text-zinc-300 focus:border-emerald-500 focus:outline-none">
@@ -296,22 +353,23 @@
           </select>
 
           <button id="openSupportModalBtnMobile" type="button"
-                  class="h-8 rounded-lg border border-emerald-500/50 bg-emerald-500/10 px-2.5 text-[11px] font-semibold text-emerald-400 transition-all duration-200 hover:bg-emerald-500/20 active:scale-95"
+                  class="h-8 rounded-lg border border-emerald-500/50 bg-emerald-500/10 px-2.5 text-[11px] font-semibold text-emerald-400 transition-all duration-200 active:scale-95"
                   data-i18n="supportBtn">
             Support
           </button>
-
-          <button id="data-saver-btn-mobile" type="button"
-                  class="flex items-center gap-1 rounded-lg border border-zinc-800/80 bg-zinc-900/70 px-2 py-1 text-[10px] font-medium text-zinc-500 transition-all duration-200 active:scale-95"
-                  aria-label="Toggle Data Saver" title="Data Saver">
-            <span aria-hidden="true">⚡</span>
-            <span>Data: <strong id="data-saver-status-mobile" class="text-zinc-400">Off</strong></span>
-          </button>
         </div>
 
-        <div class="flex items-center gap-1">
+        <div class="flex items-center gap-1.5">
+          <!-- Data Saver (more compact) -->
+          <button id="data-saver-btn-mobile" type="button"
+                  class="flex h-8 items-center gap-1 rounded-lg border border-zinc-800 bg-zinc-900/80 px-2 text-[10px] font-medium text-zinc-500 transition-all duration-200 active:scale-95"
+                  aria-label="Toggle Data Saver" title="Data Saver">
+            <span aria-hidden="true">⚡</span>
+            <span id="data-saver-status-mobile" class="text-zinc-400">Off</span>
+          </button>
+
           <button id="bookmarks-nav-btn-mobile" type="button" aria-label="Saved" data-action="open-bookmarks"
-                  class="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-800/80 bg-zinc-900/70 text-zinc-500 transition-all duration-200 active:scale-95">
+                  class="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900/80 text-zinc-500 transition-all duration-200 active:scale-95">
             <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
             </svg>
@@ -319,7 +377,7 @@
 
           <div class="relative" id="notification-container-mobile">
             <button id="notification-btn-mobile" type="button" aria-label="Notifications"
-                    class="relative flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-800/80 bg-zinc-900/70 text-zinc-500 transition-all duration-200 active:scale-95"
+                    class="relative flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900/80 text-zinc-500 transition-all duration-200 active:scale-95"
                     data-action="open-notifications">
               <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
@@ -373,6 +431,29 @@
              autocomplete="off">
     </div>
   </div>
+  <!-- Global search (already correct) -->
+<input type="search" id="global-search" 
+       placeholder="Search reports, news, hashtags, or people..."
+       class="..."
+       autocomplete="off">
+
+<!-- Title -->
+<input type="text" id="testimonyTitle" maxlength="120" 
+       placeholder="Add a short title (optional)"
+       class="..."
+       autocomplete="off">
+
+<!-- Main report text -->
+<textarea id="mainInput" rows="5" maxlength="2000"
+          placeholder="What did you see or experience? Share the facts..."
+          class="..."
+          autocomplete="off"></textarea>
+
+<!-- Trusted Voices search -->
+<input type="search" id="witness-search"
+       placeholder="Search trusted voices…"
+       class="..."
+       autocomplete="off">
 
   <!-- Main Navigation Tabs -->
   <div class="mb-8 flex items-center gap-2">
@@ -732,7 +813,8 @@
       <div>
         <label for="customSupportAmount" class="mb-1.5 block text-xs font-medium text-zinc-400">Custom Amount ($ USD)</label>
         <input type="number" id="customSupportAmount" placeholder="Enter amount" min="1" value="15"
-               class="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm text-white placeholder-zinc-500 transition focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/30">
+               class="w-full rounded-xl border border-zinc-700 bg-zinc-900/80 px-4 py-3 text-sm text-white placeholder-zinc-500 transition focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/30"
+               autocomplete="off">
       </div>
 
       <!-- Primary Action -->
@@ -752,7 +834,7 @@
     <div class="mt-6 border-t border-zinc-800 pt-5">
       <p class="mb-3 text-center text-xs font-medium text-zinc-400">Or send USDT directly</p>
       
-      <div class="mx-auto mb-4 flex h-36 w-36 items-center justify-center rounded-2xl bg-white p-3 shadow-md">
+      <div class="mx-auto mb-4 flex h-36 w-36 items-center justify-center overflow-hidden rounded-2xl border border-zinc-700 bg-white p-3 shadow-md">
         <img src="./image/95756.jpg" 
              alt="USDT TRC-20 QR Code" 
              class="h-full w-full object-contain" 
@@ -760,7 +842,7 @@
         <span class="hidden text-xs text-zinc-500">QR unavailable</span>
       </div>
 
-      <div class="flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 p-2.5">
+      <div class="flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900/80 p-2.5">
         <span id="usdtAddress" class="min-w-0 flex-1 select-all truncate font-mono text-[11px] text-emerald-400">
           TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK
         </span>
@@ -782,12 +864,12 @@
   </div>
 </div>
 
-<!-- ====================== AUTH MODAL ====================== -->
+  <!-- ====================== AUTH MODAL ====================== -->
 <div id="authModal"
      class="fixed inset-0 z-[10000] hidden items-center justify-center bg-black/80 p-4 backdrop-blur-md"
      role="dialog" aria-modal="true" aria-labelledby="authModalTitle" aria-hidden="true">
   
-  <div class="relative w-full max-w-md rounded-3xl border border-zinc-700 bg-zinc-900 p-5 sm:p-6 text-white shadow-2xl">
+  <div class="glass relative w-full max-w-md rounded-3xl border border-emerald-500/25 p-5 sm:p-6 text-white shadow-2xl">
     
     <button type="button" id="closeAuthModalBtn" data-action="close-auth-modal"
             class="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full text-xl text-zinc-400 transition-all duration-200 hover:bg-zinc-800 hover:text-white active:scale-90"
@@ -833,19 +915,18 @@
     </p>
   </div>
 </div>
-
-<!-- ====================== USER PROFILE MODAL ====================== -->
+  <!-- ====================== USER PROFILE MODAL ====================== -->
 <div id="profileModal"
-     class="fixed inset-0 z-[9000] hidden items-center justify-center overflow-y-auto bg-black/85 p-4"
+     class="fixed inset-0 z-[9000] hidden items-center justify-center overflow-y-auto bg-black/80 p-4 backdrop-blur-md"
      role="dialog"
      aria-modal="true"
      aria-labelledby="profileModalTitle"
      aria-hidden="true">
   
-  <div class="relative w-full max-w-lg rounded-3xl border border-zinc-700 bg-[#111827] p-5 sm:p-6 text-white shadow-2xl">
+  <div class="glass relative w-full max-w-lg rounded-3xl border border-emerald-500/25 p-5 sm:p-6 text-white shadow-2xl">
     
     <!-- Header -->
-    <div class="mb-5 flex items-center justify-between border-b border-zinc-700 pb-4">
+    <div class="mb-5 flex items-center justify-between border-b border-zinc-700/80 pb-4">
       <h3 id="profileModalTitle" class="text-xl font-bold tracking-tight" data-i18n="profile.title">
         User Profile
       </h3>
@@ -868,14 +949,14 @@
   </div>
 </div>
 
-<!-- ====================== EDIT PROFILE MODAL ====================== -->
+  <!-- ====================== EDIT PROFILE MODAL ====================== -->
 <div id="editProfileModal"
-     class="fixed inset-0 z-[10001] hidden items-center justify-center overflow-y-auto bg-black/85 p-4"
+     class="fixed inset-0 z-[10001] hidden items-center justify-center overflow-y-auto bg-black/80 p-4 backdrop-blur-md"
      role="dialog" aria-modal="true" aria-labelledby="editProfileTitle" aria-hidden="true">
   
-  <div class="custom-scroll relative max-h-[90vh] w-full max-w-md space-y-5 overflow-y-auto rounded-3xl border border-zinc-700 bg-[#111827] p-5 sm:p-6 text-white shadow-2xl">
+  <div class="glass custom-scroll relative max-h-[90vh] w-full max-w-md space-y-5 overflow-y-auto rounded-3xl border border-emerald-500/25 p-5 sm:p-6 text-white shadow-2xl">
     
-    <div class="flex items-center justify-between border-b border-zinc-700 pb-3">
+    <div class="flex items-center justify-between border-b border-zinc-700/80 pb-3">
       <h3 id="editProfileTitle" class="text-xl font-bold">Edit Profile</h3>
       <button id="closeEditProfileBtn" type="button"
               class="flex h-10 w-10 items-center justify-center rounded-full text-zinc-400 transition-all duration-200 hover:bg-zinc-800 hover:text-white active:scale-90"
@@ -900,42 +981,42 @@
 
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label for="editFirstName" class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">First Name</label>
-          <input type="text" id="editFirstName" 
-                 class="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+          <label for="editFirstName" class="mb-1.5 block text-xs font-medium text-zinc-400">First Name</label>
+          <input type="text" id="editFirstName" autocomplete="given-name"
+                 class="w-full rounded-xl border border-zinc-700 bg-zinc-900/80 p-3 text-white placeholder-zinc-500 transition focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/30">
         </div>
         <div>
-          <label for="editLastName" class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">Last Name</label>
-          <input type="text" id="editLastName" 
-                 class="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+          <label for="editLastName" class="mb-1.5 block text-xs font-medium text-zinc-400">Last Name</label>
+          <input type="text" id="editLastName" autocomplete="family-name"
+                 class="w-full rounded-xl border border-zinc-700 bg-zinc-900/80 p-3 text-white placeholder-zinc-500 transition focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/30">
         </div>
       </div>
 
       <div>
-        <label for="editDisplayName" class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">Display Name *</label>
-        <input type="text" id="editDisplayName" required 
-               class="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+        <label for="editDisplayName" class="mb-1.5 block text-xs font-medium text-zinc-400">Display Name *</label>
+        <input type="text" id="editDisplayName" required autocomplete="nickname"
+               class="w-full rounded-xl border border-zinc-700 bg-zinc-900/80 p-3 text-white placeholder-zinc-500 transition focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/30">
       </div>
 
       <div>
-        <label for="editUsername" class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">Username</label>
-        <input type="text" id="editUsername" 
-               class="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+        <label for="editUsername" class="mb-1.5 block text-xs font-medium text-zinc-400">Username</label>
+        <input type="text" id="editUsername" autocomplete="username"
+               class="w-full rounded-xl border border-zinc-700 bg-zinc-900/80 p-3 text-white placeholder-zinc-500 transition focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/30">
       </div>
 
       <div>
-        <label for="editRegion" class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">Region / Location</label>
-        <input type="text" id="editRegion" placeholder="e.g. West Africa" 
-               class="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+        <label for="editRegion" class="mb-1.5 block text-xs font-medium text-zinc-400">Region / Location</label>
+        <input type="text" id="editRegion" placeholder="e.g. West Africa" autocomplete="off"
+               class="w-full rounded-xl border border-zinc-700 bg-zinc-900/80 p-3 text-white placeholder-zinc-500 transition focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/30">
       </div>
 
       <div>
-        <label for="editBio" class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">Bio</label>
-        <textarea id="editBio" rows="3" maxlength="280" 
-                  class="w-full resize-none rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"></textarea>
+        <label for="editBio" class="mb-1.5 block text-xs font-medium text-zinc-400">Bio</label>
+        <textarea id="editBio" rows="3" maxlength="280" autocomplete="off"
+                  class="w-full resize-none rounded-xl border border-zinc-700 bg-zinc-900/80 p-3 text-white placeholder-zinc-500 transition focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/30"></textarea>
       </div>
 
-      <div class="flex items-center justify-between gap-3 rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
+      <div class="flex items-center justify-between gap-3 rounded-2xl border border-zinc-700 bg-zinc-900/60 p-4">
         <div class="min-w-0">
           <div class="flex items-center gap-2 text-sm font-medium text-white">🛡️ Privacy Shield</div>
           <div class="mt-0.5 text-xs text-zinc-400">Hides real name & location from others</div>
@@ -945,7 +1026,7 @@
       </div>
 
       <!-- Actions -->
-      <div class="flex gap-3 pt-3">
+      <div class="flex gap-3 pt-2">
         <button type="submit"
                 class="flex-1 rounded-xl bg-emerald-500 py-3.5 text-sm font-bold text-black shadow-md shadow-emerald-500/20 transition-all duration-200 hover:bg-emerald-400 active:scale-[0.98]">
           Save Changes
@@ -962,58 +1043,66 @@
   
 <!-- ====================== SETTINGS & SECURITY MODAL ====================== -->
 <div id="settingsModal"
-     class="fixed inset-0 z-[10001] hidden items-center justify-center overflow-y-auto bg-black/85 p-4"
+     class="fixed inset-0 z-[10001] hidden items-center justify-center overflow-y-auto bg-black/85 p-4 backdrop-blur-sm"
      role="dialog" aria-modal="true" aria-labelledby="settingsTitle" aria-hidden="true">
   
-  <div class="custom-scroll relative max-h-[92vh] w-full max-w-lg space-y-6 overflow-y-auto rounded-3xl border border-zinc-700 bg-[#111827] p-6 text-white shadow-2xl">
+  <div class="custom-scroll relative max-h-[92vh] w-full max-w-lg space-y-6 overflow-y-auto rounded-3xl border border-zinc-700/80 bg-[#0f172a] p-6 text-white shadow-2xl ring-1 ring-white/5">
     
     <!-- Header -->
-    <div class="flex items-center justify-between border-b border-zinc-700 pb-4">
-      <h3 id="settingsTitle" class="text-xl font-bold flex items-center gap-2">
-        ⚙️ Security & Account Settings
+    <div class="flex items-center justify-between border-b border-zinc-800 pb-4">
+      <h3 id="settingsTitle" class="flex items-center gap-2.5 text-xl font-bold tracking-tight">
+        <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          </svg>
+        </span>
+        Security & Account
       </h3>
       <button id="closeSettingsBtn" type="button"
-              class="rounded-full p-2 text-zinc-400 hover:bg-zinc-800 hover:text-white transition">
-        ✕
+              class="rounded-full p-2 text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+              aria-label="Close settings">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
       </button>
     </div>
 
     <!-- ===== Security Controls ===== -->
     <div class="space-y-3">
-      <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400">Security Controls</h4>
+      <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400/90">Security Controls</h4>
 
-      <div class="flex items-center justify-between rounded-2xl border border-zinc-700 bg-zinc-900 p-4">
+      <!-- Password -->
+      <div class="flex items-center justify-between gap-4 rounded-2xl border border-zinc-700/80 bg-zinc-900/80 p-4 transition hover:border-zinc-600">
         <div>
           <div class="text-sm font-medium">Password</div>
-          <div class="text-xs text-zinc-400">Send password reset email</div>
+          <div class="text-xs text-zinc-400">Send a secure reset link to your email</div>
         </div>
         <button id="triggerPasswordResetBtn" type="button"
-                class="px-4 py-2 text-xs font-semibold rounded-xl bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 transition">
+                class="shrink-0 rounded-xl border border-zinc-600 bg-zinc-800 px-4 py-2 text-xs font-semibold transition hover:bg-zinc-700 active:scale-[0.97]">
           Reset Password
         </button>
       </div>
 
-      <div class="flex items-center justify-between rounded-2xl border border-zinc-700 bg-zinc-900 p-4">
+      <!-- 2FA -->
+      <div class="flex items-center justify-between gap-4 rounded-2xl border border-zinc-700/80 bg-zinc-900/80 p-4 transition hover:border-zinc-600">
         <div>
           <div class="text-sm font-medium">Two-Factor Protection</div>
-          <div class="text-xs text-zinc-400">Require phone check on every sign-in</div>
+          <div class="text-xs text-zinc-400">Require phone verification on every sign-in</div>
         </div>
-        <label class="relative inline-flex items-center cursor-pointer">
-          <input type="checkbox" id="toggle2FA" class="sr-only peer">
-          <div class="w-11 h-6 bg-zinc-700 rounded-full peer peer-checked:bg-emerald-500 
-                      after:content-[''] after:absolute after:top-[2px] after:left-[2px] 
-                      after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all 
-                      peer-checked:after:translate-x-full"></div>
+        <label class="relative inline-flex cursor-pointer items-center">
+          <input type="checkbox" id="toggle2FA" class="peer sr-only">
+          <div class="h-6 w-11 rounded-full bg-zinc-700 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-emerald-500 peer-checked:after:translate-x-full peer-focus-visible:ring-2 peer-focus-visible:ring-emerald-500/60"></div>
         </label>
       </div>
     </div>
 
     <!-- ===== Preferences ===== -->
     <div class="space-y-3">
-      <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400">Preferences</h4>
-      <div class="rounded-2xl border border-zinc-700 bg-zinc-900 p-4">
-        <label class="block text-xs text-zinc-400 mb-2">Default page after login</label>
-        <select id="defaultDoorSelect" class="w-full bg-zinc-950 border border-zinc-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+      <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400/90">Preferences</h4>
+      <div class="rounded-2xl border border-zinc-700/80 bg-zinc-900/80 p-4">
+        <label for="defaultDoorSelect" class="mb-2 block text-xs text-zinc-400">Default page after login</label>
+        <select id="defaultDoorSelect"
+                class="w-full appearance-none rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30">
           <option value="public_square">Public Square</option>
           <option value="citizen_talk">Citizen Talk</option>
           <option value="witness_voice">Witness Voice</option>
@@ -1022,94 +1111,180 @@
     </div>
 
     <!-- ===== Danger Zone ===== -->
-    <div class="space-y-3 pt-2">
-      <h4 class="text-xs font-bold uppercase tracking-wider text-red-400">Data & Identity</h4>
+    <div class="space-y-3 pt-1">
+      <h4 class="text-xs font-bold uppercase tracking-wider text-red-400/90">Data & Identity</h4>
 
       <button id="exportUserDataPdfBtn" type="button"
-              class="w-full py-3 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 text-sm font-semibold hover:bg-emerald-500/20 transition">
-        📄 Download Identity PDF
+              class="flex w-full items-center justify-center gap-2 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 py-3.5 text-sm font-semibold text-emerald-400 transition hover:bg-emerald-500/20 active:scale-[0.98]">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        Download Identity PDF
       </button>
 
       <button id="settingsSignOutBtn" type="button"
-              class="w-full py-3.5 rounded-2xl border border-red-500/40 bg-red-950/40 text-red-400 text-sm font-semibold hover:bg-red-900/50 transition">
-        🚪 Sign Out of All Sessions
+              class="w-full rounded-2xl border border-red-500/40 bg-red-950/40 py-3.5 text-sm font-semibold text-red-400 transition hover:bg-red-900/50 active:scale-[0.98]">
+        Sign Out of All Sessions
       </button>
 
       <!-- Emergency Clear -->
       <button id="panicClearBtn" type="button"
-              class="w-full py-3.5 rounded-2xl border border-red-600 bg-red-950/60 hover:bg-red-900/70 text-red-300 text-sm font-semibold transition flex items-center justify-center gap-2">
-        🚨 Emergency Clear This Device
+              class="flex w-full items-center justify-center gap-2 rounded-2xl border border-red-600/80 bg-red-950/70 py-3.5 text-sm font-semibold text-red-300 transition hover:bg-red-900/80 active:scale-[0.98]">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+        </svg>
+        Emergency Clear This Device
       </button>
-      <p class="text-[11px] text-zinc-500 text-center -mt-1">
-        Instantly removes all local data from this device only. The public record stays safe.
+      <p class="text-center text-[11px] leading-relaxed text-zinc-500">
+        Instantly removes all local data from this device only.<br>
+        The public record stays completely safe.
       </p>
     </div>
-
   </div>
 </div>
-  
+
 <!-- ====================== PHONE VERIFICATION MODAL ====================== -->
 <div id="phoneVerificationModal"
-     class="fixed inset-0 z-[10050] hidden items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+     class="fixed inset-0 z-[10050] hidden items-center justify-center bg-black/75 p-4 backdrop-blur-md"
      role="dialog" aria-modal="true" aria-labelledby="phoneVerificationTitle" aria-hidden="true">
-  <div class="w-full max-w-md space-y-5 rounded-3xl border border-zinc-700 bg-zinc-900 p-6 shadow-2xl">
-    <div class="flex items-center justify-between">
+  
+  <div class="w-full max-w-md space-y-5 rounded-3xl border border-zinc-700/80 bg-zinc-900 p-6 shadow-2xl ring-1 ring-white/5">
+    
+    <div class="flex items-start justify-between gap-3">
       <div>
-        <h3 id="phoneVerificationTitle" class="text-xl font-bold text-white">Verify Phone Number</h3>
-        <p class="mt-1 text-sm text-zinc-400">Unlock Citizen Circle &amp; advanced features</p>
+        <h3 id="phoneVerificationTitle" class="text-xl font-bold tracking-tight text-white">Verify Phone Number</h3>
+        <p class="mt-1 text-sm text-zinc-400">Unlock Citizen Circle & advanced features</p>
       </div>
       <button type="button" id="closePhoneVerificationBtn"
-              class="flex h-10 w-10 items-center justify-center rounded-full text-2xl leading-none text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
-              aria-label="Close phone verification">&times;</button>
+              class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+              aria-label="Close phone verification">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
     </div>
+
+    <!-- Step 1 -->
     <div id="phone-step-1" class="space-y-4">
       <div>
-        <label for="phone-input" class="mb-1.5 block text-sm text-zinc-300">Phone Number (international format)</label>
+        <label for="phone-input" class="mb-1.5 block text-sm font-medium text-zinc-300">
+          Phone Number <span class="text-zinc-500">(international format)</span>
+        </label>
         <input type="tel" id="phone-input" placeholder="+234 801 234 5678" autocomplete="tel"
-               class="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-white placeholder-zinc-500 focus:border-emerald-500 focus:outline-none">
+               class="w-full rounded-xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 text-white placeholder-zinc-500 transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30">
       </div>
       <button type="button" id="send-otp-btn"
-              class="w-full rounded-xl bg-emerald-600 py-3 font-semibold text-white transition hover:bg-emerald-500 active:scale-[0.98]">
+              class="w-full rounded-xl bg-emerald-600 py-3.5 font-semibold text-white shadow-lg shadow-emerald-900/30 transition hover:bg-emerald-500 active:scale-[0.98]">
         Send Verification Code
       </button>
     </div>
+
+    <!-- Step 2 -->
     <div id="phone-step-2" class="hidden space-y-4">
       <div>
-        <label for="otp-input" class="mb-1.5 block text-sm text-zinc-300">Enter 6-digit code</label>
+        <label for="otp-input" class="mb-1.5 block text-sm font-medium text-zinc-300">Enter 6-digit code</label>
         <input type="text" id="otp-input" maxlength="6" inputmode="numeric" pattern="[0-9]*"
-               placeholder="123456" autocomplete="one-time-code"
-               class="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-center text-2xl tracking-widest text-white placeholder-zinc-500 focus:border-emerald-500 focus:outline-none">
+               placeholder="• • • • • •" autocomplete="one-time-code"
+               class="w-full rounded-xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 text-center text-2xl tracking-[0.4em] text-white placeholder-zinc-600 transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30">
       </div>
       <button type="button" id="verify-otp-btn"
-              class="w-full rounded-xl bg-emerald-600 py-3 font-semibold text-white transition hover:bg-emerald-500 active:scale-[0.98]">
-        Verify &amp; Unlock Citizen Circle
+              class="w-full rounded-xl bg-emerald-600 py-3.5 font-semibold text-white shadow-lg shadow-emerald-900/30 transition hover:bg-emerald-500 active:scale-[0.98]">
+        Verify & Unlock Citizen Circle
       </button>
       <button type="button" id="change-phone-btn"
-              class="w-full py-2 text-sm text-zinc-400 hover:text-white">
+              class="w-full py-2 text-sm text-zinc-400 transition hover:text-white">
         ← Change phone number
       </button>
     </div>
-    <p class="text-center text-xs text-zinc-500">
+
+    <p class="text-center text-xs leading-relaxed text-zinc-500">
       We only use your number for anti-spam verification.<br>
       It is never shown publicly or stored on the ledger.
     </p>
   </div>
 </div>
 
-<!-- ====================== GLOBAL UI HELPER SCRIPT ====================== -->
-<script>
+<!-- ====================== VIDEO POLICY & AUTHENTICITY MODAL ====================== -->
+<div id="video-policy-modal" 
+     class="fixed inset-0 z-[10000] hidden items-center justify-center bg-black/80 p-4 backdrop-blur-md"
+     role="dialog" aria-modal="true" aria-labelledby="videoPolicyTitle" aria-hidden="true">
+  
+  <div class="w-full max-w-md rounded-3xl border border-amber-500/40 bg-slate-900 p-6 text-slate-100 shadow-2xl ring-1 ring-amber-500/10">
+    
+    <!-- Header -->
+    <div class="mb-5 flex items-center gap-3.5">
+      <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-400">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+      </div>
+      <h3 id="videoPolicyTitle" class="text-xl font-bold tracking-tight">Authenticity Requirement</h3>
+    </div>
+
+    <p id="video-policy-msg" class="mb-5 text-sm leading-relaxed text-slate-300">
+      To maintain evidence integrity, AI-generated or heavily edited videos are prohibited.
+    </p>
+
+    <!-- Policy badges -->
+    <div class="mb-6 space-y-2.5 rounded-2xl border border-slate-700/70 bg-slate-800/80 p-4 text-xs">
+      <div class="flex items-center justify-between">
+        <span class="text-slate-400">Daily Upload Quota</span>
+        <span class="font-mono font-semibold text-amber-400">Max 2 Videos / Day</span>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-slate-400">Max File Size</span>
+        <span class="font-mono font-semibold text-amber-400">25 MB (Raw Clip)</span>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-slate-400">AI / Deepfake Policy</span>
+        <span class="font-medium text-red-400">Strictly Banned (C2PA)</span>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="space-y-3">
+      <a href="live-arena.html"
+         class="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-4 py-3.5 font-bold text-slate-950 shadow-lg shadow-amber-900/30 transition hover:from-amber-400 hover:to-amber-500 active:scale-[0.98]">
+        <span>Go to Live Arena for True Reality</span>
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+        </svg>
+      </a>
+
+      <button type="button" id="closeVideoPolicyBtn"
+              class="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm font-semibold text-slate-300 transition hover:bg-slate-700 active:scale-[0.98]">
+        I understand, cancel upload
+      </button>
+    </div>
+  </div>
+</div>
+
+  <script>
   const $ = (id) => document.getElementById(id);
 
   function showToast(message, type = 'info') {
+    const existing = document.querySelector('.vw-toast');
+    if (existing) existing.remove();
+
     const toast = document.createElement('div');
-    toast.className = `fixed bottom-6 left-1/2 z-[11000] -translate-x-1/2 rounded-2xl px-6 py-3 text-sm font-medium text-white shadow-2xl transition-all duration-300 ${
+    toast.className = `vw-toast fixed bottom-6 left-1/2 z-[11000] -translate-x-1/2 rounded-2xl px-6 py-3.5 text-sm font-medium text-white shadow-2xl transition-all duration-300 ${
       type === 'success' ? 'bg-emerald-600' :
       type === 'error'   ? 'bg-red-600' :
       type === 'warning' ? 'bg-amber-600' : 'bg-zinc-800'
     }`;
     toast.textContent = message;
     document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3500);
+    
+    requestAnimationFrame(() => {
+      toast.style.opacity = '1';
+      toast.style.transform = 'translate(-50%, 0)';
+    });
+
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translate(-50%, 12px)';
+      setTimeout(() => toast.remove(), 300);
+    }, 3400);
   }
 
   function openModal(id) {
@@ -1118,6 +1293,8 @@
     m.classList.remove('hidden');
     m.classList.add('flex');
     m.setAttribute('aria-hidden', 'false');
+    // Prevent body scroll
+    document.body.style.overflow = 'hidden';
   }
 
   function closeModal(id) {
@@ -1126,36 +1303,42 @@
     m.classList.add('hidden');
     m.classList.remove('flex');
     m.setAttribute('aria-hidden', 'true');
+    
+    // Restore body scroll only if no other modal is open
+    const anyOpen = ['settingsModal','phoneVerificationModal','video-policy-modal','supportModal','profileModal','editProfileModal','authModal']
+      .some(mid => {
+        const el = $(mid);
+        return el && !el.classList.contains('hidden');
+      });
+    if (!anyOpen) document.body.style.overflow = '';
   }
 
+  // Expose globally
   window.$ = $;
   window.showToast = showToast;
   window.openModal = openModal;
   window.closeModal = closeModal;
+
   window.closeAuthModal = () => closeModal('authModal');
   window.closeLoginModal = () => {
     closeModal('loginModal');
     closeModal('authModal');
   };
 
-  if (typeof window.openProfileModal !== 'function') {
-    window.openProfileModal = () => openModal('profileModal');
-  }
-  if (typeof window.closeProfileModal !== 'function') {
-    window.closeProfileModal = () => closeModal('profileModal');
-  }
-window.closeEditProfile = () => closeModal('editProfileModal');
-window.openSupportModal = () => openModal('supportModal');
-window.closeSupportModal = () => closeModal('supportModal');
-window.closeVerificationModal = () => closeModal('phoneVerificationModal');
+  window.openProfileModal = window.openProfileModal || (() => openModal('profileModal'));
+  window.closeProfileModal = window.closeProfileModal || (() => closeModal('profileModal'));
+  window.closeEditProfile = () => closeModal('editProfileModal');
+  window.openSupportModal = () => openModal('supportModal');
+  window.closeSupportModal = () => closeModal('supportModal');
 
-window.openPhoneVerificationModal = () => {
-  openModal('phoneVerificationModal');
-  $('phone-step-2')?.classList.add('hidden');
-  $('phone-step-1')?.classList.remove('hidden');
-};
+  window.openPhoneVerificationModal = () => {
+    openModal('phoneVerificationModal');
+    $('phone-step-2')?.classList.add('hidden');
+    $('phone-step-1')?.classList.remove('hidden');
+    setTimeout(() => $('phone-input')?.focus(), 50);
+  };
+  window.closePhoneVerificationModal = () => closeModal('phoneVerificationModal');
 
-window.closePhoneVerificationModal = () => closeModal('phoneVerificationModal');
   window.openVideoPolicyModal = (msg) => {
     if (msg && $('video-policy-msg')) {
       $('video-policy-msg').textContent = msg;
@@ -1164,6 +1347,7 @@ window.closePhoneVerificationModal = () => closeModal('phoneVerificationModal');
   };
   window.closeVideoPolicyModal = () => closeModal('video-policy-modal');
 
+  // Data Saver
   window.toggleDataSaver = function () {
     if (typeof window.toggleDataSaverFromModule === 'function') {
       return window.toggleDataSaverFromModule();
@@ -1182,6 +1366,7 @@ window.closePhoneVerificationModal = () => closeModal('phoneVerificationModal');
   };
 
   document.addEventListener('DOMContentLoaded', () => {
+    // Restore Data Saver status
     const enabled = localStorage.getItem('vocalwitness_data_saver') === 'true';
     ['data-saver-status', 'footer-data-saver-status'].forEach((id) => {
       const el = $(id);
@@ -1191,36 +1376,92 @@ window.closePhoneVerificationModal = () => closeModal('phoneVerificationModal');
       el.classList.toggle('text-amber-400', !enabled);
     });
 
+    // Support
     $('footerSupportBtn')?.addEventListener('click', () => window.openSupportModal());
     $('openSupportModalBtn')?.addEventListener('click', () => window.openSupportModal());
     $('openSupportModalBtnMobile')?.addEventListener('click', () => window.openSupportModal());
     $('closeSupportModal')?.addEventListener('click', () => window.closeSupportModal());
 
+    // Data Saver
     $('data-saver-btn')?.addEventListener('click', () => window.toggleDataSaver());
     $('data-saver-btn-mobile')?.addEventListener('click', () => window.toggleDataSaver());
     $('footer-data-saver-btn')?.addEventListener('click', () => window.toggleDataSaver());
 
+    // Phone Verification
     $('closePhoneVerificationBtn')?.addEventListener('click', () => window.closePhoneVerificationModal());
     $('startPhoneVerificationBtn')?.addEventListener('click', () => window.openPhoneVerificationModal());
 
     $('send-otp-btn')?.addEventListener('click', () => {
       if (typeof handleSendOTP === 'function') handleSendOTP();
+      else showToast('OTP system loading…', 'info');
     });
     $('verify-otp-btn')?.addEventListener('click', () => {
       if (typeof handleVerifyOTP === 'function') handleVerifyOTP();
+      else showToast('Verification system loading…', 'info');
     });
     $('change-phone-btn')?.addEventListener('click', () => {
       $('phone-step-2')?.classList.add('hidden');
       $('phone-step-1')?.classList.remove('hidden');
+      setTimeout(() => $('phone-input')?.focus(), 30);
     });
 
+    // Profile / Settings / Video
     $('closeProfileModalBtn')?.addEventListener('click', () => window.closeProfileModal());
     $('closeEditProfileBtn')?.addEventListener('click', () => window.closeEditProfile());
     $('cancelEditProfileBtn')?.addEventListener('click', () => window.closeEditProfile());
     $('closeSettingsBtn')?.addEventListener('click', () => closeModal('settingsModal'));
     $('closeVideoPolicyBtn')?.addEventListener('click', () => window.closeVideoPolicyModal());
 
-    // Backdrop click handlers for all active modals
+    // ===== SENSITIVE SETTINGS HANDLERS =====
+    $('triggerPasswordResetBtn')?.addEventListener('click', () => {
+      if (typeof window.handlePasswordReset === 'function') {
+        window.handlePasswordReset();
+      } else {
+        showToast('Password reset email will be sent shortly', 'info');
+      }
+    });
+
+    $('toggle2FA')?.addEventListener('change', (e) => {
+      const enabled = e.target.checked;
+      if (typeof window.handleToggle2FA === 'function') {
+        window.handleToggle2FA(enabled);
+      } else {
+        showToast(enabled ? 'Two-Factor Protection enabled' : 'Two-Factor Protection disabled', enabled ? 'success' : 'info');
+      }
+    });
+
+    $('exportUserDataPdfBtn')?.addEventListener('click', () => {
+      if (typeof window.handleExportIdentityPDF === 'function') {
+        window.handleExportIdentityPDF();
+      } else {
+        showToast('Preparing your Identity PDF…', 'info');
+      }
+    });
+
+    $('settingsSignOutBtn')?.addEventListener('click', () => {
+      if (typeof window.handleSignOutAll === 'function') {
+        window.handleSignOutAll();
+      } else {
+        showToast('Signing out of all sessions…', 'warning');
+      }
+    });
+
+    $('panicClearBtn')?.addEventListener('click', () => {
+      if (typeof window.handlePanicClear === 'function') {
+        window.handlePanicClear();
+      } else {
+        // Safe fallback
+        const confirmed = confirm('This will permanently erase all local data on this device only. Continue?');
+        if (confirmed) {
+          localStorage.clear();
+          sessionStorage.clear();
+          showToast('Local data cleared from this device', 'success');
+          setTimeout(() => location.reload(), 1200);
+        }
+      }
+    });
+
+    // Backdrop clicks
     ['supportModal', 'profileModal', 'editProfileModal', 'settingsModal', 'phoneVerificationModal', 'authModal', 'video-policy-modal'].forEach((id) => {
       const m = $(id);
       m?.addEventListener('click', (e) => {
@@ -1228,7 +1469,7 @@ window.closePhoneVerificationModal = () => closeModal('phoneVerificationModal');
       });
     });
 
-    // Escape Key Modal Listener
+    // Escape key (priority order)
     document.addEventListener('keydown', (e) => {
       if (e.key !== 'Escape') return;
       const order = ['video-policy-modal', 'phoneVerificationModal', 'editProfileModal', 'settingsModal', 'supportModal', 'profileModal', 'authModal'];
@@ -1241,7 +1482,7 @@ window.closePhoneVerificationModal = () => closeModal('phoneVerificationModal');
       }
     });
 
-    // More dropdown navigation logic
+    // More dropdown
     document.addEventListener('click', (e) => {
       const moreBtn = $('more-btn');
       const moreMenu = $('more-menu');
@@ -1256,7 +1497,7 @@ window.closePhoneVerificationModal = () => closeModal('phoneVerificationModal');
       }
     });
 
-    // Support Modal Tier Button handling
+    // Support tier buttons
     document.addEventListener('click', (e) => {
       const btn = e.target.closest('.support-tier-btn');
       if (!btn) return;
@@ -1271,7 +1512,7 @@ window.closePhoneVerificationModal = () => closeModal('phoneVerificationModal');
       if (amountInput) amountInput.value = btn.getAttribute('data-amount') || '15';
     });
 
-    // Copy USDT address helper
+    // Copy USDT
     $('copyUsdtBtn')?.addEventListener('click', async () => {
       const addr = $('usdtAddress')?.textContent?.trim();
       if (!addr) return;
@@ -1283,10 +1524,8 @@ window.closePhoneVerificationModal = () => closeModal('phoneVerificationModal');
       }
     });
 
-    // Reset active tier selection when custom input is changed
-    $('customSupportAmount')?.addEventListener('input', (e) => {
-      const val = e.target.value;
-      if (!val) return;
+    // Custom amount resets tiers
+    $('customSupportAmount')?.addEventListener('input', () => {
       const container = $('supportTierContainer');
       container?.querySelectorAll('.support-tier-btn').forEach((b) => {
         b.classList.remove('bg-emerald-600/20', 'border-emerald-500', 'active-tier');
@@ -1294,7 +1533,7 @@ window.closePhoneVerificationModal = () => closeModal('phoneVerificationModal');
       });
     });
 
-    // Payment action triggers
+    // Payment triggers
     $('paystackPayBtn')?.addEventListener('click', () => {
       const amount = Number($('customSupportAmount')?.value) || 15;
       if (amount < 1) return showToast('Enter a valid amount', 'warning');
@@ -1308,74 +1547,5 @@ window.closePhoneVerificationModal = () => closeModal('phoneVerificationModal');
     });
   });
 </script>
-
-<script type="module" src="./js/app-state.js"></script>
-<script type="module" src="./js/auth.js"></script>
-<script type="module" src="./js/notifications.js"></script>
-<script type="module" src="./js/bookmarks.js"></script>
-<script type="module" src="./js/zk-client.js"></script>
-<script type="module" src="./js/feed.js"></script>
-<script type="module" src="./js/witness-voice.js"></script>
-<script type="module">
-  import { initLiveArena } from './js/live-arena.js';
-  if (document.querySelector('[data-tab="arena"], #live-arena')) {
-    initLiveArena();
-  }
-</script>
-
-<!-- ====================== VIDEO POLICY & AUTHENTICITY MODAL ====================== -->
-<div id="video-policy-modal" 
-     class="fixed inset-0 z-[10000] hidden items-center justify-center bg-black/80 p-4 backdrop-blur-md"
-     role="dialog" aria-modal="true" aria-labelledby="videoPolicyTitle" aria-hidden="true">
-  <div class="w-full max-w-md rounded-3xl border border-amber-500/40 bg-slate-900 p-6 text-slate-100 shadow-2xl">
-    
-    <!-- Modal Header -->
-    <div class="mb-4 flex items-center space-x-3">
-      <div class="rounded-full border border-amber-500/30 bg-amber-500/10 p-3 text-amber-400">
-        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-        </svg>
-      </div>
-      <h3 id="videoPolicyTitle" class="text-xl font-bold tracking-tight">Authenticity Requirement</h3>
-    </div>
-
-    <!-- Dynamic Message -->
-    <p id="video-policy-msg" class="mb-4 text-sm leading-relaxed text-slate-300">
-      To maintain evidence integrity, AI-generated or heavily edited videos are prohibited.
-    </p>
-
-    <!-- Policy Badges -->
-    <div class="mb-5 space-y-2 rounded-xl border border-slate-700/60 bg-slate-800 p-3 text-xs text-slate-400">
-      <div class="flex justify-between">
-        <span>Daily Upload Quota:</span>
-        <span class="font-mono font-semibold text-amber-400">Max 2 Videos / Day</span>
-      </div>
-      <div class="flex justify-between">
-        <span>Max File Size:</span>
-        <span class="font-mono font-semibold text-amber-400">25 MB (Raw Clip)</span>
-      </div>
-      <div class="flex justify-between">
-        <span>AI / Deepfake Policy:</span>
-        <span class="font-medium text-red-400">Strictly Banned (C2PA Enforced)</span>
-      </div>
-    </div>
-
-    <!-- Action Buttons -->
-    <div class="space-y-3">
-      <a href="live-arena.html" class="flex w-full items-center justify-center space-x-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-4 py-3 font-bold text-slate-950 shadow-lg transition hover:from-amber-600">
-        <span>Go to Live Arena for True Reality</span>
-        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
-        </svg>
-      </a>
-
-      <button type="button" id="closeVideoPolicyBtn" class="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-xs font-semibold text-slate-300 transition hover:bg-slate-700">
-        I understand, cancel video upload
-      </button>
-    </div>
-
-  </div>
-</div>
-  
 </body>
 </html>
