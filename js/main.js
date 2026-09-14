@@ -102,90 +102,113 @@ function toggleDataSaver() {
 }
 
 window.toggleDataSaver = toggleDataSaver;
-
 /* ====================== TAB SWITCHING ====================== */
-window.switchTab = async (tab) => {
+const TAB_TO_SECTION = {
+  square:    'public-square',
+  ledger:    'evidence-ledger',
+  arena:     'live-arena',
+  mycircle:  'mycircle',
+  witness:   'witness'
+};
+
+let isSwitchingTab = false;
+
+window.switchTab = async function(tab) {
   if (isSwitchingTab) return;
   isSwitchingTab = true;
 
-  console.log(`[Tab] Switching to: ${tab}`);
+  console.log('[Tab] Switching to:', tab);
 
-  // 1. Update visual state of nav buttons
-  document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
-    const isActive = btn.dataset.tab === tab;
-    btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
-    btn.classList.toggle('active', isActive);
-
-    // Clean previous color classes
-    btn.classList.remove(
-      'bg-emerald-500', 'text-black', 'shadow-lg', 'shadow-emerald-500/20',
-      'bg-emerald-950/70', 'text-emerald-300', 'border-emerald-700/60',
-      'bg-sky-900/70', 'text-sky-300', 'border-sky-700',
-      'bg-amber-900/70', 'text-amber-300', 'border-amber-700',
-      'bg-zinc-900', 'text-zinc-300', 'border-zinc-700'
-    );
-
-    if (isActive) {
-      // Primary active style (Public Square)
-      if (tab === 'square' || tab === 'citizen') {
-        btn.classList.add('bg-emerald-500', 'text-black', 'shadow-lg', 'shadow-emerald-500/20');
-      }
-      // Keep special colors for other tabs when active
-      else if (tab === 'ledger') {
-        btn.classList.add('bg-emerald-950/70', 'text-emerald-300', 'border-emerald-700/60');
-      } else if (tab === 'arena') {
-        btn.classList.add('bg-sky-900/70', 'text-sky-300', 'border-sky-700');
-      } else if (tab === 'witness') {
-        btn.classList.add('bg-amber-900/70', 'text-amber-300', 'border-amber-700');
-      } else {
-        btn.classList.add('bg-zinc-900', 'text-zinc-200', 'border-zinc-700');
-      }
-    } else {
-      // Default inactive style
-      btn.classList.add('bg-zinc-900', 'text-zinc-300', 'border-zinc-700');
-    }
-  });
-
-  // 2. Hide all panels
-  const panels = ['public-square', 'evidence-ledger', 'live-arena', 'mycircle', 'witness'];
-  panels.forEach(id => {
-    document.getElementById(id)?.classList.add('hidden');
-  });
-
-  // 3. Show correct panel + load data
   try {
-    if (tab === 'square' || tab === 'citizen') {
-      document.getElementById('public-square')?.classList.remove('hidden');
-      if (typeof initFeed === 'function') {
-        initFeed(db, 'citizen-talk');
+    // 1. Update nav button styles
+    document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
+      const isActive = btn.dataset.tab === tab;
+      btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      btn.classList.toggle('active', isActive);
+
+      // Reset common classes
+      btn.classList.remove(
+        'bg-emerald-500', 'text-black', 'shadow-lg', 'shadow-emerald-500/20',
+        'bg-sky-950/50', 'text-sky-300', 'border-sky-700/60',
+        'bg-amber-950/40', 'text-amber-300', 'border-amber-700/50',
+        'bg-zinc-900', 'text-zinc-300', 'border-zinc-700'
+      );
+
+      if (isActive) {
+        if (tab === 'square') {
+          btn.classList.add('bg-emerald-500', 'text-black', 'shadow-lg', 'shadow-emerald-500/20');
+        } else if (tab === 'arena') {
+          btn.classList.add('bg-sky-950/50', 'text-sky-300', 'border', 'border-sky-700/60');
+        } else if (tab === 'witness') {
+          btn.classList.add('bg-amber-950/40', 'text-amber-300', 'border', 'border-amber-700/50');
+        } else {
+          btn.classList.add('bg-zinc-900', 'text-zinc-300', 'border', 'border-zinc-700');
+        }
+      } else {
+        btn.classList.add('bg-zinc-900', 'text-zinc-300', 'border', 'border-zinc-700');
       }
-    } else if (tab === 'ledger') {
-      document.getElementById('evidence-ledger')?.classList.remove('hidden');
-      await loadEvidenceLedger();
-    } else if (tab === 'arena') {
-      document.getElementById('live-arena')?.classList.remove('hidden');
-    } else if (tab === 'mycircle') {
-      document.getElementById('mycircle')?.classList.remove('hidden');
-    } else if (tab === 'witness') {
-      document.getElementById('witness')?.classList.remove('hidden');
-      if (typeof initFeed === 'function') {
-        initFeed(db, 'witness-voice');
+    });
+
+    // 2. Hide all sections
+    Object.values(TAB_TO_SECTION).forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.classList.add('hidden');
+        el.classList.remove('block');
       }
+    });
+
+    // 3. Show the selected section
+    const sectionId = TAB_TO_SECTION[tab] || 'public-square';
+    const section = document.getElementById(sectionId);
+    if (section) {
+      section.classList.remove('hidden');
+      section.classList.add('block');
+    } else {
+      console.warn('[Tab] Section not found:', sectionId);
     }
 
-    // Keep global state in sync
-    if (typeof state !== 'undefined') {
-      state.currentTab = tab;
+    // 4. Update URL hash (for bookmarking / back button)
+    const newHash = `#${tab === 'square' ? 'citizen-talk' : tab}`;
+    if (window.location.hash !== newHash) {
+      history.pushState({ tab }, '', newHash);
     }
-  } catch (err) {
-    console.error('[Tab] Switch error:', err);
-    showToast?.('Failed to load tab', 'error');
+
+    // 5. Run tab-specific init
+    if (tab === 'square' && typeof initFeed === 'function') {
+      initFeed(undefined, 'citizen-talk');
+    }
+    if (tab === 'ledger' && typeof loadEvidenceLedger === 'function') {
+      loadEvidenceLedger();
+    }
+    if (tab === 'mycircle' && typeof loadCircle === 'function') {
+      loadCircle();
+    }
+    if (tab === 'witness' && typeof initFeed === 'function') {
+      initFeed(undefined, 'witness-voice');
+    }
+
   } finally {
     isSwitchingTab = false;
   }
 };
 
-window.refreshLedger = () => loadEvidenceLedger();
+// Wire the nav buttons once
+function wireTabButtons() {
+  document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.switchTab(btn.dataset.tab);
+    });
+  });
+}
+
+// Handle browser back/forward history state
+window.addEventListener('popstate', () => {
+  const hash = window.location.hash.slice(1);
+  const tab = hash === 'citizen-talk' || !hash ? 'square' : hash;
+  window.switchTab(tab);
+});
 
 /* ====================== PAYMENT (PAYSTACK) ====================== */
 const PAYSTACK_PUBLIC_KEY = 'pk_live_5d13a6db326f02375127aae9d0fb03678ed1d923'; // TODO: move to env / Remote Config
