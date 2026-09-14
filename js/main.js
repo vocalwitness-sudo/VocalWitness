@@ -305,15 +305,6 @@ window.switchTab = async function(tab) {
   }
 };
 
-// Wire the navigation buttons once
-function wireTabButtons() {
-  document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      window.switchTab(btn.dataset.tab);
-    });
-  });
-}
 
 // Handle browser back/forward
 window.addEventListener('popstate', () => {
