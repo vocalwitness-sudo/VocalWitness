@@ -113,7 +113,6 @@ const TAB_TO_SECTION = {
 };
 
 // Ensure this is declared ONLY ONCE across the entire file
-let isSwitchingTab = false;
 
 window.switchTab = async function(tab) {
   if (isSwitchingTab) return;
