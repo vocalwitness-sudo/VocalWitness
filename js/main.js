@@ -738,7 +738,7 @@ function setupEventListeners() {
       const btn = e.target.closest('button[data-tab]');
       if (btn && typeof window.switchTab === 'function') {
         e.preventDefault();
-        window.switchTab(btn.dataset.tab);
+       wireTabButtons();
       }
     });
   }
