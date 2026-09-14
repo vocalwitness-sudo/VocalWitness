@@ -436,14 +436,12 @@ async function generatePremiumCertificate(userData, tier, docId, verificationUrl
    ============================================================ */
 export function showPremiumUpgradeModal(userData, db) {
   document.getElementById('premiumUpgradeModal')?.remove();
-
   const modal = document.createElement('div');
   modal.id = 'premiumUpgradeModal';
   modal.className = 'fixed inset-0 z-[10060] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm';
   modal.innerHTML = `
     <div class="relative w-full max-w-md rounded-3xl border border-amber-500/30 bg-zinc-900 p-6 shadow-2xl text-white">
       <button id="closePremiumModal" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl leading-none">&times;</button>
-
       <div class="text-center mb-5">
         <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 mb-3">
           <span class="text-2xl">🎖️</span>
@@ -451,7 +449,6 @@ export function showPremiumUpgradeModal(userData, db) {
         <h3 class="text-xl font-bold text-amber-400">Get Premium Certificate</h3>
         <p class="text-sm text-zinc-400 mt-1">High-quality official identity document</p>
       </div>
-
       <div class="space-y-3 mb-6 text-sm">
         <div class="flex items-start gap-3">
           <span class="text-emerald-400 mt-0.5">✓</span>
@@ -470,12 +467,10 @@ export function showPremiumUpgradeModal(userData, db) {
           <span>Supports VocalWitness infrastructure</span>
         </div>
       </div>
-
       <div class="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 mb-5 text-center">
         <div class="text-2xl font-bold text-white">$2.99</div>
         <div class="text-xs text-zinc-400 mt-1">One-time download • Does not change your membership tier</div>
       </div>
-
       <div class="flex flex-col gap-3">
         <button id="upgradeToPremiumBtn" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold transition">
           Pay $2.99 & Download Premium
@@ -484,38 +479,27 @@ export function showPremiumUpgradeModal(userData, db) {
           Download Standard Passport (Free)
         </button>
       </div>
-
       <p class="text-[11px] text-zinc-500 text-center mt-4">
         Gold & Steward members get 1 free Premium certificate every month.
       </p>
     </div>
   `;
-
   document.body.appendChild(modal);
-
   document.getElementById('closePremiumModal')?.addEventListener('click', () => modal.remove());
   modal.addEventListener('click', (e) => {
     if (e.target === modal) modal.remove();
   });
-
   document.getElementById('upgradeToPremiumBtn')?.addEventListener('click', () => {
     modal.remove();
     showToast("Redirecting to secure payment...", "info");
-
     // After successful payment you can call:
     // proceedGeneration(userData, db, resolveCertificateType(userData), "premium");
-
     if (typeof window.openSupportModal === 'function') {
       window.openSupportModal();
     }
   });
-
   document.getElementById('downloadStandardInstead')?.addEventListener('click', () => {
     modal.remove();
     generateAndDownloadPDF(userData, db, 'standard');
   });
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 44e292d (fix: remove global CSS selectors to restore Tailwind layout integrity)
