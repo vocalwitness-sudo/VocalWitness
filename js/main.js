@@ -42,7 +42,7 @@ console.log('%c[VocalWitness] main.js loaded', 'color:#10b981;font-weight:bold')
 let engineInstance = null;
 let isInitialized = false;
 let listenersInitialized = false;
-let isSwitchingTab = false;
+
 
 /* ====================== DATA SAVER ====================== */
 const DATA_SAVER_KEY = 'vw_data_saver';
