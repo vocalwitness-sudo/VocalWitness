@@ -868,17 +868,17 @@ function setupEventListeners() {
     }
   });
 
-  // Main navigation tabs
-  const mainNav = document.getElementById('main-nav');
-  if (mainNav) {
-    mainNav.addEventListener('click', (e) => {
-      const btn = e.target.closest('button[data-tab]');
-      if (btn && typeof window.switchTab === 'function') {
-        e.preventDefault();
-       wireTabButtons();
-      }
-    });
-  }
+ // Main navigation tabs
+const mainNav = document.getElementById('main-nav');
+if (mainNav) {
+  mainNav.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-tab]');
+    if (btn && typeof window.switchTab === 'function') {
+      e.preventDefault();
+      window.switchTab(btn.dataset.tab);
+    }
+  });
+}
 
   // Header-specific events
   if (typeof bindHeaderEvents === 'function') {
