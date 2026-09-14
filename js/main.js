@@ -44,7 +44,6 @@ let isInitialized = false;
 let listenersInitialized = false;
 let isSwitchingTab = false;
 
-
 /* ====================== DATA SAVER ====================== */
 const DATA_SAVER_KEY = 'vw_data_saver';
 
@@ -230,7 +229,95 @@ window.addEventListener('popstate', () => {
   const tab = hash === 'citizen-talk' || !hash ? 'square' : hash;
   window.switchTab(tab);
 });
-/* ====================== TAB SWITCHING & ROUTING ====================== */
+/* ====================== TAB SWITCHING ====================== */
+const TAB_TO_SECTION = {
+  square:    'public-square',
+  ledger:    'evidence-ledger',
+  arena:     'live-arena',
+  mycircle:  'mycircle',
+  witness:   'witness'
+};
+
+let isSwitchingTab = false;
+
+window.switchTab = async function(tab) {
+  if (isSwitchingTab) return;
+  isSwitchingTab = true;
+
+  console.log('[Tab] Switching to:', tab);
+
+  try {
+    // Update nav button styles
+    document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
+      const isActive = btn.dataset.tab === tab;
+      btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      btn.classList.toggle('active', isActive);
+
+      btn.classList.remove(
+        'bg-emerald-500', 'text-black', 'shadow-lg', 'shadow-emerald-500/20',
+        'bg-sky-950/50', 'text-sky-300', 'border-sky-700/60',
+        'bg-amber-950/40', 'text-amber-300', 'border-amber-700/50',
+        'bg-zinc-900', 'text-zinc-300', 'border-zinc-700'
+      );
+
+      if (isActive) {
+        if (tab === 'square') {
+          btn.classList.add('bg-emerald-500', 'text-black', 'shadow-lg', 'shadow-emerald-500/20');
+        } else if (tab === 'arena') {
+          btn.classList.add('bg-sky-950/50', 'text-sky-300', 'border', 'border-sky-700/60');
+        } else if (tab === 'witness') {
+          btn.classList.add('bg-amber-950/40', 'text-amber-300', 'border', 'border-amber-700/50');
+        } else {
+          btn.classList.add('bg-zinc-900', 'text-zinc-300', 'border', 'border-zinc-700');
+        }
+      } else {
+        btn.classList.add('bg-zinc-900', 'text-zinc-300', 'border', 'border-zinc-700');
+      }
+    });
+
+    // Hide all sections
+    Object.values(TAB_TO_SECTION).forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.classList.add('hidden');
+        el.classList.remove('block');
+      }
+    });
+
+    // Show selected section
+    const sectionId = TAB_TO_SECTION[tab] || 'public-square';
+    const section = document.getElementById(sectionId);
+    if (section) {
+      section.classList.remove('hidden');
+      section.classList.add('block');
+    } else {
+      console.warn('[Tab] Section not found:', sectionId);
+    }
+
+    // Update URL hash
+    const newHash = `#${tab === 'square' ? 'citizen-talk' : tab}`;
+    if (window.location.hash !== newHash) {
+      history.pushState({ tab }, '', newHash);
+    }
+
+    // Tab-specific init
+    if (tab === 'square' && typeof initFeed === 'function') {
+      initFeed(undefined, 'citizen-talk');
+    }
+    if (tab === 'ledger' && typeof loadEvidenceLedger === 'function') {
+      loadEvidenceLedger();
+    }
+    if (tab === 'mycircle' && typeof loadCircle === 'function') {
+      loadCircle();
+    }
+    if (tab === 'witness' && typeof initFeed === 'function') {
+      initFeed(undefined, 'witness-voice');
+    }
+
+  } finally {
+    isSwitchingTab = false;
+  }
+};
 
 // Wire the navigation buttons once
 function wireTabButtons() {
@@ -242,13 +329,12 @@ function wireTabButtons() {
   });
 }
 
-// Handle browser back/forward history navigation
+// Handle browser back/forward
 window.addEventListener('popstate', () => {
   const hash = window.location.hash.slice(1);
   const tab = (hash === 'citizen-talk' || !hash) ? 'square' : hash;
   window.switchTab(tab);
 });
-
 /* ====================== PAYMENT (PAYSTACK) ====================== */
 const PAYSTACK_PUBLIC_KEY = 'pk_live_5d13a6db326f02375127aae9d0fb03678ed1d923'; // TODO: move to env / Remote Config
 
