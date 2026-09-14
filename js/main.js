@@ -102,6 +102,7 @@ function toggleDataSaver() {
 }
 
 window.toggleDataSaver = toggleDataSaver;
+
 /* ====================== TAB SWITCHING ====================== */
 const TAB_TO_SECTION = {
   square:    'public-square',
@@ -126,7 +127,6 @@ window.switchTab = async function(tab) {
       btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
       btn.classList.toggle('active', isActive);
 
-      // Reset common classes
       btn.classList.remove(
         'bg-emerald-500', 'text-black', 'shadow-lg', 'shadow-emerald-500/20',
         'bg-sky-950/50', 'text-sky-300', 'border-sky-700/60',
@@ -168,13 +168,13 @@ window.switchTab = async function(tab) {
       console.warn('[Tab] Section not found:', sectionId);
     }
 
-    // 4. Update URL hash (for bookmarking / back button)
+    // 4. Update URL hash
     const newHash = `#${tab === 'square' ? 'citizen-talk' : tab}`;
     if (window.location.hash !== newHash) {
       history.pushState({ tab }, '', newHash);
     }
 
-    // 5. Run tab-specific init
+    // 5. Tab-specific init
     if (tab === 'square' && typeof initFeed === 'function') {
       initFeed(undefined, 'citizen-talk');
     }
@@ -193,7 +193,7 @@ window.switchTab = async function(tab) {
   }
 };
 
-// Wire the nav buttons once
+// Wire the buttons
 function wireTabButtons() {
   document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
     btn.addEventListener('click', (e) => {
@@ -203,10 +203,13 @@ function wireTabButtons() {
   });
 }
 
-// Handle browser back/forward history state
+// Call this inside bootstrap() after the DOM is ready
+// wireTabButtons();
+
+// Handle browser back/forward
 window.addEventListener('popstate', () => {
   const hash = window.location.hash.slice(1);
-  const tab = hash === 'citizen-talk' || !hash ? 'square' : hash;
+  const tab = (hash === 'citizen-talk' || !hash) ? 'square' : hash;
   window.switchTab(tab);
 });
 
@@ -376,7 +379,6 @@ window.publishTestimony = async () => {
         }
       } catch (mediaErr) {
         console.error('[publish] Media upload failed – aborting:', mediaErr);
-
         const isCorsLike = mediaErr?.message?.includes('Network error') ||
                            mediaErr?.message?.includes('CORS') ||
                            mediaErr?.name === 'NetworkError';
@@ -388,12 +390,7 @@ window.publishTestimony = async () => {
           'error'
         );
 
-        window.__isPublishing = false;
-        if (postBtn) {
-          postBtn.disabled = false;
-          postBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-        }
-        return;
+        return; // finally block will clean up
       }
     }
 
@@ -407,7 +404,35 @@ window.publishTestimony = async () => {
       console.warn('[publish] Could not compute bodyHash:', hashErr);
     }
 
-    // 3. Final payload
+    // ========== 3. GENERATE ZK PROOF ==========
+    let zkResult = {
+      isFallback: true,
+      proofType: 'NONE',
+      proof: null,
+      publicSignals: []
+    };
+
+    try {
+      // Dynamic import so the app still works even if zk-client fails to load
+      const { generateZKProofAsync } = await import('./zk-client.js');
+
+      const contentHash = mediaData.bodyHash || await generateSha256Hash(new Blob([content]));
+      const authorHash  = await generateSha256Hash(currentUser.uid);
+
+      zkResult = await generateZKProofAsync({
+        contentHash,
+        authorHash,
+        timestamp: Date.now().toString(),
+        mediaHash: mediaData.imageHash || mediaData.videoHash || mediaData.audioHash || mediaData.bodyHash || '0'
+      });
+
+      console.log('[publish] ZK result:', zkResult.proofType, zkResult.isFallback ? '(fallback)' : '(real proof)');
+    } catch (zkErr) {
+      console.warn('[publish] ZK generation failed, continuing without proof:', zkErr);
+      // We still publish the report even if ZK fails
+    }
+
+    // 4. Final payload
     const testimonyData = {
       authorId: currentUser.uid,
       content,
@@ -417,6 +442,8 @@ window.publishTestimony = async () => {
       author: currentUser.displayName || 'Registered Witness',
       feedVisibility: 'citizen-talk',
       timestamp: Date.now(),
+
+      // Media
       imageUrl: mediaData.imageUrl || null,
       videoUrl: mediaData.videoUrl || null,
       audioUrl: mediaData.audioUrl || null,
@@ -427,25 +454,37 @@ window.publishTestimony = async () => {
       hasForensic: !!(mediaData.imageHash || mediaData.videoHash || mediaData.audioHash || mediaData.bodyHash),
       hasEvidencePack: !!mediaData.hasEvidencePack,
       evidencePack: mediaData.evidencePack || null,
-      packCoreHash: mediaData.packCoreHash || null
+      packCoreHash: mediaData.packCoreHash || null,
+
+      // ZK Proof
+      zkProof: zkResult.proof || null,
+      zkPublicSignals: zkResult.publicSignals || [],
+      proofType: zkResult.proofType || 'NONE',
+      isZkVerified: !zkResult.isFallback
     };
 
     console.log('[publish] FINAL PAYLOAD:', {
       ...testimonyData,
       createdAt: '[serverTimestamp]',
-      contentLen: content.length
+      contentLen: content.length,
+      proofType: testimonyData.proofType
     });
 
-    // 4. Write to Firestore
+    // 5. Write to Firestore
     const docRef = await addDoc(collection(db, 'testimonies'), testimonyData);
     console.log('[publish] SUCCESS →', docRef.id);
 
-    // 5. Update throttle
+    // 6. Update throttle
     await setDoc(userRef, {
       lastTestimonyAt: serverTimestamp()
     }, { merge: true });
 
-    showToast("🛡️ Report sealed and published", "success");
+    // Success message
+    if (testimonyData.isZkVerified) {
+      showToast("🛡️ Report sealed with Zero-Knowledge proof", "success");
+    } else {
+      showToast("🛡️ Report sealed and published", "success");
+    }
 
     // Reset UI
     if (titleInput) titleInput.value = '';
@@ -473,8 +512,7 @@ window.publishTestimony = async () => {
       postBtn.classList.remove('opacity-50', 'cursor-not-allowed');
     }
   }
-  };
-
+};
 
 /* ====================== EVIDENCE LEDGER ====================== */
 async function loadEvidenceLedger() {
