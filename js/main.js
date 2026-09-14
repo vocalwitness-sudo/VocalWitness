@@ -902,17 +902,18 @@ async function bootstrap() {
   } catch (e) {
     console.error("Bootstrap error:", e);
     showToast?.("Failed to initialize app. Please refresh.", "error");
-  } finally {
-    // Fade out splash
-    const splash = document.getElementById('app-splash-screen');
-    if (splash) {
-      splash.style.opacity = '0';
-      setTimeout(() => splash.remove(), 350);
+   } finally {
+    window.__isPublishing = false;
+    if (postBtn) {
+      postBtn.disabled = false;
+      postBtn.classList.remove('opacity-50', 'cursor-not-allowed');
     }
   }
-}
+};  
 
-  /* ====================== DOM READY ====================== */
+
+//.......
+
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     await bootstrap();
