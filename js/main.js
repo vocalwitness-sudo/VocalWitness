@@ -229,7 +229,9 @@ window.addEventListener('popstate', () => {
   const tab = hash === 'citizen-talk' || !hash ? 'square' : hash;
   window.switchTab(tab);
 });
-// Wire the buttons
+/* ====================== TAB SWITCHING & ROUTING ====================== */
+
+// Wire the navigation buttons once
 function wireTabButtons() {
   document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
     btn.addEventListener('click', (e) => {
@@ -239,10 +241,7 @@ function wireTabButtons() {
   });
 }
 
-// Call this inside bootstrap() after the DOM is ready
-// wireTabButtons();
-
-// Handle browser back/forward
+// Handle browser back/forward history navigation
 window.addEventListener('popstate', () => {
   const hash = window.location.hash.slice(1);
   const tab = (hash === 'citizen-talk' || !hash) ? 'square' : hash;
