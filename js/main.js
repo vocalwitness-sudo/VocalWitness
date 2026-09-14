@@ -226,13 +226,6 @@ function wireTabButtons() {
 
 /* ====================== TAB SWITCHING ====================== */
 
-window.switchTab = async function(tab) {
-  if (isSwitchingTab) return;
-  isSwitchingTab = true;
-
-  console.log('[Tab] Switching to:', tab);
-
-  try {
     // Update nav button styles
     document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
       const isActive = btn.dataset.tab === tab;
@@ -1091,16 +1084,23 @@ async function bootstrap() {
   } catch (e) {
     console.error('%c❌ Bootstrap error:', 'color:red;font-weight:bold', e);
     showToast?.("Failed to initialize app. Please refresh.", "error");
-  } finally {
-    // Fade out splash screen
-    const splash = document.getElementById('app-splash-screen');
-    if (splash) {
-      splash.style.opacity = '0';
-      setTimeout(() => splash.remove(), 350);
+} finally {
+  // Aggressive splash screen removal (safer)
+  const splash = document.getElementById('app-splash-screen') || 
+                 document.querySelector('[id*="splash"]') ||
+                 document.querySelector('.splash') ||
+                 document.querySelector('#splash');
+
+  if (splash) {
+    splash.style.opacity = '0';
+    splash.style.pointerEvents = 'none';
+    splash.style.visibility = 'hidden';
+    setTimeout(() => {
+      splash.remove();
       console.log('[Bootstrap] Splash screen removed');
-    } else {
-      console.warn('[Bootstrap] Splash screen element not found');
-    }
+    }, 350);
+  } else {
+    console.warn('[Bootstrap] Splash screen element not found');
   }
 }
 /* ====================== DOM READY ====================== */
