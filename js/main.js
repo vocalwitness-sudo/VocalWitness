@@ -112,6 +112,7 @@ const TAB_TO_SECTION = {
   witness:   'witness'
 };
 
+// Ensure this is declared ONLY ONCE across the entire file
 let isSwitchingTab = false;
 
 window.switchTab = async function(tab) {
@@ -127,6 +128,7 @@ window.switchTab = async function(tab) {
       btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
       btn.classList.toggle('active', isActive);
 
+      // Reset common classes
       btn.classList.remove(
         'bg-emerald-500', 'text-black', 'shadow-lg', 'shadow-emerald-500/20',
         'bg-sky-950/50', 'text-sky-300', 'border-sky-700/60',
@@ -168,13 +170,13 @@ window.switchTab = async function(tab) {
       console.warn('[Tab] Section not found:', sectionId);
     }
 
-    // 4. Update URL hash
+    // 4. Update URL hash (for bookmarking / back button)
     const newHash = `#${tab === 'square' ? 'citizen-talk' : tab}`;
     if (window.location.hash !== newHash) {
       history.pushState({ tab }, '', newHash);
     }
 
-    // 5. Tab-specific init
+    // 5. Run tab-specific init
     if (tab === 'square' && typeof initFeed === 'function') {
       initFeed(undefined, 'citizen-talk');
     }
@@ -193,6 +195,25 @@ window.switchTab = async function(tab) {
   }
 };
 
+// Wire the nav buttons once
+function wireTabButtons() {
+  document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.switchTab(btn.dataset.tab);
+    });
+  });
+}
+
+// Wire them up
+wireTabButtons();
+
+// Handle browser back/forward history state
+window.addEventListener('popstate', () => {
+  const hash = window.location.hash.slice(1);
+  const tab = hash === 'citizen-talk' || !hash ? 'square' : hash;
+  window.switchTab(tab);
+});
 // Wire the buttons
 function wireTabButtons() {
   document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
@@ -902,6 +923,7 @@ function wireTestimonyComposer() {
 }
 
 /* ====================== BOOTSTRAP ====================== */
+/* ====================== BOOTSTRAP ====================== */
 async function bootstrap() {
   if (isInitialized) return;
   isInitialized = true;
@@ -957,6 +979,18 @@ async function bootstrap() {
 
     // Event listeners
     setupEventListeners();
+
+    // ★ Wire tab switching buttons
+    if (typeof wireTabButtons === 'function') {
+      wireTabButtons();
+    }
+
+    // Set initial tab
+    const initialHash = window.location.hash.slice(1);
+    const initialTab = (initialHash === 'citizen-talk' || !initialHash) ? 'square' : initialHash;
+    if (typeof window.switchTab === 'function') {
+      window.switchTab(initialTab);
+    }
 
     console.log("✅ Bootstrap finished successfully");
 
