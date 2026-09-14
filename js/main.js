@@ -21,6 +21,23 @@ import {
   serverTimestamp, query, getDocs, orderBy, limit
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
+/* ====================== GLOBAL ERROR LOGGING ====================== */
+window.addEventListener('error', (event) => {
+  console.error('🔴 Global Error:', {
+    message: event.message,
+    filename: event.filename,
+    lineno: event.lineno,
+    colno: event.colno,
+    error: event.error
+  });
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+  console.error('🔴 Unhandled Promise Rejection:', event.reason);
+});
+
+console.log('%c[VocalWitness] main.js loaded', 'color:#10b981;font-weight:bold');
+
 /* ====================== GLOBAL MODULE STATE ====================== */
 let engineInstance = null;
 let isInitialized = false;
@@ -922,22 +939,30 @@ function wireTestimonyComposer() {
 }
 
 /* ====================== BOOTSTRAP ====================== */
-/* ====================== BOOTSTRAP ====================== */
 async function bootstrap() {
-  if (isInitialized) return;
+  if (isInitialized) {
+    console.warn('[Bootstrap] Already initialized – skipped');
+    return;
+  }
   isInitialized = true;
 
-  console.log("🚀 VocalWitness Bootstrap started");
+  console.log('%c🚀 VocalWitness Bootstrap started', 'color:#10b981;font-weight:bold');
 
   try {
     // Core UI
+    console.log('[Bootstrap] Initializing core UI...');
     initDataSaver();
     initFocusBanner();
     initHeaderSearch();
 
     // Tier + leaderboard
-    if (typeof refreshTierAndUI === 'function') refreshTierAndUI();
-    if (typeof loadWeeklyLeaderboard === 'function') loadWeeklyLeaderboard();
+    if (typeof refreshTierAndUI === 'function') {
+      console.log('[Bootstrap] Refreshing tier UI...');
+      refreshTierAndUI();
+    }
+    if (typeof loadWeeklyLeaderboard === 'function') {
+      loadWeeklyLeaderboard();
+    }
 
     // Auth state listener
     window.addEventListener('auth-changed', (e) => {
@@ -962,11 +987,12 @@ async function bootstrap() {
 
     // Engine
     if (typeof CitizenTalkEngine === 'function' && db && storage) {
+      console.log('[Bootstrap] Starting CitizenTalkEngine...');
       engineInstance = new CitizenTalkEngine(db, storage);
       window.engineInstance = engineInstance;
       mediaModule.setEngine?.(engineInstance);
     } else {
-      console.warn("CitizenTalkEngine / db / storage not ready — engine skipped");
+      console.warn("[Bootstrap] CitizenTalkEngine / db / storage not ready — engine skipped");
     }
 
     // Navigation + news
@@ -974,27 +1000,34 @@ async function bootstrap() {
     fetchCuratedNews();
 
     // Auth
+    console.log('[Bootstrap] Initializing auth...');
     await initAuth();
 
     // Event listeners
     setupEventListeners();
 
-    // ★ Wire tab switching buttons
+    // Tab switching
     if (typeof wireTabButtons === 'function') {
+      console.log('[Bootstrap] Wiring tab buttons...');
       wireTabButtons();
+    } else {
+      console.warn('[Bootstrap] wireTabButtons() not found');
     }
 
     // Set initial tab
     const initialHash = window.location.hash.slice(1);
     const initialTab = (initialHash === 'citizen-talk' || !initialHash) ? 'square' : initialHash;
+    console.log('[Bootstrap] Setting initial tab:', initialTab);
     if (typeof window.switchTab === 'function') {
       window.switchTab(initialTab);
+    } else {
+      console.error('[Bootstrap] window.switchTab is not defined!');
     }
 
-    console.log("✅ Bootstrap finished successfully");
+    console.log('%c✅ Bootstrap finished successfully', 'color:#10b981;font-weight:bold');
 
   } catch (e) {
-    console.error("Bootstrap error:", e);
+    console.error('%c❌ Bootstrap error:', 'color:red;font-weight:bold', e);
     showToast?.("Failed to initialize app. Please refresh.", "error");
   } finally {
     // Fade out splash screen
@@ -1002,10 +1035,12 @@ async function bootstrap() {
     if (splash) {
       splash.style.opacity = '0';
       setTimeout(() => splash.remove(), 350);
+      console.log('[Bootstrap] Splash screen removed');
+    } else {
+      console.warn('[Bootstrap] Splash screen element not found');
     }
   }
 }
-
 /* ====================== DOM READY ====================== */
 document.addEventListener('DOMContentLoaded', async () => {
   try {
