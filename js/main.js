@@ -222,7 +222,6 @@ function wireTabButtons() {
 }
 
 // Wire them up
-wireTabButtons();
 
 // Handle browser back/forward history state
 window.addEventListener('popstate', () => {
