@@ -223,22 +223,8 @@ function wireTabButtons() {
 
 // Wire them up
 
-// Handle browser back/forward history state
-window.addEventListener('popstate', () => {
-  const hash = window.location.hash.slice(1);
-  const tab = hash === 'citizen-talk' || !hash ? 'square' : hash;
-  window.switchTab(tab);
-});
-/* ====================== TAB SWITCHING ====================== */
-const TAB_TO_SECTION = {
-  square:    'public-square',
-  ledger:    'evidence-ledger',
-  arena:     'live-arena',
-  mycircle:  'mycircle',
-  witness:   'witness'
-};
 
-let isSwitchingTab = false;
+/* ====================== TAB SWITCHING ====================== */
 
 window.switchTab = async function(tab) {
   if (isSwitchingTab) return;
