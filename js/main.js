@@ -1073,6 +1073,7 @@ async function bootstrap() {
     const initialHash = window.location.hash.slice(1);
     const initialTab = (initialHash === 'citizen-talk' || !initialHash) ? 'square' : initialHash;
     console.log('[Bootstrap] Setting initial tab:', initialTab);
+    
     if (typeof window.switchTab === 'function') {
       window.switchTab(initialTab);
     } else {
@@ -1084,23 +1085,24 @@ async function bootstrap() {
   } catch (e) {
     console.error('%c❌ Bootstrap error:', 'color:red;font-weight:bold', e);
     showToast?.("Failed to initialize app. Please refresh.", "error");
-} finally {
-  // Aggressive splash screen removal (safer)
-  const splash = document.getElementById('app-splash-screen') || 
-                 document.querySelector('[id*="splash"]') ||
-                 document.querySelector('.splash') ||
-                 document.querySelector('#splash');
+  } finally {
+    // Aggressive splash screen removal
+    const splash = document.getElementById('app-splash-screen') || 
+                   document.querySelector('[id*="splash"]') ||
+                   document.querySelector('.splash') ||
+                   document.querySelector('#splash');
 
-  if (splash) {
-    splash.style.opacity = '0';
-    splash.style.pointerEvents = 'none';
-    splash.style.visibility = 'hidden';
-    setTimeout(() => {
-      splash.remove();
-      console.log('[Bootstrap] Splash screen removed');
-    }, 350);
-  } else {
-    console.warn('[Bootstrap] Splash screen element not found');
+    if (splash) {
+      splash.style.opacity = '0';
+      splash.style.pointerEvents = 'none';
+      splash.style.visibility = 'hidden';
+      setTimeout(() => {
+        splash.remove();
+        console.log('[Bootstrap] Splash screen removed');
+      }, 350);
+    } else {
+      console.warn('[Bootstrap] Splash screen element not found');
+    }
   }
 }
 /* ====================== DOM READY ====================== */
