@@ -257,3 +257,93 @@ div.sticky {
   visibility: hidden;
   pointer-events: none;
 }
+
+/* ====================== BEAUTY & VISIBILITY BOOST ====================== */
+
+/* Better card presence */
+.glass,
+.rounded-2xl,
+.rounded-3xl {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.glass:hover {
+  border-color: rgba(16, 185, 129, 0.35);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+/* Refined text hierarchy */
+h1, h2, .text-xl, .text-2xl {
+  letter-spacing: -0.025em;
+}
+
+/* Stronger primary action feeling */
+button.bg-emerald-500,
+.bg-emerald-500 {
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.4), 0 4px 14px rgba(16, 185, 129, 0.25);
+}
+
+button.bg-emerald-500:active,
+.bg-emerald-500:active {
+  transform: scale(0.97);
+}
+
+/* Cleaner ledger / table rows */
+tr.hover\:bg-zinc-800\/40:hover {
+  background-color: rgba(39, 39, 42, 0.45) !important;
+}
+
+/* Better empty & loading states */
+.text-zinc-500.animate-pulse {
+  letter-spacing: 0.02em;
+}
+
+/* Mobile comfort */
+@media (max-width: 767px) {
+  .px-3, .px-4 {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  /* Slightly larger tap targets */
+  button, .nav-tab, [role="button"] {
+    min-height: 44px;
+  }
+}
+
+/* Desktop breathing room */
+@media (min-width: 768px) {
+  #main-content {
+    padding-top: 1.5rem;
+  }
+}
+
+/* Soft focus ring for accessibility + polish */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #10b981;
+  outline-offset: 2px;
+}
+
+/* Subtle scrollbar (modern browsers) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(16, 185, 129, 0.25);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(16, 185, 129, 0.4);
+}
+
+/* Prevent layout jump when splash disappears */
+body {
+  overflow-x: hidden;
+}
