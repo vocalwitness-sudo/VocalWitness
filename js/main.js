@@ -211,7 +211,6 @@ window.switchTab = async function(tab) {
   }
 };
 
-// Wire the nav buttons once
 function wireTabButtons() {
   document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
     btn.addEventListener('click', (e) => {
@@ -220,7 +219,6 @@ function wireTabButtons() {
     });
   });
 }
-
 // Wire them up
 
 
