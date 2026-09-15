@@ -1086,25 +1086,42 @@ async function bootstrap() {
     console.error('%c❌ Bootstrap error:', 'color:red;font-weight:bold', e);
     showToast?.("Failed to initialize app. Please refresh.", "error");
   } finally {
-    // Aggressive splash screen removal
-    const splash = document.getElementById('app-splash-screen') || 
-                   document.querySelector('[id*="splash"]') ||
-                   document.querySelector('.splash') ||
-                   document.querySelector('#splash');
+   // ====================== AGGRESSIVE SPLASH SCREEN REMOVAL ======================
+const removeSplash = () => {
+  const selectors = [
+    '#app-splash-screen',
+    '#splash',
+    '#loading',
+    '#loader',
+    '.splash',
+    '.loading-screen',
+    '.loader',
+    '[id*="splash"]',
+    '[class*="splash"]',
+    '[id*="loading"]',
+    '[class*="loading"]'
+  ];
 
-    if (splash) {
-      splash.style.opacity = '0';
-      splash.style.pointerEvents = 'none';
-      splash.style.visibility = 'hidden';
+  selectors.forEach(selector => {
+    document.querySelectorAll(selector).forEach(el => {
+      el.style.transition = 'opacity 0.3s ease';
+      el.style.opacity = '0';
+      el.style.pointerEvents = 'none';
+      el.style.visibility = 'hidden';
+
       setTimeout(() => {
-        splash.remove();
-        console.log('[Bootstrap] Splash screen removed');
+        el.remove();
       }, 350);
-    } else {
-      console.warn('[Bootstrap] Splash screen element not found');
-    }
-  }
-}
+    });
+  });
+
+  // Restore scrolling just in case
+  document.body.style.overflow = '';
+  document.documentElement.style.overflow = '';
+};
+
+// Call it
+removeSplash();
 /* ====================== DOM READY ====================== */
 document.addEventListener('DOMContentLoaded', async () => {
   try {
