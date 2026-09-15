@@ -293,7 +293,7 @@ function wireTabButtons() {
       initFeed(undefined, 'witness-voice');
     }
 
-  } finally {
+   finally {
     isSwitchingTab = false;
   }
 };
