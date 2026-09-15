@@ -129,8 +129,6 @@ const TAB_TO_SECTION = {
   witness:   'witness'
 };
 
-// Ensure this is declared ONLY ONCE across the entire file
-
 window.switchTab = async function(tab) {
   if (isSwitchingTab) return;
   isSwitchingTab = true;
@@ -219,83 +217,6 @@ function wireTabButtons() {
     });
   });
 }
-// Wire them up
-
-
-/* ====================== TAB SWITCHING ====================== */
-
-    // Update nav button styles
-    document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
-      const isActive = btn.dataset.tab === tab;
-      btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
-      btn.classList.toggle('active', isActive);
-
-      btn.classList.remove(
-        'bg-emerald-500', 'text-black', 'shadow-lg', 'shadow-emerald-500/20',
-        'bg-sky-950/50', 'text-sky-300', 'border-sky-700/60',
-        'bg-amber-950/40', 'text-amber-300', 'border-amber-700/50',
-        'bg-zinc-900', 'text-zinc-300', 'border-zinc-700'
-      );
-
-      if (isActive) {
-        if (tab === 'square') {
-          btn.classList.add('bg-emerald-500', 'text-black', 'shadow-lg', 'shadow-emerald-500/20');
-        } else if (tab === 'arena') {
-          btn.classList.add('bg-sky-950/50', 'text-sky-300', 'border', 'border-sky-700/60');
-        } else if (tab === 'witness') {
-          btn.classList.add('bg-amber-950/40', 'text-amber-300', 'border', 'border-amber-700/50');
-        } else {
-          btn.classList.add('bg-zinc-900', 'text-zinc-300', 'border', 'border-zinc-700');
-        }
-      } else {
-        btn.classList.add('bg-zinc-900', 'text-zinc-300', 'border', 'border-zinc-700');
-      }
-    });
-
-    // Hide all sections
-    Object.values(TAB_TO_SECTION).forEach(id => {
-      const el = document.getElementById(id);
-      if (el) {
-        el.classList.add('hidden');
-        el.classList.remove('block');
-      }
-    });
-
-    // Show selected section
-    const sectionId = TAB_TO_SECTION[tab] || 'public-square';
-    const section = document.getElementById(sectionId);
-    if (section) {
-      section.classList.remove('hidden');
-      section.classList.add('block');
-    } else {
-      console.warn('[Tab] Section not found:', sectionId);
-    }
-
-    // Update URL hash
-    const newHash = `#${tab === 'square' ? 'citizen-talk' : tab}`;
-    if (window.location.hash !== newHash) {
-      history.pushState({ tab }, '', newHash);
-    }
-
-    // Tab-specific init
-    if (tab === 'square' && typeof initFeed === 'function') {
-      initFeed(undefined, 'citizen-talk');
-    }
-    if (tab === 'ledger' && typeof loadEvidenceLedger === 'function') {
-      loadEvidenceLedger();
-    }
-    if (tab === 'mycircle' && typeof loadCircle === 'function') {
-      loadCircle();
-    }
-    if (tab === 'witness' && typeof initFeed === 'function') {
-      initFeed(undefined, 'witness-voice');
-    }
-
-   finally {
-    isSwitchingTab = false;
-  }
-};
-
 
 // Handle browser back/forward
 window.addEventListener('popstate', () => {
@@ -303,6 +224,7 @@ window.addEventListener('popstate', () => {
   const tab = (hash === 'citizen-talk' || !hash) ? 'square' : hash;
   window.switchTab(tab);
 });
+
 /* ====================== PAYMENT (PAYSTACK) ====================== */
 const PAYSTACK_PUBLIC_KEY = 'pk_live_5d13a6db326f02375127aae9d0fb03678ed1d923'; // TODO: move to env / Remote Config
 
@@ -480,7 +402,7 @@ window.publishTestimony = async () => {
           'error'
         );
 
-        return; // finally block will clean up
+        return; // finally will clean up
       }
     }
 
@@ -503,7 +425,6 @@ window.publishTestimony = async () => {
     };
 
     try {
-      // Dynamic import so the app still works even if zk-client fails to load
       const { generateZKProofAsync } = await import('./zk-client.js');
 
       const contentHash = mediaData.bodyHash || await generateSha256Hash(new Blob([content]));
@@ -519,7 +440,6 @@ window.publishTestimony = async () => {
       console.log('[publish] ZK result:', zkResult.proofType, zkResult.isFallback ? '(fallback)' : '(real proof)');
     } catch (zkErr) {
       console.warn('[publish] ZK generation failed, continuing without proof:', zkErr);
-      // We still publish the report even if ZK fails
     }
 
     // 4. Final payload
@@ -607,7 +527,7 @@ window.publishTestimony = async () => {
 /* ====================== EVIDENCE LEDGER ====================== */
 async function loadEvidenceLedger() {
   // Support both possible container IDs for compatibility
-  const container = document.getElementById('ledger-list') || 
+  const container = document.getElementById('ledger-list') ||
                     document.getElementById('ledgerContainer') ||
                     document.getElementById('evidence-ledger');
 
@@ -641,14 +561,15 @@ async function loadEvidenceLedger() {
   const innerWrapper = document.getElementById('ledgerTableInnerWrapper');
   const syncBtn = document.getElementById('syncLedgerBtn');
 
+  // Proper re-bindable refresh button (no { once: true })
   if (syncBtn) {
-    syncBtn.addEventListener('click', () => {
+    syncBtn.onclick = () => {
       if (typeof window.refreshLedger === 'function') {
         window.refreshLedger();
       } else {
         loadEvidenceLedger();
       }
-    }, { once: true });
+    };
     syncBtn.disabled = true;
   }
 
@@ -684,8 +605,11 @@ async function loadEvidenceLedger() {
 
     querySnapshot.forEach((docSnapshot) => {
       const data = docSnapshot.data();
-      const dateStr = data.timestamp
-        ? new Date(data.timestamp).toLocaleString()
+
+      // Safe timestamp handling (works with both number and Firestore Timestamp)
+      const ts = data.timestamp;
+      const dateStr = ts
+        ? (ts.toDate ? ts.toDate() : new Date(ts)).toLocaleString()
         : 'N/A';
 
       const hasHash = data.imageHash || data.audioHash || data.videoHash || data.bodyHash || data.hasForensic;
@@ -806,8 +730,6 @@ function setupEventListeners() {
         e.preventDefault();
         if (typeof window.openAuthModal === 'function') {
           window.openAuthModal();
-        } else if (typeof window.openAuthModalBtn === 'function') {
-          // fallback
         }
         break;
 
@@ -840,7 +762,7 @@ function setupEventListeners() {
   });
 
   // Notification dropdown
-  const notifBtn = document.getElementById('notification-btn') || 
+  const notifBtn = document.getElementById('notification-btn') ||
                    document.getElementById('notification-btn-mobile');
   if (notifBtn && typeof window.toggleNotificationDropdown === 'function') {
     notifBtn.addEventListener('click', window.toggleNotificationDropdown);
@@ -859,17 +781,17 @@ function setupEventListeners() {
     }
   });
 
- // Main navigation tabs
-const mainNav = document.getElementById('main-nav');
-if (mainNav) {
-  mainNav.addEventListener('click', (e) => {
-    const btn = e.target.closest('button[data-tab]');
-    if (btn && typeof window.switchTab === 'function') {
-      e.preventDefault();
-      window.switchTab(btn.dataset.tab);
-    }
-  });
-}
+  // Main navigation tabs
+  const mainNav = document.getElementById('main-nav');
+  if (mainNav) {
+    mainNav.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-tab]');
+      if (btn && typeof window.switchTab === 'function') {
+        e.preventDefault();
+        window.switchTab(btn.dataset.tab);
+      }
+    });
+  }
 
   // Header-specific events
   if (typeof bindHeaderEvents === 'function') {
@@ -918,7 +840,7 @@ document.addEventListener('click', (e) => {
 
 /* ====================== MOBILE + GLOBAL SEARCH ====================== */
 function initHeaderSearch() {
-  const mobileSearch = document.getElementById('searchInputMobile') || 
+  const mobileSearch = document.getElementById('searchInputMobile') ||
                        document.getElementById('global-search');
   const feedSearch = document.getElementById('feedSearchInput');
 
@@ -971,7 +893,6 @@ function initFocusBanner() {
 function wireTestimonyComposer() {
   // Photo/video handled by composer.js → initComposer()
   // We only wire voice + publish here
-
   const btnVoice = document.getElementById('btn-voice');
   if (btnVoice && !btnVoice.dataset.wired) {
     btnVoice.addEventListener('click', () => {
@@ -1059,13 +980,11 @@ async function bootstrap() {
     // Event listeners
     setupEventListeners();
 
-  
-
     // Set initial tab
     const initialHash = window.location.hash.slice(1);
     const initialTab = (initialHash === 'citizen-talk' || !initialHash) ? 'square' : initialHash;
     console.log('[Bootstrap] Setting initial tab:', initialTab);
-    
+
     if (typeof window.switchTab === 'function') {
       window.switchTab(initialTab);
     } else {
@@ -1077,9 +996,11 @@ async function bootstrap() {
   } catch (e) {
     console.error('%c❌ Bootstrap error:', 'color:red;font-weight:bold', e);
     showToast?.("Failed to initialize app. Please refresh.", "error");
-  } finally {
-   // ====================== AGGRESSIVE SPLASH SCREEN REMOVAL ======================
-const removeSplash = () => {
+  }
+}
+
+/* ====================== AGGRESSIVE SPLASH SCREEN REMOVAL ====================== */
+function removeSplash() {
   const selectors = [
     '#app-splash-screen',
     '#splash',
@@ -1100,7 +1021,6 @@ const removeSplash = () => {
       el.style.opacity = '0';
       el.style.pointerEvents = 'none';
       el.style.visibility = 'hidden';
-
       setTimeout(() => {
         el.remove();
       }, 350);
@@ -1110,16 +1030,16 @@ const removeSplash = () => {
   // Restore scrolling just in case
   document.body.style.overflow = '';
   document.documentElement.style.overflow = '';
-};
+}
 
-// Call it
-removeSplash();
 /* ====================== DOM READY ====================== */
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     await bootstrap();
   } catch (err) {
     console.error('Bootstrap failed:', err);
+  } finally {
+    removeSplash();
   }
 
   // Wire composer after a short delay to ensure all elements exist
