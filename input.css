@@ -12,14 +12,65 @@
   --text-primary: #f8fafc;
   --text-muted: #94a3b8;
   --border-subtle: rgba(255, 255, 255, 0.07);
-  --header-height-desktop: 68px;
-  --header-height-mobile: 110px;
+  --header-height-desktop: 64px;
+  --header-height-mobile: 98px;
   --radius: 14px;
   --radius-sm: 10px;
 }
 
+/* ====================== CRITICAL TAILWIND SAFETY UTILITIES ====================== */
+/* These must exist until the full Tailwind build is restored */
+
+.hidden {
+  display: none !important;
+}
+
+.block {
+  display: block !important;
+}
+
+.flex {
+  display: flex !important;
+}
+
+.inline-flex {
+  display: inline-flex !important;
+}
+
+.grid {
+  display: grid !important;
+}
+
+.contents {
+  display: contents !important;
+}
+
+/* Common responsive helpers used in the header / nav */
+@media (min-width: 768px) {
+  .md\:flex {
+    display: flex !important;
+  }
+  .md\:hidden {
+    display: none !important;
+  }
+  .md\:block {
+    display: block !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .sm\:flex {
+    display: flex !important;
+  }
+  .sm\:hidden {
+    display: none !important;
+  }
+}
+
 /* ====================== BASE ====================== */
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
 html, body {
   height: 100%;
@@ -58,14 +109,12 @@ body {
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
 }
 
-/* Desktop fixed height */
 @media (min-width: 768px) {
   #main-header {
     height: var(--header-height-desktop);
   }
 }
 
-/* Mobile allows natural height */
 @media (max-width: 767px) {
   #main-header {
     height: auto;
@@ -73,7 +122,6 @@ body {
   }
 }
 
-/* Logo size */
 #main-header img {
   height: 2.5rem;
   width: 2.5rem;
@@ -108,7 +156,6 @@ body {
   cursor: pointer;
 }
 
-/* Active state – keep it simple */
 #main-nav .nav-tab.active {
   background: var(--primary-color);
   color: #000;
@@ -116,7 +163,6 @@ body {
   box-shadow: 0 0 20px var(--primary-glow);
 }
 
-/* Special inactive states (optional, keep light) */
 #main-nav button[data-tab="arena"]:not(.active) {
   background: rgba(12, 74, 110, 0.5);
   color: #7dd3fc;
@@ -130,7 +176,6 @@ body {
 }
 
 /* ====================== SUPPORT BUTTON ====================== */
-/* Make Support secondary again */
 #openSupportModalBtn,
 #openSupportModalBtnMobile {
   background: rgba(16, 185, 129, 0.12);
@@ -155,17 +200,24 @@ body {
   backdrop-filter: blur(8px);
 }
 
+/* Explicit control for the main modals */
 #supportModal,
 #authModal,
 #profileModal,
-#editProfileModal {
+#editProfileModal,
+#settingsModal,
+#phoneVerificationModal,
+#video-policy-modal {
   display: none;
 }
 
 #supportModal.flex,
 #authModal.flex,
 #profileModal.flex,
-#editProfileModal.flex {
+#editProfileModal.flex,
+#settingsModal.flex,
+#phoneVerificationModal.flex,
+#video-policy-modal.flex {
   display: flex !important;
   align-items: center;
   justify-content: center;
@@ -185,4 +237,23 @@ div.sticky {
   div.sticky {
     top: var(--header-height-mobile);
   }
+}
+
+/* ====================== SPLASH SCREEN SAFETY ====================== */
+#app-splash-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: #0b1120;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.4s;
+}
+
+#app-splash-screen.fade-out,
+#app-splash-screen.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
 }
