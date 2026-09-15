@@ -390,3 +390,74 @@ footer .grid {
     grid-template-columns: repeat(4, 1fr);
   }
 }
+/* ====================== EMERGENCY FIX – HEADER + MODALS ====================== */
+
+/* Force desktop header layout */
+@media (min-width: 768px) {
+  #main-header .hidden.md\:flex,
+  #main-header .md\:flex {
+    display: flex !important;
+  }
+  
+  #main-header .md\:hidden {
+    display: none !important;
+  }
+}
+
+/* Force mobile header */
+@media (max-width: 767px) {
+  #main-header .md\:flex {
+    display: none !important;
+  }
+  
+  #main-header .flex.flex-col {
+    display: flex !important;
+  }
+}
+
+/* Strong hidden for all modals */
+#settingsModal,
+#phoneVerificationModal,
+#video-policy-modal,
+#supportModal,
+#authModal,
+#profileModal,
+#editProfileModal,
+#loginModal {
+  display: none !important;
+}
+
+/* When a modal is intentionally opened */
+#settingsModal.flex,
+#phoneVerificationModal.flex,
+#video-policy-modal.flex,
+#supportModal.flex,
+#authModal.flex,
+#profileModal.flex,
+#editProfileModal.flex,
+#loginModal.flex {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Prevent any leftover splash / logo from covering the page */
+#app-splash-screen.hidden,
+#app-splash-screen.fade-out {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  z-index: -1 !important;
+}
+
+/* Make sure main content is always on top of any residual overlays */
+#main-content {
+  position: relative;
+  z-index: 10;
+}
+
+/* Header should stay above everything except open modals */
+#main-header {
+  z-index: 60 !important;
+}
