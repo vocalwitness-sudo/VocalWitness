@@ -1061,13 +1061,7 @@ async function bootstrap() {
     // Event listeners
     setupEventListeners();
 
-    // Tab switching
-    if (typeof wireTabButtons === 'function') {
-      console.log('[Bootstrap] Wiring tab buttons...');
-      wireTabButtons();
-    } else {
-      console.warn('[Bootstrap] wireTabButtons() not found');
-    }
+  
 
     // Set initial tab
     const initialHash = window.location.hash.slice(1);
