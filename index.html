@@ -60,83 +60,81 @@
   <script src="https://cdn.jsdelivr.net/npm/snarkjs@0.7.0/build/snarkjs.min.js" defer></script>
 
   <script type="module" src="./js/main.js?v=2.2"></script>
+<style>
+  :root {
+    /* === Core Palette === */
+    --bg-dark: #0b1120;
+    --bg-elevated: #111827;
+    --bg-card: #1e293b;
+    --primary: #10b981;
+    --primary-hover: #34d399;
+    --primary-glow: rgba(16, 185, 129, 0.25);
+    --border: #1e293b;
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --text-primary: #f8fafc;
+    --text-muted: #94a3b8;
+    --text-dim: #64748b;
 
-  <style>
-    :root {
-      /* === Core Palette === */
-      --bg-dark: #0b1120;
-      --bg-elevated: #111827;
-      --bg-card: #1e293b;
-      --primary: #10b981;
-      --primary-hover: #34d399;
-      --primary-glow: rgba(16, 185, 129, 0.25);
-      --border: #1e293b;
-      --border-subtle: rgba(255, 255, 255, 0.08);
+    /* Updated to comfortably fit the two mobile rows */
+    --header-height-mobile: 104px;
+    --header-height-desktop: 64px;
+  }
 
-      --text-primary: #f8fafc;
-      --text-muted: #94a3b8;
-      --text-dim: #64748b;
+  html, body {
+    height: 100%;
+    min-height: 100dvh;
+    margin: 0;
+    padding: 0;
+  }
 
-      /* Updated to match the new header */
-      --header-height-mobile: 98px;
-      --header-height-desktop: 64px;
-    }
+  body {
+    background-color: var(--bg-dark) !important;
+    color: var(--text-primary) !important;
+    padding-top: var(--header-height-mobile);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 
-    html, body {
-      height: 100%;
-      min-height: 100dvh;
-      margin: 0;
-      padding: 0;
-    }
-
+  @media (min-width: 768px) {
     body {
-      background-color: var(--bg-dark) !important;
-      color: var(--text-primary) !important;
-      padding-top: var(--header-height-mobile);
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
+      padding-top: var(--header-height-desktop);
     }
+  }
 
-    @media (min-width: 768px) {
-      body {
-        padding-top: var(--header-height-desktop);
-      }
-    }
+  /* Glass / Cards */
+  .glass,
+  [class*="backdrop-blur"] {
+    background-color: var(--bg-elevated) !important;
+    border: 1px solid var(--border) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
 
-    /* Glass / Cards */
-    .glass,
-    [class*="backdrop-blur"] {
-      background-color: var(--bg-elevated) !important;
-      border: 1px solid var(--border) !important;
-      backdrop-filter: none !important;
-      -webkit-backdrop-filter: none !important;
-    }
+  #main-header {
+    background-color: rgba(11, 17, 32, 0.92) !important;
+    border-bottom: 1px solid rgba(16, 185, 129, 0.22) !important;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
 
-    #main-header {
-      background-color: rgba(11, 17, 32, 0.92) !important;
-      border-bottom: 1px solid rgba(16, 185, 129, 0.22) !important;
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-    }
+  .rounded-3xl,
+  .rounded-2xl {
+    background-color: var(--bg-elevated) !important;
+    border: 1px solid var(--border) !important;
+  }
 
-    .rounded-3xl,
-    .rounded-2xl {
-      background-color: var(--bg-elevated) !important;
-      border: 1px solid var(--border) !important;
-    }
-
-    /* Fallback for older browsers */
-    @supports not (color: rgb(0 0 0 / 0.5)) {
-      .bg-zinc-950 { background-color: #0b1120 !important; }
-      .bg-zinc-900 { background-color: #111827 !important; }
-      .bg-zinc-800 { background-color: #1e293b !important; }
-      .border-zinc-800 { border-color: #1e293b !important; }
-      .border-zinc-700 { border-color: #334155 !important; }
-      .text-zinc-400 { color: #94a3b8 !important; }
-      .text-emerald-400 { color: #34d399 !important; }
-    }
-  </style>
+  /* Fallback for older browsers */
+  @supports not (color: rgb(0 0 0 / 0.5)) {
+    .bg-zinc-950 { background-color: #0b1120 !important; }
+    .bg-zinc-900 { background-color: #111827 !important; }
+    .bg-zinc-800 { background-color: #1e293b !important; }
+    .border-zinc-800 { border-color: #1e293b !important; }
+    .border-zinc-700 { border-color: #334155 !important; }
+    .text-zinc-400 { color: #94a3b8 !important; }
+    .text-emerald-400 { color: #34d399 !important; }
+  }
+</style>
 </head>
 
 <body class="theme-citizen tier-citizen">
