@@ -184,31 +184,31 @@
 </style>
 
 <!-- ====================== HEADER ====================== -->
-<header id="main-header" dir="ltr" class="fixed top-0 left-0 right-0 z-50 border-b border-emerald-500/20 bg-zinc-950/90 backdrop-blur-xl shadow-lg">
+<header id="main-header" dir="ltr" class="fixed top-0 left-0 right-0 z-50 border-b border-emerald-500/25 bg-zinc-950/95 backdrop-blur-xl shadow-lg">
   <div class="mx-auto max-w-6xl px-4 sm:px-6">
 
     <!-- ========== DESKTOP HEADER ========== -->
-    <div class="hidden h-16 items-center justify-between gap-6 md:flex">
+    <div class="hidden h-16 items-center justify-between gap-4 md:flex">
       
       <!-- Logo + Brand -->
       <a href="/" class="group flex shrink-0 items-center gap-3.5" aria-label="VocalWitness Home">
-        <div class="relative">
+        <div class="relative flex items-center justify-center">
           <div class="absolute -inset-1.5 rounded-2xl bg-gradient-to-br from-emerald-500/50 to-teal-400/30 opacity-70 blur-md transition duration-300 group-hover:opacity-100"></div>
           <img src="./logo.png" alt="VocalWitness"
                class="relative h-11 w-11 rounded-2xl border border-emerald-400/50 bg-zinc-900 object-cover shadow-lg ring-1 ring-white/10">
         </div>
-       <div class="leading-tight group cursor-pointer">
-  <h1 class="text-[23px] font-extrabold tracking-tight transition" data-i18n="appTitle">
-    <span class="text-emerald-400 group-hover:text-emerald-300">Vocal</span><span class="text-white">Witness</span>
-  </h1>
-  <p class="text-[11px] font-medium tracking-wide text-emerald-400/75 uppercase" data-i18n="appSubtitle">
-    Truth • Evidence • Zero-Knowledge
-  </p>
-</div>
+        <div class="leading-tight group cursor-pointer">
+          <h1 class="text-[23px] font-extrabold tracking-tight transition" data-i18n="appTitle">
+            <span class="text-emerald-400 group-hover:text-emerald-300">Vocal</span><span class="text-white">Witness</span>
+          </h1>
+          <p class="text-[11px] font-medium tracking-wide text-emerald-400/75 uppercase" data-i18n="appSubtitle">
+            Truth • Evidence • Zero-Knowledge
+          </p>
+        </div>
       </a>
 
       <!-- Right side controls -->
-      <div class="flex shrink-0 items-center gap-2.5">
+      <div class="flex shrink-0 items-center gap-2">
         
         <!-- Language -->
         <select id="languageSelect" aria-label="Language"
@@ -302,44 +302,50 @@
     </div>
 
     <!-- ========== MOBILE HEADER ========== -->
-    <div class="flex flex-col gap-2.5 py-3 md:hidden">
+    <div class="flex flex-col gap-2 py-2.5 md:hidden">
       
       <!-- Top row: Brand + Primary Action -->
       <div class="flex items-center justify-between">
         <a href="/" class="flex shrink-0 items-center gap-2.5" aria-label="VocalWitness Home">
-          <div class="relative">
+          <div class="relative flex items-center justify-center">
             <div class="absolute -inset-1 rounded-xl bg-emerald-500/40 blur-sm"></div>
             <img src="./logo.png" alt="VocalWitness" 
-                 class="relative h-10 w-10 rounded-xl border border-emerald-500/40 object-cover ring-1 ring-white/10">
+                 class="relative h-9 w-9 rounded-xl border border-emerald-500/40 object-cover ring-1 ring-white/10">
           </div>
-          <div class="leading-none">
-            <h1 class="text-[16px] font-extrabold tracking-tight text-white" data-i18n="appTitle">VocalWitness</h1>
-            <p class="mt-0.5 text-[10px] font-medium text-emerald-400/75" data-i18n="appSubtitle">Citizen Reporting</p>
+          <div class="leading-tight">
+            <h1 class="text-[15px] font-extrabold tracking-tight" data-i18n="appTitle">
+              <span class="text-emerald-400">Vocal</span><span class="text-white">Witness</span>
+            </h1>
+            <p class="text-[9px] font-medium text-emerald-400/75 uppercase" data-i18n="appSubtitle">Citizen Reporting</p>
           </div>
         </a>
 
         <div class="flex items-center gap-2">
           <!-- Primary CTA -->
           <button id="openAuthModalBtnMobile" type="button"
-                  class="flex h-9 items-center gap-1.5 rounded-xl bg-white px-3 text-xs font-semibold text-zinc-900 shadow-sm transition-all duration-200 active:scale-95"
+                  class="flex h-8 items-center gap-1.5 rounded-xl bg-white px-3 text-xs font-semibold text-zinc-900 shadow-sm transition-all duration-200 active:scale-95"
                   data-action="open-auth-modal">
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-                 class="h-3.5 w-3.5 pointer-events-none" alt="" width="14" height="14">
+            <svg class="h-3.5 w-3.5 pointer-events-none shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+            </svg>
             <span class="pointer-events-none">Sign In</span>
           </button>
 
           <!-- Profile (when logged in) -->
           <button id="userProfileBtnMobile" type="button"
-                  class="hidden h-9 w-9 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900 text-sm text-emerald-400 transition-all duration-200 active:scale-95"
+                  class="hidden h-8 w-8 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900 text-sm text-emerald-400 transition-all duration-200 active:scale-95"
                   aria-label="Open profile">👤</button>
         </div>
       </div>
 
       <!-- Bottom row: Utilities -->
-      <div class="flex items-center justify-between gap-2 border-t border-zinc-800/50 pt-2.5">
+      <div class="flex items-center justify-between gap-1 border-t border-zinc-800/60 pt-2">
         <div class="flex items-center gap-1.5">
           <select id="languageSelectMobile" aria-label="Language"
-                  class="h-8 rounded-lg border border-zinc-700 bg-zinc-900 px-2 text-[11px] font-medium text-zinc-300 focus:border-emerald-500 focus:outline-none">
+                  class="h-7 rounded-lg border border-zinc-700 bg-zinc-900 px-1.5 text-[11px] font-medium text-zinc-300 focus:border-emerald-500 focus:outline-none">
             <option value="en">EN</option>
             <option value="pcm">PCM</option>
             <option value="ha">HA</option>
@@ -353,31 +359,33 @@
           </select>
 
           <button id="openSupportModalBtnMobile" type="button"
-                  class="h-8 rounded-lg border border-emerald-500/50 bg-emerald-500/10 px-2.5 text-[11px] font-semibold text-emerald-400 transition-all duration-200 active:scale-95"
+                  class="h-7 rounded-lg border border-emerald-500/50 bg-emerald-500/10 px-2 text-[11px] font-semibold text-emerald-400 transition-all duration-200 active:scale-95"
                   data-i18n="supportBtn">
             Support
           </button>
         </div>
 
         <div class="flex items-center gap-1.5">
-          <!-- Data Saver (more compact) -->
+          <!-- Data Saver -->
           <button id="data-saver-btn-mobile" type="button"
-                  class="flex h-8 items-center gap-1 rounded-lg border border-zinc-800 bg-zinc-900/80 px-2 text-[10px] font-medium text-zinc-500 transition-all duration-200 active:scale-95"
+                  class="flex h-7 items-center gap-1 rounded-lg border border-zinc-800 bg-zinc-900/80 px-2 text-[10px] font-medium text-zinc-500 transition-all duration-200 active:scale-95"
                   aria-label="Toggle Data Saver" title="Data Saver">
             <span aria-hidden="true">⚡</span>
             <span id="data-saver-status-mobile" class="text-zinc-400">Off</span>
           </button>
 
+          <!-- Bookmarks -->
           <button id="bookmarks-nav-btn-mobile" type="button" aria-label="Saved" data-action="open-bookmarks"
-                  class="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900/80 text-zinc-500 transition-all duration-200 active:scale-95">
+                  class="flex h-7 w-7 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900/80 text-zinc-500 transition-all duration-200 active:scale-95">
             <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
             </svg>
           </button>
 
+          <!-- Notifications -->
           <div class="relative" id="notification-container-mobile">
             <button id="notification-btn-mobile" type="button" aria-label="Notifications"
-                    class="relative flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900/80 text-zinc-500 transition-all duration-200 active:scale-95"
+                    class="relative flex h-7 w-7 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900/80 text-zinc-500 transition-all duration-200 active:scale-95"
                     data-action="open-notifications">
               <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
@@ -390,7 +398,6 @@
     </div>
   </div>
 </header>
-
 <!-- ====================== MAIN CONTAINER ====================== -->
 <main id="main-content" class="mx-auto max-w-6xl px-4 pb-16 pt-6 sm:px-6">
 
