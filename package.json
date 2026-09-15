@@ -13,6 +13,8 @@
     "deploy:hosting": "npm run build:css && firebase deploy --only hosting",
     "deploy:functions": "firebase deploy --only functions",
     "logs": "firebase functions:log"
+    "build:css": "tailwindcss -i ./input.css -o ./style.css --minify",
+  "watch:css": "tailwindcss -i ./input.css -o ./style.css --watch"
   },
   "engines": {
     "node": ">=20.0.0"
