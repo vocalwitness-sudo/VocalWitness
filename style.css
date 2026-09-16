@@ -402,3 +402,122 @@ footer .grid {
 #main-header {
   z-index: 60 !important;
 }
+/* =====================================================
+   SAFE HEADER POLISH – Desktop balance + Profile fit + Strong language
+   Add at the very bottom of style.css
+   ===================================================== */
+
+/* ----- Desktop: remove the big empty middle space & balance the right group ----- */
+@media (min-width: 768px) {
+  #main-header .desktop-header {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    height: var(--header-height-desktop);
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+
+  /* Force the right-side controls into one tight, evenly-spaced group */
+  #main-header .desktop-header > div:last-child,
+  #main-header .desktop-header .header-actions,
+  #main-header .desktop-header .right-controls {
+    display: flex !important;
+    align-items: center;
+    gap: 0.65rem;               /* even breathing room between every button */
+    margin-left: auto;          /* push the whole group to the right */
+    flex-shrink: 0;
+  }
+}
+
+/* ----- Language button – strong solid background (not faint) ----- */
+#main-header select,
+#main-header .lang-select,
+#main-header [data-lang],
+#main-header button[aria-label*="language"],
+#main-header .language-btn {
+  background: #1e293b !important;          /* solid dark */
+  border: 1px solid #334155 !important;
+  color: #f1f5f9 !important;
+  font-weight: 500;
+  padding: 0.4rem 0.75rem;
+  border-radius: 0.5rem;
+  min-width: 5.5rem;
+}
+
+#main-header select:hover,
+#main-header .lang-select:hover,
+#main-header .language-btn:hover {
+  background: #334155 !important;
+}
+
+/* ----- Profile button – make it fit cleanly inside its border ----- */
+#main-header .profile-btn,
+#main-header [data-profile],
+#main-header button[aria-label*="profile"],
+#main-header .user-chip {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.6rem 0.25rem 0.25rem;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 9999px;          /* nice pill */
+  max-width: 9.5rem;              /* prevents it from stretching */
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+#main-header .profile-btn img,
+#main-header .user-chip img,
+#main-header .profile-btn .avatar {
+  width: 1.75rem !important;
+  height: 1.75rem !important;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+#main-header .profile-btn span,
+#main-header .user-chip .name {
+  font-size: 0.8125rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 5.5rem;
+}
+
+/* ----- Mobile: keep the two-row layout clean and balanced ----- */
+@media (max-width: 767px) {
+  #main-header .mobile-header {
+    display: flex !important;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+  }
+
+  /* First row (logo + main actions) stays balanced */
+  #main-header .mobile-header > div:first-child {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  /* Second row controls also evenly spaced */
+  #main-header .mobile-header > div:last-child {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;   /* or space-between if you prefer */
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  /* Slightly smaller profile on phone so it never overflows */
+  #main-header .profile-btn,
+  #main-header .user-chip {
+    max-width: 7.5rem;
+    padding: 0.2rem 0.5rem 0.2rem 0.2rem;
+  }
+}
