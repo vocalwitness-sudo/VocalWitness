@@ -709,13 +709,12 @@ function escapeHtml(str) {
 function setupEventListeners() {
   if (window.listenersInitialized) return;
   window.listenersInitialized = true;
-
   console.log("✅ Wiring application listeners...");
 
   // Global click delegation
   document.addEventListener('click', (e) => {
     const actionTarget = e.target.closest('[data-action]');
-
+    
     // Fallback for buttons without data-action
     if (!actionTarget) {
       if (e.target.closest('#data-saver-btn') || e.target.closest('#data-saver-btn-mobile')) {
@@ -732,25 +731,21 @@ function setupEventListeners() {
     }
 
     const action = actionTarget.dataset.action;
-
     switch (action) {
       case 'toggle-data-saver':
         e.preventDefault();
         if (typeof toggleDataSaver === 'function') toggleDataSaver();
         break;
-
       case 'open-support-modal':
         e.preventDefault();
         if (typeof window.openSupportModal === 'function') window.openSupportModal();
         break;
-
       case 'open-auth-modal':
         e.preventDefault();
         if (typeof window.openAuthModal === 'function') {
           window.openAuthModal();
         }
         break;
-
       case 'open-profile':
         e.preventDefault();
         if (typeof window.openProfile === 'function') {
@@ -759,7 +754,6 @@ function setupEventListeners() {
           window.showProfile();
         }
         break;
-
       case 'open-bookmarks':
         e.preventDefault();
         document.querySelectorAll('.tab-view, [role="tabpanel"]').forEach(view => {
@@ -768,17 +762,119 @@ function setupEventListeners() {
         document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
         if (typeof initBookmarksView === 'function') initBookmarksView();
         break;
-
       case 'open-notifications':
         e.preventDefault();
-        showToast?.("🔔 Notification center coming online...", "info");
+        // Handled by dedicated listeners below
         break;
-
       default:
         break;
     }
   });
 
+  // ---------- More Menu ----------
+  const moreBtn = document.getElementById('more-btn');
+  const moreMenu = document.getElementById('more-menu');
+
+  if (moreBtn && moreMenu) {
+    moreBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      moreMenu.classList.toggle('hidden');
+      // Close notification dropdowns if open
+      document.getElementById('notification-dropdown')?.classList.add('hidden');
+      document.getElementById('notification-dropdown-mobile')?.classList.add('hidden');
+    });
+  }
+
+  // ---------- Notification Toggles ----------
+  function toggleNotification(id) {
+    const dropdown = document.getElementById(id);
+    if (!dropdown) return;
+
+    // Close others
+    moreMenu?.classList.add('hidden');
+    document.getElementById('notification-dropdown')?.classList.add('hidden');
+    document.getElementById('notification-dropdown-mobile')?.classList.add('hidden');
+
+    dropdown.classList.toggle('hidden');
+  }
+
+  document.getElementById('notification-btn')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleNotification('notification-dropdown');
+  });
+
+  document.getElementById('notification-btn-mobile')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleNotification('notification-dropdown-mobile');
+  });
+
+  // ---------- Global click-outside closer ----------
+  document.addEventListener('click', (e) => {
+    // More menu
+    if (moreMenu && !moreMenu.contains(e.target) && !moreBtn?.contains(e.target)) {
+      moreMenu.classList.add('hidden');
+    }
+    // Desktop notifications
+    const notifDesktop = document.getElementById('notification-dropdown');
+    const notifBtnDesktop = document.getElementById('notification-btn');
+    if (notifDesktop && !notifDesktop.contains(e.target) && !notifBtnDesktop?.contains(e.target)) {
+      notifDesktop.classList.add('hidden');
+    }
+    // Mobile notifications
+    const notifMobile = document.getElementById('notification-dropdown-mobile');
+    const notifBtnMobile = document.getElementById('notification-btn-mobile');
+    if (notifMobile && !notifMobile.contains(e.target) && !notifBtnMobile?.contains(e.target)) {
+      notifMobile.classList.add('hidden');
+    }
+  });
+
+  // ---------- Main navigation tabs ----------
+  const mainNav = document.getElementById('main-nav');
+  if (mainNav) {
+    mainNav.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-tab]');
+      if (btn && typeof window.switchTab === 'function') {
+        e.preventDefault();
+        window.switchTab(btn.dataset.tab);
+      }
+    });
+  }
+
+  // ---------- Language selectors ----------
+  ['languageSelect', 'languageSelectMobile'].forEach(id => {
+    const selectEl = document.getElementById(id);
+    if (selectEl) {
+      selectEl.addEventListener('change', (e) => {
+        const langCode = e.target.value;
+        if (langCode && typeof window.changeLanguage === 'function') {
+          window.changeLanguage(langCode);
+        }
+      });
+    }
+  });
+
+  // ---------- Header-specific events ----------
+  if (typeof bindHeaderEvents === 'function') {
+    bindHeaderEvents();
+  }
+
+  // ---------- Composer ----------
+  if (typeof initComposer === 'function') {
+    initComposer();
+  }
+
+  // ---------- Paystack button ----------
+  document.getElementById('paystackPayBtn')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    const amountInput = document.getElementById('customSupportAmount');
+    const amount = amountInput ? parseFloat(amountInput.value) || 15 : 15;
+    if (typeof window.initiatePayment === 'function') {
+      window.initiatePayment(amount);
+    }
+  });
+
+  console.log("✅ Application listeners active");
+}
   // Notification dropdown
   const notifBtn = document.getElementById('notification-btn') ||
                    document.getElementById('notification-btn-mobile');
