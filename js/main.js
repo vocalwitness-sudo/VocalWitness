@@ -356,13 +356,14 @@ window.publishTestimony = async () => {
       : content.slice(0, 80).replace(/\s+\S*$/, '') + '...';
   }
 
-  const postBtn = document.getElementById('postButton');
+   const postBtn = document.getElementById('postButton');
   if (postBtn) {
     postBtn.disabled = true;
     postBtn.classList.add('opacity-50', 'cursor-not-allowed');
   }
 
  try {
+    try {
       const { remindUserOfAIRestrictions, AI_USER_NOTICE } = await import('./ai-services.js');
       remindUserOfAIRestrictions("publish");
       // showToast?.(AI_USER_NOTICE.short, "info");
@@ -370,7 +371,6 @@ window.publishTestimony = async () => {
       console.warn("[publish] AI notice skipped:", aiErr);
     }
 
-    // 1. Ensure user document exists
     const userRef = doc(db, 'users', currentUser.uid);
     const userSnap = await getDoc(userRef);
     if (!userSnap.exists()) {
@@ -416,14 +416,12 @@ window.publishTestimony = async () => {
         const isCorsLike = mediaErr?.message?.includes('Network error') ||
                            mediaErr?.message?.includes('CORS') ||
                            mediaErr?.name === 'NetworkError';
-
         showToast(
           isCorsLike
             ? 'Media upload blocked (CORS). Open https://vocalwitness.com and try again. Report was NOT published.'
             : 'Media upload failed. Report was NOT published. Please try again.',
           'error'
         );
-
         return; // finally will clean up
       }
     }
