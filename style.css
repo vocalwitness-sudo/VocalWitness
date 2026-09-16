@@ -584,4 +584,88 @@ footer .grid {
   }
 }
 
-/* Mobile language stays strong too (already handled above) */
+
+/* ====================== SPLASH SCREEN ====================== */
+#app-splash-screen {
+  position: fixed;
+  inset: 0;
+  background: #0b1120;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  color: white;
+  font-family: 'Inter', system-ui, sans-serif;
+  opacity: 1;
+  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.4s;
+}
+
+#app-splash-screen.fade-out,
+#app-splash-screen.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+#app-splash-screen.fade-out > .splash-inner {
+  transform: scale(0.96);
+}
+
+.splash-inner {
+  text-align: center;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.splash-logo-wrapper {
+  position: relative;
+  margin: 0 auto 24px;
+  width: 72px;
+  height: 72px;
+}
+
+.splash-logo-glow {
+  position: absolute;
+  inset: -8px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(16,185,129,0.4), rgba(45,212,191,0.2));
+  filter: blur(12px);
+}
+
+.splash-logo {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  border: 1px solid rgba(16,185,129,0.4);
+  object-fit: cover;
+}
+
+.splash-title {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin: 0 0 6px;
+  color: white;
+}
+
+.splash-subtitle {
+  font-size: 13px;
+  color: #34d399;
+  margin: 0 0 28px;
+  font-weight: 500;
+}
+
+.splash-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(16,185,129,0.2);
+  border-top-color: #10b981;
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
