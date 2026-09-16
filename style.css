@@ -521,3 +521,67 @@ footer .grid {
     padding: 0.2rem 0.5rem 0.2rem 0.2rem;
   }
 }
+
+/* =====================================================
+   SAFE HEADER POLISH (matches your exact HTML)
+   – Stronger language select
+   – Profile fits cleanly inside its border
+   – No layout breakage
+   ===================================================== */
+
+/* ----- Language select – solid, strong background ----- */
+#languageSelect,
+#languageSelectMobile {
+  background-color: #1e293b !important;   /* solid dark instead of faint zinc-900 */
+  border-color: #334155 !important;
+  color: #f1f5f9 !important;
+  font-weight: 500;
+}
+
+#languageSelect:hover,
+#languageSelectMobile:hover {
+  background-color: #334155 !important;
+  border-color: #475569 !important;
+  color: #ffffff !important;
+}
+
+#languageSelect:focus,
+#languageSelectMobile:focus {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.4);
+}
+
+/* ----- Profile button – clean fit inside border (desktop) ----- */
+#userProfileBtn {
+  /* keep your existing height & padding, just tighten internal spacing */
+  gap: 0.35rem !important;
+  padding-left: 0.35rem !important;
+  padding-right: 0.7rem !important;
+  max-width: 9.5rem;                 /* prevents it from stretching */
+  overflow: hidden;
+}
+
+#userProfileBtn img#user-avatar-desktop {
+  width: 1.5rem !important;
+  height: 1.5rem !important;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  object-fit: cover;
+}
+
+#userProfileBtn #user-name-desktop {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 5.5rem;                 /* “Vocal” (or longer names) stay neat */
+  font-size: 0.8125rem;
+}
+
+/* ----- Tiny visual balance on the right group (optional, very light) ----- */
+@media (min-width: 768px) {
+  .desktop-header > div.flex.shrink-0.items-center {
+    gap: 0.5rem;                     /* was gap-1.5 → slightly tighter & more even */
+  }
+}
+
+/* Mobile language stays strong too (already handled above) */
