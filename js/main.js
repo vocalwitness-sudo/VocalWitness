@@ -329,12 +329,9 @@ window.publishTestimony = async () => {
     return;
   }
 
-  window.__isPublishing = true;
-
   const currentUser = auth.currentUser;
   if (!currentUser) {
     showToast("Session expired. Please re-authenticate.", "error");
-    window.__isPublishing = false;
     return;
   }
 
@@ -345,7 +342,6 @@ window.publishTestimony = async () => {
 
   if (!content) {
     showToast("Please write something before publishing", "error");
-    window.__isPublishing = false;
     return;
   }
 
@@ -356,17 +352,24 @@ window.publishTestimony = async () => {
       : content.slice(0, 80).replace(/\s+\S*$/, '') + '...';
   }
 
-   const postBtn = document.getElementById('postButton');
+  const postBtn = document.getElementById('postButton');
+  const originalBtnHTML = postBtn ? postBtn.innerHTML : '';
+
+  // Lock publishing flag & activate button visual state ("alive" & pulsing)
+  window.__isPublishing = true;
   if (postBtn) {
     postBtn.disabled = true;
-    postBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    postBtn.classList.add('opacity-75', 'cursor-not-allowed', 'scale-[0.98]');
+    postBtn.innerHTML = `
+      <span class="inline-block w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin mr-2 align-middle"></span>
+      <span class="align-middle">Sealing & Publishing...</span>
+    `;
   }
 
- try {
+  try {
     try {
-      const { remindUserOfAIRestrictions, AI_USER_NOTICE } = await import('./ai-services.js');
+      const { remindUserOfAIRestrictions } = await import('./ai-services.js');
       remindUserOfAIRestrictions("publish");
-      // showToast?.(AI_USER_NOTICE.short, "info");
     } catch (aiErr) {
       console.warn("[publish] AI notice skipped:", aiErr);
     }
@@ -422,7 +425,7 @@ window.publishTestimony = async () => {
             : 'Media upload failed. Report was NOT published. Please try again.',
           'error'
         );
-        return; // finally will clean up
+        return; 
       }
     }
 
@@ -493,13 +496,6 @@ window.publishTestimony = async () => {
       isZkVerified: !zkResult.isFallback
     };
 
-    console.log('[publish] FINAL PAYLOAD:', {
-      ...testimonyData,
-      createdAt: '[serverTimestamp]',
-      contentLen: content.length,
-      proofType: testimonyData.proofType
-    });
-
     // 5. Write to Firestore
     const docRef = await addDoc(collection(db, 'testimonies'), testimonyData);
     console.log('[publish] SUCCESS →', docRef.id);
@@ -516,20 +512,23 @@ window.publishTestimony = async () => {
       showToast("🛡️ Report sealed and published", "success");
     }
 
-    // Reset UI
+    // Reset UI & inputs completely to prevent accidental double-picks
     if (titleInput) titleInput.value = '';
     if (textarea) textarea.value = '';
     if (typeof mediaModule?.resetMediaState === 'function') {
       mediaModule.resetMediaState();
     }
+    
+    // Clear out file input elements explicitly if present in DOM
+    const fileInputEl = document.getElementById('mediaInput') || document.querySelector('input[type="file"]');
+    if (fileInputEl) fileInputEl.value = '';
+
     if (typeof initFeed === 'function') {
       initFeed(db, 'citizen-talk');
     }
 
   } catch (err) {
     console.error('[publish] FULL ERROR:', err);
-    console.error('[publish] code:', err.code, 'message:', err.message);
-
     if (err.code === 'permission-denied') {
       showToast("Permission denied. Check console for exact rule failure.", "error");
     } else {
@@ -539,11 +538,11 @@ window.publishTestimony = async () => {
     window.__isPublishing = false;
     if (postBtn) {
       postBtn.disabled = false;
-      postBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+      postBtn.classList.remove('opacity-75', 'cursor-not-allowed', 'scale-[0.98]');
+      postBtn.innerHTML = originalBtnHTML; // Restores original button content cleanly
     }
   }
 };
-
 /* ====================== EVIDENCE LEDGER ====================== */
 async function loadEvidenceLedger() {
   // Support both possible container IDs for compatibility
