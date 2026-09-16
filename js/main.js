@@ -136,34 +136,38 @@ window.switchTab = async function(tab) {
   console.log('[Tab] Switching to:', tab);
 
   try {
-    // 1. Update nav button styles
-    document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
-      const isActive = btn.dataset.tab === tab;
-      btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
-      btn.classList.toggle('active', isActive);
+   // 1. Update nav button styles (replace the whole forEach)
+document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
+  const isActive = btn.dataset.tab === tab;
+  btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+  btn.classList.toggle('active', isActive);
 
-      // Reset common classes
-      btn.classList.remove(
-        'bg-emerald-500', 'text-black', 'shadow-lg', 'shadow-emerald-500/20',
-        'bg-sky-950/50', 'text-sky-300', 'border-sky-700/60',
-        'bg-amber-950/40', 'text-amber-300', 'border-amber-700/50',
-        'bg-zinc-900', 'text-zinc-300', 'border-zinc-700'
-      );
+  // Remove ALL color/border/background utilities we manage
+  btn.classList.remove(
+    'bg-emerald-500', 'text-black', 'shadow-lg', 'shadow-emerald-500/20',
+    'bg-sky-950/50', 'text-sky-300', 'border-sky-700/60',
+    'bg-amber-950/40', 'text-amber-300', 'border-amber-700/50',
+    'bg-zinc-900', 'text-zinc-300', 'border-zinc-700',
+    'border' // remove generic border so we can re-add the correct one
+  );
 
-      if (isActive) {
-        if (tab === 'square') {
-          btn.classList.add('bg-emerald-500', 'text-black', 'shadow-lg', 'shadow-emerald-500/20');
-        } else if (tab === 'arena') {
-          btn.classList.add('bg-sky-950/50', 'text-sky-300', 'border', 'border-sky-700/60');
-        } else if (tab === 'witness') {
-          btn.classList.add('bg-amber-950/40', 'text-amber-300', 'border', 'border-amber-700/50');
-        } else {
-          btn.classList.add('bg-zinc-900', 'text-zinc-300', 'border', 'border-zinc-700');
-        }
-      } else {
-        btn.classList.add('bg-zinc-900', 'text-zinc-300', 'border', 'border-zinc-700');
-      }
-    });
+  if (isActive) {
+    // Active styles
+    if (tab === 'square') {
+      btn.classList.add('bg-emerald-500', 'text-black', 'shadow-lg', 'shadow-emerald-500/20');
+    } else if (tab === 'arena') {
+      btn.classList.add('bg-sky-950/50', 'text-sky-300', 'border', 'border-sky-500');
+    } else if (tab === 'witness') {
+      btn.classList.add('bg-amber-950/40', 'text-amber-300', 'border', 'border-amber-500');
+    } else {
+      // ledger + mycircle
+      btn.classList.add('bg-emerald-600/20', 'text-emerald-300', 'border', 'border-emerald-500/60');
+    }
+  } else {
+    // Inactive styles (consistent for all)
+    btn.classList.add('bg-zinc-900', 'text-zinc-300', 'border', 'border-zinc-700');
+  }
+});
 
     // 2. Hide all sections
     Object.values(TAB_TO_SECTION).forEach(id => {
@@ -217,6 +221,22 @@ function wireTabButtons() {
     });
   });
 }
+// More menu toggle
+const moreBtn = document.getElementById('more-btn');
+const moreMenu = document.getElementById('more-menu');
+if (moreBtn && moreMenu) {
+  moreBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    moreMenu.classList.toggle('hidden');
+  });
+}
+
+// Close More menu when clicking outside
+document.addEventListener('click', (e) => {
+  if (moreMenu && !moreMenu.contains(e.target) && !moreBtn.contains(e.target)) {
+    moreMenu.classList.add('hidden');
+  }
+});
 
 // Handle browser back/forward
 window.addEventListener('popstate', () => {
