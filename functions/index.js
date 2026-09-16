@@ -784,6 +784,223 @@ exports.summarizeReport = onCall(
 );
 
 // ======================================================
+// 5B. ADDITIONAL AI ADVISORY TOOLS (VocalWitness)
+// Principle: AI assists humans. Never auto-deletes or alters sealed records.
+// ======================================================
+
+/**
+ * Stronger on-demand synthetic / deepfake detection
+ * (Can be called from client when user wants a deeper check)
+ */
+exports.detectSyntheticMedia = onCall(
+  {
+    cors: allowedOrigins,
+    secrets: [geminiApiKey],
+    timeoutSeconds: 60,
+    memory: "512MiB"
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Authentication required.");
+    }
+
+    const { mediaUrl, mediaHash, mimeType, title = "", content = "" } = request.data || {};
+
+    if (!mediaHash && !mediaUrl) {
+      throw new HttpsError("invalid-argument", "mediaHash or mediaUrl is required.");
+    }
+
+    try {
+      const apiKey = geminiApiKey.value();
+      const ai = new GoogleGenAI({ apiKey });
+
+      const prompt = `
+        You are an advisory media authenticity assistant for a citizen evidence platform.
+        Analyze the provided information for signs of AI generation, deepfakes, or heavy synthetic manipulation.
+        Be conservative. Return only an advisory score.
+
+        Title: ${title}
+        Content: ${content}
+        Media Type: ${mimeType || "unknown"}
+        Media Hash: ${mediaHash || "N/A"}
+        Media URL: ${mediaUrl || "N/A"}
+
+        Return JSON with:
+        - score: integer 0-100 (0 = likely organic, 100 = very likely synthetic)
+        - confidence: float 0-1
+        - labels: array of short strings
+        - explanation: short human-readable reason
+        - requiresHumanReview: boolean (true if score >= 75)
+      `;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              score: { type: Type.NUMBER },
+              confidence: { type: Type.NUMBER },
+              labels: { type: Type.ARRAY, items: { type: Type.STRING } },
+              explanation: { type: Type.STRING },
+              requiresHumanReview: { type: Type.BOOLEAN }
+            },
+            required: ["score", "confidence", "labels", "explanation", "requiresHumanReview"]
+          }
+        }
+      });
+
+      const result = JSON.parse(response.text || "{}");
+
+      // Safety clamp
+      result.score = Math.min(100, Math.max(0, Math.round(result.score || 0)));
+      result.requiresHumanReview = result.score >= 75;
+
+      // Always remind that this is advisory
+      result.note = "Advisory result only. No sealed report was changed or hidden.";
+
+      return result;
+    } catch (error) {
+      console.error("detectSyntheticMedia error:", error);
+      throw new HttpsError("internal", "Synthetic detection failed.");
+    }
+  }
+);
+
+/**
+ * Content consistency check (text vs transcript vs caption)
+ */
+exports.checkContentConsistency = onCall(
+  {
+    cors: allowedOrigins,
+    secrets: [geminiApiKey]
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Authentication required.");
+    }
+
+    const { text = "", transcript = "", imageCaption = "" } = request.data || {};
+
+    if (!text) {
+      throw new HttpsError("invalid-argument", "text is required.");
+    }
+
+    try {
+      const apiKey = geminiApiKey.value();
+      const ai = new GoogleGenAI({ apiKey });
+
+      const prompt = `
+        Compare the following elements from a citizen report for basic consistency.
+        This is an advisory check only.
+
+        Main text: "${text}"
+        Audio transcript: "${transcript}"
+        Image caption: "${imageCaption}"
+
+        Return JSON:
+        - consistent: boolean
+        - score: 0-100
+        - notes: array of short observations
+        - explanation: one short sentence
+      `;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              consistent: { type: Type.BOOLEAN },
+              score: { type: Type.NUMBER },
+              notes: { type: Type.ARRAY, items: { type: Type.STRING } },
+              explanation: { type: Type.STRING }
+            },
+            required: ["consistent", "score", "notes", "explanation"]
+          }
+        }
+      });
+
+      const result = JSON.parse(response.text || "{}");
+      result.note = "Advisory consistency signal only. Does not alter any sealed record.";
+      return result;
+    } catch (error) {
+      console.error("checkContentConsistency error:", error);
+      throw new HttpsError("internal", "Consistency check failed.");
+    }
+  }
+);
+
+/**
+ * Corroboration helper – suggests similar reports (advisory)
+ */
+exports.suggestCorroborations = onCall(
+  {
+    cors: allowedOrigins
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Authentication required.");
+    }
+
+    const { testimonyId, text = "", timestamp } = request.data || {};
+
+    try {
+      // Simple version for now – can be improved later with vector search or better queries
+      // For safety we return an empty list + message until a proper similarity system is ready
+      return {
+        suggestions: [],
+        message: "Corroboration suggestions are currently limited. This feature only helps humans find related reports.",
+        note: "Advisory helper only. Never changes sealed records."
+      };
+    } catch (error) {
+      console.error("suggestCorroborations error:", error);
+      throw new HttpsError("internal", "Corroboration suggestion failed.");
+    }
+  }
+);
+
+/**
+ * Toxicity scoring specifically for comments / replies
+ * (Keep primary reports under the existing moderatePostContent + Perspective flow)
+ */
+exports.scoreToxicity = onCall(
+  {
+    cors: allowedOrigins,
+    secrets: [perspectiveApiKey]
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Authentication required.");
+    }
+
+    const { text = "" } = request.data || {};
+    if (!text || text.length < 3) {
+      return { score: 0, labels: [], safe: true, note: "Too short to evaluate" };
+    }
+
+    try {
+      const result = await analyzeToxicityWithPerspective(text);
+      return {
+        score: result.toxicityScore || 0,
+        insultScore: result.insultScore || 0,
+        threatScore: result.threatScore || 0,
+        safe: result.safe,
+        labels: result.safe ? [] : ["possible_toxicity"],
+        note: "Advisory signal for comments/replies only."
+      };
+    } catch (error) {
+      console.error("scoreToxicity error:", error);
+      throw new HttpsError("internal", "Toxicity scoring failed.");
+    }
+  }
+);
+
+// ======================================================
 // 6. PAYSTACK
 // ======================================================
 exports.initializePaystack = onCall(
