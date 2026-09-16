@@ -1,3 +1,65 @@
+/* =====================================================
+   REFINED HEADER POLISH
+   Minimal • High specificity • Matches exact HTML
+   Language strength + Profile fit + Right-group balance
+   ===================================================== */
+
+/* ----- Language Select – solid & strong on all devices ----- */
+#languageSelect,
+#languageSelectMobile {
+  background-color: #1e293b !important;
+  border-color: #475569 !important;
+  color: #f8fafc !important;
+  font-weight: 500;
+}
+
+#languageSelect:hover,
+#languageSelectMobile:hover,
+#languageSelect:focus,
+#languageSelectMobile:focus {
+  background-color: #334155 !important;
+  border-color: #10b981 !important;
+  color: #ffffff !important;
+}
+
+/* ----- Profile button (desktop) – clean internal fit ----- */
+#userProfileBtn {
+  gap: 0.375rem !important;
+  padding-left: 0.375rem !important;
+  padding-right: 0.75rem !important;
+  max-width: 9.75rem;
+  overflow: hidden;
+}
+
+#userProfileBtn img#user-avatar-desktop {
+  width: 1.5rem !important;
+  height: 1.5rem !important;
+  border-radius: 9999px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+#userProfileBtn #user-name-desktop {
+  font-size: 0.8125rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 5.75rem;
+}
+
+/* ----- Right-side controls – balanced spacing (desktop only) ----- */
+@media (min-width: 768px) {
+  .desktop-header > div.flex.shrink-0.items-center {
+    gap: 0.5rem; /* slightly tighter & more even than original gap-1.5 */
+  }
+}
+
+/* ----- Mobile profile button (when visible) ----- */
+#userProfileBtnMobile {
+  /* keep it compact and consistent */
+  flex-shrink: 0;
+}
+
 /* ====================== ROOT VARIABLES ====================== */
 :root {
   --bg-dark: #070b14;
