@@ -808,6 +808,23 @@ function setupEventListeners() {
     toggleNotification('notification-dropdown-mobile');
   });
 
+  document.addEventListener('click', (e) => {
+  // 1. Tab buttons (delegation)
+  const tabBtn = e.target.closest('#main-nav button[data-tab]');
+  if (tabBtn && typeof window.switchTab === 'function') {
+    e.preventDefault();
+    window.switchTab(tabBtn.dataset.tab);
+    return;
+  }
+
+  // 2. More button (optional – you already have a dedicated listener)
+  // ... keep existing more-btn logic if you prefer
+
+  // 3. Existing data-action handling
+  const actionTarget = e.target.closest('[data-action]');
+  // ... rest of your current code
+});
+
   // ---------- Global click-outside closer ----------
   document.addEventListener('click', (e) => {
     // More menu
