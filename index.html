@@ -394,6 +394,21 @@
               </svg>
               <span id="notification-badge-mobile" class="absolute -right-0.5 -top-0.5 hidden min-w-[14px] rounded-full bg-emerald-500 px-1 text-center text-[8px] font-bold text-black">0</span>
             </button>
+            <!-- Mobile Notification Dropdown -->
+<div id="notification-dropdown-mobile"
+     class="absolute right-0 top-full z-50 mt-2 hidden max-h-80 w-72 overflow-y-auto rounded-2xl border border-zinc-700/80 bg-zinc-900/95 shadow-2xl backdrop-blur-xl"
+     role="region" aria-label="Notifications">
+  <div class="sticky top-0 flex items-center justify-between border-b border-zinc-800 bg-zinc-900/95 px-4 py-3">
+    <h3 class="text-sm font-semibold text-white">Notifications</h3>
+    <span id="notification-count-tag-mobile" class="text-[11px] font-medium text-emerald-400">0 new</span>
+  </div>
+  <div id="notification-list-mobile">
+    <div class="p-8 text-center text-zinc-500">
+      <p class="mb-1 text-2xl" aria-hidden="true">🔔</p>
+      <p class="text-sm">No notifications yet</p>
+    </div>
+  </div>
+</div>
           </div>
         </div>
       </div>
