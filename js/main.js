@@ -364,11 +364,17 @@ window.publishTestimony = async () => {
     postBtn.classList.add('opacity-50', 'cursor-not-allowed');
   }
 
-  try {
+ try {
+      const { remindUserOfAIRestrictions, AI_USER_NOTICE } = await import('./ai-services.js');
+      remindUserOfAIRestrictions("publish");
+      // showToast?.(AI_USER_NOTICE.short, "info");
+    } catch (aiErr) {
+      console.warn("[publish] AI notice skipped:", aiErr);
+    }
+
     // 1. Ensure user document exists
     const userRef = doc(db, 'users', currentUser.uid);
     const userSnap = await getDoc(userRef);
-
     if (!userSnap.exists()) {
       console.log('[publish] Creating missing user document...');
       await setDoc(userRef, {
@@ -711,12 +717,20 @@ function setupEventListeners() {
   window.listenersInitialized = true;
   console.log("✅ Wiring application listeners...");
 
-  // Global click delegation
+  // ---------- Global click delegation (data-action + tabs) ----------
   document.addEventListener('click', (e) => {
+    // Tab buttons
+    const tabBtn = e.target.closest('#main-nav button[data-tab]');
+    if (tabBtn && typeof window.switchTab === 'function') {
+      e.preventDefault();
+      window.switchTab(tabBtn.dataset.tab);
+      return;
+    }
+
+    // data-action buttons
     const actionTarget = e.target.closest('[data-action]');
-    
-    // Fallback for buttons without data-action
     if (!actionTarget) {
+      // Fallbacks for buttons without data-action
       if (e.target.closest('#data-saver-btn') || e.target.closest('#data-saver-btn-mobile')) {
         e.preventDefault();
         if (typeof toggleDataSaver === 'function') toggleDataSaver();
@@ -742,9 +756,7 @@ function setupEventListeners() {
         break;
       case 'open-auth-modal':
         e.preventDefault();
-        if (typeof window.openAuthModal === 'function') {
-          window.openAuthModal();
-        }
+        if (typeof window.openAuthModal === 'function') window.openAuthModal();
         break;
       case 'open-profile':
         e.preventDefault();
@@ -763,8 +775,7 @@ function setupEventListeners() {
         if (typeof initBookmarksView === 'function') initBookmarksView();
         break;
       case 'open-notifications':
-        e.preventDefault();
-        // Handled by dedicated listeners below
+        // Handled by dedicated listeners
         break;
       default:
         break;
@@ -779,7 +790,7 @@ function setupEventListeners() {
     moreBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       moreMenu.classList.toggle('hidden');
-      // Close notification dropdowns if open
+      // Close notification dropdowns
       document.getElementById('notification-dropdown')?.classList.add('hidden');
       document.getElementById('notification-dropdown-mobile')?.classList.add('hidden');
     });
@@ -790,7 +801,6 @@ function setupEventListeners() {
     const dropdown = document.getElementById(id);
     if (!dropdown) return;
 
-    // Close others
     moreMenu?.classList.add('hidden');
     document.getElementById('notification-dropdown')?.classList.add('hidden');
     document.getElementById('notification-dropdown-mobile')?.classList.add('hidden');
@@ -807,23 +817,6 @@ function setupEventListeners() {
     e.stopPropagation();
     toggleNotification('notification-dropdown-mobile');
   });
-
-  document.addEventListener('click', (e) => {
-  // 1. Tab buttons (delegation)
-  const tabBtn = e.target.closest('#main-nav button[data-tab]');
-  if (tabBtn && typeof window.switchTab === 'function') {
-    e.preventDefault();
-    window.switchTab(tabBtn.dataset.tab);
-    return;
-  }
-
-  // 2. More button (optional – you already have a dedicated listener)
-  // ... keep existing more-btn logic if you prefer
-
-  // 3. Existing data-action handling
-  const actionTarget = e.target.closest('[data-action]');
-  // ... rest of your current code
-});
 
   // ---------- Global click-outside closer ----------
   document.addEventListener('click', (e) => {
@@ -844,18 +837,6 @@ function setupEventListeners() {
       notifMobile.classList.add('hidden');
     }
   });
-
-  // ---------- Main navigation tabs ----------
-  const mainNav = document.getElementById('main-nav');
-  if (mainNav) {
-    mainNav.addEventListener('click', (e) => {
-      const btn = e.target.closest('button[data-tab]');
-      if (btn && typeof window.switchTab === 'function') {
-        e.preventDefault();
-        window.switchTab(btn.dataset.tab);
-      }
-    });
-  }
 
   // ---------- Language selectors ----------
   ['languageSelect', 'languageSelectMobile'].forEach(id => {
@@ -881,60 +862,6 @@ function setupEventListeners() {
   }
 
   // ---------- Paystack button ----------
-  document.getElementById('paystackPayBtn')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    const amountInput = document.getElementById('customSupportAmount');
-    const amount = amountInput ? parseFloat(amountInput.value) || 15 : 15;
-    if (typeof window.initiatePayment === 'function') {
-      window.initiatePayment(amount);
-    }
-  });
-
-  console.log("✅ Application listeners active");
-}
-  // Notification dropdown
-  const notifBtn = document.getElementById('notification-btn') ||
-                   document.getElementById('notification-btn-mobile');
-  if (notifBtn && typeof window.toggleNotificationDropdown === 'function') {
-    notifBtn.addEventListener('click', window.toggleNotificationDropdown);
-  }
-
-  // Language selectors
-  ['languageSelect', 'languageSelectMobile'].forEach(id => {
-    const selectEl = document.getElementById(id);
-    if (selectEl) {
-      selectEl.addEventListener('change', (e) => {
-        const langCode = e.target.value;
-        if (langCode && typeof window.changeLanguage === 'function') {
-          window.changeLanguage(langCode);
-        }
-      });
-    }
-  });
-
-  // Main navigation tabs
-  const mainNav = document.getElementById('main-nav');
-  if (mainNav) {
-    mainNav.addEventListener('click', (e) => {
-      const btn = e.target.closest('button[data-tab]');
-      if (btn && typeof window.switchTab === 'function') {
-        e.preventDefault();
-        window.switchTab(btn.dataset.tab);
-      }
-    });
-  }
-
-  // Header-specific events
-  if (typeof bindHeaderEvents === 'function') {
-    bindHeaderEvents();
-  }
-
-  // Composer
-  if (typeof initComposer === 'function') {
-    initComposer();
-  }
-
-  // Paystack button
   document.getElementById('paystackPayBtn')?.addEventListener('click', (e) => {
     e.preventDefault();
     const amountInput = document.getElementById('customSupportAmount');
@@ -1019,6 +946,7 @@ function initFocusBanner() {
     banner.remove();
   });
 }
+
 
 /* ====================== COMPOSER WIRING ====================== */
 function wireTestimonyComposer() {
