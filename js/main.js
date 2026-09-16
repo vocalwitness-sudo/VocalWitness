@@ -129,8 +129,6 @@ const TAB_TO_SECTION = {
   witness:  'witness'
 };
 
-let isSwitchingTab = false;
-
 window.switchTab = async function (tab) {
   if (isSwitchingTab) return;
   isSwitchingTab = true;
