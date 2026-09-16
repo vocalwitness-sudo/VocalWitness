@@ -138,50 +138,24 @@
 </head>
 
 <body class="theme-citizen tier-citizen">
-<!-- Splash Screen -->
-<div id="app-splash-screen" 
-     style="position: fixed; inset: 0; background: #0b1120; display: flex; align-items: center; justify-content: center; z-index: 99999; color: white; font-family: 'Inter', system-ui, sans-serif; opacity: 1; transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.4s;">
-  
-  <div style="text-align: center; transform: scale(1); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);">
-    <!-- Logo -->
-    <div style="position: relative; margin: 0 auto 24px; width: 72px; height: 72px;">
-      <div style="position: absolute; inset: -8px; border-radius: 20px; background: linear-gradient(135deg, rgba(16,185,129,0.4), rgba(45,212,191,0.2)); filter: blur(12px);"></div>
-      <img src="./logo.png" alt="VocalWitness" 
-           style="position: relative; width: 72px; height: 72px; border-radius: 18px; border: 1px solid rgba(16,185,129,0.4); object-fit: cover;">
-    </div>
 
-    <!-- Brand name -->
-    <h1 style="font-size: 22px; font-weight: 800; letter-spacing: -0.03em; margin: 0 0 6px; color: white;">
-      VocalWitness
-    </h1>
-    <p style="font-size: 13px; color: #34d399; margin: 0 0 28px; font-weight: 500;">
-      Truth • Evidence • Public Square
-    </p>
+  <!-- Splash Screen -->
+  <div id="app-splash-screen">
+    <div class="splash-inner">
+      <!-- Logo -->
+      <div class="splash-logo-wrapper">
+        <div class="splash-logo-glow"></div>
+        <img src="./logo.png" alt="VocalWitness" class="splash-logo">
+      </div>
 
-    <!-- Spinner -->
-    <div class="spinner" 
-         style="width: 32px; height: 32px; border: 3px solid rgba(16,185,129,0.2); border-top-color: #10b981; border-radius: 50%; animation: spin 0.75s linear infinite; margin: 0 auto;">
+      <h1 class="splash-title">VocalWitness</h1>
+      <p class="splash-subtitle">Truth • Evidence • Public Square</p>
+
+      <div class="splash-spinner"></div>
     </div>
   </div>
-</div>
 
-<style>
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-
-  /* Optional: fade + slight scale when removing */
-  #app-splash-screen.fade-out {
-    opacity: 0;
-    visibility: hidden;
-  }
-
-  #app-splash-screen.fade-out > div {
-    transform: scale(0.96);
-  }
-</style>
-  
-<!-- ====================== HEADER ====================== -->
+  <!-- ====================== HEADER ====================== -->
 <header id="main-header" dir="ltr" class="fixed top-0 left-0 right-0 z-50 border-b border-emerald-500/25 bg-zinc-950/95 backdrop-blur-xl shadow-lg">
   <div class="mx-auto max-w-6xl px-3 sm:px-5">
 
