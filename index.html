@@ -180,13 +180,12 @@
     transform: scale(0.96);
   }
 </style>
-
 <!-- ====================== HEADER ====================== -->
 <header id="main-header" dir="ltr" class="fixed top-0 left-0 right-0 z-50 border-b border-emerald-500/25 bg-zinc-950/95 backdrop-blur-xl shadow-lg">
   <div class="mx-auto max-w-6xl px-3 sm:px-5">
 
     <!-- ========== DESKTOP HEADER ========== -->
-    <div class="hidden h-16 items-center justify-between gap-3 md:flex">
+    <div class="desktop-header hidden h-16 items-center justify-between gap-3 md:flex">
       
       <!-- Logo + Brand -->
       <a href="/" class="group flex shrink-0 items-center gap-3" aria-label="VocalWitness Home">
@@ -196,13 +195,12 @@
                class="relative h-10 w-10 rounded-2xl border border-emerald-400/50 bg-zinc-900 object-cover shadow-lg ring-1 ring-white/10">
         </div>
         <div class="leading-none">
-          <h1 class="text-[21px] font-extrabold tracking-tight">
+          <h1 class="brand-wordmark text-[21px] font-extrabold tracking-tight">
             <span class="text-emerald-400 transition group-hover:text-emerald-300">Vocal</span><span class="text-white">Witness</span>
           </h1>
           <p class="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-400/80">
             Truth • Evidence • Zero-Knowledge
           </p>
-          <div class="desktop-header hidden h-16 items-center justify-between gap-3 md:flex">
         </div>
       </a>
 
@@ -315,7 +313,7 @@
     </div>
 
     <!-- ========== MOBILE HEADER ========== -->
-    <div class="flex flex-col gap-2 py-2.5 md:hidden">
+    <div class="mobile-header flex flex-col gap-2 py-2.5 md:hidden">
       
       <!-- Top row: Brand + Primary Action -->
       <div class="flex items-center justify-between gap-2">
@@ -326,13 +324,12 @@
                  class="relative h-9 w-9 rounded-xl border border-emerald-500/50 object-cover ring-1 ring-white/10">
           </div>
           <div class="leading-none">
-            <h1 class="text-[16px] font-extrabold tracking-tight">
+            <h1 class="brand-wordmark text-[16px] font-extrabold tracking-tight">
               <span class="text-emerald-400">Vocal</span><span class="text-white">Witness</span>
             </h1>
             <p class="mt-0.5 text-[9px] font-semibold uppercase tracking-wider text-emerald-400/80">
               Truth • Evidence
             </p>
-            <div class="mobile-header flex flex-col gap-2 py-2.5 md:hidden">
           </div>
         </a>
 
@@ -428,6 +425,7 @@
     </div>
   </div>
 </header>
+  
 <!-- ====================== MAIN CONTAINER ====================== -->
 <main id="main-content" class="mx-auto max-w-6xl px-4 pb-16 pt-6 sm:px-6">
 
