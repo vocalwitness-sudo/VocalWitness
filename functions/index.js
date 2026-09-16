@@ -1475,3 +1475,129 @@ exports.requestTimestamp = onCall(
     }
   }
 );
+ /**
+ * 9B. Batch 3: Asynchronous Synthetic Likelihood Scoring & Audit Queue
+ * Triggers when testimonies are created or updated with media artifacts.
+ * Generates an advisory syntheticLikelihood score (0-100).
+ * NEVER auto-deletes or hides sealed reports.
+ */
+exports.processMediaSyntheticScoring = onDocumentWritten(
+  {
+    region: "us-central1",
+    document: "testimonies/{postId}",
+    secrets: [geminiApiKey]
+  },
+  async (event) => {
+    const afterSnap = event.data?.after;
+    if (!afterSnap || !afterSnap.exists) return; // Ignore deletions
+
+    const data = afterSnap.data() || {};
+    const postId = event.params.postId;
+
+    // Run only if media is present and syntheticLikelihood has not been evaluated yet
+    const hasMedia = data.mediaUrl || data.imageUrl || data.videoUrl || data.audioUrl ||
+                     (data.mediaArtifacts && data.mediaArtifacts.length > 0);
+
+    if (!hasMedia || typeof data.syntheticLikelihood === "number") {
+      return;
+    }
+
+    try {
+      const apiKey = geminiApiKey.value();
+      const ai = new GoogleGenAI({ apiKey });
+
+      const prompt = `
+You are an advisory authenticity assistant for a citizen evidence platform called VocalWitness.
+Your job is to give a careful, conservative risk score for possible synthetic / AI-generated / deepfake media.
+You must NEVER claim certainty. This is only an advisory signal for human stewards.
+
+Testimony details:
+- Title: ${data.title || "N/A"}
+- Content: ${(data.content || "").slice(0, 800)}
+- Media Type: ${data.mediaType || data.mimeType || "unknown"}
+- Has image: ${!!data.imageUrl}
+- Has video: ${!!data.videoUrl}
+- Has audio: ${!!data.audioUrl}
+- Artifact hashes present: ${!!(data.mediaArtifacts || data.imageHash || data.videoHash || data.audioHash)}
+
+Return a JSON object with exactly these fields:
+- syntheticLikelihood: integer from 0 (very likely organic) to 100 (very likely synthetic)
+- confidence: float from 0.0 to 1.0
+- reasons: array of short, factual observations (max 4 items)
+- requiresHumanReview: boolean (true only if syntheticLikelihood >= 75)
+`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              syntheticLikelihood: { type: Type.NUMBER },
+              confidence: { type: Type.NUMBER },
+              reasons: { type: Type.ARRAY, items: { type: Type.STRING } },
+              requiresHumanReview: { type: Type.BOOLEAN }
+            },
+            required: ["syntheticLikelihood", "confidence", "reasons", "requiresHumanReview"]
+          }
+        }
+      });
+
+      let result;
+      try {
+        result = JSON.parse(response.text || "{}");
+      } catch (parseErr) {
+        console.warn("Failed to parse synthetic scoring response, using safe defaults");
+        result = {
+          syntheticLikelihood: 20,
+          confidence: 0.4,
+          reasons: ["Parsing fallback – manual review recommended if media looks unusual"],
+          requiresHumanReview: false
+        };
+      }
+
+      const score = Math.min(100, Math.max(0, Math.round(result.syntheticLikelihood || 0)));
+      const isHighRisk = score >= 75 || result.requiresHumanReview === true;
+
+      const updatePayload = {
+        syntheticLikelihood: score,
+        syntheticAnalysis: {
+          confidence: typeof result.confidence === "number" ? result.confidence : 0.7,
+          reasons: Array.isArray(result.reasons) ? result.reasons.slice(0, 4) : [],
+          evaluatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          note: "Advisory score only. No automatic deletion or hiding was performed."
+        }
+      };
+
+      // Only flag for human review – never auto-delete or auto-hide
+      if (isHighRisk) {
+        updatePayload.status = "pending_steward_review";
+        updatePayload.moderationNote = `High synthetic likelihood (${score}/100) – queued for steward review.`;
+      }
+
+      await afterSnap.ref.set(updatePayload, { merge: true });
+
+      // Audit log for high-risk cases
+      if (isHighRisk) {
+        await writeAuditLog({
+          action: "synthetic_flagged_for_review",
+          performedBy: "system_synthetic_scorer",
+          targetId: postId,
+          targetType: "testimony",
+          details: {
+            syntheticLikelihood: score,
+            reasons: result.reasons || [],
+            previousStatus: data.status || "published",
+            note: "Advisory flag only – sealed record was not altered beyond status label"
+          },
+          severity: "warning"
+        });
+      }
+    } catch (error) {
+      console.error(`Error processing synthetic score for ${postId}:`, error);
+      // Fail soft – do not block the testimony
+    }
+  }
+);
