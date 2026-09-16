@@ -103,6 +103,8 @@ function showVideoPolicyModal(customMessage) {
                 window.location.href = "live-arena.html";
             } else if (cancelBtn) {
                 modal.classList.add("hidden");
+                clearAllMediaStates();
+                showToast('Video upload canceled', 'info');
             }
         });
     }
@@ -234,6 +236,18 @@ function renderMediaTrustBadge(costInfo, file, validationResult) {
                 <span class="font-mono text-[11px]">${fileMB} MB</span>
             </div>
             <p class="mt-1 text-slate-300">${costInfo.reason || ''}</p>
+        `;
+    } else if (validationResult?.syntheticScore > 0.65) {
+        container.className = 'mt-2 p-3 rounded-xl border border-red-500/40 bg-red-950/20 text-red-300 text-xs';
+        container.innerHTML = `
+            <div class="flex items-center justify-between">
+                <span class="font-semibold text-red-400">⚠️ High Synthetic Probability</span>
+                <span class="font-mono text-[11px]">${fileMB} MB</span>
+            </div>
+            <p class="mt-1 text-slate-300">
+                Score: ${(validationResult.syntheticScore * 100).toFixed(0)}% — 
+                ${validationResult.syntheticAdvisory || 'Likely AI-generated or heavily manipulated'}
+            </p>
         `;
     } else if (validationResult?.provenance === 'c2pa_sealed') {
         container.className = 'mt-2 p-3 rounded-xl border border-emerald-500/40 bg-emerald-950/20 text-emerald-300 text-xs';
@@ -422,8 +436,23 @@ export async function handleVideoSelectAction(event) {
         return;
     }
 
+    // Optional client-side synthetic score
+    let syntheticInfo = null;
+    try {
+        syntheticInfo = await calculateSyntheticScoreFromMetadata(file);
+        // Optionally also run: evaluateClientSyntheticAdvisory(syntheticInfo)
+    } catch (err) {
+        console.warn('Synthetic score calculation failed (non-blocking):', err);
+    }
+
+    const enrichedValidation = {
+        ...validationResult,
+        syntheticScore: syntheticInfo?.score ?? null,
+        syntheticAdvisory: syntheticInfo?.advisory ?? null
+    };
+
     const costInfo = await calculateVideoUploadCost(file);
-    renderMediaTrustBadge(costInfo, file, validationResult);
+    renderMediaTrustBadge(costInfo, file, enrichedValidation);
 
     if (costInfo.blocked) {
         showToast(costInfo.reason, 'error');
@@ -458,7 +487,9 @@ export async function handleVideoSelectAction(event) {
             duration: validationResult.duration || 0,
             provenance: validationResult.provenance,
             editorDetected: validationResult.editorDetected,
-            detectedSignatures: validationResult.detectedSignatures
+            detectedSignatures: validationResult.detectedSignatures,
+            syntheticScore: enrichedValidation.syntheticScore,
+            syntheticAdvisory: enrichedValidation.syntheticAdvisory
         };
 
         showToast('Video ready for submission', 'success');
@@ -571,13 +602,14 @@ export function initComposer() {
     bodyInput.dataset.aiListenerAttached = 'true';
     bodyInput.addEventListener('input', (e) => {
       const text = e.target.value.trim();
-      if (text.length < 30) {
+      if (text.length < 30 || text === lastAnalyzedText) {
         clearTimeout(aiAnalysisDebounceTimer);
-        clearAiFeedback();
+        if (text.length < 30) clearAiFeedback();
         return;
       }
       clearTimeout(aiAnalysisDebounceTimer);
       aiAnalysisDebounceTimer = setTimeout(() => {
+        lastAnalyzedText = text;
         runRealtimeAiAnalysis(text);
       }, 900);
     });
@@ -630,7 +662,13 @@ async function runRealtimeAiAnalysis(text) {
         renderAiFeedback(feedbackBox, analysis, category);
     } catch (err) {
         console.warn("Real-time AI analysis failed:", err);
-        clearAiFeedback();
+        feedbackBox.className = 'mt-3 p-3 rounded-xl border border-zinc-700 bg-zinc-900/80 text-zinc-400 text-xs';
+        feedbackBox.innerHTML = `
+            <div class="flex items-center gap-2">
+                <span>🤖</span>
+                <span>AI analysis temporarily unavailable</span>
+            </div>`;
+        feedbackBox.classList.remove('hidden');
     }
 }
 
@@ -686,7 +724,8 @@ function renderAiFeedback(container, analysis, category) {
 }
 
 /**
- * Main submit handler – prefers window.publishTestimony() when available
+ * Main submit handler – prefers window.publishTestimony() when available,
+ * falls back to publishTestimonyOrQueue
  */
 async function handleComposerSubmit(e) {
     if (e?.preventDefault) e.preventDefault();
@@ -697,40 +736,40 @@ async function handleComposerSubmit(e) {
         return;
     }
 
-    if (typeof window.publishTestimony === 'function') {
-        console.log('[composer] Using existing window.publishTestimony()');
+    isSubmitting = true;
+    const submitBtn = document.getElementById('postButton') ||
+                      document.getElementById('submitBtn') ||
+                      document.querySelector('button[type="submit"]');
 
-        isSubmitting = true;
-        const submitBtn = document.getElementById('postButton') ||
-                          document.getElementById('submitBtn') ||
-                          document.querySelector('button[type="submit"]');
-
-        if (submitBtn) {
-            submitBtn.disabled = true;
-            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
-        }
-
-        try {
-            // Optionally enrich draft with origin claim before publish
-            window.activeSubmissionDraft = window.activeSubmissionDraft || {};
-            window.activeSubmissionDraft.mediaOriginClaim = getSelectedMediaOriginClaim();
-
-            await window.publishTestimony();
-        } catch (err) {
-            console.error('[composer] publishTestimony failed:', err);
-            showToast('Failed to publish. Please try again.', 'error');
-        } finally {
-            isSubmitting = false;
-            if (submitBtn) {
-                submitBtn.disabled = false;
-                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-            }
-        }
-        return;
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
     }
 
-    console.error('[composer] window.publishTestimony is not available');
-    showToast('Publish system not ready. Please refresh the page.', 'error');
+    try {
+        // Always enrich the draft with origin claim
+        window.activeSubmissionDraft = window.activeSubmissionDraft || {};
+        window.activeSubmissionDraft.mediaOriginClaim = getSelectedMediaOriginClaim();
+
+        if (typeof window.publishTestimony === 'function') {
+            console.log('[composer] Using window.publishTestimony()');
+            await window.publishTestimony();
+        } else if (typeof publishTestimonyOrQueue === 'function') {
+            console.log('[composer] Falling back to publishTestimonyOrQueue');
+            await publishTestimonyOrQueue(window.activeSubmissionDraft);
+        } else {
+            throw new Error('No publish function available');
+        }
+    } catch (err) {
+        console.error('[composer] Publish failed:', err);
+        showToast('Failed to publish. Please try again.', 'error');
+    } finally {
+        isSubmitting = false;
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+    }
 }
 
 // ======================================================
