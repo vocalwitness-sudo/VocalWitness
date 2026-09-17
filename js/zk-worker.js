@@ -40,10 +40,11 @@ self.onmessage = async (event) => {
             return;
         }
 
+        // SnarkJS is attached to the global scope by the CDN script; verify both global presence and groth16 support
         const snarkEngine = self.snarkjs || (typeof snarkjs !== 'undefined' ? snarkjs : null);
 
-        if (!snarkEngine) {
-            throw new Error('SnarkJS library failed to initialize inside worker context.');
+        if (!snarkEngine || !snarkEngine.groth16) {
+            throw new Error('SnarkJS library or groth16 module failed to initialize inside worker context.');
         }
 
         const baseUrl = self.location.origin;
