@@ -121,7 +121,7 @@ function audioBufferToWav(audioBuffer) {
     writeString(8, 'WAVE');
     writeString(12, 'fmt ');
     view.setUint32(16, 16, true);          // PCM chunk size
-    view.setUint16(20, 1, true);           // PCM format
+    view.setUint16(20, 1, true);            // PCM format
     view.setUint16(22, numChannels, true);
     view.setUint32(24, sampleRate, true);
     view.setUint32(28, sampleRate * blockAlign, true);
