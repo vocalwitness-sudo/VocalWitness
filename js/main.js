@@ -353,10 +353,9 @@ window.publishTestimony = async () => {
       : content.slice(0, 80).replace(/\s+\S*$/, '') + '...';
   }
 
-  const postBtn = document.getElementById('postButton');
+  const postBtn = document.getElementById('postButton') || document.getElementById('postBtn');
   const originalBtnHTML = postBtn ? postBtn.innerHTML : '';
 
-  // Lock publishing flag & activate button visual state ("alive" & pulsing)
   window.__isPublishing = true;
   if (postBtn) {
     postBtn.disabled = true;
@@ -368,6 +367,7 @@ window.publishTestimony = async () => {
   }
 
   try {
+    // AI notice (non-blocking)
     try {
       const { remindUserOfAIRestrictions } = await import('./ai-services.js');
       remindUserOfAIRestrictions("publish");
@@ -375,6 +375,7 @@ window.publishTestimony = async () => {
       console.warn("[publish] AI notice skipped:", aiErr);
     }
 
+    // Ensure user document exists
     const userRef = doc(db, 'users', currentUser.uid);
     const userSnap = await getDoc(userRef);
     if (!userSnap.exists()) {
@@ -391,13 +392,13 @@ window.publishTestimony = async () => {
 
     // ====================== MEDIA HANDLING (FAIL-CLOSED) ======================
     const audioInfo = typeof getAudioForPublish === 'function' ? getAudioForPublish() : null;
-    
+
     let mediaData = {
       imageUrl: null,
       videoUrl: null,
       audioUrl: null,
-      audioSource: null,        // 'live_recording' or 'uploaded_audio'
-      audioLabel: null,         // 'Live Voice' or 'Uploaded Audio'
+      audioSource: null,
+      audioLabel: null,
       imageHash: null,
       videoHash: null,
       audioHash: null,
@@ -411,8 +412,8 @@ window.publishTestimony = async () => {
       ? mediaModule.hasPendingMedia()
       : !!(audioInfo || window.selectedImageFile || window.selectedVideoFile);
 
-    const uploaderFunc = typeof uploadForensicMedia === 'function' 
-      ? uploadForensicMedia 
+    const uploaderFunc = typeof uploadForensicMedia === 'function'
+      ? uploadForensicMedia
       : mediaModule?.uploadForensicMedia;
 
     if (typeof uploaderFunc === 'function') {
@@ -420,7 +421,6 @@ window.publishTestimony = async () => {
         const activeImg = typeof activeImageFile !== 'undefined' ? activeImageFile : window.selectedImageFile;
         const activeVid = typeof activeVideoFile !== 'undefined' ? activeVideoFile : window.selectedVideoFile;
 
-        // Upload media using forensic uploader with priority-resolved audio blob
         const uploaded = await uploaderFunc(
           activeImg,
           activeVid,
@@ -433,8 +433,6 @@ window.publishTestimony = async () => {
             ...uploaded,
             audioSource: audioInfo ? audioInfo.source : null
           };
-
-          // Assign clear feed label depending on audio origin
           if (audioInfo?.isLive) {
             mediaData.audioLabel = 'Live Voice';
           } else if (audioInfo) {
@@ -454,11 +452,11 @@ window.publishTestimony = async () => {
             : 'Media upload failed. Report was NOT published. Please try again.',
           'error'
         );
-        return; 
+        return;
       }
     }
 
-    // 2b. Body hash
+    // Body hash
     try {
       if (content && typeof generateSha256Hash === 'function') {
         const textBlob = new Blob([content], { type: 'text/plain' });
@@ -468,34 +466,7 @@ window.publishTestimony = async () => {
       console.warn('[publish] Could not compute bodyHash:', hashErr);
     }
 
-    // Continue with creating the Firestore document using mediaData...
-  } catch (err) {
-    console.error('[publish] Error during publication:', err);
-    showToast('Publication failed. Please try again.', 'error');
-  } finally {
-    window.__isPublishing = false;
-    if (postBtn) {
-      postBtn.disabled = false;
-      postBtn.classList.remove('opacity-75', 'cursor-not-allowed', 'scale-[0.98]');
-      postBtn.innerHTML = originalBtnHTML;
-    }
-  }
-};
-   window.publishTestimony = async function() {
-  const postBtn = document.getElementById('postBtn'); // Example reference
-  const originalBtnHTML = postBtn ? postBtn.innerHTML : '';
-  
-  if (window.__isPublishing) return;
-  window.__isPublishing = true;
-
-  if (postBtn) {
-    postBtn.disabled = true;
-    postBtn.classList.add('opacity-75', 'cursor-not-allowed', 'scale-[0.98]');
-    postBtn.innerHTML = 'Publishing...';
-  }
-
-  try {
-    // ========== 3. GENERATE ZK PROOF ==========
+    // ========== GENERATE ZK PROOF ==========
     let zkResult = {
       isFallback: true,
       proofType: 'NONE',
@@ -505,7 +476,6 @@ window.publishTestimony = async () => {
 
     try {
       const { generateZKProofAsync } = await import('./zk-client.js');
-
       const contentHash = mediaData.bodyHash || await generateSha256Hash(new Blob([content]));
       const authorHash  = await generateSha256Hash(currentUser.uid);
 
@@ -521,7 +491,7 @@ window.publishTestimony = async () => {
       console.warn('[publish] ZK generation failed, continuing without proof:', zkErr);
     }
 
-    // 4. Final payload
+    // Final payload
     const testimonyData = {
       authorId: currentUser.uid,
       content,
@@ -552,29 +522,28 @@ window.publishTestimony = async () => {
       isZkVerified: !zkResult.isFallback
     };
 
-    // 5. Write to Firestore
+    // Write to Firestore
     const docRef = await addDoc(collection(db, 'testimonies'), testimonyData);
     console.log('[publish] SUCCESS →', docRef.id);
 
-    // 6. Update throttle
+    // Update throttle
     await setDoc(userRef, {
       lastTestimonyAt: serverTimestamp()
     }, { merge: true });
 
-    // Success message
+    // Success toast
     if (testimonyData.isZkVerified) {
       showToast("🛡️ Report sealed with Zero-Knowledge proof", "success");
     } else {
       showToast("🛡️ Report sealed and published", "success");
     }
 
-    // Reset UI & inputs completely
+    // Reset UI
     if (titleInput) titleInput.value = '';
     if (textarea) textarea.value = '';
     if (typeof mediaModule?.resetMediaState === 'function') {
       mediaModule.resetMediaState();
     }
-    
     const fileInputEl = document.getElementById('mediaInput') || document.querySelector('input[type="file"]');
     if (fileInputEl) fileInputEl.value = '';
 
@@ -597,6 +566,7 @@ window.publishTestimony = async () => {
       postBtn.innerHTML = originalBtnHTML;
     }
   }
+};
 
 /* ====================== EVIDENCE LEDGER ====================== */
 async function loadEvidenceLedger() {
