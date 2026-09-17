@@ -441,6 +441,125 @@ export function getPendingMedia() {
  *
  * Always throws on failure so publishTestimony can abort cleanly.
  */
+
+// ====================== MEDIA BUTTONS WIRING ======================
+/**
+ * Wire all media buttons (Live Voice, Photo, Video, Upload Audio)
+ * Call this once after the engine is ready.
+ */
+export function initMediaButtons() {
+  const btnVoice        = document.getElementById('btn-voice');
+  const btnPhoto        = document.getElementById('btn-photo');
+  const btnVideo        = document.getElementById('btn-video');
+  const btnUploadAudio  = document.getElementById('btn-upload-audio');
+
+  const photoInput      = document.getElementById('photoInput');
+  const videoInput      = document.getElementById('videoInput');
+  const audioInput      = document.getElementById('audioInput');
+
+  // --- 1. LIVE VOICE RECORDING (Primary) ---
+  if (btnVoice) {
+    // Remove old listeners to prevent double firing
+    btnVoice.replaceWith(btnVoice.cloneNode(true));
+    const freshVoiceBtn = document.getElementById('btn-voice');
+
+    freshVoiceBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (freshVoiceBtn.disabled) return;
+      freshVoiceBtn.disabled = true;
+
+      try {
+        await toggleVoiceRecording(freshVoiceBtn);
+      } catch (err) {
+        console.error('Voice recording error:', err);
+        showToast('Could not start recording', 'error');
+      } finally {
+        setTimeout(() => {
+          freshVoiceBtn.disabled = false;
+        }, 800);
+      }
+    });
+  }
+
+  // --- 2. UPLOAD EXISTING AUDIO (Secondary) ---
+  if (btnUploadAudio && audioInput) {
+    btnUploadAudio.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      audioInput.click();
+    });
+
+    audioInput.addEventListener('change', async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      const check = validateMediaFile(file, {
+        maxSizeBytes: 15 * 1024 * 1024, // 15MB for audio
+        allowedTypes: ['audio/webm', 'audio/mp3', 'audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/m4a']
+      });
+
+      if (!check.valid) {
+        showToast(check.error, 'error');
+        audioInput.value = '';
+        return;
+      }
+
+      // Clear other media
+      selectedImageFile = null;
+      selectedVideoFile = null;
+      selectedAudioFile = file;
+      file._source = 'uploaded_audio';   // mark as uploaded (not live)
+
+      // Show simple preview
+      const previewArea = document.getElementById('preview-area');
+      if (previewArea) {
+        const objectUrl = URL.createObjectURL(file);
+        previewArea.dataset.objectUrl = objectUrl;
+        previewArea.innerHTML = `
+          <div class="relative mt-2 rounded-2xl border border-amber-500/40 bg-zinc-900 p-4">
+            <p class="text-sm text-amber-400 font-medium">Uploaded Audio</p>
+            <p class="text-xs text-zinc-400 mt-1">${file.name} • ${(file.size / 1024 / 1024).toFixed(2)} MB</p>
+            <audio controls class="mt-3 w-full" src="${objectUrl}"></audio>
+            <button type="button" id="removeMediaBtn"
+                    class="absolute top-2 right-2 bg-red-600/90 hover:bg-red-700 text-white rounded-full p-1.5">
+              ✕
+            </button>
+          </div>`;
+        previewArea.classList.add('has-content');
+
+        document.getElementById('removeMediaBtn')?.addEventListener('click', () => {
+          removeMedia(previewArea);
+        });
+      }
+
+      showToast('Audio file ready', 'success');
+      audioInput.value = '';
+    });
+  }
+
+  // --- 3. PHOTO ---
+  if (btnPhoto && photoInput) {
+    btnPhoto.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      photoInput.click();
+    });
+
+    // Note: the actual change handler is usually in composer.js via handleImageSelect
+  }
+
+  // --- 4. VIDEO ---
+  if (btnVideo && videoInput) {
+    btnVideo.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      videoInput.click();
+    });
+  }
+}
+
 export async function uploadForensicMedia(
   activeImageFile = null,
   activeVideoFile = null,
