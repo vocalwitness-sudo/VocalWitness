@@ -1086,6 +1086,24 @@ function removeSplash() {
   document.documentElement.style.overflow = '';
 }
 
+// At the very end of the Bootstrap process (right after "✅ Bootstrap finished successfully")
+function hideSplash() {
+  const splash = document.getElementById('app-splash-screen');
+  if (!splash) return;
+
+  splash.classList.add('fade-out');          // optional CSS class
+  splash.style.opacity = '0';
+  splash.style.transition = 'opacity 0.4s ease';
+  splash.style.pointerEvents = 'none';
+
+  setTimeout(() => {
+    splash.remove();
+  }, 450);
+}
+
+// Call it when everything is ready
+hideSplash();
+
 /* ====================== DOM READY ====================== */
 document.addEventListener('DOMContentLoaded', async () => {
   try {
