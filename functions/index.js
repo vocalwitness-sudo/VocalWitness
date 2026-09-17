@@ -4,7 +4,7 @@
  */
 const functions = require("firebase-functions");
 const { onRequest, onCall, HttpsError } = require("firebase-functions/v2/https");
-const { onDocumentCreated } = require("firebase-functions/v2/firestore");
+const { onDocumentCreated, onDocumentWritten } = require("firebase-functions/v2/firestore");
 const { GoogleGenAI, Type } = require("@google/genai");
 const { defineSecret } = require("firebase-functions/params");
 const { CloudTasksClient } = require("@google-cloud/tasks");
