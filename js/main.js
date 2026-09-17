@@ -15,6 +15,7 @@ import { wireIndexPage } from './ui-events.js';
 import { initComposer } from './composer.js';
 import { createEvidencePack } from './evidence-pack.js';
 import { generateSha256Hash } from './utils.js';
+import { getAudioForPublish, uploadForensicMedia } from './media.js';
 
 import {
   collection, addDoc, doc, getDoc, setDoc, updateDoc,
@@ -388,11 +389,15 @@ window.publishTestimony = async () => {
       }, { merge: true });
     }
 
-    // 2. Media handling (fail-closed)
+    // ====================== MEDIA HANDLING (FAIL-CLOSED) ======================
+    const audioInfo = typeof getAudioForPublish === 'function' ? getAudioForPublish() : null;
+    
     let mediaData = {
       imageUrl: null,
       videoUrl: null,
       audioUrl: null,
+      audioSource: null,        // 'live_recording' or 'uploaded_audio'
+      audioLabel: null,         // 'Live Voice' or 'Uploaded Audio'
       imageHash: null,
       videoHash: null,
       audioHash: null,
@@ -404,13 +409,37 @@ window.publishTestimony = async () => {
 
     const userSelectedMedia = typeof mediaModule?.hasPendingMedia === 'function'
       ? mediaModule.hasPendingMedia()
-      : false;
+      : !!(audioInfo || window.selectedImageFile || window.selectedVideoFile);
 
-    if (typeof mediaModule?.uploadForensicMedia === 'function') {
+    const uploaderFunc = typeof uploadForensicMedia === 'function' 
+      ? uploadForensicMedia 
+      : mediaModule?.uploadForensicMedia;
+
+    if (typeof uploaderFunc === 'function') {
       try {
-        const uploaded = await mediaModule.uploadForensicMedia();
+        const activeImg = typeof activeImageFile !== 'undefined' ? activeImageFile : window.selectedImageFile;
+        const activeVid = typeof activeVideoFile !== 'undefined' ? activeVideoFile : window.selectedVideoFile;
+
+        // Upload media using forensic uploader with priority-resolved audio blob
+        const uploaded = await uploaderFunc(
+          activeImg,
+          activeVid,
+          audioInfo ? audioInfo.blob : null
+        );
+
         if (uploaded) {
-          mediaData = { ...mediaData, ...uploaded };
+          mediaData = {
+            ...mediaData,
+            ...uploaded,
+            audioSource: audioInfo ? audioInfo.source : null
+          };
+
+          // Assign clear feed label depending on audio origin
+          if (audioInfo?.isLive) {
+            mediaData.audioLabel = 'Live Voice';
+          } else if (audioInfo) {
+            mediaData.audioLabel = 'Uploaded Audio';
+          }
         } else if (userSelectedMedia) {
           throw new Error('Media upload returned empty result');
         }
@@ -439,6 +468,19 @@ window.publishTestimony = async () => {
       console.warn('[publish] Could not compute bodyHash:', hashErr);
     }
 
+    // Continue with creating the Firestore document using mediaData...
+  } catch (err) {
+    console.error('[publish] Error during publication:', err);
+    showToast('Publication failed. Please try again.', 'error');
+  } finally {
+    window.__isPublishing = false;
+    if (postBtn) {
+      postBtn.disabled = false;
+      postBtn.classList.remove('opacity-75', 'cursor-not-allowed', 'scale-[0.98]');
+      postBtn.innerHTML = originalBtnHTML;
+    }
+  }
+};
     // ========== 3. GENERATE ZK PROOF ==========
     let zkResult = {
       isFallback: true,
