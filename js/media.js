@@ -656,3 +656,28 @@ export async function uploadForensicMedia(
 
   return mediaData;
 }
+
+export async function handleAudioSelectAction(event) {
+  const previewArea = document.getElementById('preview-area') || document.getElementById('media-preview');
+  const file = event.target?.files?.[0];
+
+  if (!file) return;
+
+  // Enforce exclusivity
+  clearAllMediaStates();
+  activeAudioFile = file;
+  file._source = 'uploaded_audio';   // ← Important: mark as uploaded (not live)
+
+  renderMediaTrustBadge(null, activeAudioFile, { provenance: 'uploaded_audio' });
+
+  try {
+    showToast('Processing uploaded audio...', 'info');
+    renderGenericMediaPreview(file, previewArea);
+    renderMediaOriginClaimUI();
+    showToast('Uploaded audio ready', 'success');
+  } catch (err) {
+    console.error('Audio processing error:', err);
+    showToast('Audio processing failed', 'error');
+    activeAudioFile = null;
+  }
+}
