@@ -118,7 +118,7 @@ export async function generateZKProofAsync(inputs) {
     };
 
     try {
-      worker = new Worker(new URL('./zk-worker.js', import.meta.url), { type: 'module' });
+     worker = new Worker(new URL('./zk-worker.js', import.meta.url));
     } catch (err) {
       console.warn('Could not start ZK worker, falling back to server:', err);
       generateZKProofServerSide(inputs).then(resolve);
