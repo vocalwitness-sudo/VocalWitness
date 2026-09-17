@@ -597,7 +597,6 @@ window.publishTestimony = async () => {
       postBtn.innerHTML = originalBtnHTML;
     }
   }
-}; // <-- This single closing brace and semicolon correctly ends the outer function wrapper.
 
 /* ====================== EVIDENCE LEDGER ====================== */
 async function loadEvidenceLedger() {
