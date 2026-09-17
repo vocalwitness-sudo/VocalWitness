@@ -570,63 +570,79 @@
         <span id="char-count" class="text-xs text-zinc-500">0 / 2000</span>
       </div>
 
-      <!-- Media Buttons -->
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <button id="btn-photo" type="button"
-                class="flex items-center justify-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 font-medium text-emerald-400 transition hover:border-emerald-500 hover:bg-zinc-800">
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-          </svg>
-          Add Photo
-        </button>
-        <button id="btn-video" type="button"
-                class="flex items-center justify-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 font-medium text-sky-400 transition hover:border-sky-500 hover:bg-zinc-800">
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-          </svg>
-          Add Video
-        </button>
-        <button id="btn-voice" type="button"
-                class="flex items-center justify-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 font-medium text-amber-400 transition hover:border-amber-500 hover:bg-zinc-800">
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z"/>
-          </svg>
-          Record Voice
-        </button>
-      </div>
+<!-- Media Buttons -->
+<div class="grid grid-cols-1 gap-3 sm:grid-cols-3 mb-1">
+  <!-- Add Photo -->
+  <button id="btn-photo" type="button"
+          class="flex items-center justify-center gap-2.5 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3.5 font-medium text-emerald-400 transition-all
+                 hover:bg-emerald-500 hover:text-zinc-950 hover:border-emerald-400
+                 active:scale-[0.98]">
+    <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+    </svg>
+    <span>Add Photo</span>
+  </button>
 
-      <!-- Preview -->
-      <div id="preview-area" class="mt-6 flex min-h-[100px] flex-wrap items-center justify-center gap-4 rounded-2xl border border-dashed border-zinc-700 bg-zinc-900/40 p-5 text-sm text-zinc-500">
-        <div id="preview-empty" class="text-center">
-          <p>Preview will appear here...</p>
-          <p class="mt-1 text-xs text-zinc-600">Photos, videos, or voice notes show after you add them</p>
-        </div>
-      </div>
+  <!-- Add Video -->
+  <button id="btn-video" type="button"
+          class="flex items-center justify-center gap-2.5 rounded-2xl border border-sky-500/40 bg-sky-500/10 px-4 py-3.5 font-medium text-sky-400 transition-all
+                 hover:bg-sky-500 hover:text-zinc-950 hover:border-sky-400
+                 active:scale-[0.98]">
+    <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+    </svg>
+    <span>Add Video</span>
+  </button>
 
-      <!-- Voice Recorder -->
-      <div id="voice-recorder-bar" class="mt-4 hidden rounded-2xl border border-emerald-500/30 bg-zinc-900/60 p-4">
-        <div class="flex flex-wrap items-center gap-3">
-          <div class="flex min-w-[70px] items-center gap-2">
-            <span id="rec-indicator" class="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500"></span>
-            <span id="rec-timer" class="font-mono text-sm text-emerald-400">00:00</span>
-          </div>
-          <button id="verify-voice-btn" type="button" class="rounded-xl bg-blue-600/80 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-600">🛡️ Verify</button>
-          <canvas id="rec-waveform" width="180" height="36" class="max-w-[200px] flex-1 rounded bg-zinc-950"></canvas>
-          <div class="ml-auto flex items-center gap-2">
-            <button id="rec-pause-btn" type="button" class="rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700">⏸ Pause</button>
-            <button id="rec-stop-btn" type="button" class="rounded-xl bg-red-600/80 px-3 py-1.5 text-xs text-white hover:bg-red-600">⏹ Stop</button>
-            <button id="rec-replay-btn" type="button" class="hidden rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700">↻ Replay</button>
-          </div>
-        </div>
-        <audio id="rec-replay-audio" class="hidden"></audio>
-      </div>
+  <!-- Record Voice -->
+  <button id="btn-voice" type="button"
+          class="flex items-center justify-center gap-2.5 rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-3.5 font-medium text-amber-400 transition-all
+                 hover:bg-amber-500 hover:text-zinc-950 hover:border-amber-400
+                 active:scale-[0.98]">
+    <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z"/>
+    </svg>
+    <span>Record Voice</span>
+  </button>
+</div>
 
-      <button id="postButton" type="button"
-              class="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 py-4 text-base font-bold text-black shadow-lg shadow-emerald-500/25 transition hover:bg-emerald-400 active:scale-[0.98]">
-        <span data-i18n="postButton">Publish Report</span>
-      </button>
+<!-- Preview -->
+<div id="preview-area" class="mt-5 flex min-h-[110px] flex-wrap items-center justify-center gap-4 rounded-2xl border border-dashed border-zinc-700 bg-zinc-900/50 p-5 text-sm text-zinc-500">
+  <div id="preview-empty" class="text-center">
+    <p>Preview will appear here...</p>
+    <p class="mt-1 text-xs text-zinc-600">Photos, videos, or voice notes show after you add them</p>
+  </div>
+</div>
+
+<!-- Voice Recorder -->
+<div id="voice-recorder-bar" class="mt-4 hidden rounded-2xl border border-emerald-500/30 bg-zinc-900/60 p-4">
+  <div class="flex flex-wrap items-center gap-3">
+    <div class="flex min-w-[70px] items-center gap-2">
+      <span id="rec-indicator" class="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500"></span>
+      <span id="rec-timer" class="font-mono text-sm text-emerald-400">00:00</span>
     </div>
+    <button id="verify-voice-btn" type="button" class="rounded-xl bg-blue-600/80 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-600">
+      🛡️ Verify
+    </button>
+    <canvas id="rec-waveform" width="180" height="36" class="max-w-[200px] flex-1 rounded bg-zinc-950"></canvas>
+    <div class="ml-auto flex items-center gap-2">
+      <button id="rec-pause-btn" type="button" class="rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700">⏸ Pause</button>
+      <button id="rec-stop-btn" type="button" class="rounded-xl bg-red-600/80 px-3 py-1.5 text-xs text-white hover:bg-red-600">⏹ Stop</button>
+      <button id="rec-replay-btn" type="button" class="hidden rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700">↻ Replay</button>
+    </div>
+  </div>
+  <audio id="rec-replay-audio" class="hidden"></audio>
+</div>
 
+<!-- Publish Button -->
+<button id="postButton" type="button"
+        class="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 py-4 text-base font-bold text-black shadow-lg shadow-emerald-500/25 transition-all
+               hover:bg-emerald-400 hover:shadow-emerald-500/40
+               active:scale-[0.98] active:bg-emerald-600
+               disabled:opacity-60 disabled:cursor-not-allowed">
+  <span data-i18n="postButton">Publish Report</span>
+</button>
+      
     <!-- Upload Progress -->
     <div id="upload-progress-container" class="mb-6 hidden">
       <div class="mb-1 flex justify-between text-xs text-zinc-400">
