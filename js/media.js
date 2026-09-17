@@ -397,8 +397,47 @@ export function initVoiceControls() {
         };
     }
 }
+// ====================== AUDIO & MEDIA HELPERS ======================
 
-// ====================== PENDING MEDIA HELPERS ======================
+/**
+ * Returns the correct audio source for publishing.
+ * Priority:
+ * 1. Live recording (highest authenticity)
+ * 2. Uploaded audio file
+ * 3. Composer active audio file fallback
+ * 4. null (no audio)
+ */
+export function getAudioForPublish() {
+  // 1. Live recording from the engine (highest priority)
+  if (engineInstance?.currentAudioBlob && engineInstance.currentAudioBlob.size > 0) {
+    return {
+      blob: engineInstance.currentAudioBlob,
+      source: 'live_recording',
+      isLive: true
+    };
+  }
+
+  // 2. Uploaded audio file
+  if (typeof selectedAudioFile !== 'undefined' && selectedAudioFile && selectedAudioFile.size > 0) {
+    return {
+      blob: selectedAudioFile,
+      source: selectedAudioFile._source || 'uploaded_audio',
+      isLive: false
+    };
+  }
+
+  // 3. Composer's activeAudioFile fallback (if defined in module scope)
+  if (typeof activeAudioFile !== 'undefined' && activeAudioFile && activeAudioFile.size > 0) {
+    return {
+      blob: activeAudioFile,
+      source: activeAudioFile._source || 'uploaded_audio',
+      isLive: false
+    };
+  }
+
+  return null;
+}
+
 /**
  * Returns true if the user has selected any media
  * (image, video or audio) that still needs to be handled.
@@ -406,23 +445,26 @@ export function initVoiceControls() {
  * should abort the whole publish (fail-closed).
  */
 export function hasPendingMedia() {
-  return !!(
-    selectedImageFile ||
-    selectedVideoFile ||
-    selectedAudioFile ||
-    engineInstance?.currentAudioBlob
-  );
+  const audioInfo = getAudioForPublish();
+  const hasImage = typeof selectedImageFile !== 'undefined' && selectedImageFile && selectedImageFile.size > 0;
+  const hasVideo = typeof selectedVideoFile !== 'undefined' && selectedVideoFile && selectedVideoFile.size > 0;
+
+  return !!(hasImage || hasVideo || audioInfo !== null);
 }
 
 /**
- * Returns a simple snapshot of the currently selected media.
- * Useful for debugging or for the composer.
+ * Returns a comprehensive snapshot of the currently selected media.
+ * Useful for debugging, previews, or for the composer.
  */
 export function getPendingMedia() {
+  const audioInfo = getAudioForPublish();
+  
   return {
-    image: selectedImageFile,
-    video: selectedVideoFile,
-    audio: selectedAudioFile || engineInstance?.currentAudioBlob || null
+    image: (typeof selectedImageFile !== 'undefined') ? selectedImageFile : null,
+    video: (typeof selectedVideoFile !== 'undefined') ? selectedVideoFile : null,
+    audio: audioInfo ? audioInfo.blob : null,
+    audioSource: audioInfo ? audioInfo.source : null,
+    isLiveAudio: audioInfo ? audioInfo.isLive : false
   };
 }
 
