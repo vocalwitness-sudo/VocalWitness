@@ -481,6 +481,20 @@ window.publishTestimony = async () => {
     }
   }
 };
+   window.publishTestimony = async function() {
+  const postBtn = document.getElementById('postBtn'); // Example reference
+  const originalBtnHTML = postBtn ? postBtn.innerHTML : '';
+  
+  if (window.__isPublishing) return;
+  window.__isPublishing = true;
+
+  if (postBtn) {
+    postBtn.disabled = true;
+    postBtn.classList.add('opacity-75', 'cursor-not-allowed', 'scale-[0.98]');
+    postBtn.innerHTML = 'Publishing...';
+  }
+
+  try {
     // ========== 3. GENERATE ZK PROOF ==========
     let zkResult = {
       isFallback: true,
@@ -554,14 +568,13 @@ window.publishTestimony = async () => {
       showToast("🛡️ Report sealed and published", "success");
     }
 
-    // Reset UI & inputs completely to prevent accidental double-picks
+    // Reset UI & inputs completely
     if (titleInput) titleInput.value = '';
     if (textarea) textarea.value = '';
     if (typeof mediaModule?.resetMediaState === 'function') {
       mediaModule.resetMediaState();
     }
     
-    // Clear out file input elements explicitly if present in DOM
     const fileInputEl = document.getElementById('mediaInput') || document.querySelector('input[type="file"]');
     if (fileInputEl) fileInputEl.value = '';
 
@@ -581,10 +594,11 @@ window.publishTestimony = async () => {
     if (postBtn) {
       postBtn.disabled = false;
       postBtn.classList.remove('opacity-75', 'cursor-not-allowed', 'scale-[0.98]');
-      postBtn.innerHTML = originalBtnHTML; // Restores original button content cleanly
+      postBtn.innerHTML = originalBtnHTML;
     }
   }
-};
+}; // <-- This single closing brace and semicolon correctly ends the outer function wrapper.
+
 /* ====================== EVIDENCE LEDGER ====================== */
 async function loadEvidenceLedger() {
   // Support both possible container IDs for compatibility
