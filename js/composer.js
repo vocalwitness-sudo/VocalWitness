@@ -504,30 +504,28 @@ export async function handleVideoSelectAction(event) {
  * Distinct handler for Audio Selection
  */
 export async function handleAudioSelectAction(event) {
-    const previewArea = document.getElementById('preview-area') || document.getElementById('media-preview');
-    const file = event.target?.files?.[0];
+  const previewArea = document.getElementById('preview-area') || document.getElementById('media-preview');
+  const file = event.target?.files?.[0];
 
-    if (!file) return;
+  if (!file) return;
 
-    // Enforce exclusivity
-    clearAllMediaStates();
-    activeAudioFile = file;
+  // Enforce exclusivity
+  clearAllMediaStates();
+  activeAudioFile = file;
+  file._source = 'uploaded_audio';   // ← Important: mark as uploaded (not live)
 
-    renderMediaTrustBadge(null, activeAudioFile, { provenance: 'audio_recording' });
+  renderMediaTrustBadge(null, activeAudioFile, { provenance: 'uploaded_audio' });
 
-    try {
-        showToast('Processing audio payload...', 'info');
-
-        // Safe neutral preview – NEVER call handleImageSelect here
-        renderGenericMediaPreview(file, previewArea);
-        renderMediaOriginClaimUI();
-
-        showToast('Audio ready for submission', 'success');
-    } catch (err) {
-        console.error('Audio processing error:', err);
-        showToast('Audio processing failed', 'error');
-        activeAudioFile = null;
-    }
+  try {
+    showToast('Processing uploaded audio...', 'info');
+    renderGenericMediaPreview(file, previewArea);
+    renderMediaOriginClaimUI();
+    showToast('Uploaded audio ready', 'success');
+  } catch (err) {
+    console.error('Audio processing error:', err);
+    showToast('Audio processing failed', 'error');
+    activeAudioFile = null;
+  }
 }
 
 // ====================== INIT COMPOSER ======================
@@ -543,39 +541,49 @@ export function initComposer() {
   }
   root.dataset.composerInitialized = 'true';
 
-  // ===== CLICK DELEGATION =====
-  root.addEventListener('click', (e) => {
-    // Photo button
-    if (e.target.closest('#btn-photo, #btn-attach-photo, [data-action="attach-photo"]')) {
-      e.preventDefault();
-      const input = document.getElementById('photoInput') || document.getElementById('media-input');
-      if (input) input.click();
-      return;
-    }
+ // ===== CLICK DELEGATION =====
+root.addEventListener('click', (e) => {
+  // Photo button
+  if (e.target.closest('#btn-photo, #btn-attach-photo, [data-action="attach-photo"]')) {
+    e.preventDefault();
+    e.stopPropagation();
+    const input = document.getElementById('photoInput') || document.getElementById('media-input');
+    if (input) input.click();
+    return;
+  }
 
-    // Video button
-    if (e.target.closest('#btn-video, [data-action="attach-video"]')) {
-      e.preventDefault();
-      const input = document.getElementById('videoInput');
-      if (input) input.click();
-      return;
-    }
+  // Video button
+  if (e.target.closest('#btn-video, [data-action="attach-video"]')) {
+    e.preventDefault();
+    e.stopPropagation();
+    const input = document.getElementById('videoInput');
+    if (input) input.click();
+    return;
+  }
 
-    // Voice / Audio button
-    if (e.target.closest('#btn-voice, [data-action="record-voice"]')) {
-      e.preventDefault();
-      // Let media.js or main.js handle recording if available
-      if (typeof window.toggleVoiceRecording === 'function') {
-        window.toggleVoiceRecording();
-      }
-      return;
-    }
+  // Live Voice button → Let media.js handle it completely
+  if (e.target.closest('#btn-voice, [data-action="record-voice"]')) {
+    e.preventDefault();
+    e.stopPropagation();
+    // Do NOT call anything here.
+    // media.js already owns the live recording via initMediaButtons()
+    return;
+  }
 
-    // Publish button
-    if (e.target.closest('#postButton, #submitBtn')) {
-      handleComposerSubmit(e);
-    }
-  });
+  // Upload existing audio button
+  if (e.target.closest('#btn-upload-audio')) {
+    e.preventDefault();
+    e.stopPropagation();
+    const audioInput = document.getElementById('audioInput');
+    if (audioInput) audioInput.click();
+    return;
+  }
+
+  // Publish button
+  if (e.target.closest('#postButton, #submitBtn')) {
+    handleComposerSubmit(e);
+  }
+});
 
   // ===== FILE INPUT LISTENERS =====
   const photoInput = document.getElementById('photoInput') || document.getElementById('media-input');
@@ -591,10 +599,17 @@ export function initComposer() {
   }
 
   const audioInput = document.getElementById('audioInput');
-  if (audioInput && !audioInput.dataset.listenerAttached) {
-    audioInput.dataset.listenerAttached = 'true';
-    audioInput.addEventListener('change', handleAudioSelectAction);
-  }
+if (audioInput && !audioInput.dataset.listenerAttached) {
+  audioInput.dataset.listenerAttached = 'true';
+
+  audioInput.addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Use the dedicated audio handler
+    await handleAudioSelectAction(e);
+  });
+}
 
   // ===== AI Analysis (debounced) =====
   const bodyInput = document.getElementById('mainInput');
