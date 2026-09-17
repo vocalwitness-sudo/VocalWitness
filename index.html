@@ -134,6 +134,61 @@
     .text-zinc-400 { color: #94a3b8 !important; }
     .text-emerald-400 { color: #34d399 !important; }
   }
+
+  /* ========== SPLASH SCREEN (CRITICAL) ========== */
+  #app-splash-screen {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 99999 !important;
+    background: #0b1120 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: opacity 0.4s ease;
+  }
+
+  #app-splash-screen.fade-out {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .splash-inner {
+    text-align: center;
+  }
+
+  .splash-logo {
+    width: 96px;
+    height: 96px;
+    border-radius: 24px;
+    object-fit: cover;
+  }
+
+  .splash-title {
+    margin-top: 1.25rem;
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #f8fafc;
+  }
+
+  .splash-subtitle {
+    margin-top: 0.35rem;
+    font-size: 0.9rem;
+    color: #94a3b8;
+  }
+
+  .splash-spinner {
+    margin: 1.75rem auto 0;
+    width: 32px;
+    height: 32px;
+    border: 3px solid rgba(16, 185, 129, 0.25);
+    border-top-color: #10b981;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
 </style>
 </head>
 
