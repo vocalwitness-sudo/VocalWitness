@@ -44,7 +44,7 @@ body {
   }
 }
 
-/* ====================== HEADER (CRITICAL) ====================== */
+/* ====================== HEADER ====================== */
 #main-header {
   position: fixed;
   top: 0;
@@ -58,7 +58,6 @@ body {
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
 }
 
-/* Desktop height lock */
 @media (min-width: 768px) {
   #main-header {
     height: var(--header-height-desktop);
@@ -67,7 +66,6 @@ body {
   }
 }
 
-/* Mobile – allow two rows */
 @media (max-width: 767px) {
   #main-header {
     height: auto;
@@ -76,7 +74,6 @@ body {
   }
 }
 
-/* Logo sizing */
 #main-header img {
   height: 2.5rem;
   width: 2.5rem;
@@ -93,7 +90,6 @@ body {
   }
 }
 
-/* Brand wordmark glow */
 .brand-wordmark {
   text-shadow: 0 0 20px rgba(16, 185, 129, 0.18);
 }
@@ -129,7 +125,7 @@ body {
   }
 }
 
-/* ====================== GLASS & CARDS ====================== */
+/* ====================== GLASS & CARDS (SAFE) ====================== */
 .glass {
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
@@ -139,14 +135,17 @@ body {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
-/* Safe version – does not affect buttons */
+/* Only apply dark background to real cards — NEVER to buttons */
 .glass.rounded-2xl,
 .glass.rounded-3xl,
 .card.rounded-2xl,
-.card.rounded-3xl {
-  background-color: var(--bg-elevated) !important;
-  border: 1px solid var(--border) !important;
+.card.rounded-3xl,
+.panel.rounded-2xl,
+.panel.rounded-3xl {
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--border-subtle) !important;
 }
+
 /* ====================== STICKY FEED PILLS ====================== */
 div.sticky {
   position: sticky;
@@ -163,7 +162,7 @@ div.sticky {
   }
 }
 
-/* ====================== MAIN NAV TABS – CLEAR ACTIVE STATES ========== */
+/* ====================== MAIN NAV TABS ====================== */
 #main-nav {
   display: flex;
   gap: 6px;
@@ -198,34 +197,32 @@ div.sticky {
   background: rgba(255, 255, 255, 0.05);
 }
 
-/* Active – strong and unmistakable */
+/* ========== FORCE ACTIVE TAB COLORS (HIGHEST PRIORITY) ========== */
 #main-nav button[data-tab].active,
-#main-nav button[data-tab][aria-selected="true"] {
-  background: #10b981;
-  color: #0f172a;
-  border-color: #10b981;
-  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+#main-nav button[data-tab][aria-selected="true"],
+button.nav-tab.active {
+  background: #10b981 !important;
+  color: #0f172a !important;
+  border-color: #10b981 !important;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4) !important;
 }
 
-/* Live Arena – distinct blue accent when active */
 #main-nav button[data-tab="arena"].active {
-  background: #0ea5e9;
-  border-color: #0ea5e9;
-  color: white;
-  box-shadow: 0 4px 14px rgba(14, 165, 233, 0.35);
+  background: #0ea5e9 !important;
+  color: #ffffff !important;
+  border-color: #0ea5e9 !important;
+  box-shadow: 0 4px 16px rgba(14, 165, 233, 0.4) !important;
 }
 
-/* Witness / My Circle – warm amber when active */
 #main-nav button[data-tab="witness"].active,
 #main-nav button[data-tab="mycircle"].active {
-  background: #f59e0b;
-  border-color: #f59e0b;
-  color: #0f172a;
-  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);
+  background: #f59e0b !important;
+  color: #0f172a !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.35) !important;
 }
 
 /* ====================== HEADER CONTROLS ====================== */
-/* Language – solid & strong */
 #languageSelect,
 #languageSelectMobile {
   background-color: #1e293b !important;
@@ -244,7 +241,6 @@ div.sticky {
   color: #ffffff !important;
 }
 
-/* Support button */
 #openSupportModalBtn,
 #openSupportModalBtnMobile {
   background: rgba(16, 185, 129, 0.12) !important;
@@ -263,7 +259,6 @@ div.sticky {
   box-shadow: 0 6px 18px rgba(16, 185, 129, 0.3);
 }
 
-/* Profile button (desktop) – clean fit */
 #userProfileBtn {
   gap: 0.375rem !important;
   padding-left: 0.375rem !important;
@@ -288,7 +283,6 @@ div.sticky {
   max-width: 5.75rem;
 }
 
-/* Right-side controls – balanced spacing (desktop) */
 @media (min-width: 768px) {
   .desktop-header > div.flex.shrink-0.items-center {
     gap: 0.5rem;
@@ -456,7 +450,7 @@ main {
   background: rgba(255, 255, 255, 0.2);
 }
 
-/* ====================== Z-INDEX SAFETY ====================== */
+/* ====================== Z-INDEX ====================== */
 header,
 #main-header {
   z-index: 60 !important;
@@ -532,7 +526,7 @@ footer .grid {
   }
 }
 
-/* Soft focus ring for accessibility */
+/* Soft focus ring */
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,
@@ -541,56 +535,15 @@ textarea:focus-visible {
   outline-offset: 2px;
 }
 
-/* SVG size control */
 svg {
   max-width: 1.5rem;
   max-height: 1.5rem;
 }
 
-/* ========== FIX: Stop rounded-2xl / rounded-3xl from killing button colors ========== */
-/* Only force dark background on actual cards / panels — not on buttons */
-.card.rounded-2xl,
-.card.rounded-3xl,
-.glass.rounded-2xl,
-.glass.rounded-3xl,
-.panel.rounded-2xl,
-.panel.rounded-3xl,
-div.rounded-2xl:not(button):not([role="button"]),
-div.rounded-3xl:not(button):not([role="button"]) {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius);
-}
-/* ========== FORCE CORRECT ACTIVE TAB COLORS ========== */
-#main-nav button[data-tab].active,
-#main-nav button[data-tab][aria-selected="true"],
-button.nav-tab.active {
-  background: #10b981 !important;
-  color: #0f172a !important;
-  border-color: #10b981 !important;
-  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35) !important;
-}
-
-/* Live Arena active */
-#main-nav button[data-tab="arena"].active {
-  background: #0ea5e9 !important;
-  color: white !important;
-  border-color: #0ea5e9 !important;
-  box-shadow: 0 4px 14px rgba(14, 165, 233, 0.35) !important;
-}
-
-/* Witness / My Circle / Trusted Voices active */
-#main-nav button[data-tab="witness"].active,
-#main-nav button[data-tab="mycircle"].active {
-  background: #f59e0b !important;
-  color: #0f172a !important;
-  border-color: #f59e0b !important;
-  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3) !important;
-}
-/* Also protect other important colored buttons */
+/* ========== FINAL PROTECTION FOR COLORED BUTTONS ========== */
 button.bg-emerald-500,
 button.bg-emerald-600,
-.bg-emerald-500:not(.glass):not(.rounded-3xl) {
+.bg-emerald-500:not(.glass) {
   background-color: #10b981 !important;
   color: #0f172a !important;
 }
