@@ -534,38 +534,32 @@ export function initMediaButtons() {
   const videoInput = document.getElementById('videoInput');
   const audioInput = document.getElementById('audioInput');
 
-  // --- 1. LIVE VOICE RECORDING (Primary) ---
+  // --- LIVE VOICE ONLY (mic) — never open a file picker ---
   if (btnVoice) {
-    // Remove old listeners to prevent double firing
-    btnVoice.replaceWith(btnVoice.cloneNode(true));
-    const freshVoiceBtn = document.getElementById('btn-voice');
-
-    freshVoiceBtn.addEventListener('click', async (e) => {
+    btnVoice.replaceWith(btnVoice.cloneNode(true)); // drop old listeners
+    const fresh = document.getElementById('btn-voice');
+    fresh.addEventListener('click', async (e) => {
       e.preventDefault();
       e.stopPropagation();
-
-      if (freshVoiceBtn.disabled) return;
-      freshVoiceBtn.disabled = true;
-
+      if (fresh.disabled) return;
+      fresh.disabled = true;
       try {
-        await toggleVoiceRecording(freshVoiceBtn);
+        await toggleVoiceRecording(fresh); // mic only
       } catch (err) {
         console.error('Voice recording error:', err);
-        showToast('Could not start recording', 'error');
+        showToast(err?.message || 'Could not start recording', 'error');
       } finally {
-        setTimeout(() => {
-          freshVoiceBtn.disabled = false;
-        }, 800);
+        setTimeout(() => { fresh.disabled = false; }, 800);
       }
     });
   }
 
-  // --- 2. UPLOAD EXISTING AUDIO (Secondary) ---
+  // --- EXISTING AUDIO ONLY (file picker) ---
   if (btnUploadAudio && audioInput) {
     btnUploadAudio.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
-      audioInput.click();
+      audioInput.click(); // only this button
     });
 
     audioInput.addEventListener('change', async (e) => {
@@ -573,69 +567,39 @@ export function initMediaButtons() {
       if (!file) return;
 
       const check = validateMediaFile(file, {
-        maxSizeBytes: 15 * 1024 * 1024, // 15MB for audio
+        maxSizeBytes: 15 * 1024 * 1024,
         allowedTypes: [
           'audio/webm', 'audio/mp3', 'audio/mpeg',
           'audio/wav', 'audio/ogg', 'audio/m4a'
         ]
       });
-
       if (!check.valid) {
         showToast(check.error, 'error');
         audioInput.value = '';
         return;
       }
 
-      setAudioFile(file, 'uploaded_audio');
-
-      // Simple preview
-      const previewArea = document.getElementById('preview-area');
-      if (previewArea) {
-        if (previewArea.dataset.objectUrl) {
-          URL.revokeObjectURL(previewArea.dataset.objectUrl);
-        }
-        const objectUrl = URL.createObjectURL(file);
-        previewArea.dataset.objectUrl = objectUrl;
-        previewArea.innerHTML = `
-          <div class="relative mt-2 rounded-2xl border border-amber-500/40 bg-zinc-900 p-4">
-            <p class="text-sm text-amber-400 font-medium">Uploaded Audio</p>
-            <p class="text-xs text-zinc-400 mt-1">${file.name} • ${(file.size / 1024 / 1024).toFixed(2)} MB</p>
-            <audio controls class="mt-3 w-full" src="${objectUrl}"></audio>
-            <button type="button" id="removeMediaBtn"
-                    class="absolute top-2 right-2 bg-red-600/90 hover:bg-red-700 text-white rounded-full p-1.5">
-              ✕
-            </button>
-          </div>`;
-        previewArea.classList.add('has-content');
-
-        document.getElementById('removeMediaBtn')?.addEventListener('click', () => {
-          removeMedia(previewArea);
-        });
-      }
-
-      showToast('Audio file ready', 'success');
+      setAudioFile(file, 'uploaded_audio'); // selectedAudioFile path only
+      // preview UI...
+      showToast('Uploaded audio ready', 'success');
       audioInput.value = '';
     });
   }
 
-  // --- 3. PHOTO ---
+  // Photo / video: open their own inputs only
   if (btnPhoto && photoInput) {
     btnPhoto.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
       photoInput.click();
     });
-    // change handler lives in composer.js (handleImageSelectAction)
   }
-
-  // --- 4. VIDEO ---
   if (btnVideo && videoInput) {
     btnVideo.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
       videoInput.click();
     });
-    // change handler lives in composer.js (handleVideoSelectAction)
   }
 }
 export async function uploadForensicMedia(
