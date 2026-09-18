@@ -502,3 +502,55 @@ footer .grid {
     grid-template-columns: repeat(4, 1fr);
   }
 }
+
+/* ========== STRONG ACTIVE TAB STATES ========== */
+#main-nav button[data-tab] {
+  background: #111827 !important;
+  color: #94a3b8 !important;
+  border: 1px solid #334155 !important;
+  box-shadow: none !important;
+}
+
+#main-nav button[data-tab]:hover {
+  background: #1e293b !important;
+  color: #e2e8f0 !important;
+  border-color: #475569 !important;
+}
+
+#main-nav button[data-tab="square"].active,
+#main-nav button[data-tab="square"][aria-selected="true"] {
+  background: #10b981 !important;
+  color: #0f172a !important;
+  border: 1px solid #10b981 !important;
+  box-shadow: 0 4px 18px rgba(16, 185, 129, 0.45) !important;
+  font-weight: 700 !important;
+}
+
+#main-nav button[data-tab="arena"].active,
+#main-nav button[data-tab="arena"][aria-selected="true"] {
+  background: #0ea5e9 !important;
+  color: #ffffff !important;
+  border: 1px solid #0ea5e9 !important;
+  box-shadow: 0 4px 18px rgba(14, 165, 233, 0.45) !important;
+  font-weight: 700 !important;
+}
+
+#main-nav button[data-tab="mycircle"].active,
+#main-nav button[data-tab="witness"].active,
+#main-nav button[data-tab="mycircle"][aria-selected="true"],
+#main-nav button[data-tab="witness"][aria-selected="true"] {
+  background: #f59e0b !important;
+  color: #0f172a !important;
+  border: 1px solid #f59e0b !important;
+  box-shadow: 0 4px 18px rgba(245, 158, 11, 0.4) !important;
+  font-weight: 700 !important;
+}
+
+#main-nav button[data-tab="ledger"].active,
+#main-nav button[data-tab="ledger"][aria-selected="true"] {
+  background: #059669 !important;
+  color: #ffffff !important;
+  border: 1px solid #059669 !important;
+  box-shadow: 0 4px 18px rgba(5, 150, 105, 0.4) !important;
+  font-weight: 700 !important;
+}
