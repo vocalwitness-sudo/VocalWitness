@@ -545,3 +545,51 @@ svg {
   max-width: 1.5rem;
   max-height: 1.5rem;
 }
+
+/* ========== FIX: Stop rounded-2xl / rounded-3xl from killing button colors ========== */
+/* Only force dark background on actual cards / panels — not on buttons */
+.card.rounded-2xl,
+.card.rounded-3xl,
+.glass.rounded-2xl,
+.glass.rounded-3xl,
+.panel.rounded-2xl,
+.panel.rounded-3xl,
+div.rounded-2xl:not(button):not([role="button"]),
+div.rounded-3xl:not(button):not([role="button"]) {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+}
+/* ========== FORCE CORRECT ACTIVE TAB COLORS ========== */
+#main-nav button[data-tab].active,
+#main-nav button[data-tab][aria-selected="true"],
+button.nav-tab.active {
+  background: #10b981 !important;
+  color: #0f172a !important;
+  border-color: #10b981 !important;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35) !important;
+}
+
+/* Live Arena active */
+#main-nav button[data-tab="arena"].active {
+  background: #0ea5e9 !important;
+  color: white !important;
+  border-color: #0ea5e9 !important;
+  box-shadow: 0 4px 14px rgba(14, 165, 233, 0.35) !important;
+}
+
+/* Witness / My Circle / Trusted Voices active */
+#main-nav button[data-tab="witness"].active,
+#main-nav button[data-tab="mycircle"].active {
+  background: #f59e0b !important;
+  color: #0f172a !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3) !important;
+}
+/* Also protect other important colored buttons */
+button.bg-emerald-500,
+button.bg-emerald-600,
+.bg-emerald-500:not(.glass):not(.rounded-3xl) {
+  background-color: #10b981 !important;
+  color: #0f172a !important;
+}
