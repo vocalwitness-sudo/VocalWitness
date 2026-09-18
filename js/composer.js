@@ -379,7 +379,6 @@ function clearAllMediaStates() {
 // ======================================================
 // UPDATED: Distinct Media Handlers (Safe Version)
 // ======================================================
-
 /**
  * Distinct handler for Image/Photo Selection
  */
@@ -401,10 +400,10 @@ export async function handleImageSelectAction(event) {
         // Safe neutral preview
         renderGenericMediaPreview(file, previewArea);
 
-        // Keep existing image-specific processing if still needed
-        if (typeof handleImageSelect === 'function') {
-            await handleImageSelect(event, previewArea);
-        }
+        // Do NOT call the old handleImageSelect anymore – it causes double work
+        // if (typeof handleImageSelect === 'function') {
+        //   await handleImageSelect(event, previewArea);
+        // }
 
         renderMediaOriginClaimUI();
         showToast('Photo ready for submission', 'success');
@@ -414,7 +413,6 @@ export async function handleImageSelectAction(event) {
         activeImageFile = null;
     }
 }
-
 /**
  * Distinct handler for Video Selection
  */
