@@ -192,6 +192,22 @@ export function validateMediaFile(file, options = {}) {
     return { valid: true };
 }
 
+export function setImageFile(file) {
+  clearAllMedia();
+  selectedImageFile = file;
+}
+
+export function setVideoFile(file) {
+  clearAllMedia();
+  selectedVideoFile = file;
+}
+
+export function setAudioFile(file, source = 'uploaded_audio') {
+  clearAllMedia();
+  selectedAudioFile = file;
+  if (file) file._source = source;
+}
+
 // ====================== STATE RESET ======================
 export function resetMediaState() {
     selectedImageFile = null;
