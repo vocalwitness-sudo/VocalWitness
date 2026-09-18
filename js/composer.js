@@ -10,11 +10,18 @@ import {
     addDoc,
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-import { resetMediaState, handleImageSelect } from './media.js';
 import { logSecurityAudit } from './audit.js';
 import { prepareAnonymousSubmission } from './onboarding.js';
 import { publishTestimonyOrQueue } from './db.js';
 import { analyzeReportContent, classifyCategory } from './moderation.js';
+import {
+  resetMediaState,
+  clearAllMedia,
+  setImageFile,
+  setVideoFile,
+  setAudioFile,
+  getActiveMedia
+} from './media.js';
 
 let isSubmitting = false;
 let aiAnalysisDebounceTimer = null;
@@ -343,15 +350,17 @@ function renderGenericMediaPreview(file, previewArea) {
  * Helper to fully reset all media states and UI
  */
 function clearAllMediaStates() {
-    activeImageFile = null;
-    activeVideoFile = null;
-    activeAudioFile = null;
+  clearAllMedia();   // single source of truth
 
-    // Clear the respective file inputs
-    ['media-input', 'photoInput', 'videoInput', 'audioInput', 'media-file-input', 'mediaFileInput'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = '';
+  ['media-input', 'photoInput', 'videoInput', 'audioInput', 'media-file-input', 'mediaFileInput']
+    .forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
     });
+
+  clearMediaQuotaBadge();
+  clearMediaOriginClaimUI();
+}
 
     // Clean up preview area + object URL
     const previewArea = document.getElementById('preview-area') || document.getElementById('media-preview');
@@ -554,23 +563,11 @@ root.addEventListener('click', (e) => {
     return;
   }
 
-  // Live Voice button → Let media.js handle it completely
-  if (e.target.closest('#btn-voice, [data-action="record-voice"]')) {
-    e.preventDefault();
-    e.stopPropagation();
-    // Do NOT call anything here.
-    // media.js already owns the live recording via initMediaButtons()
-    return;
-  }
+  // Live Voice → DO NOTHING HERE. media.js owns it completely.
+  // (no preventDefault / stopPropagation so media.js listener can fire)
 
-  // Upload existing audio button
-  if (e.target.closest('#btn-upload-audio')) {
-    e.preventDefault();
-    e.stopPropagation();
-    const audioInput = document.getElementById('audioInput');
-    if (audioInput) audioInput.click();
-    return;
-  }
+  // Upload existing audio → also leave it to media.js
+  // (remove the old handler that was here)
 
   // Publish button
   if (e.target.closest('#postButton, #submitBtn')) {
@@ -591,18 +588,33 @@ root.addEventListener('click', (e) => {
     videoInput.addEventListener('change', handleVideoSelectAction);
   }
 
-  const audioInput = document.getElementById('audioInput');
-if (audioInput && !audioInput.dataset.listenerAttached) {
-  audioInput.dataset.listenerAttached = 'true';
+  // Optional small hardening inside initMediaButtons (recommended): 
+  // --- 1. LIVE VOICE RECORDING (Primary) ---
+  const btnVoice = document.getElementById('btn-voice') || document.querySelector('[data-action="record-voice"]');
+  if (btnVoice) {
+    // Remove any previous listeners cleanly
+    const freshVoiceBtn = btnVoice.cloneNode(true);
+    btnVoice.parentNode.replaceChild(freshVoiceBtn, btnVoice);
 
-  audioInput.addEventListener('change', async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    freshVoiceBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();          // now safe – composer no longer interferes
 
-    // Use the dedicated audio handler
-    await handleAudioSelectAction(e);
-  });
-}
+      if (freshVoiceBtn.disabled) return;
+      freshVoiceBtn.disabled = true;
+
+      try {
+        await toggleVoiceRecording(freshVoiceBtn);
+      } catch (err) {
+        console.error('Voice recording error:', err);
+        showToast('Could not start recording', 'error');
+      } finally {
+        setTimeout(() => {
+          freshVoiceBtn.disabled = false;
+        }, 800);
+      }
+    });
+  }
 
   // ===== AI Analysis (debounced) =====
   const bodyInput = document.getElementById('mainInput');
