@@ -139,13 +139,14 @@ body {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
-.rounded-3xl,
-.rounded-2xl {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius);
+/* Safe version – does not affect buttons */
+.glass.rounded-2xl,
+.glass.rounded-3xl,
+.card.rounded-2xl,
+.card.rounded-3xl {
+  background-color: var(--bg-elevated) !important;
+  border: 1px solid var(--border) !important;
 }
-
 /* ====================== STICKY FEED PILLS ====================== */
 div.sticky {
   position: sticky;
