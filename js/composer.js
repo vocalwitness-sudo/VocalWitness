@@ -350,7 +350,7 @@ function renderGenericMediaPreview(file, previewArea) {
  * Helper to fully reset all media states and UI
  */
 function clearAllMediaStates() {
-  clearAllMedia();   // single source of truth
+  clearAllMedia();   // single source of truth from media.js
 
   ['media-input', 'photoInput', 'videoInput', 'audioInput', 'media-file-input', 'mediaFileInput']
     .forEach(id => {
@@ -362,24 +362,6 @@ function clearAllMediaStates() {
   clearMediaOriginClaimUI();
 }
 
-    // Clean up preview area + object URL
-    const previewArea = document.getElementById('preview-area') || document.getElementById('media-preview');
-    if (previewArea) {
-        if (previewArea.dataset.objectUrl) {
-            URL.revokeObjectURL(previewArea.dataset.objectUrl);
-            delete previewArea.dataset.objectUrl;
-        }
-        previewArea.innerHTML = '<span class="text-zinc-500 text-sm">Preview will appear here...</span>';
-    }
-
-    clearMediaQuotaBadge();
-    clearMediaOriginClaimUI();
-
-    if (typeof resetMediaState === 'function') {
-        resetMediaState();
-    }
-}
-
 // ======================================================
 // UPDATED: Distinct Media Handlers (Safe Version)
 // ======================================================
@@ -387,36 +369,26 @@ function clearAllMediaStates() {
  * Distinct handler for Image/Photo Selection
  */
 export async function handleImageSelectAction(event) {
-    const previewArea = document.getElementById('preview-area') || document.getElementById('media-preview');
-    const file = event.target?.files?.[0];
+  const previewArea = document.getElementById('preview-area') || document.getElementById('media-preview');
+  const file = event.target?.files?.[0];
+  if (!file) return;
 
-    if (!file) return;
+  setImageFile(file);   // ← use this
 
-    // Enforce exclusivity
-    clearAllMediaStates();
-    activeImageFile = file;
+  renderMediaTrustBadge(null, file, { provenance: 'standard_image' });
 
-    renderMediaTrustBadge(null, activeImageFile, { provenance: 'standard_image' });
-
-    try {
-        showToast('Processing photo payload...', 'info');
-
-        // Safe neutral preview
-        renderGenericMediaPreview(file, previewArea);
-
-        // Do NOT call the old handleImageSelect anymore – it causes double work
-        // if (typeof handleImageSelect === 'function') {
-        //   await handleImageSelect(event, previewArea);
-        // }
-
-        renderMediaOriginClaimUI();
-        showToast('Photo ready for submission', 'success');
-    } catch (err) {
-        console.error('Image processing error:', err);
-        showToast('Photo processing failed', 'error');
-        activeImageFile = null;
-    }
+  try {
+    showToast('Processing photo payload...', 'info');
+    renderGenericMediaPreview(file, previewArea);
+    renderMediaOriginClaimUI();
+    showToast('Photo ready for submission', 'success');
+  } catch (err) {
+    console.error('Image processing error:', err);
+    showToast('Photo processing failed', 'error');
+    clearAllMedia();
+  }
 }
+
 /**
  * Distinct handler for Video Selection
  */
@@ -474,7 +446,7 @@ export async function handleVideoSelectAction(event) {
     }
 
     // Assign to isolated video state
-    activeVideoFile = file;
+    setVideoFile(file);
 
     try {
         // Safe neutral preview – NEVER call handleImageSelect here
@@ -498,7 +470,7 @@ export async function handleVideoSelectAction(event) {
     } catch (err) {
         console.error('Video preview error:', err);
         showToast('Video preview failed', 'error');
-        activeVideoFile = null;
+        clearAllMedia();
     }
 }
 
@@ -506,28 +478,13 @@ export async function handleVideoSelectAction(event) {
  * Distinct handler for Audio Selection
  */
 export async function handleAudioSelectAction(event) {
-  const previewArea = document.getElementById('preview-area') || document.getElementById('media-preview');
   const file = event.target?.files?.[0];
-
   if (!file) return;
 
-  // Enforce exclusivity
-  clearAllMediaStates();
-  activeAudioFile = file;
-  file._source = 'uploaded_audio';   // ← Important: mark as uploaded (not live)
-
-  renderMediaTrustBadge(null, activeAudioFile, { provenance: 'uploaded_audio' });
-
-  try {
-    showToast('Processing uploaded audio...', 'info');
-    renderGenericMediaPreview(file, previewArea);
-    renderMediaOriginClaimUI();
-    showToast('Uploaded audio ready', 'success');
-  } catch (err) {
-    console.error('Audio processing error:', err);
-    showToast('Audio processing failed', 'error');
-    activeAudioFile = null;
-  }
+  setAudioFile(file, 'uploaded_audio');
+  renderMediaTrustBadge(null, file, { provenance: 'uploaded_audio' });
+  renderMediaOriginClaimUI();
+  showToast('Uploaded audio ready', 'success');
 }
 
 // ====================== INIT COMPOSER ======================
