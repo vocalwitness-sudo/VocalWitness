@@ -18,7 +18,7 @@
   --radius-sm: 10px;
 }
 
-/* ====================== BASE ====================== */
+/* ====================== BASE LAYER ====================== */
 * { box-sizing: border-box; }
 
 html, body {
@@ -44,6 +44,15 @@ body {
   }
 }
 
+/* Soft focus ring */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
 /* ====================== HEADER ====================== */
 #main-header {
   position: fixed;
@@ -64,6 +73,16 @@ body {
     max-height: var(--header-height-desktop);
     overflow: hidden;
   }
+  #main-header .desktop-header {
+    display: flex !important;
+    height: var(--header-height-desktop);
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  #main-header .mobile-header {
+    display: none !important;
+  }
 }
 
 @media (max-width: 767px) {
@@ -71,6 +90,16 @@ body {
     height: auto;
     max-height: none;
     overflow: visible;
+  }
+  #main-header .desktop-header {
+    display: none !important;
+  }
+  #main-header .mobile-header {
+    display: flex !important;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-top: 0.6rem;
+    padding-bottom: 0.6rem;
   }
 }
 
@@ -91,41 +120,10 @@ body {
 }
 
 .brand-wordmark {
-  text-shadow: 0 0 20px rgba(16, 185, 129, 0.18);
+  text-shadow: 0 0 20px var(--primary-glow);
 }
 
-/* ====================== RESPONSIVE VISIBILITY ====================== */
-#main-header .desktop-header {
-  display: none;
-}
-
-@media (min-width: 768px) {
-  #main-header .desktop-header {
-    display: flex !important;
-    height: var(--header-height-desktop);
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-  }
-  #main-header .mobile-header {
-    display: none !important;
-  }
-}
-
-@media (max-width: 767px) {
-  #main-header .desktop-header {
-    display: none !important;
-  }
-  #main-header .mobile-header {
-    display: flex !important;
-    flex-direction: column;
-    gap: 0.5rem;
-    padding-top: 0.6rem;
-    padding-bottom: 0.6rem;
-  }
-}
-
-/* ====================== GLASS & CARDS (SAFE) ====================== */
+/* ====================== GLASS & CARDS ====================== */
 .glass {
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
@@ -135,7 +133,6 @@ body {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
-/* Only apply dark background to real cards — NEVER to buttons */
 .glass.rounded-2xl,
 .glass.rounded-3xl,
 .card.rounded-2xl,
@@ -172,6 +169,8 @@ div.sticky {
   border-radius: 14px;
   overflow-x: auto;
   scrollbar-width: none;
+  position: relative;
+  z-index: 55;
 }
 
 #main-nav::-webkit-scrollbar {
@@ -184,42 +183,69 @@ div.sticky {
   font-size: 0.8125rem;
   font-weight: 600;
   border-radius: 10px;
-  border: 1px solid transparent;
-  background: transparent;
-  color: #94a3b8;
+  border: 1px solid #334155;
+  background: #111827;
+  color: var(--text-muted);
   transition: all 0.18s ease;
   white-space: nowrap;
   min-height: 38px;
+  cursor: pointer;
 }
 
 #main-nav button[data-tab]:hover {
+  background: #1e293b;
   color: #e2e8f0;
-  background: rgba(255, 255, 255, 0.05);
+  border-color: #475569;
 }
 
-/* ========== FORCE ACTIVE TAB COLORS (HIGHEST PRIORITY) ========== */
+/* ========== UNMISTAKABLE ACTIVE TAB STATES ========== */
+#main-nav button[data-tab="square"].active,
+#main-nav button[data-tab="square"][aria-selected="true"],
+#main-nav button.nav-tab.active[data-tab="square"] {
+  background: #10b981 !important;
+  color: #0f172a !important;
+  border-color: #10b981 !important;
+  box-shadow: 0 4px 18px rgba(16, 185, 129, 0.45) !important;
+  font-weight: 700 !important;
+}
+
+#main-nav button[data-tab="arena"].active,
+#main-nav button[data-tab="arena"][aria-selected="true"] {
+  background: #0ea5e9 !important;
+  color: #ffffff !important;
+  border-color: #0ea5e9 !important;
+  box-shadow: 0 4px 18px rgba(14, 165, 233, 0.45) !important;
+  font-weight: 700 !important;
+}
+
+#main-nav button[data-tab="mycircle"].active,
+#main-nav button[data-tab="witness"].active,
+#main-nav button[data-tab="mycircle"][aria-selected="true"],
+#main-nav button[data-tab="witness"][aria-selected="true"] {
+  background: #f59e0b !important;
+  color: #0f172a !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 4px 18px rgba(245, 158, 11, 0.4) !important;
+  font-weight: 700 !important;
+}
+
+#main-nav button[data-tab="ledger"].active,
+#main-nav button[data-tab="ledger"][aria-selected="true"] {
+  background: #059669 !important;
+  color: #ffffff !important;
+  border-color: #059669 !important;
+  box-shadow: 0 4px 18px rgba(5, 150, 105, 0.4) !important;
+  font-weight: 700 !important;
+}
+
+/* Catch-all fallback for generic active nav classes */
 #main-nav button[data-tab].active,
-#main-nav button[data-tab][aria-selected="true"],
 button.nav-tab.active {
   background: #10b981 !important;
   color: #0f172a !important;
   border-color: #10b981 !important;
   box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4) !important;
-}
-
-#main-nav button[data-tab="arena"].active {
-  background: #0ea5e9 !important;
-  color: #ffffff !important;
-  border-color: #0ea5e9 !important;
-  box-shadow: 0 4px 16px rgba(14, 165, 233, 0.4) !important;
-}
-
-#main-nav button[data-tab="witness"].active,
-#main-nav button[data-tab="mycircle"].active {
-  background: #f59e0b !important;
-  color: #0f172a !important;
-  border-color: #f59e0b !important;
-  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.35) !important;
+  font-weight: 700 !important;
 }
 
 /* ====================== HEADER CONTROLS ====================== */
@@ -227,7 +253,7 @@ button.nav-tab.active {
 #languageSelectMobile {
   background-color: #1e293b !important;
   border-color: #475569 !important;
-  color: #f8fafc !important;
+  color: var(--text-primary) !important;
   font-weight: 500;
   transition: all 0.15s ease;
 }
@@ -237,7 +263,7 @@ button.nav-tab.active {
 #languageSelect:focus,
 #languageSelectMobile:focus {
   background-color: #334155 !important;
-  border-color: #10b981 !important;
+  border-color: var(--primary-color) !important;
   color: #ffffff !important;
 }
 
@@ -252,9 +278,9 @@ button.nav-tab.active {
 
 #openSupportModalBtn:hover,
 #openSupportModalBtnMobile:hover {
-  background: #10b981 !important;
+  background: var(--primary-color) !important;
   color: #0f172a !important;
-  border-color: #10b981 !important;
+  border-color: var(--primary-color) !important;
   transform: translateY(-1px);
   box-shadow: 0 6px 18px rgba(16, 185, 129, 0.3);
 }
@@ -283,12 +309,6 @@ button.nav-tab.active {
   max-width: 5.75rem;
 }
 
-@media (min-width: 768px) {
-  .desktop-header > div.flex.shrink-0.items-center {
-    gap: 0.5rem;
-  }
-}
-
 #userProfileBtnMobile {
   flex-shrink: 0;
 }
@@ -310,10 +330,10 @@ button[data-media] {
   justify-content: center;
   gap: 6px;
   padding: 14px 8px;
-  border-radius: 14px;
+  border-radius: var(--radius);
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(30, 41, 59, 0.55);
-  color: #94a3b8;
+  color: var(--text-muted);
   font-size: 0.8rem;
   font-weight: 500;
   transition: all 0.18s ease;
@@ -333,7 +353,7 @@ button[data-media]:hover {
 .media-btn.recording,
 button[data-media].active {
   background: rgba(16, 185, 129, 0.15);
-  border-color: #10b981;
+  border-color: var(--primary-color);
   color: #34d399;
   box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.25);
 }
@@ -345,10 +365,11 @@ button[data-action="publish"] {
   color: #0f172a !important;
   font-weight: 700;
   border: none !important;
-  border-radius: 14px;
+  border-radius: var(--radius);
   padding: 13px 22px;
   box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
   transition: all 0.18s ease;
+  cursor: pointer;
 }
 
 #postButton:hover:not(:disabled) {
@@ -395,18 +416,6 @@ button[data-action="publish"] {
   justify-content: center;
 }
 
-/* ====================== LAYOUT HELPERS ====================== */
-.flex { display: flex; }
-.hidden { display: none !important; }
-.items-center { align-items: center; }
-.justify-between { justify-content: space-between; }
-.justify-center { justify-content: center; }
-.flex-col { flex-direction: column; }
-.gap-2 { gap: 0.5rem; }
-.gap-3 { gap: 0.75rem; }
-.gap-4 { gap: 1rem; }
-.shrink-0 { flex-shrink: 0; }
-
 /* ====================== MAIN CONTENT ====================== */
 #main-content,
 main {
@@ -420,7 +429,7 @@ main {
   z-index: 10;
 }
 
-/* ====================== SCROLLBAR ====================== */
+/* ====================== SCROLLBARS & UTILS ====================== */
 .scrollbar-hide::-webkit-scrollbar,
 .no-scrollbar::-webkit-scrollbar {
   display: none;
@@ -450,20 +459,9 @@ main {
   background: rgba(255, 255, 255, 0.2);
 }
 
-/* ====================== Z-INDEX ====================== */
-header,
-#main-header {
-  z-index: 60 !important;
-}
-
-#main-nav {
-  position: relative;
-  z-index: 55;
-}
-
-button,
-[role="button"] {
-  pointer-events: auto;
+svg {
+  max-width: 1.5rem;
+  max-height: 1.5rem;
 }
 
 /* ====================== SPLASH SCREEN ====================== */
@@ -476,7 +474,6 @@ button,
   justify-content: center;
   z-index: 99999;
   color: white;
-  font-family: 'Inter', system-ui, sans-serif;
   opacity: 1;
   transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.4s;
 }
@@ -504,46 +501,4 @@ footer .grid {
   footer .grid {
     grid-template-columns: repeat(4, 1fr);
   }
-}
-
-/* ====================== EMERGENCY FIXES ====================== */
-@media (min-width: 768px) {
-  #main-header .hidden.md\:flex,
-  #main-header .md\:flex {
-    display: flex !important;
-  }
-  #main-header .md\:hidden {
-    display: none !important;
-  }
-}
-
-@media (max-width: 767px) {
-  #main-header .md\:flex {
-    display: none !important;
-  }
-  #main-header .flex.flex-col {
-    display: flex !important;
-  }
-}
-
-/* Soft focus ring */
-button:focus-visible,
-a:focus-visible,
-input:focus-visible,
-textarea:focus-visible {
-  outline: 2px solid #10b981;
-  outline-offset: 2px;
-}
-
-svg {
-  max-width: 1.5rem;
-  max-height: 1.5rem;
-}
-
-/* ========== FINAL PROTECTION FOR COLORED BUTTONS ========== */
-button.bg-emerald-500,
-button.bg-emerald-600,
-.bg-emerald-500:not(.glass) {
-  background-color: #10b981 !important;
-  color: #0f172a !important;
 }
