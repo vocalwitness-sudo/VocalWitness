@@ -263,21 +263,6 @@ export function removeMedia(previewArea) {
   showToast('Media removed', 'info');
 }
 
-    if (previewArea) {
-        if (previewArea.dataset.objectUrl) {
-            URL.revokeObjectURL(previewArea.dataset.objectUrl);
-            delete previewArea.dataset.objectUrl;
-        }
-        previewArea.innerHTML = `
-            <div id="preview-empty" class="py-2 text-center">
-                <p>Preview will appear here...</p>
-                <p class="mt-1 text-xs text-zinc-600">Photos, videos, or voice notes show after you add them</p>
-            </div>`;
-        previewArea.classList.remove('has-content');
-    }
-
-    showToast('Media removed', 'info');
-}
 
 // ====================== IMAGE SELECT (Protected Path) ======================
 export async function handleImageSelect(event, previewArea) {
@@ -548,6 +533,13 @@ export function initMediaButtons() {
   const photoInput      = document.getElementById('photoInput');
   const videoInput      = document.getElementById('videoInput');
   const audioInput      = document.getElementById('audioInput');
+    const previewArea = document.getElementById('preview-area');
+if (previewArea) {
+  if (previewArea.dataset.objectUrl) {
+    URL.revokeObjectURL(previewArea.dataset.objectUrl);
+  }
+  const objectUrl = URL.createObjectURL(file);
+  previewArea.dataset.objectUrl = objectUrl;
 
   // --- 1. LIVE VOICE RECORDING (Primary) ---
   if (btnVoice) {
