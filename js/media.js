@@ -27,6 +27,39 @@ export function setEngine(engine) {
     setTimeout(() => initVoiceControls(), 300);
 }
 
+// ====================== SINGLE SOURCE OF TRUTH ======================
+export function getActiveMedia() {
+  return {
+    image: selectedImageFile || null,
+    video: selectedVideoFile || null,
+    audio: getAudioForPublish()?.blob || null,   // already handles live + uploaded
+    audioSource: getAudioForPublish()?.source || null,
+    isLiveAudio: getAudioForPublish()?.isLive || false
+  };
+}
+
+export function hasAnyMedia() {
+  const m = getActiveMedia();
+  return !!(m.image || m.video || m.audio);
+}
+
+export function clearAllMedia() {
+  selectedImageFile = null;
+  selectedVideoFile = null;
+  selectedAudioFile = null;
+
+  if (engineInstance) {
+    engineInstance.currentAudioBlob = null;
+  }
+
+  if (replayUrl) {
+    URL.revokeObjectURL(replayUrl);
+    replayUrl = null;
+  }
+
+  resetMediaState();          // your existing function
+}
+
 // ====================== HELPERS ======================
 function formatTime(ms) {
     const totalSec = Math.floor(ms / 1000);
