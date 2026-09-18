@@ -19,6 +19,7 @@ export let selectedAudioFile = null;
 let engineInstance = null;
 let waveAnimationId = null;
 let replayUrl = null;
+let isUploading = false;
 
 export function setEngine(engine) {
     engineInstance = engine;
@@ -607,96 +608,107 @@ export async function uploadForensicMedia(
   activeVideoFile = null,
   activeAudioBlob = null
 ) {
-  const mediaData = {
-    imageUrl: null,
-    videoUrl: null,
-    audioUrl: null,
-    imageHash: null,
-    videoHash: null,
-    audioHash: null,
-    bodyHash: null,          // will be filled by publishTestimony
-    hasEvidencePack: false,
-    evidencePack: null,
-    packCoreHash: null
-  };
+  if (isUploading) {
+    console.warn('[media] Upload already in progress – ignored');
+    return null;
+  }
 
-  // Prefer values passed from composer, otherwise use internal state
-  const targetImage = activeImageFile || selectedImageFile;
-  const targetVideo = activeVideoFile || selectedVideoFile;
-  const targetAudio = activeAudioBlob || selectedAudioFile || engineInstance?.currentAudioBlob;
+  isUploading = true;
 
-  // Nothing selected → return empty object (text-only post is allowed)
-  if (!targetImage && !targetVideo && !targetAudio) {
+  try {
+    const mediaData = {
+      imageUrl: null,
+      videoUrl: null,
+      audioUrl: null,
+      imageHash: null,
+      videoHash: null,
+      audioHash: null,
+      bodyHash: null,          // will be filled by publishTestimony
+      hasEvidencePack: false,
+      evidencePack: null,
+      packCoreHash: null
+    };
+
+    // Prefer values passed from composer, otherwise use internal state
+    const targetImage = activeImageFile || selectedImageFile;
+    const targetVideo = activeVideoFile || selectedVideoFile;
+    const targetAudio = activeAudioBlob || selectedAudioFile || engineInstance?.currentAudioBlob;
+
+    // Nothing selected → return empty object (text-only post is allowed)
+    if (!targetImage && !targetVideo && !targetAudio) {
+      return mediaData;
+    }
+
+    // ---------- 1. Image Path (Protected + Scrubbed) ----------
+    if (targetImage) {
+      try {
+        if (targetImage.size === 0) throw new Error("Selected image is empty");
+
+        // Scrub EXIF / GPS and optionally compress
+        const cleanedFile = await prepareMediaForUpload(targetImage, {
+          maxWidth: 1920,
+          maxHeight: 1080
+        });
+
+        // Forensic hash of the cleaned file
+        const hash = await generateSha256Hash(cleanedFile);
+
+        // Upload
+        const uploadedUrl = await uploadSecurePhoto(cleanedFile, 'evidence');
+        await verifyMediaUrl(uploadedUrl);
+
+        mediaData.imageUrl = uploadedUrl;
+        mediaData.imageHash = hash;
+        console.log("✅ Image scrubbed, hashed & verified:", mediaData.imageUrl);
+      } catch (e) {
+        console.error("Image upload failed:", e);
+        showToast(e.message || "Image upload failed", "error");
+        throw e; // critical – let publish abort
+      }
+    }
+
+    // ---------- 2. Video Path (Isolated) ----------
+    if (targetVideo) {
+      try {
+        if (targetVideo.size === 0) throw new Error("Selected video is empty");
+
+        const hash = await generateSha256Hash(targetVideo);
+        const uploadedUrl = await uploadSecureVideo(targetVideo, 'evidence');
+        await verifyMediaUrl(uploadedUrl);
+
+        mediaData.videoUrl = uploadedUrl;
+        mediaData.videoHash = hash;
+        console.log("✅ Video uploaded and verified:", mediaData.videoUrl);
+      } catch (e) {
+        console.error("Video upload failed:", e);
+        showToast(e.message || "Video upload failed", "error");
+        throw e;
+      }
+    }
+
+    // ---------- 3. Audio Path (Isolated) ----------
+    if (targetAudio) {
+      try {
+        if (targetAudio.size === 0) throw new Error("Selected audio is empty");
+
+        const hash = await generateSha256Hash(targetAudio);
+        const uploadedUrl = await uploadSecureAudio(targetAudio, 'evidence');
+        await verifyMediaUrl(uploadedUrl);
+
+        mediaData.audioUrl = uploadedUrl;
+        mediaData.audioHash = hash;
+        console.log("✅ Audio uploaded and verified:", mediaData.audioUrl);
+      } catch (e) {
+        console.error("Audio upload failed:", e);
+        showToast(e.message || "Audio upload failed", "error");
+        throw e;
+      }
+    }
+
     return mediaData;
+  } finally {
+    isUploading = false;
   }
-
-  // ---------- 1. Image Path (Protected + Scrubbed) ----------
-  if (targetImage) {
-    try {
-      if (targetImage.size === 0) throw new Error("Selected image is empty");
-
-      // Scrub EXIF / GPS and optionally compress
-      const cleanedFile = await prepareMediaForUpload(targetImage, {
-        maxWidth: 1920,
-        maxHeight: 1080
-      });
-
-      // Forensic hash of the cleaned file
-      const hash = await generateSha256Hash(cleanedFile);
-
-      // Upload
-      const uploadedUrl = await uploadSecurePhoto(cleanedFile, 'evidence');
-      await verifyMediaUrl(uploadedUrl);
-
-      mediaData.imageUrl = uploadedUrl;
-      mediaData.imageHash = hash;
-      console.log("✅ Image scrubbed, hashed & verified:", mediaData.imageUrl);
-    } catch (e) {
-      console.error("Image upload failed:", e);
-      showToast(e.message || "Image upload failed", "error");
-      throw e; // critical – let publish abort
-    }
-  }
-
-  // ---------- 2. Video Path (Isolated) ----------
-  if (targetVideo) {
-    try {
-      if (targetVideo.size === 0) throw new Error("Selected video is empty");
-
-      const hash = await generateSha256Hash(targetVideo);
-      const uploadedUrl = await uploadSecureVideo(targetVideo, 'evidence');
-      await verifyMediaUrl(uploadedUrl);
-
-      mediaData.videoUrl = uploadedUrl;
-      mediaData.videoHash = hash;
-      console.log("✅ Video uploaded and verified:", mediaData.videoUrl);
-    } catch (e) {
-      console.error("Video upload failed:", e);
-      showToast(e.message || "Video upload failed", "error");
-      throw e;
-    }
-  }
-
-  // ---------- 3. Audio Path (Isolated) ----------
-  if (targetAudio) {
-    try {
-      if (targetAudio.size === 0) throw new Error("Selected audio is empty");
-
-      const hash = await generateSha256Hash(targetAudio);
-      const uploadedUrl = await uploadSecureAudio(targetAudio, 'evidence');
-      await verifyMediaUrl(uploadedUrl);
-
-      mediaData.audioUrl = uploadedUrl;
-      mediaData.audioHash = hash;
-      console.log("✅ Audio uploaded and verified:", mediaData.audioUrl);
-    } catch (e) {
-      console.error("Audio upload failed:", e);
-      showToast(e.message || "Audio upload failed", "error");
-      throw e;
-    }
-  }
-
-  return mediaData;
 }
 
 export async function handleAudioSelectAction(event) {
