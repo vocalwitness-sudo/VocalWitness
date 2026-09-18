@@ -525,21 +525,14 @@ export function getPendingMedia() {
  * Call this once after the engine is ready.
  */
 export function initMediaButtons() {
-  const btnVoice        = document.getElementById('btn-voice');
-  const btnPhoto        = document.getElementById('btn-photo');
-  const btnVideo        = document.getElementById('btn-video');
-  const btnUploadAudio  = document.getElementById('btn-upload-audio');
+  const btnVoice       = document.getElementById('btn-voice');
+  const btnPhoto       = document.getElementById('btn-photo');
+  const btnVideo       = document.getElementById('btn-video');
+  const btnUploadAudio = document.getElementById('btn-upload-audio');
 
-  const photoInput      = document.getElementById('photoInput');
-  const videoInput      = document.getElementById('videoInput');
-  const audioInput      = document.getElementById('audioInput');
-    const previewArea = document.getElementById('preview-area');
-if (previewArea) {
-  if (previewArea.dataset.objectUrl) {
-    URL.revokeObjectURL(previewArea.dataset.objectUrl);
-  }
-  const objectUrl = URL.createObjectURL(file);
-  previewArea.dataset.objectUrl = objectUrl;
+  const photoInput = document.getElementById('photoInput');
+  const videoInput = document.getElementById('videoInput');
+  const audioInput = document.getElementById('audioInput');
 
   // --- 1. LIVE VOICE RECORDING (Primary) ---
   if (btnVoice) {
@@ -581,7 +574,10 @@ if (previewArea) {
 
       const check = validateMediaFile(file, {
         maxSizeBytes: 15 * 1024 * 1024, // 15MB for audio
-        allowedTypes: ['audio/webm', 'audio/mp3', 'audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/m4a']
+        allowedTypes: [
+          'audio/webm', 'audio/mp3', 'audio/mpeg',
+          'audio/wav', 'audio/ogg', 'audio/m4a'
+        ]
       });
 
       if (!check.valid) {
@@ -590,11 +586,14 @@ if (previewArea) {
         return;
       }
 
-     setAudioFile(file, 'uploaded_audio');
-        
-      // Show simple preview
+      setAudioFile(file, 'uploaded_audio');
+
+      // Simple preview
       const previewArea = document.getElementById('preview-area');
       if (previewArea) {
+        if (previewArea.dataset.objectUrl) {
+          URL.revokeObjectURL(previewArea.dataset.objectUrl);
+        }
         const objectUrl = URL.createObjectURL(file);
         previewArea.dataset.objectUrl = objectUrl;
         previewArea.innerHTML = `
@@ -626,8 +625,7 @@ if (previewArea) {
       e.stopPropagation();
       photoInput.click();
     });
-
-    // Note: the actual change handler is usually in composer.js via handleImageSelect
+    // change handler lives in composer.js (handleImageSelectAction)
   }
 
   // --- 4. VIDEO ---
@@ -637,9 +635,9 @@ if (previewArea) {
       e.stopPropagation();
       videoInput.click();
     });
+    // change handler lives in composer.js (handleVideoSelectAction)
   }
 }
-
 export async function uploadForensicMedia(
   activeImageFile = null,
   activeVideoFile = null,
