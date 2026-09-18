@@ -259,9 +259,9 @@ export function resetMediaState() {
 
 // ====================== REMOVE MEDIA ======================
 export function removeMedia(previewArea) {
-    selectedImageFile = null;
-    selectedVideoFile = null;
-    selectedAudioFile = null;
+  clearAllMedia();
+  showToast('Media removed', 'info');
+}
 
     if (previewArea) {
         if (previewArea.dataset.objectUrl) {
@@ -345,7 +345,7 @@ export async function toggleVoiceRecording(voiceBtn) {
             // Clear other media when starting voice recording
             selectedImageFile = null;
             selectedVideoFile = null;
-
+            selectedAudioFile = null;
             await engineInstance.startVoiceRecording(300000);
             voiceBtn?.classList.add('recording-active', 'animate-pulse');
             showRecorderBar(true);
@@ -598,12 +598,8 @@ export function initMediaButtons() {
         return;
       }
 
-      // Clear other media
-      selectedImageFile = null;
-      selectedVideoFile = null;
-      selectedAudioFile = file;
-      file._source = 'uploaded_audio';   // mark as uploaded (not live)
-
+     setAudioFile(file, 'uploaded_audio');
+        
       // Show simple preview
       const previewArea = document.getElementById('preview-area');
       if (previewArea) {
@@ -760,27 +756,3 @@ export async function uploadForensicMedia(
   }
 }
 
-export async function handleAudioSelectAction(event) {
-  const previewArea = document.getElementById('preview-area') || document.getElementById('media-preview');
-  const file = event.target?.files?.[0];
-
-  if (!file) return;
-
-  // Enforce exclusivity
-  clearAllMediaStates();
-  activeAudioFile = file;
-  file._source = 'uploaded_audio';   // ← Important: mark as uploaded (not live)
-
-  renderMediaTrustBadge(null, activeAudioFile, { provenance: 'uploaded_audio' });
-
-  try {
-    showToast('Processing uploaded audio...', 'info');
-    renderGenericMediaPreview(file, previewArea);
-    renderMediaOriginClaimUI();
-    showToast('Uploaded audio ready', 'success');
-  } catch (err) {
-    console.error('Audio processing error:', err);
-    showToast('Audio processing failed', 'error');
-    activeAudioFile = null;
-  }
-}
