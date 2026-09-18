@@ -554,3 +554,9 @@ footer .grid {
   box-shadow: 0 4px 18px rgba(5, 150, 105, 0.4) !important;
   font-weight: 700 !important;
 }
+
+/* Fallback for older browsers that struggle with oklch / modern colors */
+#main-nav button[data-tab].active {
+  background-color: #10b981 !important;
+  color: #000 !important;
+}
