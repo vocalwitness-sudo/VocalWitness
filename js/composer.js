@@ -500,37 +500,34 @@ export function initComposer() {
   }
   root.dataset.composerInitialized = 'true';
 
- // ===== CLICK DELEGATION =====
-root.addEventListener('click', (e) => {
-  // Photo button
-  if (e.target.closest('#btn-photo, #btn-attach-photo, [data-action="attach-photo"]')) {
-    e.preventDefault();
-    e.stopPropagation();
-    const input = document.getElementById('photoInput') || document.getElementById('media-input');
-    if (input) input.click();
-    return;
-  }
+  // ===== CLICK DELEGATION =====
+  root.addEventListener('click', (e) => {
+    // Photo button
+    if (e.target.closest('#btn-photo, #btn-attach-photo, [data-action="attach-photo"]')) {
+      e.preventDefault();
+      e.stopPropagation();
+      const input = document.getElementById('photoInput') || document.getElementById('media-input');
+      if (input) input.click();
+      return;
+    }
 
-  // Video button
-  if (e.target.closest('#btn-video, [data-action="attach-video"]')) {
-    e.preventDefault();
-    e.stopPropagation();
-    const input = document.getElementById('videoInput');
-    if (input) input.click();
-    return;
-  }
+    // Video button
+    if (e.target.closest('#btn-video, [data-action="attach-video"]')) {
+      e.preventDefault();
+      e.stopPropagation();
+      const input = document.getElementById('videoInput');
+      if (input) input.click();
+      return;
+    }
 
-  // Live Voice → DO NOTHING HERE. media.js owns it completely.
-  // (no preventDefault / stopPropagation so media.js listener can fire)
+    // Live Voice → DO NOTHING HERE. media.js owns it completely.
+    // Upload existing audio → also left to media.js.
 
-  // Upload existing audio → also leave it to media.js
-  // (remove the old handler that was here)
-
-  // Publish button
-  if (e.target.closest('#postButton, #submitBtn')) {
-    handleComposerSubmit(e);
-  }
-});
+    // Publish button
+    if (e.target.closest('#postButton, #submitBtn')) {
+      handleComposerSubmit(e);
+    }
+  });
 
   // ===== FILE INPUT LISTENERS =====
   const photoInput = document.getElementById('photoInput') || document.getElementById('media-input');
@@ -543,34 +540,6 @@ root.addEventListener('click', (e) => {
   if (videoInput && !videoInput.dataset.listenerAttached) {
     videoInput.dataset.listenerAttached = 'true';
     videoInput.addEventListener('change', handleVideoSelectAction);
-  }
-
-  // Optional small hardening inside initMediaButtons (recommended): 
-  // --- 1. LIVE VOICE RECORDING (Primary) ---
-  const btnVoice = document.getElementById('btn-voice') || document.querySelector('[data-action="record-voice"]');
-  if (btnVoice) {
-    // Remove any previous listeners cleanly
-    const freshVoiceBtn = btnVoice.cloneNode(true);
-    btnVoice.parentNode.replaceChild(freshVoiceBtn, btnVoice);
-
-    freshVoiceBtn.addEventListener('click', async (e) => {
-      e.preventDefault();
-      e.stopPropagation();          // now safe – composer no longer interferes
-
-      if (freshVoiceBtn.disabled) return;
-      freshVoiceBtn.disabled = true;
-
-      try {
-        await toggleVoiceRecording(freshVoiceBtn);
-      } catch (err) {
-        console.error('Voice recording error:', err);
-        showToast('Could not start recording', 'error');
-      } finally {
-        setTimeout(() => {
-          freshVoiceBtn.disabled = false;
-        }, 800);
-      }
-    });
   }
 
   // ===== AI Analysis (debounced) =====
@@ -594,7 +563,6 @@ root.addEventListener('click', (e) => {
 
   console.log('✅ Composer initialized with isolated media handlers');
 }
-
 /**
  * Executes background AI analysis on composer text input
  */
