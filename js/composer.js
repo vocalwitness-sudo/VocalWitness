@@ -139,11 +139,6 @@ async function triggerOveragePaymentModal(feeUSD, reason) {
     });
 }
 
-// Isolated Media State Variables (Only one should be active at a time)
-let activeImageFile = null;
-let activeVideoFile = null;
-let activeAudioFile = null;
-
 /**
  * Renders or reveals the mandatory Media Origin Claim dropdown
  */
