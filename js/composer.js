@@ -57,7 +57,6 @@ async function logAuditEvent(uid, eventType, metadata = {}) {
  */
 function showVideoPolicyModal(customMessage) {
     let modal = document.getElementById("video-policy-modal");
-
     if (!modal) {
         modal = document.createElement("div");
         modal.id = "video-policy-modal";
@@ -72,9 +71,7 @@ function showVideoPolicyModal(customMessage) {
                     </div>
                     <h3 class="text-xl font-bold tracking-tight">Authenticity Requirement</h3>
                 </div>
-
                 <p id="video-policy-msg" class="text-slate-300 text-sm leading-relaxed mb-4"></p>
-
                 <div class="bg-slate-800 border border-slate-700/60 rounded-xl p-3 mb-5 space-y-2 text-xs text-slate-400">
                     <div class="flex justify-between">
                         <span>Daily Upload Quota:</span>
@@ -131,7 +128,6 @@ async function triggerOveragePaymentModal(feeUSD, reason) {
             `Fee: $${feeUSD.toFixed(2)} USD (Payable via Paystack or USDT).\n\n` +
             `Would you like to proceed to payment to finalize this upload?`
         );
-
         if (userChoice) {
             const supportModal = document.getElementById('support-modal') || document.getElementById('paymentModal');
             if (supportModal) {
@@ -151,7 +147,6 @@ async function triggerOveragePaymentModal(feeUSD, reason) {
  */
 function renderMediaOriginClaimUI() {
     let container = document.getElementById('media-claim-container');
-
     if (!container) {
         container = document.createElement('div');
         container.id = 'media-claim-container';
@@ -170,7 +165,6 @@ function renderMediaOriginClaimUI() {
                 Accurate origin claims preserve cryptographic trust scores. False claims route posts to steward review. Aligns with C2PA Content Credentials principles.
             </p>
         `;
-
         const fileInput = document.getElementById('media-input') ||
                           document.getElementById('photoInput') ||
                           document.getElementById('media-file-input') ||
@@ -179,7 +173,6 @@ function renderMediaOriginClaimUI() {
             fileInput.parentNode.insertBefore(container, fileInput.nextSibling);
         }
     }
-
     container.classList.remove('hidden');
 }
 
@@ -208,12 +201,10 @@ function getSelectedMediaOriginClaim() {
  */
 function renderMediaTrustBadge(costInfo, file, validationResult) {
     let container = document.getElementById('media-quota-badge');
-
     if (!container) {
         container = document.createElement('div');
         container.id = 'media-quota-badge';
         container.className = 'mt-2 p-3 rounded-xl border text-xs transition-all duration-300';
-
         const fileInput = document.getElementById('media-input') ||
                           document.getElementById('photoInput') ||
                           document.getElementById('media-file-input') ||
@@ -280,7 +271,6 @@ function renderMediaTrustBadge(costInfo, file, validationResult) {
             <p class="mt-1 text-zinc-400">Standard file verification completed. Consider C2PA signing for stronger provenance.</p>
         `;
     }
-
     container.classList.remove('hidden');
 }
 
@@ -314,12 +304,10 @@ function renderGenericMediaPreview(file, previewArea) {
     }
 
     previewArea.innerHTML = '';
-
     const objectUrl = URL.createObjectURL(file);
     previewArea.dataset.objectUrl = objectUrl;
 
     let previewElement;
-
     if (file.type.startsWith('image/')) {
         previewElement = document.createElement('img');
         previewElement.src = objectUrl;
@@ -342,7 +330,6 @@ function renderGenericMediaPreview(file, previewArea) {
         previewElement.className = 'text-xs text-zinc-400 p-2';
         previewElement.innerText = `File attached: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)} MB)`;
     }
-
     previewArea.appendChild(previewElement);
 }
 
@@ -351,13 +338,11 @@ function renderGenericMediaPreview(file, previewArea) {
  */
 function clearAllMediaStates() {
   clearAllMedia();   // single source of truth from media.js
-
   ['media-input', 'photoInput', 'videoInput', 'audioInput', 'media-file-input', 'mediaFileInput']
     .forEach(id => {
       const el = document.getElementById(id);
       if (el) el.value = '';
     });
-
   clearMediaQuotaBadge();
   clearMediaOriginClaimUI();
 }
@@ -365,6 +350,7 @@ function clearAllMediaStates() {
 // ======================================================
 // UPDATED: Distinct Media Handlers (Safe Version)
 // ======================================================
+
 /**
  * Distinct handler for Image/Photo Selection
  */
@@ -374,7 +360,6 @@ export async function handleImageSelectAction(event) {
   if (!file) return;
 
   setImageFile(file);   // ← use this
-
   renderMediaTrustBadge(null, file, { provenance: 'standard_image' });
 
   try {
@@ -395,15 +380,14 @@ export async function handleImageSelectAction(event) {
 export async function handleVideoSelectAction(event) {
     const previewArea = document.getElementById('preview-area') || document.getElementById('media-preview');
     const file = event.target?.files?.[0];
-
     if (!file) return;
 
     // Enforce exclusivity
     clearAllMediaStates();
 
     showToast('Validating video authenticity & size rules...', 'info');
-    const validationResult = await validateVideoFile(file);
 
+    const validationResult = await validateVideoFile(file);
     if (!validationResult.valid) {
         event.target.value = '';
         showVideoPolicyModal(validationResult.message);
@@ -475,7 +459,8 @@ export async function handleVideoSelectAction(event) {
 }
 
 /**
- * Distinct handler for Audio Selection
+ * Distinct handler for Audio Selection (file upload only)
+ * Live voice recording is owned 100% by media.js
  */
 export async function handleAudioSelectAction(event) {
   const file = event.target?.files?.[0];
@@ -501,6 +486,8 @@ export function initComposer() {
   root.dataset.composerInitialized = 'true';
 
   // ===== CLICK DELEGATION =====
+  // Voice button (#btn-voice / live recording) is intentionally NOT handled here.
+  // media.js owns 100% of voice recording UI + logic.
   root.addEventListener('click', (e) => {
     // Photo button
     if (e.target.closest('#btn-photo, #btn-attach-photo, [data-action="attach-photo"]')) {
@@ -519,9 +506,6 @@ export function initComposer() {
       if (input) input.click();
       return;
     }
-
-    // Live Voice → DO NOTHING HERE. media.js owns it completely.
-    // Upload existing audio → also left to media.js.
 
     // Publish button
     if (e.target.closest('#postButton, #submitBtn')) {
@@ -561,14 +545,14 @@ export function initComposer() {
     });
   }
 
-  console.log('✅ Composer initialized with isolated media handlers');
+  console.log('✅ Composer initialized with isolated media handlers (voice left entirely to media.js)');
 }
+
 /**
  * Executes background AI analysis on composer text input
  */
 async function runRealtimeAiAnalysis(text) {
     const feedbackBox = ensureAiFeedbackContainer();
-
     try {
         feedbackBox.innerHTML = `
             <div class="flex items-center gap-2 text-xs text-zinc-400">
@@ -584,7 +568,6 @@ async function runRealtimeAiAnalysis(text) {
 
         const categorySelect = document.getElementById('categorySelect') ||
                                 document.getElementById('testimonyCategory');
-
         if (categorySelect && (categorySelect.value === 'General' || !categorySelect.value)) {
             const matchOption = Array.from(categorySelect.options).find(
                 opt => opt.value.toLowerCase() === category.toLowerCase() ||
@@ -598,7 +581,6 @@ async function runRealtimeAiAnalysis(text) {
         const channelToggle = document.getElementById('channelToggle') ||
                             document.getElementById('isWitnessVoice');
         const targetFeedSelect = document.getElementById('targetFeedSelect');
-
         if (analysis?.severity === 'High' || analysis?.urgency === 'High') {
             if (targetFeedSelect) targetFeedSelect.value = 'witness_voice';
             if (channelToggle) channelToggle.checked = true;
@@ -623,11 +605,9 @@ function ensureAiFeedbackContainer() {
         box = document.createElement('div');
         box.id = 'composer-ai-feedback';
         box.className = 'mt-3 p-3 rounded-xl border text-xs transition-all duration-300 hidden';
-
         const bodyInput = document.getElementById('mainInput') ||
                           document.getElementById('postBody') ||
                           document.getElementById('testimonyBody');
-
         if (bodyInput && bodyInput.parentNode) {
             bodyInput.parentNode.insertBefore(box, bodyInput.nextSibling);
         }
@@ -642,7 +622,6 @@ function renderAiFeedback(container, analysis, category) {
     }
 
     const isFlagged = analysis.isToxic || analysis.flagged;
-
     if (isFlagged) {
         container.className = 'mt-3 p-3 rounded-xl border border-red-500/30 bg-red-950/20 text-red-300 text-xs';
         container.innerHTML = `
@@ -680,12 +659,11 @@ async function handleComposerSubmit(e) {
         console.warn('[composer] Already submitting – ignored');
         return;
     }
-
     isSubmitting = true;
+
     const submitBtn = document.getElementById('postButton') ||
                       document.getElementById('submitBtn') ||
                       document.querySelector('button[type="submit"]');
-
     if (submitBtn) {
         submitBtn.disabled = true;
         submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
@@ -720,6 +698,7 @@ async function handleComposerSubmit(e) {
 // ======================================================
 // UPDATED: resetForm with full media cleanup
 // ======================================================
+
 /**
  * Reset form UI
  */
@@ -739,7 +718,6 @@ export function resetForm() {
 
     // Full media cleanup (variables + preview + object URLs + badges)
     clearAllMediaStates();
-
     window.activeSubmissionDraft = {};
     clearAiFeedback();
     lastAnalyzedText = '';
