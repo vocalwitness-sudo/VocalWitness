@@ -534,10 +534,11 @@ export function initMediaButtons() {
   const videoInput = document.getElementById('videoInput');
   const audioInput = document.getElementById('audioInput');
 
-  // --- LIVE VOICE ONLY (mic) — never open a file picker ---
+  // --- 1. LIVE VOICE ONLY (mic) — never open a file picker ---
   if (btnVoice) {
     btnVoice.replaceWith(btnVoice.cloneNode(true)); // drop old listeners
     const fresh = document.getElementById('btn-voice');
+
     fresh.addEventListener('click', async (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -554,7 +555,7 @@ export function initMediaButtons() {
     });
   }
 
-  // --- EXISTING AUDIO ONLY (file picker) ---
+  // --- 2. EXISTING AUDIO ONLY (file picker) ---
   if (btnUploadAudio && audioInput) {
     btnUploadAudio.addEventListener('click', (e) => {
       e.preventDefault();
@@ -573,20 +574,45 @@ export function initMediaButtons() {
           'audio/wav', 'audio/ogg', 'audio/m4a'
         ]
       });
+
       if (!check.valid) {
         showToast(check.error, 'error');
         audioInput.value = '';
         return;
       }
 
-      setAudioFile(file, 'uploaded_audio'); // selectedAudioFile path only
-      // preview UI...
+      setAudioFile(file, 'uploaded_audio');
+
+      const previewArea = document.getElementById('preview-area');
+      if (previewArea) {
+        if (previewArea.dataset.objectUrl) {
+          URL.revokeObjectURL(previewArea.dataset.objectUrl);
+        }
+        const objectUrl = URL.createObjectURL(file);
+        previewArea.dataset.objectUrl = objectUrl;
+        previewArea.innerHTML = `
+          <div class="relative mt-2 rounded-2xl border border-amber-500/40 bg-zinc-900 p-4 w-full max-w-md">
+            <p class="text-sm text-amber-400 font-medium">Uploaded Audio</p>
+            <p class="text-xs text-zinc-400 mt-1">${file.name} • ${(file.size / 1024 / 1024).toFixed(2)} MB</p>
+            <audio controls class="mt-3 w-full" src="${objectUrl}"></audio>
+            <button type="button" id="removeMediaBtn"
+                    class="absolute top-2 right-2 bg-red-600/90 hover:bg-red-700 text-white rounded-full p-1.5">
+              ✕
+            </button>
+          </div>`;
+        previewArea.classList.add('has-content');
+
+        document.getElementById('removeMediaBtn')?.addEventListener('click', () => {
+          removeMedia(previewArea);
+        });
+      }
+
       showToast('Uploaded audio ready', 'success');
       audioInput.value = '';
     });
   }
 
-  // Photo / video: open their own inputs only
+  // --- 3. PHOTO ---
   if (btnPhoto && photoInput) {
     btnPhoto.addEventListener('click', (e) => {
       e.preventDefault();
@@ -594,6 +620,8 @@ export function initMediaButtons() {
       photoInput.click();
     });
   }
+
+  // --- 4. VIDEO ---
   if (btnVideo && videoInput) {
     btnVideo.addEventListener('click', (e) => {
       e.preventDefault();
