@@ -3,6 +3,18 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // ==========================================
+    // INDEX REMINDER (create these in Firebase Console or firestore.indexes.json)
+    // ==========================================
+    // Collection: testimonies
+    //   - channel ASC, createdAt DESC
+    //   - feedVisibility ASC, createdAt DESC   (if you still use the old field)
+    // Collection: posts
+    //   - visibilityDoor ASC, createdAt DESC
+    // Collection: corroborations
+    //   - testimonyId ASC, createdAt DESC
+    // ==========================================
+
+    // ==========================================
     // HELPER FUNCTIONS
     // ==========================================
     function isAuthenticated() {
@@ -23,14 +35,7 @@ service cloud.firestore {
         : {};
     }
 
-    // -------------------------------------------------
     // 30-second anti-spam throttle
-    // Returns true (= allowed) when:
-    //   - user document does not exist yet
-    //   - lastTestimonyAt field is missing
-    //   - lastTestimonyAt is not a real timestamp
-    //   - more than 30 seconds have passed since last post
-    // -------------------------------------------------
     function isNotThrottled() {
       return !exists(/databases/$(database)/documents/users/$(request.auth.uid))
         || !('lastTestimonyAt' in getUserData())
@@ -65,11 +70,15 @@ service cloud.firestore {
     }
 
     // -------------------------------------------------
-    // Ban check – safe when user document is missing
+    // Ban check – restored (safe when user document is missing)
     // -------------------------------------------------
     function isNotBanned() {
-  return isAuthenticated();   // temporary – removes the ban checks
-}
+      return isAuthenticated()
+        && (
+          !exists(/databases/$(database)/documents/users/$(request.auth.uid))
+          || getUserData().get('isBanned', false) != true
+        );
+    }
 
     // Strict media URL allow-list (C2PA / provenance friendly)
     function isValidMediaUrl(url) {
@@ -165,22 +174,21 @@ service cloud.firestore {
     // ==========================================
     // USERS
     // ==========================================
-  match /users/{userId} {
-  allow read: if true;
-  allow create: if isOwner(userId) && isSafeUserCreation();
-  
-  allow update: if isAdmin() || 
-    (isOwner(userId) && isSafeUserUpdate()) ||
-    // Allow reputation increments from the support system
-    (isAuthenticated() && 
-     request.resource.data.diff(resource.data).affectedKeys()
-       .hasOnly(['reputation', 'credibilityScore', 'lastSupportedAt', 'totalSupportsReceived']) &&
-     // Only allow increase, never decrease from client
-     request.resource.data.reputation >= resource.data.get('reputation', 0) &&
-     request.resource.data.credibilityScore >= resource.data.get('credibilityScore', 0)
-    );
+    match /users/{userId} {
+      allow read: if true;
+      allow create: if isOwner(userId) && isSafeUserCreation();
 
-  allow delete: if isAdmin();
+      allow update: if isAdmin() ||
+        (isOwner(userId) && isSafeUserUpdate()) ||
+        // Allow reputation increments from the support system
+        (isAuthenticated() &&
+         request.resource.data.diff(resource.data).affectedKeys()
+           .hasOnly(['reputation', 'credibilityScore', 'lastSupportedAt', 'totalSupportsReceived']) &&
+         // Only allow increase, never decrease from client
+         request.resource.data.reputation >= resource.data.get('reputation', 0) &&
+         request.resource.data.credibilityScore >= resource.data.get('credibilityScore', 0)
+        );
+      allow delete: if isAdmin();
 
       match /drafts/{draftId} {
         allow read, write: if isOwner(userId);
@@ -217,6 +225,9 @@ service cloud.firestore {
 
     // ==========================================
     // LEGACY COLLECTIONS
+    // (kept writable for now so existing clients don’t break.
+    //  Once the app only writes to /testimonies you can change
+    //  these to allow create: if false;)
     // ==========================================
     match /witness_voice/{postId} {
       allow read: if true;
@@ -226,7 +237,8 @@ service cloud.firestore {
         && request.resource.data.authorId == request.auth.uid
         && request.resource.data.content is string
         && request.resource.data.content.size() > 0
-        && request.resource.data.content.size() <= 4000;
+        && request.resource.data.content.size() <= 4000
+        && (request.resource.data.createdAt is timestamp || request.resource.data.createdAt == request.time);
       allow update: if isModerator() || (
         isNotBanned() && resource.data.authorId == request.auth.uid && isSafeAuthorTestimonyUpdate()
       );
@@ -240,7 +252,8 @@ service cloud.firestore {
         && request.resource.data.authorId == request.auth.uid
         && request.resource.data.content is string
         && request.resource.data.content.size() > 0
-        && request.resource.data.content.size() <= 2000;
+        && request.resource.data.content.size() <= 2000
+        && (request.resource.data.createdAt is timestamp || request.resource.data.createdAt == request.time);
       allow update: if isModerator() || (
         isNotBanned() && resource.data.authorId == request.auth.uid && isSafeAuthorTestimonyUpdate()
       );
@@ -250,53 +263,50 @@ service cloud.firestore {
     // ==========================================
     // MAIN TESTIMONIES COLLECTION (hardened + fixed)
     // ==========================================
-  match /testimonies/{testimonyId} {
-  allow read: if true;
-
-  allow create: if isNotBanned()
-    && isNotThrottled()
-    && request.resource.data.authorId == request.auth.uid
-    && request.resource.data.keys().hasAll(['content', 'createdAt', 'authorId'])
-    && request.resource.data.content is string
-    && request.resource.data.content.size() > 0
-    && request.resource.data.content.size() <= 4000
-    && request.resource.data.createdAt is timestamp
-    // Accept either "channel" or the older "feedVisibility"
-    && (
-         ('channel' in request.resource.data && request.resource.data.channel is string
-          && request.resource.data.channel in [
-               'citizen-talk', 'witness-voice',
-               'citizen-circle', 'witness-circle',
-               'citizen_talk', 'witness_voice'
-             ])
-         ||
-         ('feedVisibility' in request.resource.data && request.resource.data.feedVisibility is string
-          && request.resource.data.feedVisibility in [
-               'citizen-talk', 'witness-voice',
-               'citizen-circle', 'witness-circle',
-               'citizen_talk', 'witness_voice'
-             ])
-       )
-    && (!('mediaUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.mediaUrl))
-    && (!('mediaUrls' in request.resource.data) || request.resource.data.mediaUrls is list);
-
-  allow update: if isModerator()
-    || (
-         isNotBanned()
-         && resource.data.authorId == request.auth.uid
-         && isSafeAuthorTestimonyUpdate()
-       )
-    || (
-         isNotBanned()
-         && request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly([
-              'corroborationCount', 'corroborationScore', 'lastCorroboratedAt',
-              'reactions', 'commentsCount', 'updatedAt'
-            ])
-       );
-
-  allow delete: if (resource.data.authorId == request.auth.uid) || isModerator();
-}
+    match /testimonies/{testimonyId} {
+      allow read: if true;
+      allow create: if isNotBanned()
+        && isNotThrottled()
+        && request.resource.data.authorId == request.auth.uid
+        && request.resource.data.keys().hasAll(['content', 'createdAt', 'authorId'])
+        && request.resource.data.content is string
+        && request.resource.data.content.size() > 0
+        && request.resource.data.content.size() <= 4000
+        && (request.resource.data.createdAt is timestamp || request.resource.data.createdAt == request.time)
+        // Accept either "channel" or the older "feedVisibility"
+        && (
+             ('channel' in request.resource.data && request.resource.data.channel is string
+              && request.resource.data.channel in [
+                   'citizen-talk', 'witness-voice',
+                   'citizen-circle', 'witness-circle',
+                   'citizen_talk', 'witness_voice'
+                 ])
+             ||
+             ('feedVisibility' in request.resource.data && request.resource.data.feedVisibility is string
+              && request.resource.data.feedVisibility in [
+                   'citizen-talk', 'witness-voice',
+                   'citizen-circle', 'witness-circle',
+                   'citizen_talk', 'witness_voice'
+                 ])
+           )
+        && (!('mediaUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.mediaUrl))
+        && (!('mediaUrls' in request.resource.data) || request.resource.data.mediaUrls is list);
+      allow update: if isModerator()
+        || (
+             isNotBanned()
+             && resource.data.authorId == request.auth.uid
+             && isSafeAuthorTestimonyUpdate()
+           )
+        || (
+             isNotBanned()
+             && request.resource.data.diff(resource.data).affectedKeys()
+                .hasOnly([
+                  'corroborationCount', 'corroborationScore', 'lastCorroboratedAt',
+                  'reactions', 'commentsCount', 'updatedAt'
+                ])
+           );
+      allow delete: if (resource.data.authorId == request.auth.uid) || isModerator();
+    }
 
     // ==========================================
     // CORROBORATIONS & FORENSIC LEDGER
@@ -311,6 +321,7 @@ service cloud.firestore {
         && request.resource.data.weight is number
         && request.resource.data.weight >= 1
         && request.resource.data.weight <= 5
+        && (request.resource.data.createdAt is timestamp || request.resource.data.createdAt == request.time)
         && (!('note' in request.resource.data) ||
             (request.resource.data.note is string && request.resource.data.note.size() <= 280));
       allow update, delete: if false;
@@ -327,20 +338,18 @@ service cloud.firestore {
     }
 
     // ==========================================
-    // POSTS
+    // POSTS (kept for backward compatibility)
     // ==========================================
     match /posts/{postId} {
       allow read: if resource.data.visibilityDoor == 'public_square' ||
                     (resource.data.visibilityDoor == 'citizen_circle' && isAuthenticated()) ||
                     (resource.data.visibilityDoor == 'witness_circle' && isWitnessCircle());
-
       allow create: if isNotBanned()
         && request.resource.data.authorId == request.auth.uid
         && request.resource.data.content is string
         && request.resource.data.content.size() <= 2000
         && (request.resource.data.createdAt is timestamp || request.resource.data.createdAt == request.time)
         && (!('mediaUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.mediaUrl));
-
       allow update: if isModerator() || (
         isNotBanned() && resource.data.authorId == request.auth.uid
       );
@@ -373,31 +382,29 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-// ==========================================
-// SUPPORT / REPUTATION LOG
-// ==========================================
-match /support_log/{logId} {
-  allow read: if isAuthenticated() && 
-    (resource.data.giverId == request.auth.uid || 
-     resource.data.targetId == request.auth.uid);
-
-  allow create: if isAuthenticated() &&
-    isNotBanned() &&
-    request.resource.data.giverId == request.auth.uid &&
-    request.resource.data.targetId is string &&
-    request.resource.data.targetId != request.auth.uid &&
-    request.resource.data.strength is number &&
-    request.resource.data.strength >= 1 &&
-    request.resource.data.strength <= 5 &&
-    request.resource.data.cost is number &&
-    request.resource.data.reputationGiven is number &&
-    request.resource.data.keys().hasAll([
-      'giverId', 'targetId', 'strength', 'cost', 
-      'reputationGiven', 'createdAt'
-    ]);
-
-  allow update, delete: if false;
-}
+    // ==========================================
+    // SUPPORT / REPUTATION LOG
+    // ==========================================
+    match /support_log/{logId} {
+      allow read: if isAuthenticated() &&
+        (resource.data.giverId == request.auth.uid ||
+         resource.data.targetId == request.auth.uid);
+      allow create: if isAuthenticated() &&
+        isNotBanned() &&
+        request.resource.data.giverId == request.auth.uid &&
+        request.resource.data.targetId is string &&
+        request.resource.data.targetId != request.auth.uid &&
+        request.resource.data.strength is number &&
+        request.resource.data.strength >= 1 &&
+        request.resource.data.strength <= 5 &&
+        request.resource.data.cost is number &&
+        request.resource.data.reputationGiven is number &&
+        request.resource.data.keys().hasAll([
+          'giverId', 'targetId', 'strength', 'cost',
+          'reputationGiven', 'createdAt'
+        ]);
+      allow update, delete: if false;
+    }
 
     // ==========================================
     // DAO
