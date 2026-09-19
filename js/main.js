@@ -210,37 +210,95 @@ window.switchTab = async function (tab) {
     isSwitchingTab = false;
   }
 };
+/**
+ * Tabs + More menu — single init, no double-bind, a11y-aware
+ */
+function initNavigationChrome() {
+  wireTabButtons();
+  initMoreMenu();
+  initHashRouting();
+}
+
 function wireTabButtons() {
-  document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      window.switchTab(btn.dataset.tab);
-    });
+  const nav = document.getElementById('main-nav');
+  if (!nav || nav.dataset.tabsWired === 'true') return;
+  nav.dataset.tabsWired = 'true';
+
+  nav.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-tab]');
+    if (!btn || !nav.contains(btn)) return;
+    e.preventDefault();
+    const tab = btn.dataset.tab;
+    if (tab && typeof window.switchTab === 'function') {
+      window.switchTab(tab);
+    }
   });
 }
-// More menu toggle
-const moreBtn = document.getElementById('more-btn');
-const moreMenu = document.getElementById('more-menu');
-if (moreBtn && moreMenu) {
+
+function initMoreMenu() {
+  const moreBtn = document.getElementById('more-btn');
+  const moreMenu = document.getElementById('more-menu');
+  if (!moreBtn || !moreMenu) return;
+  if (moreBtn.dataset.moreWired === 'true') return;
+  moreBtn.dataset.moreWired = 'true';
+
+  const setOpen = (open) => {
+    moreMenu.classList.toggle('hidden', !open);
+    moreBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  };
+
+  moreBtn.setAttribute('aria-haspopup', 'true');
+  moreBtn.setAttribute('aria-expanded', 'false');
+
   moreBtn.addEventListener('click', (e) => {
+    e.preventDefault();
     e.stopPropagation();
-    moreMenu.classList.toggle('hidden');
+    setOpen(moreMenu.classList.contains('hidden'));
+  });
+
+  // Outside click
+  document.addEventListener('click', (e) => {
+    if (moreMenu.classList.contains('hidden')) return;
+    if (moreMenu.contains(e.target) || moreBtn.contains(e.target)) return;
+    setOpen(false);
+  });
+
+  // Escape closes menu
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !moreMenu.classList.contains('hidden')) {
+      setOpen(false);
+      moreBtn.focus();
+    }
   });
 }
 
-// Close More menu when clicking outside
-document.addEventListener('click', (e) => {
-  if (moreMenu && !moreMenu.contains(e.target) && !moreBtn.contains(e.target)) {
-    moreMenu.classList.add('hidden');
-  }
-});
+function initHashRouting() {
+  if (window.__hashRoutingWired) return;
+  window.__hashRoutingWired = true;
 
-// Handle browser back/forward
-window.addEventListener('popstate', () => {
-  const hash = window.location.hash.slice(1);
-  const tab = (hash === 'citizen-talk' || !hash) ? 'square' : hash;
-  window.switchTab(tab);
-});
+  const resolveTabFromHash = () => {
+    const hash = (window.location.hash || '').slice(1);
+    // Map legacy / empty hashes
+    if (!hash || hash === 'citizen-talk') return 'square';
+    return hash;
+  };
+
+  window.addEventListener('popstate', () => {
+    if (typeof window.switchTab === 'function') {
+      window.switchTab(resolveTabFromHash());
+    }
+  });
+
+  // Optional: also react to hashchange (some browsers / in-app links)
+  window.addEventListener('hashchange', () => {
+    if (typeof window.switchTab === 'function') {
+      window.switchTab(resolveTabFromHash());
+    }
+  });
+}
+
+// Call once after DOM is ready (bootstrap / setupEventListeners)
+initNavigationChrome();
 
 /* ====================== PAYMENT (PAYSTACK) ====================== */
 const PAYSTACK_PUBLIC_KEY = 'pk_live_5d13a6db326f02375127aae9d0fb03678ed1d923'; // TODO: move to env / Remote Config
