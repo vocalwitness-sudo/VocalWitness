@@ -970,17 +970,17 @@ function initFocusBanner() {
 
 /* ====================== COMPOSER WIRING ====================== */
 function wireTestimonyComposer() {
-  // Photo/video handled by composer.js → initComposer()
-  // We only wire voice + publish here
-  const btnVoice = document.getElementById('btn-voice');
-  if (btnVoice && !btnVoice.dataset.wired) {
-    btnVoice.addEventListener('click', () => {
-      mediaModule.toggleVoiceRecording?.(btnVoice);
-    });
-    btnVoice.dataset.wired = 'true';
-  }
-
   const postBtn = document.getElementById('postButton');
+  if (postBtn && !postBtn.dataset.wired) {
+    postBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.publishTestimony();
+    });
+    postBtn.dataset.wired = 'true';
+  }
+  console.log('✅ Testimony composer wired (publish only)');
+}
+
   if (postBtn && !postBtn.dataset.wired) {
     postBtn.addEventListener('click', () => {
       window.publishTestimony();
@@ -1044,10 +1044,15 @@ async function bootstrap() {
       engineInstance = new CitizenTalkEngine(db, storage);
       window.engineInstance = engineInstance;
       mediaModule.setEngine?.(engineInstance);
-    } else {
-      console.warn("[Bootstrap] CitizenTalkEngine / db / storage not ready — engine skipped");
-    }
 
+      // Wire Record Live Voice vs Upload existing audio (once)
+      if (typeof mediaModule.initMediaButtons === 'function') {
+        mediaModule.initMediaButtons();
+      }
+    } else {
+      console.warn('[Bootstrap] CitizenTalkEngine / db / storage not ready — engine skipped');
+    }
+      
     // Navigation + news
     if (typeof loadDynamicNavigation === 'function') loadDynamicNavigation();
     fetchCuratedNews();
@@ -1077,7 +1082,6 @@ async function bootstrap() {
     showToast?.("Failed to initialize app. Please refresh.", "error");
   }
 }
-
 /* ====================== AGGRESSIVE SPLASH SCREEN REMOVAL ====================== */
 function removeSplash() {
   const selectors = [
