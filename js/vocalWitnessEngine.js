@@ -6,13 +6,15 @@
  * - Pause / resume with accurate elapsed time
  * - Live waveform (AnalyserNode)
  * - Real SHA-256 forensic hashing
- * - R2 Worker API uploads (UUID paths)
+ * - R2 Worker API uploads (UUID paths) — available as uploadMediaAsset helper
  * - Size & duration limits
  * - Single `testimonies` collection + targetFeed
  * - Client NEVER writes zkVerified (only Cloud Function after real proof)
  * - Image EXIF must be scrubbed before setPendingImage (use imageScrubber.js)
+ *
+ * IMPORTANT: submitCitizenTalk / submitWitnessTestimony do NOT upload media.
+ * Call uploadForensicMedia() (media.js) first, then pass audioUrl/imageUrl/hashes in.
  */
-
 import { auth } from './firebase-config.js';
 import {
   collection,
@@ -65,15 +67,14 @@ export async function sha256(data) {
 
 /**
  * Direct upload to Cloudflare R2 worker endpoint with progress reporting.
- * Paths are UUID-based to avoid collisions and filename leaks.
+ * Kept for callers that still need a low-level upload helper.
+ * Prefer media.js uploadForensicMedia for the main publish path.
  */
 export async function uploadMediaAsset(file, folder, uid, onProgress = null) {
   if (!file || !uid) return null;
-
   const ext = (file.type || 'application/octet-stream')
     .split('/')[1]
     ?.split(';')[0] || 'bin';
-
   const path = `${folder}/${uid}/${crypto.randomUUID()}.${ext}`;
 
   return new Promise(async (resolve, reject) => {
@@ -111,7 +112,6 @@ export async function uploadMediaAsset(file, folder, uid, onProgress = null) {
         reject(new Error(`Upload failed with status ${xhr.status}`));
       }
     };
-
     xhr.onerror = () => reject(new Error('Network error during asset upload.'));
     xhr.send(file);
   });
@@ -119,23 +119,19 @@ export async function uploadMediaAsset(file, folder, uid, onProgress = null) {
 
 /**
  * Fetch testimonies filtered by a specific hashtag
- * @param {Object} db - Firestore database instance
- * @param {string} tag - The hashtag to search for (e.g., 'VocalWitness' or '#truth')
  */
 export async function fetchPostsByHashtag(db, tag) {
   if (!tag) return [];
-  
-  // Ensure the tag starts with '#' and is lowercase to match stored array items
+
   const cleanTag = tag.trim().toLowerCase();
   const normalizedTag = cleanTag.startsWith('#') ? cleanTag : `#${cleanTag}`;
-  
+
   try {
     const q = query(
       collection(db, 'testimonies'),
       where('hashtags', 'array-contains', normalizedTag),
       orderBy('createdAt', 'desc')
     );
-
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   } catch (error) {
@@ -151,29 +147,19 @@ export class BaseEngine {
   constructor(db, storage = null) {
     this.db = db;
     this.storage = storage;
-
-    // Recorder
     this.mediaRecorder = null;
     this.audioChunks = [];
     this.currentAudioBlob = null;
     this.stream = null;
-
-    // Stop coordination
     this._stopPromise = null;
     this._stopResolve = null;
     this._stopSafetyTimer = null;
-
-    // Duration timer
     this._durationTimer = null;
     this._recordingStartedAt = null;
     this._totalPausedMs = 0;
     this._pausedAt = null;
-
-    // Waveform
     this._audioCtx = null;
     this._analyser = null;
-
-    // Pending image (must already be scrubbed)
     this.pendingImage = null;
     this.pendingImageHash = null;
     this.pendingExif = null;
@@ -252,14 +238,11 @@ export class BaseEngine {
 
         this.mediaRecorder.onstop = () => {
           this._clearStopSafety();
-
           this.currentAudioBlob = new Blob(this.audioChunks, {
             type: this.mediaRecorder?.mimeType || 'audio/webm'
           });
-
           this._cleanupStream();
           this._cleanupAudioGraph();
-
           if (this._stopResolve) {
             this._stopResolve(this.currentAudioBlob);
             this._stopResolve = null;
@@ -293,7 +276,6 @@ export class BaseEngine {
         this._pausedAt = null;
 
         this.mediaRecorder.start(TIMESLICE_MS);
-
         if (typeof this.mediaRecorder.requestData === 'function') {
           this.mediaRecorder.requestData();
         }
@@ -411,7 +393,6 @@ export class BaseEngine {
   getNormalizedWaveform(barCount = 32) {
     const data = this.getWaveformData();
     if (!data || data.length === 0) return new Array(barCount).fill(0);
-
     const step = Math.max(1, Math.floor(data.length / barCount));
     const bars = [];
     for (let i = 0; i < barCount; i++) {
@@ -477,33 +458,46 @@ export class BaseEngine {
 }
 
 // ---------------------------------------------------------------------------
-// CitizenTalkEngine
+// CitizenTalkEngine — NO media upload here
 // ---------------------------------------------------------------------------
 export class CitizenTalkEngine extends BaseEngine {
   constructor(db, storage = null) {
     super(db, storage);
   }
 
-  async submitCitizenTalk({ text = '', category = 'General', onProgress = null } = {}) {
+  /**
+   * Write a citizen_talk testimony. Media must already be uploaded via media.js.
+   *
+   * @param {Object} opts
+   * @param {string} [opts.text]
+   * @param {string} [opts.category='General']
+   * @param {string|null} [opts.audioUrl]   - from uploadForensicMedia
+   * @param {string|null} [opts.audioHash]  - from uploadForensicMedia
+   * @param {string|null} [opts.imageUrl]
+   * @param {string|null} [opts.imageHash]
+   * @param {string|null} [opts.videoUrl]
+   * @param {string|null} [opts.videoHash]
+   * @param {Object} [opts.extra]           - optional extra fields (origin claim, etc.)
+   */
+  async submitCitizenTalk({
+    text = '',
+    category = 'General',
+    audioUrl = null,
+    audioHash = null,
+    imageUrl = null,
+    imageHash = null,
+    videoUrl = null,
+    videoHash = null,
+    extra = {}
+  } = {}) {
     if (!auth.currentUser) throw new Error('Authentication required');
 
     this._assertWithinLimits();
 
     const uid = auth.currentUser.uid;
-    let audioUrl = null;
-    let audioHash = null;
-
-    if (this.currentAudioBlob?.size > 0) {
-      audioHash = await this.generateAudioHash(this.currentAudioBlob);
-      audioUrl = await uploadMediaAsset(
-        this.currentAudioBlob,
-        'testimonies/audio',
-        uid,
-        onProgress
-      );
-    }
-
     const { hashtags, mentions, cleanedContent } = parsePostMetadata(text);
+
+    const forensicHash = audioHash || imageHash || videoHash || null;
 
     const docData = {
       authorId: uid,
@@ -513,17 +507,20 @@ export class CitizenTalkEngine extends BaseEngine {
       mentions,
       category,
       targetFeed: 'citizen_talk',
-      audioUrl,
-      imageUrl: null,
-      audioHash,
-      imageHash: null,
-      forensicHash: audioHash || null,
-      hasForensic: Boolean(audioHash),
+      audioUrl: audioUrl || null,
+      imageUrl: imageUrl || null,
+      videoUrl: videoUrl || null,
+      audioHash: audioHash || null,
+      imageHash: imageHash || null,
+      videoHash: videoHash || null,
+      forensicHash,
+      hasForensic: Boolean(forensicHash),
       tier: 'citizen_circle',
       status: 'published',
       createdAt: serverTimestamp(),
       likes: 0,
-      views: 0
+      views: 0,
+      ...extra
     };
 
     const refDoc = await addDoc(collection(this.db, 'testimonies'), docData);
@@ -533,50 +530,52 @@ export class CitizenTalkEngine extends BaseEngine {
 }
 
 // ---------------------------------------------------------------------------
-// WitnessVoiceEngine
+// WitnessVoiceEngine — NO media upload here
 // ---------------------------------------------------------------------------
 export class WitnessVoiceEngine extends BaseEngine {
   constructor(db, storage = null) {
     super(db, storage);
   }
 
+  /**
+   * Write a witness_voice testimony. Media must already be uploaded via media.js.
+   *
+   * @param {Object} opts
+   * @param {string} [opts.title]
+   * @param {string} [opts.category='General']
+   * @param {string} [opts.content]
+   * @param {Object|null} [opts.zkProof]
+   * @param {string|null} [opts.audioUrl]
+   * @param {string|null} [opts.audioHash]
+   * @param {string|null} [opts.imageUrl]
+   * @param {string|null} [opts.imageHash]
+   * @param {string|null} [opts.videoUrl]
+   * @param {string|null} [opts.videoHash]
+   * @param {Object} [opts.extra]
+   */
   async submitWitnessTestimony({
     title = 'Untitled Witness Statement',
     category = 'General',
     content = '',
     zkProof = null,
-    onProgress = null
+    audioUrl = null,
+    audioHash = null,
+    imageUrl = null,
+    imageHash = null,
+    videoUrl = null,
+    videoHash = null,
+    extra = {}
   } = {}) {
     if (!auth.currentUser) throw new Error('Authentication required');
 
     this._assertWithinLimits();
 
     const uid = auth.currentUser.uid;
-    let audioUrl = null;
-    let imageUrl = null;
-    let audioHash = null;
-
-    if (this.currentAudioBlob?.size > 0) {
-      audioHash = await this.generateAudioHash(this.currentAudioBlob);
-      audioUrl = await uploadMediaAsset(
-        this.currentAudioBlob,
-        'testimonies/audio',
-        uid,
-        onProgress
-      );
-    }
-
-    if (this.pendingImage) {
-      imageUrl = await uploadMediaAsset(
-        this.pendingImage,
-        'testimonies/images',
-        uid,
-        onProgress
-      );
-    }
-
-    const forensicHash = audioHash || this.pendingImageHash || null;
     const { hashtags, mentions, cleanedContent } = parsePostMetadata(content);
+
+    // Prefer explicitly passed hashes; fall back to pending image hash if still set
+    const resolvedImageHash = imageHash || this.pendingImageHash || null;
+    const forensicHash = audioHash || resolvedImageHash || videoHash || null;
 
     const docData = {
       authorId: uid,
@@ -587,10 +586,12 @@ export class WitnessVoiceEngine extends BaseEngine {
       hashtags,
       mentions,
       targetFeed: 'witness_voice',
-      audioUrl,
-      imageUrl,
-      audioHash,
-      imageHash: this.pendingImageHash || null,
+      audioUrl: audioUrl || null,
+      imageUrl: imageUrl || null,
+      videoUrl: videoUrl || null,
+      audioHash: audioHash || null,
+      imageHash: resolvedImageHash,
+      videoHash: videoHash || null,
       forensicHash,
       hasForensic: Boolean(forensicHash),
       zkProofPayload: zkProof || null,
@@ -598,7 +599,8 @@ export class WitnessVoiceEngine extends BaseEngine {
       status: 'published',
       createdAt: serverTimestamp(),
       upvotes: 0,
-      views: 0
+      views: 0,
+      ...extra
     };
 
     const refDoc = await addDoc(collection(this.db, 'testimonies'), docData);
@@ -620,11 +622,11 @@ export class WitnessVoiceEngine extends BaseEngine {
     }
 
     this.clearPendingMedia();
-
     return {
       id: refDoc.id,
-      audioHash,
-      imageHash: this.pendingImageHash || null
+      audioHash: audioHash || null,
+      imageHash: resolvedImageHash,
+      videoHash: videoHash || null
     };
   }
 }
@@ -632,4 +634,4 @@ export class WitnessVoiceEngine extends BaseEngine {
 // Export alias for legacy script compatibility
 export { WitnessVoiceEngine as VocalWitnessEngine };
 
-console.log('%cVocalWitness Engine loaded (production R2 Two-Lungs)', 'color:#10b981;font-weight:bold');
+console.log('%cVocalWitness Engine loaded (production R2 Two-Lungs — no submit upload)', 'color:#10b981;font-weight:bold');
