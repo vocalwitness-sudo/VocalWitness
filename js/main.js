@@ -120,8 +120,7 @@ function toggleDataSaver() {
 }
 
 window.toggleDataSaver = toggleDataSaver;
-
-/* ====================== TAB SWITCHING (FIXED) ====================== */
+/* ====================== TAB SWITCHING ====================== */
 const TAB_TO_SECTION = {
   square:   'public-square',
   ledger:   'evidence-ledger',
@@ -130,69 +129,81 @@ const TAB_TO_SECTION = {
   witness:  'witness'
 };
 
+/** Active styles per tab (inactive is always the same) */
+const TAB_ACTIVE_CLASSES = {
+  square:  ['bg-emerald-500', 'text-black', 'shadow-lg', 'shadow-emerald-500/20'],
+  arena:   ['bg-sky-950/50', 'text-sky-300', 'border', 'border-sky-500'],
+  witness: ['bg-amber-950/40', 'text-amber-300', 'border', 'border-amber-500'],
+  // ledger + mycircle (+ default)
+  default: ['bg-emerald-600/20', 'text-emerald-300', 'border', 'border-emerald-500/60']
+};
+
+const TAB_INACTIVE_CLASSES = ['bg-zinc-900', 'text-zinc-300', 'border', 'border-zinc-700'];
+
+/** Every class we ever add for active/inactive — used to reset */
+const ALL_TAB_STYLE_CLASSES = [
+  ...new Set([
+    ...Object.values(TAB_ACTIVE_CLASSES).flat(),
+    ...TAB_INACTIVE_CLASSES
+  ])
+];
+
+let isSwitchingTab = false;
+
 window.switchTab = async function (tab) {
   if (isSwitchingTab) return;
+  if (!TAB_TO_SECTION[tab]) tab = 'square';
+
   isSwitchingTab = true;
   console.log('[Tab] Switching to:', tab);
 
   try {
-    // 1. Update nav buttons
-    document.querySelectorAll('#main-nav button[data-tab]').forEach(btn => {
+    // 1. Nav buttons
+    document.querySelectorAll('#main-nav button[data-tab]').forEach((btn) => {
       const isActive = btn.dataset.tab === tab;
       btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
       btn.classList.toggle('active', isActive);
 
-      // Clear every color / border class we manage
-      btn.classList.remove(
-        'bg-emerald-500', 'text-black', 'shadow-lg', 'shadow-emerald-500/20',
-        'bg-sky-950/50', 'text-sky-300', 'border-sky-700/60', 'border-sky-500',
-        'bg-amber-950/40', 'text-amber-300', 'border-amber-700/50', 'border-amber-500',
-        'bg-emerald-600/20', 'text-emerald-300', 'border-emerald-500/60',
-        'bg-zinc-900', 'text-zinc-300', 'border-zinc-700',
-        'border'
-      );
+      btn.classList.remove(...ALL_TAB_STYLE_CLASSES);
 
       if (isActive) {
-        if (tab === 'square') {
-          btn.classList.add('bg-emerald-500', 'text-black', 'shadow-lg', 'shadow-emerald-500/20');
-        } else if (tab === 'arena') {
-          btn.classList.add('bg-sky-950/50', 'text-sky-300', 'border', 'border-sky-500');
-        } else if (tab === 'witness') {
-          btn.classList.add('bg-amber-950/40', 'text-amber-300', 'border', 'border-amber-500');
-        } else {
-          // ledger + mycircle get a soft emerald active look
-          btn.classList.add('bg-emerald-600/20', 'text-emerald-300', 'border', 'border-emerald-500/60');
-        }
+        const active =
+          TAB_ACTIVE_CLASSES[tab] || TAB_ACTIVE_CLASSES.default;
+        btn.classList.add(...active);
       } else {
-        // Consistent inactive style
-        btn.classList.add('bg-zinc-900', 'text-zinc-300', 'border', 'border-zinc-700');
+        btn.classList.add(...TAB_INACTIVE_CLASSES);
       }
     });
 
     // 2. Hide all sections
-    Object.values(TAB_TO_SECTION).forEach(id => {
+    Object.values(TAB_TO_SECTION).forEach((id) => {
       const el = document.getElementById(id);
-      if (el) {
-        el.classList.add('hidden');
-        el.classList.remove('block');
-      }
+      if (!el) return;
+      el.classList.add('hidden');
+      el.classList.remove('block');
+      el.setAttribute('hidden', '');
+      el.setAttribute('aria-hidden', 'true');
     });
 
     // 3. Show selected section
-    const sectionId = TAB_TO_SECTION[tab] || 'public-square';
+    const sectionId = TAB_TO_SECTION[tab];
     const section = document.getElementById(sectionId);
     if (section) {
       section.classList.remove('hidden');
       section.classList.add('block');
+      section.removeAttribute('hidden');
+      section.setAttribute('aria-hidden', 'false');
+    } else {
+      console.warn('[Tab] Section not found:', sectionId);
     }
 
-    // 4. Update URL hash
+    // 4. URL hash (back/forward friendly)
     const newHash = `#${tab === 'square' ? 'citizen-talk' : tab}`;
     if (window.location.hash !== newHash) {
       history.pushState({ tab }, '', newHash);
     }
 
-    // 5. Tab-specific init
+    // 5. Tab-specific init (lazy, non-blocking where possible)
     if (tab === 'square' && typeof initFeed === 'function') {
       initFeed(undefined, 'citizen-talk');
     }
@@ -205,11 +216,17 @@ window.switchTab = async function (tab) {
     if (tab === 'witness' && typeof initFeed === 'function') {
       initFeed(undefined, 'witness-voice');
     }
-
+    if (tab === 'arena' && typeof initLiveArena === 'function') {
+      initLiveArena();
+    }
+  } catch (err) {
+    console.error('[Tab] switchTab failed:', err);
   } finally {
     isSwitchingTab = false;
   }
 };
+
+
 /**
  * Tabs + More menu — single init, no double-bind, a11y-aware
  */
