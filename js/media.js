@@ -315,80 +315,172 @@ export async function handleImageSelect(event, previewArea) {
     if (event.target) event.target.value = '';
 }
 
+
+
+/**
+ * Query mic permission state when the browser supports it.
+ * Returns: 'granted' | 'denied' | 'prompt'
+ */
+async function ensureMicPermission() {
+  try {
+    if (!navigator.permissions?.query) return 'prompt';
+    const status = await navigator.permissions.query({ name: 'microphone' });
+    return status.state;
+  } catch {
+    return 'prompt';
+  }
+}
+
 // ====================== VOICE RECORDING ======================
+
 export async function toggleVoiceRecording(voiceBtn) {
-    if (!engineInstance) {
-        return showToast("Voice engine not ready yet", "error");
+  if (!engineInstance) {
+    return showToast('Voice engine not ready yet', 'error');
+  }
+
+  const isActive =
+    engineInstance.mediaRecorder &&
+    (engineInstance.mediaRecorder.state === 'recording' ||
+      engineInstance.mediaRecorder.state === 'paused');
+
+  if (!isActive) {
+    // Check permission before getUserMedia
+    const micState = await ensureMicPermission();
+    if (micState === 'denied') {
+      showToast(
+        'Microphone is blocked for this site. Click the lock icon next to the URL → Microphone → Allow, then reload and try again.',
+        'error'
+      );
+      const preview = document.getElementById('preview-area');
+      if (preview) {
+        preview.innerHTML = `
+          <div class="p-4 rounded-xl border border-amber-500/40 bg-amber-950/20 text-amber-200 text-sm max-w-md">
+            <p class="font-semibold mb-2">🎤 Microphone blocked</p>
+            <ol class="list-decimal list-inside space-y-1 text-xs text-zinc-300">
+              <li>Click the <strong>lock</strong> icon in the address bar</li>
+              <li>Open <strong>Site settings</strong></li>
+              <li>Set <strong>Microphone</strong> to <strong>Allow</strong></li>
+              <li>Reload this page and press <strong>Record Live Voice</strong> again</li>
+            </ol>
+            <p class="mt-2 text-xs text-zinc-500">Or use “Or upload existing audio file” below.</p>
+          </div>`;
+        preview.classList.add('has-content');
+      }
+      return;
     }
 
-    const isActive = engineInstance.mediaRecorder &&
-        (engineInstance.mediaRecorder.state === "recording" ||
-         engineInstance.mediaRecorder.state === "paused");
+    try {
+      selectedImageFile = null;
+      selectedVideoFile = null;
+      selectedAudioFile = null;
 
-    if (!isActive) {
-        try {
-            // Clear other media when starting voice recording
-            selectedImageFile = null;
-            selectedVideoFile = null;
-            selectedAudioFile = null;
-            await engineInstance.startVoiceRecording(300000);
-            voiceBtn?.classList.add('recording-active', 'animate-pulse');
-            showRecorderBar(true);
+      await engineInstance.startVoiceRecording(300000);
 
-            const pauseBtn = document.getElementById('rec-pause-btn');
-            const stopBtn = document.getElementById('rec-stop-btn');
-            const replayBtn = document.getElementById('rec-replay-btn');
-            const indicator = document.getElementById('rec-indicator');
+      voiceBtn?.classList.add('recording-active', 'animate-pulse');
+      showRecorderBar(true);
 
-            if (pauseBtn) {
-                pauseBtn.textContent = '⏸ Pause';
-                pauseBtn.classList.remove('hidden');
-            }
-            if (stopBtn) stopBtn.classList.remove('hidden');
-            if (replayBtn) replayBtn.classList.add('hidden');
-            if (indicator) {
-                indicator.classList.add('animate-pulse', 'bg-red-500');
-                indicator.classList.remove('bg-emerald-500');
-            }
+      const pauseBtn = document.getElementById('rec-pause-btn');
+      const stopBtn = document.getElementById('rec-stop-btn');
+      const replayBtn = document.getElementById('rec-replay-btn');
+      const indicator = document.getElementById('rec-indicator');
 
-            startWaveAndTimer();
-            showToast("🎤 Recording started... Speak clearly", "info");
-        } catch (err) {
-            console.error(err);
-            showToast("Microphone access denied or unavailable", "error");
+      if (pauseBtn) {
+        pauseBtn.textContent = '⏸ Pause';
+        pauseBtn.classList.remove('hidden');
+      }
+      if (stopBtn) stopBtn.classList.remove('hidden');
+      if (replayBtn) replayBtn.classList.add('hidden');
+      if (indicator) {
+        indicator.classList.add('animate-pulse', 'bg-red-500');
+        indicator.classList.remove('bg-emerald-500');
+      }
+
+      startWaveAndTimer();
+      showToast('🎤 Recording started... Speak clearly', 'info');
+    } catch (err) {
+      console.error('[media] startVoiceRecording failed:', err);
+
+      const name = err?.name || '';
+      const msg = String(err?.message || '');
+
+      const denied =
+        name === 'NotAllowedError' ||
+        name === 'PermissionDeniedError' ||
+        /Permission denied/i.test(msg);
+
+      const notFound =
+        name === 'NotFoundError' ||
+        /Requested device not found/i.test(msg);
+
+      const inUse =
+        name === 'NotReadableError' ||
+        /Could not start audio source/i.test(msg);
+
+      if (denied) {
+        showToast(
+          'Microphone is blocked for this site. Click the lock icon next to the URL → Site settings → Microphone → Allow, then try Record Live Voice again.',
+          'error'
+        );
+        const preview = document.getElementById('preview-area');
+        if (preview) {
+          preview.innerHTML = `
+            <div class="p-4 rounded-xl border border-amber-500/40 bg-amber-950/20 text-amber-200 text-sm max-w-md">
+              <p class="font-semibold mb-2">🎤 Microphone blocked</p>
+              <ol class="list-decimal list-inside space-y-1 text-xs text-zinc-300">
+                <li>Click the <strong>lock</strong> icon in the address bar</li>
+                <li>Open <strong>Site settings</strong></li>
+                <li>Set <strong>Microphone</strong> to <strong>Allow</strong></li>
+                <li>Reload this page and press <strong>Record Live Voice</strong> again</li>
+              </ol>
+              <p class="mt-2 text-xs text-zinc-500">Or use “Or upload existing audio file” below.</p>
+            </div>`;
+          preview.classList.add('has-content');
         }
-    } else {
-        const blob = await engineInstance.stopVoiceRecording();
-        voiceBtn?.classList.remove('recording-active', 'animate-pulse');
-        stopWaveAndTimer();
-
-        const indicator = document.getElementById('rec-indicator');
-        const pauseBtn = document.getElementById('rec-pause-btn');
-        const stopBtn = document.getElementById('rec-stop-btn');
-        const replayBtn = document.getElementById('rec-replay-btn');
-
-        if (indicator) {
-            indicator.classList.remove('animate-pulse', 'bg-red-500');
-            indicator.classList.add('bg-emerald-500');
-        }
-        if (pauseBtn) pauseBtn.classList.add('hidden');
-        if (stopBtn) stopBtn.classList.add('hidden');
-
-        if (!blob || blob.size === 0) {
-            showToast("Recording is empty. Please try again.", "error");
-            showRecorderBar(false);
-            return;
-        }
-
-        if (replayUrl) URL.revokeObjectURL(replayUrl);
-        replayUrl = URL.createObjectURL(blob);
-
-        const audioEl = document.getElementById('rec-replay-audio');
-        if (audioEl) audioEl.src = replayUrl;
-
-        if (replayBtn) replayBtn.classList.remove('hidden');
-        showToast("✅ Recording saved. You can replay or publish.", "success");
+      } else if (notFound) {
+        showToast(
+          'No microphone found. Plug one in, or use “Or upload existing audio file”.',
+          'error'
+        );
+      } else if (inUse) {
+        showToast(
+          'Microphone is in use by another app or tab. Close it, then try again.',
+          'error'
+        );
+      } else {
+        showToast(msg || 'Microphone access denied or unavailable', 'error');
+      }
     }
+  } else {
+    const blob = await engineInstance.stopVoiceRecording();
+    voiceBtn?.classList.remove('recording-active', 'animate-pulse');
+    stopWaveAndTimer();
+
+    const indicator = document.getElementById('rec-indicator');
+    const pauseBtn = document.getElementById('rec-pause-btn');
+    const stopBtn = document.getElementById('rec-stop-btn');
+    const replayBtn = document.getElementById('rec-replay-btn');
+
+    if (indicator) {
+      indicator.classList.remove('animate-pulse', 'bg-red-500');
+      indicator.classList.add('bg-emerald-500');
+    }
+    if (pauseBtn) pauseBtn.classList.add('hidden');
+    if (stopBtn) stopBtn.classList.add('hidden');
+
+    if (!blob || blob.size === 0) {
+      showToast('Recording is empty. Please try again.', 'error');
+      showRecorderBar(false);
+      return;
+    }
+
+    if (replayUrl) URL.revokeObjectURL(replayUrl);
+    replayUrl = URL.createObjectURL(blob);
+    const audioEl = document.getElementById('rec-replay-audio');
+    if (audioEl) audioEl.src = replayUrl;
+    if (replayBtn) replayBtn.classList.remove('hidden');
+
+    showToast('✅ Recording saved. You can replay or publish.', 'success');
+  }
 }
 
 export function initVoiceControls() {
