@@ -981,16 +981,6 @@ function wireTestimonyComposer() {
   console.log('✅ Testimony composer wired (publish only)');
 }
 
-  if (postBtn && !postBtn.dataset.wired) {
-    postBtn.addEventListener('click', () => {
-      window.publishTestimony();
-    });
-    postBtn.dataset.wired = 'true';
-  }
-
-  console.log('✅ Testimony composer wired');
-}
-
 /* ====================== BOOTSTRAP ====================== */
 async function bootstrap() {
   if (isInitialized) {
