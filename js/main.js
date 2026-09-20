@@ -54,72 +54,61 @@ function getDataSaverState() {
 
 function updateDataSaverUI(isOn) {
   const statusText = isOn ? 'On' : 'Off';
-  const statusClass = isOn ? 'text-emerald-400 font-bold' : 'text-zinc-400';
 
   ['data-saver-status', 'data-saver-status-mobile', 'footer-data-saver-status'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) {
-      el.textContent = statusText;
-      el.className = statusClass;
-    }
+    if (!el) return;
+    el.textContent = statusText;
+    el.classList.toggle('text-emerald-400', isOn);
+    el.classList.toggle('text-zinc-300', !isOn);
+    el.classList.toggle('font-bold', isOn);
   });
 
-  // Desktop button visual feedback
+  // Visual feedback on buttons
   const desktopBtn = document.getElementById('data-saver-btn');
   if (desktopBtn) {
     desktopBtn.classList.toggle('border-emerald-500', isOn);
     desktopBtn.classList.toggle('bg-emerald-950/40', isOn);
-    desktopBtn.classList.toggle('border-zinc-800', !isOn);
+    desktopBtn.classList.toggle('border-zinc-700', !isOn);
     desktopBtn.classList.toggle('bg-zinc-900', !isOn);
   }
 
-  // Mobile button visual feedback
   const mobileBtn = document.getElementById('data-saver-btn-mobile');
   if (mobileBtn) {
     mobileBtn.classList.toggle('border-emerald-500', isOn);
     mobileBtn.classList.toggle('bg-emerald-950/40', isOn);
     mobileBtn.classList.toggle('text-emerald-400', isOn);
-    mobileBtn.classList.toggle('border-zinc-800', !isOn);
+    mobileBtn.classList.toggle('border-zinc-700', !isOn);
     mobileBtn.classList.toggle('bg-zinc-900', !isOn);
     mobileBtn.classList.toggle('text-zinc-300', !isOn);
   }
 }
 
 function initDataSaver() {
-  const isOn = getDataSaverState();
-  updateDataSaverUI(isOn);
+  updateDataSaverUI(getDataSaverState());
 
   ['data-saver-btn', 'data-saver-btn-mobile'].forEach(id => {
     const btn = document.getElementById(id);
-    if (!btn) return;
+    if (!btn || btn.dataset.wired) return;
+    btn.dataset.wired = 'true';
 
     btn.addEventListener('click', () => {
-      const newState = !getDataSaverState();
-      localStorage.setItem(DATA_SAVER_KEY, String(newState));
-      updateDataSaverUI(newState);
-
-      showToast?.(`Data Saver ${newState ? 'Enabled' : 'Disabled'}`, 'success');
-
-      window.dispatchEvent(new CustomEvent('data-saver-changed', {
-        detail: { enabled: newState }
-      }));
+      const next = !getDataSaverState();
+      localStorage.setItem(DATA_SAVER_KEY, String(next));
+      updateDataSaverUI(next);
+      showToast?.(`Data Saver ${next ? 'Enabled' : 'Disabled'}`, 'success');
+      window.dispatchEvent(new CustomEvent('data-saver-changed', { detail: { enabled: next } }));
     });
   });
 }
 
-function toggleDataSaver() {
+window.toggleDataSaver = function () {
   const next = !getDataSaverState();
   localStorage.setItem(DATA_SAVER_KEY, String(next));
   updateDataSaverUI(next);
+  showToast?.(`Data Saver ${next ? 'Enabled' : 'Disabled'}`, 'success');
+};
 
-  window.dispatchEvent(new CustomEvent('data-saver-changed', {
-    detail: { enabled: next }
-  }));
-
-  console.log('[Data Saver]', next ? 'ON' : 'OFF');
-}
-
-window.toggleDataSaver = toggleDataSaver;
 /* ====================== TAB SWITCHING ====================== */
 const TAB_TO_SECTION = {
   square:   'public-square',
@@ -540,6 +529,71 @@ window.publishTestimony = async () => {
       console.warn('[publish] Could not compute bodyHash:', hashErr);
     }
 
+    // ====================== WRITE TO FIRESTORE ======================
+    const testimonyData = {
+      title,
+      content,
+      uid: currentUser.uid,
+      authorName: currentUser.displayName || 'Registered Witness',
+      createdAt: serverTimestamp(),
+      ...mediaData,
+      isZkVerified: !!mediaData.packCoreHash // example check or property flag
+    };
+
+    await addDoc(collection(db, 'testimonies'), testimonyData);
+
+    // ====================== SUCCESS STATE ======================
+    if (testimonyData.isZkVerified) {
+      showToast("🛡️ Report sealed with Zero-Knowledge proof", "success");
+    } else {
+      showToast("🛡️ Report sealed and published", "success");
+    }
+
+    // Show success UI
+    const successEl = document.getElementById('publish-success');
+    if (successEl) {
+      successEl.classList.remove('hidden');
+      if (postBtn) postBtn.classList.add('hidden');
+      
+      // Auto-hide after 4.5 seconds and restore form
+      setTimeout(() => {
+        successEl.classList.add('hidden');
+        if (postBtn) postBtn.classList.remove('hidden');
+        
+        // Reset form
+        if (titleInput) titleInput.value = '';
+        if (textarea) textarea.value = '';
+        if (typeof mediaModule?.resetMediaState === 'function') {
+          mediaModule.resetMediaState();
+        }
+        // Trigger state update
+        window.dispatchEvent(new CustomEvent('media-changed'));
+      }, 4500);
+    } else {
+      // Fallback reset
+      if (titleInput) titleInput.value = '';
+      if (textarea) textarea.value = '';
+      if (typeof mediaModule?.resetMediaState === 'function') {
+        mediaModule.resetMediaState();
+      }
+    }
+
+    if (typeof initFeed === 'function') {
+      initFeed(db, 'citizen-talk');
+    }
+
+  } catch (err) {
+    console.error('[publish] Fatal publishing error:', err);
+    showToast(err.message || 'Failed to publish report. Please try again.', 'error');
+  } finally {
+    window.__isPublishing = false;
+    if (postBtn) {
+      postBtn.disabled = false;
+      postBtn.classList.remove('opacity-75', 'cursor-not-allowed', 'scale-[0.98]');
+      postBtn.innerHTML = originalBtnHTML;
+    }
+  }
+};
     // ========== GENERATE ZK PROOF ==========
     let zkResult = {
       isFallback: true,
@@ -1054,6 +1108,49 @@ function wireTestimonyComposer() {
   }
   console.log('✅ Testimony composer wired (publish only)');
 }
+/* ====================== COMPOSER LIVE STATE ====================== */
+function initComposerLiveState() {
+  const textarea = document.getElementById('mainInput');
+  const titleInput = document.getElementById('testimonyTitle');
+  const charCount = document.getElementById('char-count');
+  const postBtn = document.getElementById('postButton');
+  const successEl = document.getElementById('publish-success');
+
+  if (!textarea || !postBtn) return;
+
+  const updateState = () => {
+    const text = textarea.value.trim();
+    const len = text.length;
+    const hasMedia = !!(window.selectedImageFile || window.selectedVideoFile || 
+                        (typeof getAudioForPublish === 'function' && getAudioForPublish()));
+
+    // Character counter colours
+    if (charCount) {
+      charCount.textContent = `${len} / 2000`;
+      charCount.classList.remove('text-zinc-500', 'text-emerald-400', 'text-red-400');
+      if (len === 0) {
+        charCount.classList.add('text-zinc-500');
+      } else if (len >= 1800) {
+        charCount.classList.add('text-red-400');
+      } else {
+        charCount.classList.add('text-emerald-400');
+      }
+    }
+
+    // Enable / disable Publish button
+    const canPublish = len >= 15 || hasMedia;
+    postBtn.disabled = !canPublish;
+  };
+
+  textarea.addEventListener('input', updateState);
+  titleInput?.addEventListener('input', updateState);
+
+  // Also listen for media changes
+  window.addEventListener('media-changed', updateState);
+
+  // Initial state
+  updateState();
+}
 
 /* ====================== BOOTSTRAP ====================== */
 async function bootstrap() {
@@ -1125,8 +1222,12 @@ async function bootstrap() {
     console.log('[Bootstrap] Initializing auth...');
     await initAuth();
 
-    // Event listeners
+    // Event listeners & Live Composer State
     setupEventListeners();
+
+    if (typeof initComposerLiveState === 'function') {
+      initComposerLiveState();
+    }
 
     // Set initial tab
     const initialHash = window.location.hash.slice(1);
@@ -1194,8 +1295,11 @@ function hideSplash() {
   }, 450);
 }
 
-// Call it when everything is ready
-hideSplash();
+    // Force splash removal
+    setTimeout(() => {
+      hideSplash();
+      removeSplash();
+    }, 300);
 
 /* ====================== DOM READY ====================== */
 document.addEventListener('DOMContentLoaded', async () => {
