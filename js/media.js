@@ -130,6 +130,17 @@ function stopWaveAndTimer() {
     }
 }
 
+function showMicPermissionMsg(html = null) {
+  const box = document.getElementById('mic-permission-msg');
+  if (!box) return;
+  if (html) {
+    box.innerHTML = html;
+    box.classList.remove('hidden');
+  } else {
+    box.innerHTML = '';
+    box.classList.add('hidden');
+  }
+}
 /**
  * Verifies that an uploaded media URL is publicly accessible at the edge
  */
@@ -351,20 +362,17 @@ export async function toggleVoiceRecording(voiceBtn) {
         'Microphone is blocked for this site. Click the lock icon next to the URL → Microphone → Allow, then reload and try again.',
         'error'
       );
-      const preview = document.getElementById('preview-area');
-      if (preview) {
-        preview.innerHTML = `
-          <div class="p-4 rounded-xl border border-amber-500/40 bg-amber-950/20 text-amber-200 text-sm max-w-md">
-            <p class="font-semibold mb-2">🎤 Microphone blocked</p>
-            <ol class="list-decimal list-inside space-y-1 text-xs text-zinc-300">
-              <li>Click the <strong>lock</strong> icon in the address bar</li>
-              <li>Open <strong>Site settings</strong></li>
-              <li>Set <strong>Microphone</strong> to <strong>Allow</strong></li>
-              <li>Reload this page and press <strong>Record Live Voice</strong> again</li>
-            </ol>
-            <p class="mt-2 text-xs text-zinc-500">Or use “Or upload existing audio file” below.</p>
-          </div>`;
-        preview.classList.add('has-content');
+      if (typeof showMicPermissionMsg === 'function') {
+        showMicPermissionMsg(`
+          <p class="font-semibold mb-2">🎤 Microphone blocked</p>
+          <ol class="list-decimal list-inside space-y-1 text-xs text-zinc-300">
+            <li>Click the <strong>lock</strong> icon in the address bar</li>
+            <li>Open <strong>Site settings</strong></li>
+            <li>Set <strong>Microphone</strong> to <strong>Allow</strong></li>
+            <li>Reload this page and press <strong>Record Live Voice</strong> again</li>
+          </ol>
+          <p class="mt-2 text-xs text-zinc-500">Or use “Or upload existing audio file” below.</p>
+        `);
       }
       return;
     }
@@ -421,20 +429,17 @@ export async function toggleVoiceRecording(voiceBtn) {
           'Microphone is blocked for this site. Click the lock icon next to the URL → Site settings → Microphone → Allow, then try Record Live Voice again.',
           'error'
         );
-        const preview = document.getElementById('preview-area');
-        if (preview) {
-          preview.innerHTML = `
-            <div class="p-4 rounded-xl border border-amber-500/40 bg-amber-950/20 text-amber-200 text-sm max-w-md">
-              <p class="font-semibold mb-2">🎤 Microphone blocked</p>
-              <ol class="list-decimal list-inside space-y-1 text-xs text-zinc-300">
-                <li>Click the <strong>lock</strong> icon in the address bar</li>
-                <li>Open <strong>Site settings</strong></li>
-                <li>Set <strong>Microphone</strong> to <strong>Allow</strong></li>
-                <li>Reload this page and press <strong>Record Live Voice</strong> again</li>
-              </ol>
-              <p class="mt-2 text-xs text-zinc-500">Or use “Or upload existing audio file” below.</p>
-            </div>`;
-          preview.classList.add('has-content');
+        if (typeof showMicPermissionMsg === 'function') {
+          showMicPermissionMsg(`
+            <p class="font-semibold mb-2">🎤 Microphone blocked</p>
+            <ol class="list-decimal list-inside space-y-1 text-xs text-zinc-300">
+              <li>Click the <strong>lock</strong> icon in the address bar</li>
+              <li>Open <strong>Site settings</strong></li>
+              <li>Set <strong>Microphone</strong> to <strong>Allow</strong></li>
+              <li>Reload this page and press <strong>Record Live Voice</strong> again</li>
+            </ol>
+            <p class="mt-2 text-xs text-zinc-500">Or use “Or upload existing audio file” below.</p>
+          `);
         }
       } else if (notFound) {
         showToast(
@@ -482,7 +487,6 @@ export async function toggleVoiceRecording(voiceBtn) {
     showToast('✅ Recording saved. You can replay or publish.', 'success');
   }
 }
-
 export function initVoiceControls() {
     const pauseBtn = document.getElementById('rec-pause-btn');
     const stopBtn = document.getElementById('rec-stop-btn');
