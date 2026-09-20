@@ -53,46 +53,33 @@ function getDataSaverState() {
 }
 
 function updateDataSaverUI(isOn) {
-  // Update every status text
+  // 1. Update all status texts
   ['data-saver-status', 'data-saver-status-mobile', 'footer-data-saver-status'].forEach(id => {
     const el = document.getElementById(id);
-    if (!el) return;
-    el.textContent = isOn ? 'On' : 'Off';
+    if (el) el.textContent = isOn ? 'On' : 'Off';
   });
 
-  // Desktop button
+  // 2. Desktop button – full class rewrite (most reliable)
   const desktopBtn = document.getElementById('data-saver-btn');
   if (desktopBtn) {
-    if (isOn) {
-      desktopBtn.className = desktopBtn.className
-        .replace(/border-zinc-700|bg-zinc-900|text-zinc-400/g, '')
-        .trim() + ' border-emerald-500 bg-emerald-950/50 text-emerald-400';
-    } else {
-      desktopBtn.className = desktopBtn.className
-        .replace(/border-emerald-500|bg-emerald-950\/50|text-emerald-400/g, '')
-        .trim() + ' border-zinc-700 bg-zinc-900 text-zinc-400';
-    }
+    desktopBtn.className = isOn
+      ? 'flex h-9 items-center gap-1.5 rounded-xl border px-3 text-xs font-medium transition-all active:scale-95 border-emerald-500 bg-emerald-950/50 text-emerald-400'
+      : 'flex h-9 items-center gap-1.5 rounded-xl border px-3 text-xs font-medium transition-all active:scale-95 border-zinc-700 bg-zinc-900 text-zinc-400';
   }
 
-  // Mobile button (if exists)
+  // 3. Mobile button – full class rewrite
   const mobileBtn = document.getElementById('data-saver-btn-mobile');
   if (mobileBtn) {
-    if (isOn) {
-      mobileBtn.className = mobileBtn.className
-        .replace(/border-zinc-700|bg-zinc-900|text-zinc-300|text-zinc-400/g, '')
-        .trim() + ' border-emerald-500 bg-emerald-950/50 text-emerald-400';
-    } else {
-      mobileBtn.className = mobileBtn.className
-        .replace(/border-emerald-500|bg-emerald-950\/50|text-emerald-400/g, '')
-        .trim() + ' border-zinc-700 bg-zinc-900 text-zinc-400';
-    }
+    mobileBtn.className = isOn
+      ? 'flex h-8 items-center gap-1 rounded-lg border px-2 text-[10px] font-medium transition-all active:scale-95 border-emerald-500 bg-emerald-950/50 text-emerald-400'
+      : 'flex h-8 items-center gap-1 rounded-lg border px-2 text-[10px] font-medium transition-all active:scale-95 border-zinc-700 bg-zinc-900 text-zinc-400';
   }
 
-  // Optional: change the lightning icon colour
-  const icon = document.getElementById('data-saver-icon');
-  if (icon) {
-    icon.className = isOn ? 'text-emerald-400' : 'text-zinc-400';
-  }
+  // 4. Icons (optional)
+  const iconDesktop = document.getElementById('data-saver-icon');
+  const iconMobile  = document.getElementById('data-saver-icon-mobile');
+  if (iconDesktop) iconDesktop.className = isOn ? 'text-emerald-400' : 'text-zinc-400';
+  if (iconMobile)  iconMobile.className  = isOn ? 'text-emerald-400' : 'text-zinc-400';
 }
 
 function initDataSaver() {
@@ -110,7 +97,6 @@ function initDataSaver() {
       localStorage.setItem(DATA_SAVER_KEY, String(next));
       updateDataSaverUI(next);
 
-      // Clear, relevant toast only
       if (typeof showToast === 'function') {
         showToast(next ? 'Data Saver turned ON' : 'Data Saver turned OFF', 'info');
       }
@@ -122,7 +108,7 @@ function initDataSaver() {
   });
 }
 
-// Global helper (for footer or other places)
+// Global helper
 window.toggleDataSaver = function () {
   const next = !getDataSaverState();
   localStorage.setItem(DATA_SAVER_KEY, String(next));
@@ -131,6 +117,7 @@ window.toggleDataSaver = function () {
     showToast(next ? 'Data Saver turned ON' : 'Data Saver turned OFF', 'info');
   }
 };
+
 /* ====================== TAB SWITCHING ====================== */
 const TAB_TO_SECTION = {
   square:   'public-square',
