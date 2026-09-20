@@ -429,16 +429,34 @@ main {
   z-index: 10;
 }
 
-/* ====================== SCROLLBARS & UTILS ====================== */
-.scrollbar-hide::-webkit-scrollbar,
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
+/* ===== Thick White Scrollbar ===== */
+
+/* Chrome, Edge, Safari */
+::-webkit-scrollbar {
+  width: 14px;          /* ← thicker vertical */
+  height: 14px;         /* ← thicker horizontal */
 }
 
-.scrollbar-hide,
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #ffffff;
+  border-radius: 7px;
+  border: 3px solid transparent;   /* creates nice padding */
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #e5e5e5;
+  background-clip: content-box;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: auto;                 /* thicker in Firefox */
+  scrollbar-color: #ffffff transparent;
 }
 
 /* ========== CUSTOM SCROLLBAR (Dark + Visible) ========== */
