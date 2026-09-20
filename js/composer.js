@@ -15,12 +15,12 @@ import { prepareAnonymousSubmission } from './onboarding.js';
 import { publishTestimonyOrQueue } from './db.js';
 import { analyzeReportContent, classifyCategory } from './moderation.js';
 import {
-  resetMediaState,
-  clearAllMedia,
-  setImageFile,
-  setVideoFile,
-  setAudioFile,
-  getActiveMedia
+ resetMediaState,
+ clearAllMedia,
+ setImageFile,
+ setVideoFile,
+ setAudioFile,
+ getActiveMedia
 } from './media.js';
 
 let isSubmitting = false;
@@ -53,69 +53,29 @@ async function logAuditEvent(uid, eventType, metadata = {}) {
 }
 
 /**
- * Render Video Policy & Authenticity Guidance Modal
+ * Show the existing Video Policy modal (from HTML)
  */
 function showVideoPolicyModal(customMessage) {
-    let modal = document.getElementById("video-policy-modal");
-    if (!modal) {
-        modal = document.createElement("div");
-        modal.id = "video-policy-modal";
-        modal.className = "fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50";
-        modal.innerHTML = `
-            <div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-md w-full p-6 text-slate-100 shadow-2xl">
-                <div class="flex items-center space-x-3 mb-4">
-                    <div class="p-3 bg-amber-500/10 rounded-full border border-amber-500/30 text-amber-400">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-xl font-bold tracking-tight">Authenticity Requirement</h3>
-                </div>
-                <p id="video-policy-msg" class="text-slate-300 text-sm leading-relaxed mb-4"></p>
-                <div class="bg-slate-800 border border-slate-700/60 rounded-xl p-3 mb-5 space-y-2 text-xs text-slate-400">
-                    <div class="flex justify-between">
-                        <span>Daily Upload Quota:</span>
-                        <span class="font-mono text-amber-400 font-semibold">Max 2 Videos / Day</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span>Max Size per Clip:</span>
-                        <span class="font-mono text-amber-400 font-semibold">25 MB (Raw Clip)</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span>AI / Deepfake Policy:</span>
-                        <span class="text-red-400 font-medium">Strictly Banned (C2PA Enforced)</span>
-                    </div>
-                </div>
-                <div class="space-y-3">
-                    <button id="btn-modal-live-arena" class="w-full py-3 px-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 text-slate-950 font-bold rounded-xl shadow-lg transition flex items-center justify-center space-x-2">
-                        <span>Go to Live Arena for True Reality</span>
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-                    </button>
-                    <button id="btn-modal-cancel" class="w-full py-2.5 px-4 bg-slate-800 text-slate-300 text-xs font-semibold rounded-xl transition border border-slate-700 hover:bg-slate-700">
-                        I understand, cancel video upload
-                    </button>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modal);
+  const modal = document.getElementById('video-policy-modal');
+  if (!modal) {
+    console.warn('[composer] video-policy-modal not found in DOM');
+    showToast(customMessage || 'Video policy restriction applied', 'warning');
+    return;
+  }
 
-        // Use event delegation for modal buttons (safe even if recreated)
-        modal.addEventListener('click', (e) => {
-            const liveBtn = e.target.closest('#btn-modal-live-arena');
-            const cancelBtn = e.target.closest('#btn-modal-cancel');
-            if (liveBtn) {
-                window.location.href = "live-arena.html";
-            } else if (cancelBtn) {
-                modal.classList.add("hidden");
-                clearAllMediaStates();
-                showToast('Video upload canceled', 'info');
-            }
-        });
-    }
+  const msgEl = document.getElementById('video-policy-msg');
+  if (msgEl && customMessage) {
+    msgEl.textContent = customMessage;
+  }
 
-    const msgElement = document.getElementById("video-policy-msg");
-    if (msgElement) msgElement.innerText = customMessage || '';
-    modal.classList.remove("hidden");
+  // Use the global helper if available
+  if (typeof window.openVideoPolicyModal === 'function') {
+    window.openVideoPolicyModal(customMessage);
+  } else {
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    modal.setAttribute('aria-hidden', 'false');
+  }
 }
 
 /**
@@ -337,14 +297,14 @@ function renderGenericMediaPreview(file, previewArea) {
  * Helper to fully reset all media states and UI
  */
 function clearAllMediaStates() {
-  clearAllMedia();   // single source of truth from media.js
-  ['media-input', 'photoInput', 'videoInput', 'audioInput', 'media-file-input', 'mediaFileInput']
+ clearAllMedia();   // single source of truth from media.js
+ ['media-input', 'photoInput', 'videoInput', 'audioInput', 'media-file-input', 'mediaFileInput']
     .forEach(id => {
       const el = document.getElementById(id);
       if (el) el.value = '';
     });
-  clearMediaQuotaBadge();
-  clearMediaOriginClaimUI();
+ clearMediaQuotaBadge();
+ clearMediaOriginClaimUI();
 }
 
 // ======================================================
@@ -367,6 +327,8 @@ export async function handleImageSelectAction(event) {
     renderGenericMediaPreview(file, previewArea);
     renderMediaOriginClaimUI();
     showToast('Photo ready for submission', 'success');
+    // After successful media is set
+    window.dispatchEvent(new CustomEvent('media-changed'));
   } catch (err) {
     console.error('Image processing error:', err);
     showToast('Photo processing failed', 'error');
@@ -451,6 +413,8 @@ export async function handleVideoSelectAction(event) {
         };
 
         showToast('Video ready for submission', 'success');
+        // After successful media is set
+        window.dispatchEvent(new CustomEvent('media-changed'));
     } catch (err) {
         console.error('Video preview error:', err);
         showToast('Video preview failed', 'error');
@@ -470,6 +434,8 @@ export async function handleAudioSelectAction(event) {
   renderMediaTrustBadge(null, file, { provenance: 'uploaded_audio' });
   renderMediaOriginClaimUI();
   showToast('Uploaded audio ready', 'success');
+  // After successful media is set
+  window.dispatchEvent(new CustomEvent('media-changed'));
 }
 
 // ====================== INIT COMPOSER ======================
@@ -545,7 +511,12 @@ export function initComposer() {
     });
   }
 
-  console.log('✅ Composer initialized with isolated media handlers (voice left entirely to media.js)');
+  // Make sure the live publish button state is wired
+  if (typeof window.initComposerLiveState === 'function') {
+    window.initComposerLiveState();
+  }
+
+  console.log('✅ Composer initialized (media handlers isolated, voice left to media.js)');
 }
 
 /**
@@ -616,83 +587,76 @@ function ensureAiFeedbackContainer() {
 }
 
 function renderAiFeedback(container, analysis, category) {
-    if (!analysis) {
-        container.classList.add('hidden');
-        return;
-    }
+  if (!analysis) {
+    container.classList.add('hidden');
+    return;
+  }
 
-    const isFlagged = analysis.isToxic || analysis.flagged;
-    if (isFlagged) {
-        container.className = 'mt-3 p-3 rounded-xl border border-red-500/30 bg-red-950/20 text-red-300 text-xs';
-        container.innerHTML = `
-            <div class="flex items-center gap-2 font-semibold text-red-400 mb-1">
-                ⚠️ Content Flagged
-            </div>
-            <p>${analysis.reason || 'This post contains terms that may violate community safety standards.'}</p>
-        `;
-    } else {
-        container.className = 'mt-3 p-3 rounded-xl border border-emerald-500/30 bg-emerald-950/20 text-emerald-300 text-xs';
-        container.innerHTML = `
-            <div class="flex items-center justify-between flex-wrap gap-2">
-                <span class="flex items-center gap-1.5 font-medium">
-                    🤖 Auto-Classified: <strong class="text-white">${category || 'General'}</strong>
-                </span>
-                <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30">
-                    Urgency: ${analysis.urgency || 'Normal'}
-                </span>
-            </div>
-            ${analysis.summary ? `<p class="mt-1 text-zinc-400 text-[11px]">${analysis.summary}</p>` : ''}
-        `;
-    }
-    container.classList.remove('hidden');
+  const isFlagged = analysis.isToxic || analysis.flagged;
+
+  if (isFlagged) {
+    container.className = 'mt-3 p-3 rounded-xl border border-red-500/30 bg-red-950/20 text-red-300 text-xs';
+    container.innerHTML = `
+      <div class="flex items-center gap-2 font-semibold text-red-400 mb-1">
+        ⚠️ Content needs attention
+      </div>
+      <p>${analysis.reason || 'This content may violate community safety standards. Please review before publishing.'}</p>
+    `;
+  } else {
+    container.className = 'mt-3 p-3 rounded-xl border border-emerald-500/30 bg-emerald-950/20 text-emerald-300 text-xs';
+    container.innerHTML = `
+      <div class="flex items-center justify-between flex-wrap gap-2">
+        <span class="flex items-center gap-1.5 font-medium">
+          ✨ Auto-tagged: <strong class="text-white">${category || 'General'}</strong>
+        </span>
+        <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30">
+          ${analysis.urgency === 'High' ? '🔥 High urgency' : 'Normal priority'}
+        </span>
+      </div>
+      ${analysis.summary ? `<p class="mt-1.5 text-zinc-400 text-[11px] leading-relaxed">${analysis.summary}</p>` : ''}
+    `;
+  }
+  container.classList.remove('hidden');
 }
 
 /**
- * Main submit handler – prefers window.publishTestimony() when available,
- * falls back to publishTestimonyOrQueue
+ * Strengthen handleComposerSubmit success path
  */
 async function handleComposerSubmit(e) {
-    if (e?.preventDefault) e.preventDefault();
-    if (e?.stopImmediatePropagation) e.stopImmediatePropagation();
+  if (e?.preventDefault) e.preventDefault();
+  if (e?.stopImmediatePropagation) e.stopImmediatePropagation();
 
-    if (isSubmitting) {
-        console.warn('[composer] Already submitting – ignored');
-        return;
+  if (isSubmitting) return;
+  isSubmitting = true;
+
+  const submitBtn = document.getElementById('postButton');
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.classList.add('opacity-60', 'cursor-not-allowed');
+  }
+
+  try {
+    window.activeSubmissionDraft = window.activeSubmissionDraft || {};
+    window.activeSubmissionDraft.mediaOriginClaim = getSelectedMediaOriginClaim();
+
+    if (typeof window.publishTestimony === 'function') {
+      await window.publishTestimony();
+    } else if (typeof publishTestimonyOrQueue === 'function') {
+      await publishTestimonyOrQueue(window.activeSubmissionDraft);
+    } else {
+      throw new Error('No publish function available');
     }
-    isSubmitting = true;
 
-    const submitBtn = document.getElementById('postButton') ||
-                      document.getElementById('submitBtn') ||
-                      document.querySelector('button[type="submit"]');
-    if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
-    }
-
-    try {
-        // Always enrich the draft with origin claim
-        window.activeSubmissionDraft = window.activeSubmissionDraft || {};
-        window.activeSubmissionDraft.mediaOriginClaim = getSelectedMediaOriginClaim();
-
-        if (typeof window.publishTestimony === 'function') {
-            console.log('[composer] Using window.publishTestimony()');
-            await window.publishTestimony();
-        } else if (typeof publishTestimonyOrQueue === 'function') {
-            console.log('[composer] Falling back to publishTestimonyOrQueue');
-            await publishTestimonyOrQueue(window.activeSubmissionDraft);
-        } else {
-            throw new Error('No publish function available');
-        }
-    } catch (err) {
-        console.error('[composer] Publish failed:', err);
-        showToast('Failed to publish. Please try again.', 'error');
-    } finally {
-        isSubmitting = false;
-        if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-        }
-    }
+    // Optional: clear AI feedback after successful publish
+    clearAiFeedback();
+  } catch (err) {
+    console.error('[composer] Publish failed:', err);
+    showToast('Failed to publish. Please try again.', 'error');
+  } finally {
+    isSubmitting = false;
+    // Note: we deliberately do NOT re-enable the button here.
+    // The success state in main.js will handle UI reset.
+  }
 }
 
 // ======================================================
