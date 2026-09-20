@@ -441,22 +441,30 @@ main {
   scrollbar-width: none;
 }
 
+/* ========== CUSTOM SCROLLBAR (Dark + Visible) ========== */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: #0b1120;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 10px;
+  background: #334155;
+  border-radius: 9999px;
+  border: 2px solid #0b1120;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: #10b981;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #334155 #0b1120;
 }
 
 svg {
@@ -494,7 +502,6 @@ svg {
 .notification-badge-new {
   animation: badge-pulse 0.6s ease 2;
 }
-
 
 @keyframes spin {
   to { transform: rotate(360deg); }
