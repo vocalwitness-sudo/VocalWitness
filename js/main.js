@@ -529,82 +529,72 @@ window.publishTestimony = async () => {
       console.warn('[publish] Could not compute bodyHash:', hashErr);
     }
 
-    // ====================== WRITE TO FIRESTORE ======================
-    const testimonyData = {
-      title,
-      content,
-      uid: currentUser.uid,
-      authorName: currentUser.displayName || 'Registered Witness',
-      createdAt: serverTimestamp(),
-      ...mediaData,
-      isZkVerified: !!mediaData.packCoreHash // example check or property flag
-    };
+ // ====================== WRITE TO FIRESTORE ======================
 
-    await addDoc(collection(db, 'testimonies'), testimonyData);
-    // ========== GENERATE ZK PROOF ==========
-    let zkResult = {
-      isFallback: true,
-      proofType: 'NONE',
-      proof: null,
-      publicSignals: []
-    };
+// 1. Generate ZK proof (needs the hashes we already have)
+let zkResult = {
+  isFallback: true,
+  proofType: 'NONE',
+  proof: null,
+  publicSignals: []
+};
 
-    try {
-      const { generateZKProofAsync } = await import('./zk-client.js');
-      const contentHash = mediaData.bodyHash || await generateSha256Hash(new Blob([content]));
-      const authorHash  = await generateSha256Hash(currentUser.uid);
+try {
+  const { generateZKProofAsync } = await import('./zk-client.js');
+  const contentHash = mediaData.bodyHash || await generateSha256Hash(new Blob([content]));
+  const authorHash  = await generateSha256Hash(currentUser.uid);
 
-      zkResult = await generateZKProofAsync({
-        contentHash,
-        authorHash,
-        timestamp: Date.now().toString(),
-        mediaHash: mediaData.imageHash || mediaData.videoHash || mediaData.audioHash || mediaData.bodyHash || '0'
-      });
+  zkResult = await generateZKProofAsync({
+    contentHash,
+    authorHash,
+    timestamp: Date.now().toString(),
+    mediaHash: mediaData.imageHash || mediaData.videoHash || mediaData.audioHash || mediaData.bodyHash || '0'
+  });
 
-      console.log('[publish] ZK result:', zkResult.proofType, zkResult.isFallback ? '(fallback)' : '(real proof)');
-    } catch (zkErr) {
-      console.warn('[publish] ZK generation failed, continuing without proof:', zkErr);
-    }
+  console.log('[publish] ZK result:', zkResult.proofType, zkResult.isFallback ? '(fallback)' : '(real proof)');
+} catch (zkErr) {
+  console.warn('[publish] ZK generation failed, continuing without proof:', zkErr);
+}
 
-    // Final payload
-    const testimonyData = {
-      authorId: currentUser.uid,
-      content,
-      createdAt: serverTimestamp(),
-      channel: 'citizen-talk',
-      title: title || null,
-      author: currentUser.displayName || 'Registered Witness',
-      feedVisibility: 'citizen-talk',
-      timestamp: Date.now(),
+// 2. Final complete payload (only one declaration)
+const testimonyData = {
+  authorId: currentUser.uid,
+  content,
+  createdAt: serverTimestamp(),
+  channel: 'citizen-talk',
+  title: title || null,
+  author: currentUser.displayName || 'Registered Witness',
+  feedVisibility: 'citizen-talk',
+  timestamp: Date.now(),
 
-      // Media
-      imageUrl: mediaData.imageUrl || null,
-      videoUrl: mediaData.videoUrl || null,
-      audioUrl: mediaData.audioUrl || null,
-      imageHash: mediaData.imageHash || null,
-      videoHash: mediaData.videoHash || null,
-      audioHash: mediaData.audioHash || null,
-      bodyHash: mediaData.bodyHash || null,
-      hasForensic: !!(mediaData.imageHash || mediaData.videoHash || mediaData.audioHash || mediaData.bodyHash),
-      hasEvidencePack: !!mediaData.hasEvidencePack,
-      evidencePack: mediaData.evidencePack || null,
-      packCoreHash: mediaData.packCoreHash || null,
+  // Media
+  imageUrl: mediaData.imageUrl || null,
+  videoUrl: mediaData.videoUrl || null,
+  audioUrl: mediaData.audioUrl || null,
+  imageHash: mediaData.imageHash || null,
+  videoHash: mediaData.videoHash || null,
+  audioHash: mediaData.audioHash || null,
+  bodyHash: mediaData.bodyHash || null,
+  hasForensic: !!(mediaData.imageHash || mediaData.videoHash || mediaData.audioHash || mediaData.bodyHash),
+  hasEvidencePack: !!mediaData.hasEvidencePack,
+  evidencePack: mediaData.evidencePack || null,
+  packCoreHash: mediaData.packCoreHash || null,
 
-      // ZK Proof
-      zkProof: zkResult.proof || null,
-      zkPublicSignals: zkResult.publicSignals || [],
-      proofType: zkResult.proofType || 'NONE',
-      isZkVerified: !zkResult.isFallback
-    };
+  // ZK Proof
+  zkProof: zkResult.proof || null,
+  zkPublicSignals: zkResult.publicSignals || [],
+  proofType: zkResult.proofType || 'NONE',
+  isZkVerified: !zkResult.isFallback
+};
 
-    // Write to Firestore
-    const docRef = await addDoc(collection(db, 'testimonies'), testimonyData);
-    console.log('[publish] SUCCESS →', docRef.id);
+// 3. Write once
+const docRef = await addDoc(collection(db, 'testimonies'), testimonyData);
+console.log('[publish] SUCCESS →', docRef.id);
 
-    // Update throttle
-    await setDoc(userRef, {
-      lastTestimonyAt: serverTimestamp()
-    }, { merge: true });
+// 4. Update throttle
+await setDoc(userRef, {
+  lastTestimonyAt: serverTimestamp()
+}, { merge: true });
 
     // ====================== SUCCESS STATE ======================
     if (testimonyData.isZkVerified) {
