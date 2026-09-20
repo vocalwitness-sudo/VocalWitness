@@ -485,11 +485,12 @@
       <input type="search" id="global-search" 
              placeholder="Search reports, news, hashtags, or people..."
              class="w-full rounded-2xl border border-zinc-700 bg-zinc-900/80 py-3.5 pl-11 pr-4 text-sm text-white placeholder-zinc-500 transition focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/20"
-             autocomplete="off">
+             autocomplete="off" aria-label="Search reports, news, hashtags, or people">
     </div>
   </div>
-<!-- Main Navigation Tabs -->
-  <div class="mb-4 flex items-center gap-2">
+
+  <!-- Main Navigation Tabs -->
+  <div class="mb-6 flex items-center gap-2">
     <nav id="main-nav" class="flex flex-1 items-center gap-2 min-w-0 overflow-x-auto no-scrollbar" role="tablist">
       <button type="button" data-tab="square" role="tab" aria-selected="true"
               class="nav-tab active flex h-12 flex-1 min-w-0 flex-col items-center justify-center rounded-2xl bg-emerald-500 px-2 text-xs font-semibold text-black shadow-lg shadow-emerald-500/25 transition sm:text-sm">
@@ -522,15 +523,11 @@
       </button>
     </nav>
     
-    <button id="more-btn" type="button" class="shrink-0 flex h-12 items-center justify-center rounded-2xl border border-zinc-700 bg-zinc-900 px-4 text-xs font-medium text-zinc-300 transition hover:border-zinc-500 sm:text-sm">
-      <span>More</span>
-    </button>
-  </div>
-
-    <!-- More menu -->
+    <!-- More menu (single instance) -->
     <div class="relative shrink-0">
       <button id="more-btn" type="button"
-              class="flex h-12 items-center gap-1.5 rounded-2xl border border-zinc-700 bg-zinc-900 px-4 text-xs font-medium text-zinc-300 transition hover:border-emerald-500/40 sm:text-sm">
+              class="flex h-12 items-center gap-1.5 rounded-2xl border border-zinc-700 bg-zinc-900 px-4 text-xs font-medium text-zinc-300 transition hover:border-emerald-500/40 sm:text-sm"
+              aria-haspopup="true" aria-expanded="false">
         <span data-i18n="moreOptionsBtn">More</span>
         <svg class="h-3.5 w-3.5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
@@ -574,117 +571,124 @@
                 class="w-full resize-none rounded-2xl border border-zinc-700 bg-zinc-900 p-5 text-base text-white placeholder-zinc-500 focus:border-emerald-500 focus:outline-none transition"></textarea>
 
       <div class="mb-5 mt-1.5 flex justify-end">
-        <span id="char-count" class="text-xs text-zinc-500">0 / 2000</span>
+        <span id="char-count" class="text-xs text-zinc-500 transition-colors duration-200">0 / 2000</span>
       </div>
 
-<!-- Media Buttons - Prioritize Live Voice -->
-<div class="space-y-4">
+      <!-- Media Buttons - Prioritize Live Voice -->
+      <div class="space-y-4">
+        <!-- Primary Action: Live Voice Recording -->
+        <button id="btn-voice" type="button"
+                class="flex w-full items-center justify-center gap-3 rounded-2xl border-2 border-emerald-500 bg-emerald-500/15 px-5 py-4 text-base font-semibold text-emerald-400 transition-all
+                       hover:bg-emerald-500 hover:text-zinc-950
+                       active:scale-[0.98]">
+          <svg class="h-6 w-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z"/>
+          </svg>
+          <span>Record Live Voice</span>
+          <span class="ml-1 rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-medium text-emerald-300">Recommended</span>
+        </button>
 
-  <!-- Primary Action: Live Voice Recording -->
-  <button id="btn-voice" type="button"
-          class="flex w-full items-center justify-center gap-3 rounded-2xl border-2 border-emerald-500 bg-emerald-500/15 px-5 py-4 text-base font-semibold text-emerald-400 transition-all
-                 hover:bg-emerald-500 hover:text-zinc-950
-                 active:scale-[0.98]">
-    <svg class="h-6 w-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z"/>
-    </svg>
-    <span>Record Live Voice</span>
-    <span class="ml-1 rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-medium text-emerald-300">Recommended</span>
-  </button>
+        <!-- Secondary Actions -->
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <button id="btn-photo" type="button"
+                  class="flex items-center justify-center gap-2.5 rounded-2xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 font-medium text-emerald-400 transition-all
+                         hover:border-emerald-500 hover:bg-zinc-800">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            Add Photo
+          </button>
 
-  <!-- Secondary Actions -->
-  <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-    <!-- Add Photo -->
-    <button id="btn-photo" type="button"
-            class="flex items-center justify-center gap-2.5 rounded-2xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 font-medium text-emerald-400 transition-all
-                   hover:border-emerald-500 hover:bg-zinc-800">
-      <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-      </svg>
-      Add Photo
-    </button>
+          <button id="btn-video" type="button"
+                  class="flex items-center justify-center gap-2.5 rounded-2xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 font-medium text-sky-400 transition-all
+                         hover:border-sky-500 hover:bg-zinc-800">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+            </svg>
+            Add Video
+          </button>
+        </div>
 
-    <!-- Add Video -->
-    <button id="btn-video" type="button"
-            class="flex items-center justify-center gap-2.5 rounded-2xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 font-medium text-sky-400 transition-all
-                   hover:border-sky-500 hover:bg-zinc-800">
-      <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-      </svg>
-      Add Video
-    </button>
-  </div>
+        <!-- Upload existing audio (secondary) -->
+        <div class="text-center">
+          <button id="btn-upload-audio" type="button"
+                  class="text-sm text-zinc-400 underline-offset-2 hover:text-emerald-400 hover:underline transition">
+            Or upload existing audio file
+          </button>
+        </div>
+      </div>
 
-  <!-- Upload existing audio (secondary) -->
-  <div class="text-center">
-    <button id="btn-upload-audio" type="button"
-            class="text-sm text-zinc-400 underline-offset-2 hover:text-emerald-400 hover:underline transition">
-      Or upload existing audio file
-    </button>
-    <input type="file" id="audioInput" accept="audio/webm,audio/mp3,audio/mpeg,audio/wav,audio/ogg" class="hidden">
-  </div>
-</div>
+      <!-- Preview -->
+      <div id="preview-area" class="mt-5 flex min-h-[110px] flex-wrap items-center justify-center gap-4 rounded-2xl border border-dashed border-zinc-700 bg-zinc-900/50 p-5 text-sm text-zinc-500">
+        <div id="preview-empty" class="text-center">
+          <p>Preview will appear here...</p>
+          <p class="mt-1 text-xs text-zinc-600">Live voice, photos, videos or uploaded audio will show here</p>
+        </div>
+      </div>
 
-<!-- Preview -->
-<div id="preview-area" class="mt-5 flex min-h-[110px] flex-wrap items-center justify-center gap-4 rounded-2xl border border-dashed border-zinc-700 bg-zinc-900/50 p-5 text-sm text-zinc-500">
-  <div id="preview-empty" class="text-center">
-    <p>Preview will appear here...</p>
-    <p class="mt-1 text-xs text-zinc-600">Live voice, photos, videos or uploaded audio will show here</p>
-  </div>
-</div>
+      <!-- Voice Recorder Bar -->
+      <div id="voice-recorder-bar" class="mt-4 hidden rounded-2xl border border-emerald-500/30 bg-zinc-900/60 p-4">
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="flex min-w-[70px] items-center gap-2">
+            <span id="rec-indicator" class="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500"></span>
+            <span id="rec-timer" class="font-mono text-sm text-emerald-400">00:00</span>
+          </div>
 
-<!-- Voice Recorder Bar -->
-<div id="voice-recorder-bar" class="mt-4 hidden rounded-2xl border border-emerald-500/30 bg-zinc-900/60 p-4">
-  <div class="flex flex-wrap items-center gap-3">
-    <div class="flex min-w-[70px] items-center gap-2">
-      <span id="rec-indicator" class="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500"></span>
-      <span id="rec-timer" class="font-mono text-sm text-emerald-400">00:00</span>
+          <button id="verify-voice-btn" type="button"
+                  class="rounded-xl bg-blue-600/80 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-600">
+            🛡️ Verify
+          </button>
+
+          <canvas id="rec-waveform" width="180" height="36" class="max-w-[200px] flex-1 rounded bg-zinc-950"></canvas>
+
+          <div class="ml-auto flex items-center gap-2">
+            <button id="rec-pause-btn" type="button"
+                    class="rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700">
+              ⏸ Pause
+            </button>
+            <button id="rec-stop-btn" type="button"
+                    class="rounded-xl bg-red-600/80 px-3 py-1.5 text-xs text-white hover:bg-red-600">
+              ⏹ Stop
+            </button>
+            <button id="rec-replay-btn" type="button"
+                    class="hidden rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700">
+              ↻ Replay
+            </button>
+          </div>
+        </div>
+        <audio id="rec-replay-audio" class="hidden"></audio>
+      </div>
+
+      <!-- Publish Button (starts disabled) -->
+      <button id="postButton" type="button" disabled
+              class="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 py-4 text-base font-bold text-black shadow-lg shadow-emerald-500/25 transition-all
+                     hover:bg-emerald-400 hover:shadow-emerald-500/40
+                     active:scale-[0.98] active:bg-emerald-600
+                     disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-emerald-500 disabled:hover:shadow-emerald-500/25">
+        <span data-i18n="postButton">Publish Report</span>
+      </button>
+
+      <!-- Success State (hidden by default) -->
+      <div id="publish-success" class="mt-6 hidden">
+        <div class="flex flex-col items-center justify-center gap-3 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 py-8 text-center">
+          <div class="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500 text-2xl text-black">✓</div>
+          <p class="text-lg font-bold text-emerald-400">Report sealed</p>
+          <p class="text-sm text-zinc-400">Your evidence is now protected and timestamped</p>
+        </div>
+      </div>
+
+      <!-- Upload Progress -->
+      <div id="upload-progress-container" class="mb-6 mt-4 hidden">
+        <div class="mb-1 flex justify-between text-xs text-zinc-400">
+          <span id="upload-status-text">Uploading media...</span>
+          <span id="upload-progress-pct">0%</span>
+        </div>
+        <div class="h-2 w-full overflow-hidden rounded-full bg-zinc-800">
+          <div id="upload-progress-bar" class="h-full bg-emerald-500 transition-all duration-300" style="width: 0%"></div>
+        </div>
+      </div>
     </div>
 
-    <button id="verify-voice-btn" type="button"
-            class="rounded-xl bg-blue-600/80 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-600">
-      🛡️ Verify
-    </button>
-
-    <canvas id="rec-waveform" width="180" height="36" class="max-w-[200px] flex-1 rounded bg-zinc-950"></canvas>
-
-    <div class="ml-auto flex items-center gap-2">
-      <button id="rec-pause-btn" type="button"
-              class="rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700">
-        ⏸ Pause
-      </button>
-      <button id="rec-stop-btn" type="button"
-              class="rounded-xl bg-red-600/80 px-3 py-1.5 text-xs text-white hover:bg-red-600">
-        ⏹ Stop
-      </button>
-      <button id="rec-replay-btn" type="button"
-              class="hidden rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700">
-        ↻ Replay
-      </button>
-    </div>
-  </div>
-  <audio id="rec-replay-audio" class="hidden"></audio>
-</div>
-
-<!-- Publish Button -->
-<button id="postButton" type="button"
-        class="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 py-4 text-base font-bold text-black shadow-lg shadow-emerald-500/25 transition-all
-               hover:bg-emerald-400 hover:shadow-emerald-500/40
-               active:scale-[0.98] active:bg-emerald-600
-               disabled:opacity-60 disabled:cursor-not-allowed">
-  <span data-i18n="postButton">Publish Report</span>
-</button>
-
-<!-- Upload Progress -->
-<div id="upload-progress-container" class="mb-6 hidden">
-  <div class="mb-1 flex justify-between text-xs text-zinc-400">
-    <span id="upload-status-text">Uploading media...</span>
-    <span id="upload-progress-pct">0%</span>
-  </div>
-  <div class="h-2 w-full overflow-hidden rounded-full bg-zinc-800">
-    <div id="upload-progress-bar" class="h-full bg-emerald-500 transition-all duration-300" style="width: 0%"></div>
-  </div>
-</div>
     <!-- Recent Reports -->
     <div id="feed-container" class="space-y-6">
       <div class="flex items-center justify-between">
@@ -763,12 +767,13 @@
         <div class="h-3 overflow-hidden rounded-full bg-zinc-800">
           <div id="verifiedProgress" class="h-full bg-gradient-to-r from-sky-500 to-cyan-400 transition-all duration-700" style="width: 0%"></div>
         </div>
-        <p id="progressText" class="mt-4 text-xs text-zinc-400">Loading progress…</p>
+        <p id="progressText" class="mt-4 text-xs text-zinc-400">Arena opens when enough verified citizens are ready</p>
       </div>
       <button id="notifyArenaBtn" type="button"
-              class="w-full rounded-2xl bg-gradient-to-r from-rose-500 to-pink-500 px-8 py-4 font-bold text-white shadow-lg shadow-rose-500/25 transition hover:from-rose-400 hover:to-pink-400 active:scale-[0.98] sm:w-auto">
+              class="w-full rounded-2xl bg-gradient-to-r from-sky-500 to-cyan-500 px-8 py-4 font-bold text-white shadow-lg shadow-sky-500/25 transition hover:from-sky-400 hover:to-cyan-400 active:scale-[0.98] sm:w-auto">
         🔔 Notify me when Arena opens
       </button>
+      <p class="text-sm text-zinc-500">Be among the first to report live when the Arena goes live</p>
     </div>
   </section>
 
@@ -811,8 +816,9 @@
       </button>
     </div>
     <div id="circle-list" class="space-y-3">
-      <div class="py-16 text-center text-sm text-zinc-500">
-        Your circle is empty. Follow voices you trust.
+      <div class="py-16 text-center">
+        <p class="text-base text-zinc-300">Your circle is empty</p>
+        <p class="mt-2 text-sm text-zinc-500">Follow trusted voices to build your personal network of reliable reporters</p>
       </div>
     </div>
   </section>
@@ -826,7 +832,8 @@
       </div>
       <input type="search" id="witness-search"
              placeholder="Search trusted voices…"
-             class="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:border-amber-500 focus:outline-none sm:w-72">
+             class="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:border-amber-500 focus:outline-none sm:w-72"
+             aria-label="Search trusted voices">
     </div>
     <div class="flex flex-wrap gap-2" id="witness-filters">
       <button type="button" data-filter="all"
@@ -866,7 +873,7 @@
       <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/20 text-2xl font-bold text-emerald-400" aria-hidden="true">♥</div>
       <h3 id="supportModalTitle" class="text-xl font-bold text-white">Sustain the Public Square</h3>
       <p class="mt-1.5 text-xs leading-relaxed text-emerald-300/90">
-        VocalWitness stays free, independent, and un-manipulated through voluntary community backing.
+        Your support keeps VocalWitness free, independent, and protected from manipulation — so every sealed report stays public.
       </p>
     </div>
 
@@ -918,7 +925,8 @@
         <img src="./image/95756.jpg" 
              alt="USDT TRC-20 QR Code" 
              class="h-full w-full object-contain" 
-             id="usdt-qr-img">
+             id="usdt-qr-img"
+             onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');">
         <span class="hidden text-xs text-zinc-500">QR unavailable</span>
       </div>
 
@@ -944,7 +952,8 @@
   </div>
 </div>
 
-  <!-- ====================== AUTH MODAL ====================== -->
+
+<!-- ====================== AUTH MODAL ====================== -->
 <div id="authModal"
      class="fixed inset-0 z-[10000] hidden items-center justify-center bg-black/80 p-4 backdrop-blur-md"
      role="dialog" aria-modal="true" aria-labelledby="authModalTitle" aria-hidden="true">
@@ -958,7 +967,9 @@
     <div class="mb-6 text-center">
       <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/20 text-2xl" aria-hidden="true">🛡️</div>
       <h3 id="authModalTitle" class="text-xl font-bold text-white">Join the Public Square</h3>
-      <p class="mt-1.5 text-sm text-zinc-400">Sign in to publish reports, corroborate, and build trust.</p>
+      <p class="mt-1.5 text-sm text-zinc-400">
+        Sign in to publish sealed reports, corroborate evidence, and build your circle of trusted voices.
+      </p>
     </div>
 
     <div class="space-y-3">
@@ -995,7 +1006,9 @@
     </p>
   </div>
 </div>
-  <!-- ====================== USER PROFILE MODAL ====================== -->
+
+
+<!-- ====================== USER PROFILE MODAL ====================== -->
 <div id="profileModal"
      class="fixed inset-0 z-[9000] hidden items-center justify-center overflow-y-auto bg-black/80 p-4 backdrop-blur-md"
      role="dialog"
@@ -1029,7 +1042,8 @@
   </div>
 </div>
 
-  <!-- ====================== EDIT PROFILE MODAL ====================== -->
+
+<!-- ====================== EDIT PROFILE MODAL ====================== -->
 <div id="editProfileModal"
      class="fixed inset-0 z-[10001] hidden items-center justify-center overflow-y-auto bg-black/80 p-4 backdrop-blur-md"
      role="dialog" aria-modal="true" aria-labelledby="editProfileTitle" aria-hidden="true">
@@ -1223,6 +1237,7 @@
   </div>
 </div>
 
+
 <!-- ====================== PHONE VERIFICATION MODAL ====================== -->
 <div id="phoneVerificationModal"
      class="fixed inset-0 z-[10050] hidden items-center justify-center bg-black/75 p-4 backdrop-blur-md"
@@ -1233,7 +1248,7 @@
     <div class="flex items-start justify-between gap-3">
       <div>
         <h3 id="phoneVerificationTitle" class="text-xl font-bold tracking-tight text-white">Verify Phone Number</h3>
-        <p class="mt-1 text-sm text-zinc-400">Unlock Citizen Circle & advanced features</p>
+        <p class="mt-1 text-sm text-zinc-400">Unlock Citizen Circle and higher trust features</p>
       </div>
       <button type="button" id="closePhoneVerificationBtn"
               class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
@@ -1284,6 +1299,7 @@
   </div>
 </div>
 
+
 <!-- ====================== VIDEO POLICY & AUTHENTICITY MODAL ====================== -->
 <div id="video-policy-modal" 
      class="fixed inset-0 z-[10000] hidden items-center justify-center bg-black/80 p-4 backdrop-blur-md"
@@ -1302,7 +1318,7 @@
     </div>
 
     <p id="video-policy-msg" class="mb-5 text-sm leading-relaxed text-slate-300">
-      To maintain evidence integrity, AI-generated or heavily edited videos are prohibited.
+      To protect the integrity of the Public Record, AI-generated or heavily edited videos are not allowed.
     </p>
 
     <!-- Policy badges -->
@@ -1323,7 +1339,7 @@
 
     <!-- Actions -->
     <div class="space-y-3">
-      <a href="live-arena.html"
+      <a href="/live-arena"
          class="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-4 py-3.5 font-bold text-slate-950 shadow-lg shadow-amber-900/30 transition hover:from-amber-400 hover:to-amber-500 active:scale-[0.98]">
         <span>Go to Live Arena for True Reality</span>
         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1339,7 +1355,8 @@
   </div>
 </div>
 
-  <script>
+
+<script>
   const $ = (id) => document.getElementById(id);
 
   function showToast(message, type = 'info') {
@@ -1347,7 +1364,7 @@
     if (existing) existing.remove();
 
     const toast = document.createElement('div');
-    toast.className = `vw-toast fixed bottom-6 left-1/2 z-[11000] -translate-x-1/2 rounded-2xl px-6 py-3.5 text-sm font-medium text-white shadow-2xl transition-all duration-300 ${
+    toast.className = `vw-toast fixed bottom-6 left-1/2 z-[11000] -translate-x-1/2 rounded-2xl px-6 py-3.5 text-sm font-medium text-white shadow-2xl transition-all duration-300 opacity-0 ${
       type === 'success' ? 'bg-emerald-600' :
       type === 'error'   ? 'bg-red-600' :
       type === 'warning' ? 'bg-amber-600' : 'bg-zinc-800'
@@ -1373,7 +1390,6 @@
     m.classList.remove('hidden');
     m.classList.add('flex');
     m.setAttribute('aria-hidden', 'false');
-    // Prevent body scroll
     document.body.style.overflow = 'hidden';
   }
 
@@ -1384,7 +1400,6 @@
     m.classList.remove('flex');
     m.setAttribute('aria-hidden', 'true');
     
-    // Restore body scroll only if no other modal is open
     const anyOpen = ['settingsModal','phoneVerificationModal','video-policy-modal','supportModal','profileModal','editProfileModal','authModal']
       .some(mid => {
         const el = $(mid);
@@ -1435,12 +1450,12 @@
     const enabled = localStorage.getItem('vocalwitness_data_saver') === 'true';
     const next = !enabled;
     localStorage.setItem('vocalwitness_data_saver', String(next));
-    ['data-saver-status', 'footer-data-saver-status'].forEach((id) => {
+    ['data-saver-status', 'data-saver-status-mobile', 'footer-data-saver-status'].forEach((id) => {
       const el = $(id);
       if (!el) return;
       el.textContent = next ? 'On' : 'Off';
       el.classList.toggle('text-emerald-400', next);
-      el.classList.toggle('text-amber-400', !next);
+      el.classList.toggle('text-zinc-300', !next);
     });
     showToast(`Data Saver mode turned ${next ? 'ON' : 'OFF'}`, 'info');
   };
@@ -1448,12 +1463,12 @@
   document.addEventListener('DOMContentLoaded', () => {
     // Restore Data Saver status
     const enabled = localStorage.getItem('vocalwitness_data_saver') === 'true';
-    ['data-saver-status', 'footer-data-saver-status'].forEach((id) => {
+    ['data-saver-status', 'data-saver-status-mobile', 'footer-data-saver-status'].forEach((id) => {
       const el = $(id);
       if (!el) return;
       el.textContent = enabled ? 'On' : 'Off';
       el.classList.toggle('text-emerald-400', enabled);
-      el.classList.toggle('text-amber-400', !enabled);
+      el.classList.toggle('text-zinc-300', !enabled);
     });
 
     // Support
@@ -1530,8 +1545,7 @@
       if (typeof window.handlePanicClear === 'function') {
         window.handlePanicClear();
       } else {
-        // Safe fallback
-        const confirmed = confirm('This will permanently erase all local data on this device only. Continue?');
+        const confirmed = confirm('This will permanently erase all local data on this device only. The public record stays safe. Continue?');
         if (confirmed) {
           localStorage.clear();
           sessionStorage.clear();
