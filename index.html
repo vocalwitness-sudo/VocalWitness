@@ -196,18 +196,36 @@
 <body class="theme-citizen tier-citizen">
 
   <!-- Splash Screen -->
-  <div id="app-splash-screen">
-    <div class="splash-inner">
+  <div id="app-splash-screen" 
+       class="fixed inset-0 z-[9999] flex items-center justify-center bg-zinc-950"
+       role="status" 
+       aria-live="polite" 
+       aria-label="Loading VocalWitness">
+    
+    <div class="splash-inner flex flex-col items-center text-center px-6">
+      
       <!-- Logo -->
-      <div class="splash-logo-wrapper">
-        <div class="splash-logo-glow"></div>
-        <img src="./logo.png" alt="VocalWitness" class="splash-logo">
+      <div class="splash-logo-wrapper relative mb-6">
+        <div class="splash-logo-glow absolute inset-0 rounded-full bg-emerald-500/30 blur-2xl"></div>
+        <img src="./logo.png" 
+             alt="VocalWitness Logo" 
+             class="splash-logo relative h-20 w-20 rounded-2xl object-cover border border-emerald-500/40 shadow-lg">
       </div>
 
-      <h1 class="splash-title">VocalWitness</h1>
-      <p class="splash-subtitle">Truth • Evidence • Public Square</p>
+      <h1 class="splash-title text-3xl font-extrabold tracking-tight text-white mb-2">
+        Vocal<span class="text-emerald-400">Witness</span>
+      </h1>
+      
+      <p class="splash-subtitle text-sm font-medium tracking-wide text-emerald-400/80 mb-8">
+        Truth • Evidence • Public Square
+      </p>
 
-      <div class="splash-spinner"></div>
+      <!-- Spinner -->
+      <div class="splash-spinner relative">
+        <div class="h-8 w-8 rounded-full border-2 border-emerald-500/30 border-t-emerald-400 animate-spin"></div>
+        <span class="sr-only">Loading…</span>
+      </div>
+
     </div>
   </div>
 
@@ -258,8 +276,7 @@
         <!-- Support -->
         <button id="openSupportModalBtn" type="button"
                 class="h-9 rounded-xl border border-emerald-500/50 bg-emerald-500/10 px-4 text-xs font-semibold text-emerald-400 transition-all
-                       hover:bg-emerald-500 hover:text-zinc-950 hover:border-emerald-400
-                       active:scale-95"
+                       hover:bg-emerald-500 hover:text-zinc-950 hover:border-emerald-400 active:scale-95"
                 data-i18n="supportBtn">
           Support
         </button>
@@ -267,8 +284,7 @@
         <!-- Join (shown when logged out) -->
         <button id="openAuthModalBtn" type="button"
                 class="flex h-9 items-center gap-2 rounded-xl bg-white px-4 text-xs font-semibold text-zinc-900 shadow-sm transition-all
-                       hover:bg-emerald-400 hover:text-zinc-950
-                       active:scale-95"
+                       hover:bg-emerald-400 hover:text-zinc-950 active:scale-95"
                 data-action="open-auth-modal">
           <svg class="h-4 w-4 shrink-0 pointer-events-none" viewBox="0 0 24 24" aria-hidden="true">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -282,8 +298,7 @@
         <!-- Profile (shown when logged in) -->
         <button id="userProfileBtn" type="button"
                 class="hidden h-9 items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 px-3 text-xs font-semibold text-emerald-400 transition-all
-                       hover:border-emerald-500 hover:bg-emerald-500/10 hover:text-emerald-300
-                       active:scale-95"
+                       hover:border-emerald-500 hover:bg-emerald-500/10 hover:text-emerald-300 active:scale-95"
                 aria-label="Open profile">
           <img id="user-avatar-desktop" src="" alt="" class="hidden h-5 w-5 rounded-full object-cover">
           <span id="default-avatar-icon-desktop" class="text-sm">👤</span>
@@ -293,20 +308,18 @@
         <!-- Divider -->
         <div class="mx-1 h-5 w-px bg-zinc-700"></div>
 
-      <!-- Data Saver -->
-<button id="data-saver-btn" type="button"
-        class="flex h-9 items-center gap-1.5 rounded-xl border px-3 text-xs font-medium transition-all active:scale-95
-               border-zinc-700 bg-zinc-900 text-zinc-400
-               hover:border-zinc-500 hover:text-white">
-  <span id="data-saver-icon">⚡</span>
-  <span>Data: <strong id="data-saver-status">Off</strong></span>
-</button>
+        <!-- Data Saver -->
+        <button id="data-saver-btn" type="button"
+                class="flex h-9 items-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-900 px-3 text-xs font-medium text-zinc-400 transition-all
+                       hover:border-zinc-500 hover:text-white active:scale-95">
+          <span id="data-saver-icon">⚡</span>
+          <span>Data: <strong id="data-saver-status">Off</strong></span>
+        </button>
 
         <!-- Bookmarks -->
         <button id="bookmarks-nav-btn" type="button" aria-label="Saved Items" data-action="open-bookmarks"
                 class="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900 text-zinc-400 transition-all
-                       hover:border-emerald-500/60 hover:text-emerald-400 hover:bg-emerald-500/10
-                       active:scale-95">
+                       hover:border-emerald-500/60 hover:text-emerald-400 hover:bg-emerald-500/10 active:scale-95">
           <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
           </svg>
@@ -316,8 +329,7 @@
         <div class="relative" id="notification-container">
           <button id="notification-btn" type="button" aria-label="Notifications"
                   class="relative flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900 text-zinc-400 transition-all
-                         hover:border-emerald-500/60 hover:text-emerald-400 hover:bg-emerald-500/10
-                         active:scale-95">
+                         hover:border-emerald-500/60 hover:text-emerald-400 hover:bg-emerald-500/10 active:scale-95">
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
             </svg>
@@ -341,61 +353,64 @@
         </div>
       </div>
     </div>
-    
 
-   <!-- ========== MOBILE HEADER ========== -->
-<div class="mobile-header flex flex-col gap-2.5 py-2.5 md:hidden">
-  
-  <!-- Top row -->
-  <div class="flex items-center justify-between gap-3">   <!-- increased from gap-2 → gap-3 -->
-    <a href="/" class="flex shrink-0 items-center gap-2.5" aria-label="VocalWitness Home">
-      <div class="relative">
-        <div class="absolute -inset-1 rounded-xl bg-gradient-to-br from-emerald-500/40 to-teal-400/20 blur-sm"></div>
-        <img src="./logo.png" alt="VocalWitness" 
-             class="relative h-9 w-9 rounded-xl border border-emerald-500/40 object-cover">
+    <!-- ========== MOBILE HEADER ========== -->
+    <div class="mobile-header flex flex-col gap-2.5 py-2.5 md:hidden">
+      
+      <!-- Top Row -->
+      <div class="flex items-center justify-between gap-3">
+        <a href="/" class="flex shrink-0 items-center gap-2.5" aria-label="VocalWitness Home">
+          <div class="relative">
+            <div class="absolute -inset-1 rounded-xl bg-gradient-to-br from-emerald-500/40 to-teal-400/20 blur-sm"></div>
+            <img src="./logo.png" alt="VocalWitness" 
+                 class="relative h-9 w-9 rounded-xl border border-emerald-500/40 object-cover">
+          </div>
+          <div class="leading-tight">
+            <h1 class="text-[16px] font-extrabold tracking-tight">
+              <span class="text-emerald-400">Vocal</span><span class="text-white">Witness</span>
+            </h1>
+            <p class="text-[9px] font-semibold uppercase tracking-wider text-emerald-400/70">
+              Truth • Evidence
+            </p>
+          </div>
+        </a>
+
+        <div class="flex items-center gap-2.5">
+          <button id="openAuthModalBtnMobile" type="button"
+                  class="flex h-8 items-center gap-1.5 rounded-xl bg-white px-3 text-xs font-semibold text-zinc-900 transition-all
+                         hover:bg-emerald-400 active:scale-95"
+                  data-action="open-auth-modal">
+            <span data-i18n="joinBtn">Join</span>
+          </button>
+
+          <button id="userProfileBtnMobile" type="button"
+                  class="hidden h-8 w-8 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900 text-sm text-emerald-400 transition-all
+                         hover:border-emerald-500 hover:bg-emerald-500/10 active:scale-95"
+                  aria-label="Open profile">
+            👤
+          </button>
+        </div>
       </div>
-      <div class="leading-tight">
-        <h1 class="text-[16px] font-extrabold tracking-tight">
-          <span class="text-emerald-400">Vocal</span><span class="text-white">Witness</span>
-        </h1>
-        <p class="text-[9px] font-semibold uppercase tracking-wider text-emerald-400/70">
-          Truth • Evidence
-        </p>
-      </div>
-    </a>
 
-    <div class="flex items-center gap-2.5">   <!-- slightly more space between Join & Profile -->
-      <button id="openAuthModalBtnMobile" type="button"
-              class="flex h-8 items-center gap-1.5 rounded-xl bg-white px-3 text-xs font-semibold text-zinc-900 transition-all
-                     hover:bg-emerald-400 active:scale-95"
-              data-action="open-auth-modal">
-        <span data-i18n="joinBtn">Join</span>
-      </button>
-
-      <button id="userProfileBtnMobile" type="button"
-              class="hidden h-8 w-8 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900 text-sm text-emerald-400 transition-all
-                     hover:border-emerald-500 hover:bg-emerald-500/10 active:scale-95"
-              aria-label="Open profile">
-        👤
-      </button>
-    </div>
-  </div>
-      <!-- Bottom row -->
-      <div class="flex items-center justify-between gap-1.5 border-t border-zinc-800/60 pt-2">
+      <!-- Bottom Row -->
+      <div class="flex items-center justify-between gap-2 border-t border-zinc-800/60 pt-2">
+        
+        <!-- Left Group -->
         <div class="flex items-center gap-1.5">
           <select id="languageSelectMobile" aria-label="Language"
-        class="h-8 rounded-lg border border-zinc-700 bg-zinc-900 px-2 text-[11px] font-medium text-zinc-300">
-  <option value="en">English</option>
-  <option value="pcm">Pidgin</option>
-  <option value="sw">Swahili</option>
-  <option value="ha">Hausa</option>
-  <option value="yo">Yoruba</option>
-  <option value="ig">Igbo</option>
-  <option value="fr">French</option>
-  <option value="es">Spanish</option>
-  <option value="pt">Portuguese</option>
-  <option value="ar">Arabic</option>
-</select>
+                  class="h-8 rounded-lg border border-zinc-700 bg-zinc-900 px-2 text-[11px] font-medium text-zinc-300">
+            <option value="en" selected>English</option>
+            <option value="pcm">Naija Pidgin</option>
+            <option value="ha">Hausa</option>
+            <option value="yo">Yorùbá</option>
+            <option value="ig">Igbo</option>
+            <option value="sw">Swahili</option>
+            <option value="fr">Français</option>
+            <option value="es">Español</option>
+            <option value="pt">Português</option>
+            <option value="ar">العربية</option>
+          </select>
+
           <button id="openSupportModalBtnMobile" type="button"
                   class="h-8 rounded-lg border border-emerald-500/50 bg-emerald-500/10 px-2.5 text-[11px] font-semibold text-emerald-400 transition-all
                          hover:bg-emerald-500 hover:text-zinc-950 active:scale-95"
@@ -404,23 +419,27 @@
           </button>
         </div>
 
-        <button id="data-saver-btn-mobile" type="button"
-        class="flex h-8 items-center gap-1 rounded-lg border px-2 text-[10px] font-medium transition-all active:scale-95
-               border-zinc-700 bg-zinc-900 text-zinc-400">
-  <span id="data-saver-icon-mobile">⚡</span>
-  <span id="data-saver-status-mobile">Off</span>
-</button>
+        <!-- Right Group -->
+        <div class="flex items-center gap-1.5">
+          <button id="data-saver-btn-mobile" type="button"
+                  class="flex h-8 items-center gap-1 rounded-lg border border-zinc-700 bg-zinc-900 px-2 text-[10px] font-medium text-zinc-400 transition-all
+                         hover:border-zinc-500 hover:text-white active:scale-95">
+            <span id="data-saver-icon-mobile">⚡</span>
+            <span id="data-saver-status-mobile">Off</span>
+          </button>
 
           <button id="bookmarks-nav-btn-mobile" type="button" data-action="open-bookmarks"
-                  class="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-700 bg-zinc-900 text-zinc-400 hover:text-emerald-400">
+                  class="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-700 bg-zinc-900 text-zinc-400 transition-all
+                         hover:text-emerald-400 hover:border-emerald-500/60">
             <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
             </svg>
           </button>
 
           <div class="relative" id="notification-container-mobile">
-            <button id="notification-btn-mobile" type="button"
-                    class="relative flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-700 bg-zinc-900 text-zinc-400 hover:text-emerald-400">
+            <button id="notification-btn-mobile" type="button" aria-label="Notifications"
+                    class="relative flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-700 bg-zinc-900 text-zinc-400 transition-all
+                           hover:text-emerald-400 hover:border-emerald-500/60">
               <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
               </svg>
@@ -445,6 +464,7 @@
         </div>
       </div>
     </div>
+
   </div>
 </header>
 <!-- ====================== MAIN CONTAINER ====================== -->
