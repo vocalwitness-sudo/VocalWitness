@@ -459,37 +459,63 @@ main {
   scrollbar-color: #ffffff transparent;
 }
 
-/* ========== CUSTOM SCROLLBAR (Dark + Visible) ========== */
+/* ====================== THICK WHITE SCROLLBAR (all browsers) ====================== */
+
+/* Chrome, Edge, Safari, Opera */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 14px;
+  height: 14px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0b1120;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #334155;
-  border-radius: 9999px;
-  border: 2px solid #0b1120;
+  background: #ffffff;
+  border-radius: 7px;
+  border: 3px solid transparent;
+  background-clip: content-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #10b981;
+  background: #e5e5e5;
+  background-clip: content-box;
 }
 
 /* Firefox */
 * {
-  scrollbar-width: thin;
-  scrollbar-color: #334155 #0b1120;
+  scrollbar-width: auto;
+  scrollbar-color: #ffffff transparent;
 }
 
-svg {
-  max-width: 1.5rem;
-  max-height: 1.5rem;
+/* Better text selection */
+::selection {
+  background: rgba(16, 185, 129, 0.35);
+  color: #fff;
 }
 
+/* Smoother scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Prevent layout shift when scrollbar appears */
+html {
+  scrollbar-gutter: stable;
+}
+
+/* Slightly nicer card hover */
+.glass:hover,
+.card:hover {
+  border-color: rgba(16, 185, 129, 0.35);
+  transition: border-color 0.2s ease;
+}
+
+/* Make the publish button feel more premium */
+#postButton:active:not(:disabled) {
+  transform: scale(0.98);
+}
 /* ====================== SPLASH SCREEN ====================== */
 #app-splash-screen {
   position: fixed;
