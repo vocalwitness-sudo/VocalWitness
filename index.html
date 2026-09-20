@@ -216,7 +216,7 @@
   <div class="mx-auto max-w-6xl px-3 sm:px-5">
 
     <!-- ========== DESKTOP HEADER ========== -->
-    <div class="desktop-header hidden h-16 items-center justify-between gap-4 md:flex">
+    <div class="desktop-header hidden h-16 items-center gap-8 md:flex">
       
       <!-- Logo + Brand -->
       <a href="/" class="group flex shrink-0 items-center gap-3" aria-label="VocalWitness Home">
@@ -236,7 +236,7 @@
       </a>
 
       <!-- Right side controls -->
-      <div class="flex shrink-0 items-center gap-2">
+      <div class="flex shrink-0 items-center gap-3 ml-auto">
         
         <!-- Language -->
         <select id="languageSelect" aria-label="Language"
@@ -343,44 +343,43 @@
     </div>
     
 
-    <!-- ========== MOBILE HEADER ========== -->
-    <div class="mobile-header flex flex-col gap-2.5 py-2.5 md:hidden">
-      
-      <!-- Top row -->
-      <div class="flex items-center justify-between gap-2">
-        <a href="/" class="flex shrink-0 items-center gap-2.5" aria-label="VocalWitness Home">
-          <div class="relative">
-            <div class="absolute -inset-1 rounded-xl bg-gradient-to-br from-emerald-500/40 to-teal-400/20 blur-sm"></div>
-            <img src="./logo.png" alt="VocalWitness" 
-                 class="relative h-9 w-9 rounded-xl border border-emerald-500/40 object-cover">
-          </div>
-          <div class="leading-tight">
-            <h1 class="text-[16px] font-extrabold tracking-tight">
-              <span class="text-emerald-400">Vocal</span><span class="text-white">Witness</span>
-            </h1>
-            <p class="text-[9px] font-semibold uppercase tracking-wider text-emerald-400/70">
-              Truth • Evidence
-            </p>
-          </div>
-        </a>
-
-        <div class="flex items-center gap-2">
-          <button id="openAuthModalBtnMobile" type="button"
-                  class="flex h-8 items-center gap-1.5 rounded-xl bg-white px-3 text-xs font-semibold text-zinc-900 transition-all
-                         hover:bg-emerald-400 active:scale-95"
-                  data-action="open-auth-modal">
-            <span data-i18n="joinBtn">Join</span>
-          </button>
-
-          <button id="userProfileBtnMobile" type="button"
-                  class="hidden h-8 w-8 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900 text-sm text-emerald-400 transition-all
-                         hover:border-emerald-500 hover:bg-emerald-500/10 active:scale-95"
-                  aria-label="Open profile">
-            👤
-          </button>
-        </div>
+   <!-- ========== MOBILE HEADER ========== -->
+<div class="mobile-header flex flex-col gap-2.5 py-2.5 md:hidden">
+  
+  <!-- Top row -->
+  <div class="flex items-center justify-between gap-3">   <!-- increased from gap-2 → gap-3 -->
+    <a href="/" class="flex shrink-0 items-center gap-2.5" aria-label="VocalWitness Home">
+      <div class="relative">
+        <div class="absolute -inset-1 rounded-xl bg-gradient-to-br from-emerald-500/40 to-teal-400/20 blur-sm"></div>
+        <img src="./logo.png" alt="VocalWitness" 
+             class="relative h-9 w-9 rounded-xl border border-emerald-500/40 object-cover">
       </div>
+      <div class="leading-tight">
+        <h1 class="text-[16px] font-extrabold tracking-tight">
+          <span class="text-emerald-400">Vocal</span><span class="text-white">Witness</span>
+        </h1>
+        <p class="text-[9px] font-semibold uppercase tracking-wider text-emerald-400/70">
+          Truth • Evidence
+        </p>
+      </div>
+    </a>
 
+    <div class="flex items-center gap-2.5">   <!-- slightly more space between Join & Profile -->
+      <button id="openAuthModalBtnMobile" type="button"
+              class="flex h-8 items-center gap-1.5 rounded-xl bg-white px-3 text-xs font-semibold text-zinc-900 transition-all
+                     hover:bg-emerald-400 active:scale-95"
+              data-action="open-auth-modal">
+        <span data-i18n="joinBtn">Join</span>
+      </button>
+
+      <button id="userProfileBtnMobile" type="button"
+              class="hidden h-8 w-8 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900 text-sm text-emerald-400 transition-all
+                     hover:border-emerald-500 hover:bg-emerald-500/10 active:scale-95"
+              aria-label="Open profile">
+        👤
+      </button>
+    </div>
+  </div>
       <!-- Bottom row -->
       <div class="flex items-center justify-between gap-1.5 border-t border-zinc-800/60 pt-2">
         <div class="flex items-center gap-1.5">
