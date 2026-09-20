@@ -541,59 +541,6 @@ window.publishTestimony = async () => {
     };
 
     await addDoc(collection(db, 'testimonies'), testimonyData);
-
-    // ====================== SUCCESS STATE ======================
-    if (testimonyData.isZkVerified) {
-      showToast("🛡️ Report sealed with Zero-Knowledge proof", "success");
-    } else {
-      showToast("🛡️ Report sealed and published", "success");
-    }
-
-    // Show success UI
-    const successEl = document.getElementById('publish-success');
-    if (successEl) {
-      successEl.classList.remove('hidden');
-      if (postBtn) postBtn.classList.add('hidden');
-      
-      // Auto-hide after 4.5 seconds and restore form
-      setTimeout(() => {
-        successEl.classList.add('hidden');
-        if (postBtn) postBtn.classList.remove('hidden');
-        
-        // Reset form
-        if (titleInput) titleInput.value = '';
-        if (textarea) textarea.value = '';
-        if (typeof mediaModule?.resetMediaState === 'function') {
-          mediaModule.resetMediaState();
-        }
-        // Trigger state update
-        window.dispatchEvent(new CustomEvent('media-changed'));
-      }, 4500);
-    } else {
-      // Fallback reset
-      if (titleInput) titleInput.value = '';
-      if (textarea) textarea.value = '';
-      if (typeof mediaModule?.resetMediaState === 'function') {
-        mediaModule.resetMediaState();
-      }
-    }
-
-    if (typeof initFeed === 'function') {
-      initFeed(db, 'citizen-talk');
-    }
-
-  } catch (err) {
-    console.error('[publish] Fatal publishing error:', err);
-    showToast(err.message || 'Failed to publish report. Please try again.', 'error');
-  } finally {
-    window.__isPublishing = false;
-    if (postBtn) {
-      postBtn.disabled = false;
-      postBtn.classList.remove('opacity-75', 'cursor-not-allowed', 'scale-[0.98]');
-      postBtn.innerHTML = originalBtnHTML;
-    }
-  }
-};
     // ========== GENERATE ZK PROOF ==========
     let zkResult = {
       isFallback: true,
@@ -659,21 +606,46 @@ window.publishTestimony = async () => {
       lastTestimonyAt: serverTimestamp()
     }, { merge: true });
 
-    // Success toast
+    // ====================== SUCCESS STATE ======================
     if (testimonyData.isZkVerified) {
       showToast("🛡️ Report sealed with Zero-Knowledge proof", "success");
     } else {
       showToast("🛡️ Report sealed and published", "success");
     }
 
-    // Reset UI
-    if (titleInput) titleInput.value = '';
-    if (textarea) textarea.value = '';
-    if (typeof mediaModule?.resetMediaState === 'function') {
-      mediaModule.resetMediaState();
+    // Show success UI (preferred path)
+    const successEl = document.getElementById('publish-success');
+    if (successEl) {
+      successEl.classList.remove('hidden');
+      if (postBtn) postBtn.classList.add('hidden');
+
+      // Auto-hide after 4.5 seconds and restore form
+      setTimeout(() => {
+        successEl.classList.add('hidden');
+        if (postBtn) postBtn.classList.remove('hidden');
+
+        // Reset form
+        if (titleInput) titleInput.value = '';
+        if (textarea) textarea.value = '';
+        if (typeof mediaModule?.resetMediaState === 'function') {
+          mediaModule.resetMediaState();
+        }
+        const fileInputEl = document.getElementById('mediaInput') || document.querySelector('input[type="file"]');
+        if (fileInputEl) fileInputEl.value = '';
+
+        // Trigger state update
+        window.dispatchEvent(new CustomEvent('media-changed'));
+      }, 4500);
+    } else {
+      // Fallback reset
+      if (titleInput) titleInput.value = '';
+      if (textarea) textarea.value = '';
+      if (typeof mediaModule?.resetMediaState === 'function') {
+        mediaModule.resetMediaState();
+      }
+      const fileInputEl = document.getElementById('mediaInput') || document.querySelector('input[type="file"]');
+      if (fileInputEl) fileInputEl.value = '';
     }
-    const fileInputEl = document.getElementById('mediaInput') || document.querySelector('input[type="file"]');
-    if (fileInputEl) fileInputEl.value = '';
 
     if (typeof initFeed === 'function') {
       initFeed(db, 'citizen-talk');
@@ -684,7 +656,7 @@ window.publishTestimony = async () => {
     if (err.code === 'permission-denied') {
       showToast("Permission denied. Check console for exact rule failure.", "error");
     } else {
-      showToast("Failed to publish. See console.", "error");
+      showToast(err.message || "Failed to publish. See console.", "error");
     }
   } finally {
     window.__isPublishing = false;
@@ -695,7 +667,6 @@ window.publishTestimony = async () => {
     }
   }
 };
-
 /* ====================== EVIDENCE LEDGER ====================== */
 async function loadEvidenceLedger() {
   // Support both possible container IDs for compatibility
