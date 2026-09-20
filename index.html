@@ -545,8 +545,7 @@
       </div>
     </div>
   </div>
-
-  <!-- ========== PUBLIC SQUARE ========== -->
+<!-- ========== PUBLIC SQUARE ========== -->
   <section id="public-square" data-view="citizenTalkView" role="tabpanel">
     <div class="glass mb-10 rounded-3xl border border-zinc-800/80 p-6 shadow-xl sm:p-8">
       
@@ -574,21 +573,64 @@
         <span id="char-count" class="text-xs text-zinc-500 transition-colors duration-200">0 / 2000</span>
       </div>
 
-      <!-- Media Buttons - Prioritize Live Voice -->
+      <!-- ====================== MEDIA SECTION (unified & easy) ====================== -->
       <div class="space-y-4">
-        <!-- Primary Action: Live Voice Recording -->
-        <button id="btn-voice" type="button"
-                class="flex w-full items-center justify-center gap-3 rounded-2xl border-2 border-emerald-500 bg-emerald-500/15 px-5 py-4 text-base font-semibold text-emerald-400 transition-all
-                       hover:bg-emerald-500 hover:text-zinc-950
-                       active:scale-[0.98]">
-          <svg class="h-6 w-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z"/>
-          </svg>
-          <span>Record Live Voice</span>
-          <span class="ml-1 rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-medium text-emerald-300">Recommended</span>
-        </button>
 
-        <!-- Secondary Actions -->
+        <!-- LIVE VOICE – one clear block -->
+        <div id="voice-section" class="rounded-2xl border-2 border-emerald-500/40 bg-emerald-500/5 overflow-hidden">
+          
+          <!-- Main Record button -->
+          <button id="btn-voice" type="button"
+                  class="flex w-full items-center justify-center gap-3 px-5 py-4 text-base font-semibold text-emerald-400 transition-all
+                         hover:bg-emerald-500 hover:text-zinc-950
+                         active:scale-[0.98]">
+            <svg class="h-6 w-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z"/>
+            </svg>
+            <span>Record Live Voice</span>
+            <span class="ml-1 rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-medium text-emerald-300">Recommended</span>
+          </button>
+
+          <!-- Recording controls appear right under the button -->
+          <div id="voice-recorder-bar" class="hidden border-t border-emerald-500/20 bg-zinc-900/70 p-4">
+            <div class="flex flex-wrap items-center gap-3">
+              <div class="flex min-w-[70px] items-center gap-2">
+                <span id="rec-indicator" class="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500"></span>
+                <span id="rec-timer" class="font-mono text-sm text-emerald-400">00:00</span>
+              </div>
+
+              <button id="verify-voice-btn" type="button"
+                      class="rounded-xl bg-blue-600/80 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-600">
+                🛡️ Verify
+              </button>
+
+              <canvas id="rec-waveform" width="180" height="36" class="max-w-[200px] flex-1 rounded bg-zinc-950"></canvas>
+
+              <div class="ml-auto flex items-center gap-2">
+                <button id="rec-pause-btn" type="button"
+                        class="rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700">
+                  ⏸ Pause
+                </button>
+                <button id="rec-stop-btn" type="button"
+                        class="rounded-xl bg-red-600/80 px-3 py-1.5 text-xs text-white hover:bg-red-600">
+                  ⏹ Stop
+                </button>
+                <button id="rec-replay-btn" type="button"
+                        class="hidden rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700">
+                  ↻ Replay
+                </button>
+              </div>
+            </div>
+            <audio id="rec-replay-audio" class="hidden"></audio>
+          </div>
+
+          <!-- Mic-blocked message (lives inside the same block) -->
+          <div id="mic-permission-msg" class="hidden border-t border-amber-500/20 bg-amber-950/30 p-4 text-xs text-amber-200">
+            <!-- filled by media.js -->
+          </div>
+        </div>
+
+        <!-- Photo + Video (secondary) -->
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <button id="btn-photo" type="button"
                   class="flex items-center justify-center gap-2.5 rounded-2xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 font-medium text-emerald-400 transition-all
@@ -598,7 +640,6 @@
             </svg>
             Add Photo
           </button>
-
           <button id="btn-video" type="button"
                   class="flex items-center justify-center gap-2.5 rounded-2xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 font-medium text-sky-400 transition-all
                          hover:border-sky-500 hover:bg-zinc-800">
@@ -609,7 +650,7 @@
           </button>
         </div>
 
-        <!-- Upload existing audio (secondary) -->
+        <!-- Upload existing audio (quiet secondary) -->
         <div class="text-center">
           <button id="btn-upload-audio" type="button"
                   class="text-sm text-zinc-400 underline-offset-2 hover:text-emerald-400 hover:underline transition">
@@ -618,45 +659,12 @@
         </div>
       </div>
 
-      <!-- Preview -->
+      <!-- Preview area stays after the media section -->
       <div id="preview-area" class="mt-5 flex min-h-[110px] flex-wrap items-center justify-center gap-4 rounded-2xl border border-dashed border-zinc-700 bg-zinc-900/50 p-5 text-sm text-zinc-500">
         <div id="preview-empty" class="text-center">
           <p>Preview will appear here...</p>
           <p class="mt-1 text-xs text-zinc-600">Live voice, photos, videos or uploaded audio will show here</p>
         </div>
-      </div>
-
-      <!-- Voice Recorder Bar -->
-      <div id="voice-recorder-bar" class="mt-4 hidden rounded-2xl border border-emerald-500/30 bg-zinc-900/60 p-4">
-        <div class="flex flex-wrap items-center gap-3">
-          <div class="flex min-w-[70px] items-center gap-2">
-            <span id="rec-indicator" class="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500"></span>
-            <span id="rec-timer" class="font-mono text-sm text-emerald-400">00:00</span>
-          </div>
-
-          <button id="verify-voice-btn" type="button"
-                  class="rounded-xl bg-blue-600/80 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-600">
-            🛡️ Verify
-          </button>
-
-          <canvas id="rec-waveform" width="180" height="36" class="max-w-[200px] flex-1 rounded bg-zinc-950"></canvas>
-
-          <div class="ml-auto flex items-center gap-2">
-            <button id="rec-pause-btn" type="button"
-                    class="rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700">
-              ⏸ Pause
-            </button>
-            <button id="rec-stop-btn" type="button"
-                    class="rounded-xl bg-red-600/80 px-3 py-1.5 text-xs text-white hover:bg-red-600">
-              ⏹ Stop
-            </button>
-            <button id="rec-replay-btn" type="button"
-                    class="hidden rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700">
-              ↻ Replay
-            </button>
-          </div>
-        </div>
-        <audio id="rec-replay-audio" class="hidden"></audio>
       </div>
 
       <!-- Publish Button (starts disabled) -->
