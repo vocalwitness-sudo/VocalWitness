@@ -626,3 +626,18 @@ footer .grid {
 #data-saver-btn-mobile {
   transition: all 0.2s ease;
 }
+
+.ticker-track {
+  display: inline-flex;          /* or inline-block */
+  animation: ticker-scroll 45s linear infinite;
+  will-change: transform;
+}
+
+.ticker-wrap:hover .ticker-track {
+  animation-play-state: paused;
+}
+
+@keyframes ticker-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
