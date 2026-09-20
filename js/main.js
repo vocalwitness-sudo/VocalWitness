@@ -148,7 +148,6 @@ const ALL_TAB_STYLE_CLASSES = [
   ])
 ];
 
-let isSwitchingTab = false;
 
 window.switchTab = async function (tab) {
   if (isSwitchingTab) return;
