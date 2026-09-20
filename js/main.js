@@ -823,24 +823,83 @@ async function fetchCuratedNews() {
     const data = await res.json();
 
     if (data.status === 'ok' && Array.isArray(data.items) && data.items.length > 0) {
-      const headlines = data.items.slice(0, 8).map(item => {
-        const safeTitle = escapeHtml(item.title || '');
-        return `<span class="ticker-item"><strong class="text-emerald-400">•</strong> ${safeTitle}</span>`;
-      }).join(' &nbsp;&nbsp;&nbsp; ');
+      const headlines = data.items
+        .slice(0, 8)
+        .map(item => {
+          const safeTitle = escapeHtml(item.title || '');
+          return `<span class="ticker-item"><strong class="text-emerald-400">•</strong> ${safeTitle}</span>`;
+        })
+        .join('&nbsp;&nbsp;&nbsp;&nbsp;');
 
-      tickerEl.innerHTML = headlines;
+      // Duplicate the content → this is what makes the infinite scroll seamless
+      tickerEl.innerHTML = headlines + '&nbsp;&nbsp;&nbsp;&nbsp;' + headlines;
+
+      // Optional: restart animation cleanly (helps on some browsers)
+      tickerEl.style.animation = 'none';
+      tickerEl.offsetHeight; // trigger reflow
+      tickerEl.style.animation = '';
+
       return;
     }
 
     throw new Error('Malformed RSS payload');
   } catch (err) {
     console.warn("[Ticker] Fallback active:", err.message);
-    tickerEl.innerHTML = `
+
+    const fallback = `
       <span class="ticker-item text-slate-400">
         🛡️ Public Square active • Zero-knowledge ledger online • Standby for live updates
       </span>`;
+
+    // Also duplicate the fallback so it still scrolls
+    tickerEl.innerHTML = fallback + '&nbsp;&nbsp;&nbsp;&nbsp;' + fallback;
   }
 }
+const focusMessages = [
+  {
+    title: "Social citizen journalism.",
+    text: "Anyone can report — only sealed records stay public."
+  },
+  {
+    title: "Zero-Knowledge sealed.",
+    text: "Your identity stays private while the evidence stays verifiable."
+  },
+  {
+    title: "Record Live Voice recommended.",
+    text: "Audio evidence is harder to fake and carries higher weight."
+  },
+  {
+    title: "Forensic hashes enabled.",
+    text: "Every media file is cryptographically fingerprinted on upload."
+  },
+  {
+    title: "Public Square is live.",
+    text: "Browse verified citizen reports from around the world."
+  }
+];
+
+let focusIndex = 0;
+
+function rotateFocusBanner() {
+  const el = document.getElementById('focus-banner-text');
+  if (!el) return;
+
+  el.style.opacity = '0';
+
+  setTimeout(() => {
+    const msg = focusMessages[focusIndex];
+    el.innerHTML = `
+      <span class="font-medium text-emerald-300">${msg.title}</span>
+      <span class="text-zinc-400"> ${msg.text}</span>
+    `;
+    el.style.opacity = '1';
+    focusIndex = (focusIndex + 1) % focusMessages.length;
+  }, 300);
+}
+
+// Rotate every 8 seconds
+setInterval(rotateFocusBanner, 8000);
+
 
 /* ====================== UTILITIES ====================== */
 function escapeHtml(str) {
