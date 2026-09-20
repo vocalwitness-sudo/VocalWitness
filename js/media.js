@@ -382,6 +382,11 @@ export async function toggleVoiceRecording(voiceBtn) {
       selectedVideoFile = null;
       selectedAudioFile = null;
 
+      // Clear any previous blocked message right before starting
+      if (typeof showMicPermissionMsg === 'function') {
+        showMicPermissionMsg(null);
+      }
+
       await engineInstance.startVoiceRecording(300000);
 
       voiceBtn?.classList.add('recording-active', 'animate-pulse');
@@ -483,6 +488,11 @@ export async function toggleVoiceRecording(voiceBtn) {
     const audioEl = document.getElementById('rec-replay-audio');
     if (audioEl) audioEl.src = replayUrl;
     if (replayBtn) replayBtn.classList.remove('hidden');
+
+    // Clear mic permission message if any remains
+    if (typeof showMicPermissionMsg === 'function') {
+      showMicPermissionMsg(null);
+    }
 
     showToast('✅ Recording saved. You can replay or publish.', 'success');
   }
