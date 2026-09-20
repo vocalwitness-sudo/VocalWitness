@@ -620,3 +620,9 @@ footer .grid {
   background-color: #10b981 !important;
   color: #000 !important;
 }
+
+/* Data Saver button smooth transition */
+#data-saver-btn,
+#data-saver-btn-mobile {
+  transition: all 0.2s ease;
+}
