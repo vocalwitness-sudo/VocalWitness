@@ -448,41 +448,44 @@
   </div>
 </header>
 <!-- ====================== MAIN CONTAINER ====================== -->
-<main id="main-content" class="mx-auto max-w-6xl px-4 pb-16 pt-6 sm:px-6">
+<main id="main-content" class="mx-auto max-w-6xl px-4 pb-16 pt-24 sm:px-6">
 
-<!-- Breaking Ticker -->
-<div class="ticker-wrap relative overflow-hidden rounded-2xl border border-emerald-500/20 bg-zinc-900/80">
-  <!-- Fixed label -->
-  <div class="absolute bottom-0 left-0 top-0 z-20 flex items-center border-r border-emerald-500/20 bg-zinc-900 px-4">
-    <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">⚡ Breaking</span>
-  </div>
+  <!-- Breaking + Banner + Search -->
+  <div class="mb-6 space-y-4">
 
-  <!-- Scrolling track -->
-  <div class="overflow-hidden whitespace-nowrap py-3 pl-28">
-    <div id="ticker-content" class="ticker-track inline-flex will-change-transform" aria-live="polite">
-      <!-- JS will inject duplicated items here -->
-      <span class="ticker-item px-8">Loading latest headlines...</span>
+    <!-- Breaking Ticker -->
+    <div class="ticker-wrap relative overflow-hidden rounded-2xl border border-emerald-500/20 bg-zinc-900/80">
+      <!-- Fixed label -->
+      <div class="absolute bottom-0 left-0 top-0 z-20 flex items-center border-r border-emerald-500/20 bg-zinc-900 px-4">
+        <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">⚡ Breaking</span>
+      </div>
+
+      <!-- Scrolling track -->
+      <div class="overflow-hidden whitespace-nowrap py-3 pl-28">
+        <div id="ticker-content" class="ticker-track inline-flex will-change-transform" aria-live="polite">
+          <span class="ticker-item px-8">Loading latest headlines...</span>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
-  <!-- Focus Banner -->
-<div id="focus-banner" class="flex items-center gap-3 rounded-xl border border-emerald-500/25 bg-gradient-to-r from-emerald-950/40 to-zinc-900/60 px-4 py-3 text-sm shadow-lg shadow-emerald-900/10">
-  <span class="shrink-0 text-lg">🎯</span>
-  
-  <div class="min-w-0 flex-1 overflow-hidden">
-    <p id="focus-banner-text" class="leading-snug text-zinc-300 transition-opacity duration-300">
-      <span class="font-medium text-emerald-300">Social citizen journalism.</span>
-      <span class="text-zinc-400"> Anyone can report — only sealed records stay public.</span>
-    </p>
-  </div>
 
-  <button type="button" id="dismiss-focus-banner" 
-          class="shrink-0 rounded-lg p-1.5 text-zinc-500 transition hover:bg-zinc-800 hover:text-white"
-          aria-label="Dismiss">
-    ✕
-  </button>
-</div>
-  
+    <!-- Focus Banner -->
+    <div id="focus-banner" class="flex items-center gap-3 rounded-xl border border-emerald-500/25 bg-gradient-to-r from-emerald-950/40 to-zinc-900/60 px-4 py-3 text-sm shadow-lg shadow-emerald-900/10">
+      <span class="shrink-0 text-lg">🎯</span>
+      
+      <div class="min-w-0 flex-1 overflow-hidden">
+        <p id="focus-banner-text" class="leading-snug text-zinc-300 transition-opacity duration-300">
+          <span class="font-medium text-emerald-300">Social citizen journalism.</span>
+          <span class="text-zinc-400"> Anyone can report — only sealed records stay public.</span>
+        </p>
+      </div>
+
+      <button type="button" id="dismiss-focus-banner" 
+              class="shrink-0 rounded-lg p-1.5 text-zinc-500 transition hover:bg-zinc-800 hover:text-white"
+              aria-label="Dismiss">
+        ✕
+      </button>
+    </div>
+    
     <!-- Search -->
     <div class="relative">
       <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-zinc-500">
@@ -495,6 +498,7 @@
              class="w-full rounded-2xl border border-zinc-700 bg-zinc-900/80 py-3.5 pl-11 pr-4 text-sm text-white placeholder-zinc-500 transition focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/20"
              autocomplete="off" aria-label="Search reports, news, hashtags, or people">
     </div>
+
   </div>
 
   <!-- Main Navigation Tabs -->
