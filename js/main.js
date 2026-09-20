@@ -256,38 +256,58 @@ function wireTabButtons() {
 function initMoreMenu() {
   const moreBtn = document.getElementById('more-btn');
   const moreMenu = document.getElementById('more-menu');
-  if (!moreBtn || !moreMenu) return;
-  if (moreBtn.dataset.moreWired === 'true') return;
+
+  if (!moreBtn || !moreMenu) {
+    console.warn('[more-menu] #more-btn or #more-menu not found in DOM');
+    return;
+  }
+
+  // Prevent double-wiring
+  if (moreBtn.dataset.moreWired === 'true') {
+    console.log('[more-menu] Already wired – skipping');
+    return;
+  }
   moreBtn.dataset.moreWired = 'true';
 
   const setOpen = (open) => {
     moreMenu.classList.toggle('hidden', !open);
     moreBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+
+    // Rotate chevron for visual feedback
+    const chevron = moreBtn.querySelector('svg');
+    if (chevron) {
+      chevron.style.transition = 'transform 0.2s ease';
+      chevron.style.transform = open ? 'rotate(180deg)' : 'rotate(0deg)';
+    }
+
+    console.log('[more-menu] setOpen →', open);
   };
 
-  moreBtn.setAttribute('aria-haspopup', 'true');
-  moreBtn.setAttribute('aria-expanded', 'false');
-
+  // Toggle on click
   moreBtn.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
-    setOpen(moreMenu.classList.contains('hidden'));
+    const isHidden = moreMenu.classList.contains('hidden');
+    console.log('[more-menu] button clicked, currently hidden?', isHidden);
+    setOpen(isHidden);
   });
 
-  // Outside click
+  // Close when clicking outside
   document.addEventListener('click', (e) => {
     if (moreMenu.classList.contains('hidden')) return;
     if (moreMenu.contains(e.target) || moreBtn.contains(e.target)) return;
     setOpen(false);
   });
 
-  // Escape closes menu
+  // Close on Escape
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && !moreMenu.classList.contains('hidden')) {
       setOpen(false);
       moreBtn.focus();
     }
   });
+
+  console.log('[more-menu] Successfully initialized');
 }
 
 function initHashRouting() {
