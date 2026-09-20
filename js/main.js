@@ -53,62 +53,84 @@ function getDataSaverState() {
 }
 
 function updateDataSaverUI(isOn) {
-  const statusText = isOn ? 'On' : 'Off';
-
+  // Update every status text
   ['data-saver-status', 'data-saver-status-mobile', 'footer-data-saver-status'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
-    el.textContent = statusText;
-    el.classList.toggle('text-emerald-400', isOn);
-    el.classList.toggle('text-zinc-300', !isOn);
-    el.classList.toggle('font-bold', isOn);
+    el.textContent = isOn ? 'On' : 'Off';
   });
 
-  // Visual feedback on buttons
+  // Desktop button
   const desktopBtn = document.getElementById('data-saver-btn');
   if (desktopBtn) {
-    desktopBtn.classList.toggle('border-emerald-500', isOn);
-    desktopBtn.classList.toggle('bg-emerald-950/40', isOn);
-    desktopBtn.classList.toggle('border-zinc-700', !isOn);
-    desktopBtn.classList.toggle('bg-zinc-900', !isOn);
+    if (isOn) {
+      desktopBtn.className = desktopBtn.className
+        .replace(/border-zinc-700|bg-zinc-900|text-zinc-400/g, '')
+        .trim() + ' border-emerald-500 bg-emerald-950/50 text-emerald-400';
+    } else {
+      desktopBtn.className = desktopBtn.className
+        .replace(/border-emerald-500|bg-emerald-950\/50|text-emerald-400/g, '')
+        .trim() + ' border-zinc-700 bg-zinc-900 text-zinc-400';
+    }
   }
 
+  // Mobile button (if exists)
   const mobileBtn = document.getElementById('data-saver-btn-mobile');
   if (mobileBtn) {
-    mobileBtn.classList.toggle('border-emerald-500', isOn);
-    mobileBtn.classList.toggle('bg-emerald-950/40', isOn);
-    mobileBtn.classList.toggle('text-emerald-400', isOn);
-    mobileBtn.classList.toggle('border-zinc-700', !isOn);
-    mobileBtn.classList.toggle('bg-zinc-900', !isOn);
-    mobileBtn.classList.toggle('text-zinc-300', !isOn);
+    if (isOn) {
+      mobileBtn.className = mobileBtn.className
+        .replace(/border-zinc-700|bg-zinc-900|text-zinc-300|text-zinc-400/g, '')
+        .trim() + ' border-emerald-500 bg-emerald-950/50 text-emerald-400';
+    } else {
+      mobileBtn.className = mobileBtn.className
+        .replace(/border-emerald-500|bg-emerald-950\/50|text-emerald-400/g, '')
+        .trim() + ' border-zinc-700 bg-zinc-900 text-zinc-400';
+    }
+  }
+
+  // Optional: change the lightning icon colour
+  const icon = document.getElementById('data-saver-icon');
+  if (icon) {
+    icon.className = isOn ? 'text-emerald-400' : 'text-zinc-400';
   }
 }
 
 function initDataSaver() {
+  // Set initial state
   updateDataSaverUI(getDataSaverState());
 
+  // Wire buttons (only once)
   ['data-saver-btn', 'data-saver-btn-mobile'].forEach(id => {
     const btn = document.getElementById(id);
-    if (!btn || btn.dataset.wired) return;
+    if (!btn || btn.dataset.wired === 'true') return;
     btn.dataset.wired = 'true';
 
     btn.addEventListener('click', () => {
       const next = !getDataSaverState();
       localStorage.setItem(DATA_SAVER_KEY, String(next));
       updateDataSaverUI(next);
-      showToast?.(`Data Saver ${next ? 'Enabled' : 'Disabled'}`, 'success');
-      window.dispatchEvent(new CustomEvent('data-saver-changed', { detail: { enabled: next } }));
+
+      // Clear, relevant toast only
+      if (typeof showToast === 'function') {
+        showToast(next ? 'Data Saver turned ON' : 'Data Saver turned OFF', 'info');
+      }
+
+      window.dispatchEvent(new CustomEvent('data-saver-changed', {
+        detail: { enabled: next }
+      }));
     });
   });
 }
 
+// Global helper (for footer or other places)
 window.toggleDataSaver = function () {
   const next = !getDataSaverState();
   localStorage.setItem(DATA_SAVER_KEY, String(next));
   updateDataSaverUI(next);
-  showToast?.(`Data Saver ${next ? 'Enabled' : 'Disabled'}`, 'success');
+  if (typeof showToast === 'function') {
+    showToast(next ? 'Data Saver turned ON' : 'Data Saver turned OFF', 'info');
+  }
 };
-
 /* ====================== TAB SWITCHING ====================== */
 const TAB_TO_SECTION = {
   square:   'public-square',
