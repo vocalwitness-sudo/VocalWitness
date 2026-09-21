@@ -35,7 +35,7 @@
         <p class="text-xs text-zinc-500 mt-2">Trust metrics, hash-chain health, disputes, and operator accountability</p>
     </div>
 
-    <!-- Batch 5: Trust model metrics -->
+    <!-- Trust model metrics -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10" id="trustStatsContainer">
         <div class="glass rounded-3xl p-6 text-center">
             <div class="text-3xl font-bold text-zinc-500">—</div>
@@ -77,7 +77,7 @@
             <span class="text-xs bg-zinc-900 text-zinc-400 border border-zinc-700 px-3 py-1 rounded-full">Density pilot</span>
         </div>
         <p class="text-sm text-zinc-400 mb-4">
-            Batch 5 geographic density: seed real witnesses in 1–2 cities, measure sealed reports and challenges there first.
+            Geographic density pilot: seed real witnesses in 1–2 cities, measure sealed reports and challenges there first.
         </p>
         <div id="densityRegions" class="flex flex-wrap gap-2 text-xs mb-4">
             <span class="px-3 py-1.5 rounded-full border border-emerald-800 bg-emerald-950 text-emerald-300 font-medium">Lagos, NG</span>
@@ -254,32 +254,32 @@
         try {
             const m = await getTransparencyMetrics();
             const chainLabel =
-                m.chain.status === 'HEALTHY'
+                m.chain?.status === 'HEALTHY'
                     ? 'Healthy'
-                    : m.chain.status === 'BREAKS_DETECTED'
+                    : m.chain?.status === 'BREAKS_DETECTED'
                       ? 'Breaks'
-                      : m.chain.status === 'HEALTHY_SHORT'
+                      : m.chain?.status === 'HEALTHY_SHORT'
                         ? 'OK (short)'
-                        : m.chain.status || '—';
+                        : m.chain?.status || '—';
 
-            const chainClass = m.chain.ok ? 'text-emerald-400' : 'text-red-400';
+            const chainClass = m.chain?.ok ? 'text-emerald-400' : 'text-red-400';
 
             if (trustEl) {
                 trustEl.innerHTML = `
                     <div class="glass rounded-3xl p-6 text-center">
                         <div class="text-4xl font-bold text-emerald-400">${Number(m.sealedReports || 0).toLocaleString()}</div>
-                        <div class="text-sm text-zinc-400 mt-2">Sealed reports <span class="text-zinc-600">(sample)</span></div>
+                        <div class="text-sm text-zinc-400 mt-2">Sealed reports</div>
                     </div>
                     <div class="glass rounded-3xl p-6 text-center">
                         <div class="text-3xl font-bold ${chainClass}">${escapeHtml(chainLabel)}</div>
-                        <div class="text-sm text-zinc-400 mt-2">Hash-chain · ${m.chain.checked || 0} checked${m.chain.breaks ? ` · ${m.chain.breaks} break(s)` : ''}</div>
+                        <div class="text-sm text-zinc-400 mt-2">Hash-chain · ${m.chain?.checked || 0} checked${m.chain?.breaks ? ` · ${m.chain.breaks} break(s)` : ''}</div>
                     </div>
                     <div class="glass rounded-3xl p-6 text-center">
-                        <div class="text-4xl font-bold text-amber-400">${Number(m.disputes.open || 0).toLocaleString()}</div>
+                        <div class="text-4xl font-bold text-amber-400">${Number(m.disputes?.open || 0).toLocaleString()}</div>
                         <div class="text-sm text-zinc-400 mt-2">Open disputes</div>
                     </div>
                     <div class="glass rounded-3xl p-6 text-center">
-                        <div class="text-4xl font-bold text-white">${Number(m.disputes.upheld || 0).toLocaleString()} <span class="text-zinc-600">/</span> ${Number(m.disputes.rejected || 0).toLocaleString()}</div>
+                        <div class="text-4xl font-bold text-white">${Number(m.disputes?.upheld || 0).toLocaleString()} <span class="text-zinc-600">/</span> ${Number(m.disputes?.rejected || 0).toLocaleString()}</div>
                         <div class="text-sm text-zinc-400 mt-2">Upheld / Rejected</div>
                     </div>
                 `;
@@ -288,15 +288,15 @@
             if (disputeEl) {
                 disputeEl.innerHTML = `
                     <ul class="grid grid-cols-2 gap-3 text-zinc-400">
-                        <li class="bg-zinc-950/50 border border-zinc-800 rounded-xl p-3">Open: <span class="text-white font-semibold">${m.disputes.open || 0}</span></li>
-                        <li class="bg-zinc-950/50 border border-zinc-800 rounded-xl p-3">Total: <span class="text-white font-semibold">${m.disputes.total || 0}</span></li>
-                        <li class="bg-zinc-950/50 border border-zinc-800 rounded-xl p-3">Upheld: <span class="text-amber-300 font-semibold">${m.disputes.upheld || 0}</span></li>
-                        <li class="bg-zinc-950/50 border border-zinc-800 rounded-xl p-3">Rejected: <span class="text-emerald-300 font-semibold">${m.disputes.rejected || 0}</span></li>
+                        <li class="bg-zinc-950/50 border border-zinc-800 rounded-xl p-3">Open: <span class="text-white font-semibold">${m.disputes?.open || 0}</span></li>
+                        <li class="bg-zinc-950/50 border border-zinc-800 rounded-xl p-3">Total: <span class="text-white font-semibold">${m.disputes?.total || 0}</span></li>
+                        <li class="bg-zinc-950/50 border border-zinc-800 rounded-xl p-3">Upheld: <span class="text-amber-300 font-semibold">${m.disputes?.upheld || 0}</span></li>
+                        <li class="bg-zinc-950/50 border border-zinc-800 rounded-xl p-3">Rejected: <span class="text-emerald-300 font-semibold">${m.disputes?.rejected || 0}</span></li>
                     </ul>
                 `;
             }
 
-            if (chainHeadEl && m.chain.headHash) {
+            if (chainHeadEl && m.chain?.headHash) {
                 chainHeadEl.classList.remove('hidden');
                 chainHeadEl.textContent = `Chain head (newest forensicHash): ${m.chain.headHash}`;
             }
@@ -314,7 +314,9 @@
             }
         } catch (e) {
             console.error('Trust metrics error:', e);
-            if (trustEl) trustEl.innerHTML = `<div class="col-span-full text-center text-red-400 text-sm">Unable to load trust metrics.</div>`;
+            if (trustEl) {
+                trustEl.innerHTML = `<div class="col-span-full text-center text-red-400 text-sm py-6">Unable to load trust metrics right now.</div>`;
+            }
             if (disputeEl) disputeEl.textContent = 'Dispute metrics unavailable.';
         }
     }
@@ -469,8 +471,7 @@
     }
 
     document.getElementById('cancelAppealBtn')?.addEventListener('click', () => {
-        const modal = document.getElementById('appealModal');
-        if (modal) modal.classList.add('hidden');
+        document.getElementById('appealModal')?.classList.add('hidden');
     });
 
     document.getElementById('submitAppealBtn')?.addEventListener('click', async () => {
@@ -497,7 +498,7 @@
         }
     });
 
-    // Refresh metrics on offline sync events broadcast from js/db.js
+    // Refresh metrics when new posts arrive
     window.addEventListener('vocalWitness:posted', () => {
         loadTrustMetrics();
         loadChallengesTable();
