@@ -17,7 +17,7 @@ import {
   onSnapshot
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
-import { showToast } from './utils.js';
+import { showToast, escapeHTML } from './utils.js';
 import {
   getCurrentUserTier,
   getUserVotingWeight,
@@ -29,16 +29,21 @@ import { generateRigorousProof } from './zk-crypto.js';
 import { logSecurityAudit } from './audit.js';
 import { generateZKProofAsync } from './zk-client.js';
 
-// Constant Thresholds
+// Constant Thresholds and Governance Security Parameters
 export const MINIMUM_MULTISIG_THRESHOLD = 3;
+export const MAX_VOTING_BUDGET_POINTS = 25;
+export const BASE_REPUTATION_REWARD = 15;
 
-// Quadratic Voting Cost Formula
+/**
+ * Compute Quadratic Voting Cost based on strength level
+ * Formula: cost = strength^2
+ */
 function quadraticCost(strength) {
   return strength * strength;
 }
 
 /**
- * Record Testimony Contribution (awards credibility score)
+ * Record Testimony Contribution and award credibility score points
  */
 export async function recordTestimonyContribution() {
   if (!auth.currentUser) return;
@@ -49,19 +54,19 @@ export async function recordTestimonyContribution() {
       const data = snap.data();
       const currentRep = data.credibilityScore || data.reputation || 0;
       await updateDoc(userRef, {
-        credibilityScore: currentRep + 15,
-        reputation: currentRep + 15,
+        credibilityScore: currentRep + BASE_REPUTATION_REWARD,
+        reputation: currentRep + BASE_REPUTATION_REWARD,
         lastContribution: serverTimestamp()
       });
-      console.log("✅ +15 Reputation for testimony");
+      console.log("✅ +15 Reputation awarded for verified testimony contribution");
     }
   } catch (e) {
-    console.warn("Reputation update failed:", e);
+    console.warn("Reputation update operation failed during testimony recording:", e);
   }
 }
 
 /**
- * Small reputation reward for governance participation
+ * Award reputation points for active governance participation
  */
 async function awardGovernanceRep(points = 5) {
   if (!auth.currentUser) return;
@@ -77,15 +82,15 @@ async function awardGovernanceRep(points = 5) {
       lastGovernanceAction: serverTimestamp()
     });
   } catch (e) {
-    console.warn("Governance reputation update failed:", e);
+    console.warn("Governance reputation update operation failed:", e);
   }
 }
 
 /**
- * Create DAO Proposal (Witness Circle or Admin/Moderator)
+ * Create DAO Proposal (Witness Circle, Stewards, or Authorized Moderators)
  */
 export async function createDAOProposal(title, description, category = 'governance') {
-  if (!auth.currentUser) return showToast("Sign in required", "error");
+  if (!auth.currentUser) return showToast("Sign in required to initiate proposals", "error");
 
   try {
     const tier = await getCurrentUserTier();
@@ -97,7 +102,7 @@ export async function createDAOProposal(title, description, category = 'governan
       ['admin', 'moderator', 'steward'].includes(userData.role);
 
     if (!canCreate) {
-      return showToast("Only Witness Circle members or Stewards can create proposals", "error");
+      return showToast("Only Witness Circle members or authorized Stewards can create proposals", "error");
     }
 
     const proposalRef = await addDoc(collection(db, "dao_proposals"), {
@@ -124,20 +129,20 @@ export async function createDAOProposal(title, description, category = 'governan
       category
     });
 
-    showToast("✅ DAO Proposal created", "success");
+    showToast("✅ DAO Proposal created successfully", "success");
     return proposalRef.id;
   } catch (e) {
-    console.error("Proposal creation error:", e);
-    showToast("Failed to create proposal", "error");
+    console.error("Proposal creation encountered an error:", e);
+    showToast("Failed to create proposal due to network or permission error", "error");
     return null;
   }
 }
 
 /**
- * Create a Moderation Appeal proposal
+ * Create a Community Moderation Appeal proposal linked to a specific post ID
  */
 export async function createModerationAppeal(postId, reason, originalDecision = 'purged') {
-  if (!auth.currentUser) return showToast("Sign in required", "error");
+  if (!auth.currentUser) return showToast("Sign in required to file an appeal", "error");
 
   try {
     const title = `Appeal: ${originalDecision.toUpperCase()} decision on post ${postId.substring(0, 8)}…`;
@@ -152,26 +157,26 @@ export async function createModerationAppeal(postId, reason, originalDecision = 
     }
     return proposalId;
   } catch (e) {
-    console.error("Moderation appeal error:", e);
-    showToast("Failed to create appeal", "error");
+    console.error("Moderation appeal creation error:", e);
+    showToast("Failed to create moderation appeal", "error");
     return null;
   }
 }
 
 /**
- * Cast Quadratic Vote
+ * Cast Quadratic Vote with cryptographic validation and voting power calculation
  */
 export async function castQuadraticVote(proposalId, direction, strength = 1, proofContext = {}) {
-  if (!auth.currentUser) return showToast("Sign in required", "error");
-  if (strength < 1 || strength > 5) return showToast("Strength must be between 1-5", "error");
+  if (!auth.currentUser) return showToast("Sign in required to cast votes", "error");
+  if (strength < 1 || strength > 5) return showToast("Strength parameters must range between 1 and 5", "error");
   if (!['for', 'against'].includes(direction)) {
-    return showToast("Invalid vote direction", "error");
+    return showToast("Invalid vote direction specified", "error");
   }
 
   const userId = auth.currentUser.uid;
   const userRef = doc(db, "users", userId);
   const userSnap = await getDoc(userRef);
-  if (!userSnap.exists()) return showToast("User profile not found", "error");
+  if (!userSnap.exists()) return showToast("User profile record not found", "error");
 
   const userData = userSnap.data();
   const userReputation = userData.credibilityScore || userData.reputation || 0;
@@ -181,28 +186,28 @@ export async function castQuadraticVote(proposalId, direction, strength = 1, pro
       const hasPermission = await requireCitizenCirclePermission();
       if (!hasPermission) return;
     } else {
-      return showToast("Account must be phone verified or have 10+ REP to vote", "error");
+      return showToast("Account must be phone verified or maintain 10+ credibility score to vote", "error");
     }
   }
 
   const proposalRef = doc(db, "dao_proposals", proposalId);
   const proposalSnap = await getDoc(proposalRef);
-  if (!proposalSnap.exists()) return showToast("Proposal not found", "error");
+  if (!proposalSnap.exists()) return showToast("Target proposal not found", "error");
 
   const data = proposalSnap.data();
   if (data.status !== 'active') {
-    return showToast("This proposal is no longer open for voting", "error");
+    return showToast("This proposal is closed and no longer open for voting", "error");
   }
 
   const previousVote = data.voteLog?.[userId];
   if (previousVote && previousVote.direction === direction) {
-    return showToast("You already voted this way.", "info");
+    return showToast("You have already cast a vote in this exact direction.", "info");
   }
 
   const cost = quadraticCost(strength);
   const currentSpent = previousVote?.cost || 0;
-  if (currentSpent + cost > 25) {
-    return showToast("Exceeded voting budget (max 25 power points)", "error");
+  if (currentSpent + cost > MAX_VOTING_BUDGET_POINTS) {
+    return showToast("Exceeded maximum voting budget (max 25 cumulative power points)", "error");
   }
 
   let zkProof = null;
@@ -215,7 +220,7 @@ export async function castQuadraticVote(proposalId, direction, strength = 1, pro
       context: proofContext
     });
   } catch (e) {
-    console.warn("ZK Proof generation skipped:", e);
+    console.warn("ZK Proof generation bypassed or skipped:", e);
   }
 
   const currentTier = await getCurrentUserTier();
@@ -249,16 +254,16 @@ export async function castQuadraticVote(proposalId, direction, strength = 1, pro
     effectiveStrength
   });
 
-  showToast(`Voted ${direction.toUpperCase()} (Cost: ${cost} • Effective strength: ${effectiveStrength})`, "success");
+  showToast(`Successfully voted ${direction.toUpperCase()} (Cost: ${cost} points • Effective strength: ${effectiveStrength})`, "success");
 }
 
 /* ==========================================================================
-   MULTI-SIG & HIGH-STAKES
+   MULTI-SIG & HIGH-STAKES ATTESTATION PIPELINES
    ========================================================================== */
 
 export async function submitMultiSigAttestation(targetId, proofData, isProposal = false) {
   if (!auth.currentUser) {
-    showToast("You must be logged in to sign multi-sig attestations.", "error");
+    showToast("Authentication required to submit multi-sig attestations.", "error");
     return false;
   }
 
@@ -287,11 +292,11 @@ export async function submitMultiSigAttestation(targetId, proofData, isProposal 
       isProposal
     });
 
-    showToast("✅ Multi-Sig attestation anchored!", "success");
+    showToast("✅ Multi-Sig cryptographic attestation anchored securely!", "success");
     return true;
   } catch (error) {
-    console.error("Multi-Sig attestation error:", error);
-    showToast("Failed to submit multi-sig attestation.", "error");
+    console.error("Multi-Sig attestation submission error:", error);
+    showToast("Failed to submit multi-sig attestation to ledger.", "error");
     return false;
   }
 }
@@ -303,8 +308,8 @@ export async function handleHighStakesAttestation(targetId, inputs, isProposal =
       return await submitMultiSigAttestation(targetId, proofResult, isProposal);
     }
   } catch (err) {
-    console.error("Failed high-stakes attestation pipeline:", err);
-    showToast("High-stakes attestation aborted.", "error");
+    console.error("High-stakes cryptographic attestation pipeline failed:", err);
+    showToast("High-stakes attestation aborted due to generation error.", "error");
   }
   return false;
 }
@@ -331,28 +336,28 @@ export function evaluateMultiSigStatus(entityData) {
 }
 
 /* ==========================================================================
-   PROPOSAL DISCUSSION (NEW)
+   PROPOSAL DISCUSSION & COMMUNITY COMMENTS MODULE
    ========================================================================== */
 
 const commentUnsubscribers = {};
 
 /**
- * Post a comment on a proposal
+ * Post a verified community comment on an active DAO proposal
  */
 export async function postDAOComment(proposalId, content) {
   if (!auth.currentUser) {
-    showToast("Please sign in to comment", "error");
+    showToast("Please sign in to participate in proposal discussions", "error");
     return false;
   }
 
   const trimmed = content?.trim();
   if (!trimmed || trimmed.length === 0) {
-    showToast("Write something first", "error");
+    showToast("Comment body cannot be empty", "error");
     return false;
   }
 
   if (trimmed.length > 400) {
-    showToast("Comment is too long (max 400 characters)", "error");
+    showToast("Comment exceeds maximum length constraint (max 400 characters)", "error");
     return false;
   }
 
@@ -361,11 +366,10 @@ export async function postDAOComment(proposalId, content) {
       proposalId,
       content: trimmed,
       authorId: auth.currentUser.uid,
-      authorName: auth.currentUser.displayName || "Anonymous",
+      authorName: auth.currentUser.displayName || "Anonymous Citizen",
       createdAt: serverTimestamp()
     });
 
-    // Optionally keep a counter on the proposal
     const proposalRef = doc(db, "dao_proposals", proposalId);
     const snap = await getDoc(proposalRef);
     if (snap.exists()) {
@@ -376,21 +380,19 @@ export async function postDAOComment(proposalId, content) {
     }
 
     await awardGovernanceRep(2);
-    showToast("Comment posted", "success");
+    showToast("Comment published to discussion ledger", "success");
     return true;
   } catch (err) {
-    console.error("Failed to post comment:", err);
+    console.error("Failed to post discussion comment:", err);
     showToast("Failed to post comment", "error");
     return false;
   }
 }
 
 /**
- * Real-time subscription to comments of a proposal
- * Returns an unsubscribe function
+ * Real-time snapshot subscription for proposal discussion comments
  */
 export function subscribeToProposalComments(proposalId, callback) {
-  // Clean previous listener if exists
   if (commentUnsubscribers[proposalId]) {
     commentUnsubscribers[proposalId]();
   }
@@ -408,7 +410,7 @@ export function subscribeToProposalComments(proposalId, callback) {
     }));
     callback(comments);
   }, (error) => {
-    console.error("Comments listener error:", error);
+    console.error("Real-time comments listener snapshot error:", error);
     callback([]);
   });
 
@@ -417,7 +419,7 @@ export function subscribeToProposalComments(proposalId, callback) {
 }
 
 /**
- * Stop listening to comments for a proposal
+ * Terminate active snapshot subscription for proposal comments
  */
 export function unsubscribeFromComments(proposalId) {
   if (commentUnsubscribers[proposalId]) {
@@ -427,7 +429,7 @@ export function unsubscribeFromComments(proposalId) {
 }
 
 /* ==========================================================================
-   FETCH & CLOSE
+   FETCH & PROPOSAL LIFECYCLE MANAGEMENT UTILITIES
    ========================================================================== */
 
 export async function fetchActiveProposals(max = 20) {
@@ -441,7 +443,7 @@ export async function fetchActiveProposals(max = 20) {
     const snapshot = await getDocs(q);
     return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
   } catch (e) {
-    console.error("Failed to fetch active proposals:", e);
+    console.error("Failed to query active proposals collection:", e);
     return [];
   }
 }
@@ -452,22 +454,22 @@ export async function getProposal(proposalId) {
     if (!snap.exists()) return null;
     return { id: snap.id, ...snap.data() };
   } catch (e) {
-    console.error("Failed to get proposal:", e);
+    console.error("Failed to fetch individual proposal record:", e);
     return null;
   }
 }
 
 export async function closeProposal(proposalId, finalStatus = 'closed') {
-  if (!auth.currentUser) return showToast("Sign in required", "error");
+  if (!auth.currentUser) return showToast("Sign in required to close proposals", "error");
 
   try {
     const isSteward = await hasStewardAccess();
     const proposal = await getProposal(proposalId);
-    if (!proposal) return showToast("Proposal not found", "error");
+    if (!proposal) return showToast("Target proposal record not found", "error");
 
     const isCreator = proposal.createdBy === auth.currentUser.uid;
     if (!isSteward && !isCreator) {
-      return showToast("Only Stewards or the proposal creator can close it", "error");
+      return showToast("Only designated Stewards or the original proposal creator can close this proposal", "error");
     }
 
     const passed = hasProposalPassed(proposal);
@@ -486,14 +488,92 @@ export async function closeProposal(proposalId, finalStatus = 'closed') {
       passed
     });
 
-    showToast(passed ? "✅ Proposal PASSED and closed" : "Proposal closed (did not pass)", "success");
+    showToast(passed ? "✅ Proposal PASSED voting threshold and is now closed" : "Proposal closed (did not satisfy quorum/approval requirements)", "success");
     return true;
   } catch (e) {
-    console.error("Close proposal error:", e);
+    console.error("Error executing proposal close operation:", e);
     showToast("Failed to close proposal", "error");
     return false;
   }
 }
+
+// ====================== DISCUSSION HELPERS ======================
+
+window.toggleDiscussion = function (proposalId) {
+  const panel = document.getElementById(`discussion-${proposalId}`);
+  const arrow = document.getElementById(`discussion-arrow-${proposalId}`);
+
+  if (!panel) return;
+
+  const isHidden = panel.classList.contains('hidden');
+
+  if (isHidden) {
+    panel.classList.remove('hidden');
+    if (arrow) arrow.textContent = '▲';
+    loadComments(proposalId);
+  } else {
+    panel.classList.add('hidden');
+    if (arrow) arrow.textContent = '▼';
+    unsubscribeFromComments(proposalId);
+  }
+};
+
+function loadComments(proposalId) {
+  const list = document.getElementById(`comments-list-${proposalId}`);
+  const countEl = document.getElementById(`comment-count-${proposalId}`);
+  if (!list) return;
+
+  subscribeToProposalComments(proposalId, (comments) => {
+    list.innerHTML = '';
+
+    if (!comments || comments.length === 0) {
+      list.innerHTML = `<p class="py-4 text-center text-xs text-zinc-500">No comments yet. Start the discussion.</p>`;
+      if (countEl) countEl.textContent = '0';
+      return;
+    }
+
+    if (countEl) countEl.textContent = comments.length;
+
+    comments.forEach(c => {
+      const time = c.createdAt?.toDate
+        ? c.createdAt.toDate().toLocaleString()
+        : 'Just now';
+
+      const el = document.createElement('div');
+      el.className = 'rounded-2xl border border-zinc-800 bg-zinc-900/60 p-3';
+
+      el.innerHTML = `
+        <div class="mb-1 flex items-center justify-between">
+          <span class="text-xs font-medium text-emerald-400">
+            ${escapeHTML(c.authorName || 'Anonymous')}
+          </span>
+          <span class="text-[10px] text-zinc-500">${time}</span>
+        </div>
+        <p class="text-sm leading-relaxed text-zinc-300">
+          ${escapeHTML(c.content)}
+        </p>
+      `;
+      list.appendChild(el);
+    });
+
+    // Scroll to bottom
+    list.scrollTop = list.scrollHeight;
+  });
+}
+
+window.postComment = async function (proposalId) {
+  const input = document.getElementById(`comment-input-${proposalId}`);
+  const content = input?.value.trim();
+
+  if (!content) {
+    return showToast('Write something first', 'error');
+  }
+
+  const success = await postDAOComment(proposalId, content);
+  if (success && input) {
+    input.value = '';
+  }
+};
 
 export const MODERATION_PROFILES = {
   PERMISSIVE: { quorum: 5, approvalRate: 0.51, multiSigRequired: 2 },
@@ -509,7 +589,7 @@ export function hasProposalPassed(proposal, profile = MODERATION_PROFILES.BALANC
   return approvalRatio >= profile.approvalRate && total >= targetQuorum;
 }
 
-// Global Exports
+// Global Window Namespace Registrations for DOM Event Handlers
 window.submitMultiSigAttestation = submitMultiSigAttestation;
 window.handleHighStakesAttestation = handleHighStakesAttestation;
 window.evaluateMultiSigStatus = evaluateMultiSigStatus;
@@ -517,7 +597,7 @@ window.postDAOComment = postDAOComment;
 window.subscribeToProposalComments = subscribeToProposalComments;
 window.unsubscribeFromComments = unsubscribeFromComments;
 
-// Re-initialize UI on language switch
+// Re-initialize UI modules upon localization language change events
 window.addEventListener('languageChanged', () => {
   if (typeof initDAO === 'function') initDAO();
 });
