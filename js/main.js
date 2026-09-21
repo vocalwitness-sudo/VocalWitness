@@ -164,11 +164,11 @@ function showSingleDataSaverToast(msg) {
 
 /* ====================== TAB SWITCHING ====================== */
 const TAB_TO_SECTION = {
-  square:   'public-square',
-  ledger:   'evidence-ledger',
-  arena:    'live-arena',
-  mycircle: 'mycircle',
-  witness:  'witness'
+  square:   ['public-square', 'square', 'citizen-talk', 'tab-square'],
+  ledger:   ['evidence-ledger', 'ledger', 'public-record', 'ledgerContainer', 'ledger-list', 'tab-ledger'],
+  arena:    ['live-arena', 'arena', 'liveArena', 'tab-arena'],
+  mycircle: ['mycircle', 'my-circle', 'circle', 'tab-mycircle'],
+  witness:  ['witness', 'trusted-voices', 'witness-voice', 'tab-witness']
 };
 
 /** Active styles per tab (inactive is always the same) */
@@ -190,6 +190,7 @@ const ALL_TAB_STYLE_CLASSES = [
   ])
 ];
 
+let isSwitchingTab = false;
 
 window.switchTab = async function (tab) {
   if (isSwitchingTab) return;
@@ -199,7 +200,7 @@ window.switchTab = async function (tab) {
   console.log('[Tab] Switching to:', tab);
 
   try {
-    // 1. Nav buttons
+    // 1. Nav buttons – visual state
     document.querySelectorAll('#main-nav button[data-tab]').forEach((btn) => {
       const isActive = btn.dataset.tab === tab;
       btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
@@ -208,16 +209,16 @@ window.switchTab = async function (tab) {
       btn.classList.remove(...ALL_TAB_STYLE_CLASSES);
 
       if (isActive) {
-        const active =
-          TAB_ACTIVE_CLASSES[tab] || TAB_ACTIVE_CLASSES.default;
+        const active = TAB_ACTIVE_CLASSES[tab] || TAB_ACTIVE_CLASSES.default;
         btn.classList.add(...active);
       } else {
         btn.classList.add(...TAB_INACTIVE_CLASSES);
       }
     });
 
-    // 2. Hide all sections
-    Object.values(TAB_TO_SECTION).forEach((id) => {
+    // 2. Hide ALL possible sections (from every mapping)
+    const allPossibleIds = Object.values(TAB_TO_SECTION).flat();
+    allPossibleIds.forEach((id) => {
       const el = document.getElementById(id);
       if (!el) return;
       el.classList.add('hidden');
@@ -226,16 +227,26 @@ window.switchTab = async function (tab) {
       el.setAttribute('aria-hidden', 'true');
     });
 
-    // 3. Show selected section
-    const sectionId = TAB_TO_SECTION[tab];
-    const section = document.getElementById(sectionId);
+    // 3. Show the correct section (try every possible ID)
+    const possibleIds = TAB_TO_SECTION[tab];
+    let section = null;
+
+    for (const id of possibleIds) {
+      const el = document.getElementById(id);
+      if (el) {
+        section = el;
+        break;
+      }
+    }
+
     if (section) {
       section.classList.remove('hidden');
       section.classList.add('block');
       section.removeAttribute('hidden');
       section.setAttribute('aria-hidden', 'false');
+      console.log('[Tab] Opened section:', section.id);
     } else {
-      console.warn('[Tab] Section not found:', sectionId);
+      console.warn('[Tab] Section not found for:', tab, 'Tried IDs:', possibleIds);
     }
 
     // 4. URL hash (back/forward friendly)
@@ -244,7 +255,7 @@ window.switchTab = async function (tab) {
       history.pushState({ tab }, '', newHash);
     }
 
-    // 5. Tab-specific init (lazy, non-blocking where possible)
+    // 5. Tab-specific init
     if (tab === 'square' && typeof initFeed === 'function') {
       initFeed(undefined, 'citizen-talk');
     }
@@ -266,7 +277,6 @@ window.switchTab = async function (tab) {
     isSwitchingTab = false;
   }
 };
-
 
 /**
  * Tabs + More menu — single init, no double-bind, a11y-aware
