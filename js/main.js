@@ -67,8 +67,8 @@ function updateDataSaverUI(isOn) {
   const desktopBtn = document.getElementById('data-saver-btn');
   if (desktopBtn) {
     desktopBtn.className = isOn
-      ? 'flex h-9 items-center gap-1.5 rounded-xl border px-3 text-xs font-medium transition-all active:scale-95 border-emerald-500 bg-emerald-950/50 text-emerald-400'
-      : 'flex h-9 items-center gap-1.5 rounded-xl border px-3 text-xs font-medium transition-all active:scale-95 border-zinc-700 bg-zinc-900 text-zinc-400';
+      ? 'flex h-9 items-center gap-1.5 rounded-xl border px-3 text-xs font-medium transition-all active:scale-95 border-emerald-500 bg-emerald-950/50 text-emerald-400 hover:border-emerald-400'
+      : 'flex h-9 items-center gap-1.5 rounded-xl border px-3 text-xs font-medium transition-all active:scale-95 border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-zinc-500 hover:text-white';
   }
 
   // 3. Mobile button – full class rewrite
@@ -79,30 +79,44 @@ function updateDataSaverUI(isOn) {
       : 'flex h-8 items-center gap-1 rounded-lg border px-2 text-[10px] font-medium transition-all active:scale-95 border-zinc-700 bg-zinc-900 text-zinc-400';
   }
 
-  // 4. Icons (optional)
+  // 4. Icons
   const iconDesktop = document.getElementById('data-saver-icon');
   const iconMobile  = document.getElementById('data-saver-icon-mobile');
-  if (iconDesktop) iconDesktop.className = isOn ? 'text-emerald-400' : 'text-zinc-400';
-  if (iconMobile)  iconMobile.className  = isOn ? 'text-emerald-400' : 'text-zinc-400';
+  if (iconDesktop) {
+    iconDesktop.className = isOn ? 'text-emerald-400' : 'text-zinc-400';
+    iconDesktop.style.opacity = isOn ? '1' : '0.7';
+  }
+  if (iconMobile) {
+    iconMobile.className = isOn ? 'text-emerald-400' : 'text-zinc-400';
+    iconMobile.style.opacity = isOn ? '1' : '0.7';
+  }
 }
 
 function initDataSaver() {
-  // Set initial state
+  // Set initial state from localStorage
   updateDataSaverUI(getDataSaverState());
 
-  // Wire buttons (only once)
+  // Wire buttons only once
   ['data-saver-btn', 'data-saver-btn-mobile'].forEach(id => {
     const btn = document.getElementById(id);
     if (!btn || btn.dataset.wired === 'true') return;
+
     btn.dataset.wired = 'true';
 
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
       const next = !getDataSaverState();
       localStorage.setItem(DATA_SAVER_KEY, String(next));
       updateDataSaverUI(next);
 
+      // Single clean toast
       if (typeof showToast === 'function') {
         showToast(next ? 'Data Saver turned ON' : 'Data Saver turned OFF', 'info');
+      } else {
+        // Fallback single toast if showToast does not exist
+        showSingleDataSaverToast(next ? 'Data Saver ON' : 'Data Saver OFF');
       }
 
       window.dispatchEvent(new CustomEvent('data-saver-changed', {
@@ -112,15 +126,41 @@ function initDataSaver() {
   });
 }
 
-// Global helper
+// Global helper used by the main click delegation
 window.toggleDataSaver = function () {
   const next = !getDataSaverState();
   localStorage.setItem(DATA_SAVER_KEY, String(next));
   updateDataSaverUI(next);
+
   if (typeof showToast === 'function') {
     showToast(next ? 'Data Saver turned ON' : 'Data Saver turned OFF', 'info');
+  } else {
+    showSingleDataSaverToast(next ? 'Data Saver ON' : 'Data Saver OFF');
   }
+
+  window.dispatchEvent(new CustomEvent('data-saver-changed', {
+    detail: { enabled: next }
+  }));
 };
+
+// Tiny fallback toast so we never get multiple messages
+let dataSaverToastTimer = null;
+function showSingleDataSaverToast(msg) {
+  let toast = document.getElementById('data-saver-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'data-saver-toast';
+    toast.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] rounded-xl bg-zinc-800 border border-zinc-600 px-5 py-3 text-sm text-white shadow-2xl transition-opacity duration-300 pointer-events-none';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.opacity = '1';
+
+  clearTimeout(dataSaverToastTimer);
+  dataSaverToastTimer = setTimeout(() => {
+    toast.style.opacity = '0';
+  }, 2200);
+}
 
 /* ====================== TAB SWITCHING ====================== */
 const TAB_TO_SECTION = {
@@ -983,18 +1023,44 @@ function setupEventListeners() {
     }
   });
 
-  // ---------- More Menu ----------
+    // ---------- More Menu (robust version) ----------
   const moreBtn = document.getElementById('more-btn');
   const moreMenu = document.getElementById('more-menu');
 
   if (moreBtn && moreMenu) {
-    moreBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      moreMenu.classList.toggle('hidden');
-      // Close notification dropdowns
-      document.getElementById('notification-dropdown')?.classList.add('hidden');
-      document.getElementById('notification-dropdown-mobile')?.classList.add('hidden');
-    });
+    // Prevent double-wiring
+    if (!moreBtn.dataset.moreWired) {
+      moreBtn.dataset.moreWired = 'true';
+
+      const setOpen = (open) => {
+        moreMenu.classList.toggle('hidden', !open);
+        moreBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        console.log('[more-menu] setOpen →', open);
+      };
+
+      moreBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const isOpen = !moreMenu.classList.contains('hidden');
+        setOpen(!isOpen);
+
+        // Close other dropdowns
+        document.getElementById('notification-dropdown')?.classList.add('hidden');
+        document.getElementById('notification-dropdown-mobile')?.classList.add('hidden');
+      });
+
+      // Close when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!moreBtn.contains(e.target) && !moreMenu.contains(e.target)) {
+          setOpen(false);
+        }
+      });
+
+      // Close on Escape
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') setOpen(false);
+      });
+    }
   }
 
   // ---------- Notification Toggles ----------
