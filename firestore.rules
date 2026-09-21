@@ -365,6 +365,20 @@ match /groups/{groupId} {
       allow update, delete: if false;
     }
 
+match /dao_comments/{commentId} {
+  allow read: if true;
+
+  allow create: if isNotBanned()
+    && request.resource.data.authorId == request.auth.uid
+    && request.resource.data.proposalId is string
+    && request.resource.data.content is string
+    && request.resource.data.content.size() > 0
+    && request.resource.data.content.size() <= 400
+    && request.resource.data.createdAt is timestamp;
+
+  allow update, delete: if false;
+}
+
     // ==========================================
     // POSTS (kept for backward compatibility)
     // ==========================================
