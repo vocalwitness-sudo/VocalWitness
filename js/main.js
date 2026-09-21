@@ -659,7 +659,7 @@ window.publishTestimony = async () => {
       console.warn('[publish] Could not compute bodyHash:', hashErr);
     }
 
- // ====================== WRITE TO FIRESTORE ======================
+// ====================== WRITE TO FIRESTORE ======================
 
 // 1. Generate ZK proof (needs the hashes we already have)
 let zkResult = {
@@ -705,10 +705,15 @@ const testimonyData = {
   videoHash: mediaData.videoHash || null,
   audioHash: mediaData.audioHash || null,
   bodyHash: mediaData.bodyHash || null,
-  hasForensic: !!(mediaData.imageHash || mediaData.videoHash || mediaData.audioHash || mediaData.bodyHash),
   hasEvidencePack: !!mediaData.hasEvidencePack,
   evidencePack: mediaData.evidencePack || null,
   packCoreHash: mediaData.packCoreHash || null,
+
+  // === Forensic flags ===
+  forensicVerified: !!(mediaData.imageHash || mediaData.videoHash || mediaData.audioHash || mediaData.bodyHash),
+  hash: mediaData.imageHash || mediaData.videoHash || mediaData.audioHash || mediaData.bodyHash || null,
+  prevHash: null,
+  hasForensic: !!(mediaData.imageHash || mediaData.videoHash || mediaData.audioHash || mediaData.bodyHash),
 
   // ZK Proof
   zkProof: zkResult.proof || null,
@@ -721,11 +726,20 @@ const testimonyData = {
 const docRef = await addDoc(collection(db, 'testimonies'), testimonyData);
 console.log('[publish] SUCCESS →', docRef.id);
 
+// 3.1 Refresh UI ledgers if functions exist
+if (typeof window.loadEvidenceLedger === 'function') {
+  window.loadEvidenceLedger();
+}
+if (typeof window.loadForensicLedger === 'function') {
+  window.loadForensicLedger();
+}
+
 // 4. Update throttle
 await setDoc(userRef, {
   lastTestimonyAt: serverTimestamp()
 }, { merge: true });
 
+    
     // ====================== SUCCESS STATE ======================
     if (testimonyData.isZkVerified) {
       showToast("🛡️ Report sealed with Zero-Knowledge proof", "success");
