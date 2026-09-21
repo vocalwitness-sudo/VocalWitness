@@ -1,10 +1,11 @@
 /**
  * js/evidence-ui.js
- * UI utilities & components for Evidence Pack rendering & interaction delegation.
+ * UI utilities for Evidence Pack rendering & interaction
+ * Name = Reality version
  */
 
 import {
-  toFullEvidencePack,
+  buildFullPackFromTestimony,
   downloadEvidencePack,
   shareTestimony,
   exportForNewsroom,
@@ -14,15 +15,13 @@ import { showSupportWitnessModal } from './support-witness.js';
 import { showToast } from './utils.js';
 
 /**
- * Renders the small non-scary badge for sealed posts.
- * @param {boolean|object} hasPack Or testimony object containing evidence metadata
- * @returns {string} HTML string
+ * Small sealed badge
  */
 export function renderSealedBadge(hasPack) {
   if (!hasPack) return '';
   return `
     <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-950/60 border border-emerald-700/50 px-2.5 py-0.5 text-[10px] font-medium text-emerald-400 shadow-sm"
-        title="This report is sealed with cryptographic hashes. It verifies integrity, not factual truth.">
+          title="Cryptographically sealed. Verifies integrity of the record, not real-world truth.">
       <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
       🛡️ Sealed • Verifiable
     </span>
@@ -30,9 +29,7 @@ export function renderSealedBadge(hasPack) {
 }
 
 /**
- * Renders the download button for a sealed evidence pack.
- * @param {string} testimonyId
- * @returns {string} HTML string
+ * Simple download button
  */
 export function renderDownloadPackButton(testimonyId) {
   if (!testimonyId) return '';
@@ -47,10 +44,7 @@ export function renderDownloadPackButton(testimonyId) {
 }
 
 /**
- * Renders the primary action toolbar for Evidence & Newsroom export.
- * @param {string} testimonyId
- * @param {string} [authorId=''] Optional author/witness ID
- * @returns {string} HTML string
+ * Full evidence toolbar
  */
 export function renderEvidenceToolbar(testimonyId, authorId = '') {
   if (!testimonyId) return '';
@@ -88,10 +82,7 @@ export function renderEvidenceToolbar(testimonyId, authorId = '') {
 }
 
 /**
- * Handles all evidence-related UI actions delegated from feed elements.
- * @param {Event} e The click event object
- * @param {object} post The full testimony dataset associated with the target
- * @returns {Promise<boolean>} True if action was handled, false otherwise
+ * Main action handler
  */
 export async function handleEvidenceAction(e, post) {
   const btn = e.target.closest('[data-action]');
@@ -100,20 +91,30 @@ export async function handleEvidenceAction(e, post) {
   const action = btn.dataset.action;
 
   try {
+    btn.classList.add('opacity-50', 'pointer-events-none');
+
     switch (action) {
       case 'download-pack': {
-        btn.classList.add('opacity-50', 'pointer-events-none');
-        showToast('Generating Cryptographic Evidence Pack...', 'info');
+        showToast('Generating cryptographic Evidence Pack…', 'info');
 
-        const fullPack = await toFullEvidencePack(post);
-        downloadEvidencePack(fullPack, `evidence-pack-${post.id || 'report'}.json`);
+        // Correct way: build full pack from the testimony object
+        const fullPack = await buildFullPackFromTestimony(post);
 
+        downloadEvidencePack(fullPack, post.id || post.testimonyId || 'report');
         showToast('✅ Evidence Pack downloaded', 'success');
         return true;
       }
 
       case 'share-testimony': {
-        await shareTestimony(post);
+        const result = await shareTestimony(post);
+        if (result.ok) {
+          showToast(
+            result.method === 'native' ? 'Shared' : '🔗 Verifiable link copied',
+            'success'
+          );
+        } else if (result.method !== 'cancelled') {
+          showToast('Could not share link', 'error');
+        }
         return true;
       }
 
@@ -129,20 +130,22 @@ export async function handleEvidenceAction(e, post) {
       case 'copy-share-url': {
         const url = buildShareUrl(post);
         await navigator.clipboard.writeText(url);
-        showToast('📋 Verifiable link copied to clipboard', 'success');
+        showToast('📋 Verifiable link copied', 'success');
         return true;
       }
 
       case 'support-witness': {
         const authorId = btn.dataset.authorId || post.uid || post.authorId;
-        const authorName = post.authorName || post.displayName || 'Witness';
+        const authorName = post.author || post.displayName || 'Witness';
 
         if (!authorId) {
-          showToast('Unable to identify witness for support.', 'error');
+          showToast('Unable to identify witness', 'error');
           return true;
         }
 
-        showSupportWitnessModal(authorId, authorName);
+        if (typeof showSupportWitnessModal === 'function') {
+          showSupportWitnessModal(authorId, authorName);
+        }
         return true;
       }
 
@@ -150,8 +153,8 @@ export async function handleEvidenceAction(e, post) {
         return false;
     }
   } catch (error) {
-    console.error(`Error processing evidence action [${action}]:`, error);
-    showToast('Failed to process evidence request.', 'error');
+    console.error(`[evidence-ui] Action failed (${action}):`, error);
+    showToast('Failed to process evidence request', 'error');
     return false;
   } finally {
     btn.classList.remove('opacity-50', 'pointer-events-none');
@@ -159,12 +162,13 @@ export async function handleEvidenceAction(e, post) {
 }
 
 /**
- * Global fallback click handler for standalone usage.
- * Used when a download button is clicked outside the main feed handler.
+ * Global fallback for buttons outside the main feed handler
  */
 export function initEvidencePackUI() {
   document.addEventListener('click', async (e) => {
-    const btn = e.target.closest('.download-evidence-pack-btn, [data-action="download-pack"]');
+    const btn = e.target.closest(
+      '.download-evidence-pack-btn, [data-action="download-pack"]'
+    );
     if (!btn || btn.dataset.handledByFeed) return;
 
     const id = btn.dataset.id || btn.dataset.testimonyId;
@@ -174,37 +178,29 @@ export function initEvidencePackUI() {
     e.stopPropagation();
 
     try {
-      btn.classList.add('opacity-50', 'pointer-events-none');
-      showToast('Fetching full pack context...', 'info');
-
-      // Try to find the post data from the nearest card
-      const card = btn.closest('[data-post-id], .post-card, .testimony-card, article');
+      // Try to recover the full post object
       let post = null;
 
+      const card = btn.closest('[data-post-id], .post-card, .testimony-card, article');
       if (card && card.__postData) {
-        // Some feeds attach the full object directly
         post = card.__postData;
-      } else if (window.__testimoniesCache && window.__testimoniesCache[id]) {
-        // Fallback to global cache if available
+      } else if (window.__testimoniesCache?.[id]) {
         post = window.__testimoniesCache[id];
       }
 
       if (!post) {
-        showToast('Could not locate full report data. Please try again from the feed.', 'error');
-        return;
+        // Minimal fallback so the button still does something useful
+        post = { id };
+        showToast('Limited pack (full data not in memory)', 'info');
       }
 
-      // Re-use the main evidence action handler
       await handleEvidenceAction(
         { target: btn, preventDefault() {}, stopPropagation() {} },
         post
       );
-
     } catch (err) {
-      console.error('[evidence-ui] Fallback download failed:', err);
-      showToast('Failed to generate Evidence Pack.', 'error');
-    } finally {
-      btn.classList.remove('opacity-50', 'pointer-events-none');
+      console.error('[evidence-ui] Fallback failed:', err);
+      showToast('Failed to generate Evidence Pack', 'error');
     }
   });
 }
