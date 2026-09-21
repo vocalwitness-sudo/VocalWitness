@@ -372,6 +372,69 @@ function initHashRouting() {
 // Call once after DOM is ready (bootstrap / setupEventListeners)
 initNavigationChrome();
 
+/**
+ * Updates the visual state of the voice recorder UI
+ * Call this from your existing start / pause / stop / reset handlers
+ */
+function updateVoiceUI(state) {
+  const btn = document.getElementById('btn-voice');
+  const btnText = document.getElementById('btn-voice-text');
+  const badge = document.getElementById('btn-voice-badge');
+  const instruction = document.getElementById('voice-instruction');
+  const replayBtn = document.getElementById('rec-replay-btn');
+  const rerecordBtn = document.getElementById('rec-rerecord-btn');
+  const pauseBtn = document.getElementById('rec-pause-btn');
+  const stopBtn = document.getElementById('rec-stop-btn');
+
+  if (!btn || !btnText) return;
+
+  // Reset classes
+  btn.classList.remove('bg-emerald-500', 'text-zinc-950', 'bg-red-600', 'text-white', 'bg-amber-600', 'text-white');
+  btn.classList.add('text-emerald-400');
+
+  switch (state) {
+    case 'idle':
+      btnText.textContent = 'Record Live Voice';
+      if (badge) badge.classList.remove('hidden');
+      if (instruction) instruction.textContent = 'Tap the button above to start recording. Speak clearly.';
+      if (replayBtn) replayBtn.classList.add('hidden');
+      if (rerecordBtn) rerecordBtn.classList.add('hidden');
+      if (pauseBtn) pauseBtn.classList.remove('hidden');
+      if (stopBtn) stopBtn.classList.remove('hidden');
+      break;
+
+    case 'recording':
+      btnText.textContent = 'Recording…';
+      btn.classList.remove('text-emerald-400');
+      btn.classList.add('bg-red-600', 'text-white');
+      if (badge) badge.classList.add('hidden');
+      if (instruction) instruction.textContent = 'Recording in progress… Speak now.';
+      if (replayBtn) replayBtn.classList.add('hidden');
+      if (rerecordBtn) rerecordBtn.classList.add('hidden');
+      break;
+
+    case 'paused':
+      btnText.textContent = 'Recording Paused';
+      btn.classList.remove('text-emerald-400');
+      btn.classList.add('bg-amber-600', 'text-white');
+      if (badge) badge.classList.add('hidden');
+      if (instruction) instruction.textContent = 'Recording paused. Press Resume or Stop.';
+      break;
+
+    case 'stopped':
+      btnText.textContent = 'Voice Ready ✓';
+      btn.classList.remove('text-emerald-400');
+      btn.classList.add('bg-emerald-500', 'text-zinc-950');
+      if (badge) badge.classList.add('hidden');
+      if (instruction) instruction.textContent = 'Voice recorded. You can replay or re-record.';
+      if (replayBtn) replayBtn.classList.remove('hidden');
+      if (rerecordBtn) rerecordBtn.classList.remove('hidden');
+      if (pauseBtn) pauseBtn.classList.add('hidden');
+      if (stopBtn) stopBtn.classList.add('hidden');
+      break;
+  }
+}
+
 /* ====================== PAYMENT (PAYSTACK) ====================== */
 const PAYSTACK_PUBLIC_KEY = 'pk_live_5d13a6db326f02375127aae9d0fb03678ed1d923'; // TODO: move to env / Remote Config
 
