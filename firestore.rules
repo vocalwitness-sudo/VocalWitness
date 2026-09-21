@@ -308,6 +308,34 @@ service cloud.firestore {
       allow delete: if (resource.data.authorId == request.auth.uid) || isModerator();
     }
 
+// ==========================================
+// GROUPS
+// ==========================================
+match /groups/{groupId} {
+  // Anyone can read groups (needed for Discover + My Groups)
+  allow read: if true;
+
+  // Only authenticated + not banned users can create a group
+  allow create: if isNotBanned()
+    && request.resource.data.creatorId == request.auth.uid
+    && request.resource.data.keys().hasAll(['name', 'creatorId', 'createdAt', 'members', 'memberCount'])
+    && request.resource.data.name is string
+    && request.resource.data.name.size() > 0
+    && request.resource.data.name.size() <= 60
+    && request.resource.data.members is list
+    && request.resource.data.memberCount is number;
+
+  // Creator or Admin can update the group
+  allow update: if isNotBanned() && (
+    resource.data.creatorId == request.auth.uid ||
+    request.auth.uid in resource.data.get('admins', [])
+  );
+
+  // Only the creator can delete the group
+  allow delete: if isNotBanned()
+    && resource.data.creatorId == request.auth.uid;
+}
+
     // ==========================================
     // CORROBORATIONS & FORENSIC LEDGER
     // ==========================================
