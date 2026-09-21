@@ -1,69 +1,195 @@
 <!DOCTYPE html>
 <html lang="en-NG">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="publicSquareTitle">Public Square • VocalWitness</title>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="style.css">
-    
-    <style>
-        body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; color: #e2e8f0; }
-        .glass { background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(16, 185, 129, 0.25); }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Testimonies • VocalWitness</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #0a0f1c;
+      color: #e2e8f0;
+    }
+    .glass {
+      background: rgba(17, 24, 39, 0.95);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+  </style>
 </head>
 <body class="min-h-screen bg-[#0a0f1c]">
 
-    <div class="max-w-3xl mx-auto p-6">
-        <header class="flex items-center justify-between mb-10">
-            <div class="flex items-center gap-3">
-                <a href="index.html" class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-2xl">🔊</div>
-                    <div>
-                        <h1 class="text-2xl font-bold" data-i18n="vocalWitnessBrand">VocalWitness</h1>
-                    </div>
-                </a>
-            </div>
-            <a href="my-testimonies.html" class="text-emerald-400 hover:text-emerald-300">My Testimonies →</a>
-        </header>
+  <div class="max-w-3xl mx-auto px-4 py-8 sm:px-6">
 
-        <!-- Testimony Recording / Creation Box -->
-        <div class="glass rounded-3xl p-8 mb-8">
-            <h2 class="text-xl font-bold mb-4">Record Your Testimony</h2>
-            
-            <textarea 
-                id="testimonyText"
-                rows="4" 
-                class="w-full bg-slate-900/80 border border-emerald-500/30 rounded-2xl p-4 text-slate-200 placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
-                placeholder="Share your witness..."
-            ></textarea>
-
-            <!-- Bottom Action Controls -->
-            <div class="flex flex-wrap items-center justify-between gap-4 mt-4 pt-2 border-t border-slate-800">
-                
-                <!-- PASTE YOUR ANONYMOUS CHECKBOX HERE -->
-                <label class="flex items-center gap-2 text-xs text-zinc-300 cursor-pointer select-none">
-                    <input type="checkbox" id="post-anonymously" class="rounded border-zinc-600 accent-emerald-500" />
-                    <span>Post Anonymously <span class="text-zinc-500">(tier still counts privately if signed in)</span></span>
-                </label>
-
-                <!-- Submit Button -->
-                <button 
-                    id="submitTestimonyBtn"
-                    class="bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-semibold px-6 py-2.5 rounded-xl hover:opacity-90 transition-opacity"
-                >
-                    Publish Testimony
-                </button>
-            </div>
+    <!-- ========== HEADER ========== -->
+    <header class="mb-10 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-3 group">
+        <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 text-2xl shadow-lg shadow-emerald-500/20">
+          🔊
         </div>
-
-        <!-- Feed Container -->
-        <div id="testimoniesFeed" class="space-y-6">
-            <!-- Feed items will render here -->
+        <div>
+          <h1 class="text-xl font-bold text-white group-hover:text-emerald-300 transition">VocalWitness</h1>
+          <p class="text-xs text-zinc-400">Truth • Evidence • Zero-Knowledge</p>
         </div>
+      </a>
+
+      <div class="flex items-center gap-3">
+        <span id="user-tier-badge" class="hidden rounded-full border border-emerald-500/40 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400">
+          Citizen
+        </span>
+        <a href="index.html" class="text-sm font-medium text-emerald-400 hover:text-emerald-300 transition">
+          ← Public Square
+        </a>
+      </div>
+    </header>
+
+    <!-- ========== PAGE TITLE ========== -->
+    <div class="mb-8">
+      <h2 class="text-2xl font-bold text-white">My Testimonies</h2>
+      <p class="mt-1 text-sm text-zinc-400">
+        Create, manage and protect your official records
+      </p>
     </div>
 
-    <script type="module" src="js/main.js"></script>
+    <!-- ========== CREATE NEW TESTIMONY ========== -->
+    <section class="glass mb-10 rounded-3xl p-6 sm:p-8">
+      <div class="mb-6 flex items-center justify-between">
+        <h3 class="text-lg font-bold text-white">Record New Testimony</h3>
+        <span class="rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-medium text-emerald-400">
+          Official Record
+        </span>
+      </div>
+
+      <!-- Title -->
+      <input 
+        type="text" 
+        id="testimonyTitle"
+        maxlength="120"
+        placeholder="Short title (optional but recommended)"
+        class="mb-4 w-full rounded-2xl border border-zinc-700 bg-zinc-900/80 px-5 py-3.5 text-base text-white placeholder-zinc-500 focus:border-emerald-500 focus:outline-none transition"
+      >
+
+      <!-- Main text -->
+      <textarea 
+        id="testimonyText"
+        rows="5"
+        maxlength="3000"
+        placeholder="Describe what you witnessed clearly and factually..."
+        class="w-full resize-none rounded-2xl border border-zinc-700 bg-zinc-900/80 p-5 text-base text-white placeholder-zinc-500 focus:border-emerald-500 focus:outline-none transition"
+      ></textarea>
+      <div class="mb-5 mt-1.5 flex justify-end">
+        <span id="char-count" class="text-xs text-zinc-500">0 / 3000</span>
+      </div>
+
+      <!-- Category -->
+      <div class="mb-5">
+        <label class="mb-2 block text-sm font-medium text-zinc-300">Category</label>
+        <select id="testimonyCategory"
+                class="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm text-white focus:border-emerald-500 focus:outline-none">
+          <option value="">Select category...</option>
+          <option value="human-rights">Human Rights</option>
+          <option value="election">Election / Politics</option>
+          <option value="police">Police / Security Forces</option>
+          <option value="corruption">Corruption</option>
+          <option value="violence">Violence / Conflict</option>
+          <option value="personal-safety">Personal Safety</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+
+      <!-- Media Section (simplified for this page) -->
+      <div class="mb-6 space-y-3">
+        <p class="text-sm font-medium text-zinc-300">Add Evidence (recommended)</p>
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <button type="button" id="btn-add-voice"
+                  class="flex items-center justify-center gap-2 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3.5 text-sm font-medium text-emerald-400 transition hover:bg-emerald-500/20">
+            🎤 Live Voice
+          </button>
+          <button type="button" id="btn-add-photo"
+                  class="flex items-center justify-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 text-sm font-medium text-zinc-300 transition hover:border-emerald-500/50">
+            📷 Photo
+          </button>
+          <button type="button" id="btn-add-video"
+                  class="flex items-center justify-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 text-sm font-medium text-zinc-300 transition hover:border-sky-500/50">
+            🎥 Video
+          </button>
+        </div>
+        <p class="text-xs text-zinc-500">
+          Live voice carries the highest weight. You can also upload existing media.
+        </p>
+      </div>
+
+      <!-- Preview Area -->
+      <div id="preview-area" class="mb-6 hidden min-h-[80px] rounded-2xl border border-dashed border-zinc-700 bg-zinc-900/50 p-4 text-center text-sm text-zinc-500">
+        <!-- Media previews will appear here -->
+      </div>
+
+      <!-- Anonymity + Publish -->
+      <div class="flex flex-col gap-4 border-t border-zinc-800 pt-5 sm:flex-row sm:items-center sm:justify-between">
+        <label class="flex cursor-pointer items-center gap-2.5 text-sm text-zinc-300 select-none">
+          <input type="checkbox" id="post-anonymously" class="h-4 w-4 rounded border-zinc-600 accent-emerald-500">
+          <span>
+            Post Anonymously
+            <span class="text-zinc-500">(tier still counts privately)</span>
+          </span>
+        </label>
+
+        <button id="submitTestimonyBtn" type="button"
+                class="rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 px-8 py-3.5 text-base font-bold text-slate-950 shadow-lg shadow-emerald-500/20 transition hover:opacity-90 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed">
+          Publish Testimony
+        </button>
+      </div>
+
+      <!-- Safety Notice -->
+      <p class="mt-5 text-center text-xs text-zinc-500 leading-relaxed">
+        False testimony may have legal consequences. Only submit what you personally witnessed.
+      </p>
+    </section>
+
+    <!-- ========== MY TESTIMONIES LIST ========== -->
+    <section>
+      <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <h3 class="text-lg font-bold text-white">Your Records</h3>
+        
+        <div class="flex items-center gap-2">
+          <select id="filterStatus"
+                  class="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300 focus:border-emerald-500 focus:outline-none">
+            <option value="all">All</option>
+            <option value="published">Published</option>
+            <option value="draft">Drafts</option>
+            <option value="verified">Verified</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div id="empty-state" class="rounded-3xl border border-dashed border-zinc-700 bg-zinc-900/40 py-16 text-center">
+        <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-zinc-800 text-3xl">
+          📜
+        </div>
+        <h4 class="text-lg font-medium text-white">No testimonies yet</h4>
+        <p class="mt-2 text-sm text-zinc-400 max-w-xs mx-auto">
+          Your sealed records will appear here. Start by recording your first testimony above.
+        </p>
+      </div>
+
+      <!-- Feed of user's testimonies -->
+      <div id="testimoniesFeed" class="space-y-4">
+        <!-- Dynamic cards will be injected here by JS -->
+      </div>
+    </section>
+
+    <!-- ========== FOOTER NOTE ========== -->
+    <footer class="mt-16 border-t border-zinc-800 pt-8 text-center text-xs text-zinc-500">
+      <p>All published testimonies are timestamped and sealed.</p>
+      <p class="mt-1">Once published, the original content cannot be edited or deleted.</p>
+    </footer>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>
