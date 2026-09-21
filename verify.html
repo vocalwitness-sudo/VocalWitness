@@ -130,7 +130,6 @@
 </head>
 <body>
     <div class="container">
-        <!-- Top Navigation Bar with Exit/Back Link -->
         <header class="w-full max-w-4xl mx-auto px-4 py-3 mb-4 flex items-center justify-between glass rounded-2xl">
             <a href="index.html#square" class="inline-flex items-center gap-2 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-medium rounded-xl transition border border-zinc-700">
                 <span>←</span> Back to Square
@@ -215,6 +214,15 @@
         const jsonSection = document.getElementById('jsonSection');
         const resultBox = document.getElementById('resultBox');
 
+        function escapeHtml(str) {
+            return String(str ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
         function setTab(which) {
             [tabLedger, tabC2PA, tabJSON].forEach((t) => t?.classList.remove('active'));
             ledgerSection.classList.add('hidden');
@@ -250,43 +258,6 @@
             }
         }
 
-        function handleAutoPilotVerification() {
-            const params = new URLSearchParams(window.location.search);
-            if (params.get('action') === 'zk-auto') {
-                const mainContainer = document.querySelector('main');
-                if (!mainContainer) return;
-
-                const guideBanner = document.createElement('div');
-                guideBanner.className = 'glass mb-4';
-                guideBanner.style.borderColor = 'var(--emerald-accent)';
-                guideBanner.style.marginBottom = '1.5rem';
-                guideBanner.innerHTML = `
-                    <div style="display: flex; align-items: center; gap: 1rem;">
-                        <div style="font-size: 1.5rem;">🛡️</div>
-                        <div>
-                            <h3 style="color: var(--emerald-accent); font-weight: 600; font-size: 0.95rem;">Automated ZK Verification Assistant</h3>
-                            <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.2rem;">Preparing your cryptographic verification context. Please follow any wallet or environment prompts if requested.</p>
-                        </div>
-                    </div>
-                    <div style="margin-top: 1rem; background: rgba(0,0,0,0.3); border-radius: 0.5rem; height: 6px; overflow: hidden;">
-                        <div id="autoProgressBar" style="background: var(--emerald-accent); width: 40%; height: 100%; transition: width 0.6s ease;"></div>
-                    </div>
-                `;
-                mainContainer.prepend(guideBanner);
-
-                setTimeout(() => {
-                    const progressBar = document.getElementById('autoProgressBar');
-                    if (progressBar) progressBar.style.width = '100%';
-                }, 1200);
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            initLanguage();
-            hydrateFromQuery();
-            handleAutoPilotVerification();
-        });
-
         function showResult(ok, title, html) {
             resultBox.className = 'glass ' + (ok ? 'result-valid' : 'result-invalid');
             resultBox.classList.remove('hidden');
@@ -313,7 +284,7 @@
             try {
                 const snap = await getDoc(doc(db, 'testimonies', id));
                 if (!snap.exists()) {
-                    showResult(false, '❌ Not found on ledger', `<p>No testimony with id <strong>${id}</strong>.</p>`);
+                    showResult(false, '❌ Not found on ledger', `<p>No testimony with id <strong>${escapeHtml(id)}</strong>.</p>`);
                     return;
                 }
 
@@ -338,20 +309,24 @@
                             ? 'ℹ️ Record found (no h= in link to compare)'
                             : '⚠️ Record found but no forensic hash stored';
 
-                showResult(match !== false && !!storedNorm, title, `
-                    <p><strong>Testimony ID:</strong> ${data.id}</p>
-                    <p><strong>Stored hash:</strong> ${stored || '—'}</p>
-                    <p><strong>Claimed h=:</strong> ${claimed || '—'}</p>
+                const isOk = match !== false && !!storedNorm;
+
+                showResult(isOk, title, `
+                    <p><strong>Testimony ID:</strong> ${escapeHtml(data.id)}</p>
+                    <p><strong>Stored hash:</strong> ${escapeHtml(stored || '—')}</p>
+                    <p><strong>Claimed h=:</strong> ${escapeHtml(claimed || '—')}</p>
                     <p><strong>Match:</strong> ${match === null ? 'n/a' : match}</p>
-                    <p><strong>Status:</strong> ${data.status || '—'}</p>
+                    <p><strong>Status:</strong> ${escapeHtml(data.status || '—')}</p>
                     <p><strong>Anonymous:</strong> ${data.isAnonymous ? 'yes' : 'no'}</p>
-                    <p><strong>Channel:</strong> ${data.targetFeed || data.channel || '—'}</p>
-                    <p><strong>Canonical link:</strong> ${share}</p>
-                    <p style="margin-top:0.75rem;color:#9ca3af">Application-level integrity only. Does not prove real-world events.</p>
+                    <p><strong>Channel:</strong> ${escapeHtml(data.targetFeed || data.channel || '—')}</p>
+                    <p><strong>Canonical link:</strong> ${escapeHtml(share)}</p>
+                    <p style="margin-top:0.75rem;color:#9ca3af">
+                        Application-level integrity only. This does <strong>not</strong> prove real-world events.
+                    </p>
                 `);
             } catch (e) {
                 console.error(e);
-                showResult(false, 'Verification error', `<p>${e.message || 'Could not read ledger'}</p>`);
+                showResult(false, 'Verification error', `<p>${escapeHtml(e.message || 'Could not read ledger')}</p>`);
             }
         }
 
@@ -361,6 +336,7 @@
             verifyLedger(id, h);
         });
 
+        // C2PA / Media
         const dropZone = document.getElementById('dropZone');
         const mediaInput = document.getElementById('mediaInput');
         const dropZoneText = document.getElementById('dropZoneText');
@@ -382,13 +358,13 @@
         dropZone?.addEventListener('drop', (e) => {
             if (e.dataTransfer?.files?.length) {
                 selectedFile = e.dataTransfer.files[0];
-                dropZoneText.innerHTML = `📄 <strong>${selectedFile.name}</strong>`;
+                dropZoneText.innerHTML = `📄 <strong>${escapeHtml(selectedFile.name)}</strong>`;
             }
         });
         mediaInput?.addEventListener('change', (e) => {
             if (e.target.files?.length) {
                 selectedFile = e.target.files[0];
-                dropZoneText.innerHTML = `📄 <strong>${selectedFile.name}</strong>`;
+                dropZoneText.innerHTML = `📄 <strong>${escapeHtml(selectedFile.name)}</strong>`;
             }
         });
 
@@ -403,17 +379,18 @@
             const res = await verifyMediaProvenance(selectedFile);
             if (res.hasC2PA && res.isValid) {
                 showResult(true, '✅ Authenticated C2PA Content Credentials', `
-                    <p><strong>Issuer:</strong> ${res.issuer}</p>
-                    <p><strong>Claim Generator:</strong> ${res.claimGenerator}</p>
-                    <p><strong>Title:</strong> ${res.title}</p>
+                    <p><strong>Issuer:</strong> ${escapeHtml(res.issuer || '—')}</p>
+                    <p><strong>Claim Generator:</strong> ${escapeHtml(res.claimGenerator || '—')}</p>
+                    <p><strong>Title:</strong> ${escapeHtml(res.title || '—')}</p>
                 `);
             } else if (res.hasC2PA) {
                 showResult(false, '⚠️ C2PA Manifest Tampered or Invalid', '<p>Validation failed or bytes modified after signature.</p>');
             } else {
-                showResult(false, 'ℹ️ No C2PA Credentials Found', `<p>${res.message || res.error || 'No embedded C2PA manifest.'}</p>`);
+                showResult(false, 'ℹ️ No C2PA Credentials Found', `<p>${escapeHtml(res.message || res.error || 'No embedded C2PA manifest.')}</p>`);
             }
         });
 
+        // JSON / Evidence Pack
         document.getElementById('btnVerifyJSON')?.addEventListener('click', async () => {
             const rawText = document.getElementById('proofInput').value.trim();
             if (!rawText) {
@@ -446,8 +423,8 @@
 
                 if (structural) {
                     showResult(true, '✅ Pack structure looks valid', `
-                        <p><strong>Hash:</strong> ${hash}</p>
-                        <p><strong>verifyUrl:</strong> ${verifyUrl || '—'}</p>
+                        <p><strong>Hash:</strong> ${escapeHtml(hash)}</p>
+                        <p><strong>verifyUrl:</strong> ${escapeHtml(verifyUrl || '—')}</p>
                         <p>Open Ledger tab with id + h for live comparison when available.</p>
                     `);
                 } else {
@@ -456,6 +433,11 @@
             } catch (err) {
                 showResult(false, '⚠️ Invalid JSON Structure', '<p>Could not parse JSON.</p>');
             }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof initLanguage === 'function') initLanguage();
+            hydrateFromQuery();
         });
     </script>
 </body>
