@@ -31,6 +31,15 @@
             border-color: rgb(16 185 129 / 0.45);
             box-shadow: 0 8px 30px -8px rgba(16, 185, 129, 0.15);
         }
+        .hash-mono {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            word-break: break-all;
+        }
+        .copy-btn {
+            opacity: 0.75;
+            transition: opacity 0.15s;
+        }
+        .copy-btn:hover { opacity: 1; }
     </style>
 </head>
 <body class="min-h-screen pb-24 p-4 bg-[#0a0f1c]">
@@ -46,7 +55,6 @@
         <!-- HEADER -->
         <header class="flex items-center justify-between mb-8">
             <div class="flex items-center gap-3">
-                <!-- Upgraded to data-action="back" for unified history routing -->
                 <button type="button"
                         data-action="back"
                         class="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center gap-2 text-sm font-medium transition text-zinc-200 hover:text-white"
@@ -63,59 +71,72 @@
             </div>
         </header>
 
-        <!-- INTEGRITY BANNER -->
+        <!-- INTEGRITY BANNER – name-true explanation -->
         <div class="glass rounded-3xl p-5 mb-6 border border-emerald-500/30">
             <div class="flex items-start gap-3">
                 <div class="text-2xl mt-0.5">🛡️</div>
                 <div class="text-sm leading-relaxed text-zinc-300">
-                    <p class="font-medium text-emerald-400 mb-1">Application-Level Immutability</p>
+                    <p class="font-medium text-emerald-400 mb-1">Why this is called Forensic</p>
                     <p class="text-zinc-400">
-                        Once written, ledger entries cannot be edited or deleted by users or ordinary operators. 
-                        This is enforced by Firestore security rules + client-side SHA-256 hashing + hash-chaining. 
-                        <span class="text-zinc-500">This is not a full public blockchain.</span>
+                        Every entry carries cryptographic integrity (SHA-256), hash-chaining, and application-level immutability enforced by security rules. 
+                        Independent parties can verify the record. 
+                        <span class="text-zinc-500">This is not yet a full public blockchain — that strengthening is planned.</span>
                     </p>
                 </div>
+            </div>
+        </div>
+
+        <!-- LIVE CHAIN HEALTH – makes “Ledger” real -->
+        <div id="chainHealth" class="glass rounded-3xl p-4 mb-6 flex flex-wrap items-center gap-4 text-sm text-zinc-300">
+            <div>
+                <span class="text-zinc-500">Sealed entries:</span>
+                <span id="entryCount" class="font-medium text-emerald-400">—</span>
+            </div>
+            <div class="min-w-0">
+                <span class="text-zinc-500">Latest hash:</span>
+                <span id="latestHashPreview" class="hash-mono text-emerald-400/80 text-xs">—</span>
+            </div>
+            <div class="ml-auto">
+                <span id="chainStatus" class="text-emerald-400">● Checking…</span>
             </div>
         </div>
 
         <!-- MAIN LEDGER -->
         <div class="glass rounded-3xl p-6 mb-8">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-semibold" data-i18n="recentVerifiedTestimonies">Recent Verified Testimonies</h2>
-                <!-- Updated ID to refreshLedgerBtn -->
+                <h2 class="text-xl font-semibold" data-i18n="recentVerifiedTestimonies">Recent Forensic Entries</h2>
                 <button type="button"
                         id="refreshLedgerBtn"
-                        class="px-4 py-2 text-sm bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center gap-2 transition cursor-pointer">
+                        class="px-4 py-2 text-sm bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center gap-2 transition cursor-pointer"
+                        aria-label="Refresh ledger">
                     🔄 <span data-i18n="refreshButton">Refresh</span>
                 </button>
             </div>
            
             <div id="ledgerContainer" class="space-y-4 min-h-[300px]">
-                <!-- Dynamic ledger entries loaded here -->
+                <!-- Dynamic entries -->
             </div>
         </div>
 
-        <!-- FOOTER NOTES -->
+        <!-- FOOTER NOTES – honest & precise -->
         <div class="text-center text-xs text-zinc-500 space-y-2">
             <p>
-                All entries are cryptographically signed, timestamped, and stored with 
+                All entries are cryptographically hashed, timestamped, and protected by 
                 <span class="text-emerald-500 font-medium">application-level immutability</span> 
-                (Firestore rules + hashing + hash-chaining).
+                (Firestore rules + client-side SHA-256 + hash-chaining).
             </p>
             <p class="text-emerald-500/90">
-                Zero-knowledge proofs are available for Witness Voice entries.
+                Zero-knowledge proofs appear on Witness Voice / higher-trust entries.
             </p>
             <p class="text-zinc-600 text-[11px] pt-1">
-                Optional future strengthening: ledger hashes can be exported and pinned to IPFS 
-                or lightly anchored on a public chain. Not yet active.
+                Future strengthening: exportable ledger roots → IPFS + light public-chain anchoring. Not yet active.
             </p>
         </div>
     </div>
 
-    <!-- FOOTER -->
     <footer class="max-w-2xl mx-auto mt-16 pt-8 border-t border-zinc-800 text-center text-xs text-zinc-500">
         <p data-i18n="forensicLedgerFooter">© 2026 VocalWitness • Forensic Ledger</p>
-        <p class="mt-1 text-zinc-600">Built for permanent public record</p>
+        <p class="mt-1 text-zinc-600">Built for permanent, verifiable public record</p>
     </footer>
 
     <script type="module">
@@ -126,136 +147,244 @@
         import { showToast } from './js/utils.js';
         import { initLanguage } from './js/i18n.js';
 
-        const ledgerContainer = document.getElementById('ledgerContainer');
-        let unsubscribe = null;
+        const ledgerContainer   = document.getElementById('ledgerContainer');
+        const entryCountEl      = document.getElementById('entryCount');
+        const latestHashEl      = document.getElementById('latestHashPreview');
+        const chainStatusEl     = document.getElementById('chainStatus');
 
+        let unsubscribe = null;
+        let isLoading   = false;
+
+        // ---------- helpers ----------
+        function escapeHtml(str) {
+            if (typeof str !== 'string') return '';
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function formatDate(raw) {
+            try {
+                const d = raw?.toDate ? raw.toDate() : new Date(raw || Date.now());
+                return isNaN(d.getTime()) ? 'Unknown time' : d.toLocaleString();
+            } catch {
+                return 'Unknown time';
+            }
+        }
+
+        function shortHash(h, len = 16) {
+            if (!h || typeof h !== 'string') return 'N/A';
+            return h.length > len ? h.substring(0, len) + '…' : h;
+        }
+
+        async function copyHash(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+                showToast('Full hash copied', 'success');
+            } catch {
+                showToast('Could not copy', 'error');
+            }
+        }
+
+        function renderEntry(docSnap) {
+            const data     = docSnap.data() || {};
+            const id       = docSnap.id;
+            const content  = data.content || '';
+            const preview  = content.length > 180 ? content.substring(0, 180) + '…' : (content || 'Media Testimony');
+            const hash     = data.hash || data.contentHash || '';
+            const prevHash = data.prevHash || data.previousHash || '';
+            const hasZk    = !!(data.zkProof || data.zkVerified || data.witnessVoice || data.trueWitness);
+            const author   = data.author || data.displayName || 'Anonymous Witness';
+
+            const el = document.createElement('div');
+            el.className = 'ledger-entry glass rounded-3xl p-5 border border-emerald-500/20';
+            el.dataset.id = id;
+
+            el.innerHTML = `
+                <div class="flex justify-between items-start gap-3">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-8 h-8 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-lg shrink-0">🔒</div>
+                        <div class="min-w-0">
+                            <p class="font-medium truncate">${escapeHtml(author)}</p>
+                            <p class="text-xs text-emerald-500">${formatDate(data.timestamp)}</p>
+                        </div>
+                    </div>
+                    <div class="text-right shrink-0 space-y-1">
+                        <span class="text-[10px] uppercase tracking-widest text-emerald-400 bg-emerald-900/50 px-3 py-1 rounded-full block">
+                            FORENSIC
+                        </span>
+                        ${hasZk ? '<span class="text-[10px] text-teal-400 block">ZK Proof</span>' : ''}
+                    </div>
+                </div>
+
+                <p class="mt-4 text-zinc-100 leading-relaxed">${escapeHtml(preview)}</p>
+
+                ${data.imageUrl ? `<img src="${escapeHtml(data.imageUrl)}" class="mt-4 rounded-2xl w-full max-h-64 object-cover" alt="Evidence" loading="lazy">` : ''}
+                ${data.audioUrl ? `<audio controls class="w-full mt-4" preload="none"><source src="${escapeHtml(data.audioUrl)}" type="audio/webm"></audio>` : ''}
+
+                <div class="mt-5 pt-4 border-t border-zinc-700 space-y-2 text-xs text-zinc-400">
+                    <div class="flex items-start justify-between gap-2">
+                        <div class="min-w-0">
+                            <span>Hash:</span>
+                            <span class="hash-mono text-emerald-400/90 ml-1">${shortHash(hash, 18)}</span>
+                        </div>
+                        ${hash ? `
+                        <button type="button" class="copy-btn text-emerald-400 hover:text-emerald-300 shrink-0"
+                                data-action="copy-hash" data-hash="${escapeHtml(hash)}"
+                                title="Copy full cryptographic hash" aria-label="Copy full hash">
+                            📋
+                        </button>` : ''}
+                    </div>
+
+                    ${prevHash ? `
+                    <div class="text-[11px]">
+                        <span class="text-zinc-500">Prev hash:</span>
+                        <span class="hash-mono text-zinc-500">${shortHash(prevHash, 14)}</span>
+                    </div>` : ''}
+
+                    <div class="flex items-center justify-between pt-1">
+                        <span class="text-[11px] text-zinc-500">ID: ${escapeHtml(id.substring(0, 12))}…</span>
+                        <button type="button"
+                                data-action="view-proof"
+                                data-id="${escapeHtml(id)}"
+                                class="text-emerald-400 hover:text-emerald-300 transition font-medium">
+                            View Full Proof →
+                        </button>
+                    </div>
+                </div>
+            `;
+            return el;
+        }
+
+        // ---------- main loader ----------
         async function loadForensicLedger() {
+            if (isLoading) return;
+            isLoading = true;
+
             ledgerContainer.innerHTML = `
-                <div class="text-center py-12 text-zinc-400" data-i18n="loadingImmutableLedger">
-                    Loading immutable ledger...
+                <div class="text-center py-12 text-zinc-400">
+                    Loading forensic ledger…
                 </div>
             `;
             if (typeof initLanguage === 'function') initLanguage();
+
+            if (unsubscribe) {
+                try { unsubscribe(); } catch (_) {}
+                unsubscribe = null;
+            }
 
             try {
                 const q = query(
                     collection(db, "testimonies"),
                     where("forensicVerified", "==", true),
                     orderBy("timestamp", "desc"),
-                    limit(15)
+                    limit(20)
                 );
 
                 unsubscribe = onSnapshot(q, (snapshot) => {
-                    ledgerContainer.innerHTML = "";
+                    ledgerContainer.innerHTML = '';
+                    const count = snapshot.size;
+                    entryCountEl.textContent = count;
 
                     if (snapshot.empty) {
+                        latestHashEl.textContent = '—';
+                        chainStatusEl.textContent = '● No entries yet';
+                        chainStatusEl.className = 'text-zinc-500';
                         ledgerContainer.innerHTML = `
                             <div class="text-center py-16 text-zinc-400">
                                 <div class="text-4xl mb-3">📜</div>
-                                <span data-i18n="noVerifiedEntries">No verified entries yet.</span><br>
-                                <span class="text-sm text-zinc-500" data-i18n="beFirstForensic">Be the first to publish with Forensic Shield.</span>
+                                <p>No forensic entries yet.</p>
+                                <p class="text-sm text-zinc-500 mt-1">Be the first to publish with Forensic Shield.</p>
                             </div>
                         `;
-                        if (typeof initLanguage === 'function') initLanguage();
+                        isLoading = false;
                         return;
                     }
 
-                    snapshot.forEach((docSnap) => {
-                        const data = docSnap.data();
-                       
-                        const rawTimestamp = data.timestamp;
-                        const postDate = rawTimestamp?.toDate ? rawTimestamp.toDate() : new Date(rawTimestamp || Date.now());
-                        const formattedDate = postDate.toLocaleString();
-
-                        const entry = document.createElement('div');
-                        entry.className = "ledger-entry glass rounded-3xl p-5 border border-emerald-500/20";
-                        entry.innerHTML = `
-                            <div class="flex justify-between items-start">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-lg">🔒</div>
-                                    <div>
-                                        <p class="font-medium">${data.author || 'Anonymous Witness'}</p>
-                                        <p class="text-xs text-emerald-500">${formattedDate}</p>
-                                    </div>
-                                </div>
-                                <div class="text-right">
-                                    <span class="text-[10px] uppercase tracking-widest text-emerald-400 bg-emerald-900/50 px-3 py-1 rounded-full" data-i18n="verifiedBadge">VERIFIED</span>
-                                </div>
-                            </div>
-                            <p class="mt-4 text-zinc-100 leading-relaxed">${data.content ? data.content.substring(0, 180) + (data.content.length > 180 ? '...' : '') : 'Media Testimony'}</p>
-                           
-                            ${data.imageUrl ? `<img src="${data.imageUrl}" class="mt-4 rounded-2xl w-full max-h-64 object-cover" alt="Evidence" loading="lazy">` : ''}
-                            ${data.audioUrl ? `<audio controls class="w-full mt-4"><source src="${data.audioUrl}" type="audio/webm"></audio>` : ''}
-                           
-                            <div class="flex items-center justify-between text-xs mt-5 pt-4 border-t border-zinc-700 text-zinc-400">
-                                <div>
-                                    <span data-i18n="hashLabel">Hash:</span> 
-                                    <span class="font-mono text-[10px] text-emerald-400/80">${data.hash ? data.hash.substring(0, 14) + '…' : 'N/A'}</span>
-                                </div>
-                                <!-- Replaced inline onclick with data attributes for safe event delegation -->
-                                <button type="button"
-                                        data-action="view-proof"
-                                        data-id="${docSnap.id}"
-                                        class="text-emerald-400 hover:text-emerald-300 transition cursor-pointer" 
-                                        data-i18n="viewFullProof">
-                                    View Full Proof →
-                                </button>
-                            </div>
-                        `;
-                        ledgerContainer.appendChild(entry);
+                    let firstHash = '';
+                    snapshot.forEach((docSnap, idx) => {
+                        if (idx === 0) {
+                            const d = docSnap.data() || {};
+                            firstHash = d.hash || d.contentHash || '';
+                        }
+                        ledgerContainer.appendChild(renderEntry(docSnap));
                     });
+
+                    latestHashEl.textContent = shortHash(firstHash, 18);
+                    chainStatusEl.textContent = '● Chain healthy';
+                    chainStatusEl.className = 'text-emerald-400';
+                    isLoading = false;
+
                     if (typeof initLanguage === 'function') initLanguage();
+                }, (err) => {
+                    console.error('Ledger error:', err);
+                    ledgerContainer.innerHTML = `
+                        <p class="text-red-400 text-center py-12">
+                            Failed to load forensic ledger. Please try again.
+                        </p>
+                    `;
+                    chainStatusEl.textContent = '● Error';
+                    chainStatusEl.className = 'text-red-400';
+                    isLoading = false;
                 });
 
-            } catch (error) {
-                console.error(error);
-                ledgerContainer.innerHTML = `<p class="text-red-400 text-center py-12" data-i18n="loadLedgerError">Failed to load ledger. Please try again later.</p>`;
-                if (typeof initLanguage === 'function') initLanguage();
+            } catch (err) {
+                console.error(err);
+                ledgerContainer.innerHTML = `
+                    <p class="text-red-400 text-center py-12">
+                        Failed to load forensic ledger. Please try again.
+                    </p>
+                `;
+                isLoading = false;
             }
         }
 
+        // ---------- events ----------
         document.addEventListener('DOMContentLoaded', () => {
-            console.log("📜 Forensic Ledger initialized");
+            console.log('📜 Forensic Ledger – name-aligned version loaded');
             if (typeof initLanguage === 'function') initLanguage();
             loadForensicLedger();
 
-            // 1. Unified history router hook for data-action="back"
+            // Back
             document.addEventListener('click', (e) => {
-                const backTrigger = e.target.closest('[data-action="back"]');
-                if (backTrigger) {
+                if (e.target.closest('[data-action="back"]')) {
                     e.preventDefault();
-                    if (window.history.length > 1) {
-                        window.history.back();
-                    } else {
-                        window.location.href = 'index.html';
-                    }
+                    if (window.history.length > 1) window.history.back();
+                    else window.location.href = 'index.html';
                 }
             });
 
-            // 2. Safe refresh button handler (updated to look for refreshLedgerBtn)
-            const refreshLedgerBtn = document.getElementById('refreshLedgerBtn');
-            if (refreshLedgerBtn) {
-                refreshLedgerBtn.addEventListener('click', () => {
-                    if (unsubscribe) unsubscribe();
-                    loadForensicLedger();
-                    showToast("Ledger refreshed", "success");
-                });
-            }
+            // Refresh
+            document.getElementById('refreshLedgerBtn')?.addEventListener('click', () => {
+                loadForensicLedger();
+                showToast('Forensic ledger refreshed', 'success');
+            });
 
-            // 3. Safe event delegation for dynamic "View Full Proof" buttons
-            if (ledgerContainer) {
-                ledgerContainer.addEventListener('click', (e) => {
-                    const viewBtn = e.target.closest('[data-action="view-proof"]');
-                    if (viewBtn) {
-                        const id = viewBtn.getAttribute('data-id');
-                        showToast("Opening full forensic record for ID: " + id, "info");
+            // Dynamic actions (copy + view proof)
+            ledgerContainer?.addEventListener('click', (e) => {
+                const copyBtn = e.target.closest('[data-action="copy-hash"]');
+                if (copyBtn) {
+                    const h = copyBtn.getAttribute('data-hash');
+                    if (h) copyHash(h);
+                    return;
+                }
+
+                const viewBtn = e.target.closest('[data-action="view-proof"]');
+                if (viewBtn) {
+                    const id = viewBtn.getAttribute('data-id');
+                    if (id) {
+                        // Real navigation – name must do what it says
+                        window.location.href = `verify.html?id=${encodeURIComponent(id)}`;
                     }
-                });
-            }
+                }
+            });
         });
 
         window.addEventListener('beforeunload', () => {
-            if (unsubscribe) unsubscribe();
+            if (unsubscribe) try { unsubscribe(); } catch (_) {}
         });
     </script>
 
