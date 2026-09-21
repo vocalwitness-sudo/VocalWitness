@@ -238,7 +238,7 @@ div.sticky {
   font-weight: 700 !important;
 }
 
-/* Catch-all fallback for generic active nav classes */
+/* Catch-all fallback */
 #main-nav button[data-tab].active,
 button.nav-tab.active {
   background: #10b981 !important;
@@ -313,6 +313,35 @@ button.nav-tab.active {
   flex-shrink: 0;
 }
 
+/* ====================== DATA SAVER BUTTON ====================== */
+#data-saver-btn,
+#data-saver-btn-mobile {
+  transition: all 0.2s ease;
+}
+
+/* When ON – the JS already rewrites the classes, but we keep a safe fallback */
+#data-saver-btn.border-emerald-500,
+#data-saver-btn-mobile.border-emerald-500 {
+  border-color: #10b981 !important;
+  background-color: rgba(6, 78, 59, 0.5) !important;
+  color: #34d399 !important;
+}
+
+/* ====================== MORE MENU ====================== */
+#more-menu {
+  /* already has Tailwind classes, just make sure it sits above everything */
+  z-index: 70 !important;
+}
+
+#more-menu a {
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+#more-menu a:hover {
+  background-color: #1e293b;
+  color: #ffffff;
+}
+
 /* ====================== MEDIA ACTION BUTTONS ====================== */
 .media-actions,
 #media-actions {
@@ -383,6 +412,10 @@ button[data-action="publish"] {
   transform: none;
 }
 
+#postButton:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
 /* ====================== MODALS ====================== */
 .fixed.inset-0 {
   position: fixed;
@@ -429,39 +462,7 @@ main {
   z-index: 10;
 }
 
-/* ===== Thick White Scrollbar ===== */
-
-/* Chrome, Edge, Safari */
-::-webkit-scrollbar {
-  width: 14px;          /* ← thicker vertical */
-  height: 14px;         /* ← thicker horizontal */
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #ffffff;
-  border-radius: 7px;
-  border: 3px solid transparent;   /* creates nice padding */
-  background-clip: content-box;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #e5e5e5;
-  background-clip: content-box;
-}
-
-/* Firefox */
-* {
-  scrollbar-width: auto;                 /* thicker in Firefox */
-  scrollbar-color: #ffffff transparent;
-}
-
-/* ====================== THICK WHITE SCROLLBAR (all browsers) ====================== */
-
-/* Chrome, Edge, Safari, Opera */
+/* ====================== SCROLLBAR ====================== */
 ::-webkit-scrollbar {
   width: 14px;
   height: 14px;
@@ -483,7 +484,6 @@ main {
   background-clip: content-box;
 }
 
-/* Firefox */
 * {
   scrollbar-width: auto;
   scrollbar-color: #ffffff transparent;
@@ -498,10 +498,6 @@ main {
 /* Smoother scrolling */
 html {
   scroll-behavior: smooth;
-}
-
-/* Prevent layout shift when scrollbar appears */
-html {
   scrollbar-gutter: stable;
 }
 
@@ -512,10 +508,6 @@ html {
   transition: border-color 0.2s ease;
 }
 
-/* Make the publish button feel more premium */
-#postButton:active:not(:disabled) {
-  transform: scale(0.98);
-}
 /* ====================== SPLASH SCREEN ====================== */
 #app-splash-screen {
   position: fixed;
@@ -563,77 +555,22 @@ footer .grid {
   }
 }
 
-/* ========== STRONG ACTIVE TAB STATES ========== */
-#main-nav button[data-tab] {
-  background: #111827 !important;
-  color: #94a3b8 !important;
-  border: 1px solid #334155 !important;
-  box-shadow: none !important;
+/* ====================== BREAKING TICKER ====================== */
+.ticker-wrap {
+  overflow: hidden;
+  position: relative;
 }
 
-#main-nav button[data-tab]:hover {
-  background: #1e293b !important;
-  color: #e2e8f0 !important;
-  border-color: #475569 !important;
-}
-
-#main-nav button[data-tab="square"].active,
-#main-nav button[data-tab="square"][aria-selected="true"] {
-  background: #10b981 !important;
-  color: #0f172a !important;
-  border: 1px solid #10b981 !important;
-  box-shadow: 0 4px 18px rgba(16, 185, 129, 0.45) !important;
-  font-weight: 700 !important;
-}
-
-#main-nav button[data-tab="arena"].active,
-#main-nav button[data-tab="arena"][aria-selected="true"] {
-  background: #0ea5e9 !important;
-  color: #ffffff !important;
-  border: 1px solid #0ea5e9 !important;
-  box-shadow: 0 4px 18px rgba(14, 165, 233, 0.45) !important;
-  font-weight: 700 !important;
-}
-
-#main-nav button[data-tab="mycircle"].active,
-#main-nav button[data-tab="witness"].active,
-#main-nav button[data-tab="mycircle"][aria-selected="true"],
-#main-nav button[data-tab="witness"][aria-selected="true"] {
-  background: #f59e0b !important;
-  color: #0f172a !important;
-  border: 1px solid #f59e0b !important;
-  box-shadow: 0 4px 18px rgba(245, 158, 11, 0.4) !important;
-  font-weight: 700 !important;
-}
-
-#main-nav button[data-tab="ledger"].active,
-#main-nav button[data-tab="ledger"][aria-selected="true"] {
-  background: #059669 !important;
-  color: #ffffff !important;
-  border: 1px solid #059669 !important;
-  box-shadow: 0 4px 18px rgba(5, 150, 105, 0.4) !important;
-  font-weight: 700 !important;
-}
-
-/* Fallback for older browsers that struggle with oklch / modern colors */
-#main-nav button[data-tab].active {
-  background-color: #10b981 !important;
-  color: #000 !important;
-}
-
-/* Data Saver button smooth transition */
-#data-saver-btn,
-#data-saver-btn-mobile {
-  transition: all 0.2s ease;
-}
-
-.ticker-track {
-  display: inline-flex;          /* or inline-block */
+.ticker-track,
+#ticker-content {
+  display: inline-flex;          /* works for both class and id */
+  white-space: nowrap;
   animation: ticker-scroll 45s linear infinite;
   will-change: transform;
 }
 
-.ticker-wrap:hover .ticker-track {
+.ticker-wrap:hover .ticker-track,
+.ticker-wrap:hover #ticker-content {
   animation-play-state: paused;
 }
 
