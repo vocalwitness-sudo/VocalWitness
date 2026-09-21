@@ -1,4 +1,4 @@
-// js/i18n.js - Hardened Production i18n Module (Forced English + RTL Header Fix)
+// js/i18n.js - Production i18n Module (Full language support + RTL Header Fix)
 
 let currentTranslations = {};
 let fallbackTranslations = {};
@@ -54,13 +54,19 @@ function getNestedTranslation(obj, path) {
 }
 
 export function t(key, fallback = "") {
+  // 1. Current language
   const val = getNestedTranslation(currentTranslations, key);
   if (val !== null && val !== "") return val;
 
+  // 2. English fallback (loaded file)
   const fallbackVal = getNestedTranslation(fallbackTranslations, key);
   if (fallbackVal !== null && fallbackVal !== "") return fallbackVal;
 
-  return DEFAULT_FALLBACK_DICTIONARY[key] || fallback || key;
+  // 3. Hard-coded emergency dictionary
+  if (DEFAULT_FALLBACK_DICTIONARY[key]) return DEFAULT_FALLBACK_DICTIONARY[key];
+
+  // 4. Caller-provided fallback or the key itself
+  return fallback || key;
 }
 
 function applyTextDirection(langCode) {
@@ -76,27 +82,35 @@ function applyTextDirection(langCode) {
   if (header) {
     header.setAttribute('dir', 'ltr');
   }
+
+  // Optional: also force any navigation that must stay LTR
+  document.querySelectorAll('[data-force-ltr]').forEach(el => {
+    el.setAttribute('dir', 'ltr');
+  });
 }
 
 export function applyTranslations() {
+  // Text content
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
     if (!key) return;
 
     const text = t(key);
-    if (!text || text === key) return;
+    if (!text || text === key) return; // skip if no real translation
 
     if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
       el.placeholder = text;
       return;
     }
 
+    // Prefer a dedicated label span if present
     const labelSpan = el.querySelector(':scope > .i18n-label');
     if (labelSpan) {
       labelSpan.textContent = text;
       return;
     }
 
+    // Replace first non-empty text node
     let textNodeFound = false;
     for (let node of el.childNodes) {
       if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '') {
@@ -106,19 +120,21 @@ export function applyTranslations() {
       }
     }
 
+    // Fallback: element has no children → set whole text
     if (!textNodeFound && el.children.length === 0) {
       el.textContent = text;
     }
   });
 
+  // Placeholders
   document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
     const key = el.getAttribute('data-i18n-placeholder');
-    if (key) {
-      const text = t(key);
-      if (text && text !== key) el.placeholder = text;
-    }
+    if (!key) return;
+    const text = t(key);
+    if (text && text !== key) el.placeholder = text;
   });
 
+  // Page title
   const pageTitle = t('pageTitle');
   if (pageTitle && pageTitle !== 'pageTitle') {
     document.title = pageTitle;
@@ -130,49 +146,66 @@ function syncSelectors(langCode) {
     '#languageSelect, #languageSelectMobile, #languageSelector, #languageSelector-desktop, #languageSelector-mobile, [data-i18n-selector], .lang-select'
   );
   selectors.forEach(sel => {
-    if (sel.value !== langCode) {
+    if (sel && sel.value !== langCode) {
       sel.value = langCode;
     }
   });
 }
 
 export async function loadTranslations(langCode = 'en') {
-  // Force English for now (remove this line later when RTL is fully fixed)
-  const targetLang = 'en';
+  // Validate language code
+  const isSupported = supportedLanguages.some(l => l.code === langCode);
+  const targetLang = isSupported ? langCode : 'en';
 
   try {
-    if (Object.keys(fallbackTranslations).length === 0 && targetLang !== 'en') {
+    // Always keep English as fallback
+    if (Object.keys(fallbackTranslations).length === 0) {
       try {
         const fallbackRes = await fetch('./translations/en.json');
-        if (fallbackRes.ok) fallbackTranslations = await fallbackRes.json();
+        if (fallbackRes.ok) {
+          fallbackTranslations = await fallbackRes.json();
+        } else {
+          fallbackTranslations = { ...DEFAULT_FALLBACK_DICTIONARY };
+        }
       } catch (_) {
-        fallbackTranslations = DEFAULT_FALLBACK_DICTIONARY;
+        fallbackTranslations = { ...DEFAULT_FALLBACK_DICTIONARY };
       }
     }
 
-    const response = await fetch(`./translations/${targetLang}.json`);
-    if (response.ok) {
-      currentTranslations = await response.json();
-      currentLang = targetLang;
-      if (targetLang === 'en') fallbackTranslations = currentTranslations;
-    } else {
-      console.warn(`[i18n] Translation file for ${targetLang}.json not found. Falling back to English.`);
-      const fallbackRes = await fetch('./translations/en.json');
-      if (fallbackRes.ok) currentTranslations = await fallbackRes.json();
+    // Load requested language
+    if (targetLang === 'en') {
+      currentTranslations = { ...fallbackTranslations };
       currentLang = 'en';
+    } else {
+      const response = await fetch(`./translations/${targetLang}.json`);
+      if (response.ok) {
+        currentTranslations = await response.json();
+        currentLang = targetLang;
+      } else {
+        console.warn(`[i18n] ${targetLang}.json not found → falling back to English`);
+        currentTranslations = { ...fallbackTranslations };
+        currentLang = 'en';
+      }
     }
   } catch (e) {
-    console.warn(`[i18n] Network/Fetch error loading ${targetLang}.`, e);
-    currentTranslations = DEFAULT_FALLBACK_DICTIONARY;
+    console.warn(`[i18n] Failed to load language ${targetLang}`, e);
+    currentTranslations = { ...fallbackTranslations };
     currentLang = 'en';
   }
 
+  // Persist preference
   localStorage.setItem('preferredLang', currentLang);
+
+  // Apply everything
   document.documentElement.lang = currentLang;
   applyTextDirection(currentLang);
   applyTranslations();
   syncSelectors(currentLang);
-  window.dispatchEvent(new CustomEvent('languageChanged', { detail: { lang: currentLang } }));
+
+  // Notify the rest of the app
+  window.dispatchEvent(new CustomEvent('languageChanged', {
+    detail: { lang: currentLang }
+  }));
 }
 
 export async function updateUILanguage(langCode) {
@@ -180,28 +213,36 @@ export async function updateUILanguage(langCode) {
 }
 
 export function initLanguage() {
-  // Clear any previously saved Arabic preference
-  const saved = localStorage.getItem('preferredLang');
-  if (saved === 'ar') {
-    localStorage.setItem('preferredLang', 'en');
-  }
+  // Restore last chosen language (or default to English)
+  let savedLang = localStorage.getItem('preferredLang') || 'en';
 
-  const savedLang = localStorage.getItem('preferredLang') || 'en';
+  // Optional safety: if you still want to block Arabic temporarily, uncomment the next 3 lines
+  // if (savedLang === 'ar') {
+  //   savedLang = 'en';
+  //   localStorage.setItem('preferredLang', 'en');
+  // }
 
+  // Listen for language selector changes
   document.addEventListener('change', (e) => {
-    if (e.target.matches('#languageSelect, #languageSelectMobile, #languageSelector, #languageSelector-desktop, #languageSelector-mobile, [data-i18n-selector], .lang-select')) {
+    if (
+      e.target.matches(
+        '#languageSelect, #languageSelectMobile, #languageSelector, #languageSelector-desktop, #languageSelector-mobile, [data-i18n-selector], .lang-select'
+      )
+    ) {
       const selectedLang = e.target.value;
       loadTranslations(selectedLang);
     }
   });
 
+  // Initial load
   loadTranslations(savedLang);
 }
 
-// Mutation Observer
+// ── Mutation Observer (auto-translate dynamically added content) ──
 let observerTimeout = null;
 const observer = new MutationObserver((mutations) => {
   let shouldTranslate = false;
+
   for (const mutation of mutations) {
     for (const node of mutation.addedNodes) {
       if (node.nodeType === Node.ELEMENT_NODE) {
@@ -217,25 +258,34 @@ const observer = new MutationObserver((mutations) => {
     }
     if (shouldTranslate) break;
   }
+
   if (shouldTranslate) {
     clearTimeout(observerTimeout);
     observerTimeout = setTimeout(() => {
       applyTranslations();
-    }, 30);
+    }, 40);
   }
 });
 
-observer.observe(document.body, { childList: true, subtree: true });
+if (document.body) {
+  observer.observe(document.body, { childList: true, subtree: true });
+} else {
+  document.addEventListener('DOMContentLoaded', () => {
+    observer.observe(document.body, { childList: true, subtree: true });
+  });
+}
 
+// Boot
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initLanguage);
 } else {
   initLanguage();
 }
 
-// Global exports
+// Global exports (for non-module scripts)
 window.initLanguage = initLanguage;
 window.changeLanguage = loadTranslations;
 window.setLanguage = loadTranslations;
 window.updateUILanguage = updateUILanguage;
 window.t = t;
+window.applyTranslations = applyTranslations;
