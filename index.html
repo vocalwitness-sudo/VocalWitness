@@ -1122,7 +1122,8 @@
           <div class="text-xs text-zinc-400">Require phone verification on every sign-in</div>
         </div>
         <label class="relative inline-flex cursor-pointer items-center">
-          <input type="checkbox" id="toggle2FA" class="peer sr-only">
+          <input type="checkbox" id="toggle2FA" class="peer sr-only"
+                 aria-label="Enable two-factor authentication">
           <div class="h-6 w-11 rounded-full bg-zinc-700 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-emerald-500 peer-checked:after:translate-x-full peer-focus-visible:ring-2 peer-focus-visible:ring-emerald-500/60"></div>
         </label>
       </div>
@@ -1133,12 +1134,20 @@
       <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400/90">Preferences</h4>
       <div class="rounded-2xl border border-zinc-700/80 bg-zinc-900/80 p-4">
         <label for="defaultDoorSelect" class="mb-2 block text-xs text-zinc-400">Default page after login</label>
-        <select id="defaultDoorSelect"
-                class="w-full appearance-none rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30">
-          <option value="public_square">Public Square</option>
-          <option value="citizen_talk">Citizen Talk</option>
-          <option value="witness_voice">Witness Voice</option>
-        </select>
+        <div class="relative">
+          <select id="defaultDoorSelect"
+                  class="w-full appearance-none rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 pr-10 text-sm text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30">
+            <option value="public_square">Public Square</option>
+            <option value="citizen_talk">Citizen Talk</option>
+            <option value="witness_voice">Witness Voice</option>
+          </select>
+          <!-- Chevron -->
+          <div class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-zinc-400">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1167,7 +1176,7 @@
         </svg>
         Emergency Clear This Device
       </button>
-      <p class="text-center text-[11px] leading-relaxed text-zinc-500">
+      <p id="panicClearDesc" class="text-center text-[11px] leading-relaxed text-zinc-500">
         Instantly removes all local data from this device only.<br>
         The public record stays completely safe.
       </p>
@@ -1329,6 +1338,12 @@
     m.classList.add('flex');
     m.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
+
+    // Focus first focusable element inside the modal
+    setTimeout(() => {
+      const focusable = m.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+      focusable?.focus();
+    }, 40);
   }
 
   function closeModal(id) {
@@ -1450,7 +1465,7 @@
       if (typeof window.handlePasswordReset === 'function') {
         window.handlePasswordReset();
       } else {
-        showToast('Password reset email will be sent shortly', 'info');
+        showToast('Password reset system is still loading…', 'info');
       }
     });
 
@@ -1459,7 +1474,9 @@
       if (typeof window.handleToggle2FA === 'function') {
         window.handleToggle2FA(enabled);
       } else {
-        showToast(enabled ? 'Two-Factor Protection enabled' : 'Two-Factor Protection disabled', enabled ? 'success' : 'info');
+        // Revert optimistic UI if real handler is missing
+        e.target.checked = !enabled;
+        showToast('Two-Factor system is still loading…', 'info');
       }
     });
 
@@ -1471,7 +1488,13 @@
       }
     });
 
+    // Stronger confirmation for Sign Out of All Sessions
     $('settingsSignOutBtn')?.addEventListener('click', () => {
+      const confirmed = confirm(
+        'This will sign you out of ALL devices and sessions.\n\nYou will need to log in again everywhere. Continue?'
+      );
+      if (!confirmed) return;
+
       if (typeof window.handleSignOutAll === 'function') {
         window.handleSignOutAll();
       } else {
@@ -1479,17 +1502,20 @@
       }
     });
 
+    // Stronger confirmation for Emergency Clear
     $('panicClearBtn')?.addEventListener('click', () => {
+      const confirmed = confirm(
+        '⚠️ EMERGENCY CLEAR\n\nThis will permanently erase ALL local data on THIS device only.\nThe public record stays completely safe.\n\nThis cannot be undone. Continue?'
+      );
+      if (!confirmed) return;
+
       if (typeof window.handlePanicClear === 'function') {
         window.handlePanicClear();
       } else {
-        const confirmed = confirm('This will permanently erase all local data on this device only. The public record stays safe. Continue?');
-        if (confirmed) {
-          localStorage.clear();
-          sessionStorage.clear();
-          showToast('Local data cleared from this device', 'success');
-          setTimeout(() => location.reload(), 1200);
-        }
+        localStorage.clear();
+        sessionStorage.clear();
+        showToast('Local data cleared from this device', 'success');
+        setTimeout(() => location.reload(), 1200);
       }
     });
 
