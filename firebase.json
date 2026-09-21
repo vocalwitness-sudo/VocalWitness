@@ -44,92 +44,50 @@
       {
         "source": "**",
         "headers": [
-          {
-            "key": "Cross-Origin-Opener-Policy",
-            "value": "unsafe-none"
-          },
-          {
-            "key": "Strict-Transport-Security",
-            "value": "max-age=31536000; includeSubDomains; preload"
-          },
-          {
-            "key": "X-Content-Type-Options",
-            "value": "nosniff"
-          },
-          {
-            "key": "X-Frame-Options",
-            "value": "SAMEORIGIN"
-          },
-          {
-            "key": "Referrer-Policy",
-            "value": "strict-origin-when-cross-origin"
-          }
+          { "key": "Cross-Origin-Opener-Policy", "value": "unsafe-none" },
+          { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains; preload" },
+          { "key": "X-Content-Type-Options", "value": "nosniff" },
+          { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
+          { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
         ]
       },
       {
         "source": "sw.js",
         "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "no-cache, no-store, must-revalidate"
-          },
-          {
-            "key": "Content-Type",
-            "value": "application/javascript; charset=utf-8"
-          }
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
+          { "key": "Content-Type", "value": "application/javascript; charset=utf-8" }
         ]
       },
       {
         "source": "**/*.html",
         "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "no-cache, no-store, must-revalidate"
-          }
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
         ]
       },
       {
         "source": "**/*.js",
         "headers": [
-          {
-            "key": "Content-Type",
-            "value": "application/javascript; charset=utf-8"
-          }
+          { "key": "Content-Type", "value": "application/javascript; charset=utf-8" }
         ]
       },
       {
         "source": "**/*.css",
         "headers": [
-          {
-            "key": "Content-Type",
-            "value": "text/css; charset=utf-8"
-          }
+          { "key": "Content-Type", "value": "text/css; charset=utf-8" }
         ]
       },
       {
         "source": "**/*.wasm",
         "headers": [
-          {
-            "key": "Content-Type",
-            "value": "application/wasm"
-          },
-          {
-            "key": "Cache-Control",
-            "value": "max-age=31536000, immutable"
-          }
+          { "key": "Content-Type", "value": "application/wasm" },
+          { "key": "Cache-Control", "value": "max-age=31536000, immutable" }
         ]
       },
       {
         "source": "**/*.zkey",
         "headers": [
-          {
-            "key": "Content-Type",
-            "value": "application/octet-stream"
-          },
-          {
-            "key": "Cache-Control",
-            "value": "max-age=31536000, immutable"
-          }
+          { "key": "Content-Type", "value": "application/octet-stream" },
+          { "key": "Cache-Control", "value": "max-age=31536000, immutable" }
         ]
       }
     ]
@@ -147,18 +105,5 @@
         "*.local"
       ]
     }
-  ],
-  "firestoreIndexes": {
-    "indexes": [
-      {
-        "collectionGroup": "dao_comments",
-        "queryScope": "COLLECTION",
-        "fields": [
-          { "fieldPath": "proposalId", "order": "ASCENDING" },
-          { "fieldPath": "createdAt", "order": "ASCENDING" }
-        ]
-      }
-    ],
-    "fieldOverrides": []
-  }
+  ]
 }
