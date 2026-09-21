@@ -1,4 +1,6 @@
-// js/evidence-pack.js — Evidence pack + Batch 6 share / newsroom export
+// js/evidence-pack.js — Evidence pack + share / newsroom export
+// Name = Reality: every pack must be independently verifiable
+
 import { generateSha256Hash } from './utils.js';
 
 const SCHEMA = 'vocalwitness.evidence-pack.v1';
@@ -50,6 +52,17 @@ export async function buildPackCore({
       hashAfterUpload: media.imageHash,
       hashMatch: true,
       exifScrubbed: true,
+    });
+  }
+
+  if (media.videoUrl && media.videoHash) {
+    mediaRows.push({
+      role: 'video',
+      url: media.videoUrl,
+      hashAlg: 'SHA-256',
+      hashCapture: media.videoHash,
+      hashAfterUpload: media.videoHash,
+      hashMatch: true,
     });
   }
 
@@ -136,14 +149,74 @@ export function toFullEvidencePack(core, packCoreHash, rfc3161, testimonyId, ext
     auditSnippet: extra.auditSnippet || null,
     verify: {
       instructions: [
-        'Open verifyUrl (includes testimony id + ledger hash)',
+        'Open the verifyUrl (contains testimony id + ledger hash)',
         'Re-download media from the listed URLs',
-        'Compute SHA-256 of each file; compare to hashAfterUpload',
-        'Compute SHA-256 of body UTF-8; compare to bodyHash',
-        'If rfc3161.tokenBase64 is present, verify offline with your TSA tools',
+        'Compute SHA-256 of each file and compare to hashAfterUpload',
+        'Compute SHA-256 of the body text (UTF-8) and compare to bodyHash',
+        'If rfc3161.tokenBase64 is present, verify offline with TSA tools',
+        'This pack proves integrity of the bitstrings, not real-world events',
       ],
     },
   };
+}
+
+/**
+ * Convenience: build a full pack directly from a Firestore testimony document.
+ * This is the function most UI code should call.
+ */
+export async function buildFullPackFromTestimony(testimony = {}, extras = {}) {
+  const id = testimony.id || testimony.testimonyId || extras.testimonyId || null;
+
+  // If we already have a stored core-like structure, reuse it
+  const existingCore = testimony.evidencePackCore || null;
+  const packCoreHash =
+    testimony.packCoreHash ||
+    testimony.evidencePack?.packCoreHash ||
+    extras.packCoreHash ||
+    null;
+
+  let core = existingCore;
+  let finalPackCoreHash = packCoreHash;
+
+  if (!core) {
+    // Rebuild a minimal core from the testimony fields
+    const media = {
+      imageUrl: testimony.imageUrl,
+      imageHash: testimony.imageHash,
+      videoUrl: testimony.videoUrl,
+      videoHash: testimony.videoHash,
+      audioUrl: testimony.audioUrl,
+      audioHash: testimony.audioHash,
+    };
+
+    const built = await buildPackCore({
+      content: testimony.content || testimony.body || '',
+      bodyHash: testimony.bodyHash || null,
+      media,
+      identity: {
+        mode: testimony.isAnonymous ? 'ANONYMOUS' : 'IDENTIFIED',
+        authorId: testimony.authorId || testimony.uid || null,
+        displayName: testimony.author || testimony.displayName || null,
+      },
+      channel: testimony.targetFeed || testimony.channel || 'citizen-talk',
+      clientCaptureMs: testimony.clientCaptureMs || Date.now(),
+    });
+
+    core = built.core;
+    finalPackCoreHash = built.packCoreHash;
+  }
+
+  return toFullEvidencePack(
+    core,
+    finalPackCoreHash,
+    testimony.evidencePack?.rfc3161 || extras.rfc3161 || null,
+    id,
+    {
+      forensicHash: resolveLedgerHash(testimony),
+      disputes: extras.disputes || testimony.disputes || [],
+      auditSnippet: extras.auditSnippet || null,
+    }
+  );
 }
 
 export function downloadJson(filename, obj) {
@@ -156,26 +229,28 @@ export function downloadJson(filename, obj) {
   document.body.appendChild(a);
   a.click();
   a.remove();
-  URL.revokeObjectURL(a.href);
+  setTimeout(() => URL.revokeObjectURL(a.href), 1500);
 }
 
 /* ============================================================
-   Existing create / download helpers
+   Create / download helpers
    ============================================================ */
 
-export async function createEvidencePack({
-  content,
-  bodyHash,
-  media = {},
-  identity = {},
-  channel = 'citizen-talk',
-  clientCaptureMs = Date.now(),
-  testimonyId = null,
-  rfc3161 = null,
-  forensicHash = null,
-  disputes = [],
-  auditSnippet = null,
-}) {
+export async function createEvidencePack(options) {
+  const {
+    content,
+    bodyHash,
+    media = {},
+    identity = {},
+    channel = 'citizen-talk',
+    clientCaptureMs = Date.now(),
+    testimonyId = null,
+    rfc3161 = null,
+    forensicHash = null,
+    disputes = [],
+    auditSnippet = null,
+  } = options;
+
   const { core, packCoreHash } = await buildPackCore({
     content,
     bodyHash,
@@ -212,29 +287,23 @@ export function downloadEvidencePack(fullPack, testimonyId) {
 }
 
 /* ============================================================
-   Batch 6 — Share links (always include ledger / hash ref)
+   Share links (always include ledger / hash ref)
    ============================================================ */
 
-/**
- * Resolve best integrity hash for links and packs.
- */
 export function resolveLedgerHash(testimony = {}) {
   return (
     testimony.forensicHash ||
+    testimony.hash ||
     testimony.packCoreHash ||
     testimony.evidencePack?.packCoreHash ||
     testimony.imageHash ||
+    testimony.videoHash ||
     testimony.audioHash ||
     testimony.bodyHash ||
     null
   );
 }
 
-/**
- * Share / verify URL that always carries id + hash when sealed.
- * @param {{ id?: string, testimonyId?: string, forensicHash?: string, packCoreHash?: string }} testimony
- * @param {string} [origin]
- */
 export function buildShareUrl(testimony = {}, origin = DEFAULT_ORIGIN) {
   const id = testimony.id || testimony.testimonyId || '';
   const h = resolveLedgerHash(testimony);
@@ -243,25 +312,18 @@ export function buildShareUrl(testimony = {}, origin = DEFAULT_ORIGIN) {
   if (id) url.searchParams.set('id', id);
   if (h) url.searchParams.set('h', h);
 
-  // Optional short channel hint for UX only
   if (testimony.targetFeed || testimony.channel) {
-    url.searchParams.set(
-      'ch',
-      testimony.targetFeed || testimony.channel
-    );
+    url.searchParams.set('ch', testimony.targetFeed || testimony.channel);
   }
 
   return url.toString();
 }
 
-/**
- * Copy or native-share a sealed report link.
- */
 export async function shareTestimony(testimony, options = {}) {
   const link = buildShareUrl(testimony, options.origin);
   const hash = resolveLedgerHash(testimony);
   const shortHash = hash ? `${hash.slice(0, 12)}…` : 'unsealed';
-  const title = testimony.headline || 'VocalWitness sealed report';
+  const title = testimony.headline || testimony.title || 'VocalWitness sealed report';
   const text =
     options.text ||
     `VocalWitness evidence (${shortHash}). Verify: ${link}`;
@@ -288,13 +350,9 @@ export async function shareTestimony(testimony, options = {}) {
 }
 
 /* ============================================================
-   Batch 6 — Newsroom / NGO export
+   Newsroom / NGO export
    ============================================================ */
 
-/**
- * Build a newsroom-oriented pack from a Firestore testimony doc (+ optional extras).
- * Does not require rebuild of pack core if testimony already has hashes.
- */
 export function buildNewsroomPack(testimony, extras = {}) {
   const id = testimony.id || extras.testimonyId || null;
   const forensicHash = resolveLedgerHash(testimony);
@@ -308,6 +366,14 @@ export function buildNewsroomPack(testimony, extras = {}) {
       hashAlg: 'SHA-256',
       hashAfterUpload: testimony.imageHash || null,
       exifScrubbed: true,
+    });
+  }
+  if (testimony.videoUrl) {
+    media.push({
+      role: 'video',
+      url: testimony.videoUrl,
+      hashAlg: 'SHA-256',
+      hashAfterUpload: testimony.videoHash || null,
     });
   }
   if (testimony.audioUrl) {
@@ -328,7 +394,7 @@ export function buildNewsroomPack(testimony, extras = {}) {
     verifyUrl,
     testimony: {
       id,
-      headline: testimony.headline || null,
+      headline: testimony.headline || testimony.title || null,
       content: testimony.content || testimony.body || '',
       channel: testimony.targetFeed || testimony.channel || null,
       status: testimony.status || null,
@@ -349,8 +415,8 @@ export function buildNewsroomPack(testimony, extras = {}) {
         testimony.evidencePack?.packCoreHash ||
         null,
       imageHash: testimony.imageHash || null,
+      videoHash: testimony.videoHash || null,
       audioHash: testimony.audioHash || null,
-      publicNullifier: testimony.publicNullifier || null,
       bodyHash: testimony.bodyHash || null,
     },
     media,
@@ -368,9 +434,6 @@ export function buildNewsroomPack(testimony, extras = {}) {
   };
 }
 
-/**
- * Download newsroom JSON pack.
- */
 export function exportForNewsroom(testimony, extras = {}) {
   const pack = buildNewsroomPack(testimony, extras);
   const id = pack.packId || 'unknown';
@@ -378,10 +441,6 @@ export function exportForNewsroom(testimony, extras = {}) {
   return pack;
 }
 
-/**
- * Optional partner webhook payload (client preview / Functions mirror).
- * Server should POST this; client may only build it for debugging.
- */
 export function buildPartnerWebhookPayload(testimony, event = 'testimony.sealed') {
   const id = testimony.id || null;
   const forensicHash = resolveLedgerHash(testimony);
@@ -399,9 +458,11 @@ export function buildPartnerWebhookPayload(testimony, event = 'testimony.sealed'
   };
 }
 
+// Expose useful helpers globally for convenience
 if (typeof window !== 'undefined') {
   window.buildShareUrl = buildShareUrl;
   window.shareTestimony = shareTestimony;
   window.exportForNewsroom = exportForNewsroom;
   window.buildNewsroomPack = buildNewsroomPack;
+  window.buildFullPackFromTestimony = buildFullPackFromTestimony;
 }
