@@ -1,10 +1,9 @@
 // js/group-detail.js
-// Handles a single Group Detail page
+// Complete Group Detail page with Invite Code, Expiration & Approval
 
 import { db, auth } from './firebase-config.js';
 import {
   doc,
-  getDoc,
   onSnapshot,
   updateDoc,
   arrayUnion,
@@ -19,7 +18,6 @@ import {
 } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
 
 import { showToast } from './utils.js';
-import { getCurrentUserTier, TIERS } from './tier.js';
 
 let currentGroupId = null;
 let currentGroupData = null;
@@ -35,15 +33,26 @@ export function initGroupDetail() {
 
   if (!currentGroupId) {
     showToast('Group not found', 'error');
-    setTimeout(() => window.location.href = 'groups.html', 1500);
+    setTimeout(() => (window.location.href = 'groups.html'), 1500);
     return;
   }
 
   loadGroup();
 
-  // Tab switching (keep your existing code)
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    // ... existing tab code
+  // Tab switching
+  document.querySelectorAll('.tab-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach((b) => {
+        b.classList.remove('active', 'text-emerald-400');
+        b.classList.add('text-zinc-400');
+      });
+      btn.classList.add('active', 'text-emerald-400');
+      btn.classList.remove('text-zinc-400');
+
+      document.querySelectorAll('[id^="tab-"]').forEach((t) => t.classList.add('hidden'));
+      const tab = btn.dataset.tab;
+      document.getElementById(`tab-${tab}`)?.classList.remove('hidden');
+    });
   });
 
   // Join / Leave
@@ -52,44 +61,68 @@ export function initGroupDetail() {
   // Post to group
   document.getElementById('postToGroupBtn')?.addEventListener('click', postToGroup);
 
-  // ===== NEW: Invite Link =====
-  document.getElementById('copyInviteBtn')?.addEventListener('click', copyInviteLink);
+  // Invite buttons
+  document.getElementById('copyInviteBtn')?.addEventListener('click', () => {
+    const input = document.getElementById('inviteLinkInput');
+    if (input?.value) {
+      navigator.clipboard.writeText(input.value);
+      showToast('Invite link copied!', 'success');
+    }
+  });
 
-  // Generate the link once the group is loaded
-  // (we call it inside renderGroupHeader after data is ready)
+  document.getElementById('copyCodeBtn')?.addEventListener('click', () => {
+    const input = document.getElementById('inviteCodeInput');
+    if (input?.value) {
+      navigator.clipboard.writeText(input.value);
+      showToast('Invite code copied!', 'success');
+    }
+  });
+
+  document.getElementById('regenerateInviteBtn')?.addEventListener('click', async () => {
+    const expiry = Number(document.getElementById('inviteExpiry')?.value || 7);
+    const requireApproval = document.getElementById('inviteApproval')?.value === 'approval';
+    await createOrRefreshInvite({ expiryDays: expiry, requireApproval });
+  });
 }
 
 /**
- * Load group info + members
+ * Load group in real-time
  */
 function loadGroup() {
   const groupRef = doc(db, 'groups', currentGroupId);
 
   if (unsubscribeGroup) unsubscribeGroup();
 
-  unsubscribeGroup = onSnapshot(groupRef, async (snap) => {
-    if (!snap.exists()) {
-      showToast('This group no longer exists', 'error');
-      setTimeout(() => window.location.href = 'groups.html', 1500);
-      return;
-    }
+  unsubscribeGroup = onSnapshot(
+    groupRef,
+    (snap) => {
+      if (!snap.exists()) {
+        showToast('This group no longer exists', 'error');
+        setTimeout(() => (window.location.href = 'groups.html'), 1500);
+        return;
+      }
 
-    currentGroupData = { id: snap.id, ...snap.data() };
-    renderGroupHeader(currentGroupData);
-    renderMembers(currentGroupData);
-    loadGroupFeed();
-  }, (err) => {
-    console.error(err);
-    showToast('Failed to load group', 'error');
-  });
+      currentGroupData = { id: snap.id, ...snap.data() };
+      renderGroupHeader(currentGroupData);
+      renderMembers(currentGroupData);
+      renderInviteUI();
+      handleInviteJoin();
+      loadGroupFeed();
+    },
+    (err) => {
+      console.error(err);
+      showToast('Failed to load group', 'error');
+    }
+  );
 }
 
 /**
- * Render header (name, description, visibility, member count, join button)
+ * Render header
  */
 function renderGroupHeader(group) {
   document.getElementById('groupName').textContent = group.name || 'Unnamed Group';
-  document.getElementById('groupDescription').textContent = group.description || 'No description provided.';
+  document.getElementById('groupDescription').textContent =
+    group.description || 'No description provided.';
   document.getElementById('memberCount').textContent = `${group.memberCount || 1} members`;
 
   // Visibility badge
@@ -106,7 +139,7 @@ function renderGroupHeader(group) {
     badge.className = `rounded-full border px-2.5 py-0.5 text-xs ${info.class}`;
   }
 
-  // Join / Leave button state
+  // Join / Leave button
   const btn = document.getElementById('joinLeaveBtn');
   const uid = auth.currentUser?.uid;
   const isMember = uid && group.members?.includes(uid);
@@ -136,7 +169,7 @@ function renderGroupHeader(group) {
 }
 
 /**
- * Render members list
+ * Render members + pending requests
  */
 function renderMembers(group) {
   const list = document.getElementById('membersList');
@@ -146,42 +179,79 @@ function renderMembers(group) {
 
   const members = group.members || [];
   const admins = group.admins || [group.creatorId];
+  const pending = group.pendingMembers || [];
 
+  // Normal members
   if (members.length === 0) {
     list.innerHTML = `<p class="text-sm text-zinc-500 py-6 text-center">No members yet</p>`;
-    return;
+  } else {
+    members.forEach((uid) => {
+      const isAdmin = admins.includes(uid);
+      const isCreator = uid === group.creatorId;
+
+      const row = document.createElement('div');
+      row.className = 'flex items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-900/60 px-4 py-3';
+
+      row.innerHTML = `
+        <div class="flex items-center gap-3">
+          <div class="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-700 text-sm font-medium">
+            ${uid.substring(0, 2).toUpperCase()}
+          </div>
+          <div>
+            <p class="text-sm font-medium text-white">${uid.substring(0, 8)}...</p>
+            <p class="text-xs text-zinc-500">
+              ${isCreator ? 'Creator' : isAdmin ? 'Admin' : 'Member'}
+            </p>
+          </div>
+        </div>
+        ${isCreator || isAdmin
+          ? `<span class="text-[10px] rounded-full bg-amber-500/15 text-amber-400 px-2 py-0.5">Admin</span>`
+          : ''}
+      `;
+      list.appendChild(row);
+    });
   }
 
-  members.forEach(uid => {
-    const isAdmin = admins.includes(uid);
-    const isCreator = uid === group.creatorId;
+  // Pending requests (only visible to admins)
+  const uid = auth.currentUser?.uid;
+  const isAdmin = uid && (group.creatorId === uid || (group.admins || []).includes(uid));
 
-    const row = document.createElement('div');
-    row.className = 'flex items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-900/60 px-4 py-3';
+  if (isAdmin && pending.length > 0) {
+    const title = document.createElement('h4');
+    title.className = 'mt-6 mb-3 text-sm font-medium text-amber-400';
+    title.textContent = `Pending Requests (${pending.length})`;
+    list.appendChild(title);
 
-    row.innerHTML = `
-      <div class="flex items-center gap-3">
-        <div class="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-700 text-sm font-medium">
-          ${uid.substring(0, 2).toUpperCase()}
+    pending.forEach((pendingUid) => {
+      const row = document.createElement('div');
+      row.className = 'flex items-center justify-between rounded-2xl border border-amber-500/30 bg-amber-500/5 px-4 py-3';
+
+      row.innerHTML = `
+        <div class="text-sm text-zinc-300">${pendingUid.substring(0, 10)}...</div>
+        <div class="flex gap-2">
+          <button data-approve="${pendingUid}" class="rounded-lg bg-emerald-600 px-3 py-1 text-xs text-black hover:bg-emerald-500">
+            Approve
+          </button>
+          <button data-reject="${pendingUid}" class="rounded-lg bg-zinc-700 px-3 py-1 text-xs text-zinc-300 hover:bg-zinc-600">
+            Reject
+          </button>
         </div>
-        <div>
-          <p class="text-sm font-medium text-white">${uid.substring(0, 8)}...</p>
-          <p class="text-xs text-zinc-500">
-            ${isCreator ? 'Creator' : isAdmin ? 'Admin' : 'Member'}
-          </p>
-        </div>
-      </div>
-      ${isCreator || isAdmin
-        ? `<span class="text-[10px] rounded-full bg-amber-500/15 text-amber-400 px-2 py-0.5">Admin</span>`
-        : ''}
-    `;
+      `;
+      list.appendChild(row);
+    });
 
-    list.appendChild(row);
-  });
+    // Bind approve / reject
+    list.querySelectorAll('[data-approve]').forEach((btn) => {
+      btn.addEventListener('click', () => approveMember(btn.dataset.approve));
+    });
+    list.querySelectorAll('[data-reject]').forEach((btn) => {
+      btn.addEventListener('click', () => rejectMember(btn.dataset.reject));
+    });
+  }
 }
 
 /**
- * Load group feed (posts inside this group)
+ * Load group feed
  */
 function loadGroupFeed() {
   const feedContainer = document.getElementById('groupFeed');
@@ -189,7 +259,6 @@ function loadGroupFeed() {
 
   if (unsubscribeFeed) unsubscribeFeed();
 
-  // Assuming posts that belong to a group have a field: groupId
   const q = query(
     collection(db, 'testimonies'),
     where('groupId', '==', currentGroupId),
@@ -210,33 +279,30 @@ function loadGroupFeed() {
       return;
     }
 
-    snapshot.forEach(docSnap => {
+    snapshot.forEach((docSnap) => {
       const data = docSnap.data();
       const card = document.createElement('div');
       card.className = 'glass rounded-3xl p-5';
 
       card.innerHTML = `
-        <div class="flex items-start justify-between gap-3 mb-3">
-          <div class="text-xs text-zinc-400">
-            ${data.createdAt?.toDate ? data.createdAt.toDate().toLocaleString() : ''}
-          </div>
+        <div class="text-xs text-zinc-400 mb-2">
+          ${data.createdAt?.toDate ? data.createdAt.toDate().toLocaleString() : ''}
         </div>
         ${data.title ? `<h4 class="font-semibold text-white mb-1">${escapeHtml(data.title)}</h4>` : ''}
-        <p class="text-zinc-200 text-sm leading-relaxed whitespace-pre-wrap">${escapeHtml(data.content || data.text || '')}</p>
+        <p class="text-zinc-200 text-sm leading-relaxed whitespace-pre-wrap">
+          ${escapeHtml(data.content || data.text || '')}
+        </p>
       `;
-
       feedContainer.appendChild(card);
     });
   });
 }
 
 /**
- * Join or Leave the group
+ * Join or Leave
  */
 async function handleJoinLeave() {
-  if (!auth.currentUser) {
-    return showToast('Please sign in first', 'error');
-  }
+  if (!auth.currentUser) return showToast('Please sign in first', 'error');
 
   const uid = auth.currentUser.uid;
   const isMember = currentGroupData.members?.includes(uid);
@@ -245,14 +311,12 @@ async function handleJoinLeave() {
     const groupRef = doc(db, 'groups', currentGroupId);
 
     if (isMember) {
-      // Leave
       await updateDoc(groupRef, {
         members: arrayRemove(uid),
         memberCount: increment(-1)
       });
       showToast('You left the group', 'info');
     } else {
-      // Join
       await updateDoc(groupRef, {
         members: arrayUnion(uid),
         memberCount: increment(1)
@@ -265,114 +329,15 @@ async function handleJoinLeave() {
   }
 }
 
-// ====================== INVITE LINK SYSTEM ======================
-
 /**
- * Generate or get the invite link for the current group
- */
-async function generateInviteLink() {
-  if (!currentGroupId || !currentGroupData) return;
-
-  const baseUrl = window.location.origin;
-  // Simple and reliable invite format
-  const inviteLink = `${baseUrl}/group-detail.html?id=${currentGroupId}&invite=1`;
-
-  const input = document.getElementById('inviteLinkInput');
-  if (input) {
-    input.value = inviteLink;
-  }
-
-  // Optional: store invite code in the group document for future advanced features
-  try {
-    const groupRef = doc(db, 'groups', currentGroupId);
-    if (!currentGroupData.inviteCode) {
-      const simpleCode = currentGroupId.substring(0, 8).toUpperCase();
-      await updateDoc(groupRef, {
-        inviteCode: simpleCode,
-        inviteEnabled: true
-      });
-    }
-  } catch (err) {
-    console.warn('Could not save invite code:', err);
-  }
-}
-
-/**
- * Copy invite link to clipboard
- */
-async function copyInviteLink() {
-  const input = document.getElementById('inviteLinkInput');
-  if (!input || !input.value) {
-    return showToast('Invite link not ready', 'error');
-  }
-
-  try {
-    await navigator.clipboard.writeText(input.value);
-    showToast('Invite link copied!', 'success');
-
-    // Visual feedback
-    const btn = document.getElementById('copyInviteBtn');
-    if (btn) {
-      const original = btn.textContent;
-      btn.textContent = 'Copied!';
-      btn.classList.add('bg-emerald-600');
-      setTimeout(() => {
-        btn.textContent = original;
-        btn.classList.remove('bg-emerald-600');
-      }, 2000);
-    }
-  } catch (err) {
-    // Fallback for older browsers
-    input.select();
-    document.execCommand('copy');
-    showToast('Invite link copied!', 'success');
-  }
-}
-
-/**
- * Handle joining via invite link
- */
-async function handleInviteJoin() {
-  const params = new URLSearchParams(window.location.search);
-  const isInvite = params.get('invite') === '1';
-
-  if (!isInvite || !auth.currentUser) return;
-
-  // Auto-join if the user is not already a member
-  const uid = auth.currentUser.uid;
-  if (currentGroupData && !currentGroupData.members?.includes(uid)) {
-    try {
-      const groupRef = doc(db, 'groups', currentGroupId);
-      await updateDoc(groupRef, {
-        members: arrayUnion(uid),
-        memberCount: increment(1)
-      });
-      showToast('You joined the group via invite link!', 'success');
-
-      // Clean the URL so the invite parameter disappears
-      const cleanUrl = window.location.pathname + `?id=${currentGroupId}`;
-      window.history.replaceState({}, '', cleanUrl);
-    } catch (err) {
-      console.error(err);
-      showToast('Could not join via invite', 'error');
-    }
-  }
-}
-
-/**
- * Post a message / testimony inside the group
+ * Post inside the group
  */
 async function postToGroup() {
-  if (!auth.currentUser) {
-    return showToast('Please sign in to post', 'error');
-  }
+  if (!auth.currentUser) return showToast('Please sign in to post', 'error');
 
   const input = document.getElementById('groupPostInput');
   const content = input?.value.trim();
-
-  if (!content) {
-    return showToast('Write something first', 'error');
-  }
+  if (!content) return showToast('Write something first', 'error');
 
   try {
     await addDoc(collection(db, 'testimonies'), {
@@ -391,6 +356,171 @@ async function postToGroup() {
   } catch (err) {
     console.error(err);
     showToast('Failed to post', 'error');
+  }
+}
+
+// ====================== INVITE SYSTEM ======================
+
+function generateShortCode(groupName = '') {
+  const prefix = (groupName || 'GRP')
+    .replace(/[^a-zA-Z]/g, '')
+    .substring(0, 5)
+    .toUpperCase() || 'GRP';
+  const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+  return `${prefix}-${random}`;
+}
+
+async function createOrRefreshInvite({ expiryDays = 7, requireApproval = true } = {}) {
+  if (!currentGroupId || !auth.currentUser) return;
+
+  const code = generateShortCode(currentGroupData?.name);
+  const expiresAt = expiryDays > 0
+    ? new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000)
+    : null;
+
+  const inviteData = {
+    inviteCode: code,
+    inviteEnabled: true,
+    inviteRequireApproval: requireApproval,
+    inviteExpiresAt: expiresAt,
+    inviteCreatedAt: serverTimestamp(),
+    inviteCreatedBy: auth.currentUser.uid
+  };
+
+  try {
+    await updateDoc(doc(db, 'groups', currentGroupId), inviteData);
+    showToast('Invite updated', 'success');
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to update invite', 'error');
+  }
+}
+
+function renderInviteUI() {
+  const linkInput = document.getElementById('inviteLinkInput');
+  const codeInput = document.getElementById('inviteCodeInput');
+  const statusBadge = document.getElementById('inviteStatusBadge');
+  const settings = document.getElementById('inviteSettings');
+
+  if (!currentGroupData) return;
+
+  const baseUrl = window.location.origin;
+  const link = `${baseUrl}/group-detail.html?id=${currentGroupId}&code=${currentGroupData.inviteCode || ''}`;
+
+  if (linkInput) linkInput.value = link;
+  if (codeInput) codeInput.value = currentGroupData.inviteCode || '————';
+
+  // Status
+  if (statusBadge) {
+    const expired = currentGroupData.inviteExpiresAt?.toDate
+      ? currentGroupData.inviteExpiresAt.toDate() < new Date()
+      : false;
+
+    if (!currentGroupData.inviteEnabled || expired) {
+      statusBadge.textContent = 'Expired / Disabled';
+      statusBadge.className = 'text-xs text-red-400';
+    } else {
+      statusBadge.textContent = currentGroupData.inviteRequireApproval
+        ? 'Requires Approval'
+        : 'Auto-join Active';
+      statusBadge.className = 'text-xs text-emerald-400';
+    }
+  }
+
+  // Show settings only to admins
+  const uid = auth.currentUser?.uid;
+  const isAdmin = uid && (
+    currentGroupData.creatorId === uid ||
+    (currentGroupData.admins || []).includes(uid)
+  );
+
+  if (settings) {
+    settings.classList.toggle('hidden', !isAdmin);
+  }
+}
+
+async function handleInviteJoin() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  const isInvite = params.get('invite') === '1' || !!code;
+
+  if (!isInvite || !auth.currentUser || !currentGroupData) return;
+
+  const uid = auth.currentUser.uid;
+
+  if (currentGroupData.members?.includes(uid)) {
+    cleanInviteFromUrl();
+    return;
+  }
+
+  // Check expiration
+  if (currentGroupData.inviteExpiresAt?.toDate) {
+    if (currentGroupData.inviteExpiresAt.toDate() < new Date()) {
+      showToast('This invite has expired', 'error');
+      cleanInviteFromUrl();
+      return;
+    }
+  }
+
+  // Check code
+  if (code && currentGroupData.inviteCode && code !== currentGroupData.inviteCode) {
+    showToast('Invalid invite code', 'error');
+    cleanInviteFromUrl();
+    return;
+  }
+
+  try {
+    const groupRef = doc(db, 'groups', currentGroupId);
+
+    if (currentGroupData.inviteRequireApproval) {
+      await updateDoc(groupRef, {
+        pendingMembers: arrayUnion(uid)
+      });
+      showToast('Join request sent. Waiting for approval.', 'info');
+    } else {
+      await updateDoc(groupRef, {
+        members: arrayUnion(uid),
+        memberCount: increment(1),
+        pendingMembers: arrayRemove(uid)
+      });
+      showToast('You joined the group!', 'success');
+    }
+
+    cleanInviteFromUrl();
+  } catch (err) {
+    console.error(err);
+    showToast('Could not process invite', 'error');
+  }
+}
+
+function cleanInviteFromUrl() {
+  const cleanUrl = `${window.location.pathname}?id=${currentGroupId}`;
+  window.history.replaceState({}, '', cleanUrl);
+}
+
+async function approveMember(uid) {
+  try {
+    await updateDoc(doc(db, 'groups', currentGroupId), {
+      members: arrayUnion(uid),
+      pendingMembers: arrayRemove(uid),
+      memberCount: increment(1)
+    });
+    showToast('Member approved', 'success');
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to approve', 'error');
+  }
+}
+
+async function rejectMember(uid) {
+  try {
+    await updateDoc(doc(db, 'groups', currentGroupId), {
+      pendingMembers: arrayRemove(uid)
+    });
+    showToast('Request rejected', 'info');
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to reject', 'error');
   }
 }
 
