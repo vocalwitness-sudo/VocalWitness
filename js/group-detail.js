@@ -167,7 +167,7 @@ function renderGroupHeader(group) {
     createdEl.textContent = group.createdAt.toDate().toLocaleString();
   }
 }
-
+updatePendingBadge(group);
 /**
  * Render members + pending requests
  */
@@ -490,6 +490,31 @@ async function handleInviteJoin() {
   } catch (err) {
     console.error(err);
     showToast('Could not process invite', 'error');
+  }
+}
+
+/**
+ * Update the pending requests badge on the Members tab
+ */
+function updatePendingBadge(group) {
+  const badge = document.getElementById('pendingBadge');
+  if (!badge) return;
+
+  const uid = auth.currentUser?.uid;
+  const isAdmin = uid && (
+    group.creatorId === uid ||
+    (group.admins || []).includes(uid)
+  );
+
+  const pendingCount = (group.pendingMembers || []).length;
+
+  if (isAdmin && pendingCount > 0) {
+    badge.textContent = pendingCount;
+    badge.classList.remove('hidden');
+    badge.classList.add('flex');
+  } else {
+    badge.classList.add('hidden');
+    badge.classList.remove('flex');
   }
 }
 
