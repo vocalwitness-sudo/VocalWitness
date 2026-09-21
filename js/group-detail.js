@@ -167,13 +167,16 @@ function renderGroupHeader(group) {
     createdEl.textContent = group.createdAt.toDate().toLocaleString();
   }
 }
-updatePendingBadge(group);
+
 /**
  * Render members + pending requests
  */
 function renderMembers(group) {
   const list = document.getElementById('membersList');
   if (!list) return;
+
+  // Update pending badge count
+  updatePendingBadge(group);
 
   list.innerHTML = '';
 
