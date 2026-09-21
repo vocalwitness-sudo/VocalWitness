@@ -283,6 +283,34 @@
                   Close
                 </button>` : ''}
             </div>
+
+            <!-- Discussion Toggle -->
+            <div class="mt-4 border-t border-zinc-800 pt-4">
+              <button onclick="toggleDiscussion('${p.id}')"
+                      class="flex w-full items-center justify-between text-sm text-zinc-400 hover:text-white transition">
+                <span>Discussion (<span id="comment-count-${p.id}">0</span>)</span>
+                <span id="discussion-arrow-${p.id}">▼</span>
+              </button>
+
+              <div id="discussion-${p.id}" class="mt-4 hidden space-y-4">
+                <!-- Comments will load here -->
+                <div id="comments-list-${p.id}" class="space-y-3 max-h-64 overflow-y-auto">
+                  <p class="text-xs text-zinc-500 text-center py-4">Loading comments...</p>
+                </div>
+
+                <!-- Add comment -->
+                <div class="flex gap-2">
+                  <input id="comment-input-${p.id}" type="text" maxlength="400"
+                         placeholder="Add a comment..."
+                         class="flex-1 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-white focus:border-emerald-500 focus:outline-none">
+                  <button onclick="postComment('${p.id}')"
+                          class="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-medium text-black hover:bg-emerald-500 transition">
+                    Post
+                  </button>
+                </div>
+              </div>
+            </div>
+
           </div>`;
       }).join('');
     }
@@ -296,6 +324,32 @@
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
     }
+
+    // ---------- Discussion Handlers ----------
+    window.toggleDiscussion = (proposalId) => {
+      const discDiv = document.getElementById(`discussion-${proposalId}`);
+      const arrow = document.getElementById(`discussion-arrow-${proposalId}`);
+      if (!discDiv) return;
+
+      const isHidden = discDiv.classList.contains('hidden');
+      if (isHidden) {
+        discDiv.classList.remove('hidden');
+        arrow.textContent = '▲';
+        // Trigger loading comments when opened if needed
+      } else {
+        discDiv.classList.add('hidden');
+        arrow.textContent = '▼';
+      }
+    };
+
+    window.postComment = (proposalId) => {
+      const input = document.getElementById(`comment-input-${proposalId}`);
+      if (!input || !input.value.trim()) return showToast('Comment cannot be empty', 'error');
+      
+      // Implement your comment submission logic here
+      showToast('Comment submitted', 'success');
+      input.value = '';
+    };
 
     // ---------- Filters ----------
     document.querySelectorAll('.filter-btn').forEach(btn => {
