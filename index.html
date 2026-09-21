@@ -786,35 +786,70 @@
   </div>
 </section>
 
-<!-- ========== 5. TRUSTED VOICES ========== -->
-<section id="witness" class="hidden space-y-6" role="tabpanel" aria-label="Trusted Voices">
-  <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-    <div>
-      <h2 class="text-2xl font-bold text-amber-400">Trusted Voices</h2>
-      <p class="mt-1 text-sm text-zinc-400">Verified reporters and higher-trust accounts</p>
+<!-- LIVE VOICE -->
+<div id="voice-section" class="rounded-2xl border-2 border-emerald-500/40 bg-emerald-500/5 overflow-hidden">
+  
+  <!-- Main Button -->
+  <button id="btn-voice" type="button"
+          class="flex w-full items-center justify-center gap-3 px-5 py-4 text-base font-semibold text-emerald-400 transition-all
+                 hover:bg-emerald-500 hover:text-zinc-950 active:scale-[0.98]">
+    <svg class="h-6 w-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+            d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z"/>
+    </svg>
+    <span id="btn-voice-text">Record Live Voice</span>
+    <span id="btn-voice-badge" class="ml-1 rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-medium text-emerald-300">
+      Recommended
+    </span>
+  </button>
+
+  <!-- Instruction text (always visible under the button) -->
+  <div id="voice-instruction" class="border-t border-emerald-500/20 bg-zinc-900/40 px-5 py-2.5 text-center text-xs text-zinc-400">
+    Tap the button above to start recording. Speak clearly.
+  </div>
+
+  <!-- Recording controls -->
+  <div id="voice-recorder-bar" class="hidden border-t border-emerald-500/20 bg-zinc-900/70 p-4">
+    <div class="flex flex-wrap items-center gap-3">
+      <div class="flex min-w-[70px] items-center gap-2">
+        <span id="rec-indicator" class="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500"></span>
+        <span id="rec-timer" class="font-mono text-sm text-emerald-400">00:00</span>
+      </div>
+
+      <button id="verify-voice-btn" type="button"
+              class="rounded-xl bg-blue-600/80 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-600">
+        🛡️ Verify
+      </button>
+
+      <canvas id="rec-waveform" width="180" height="36" class="max-w-[200px] flex-1 rounded bg-zinc-950"></canvas>
+
+      <div class="ml-auto flex items-center gap-2">
+        <button id="rec-pause-btn" type="button"
+                class="rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700">
+          ⏸ Pause
+        </button>
+        <button id="rec-stop-btn" type="button"
+                class="rounded-xl bg-red-600/80 px-3 py-1.5 text-xs text-white hover:bg-red-600">
+          ⏹ Stop
+        </button>
+        <button id="rec-replay-btn" type="button"
+                class="hidden rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700">
+          ↻ Replay
+        </button>
+        <button id="rec-rerecord-btn" type="button"
+                class="hidden rounded-xl border border-amber-600/60 bg-amber-900/40 px-3 py-1.5 text-xs text-amber-300 hover:bg-amber-800/50">
+          ↺ Re-record
+        </button>
+      </div>
     </div>
-    <input type="search" id="witness-search"
-           placeholder="Search trusted voices…"
-           class="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:border-amber-500 focus:outline-none sm:w-72">
+    <audio id="rec-replay-audio" class="hidden"></audio>
   </div>
-  <div class="flex flex-wrap gap-2" id="witness-filters">
-    <button type="button" data-filter="all"
-            class="rounded-full border border-amber-500/40 bg-amber-500/15 px-4 py-1.5 text-xs font-medium text-amber-400">
-      All
-    </button>
-    <button type="button" data-filter="zk"
-            class="rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs font-medium text-amber-400">
-      Higher Trust
-    </button>
-    <button type="button" data-filter="phone"
-            class="rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs font-medium text-zinc-300 transition hover:border-amber-500/50">
-      Phone verified
-    </button>
+
+  <!-- Mic permission message -->
+  <div id="mic-permission-msg" class="hidden border-t border-amber-500/20 bg-amber-950/30 p-4 text-xs text-amber-200">
+    <!-- filled by media.js -->
   </div>
-  <div id="verified-witnesses-grid" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-    <!-- content loads dynamically -->
-  </div>
-</section>
+</div>
     <!-- ====================== MEDIA SECTION ====================== -->
     <div class="space-y-4">
 
