@@ -164,25 +164,22 @@ function showSingleDataSaverToast(msg) {
 
 /* ====================== TAB SWITCHING ====================== */
 const TAB_TO_SECTION = {
-  square:   ['public-square', 'square', 'citizen-talk', 'tab-square'],
-  ledger:   ['evidence-ledger', 'ledger', 'public-record', 'ledgerContainer', 'ledger-list', 'tab-ledger'],
-  arena:    ['live-arena', 'arena', 'liveArena', 'tab-arena'],
-  mycircle: ['mycircle', 'my-circle', 'circle', 'tab-mycircle'],
-  witness:  ['witness', 'trusted-voices', 'witness-voice', 'tab-witness']
+  square:   ['public-square'],
+  ledger:   ['evidence-ledger'],
+  arena:    ['live-arena'],
+  mycircle: ['mycircle'],
+  witness:  ['witness']
 };
 
-/** Active styles per tab (inactive is always the same) */
 const TAB_ACTIVE_CLASSES = {
   square:  ['bg-emerald-500', 'text-black', 'shadow-lg', 'shadow-emerald-500/20'],
   arena:   ['bg-sky-950/50', 'text-sky-300', 'border', 'border-sky-500'],
   witness: ['bg-amber-950/40', 'text-amber-300', 'border', 'border-amber-500'],
-  // ledger + mycircle (+ default)
   default: ['bg-emerald-600/20', 'text-emerald-300', 'border', 'border-emerald-500/60']
 };
 
 const TAB_INACTIVE_CLASSES = ['bg-zinc-900', 'text-zinc-300', 'border', 'border-zinc-700'];
 
-/** Every class we ever add for active/inactive — used to reset */
 const ALL_TAB_STYLE_CLASSES = [
   ...new Set([
     ...Object.values(TAB_ACTIVE_CLASSES).flat(),
@@ -190,6 +187,7 @@ const ALL_TAB_STYLE_CLASSES = [
   ])
 ];
 
+let isSwitchingTab = false;   // ← only declare this ONCE in the whole file
 
 window.switchTab = async function (tab) {
   if (isSwitchingTab) return;
@@ -199,7 +197,7 @@ window.switchTab = async function (tab) {
   console.log('[Tab] Switching to:', tab);
 
   try {
-    // 1. Nav buttons – visual state
+    // 1. Update nav button styles
     document.querySelectorAll('#main-nav button[data-tab]').forEach((btn) => {
       const isActive = btn.dataset.tab === tab;
       btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
@@ -215,46 +213,35 @@ window.switchTab = async function (tab) {
       }
     });
 
-    // 2. Hide ALL possible sections (from every mapping)
-    const allPossibleIds = Object.values(TAB_TO_SECTION).flat();
-    allPossibleIds.forEach((id) => {
+    // 2. Hide every tab panel
+    Object.values(TAB_TO_SECTION).flat().forEach((id) => {
       const el = document.getElementById(id);
       if (!el) return;
       el.classList.add('hidden');
-      el.classList.remove('block');
       el.setAttribute('hidden', '');
       el.setAttribute('aria-hidden', 'true');
     });
 
-    // 3. Show the correct section (try every possible ID)
-    const possibleIds = TAB_TO_SECTION[tab];
-    let section = null;
-
-    for (const id of possibleIds) {
-      const el = document.getElementById(id);
-      if (el) {
-        section = el;
-        break;
-      }
-    }
+    // 3. Show the selected panel
+    const sectionId = TAB_TO_SECTION[tab][0];
+    const section = document.getElementById(sectionId);
 
     if (section) {
       section.classList.remove('hidden');
-      section.classList.add('block');
       section.removeAttribute('hidden');
       section.setAttribute('aria-hidden', 'false');
-      console.log('[Tab] Opened section:', section.id);
+      console.log('[Tab] Opened section:', sectionId);
     } else {
-      console.warn('[Tab] Section not found for:', tab, 'Tried IDs:', possibleIds);
+      console.warn('[Tab] Section not found:', sectionId);
     }
 
-    // 4. URL hash (back/forward friendly)
+    // 4. Update URL hash
     const newHash = `#${tab === 'square' ? 'citizen-talk' : tab}`;
     if (window.location.hash !== newHash) {
       history.pushState({ tab }, '', newHash);
     }
 
-    // 5. Tab-specific init
+    // 5. Tab-specific initialization
     if (tab === 'square' && typeof initFeed === 'function') {
       initFeed(undefined, 'citizen-talk');
     }
