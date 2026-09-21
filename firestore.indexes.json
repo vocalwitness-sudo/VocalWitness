@@ -9,7 +9,7 @@
       ]
     },
     {
-      "collectionGroup": "testimonies" 
+      "collectionGroup": "testimonies",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "channel", "order": "ASCENDING" },
