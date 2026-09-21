@@ -19,6 +19,13 @@
       font-weight: 600;
     }
   </style>
+  <script type="module">
+  import { initGroupDetail } from './js/group-detail.js';
+
+  document.addEventListener('DOMContentLoaded', () => {
+    initGroupDetail();
+  });
+</script>
 </head>
 <body class="min-h-screen bg-[#0a0f1c] text-white">
 
@@ -96,6 +103,41 @@
         <!-- Members load here -->
       </div>
     </div>
+
+    <!-- ========== MEMBERS TAB ========== -->
+<div id="tab-members" class="hidden space-y-5">
+
+  <!-- Invite Section -->
+  <div class="glass rounded-3xl p-5">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-medium text-white">Invite People</h3>
+      <span class="text-xs text-zinc-500">Share this link</span>
+    </div>
+
+    <div class="flex gap-2">
+      <input id="inviteLinkInput" type="text" readonly
+             class="flex-1 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm text-zinc-300 focus:outline-none"
+             placeholder="Generating invite link...">
+      <button id="copyInviteBtn"
+              class="rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-black hover:bg-emerald-400 transition">
+        Copy
+      </button>
+    </div>
+
+    <p class="mt-3 text-xs text-zinc-500">
+      Anyone with this link can request to join (or join instantly if the group is public).
+    </p>
+  </div>
+
+  <!-- Members List -->
+  <div class="flex items-center justify-between mb-2">
+    <h3 class="font-medium">Members</h3>
+  </div>
+  <div id="membersList" class="space-y-3">
+    <!-- Members load here -->
+  </div>
+</div>
+    
 
     <!-- ========== ABOUT TAB ========== -->
     <div id="tab-about" class="hidden space-y-6">
