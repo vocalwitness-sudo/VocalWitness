@@ -187,8 +187,6 @@ const ALL_TAB_STYLE_CLASSES = [
   ])
 ];
 
-let isSwitchingTab = false;   // ← only declare this ONCE in the whole file
-
 window.switchTab = async function (tab) {
   if (isSwitchingTab) return;
   if (!TAB_TO_SECTION[tab]) tab = 'square';
