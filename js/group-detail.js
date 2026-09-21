@@ -39,36 +39,24 @@ export function initGroupDetail() {
     return;
   }
 
-  // Load group data in real-time
   loadGroup();
 
-  // Tab switching
+  // Tab switching (keep your existing code)
   document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.tab-btn').forEach(b => {
-        b.classList.remove('active', 'text-emerald-400');
-        b.classList.add('text-zinc-400');
-      });
-      btn.classList.add('active', 'text-emerald-400');
-      btn.classList.remove('text-zinc-400');
-
-      document.querySelectorAll('[id^="tab-"]').forEach(t => t.classList.add('hidden'));
-      const tab = btn.dataset.tab;
-      document.getElementById(`tab-${tab}`)?.classList.remove('hidden');
-    });
+    // ... existing tab code
   });
 
-  // Join / Leave button
-  const joinBtn = document.getElementById('joinLeaveBtn');
-  if (joinBtn) {
-    joinBtn.addEventListener('click', handleJoinLeave);
-  }
+  // Join / Leave
+  document.getElementById('joinLeaveBtn')?.addEventListener('click', handleJoinLeave);
 
   // Post to group
-  const postBtn = document.getElementById('postToGroupBtn');
-  if (postBtn) {
-    postBtn.addEventListener('click', postToGroup);
-  }
+  document.getElementById('postToGroupBtn')?.addEventListener('click', postToGroup);
+
+  // ===== NEW: Invite Link =====
+  document.getElementById('copyInviteBtn')?.addEventListener('click', copyInviteLink);
+
+  // Generate the link once the group is loaded
+  // (we call it inside renderGroupHeader after data is ready)
 }
 
 /**
@@ -274,6 +262,100 @@ async function handleJoinLeave() {
   } catch (err) {
     console.error(err);
     showToast('Action failed', 'error');
+  }
+}
+
+// ====================== INVITE LINK SYSTEM ======================
+
+/**
+ * Generate or get the invite link for the current group
+ */
+async function generateInviteLink() {
+  if (!currentGroupId || !currentGroupData) return;
+
+  const baseUrl = window.location.origin;
+  // Simple and reliable invite format
+  const inviteLink = `${baseUrl}/group-detail.html?id=${currentGroupId}&invite=1`;
+
+  const input = document.getElementById('inviteLinkInput');
+  if (input) {
+    input.value = inviteLink;
+  }
+
+  // Optional: store invite code in the group document for future advanced features
+  try {
+    const groupRef = doc(db, 'groups', currentGroupId);
+    if (!currentGroupData.inviteCode) {
+      const simpleCode = currentGroupId.substring(0, 8).toUpperCase();
+      await updateDoc(groupRef, {
+        inviteCode: simpleCode,
+        inviteEnabled: true
+      });
+    }
+  } catch (err) {
+    console.warn('Could not save invite code:', err);
+  }
+}
+
+/**
+ * Copy invite link to clipboard
+ */
+async function copyInviteLink() {
+  const input = document.getElementById('inviteLinkInput');
+  if (!input || !input.value) {
+    return showToast('Invite link not ready', 'error');
+  }
+
+  try {
+    await navigator.clipboard.writeText(input.value);
+    showToast('Invite link copied!', 'success');
+
+    // Visual feedback
+    const btn = document.getElementById('copyInviteBtn');
+    if (btn) {
+      const original = btn.textContent;
+      btn.textContent = 'Copied!';
+      btn.classList.add('bg-emerald-600');
+      setTimeout(() => {
+        btn.textContent = original;
+        btn.classList.remove('bg-emerald-600');
+      }, 2000);
+    }
+  } catch (err) {
+    // Fallback for older browsers
+    input.select();
+    document.execCommand('copy');
+    showToast('Invite link copied!', 'success');
+  }
+}
+
+/**
+ * Handle joining via invite link
+ */
+async function handleInviteJoin() {
+  const params = new URLSearchParams(window.location.search);
+  const isInvite = params.get('invite') === '1';
+
+  if (!isInvite || !auth.currentUser) return;
+
+  // Auto-join if the user is not already a member
+  const uid = auth.currentUser.uid;
+  if (currentGroupData && !currentGroupData.members?.includes(uid)) {
+    try {
+      const groupRef = doc(db, 'groups', currentGroupId);
+      await updateDoc(groupRef, {
+        members: arrayUnion(uid),
+        memberCount: increment(1)
+      });
+      showToast('You joined the group via invite link!', 'success');
+
+      // Clean the URL so the invite parameter disappears
+      const cleanUrl = window.location.pathname + `?id=${currentGroupId}`;
+      window.history.replaceState({}, '', cleanUrl);
+    } catch (err) {
+      console.error(err);
+      showToast('Could not join via invite', 'error');
+    }
   }
 }
 
