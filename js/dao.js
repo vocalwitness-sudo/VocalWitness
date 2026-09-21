@@ -1,4 +1,5 @@
-// js/dao.js - Enhanced Quadratic Voting, Multi-Sig Governance & Cryptographic Trust (Batch 3)
+// js/dao.js - Enhanced Quadratic Voting, Multi-Sig Governance, Cryptographic Trust + Proposal Discussion
+
 import { db, auth } from './firebase-config.js';
 import {
   collection,
@@ -12,8 +13,10 @@ import {
   orderBy,
   limit,
   serverTimestamp,
-  arrayUnion
+  arrayUnion,
+  onSnapshot
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
 import { showToast } from './utils.js';
 import {
   getCurrentUserTier,
@@ -39,11 +42,9 @@ function quadraticCost(strength) {
  */
 export async function recordTestimonyContribution() {
   if (!auth.currentUser) return;
-
   try {
     const userRef = doc(db, "users", auth.currentUser.uid);
     const snap = await getDoc(userRef);
-
     if (snap.exists()) {
       const data = snap.data();
       const currentRep = data.credibilityScore || data.reputation || 0;
@@ -68,10 +69,8 @@ async function awardGovernanceRep(points = 5) {
     const userRef = doc(db, "users", auth.currentUser.uid);
     const snap = await getDoc(userRef);
     if (!snap.exists()) return;
-
     const data = snap.data();
     const currentRep = data.credibilityScore || data.reputation || 0;
-
     await updateDoc(userRef, {
       credibilityScore: currentRep + points,
       reputation: currentRep + points,
@@ -115,7 +114,8 @@ export async function createDAOProposal(title, description, category = 'governan
       totalVotingPowerSpent: 0,
       quorum: 12,
       multiSigSignatures: [],
-      voteLog: {}
+      voteLog: {},
+      commentCount: 0
     });
 
     await awardGovernanceRep(8);
@@ -134,7 +134,7 @@ export async function createDAOProposal(title, description, category = 'governan
 }
 
 /**
- * Create a Moderation Appeal proposal (community can challenge a Steward decision)
+ * Create a Moderation Appeal proposal
  */
 export async function createModerationAppeal(postId, reason, originalDecision = 'purged') {
   if (!auth.currentUser) return showToast("Sign in required", "error");
@@ -144,14 +144,12 @@ export async function createModerationAppeal(postId, reason, originalDecision = 
     const description = `Community appeal against moderation decision.\n\nOriginal Decision: ${originalDecision}\nPost ID: ${postId}\n\nReason for appeal:\n${reason.trim()}`;
 
     const proposalId = await createDAOProposal(title, description, 'moderation_appeal');
-
     if (proposalId) {
       await updateDoc(doc(db, "dao_proposals", proposalId), {
         relatedPostId: postId,
         originalDecision
       });
     }
-
     return proposalId;
   } catch (e) {
     console.error("Moderation appeal error:", e);
@@ -161,7 +159,7 @@ export async function createModerationAppeal(postId, reason, originalDecision = 
 }
 
 /**
- * Cast Quadratic Vote (with Sybil Protection + Voting Weight)
+ * Cast Quadratic Vote
  */
 export async function castQuadraticVote(proposalId, direction, strength = 1, proofContext = {}) {
   if (!auth.currentUser) return showToast("Sign in required", "error");
@@ -171,7 +169,6 @@ export async function castQuadraticVote(proposalId, direction, strength = 1, pro
   }
 
   const userId = auth.currentUser.uid;
-
   const userRef = doc(db, "users", userId);
   const userSnap = await getDoc(userRef);
   if (!userSnap.exists()) return showToast("User profile not found", "error");
@@ -193,19 +190,17 @@ export async function castQuadraticVote(proposalId, direction, strength = 1, pro
   if (!proposalSnap.exists()) return showToast("Proposal not found", "error");
 
   const data = proposalSnap.data();
-
   if (data.status !== 'active') {
     return showToast("This proposal is no longer open for voting", "error");
   }
 
   const previousVote = data.voteLog?.[userId];
   if (previousVote && previousVote.direction === direction) {
-    return showToast("You already voted this way. You can change direction or increase strength in a future update.", "info");
+    return showToast("You already voted this way.", "info");
   }
 
   const cost = quadraticCost(strength);
   const currentSpent = previousVote?.cost || 0;
-
   if (currentSpent + cost > 25) {
     return showToast("Exceeded voting budget (max 25 power points)", "error");
   }
@@ -225,7 +220,6 @@ export async function castQuadraticVote(proposalId, direction, strength = 1, pro
 
   const currentTier = await getCurrentUserTier();
   const votingWeight = await getUserVotingWeight();
-
   const effectiveStrength = Math.min(strength * Math.max(1, Math.floor(votingWeight / 2)), 8);
 
   const updateData = direction === 'for'
@@ -259,12 +253,9 @@ export async function castQuadraticVote(proposalId, direction, strength = 1, pro
 }
 
 /* ==========================================================================
-   BATCH 3: HIGH-STAKES MULTI-SIG & DECENTRALIZED TRUST EXTENSIONS
+   MULTI-SIG & HIGH-STAKES
    ========================================================================== */
 
-/**
- * Submit an attestation signature/proof to a high-stakes testimony or proposal multi-sig pool
- */
 export async function submitMultiSigAttestation(targetId, proofData, isProposal = false) {
   if (!auth.currentUser) {
     showToast("You must be logged in to sign multi-sig attestations.", "error");
@@ -274,11 +265,13 @@ export async function submitMultiSigAttestation(targetId, proofData, isProposal 
   try {
     const collectionName = isProposal ? "dao_proposals" : "testimonies";
     const targetRef = doc(db, collectionName, targetId);
-    
+
     const attestationRecord = {
       witnessUid: auth.currentUser.uid,
       proofType: proofData.proofType || "UNKNOWN",
-      publicSignalsHash: proofData.publicSignals ? proofData.publicSignals[0] : (proofData.proof?.hash || proofData.payloadHash || null),
+      publicSignalsHash: proofData.publicSignals
+        ? proofData.publicSignals[0]
+        : (proofData.proof?.hash || proofData.payloadHash || null),
       isFallback: !!proofData.isFallback,
       signedAt: new Date().toISOString()
     };
@@ -294,7 +287,7 @@ export async function submitMultiSigAttestation(targetId, proofData, isProposal 
       isProposal
     });
 
-    showToast("✅ Multi-Sig attestation anchored to witness pool!", "success");
+    showToast("✅ Multi-Sig attestation anchored!", "success");
     return true;
   } catch (error) {
     console.error("Multi-Sig attestation error:", error);
@@ -303,9 +296,6 @@ export async function submitMultiSigAttestation(targetId, proofData, isProposal 
   }
 }
 
-/**
- * Executes a full Circom SNARK or fallback proof and registers high-stakes attestation
- */
 export async function handleHighStakesAttestation(targetId, inputs, isProposal = false) {
   try {
     const proofResult = await generateZKProofAsync(inputs);
@@ -319,16 +309,13 @@ export async function handleHighStakesAttestation(targetId, inputs, isProposal =
   return false;
 }
 
-/**
- * Evaluates whether a testimony or proposal has satisfied decentralized multi-sig consensus
- */
 export function evaluateMultiSigStatus(entityData) {
   const signatures = entityData?.multiSigSignatures || [];
   const count = signatures.length;
-  
-  const hasZkProof = signatures.some(sig => 
-    sig.proofType === "SNARK_GROTH16" || 
-    sig.proofType === "SNARK_GROTH16_SERVER" || 
+
+  const hasZkProof = signatures.some(sig =>
+    sig.proofType === "SNARK_GROTH16" ||
+    sig.proofType === "SNARK_GROTH16_SERVER" ||
     sig.proofType === "GROTH16_CIRCOM_ZK"
   );
 
@@ -337,13 +324,112 @@ export function evaluateMultiSigStatus(entityData) {
     signatureCount: count,
     requiredThreshold: MINIMUM_MULTISIG_THRESHOLD,
     hasZkProof,
-    status: (count >= MINIMUM_MULTISIG_THRESHOLD && hasZkProof) ? "SEALED_HIGH_STAKES" : "PENDING_WITNESSES"
+    status: (count >= MINIMUM_MULTISIG_THRESHOLD && hasZkProof)
+      ? "SEALED_HIGH_STAKES"
+      : "PENDING_WITNESSES"
   };
 }
 
+/* ==========================================================================
+   PROPOSAL DISCUSSION (NEW)
+   ========================================================================== */
+
+const commentUnsubscribers = {};
+
 /**
- * Fetch active proposals (for UI)
+ * Post a comment on a proposal
  */
+export async function postDAOComment(proposalId, content) {
+  if (!auth.currentUser) {
+    showToast("Please sign in to comment", "error");
+    return false;
+  }
+
+  const trimmed = content?.trim();
+  if (!trimmed || trimmed.length === 0) {
+    showToast("Write something first", "error");
+    return false;
+  }
+
+  if (trimmed.length > 400) {
+    showToast("Comment is too long (max 400 characters)", "error");
+    return false;
+  }
+
+  try {
+    await addDoc(collection(db, "dao_comments"), {
+      proposalId,
+      content: trimmed,
+      authorId: auth.currentUser.uid,
+      authorName: auth.currentUser.displayName || "Anonymous",
+      createdAt: serverTimestamp()
+    });
+
+    // Optionally keep a counter on the proposal
+    const proposalRef = doc(db, "dao_proposals", proposalId);
+    const snap = await getDoc(proposalRef);
+    if (snap.exists()) {
+      const currentCount = snap.data().commentCount || 0;
+      await updateDoc(proposalRef, {
+        commentCount: currentCount + 1
+      });
+    }
+
+    await awardGovernanceRep(2);
+    showToast("Comment posted", "success");
+    return true;
+  } catch (err) {
+    console.error("Failed to post comment:", err);
+    showToast("Failed to post comment", "error");
+    return false;
+  }
+}
+
+/**
+ * Real-time subscription to comments of a proposal
+ * Returns an unsubscribe function
+ */
+export function subscribeToProposalComments(proposalId, callback) {
+  // Clean previous listener if exists
+  if (commentUnsubscribers[proposalId]) {
+    commentUnsubscribers[proposalId]();
+  }
+
+  const q = query(
+    collection(db, "dao_comments"),
+    where("proposalId", "==", proposalId),
+    orderBy("createdAt", "asc")
+  );
+
+  const unsubscribe = onSnapshot(q, (snapshot) => {
+    const comments = snapshot.docs.map(d => ({
+      id: d.id,
+      ...d.data()
+    }));
+    callback(comments);
+  }, (error) => {
+    console.error("Comments listener error:", error);
+    callback([]);
+  });
+
+  commentUnsubscribers[proposalId] = unsubscribe;
+  return unsubscribe;
+}
+
+/**
+ * Stop listening to comments for a proposal
+ */
+export function unsubscribeFromComments(proposalId) {
+  if (commentUnsubscribers[proposalId]) {
+    commentUnsubscribers[proposalId]();
+    delete commentUnsubscribers[proposalId];
+  }
+}
+
+/* ==========================================================================
+   FETCH & CLOSE
+   ========================================================================== */
+
 export async function fetchActiveProposals(max = 20) {
   try {
     const q = query(
@@ -352,7 +438,6 @@ export async function fetchActiveProposals(max = 20) {
       orderBy("createdAt", "desc"),
       limit(max)
     );
-
     const snapshot = await getDocs(q);
     return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
   } catch (e) {
@@ -361,9 +446,6 @@ export async function fetchActiveProposals(max = 20) {
   }
 }
 
-/**
- * Get a single proposal by ID
- */
 export async function getProposal(proposalId) {
   try {
     const snap = await getDoc(doc(db, "dao_proposals", proposalId));
@@ -375,20 +457,15 @@ export async function getProposal(proposalId) {
   }
 }
 
-/**
- * Close / Finalize a proposal (Stewards or original creator)
- */
 export async function closeProposal(proposalId, finalStatus = 'closed') {
   if (!auth.currentUser) return showToast("Sign in required", "error");
 
   try {
     const isSteward = await hasStewardAccess();
     const proposal = await getProposal(proposalId);
-
     if (!proposal) return showToast("Proposal not found", "error");
 
     const isCreator = proposal.createdBy === auth.currentUser.uid;
-
     if (!isSteward && !isCreator) {
       return showToast("Only Stewards or the proposal creator can close it", "error");
     }
@@ -420,17 +497,15 @@ export async function closeProposal(proposalId, finalStatus = 'closed') {
 
 export const MODERATION_PROFILES = {
   PERMISSIVE: { quorum: 5, approvalRate: 0.51, multiSigRequired: 2 },
-  BALANCED:   { quorum: 12, approvalRate: 0.65, multiSigRequired: 3 }, // Your current default
+  BALANCED:   { quorum: 12, approvalRate: 0.65, multiSigRequired: 3 },
   STRICT:     { quorum: 25, approvalRate: 0.75, multiSigRequired: 5 }
 };
 
 export function hasProposalPassed(proposal, profile = MODERATION_PROFILES.BALANCED) {
   const total = (proposal.totalVotesFor || 0) + (proposal.totalVotesAgainst || 0);
   if (total === 0) return false;
-
   const approvalRatio = proposal.totalVotesFor / total;
   const targetQuorum = proposal.quorum || profile.quorum;
-
   return approvalRatio >= profile.approvalRate && total >= targetQuorum;
 }
 
@@ -438,6 +513,9 @@ export function hasProposalPassed(proposal, profile = MODERATION_PROFILES.BALANC
 window.submitMultiSigAttestation = submitMultiSigAttestation;
 window.handleHighStakesAttestation = handleHighStakesAttestation;
 window.evaluateMultiSigStatus = evaluateMultiSigStatus;
+window.postDAOComment = postDAOComment;
+window.subscribeToProposalComments = subscribeToProposalComments;
+window.unsubscribeFromComments = unsubscribeFromComments;
 
 // Re-initialize UI on language switch
 window.addEventListener('languageChanged', () => {
