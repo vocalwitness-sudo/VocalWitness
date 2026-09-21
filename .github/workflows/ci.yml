@@ -1,34 +1,24 @@
 name: CI - Smoke Tests
-
 on:
   push:
-    branches: [main, develop]
-  pull_request:
     branches: [main]
-
+  workflow_dispatch:
 jobs:
   smoke:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          # No cache – avoids lock file error
-
       - name: Install dependencies
         run: npm install
-
       - name: Lint (non-blocking)
         run: npm run lint || echo "Lint warnings present – continuing"
-
       - name: Phone Verification Smoke Test
         run: node tests/phone-smoke.js
-
       - name: Build CSS
         run: |
           npm install -D tailwindcss @tailwindcss/cli
