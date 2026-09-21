@@ -686,7 +686,47 @@ try {
   console.warn('[publish] ZK generation failed, continuing without proof:', zkErr);
 }
 
-// 2. Final complete payload (only one declaration)
+// 2. Build real Evidence Pack
+let evidencePackResult = null;
+try {
+  const { createEvidencePack } = await import('./evidence-pack.js');
+
+  evidencePackResult = await createEvidencePack({
+    content,
+    bodyHash: mediaData.bodyHash,
+    media: {
+      imageUrl: mediaData.imageUrl,
+      imageHash: mediaData.imageHash,
+      videoUrl: mediaData.videoUrl,
+      videoHash: mediaData.videoHash,
+      audioUrl: mediaData.audioUrl,
+      audioHash: mediaData.audioHash,
+    },
+    identity: {
+      mode: 'IDENTIFIED',                     // change to 'ANONYMOUS' if needed
+      authorId: currentUser.uid,
+      displayName: currentUser.displayName || 'Registered Witness',
+    },
+    channel: 'citizen-talk',
+    clientCaptureMs: Date.now(),
+    testimonyId: null,                        // will be filled after we get the doc ID
+    forensicHash: mediaData.imageHash || mediaData.videoHash || mediaData.audioHash || mediaData.bodyHash || null,
+  });
+
+  console.log('[publish] Evidence Pack created →', evidencePackResult.packCoreHash?.slice(0, 12) + '…');
+} catch (packErr) {
+  console.warn('[publish] Evidence Pack creation failed (non-blocking):', packErr);
+}
+
+// 3. Final complete payload
+const hasAnyHash = !!(
+  mediaData.imageHash ||
+  mediaData.videoHash ||
+  mediaData.audioHash ||
+  mediaData.bodyHash ||
+  evidencePackResult?.packCoreHash
+);
+
 const testimonyData = {
   authorId: currentUser.uid,
   content,
@@ -705,40 +745,75 @@ const testimonyData = {
   videoHash: mediaData.videoHash || null,
   audioHash: mediaData.audioHash || null,
   bodyHash: mediaData.bodyHash || null,
-  hasEvidencePack: !!mediaData.hasEvidencePack,
-  evidencePack: mediaData.evidencePack || null,
-  packCoreHash: mediaData.packCoreHash || null,
 
-  // === Forensic flags ===
-  forensicVerified: !!(mediaData.imageHash || mediaData.videoHash || mediaData.audioHash || mediaData.bodyHash),
-  hash: mediaData.imageHash || mediaData.videoHash || mediaData.audioHash || mediaData.bodyHash || null,
-  prevHash: null,
-  hasForensic: !!(mediaData.imageHash || mediaData.videoHash || mediaData.audioHash || mediaData.bodyHash),
+  // Forensic / Evidence flags (this is what makes the name true)
+  hasForensic: hasAnyHash,
+  forensicVerified: hasAnyHash,                 // ← Critical for Forensic Ledger
+  hash: mediaData.imageHash || mediaData.videoHash || mediaData.audioHash || mediaData.bodyHash || evidencePackResult?.packCoreHash || null,
+  packCoreHash: evidencePackResult?.packCoreHash || null,
+  hasEvidencePack: !!evidencePackResult,
+  evidencePack: evidencePackResult?.firestorePack || null,
 
   // ZK Proof
   zkProof: zkResult.proof || null,
   zkPublicSignals: zkResult.publicSignals || [],
   proofType: zkResult.proofType || 'NONE',
-  isZkVerified: !zkResult.isFallback
+  isZkVerified: !zkResult.isFallback,
 };
 
-// 3. Write once
+// 4. Write once
 const docRef = await addDoc(collection(db, 'testimonies'), testimonyData);
 console.log('[publish] SUCCESS →', docRef.id);
 
-// 3.1 Refresh UI ledgers if functions exist
+// 5. Update the pack with the real testimony ID
+if (evidencePackResult && docRef.id) {
+  try {
+    const { createEvidencePack } = await import('./evidence-pack.js');
+    const finalPack = await createEvidencePack({
+      content,
+      bodyHash: mediaData.bodyHash,
+      media: {
+        imageUrl: mediaData.imageUrl,
+        imageHash: mediaData.imageHash,
+        videoUrl: mediaData.videoUrl,
+        videoHash: mediaData.videoHash,
+        audioUrl: mediaData.audioUrl,
+        audioHash: mediaData.audioHash,
+      },
+      identity: {
+        mode: 'IDENTIFIED',
+        authorId: currentUser.uid,
+        displayName: currentUser.displayName || 'Registered Witness',
+      },
+      channel: 'citizen-talk',
+      clientCaptureMs: Date.now(),
+      testimonyId: docRef.id,
+      forensicHash: testimonyData.hash,
+    });
+
+    await setDoc(docRef, {
+      evidencePack: finalPack.firestorePack,
+      packCoreHash: finalPack.packCoreHash,
+    }, { merge: true });
+
+  } catch (finalPackErr) {
+    console.warn('[publish] Could not finalize Evidence Pack with ID:', finalPackErr);
+  }
+}
+
+// 5.1 Refresh UI ledgers and notify application components
 if (typeof window.loadEvidenceLedger === 'function') {
   window.loadEvidenceLedger();
 }
 if (typeof window.loadForensicLedger === 'function') {
   window.loadForensicLedger();
 }
+window.dispatchEvent(new CustomEvent('vocalWitness:posted'));
 
-// 4. Update throttle
+// 6. Update throttle
 await setDoc(userRef, {
   lastTestimonyAt: serverTimestamp()
 }, { merge: true });
-
     
     // ====================== SUCCESS STATE ======================
     if (testimonyData.isZkVerified) {
