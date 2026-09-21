@@ -108,36 +108,70 @@
 <div id="tab-members" class="hidden space-y-5">
 
   <!-- Invite Section -->
-  <div class="glass rounded-3xl p-5">
-    <div class="flex items-center justify-between mb-4">
-      <h3 class="font-medium text-white">Invite People</h3>
-      <span class="text-xs text-zinc-500">Share this link</span>
-    </div>
+<div class="glass rounded-3xl p-5">
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="font-medium text-white">Invite People</h3>
+    <span id="inviteStatusBadge" class="text-xs text-zinc-500">Active</span>
+  </div>
 
+  <!-- Invite Link -->
+  <div class="mb-4">
+    <label class="mb-1.5 block text-xs text-zinc-400">Invite Link</label>
     <div class="flex gap-2">
       <input id="inviteLinkInput" type="text" readonly
-             class="flex-1 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm text-zinc-300 focus:outline-none"
-             placeholder="Generating invite link...">
+             class="flex-1 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm text-zinc-300 focus:outline-none">
       <button id="copyInviteBtn"
               class="rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-black hover:bg-emerald-400 transition">
         Copy
       </button>
     </div>
-
-    <p class="mt-3 text-xs text-zinc-500">
-      Anyone with this link can request to join (or join instantly if the group is public).
-    </p>
   </div>
 
-  <!-- Members List -->
-  <div class="flex items-center justify-between mb-2">
-    <h3 class="font-medium">Members</h3>
+  <!-- Invite Code -->
+  <div class="mb-4">
+    <label class="mb-1.5 block text-xs text-zinc-400">Invite Code</label>
+    <div class="flex gap-2">
+      <input id="inviteCodeInput" type="text" readonly
+             class="flex-1 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm font-mono tracking-widest text-emerald-400 focus:outline-none">
+      <button id="copyCodeBtn"
+              class="rounded-xl bg-zinc-700 px-5 py-3 text-sm font-medium text-white hover:bg-zinc-600 transition">
+        Copy
+      </button>
+    </div>
   </div>
-  <div id="membersList" class="space-y-3">
-    <!-- Members load here -->
+
+  <!-- Settings (visible only to Admins/Creator) -->
+  <div id="inviteSettings" class="mt-5 hidden space-y-4 border-t border-zinc-800 pt-5">
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="mb-1.5 block text-xs text-zinc-400">Expires After</label>
+        <select id="inviteExpiry" class="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm">
+          <option value="0">Never</option>
+          <option value="1">1 Day</option>
+          <option value="3">3 Days</option>
+          <option value="7" selected>7 Days</option>
+          <option value="30">30 Days</option>
+        </select>
+      </div>
+      <div>
+        <label class="mb-1.5 block text-xs text-zinc-400">Approval</label>
+        <select id="inviteApproval" class="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm">
+          <option value="auto">Auto-join</option>
+          <option value="approval" selected>Require Approval</option>
+        </select>
+      </div>
+    </div>
+
+    <button id="regenerateInviteBtn"
+            class="w-full rounded-xl border border-amber-500/40 bg-amber-500/10 py-2.5 text-sm font-medium text-amber-400 hover:bg-amber-500/20 transition">
+      ↺ Regenerate Invite Code
+    </button>
   </div>
-</div>
-    
+
+  <p class="mt-4 text-xs text-zinc-500">
+    Share the link or the code. People can join instantly or request approval depending on your settings.
+  </p>
+</div>   
 
     <!-- ========== ABOUT TAB ========== -->
     <div id="tab-about" class="hidden space-y-6">
