@@ -468,3 +468,38 @@ match /dao_comments/{commentId} {
     }
   }
 }
+
+    // ==========================================
+    // DISPUTES (public transparency list)
+    // ==========================================
+    match /disputes/{disputeId} {
+      allow read: if true;
+
+      allow create: if isNotBanned()
+        && request.resource.data.challengerId == request.auth.uid
+        && request.resource.data.keys().hasAll([
+             'type', 'testimonyId', 'challengerId', 'reason', 'status', 'createdAt'
+           ])
+        && request.resource.data.type == 'TESTIMONY_CHALLENGE'
+        && request.resource.data.testimonyId is string
+        && request.resource.data.reason is string
+        && request.resource.data.reason.size() >= 20
+        && request.resource.data.reason.size() <= 2000
+        && request.resource.data.status == 'OPEN'
+        && request.resource.data.resolution == null
+        && request.resource.data.resolvedBy == null
+        && request.resource.data.resolvedAt == null
+        && (request.resource.data.createdAt is timestamp
+            || request.resource.data.createdAt == request.time);
+
+      allow update: if isModerator()
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly([
+               'status', 'resolution', 'resolutionNote',
+               'resolvedBy', 'resolvedAt'
+             ])
+        && request.resource.data.status in ['UPHELD', 'REJECTED']
+        && request.resource.data.resolution in ['UPHELD', 'REJECTED'];
+
+      allow delete: if false;
+    }
