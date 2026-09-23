@@ -8,14 +8,16 @@
     <!-- PDF Export Dependency -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 </head>
-<body class="min-h-screen bg-[#0a0f1c] text-zinc-200 antialiased selection:bg-emerald-500 selection:text-black pt-12 sm:pt-16 px-4 pb-16">
+<body class="min-h-screen bg-[#0a0f1c] text-zinc-200 antialiased selection:bg-emerald-500 selection:text-black px-4 pb-16"
+      style="padding-top: max(3rem, env(safe-area-inset-top));">
 
     <!-- Header Navigation with generous breathing room -->
     <header class="glass sticky top-4 z-50 max-w-4xl mx-auto mb-8 p-4 sm:p-5 rounded-3xl border border-zinc-800/80 backdrop-blur-md shadow-xl">
         <div class="flex items-center justify-between">
             <a href="index.html" class="flex items-center gap-3 group">
-                <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-emerald-500/10 group-hover:scale-105 transition-transform">
-                    🔊
+                <div class="relative">
+                    <img src="./logo.png" alt="VocalWitness" 
+                         class="h-10 w-10 rounded-2xl border border-emerald-500/40 object-cover shadow-lg shadow-emerald-500/10 group-hover:scale-105 transition-transform">
                 </div>
                 <span class="font-bold text-xl tracking-tight text-white" data-i18n="appTitle">VocalWitness</span>
             </a>
@@ -32,7 +34,7 @@
     </header>
 
     <!-- Main Page Content Container -->
-    <main class="max-w-4xl mx-auto">
+    <main id="main-content" class="max-w-4xl mx-auto pt-4" style="padding-top: max(1rem, env(safe-area-inset-top));">
         <div class="rounded-3xl bg-[#111827] border border-zinc-800 overflow-hidden min-h-[650px] flex flex-col shadow-2xl">
             
             <!-- Active Close/Back Sub-Bar -->
@@ -61,7 +63,7 @@
             
             <div class="flex justify-between items-center border-b border-zinc-800 pb-4">
                 <h3 id="editProfileTitle" class="text-xl font-bold text-white" data-i18n="editProfile">Edit Profile</h3>
-                <button type="button" id="btn-close-edit-profile" aria-label="Close modal"
+                <button type="button" id="btn-close-edit-profile" aria-label="Close Edit Profile"
                         class="text-2xl text-zinc-400 hover:text-white transition-colors">&times;</button>
             </div>
 
@@ -116,10 +118,15 @@
                 <!-- Privacy Shield -->
                 <div class="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 flex items-center justify-between gap-3">
                     <div class="min-w-0">
-                        <div class="font-medium text-white text-sm flex items-center gap-2">🛡️ Privacy Shield</div>
-                        <div class="text-xs text-zinc-400 mt-0.5 leading-relaxed">Hides real name &amp; location from others.</div>
+                        <label for="toggleHidePublicInfo" class="font-medium text-white text-sm flex items-center gap-2 cursor-pointer">
+                            🛡️ Privacy Shield
+                        </label>
+                        <div class="text-xs text-zinc-400 mt-0.5 leading-relaxed">
+                            Hides real name &amp; location from others.
+                        </div>
                     </div>
-                    <input type="checkbox" id="toggleHidePublicInfo" checked class="w-5 h-5 accent-emerald-500 rounded cursor-pointer shrink-0">
+                    <input type="checkbox" id="toggleHidePublicInfo" checked
+                           class="w-5 h-5 accent-emerald-500 rounded cursor-pointer shrink-0">
                 </div>
 
                 <div class="flex gap-3 pt-2">
@@ -140,7 +147,8 @@
         <div class="rounded-3xl p-6 sm:p-8 max-w-md w-full border border-zinc-800 space-y-6 shadow-2xl bg-[#111827] text-white">
             <div class="flex justify-between items-center border-b border-zinc-800 pb-4">
                 <h3 id="mfaModalTitle" class="text-xl font-bold flex items-center gap-2">🛡️ Two-Factor Setup</h3>
-                <button type="button" id="closeMfaBtn" class="text-2xl text-zinc-400 hover:text-white transition-colors cursor-pointer">&times;</button>
+                <button type="button" id="closeMfaBtn" aria-label="Close Two-Factor Setup"
+                        class="text-2xl text-zinc-400 hover:text-white transition-colors cursor-pointer">&times;</button>
             </div>
             <div class="space-y-4 text-center">
                 <p class="text-xs text-zinc-400">Scan this QR code with your Authenticator app (Google Authenticator, Authy, etc.) to complete 2FA enrollment.</p>
