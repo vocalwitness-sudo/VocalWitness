@@ -1,9 +1,8 @@
-// js/phoneVerification.js - Hardened Production Version (Fixed for Citizen Circle unlock)
+// js/phoneVerification.js - Hardened Production Version (Delegated to Cloud Functions)
 import { db, auth } from './firebase-config.js';
-import { doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { RecaptchaVerifier, linkWithPhoneNumber } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { showToast } from "./utils.js";
-import { TIERS, refreshTierAndUI } from './tier.js';
+import { refreshTierAndUI } from './tier.js';
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
 
 let recaptchaVerifier = null;
@@ -17,12 +16,12 @@ const isDemoMode = location.hostname === 'localhost' ||
 let demoCode = null;
 
 /**
- * Shared helper – marks user as phone verified + unlocks Citizen Circle
+ * Shared helper – calls secure backend Cloud Function to process verification and tier upgrade
  */
-async function forceMarkPhoneVerified() {
+async function triggerServerPhoneConfirmation() {
   const functions = getFunctions();
   const confirm = httpsCallable(functions, "confirmPhoneVerification");
-  await confirm({});   // server does the real work
+  await confirm({});   // Server handles all security, tier upgrades, and reputation updates safely
   if (typeof refreshTierAndUI === 'function') refreshTierAndUI();
 }
 
@@ -69,7 +68,6 @@ export function setupModalDismissListeners() {
   document.addEventListener('click', (e) => {
     const target = e.target;
 
-    // Broad matching so the × button always works
     if (
       target.closest('.close-modal-btn') ||
       target.closest('.modal-close') ||
@@ -106,17 +104,14 @@ export function closeAllVerificationModals() {
     }
   });
 
-  // Also hide any generic modal that might be open
   document.querySelectorAll('.modal, [role="dialog"]').forEach(m => {
     if (m.id && modalIds.includes(m.id)) return;
-    // only force-close if it looks like a phone modal
     if (m.textContent?.includes('Verify Phone') || m.textContent?.includes('Phone Number')) {
       m.classList.add('hidden');
       m.style.display = 'none';
     }
   });
 
-  // Reset reCAPTCHA
   if (window.recaptchaVerifier || recaptchaVerifier) {
     try {
       if (recaptchaVerifier) recaptchaVerifier.clear();
@@ -180,7 +175,6 @@ export async function sendPhoneVerification(phoneNumber) {
     return false;
   }
 
-  // Demo mode
   if (isDemoMode) {
     demoCode = Math.floor(100000 + Math.random() * 900000).toString();
     console.log(`%c🔑 DEMO OTP for ${phoneNumber}: ${demoCode}`, "color: lime; font-size: 16px; font-weight: bold");
@@ -189,7 +183,6 @@ export async function sendPhoneVerification(phoneNumber) {
   }
 
   try {
-    // Clean previous reCAPTCHA
     if (recaptchaVerifier) {
       try { recaptchaVerifier.clear(); } catch (_) {}
       recaptchaVerifier = null;
@@ -220,17 +213,14 @@ export async function sendPhoneVerification(phoneNumber) {
   } catch (e) {
     console.error("SMS Send Error:", e);
 
-    // ========== KEY FIX: already-linked handling ==========
     if (e.code === 'auth/provider-already-linked') {
       const hasPhone = auth.currentUser.providerData.some(p => p.providerId === 'phone');
 
       if (hasPhone) {
-        // Already verified on this account → just make sure Firestore is correct
         try {
-          await forceMarkPhoneVerified();
+          await triggerServerPhoneConfirmation();
         } catch (_) {}
         
-        // Softer message (no more scary red error for already-verified users)
         showToast("You are already phone verified (Citizen Circle).", "success");
         closeAllVerificationModals();
         return true;
@@ -240,7 +230,6 @@ export async function sendPhoneVerification(phoneNumber) {
       return false;
     }
 
-    // Other errors
     let msg = e.message || "Failed to send OTP";
     if (e.code === 'auth/too-many-requests') msg = "Too many attempts. Wait a few minutes.";
     if (e.code === 'auth/invalid-phone-number') msg = "Invalid phone number format.";
@@ -250,7 +239,6 @@ export async function sendPhoneVerification(phoneNumber) {
 
     showToast(msg, "error");
 
-    // Clean reCAPTCHA so user can retry
     if (recaptchaVerifier) {
       try { recaptchaVerifier.clear(); } catch (_) {}
       recaptchaVerifier = null;
@@ -262,7 +250,7 @@ export async function sendPhoneVerification(phoneNumber) {
 }
 
 /**
- * Confirm code + upgrade tier
+ * Confirm code + trigger backend tier update
  */
 export async function verifyPhoneCode(enteredCode) {
   if (!auth.currentUser) {
@@ -294,8 +282,8 @@ export async function verifyPhoneCode(enteredCode) {
       await result.confirm(code);
     }
 
-    // Success → unlock Citizen Circle
-    await forceMarkPhoneVerified();
+    // Success → Securely invoke Cloud Function to handle verification state and tier update
+    await triggerServerPhoneConfirmation();
 
     showToast("🎉 Phone Verified! You are now in Citizen Circle", "success");
     closeAllVerificationModals();
