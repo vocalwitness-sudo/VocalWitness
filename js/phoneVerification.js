@@ -4,6 +4,7 @@ import { doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebas
 import { RecaptchaVerifier, linkWithPhoneNumber } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { showToast } from "./utils.js";
 import { TIERS, refreshTierAndUI } from './tier.js';
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
 
 let recaptchaVerifier = null;
 let confirmationResult = null;
@@ -19,20 +20,10 @@ let demoCode = null;
  * Shared helper – marks user as phone verified + unlocks Citizen Circle
  */
 async function forceMarkPhoneVerified() {
-  const userRef = doc(db, "users", auth.currentUser.uid);
-  await updateDoc(userRef, {
-    isPhoneVerified: true,
-    hasVerifiedPhone: true,
-    phoneVerifiedAt: serverTimestamp(),
-    tier: TIERS?.CITIZEN_CIRCLE || "citizen_circle",
-    reputation: 60,
-    credibilityScore: 60,
-    updatedAt: serverTimestamp()
-  });
-
-  if (typeof refreshTierAndUI === 'function') {
-    refreshTierAndUI();
-  }
+  const functions = getFunctions();
+  const confirm = httpsCallable(functions, "confirmPhoneVerification");
+  await confirm({});   // server does the real work
+  if (typeof refreshTierAndUI === 'function') refreshTierAndUI();
 }
 
 /**
