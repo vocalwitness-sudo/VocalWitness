@@ -229,8 +229,16 @@
     </div>
   </div>
 
+<!-- ====================== SKIP LINK ====================== -->
+<a href="#main-content" 
+   class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] focus:rounded-lg focus:bg-emerald-500 focus:px-4 focus:py-2 focus:text-zinc-950 focus:outline-none">
+  Skip to main content
+</a>
+
 <!-- ====================== HEADER ====================== -->
-<header id="main-header" dir="ltr" class="fixed top-0 left-0 right-0 z-50 border-b border-emerald-500/25 bg-zinc-950/95 backdrop-blur-xl shadow-lg">
+<header id="main-header" 
+        class="fixed top-0 left-0 right-0 z-50 border-b border-emerald-500/25 bg-zinc-950/95 backdrop-blur-md shadow-lg"
+        style="padding-top: env(safe-area-inset-top);">
   <div class="mx-auto max-w-6xl px-3 sm:px-5">
 
     <!-- ========== DESKTOP HEADER ========== -->
@@ -239,7 +247,7 @@
       <!-- Logo + Brand -->
       <a href="/" class="group flex shrink-0 items-center gap-3" aria-label="VocalWitness Home">
         <div class="relative flex items-center justify-center">
-          <div class="absolute -inset-1.5 rounded-2xl bg-gradient-to-br from-emerald-500/40 to-teal-400/20 opacity-60 blur-md transition duration-300 group-hover:opacity-90"></div>
+          <div class="absolute -inset-1.5 rounded-2xl bg-gradient-to-br from-emerald-500/40 to-teal-400/20 opacity-60 blur-md transition duration-300 group-hover:opacity-90 hidden md:block"></div>
           <img src="./logo.png" alt="VocalWitness"
                class="relative h-10 w-10 rounded-2xl border border-emerald-400/40 bg-zinc-900 object-cover shadow-md ring-1 ring-white/10">
         </div>
@@ -251,13 +259,18 @@
             Truth • Evidence • Zero-Knowledge
           </p>
         </div>
+        <!-- Optional Live indicator (show/hide via JS) -->
+        <span id="live-indicator" class="ml-2 hidden items-center gap-1 rounded-full bg-red-500/15 px-2 py-0.5 text-[10px] font-bold text-red-400">
+          <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500"></span> LIVE
+        </span>
       </a>
 
       <!-- Right side controls -->
       <div class="flex shrink-0 items-center gap-3 ml-auto">
         
         <!-- Language -->
-        <select id="languageSelect" aria-label="Language"
+        <select id="languageSelect" 
+                aria-label="Select language"
                 class="h-9 rounded-xl border border-zinc-700 bg-zinc-900 px-3 text-xs font-medium text-zinc-300 transition
                        hover:border-zinc-500 hover:text-white
                        focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/40">
@@ -311,7 +324,8 @@
         <!-- Data Saver -->
         <button id="data-saver-btn" type="button"
                 class="flex h-9 items-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-900 px-3 text-xs font-medium text-zinc-400 transition-all
-                       hover:border-zinc-500 hover:text-white active:scale-95">
+                       hover:border-zinc-500 hover:text-white active:scale-95"
+                aria-pressed="false">
           <span id="data-saver-icon">⚡</span>
           <span>Data: <strong id="data-saver-status">Off</strong></span>
         </button>
@@ -327,7 +341,10 @@
 
         <!-- Notifications -->
         <div class="relative" id="notification-container">
-          <button id="notification-btn" type="button" aria-label="Notifications"
+          <button id="notification-btn" type="button" 
+                  aria-label="Notifications" 
+                  aria-expanded="false"
+                  aria-controls="notification-dropdown"
                   class="relative flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900 text-zinc-400 transition-all
                          hover:border-emerald-500/60 hover:text-emerald-400 hover:bg-emerald-500/10 active:scale-95">
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -338,7 +355,9 @@
 
           <div id="notification-dropdown"
                class="absolute right-0 top-full z-50 mt-2 hidden max-h-96 w-80 overflow-y-auto rounded-2xl border border-zinc-700/80 bg-zinc-900/95 shadow-2xl backdrop-blur-xl"
-               role="region" aria-label="Notifications">
+               role="region" 
+               aria-label="Notifications"
+               aria-hidden="true">
             <div class="sticky top-0 flex items-center justify-between border-b border-zinc-800 bg-zinc-900/95 px-4 py-3">
               <h3 class="text-sm font-semibold text-white">Notifications</h3>
               <span id="notification-count-tag" class="text-[11px] font-medium text-emerald-400">0 new</span>
@@ -361,7 +380,7 @@
       <div class="flex items-center justify-between gap-3">
         <a href="/" class="flex shrink-0 items-center gap-2.5" aria-label="VocalWitness Home">
           <div class="relative">
-            <div class="absolute -inset-1 rounded-xl bg-gradient-to-br from-emerald-500/40 to-teal-400/20 blur-sm"></div>
+            <!-- No heavy blur on mobile for performance -->
             <img src="./logo.png" alt="VocalWitness" 
                  class="relative h-9 w-9 rounded-xl border border-emerald-500/40 object-cover">
           </div>
@@ -376,6 +395,7 @@
         </a>
 
         <div class="flex items-center gap-2.5">
+          <!-- Join (logged out) -->
           <button id="openAuthModalBtnMobile" type="button"
                   class="flex h-8 items-center gap-1.5 rounded-xl bg-white px-3 text-xs font-semibold text-zinc-900 transition-all
                          hover:bg-emerald-400 active:scale-95"
@@ -383,6 +403,7 @@
             <span data-i18n="joinBtn">Join</span>
           </button>
 
+          <!-- Profile (logged in) -->
           <button id="userProfileBtnMobile" type="button"
                   class="hidden h-8 w-8 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900 text-sm text-emerald-400 transition-all
                          hover:border-emerald-500 hover:bg-emerald-500/10 active:scale-95"
@@ -397,7 +418,8 @@
         
         <!-- Left Group -->
         <div class="flex items-center gap-1.5">
-          <select id="languageSelectMobile" aria-label="Language"
+          <select id="languageSelectMobile" 
+                  aria-label="Select language"
                   class="h-8 rounded-lg border border-zinc-700 bg-zinc-900 px-2 text-[11px] font-medium text-zinc-300">
             <option value="en" selected>English</option>
             <option value="pcm">Naija Pidgin</option>
@@ -423,21 +445,26 @@
         <div class="flex items-center gap-1.5">
           <button id="data-saver-btn-mobile" type="button"
                   class="flex h-8 items-center gap-1 rounded-lg border border-zinc-700 bg-zinc-900 px-2 text-[10px] font-medium text-zinc-400 transition-all
-                         hover:border-zinc-500 hover:text-white active:scale-95">
+                         hover:border-zinc-500 hover:text-white active:scale-95"
+                  aria-pressed="false">
             <span id="data-saver-icon-mobile">⚡</span>
             <span id="data-saver-status-mobile">Off</span>
           </button>
 
           <button id="bookmarks-nav-btn-mobile" type="button" data-action="open-bookmarks"
                   class="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-700 bg-zinc-900 text-zinc-400 transition-all
-                         hover:text-emerald-400 hover:border-emerald-500/60">
+                         hover:text-emerald-400 hover:border-emerald-500/60"
+                  aria-label="Saved Items">
             <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
             </svg>
           </button>
 
           <div class="relative" id="notification-container-mobile">
-            <button id="notification-btn-mobile" type="button" aria-label="Notifications"
+            <button id="notification-btn-mobile" type="button" 
+                    aria-label="Notifications"
+                    aria-expanded="false"
+                    aria-controls="notification-dropdown-mobile"
                     class="relative flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-700 bg-zinc-900 text-zinc-400 transition-all
                            hover:text-emerald-400 hover:border-emerald-500/60">
               <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -446,9 +473,11 @@
               <span id="notification-badge-mobile" class="absolute -right-0.5 -top-0.5 hidden min-w-[14px] rounded-full bg-emerald-500 px-1 text-[8px] font-bold text-black">0</span>
             </button>
 
-            <!-- Mobile Notification Dropdown -->
             <div id="notification-dropdown-mobile"
-                 class="absolute right-0 top-full z-50 mt-2 hidden max-h-80 w-72 overflow-y-auto rounded-2xl border border-zinc-700/80 bg-zinc-900/95 shadow-2xl backdrop-blur-xl">
+                 class="absolute right-0 top-full z-50 mt-2 hidden max-h-80 w-72 overflow-y-auto rounded-2xl border border-zinc-700/80 bg-zinc-900/95 shadow-2xl backdrop-blur-xl"
+                 role="region"
+                 aria-label="Notifications"
+                 aria-hidden="true">
               <div class="sticky top-0 flex items-center justify-between border-b border-zinc-800 bg-zinc-900/95 px-4 py-3">
                 <h3 class="text-sm font-semibold text-white">Notifications</h3>
                 <span id="notification-count-tag-mobile" class="text-[11px] font-medium text-emerald-400">0 new</span>
@@ -464,7 +493,6 @@
         </div>
       </div>
     </div>
-
   </div>
 </header>
   
