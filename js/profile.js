@@ -50,6 +50,36 @@ function isPrivacyPrivate(userData) {
     return !userData || userData.hidePublicInfo !== false;
 }
 
+/**
+ * Writes a safe public projection so other users can see display info
+ * without reading the private users/{uid} document.
+ */
+async function syncPublicProfile(uid, userData) {
+  if (!uid || !userData) return;
+  try {
+    const publicRef = doc(db, "publicProfiles", uid);
+    const isPrivate = userData.hidePublicInfo !== false; // default private
+
+    const publicData = {
+      uid,
+      displayName: userData.displayName || "Anonymous Witness",
+      photoURL: userData.photoURL || null,
+      username: userData.username || null,
+      bio: isPrivate ? null : (userData.bio || null),
+      region: isPrivate ? null : (userData.region || null),
+      tierBadge: (userData.tier === "citizen_circle" || userData.isPhoneVerified || userData.hasVerifiedPhone)
+        ? "citizen_circle"
+        : "citizen",
+      updatedAt: serverTimestamp()
+    };
+
+    await setDoc(publicRef, publicData, { merge: true });
+  } catch (err) {
+    console.warn("[profile] syncPublicProfile failed:", err);
+  }
+}
+
+
 // ====================== OPEN / CLOSE MAIN PROFILE MODAL ======================
 export function openProfile() {
     const modal = document.getElementById('profileModal');
@@ -588,6 +618,13 @@ window.togglePrivacyShield = async function () {
             hidePublicInfo: nextPrivate,
             updatedAt: serverTimestamp()
         });
+        await syncPublicProfile(auth.currentUser.uid, currentUserData || {});
+
+        // keep public projection in sync
+        if (currentUserData) {
+            currentUserData.hidePublicInfo = nextPrivate;
+            await syncPublicProfile(auth.currentUser.uid, currentUserData);
+        }
         if (currentUserData) {
             currentUserData.hidePublicInfo = nextPrivate;
             window.currentUserData = currentUserData;

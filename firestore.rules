@@ -493,5 +493,19 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+
+    // ==========================================
+    // PUBLIC PROFILES (safe projection only)
+    // ==========================================
+    match /publicProfiles/{uid} {
+      allow read: if true;
+      allow create, update: if isOwner(uid)
+        && request.resource.data.keys().hasOnly([
+             'uid', 'displayName', 'photoURL', 'username',
+             'bio', 'region', 'tierBadge', 'updatedAt'
+           ]);
+      allow delete: if false;
+    }
+
   }
 }
