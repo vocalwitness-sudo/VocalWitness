@@ -262,19 +262,28 @@ exports.confirmPhoneVerification = onCall(
     }
 
     const uid = request.auth.uid;
+
     try {
       const userRecord = await admin.auth().getUser(uid);
 
       if (!userRecord.phoneNumber) {
-        throw new HttpsError("failed-precondition", "No verified phone number linked to Auth user record.");
+        throw new HttpsError(
+          "failed-precondition",
+          "No verified phone number linked to Auth user record."
+        );
       }
 
+      // Server-only write — no raw phone number ever stored
       await db.collection("users").doc(uid).set(
         {
           isPhoneVerified: true,
+          hasVerifiedPhone: true,
           isVerified: true,
-          phoneNumber: userRecord.phoneNumber,
-          verifiedAt: admin.firestore.FieldValue.serverTimestamp()
+          phoneVerifiedAt: admin.firestore.FieldValue.serverTimestamp(),
+          verifiedAt: admin.firestore.FieldValue.serverTimestamp(),
+          tier: "citizen_circle",          // server is allowed to set this
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+          // NEVER write phoneNumber
         },
         { merge: true }
       );
@@ -284,11 +293,11 @@ exports.confirmPhoneVerification = onCall(
         performedBy: uid,
         targetId: uid,
         targetType: "user",
-        details: { phoneNumber: userRecord.phoneNumber },
+        details: { phoneVerified: true },   // no actual number
         severity: "info"
       });
 
-      return { success: true, phoneNumber: userRecord.phoneNumber };
+      return { success: true };   // do not return the phone number
     } catch (error) {
       console.error("Phone verification confirmation error:", error);
       if (error instanceof HttpsError) throw error;
@@ -296,7 +305,6 @@ exports.confirmPhoneVerification = onCall(
     }
   }
 );
-
 // ======================================================
 // 3. TRUST TIER
 // ======================================================
