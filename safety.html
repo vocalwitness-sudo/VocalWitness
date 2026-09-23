@@ -62,12 +62,12 @@
         <div class="rounded-3xl border border-emerald-500/30 bg-emerald-950/20 p-6 mb-10 space-y-4">
             <h2 class="text-xl font-bold text-emerald-400" data-i18n="safetyBannerTitle">The Right to Verifiable Truth</h2>
             <p class="text-zinc-300 leading-relaxed text-sm md:text-base" data-i18n="safetyBannerDesc">
-                Every individual has the inherent right to record and publish verified accounts of public events. 
+                Every individual has the right to record and publish verified accounts of public events. 
                 This framework is anchored to Article 19 of the Universal Declaration of Human Rights.
             </p>
             <div class="flex flex-wrap gap-2 text-xs">
-                <span class="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 font-medium text-emerald-400">Zero-Knowledge Isolation</span>
-                <span class="rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 font-medium text-amber-400">Edge Anonymization</span>
+                <span class="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 font-medium text-emerald-400">Data Minimization Practices</span>
+                <span class="rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 font-medium text-amber-400">Cloudflare Edge Shield</span>
                 <span class="rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 font-medium text-cyan-400">Client-Side EXIF Scrubbing</span>
             </div>
         </div>
@@ -77,15 +77,15 @@
 
             <!-- Section 1 -->
             <section>
-                <h2 class="text-xl font-semibold text-white mb-4" data-i18n="safetySec1Title">1. Cryptographic Data Minimization</h2>
+                <h2 class="text-xl font-semibold text-white mb-4" data-i18n="safetySec1Title">1. Privacy & Data Protection Design</h2>
                 <div class="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-6 space-y-3">
                     <p class="text-sm text-zinc-300" data-i18n="safetySec1Text">
-                        Uncollected data cannot be subpoenaed, leaked, or intercepted. Confidentiality is maintained by design:
+                        We apply data minimization principles to reduce unnecessary tracking and protect contributor privacy:
                     </p>
                     <ul class="space-y-2 text-sm text-zinc-400 list-disc pl-5">
-                        <li data-i18n="safetySec1Bullet1"><strong class="text-zinc-200">Zero Identity Association:</strong> Publication tokens are decoupled from persistent accounts.</li>
-                        <li data-i18n="safetySec1Bullet2"><strong class="text-zinc-200">Automated Sanitization:</strong> Geolocation and hardware signatures are scrubbed in the browser before upload.</li>
-                        <li data-i18n="safetySec1Bullet3"><strong class="text-zinc-200">Mathematical Isolation:</strong> Cryptographic proofs replace vulnerable plaintext identifiers.</li>
+                        <li data-i18n="safetySec1Bullet1"><strong class="text-zinc-200">Focused Collection:</strong> Only necessary post and account data required for platform operation are processed.</li>
+                        <li data-i18n="safetySec1Bullet2"><strong class="text-zinc-200">Automated Sanitization:</strong> Metadata and device signatures can be processed or stripped in-browser before publishing.</li>
+                        <li data-i18n="safetySec1Bullet3"><strong class="text-zinc-200">Secure Storage:</strong> Information is stored securely via Firebase and Cloudflare infrastructure with operational controls.</li>
                     </ul>
                 </div>
             </section>
@@ -98,14 +98,14 @@
                         <div class="text-2xl mb-2">📡</div>
                         <h3 class="font-semibold text-white mb-2" data-i18n="safetyCard1Title">Network Obfuscation</h3>
                         <p class="text-sm text-zinc-400" data-i18n="safetyCard1Desc">
-                            In restricted environments, use Tor or a trusted VPN. Avoid publishing through mobile networks tied to government-registered identity.
+                            In restricted or sensitive environments, consider utilizing secure connection tools or VPNs to safeguard your browsing context.
                         </p>
                     </div>
                     <div class="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5">
                         <div class="text-2xl mb-2">📱</div>
                         <h3 class="font-semibold text-white mb-2" data-i18n="safetyCard2Title">Device Security & Quick Exit</h3>
                         <p class="text-sm text-zinc-400" data-i18n="safetyCard2Desc">
-                            Use strong passcodes instead of biometrics. Press <strong>Quick Exit</strong> to instantly clear local data and leave the site.
+                            Maintain strong device lock safeguards. Press <strong>Quick Exit</strong> to instantly clear local browser storage and redirect away from the site.
                         </p>
                     </div>
                 </div>
@@ -126,8 +126,8 @@
             <section>
                 <h2 class="text-xl font-semibold text-white mb-4" data-i18n="safetySec4Title">4. Community Governance & Trust Tiers</h2>
                 <div class="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5 space-y-3 text-sm text-zinc-400">
-                    <p data-i18n="safetyTier1">• <strong class="text-zinc-200">Citizen Talk</strong> — Open discussion moderated by community flags and automated heuristics.</p>
-                    <p data-i18n="safetyTier2">• <strong class="text-zinc-200">Witness Voice</strong> — Cryptographically verified records with immutable timestamps and integrity hashes.</p>
+                    <p data-i18n="safetyTier1">• <strong class="text-zinc-200">Citizen Talk</strong> — Open public discussions moderated via community flags and platform oversight.</p>
+                    <p data-i18n="safetyTier2">• <strong class="text-zinc-200">Witness Voice</strong> — Reports backed by client-side media hashing, verification metadata, and hash integrity proofs.</p>
                 </div>
             </section>
 
@@ -135,7 +135,7 @@
             <section class="pt-6 border-t border-zinc-800">
                 <p class="text-emerald-400 font-medium mb-1" data-i18n="safetyMissionHeader">Protocol Mission</p>
                 <p class="text-sm text-zinc-400" data-i18n="safetyMissionDesc">
-                    Building an immutable public square where factual reporting is permanently protected by architecture, not by promises.
+                    Building a reliable public square where factual reporting is supported by strong structural safeguards and clear operational standards.
                 </p>
             </section>
         </div>
