@@ -399,3 +399,16 @@ window.goBack = function () {
         window.location.href = 'index.html';
     }
 };
+/* ====================== DARK MODE UTILS ====================== */
+export function initDarkMode() {
+    const isDark = localStorage.getItem('theme') === 'dark' || 
+                   (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    
+    if (isDark) {
+        document.documentElement.classList.add('dark');
+    } else {
+        document.documentElement.classList.remove('dark');
+    }
+}
+
+window.initDarkMode = initDarkMode;
