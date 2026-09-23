@@ -210,7 +210,6 @@ exports.initializeCitizenProfile = functions.auth.user().onCreate(async (user) =
     level: 1,
     isPhoneVerified: Boolean(user.phoneNumber),
     isVerified: Boolean(user.phoneNumber),
-    phoneNumber: user.phoneNumber || "",
     zkVerified: false,
     verifiedAt: user.phoneNumber ? admin.firestore.FieldValue.serverTimestamp() : null,
     testimoniesCount: 0,
