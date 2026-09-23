@@ -466,8 +466,6 @@ match /dao_comments/{commentId} {
       );
       allow delete: if false;
     }
-  }
-}
 
     // ==========================================
     // DISPUTES (public transparency list)
@@ -503,3 +501,6 @@ match /dao_comments/{commentId} {
 
       allow delete: if false;
     }
+
+  }
+}
