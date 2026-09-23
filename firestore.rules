@@ -103,7 +103,8 @@ service cloud.firestore {
         && !request.resource.data.keys().hasAny([
              'role', 'isBanned', 'badges', 'admin', 'moderator', 'score', 'steward',
              'isPhoneVerified', 'hasVerifiedPhone', 'phoneVerifiedAt', 'reputation',
-             'credibilityScore', 'zkVerified', 'weeklyPoints'
+             'credibilityScore', 'zkVerified', 'weeklyPoints',
+             'phoneNumber', 'phone', 'phoneHash'
            ]);
     }
 
@@ -112,7 +113,8 @@ service cloud.firestore {
           'role', 'isBanned', 'badges', 'admin', 'moderator',
           'zkVerified', 'score', 'isVerified', 'uid', 'tier',
           'hasVerifiedPhone', 'isPhoneVerified', 'phoneVerifiedAt',
-          'reputation', 'credibilityScore', 'weeklyPoints'
+          'reputation', 'credibilityScore', 'weeklyPoints',
+          'phoneNumber', 'phone', 'phoneHash'
         ])
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'email', 'displayName', 'photoURL', 'bio',
@@ -175,7 +177,7 @@ service cloud.firestore {
     // USERS
     // ==========================================
     match /users/{userId} {
-      allow read: if true;
+      allow read: if isOwner(userId) || isModerator() || isAdmin();
       allow create: if isOwner(userId) && isSafeUserCreation();
 
       allow update: if isAdmin() ||
@@ -225,9 +227,6 @@ service cloud.firestore {
 
     // ==========================================
     // LEGACY COLLECTIONS
-    // (kept writable for now so existing clients don’t break.
-    //  Once the app only writes to /testimonies you can change
-    //  these to allow create: if false;)
     // ==========================================
     match /witness_voice/{postId} {
       allow read: if true;
@@ -242,7 +241,7 @@ service cloud.firestore {
       allow update: if isModerator() || (
         isNotBanned() && resource.data.authorId == request.auth.uid && isSafeAuthorTestimonyUpdate()
       );
-      allow delete: if (resource.data.authorId == request.auth.uid) || isModerator();
+      allow delete: if false;
     }
 
     match /citizen_talk/{postId} {
@@ -257,7 +256,7 @@ service cloud.firestore {
       allow update: if isModerator() || (
         isNotBanned() && resource.data.authorId == request.auth.uid && isSafeAuthorTestimonyUpdate()
       );
-      allow delete: if (resource.data.authorId == request.auth.uid) || isModerator();
+      allow delete: if false;
     }
 
     // ==========================================
@@ -273,7 +272,6 @@ service cloud.firestore {
         && request.resource.data.content.size() > 0
         && request.resource.data.content.size() <= 4000
         && (request.resource.data.createdAt is timestamp || request.resource.data.createdAt == request.time)
-        // Accept either "channel" or the older "feedVisibility"
         && (
              ('channel' in request.resource.data && request.resource.data.channel is string
               && request.resource.data.channel in [
@@ -288,7 +286,7 @@ service cloud.firestore {
                    'citizen-circle', 'witness-circle',
                    'citizen_talk', 'witness_voice'
                  ])
-           )
+            )
         && (!('mediaUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.mediaUrl))
         && (!('mediaUrls' in request.resource.data) || request.resource.data.mediaUrls is list);
       allow update: if isModerator()
@@ -305,36 +303,31 @@ service cloud.firestore {
                   'reactions', 'commentsCount', 'updatedAt'
                 ])
            );
-      allow delete: if (resource.data.authorId == request.auth.uid) || isModerator();
+      allow delete: if false;
     }
 
-// ==========================================
-// GROUPS
-// ==========================================
-match /groups/{groupId} {
-  // Anyone can read groups (needed for Discover + My Groups)
-  allow read: if true;
+    // ==========================================
+    // GROUPS
+    // ==========================================
+    match /groups/{groupId} {
+      allow read: if true;
+      allow create: if isNotBanned()
+        && request.resource.data.creatorId == request.auth.uid
+        && request.resource.data.keys().hasAll(['name', 'creatorId', 'createdAt', 'members', 'memberCount'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 60
+        && request.resource.data.members is list
+        && request.resource.data.memberCount is number;
 
-  // Only authenticated + not banned users can create a group
-  allow create: if isNotBanned()
-    && request.resource.data.creatorId == request.auth.uid
-    && request.resource.data.keys().hasAll(['name', 'creatorId', 'createdAt', 'members', 'memberCount'])
-    && request.resource.data.name is string
-    && request.resource.data.name.size() > 0
-    && request.resource.data.name.size() <= 60
-    && request.resource.data.members is list
-    && request.resource.data.memberCount is number;
+      allow update: if isNotBanned() && (
+        resource.data.creatorId == request.auth.uid ||
+        request.auth.uid in resource.data.get('admins', [])
+      );
 
-  // Creator or Admin can update the group
-  allow update: if isNotBanned() && (
-    resource.data.creatorId == request.auth.uid ||
-    request.auth.uid in resource.data.get('admins', [])
-  );
-
-  // Only the creator can delete the group
-  allow delete: if isNotBanned()
-    && resource.data.creatorId == request.auth.uid;
-}
+      allow delete: if isNotBanned()
+        && resource.data.creatorId == request.auth.uid;
+    }
 
     // ==========================================
     // CORROBORATIONS & FORENSIC LEDGER
@@ -365,22 +358,21 @@ match /groups/{groupId} {
       allow update, delete: if false;
     }
 
-match /dao_comments/{commentId} {
-  allow read: if true;
+    match /dao_comments/{commentId} {
+      allow read: if true;
+      allow create: if isNotBanned()
+        && request.resource.data.authorId == request.auth.uid
+        && request.resource.data.proposalId is string
+        && request.resource.data.content is string
+        && request.resource.data.content.size() > 0
+        && request.resource.data.content.size() <= 400
+        && request.resource.data.createdAt is timestamp;
 
-  allow create: if isNotBanned()
-    && request.resource.data.authorId == request.auth.uid
-    && request.resource.data.proposalId is string
-    && request.resource.data.content is string
-    && request.resource.data.content.size() > 0
-    && request.resource.data.content.size() <= 400
-    && request.resource.data.createdAt is timestamp;
-
-  allow update, delete: if false;
-}
+      allow update, delete: if false;
+    }
 
     // ==========================================
-    // POSTS (kept for backward compatibility)
+    // POSTS
     // ==========================================
     match /posts/{postId} {
       allow read: if resource.data.visibilityDoor == 'public_square' ||
@@ -395,7 +387,7 @@ match /dao_comments/{commentId} {
       allow update: if isModerator() || (
         isNotBanned() && resource.data.authorId == request.auth.uid
       );
-      allow delete: if (resource.data.authorId == request.auth.uid) || isModerator();
+      allow delete: if false;
 
       match /comments/{commentId} {
         allow read: if true;
@@ -468,11 +460,10 @@ match /dao_comments/{commentId} {
     }
 
     // ==========================================
-    // DISPUTES (public transparency list)
+    // DISPUTES
     // ==========================================
     match /disputes/{disputeId} {
       allow read: if true;
-
       allow create: if isNotBanned()
         && request.resource.data.challengerId == request.auth.uid
         && request.resource.data.keys().hasAll([
