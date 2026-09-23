@@ -467,6 +467,7 @@
 
   </div>
 </header>
+  
 <!-- ====================== MAIN CONTAINER ====================== -->
 <main id="main-content" class="mx-auto max-w-6xl px-4 pb-16 pt-24 sm:px-6">
 
@@ -594,7 +595,7 @@
 
       <div class="my-1 border-t border-zinc-800"></div>
 
-      <!-- Forensic / Evidence tools (name = reality group) -->
+      <!-- Forensic / Evidence tools -->
       <a href="/forensic-ledger" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">
         📜 Forensic Ledger
       </a>
@@ -626,6 +627,7 @@
     </div>
   </div>
 </div>
+
 <!-- ========== 1. PUBLIC SQUARE ========== -->
 <section id="public-square" data-view="citizenTalkView" role="tabpanel" aria-labelledby="public-square-title">
   <div class="glass mb-10 rounded-3xl border border-zinc-800/80 p-6 shadow-xl sm:p-8">
@@ -661,6 +663,112 @@
                      placeholder-zinc-500 focus:border-emerald-500 focus:outline-none transition"></textarea>
     <div class="mb-5 mt-1.5 flex justify-end">
       <span id="char-count" class="text-xs text-zinc-500 transition-colors duration-200">0 / 2000</span>
+    </div>
+
+    <!-- LIVE VOICE & RECORDING SECTION -->
+    <div class="space-y-4 mb-6">
+      <div id="voice-section" class="rounded-2xl border-2 border-emerald-500/40 bg-emerald-500/5 overflow-hidden">
+        
+        <!-- Main Button -->
+        <button id="btn-voice" type="button"
+                class="flex w-full items-center justify-center gap-3 px-5 py-4 text-base font-semibold text-emerald-400 transition-all
+                       hover:bg-emerald-500 hover:text-zinc-950 active:scale-[0.98]">
+          <svg class="h-6 w-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                  d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z"/>
+          </svg>
+          <span id="btn-voice-text">Record Live Voice</span>
+          <span id="btn-voice-badge" class="ml-1 rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-medium text-emerald-300">
+            Recommended
+          </span>
+        </button>
+
+        <!-- Instruction text (always visible under the button) -->
+        <div id="voice-instruction" class="border-t border-emerald-500/20 bg-zinc-900/40 px-5 py-2.5 text-center text-xs text-zinc-400">
+          Tap the button above to start recording. Speak clearly.
+        </div>
+
+        <!-- Recording controls -->
+        <div id="voice-recorder-bar" class="hidden border-t border-emerald-500/20 bg-zinc-900/70 p-4">
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="flex min-w-[70px] items-center gap-2">
+              <span id="rec-indicator" class="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500"></span>
+              <span id="rec-timer" class="font-mono text-sm text-emerald-400">00:00</span>
+            </div>
+
+            <button id="verify-voice-btn" type="button"
+                    class="rounded-xl bg-blue-600/80 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-600">
+              🛡️ Verify
+            </button>
+
+            <canvas id="rec-waveform" width="180" height="36" class="max-w-[200px] flex-1 rounded bg-zinc-950"></canvas>
+
+            <div class="ml-auto flex items-center gap-2">
+              <button id="rec-pause-btn" type="button"
+                      class="rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700">
+                ⏸ Pause
+              </button>
+              <button id="rec-stop-btn" type="button"
+                      class="rounded-xl bg-red-600/80 px-3 py-1.5 text-xs text-white hover:bg-red-600">
+                ⏹ Stop
+              </button>
+              <button id="rec-replay-btn" type="button"
+                      class="hidden rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700">
+                ↻ Replay
+              </button>
+              <button id="rec-rerecord-btn" type="button"
+                      class="hidden rounded-xl border border-amber-600/60 bg-amber-900/40 px-3 py-1.5 text-xs text-amber-300 hover:bg-amber-800/50">
+                ↺ Re-record
+              </button>
+            </div>
+          </div>
+          <audio id="rec-replay-audio" class="hidden"></audio>
+        </div>
+
+        <!-- Mic permission message -->
+        <div id="mic-permission-msg" class="hidden border-t border-amber-500/20 bg-amber-950/30 p-4 text-xs text-amber-200">
+          <!-- filled by media.js -->
+        </div>
+      </div>
+
+      <!-- Photo + Video -->
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <button id="btn-photo" type="button"
+                class="flex items-center justify-center gap-2.5 rounded-2xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 font-medium text-emerald-400 transition-all
+                       hover:border-emerald-500 hover:bg-zinc-800">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+          Add Photo
+        </button>
+
+        <button id="btn-video" type="button"
+                class="flex items-center justify-center gap-2.5 rounded-2xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 font-medium text-sky-400 transition-all
+                       hover:border-sky-500 hover:bg-zinc-800">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                  d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+          </svg>
+          Add Video
+        </button>
+      </div>
+
+      <!-- Upload existing audio -->
+      <div class="text-center">
+        <button id="btn-upload-audio" type="button"
+                class="text-sm text-zinc-400 underline-offset-2 hover:text-emerald-400 hover:underline transition">
+          Or upload existing audio file
+        </button>
+      </div>
+    </div>
+
+    <!-- Preview Area -->
+    <div id="preview-area" class="mt-5 flex min-h-[110px] flex-wrap items-center justify-center gap-4 rounded-2xl border border-dashed border-zinc-700 bg-zinc-900/50 p-5 text-sm text-zinc-500">
+      <div id="preview-empty" class="text-center">
+        <p>Preview will appear here...</p>
+        <p class="mt-1 text-xs text-zinc-600">Live voice, photos, videos or uploaded audio will show here</p>
+      </div>
     </div>
 
     <!-- Publish Button -->
@@ -816,230 +924,8 @@
   </div>
 </section>
 
-<!-- LIVE VOICE -->
-<div id="voice-section" class="rounded-2xl border-2 border-emerald-500/40 bg-emerald-500/5 overflow-hidden">
-  
-  <!-- Main Button -->
-  <button id="btn-voice" type="button"
-          class="flex w-full items-center justify-center gap-3 px-5 py-4 text-base font-semibold text-emerald-400 transition-all
-                 hover:bg-emerald-500 hover:text-zinc-950 active:scale-[0.98]">
-    <svg class="h-6 w-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-            d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z"/>
-    </svg>
-    <span id="btn-voice-text">Record Live Voice</span>
-    <span id="btn-voice-badge" class="ml-1 rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-medium text-emerald-300">
-      Recommended
-    </span>
-  </button>
-
-  <!-- Instruction text (always visible under the button) -->
-  <div id="voice-instruction" class="border-t border-emerald-500/20 bg-zinc-900/40 px-5 py-2.5 text-center text-xs text-zinc-400">
-    Tap the button above to start recording. Speak clearly.
-  </div>
-
-  <!-- Recording controls -->
-  <div id="voice-recorder-bar" class="hidden border-t border-emerald-500/20 bg-zinc-900/70 p-4">
-    <div class="flex flex-wrap items-center gap-3">
-      <div class="flex min-w-[70px] items-center gap-2">
-        <span id="rec-indicator" class="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500"></span>
-        <span id="rec-timer" class="font-mono text-sm text-emerald-400">00:00</span>
-      </div>
-
-      <button id="verify-voice-btn" type="button"
-              class="rounded-xl bg-blue-600/80 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-600">
-        🛡️ Verify
-      </button>
-
-      <canvas id="rec-waveform" width="180" height="36" class="max-w-[200px] flex-1 rounded bg-zinc-950"></canvas>
-
-      <div class="ml-auto flex items-center gap-2">
-        <button id="rec-pause-btn" type="button"
-                class="rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700">
-          ⏸ Pause
-        </button>
-        <button id="rec-stop-btn" type="button"
-                class="rounded-xl bg-red-600/80 px-3 py-1.5 text-xs text-white hover:bg-red-600">
-          ⏹ Stop
-        </button>
-        <button id="rec-replay-btn" type="button"
-                class="hidden rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700">
-          ↻ Replay
-        </button>
-        <button id="rec-rerecord-btn" type="button"
-                class="hidden rounded-xl border border-amber-600/60 bg-amber-900/40 px-3 py-1.5 text-xs text-amber-300 hover:bg-amber-800/50">
-          ↺ Re-record
-        </button>
-      </div>
-    </div>
-    <audio id="rec-replay-audio" class="hidden"></audio>
-  </div>
-
-  <!-- Mic permission message -->
-  <div id="mic-permission-msg" class="hidden border-t border-amber-500/20 bg-amber-950/30 p-4 text-xs text-amber-200">
-    <!-- filled by media.js -->
-  </div>
-</div>
-    <!-- ====================== MEDIA SECTION ====================== -->
-    <div class="space-y-4">
-
-      <!-- LIVE VOICE -->
-      <div id="voice-section" class="rounded-2xl border-2 border-emerald-500/40 bg-emerald-500/5 overflow-hidden">
-        
-        <button id="btn-voice" type="button"
-                class="flex w-full items-center justify-center gap-3 px-5 py-4 text-base font-semibold text-emerald-400 transition-all
-                       hover:bg-emerald-500 hover:text-zinc-950 active:scale-[0.98]">
-          <svg class="h-6 w-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                  d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z"/>
-          </svg>
-          <span>Record Live Voice</span>
-          <span class="ml-1 rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-medium text-emerald-300">Recommended</span>
-        </button>
-
-        <!-- Recording controls -->
-        <div id="voice-recorder-bar" class="hidden border-t border-emerald-500/20 bg-zinc-900/70 p-4">
-          <div class="flex flex-wrap items-center gap-3">
-            <div class="flex min-w-[70px] items-center gap-2">
-              <span id="rec-indicator" class="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500"></span>
-              <span id="rec-timer" class="font-mono text-sm text-emerald-400">00:00</span>
-            </div>
-
-            <button id="verify-voice-btn" type="button"
-                    class="rounded-xl bg-blue-600/80 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-600">
-              🛡️ Verify
-            </button>
-
-            <canvas id="rec-waveform" width="180" height="36" class="max-w-[200px] flex-1 rounded bg-zinc-950"></canvas>
-
-            <div class="ml-auto flex items-center gap-2">
-              <button id="rec-pause-btn" type="button"
-                      class="rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700">
-                ⏸ Pause
-              </button>
-              <button id="rec-stop-btn" type="button"
-                      class="rounded-xl bg-red-600/80 px-3 py-1.5 text-xs text-white hover:bg-red-600">
-                ⏹ Stop
-              </button>
-              <button id="rec-replay-btn" type="button"
-                      class="hidden rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700">
-                ↻ Replay
-              </button>
-            </div>
-          </div>
-          <audio id="rec-replay-audio" class="hidden"></audio>
-        </div>
-
-        <!-- Mic permission message -->
-        <div id="mic-permission-msg" class="hidden border-t border-amber-500/20 bg-amber-950/30 p-4 text-xs text-amber-200">
-          <!-- filled by media.js -->
-        </div>
-      </div>
-
-      <!-- Photo + Video -->
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <button id="btn-photo" type="button"
-                class="flex items-center justify-center gap-2.5 rounded-2xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 font-medium text-emerald-400 transition-all
-                       hover:border-emerald-500 hover:bg-zinc-800">
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-          </svg>
-          Add Photo
-        </button>
-
-        <button id="btn-video" type="button"
-                class="flex items-center justify-center gap-2.5 rounded-2xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 font-medium text-sky-400 transition-all
-                       hover:border-sky-500 hover:bg-zinc-800">
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                  d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-          </svg>
-          Add Video
-        </button>
-      </div>
-
-      <!-- Upload existing audio -->
-      <div class="text-center">
-        <button id="btn-upload-audio" type="button"
-                class="text-sm text-zinc-400 underline-offset-2 hover:text-emerald-400 hover:underline transition">
-          Or upload existing audio file
-        </button>
-      </div>
-    </div>
-
-    <!-- Preview Area -->
-    <div id="preview-area" class="mt-5 flex min-h-[110px] flex-wrap items-center justify-center gap-4 rounded-2xl border border-dashed border-zinc-700 bg-zinc-900/50 p-5 text-sm text-zinc-500">
-      <div id="preview-empty" class="text-center">
-        <p>Preview will appear here...</p>
-        <p class="mt-1 text-xs text-zinc-600">Live voice, photos, videos or uploaded audio will show here</p>
-      </div>
-    </div>
-
-    <!-- Publish Button -->
-    <button id="postButton" type="button" disabled
-            class="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 py-4 text-base font-bold text-black shadow-lg shadow-emerald-500/25 transition-all
-                   hover:bg-emerald-400 hover:shadow-emerald-500/40
-                   active:scale-[0.98] active:bg-emerald-600
-                   disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-emerald-500 disabled:hover:shadow-emerald-500/25">
-      <span data-i18n="postButton">Publish Report</span>
-    </button>
-
-    <!-- Upload Progress -->
-    <div id="upload-progress-container" class="mt-4 hidden">
-      <div class="mb-1 flex justify-between text-xs text-zinc-400">
-        <span id="upload-status-text">Uploading media...</span>
-        <span id="upload-progress-pct">0%</span>
-      </div>
-      <div class="h-2 w-full overflow-hidden rounded-full bg-zinc-800">
-        <div id="upload-progress-bar" class="h-full bg-emerald-500 transition-all duration-300" style="width: 0%"></div>
-      </div>
-    </div>
-
-    <!-- Success State -->
-    <div id="publish-success" class="mt-6 hidden">
-      <div class="flex flex-col items-center justify-center gap-3 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 py-8 text-center">
-        <div class="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500 text-2xl text-black">✓</div>
-        <p class="text-lg font-bold text-emerald-400">Report sealed</p>
-        <p class="text-sm text-zinc-400">Your evidence is now protected and timestamped</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Recent Reports -->
-  <div id="feed-container" class="space-y-6">
-    <div class="flex items-center justify-between">
-      <h3 id="feed-title" class="text-lg font-bold text-white" data-i18n="recentTestimoniesTitle">
-        📜 Recent Reports
-      </h3>
-      <div class="flex items-center gap-2 text-xs text-zinc-400">
-        <span>Sort:</span>
-        <select id="feedSortSelect" 
-                class="rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 py-1.5 text-zinc-300 focus:border-emerald-500 focus:outline-none">
-          <option value="latest">Latest</option>
-          <option value="verified">Verified First</option>
-          <option value="trending">Trending</option>
-        </select>
-      </div>
-    </div>
-
-    <div id="testimonies-feed" class="space-y-4">
-      <!-- Loading skeleton -->
-      <div class="animate-pulse space-y-4 rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6">
-        <div class="flex items-center gap-3">
-          <div class="h-10 w-10 rounded-full bg-zinc-800"></div>
-          <div class="flex-1 space-y-2">
-            <div class="h-3 w-1/4 rounded bg-zinc-800"></div>
-            <div class="h-2 w-1/6 rounded bg-zinc-800/60"></div>
-          </div>
-        </div>
-        <div class="h-4 w-3/4 rounded bg-zinc-800"></div>
-        <div class="h-16 rounded-xl bg-zinc-800/50"></div>
-      </div>
-    </div>
-  </div>
-</section>
 </main>
+  
 <!-- ====================== SUPPORT MODAL ====================== -->
 <div id="supportModal"
      class="fixed inset-0 z-[10000] hidden items-center justify-center bg-black/80 p-4 backdrop-blur-md"
