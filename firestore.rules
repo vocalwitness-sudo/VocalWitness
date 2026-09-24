@@ -509,3 +509,16 @@ service cloud.firestore {
 
   }
 }
+
+liveRooms/{roomId}
+  - title, description, createdBy, createdAt, isLive, participantCount
+  - city / region (optional), tags, tierRequired
+  - sealedSegments[] (hashes)
+
+liveRooms/{roomId}/participants/{uid}
+  - displayName, tier, isSpeaking, joinedAt, isMuted
+
+liveRooms/{roomId}/reactions/{id}
+  - type (corroborate / dispute / applause), uid, timestamp
+
+liveRooms/{roomId}/messages/{id}   // short text + voice notes
