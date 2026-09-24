@@ -20,7 +20,8 @@
 </head>
 <body class="min-h-screen text-white pb-24">
 
-  <div class="max-w-5xl mx-auto px-4 pt-6">
+  <!-- LOBBY VIEW -->
+  <div id="lobbyView" class="max-w-5xl mx-auto px-4 pt-6">
 
     <!-- Header -->
     <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
@@ -80,6 +81,9 @@
       </div>
     </div>
   </div>
+
+  <!-- ACTIVE ROOM VIEW (injected by JS) -->
+  <div id="activeRoomView" class="hidden"></div>
 
   <script type="module" src="/js/live-arena.js"></script>
   <script type="module">
