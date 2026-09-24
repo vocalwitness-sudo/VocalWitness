@@ -235,11 +235,11 @@ export async function startZKVerification() {
       "Database update timed out"
     );
 
-    const proofTypeMsg = zkResult.isFallback 
-      ? `(fallback: ${zkResult.proofType})` 
-      : "(real SNARK)";
+   const sealLabel = zkResult.isFallback
+  ? `Integrity Seal (${zkResult.proofType || 'Hash/Signature'})`
+  : 'ZK-SNARK Seal';
 
-    showToast(`🛡️ ZK Verification Complete! Welcome to Witness Circle ${proofTypeMsg}`, "success");
+showToast(`🛡️ Cryptographic seal complete! You now have a ${sealLabel}`, "success");
     if (typeof refreshTierAndUI === 'function') refreshTierAndUI();
 
   } catch (error) {
