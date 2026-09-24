@@ -395,14 +395,19 @@ export function renderProfileUI(userData, retryCount = 0) {
                                 </div>
                             </div>
                             ${userData.zkVerified
-                                ? `<span class="shrink-0 text-xs font-semibold text-teal-400 bg-teal-500/10 border border-teal-500/30 px-2.5 py-1 rounded-full">
-                                     🔑 Verified
-                                   </span>`
-                                : `<button type="button" id="btnStartZkVerify"
-                                           class="shrink-0 text-xs font-semibold bg-teal-600 hover:bg-teal-500 text-white px-3.5 py-1.5 rounded-xl transition">
-                                     Start Verification
-                                   </button>`
-                            }
+    ? (() => {
+        const isFallback = userData.lastZkIsFallback === true;
+        const type = (userData.lastZkProofType || '').toUpperCase();
+        const isRealSNARK = !isFallback && (type.includes('SNARK') || type.includes('GROTH16'));
+        return isRealSNARK
+            ? `<span class="shrink-0 text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 rounded-full">⚖️ ZK-SNARK</span>`
+            : `<span class="shrink-0 text-xs font-semibold text-slate-300 bg-slate-500/10 border border-slate-500/30 px-2.5 py-1 rounded-full">🔏 Integrity Seal</span>`;
+      })()
+    : `<button type="button" id="btnStartZkVerify"
+               class="shrink-0 text-xs font-semibold bg-teal-600 hover:bg-teal-500 text-white px-3.5 py-1.5 rounded-xl transition">
+         Start Verification
+       </button>`
+}
                         </div>
 
                         ${!userData.zkVerified ? `
@@ -503,9 +508,13 @@ function attachProfileEventListeners(userData, isCitizenCircle, isWitness) {
         if (typeof window.startPhoneVerification === 'function') window.startPhoneVerification();
     });
 
-    // ZK / Higher Trust
+   // ZK / Higher Trust
     document.getElementById('btnStartZkVerify')?.addEventListener('click', () => {
-        window.location.href = '/verify.html?action=zk';
+        if (typeof window.startZKVerification === 'function') {
+            window.startZKVerification();
+        } else {
+            window.location.href = '/verify.html?action=zk';
+        }
     });
 
     // Privacy Shield
