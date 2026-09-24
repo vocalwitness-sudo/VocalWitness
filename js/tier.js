@@ -17,10 +17,10 @@ import { showToast } from './utils.js';
 export const TIERS = {
   CITIZEN: 'citizen',
   CITIZEN_CIRCLE: 'citizen_circle',     // Phone Verified
-  WITNESS_CIRCLE: 'witness_circle'      // ZK Verified
+  WITNESS_CIRCLE: 'witness_circle'      // Cryptographic Seal (SNARK or Integrity)
 };
 
-// Detailed Tier Metadata for Application Logic & Upload Limits
+// Detailed Tier Metadata
 export const TIER_METADATA = {
   [TIERS.CITIZEN]: {
     id: 1,
@@ -46,8 +46,8 @@ export const TIER_METADATA = {
   },
   [TIERS.WITNESS_CIRCLE]: {
     id: 3,
-    name: 'True Witness (ZK-Verified)',
-    badge: '⚖️ Witness Voice',
+    name: 'Witness Circle (Cryptographic Seal)',
+    badge: '⚖️ Cryptographic Seal',          // generic – refined below by proof type
     maxUploadMB: 500,
     requiresPhone: true,
     requiresZK: true,
@@ -373,11 +373,20 @@ export async function updateTierBadge() {
 
   const tier = await getCurrentUserTier();
   const level = await getCurrentWitnessLevel();
+  const profile = await getUserProfile();
 
-  if (level) {
-    badge.innerHTML = `<span>${level.emblem}</span> <span>${escapeHTML(level.name)}</span>`;
+  if (tier === TIERS.WITNESS_CIRCLE) {
+    // Use the honest label based on the actual proof stored on the profile
+    const seal = getSealLabel(profile);
+    badge.innerHTML = `<span>${seal.badge}</span>`;
     badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold shadow-sm text-white transition-all duration-200";
-    badge.style.backgroundColor = level.color;
+    
+    // Optional: keep the old level colour if they have a progression level
+    if (level) {
+      badge.style.backgroundColor = level.color;
+    } else {
+      badge.style.backgroundColor = seal.short === 'ZK-SNARK' ? '#10b981' : '#64748b';
+    }
   } else if (tier === TIERS.CITIZEN_CIRCLE) {
     badge.innerHTML = '🛡️ Field Witness';
     badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
@@ -389,7 +398,6 @@ export async function updateTierBadge() {
   }
   badge.classList.remove('hidden');
 }
-
 /**
  * Force refresh of tier system and UI
  */
@@ -582,6 +590,53 @@ export async function getUserTierData(uid = null) {
     maxUploadMB: metadata.maxUploadMB,
     canVoteGovernance: metadata.canVoteGovernance,
     canValidate: metadata.canValidate
+  };
+}
+
+/**
+ * Returns an honest badge + name based on the actual proof that was used.
+ * Call this whenever you display the user's seal.
+ */
+export function getSealLabel(proofOrProfile) {
+  // proofOrProfile can be the proof object or the user profile
+  const isFallback = proofOrProfile?.isFallback === true ||
+                     proofOrProfile?.proofType === 'ECDSA_SIGNATURE' ||
+                     proofOrProfile?.proofType === 'CLIENT_SHA256_STAMP';
+
+  const isRealSNARK = !isFallback && (
+    proofOrProfile?.proofType?.includes('SNARK') ||
+    proofOrProfile?.zkVerified === true && proofOrProfile?.proofType?.includes('SNARK')
+  );
+
+  if (isRealSNARK) {
+    return {
+      name: 'True Witness (ZK-SNARK)',
+      badge: '⚖️ ZK-SNARK Seal',
+      short: 'ZK-SNARK'
+    };
+  }
+
+  if (isFallback || proofOrProfile?.zkVerified) {
+    const type = proofOrProfile?.proofType;
+    if (type === 'ECDSA_SIGNATURE') {
+      return {
+        name: 'Witness (Integrity Seal)',
+        badge: '🔏 Integrity Seal (Wallet)',
+        short: 'ECDSA'
+      };
+    }
+    return {
+      name: 'Witness (Integrity Seal)',
+      badge: '🔏 Integrity Seal (Hash)',
+      short: 'SHA-256'
+    };
+  }
+
+  // Default phone-verified
+  return {
+    name: 'Verified Citizen (Phone)',
+    badge: '🛡️ Field Witness',
+    short: 'Phone'
   };
 }
 
