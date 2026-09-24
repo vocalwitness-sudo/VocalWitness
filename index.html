@@ -882,28 +882,66 @@
 </section>
 
 <!-- ========== 3. LIVE ARENA ========== -->
+<!-- ========== LIVE ARENA (FULL) ========== -->
 <section id="live-arena" class="hidden" role="tabpanel" aria-label="Live Arena">
-  <div class="mx-auto max-w-lg space-y-8 text-center">
-    <div>
-      <h2 class="text-3xl font-bold text-sky-400">Live Arena</h2>
-      <p class="mt-2 text-sm text-zinc-400">Real-time community reporting</p>
-    </div>
-    <div class="glass rounded-3xl border border-sky-500/20 p-7">
-      <div class="mb-3 flex justify-between text-sm">
-        <span class="text-zinc-300">Verified participants</span>
-        <span class="font-mono text-sky-400">
-          <span id="verifiedCount">0</span> / 500
-        </span>
+  <div class="mx-auto max-w-5xl space-y-6 px-3 sm:px-5 pb-24">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <h2 class="text-3xl font-bold text-sky-400 flex items-center gap-3">
+          <span class="text-4xl">🏟️</span> Live Arena
+        </h2>
+        <p class="mt-1 text-sm text-zinc-400">Real-time community reporting • Globe-wide</p>
       </div>
-      <div class="h-3 overflow-hidden rounded-full bg-zinc-800">
+      <div class="flex items-center gap-3">
+        <div class="text-right text-xs">
+          <div class="text-zinc-400">Verified Citizens</div>
+          <div class="font-mono text-sky-400 text-lg">
+            <span id="verifiedCount">0</span> / 500
+          </div>
+        </div>
+        <button id="createRoomBtn" class="rounded-2xl bg-gradient-to-r from-sky-500 to-cyan-500 px-6 py-3 font-bold text-white shadow-lg hover:from-sky-400 hover:to-cyan-400 active:scale-95 transition">
+          + Start a Room
+        </button>
+      </div>
+    </div>
+
+    <!-- Progress (soft goal) -->
+    <div class="glass rounded-2xl border border-sky-500/20 p-4">
+      <div class="flex justify-between text-sm mb-2">
+        <span class="text-zinc-300">Community Goal – Unlock full global stages</span>
+        <span id="progressText" class="text-sky-400">Loading…</span>
+      </div>
+      <div class="h-2 overflow-hidden rounded-full bg-zinc-800">
         <div id="verifiedProgress" class="h-full bg-gradient-to-r from-sky-500 to-cyan-400 transition-all duration-700" style="width: 0%"></div>
       </div>
-      <p id="progressText" class="mt-4 text-xs text-zinc-400">Loading progress…</p>
     </div>
-    <button id="notifyArenaBtn" type="button"
-            class="w-full rounded-2xl bg-gradient-to-r from-rose-500 to-pink-500 px-8 py-4 font-bold text-white shadow-lg shadow-rose-500/25 transition hover:from-rose-400 hover:to-pink-400 active:scale-[0.98] sm:w-auto">
-      🔔 Notify me when Arena opens
-    </button>
+
+    <!-- Live Rooms Grid -->
+    <div>
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-white">Live Now</h3>
+        <div class="flex gap-2 text-xs">
+          <button class="px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700">All</button>
+          <button class="px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700">Near Me</button>
+          <button class="px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700">My Circle</button>
+        </div>
+      </div>
+
+      <div id="liveRoomsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Rooms will be injected here -->
+        <div class="col-span-full py-16 text-center text-zinc-500">
+          <div class="text-5xl mb-4">🌍</div>
+          <p>No live rooms yet. Be the first to start one.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Room View (hidden until join) -->
+    <div id="activeRoomView" class="hidden fixed inset-0 z-50 bg-zinc-950/95 backdrop-blur-md flex flex-col">
+      <!-- Will be fully built in next step -->
+    </div>
   </div>
 </section>
 
