@@ -1,199 +1,93 @@
 <!DOCTYPE html>
 <html lang="en-NG">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#10b981">
-         
-    <link rel="manifest" href="/manifest.json">
-    <link rel="icon" href="logo.png" type="image/png">
-    <title>Live Arena • VocalWitness</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="../style.css">
-    <style>
-        body {
-            font-family: 'Inter', system-ui, sans-serif;
-            background: #0a0f1c;
-            color: white;
-        }
-        .glass {
-            background: rgba(17, 24, 39, 0.95);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(16, 185, 129, 0.25);
-        }
-        .arena-placeholder {
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0f1c">
+  <title>Live Arena • VocalWitness</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="/logo.png" type="image/png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; }
+    .glass {
+      background: rgba(17, 24, 39, 0.92);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(14, 165, 233, 0.2);
+    }
+  </style>
 </head>
-<body class="min-h-screen pb-20 p-4 bg-[#0a0f1c]">
-    <div class="max-w-2xl mx-auto">
-        <!-- HEADER -->
-        <header class="flex items-center justify-between mb-8">
-            <div class="flex items-center gap-3">
-                <button type="button"
-                        id="backBtn"
-                        class="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center gap-2 text-sm font-medium transition cursor-pointer"
-                        aria-label="Go back">
-                    ← Back
-                </button>
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-gradient-to-br from-red-500 to-rose-500 rounded-2xl flex items-center justify-center text-2xl shadow-inner">🏟️</div>
-                    <div>
-                        <h1 class="text-3xl font-bold tracking-tighter text-rose-400">Live Arena</h1>
-                        <p class="text-xs text-rose-500 -mt-1">Real-time Public Debate</p>
-                    </div>
-                </div>
-            </div>
-        </header>
+<body class="min-h-screen text-white pb-24">
 
-        <!-- Main Content -->
-        <div class="glass rounded-3xl p-8 text-center">
-            <div class="py-12">
-                <div class="text-7xl mb-8">🏟️</div>
-                <h2 class="text-3xl font-bold mb-4 text-white">Live Arena</h2>
-                <p class="text-zinc-400 text-lg max-w-md mx-auto mb-10">
-                    Real-time discussions, debates, and public testimonies are coming soon.
-                </p>
-               
-                <!-- Arena Progress Card -->
-                <div class="arena-placeholder rounded-3xl p-8 mb-10 text-white relative overflow-hidden">
-                    <p class="text-xl font-medium mb-2">🚧 Under Construction</p>
-                    <p class="text-sm opacity-80 mb-6">
-                        The Arena will open when we reach <strong>500 verified witnesses</strong>
-                    </p>
+  <div class="max-w-5xl mx-auto px-4 pt-6">
 
-                    <!-- Live Progress -->
-                    <div class="bg-black/30 rounded-2xl p-5 text-left">
-                        <div class="flex justify-between items-end mb-3">
-                            <div>
-                                <span id="verifiedCount" class="text-4xl font-bold text-emerald-400">—</span>
-                                <span class="text-sm text-zinc-300 ml-2">Verified Citizens</span>
-                            </div>
-                            <span class="text-sm text-zinc-400">Goal: 500</span>
-                        </div>
-
-                        <!-- Progress Bar -->
-                        <div class="w-full h-3 bg-zinc-800/80 rounded-full overflow-hidden">
-                            <div id="verifiedProgress"
-                                   class="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-700 ease-out"
-                                   style="width: 0%">
-                            </div>
-                        </div>
-
-                        <p id="progressText" class="text-xs text-zinc-400 mt-2 text-right">
-                            Loading progress...
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Notify Button -->
-                <button type="button"
-                        id="notifyArenaBtn"
-                        class="px-10 py-4 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-black font-bold rounded-3xl text-lg shadow-xl transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer">
-                    🔔 Notify Me When Arena Goes Live
-                </button>
-            </div>
+    <!-- Header -->
+    <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+      <div class="flex items-center gap-3">
+        <button id="backBtn" class="px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-xl text-sm font-medium transition">
+          ← Back
+        </button>
+        <div>
+          <h1 class="text-3xl font-bold text-sky-400 flex items-center gap-2">
+            <span class="text-4xl">🏟️</span> Live Arena
+          </h1>
+          <p class="text-sm text-zinc-400">Real-time community reporting • Globe-wide</p>
         </div>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <div class="text-right">
+          <div class="text-xs text-zinc-400">Verified Citizens</div>
+          <div class="font-mono text-sky-400 text-xl font-bold">
+            <span id="verifiedCount">0</span><span class="text-zinc-500 text-base"> / 500</span>
+          </div>
+        </div>
+        <button id="createRoomBtn"
+                class="rounded-2xl bg-gradient-to-r from-sky-500 to-cyan-500 px-6 py-3.5 font-bold text-white shadow-lg shadow-sky-500/25 hover:from-sky-400 hover:to-cyan-400 active:scale-95 transition">
+          + Start a Room
+        </button>
+      </div>
+    </header>
+
+    <!-- Soft Goal Progress -->
+    <div class="glass rounded-2xl p-5 mb-8">
+      <div class="flex justify-between text-sm mb-2">
+        <span class="text-zinc-300">Community Goal – Unlock full global mega-stages</span>
+        <span id="progressText" class="text-sky-400 font-medium">Loading…</span>
+      </div>
+      <div class="h-2.5 overflow-hidden rounded-full bg-zinc-800">
+        <div id="verifiedProgress" class="h-full bg-gradient-to-r from-sky-500 to-cyan-400 transition-all duration-700" style="width: 0%"></div>
+      </div>
     </div>
 
-    <!-- Scripts -->
-    <script type="module">
-        import { listenToVerifiedCount } from '../js/utils.js';
-        import { requireAuth, showToast } from '../js/auth.js';
-        import { auth, db } from '../js/firebase-config.js';
-        import { doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+    <!-- Filters -->
+    <div class="flex items-center justify-between mb-5">
+      <h2 class="text-xl font-semibold">Live Now</h2>
+      <div class="flex gap-2 text-sm">
+        <button class="px-3 py-1.5 rounded-lg bg-sky-500/20 text-sky-300 border border-sky-500/40">All</button>
+        <button class="px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-400 hover:bg-zinc-700">Near Me</button>
+        <button class="px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-400 hover:bg-zinc-700">My Circle</button>
+      </div>
+    </div>
 
-        const GOAL = 500;
+    <!-- Rooms Grid -->
+    <div id="liveRoomsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <!-- Injected by JS -->
+      <div class="col-span-full py-20 text-center text-zinc-500">
+        <div class="text-6xl mb-4">🌍</div>
+        <p class="text-lg">Loading live rooms…</p>
+      </div>
+    </div>
+  </div>
 
-        // ========== Real-time Verified Count ==========
-        const unsubscribeVerified = listenToVerifiedCount((count) => {
-            const countEl = document.getElementById('verifiedCount');
-            const progressBar = document.getElementById('verifiedProgress');
-            const progressText = document.getElementById('progressText');
-
-            if (countEl) {
-                countEl.textContent = count.toLocaleString();
-            }
-
-            if (progressBar) {
-                const percentage = Math.min((count / GOAL) * 100, 100);
-                progressBar.style.width = `${percentage}%`;
-            }
-
-            if (progressText) {
-                if (count >= GOAL) {
-                    progressText.textContent = "🎉 Arena is ready to launch!";
-                    progressText.classList.add('text-emerald-400', 'font-medium');
-                } else {
-                    const remaining = GOAL - count;
-                    progressText.textContent = `${remaining.toLocaleString()} more needed`;
-                }
-            }
-        });
-
-        // Clean up listener when leaving the page
-        window.addEventListener('beforeunload', () => {
-            if (typeof unsubscribeVerified === 'function') {
-                unsubscribeVerified();
-            }
-        });
-
-        document.addEventListener('DOMContentLoaded', () => {
-            // ========== Back Button Handler ==========
-            document.getElementById('backBtn')?.addEventListener('click', () => {
-                if (window.history.length > 1) {
-                    window.history.back();
-                } else {
-                    window.location.href = '../index.html';
-                }
-            });
-
-            // ========== Notify Me Button Handler ==========
-            const notifyBtn = document.getElementById('notifyArenaBtn');
-            if (notifyBtn) {
-                notifyBtn.addEventListener('click', async () => {
-                    if (!requireAuth("Please sign in to get notified when the Live Arena launches.")) {
-                        return;
-                    }
-
-                    notifyBtn.disabled = true;
-                    notifyBtn.textContent = "Saving...";
-
-                    try {
-                        const user = auth.currentUser;
-                        if (!user) {
-                            showToast("Please sign in first.", "error");
-                            notifyBtn.disabled = false;
-                            notifyBtn.textContent = "🔔 Notify Me When Arena Goes Live";
-                            return;
-                        }
-
-                        const userRef = doc(db, "users", user.uid);
-                        await updateDoc(userRef, {
-                            interestedInArena: true,
-                            arenaNotifyAt: serverTimestamp()
-                        });
-
-                        showToast("✅ You're on the list! We'll notify you when the Arena goes live.", "success");
-
-                        notifyBtn.textContent = "✅ You're on the list";
-                        notifyBtn.classList.remove("from-rose-500", "to-pink-500", "hover:from-rose-600", "hover:to-pink-600");
-                        notifyBtn.classList.add("from-emerald-500", "to-teal-500");
-                    } catch (error) {
-                        console.error("Failed to save arena interest:", error);
-                        showToast("Something went wrong. Please try again.", "error");
-
-                        notifyBtn.disabled = false;
-                        notifyBtn.textContent = "🔔 Notify Me When Arena Goes Live";
-                    }
-                });
-            }
-
-            console.log("✅ Live Arena loaded successfully");
-        });
-    </script>
-
-    <script type="module" src="../js/main.js"></script>
+  <script type="module" src="/js/live-arena.js"></script>
+  <script type="module">
+    // Back button
+    document.getElementById('backBtn')?.addEventListener('click', () => {
+      if (window.history.length > 1) window.history.back();
+      else window.location.href = '/';
+    });
+  </script>
 </body>
 </html>
