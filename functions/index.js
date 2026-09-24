@@ -1608,3 +1608,66 @@ Return a JSON object with exactly these fields:
     }
   }
 );
+
+// ======================================================
+// LIVEKIT TOKEN GENERATOR (for Live Arena)
+// ======================================================
+const { AccessToken } = require('livekit-server-sdk');
+
+// Add these two secrets (run these commands later)
+const livekitApiKey = defineSecret("APInq6B2ipkddC2");
+const livekitApiSecret = defineSecret("bs7eBaq23fORnlWyMLUVvBtvpaHHWTTCXfraQQK5DHFA");
+
+exports.getLiveKitToken = onCall(
+  {
+    cors: allowedOrigins,
+    secrets: [livekitApiKey, livekitApiSecret]
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "You must be signed in to join a live room.");
+    }
+
+    const { roomName, participantName } = request.data || {};
+    if (!roomName || typeof roomName !== "string") {
+      throw new HttpsError("invalid-argument", "roomName is required");
+    }
+
+    const uid = request.auth.uid;
+    const displayName = participantName || request.auth.token.name || `Citizen-${uid.slice(0, 6)}`;
+
+    try {
+      const at = new AccessToken(
+        livekitApiKey.value(),
+        livekitApiSecret.value(),
+        {
+          identity: uid,
+          name: displayName,
+          // Optional: add metadata
+          metadata: JSON.stringify({
+            tier: request.auth.token.tier || "citizen",
+            photoURL: request.auth.token.picture || null
+          })
+        }
+      );
+
+      at.addGrant({
+        roomJoin: true,
+        room: roomName,
+        canPublish: true,
+        canSubscribe: true,
+        canPublishData: true
+      });
+
+      const token = await at.toJwt();
+
+      return {
+        token,
+        url: process.env.LIVEKIT_URL || "wss://vocal-witness-0qwfaorm.livekit.cloud" // replace later
+      };
+    } catch (error) {
+      console.error("LiveKit token error:", error);
+      throw new HttpsError("internal", "Failed to generate LiveKit token");
+    }
+  }
+);
