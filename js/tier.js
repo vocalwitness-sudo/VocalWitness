@@ -16,8 +16,8 @@ import { showToast } from './utils.js';
 // ====================== TIER DEFINITIONS ======================
 export const TIERS = {
   CITIZEN: 'citizen',
-  CITIZEN_CIRCLE: 'citizen_circle',     // Phone Verified
-  WITNESS_CIRCLE: 'witness_circle'      // Cryptographic Seal (SNARK or Integrity)
+  CITIZEN_CIRCLE: 'citizen_circle',      // Phone Verified
+  WITNESS_CIRCLE: 'witness_circle'       // Cryptographic Seal (SNARK or Integrity)
 };
 
 // Detailed Tier Metadata
@@ -365,6 +365,9 @@ export async function applyTierTheme() {
 /**
  * Update profile badge with current level
  */
+/**
+ * Update profile badge with current level
+ */
 export async function updateTierBadge() {
   const badge = document.getElementById('user-tier-badge') || 
                 document.getElementById('tier-badge') || 
@@ -373,15 +376,13 @@ export async function updateTierBadge() {
 
   const tier = await getCurrentUserTier();
   const level = await getCurrentWitnessLevel();
-  const profile = await getUserProfile();
 
   if (tier === TIERS.WITNESS_CIRCLE) {
-    // Use the honest label based on the actual proof stored on the profile
+    const profile = await getUserProfile();
     const seal = getSealLabel(profile);
-    badge.innerHTML = `<span>${seal.badge}</span>`;
+    badge.innerHTML = seal.badge;
     badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold shadow-sm text-white transition-all duration-200";
     
-    // Optional: keep the old level colour if they have a progression level
     if (level) {
       badge.style.backgroundColor = level.color;
     } else {
@@ -398,6 +399,7 @@ export async function updateTierBadge() {
   }
   badge.classList.remove('hidden');
 }
+
 /**
  * Force refresh of tier system and UI
  */
@@ -594,18 +596,23 @@ export async function getUserTierData(uid = null) {
 }
 
 /**
- * Returns an honest badge + name based on the actual proof that was used.
- * Call this whenever you display the user's seal.
+ * Honest seal label based on what was actually saved on the user profile.
+ * Uses lastZkProofType / lastZkIsFallback (already written by verification.js)
  */
-export function getSealLabel(proofOrProfile) {
-  // proofOrProfile can be the proof object or the user profile
-  const isFallback = proofOrProfile?.isFallback === true ||
-                     proofOrProfile?.proofType === 'ECDSA_SIGNATURE' ||
-                     proofOrProfile?.proofType === 'CLIENT_SHA256_STAMP';
+export function getSealLabel(profileOrProof) {
+  const p = profileOrProof || {};
 
+  const isFallback = p.lastZkIsFallback === true || 
+                     p.isFallback === true ||
+                     p.lastZkProofType === 'ECDSA_SIGNATURE' ||
+                     p.lastZkProofType === 'CLIENT_SHA256_STAMP' ||
+                     p.proofType === 'ECDSA_SIGNATURE' ||
+                     p.proofType === 'CLIENT_SHA256_STAMP';
+
+  const proofType = (p.lastZkProofType || p.proofType || '').toUpperCase();
   const isRealSNARK = !isFallback && (
-    proofOrProfile?.proofType?.includes('SNARK') ||
-    proofOrProfile?.zkVerified === true && proofOrProfile?.proofType?.includes('SNARK')
+    proofType.includes('SNARK') || 
+    proofType.includes('GROTH16')
   );
 
   if (isRealSNARK) {
@@ -616,9 +623,8 @@ export function getSealLabel(proofOrProfile) {
     };
   }
 
-  if (isFallback || proofOrProfile?.zkVerified) {
-    const type = proofOrProfile?.proofType;
-    if (type === 'ECDSA_SIGNATURE') {
+  if (isFallback || p.zkVerified) {
+    if (proofType.includes('ECDSA')) {
       return {
         name: 'Witness (Integrity Seal)',
         badge: '🔏 Integrity Seal (Wallet)',
@@ -632,7 +638,6 @@ export function getSealLabel(proofOrProfile) {
     };
   }
 
-  // Default phone-verified
   return {
     name: 'Verified Citizen (Phone)',
     badge: '🛡️ Field Witness',
