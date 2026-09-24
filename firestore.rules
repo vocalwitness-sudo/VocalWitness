@@ -185,7 +185,7 @@ service cloud.firestore {
         // Allow reputation increments from the support system
         (isAuthenticated() &&
          request.resource.data.diff(resource.data).affectedKeys()
-           .hasOnly(['reputation', 'credibilityScore', 'lastSupportedAt', 'totalSupportsReceived']) &&
+            .hasOnly(['reputation', 'credibilityScore', 'lastSupportedAt', 'totalSupportsReceived']) &&
          // Only allow increase, never decrease from client
          request.resource.data.reputation >= resource.data.get('reputation', 0) &&
          request.resource.data.credibilityScore >= resource.data.get('credibilityScore', 0)
@@ -274,19 +274,19 @@ service cloud.firestore {
         && (request.resource.data.createdAt is timestamp || request.resource.data.createdAt == request.time)
         && (
              ('channel' in request.resource.data && request.resource.data.channel is string
-              && request.resource.data.channel in [
-                   'citizen-talk', 'witness-voice',
-                   'citizen-circle', 'witness-circle',
-                   'citizen_talk', 'witness_voice'
-                 ])
+             && request.resource.data.channel in [
+                  'citizen-talk', 'witness-voice',
+                  'citizen-circle', 'witness-circle',
+                  'citizen_talk', 'witness_voice'
+                ])
              ||
              ('feedVisibility' in request.resource.data && request.resource.data.feedVisibility is string
-              && request.resource.data.feedVisibility in [
-                   'citizen-talk', 'witness-voice',
-                   'citizen-circle', 'witness-circle',
-                   'citizen_talk', 'witness_voice'
-                 ])
-            )
+             && request.resource.data.feedVisibility in [
+                  'citizen-talk', 'witness-voice',
+                  'citizen-circle', 'witness-circle',
+                  'citizen_talk', 'witness_voice'
+                ])
+           )
         && (!('mediaUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.mediaUrl))
         && (!('mediaUrls' in request.resource.data) || request.resource.data.mediaUrls is list);
       allow update: if isModerator()
@@ -493,7 +493,6 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-
     // ==========================================
     // PUBLIC PROFILES (safe projection only)
     // ==========================================
@@ -507,18 +506,37 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // ==========================================
+    // LIVE ARENA ROOMS
+    // ==========================================
+    match /liveRooms/{roomId} {
+      allow read: if true;
+      allow create: if isNotBanned() && isAuthenticated()
+        && request.resource.data.createdBy == request.auth.uid;
+      allow update: if isNotBanned() && isAuthenticated() && (
+        resource.data.createdBy == request.auth.uid || isModerator()
+      );
+      allow delete: if isNotBanned() && isAuthenticated() && (
+        resource.data.createdBy == request.auth.uid || isModerator()
+      );
+
+      match /participants/{uid} {
+        allow read: if true;
+        allow write: if isNotBanned() && isAuthenticated() && (request.auth.uid == uid || resource == null);
+      }
+
+      match /reactions/{id} {
+        allow read: if true;
+        allow create: if isNotBanned() && isAuthenticated();
+        allow update, delete: if isNotBanned() && isAuthenticated() && request.auth.uid == resource.data.uid;
+      }
+
+      match /messages/{id} {
+        allow read: if true;
+        allow create: if isNotBanned() && isAuthenticated();
+        allow update, delete: if isNotBanned() && isAuthenticated() && request.auth.uid == resource.data.uid;
+      }
+    }
+
   }
 }
-
-liveRooms/{roomId}
-  - title, description, createdBy, createdAt, isLive, participantCount
-  - city / region (optional), tags, tierRequired
-  - sealedSegments[] (hashes)
-
-liveRooms/{roomId}/participants/{uid}
-  - displayName, tier, isSpeaking, joinedAt, isMuted
-
-liveRooms/{roomId}/reactions/{id}
-  - type (corroborate / dispute / applause), uid, timestamp
-
-liveRooms/{roomId}/messages/{id}   // short text + voice notes
