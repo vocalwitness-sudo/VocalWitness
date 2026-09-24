@@ -1,4 +1,4 @@
-// js/live-arena.js – Full Live Arena + Active Room Stage
+// js/live-arena.js – Full Live Arena + Active Room Stage with LiveKit WebRTC
 import { listenToVerifiedCount, showToast } from './utils.js';
 import { requireAuth } from './auth.js';
 import { auth, db } from './firebase-config.js';
@@ -8,12 +8,16 @@ import {
   addDoc, doc, updateDoc, serverTimestamp, getDoc,
   deleteDoc, increment, getDocs
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { Room, RoomEvent, Track } from 'https://cdn.jsdelivr.net/npm/livekit-client@2.5.0/dist/livekit-client.esm.mjs';
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
 
 const GOAL = 500;
 let roomsUnsubscribe = null;
 let participantsUnsubscribe = null;
 let currentRoomId = null;
 let isSpeaking = false;
+let livekitRoom = null;
+let localAudioTrack = null;
 
 export function initLiveArena() {
   console.log('[LiveArena] Full engine + Active Room starting…');
@@ -180,7 +184,6 @@ async function showActiveRoom(roomId) {
   // Show active room container
   let stage = document.getElementById('activeRoomView');
   if (!stage) {
-    // Create it if it doesn't exist (for SPA safety)
     stage = document.createElement('div');
     stage.id = 'activeRoomView';
     document.body.appendChild(stage);
@@ -263,7 +266,7 @@ async function showActiveRoom(roomId) {
 
   stage.classList.remove('hidden');
 
-  // Wire controls
+  // Wire controls & connect LiveKit WebRTC
   wireActiveRoomControls(roomId);
 
   // Live participants
@@ -320,53 +323,140 @@ function renderParticipants(participants) {
   }
 }
 
-function wireActiveRoomControls(roomId) {
+// ========== LIVEKIT VOICE ENGINE ==========
+async function connectToLiveKit(roomId) {
+  try {
+    const functions = getFunctions();
+    const getToken = httpsCallable(functions, 'getLiveKitToken');
+
+    const result = await getToken({
+      roomName: roomId,
+      participantName: auth.currentUser?.displayName || 'Citizen'
+    });
+
+    const { token, url } = result.data;
+
+    livekitRoom = new Room({
+      adaptiveStream: true,
+      dynacast: true,
+      audioCaptureDefaults: {
+        autoGainControl: true,
+        echoCancellation: true,
+        noiseSuppression: true
+      }
+    });
+
+    // Handle remote participants speaking / audio tracks
+    livekitRoom.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
+      if (track.kind === Track.Kind.Audio) {
+        const audioEl = track.attach();
+        audioEl.id = `audio-${participant.identity}`;
+        document.body.appendChild(audioEl);
+      }
+    });
+
+    livekitRoom.on(RoomEvent.TrackUnsubscribed, (track) => {
+      track.detach().forEach(el => el.remove());
+    });
+
+    livekitRoom.on(RoomEvent.ParticipantConnected, () => {
+      console.log('Participant joined LiveKit room');
+    });
+
+    await livekitRoom.connect(url, token);
+    console.log('Connected to LiveKit room:', roomId);
+    showToast("Voice connected – ready to speak", "success");
+  } catch (err) {
+    console.error('LiveKit connect error:', err);
+    showToast("Could not connect voice channel.", "error");
+  }
+}
+
+async function startSpeaking() {
+  if (!livekitRoom || isSpeaking) return;
+
+  try {
+    localAudioTrack = await livekitRoom.localParticipant.createAudioTrack({
+      name: 'microphone'
+    });
+    await livekitRoom.localParticipant.publishTrack(localAudioTrack);
+
+    isSpeaking = true;
+    const talkBtn = document.getElementById('pushToTalkBtn');
+    const status = document.getElementById('talkStatus');
+    if (talkBtn) {
+      talkBtn.classList.add('ring-4', 'ring-red-500', 'scale-110');
+    }
+    if (status) {
+      status.textContent = "🔴 YOU ARE LIVE – Speak clearly";
+      status.classList.add('text-red-400');
+    }
+    showToast("Mic active – you are live on stage", "info");
+  } catch (err) {
+    console.error('Failed to start speaking:', err);
+    showToast("Microphone access denied or failed", "error");
+  }
+}
+
+async function stopSpeaking() {
+  if (!isSpeaking || !localAudioTrack) return;
+
+  try {
+    await livekitRoom.localParticipant.unpublishTrack(localAudioTrack);
+    localAudioTrack.stop();
+    localAudioTrack = null;
+  } catch (e) {}
+
+  isSpeaking = false;
   const talkBtn = document.getElementById('pushToTalkBtn');
   const status = document.getElementById('talkStatus');
-
-  // Push-to-talk (placeholder – will become real WebRTC)
-  let pressTimer;
-  talkBtn.addEventListener('mousedown', startSpeaking);
-  talkBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startSpeaking(); });
-  talkBtn.addEventListener('mouseup', stopSpeaking);
-  talkBtn.addEventListener('mouseleave', stopSpeaking);
-  talkBtn.addEventListener('touchend', stopSpeaking);
-
-  async function startSpeaking() {
-    if (isSpeaking) return;
-    isSpeaking = true;
-    talkBtn.classList.add('ring-4', 'ring-sky-400', 'scale-110');
-    status.textContent = "🔴 You are live – speak clearly";
-    status.classList.add('text-red-400');
-
-    // Mark as speaking in Firestore
-    // (In real version we also start LiveKit track here)
-    showToast("You are now speaking (WebRTC coming next)", "info");
+  if (talkBtn) {
+    talkBtn.classList.remove('ring-4', 'ring-red-500', 'scale-110');
   }
-
-  async function stopSpeaking() {
-    if (!isSpeaking) return;
-    isSpeaking = false;
-    talkBtn.classList.remove('ring-4', 'ring-sky-400', 'scale-110');
+  if (status) {
     status.textContent = "Hold to speak • Release to stop";
     status.classList.remove('text-red-400');
   }
+}
 
-  // Corroborate
+function wireActiveRoomControls(roomId) {
+  const talkBtn = document.getElementById('pushToTalkBtn');
+
+  // Connect voice as soon as room opens
+  connectToLiveKit(roomId);
+
+  // Push-to-talk listeners
+  if (talkBtn) {
+    talkBtn.addEventListener('mousedown', startSpeaking);
+    talkBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startSpeaking(); });
+    talkBtn.addEventListener('mouseup', stopSpeaking);
+    talkBtn.addEventListener('mouseleave', stopSpeaking);
+    talkBtn.addEventListener('touchend', stopSpeaking);
+  }
+
+  // Corroborate button
   document.getElementById('corroborateBtn')?.addEventListener('click', async () => {
     showToast("✅ Corroboration recorded – strengthens the evidence", "success");
-    // Later: write to reactions subcollection + update room score
   });
 }
 
 window.leaveCurrentRoom = async function () {
+  if (livekitRoom) {
+    await livekitRoom.disconnect();
+    livekitRoom = null;
+  }
+  if (localAudioTrack) {
+    localAudioTrack.stop();
+    localAudioTrack = null;
+  }
+  isSpeaking = false;
+
   if (!currentRoomId) return;
 
   try {
     await updateDoc(doc(db, 'liveRooms', currentRoomId), {
       participantCount: increment(-1)
     });
-    // Optional: remove participant doc (we can clean later with Cloud Function)
   } catch (e) {}
 
   if (participantsUnsubscribe) participantsUnsubscribe();
