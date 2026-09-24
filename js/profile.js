@@ -281,11 +281,19 @@ export function renderProfileUI(userData, retryCount = 0) {
                             </div>
                         `}
 
-                        ${userData.zkVerified ? `
-                            <div class="inline-flex items-center gap-1.5 px-3 py-2 bg-teal-500/10 border border-teal-500/30 rounded-2xl text-xs text-teal-400 font-medium">
-                                <span>🔑</span> ZK-Proof
-                            </div>
-                        ` : ''}
+                        ${userData.zkVerified ? (() => {
+                            const isFallback = userData.lastZkIsFallback === true;
+                            const type = (userData.lastZkProofType || '').toUpperCase();
+                            const isRealSNARK = !isFallback && (type.includes('SNARK') || type.includes('GROTH16'));
+                            if (isRealSNARK) {
+                                return `<div class="inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl text-xs text-emerald-400 font-medium">
+                                            <span>⚖️</span> ZK-SNARK Seal
+                                        </div>`;
+                            }
+                            return `<div class="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-500/10 border border-slate-500/30 rounded-2xl text-xs text-slate-300 font-medium">
+                                        <span>🔏</span> Integrity Seal
+                                    </div>`;
+                        })() : ''}
                     </div>
                 </div>
 
