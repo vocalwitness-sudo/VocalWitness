@@ -1106,311 +1106,7 @@ exports.paystackWebhook = onRequest(
   }
 );
 
-// ======================================================
-// 7. RATE LIMITING
-// ======================================================
-// Hardcoded server-side configuration for action limits
-const RATE_LIMIT_CONFIGS = {
-  general_action: { maxCalls: 5, windowMinutes: 60 },
-  create_post: { maxCalls: 3, windowMinutes: 10 },
-  submit_comment: { maxCalls: 10, windowMinutes: 5 }
-};
-
-exports.checkRateLimit = onCall(
-  {
-    cors: allowedOrigins,
-    enforceAppCheck: true // Prevents unauthorized scripts and bots from triggering checks
-  },
-  async (request) => {
-    // 1. Determine user identity (Auth UID or IP address)
-    let userId = request.auth?.uid;
-    if (!userId) {
-      const rawIp = request.rawRequest?.headers["x-forwarded-for"] || request.rawRequest?.ip || "unknown";
-      const ip = String(rawIp).split(",")[0].trim().replace(/[.:]/g, "_");
-      userId = "anonymous_" + ip;
-    }
-
-    // 2. Extract and validate action input
-    const action = request.data?.action || "general_action";
-    if (typeof action !== "string" || action.length > 64) {
-      throw new HttpsError("invalid-argument", "Invalid action name.");
-    }
-
-    // 3. Get server-enforced limits (client cannot override maxCalls or windowMinutes)
-    const limitConfig = RATE_LIMIT_CONFIGS[action] || RATE_LIMIT_CONFIGS["general_action"];
-    const maxCalls = limitConfig.maxCalls;
-    const windowMinutes = limitConfig.windowMinutes;
-
-    const rateDocRef = db.collection("rateLimits").doc(`${userId}_${action}`);
-
-    try {
-      const isAllowed = await db.runTransaction(async (transaction) => {
-        const doc = await transaction.get(rateDocRef);
-        const now = admin.firestore.Timestamp.now();
-        const windowStart = new Date(Date.now() - windowMinutes * 60 * 1000);
-
-        if (!doc.exists || doc.data().lastRequest.toDate() < windowStart) {
-          transaction.set(rateDocRef, {
-            count: 1,
-            firstRequest: now,
-            lastRequest: now
-          });
-          return true;
-        }
-
-        if (doc.data().count >= maxCalls) {
-          return false;
-        }
-
-        transaction.update(rateDocRef, {
-          count: admin.firestore.FieldValue.increment(1),
-          lastRequest: now
-        });
-        return true;
-      });
-
-      return { allowed: isAllowed };
-    } catch (error) {
-      console.error("Rate limit check failed:", error);
-      // Re-throw if it's already an HttpsError (e.g. invalid argument)
-      if (error instanceof HttpsError) {
-        throw error;
-      }
-      // Fail CLOSED (deny request with a generic error)
-      throw new HttpsError("internal", "Unable to verify rate limits at this time.");
-    }
-  }
-);
-// ======================================================
-// 8. ZERO-KNOWLEDGE PROOFS
-// ======================================================
-exports.generateZKProof = onCall(
-  {
-    cors: allowedOrigins,
-    memory: "2GiB",
-    timeoutSeconds: 60
-  },
-  async (request) => {
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "Authentication required to generate ZK proof.");
-    }
-
-    const { inputs } = request.data || {};
-    if (!inputs || typeof inputs !== "object") {
-      throw new HttpsError("invalid-argument", "Missing or invalid inputs object.");
-    }
-
-    try {
-      const wasmPath = path.join(__dirname, "verification.wasm");
-      const zkeyPath = path.join(__dirname, "verification_final.zkey");
-
-      if (!fs.existsSync(wasmPath) || !fs.existsSync(zkeyPath)) {
-        throw new HttpsError("failed-precondition", "Circuit artifacts missing on server.");
-      }
-
-      const { proof, publicSignals } = await snarkjs.groth16.fullProve(inputs, wasmPath, zkeyPath);
-      return { success: true, proof, publicSignals };
-    } catch (error) {
-      console.error("Server ZK proof generation error:", error);
-      if (error instanceof HttpsError) throw error;
-      throw new HttpsError("internal", error.message || "Failed to generate ZK proof.");
-    }
-  }
-);
-
-exports.verifyZKProof = onCall(
-  { cors: allowedOrigins },
-  async (request) => {
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "Authentication required to submit ZK proof.");
-    }
-
-    const { proof, publicSignals } = request.data || {};
-    if (!proof || !publicSignals) {
-      throw new HttpsError("invalid-argument", "Missing proof or public signals payload.");
-    }
-
-    try {
-      const keyPath = path.join(__dirname, "verification_key.json");
-      if (!fs.existsSync(keyPath)) {
-        throw new HttpsError("failed-precondition", "Verification key file not found.");
-      }
-
-      const vKey = JSON.parse(fs.readFileSync(keyPath, "utf8"));
-      const isValid = await snarkjs.groth16.verify(vKey, publicSignals, proof);
-
-      if (isValid) {
-        const uid = request.auth.uid;
-        await db.collection("users").doc(uid).set(
-          {
-            zkVerified: true,
-            isVerified: true,
-            zkVerifiedAt: admin.firestore.FieldValue.serverTimestamp()
-          },
-          { merge: true }
-        );
-
-        await writeAuditLog({
-          action: "zk_proof_verified",
-          performedBy: uid,
-          targetId: uid,
-          targetType: "user",
-          severity: "info"
-        });
-      }
-
-      return { isValid };
-    } catch (error) {
-      console.error("ZK verification error:", error);
-      if (error instanceof HttpsError) throw error;
-      throw new HttpsError("internal", error.message || "Failed to verify ZK proof.");
-    }
-  }
-);
-
-// ======================================================
-// 9. MEDIA FORENSIC PIPELINE & ASYNCHRONOUS SYNTHETIC SCORING
-// ======================================================
-
-/**
- * 9A. Initial Document Creation Pipeline: Toxicity Moderation
- */
-exports.verifyMediaPipeline = onDocumentCreated(
-  {
-    region: "us-central1",
-    document: "testimonies/{postId}",
-    secrets: [perspectiveApiKey]
-  },
-  async (event) => {
-    const snap = event.data;
-    if (!snap) return;
-
-    const data = snap.data() || {};
-    const postId = event.params.postId;
-
-    try {
-      const moderation = await analyzeToxicityWithPerspective(data.content || "");
-
-      await snap.ref.set(
-        {
-          moderationStatus: moderation.safe ? "approved" : "flagged",
-          toxicityScore: moderation.toxicityScore || 0,
-          moderationNote: moderation.note || "",
-          processedAt: admin.firestore.FieldValue.serverTimestamp()
-        },
-        { merge: true }
-      );
-    } catch (error) {
-      console.error(`Media pipeline error for ${postId}:`, error);
-    }
-  }
-);
-
-/**
- * 9B. Batch 3: Asynchronous Synthetic Likelihood Scoring & Audit Queue
- * Triggers when testimonies are created or updated with media artifacts.
- * Generates an advisory syntheticLikelihood score (0-100). NEVER auto-deletes.
- */
-exports.processMediaSyntheticScoring = onDocumentWritten(
-  {
-    region: "us-central1",
-    document: "testimonies/{postId}",
-    secrets: [geminiApiKey]
-  },
-  async (event) => {
-    const afterSnap = event.data?.after;
-    if (!afterSnap || !afterSnap.exists) return; // Ignore deletions
-
-    const data = afterSnap.data() || {};
-    const postId = event.params.postId;
-
-    // Run only if media is present and syntheticLikelihood has not been evaluated yet
-    const hasMedia = data.mediaUrl || (data.mediaArtifacts && data.mediaArtifacts.length > 0);
-    if (!hasMedia || typeof data.syntheticLikelihood === "number") {
-      return;
-    }
-
-    try {
-      const apiKey = geminiApiKey.value();
-      const ai = new GoogleGenAI({ apiKey });
-
-      const prompt = `
-        Analyze the following testimony media metadata for indicators of AI synthesis, deepfake visual artifacts, audio manipulation, or synthetic voice generation.
-        
-        Metadata:
-        - Title: ${data.title || "N/A"}
-        - Content: ${data.content || "N/A"}
-        - Media Type: ${data.mediaType || "video"}
-        - Media URL: ${data.mediaUrl || "N/A"}
-        - Artifact Hashes: ${JSON.stringify(data.mediaArtifacts || [])}
-
-        Return a JSON object with:
-        - syntheticLikelihood: integer between 0 (fully organic/authentic) and 100 (definitive deepfake/synthetic).
-        - confidence: float between 0.0 and 1.0.
-        - reasons: array of string explanations for the score.
-      `;
-
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              syntheticLikelihood: { type: Type.NUMBER },
-              confidence: { type: Type.NUMBER },
-              reasons: { type: Type.ARRAY, items: { type: Type.STRING } }
-            },
-            required: ["syntheticLikelihood", "confidence", "reasons"]
-          }
-        }
-      });
-
-      const result = JSON.parse(response.text);
-      const score = Math.min(100, Math.max(0, Math.round(result.syntheticLikelihood || 0)));
-      const HIGH_RISK_THRESHOLD = 75;
-      const isHighRisk = score >= HIGH_RISK_THRESHOLD;
-
-      const updatePayload = {
-        syntheticLikelihood: score,
-        syntheticAnalysis: {
-          confidence: result.confidence || 0.8,
-          reasons: result.reasons || [],
-          evaluatedAt: admin.firestore.FieldValue.serverTimestamp()
-        }
-      };
-
-      // Set status to pending_steward_review if high risk (NO HARD DELETE)
-      if (isHighRisk) {
-        updatePayload.status = "pending_steward_review";
-        updatePayload.moderationNote = `High synthetic likelihood score (${score}/100) flagged for steward review.`;
-      }
-
-      await afterSnap.ref.set(updatePayload, { merge: true });
-
-      // Record high-risk cases in audit queue
-      if (isHighRisk) {
-        await writeAuditLog({
-          action: "synthetic_flagged_for_review",
-          performedBy: "system_synthetic_scorer",
-          targetId: postId,
-          targetType: "testimony",
-          details: {
-            syntheticLikelihood: score,
-            reasons: result.reasons,
-            previousStatus: data.status || "published"
-          },
-          severity: "warning"
-        });
-      }
-    } catch (error) {
-      console.error(`Error processing synthetic score for ${postId}:`, error);
-    }
-  }
-);
-
-// ======================================================
+//// ======================================================
 // 10. EVIDENCE PACK — PLATFORM TIMESTAMP
 // ======================================================
 exports.requestTimestamp = onCall(
@@ -1482,141 +1178,14 @@ exports.requestTimestamp = onCall(
     }
   }
 );
- /**
- * 9B. Batch 3: Asynchronous Synthetic Likelihood Scoring & Audit Queue
- * Triggers when testimonies are created or updated with media artifacts.
- * Generates an advisory syntheticLikelihood score (0-100).
- * NEVER auto-deletes or hides sealed reports.
- */
-exports.processMediaSyntheticScoring = onDocumentWritten(
-  {
-    region: "us-central1",
-    document: "testimonies/{postId}",
-    secrets: [geminiApiKey]
-  },
-  async (event) => {
-    const afterSnap = event.data?.after;
-    if (!afterSnap || !afterSnap.exists) return; // Ignore deletions
-
-    const data = afterSnap.data() || {};
-    const postId = event.params.postId;
-
-    // Run only if media is present and syntheticLikelihood has not been evaluated yet
-    const hasMedia = data.mediaUrl || data.imageUrl || data.videoUrl || data.audioUrl ||
-                     (data.mediaArtifacts && data.mediaArtifacts.length > 0);
-
-    if (!hasMedia || typeof data.syntheticLikelihood === "number") {
-      return;
-    }
-
-    try {
-      const apiKey = geminiApiKey.value();
-      const ai = new GoogleGenAI({ apiKey });
-
-      const prompt = `
-You are an advisory authenticity assistant for a citizen evidence platform called VocalWitness.
-Your job is to give a careful, conservative risk score for possible synthetic / AI-generated / deepfake media.
-You must NEVER claim certainty. This is only an advisory signal for human stewards.
-
-Testimony details:
-- Title: ${data.title || "N/A"}
-- Content: ${(data.content || "").slice(0, 800)}
-- Media Type: ${data.mediaType || data.mimeType || "unknown"}
-- Has image: ${!!data.imageUrl}
-- Has video: ${!!data.videoUrl}
-- Has audio: ${!!data.audioUrl}
-- Artifact hashes present: ${!!(data.mediaArtifacts || data.imageHash || data.videoHash || data.audioHash)}
-
-Return a JSON object with exactly these fields:
-- syntheticLikelihood: integer from 0 (very likely organic) to 100 (very likely synthetic)
-- confidence: float from 0.0 to 1.0
-- reasons: array of short, factual observations (max 4 items)
-- requiresHumanReview: boolean (true only if syntheticLikelihood >= 75)
-`;
-
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              syntheticLikelihood: { type: Type.NUMBER },
-              confidence: { type: Type.NUMBER },
-              reasons: { type: Type.ARRAY, items: { type: Type.STRING } },
-              requiresHumanReview: { type: Type.BOOLEAN }
-            },
-            required: ["syntheticLikelihood", "confidence", "reasons", "requiresHumanReview"]
-          }
-        }
-      });
-
-      let result;
-      try {
-        result = JSON.parse(response.text || "{}");
-      } catch (parseErr) {
-        console.warn("Failed to parse synthetic scoring response, using safe defaults");
-        result = {
-          syntheticLikelihood: 20,
-          confidence: 0.4,
-          reasons: ["Parsing fallback – manual review recommended if media looks unusual"],
-          requiresHumanReview: false
-        };
-      }
-
-      const score = Math.min(100, Math.max(0, Math.round(result.syntheticLikelihood || 0)));
-      const isHighRisk = score >= 75 || result.requiresHumanReview === true;
-
-      const updatePayload = {
-        syntheticLikelihood: score,
-        syntheticAnalysis: {
-          confidence: typeof result.confidence === "number" ? result.confidence : 0.7,
-          reasons: Array.isArray(result.reasons) ? result.reasons.slice(0, 4) : [],
-          evaluatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          note: "Advisory score only. No automatic deletion or hiding was performed."
-        }
-      };
-
-      // Only flag for human review – never auto-delete or auto-hide
-      if (isHighRisk) {
-        updatePayload.status = "pending_steward_review";
-        updatePayload.moderationNote = `High synthetic likelihood (${score}/100) – queued for steward review.`;
-      }
-
-      await afterSnap.ref.set(updatePayload, { merge: true });
-
-      // Audit log for high-risk cases
-      if (isHighRisk) {
-        await writeAuditLog({
-          action: "synthetic_flagged_for_review",
-          performedBy: "system_synthetic_scorer",
-          targetId: postId,
-          targetType: "testimony",
-          details: {
-            syntheticLikelihood: score,
-            reasons: result.reasons || [],
-            previousStatus: data.status || "published",
-            note: "Advisory flag only – sealed record was not altered beyond status label"
-          },
-          severity: "warning"
-        });
-      }
-    } catch (error) {
-      console.error(`Error processing synthetic score for ${postId}:`, error);
-      // Fail soft – do not block the testimony
-    }
-  }
-);
 
 // ======================================================
-// LIVEKIT TOKEN GENERATOR (for Live Arena)
+// 11. LIVEKIT TOKEN FOR LIVE ARENA
 // ======================================================
-const { AccessToken } = require('livekit-server-sdk');
+const { AccessToken } = require("livekit-server-sdk");
 
-// Add these two secrets (run these commands later)
-const livekitApiKey = defineSecret("APInq6B2ipkddC2");
-const livekitApiSecret = defineSecret("bs7eBaq23fORnlWyMLUVvBtvpaHHWTTCXfraQQK5DHFA");
+const livekitApiKey = defineSecret("LIVEKIT_API_KEY");
+const livekitApiSecret = defineSecret("LIVEKIT_API_SECRET");
 
 exports.getLiveKitToken = onCall(
   {
@@ -1628,26 +1197,20 @@ exports.getLiveKitToken = onCall(
       throw new HttpsError("unauthenticated", "You must be signed in to join a live room.");
     }
 
-    const { roomName, participantName } = request.data || {};
+    const roomName = request.data?.roomName;
+    const participantName = request.data?.participantName || request.auth.token.name || "Citizen";
+
     if (!roomName || typeof roomName !== "string") {
       throw new HttpsError("invalid-argument", "roomName is required");
     }
-
-    const uid = request.auth.uid;
-    const displayName = participantName || request.auth.token.name || `Citizen-${uid.slice(0, 6)}`;
 
     try {
       const at = new AccessToken(
         livekitApiKey.value(),
         livekitApiSecret.value(),
         {
-          identity: uid,
-          name: displayName,
-          // Optional: add metadata
-          metadata: JSON.stringify({
-            tier: request.auth.token.tier || "citizen",
-            photoURL: request.auth.token.picture || null
-          })
+          identity: request.auth.uid,
+          name: participantName
         }
       );
 
@@ -1663,7 +1226,7 @@ exports.getLiveKitToken = onCall(
 
       return {
         token,
-        url: process.env.LIVEKIT_URL || "wss://vocal-witness-0qwfaorm.livekit.cloud" // replace later
+        url: "wss://vocal-witness-0qwfaorm.livekit.cloud"
       };
     } catch (error) {
       console.error("LiveKit token error:", error);
