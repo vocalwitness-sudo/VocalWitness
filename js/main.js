@@ -997,50 +997,90 @@ async function loadEvidenceLedger() {
   }
 }
 
-/* ====================== CURATED NEWS TICKER ====================== */
-/* ====================== LIVE BREAKING TICKER (Global + Africa) ====================== */
+
+/* ====================== LIVE BREAKING TICKER (Robust Version) ====================== */
 async function fetchCuratedNews() {
   const tickerEl = document.getElementById('ticker-content');
   if (!tickerEl) return;
 
-  // Multiple free RSS sources (no API key required)
+  // Show loading state first
+  tickerEl.innerHTML = `
+    <span class="ticker-item px-8 text-zinc-400">
+      🌍 Loading Global + Africa headlines...
+    </span>
+  `;
+
   const feeds = [
     // Global
-    'https://feeds.bbci.co.uk/news/world/rss.xml',
-    'https://rss.nytimes.com/services/xml/rss/nyt/World.xml',
+    { url: 'https://feeds.bbci.co.uk/news/world/rss.xml', weight: 1 },
+    { url: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml', weight: 1 },
 
-    // Africa focused
-    'https://feeds.bbci.co.uk/news/world/africa/rss.xml',
-    'https://www.africanews.com/feed/',
-    'https://allafrica.com/tools/headlines/rdf/latest/headlines.rdf'
+    // Africa focused (higher weight)
+    { url: 'https://feeds.bbci.co.uk/news/world/africa/rss.xml', weight: 2 },
+    { url: 'https://www.africanews.com/feed/', weight: 2 },
+    { url: 'https://allafrica.com/tools/headlines/rdf/latest/headlines.rdf', weight: 2 }
   ];
 
   try {
     const results = await Promise.allSettled(
-      feeds.map(url =>
-        fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`)
-          .then(r => r.json())
-      )
+      feeds.map(async (feed) => {
+        try {
+          const res = await fetch(
+            `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}`,
+            { signal: AbortSignal.timeout(8000) } // 8 second timeout
+          );
+
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const data = await res.json();
+
+          if (data.status !== 'ok' || !Array.isArray(data.items)) {
+            throw new Error('Invalid response');
+          }
+
+          return data.items
+            .slice(0, 6)
+            .filter(item => item.title && item.title.trim().length > 20)
+            .map(item => ({
+              title: item.title.trim(),
+              weight: feed.weight
+            }));
+        } catch (err) {
+          console.warn(`[Ticker] Failed to load ${feed.url}:`, err.message);
+          return [];
+        }
+      })
     );
 
+    // Flatten and prioritise African headlines
     let allHeadlines = [];
-
     results.forEach(result => {
-      if (result.status === 'fulfilled' && result.value?.items) {
-        result.value.items.slice(0, 5).forEach(item => {
-          if (item.title && item.title.trim().length > 15) {
-            allHeadlines.push(item.title.trim());
-          }
-        });
+      if (result.status === 'fulfilled' && Array.isArray(result.value)) {
+        allHeadlines.push(...result.value);
       }
     });
 
-    // Remove duplicates and keep a reasonable number
-    allHeadlines = [...new Set(allHeadlines)].slice(0, 12);
+    // Sort by weight (Africa first) then shuffle a bit for variety
+    allHeadlines.sort((a, b) => b.weight - a.weight);
 
-    if (allHeadlines.length === 0) throw new Error('No headlines received');
+    // Remove duplicates
+    const uniqueTitles = [];
+    const seen = new Set();
+    for (const item of allHeadlines) {
+      const key = item.title.toLowerCase().slice(0, 60);
+      if (!seen.has(key)) {
+        seen.add(key);
+        uniqueTitles.push(item.title);
+      }
+    }
 
-    const html = allHeadlines
+    const finalHeadlines = uniqueTitles.slice(0, 14);
+
+    if (finalHeadlines.length < 3) {
+      throw new Error('Not enough headlines');
+    }
+
+    // Build HTML
+    const html = finalHeadlines
       .map(title => {
         const safe = title
           .replace(/&/g, '&amp;')
@@ -1051,28 +1091,35 @@ async function fetchCuratedNews() {
       })
       .join('');
 
-    // Duplicate so the scroll is seamless
+    // Duplicate for seamless loop
     tickerEl.innerHTML = html + html;
 
     // Restart animation cleanly
     tickerEl.style.animation = 'none';
-    tickerEl.offsetHeight; // force reflow
+    void tickerEl.offsetWidth; // force reflow
     tickerEl.style.animation = '';
 
+    console.log(`[Ticker] Loaded ${finalHeadlines.length} headlines`);
+
   } catch (err) {
-    console.warn('[Ticker] Fallback active:', err.message);
+    console.warn('[Ticker] Using fallback:', err.message);
 
     const fallback = `
       <span class="ticker-item px-8 text-zinc-400">
-        🛡️ Public Square active • Zero-knowledge ledger online • Standby for live updates
+        🛡️ VocalWitness Public Square is live • Zero-knowledge ledger online
       </span>
       <span class="ticker-item px-8 text-zinc-400">
-        🌍 Global + Africa headlines loading...
-      </span>`;
-    
+        🌍 Citizen reporting active across Africa & the world
+      </span>
+      <span class="ticker-item px-8 text-zinc-400">
+        ⚡ Share what you saw — evidence stays protected
+      </span>
+    `;
+
     tickerEl.innerHTML = fallback + fallback;
   }
 }
+
 const focusMessages = [
   {
     title: "Social citizen journalism.",
