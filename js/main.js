@@ -998,49 +998,79 @@ async function loadEvidenceLedger() {
 }
 
 /* ====================== CURATED NEWS TICKER ====================== */
+/* ====================== LIVE BREAKING TICKER (Global + Africa) ====================== */
 async function fetchCuratedNews() {
   const tickerEl = document.getElementById('ticker-content');
   if (!tickerEl) return;
 
-  const RSS_URL = 'https://api.rss2json.com/v1/api.json?rss_url=https://feeds.bbci.co.uk/news/world/rss.xml';
+  // Multiple free RSS sources (no API key required)
+  const feeds = [
+    // Global
+    'https://feeds.bbci.co.uk/news/world/rss.xml',
+    'https://rss.nytimes.com/services/xml/rss/nyt/World.xml',
+
+    // Africa focused
+    'https://feeds.bbci.co.uk/news/world/africa/rss.xml',
+    'https://www.africanews.com/feed/',
+    'https://allafrica.com/tools/headlines/rdf/latest/headlines.rdf'
+  ];
 
   try {
-    const res = await fetch(RSS_URL);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const results = await Promise.allSettled(
+      feeds.map(url =>
+        fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`)
+          .then(r => r.json())
+      )
+    );
 
-    const data = await res.json();
+    let allHeadlines = [];
 
-    if (data.status === 'ok' && Array.isArray(data.items) && data.items.length > 0) {
-      const headlines = data.items
-        .slice(0, 8)
-        .map(item => {
-          const safeTitle = escapeHtml(item.title || '');
-          return `<span class="ticker-item"><strong class="text-emerald-400">•</strong> ${safeTitle}</span>`;
-        })
-        .join('&nbsp;&nbsp;&nbsp;&nbsp;');
+    results.forEach(result => {
+      if (result.status === 'fulfilled' && result.value?.items) {
+        result.value.items.slice(0, 5).forEach(item => {
+          if (item.title && item.title.trim().length > 15) {
+            allHeadlines.push(item.title.trim());
+          }
+        });
+      }
+    });
 
-      // Duplicate the content → this is what makes the infinite scroll seamless
-      tickerEl.innerHTML = headlines + '&nbsp;&nbsp;&nbsp;&nbsp;' + headlines;
+    // Remove duplicates and keep a reasonable number
+    allHeadlines = [...new Set(allHeadlines)].slice(0, 12);
 
-      // Optional: restart animation cleanly (helps on some browsers)
-      tickerEl.style.animation = 'none';
-      tickerEl.offsetHeight; // trigger reflow
-      tickerEl.style.animation = '';
+    if (allHeadlines.length === 0) throw new Error('No headlines received');
 
-      return;
-    }
+    const html = allHeadlines
+      .map(title => {
+        const safe = title
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+        return `<span class="ticker-item px-8"><strong class="text-emerald-400">•</strong> ${safe}</span>`;
+      })
+      .join('');
 
-    throw new Error('Malformed RSS payload');
+    // Duplicate so the scroll is seamless
+    tickerEl.innerHTML = html + html;
+
+    // Restart animation cleanly
+    tickerEl.style.animation = 'none';
+    tickerEl.offsetHeight; // force reflow
+    tickerEl.style.animation = '';
+
   } catch (err) {
-    console.warn("[Ticker] Fallback active:", err.message);
+    console.warn('[Ticker] Fallback active:', err.message);
 
     const fallback = `
-      <span class="ticker-item text-slate-400">
+      <span class="ticker-item px-8 text-zinc-400">
         🛡️ Public Square active • Zero-knowledge ledger online • Standby for live updates
+      </span>
+      <span class="ticker-item px-8 text-zinc-400">
+        🌍 Global + Africa headlines loading...
       </span>`;
-
-    // Also duplicate the fallback so it still scrolls
-    tickerEl.innerHTML = fallback + '&nbsp;&nbsp;&nbsp;&nbsp;' + fallback;
+    
+    tickerEl.innerHTML = fallback + fallback;
   }
 }
 const focusMessages = [
