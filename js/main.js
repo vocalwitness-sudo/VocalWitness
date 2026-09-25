@@ -233,9 +233,9 @@ window.switchTab = async function (tab) {
       loadCircle();
     }
 
-    if (tab === 'witness' && typeof initFeed === 'function') {
-      initFeed(undefined, 'witness-voice');
-    }
+    if (tab === 'witness' && typeof loadVerifiedWitnesses === 'function') {
+  loadVerifiedWitnesses();
+}
 
     // ===== LIVE ARENA (fixed) =====
     if (tab === 'arena') {
