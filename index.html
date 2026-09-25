@@ -69,7 +69,6 @@
   <script type="module" src="./js/main.js?v=2.2"></script>
 <style>
   :root {
-    /* === Core Palette === */
     --bg-dark: #0b1120;
     --bg-elevated: #111827;
     --bg-card: #1e293b;
@@ -82,8 +81,8 @@
     --text-muted: #94a3b8;
     --text-dim: #64748b;
 
-    /* Updated to comfortably fit the two mobile rows */
-    --header-height-mobile: 104px;
+    /* Single source of truth for header heights */
+    --header-height-mobile: 108px;
     --header-height-desktop: 64px;
   }
 
@@ -97,19 +96,21 @@
   body {
     background-color: var(--bg-dark) !important;
     color: var(--text-primary) !important;
-    padding-top: var(--header-height-mobile);
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    /* Start with desktop, override on mobile */
+    padding-top: var(--header-height-desktop);
   }
 
-  @media (min-width: 768px) {
+  @media (max-width: 767px) {
     body {
-      padding-top: var(--header-height-desktop);
+      padding-top: var(--header-height-mobile);
     }
   }
 
-  /* Glass / Cards */
+  /* Glass / Cards – keep solid, no blur fighting */
   .glass,
   [class*="backdrop-blur"] {
     background-color: var(--bg-elevated) !important;
@@ -119,24 +120,13 @@
   }
 
   #main-header {
-    background-color: rgba(11, 17, 32, 0.92) !important;
+    background-color: rgba(11, 17, 32, 0.94) !important;
     border-bottom: 1px solid rgba(16, 185, 129, 0.22) !important;
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
   }
 
-  /* Fallback for older browsers */
-  @supports not (color: rgb(0 0 0 / 0.5)) {
-    .bg-zinc-950 { background-color: #0b1120 !important; }
-    .bg-zinc-900 { background-color: #111827 !important; }
-    .bg-zinc-800 { background-color: #1e293b !important; }
-    .border-zinc-800 { border-color: #1e293b !important; }
-    .border-zinc-700 { border-color: #334155 !important; }
-    .text-zinc-400 { color: #94a3b8 !important; }
-    .text-emerald-400 { color: #34d399 !important; }
-  }
-
-  /* ========== SPLASH SCREEN (CRITICAL) ========== */
+  /* ========== SPLASH SCREEN ========== */
   #app-splash-screen {
     position: fixed !important;
     inset: 0 !important;
@@ -153,9 +143,7 @@
     pointer-events: none;
   }
 
-  .splash-inner {
-    text-align: center;
-  }
+  .splash-inner { text-align: center; }
 
   .splash-logo {
     width: 96px;
@@ -190,7 +178,37 @@
   @keyframes spin {
     to { transform: rotate(360deg); }
   }
+
+  /* ========== MAIN NAV – FORCE VISIBLE & USABLE ========== */
+  #main-nav {
+    display: flex !important;
+    gap: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  #main-nav::-webkit-scrollbar { display: none; }
+
+  #main-nav button[data-tab] {
+    flex: 0 0 auto !important;   /* never shrink to zero */
+    min-width: max-content;
+    white-space: nowrap;
+  }
+
+  /* Hide the tiny subtitle text on very small screens */
+  @media (max-width: 640px) {
+    #main-nav button[data-tab] span:last-child {
+      display: none !important;
+    }
+    #main-nav button[data-tab] {
+      height: 42px !important;
+      padding-left: 12px !important;
+      padding-right: 12px !important;
+      font-size: 12px !important;
+    }
+  }
 </style>
+  
 </head>
 
 <body class="theme-citizen tier-citizen">
@@ -551,18 +569,16 @@
     </div>
   </div>
 
-<!-- Main Navigation Tabs + More Menu -->
-<!-- Main Navigation Tabs + More Menu -->
+<!-- ====================== MAIN NAVIGATION ====================== -->
 <div class="mb-6">
-  <!-- Mobile: horizontal scroll tabs -->
-  <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
+  <div class="flex items-center gap-2">
     <nav id="main-nav" 
-         class="flex flex-1 items-center gap-1.5 min-w-0" 
+         class="flex flex-1 items-center gap-1.5 min-w-0 overflow-x-auto no-scrollbar"
          role="tablist" 
          aria-label="Main navigation">
       
       <button type="button" data-tab="square" role="tab" aria-selected="true" aria-controls="public-square"
-              class="nav-tab active flex h-11 shrink-0 items-center justify-center rounded-xl bg-emerald-500 px-3.5 text-xs font-semibold text-black shadow-md shadow-emerald-500/20 transition sm:h-12 sm:px-4 sm:text-sm">
+              class="nav-tab active flex h-11 shrink-0 items-center justify-center rounded-xl bg-emerald-500 px-3.5 text-xs font-semibold text-black shadow-md shadow-emerald-500/25 transition sm:h-12 sm:px-4 sm:text-sm">
         Public Square
       </button>
       
@@ -587,72 +603,47 @@
       </button>
     </nav>
 
-<!-- More Menu -->
-<div class="relative shrink-0">
-  <button id="more-btn" type="button"
-          class="flex h-11 items-center gap-1.5 rounded-xl border border-zinc-600 bg-zinc-800 px-3.5 text-xs font-semibold text-white transition
-                 hover:border-emerald-500 hover:bg-zinc-700 active:scale-95 sm:h-12 sm:px-4 sm:text-sm"
-          aria-haspopup="true" 
-          aria-expanded="false"
-          aria-controls="more-menu">
-    More
-    <svg class="h-3.5 w-3.5 text-zinc-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
-    </svg>
-  </button>
+    <!-- More Menu -->
+    <div class="relative shrink-0">
+      <button id="more-btn" type="button"
+              class="flex h-11 items-center gap-1.5 rounded-xl border border-zinc-600 bg-zinc-800 px-3.5 text-xs font-semibold text-white transition
+                     hover:border-emerald-500 hover:bg-zinc-700 active:scale-95 sm:h-12 sm:px-4 sm:text-sm"
+              aria-haspopup="true" 
+              aria-expanded="false"
+              aria-controls="more-menu">
+        More
+        <svg class="h-3.5 w-3.5 text-zinc-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+        </svg>
+      </button>
 
-  <!-- Dropdown – now correctly positioned under the button -->
-  <div id="more-menu" 
-       class="absolute right-0 top-full z-50 mt-2 hidden w-56 origin-top-right rounded-2xl border border-zinc-700 bg-zinc-900/95 py-1.5 shadow-2xl backdrop-blur-xl text-sm text-zinc-200"
-       role="menu">
-    
-    <!-- Personal -->
-    <a href="/my-testimonies" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">
-      📋 My Reports
-    </a>
-    <a href="/groups" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">
-      👥 Groups
-    </a>
-    <a href="/witness-voice" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">
-      🛡️ Witness Voice
-    </a>
-    <a href="/dao" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">
-      🏛️ DAO
-    </a>
-
-    <div class="my-1 border-t border-zinc-800"></div>
-
-    <!-- Forensic / Evidence tools -->
-    <a href="/forensic-ledger" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">
-      📜 Forensic Ledger
-    </a>
-    <a href="/verify" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">
-      🔍 Evidence Verifier
-    </a>
-    <a href="/transparency" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">
-      ⚖️ Transparency
-    </a>
-
-    <div class="my-1 border-t border-zinc-800"></div>
-
-    <!-- Info & Legal -->
-    <a href="/about" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">
-      ℹ️ About
-    </a>
-    <a href="/safety" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">
-      🛡️ Safety
-    </a>
-    <a href="/privacy" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">
-      🔒 Privacy
-    </a>
-    <a href="/terms" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">
-      📄 Terms
-    </a>
-    <a href="/legal" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">
-      ⚖️ Legal
-    </a>
+      <div id="more-menu" 
+           class="absolute right-0 top-full z-50 mt-2 hidden w-56 origin-top-right rounded-2xl border border-zinc-700 bg-zinc-900/95 py-1.5 shadow-2xl backdrop-blur-xl text-sm text-zinc-200"
+           role="menu">
+        
+        <a href="/my-testimonies" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">📋 My Reports</a>
+        <a href="/groups" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">👥 Groups</a>
+        <a href="/witness-voice" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">🛡️ Witness Voice</a>
+        <a href="/dao" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">🏛️ DAO</a>
+        
+        <div class="my-1 border-t border-zinc-800"></div>
+        
+        <a href="/forensic-ledger" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">📜 Forensic Ledger</a>
+        <a href="/verify" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">🔍 Evidence Verifier</a>
+        <a href="/transparency" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">⚖️ Transparency</a>
+        
+        <div class="my-1 border-t border-zinc-800"></div>
+        
+        <a href="/about" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">ℹ️ About</a>
+        <a href="/safety" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">🛡️ Safety</a>
+        <a href="/privacy" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">🔒 Privacy</a>
+        <a href="/terms" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">📄 Terms</a>
+        <a href="/legal" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">⚖️ Legal</a>
+      </div>
+    </div>
   </div>
 </div>
+  
 <!-- ========== 1. PUBLIC SQUARE ========== -->
 <section id="public-square" data-view="citizenTalkView" role="tabpanel" aria-labelledby="public-square-title">
 
