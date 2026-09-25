@@ -559,13 +559,14 @@ footer .grid {
 .ticker-wrap {
   overflow: hidden;
   position: relative;
+  width: 100%;
 }
 
 .ticker-track,
 #ticker-content {
-  display: inline-flex;          /* works for both class and id */
+  display: inline-flex;
   white-space: nowrap;
-  animation: ticker-scroll 45s linear infinite;
+  animation: ticker-scroll 55s linear infinite;
   will-change: transform;
 }
 
@@ -575,6 +576,10 @@ footer .grid {
 }
 
 @keyframes ticker-scroll {
-  0%   { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
 }
