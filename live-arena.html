@@ -12,82 +12,89 @@
   <style>
     body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; }
     .glass {
-      background: rgba(17, 24, 39, 0.92);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(14, 165, 233, 0.2);
+      background: rgba(17, 24, 39, 0.85);
+      backdrop-filter: blur(24px);
+      border: 1px solid rgba(14, 165, 233, 0.18);
+    }
+    .stage-glow {
+      box-shadow: 0 0 40px rgba(14, 165, 233, 0.15);
+    }
+    .speaking-ring {
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.7), 0 0 25px rgba(56, 189, 248, 0.4);
     }
   </style>
 </head>
-<body class="min-h-screen text-white pb-24">
+<body class="min-h-screen text-white pb-28">
 
-  <!-- LOBBY VIEW -->
-  <div id="lobbyView" class="max-w-5xl mx-auto px-4 pt-6">
+  <!-- ===================== LOBBY ===================== -->
+  <div id="lobbyView" class="max-w-6xl mx-auto px-4 pt-5 sm:pt-8">
 
     <!-- Header -->
-    <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+    <header class="flex flex-col lg:flex-row lg:items-center justify-between gap-5 mb-8">
       <div class="flex items-center gap-3">
-        <button id="backBtn" class="px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-xl text-sm font-medium transition">
-          ← Back
+        <button id="backBtn" class="p-2.5 rounded-xl bg-zinc-800/80 hover:bg-zinc-700 transition">
+          ←
         </button>
         <div>
-          <h1 class="text-3xl font-bold text-sky-400 flex items-center gap-2">
-            <span class="text-4xl">🏟️</span> Live Arena
+          <h1 class="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-2">
+            <span class="text-3xl">🏟️</span>
+            <span class="bg-gradient-to-r from-sky-400 to-cyan-300 bg-clip-text text-transparent">Live Arena</span>
           </h1>
-          <p class="text-sm text-zinc-400">Real-time community reporting • Globe-wide</p>
+          <p class="text-sm text-zinc-400 mt-0.5">Real-time citizen stages • Evidence grade</p>
         </div>
       </div>
 
       <div class="flex items-center gap-4">
-        <div class="text-right">
-          <div class="text-xs text-zinc-400">Verified Citizens</div>
-          <div class="font-mono text-sky-400 text-xl font-bold">
-            <span id="verifiedCount">0</span><span class="text-zinc-500 text-base"> / 500</span>
+        <div class="text-right hidden sm:block">
+          <div class="text-[11px] uppercase tracking-wider text-zinc-500">Verified Citizens</div>
+          <div class="font-mono text-sky-400 text-lg font-semibold">
+            <span id="verifiedCount">0</span><span class="text-zinc-600"> / 500</span>
           </div>
         </div>
         <button id="createRoomBtn"
-                class="rounded-2xl bg-gradient-to-r from-sky-500 to-cyan-500 px-6 py-3.5 font-bold text-white shadow-lg shadow-sky-500/25 hover:from-sky-400 hover:to-cyan-400 active:scale-95 transition">
+                class="rounded-2xl bg-gradient-to-r from-sky-500 to-cyan-500 px-5 py-3 font-semibold text-white shadow-lg shadow-sky-500/25 hover:brightness-110 active:scale-[0.98] transition">
           + Start a Room
         </button>
       </div>
     </header>
 
-    <!-- Soft Goal Progress -->
-    <div class="glass rounded-2xl p-5 mb-8">
-      <div class="flex justify-between text-sm mb-2">
-        <span class="text-zinc-300">Community Goal – Unlock full global mega-stages</span>
+    <!-- Goal Progress -->
+    <div class="glass rounded-2xl p-4 sm:p-5 mb-7">
+      <div class="flex justify-between text-sm mb-2.5">
+        <span class="text-zinc-300">Community Goal — Unlock global mega-stages</span>
         <span id="progressText" class="text-sky-400 font-medium">Loading…</span>
       </div>
-      <div class="h-2.5 overflow-hidden rounded-full bg-zinc-800">
-        <div id="verifiedProgress" class="h-full bg-gradient-to-r from-sky-500 to-cyan-400 transition-all duration-700" style="width: 0%"></div>
+      <div class="h-2 overflow-hidden rounded-full bg-zinc-800/80">
+        <div id="verifiedProgress" class="h-full bg-gradient-to-r from-sky-500 to-cyan-400 transition-all duration-700 ease-out" style="width: 0%"></div>
       </div>
     </div>
 
-    <!-- Filters -->
-    <div class="flex items-center justify-between mb-5">
-      <h2 class="text-xl font-semibold">Live Now</h2>
-      <div class="flex gap-2 text-sm">
-        <button class="px-3 py-1.5 rounded-lg bg-sky-500/20 text-sky-300 border border-sky-500/40">All</button>
-        <button class="px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-400 hover:bg-zinc-700">Near Me</button>
-        <button class="px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-400 hover:bg-zinc-700">My Circle</button>
+    <!-- Filters + Title -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+      <h2 class="text-lg font-semibold text-zinc-100">Live Now</h2>
+      <div class="flex gap-2 overflow-x-auto pb-1 text-sm scrollbar-hide">
+        <button data-filter="all" class="filter-btn px-3.5 py-1.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/40 whitespace-nowrap">All</button>
+        <button data-filter="near" class="filter-btn px-3.5 py-1.5 rounded-full bg-zinc-800 text-zinc-400 hover:bg-zinc-700 whitespace-nowrap">Near Me</button>
+        <button data-filter="circle" class="filter-btn px-3.5 py-1.5 rounded-full bg-zinc-800 text-zinc-400 hover:bg-zinc-700 whitespace-nowrap">My Circle</button>
+        <button data-filter="traffic" class="filter-btn px-3.5 py-1.5 rounded-full bg-zinc-800 text-zinc-400 hover:bg-zinc-700 whitespace-nowrap">Traffic</button>
+        <button data-filter="safety" class="filter-btn px-3.5 py-1.5 rounded-full bg-zinc-800 text-zinc-400 hover:bg-zinc-700 whitespace-nowrap">Safety</button>
       </div>
     </div>
 
     <!-- Rooms Grid -->
     <div id="liveRoomsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      <!-- Injected by JS -->
-      <div class="col-span-full py-20 text-center text-zinc-500">
-        <div class="text-6xl mb-4">🌍</div>
-        <p class="text-lg">Loading live rooms…</p>
+      <div class="col-span-full py-24 text-center text-zinc-500">
+        <div class="text-6xl mb-4 opacity-60">🌍</div>
+        <p class="text-lg font-medium text-zinc-400">Loading live rooms…</p>
       </div>
     </div>
   </div>
 
-  <!-- ACTIVE ROOM VIEW (injected by JS) -->
+  <!-- ===================== ACTIVE ROOM (injected) ===================== -->
   <div id="activeRoomView" class="hidden"></div>
 
   <script type="module" src="/js/live-arena.js"></script>
   <script type="module">
-    // Back button
     document.getElementById('backBtn')?.addEventListener('click', () => {
       if (window.history.length > 1) window.history.back();
       else window.location.href = '/';
