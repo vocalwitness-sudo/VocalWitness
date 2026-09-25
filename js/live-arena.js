@@ -273,23 +273,15 @@ async function showActiveRoom(roomId, room = {}) {
             </p>
           </div>
         </div>
-        <div class="flex gap-2 items-center">
+        <div class="flex items-center gap-2">
           <button id="corroborateBtn" class="px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 text-sm font-medium hover:bg-emerald-500/25 transition flex items-center gap-1.5">
-            ✅ I saw this (<span id="corroborationCount">0</span>)
+            ✅ I saw this
+            <span id="corroborationCount" class="bg-emerald-500/20 text-emerald-300 text-xs px-1.5 py-0.5 rounded-md font-bold">0</span>
           </button>
           <button id="sealBtn" class="px-3 py-1.5 rounded-lg bg-amber-500/15 text-amber-400 text-sm font-medium hover:bg-amber-500/25 transition">
             🛡️ Seal
           </button>
           <button id="reportBtn" class="px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-400 text-sm hover:bg-zinc-700">Report</button>
-        </div>
-      </div>
-
-      <!-- Host Control Panel (Visible only to Host) -->
-      <div id="hostControls" class="hidden px-4 py-2 bg-amber-500/10 border-b border-amber-500/20 flex items-center justify-between text-xs">
-        <span class="text-amber-400 font-semibold flex items-center gap-1.5">👑 Host Control Center</span>
-        <div class="flex gap-2">
-          <button id="muteAllBtn" class="px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition">Mute All Speakers</button>
-          <button id="lowerHandsBtn" class="px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition">Lower All Hands</button>
         </div>
       </div>
 
@@ -321,6 +313,12 @@ async function showActiveRoom(roomId, room = {}) {
               </button>
               <button class="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm transition">👏</button>
               <button class="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm transition">🔥</button>
+            </div>
+
+            <!-- Host Control Center (Underneath mic controls) -->
+            <div id="hostControls" class="hidden mt-3 flex flex-wrap justify-center gap-2">
+              <button id="muteAllBtn" class="px-3 py-1.5 rounded-lg bg-zinc-800 text-sm hover:bg-zinc-700">🔇 Mute All</button>
+              <button id="lowerHandsBtn" class="px-3 py-1.5 rounded-lg bg-zinc-800 text-sm hover:bg-zinc-700">✋ Lower All Hands</button>
             </div>
           </div>
         </div>
