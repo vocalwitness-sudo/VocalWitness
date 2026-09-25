@@ -587,73 +587,72 @@
       </button>
     </nav>
 
-    <!-- More Menu -->
-    <div class="relative shrink-0">
-      <button id="more-btn" type="button"
-              class="flex h-11 items-center gap-1 rounded-xl border border-zinc-600 bg-zinc-800 px-3 text-xs font-semibold text-white transition
-                     hover:border-emerald-500 hover:bg-zinc-700 active:scale-95 sm:h-12 sm:px-4 sm:text-sm"
-              aria-haspopup="true" 
-              aria-expanded="false"
-              aria-controls="more-menu">
-        More
-        <svg class="h-3.5 w-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
-        </svg>
-      </button>
-      <!-- keep the existing more-menu dropdown exactly as it is -->
-    </div>
+<!-- More Menu -->
+<div class="relative shrink-0">
+  <button id="more-btn" type="button"
+          class="flex h-11 items-center gap-1.5 rounded-xl border border-zinc-600 bg-zinc-800 px-3.5 text-xs font-semibold text-white transition
+                 hover:border-emerald-500 hover:bg-zinc-700 active:scale-95 sm:h-12 sm:px-4 sm:text-sm"
+          aria-haspopup="true" 
+          aria-expanded="false"
+          aria-controls="more-menu">
+    More
+    <svg class="h-3.5 w-3.5 text-zinc-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+    </svg>
+  </button>
+
+  <!-- Dropdown – now correctly positioned under the button -->
+  <div id="more-menu" 
+       class="absolute right-0 top-full z-50 mt-2 hidden w-56 origin-top-right rounded-2xl border border-zinc-700 bg-zinc-900/95 py-1.5 shadow-2xl backdrop-blur-xl text-sm text-zinc-200"
+       role="menu">
+    
+    <!-- Personal -->
+    <a href="/my-testimonies" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">
+      📋 My Reports
+    </a>
+    <a href="/groups" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">
+      👥 Groups
+    </a>
+    <a href="/witness-voice" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">
+      🛡️ Witness Voice
+    </a>
+    <a href="/dao" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">
+      🏛️ DAO
+    </a>
+
+    <div class="my-1 border-t border-zinc-800"></div>
+
+    <!-- Forensic / Evidence tools -->
+    <a href="/forensic-ledger" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">
+      📜 Forensic Ledger
+    </a>
+    <a href="/verify" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">
+      🔍 Evidence Verifier
+    </a>
+    <a href="/transparency" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">
+      ⚖️ Transparency
+    </a>
+
+    <div class="my-1 border-t border-zinc-800"></div>
+
+    <!-- Info & Legal -->
+    <a href="/about" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">
+      ℹ️ About
+    </a>
+    <a href="/safety" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">
+      🛡️ Safety
+    </a>
+    <a href="/privacy" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">
+      🔒 Privacy
+    </a>
+    <a href="/terms" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">
+      📄 Terms
+    </a>
+    <a href="/legal" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">
+      ⚖️ Legal
+    </a>
   </div>
 </div>
-      
-      <!-- Personal -->
-      <a href="/my-testimonies" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">
-        📋 My Reports
-      </a>
-      <a href="/groups" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">
-        👥 Groups
-      </a>
-      <a href="/witness-voice" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">
-        🛡️ Witness Voice
-      </a>
-      <a href="/dao" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">
-        🏛️ DAO
-      </a>
-
-      <div class="my-1 border-t border-zinc-800"></div>
-
-      <!-- Forensic / Evidence tools -->
-      <a href="/forensic-ledger" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">
-        📜 Forensic Ledger
-      </a>
-      <a href="/verify" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">
-        🔍 Evidence Verifier
-      </a>
-      <a href="/transparency" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">
-        ⚖️ Transparency
-      </a>
-
-      <div class="my-1 border-t border-zinc-800"></div>
-
-      <!-- Info & Legal -->
-      <a href="/about" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">
-        ℹ️ About
-      </a>
-      <a href="/safety" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">
-        🛡️ Safety
-      </a>
-      <a href="/privacy" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">
-        🔒 Privacy
-      </a>
-      <a href="/terms" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">
-        📄 Terms
-      </a>
-      <a href="/legal" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">
-        ⚖️ Legal
-      </a>
-    </div>
-  </div>
-</div>
-
 <!-- ========== 1. PUBLIC SQUARE ========== -->
 <section id="public-square" data-view="citizenTalkView" role="tabpanel" aria-labelledby="public-square-title">
   <div class="glass mb-10 rounded-3xl border border-zinc-800/80 p-6 shadow-xl sm:p-8">
