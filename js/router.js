@@ -64,24 +64,26 @@ const ROUTES = {
         }
     },
     'arena': {
-        viewId: 'live-arena',
-        title: 'Live Arena',
-        init: async () => {
-            const container = document.getElementById('live-arena');
+    viewId: 'live-arena',
+    title: 'Live Arena',
+    init: async () => {
+        const container = document.getElementById('live-arena');
+        
+        try {
+            const { initLiveArena } = await import('./live-arena.js');
+            initLiveArena();          // the function doesn’t need the container
+        } catch (err) {
+            console.error("Failed to load Arena module:", err);
             if (container) {
-                // Don't wipe the whole panel if main.js already owns it
-                const slot = container.querySelector('[data-arena-root]') || container;
-                if (!container.querySelector('[data-arena-initialized]')) {
-                    // optional loading hint only if empty
-                }
+                container.innerHTML = `
+                    <div class="text-center py-20 text-red-400">
+                        Failed to load Live Arena.<br>
+                        <span class="text-sm text-zinc-500">${err.message}</span>
+                    </div>`;
             }
-            const arenaModule = await import('./arena.js').catch((err) => {
-                console.error("Failed to load Arena module:", err);
-                return null;
-            });
-            arenaModule?.initLiveArena?.(container);
         }
-    },
+    }
+},
     'quadratic-vote': {
         viewId: 'quadraticVoteView',
         title: 'Quadratic Voting',
@@ -295,11 +297,4 @@ export function goBack() {
         // 3. Default fallback if history is exhausted
         navigateTo('citizen-talk');
     }
-}
-
-// Boot
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initRouter);
-} else {
-    initRouter();
 }
