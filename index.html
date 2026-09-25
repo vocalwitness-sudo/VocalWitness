@@ -655,23 +655,40 @@
 </div>
 <!-- ========== 1. PUBLIC SQUARE ========== -->
 <section id="public-square" data-view="citizenTalkView" role="tabpanel" aria-labelledby="public-square-title">
+
+  <!-- Square Identity Header -->
+  <div class="mb-6">
+    <h2 id="public-square-title" class="text-2xl sm:text-3xl font-bold text-white">
+      Public Square
+    </h2>
+    <p class="mt-1 text-sm text-zinc-400">
+      Where Citizens speak and evidence is preserved
+    </p>
+  </div>
+
   <div class="glass mb-10 rounded-3xl border border-zinc-800/80 p-6 shadow-xl sm:p-8">
     
-    <!-- Hidden file inputs -->
+    <!-- Hidden file inputs (unchanged) -->
     <input type="file" id="photoInput" accept="image/jpeg,image/png,image/webp" class="hidden">
     <input type="file" id="videoInput" accept="video/mp4,video/webm,video/quicktime" class="hidden">
     <input type="file" id="audioInput" accept="audio/webm,audio/mp3,audio/mpeg,audio/wav,audio/ogg" class="hidden">
 
-    <!-- Header -->
+    <!-- Speak Zone Header -->
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <h2 id="public-square-title" class="text-xl font-bold text-white" data-i18n="shareTestimonyTitle">
-        Share what you saw
-      </h2>
+      <div>
+        <h3 class="text-xl font-bold text-white">
+          Speak as a Citizen
+        </h3>
+        <p class="mt-1 text-sm text-zinc-400">
+          Your report can be sealed and added to the public record
+        </p>
+      </div>
+
       <select id="targetFeedSelect" 
               class="rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-emerald-400 
                      focus:border-emerald-500 focus:outline-none">
-        <option value="citizen-talk">🗣️ Citizen Talk</option>
-        <option value="witness-voice">🛡️ Witness Voice</option>
+        <option value="citizen-talk">Citizen Talk (Open)</option>
+        <option value="witness-voice">Witness Voice (Higher Trust)</option>
       </select>
     </div>
 
@@ -683,9 +700,10 @@
 
     <!-- Main Text -->
     <textarea id="mainInput" rows="5" maxlength="2000"
-              placeholder="What did you see or experience? Share the facts..."
+              placeholder="What did you see or experience? Speak clearly and stick to the facts..."
               class="w-full resize-none rounded-2xl border border-zinc-700 bg-zinc-900 p-5 text-base text-white 
                      placeholder-zinc-500 focus:border-emerald-500 focus:outline-none transition"></textarea>
+
     <div class="mb-5 mt-1.5 flex justify-end">
       <span id="char-count" class="text-xs text-zinc-500 transition-colors duration-200">0 / 2000</span>
     </div>
@@ -708,26 +726,23 @@
           </span>
         </button>
 
-        <!-- Instruction text (always visible under the button) -->
+        <!-- Instruction text -->
         <div id="voice-instruction" class="border-t border-emerald-500/20 bg-zinc-900/40 px-5 py-2.5 text-center text-xs text-zinc-400">
-          Tap the button above to start recording. Speak clearly.
+          Live voice carries stronger weight as evidence. Speak clearly.
         </div>
 
-        <!-- Recording controls -->
+        <!-- Recording controls (unchanged) -->
         <div id="voice-recorder-bar" class="hidden border-t border-emerald-500/20 bg-zinc-900/70 p-4">
           <div class="flex flex-wrap items-center gap-3">
             <div class="flex min-w-[70px] items-center gap-2">
               <span id="rec-indicator" class="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500"></span>
               <span id="rec-timer" class="font-mono text-sm text-emerald-400">00:00</span>
             </div>
-
             <button id="verify-voice-btn" type="button"
                     class="rounded-xl bg-blue-600/80 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-600">
               🛡️ Verify
             </button>
-
             <canvas id="rec-waveform" width="180" height="36" class="max-w-[200px] flex-1 rounded bg-zinc-950"></canvas>
-
             <div class="ml-auto flex items-center gap-2">
               <button id="rec-pause-btn" type="button"
                       class="rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700">
@@ -750,7 +765,6 @@
           <audio id="rec-replay-audio" class="hidden"></audio>
         </div>
 
-        <!-- Mic permission message -->
         <div id="mic-permission-msg" class="hidden border-t border-amber-500/20 bg-amber-950/30 p-4 text-xs text-amber-200">
           <!-- filled by media.js -->
         </div>
@@ -767,7 +781,6 @@
           </svg>
           Add Photo
         </button>
-
         <button id="btn-video" type="button"
                 class="flex items-center justify-center gap-2.5 rounded-2xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 font-medium text-sky-400 transition-all
                        hover:border-sky-500 hover:bg-zinc-800">
@@ -779,7 +792,6 @@
         </button>
       </div>
 
-      <!-- Upload existing audio -->
       <div class="text-center">
         <button id="btn-upload-audio" type="button"
                 class="text-sm text-zinc-400 underline-offset-2 hover:text-emerald-400 hover:underline transition">
@@ -820,7 +832,9 @@
   <!-- Recent Reports -->
   <div id="feed-container" class="space-y-6">
     <div class="flex items-center justify-between">
-      <h3 id="feed-title" class="text-lg font-bold text-white" data-i18n="recentTestimoniesTitle">📜 Recent Reports</h3>
+      <h3 id="feed-title" class="text-lg font-bold text-white">
+        Recent Reports in the Square
+      </h3>
       <div class="flex items-center gap-2 text-xs text-zinc-400">
         <span>Sort:</span>
         <select id="feedSortSelect" class="rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 py-1.5 text-zinc-300 focus:border-emerald-500 focus:outline-none">
@@ -830,8 +844,9 @@
         </select>
       </div>
     </div>
+
     <div id="testimonies-feed" class="space-y-4">
-      <!-- Loading skeleton -->
+      <!-- Loading skeleton remains the same -->
       <div class="animate-pulse space-y-4 rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6">
         <div class="flex items-center gap-3">
           <div class="h-10 w-10 rounded-full bg-zinc-800"></div>
@@ -846,7 +861,6 @@
     </div>
   </div>
 </section>
-
 <!-- ========== 2. PUBLIC RECORD ========== -->
 <section id="evidence-ledger" class="hidden space-y-6" role="tabpanel" aria-label="Public Record">
   <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
