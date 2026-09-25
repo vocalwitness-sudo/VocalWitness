@@ -81,7 +81,7 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
     // Initial loading skeleton state
     feedContainer.innerHTML = `
         <div class="text-center py-12 text-zinc-500 animate-pulse" id="feed-loading">
-            Loading testimonies...
+           Loading reports from the Square...
         </div>`;
 
     // Global event listener setup for set-sort
@@ -340,7 +340,7 @@ function renderFilteredPosts(posts, container) {
     if (posts.length === 0) {
         feedContainer.innerHTML = `
             <div class="text-center py-12 border border-dashed border-zinc-800 rounded-2xl" id="feed-empty-state">
-                <p class="text-zinc-400 font-medium">No reports published in this channel yet.</p>
+                <p class="text-zinc-400 font-medium">No reports in the Square yet..</p>
                 <p class="text-xs mt-1 text-zinc-500">Try adjusting your search terms or filters</p>
             </div>`;
         return;
@@ -451,9 +451,9 @@ function renderSinglePostDOM(id, data, container) {
     else if (data.createdAt) formattedDate = new Date(data.createdAt).toLocaleString();
 
     const authorDisplayName = escapeHTML(
-        data.author ||
-        (data.authorId ? `Witness (${data.authorId.substring(0, 6)}...)` : 'Anonymous Witness')
-    );
+    data.author ||
+    (data.authorId ? `Citizen` : 'Citizen')
+);
 
     const deleteBtnHTML = isOwner || isStewardUserCache
         ? `<button data-action="delete" data-id="${id}" title="Delete Testimony" class="text-zinc-500 hover:text-red-400 text-xs transition">🗑️</button>`
@@ -462,10 +462,10 @@ function renderSinglePostDOM(id, data, container) {
     const corrCount = data.corroborationCount || 0;
     const corrScore = data.corroborationScore || corrCount;
     const corrScoreHTML = corrCount > 0
-        ? `<span class="corr-score text-[11px] text-emerald-400/90 font-medium tracking-tight">
-                ${corrScore} pts · ${corrCount} saw this
-           </span>`
-        : '';
+    ? `<span class="corr-score text-[11px] text-emerald-400/90 font-medium tracking-tight">
+            Witnessed by ${corrCount} Citizen${corrCount === 1 ? '' : 's'}
+       </span>`
+    : '';
 
  postEl.innerHTML = `
   <!-- Header -->
@@ -571,7 +571,7 @@ function renderSinglePostDOM(id, data, container) {
 
       <button data-action="corroborate" data-id="${id}"
               class="corroborate-btn flex items-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-600/15 px-3 py-1.5 text-xs font-medium text-emerald-400 transition hover:bg-emerald-600/25">
-        👁️ I saw this too
+        👁️ I witnessed this
       </button>
 
       ${corrScoreHTML}
@@ -735,7 +735,7 @@ async function handleCorroborate(postId, btnEl) {
             post.corroborationCount = (post.corroborationCount || 0) + 1;
         }
 
-        btnEl.textContent = "👁️ You corroborated";
+        btnEl.textContent = "👁️ You witnessed this";
         btnEl.classList.add('opacity-60', 'cursor-default');
         btnEl.disabled = true;
 
