@@ -550,34 +550,29 @@ function wireActiveRoomControls(roomId) {
   }
 
   document.getElementById('corroborateBtn')?.addEventListener('click', async () => {
-    if (!requireAuth()) return;
+  if (!requireAuth()) return;
 
-    try {
-      const existing = await getDocs(
-        query(
-          collection(db, 'liveRooms', roomId, 'corroborations'),
-          where('uid', '==', auth.currentUser.uid)
-        )
-      );
+  try {
+    const corrRef = doc(db, 'liveRooms', roomId, 'corroborations', auth.currentUser.uid);
+    const existing = await getDoc(corrRef);
 
-      if (!existing.empty) {
-        showToast("You already corroborated this room", "info");
-        return;
-      }
-
-      await addDoc(collection(db, 'liveRooms', roomId, 'corroborations'), {
-        uid: auth.currentUser.uid,
-        displayName: auth.currentUser.displayName || 'Citizen',
-        createdAt: serverTimestamp()
-      });
-
-      showToast("✅ Corroboration recorded – strengthens the evidence", "success");
-    } catch (err) {
-      console.error(err);
-      showToast("Could not record corroboration", "error");
+    if (existing.exists()) {
+      showToast("You already corroborated this room", "info");
+      return;
     }
-  });
 
+    await setDoc(corrRef, {
+      uid: auth.currentUser.uid,
+      displayName: auth.currentUser.displayName || 'Citizen',
+      createdAt: serverTimestamp()
+    });
+
+    showToast("✅ Corroboration recorded – strengthens the evidence", "success");
+  } catch (err) {
+    console.error(err);
+    showToast("Could not record corroboration", "error");
+  }
+});
   document.getElementById('sealBtn')?.addEventListener('click', async () => {
     if (!requireAuth()) return;
     try {
