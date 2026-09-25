@@ -249,7 +249,6 @@ export function listenToVoteCount(postId, callback) {
  */
 export function listenToVerifiedCount(callback) {
     if (typeof callback !== 'function') return () => {};
-
     const q = query(
         collection(db, "users"),
         where("isVerified", "==", true)
@@ -276,7 +275,7 @@ export function listenToVerifiedCount(callback) {
         }
     );
 
-    return createSafeUnsubscribe(unsubscribe);
+  return () => {};
 }
 
 /**
@@ -284,6 +283,7 @@ export function listenToVerifiedCount(callback) {
  */
 export function listenToArenaInterest(callback) {
     if (typeof callback !== 'function') return () => {};
+
 
     const q = query(
         collection(db, "users"),
@@ -299,7 +299,7 @@ export function listenToArenaInterest(callback) {
         }
     );
 
-    return createSafeUnsubscribe(unsubscribe);
+   return () => {};
 }
 
 /**
