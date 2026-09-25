@@ -3,19 +3,15 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // ==========================================
-    // INDEX REMINDER (create these in Firebase Console or firestore.indexes.json)
+    // INDEX REMINDER
     // ==========================================
-    // Collection: testimonies
-    //   - channel ASC, createdAt DESC
-    //   - feedVisibility ASC, createdAt DESC   (if you still use the old field)
-    // Collection: posts
-    //   - visibilityDoor ASC, createdAt DESC
-    // Collection: corroborations
-    //   - testimonyId ASC, createdAt DESC
-    // ==========================================
+    // testimonies: channel ASC, createdAt DESC
+    // testimonies: feedVisibility ASC, createdAt DESC
+    // posts: visibilityDoor ASC, createdAt DESC
+    // corroborations: testimonyId ASC, createdAt DESC
 
-// ==========================================
-    // HELPER FUNCTIONS
+    // ==========================================
+    // HELPER FUNCTIONS (single definition only)
     // ==========================================
     function isAuthenticated() {
       return request.auth != null;
@@ -116,91 +112,6 @@ service cloud.firestore {
           'location', 'website', 'updatedAt', 'lastLoginAt',
           'theme', 'language', 'interestedInArena', 'arenaNotifyAt', 'lastNameChange',
           'lastTestimonyAt', 'following', 'trusted', 'followers', 'privacyMode'
-        ]);
-    }
-
-    function isValidNotification() {
-      return request.resource.data.keys().hasAll(['type', 'createdAt'])
-        && request.resource.data.type is string
-        && request.resource.data.type in [
-             'mention', 'reply', 'vote', 'system', 'witness_alert', 'corroboration'
-           ]
-        && request.resource.data.createdAt is timestamp
-        && (
-             ('senderId' in request.resource.data && request.resource.data.senderId == request.auth.uid)
-             ||
-             ('fromUid' in request.resource.data && request.resource.data.fromUid == request.auth.uid)
-           );
-    }
-
-    function isSafeAuthorTestimonyUpdate() {
-      return !request.resource.data.diff(resource.data).affectedKeys().hasAny([
-        'moderationStatus', 'toxicityScore', 'autoFlaggedReasons',
-        'isSynthetic', 'syntheticScore', 'authorTier',
-        'reviewedBy', 'reviewedAt', 'reviewNotes',
-        'c2paStatus', 'c2paManifest'
-      ]);
-    }
-
-    function canCommentOnPost(postId) {
-      let post = get(/databases/$(database)/documents/posts/$(postId)).data;
-      return post.authorDoorPrivacy == 'open'
-        || (post.authorDoorPrivacy == 'zk_only' && isWitnessCircle())
-        || request.auth.uid == post.authorId;
-    }
-
-    // -------------------------------------------------
-    // Ban check – restored (safe when user document is missing)
-    // -------------------------------------------------
-    function isNotBanned() {
-      return isAuthenticated()
-        && (
-          !exists(/databases/$(database)/documents/users/$(request.auth.uid))
-          || getUserData().get('isBanned', false) != true
-        );
-    }
-
-    // Strict media URL allow-list (C2PA / provenance friendly)
-    function isValidMediaUrl(url) {
-      return url is string && (
-        url == '' ||
-        url.matches('^https://media\\.vocalwitness\\.com/.*') ||
-        url.matches('^https://lh[0-9]+\\.googleusercontent\\.com/.*') ||
-        url.matches('^https://firebasestorage\\.googleapis\\.com/.*') ||
-        url.matches('^https://.*\\.r2\\.cloudflarestorage\\.com/.*') ||
-        url.matches('^data:image/svg\\+xml;.*')
-      );
-    }
-
-    function isSafeUserCreation() {
-      return request.resource.data.uid == request.auth.uid
-        && request.resource.data.uid is string
-        && request.resource.data.keys().hasAll(['uid', 'email', 'displayName', 'createdAt'])
-        && request.resource.data.email is string
-        && request.resource.data.displayName is string
-        && (!('tier' in request.resource.data) || request.resource.data.tier in ['citizen', 'citizen_circle'])
-        && (!('isVerified' in request.resource.data) || request.resource.data.isVerified == false)
-        && !request.resource.data.keys().hasAny([
-             'role', 'isBanned', 'badges', 'admin', 'moderator', 'score', 'steward',
-             'isPhoneVerified', 'hasVerifiedPhone', 'phoneVerifiedAt', 'reputation',
-             'credibilityScore', 'zkVerified', 'weeklyPoints',
-             'phoneNumber', 'phone', 'phoneHash'
-           ]);
-    }
-
-    function isSafeUserUpdate() {
-      return !request.resource.data.diff(resource.data).affectedKeys().hasAny([
-          'role', 'isBanned', 'badges', 'admin', 'moderator',
-          'zkVerified', 'score', 'isVerified', 'uid', 'tier',
-          'hasVerifiedPhone', 'isPhoneVerified', 'phoneVerifiedAt',
-          'reputation', 'credibilityScore', 'weeklyPoints',
-          'phoneNumber', 'phone', 'phoneHash'
-        ])
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'email', 'displayName', 'photoURL', 'bio',
-          'location', 'website', 'updatedAt', 'lastLoginAt',
-          'theme', 'language', 'interestedInArena', 'arenaNotifyAt', 'lastNameChange',
-          'lastTestimonyAt', 'following', 'trusted', 'followers', 'privacyMode'
         ])
         && (!('email' in request.resource.data) || request.resource.data.email is string)
         && (!('displayName' in request.resource.data) || request.resource.data.displayName is string)
@@ -229,7 +140,6 @@ service cloud.firestore {
            );
     }
 
-    // Authors cannot touch moderation / synthetic / review fields
     function isSafeAuthorTestimonyUpdate() {
       return !request.resource.data.diff(resource.data).affectedKeys().hasAny([
         'moderationStatus', 'toxicityScore', 'autoFlaggedReasons',
@@ -253,7 +163,7 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-   // ==========================================
+    // ==========================================
     // USERS
     // ==========================================
     match /users/{userId} {
@@ -282,8 +192,9 @@ service cloud.firestore {
         allow write: if isOwner(userId) || request.auth.uid == targetUid;
       }
     }
+
     // ==========================================
-    // USER CONTRIBUTIONS (tier tracking)
+    // USER CONTRIBUTIONS
     // ==========================================
     match /userContributions/{contribId} {
       allow read: if isAuthenticated() && resource.data.uid == request.auth.uid;
@@ -329,7 +240,7 @@ service cloud.firestore {
     }
 
     // ==========================================
-    // MAIN TESTIMONIES COLLECTION (hardened + fixed)
+    // MAIN TESTIMONIES
     // ==========================================
     match /testimonies/{testimonyId} {
       allow read: if true;
@@ -343,18 +254,18 @@ service cloud.firestore {
         && (request.resource.data.createdAt is timestamp || request.resource.data.createdAt == request.time)
         && (
              ('channel' in request.resource.data && request.resource.data.channel is string
-             && request.resource.data.channel in [
-                  'citizen-talk', 'witness-voice',
-                  'citizen-circle', 'witness-circle',
-                  'citizen_talk', 'witness_voice'
-                ])
+              && request.resource.data.channel in [
+                   'citizen-talk', 'witness-voice',
+                   'citizen-circle', 'witness-circle',
+                   'citizen_talk', 'witness_voice'
+                 ])
              ||
              ('feedVisibility' in request.resource.data && request.resource.data.feedVisibility is string
-             && request.resource.data.feedVisibility in [
-                  'citizen-talk', 'witness-voice',
-                  'citizen-circle', 'witness-circle',
-                  'citizen_talk', 'witness_voice'
-                ])
+              && request.resource.data.feedVisibility in [
+                   'citizen-talk', 'witness-voice',
+                   'citizen-circle', 'witness-circle',
+                   'citizen_talk', 'witness_voice'
+                 ])
            )
         && (!('mediaUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.mediaUrl))
         && (!('mediaUrls' in request.resource.data) || request.resource.data.mediaUrls is list);
@@ -388,12 +299,10 @@ service cloud.firestore {
         && request.resource.data.name.size() <= 60
         && request.resource.data.members is list
         && request.resource.data.memberCount is number;
-
       allow update: if isNotBanned() && (
         resource.data.creatorId == request.auth.uid ||
         request.auth.uid in resource.data.get('admins', [])
       );
-
       allow delete: if isNotBanned()
         && resource.data.creatorId == request.auth.uid;
     }
@@ -436,7 +345,6 @@ service cloud.firestore {
         && request.resource.data.content.size() > 0
         && request.resource.data.content.size() <= 400
         && request.resource.data.createdAt is timestamp;
-
       allow update, delete: if false;
     }
 
@@ -549,7 +457,6 @@ service cloud.firestore {
         && request.resource.data.resolvedAt == null
         && (request.resource.data.createdAt is timestamp
             || request.resource.data.createdAt == request.time);
-
       allow update: if isModerator()
         && request.resource.data.diff(resource.data).affectedKeys()
              .hasOnly([
@@ -558,12 +465,11 @@ service cloud.firestore {
              ])
         && request.resource.data.status in ['UPHELD', 'REJECTED']
         && request.resource.data.resolution in ['UPHELD', 'REJECTED'];
-
       allow delete: if false;
     }
 
     // ==========================================
-    // PUBLIC PROFILES (safe projection only)
+    // PUBLIC PROFILES (safe projection)
     // ==========================================
     match /publicProfiles/{uid} {
       allow read: if true;
@@ -575,8 +481,8 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-  // ==========================================
-    // LIVE ARENA ROOMS (Fully updated with subcollections)
+    // ==========================================
+    // LIVE ARENA ROOMS
     // ==========================================
     match /liveRooms/{roomId} {
       allow read: if true;
@@ -605,27 +511,13 @@ service cloud.firestore {
           && request.resource.data.keys().hasAll(['uid', 'displayName', 'createdAt'])
           && request.resource.data.createdAt == request.time;
         allow update: if false;
-        allow delete: if isAuthenticated() && corrId == request.auth.uid;
+        allow delete: if false;
       }
+    }
 
-      match /sealedSegments/{segmentId} {
-        allow read: if true;
-        allow create: if isNotBanned() && isAuthenticated()
-          && request.resource.data.sealedBy == request.auth.uid;
-        allow update, delete: if false;
-      }
-
-      match /reactions/{id} {
-        allow read: if true;
-        allow create: if isNotBanned() && isAuthenticated();
-        allow update, delete: if isNotBanned() && isAuthenticated() && request.auth.uid == resource.data.uid;
-      }
-
-      match /messages/{id} {
-        allow read: if true;
-        allow create: if isNotBanned() && isAuthenticated();
-        allow update, delete: if isNotBanned() && isAuthenticated() && request.auth.uid == resource.data.uid;
-      }
+    // Catch-all deny (important)
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
