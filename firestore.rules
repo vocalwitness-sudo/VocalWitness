@@ -99,7 +99,7 @@ service cloud.firestore {
            ]);
     }
 
-   function isSafeUserUpdate() {
+function isSafeUserUpdate() {
   // Fields the client is NEVER allowed to change
   let forbidden = [
     'role', 'isBanned', 'badges', 'admin', 'moderator',
@@ -134,6 +134,7 @@ service cloud.firestore {
       && (!('followers' in request.resource.data) || request.resource.data.followers is list)
       && (!('privacyMode' in request.resource.data) || request.resource.data.privacyMode is string);
 }
+
     function isValidNotification() {
       return request.resource.data.keys().hasAll(['type', 'createdAt'])
         && request.resource.data.type is string
