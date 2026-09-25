@@ -33,7 +33,7 @@ body {
   background: var(--bg-dark);
   color: var(--text-primary);
   overflow-x: hidden;
-  padding-top: var(--header-height-desktop);
+  padding-top: var(--header-height-desktop);    /* desktop first */
   -webkit-font-smoothing: antialiased;
   line-height: 1.5;
 }
@@ -329,7 +329,6 @@ button.nav-tab.active {
 
 /* ====================== MORE MENU ====================== */
 #more-menu {
-  /* already has Tailwind classes, just make sure it sits above everything */
   z-index: 70 !important;
 }
 
