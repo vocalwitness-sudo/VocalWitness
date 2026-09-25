@@ -15,13 +15,14 @@ service firebase.storage {
 
     function isModerator() {
       return isSignedIn() && (
-        request.auth.token.moderator == true || 
+        request.auth.token.moderator == true ||
         request.auth.token.admin == true
       );
     }
 
     function isValidImage() {
-      return request.resource.contentType.matches('image/(jpeg|png|webp|gif|svg\\+xml)');
+      // Removed svg+xml for security (XSS risk). Keep only safe raster formats.
+      return request.resource.contentType.matches('image/(jpeg|png|webp|gif)');
     }
 
     function isValidAudio() {
@@ -29,7 +30,6 @@ service firebase.storage {
           || request.resource.contentType.matches('audio/webm;codecs=opus');
     }
 
-    // Added Video Support to align with media-pipeline.js
     function isValidVideo() {
       return request.resource.contentType.matches('video/(mp4|webm|quicktime|x-m4v|mkv)');
     }
@@ -39,7 +39,7 @@ service firebase.storage {
     }
 
     function isValidPayload(maxMb) {
-      return request.resource.size > 0 
+      return request.resource.size > 0
           && request.resource.size <= maxMb * 1024 * 1024;
     }
 
@@ -47,41 +47,44 @@ service firebase.storage {
     // PATH MATCHERS
     // ==========================================
 
-    // Profile Avatars & User Directory
+    // Profile Avatars
     match /avatars/{userId}/{allPaths=**} {
       allow read: if true;
-      allow write: if isOwner(userId) && isValidImage() && isValidPayload(5);
+      allow create, update: if isOwner(userId) && isValidImage() && isValidPayload(5);
       allow delete: if isOwner(userId) || isModerator();
     }
 
+    // User directory (legacy / profile images)
     match /users/{userId}/{filename} {
       allow read: if true;
       allow create, update: if isOwner(userId) && isValidImage() && isValidPayload(5);
       allow delete: if isOwner(userId) || isModerator();
     }
 
-    // Single Evidence Path (from js/createPost.js)
+    // Single Evidence Path (from createPost.js / media-pipeline)
+    // Changed: require authentication. No more anonymous metadata bypass.
     match /evidence/{filename} {
       allow read: if true;
-      allow create: if (isSignedIn() || request.resource.metadata.isAnonymous == "true")
-                    && isValidMedia() 
+      allow create: if isSignedIn()
+                    && isValidMedia()
                     && isValidPayload(25);
-      allow update: if false;
+      allow update: if false;          // Immutable once uploaded
       allow delete: if isModerator();
     }
 
     // Nested User Evidence Directory
     match /evidence/{userId}/{allPaths=**} {
       allow read: if true;
-      allow write: if isOwner(userId) && isValidMedia() && isValidPayload(25);
+      allow create: if isOwner(userId) && isValidMedia() && isValidPayload(25);
+      allow update: if false;          // Prevent overwriting sealed evidence
       allow delete: if isOwner(userId) || isModerator();
     }
 
-    // Witness Evidence Path
+    // Witness Evidence Path (higher trust)
     match /witness_evidence/{fileId} {
       allow read: if true;
-      allow create: if (isSignedIn() || request.resource.metadata.isAnonymous == "true")
-                    && isValidMedia() 
+      allow create: if isSignedIn()
+                    && isValidMedia()
                     && isValidPayload(25);
       allow update: if false;
       allow delete: if isModerator();
@@ -90,18 +93,20 @@ service firebase.storage {
     // Audio Recordings
     match /audio/{userId}/{allPaths=**} {
       allow read: if true;
-      allow write: if isOwner(userId) && isValidAudio() && isValidPayload(25);
+      allow create: if isOwner(userId) && isValidAudio() && isValidPayload(25);
+      allow update: if false;
       allow delete: if isOwner(userId) || isModerator();
     }
 
-    // General Uploads
+    // General Uploads (smaller limit)
     match /uploads/{userId}/{allPaths=**} {
       allow read: if true;
-      allow write: if isOwner(userId) && isValidMedia() && isValidPayload(15);
+      allow create: if isOwner(userId) && isValidMedia() && isValidPayload(15);
+      allow update: if false;
       allow delete: if isOwner(userId) || isModerator();
     }
 
-    // Fallback Security Lock
+    // Fallback – deny everything else
     match /{allPaths=**} {
       allow read, write: if false;
     }
