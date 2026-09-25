@@ -2,6 +2,7 @@
 if (typeof window !== 'undefined') {
   window.initDarkMode = window.initDarkMode || function () {};
 }
+
 /* ====================== IMPORTS ====================== */
 import { db, auth, storage } from './firebase-config.js';
 import { state, updateAppState, isUserAuthenticated } from './app-state.js';
@@ -20,7 +21,7 @@ import { initComposer } from './composer.js';
 import { createEvidencePack } from './evidence-pack.js';
 import { generateSha256Hash } from './utils.js';
 import { getAudioForPublish, uploadForensicMedia } from './media.js';
-
+import { initLiveArena } from './live-arena.js';          // ← ADDED
 import {
   collection, addDoc, doc, getDoc, setDoc, updateDoc,
   serverTimestamp, query, getDocs, orderBy, limit
@@ -57,13 +58,11 @@ function getDataSaverState() {
 }
 
 function updateDataSaverUI(isOn) {
-  // 1. Update all status texts
   ['data-saver-status', 'data-saver-status-mobile', 'footer-data-saver-status'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.textContent = isOn ? 'On' : 'Off';
   });
 
-  // 2. Desktop button – full class rewrite (most reliable)
   const desktopBtn = document.getElementById('data-saver-btn');
   if (desktopBtn) {
     desktopBtn.className = isOn
@@ -71,7 +70,6 @@ function updateDataSaverUI(isOn) {
       : 'flex h-9 items-center gap-1.5 rounded-xl border px-3 text-xs font-medium transition-all active:scale-95 border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-zinc-500 hover:text-white';
   }
 
-  // 3. Mobile button – full class rewrite
   const mobileBtn = document.getElementById('data-saver-btn-mobile');
   if (mobileBtn) {
     mobileBtn.className = isOn
@@ -79,7 +77,6 @@ function updateDataSaverUI(isOn) {
       : 'flex h-8 items-center gap-1 rounded-lg border px-2 text-[10px] font-medium transition-all active:scale-95 border-zinc-700 bg-zinc-900 text-zinc-400';
   }
 
-  // 4. Icons
   const iconDesktop = document.getElementById('data-saver-icon');
   const iconMobile  = document.getElementById('data-saver-icon-mobile');
   if (iconDesktop) {
@@ -93,32 +90,23 @@ function updateDataSaverUI(isOn) {
 }
 
 function initDataSaver() {
-  // Set initial state from localStorage
   updateDataSaverUI(getDataSaverState());
 
-  // Wire buttons only once
   ['data-saver-btn', 'data-saver-btn-mobile'].forEach(id => {
     const btn = document.getElementById(id);
     if (!btn || btn.dataset.wired === 'true') return;
-
     btn.dataset.wired = 'true';
-
     btn.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
-
       const next = !getDataSaverState();
       localStorage.setItem(DATA_SAVER_KEY, String(next));
       updateDataSaverUI(next);
-
-      // Single clean toast
       if (typeof showToast === 'function') {
         showToast(next ? 'Data Saver turned ON' : 'Data Saver turned OFF', 'info');
       } else {
-        // Fallback single toast if showToast does not exist
         showSingleDataSaverToast(next ? 'Data Saver ON' : 'Data Saver OFF');
       }
-
       window.dispatchEvent(new CustomEvent('data-saver-changed', {
         detail: { enabled: next }
       }));
@@ -126,24 +114,20 @@ function initDataSaver() {
   });
 }
 
-// Global helper used by the main click delegation
 window.toggleDataSaver = function () {
   const next = !getDataSaverState();
   localStorage.setItem(DATA_SAVER_KEY, String(next));
   updateDataSaverUI(next);
-
   if (typeof showToast === 'function') {
     showToast(next ? 'Data Saver turned ON' : 'Data Saver turned OFF', 'info');
   } else {
     showSingleDataSaverToast(next ? 'Data Saver ON' : 'Data Saver OFF');
   }
-
   window.dispatchEvent(new CustomEvent('data-saver-changed', {
     detail: { enabled: next }
   }));
 };
 
-// Tiny fallback toast so we never get multiple messages
 let dataSaverToastTimer = null;
 function showSingleDataSaverToast(msg) {
   let toast = document.getElementById('data-saver-toast');
@@ -155,7 +139,6 @@ function showSingleDataSaverToast(msg) {
   }
   toast.textContent = msg;
   toast.style.opacity = '1';
-
   clearTimeout(dataSaverToastTimer);
   dataSaverToastTimer = setTimeout(() => {
     toast.style.opacity = '0';
@@ -200,7 +183,6 @@ window.switchTab = async function (tab) {
       const isActive = btn.dataset.tab === tab;
       btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
       btn.classList.toggle('active', isActive);
-
       btn.classList.remove(...ALL_TAB_STYLE_CLASSES);
 
       if (isActive) {
@@ -223,7 +205,6 @@ window.switchTab = async function (tab) {
     // 3. Show the selected panel
     const sectionId = TAB_TO_SECTION[tab][0];
     const section = document.getElementById(sectionId);
-
     if (section) {
       section.classList.remove('hidden');
       section.removeAttribute('hidden');
@@ -243,25 +224,46 @@ window.switchTab = async function (tab) {
     if (tab === 'square' && typeof initFeed === 'function') {
       initFeed(undefined, 'citizen-talk');
     }
+
     if (tab === 'ledger' && typeof loadEvidenceLedger === 'function') {
       loadEvidenceLedger();
     }
+
     if (tab === 'mycircle' && typeof loadCircle === 'function') {
       loadCircle();
     }
+
     if (tab === 'witness' && typeof initFeed === 'function') {
       initFeed(undefined, 'witness-voice');
     }
-    if (tab === 'arena' && typeof initLiveArena === 'function') {
-      initLiveArena();
+
+    // ===== LIVE ARENA (fixed) =====
+    if (tab === 'arena') {
+      try {
+        if (typeof initLiveArena === 'function') {
+          initLiveArena();
+        } else {
+          // Fallback dynamic import
+          const module = await import('./live-arena.js');
+          if (typeof module.initLiveArena === 'function') {
+            module.initLiveArena();
+          } else {
+            console.error('initLiveArena not found in live-arena.js');
+            showToast('Live Arena failed to load', 'error');
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load Live Arena:', err);
+        showToast('Could not load Live Arena', 'error');
+      }
     }
+
   } catch (err) {
     console.error('[Tab] switchTab failed:', err);
   } finally {
     isSwitchingTab = false;
   }
 };
-
 /**
  * Tabs + More menu — single init, no double-bind, a11y-aware
  */
