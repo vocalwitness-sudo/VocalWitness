@@ -1,15 +1,16 @@
 <!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  
+
   <!-- Brand & Theme -->
   <meta name="theme-color" content="#10b981">
   <meta name="color-scheme" content="dark">
   <meta name="description" content="VocalWitness – Privacy-first public square for truth, evidence, and citizen reporting. Protected by zero-knowledge technology.">
   <meta name="robots" content="index, follow">
   <meta name="author" content="VocalWitness">
-  
+
   <!-- PWA / Mobile -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -34,11 +35,9 @@
   <meta name="twitter:title" content="VocalWitness • Truth • Evidence • Public Square">
   <meta name="twitter:description" content="Privacy-first public square for truth and evidence. Share what you saw — protected by zero-knowledge technology.">
   <meta name="twitter:image" content="https://vocalwitness.com/logo.png">
-  <meta name="theme-color" content="#10b981" media="(prefers-color-scheme: dark)">
-  
 
   <title data-i18n="pageTitle">VocalWitness • Truth • Evidence • Public Square</title>
-  
+
   <!-- Icons & Manifest -->
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" href="./logo.png" type="image/png">
@@ -46,212 +45,213 @@
   <link rel="apple-touch-icon" href="./icon-192.png" sizes="192x192">
   <link rel="canonical" href="https://vocalwitness.com/">
 
-  <!-- Fonts (optimized) -->
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
+  <!-- Critical resources -->
   <link rel="preload" href="./logo.png" as="image">
-<link rel="preload" href="./style.css?v=3.1" as="style">
-
-
-  <!-- Main Styles -->
+  <link rel="preload" href="./style.css?v=3.1" as="style">
   <link rel="stylesheet" href="./style.css?v=3.1">
 
-  <!-- External scripts -->
+  <!-- External scripts (deferred) -->
   <script src="https://accounts.google.com/gsi/client" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" defer></script>
   <script src="https://js.paystack.co/v2/inline.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/snarkjs@0.7.0/build/snarkjs.min.js" defer></script>
-
   <script type="module" src="./js/main.js?v=2.2"></script>
-<style>
-  :root {
-    --bg-dark: #0b1120;
-    --bg-elevated: #111827;
-    --bg-card: #1e293b;
-    --primary: #10b981;
-    --primary-hover: #34d399;
-    --primary-glow: rgba(16, 185, 129, 0.25);
-    --border: #1e293b;
-    --border-subtle: rgba(255, 255, 255, 0.08);
-    --text-primary: #f8fafc;
-    --text-muted: #94a3b8;
-    --text-dim: #64748b;
 
-    /* Single source of truth for header heights */
-    --header-height-mobile: 108px;
-    --header-height-desktop: 64px;
-  }
+  <style>
+    :root {
+      --bg-dark: #0b1120;
+      --bg-elevated: #111827;
+      --bg-card: #1e293b;
+      --primary: #10b981;
+      --primary-hover: #34d399;
+      --primary-glow: rgba(16, 185, 129, 0.25);
+      --border: #1e293b;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --text-primary: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
 
-  html, body {
-    height: 100%;
-    min-height: 100dvh;
-    margin: 0;
-    padding: 0;
-  }
+      /* Corrected header heights */
+      --header-height-mobile: 104px;
+      --header-height-desktop: 64px;
+    }
 
-  body {
-    background-color: var(--bg-dark) !important;
-    color: var(--text-primary) !important;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    overflow-x: hidden;
-    /* Start with desktop, override on mobile */
-    padding-top: var(--header-height-desktop);
-  }
+    html, body {
+      height: 100%;
+      min-height: 100dvh;
+      margin: 0;
+      padding: 0;
+    }
 
-  @media (max-width: 767px) {
     body {
+      background-color: var(--bg-dark) !important;
+      color: var(--text-primary) !important;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+      /* Mobile-first padding */
       padding-top: var(--header-height-mobile);
     }
-  }
 
-  /* Glass / Cards – keep solid, no blur fighting */
-  .glass,
-  [class*="backdrop-blur"] {
-    background-color: var(--bg-elevated) !important;
-    border: 1px solid var(--border) !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-  }
-
-  #main-header {
-    background-color: rgba(11, 17, 32, 0.94) !important;
-    border-bottom: 1px solid rgba(16, 185, 129, 0.22) !important;
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-  }
-
-  /* ========== SPLASH SCREEN ========== */
-  #app-splash-screen {
-    position: fixed !important;
-    inset: 0 !important;
-    z-index: 99999 !important;
-    background: #0b1120 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    transition: opacity 0.4s ease;
-  }
-
-  #app-splash-screen.fade-out {
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  .splash-inner { text-align: center; }
-
-  .splash-logo {
-    width: 96px;
-    height: 96px;
-    border-radius: 24px;
-    object-fit: cover;
-  }
-
-  .splash-title {
-    margin-top: 1.25rem;
-    font-size: 1.75rem;
-    font-weight: 800;
-    color: #f8fafc;
-  }
-
-  .splash-subtitle {
-    margin-top: 0.35rem;
-    font-size: 0.9rem;
-    color: #94a3b8;
-  }
-
-  .splash-spinner {
-    margin: 1.75rem auto 0;
-    width: 32px;
-    height: 32px;
-    border: 3px solid rgba(16, 185, 129, 0.25);
-    border-top-color: #10b981;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-
-  /* ========== MAIN NAV – FORCE VISIBLE & USABLE ========== */
-  #main-nav {
-    display: flex !important;
-    gap: 6px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-  #main-nav::-webkit-scrollbar { display: none; }
-
-  #main-nav button[data-tab] {
-    flex: 0 0 auto !important;   /* never shrink to zero */
-    min-width: max-content;
-    white-space: nowrap;
-  }
-
-  /* Hide the tiny subtitle text on very small screens */
-  @media (max-width: 640px) {
-    #main-nav button[data-tab] span:last-child {
-      display: none !important;
+    @media (min-width: 768px) {
+      body {
+        padding-top: var(--header-height-desktop);
+      }
     }
+
+    /* Glass / Cards – solid, no blur fighting */
+    .glass,
+    [class*="backdrop-blur"] {
+      background-color: var(--bg-elevated) !important;
+      border: 1px solid var(--border) !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+
+    #main-header {
+      background-color: rgba(11, 17, 32, 0.94) !important;
+      border-bottom: 1px solid rgba(16, 185, 129, 0.22) !important;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    /* ========== SPLASH SCREEN ========== */
+    #app-splash-screen {
+      position: fixed !important;
+      inset: 0 !important;
+      z-index: 99999 !important;
+      background: #0b1120 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      transition: opacity 0.4s ease, visibility 0.4s ease;
+    }
+
+    #app-splash-screen.fade-out {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .splash-inner {
+      text-align: center;
+    }
+
+    .splash-logo {
+      width: 80px;
+      height: 80px;
+      border-radius: 20px;
+      object-fit: cover;
+    }
+
+    .splash-title {
+      margin-top: 1.25rem;
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: #f8fafc;
+    }
+
+    .splash-subtitle {
+      margin-top: 0.35rem;
+      font-size: 0.9rem;
+      color: #94a3b8;
+    }
+
+    .splash-spinner {
+      margin: 1.75rem auto 0;
+      width: 32px;
+      height: 32px;
+      border: 3px solid rgba(16, 185, 129, 0.25);
+      border-top-color: #10b981;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ========== MAIN NAV – FORCE VISIBLE & USABLE ========== */
+    #main-nav {
+      display: flex !important;
+      gap: 6px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    #main-nav::-webkit-scrollbar { display: none; }
+
     #main-nav button[data-tab] {
-      height: 42px !important;
-      padding-left: 12px !important;
-      padding-right: 12px !important;
-      font-size: 12px !important;
+      flex: 0 0 auto !important;
+      min-width: max-content;
+      white-space: nowrap;
     }
-  }
-</style>
-  
+
+    @media (max-width: 640px) {
+      #main-nav button[data-tab] span:last-child {
+        display: none !important;
+      }
+      #main-nav button[data-tab] {
+        height: 42px !important;
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+        font-size: 12px !important;
+      }
+    }
+  </style>
 </head>
 
 <body class="theme-citizen tier-citizen">
 
   <!-- Splash Screen -->
-  <div id="app-splash-screen" 
-       class="fixed inset-0 z-[9999] flex items-center justify-center bg-zinc-950"
-       role="status" 
-       aria-live="polite" 
-       aria-label="Loading VocalWitness">
-    
+  <div id="app-splash-screen"
+       class="fixed inset-0 z-[99999] flex items-center justify-center bg-zinc-950"
+       role="status"
+       aria-live="polite"
+       aria-label="Loading VocalWitness"
+       aria-busy="true">
+
     <div class="splash-inner flex flex-col items-center text-center px-6">
-      
       <!-- Logo -->
       <div class="splash-logo-wrapper relative mb-6">
-        <div class="splash-logo-glow absolute inset-0 rounded-full bg-emerald-500/30 blur-2xl"></div>
-        <img src="./logo.png" 
-             alt="VocalWitness Logo" 
-             class="splash-logo relative h-20 w-20 rounded-2xl object-cover border border-emerald-500/40 shadow-lg">
+        <div class="splash-logo-glow absolute inset-0 rounded-full bg-emerald-500/30 blur-2xl" aria-hidden="true"></div>
+        <img src="./logo.png"
+             alt="VocalWitness Logo"
+             width="80"
+             height="80"
+             class="splash-logo relative h-20 w-20 rounded-2xl object-cover border border-emerald-500/40 shadow-lg"
+             fetchpriority="high">
       </div>
 
       <h1 class="splash-title text-3xl font-extrabold tracking-tight text-white mb-2">
         Vocal<span class="text-emerald-400">Witness</span>
       </h1>
-      
+
       <p class="splash-subtitle text-sm font-medium tracking-wide text-emerald-400/80 mb-8">
         Truth • Evidence • Public Square
       </p>
 
-      <!-- Spinner -->
-      <div class="splash-spinner relative">
-        <div class="h-8 w-8 rounded-full border-2 border-emerald-500/30 border-t-emerald-400 animate-spin"></div>
-        <span class="sr-only">Loading…</span>
-      </div>
-
+      <!-- Single clean spinner -->
+      <div class="splash-spinner" aria-hidden="true"></div>
+      <span class="sr-only">Loading…</span>
     </div>
   </div>
 
-<!-- ====================== SKIP LINK ====================== -->
-<a href="#main-content" 
-   class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] focus:rounded-lg focus:bg-emerald-500 focus:px-4 focus:py-2 focus:text-zinc-950 focus:outline-none">
-  Skip to main content
-</a>
+  <!-- Skip Link -->
+  <a href="#main-content"
+     class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] focus:rounded-lg focus:bg-emerald-500 focus:px-4 focus:py-2 focus:text-zinc-950 focus:outline-none">
+    Skip to main content
+  </a>
+
+  <!-- Continue with the rest of your page (header, main, etc.) -->
 
 <!-- ====================== HEADER ====================== -->
 <header id="main-header" 
@@ -260,13 +260,16 @@
   <div class="mx-auto max-w-6xl px-3 sm:px-5">
 
     <!-- ========== DESKTOP HEADER ========== -->
-    <div class="desktop-header hidden h-16 items-center gap-8 md:flex">
+    <div class="desktop-header hidden h-16 items-center gap-6 md:flex lg:gap-8">
       
       <!-- Logo + Brand -->
       <a href="/" class="group flex shrink-0 items-center gap-3" aria-label="VocalWitness Home">
         <div class="relative flex items-center justify-center">
-          <div class="absolute -inset-1.5 rounded-2xl bg-gradient-to-br from-emerald-500/40 to-teal-400/20 opacity-60 blur-md transition duration-300 group-hover:opacity-90 hidden md:block"></div>
-          <img src="./logo.png" alt="VocalWitness"
+          <div class="absolute -inset-1.5 rounded-2xl bg-gradient-to-br from-emerald-500/40 to-teal-400/20 opacity-60 blur-md transition duration-300 group-hover:opacity-90 hidden md:block" aria-hidden="true"></div>
+          <img src="./logo.png" 
+               alt="VocalWitness" 
+               width="40" 
+               height="40"
                class="relative h-10 w-10 rounded-2xl border border-emerald-400/40 bg-zinc-900 object-cover shadow-md ring-1 ring-white/10">
         </div>
         <div class="leading-tight">
@@ -277,14 +280,16 @@
             Truth • Evidence • Zero-Knowledge
           </p>
         </div>
-        <!-- Optional Live indicator (show/hide via JS) -->
-        <span id="live-indicator" class="ml-2 hidden items-center gap-1 rounded-full bg-red-500/15 px-2 py-0.5 text-[10px] font-bold text-red-400">
-          <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500"></span> LIVE
+        <!-- Live indicator – JS should toggle: hidden ↔ inline-flex -->
+        <span id="live-indicator" 
+              class="ml-2 hidden items-center gap-1 rounded-full bg-red-500/15 px-2 py-0.5 text-[10px] font-bold text-red-400"
+              aria-live="polite">
+          <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" aria-hidden="true"></span> LIVE
         </span>
       </a>
 
       <!-- Right side controls -->
-      <div class="flex shrink-0 items-center gap-3 ml-auto">
+      <div class="flex shrink-0 items-center gap-2.5 ml-auto lg:gap-3">
         
         <!-- Language -->
         <select id="languageSelect" 
@@ -331,28 +336,32 @@
                 class="hidden h-9 items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 px-3 text-xs font-semibold text-emerald-400 transition-all
                        hover:border-emerald-500 hover:bg-emerald-500/10 hover:text-emerald-300 active:scale-95"
                 aria-label="Open profile">
-          <img id="user-avatar-desktop" src="" alt="" class="hidden h-5 w-5 rounded-full object-cover">
-          <span id="default-avatar-icon-desktop" class="text-sm">👤</span>
+          <img id="user-avatar-desktop" src="" alt="" width="20" height="20" class="hidden h-5 w-5 rounded-full object-cover">
+          <span id="default-avatar-icon-desktop" class="text-sm" aria-hidden="true">👤</span>
           <span id="user-name-desktop" data-i18n="profileBtn">Profile</span>
         </button>
 
         <!-- Divider -->
-        <div class="mx-1 h-5 w-px bg-zinc-700"></div>
+        <div class="mx-1 h-5 w-px bg-zinc-700" aria-hidden="true"></div>
 
         <!-- Data Saver -->
         <button id="data-saver-btn" type="button"
                 class="flex h-9 items-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-900 px-3 text-xs font-medium text-zinc-400 transition-all
-                       hover:border-zinc-500 hover:text-white active:scale-95"
-                aria-pressed="false">
-          <span id="data-saver-icon">⚡</span>
+                       hover:border-zinc-500 hover:text-white active:scale-95
+                       data-[active=true]:border-emerald-500/60 data-[active=true]:bg-emerald-500/10 data-[active=true]:text-emerald-400"
+                aria-pressed="false"
+                data-active="false">
+          <span id="data-saver-icon" aria-hidden="true">⚡</span>
           <span>Data: <strong id="data-saver-status">Off</strong></span>
         </button>
 
         <!-- Bookmarks -->
-        <button id="bookmarks-nav-btn" type="button" aria-label="Saved Items" data-action="open-bookmarks"
+        <button id="bookmarks-nav-btn" type="button" 
+                aria-label="Saved Items" 
+                data-action="open-bookmarks"
                 class="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900 text-zinc-400 transition-all
                        hover:border-emerald-500/60 hover:text-emerald-400 hover:bg-emerald-500/10 active:scale-95">
-          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
           </svg>
         </button>
@@ -365,10 +374,13 @@
                   aria-controls="notification-dropdown"
                   class="relative flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900 text-zinc-400 transition-all
                          hover:border-emerald-500/60 hover:text-emerald-400 hover:bg-emerald-500/10 active:scale-95">
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
             </svg>
-            <span id="notification-badge" class="absolute -right-1 -top-1 hidden min-w-[18px] rounded-full bg-emerald-500 px-1.5 py-0.5 text-center text-[10px] font-bold text-black">0</span>
+            <span id="notification-badge" 
+                  class="absolute -right-1 -top-1 hidden min-w-[18px] rounded-full bg-emerald-500 px-1.5 py-0.5 text-center text-[10px] font-bold text-black leading-none">
+              0
+            </span>
           </button>
 
           <div id="notification-dropdown"
@@ -382,7 +394,7 @@
             </div>
             <div id="notification-list">
               <div class="p-8 text-center text-zinc-500">
-                <p class="mb-1 text-2xl">🔔</p>
+                <p class="mb-1 text-2xl" aria-hidden="true">🔔</p>
                 <p class="text-sm">No notifications yet</p>
               </div>
             </div>
@@ -392,16 +404,16 @@
     </div>
 
     <!-- ========== MOBILE HEADER ========== -->
-    <div class="mobile-header flex flex-col gap-2.5 py-2.5 md:hidden">
+    <div class="mobile-header flex flex-col gap-2 py-2 md:hidden">
       
       <!-- Top Row -->
       <div class="flex items-center justify-between gap-3">
         <a href="/" class="flex shrink-0 items-center gap-2.5" aria-label="VocalWitness Home">
-          <div class="relative">
-            <!-- No heavy blur on mobile for performance -->
-            <img src="./logo.png" alt="VocalWitness" 
-                 class="relative h-9 w-9 rounded-xl border border-emerald-500/40 object-cover">
-          </div>
+          <img src="./logo.png" 
+               alt="VocalWitness" 
+               width="36" 
+               height="36"
+               class="h-9 w-9 rounded-xl border border-emerald-500/40 object-cover">
           <div class="leading-tight">
             <h1 class="text-[16px] font-extrabold tracking-tight">
               <span class="text-emerald-400">Vocal</span><span class="text-white">Witness</span>
@@ -412,7 +424,7 @@
           </div>
         </a>
 
-        <div class="flex items-center gap-2.5">
+        <div class="flex items-center gap-2">
           <!-- Join (logged out) -->
           <button id="openAuthModalBtnMobile" type="button"
                   class="flex h-8 items-center gap-1.5 rounded-xl bg-white px-3 text-xs font-semibold text-zinc-900 transition-all
@@ -426,7 +438,7 @@
                   class="hidden h-8 w-8 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900 text-sm text-emerald-400 transition-all
                          hover:border-emerald-500 hover:bg-emerald-500/10 active:scale-95"
                   aria-label="Open profile">
-            👤
+            <span aria-hidden="true">👤</span>
           </button>
         </div>
       </div>
@@ -438,7 +450,7 @@
         <div class="flex items-center gap-1.5">
           <select id="languageSelectMobile" 
                   aria-label="Select language"
-                  class="h-8 rounded-lg border border-zinc-700 bg-zinc-900 px-2 text-[11px] font-medium text-zinc-300">
+                  class="h-8 max-w-[110px] rounded-lg border border-zinc-700 bg-zinc-900 px-2 text-[11px] font-medium text-zinc-300">
             <option value="en" selected>English</option>
             <option value="pcm">Naija Pidgin</option>
             <option value="ha">Hausa</option>
@@ -463,17 +475,20 @@
         <div class="flex items-center gap-1.5">
           <button id="data-saver-btn-mobile" type="button"
                   class="flex h-8 items-center gap-1 rounded-lg border border-zinc-700 bg-zinc-900 px-2 text-[10px] font-medium text-zinc-400 transition-all
-                         hover:border-zinc-500 hover:text-white active:scale-95"
-                  aria-pressed="false">
-            <span id="data-saver-icon-mobile">⚡</span>
+                         hover:border-zinc-500 hover:text-white active:scale-95
+                         data-[active=true]:border-emerald-500/60 data-[active=true]:bg-emerald-500/10 data-[active=true]:text-emerald-400"
+                  aria-pressed="false"
+                  data-active="false">
+            <span id="data-saver-icon-mobile" aria-hidden="true">⚡</span>
             <span id="data-saver-status-mobile">Off</span>
           </button>
 
-          <button id="bookmarks-nav-btn-mobile" type="button" data-action="open-bookmarks"
+          <button id="bookmarks-nav-btn-mobile" type="button" 
+                  data-action="open-bookmarks"
                   class="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-700 bg-zinc-900 text-zinc-400 transition-all
                          hover:text-emerald-400 hover:border-emerald-500/60"
                   aria-label="Saved Items">
-            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
             </svg>
           </button>
@@ -485,10 +500,13 @@
                     aria-controls="notification-dropdown-mobile"
                     class="relative flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-700 bg-zinc-900 text-zinc-400 transition-all
                            hover:text-emerald-400 hover:border-emerald-500/60">
-              <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
               </svg>
-              <span id="notification-badge-mobile" class="absolute -right-0.5 -top-0.5 hidden min-w-[14px] rounded-full bg-emerald-500 px-1 text-[8px] font-bold text-black">0</span>
+              <span id="notification-badge-mobile" 
+                    class="absolute -right-0.5 -top-0.5 hidden min-w-[14px] rounded-full bg-emerald-500 px-1 text-[8px] font-bold text-black leading-none">
+                0
+              </span>
             </button>
 
             <div id="notification-dropdown-mobile"
@@ -502,7 +520,7 @@
               </div>
               <div id="notification-list-mobile">
                 <div class="p-8 text-center text-zinc-500">
-                  <p class="mb-1 text-2xl">🔔</p>
+                  <p class="mb-1 text-2xl" aria-hidden="true">🔔</p>
                   <p class="text-sm">No notifications yet</p>
                 </div>
               </div>
@@ -513,21 +531,17 @@
     </div>
   </div>
 </header>
-  
 <!-- ====================== MAIN CONTAINER ====================== -->
-<main id="main-content" class="mx-auto max-w-6xl px-4 pb-16 pt-24 sm:px-6">
+<main id="main-content" class="mx-auto max-w-6xl px-4 pb-16 pt-6 sm:px-6 sm:pt-8">
+  <!-- Note: Removed large pt-24. Header already handles safe spacing via body padding. -->
 
   <!-- Breaking + Banner + Search -->
   <div class="mb-6 space-y-4">
-
     <!-- Breaking Ticker -->
     <div class="ticker-wrap relative overflow-hidden rounded-2xl border border-emerald-500/20 bg-zinc-900/80">
-      <!-- Fixed label -->
       <div class="absolute bottom-0 left-0 top-0 z-20 flex items-center border-r border-emerald-500/20 bg-zinc-900 px-4">
         <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">⚡ Breaking</span>
       </div>
-
-      <!-- Scrolling track -->
       <div class="overflow-hidden whitespace-nowrap py-3 pl-28">
         <div id="ticker-content" class="ticker-track inline-flex will-change-transform" aria-live="polite">
           <span class="ticker-item px-8">Loading latest headlines...</span>
@@ -537,15 +551,13 @@
 
     <!-- Focus Banner -->
     <div id="focus-banner" class="flex items-center gap-3 rounded-xl border border-emerald-500/25 bg-gradient-to-r from-emerald-950/40 to-zinc-900/60 px-4 py-3 text-sm shadow-lg shadow-emerald-900/10">
-      <span class="shrink-0 text-lg">🎯</span>
-      
+      <span class="shrink-0 text-lg" aria-hidden="true">🎯</span>
       <div class="min-w-0 flex-1 overflow-hidden">
         <p id="focus-banner-text" class="leading-snug text-zinc-300 transition-opacity duration-300">
           <span class="font-medium text-emerald-300">Social citizen journalism.</span>
           <span class="text-zinc-400"> Anyone can report — only sealed records stay public.</span>
         </p>
       </div>
-
       <button type="button" id="dismiss-focus-banner" 
               class="shrink-0 rounded-lg p-1.5 text-zinc-500 transition hover:bg-zinc-800 hover:text-white"
               aria-label="Dismiss banner">
@@ -555,7 +567,7 @@
     
     <!-- Search -->
     <div class="relative">
-      <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-zinc-500">
+      <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-zinc-500" aria-hidden="true">
         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
         </svg>
@@ -569,473 +581,492 @@
     </div>
   </div>
 
-<!-- ====================== MAIN NAVIGATION ====================== -->
-<div class="mb-6">
-  <div class="flex items-center gap-2">
-    <nav id="main-nav"
-     class="flex flex-1 items-center gap-1.5 min-w-0 overflow-x-auto no-scrollbar"
-     role="tablist"
-     aria-label="Main navigation">
-     
-  <!-- 1. Public Square -->
-  <button type="button" data-tab="square" role="tab" aria-selected="true" aria-controls="public-square"
-          class="nav-tab active flex flex-1 min-w-0 h-11 items-center justify-center gap-1.5 rounded-xl bg-emerald-500 px-3.5 text-xs font-semibold text-black shadow-md shadow-emerald-500/25 transition sm:h-12 sm:px-4 sm:text-sm">
-    <span class="text-base leading-none">🗣️</span>
-    <span class="truncate">Square</span>
-  </button>
-  
-  <!-- 2. Record -->
-  <button type="button" data-tab="ledger" role="tab" aria-selected="false" aria-controls="evidence-ledger"
-          class="nav-tab flex flex-1 min-w-0 h-11 items-center justify-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-900 px-3.5 text-xs font-medium text-zinc-300 transition hover:border-zinc-500 sm:h-12 sm:px-4 sm:text-sm">
-    <span class="text-base leading-none">📜</span>
-    <span class="truncate">Record</span>
-  </button>
-  
-  <!-- 3. Arena -->
-  <button type="button" data-tab="arena" role="tab" aria-selected="false" aria-controls="live-arena"
-          class="nav-tab flex flex-1 min-w-0 h-11 items-center justify-center gap-1.5 rounded-xl border border-sky-700/60 bg-sky-950/50 px-3.5 text-xs font-medium text-sky-300 transition hover:border-sky-500 sm:h-12 sm:px-4 sm:text-sm">
-    <span class="text-base leading-none">🏟️</span>
-    <span class="truncate">Arena</span>
-  </button>
-  
-  <!-- 4. Circle -->
-  <button type="button" data-tab="mycircle" role="tab" aria-selected="false" aria-controls="mycircle"
-          class="nav-tab flex flex-1 min-w-0 h-11 items-center justify-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-900 px-3.5 text-xs font-medium text-zinc-300 transition hover:border-zinc-500 sm:h-12 sm:px-4 sm:text-sm">
-    <span class="text-base leading-none">👥</span>
-    <span class="truncate">Circle</span>
-  </button>
-  
-  <!-- 5. Witness -->
-  <button type="button" data-tab="witness" role="tab" aria-selected="false" aria-controls="witness"
-          class="nav-tab flex flex-1 min-w-0 h-11 items-center justify-center gap-1.5 rounded-xl border border-amber-700/50 bg-amber-950/40 px-3.5 text-xs font-medium text-amber-300 transition hover:border-amber-500 sm:h-12 sm:px-4 sm:text-sm">
-    <span class="text-base leading-none">🛡️</span>
-    <span class="truncate">Witness</span>
-  </button>
-</nav>
-
-    <!-- More Menu -->
-    <div class="relative shrink-0">
-      <button id="more-btn" type="button"
-              class="flex h-11 items-center gap-1.5 rounded-xl border border-zinc-600 bg-zinc-800 px-3.5 text-xs font-semibold text-white transition
-                     hover:border-emerald-500 hover:bg-zinc-700 active:scale-95 sm:h-12 sm:px-4 sm:text-sm"
-              aria-haspopup="true" 
-              aria-expanded="false"
-              aria-controls="more-menu">
-        More
-        <svg class="h-3.5 w-3.5 text-zinc-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
-        </svg>
-      </button>
-
-      <div id="more-menu" 
-           class="absolute right-0 top-full z-50 mt-2 hidden w-56 origin-top-right rounded-2xl border border-zinc-700 bg-zinc-900/95 py-1.5 shadow-2xl backdrop-blur-xl text-sm text-zinc-200"
-           role="menu">
-        
-        <!-- Personal -->
-        <a href="/my-testimonies" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">📋 My Reports</a>
-        <a href="/groups" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">👥 Groups</a>
-        <a href="/witness-voice" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">🛡️ Witness Voice</a>
-        <a href="/dao" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">🏛️ DAO</a>
-        
-        <div class="my-1 border-t border-zinc-800"></div>
-        
-        <!-- Evidence tools -->
-        <a href="/forensic-ledger" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">📜 Forensic Ledger</a>
-        <a href="/verify" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">🔍 Evidence Verifier</a>
-        <a href="/transparency" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">⚖️ Transparency</a>
-        
-        <div class="my-1 border-t border-zinc-800"></div>
-        
-        <!-- Info & Legal -->
-        <a href="/about" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">ℹ️ About</a>
-        <a href="/safety" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">🛡️ Safety</a>
-        <a href="/privacy" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">🔒 Privacy</a>
-        <a href="/terms" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">📄 Terms</a>
-        <a href="/legal" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">⚖️ Legal</a>
-      </div>
-    </div>
-  </div>
-</div>
-  
-<!-- ========== 1. PUBLIC SQUARE ========== -->
-<section id="public-square" data-view="citizenTalkView" role="tabpanel" aria-labelledby="public-square-title">
-
-  <!-- Square Identity Header -->
+  <!-- ====================== MAIN NAVIGATION ====================== -->
   <div class="mb-6">
-    <h2 id="public-square-title" class="text-2xl sm:text-3xl font-bold text-white">
-      Public Square
-    </h2>
-    <p class="mt-1 text-sm text-zinc-400">
-      Where Citizens speak and evidence is preserved
-    </p>
-  </div>
-
-  <div class="glass mb-10 rounded-3xl border border-zinc-800/80 p-6 shadow-xl sm:p-8">
-    
-    <!-- Hidden file inputs (unchanged) -->
-    <input type="file" id="photoInput" accept="image/jpeg,image/png,image/webp" class="hidden">
-    <input type="file" id="videoInput" accept="video/mp4,video/webm,video/quicktime" class="hidden">
-    <input type="file" id="audioInput" accept="audio/webm,audio/mp3,audio/mpeg,audio/wav,audio/ogg" class="hidden">
-
-    <!-- Speak Zone Header -->
-    <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <div>
-        <h3 class="text-xl font-bold text-white">
-          Speak as a Citizen
-        </h3>
-        <p class="mt-1 text-sm text-zinc-400">
-          Your report can be sealed and added to the public record
-        </p>
-      </div>
-
-      <select id="targetFeedSelect" 
-              class="rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-emerald-400 
-                     focus:border-emerald-500 focus:outline-none">
-        <option value="citizen-talk">Citizen Talk (Open)</option>
-        <option value="witness-voice">Witness Voice (Higher Trust)</option>
-      </select>
-    </div>
-
-    <!-- Title -->
-    <input type="text" id="testimonyTitle" maxlength="120" 
-           placeholder="Add a short title (optional)"
-           class="mb-4 w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-5 py-3.5 text-base text-white 
-                  placeholder-zinc-500 focus:border-emerald-500 focus:outline-none transition">
-
-    <!-- Main Text -->
-    <textarea id="mainInput" rows="5" maxlength="2000"
-              placeholder="What did you see or experience? Speak clearly and stick to the facts..."
-              class="w-full resize-none rounded-2xl border border-zinc-700 bg-zinc-900 p-5 text-base text-white 
-                     placeholder-zinc-500 focus:border-emerald-500 focus:outline-none transition"></textarea>
-
-    <div class="mb-5 mt-1.5 flex justify-end">
-      <span id="char-count" class="text-xs text-zinc-500 transition-colors duration-200">0 / 2000</span>
-    </div>
-
-    <!-- LIVE VOICE & RECORDING SECTION -->
-    <div class="space-y-4 mb-6">
-      <div id="voice-section" class="rounded-2xl border-2 border-emerald-500/40 bg-emerald-500/5 overflow-hidden">
+    <div class="flex items-center gap-2">
+      <nav id="main-nav"
+           class="flex flex-1 items-center gap-1.5 min-w-0 overflow-x-auto no-scrollbar"
+           role="tablist"
+           aria-label="Main navigation">
+           
+        <!-- 1. Public Square -->
+        <button type="button" 
+                id="tab-square"
+                data-tab="square" 
+                role="tab" 
+                aria-selected="true" 
+                aria-controls="public-square"
+                class="nav-tab active flex flex-1 min-w-[4.5rem] h-11 items-center justify-center gap-1.5 rounded-xl bg-emerald-500 px-3 text-xs font-semibold text-black shadow-md shadow-emerald-500/25 transition sm:h-12 sm:px-4 sm:text-sm">
+          <span class="text-base leading-none" aria-hidden="true">🗣️</span>
+          <span class="truncate">Square</span>
+        </button>
         
-        <!-- Main Button -->
-        <button id="btn-voice" type="button"
-                class="flex w-full items-center justify-center gap-3 px-5 py-4 text-base font-semibold text-emerald-400 transition-all
-                       hover:bg-emerald-500 hover:text-zinc-950 active:scale-[0.98]">
-          <svg class="h-6 w-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                  d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z"/>
+        <!-- 2. Record -->
+        <button type="button" 
+                id="tab-ledger"
+                data-tab="ledger" 
+                role="tab" 
+                aria-selected="false" 
+                aria-controls="evidence-ledger"
+                class="nav-tab flex flex-1 min-w-[4.5rem] h-11 items-center justify-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-900 px-3 text-xs font-medium text-zinc-300 transition hover:border-zinc-500 sm:h-12 sm:px-4 sm:text-sm">
+          <span class="text-base leading-none" aria-hidden="true">📜</span>
+          <span class="truncate">Record</span>
+        </button>
+        
+        <!-- 3. Arena -->
+        <button type="button" 
+                id="tab-arena"
+                data-tab="arena" 
+                role="tab" 
+                aria-selected="false" 
+                aria-controls="live-arena"
+                class="nav-tab flex flex-1 min-w-[4.5rem] h-11 items-center justify-center gap-1.5 rounded-xl border border-sky-700/60 bg-sky-950/50 px-3 text-xs font-medium text-sky-300 transition hover:border-sky-500 sm:h-12 sm:px-4 sm:text-sm">
+          <span class="text-base leading-none" aria-hidden="true">🏟️</span>
+          <span class="truncate">Arena</span>
+        </button>
+        
+        <!-- 4. Circle -->
+        <button type="button" 
+                id="tab-mycircle"
+                data-tab="mycircle" 
+                role="tab" 
+                aria-selected="false" 
+                aria-controls="mycircle"
+                class="nav-tab flex flex-1 min-w-[4.5rem] h-11 items-center justify-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-900 px-3 text-xs font-medium text-zinc-300 transition hover:border-zinc-500 sm:h-12 sm:px-4 sm:text-sm">
+          <span class="text-base leading-none" aria-hidden="true">👥</span>
+          <span class="truncate">Circle</span>
+        </button>
+        
+        <!-- 5. Witness -->
+        <button type="button" 
+                id="tab-witness"
+                data-tab="witness" 
+                role="tab" 
+                aria-selected="false" 
+                aria-controls="witness"
+                class="nav-tab flex flex-1 min-w-[4.5rem] h-11 items-center justify-center gap-1.5 rounded-xl border border-amber-700/50 bg-amber-950/40 px-3 text-xs font-medium text-amber-300 transition hover:border-amber-500 sm:h-12 sm:px-4 sm:text-sm">
+          <span class="text-base leading-none" aria-hidden="true">🛡️</span>
+          <span class="truncate">Witness</span>
+        </button>
+      </nav>
+
+      <!-- More Menu -->
+      <div class="relative shrink-0">
+        <button id="more-btn" type="button"
+                class="flex h-11 items-center gap-1.5 rounded-xl border border-zinc-600 bg-zinc-800 px-3.5 text-xs font-semibold text-white transition
+                       hover:border-emerald-500 hover:bg-zinc-700 active:scale-95 sm:h-12 sm:px-4 sm:text-sm"
+                aria-haspopup="true" 
+                aria-expanded="false"
+                aria-controls="more-menu">
+          More
+          <svg class="h-3.5 w-3.5 text-zinc-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
           </svg>
-          <span id="btn-voice-text">Record Live Voice</span>
-          <span id="btn-voice-badge" class="ml-1 rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-medium text-emerald-300">
-            Recommended
-          </span>
         </button>
-
-        <!-- Instruction text -->
-        <div id="voice-instruction" class="border-t border-emerald-500/20 bg-zinc-900/40 px-5 py-2.5 text-center text-xs text-zinc-400">
-          Live voice carries stronger weight as evidence. Speak clearly.
+        <div id="more-menu" 
+             class="absolute right-0 top-full z-50 mt-2 hidden w-56 origin-top-right rounded-2xl border border-zinc-700 bg-zinc-900/95 py-1.5 shadow-2xl backdrop-blur-xl text-sm text-zinc-200"
+             role="menu"
+             aria-hidden="true">
+          
+          <a href="/my-testimonies" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">📋 My Reports</a>
+          <a href="/groups" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">👥 Groups</a>
+          <a href="/witness-voice" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">🛡️ Witness Voice</a>
+          <a href="/dao" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">🏛️ DAO</a>
+          
+          <div class="my-1 border-t border-zinc-800" role="separator"></div>
+          
+          <a href="/forensic-ledger" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">📜 Forensic Ledger</a>
+          <a href="/verify" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">🔍 Evidence Verifier</a>
+          <a href="/transparency" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">⚖️ Transparency</a>
+          
+          <div class="my-1 border-t border-zinc-800" role="separator"></div>
+          
+          <a href="/about" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">ℹ️ About</a>
+          <a href="/safety" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">🛡️ Safety</a>
+          <a href="/privacy" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">🔒 Privacy</a>
+          <a href="/terms" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">📄 Terms</a>
+          <a href="/legal" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-zinc-800 hover:text-white transition-colors" role="menuitem">⚖️ Legal</a>
         </div>
-
-        <!-- Recording controls (unchanged) -->
-        <div id="voice-recorder-bar" class="hidden border-t border-emerald-500/20 bg-zinc-900/70 p-4">
-          <div class="flex flex-wrap items-center gap-3">
-            <div class="flex min-w-[70px] items-center gap-2">
-              <span id="rec-indicator" class="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500"></span>
-              <span id="rec-timer" class="font-mono text-sm text-emerald-400">00:00</span>
-            </div>
-            <button id="verify-voice-btn" type="button"
-                    class="rounded-xl bg-blue-600/80 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-600">
-              🛡️ Verify
-            </button>
-            <canvas id="rec-waveform" width="180" height="36" class="max-w-[200px] flex-1 rounded bg-zinc-950"></canvas>
-            <div class="ml-auto flex items-center gap-2">
-              <button id="rec-pause-btn" type="button"
-                      class="rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700">
-                ⏸ Pause
-              </button>
-              <button id="rec-stop-btn" type="button"
-                      class="rounded-xl bg-red-600/80 px-3 py-1.5 text-xs text-white hover:bg-red-600">
-                ⏹ Stop
-              </button>
-              <button id="rec-replay-btn" type="button"
-                      class="hidden rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700">
-                ↻ Replay
-              </button>
-              <button id="rec-rerecord-btn" type="button"
-                      class="hidden rounded-xl border border-amber-600/60 bg-amber-900/40 px-3 py-1.5 text-xs text-amber-300 hover:bg-amber-800/50">
-                ↺ Re-record
-              </button>
-            </div>
-          </div>
-          <audio id="rec-replay-audio" class="hidden"></audio>
-        </div>
-
-        <div id="mic-permission-msg" class="hidden border-t border-amber-500/20 bg-amber-950/30 p-4 text-xs text-amber-200">
-          <!-- filled by media.js -->
-        </div>
-      </div>
-
-      <!-- Photo + Video -->
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <button id="btn-photo" type="button"
-                class="flex items-center justify-center gap-2.5 rounded-2xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 font-medium text-emerald-400 transition-all
-                       hover:border-emerald-500 hover:bg-zinc-800">
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-          </svg>
-          Add Photo
-        </button>
-        <button id="btn-video" type="button"
-                class="flex items-center justify-center gap-2.5 rounded-2xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 font-medium text-sky-400 transition-all
-                       hover:border-sky-500 hover:bg-zinc-800">
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                  d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-          </svg>
-          Add Video
-        </button>
-      </div>
-
-      <div class="text-center">
-        <button id="btn-upload-audio" type="button"
-                class="text-sm text-zinc-400 underline-offset-2 hover:text-emerald-400 hover:underline transition">
-          Or upload existing audio file
-        </button>
-      </div>
-    </div>
-
-    <!-- Preview Area -->
-    <div id="preview-area" class="mt-5 flex min-h-[110px] flex-wrap items-center justify-center gap-4 rounded-2xl border border-dashed border-zinc-700 bg-zinc-900/50 p-5 text-sm text-zinc-500">
-      <div id="preview-empty" class="text-center">
-        <p>Preview will appear here...</p>
-        <p class="mt-1 text-xs text-zinc-600">Live voice, photos, videos or uploaded audio will show here</p>
-      </div>
-    </div>
-
-    <!-- Publish Button -->
-    <button id="postButton" type="button"
-            class="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 py-4 text-base font-bold text-black shadow-lg shadow-emerald-500/25 transition-all
-                   hover:bg-emerald-400 hover:shadow-emerald-500/40
-                   active:scale-[0.98] active:bg-emerald-600
-                   disabled:opacity-60 disabled:cursor-not-allowed">
-      <span data-i18n="postButton">Publish Report</span>
-    </button>
-
-    <!-- Upload Progress -->
-    <div id="upload-progress-container" class="mb-6 hidden">
-      <div class="mb-1 flex justify-between text-xs text-zinc-400">
-        <span id="upload-status-text">Uploading media...</span>
-        <span id="upload-progress-pct">0%</span>
-      </div>
-      <div class="h-2 w-full overflow-hidden rounded-full bg-zinc-800">
-        <div id="upload-progress-bar" class="h-full bg-emerald-500 transition-all duration-300" style="width: 0%"></div>
       </div>
     </div>
   </div>
-
-  <!-- Recent Reports -->
-  <div id="feed-container" class="space-y-6">
-    <div class="flex items-center justify-between">
-      <h3 id="feed-title" class="text-lg font-bold text-white">
-        Recent Reports in the Square
-      </h3>
-      <div class="flex items-center gap-2 text-xs text-zinc-400">
-        <span>Sort:</span>
-        <select id="feedSortSelect" class="rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 py-1.5 text-zinc-300 focus:border-emerald-500 focus:outline-none">
-          <option value="latest">Latest</option>
-          <option value="verified">Verified First</option>
-          <option value="trending">Trending</option>
-        </select>
-      </div>
-    </div>
-
-    <div id="testimonies-feed" class="space-y-4">
-      <!-- Loading skeleton remains the same -->
-      <div class="animate-pulse space-y-4 rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6">
-        <div class="flex items-center gap-3">
-          <div class="h-10 w-10 rounded-full bg-zinc-800"></div>
-          <div class="flex-1 space-y-2">
-            <div class="h-3 w-1/4 rounded bg-zinc-800"></div>
-            <div class="h-2 w-1/6 rounded bg-zinc-800/60"></div>
-          </div>
-        </div>
-        <div class="h-4 w-3/4 rounded bg-zinc-800"></div>
-        <div class="h-16 rounded-xl bg-zinc-800/50"></div>
-      </div>
-    </div>
-  </div>
-</section>
-<!-- ========== 2. PUBLIC RECORD ========== -->
-<section id="evidence-ledger" class="hidden space-y-6" role="tabpanel" aria-label="Public Record">
-  <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-    <div>
-      <h2 class="text-2xl font-bold text-emerald-400">Public Record</h2>
-      <p class="mt-1 text-sm text-zinc-400">Protected • Timestamped • Cannot be changed</p>
-    </div>
-    <div class="flex flex-wrap items-center gap-3">
-      <span id="ledger-chain-status" class="rounded-full border border-zinc-700 bg-zinc-900 px-3.5 py-1.5 text-xs font-medium text-zinc-400">
-        Chain: —
-      </span>
-      <button id="refreshLedgerBtn" type="button"
-              class="flex h-10 items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 px-4 text-sm font-medium text-zinc-300 transition hover:border-emerald-500/50 hover:bg-zinc-800">
-        🔄 Refresh
-      </button>
-    </div>
-  </div>
-  <div class="glass flex items-start gap-4 rounded-2xl border border-emerald-500/25 p-5">
-    <div class="text-2xl" aria-hidden="true">🛡️</div>
-    <div>
-      <p class="font-medium text-emerald-400">Your reports stay safe</p>
-      <p class="mt-1 text-sm text-zinc-400 leading-relaxed">
-        Every report is automatically sealed and linked. Once published, the original cannot be edited or deleted.
+  
+  <!-- ========== 1. PUBLIC SQUARE ========== -->
+  <section id="public-square" 
+           data-view="citizenTalkView" 
+           role="tabpanel" 
+           aria-labelledby="public-square-title"
+           aria-hidden="false">
+    
+    <div class="mb-6">
+      <h2 id="public-square-title" class="text-2xl sm:text-3xl font-bold text-white">
+        Public Square
+      </h2>
+      <p class="mt-1 text-sm text-zinc-400">
+        Where Citizens speak and evidence is preserved
       </p>
     </div>
-  </div>
-  <div id="ledger-list" class="space-y-4">
-    <!-- content loads dynamically -->
-  </div>
-</section>
 
-<!-- ========== 3. LIVE ARENA ========== -->
-<section id="live-arena" class="hidden" role="tabpanel" aria-label="Live Arena">
-  <div class="mx-auto max-w-5xl space-y-6 px-3 sm:px-5 pb-24">
+    <div class="glass mb-10 rounded-3xl border border-zinc-800/80 p-6 shadow-xl sm:p-8">
+      
+      <!-- Hidden file inputs -->
+      <input type="file" id="photoInput" accept="image/jpeg,image/png,image/webp" capture="environment" class="hidden">
+      <input type="file" id="videoInput" accept="video/mp4,video/webm,video/quicktime" capture="environment" class="hidden">
+      <input type="file" id="audioInput" accept="audio/webm,audio/mp3,audio/mpeg,audio/wav,audio/ogg" class="hidden">
 
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-      <div>
-        <h2 class="text-3xl font-bold text-sky-400 flex items-center gap-3">
-          <span class="text-4xl">🏟️</span> Live Arena
-        </h2>
-        <p class="mt-1 text-sm text-zinc-400">Real-time community reporting • Globe-wide</p>
+      <!-- Speak Zone Header -->
+      <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 class="text-xl font-bold text-white">Speak as a Citizen</h3>
+          <p class="mt-1 text-sm text-zinc-400">Your report can be sealed and added to the public record</p>
+        </div>
+        <select id="targetFeedSelect" 
+                class="rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-emerald-400 
+                       focus:border-emerald-500 focus:outline-none">
+          <option value="citizen-talk">Citizen Talk (Open)</option>
+          <option value="witness-voice">Witness Voice (Higher Trust)</option>
+        </select>
       </div>
-      <div class="flex items-center gap-3">
-        <div class="text-right text-xs">
-          <div class="text-zinc-400">Verified Citizens</div>
-          <div class="font-mono text-sky-400 text-lg">
-            <span id="verifiedCount">0</span> / 500
+
+      <!-- Title -->
+      <input type="text" id="testimonyTitle" maxlength="120" 
+             placeholder="Add a short title (optional)"
+             class="mb-4 w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-5 py-3.5 text-base text-white 
+                    placeholder-zinc-500 focus:border-emerald-500 focus:outline-none transition">
+
+      <!-- Main Text -->
+      <textarea id="mainInput" rows="5" maxlength="2000"
+                placeholder="What did you see or experience? Speak clearly and stick to the facts..."
+                class="w-full resize-none rounded-2xl border border-zinc-700 bg-zinc-900 p-5 text-base text-white 
+                       placeholder-zinc-500 focus:border-emerald-500 focus:outline-none transition"></textarea>
+      <div class="mb-5 mt-1.5 flex justify-end">
+        <span id="char-count" class="text-xs text-zinc-500 transition-colors duration-200">0 / 2000</span>
+      </div>
+
+      <!-- LIVE VOICE & RECORDING SECTION -->
+      <div class="space-y-4 mb-6">
+        <div id="voice-section" class="rounded-2xl border-2 border-emerald-500/40 bg-emerald-500/5 overflow-hidden">
+          
+          <button id="btn-voice" type="button"
+                  class="flex w-full items-center justify-center gap-3 px-5 py-4 text-base font-semibold text-emerald-400 transition-all
+                         hover:bg-emerald-500 hover:text-zinc-950 active:scale-[0.98]">
+            <svg class="h-6 w-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                    d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z"/>
+            </svg>
+            <span id="btn-voice-text">Record Live Voice</span>
+            <span id="btn-voice-badge" class="ml-1 rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-medium text-emerald-300">
+              Recommended
+            </span>
+          </button>
+
+          <div id="voice-instruction" class="border-t border-emerald-500/20 bg-zinc-900/40 px-5 py-2.5 text-center text-xs text-zinc-400">
+            Live voice carries stronger weight as evidence. Speak clearly.
+          </div>
+
+          <div id="voice-recorder-bar" class="hidden border-t border-emerald-500/20 bg-zinc-900/70 p-4">
+            <div class="flex flex-wrap items-center gap-3">
+              <div class="flex min-w-[70px] items-center gap-2">
+                <span id="rec-indicator" class="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500" aria-hidden="true"></span>
+                <span id="rec-timer" class="font-mono text-sm text-emerald-400">00:00</span>
+              </div>
+              <button id="verify-voice-btn" type="button"
+                      class="rounded-xl bg-blue-600/80 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-600">
+                🛡️ Verify
+              </button>
+              <canvas id="rec-waveform" width="180" height="36" class="max-w-[200px] flex-1 rounded bg-zinc-950" aria-hidden="true"></canvas>
+              <div class="ml-auto flex items-center gap-2">
+                <button id="rec-pause-btn" type="button"
+                        class="rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700">
+                  ⏸ Pause
+                </button>
+                <button id="rec-stop-btn" type="button"
+                        class="rounded-xl bg-red-600/80 px-3 py-1.5 text-xs text-white hover:bg-red-600">
+                  ⏹ Stop
+                </button>
+                <button id="rec-replay-btn" type="button"
+                        class="hidden rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700">
+                  ↻ Replay
+                </button>
+                <button id="rec-rerecord-btn" type="button"
+                        class="hidden rounded-xl border border-amber-600/60 bg-amber-900/40 px-3 py-1.5 text-xs text-amber-300 hover:bg-amber-800/50">
+                  ↺ Re-record
+                </button>
+              </div>
+            </div>
+            <audio id="rec-replay-audio" class="hidden"></audio>
+          </div>
+
+          <div id="mic-permission-msg" class="hidden border-t border-amber-500/20 bg-amber-950/30 p-4 text-xs text-amber-200">
+            <!-- filled by media.js -->
           </div>
         </div>
-        <button id="createRoomBtn" class="rounded-2xl bg-gradient-to-r from-sky-500 to-cyan-500 px-6 py-3 font-bold text-white shadow-lg hover:from-sky-400 hover:to-cyan-400 active:scale-95 transition">
-          + Start a Room
+
+        <!-- Photo + Video -->
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <button id="btn-photo" type="button"
+                  class="flex items-center justify-center gap-2.5 rounded-2xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 font-medium text-emerald-400 transition-all
+                         hover:border-emerald-500 hover:bg-zinc-800">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            Add Photo
+          </button>
+          <button id="btn-video" type="button"
+                  class="flex items-center justify-center gap-2.5 rounded-2xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 font-medium text-sky-400 transition-all
+                         hover:border-sky-500 hover:bg-zinc-800">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                    d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+            </svg>
+            Add Video
+          </button>
+        </div>
+
+        <div class="text-center">
+          <button id="btn-upload-audio" type="button"
+                  class="text-sm text-zinc-400 underline-offset-2 hover:text-emerald-400 hover:underline transition">
+            Or upload existing audio file
+          </button>
+        </div>
+      </div>
+
+      <!-- Preview Area -->
+      <div id="preview-area" class="mt-5 flex min-h-[110px] flex-wrap items-center justify-center gap-4 rounded-2xl border border-dashed border-zinc-700 bg-zinc-900/50 p-5 text-sm text-zinc-500">
+        <div id="preview-empty" class="text-center">
+          <p>Preview will appear here...</p>
+          <p class="mt-1 text-xs text-zinc-600">Live voice, photos, videos or uploaded audio will show here</p>
+        </div>
+      </div>
+
+      <!-- Upload Progress (moved above publish button) -->
+      <div id="upload-progress-container" class="mt-5 mb-4 hidden">
+        <div class="mb-1 flex justify-between text-xs text-zinc-400">
+          <span id="upload-status-text">Uploading media...</span>
+          <span id="upload-progress-pct">0%</span>
+        </div>
+        <div class="h-2 w-full overflow-hidden rounded-full bg-zinc-800">
+          <div id="upload-progress-bar" class="h-full bg-emerald-500 transition-all duration-300" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- Publish Button -->
+      <button id="postButton" type="button"
+              class="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 py-4 text-base font-bold text-black shadow-lg shadow-emerald-500/25 transition-all
+                     hover:bg-emerald-400 hover:shadow-emerald-500/40
+                     active:scale-[0.98] active:bg-emerald-600
+                     disabled:opacity-60 disabled:cursor-not-allowed">
+        <span data-i18n="postButton">Publish Report</span>
+      </button>
+    </div>
+
+    <!-- Recent Reports -->
+    <div id="feed-container" class="space-y-6">
+      <div class="flex items-center justify-between">
+        <h3 id="feed-title" class="text-lg font-bold text-white">Recent Reports in the Square</h3>
+        <div class="flex items-center gap-2 text-xs text-zinc-400">
+          <span>Sort:</span>
+          <select id="feedSortSelect" class="rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 py-1.5 text-zinc-300 focus:border-emerald-500 focus:outline-none">
+            <option value="latest">Latest</option>
+            <option value="verified">Verified First</option>
+            <option value="trending">Trending</option>
+          </select>
+        </div>
+      </div>
+      <div id="testimonies-feed" class="space-y-4">
+        <!-- Loading skeleton -->
+        <div class="animate-pulse space-y-4 rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6">
+          <div class="flex items-center gap-3">
+            <div class="h-10 w-10 rounded-full bg-zinc-800"></div>
+            <div class="flex-1 space-y-2">
+              <div class="h-3 w-1/4 rounded bg-zinc-800"></div>
+              <div class="h-2 w-1/6 rounded bg-zinc-800/60"></div>
+            </div>
+          </div>
+          <div class="h-4 w-3/4 rounded bg-zinc-800"></div>
+          <div class="h-16 rounded-xl bg-zinc-800/50"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 2. PUBLIC RECORD ========== -->
+  <section id="evidence-ledger" class="hidden space-y-6" role="tabpanel" aria-label="Public Record" aria-hidden="true">
+    <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+      <div>
+        <h2 class="text-2xl font-bold text-emerald-400">Public Record</h2>
+        <p class="mt-1 text-sm text-zinc-400">Protected • Timestamped • Cannot be changed</p>
+      </div>
+      <div class="flex flex-wrap items-center gap-3">
+        <span id="ledger-chain-status" class="rounded-full border border-zinc-700 bg-zinc-900 px-3.5 py-1.5 text-xs font-medium text-zinc-400">
+          Chain: —
+        </span>
+        <button id="refreshLedgerBtn" type="button"
+                class="flex h-10 items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 px-4 text-sm font-medium text-zinc-300 transition hover:border-emerald-500/50 hover:bg-zinc-800">
+          🔄 Refresh
         </button>
       </div>
     </div>
 
-    <!-- Progress (soft goal) -->
-    <div class="glass rounded-2xl border border-sky-500/20 p-4">
-      <div class="flex justify-between text-sm mb-2">
-        <span class="text-zinc-300">Community Goal – Unlock full global stages</span>
-        <span id="progressText" class="text-sky-400">Loading…</span>
-      </div>
-      <div class="h-2 overflow-hidden rounded-full bg-zinc-800">
-        <div id="verifiedProgress" class="h-full bg-gradient-to-r from-sky-500 to-cyan-400 transition-all duration-700" style="width: 0%"></div>
+    <div class="glass flex items-start gap-4 rounded-2xl border border-emerald-500/25 p-5">
+      <div class="text-2xl" aria-hidden="true">🛡️</div>
+      <div>
+        <p class="font-medium text-emerald-400">Your reports stay safe</p>
+        <p class="mt-1 text-sm text-zinc-400 leading-relaxed">
+          Every report is automatically sealed and linked. Once published, the original cannot be edited or deleted.
+        </p>
       </div>
     </div>
 
-    <!-- Live Rooms Grid -->
-    <div>
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-semibold text-white">Live Now</h3>
-        <div class="flex gap-2 text-xs">
-          <button class="px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700">All</button>
-          <button class="px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700">Near Me</button>
-          <button class="px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700">My Circle</button>
+    <div id="ledger-list" class="space-y-4">
+      <!-- content loads dynamically -->
+    </div>
+  </section>
+
+  <!-- ========== 3. LIVE ARENA ========== -->
+  <section id="live-arena" class="hidden" role="tabpanel" aria-label="Live Arena" aria-hidden="true">
+    <div class="space-y-6 pb-24">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-3xl font-bold text-sky-400 flex items-center gap-3">
+            <span class="text-4xl" aria-hidden="true">🏟️</span> Live Arena
+          </h2>
+          <p class="mt-1 text-sm text-zinc-400">Real-time community reporting • Globe-wide</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="text-right text-xs">
+            <div class="text-zinc-400">Verified Citizens</div>
+            <div class="font-mono text-sky-400 text-lg">
+              <span id="verifiedCount">0</span> / 500
+            </div>
+          </div>
+          <button id="createRoomBtn" type="button"
+                  class="rounded-2xl bg-gradient-to-r from-sky-500 to-cyan-500 px-6 py-3 font-bold text-white shadow-lg hover:from-sky-400 hover:to-cyan-400 active:scale-95 transition">
+            + Start a Room
+          </button>
         </div>
       </div>
 
-      <div id="liveRoomsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <!-- Rooms will be injected here -->
-        <div class="col-span-full py-16 text-center text-zinc-500">
-          <div class="text-5xl mb-4">🌍</div>
-          <p>No live rooms yet. Be the first to start one.</p>
+      <div class="glass rounded-2xl border border-sky-500/20 p-4">
+        <div class="flex justify-between text-sm mb-2">
+          <span class="text-zinc-300">Community Goal – Unlock full global stages</span>
+          <span id="progressText" class="text-sky-400">Loading…</span>
         </div>
+        <div class="h-2 overflow-hidden rounded-full bg-zinc-800">
+          <div id="verifiedProgress" class="h-full bg-gradient-to-r from-sky-500 to-cyan-400 transition-all duration-700" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-white">Live Now</h3>
+          <div class="flex gap-2 text-xs">
+            <button type="button" class="px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700">All</button>
+            <button type="button" class="px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700">Near Me</button>
+            <button type="button" class="px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700">My Circle</button>
+          </div>
+        </div>
+        <div id="liveRoomsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div class="col-span-full py-16 text-center text-zinc-500">
+            <div class="text-5xl mb-4" aria-hidden="true">🌍</div>
+            <p>No live rooms yet. Be the first to start one.</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="activeRoomView" class="hidden fixed inset-0 z-50 bg-zinc-950/95 backdrop-blur-md flex flex-col">
+        <!-- Will be fully built later -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 4. MY CIRCLE ========== -->
+  <section id="mycircle" class="hidden space-y-6" role="tabpanel" aria-label="My Circle" aria-hidden="true">
+    <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+      <div>
+        <h2 class="text-2xl font-bold text-white">My Circle</h2>
+        <p class="mt-1 text-sm text-zinc-400">People you follow and trust</p>
+      </div>
+      <span id="circle-tier-badge" class="inline-flex items-center rounded-full border border-zinc-700 bg-zinc-800 px-3.5 py-1.5 text-xs font-semibold text-zinc-300">
+        Standard
+      </span>
+    </div>
+
+    <div id="circle-upgrade-prompt" class="glass space-y-4 rounded-2xl border border-zinc-700/70 p-6">
+      <p class="text-sm text-zinc-300">Verify your account to unlock stronger circle features.</p>
+      <div class="flex flex-wrap gap-3">
+        <button type="button" id="startPhoneVerificationBtn"
+                class="rounded-xl border border-emerald-500/50 bg-emerald-600/15 px-4 py-2.5 text-sm font-medium text-emerald-400 transition hover:bg-emerald-600/25">
+          📱 Phone → Citizen Circle
+        </button>
+        <button type="button" id="startZKVerificationBtn"
+                class="rounded-xl border border-amber-500/50 bg-amber-600/15 px-4 py-2.5 text-sm font-medium text-amber-400 transition hover:bg-amber-600/25">
+          🛡️ Higher Trust → Witness Circle
+        </button>
       </div>
     </div>
 
-    <!-- Active Room View (hidden until join) -->
-    <div id="activeRoomView" class="hidden fixed inset-0 z-50 bg-zinc-950/95 backdrop-blur-md flex flex-col">
-      <!-- Will be fully built in next step -->
-    </div>
-  </div>
-</section>
-
-<!-- ========== 4. MY CIRCLE ========== -->
-<section id="mycircle" class="hidden space-y-6" role="tabpanel" aria-label="My Circle">
-  <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-    <div>
-      <h2 class="text-2xl font-bold text-white">My Circle</h2>
-      <p class="mt-1 text-sm text-zinc-400">People you follow and trust</p>
-    </div>
-    <span id="circle-tier-badge" class="inline-flex items-center rounded-full border border-zinc-700 bg-zinc-800 px-3.5 py-1.5 text-xs font-semibold text-zinc-300">
-      Standard
-    </span>
-  </div>
-  <div id="circle-upgrade-prompt" class="glass space-y-4 rounded-2xl border border-zinc-700/70 p-6">
-    <p class="text-sm text-zinc-300">Verify your account to unlock stronger circle features.</p>
-    <div class="flex flex-wrap gap-3">
-      <button type="button" id="startPhoneVerificationBtn"
-              class="rounded-xl border border-emerald-500/50 bg-emerald-600/15 px-4 py-2.5 text-sm font-medium text-emerald-400 transition hover:bg-emerald-600/25">
-        📱 Phone → Citizen Circle
+    <div class="flex gap-1 border-b border-zinc-800" role="tablist" aria-label="Circle tabs">
+      <button type="button" data-circle-tab="following"
+              class="border-b-2 border-emerald-500 px-5 py-2.5 text-sm font-medium text-emerald-400"
+              aria-selected="true">
+        Following
       </button>
-      <button type="button" id="startZKVerificationBtn"
-              class="rounded-xl border border-amber-500/50 bg-amber-600/15 px-4 py-2.5 text-sm font-medium text-amber-400 transition hover:bg-amber-600/25">
-        🛡️ Higher Trust → Witness Circle
+      <button type="button" data-circle-tab="followers"
+              class="px-5 py-2.5 text-sm font-medium text-zinc-400 transition hover:text-white"
+              aria-selected="false">
+        Followers
+      </button>
+      <button type="button" data-circle-tab="trusted"
+              class="px-5 py-2.5 text-sm font-medium text-zinc-400 transition hover:text-white"
+              aria-selected="false">
+        Trusted
       </button>
     </div>
-  </div>
-  <div class="flex gap-1 border-b border-zinc-800" role="tablist">
-    <button type="button" data-circle-tab="following"
-            class="border-b-2 border-emerald-500 px-5 py-2.5 text-sm font-medium text-emerald-400">
-      Following
-    </button>
-    <button type="button" data-circle-tab="followers"
-            class="px-5 py-2.5 text-sm font-medium text-zinc-400 transition hover:text-white">
-      Followers
-    </button>
-    <button type="button" data-circle-tab="trusted"
-            class="px-5 py-2.5 text-sm font-medium text-zinc-400 transition hover:text-white">
-      Trusted
-    </button>
-  </div>
-  <div id="circle-list" class="space-y-3">
-    <div class="py-16 text-center text-sm text-zinc-500">
-      Your circle is empty. Follow voices you trust.
+
+    <div id="circle-list" class="space-y-3">
+      <div class="py-16 text-center text-sm text-zinc-500">
+        Your circle is empty. Follow voices you trust.
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
-  <!-- ========== 5. WITNESS / TRUSTED VOICES ========== -->
-<section id="witness" class="hidden space-y-6" role="tabpanel" aria-label="Witness">
-  <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-    <div>
-      <h2 class="text-2xl font-bold text-amber-400">Witness</h2>
-      <p class="mt-1 text-sm text-zinc-400">Verified reporters and higher-trust accounts</p>
+  <!-- ========== 5. WITNESS ========== -->
+  <section id="witness" class="hidden space-y-6" role="tabpanel" aria-label="Witness" aria-hidden="true">
+    <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+      <div>
+        <h2 class="text-2xl font-bold text-amber-400">Witness</h2>
+        <p class="mt-1 text-sm text-zinc-400">Verified reporters and higher-trust accounts</p>
+      </div>
+      <input type="search" id="witness-search"
+             placeholder="Search trusted voices…"
+             class="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:border-amber-500 focus:outline-none sm:w-72"
+             aria-label="Search trusted voices">
     </div>
-    <input type="search" id="witness-search"
-           placeholder="Search trusted voices…"
-           class="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:border-amber-500 focus:outline-none sm:w-72">
-  </div>
 
-  <div class="flex flex-wrap gap-2" id="witness-filters">
-    <button type="button" data-filter="all"
-            class="rounded-full border border-amber-500/40 bg-amber-500/15 px-4 py-1.5 text-xs font-medium text-amber-400">
-      All
-    </button>
-    <button type="button" data-filter="zk"
-            class="rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs font-medium text-zinc-300 transition hover:border-amber-500/50">
-      Higher Trust
-    </button>
-    <button type="button" data-filter="phone"
-            class="rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs font-medium text-zinc-300 transition hover:border-amber-500/50">
-      Phone verified
-    </button>
-  </div>
+    <div class="flex flex-wrap gap-2" id="witness-filters" role="group" aria-label="Filter witnesses">
+      <button type="button" data-filter="all"
+              class="rounded-full border border-amber-500/40 bg-amber-500/15 px-4 py-1.5 text-xs font-medium text-amber-400"
+              aria-pressed="true">
+        All
+      </button>
+      <button type="button" data-filter="zk"
+              class="rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs font-medium text-zinc-300 transition hover:border-amber-500/50"
+              aria-pressed="false">
+        Higher Trust
+      </button>
+      <button type="button" data-filter="phone"
+              class="rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs font-medium text-zinc-300 transition hover:border-amber-500/50"
+              aria-pressed="false">
+        Phone verified
+      </button>
+    </div>
 
-  <div id="verified-witnesses-grid" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-    <!-- content loads dynamically -->
-  </div>
-</section>
-
+    <div id="verified-witnesses-grid" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <!-- content loads dynamically -->
+    </div>
+  </section>
 </main>
   
 <!-- ====================== SUPPORT MODAL ====================== -->
@@ -1799,20 +1830,30 @@
       }
     });
 
-    // Support tier buttons
-    document.addEventListener('click', (e) => {
-      const btn = e.target.closest('.support-tier-btn');
-      if (!btn) return;
-      const container = $('supportTierContainer');
-      container?.querySelectorAll('.support-tier-btn').forEach((b) => {
-        b.classList.remove('bg-emerald-600/20', 'border-emerald-500', 'active-tier');
-        b.classList.add('bg-zinc-800', 'border-zinc-700');
-      });
-      btn.classList.remove('bg-zinc-800', 'border-zinc-700');
-      btn.classList.add('bg-emerald-600/20', 'border-emerald-500', 'active-tier');
-      const amountInput = $('customSupportAmount');
-      if (amountInput) amountInput.value = btn.getAttribute('data-amount') || '15';
-    });
+   // Support tier buttons (improved)
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.support-tier-btn');
+  if (!btn) return;
+
+  const container = $('supportTierContainer');
+  container?.querySelectorAll('.support-tier-btn').forEach((b) => {
+    b.classList.remove(
+      'bg-emerald-600/20', 'bg-emerald-600/25',
+      'border-emerald-500', 'active-tier',
+      'text-emerald-300', 'font-semibold', 'shadow-sm'
+    );
+    b.classList.add('bg-zinc-800/80', 'border-zinc-700', 'text-zinc-300', 'font-medium');
+  });
+
+  btn.classList.remove('bg-zinc-800/80', 'border-zinc-700', 'text-zinc-300', 'font-medium');
+  btn.classList.add(
+    'bg-emerald-600/25', 'border-emerald-500',
+    'text-emerald-300', 'font-semibold', 'shadow-sm', 'active-tier'
+  );
+
+  const amountInput = $('customSupportAmount');
+  if (amountInput) amountInput.value = btn.getAttribute('data-amount') || '15';
+});
 
     // Copy USDT
     $('copyUsdtBtn')?.addEventListener('click', async () => {
