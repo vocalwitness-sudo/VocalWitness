@@ -33,7 +33,7 @@ body {
   background: var(--bg-dark);
   color: var(--text-primary);
   overflow-x: hidden;
-  padding-top: var(--header-height-desktop);    /* desktop first */
+  padding-top: var(--header-height-desktop);
   -webkit-font-smoothing: antialiased;
   line-height: 1.5;
 }
@@ -161,7 +161,10 @@ div.sticky {
 
 /* ====================== MAIN NAV TABS ====================== */
 #main-nav {
-  display: flex;
+  display: flex !important;
+  flex: 0 1 auto !important;          /* ← KEY: do NOT grow */
+  width: auto !important;
+  max-width: 100%;
   gap: 6px;
   padding: 5px;
   background: rgba(15, 23, 42, 0.55);
@@ -178,7 +181,9 @@ div.sticky {
 }
 
 #main-nav button[data-tab] {
-  flex-shrink: 0;
+  flex: 0 0 auto !important;          /* ← KEY: never grow */
+  flex-grow: 0 !important;
+  flex-shrink: 0 !important;
   padding: 8px 16px;
   font-size: 0.8125rem;
   font-weight: 600;
@@ -319,7 +324,6 @@ button.nav-tab.active {
   transition: all 0.2s ease;
 }
 
-/* When ON – the JS already rewrites the classes, but we keep a safe fallback */
 #data-saver-btn.border-emerald-500,
 #data-saver-btn-mobile.border-emerald-500 {
   border-color: #10b981 !important;
@@ -534,6 +538,7 @@ html {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.15); }
 }
+
 .notification-badge-new {
   animation: badge-pulse 0.6s ease 2;
 }
@@ -581,11 +586,4 @@ footer .grid {
   100% {
     transform: translateX(-50%);
   }
-}
-
-/* Force tabs never to grow – prevents the empty gap */
-#main-nav button[data-tab] {
-  flex: 0 0 auto !important;
-  flex-grow: 0 !important;
-  flex-shrink: 0 !important;
 }
