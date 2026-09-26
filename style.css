@@ -582,3 +582,10 @@ footer .grid {
     transform: translateX(-50%);
   }
 }
+
+/* Force tabs never to grow – prevents the empty gap */
+#main-nav button[data-tab] {
+  flex: 0 0 auto !important;
+  flex-grow: 0 !important;
+  flex-shrink: 0 !important;
+}
