@@ -54,7 +54,6 @@ export async function prepareMediaForUpload(file, options = {}) {
 
     // Video path
     if (file.type.startsWith('video/')) {
-        // Optional size check for safety (e.g., max 250MB)
         const maxVideoSize = 250 * 1024 * 1024;
         if (file.size > maxVideoSize) {
             throw new Error('Video file size exceeds the 250MB limit.');
@@ -66,6 +65,31 @@ export async function prepareMediaForUpload(file, options = {}) {
 }
 
 /**
+ * Show / update / hide the upload progress bar in the composer
+ */
+export function setUploadProgress(percent, statusText = 'Uploading media...') {
+    const box = document.getElementById('upload-progress-container');
+    const bar = document.getElementById('upload-progress-bar');
+    const pct = document.getElementById('upload-progress-pct');
+    const status = document.getElementById('upload-status-text');
+
+    if (!box) return;
+
+    if (percent == null || percent < 0) {
+        box.classList.add('hidden');
+        if (bar) bar.style.width = '0%';
+        if (pct) pct.textContent = '0%';
+        return;
+    }
+
+    box.classList.remove('hidden');
+    const safe = Math.max(0, Math.min(100, Math.round(percent)));
+    if (bar) bar.style.width = `${safe}%`;
+    if (pct) pct.textContent = `${safe}%`;
+    if (status) status.textContent = statusText;
+}
+
+/**
  * Scrubs + compresses + uploads an image to Cloudflare R2
  */
 export async function uploadSecurePhoto(file, folderPath = 'evidence', onProgress = null) {
@@ -73,33 +97,39 @@ export async function uploadSecurePhoto(file, folderPath = 'evidence', onProgres
         throw new Error('Invalid input: Please select a valid image file.');
     }
 
+    const isAlreadyClean = Boolean(file.isCleaned) || Boolean(file.name && file.name.includes('_clean'));
+
+    if (!isAlreadyClean) {
+        showToast('🛡️ Stripping EXIF & location data...', 'info');
+    }
+
+    const preparedFile = isAlreadyClean
+        ? file
+        : await prepareMediaForUpload(file, {
+            maxWidth: 1920,
+            maxHeight: 1080
+        });
+
+    const uid = auth.currentUser?.uid || 'anonymous';
+    const fileId = crypto.randomUUID();
+    
+    const mimeSubtype = preparedFile.type ? preparedFile.type.split('/')[1] : 'jpeg';
+    const ext = mimeSubtype === 'png' ? 'png' : mimeSubtype === 'webp' ? 'webp' : 'jpg';
+
+    const keyPath = folderPath.includes(uid)
+        ? `${folderPath}/${fileId}.${ext}`
+        : `${folderPath}/${uid}/${fileId}.${ext}`;
+
     try {
-        const isAlreadyClean = Boolean(file.isCleaned) || Boolean(file.name && file.name.includes('_clean'));
-
-        if (!isAlreadyClean) {
-            showToast('🛡️ Stripping EXIF & location data...', 'info');
-        }
-
-        const preparedFile = isAlreadyClean
-            ? file
-            : await prepareMediaForUpload(file, {
-                maxWidth: 1920,
-                maxHeight: 1080
-            });
-
-        const uid = auth.currentUser?.uid || 'anonymous';
-        const fileId = crypto.randomUUID();
-        const ext = preparedFile.type === 'image/webp' ? 'webp' : 'jpg';
-
-        const keyPath = folderPath.includes(uid)
-            ? `${folderPath}/${fileId}.${ext}`
-            : `${folderPath}/${uid}/${fileId}.${ext}`;
-
+        setUploadProgress(0, 'Uploading photo...');
         const publicUrl = await executeUpload(
             preparedFile,
             keyPath,
             preparedFile.type || 'image/webp',
-            onProgress
+            (percent) => {
+                if (typeof onProgress === 'function') onProgress(percent);
+                setUploadProgress(percent, 'Uploading photo...');
+            }
         );
 
         await logAuditEvent?.('MEDIA_UPLOADED', {
@@ -113,6 +143,8 @@ export async function uploadSecurePhoto(file, folderPath = 'evidence', onProgres
         console.error('[Upload] Secure image processing failed:', err);
         showToast('❌ Image privacy processing failed', 'error');
         throw err;
+    } finally {
+        setUploadProgress(null);
     }
 }
 
@@ -134,15 +166,32 @@ export async function uploadSecureAudio(audioBlob, folderPath = 'evidence', onPr
         ? `${folderPath}/${fileId}.${ext}`
         : `${folderPath}/${uid}/${fileId}.${ext}`;
 
-    const publicUrl = await executeUpload(audioBlob, keyPath, mimeType, onProgress);
+    try {
+        setUploadProgress(0, 'Uploading audio...');
+        const publicUrl = await executeUpload(
+            audioBlob,
+            keyPath,
+            mimeType,
+            (percent) => {
+                if (typeof onProgress === 'function') onProgress(percent);
+                setUploadProgress(percent, 'Uploading audio...');
+            }
+        );
 
-    await logAuditEvent?.('MEDIA_UPLOADED', {
-        type: 'audio',
-        path: keyPath,
-        size: audioBlob.size
-    });
+        await logAuditEvent?.('MEDIA_UPLOADED', {
+            type: 'audio',
+            path: keyPath,
+            size: audioBlob.size
+        });
 
-    return publicUrl;
+        return publicUrl;
+    } catch (err) {
+        console.error('[Upload] Secure audio processing failed:', err);
+        showToast('❌ Audio upload failed', 'error');
+        throw err;
+    } finally {
+        setUploadProgress(null);
+    }
 }
 
 /**
@@ -153,24 +202,28 @@ export async function uploadSecureVideo(videoFile, folderPath = 'evidence', onPr
         throw new Error('Invalid input: Please select a valid video file.');
     }
 
+    showToast('🛡️ Preparing secure video upload...', 'info');
+
+    const mimeType = videoFile.type || 'video/mp4';
+    const ext = mimeType.includes('webm') ? 'webm' : mimeType.includes('quicktime') ? 'mov' : 'mp4';
+
+    const uid = auth.currentUser?.uid || 'anonymous';
+    const fileId = crypto.randomUUID();
+
+    const keyPath = folderPath.includes(uid)
+        ? `${folderPath}/${fileId}.${ext}`
+        : `${folderPath}/${uid}/${fileId}.${ext}`;
+
     try {
-        showToast('🛡️ Preparing secure video upload...', 'info');
-
-        const mimeType = videoFile.type || 'video/mp4';
-        const ext = mimeType.includes('webm') ? 'webm' : mimeType.includes('quicktime') ? 'mov' : 'mp4';
-
-        const uid = auth.currentUser?.uid || 'anonymous';
-        const fileId = crypto.randomUUID();
-
-        const keyPath = folderPath.includes(uid)
-            ? `${folderPath}/${fileId}.${ext}`
-            : `${folderPath}/${uid}/${fileId}.${ext}`;
-
+        setUploadProgress(0, 'Uploading video...');
         const publicUrl = await executeUpload(
             videoFile,
             keyPath,
             mimeType,
-            onProgress
+            (percent) => {
+                if (typeof onProgress === 'function') onProgress(percent);
+                setUploadProgress(percent, 'Uploading video...');
+            }
         );
 
         await logAuditEvent?.('MEDIA_UPLOADED', {
@@ -184,6 +237,8 @@ export async function uploadSecureVideo(videoFile, folderPath = 'evidence', onPr
         console.error('[Upload] Secure video processing failed:', err);
         showToast('❌ Video upload failed', 'error');
         throw err;
+    } finally {
+        setUploadProgress(null);
     }
 }
 
@@ -236,8 +291,8 @@ function executeUpload(blob, keyPath, mimeType, onProgress) {
 
         xhr.onload = () => {
             if (xhr.status >= 200 && xhr.status < 300) {
-                const canonicalUrl = `${R2_PUBLIC_BASE}/${keyPath}`;
-                resolve(canonicalUrl);
+                if (typeof onProgress === 'function') onProgress(100);
+                resolve(`${R2_PUBLIC_BASE}/${keyPath}`);
             } else {
                 reject(new Error(`Upload failed with status ${xhr.status}`));
             }
