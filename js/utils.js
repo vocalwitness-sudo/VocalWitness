@@ -247,10 +247,16 @@ export function listenToVoteCount(postId, callback) {
  * Real-time listener for the number of verified citizens.
  * Safe fallback added for slow network/aggregation queries.
  */
+/**
+ * Real-time listener for the number of verified citizens.
+ * Uses publicProfiles (publicly readable) instead of private users collection.
+ */
 export function listenToVerifiedCount(callback) {
     if (typeof callback !== 'function') return () => {};
+
+    // Prefer isVerified; fall back to isPhoneVerified if that is what you store on publicProfiles
     const q = query(
-        collection(db, "users"),
+        collection(db, "publicProfiles"),
         where("isVerified", "==", true)
     );
 
@@ -272,21 +278,26 @@ export function listenToVerifiedCount(callback) {
         },
         (error) => {
             console.warn("Verified count listener operating offline/limited:", error);
+            callback(0);
         }
     );
 
-  return () => {};
+    return createSafeUnsubscribe(unsubscribe);   // was returning a no-op () => {}
 }
 
 /**
- * Listen to how many people requested Live Arena notifications
+ * Listen to how many people requested Live Arena notifications.
+ * Note: interestedInArena currently lives on private users docs.
+ * Options:
+ *   A) Also mirror it onto publicProfiles and query there, or
+ *   B) Keep it on users and only allow authenticated reads / use a Cloud Function.
+ * For now we query publicProfiles with the same field name so you can decide.
  */
 export function listenToArenaInterest(callback) {
     if (typeof callback !== 'function') return () => {};
 
-
     const q = query(
-        collection(db, "users"),
+        collection(db, "publicProfiles"),
         where("interestedInArena", "==", true)
     );
 
@@ -299,9 +310,8 @@ export function listenToArenaInterest(callback) {
         }
     );
 
-   return () => {};
+    return createSafeUnsubscribe(unsubscribe);   // was returning a no-op () => {}
 }
-
 /**
  * Generic real-time document listener
  */
