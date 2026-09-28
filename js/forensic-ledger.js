@@ -74,7 +74,8 @@ function renderEntry(docSnap) {
     const author   = data.author || data.displayName || 'Anonymous Witness';
 
     const entry = document.createElement('div');
-    entry.className = 'ledger-entry glass rounded-3xl p-5 border border-emerald-500/20';
+    // Added cursor-pointer so users know the entire card is clickable
+    entry.className = 'ledger-entry glass rounded-3xl p-5 border border-emerald-500/20 cursor-pointer';
     entry.dataset.id = id;
 
     entry.innerHTML = `
@@ -165,14 +166,12 @@ function updateChainHealth(count, latestHash) {
 export function loadForensicLedger() {
     const container = document.getElementById('ledgerContainer');
     if (!container) {
-        console.error('ledgerContainer element not found in DOM');
         return;
     }
 
     if (isLoading) return;
     isLoading = true;
 
-    // Clean previous listener
     if (unsubscribe) {
         try { unsubscribe(); } catch (_) {}
         unsubscribe = null;
@@ -261,11 +260,9 @@ export function refreshLedger() {
 
 /**
  * Open the full forensic proof / verifier page
- * Name must do what it says.
  */
 export function viewFullEntry(id) {
     if (!id) return;
-    // Real navigation – this is what “View Full Proof” means
     window.location.href = `verify.html?id=${encodeURIComponent(id)}`;
 }
 
@@ -286,11 +283,8 @@ export function cleanupLedger() {
 // -------------------------------------------------------
 if (document.getElementById('ledgerContainer')) {
     document.addEventListener('DOMContentLoaded', () => {
-        console.log('📜 Forensic Ledger module loaded (name-aligned)');
-
         loadForensicLedger();
 
-        // Back button (supports both id="backBtn" and data-action="back")
         document.getElementById('backBtn')?.addEventListener('click', () => {
             if (window.history.length > 1) window.history.back();
             else window.location.href = 'index.html';
@@ -304,31 +298,47 @@ if (document.getElementById('ledgerContainer')) {
             }
         });
 
-        // Refresh button
         document.getElementById('refreshLedgerBtn')?.addEventListener('click', refreshLedger);
 
-        // Event delegation for dynamic buttons
+        // Event delegation handling clicks inside the ledger container
         const container = document.getElementById('ledgerContainer');
         if (container) {
             container.addEventListener('click', (e) => {
-                // Copy full hash
+                // Copy full hash button click
                 const copyBtn = e.target.closest('[data-action="copy-hash"]');
                 if (copyBtn) {
+                    e.stopPropagation(); // Prevent card click trigger
                     const hash = copyBtn.getAttribute('data-hash');
                     if (hash) copyFullHash(hash);
                     return;
                 }
 
-                // View Full Proof → real navigation
+                // Explicit View Full Proof button or card entry click
                 const viewBtn = e.target.closest('[data-action="view-proof"]');
                 if (viewBtn) {
                     const id = viewBtn.getAttribute('data-id');
                     viewFullEntry(id);
+                    return;
+                }
+
+                // General card entry click fallback (opens the full proof page)
+                const entryCard = e.target.closest('.ledger-entry');
+                if (entryCard) {
+                    const id = entryCard.dataset.id;
+                    if (id) {
+                        viewFullEntry(id);
+                    }
                 }
             });
         }
     });
 
-    // Cleanup on page unload
     window.addEventListener('beforeunload', cleanupLedger);
 }
+
+export default {
+    loadForensicLedger,
+    refreshLedger,
+    viewFullEntry,
+    cleanupLedger
+};
