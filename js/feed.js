@@ -78,11 +78,12 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
 
     ensureSearchAndFilterUI(feedContainer);
 
-    // Initial loading skeleton state
-    feedContainer.innerHTML = `
-        <div class="text-center py-12 text-zinc-500 animate-pulse" id="feed-loading">
-           Loading reports from the Square...
-        </div>`;
+    // Initial loading 
+feedContainer.innerHTML = `
+    <div class="text-center py-16 text-zinc-500" id="feed-loading">
+        <div class="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent"></div>
+        <p class="text-sm">Loading reports from the Square...</p>
+    </div>`;
 
     // Global event listener setup for set-sort
     window.addEventListener('feed-set-sort', (e) => {
@@ -338,11 +339,29 @@ function renderFilteredPosts(posts, container) {
     feedContainer.innerHTML = '';
 
     if (posts.length === 0) {
+        // Strong, motivating empty state
         feedContainer.innerHTML = `
-            <div class="text-center py-12 border border-dashed border-zinc-800 rounded-2xl" id="feed-empty-state">
-                <p class="text-zinc-400 font-medium">No reports in the Square yet..</p>
-                <p class="text-xs mt-1 text-zinc-500">Try adjusting your search terms or filters</p>
-            </div>`;
+            <div id="empty-feed-state" class="rounded-3xl border border-dashed border-emerald-500/30 bg-zinc-900/50 px-6 py-16 text-center">
+                <div class="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10 text-3xl">
+                    🗣️
+                </div>
+                <h4 class="text-xl font-bold text-white">The Square is waiting for the first sealed reports</h4>
+                <p class="mx-auto mt-3 max-w-md text-sm leading-relaxed text-zinc-400">
+                    Be among the first citizens to publish a cryptographically sealed report. 
+                    Your voice becomes part of the permanent public record.
+                </p>
+                <button type="button" 
+                        onclick="document.getElementById('mainInput')?.focus(); document.getElementById('btn-voice')?.scrollIntoView({behavior:'smooth', block:'center'});"
+                        class="mt-7 inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-6 py-3.5 text-sm font-bold text-black shadow-lg shadow-emerald-500/25 transition hover:bg-emerald-400 active:scale-[0.98]">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z"/>
+                    </svg>
+                    Record Live Voice Now
+                </button>
+                <p class="mt-4 text-xs text-zinc-500">Recommended • Stronger evidence weight</p>
+            </div>
+        `;
         return;
     }
 
