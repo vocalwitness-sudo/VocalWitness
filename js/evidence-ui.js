@@ -21,7 +21,7 @@ export function renderSealedBadge(hasPack) {
   if (!hasPack) return '';
   return `
     <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-950/60 border border-emerald-700/50 px-2.5 py-0.5 text-[10px] font-medium text-emerald-400 shadow-sm"
-          title="Cryptographically sealed. Verifies integrity of the record, not real-world truth.">
+        title="Cryptographically sealed. Verifies integrity of the record, not real-world truth.">
       <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
       🛡️ Sealed • Verifiable
     </span>
@@ -37,8 +37,8 @@ export function renderDownloadPackButton(testimonyId) {
     <button type="button"
             data-action="download-pack"
             data-id="${testimonyId}"
-            class="download-evidence-pack-btn inline-flex items-center gap-1 text-emerald-400 hover:text-emerald-300 transition text-xs font-medium">
-      📥 Download Pack
+            class="download-evidence-pack-btn inline-flex items-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-400 transition hover:bg-emerald-500/20">
+      📥 Evidence Pack
     </button>
   `;
 }
@@ -53,8 +53,8 @@ export function renderEvidenceToolbar(testimonyId, authorId = '') {
       <button type="button"
               data-action="download-pack"
               data-id="${testimonyId}"
-              class="download-evidence-pack-btn inline-flex items-center gap-1 text-emerald-400 hover:text-emerald-300 transition font-medium">
-        📥 Download Evidence Pack
+              class="download-evidence-pack-btn inline-flex items-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-400 transition hover:bg-emerald-500/20">
+        📥 Evidence Pack
       </button>
       <span class="text-slate-600">•</span>
       <button type="button"
