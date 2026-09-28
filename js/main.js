@@ -825,13 +825,56 @@ await setDoc(userRef, {
       showToast("🛡️ Report sealed and published", "success");
     }
 
-    // Show success UI (preferred path)
     const successEl = document.getElementById('publish-success');
+    const downloadPackBtn = document.getElementById('download-pack-after-publish');
+    const viewSquareBtn = document.getElementById('view-in-square-btn');
+    const publishedId = docRef?.id;
+
     if (successEl) {
       successEl.classList.remove('hidden');
       if (postBtn) postBtn.classList.add('hidden');
 
-      // Auto-hide after 4.5 seconds and restore form
+      // Wire Download Evidence Pack
+      if (downloadPackBtn) {
+        downloadPackBtn.onclick = async () => {
+          try {
+            downloadPackBtn.disabled = true;
+            downloadPackBtn.textContent = 'Generating…';
+            showToast('Generating cryptographic Evidence Pack…', 'info');
+
+            if (typeof handleDownloadEvidencePack === 'function' && publishedId) {
+              await handleDownloadEvidencePack(publishedId);
+            } else if (typeof evidencePackResult !== 'undefined' && evidencePackResult) {
+              const { downloadEvidencePack } = await import('./evidence-pack.js');
+              downloadEvidencePack(
+                evidencePackResult.fullPack || evidencePackResult,
+                publishedId || 'report'
+              );
+              showToast('✅ Evidence Pack downloaded', 'success');
+            } else {
+              showToast('Evidence Pack will be available on the post shortly', 'info');
+            }
+          } catch (err) {
+            console.error('[publish] Pack download failed:', err);
+            showToast('Could not prepare Evidence Pack', 'error');
+          } finally {
+            downloadPackBtn.disabled = false;
+            downloadPackBtn.innerHTML = '📥 Download Evidence Pack';
+          }
+        };
+      }
+
+      // Wire "View in Public Square"
+      if (viewSquareBtn) {
+        viewSquareBtn.onclick = () => {
+          document.getElementById('feed-container')?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        };
+      }
+
+      // Keep success visible longer so user can download the pack
       setTimeout(() => {
         successEl.classList.add('hidden');
         if (postBtn) postBtn.classList.remove('hidden');
@@ -845,11 +888,10 @@ await setDoc(userRef, {
         const fileInputEl = document.getElementById('mediaInput') || document.querySelector('input[type="file"]');
         if (fileInputEl) fileInputEl.value = '';
 
-        // Trigger state update
         window.dispatchEvent(new CustomEvent('media-changed'));
-      }, 4500);
+      }, 12000); // 12 seconds
     } else {
-      // Fallback reset
+      // Fallback reset (no success UI found)
       if (titleInput) titleInput.value = '';
       if (textarea) textarea.value = '';
       if (typeof mediaModule?.resetMediaState === 'function') {
