@@ -601,7 +601,7 @@
         <span class="truncate">Square</span>
       </button>
       
-      <!-- 2. Record -->
+     <!-- 2. Immutable Record Tab -->
       <button type="button" 
               id="tab-ledger"
               data-tab="ledger" 
@@ -610,7 +610,7 @@
               aria-controls="evidence-ledger"
               class="nav-tab flex-shrink-0 min-w-[4.5rem] h-11 items-center justify-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-900 px-3 text-xs font-medium text-zinc-300 transition hover:border-zinc-500 sm:h-12 sm:px-4 sm:text-sm">
         <span class="text-base leading-none" aria-hidden="true">📜</span>
-        <span class="truncate">Record</span>
+        <span class="truncate" data-i18n="nav_immutable_record">Immutable Record</span>
       </button>
       
       <!-- 3. Arena -->
@@ -890,12 +890,12 @@
     </div>
   </section>
 
-  <!-- ========== 2. PUBLIC RECORD ========== -->
-  <section id="evidence-ledger" class="hidden space-y-6" role="tabpanel" aria-label="Public Record" aria-hidden="true">
+<!-- ========== 2. IMMUTABLE RECORD ========== -->
+  <section id="evidence-ledger" class="hidden space-y-6" role="tabpanel" aria-label="Immutable Record" aria-hidden="true">
     <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
       <div>
-        <h2 class="text-2xl font-bold text-emerald-400">Public Record</h2>
-        <p class="mt-1 text-sm text-zinc-400">Protected • Timestamped • Cannot be changed</p>
+        <h2 class="text-2xl font-bold text-emerald-400" data-i18n="ledger_title">Immutable Record</h2>
+        <p class="mt-1 text-sm text-zinc-400" data-i18n="ledger_subtitle">Protected • Timestamped • Mathematically Unchangeable</p>
       </div>
       <div class="flex flex-wrap items-center gap-3">
         <span id="ledger-chain-status" class="rounded-full border border-zinc-700 bg-zinc-900 px-3.5 py-1.5 text-xs font-medium text-zinc-400">
@@ -903,7 +903,7 @@
         </span>
         <button id="refreshLedgerBtn" type="button"
                 class="flex h-10 items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 px-4 text-sm font-medium text-zinc-300 transition hover:border-emerald-500/50 hover:bg-zinc-800">
-          🔄 Refresh
+          🔄 <span data-i18n="btn_refresh">Refresh</span>
         </button>
       </div>
     </div>
@@ -911,9 +911,9 @@
     <div class="glass flex items-start gap-4 rounded-2xl border border-emerald-500/25 p-5">
       <div class="text-2xl" aria-hidden="true">🛡️</div>
       <div>
-        <p class="font-medium text-emerald-400">Your reports stay safe</p>
-        <p class="mt-1 text-sm text-zinc-400 leading-relaxed">
-          Every report is automatically sealed and linked. Once published, the original cannot be edited or deleted.
+        <p class="font-medium text-emerald-400" data-i18n="ledger_info_title">Your reports stay safe</p>
+        <p class="mt-1 text-sm text-zinc-400 leading-relaxed" data-i18n="ledger_info_desc">
+          Every report is cryptographically sealed and linked to the ledger. Once published, the original cannot be edited or deleted by anyone.
         </p>
       </div>
     </div>
