@@ -874,6 +874,35 @@
       </button>
     </div>
 
+    <!-- Success state after publish -->
+<div id="publish-success" class="mt-4 hidden rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-5 text-center">
+  <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/20 text-2xl">
+    🛡️
+  </div>
+  <h4 class="text-lg font-bold text-white">Report sealed and published</h4>
+  <p class="mt-1.5 text-sm text-zinc-400">
+    Your evidence is now part of the permanent public record.
+  </p>
+
+  <div class="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-center">
+    <button type="button"
+            id="download-pack-after-publish"
+            class="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-bold text-black shadow-lg shadow-emerald-500/25 transition hover:bg-emerald-400 active:scale-[0.98]">
+      📥 Download Evidence Pack
+    </button>
+    <button type="button"
+            id="view-in-square-btn"
+            class="inline-flex items-center justify-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-900 px-5 py-3 text-sm font-medium text-zinc-200 transition hover:bg-zinc-800">
+      View in Public Square ↓
+    </button>
+  </div>
+
+  <p class="mt-3 text-xs text-zinc-500">
+    Safe verification file with cryptographic hashes. No app installed.
+  </p>
+</div>
+    
+
     <!-- Recent Reports -->
     <div id="feed-container" class="space-y-6">
       <div class="flex items-center justify-between">
