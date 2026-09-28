@@ -706,7 +706,21 @@
       </p>
     </div>
 
-    <div class="glass mb-10 rounded-3xl border border-zinc-800/80 p-6 shadow-xl sm:p-8">
+    <!-- Quick Latest Reports Teaser (shown when feed is empty) -->
+<div id="latest-teaser" class="mb-6 hidden rounded-2xl border border-zinc-800 bg-zinc-900/60 px-4 py-3">
+  <div class="flex items-center justify-between">
+    <p class="text-sm font-medium text-zinc-300">
+      <span class="text-emerald-400">●</span> Latest sealed reports will appear here
+    </p>
+    <button type="button" 
+            onclick="document.getElementById('feed-container')?.scrollIntoView({behavior:'smooth'})"
+            class="text-xs font-medium text-emerald-400 hover:underline">
+      View all ↓
+    </button>
+  </div>
+</div>
+
+    <div class="glass mb-8 rounded-3xl border border-zinc-800/80 p-5 shadow-xl sm:p-6">
       
       <!-- Hidden file inputs -->
       <input type="file" id="photoInput" accept="image/jpeg,image/png,image/webp" capture="environment" class="hidden">
@@ -734,7 +748,7 @@
                     placeholder-zinc-500 focus:border-emerald-500 focus:outline-none transition">
 
       <!-- Main Text -->
-      <textarea id="mainInput" rows="5" maxlength="2000"
+      textarea id="mainInput" rows="4" maxlength="2000"
                 placeholder="What did you see or experience? Speak clearly and stick to the facts..."
                 class="w-full resize-none rounded-2xl border border-zinc-700 bg-zinc-900 p-5 text-base text-white 
                        placeholder-zinc-500 focus:border-emerald-500 focus:outline-none transition"></textarea>
@@ -873,21 +887,28 @@
           </select>
         </div>
       </div>
-      <div id="testimonies-feed" class="space-y-4">
-        <!-- Loading skeleton -->
-        <div class="animate-pulse space-y-4 rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6">
-          <div class="flex items-center gap-3">
-            <div class="h-10 w-10 rounded-full bg-zinc-800"></div>
-            <div class="flex-1 space-y-2">
-              <div class="h-3 w-1/4 rounded bg-zinc-800"></div>
-              <div class="h-2 w-1/6 rounded bg-zinc-800/60"></div>
-            </div>
-          </div>
-          <div class="h-4 w-3/4 rounded bg-zinc-800"></div>
-          <div class="h-16 rounded-xl bg-zinc-800/50"></div>
-        </div>
-      </div>
+     <div id="testimonies-feed" class="space-y-4">
+  <!-- Strong Empty State -->
+  <div id="empty-feed-state" class="rounded-3xl border border-dashed border-emerald-500/30 bg-zinc-900/50 px-6 py-16 text-center">
+    <div class="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10 text-3xl">
+      🗣️
     </div>
+    <h4 class="text-xl font-bold text-white">The Square is waiting for the first sealed reports</h4>
+    <p class="mx-auto mt-3 max-w-md text-sm leading-relaxed text-zinc-400">
+      Be among the first citizens to publish a cryptographically sealed report. 
+      Your voice becomes part of the permanent public record.
+    </p>
+    <button type="button" 
+            onclick="document.getElementById('mainInput')?.focus(); document.getElementById('btn-voice')?.scrollIntoView({behavior:'smooth', block:'center'});"
+            class="mt-7 inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-6 py-3.5 text-sm font-bold text-black shadow-lg shadow-emerald-500/25 transition hover:bg-emerald-400 active:scale-[0.98]">
+      <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z"/>
+      </svg>
+      Record Live Voice Now
+    </button>
+    <p class="mt-4 text-xs text-zinc-500">Recommended • Stronger evidence weight</p>
+  </div>
+</div>
   </section>
 
 <!-- ========== 2. IMMUTABLE RECORD ========== -->
