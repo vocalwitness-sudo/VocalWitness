@@ -71,7 +71,7 @@
             </div>
         </header>
 
-        <!-- INTEGRITY BANNER – name-true explanation -->
+        <!-- INTEGRITY BANNER -->
         <div class="glass rounded-3xl p-5 mb-6 border border-emerald-500/30">
             <div class="flex items-start gap-3">
                 <div class="text-2xl mt-0.5">🛡️</div>
@@ -86,7 +86,7 @@
             </div>
         </div>
 
-        <!-- LIVE CHAIN HEALTH – makes “Ledger” real -->
+        <!-- LIVE CHAIN HEALTH -->
         <div id="chainHealth" class="glass rounded-3xl p-4 mb-6 flex flex-wrap items-center gap-4 text-sm text-zinc-300">
             <div>
                 <span class="text-zinc-500">Sealed entries:</span>
@@ -118,7 +118,7 @@
             </div>
         </div>
 
-        <!-- FOOTER NOTES – honest & precise -->
+        <!-- FOOTER NOTES -->
         <div class="text-center text-xs text-zinc-500 space-y-2">
             <p>
                 All entries are cryptographically hashed, timestamped, and protected by 
@@ -200,7 +200,8 @@
             const author   = data.author || data.displayName || 'Anonymous Witness';
 
             const el = document.createElement('div');
-            el.className = 'ledger-entry glass rounded-3xl p-5 border border-emerald-500/20';
+            // Added cursor-pointer so users know the entire card is clickable
+            el.className = 'ledger-entry glass rounded-3xl p-5 border border-emerald-500/20 cursor-pointer';
             el.dataset.id = id;
 
             el.innerHTML = `
@@ -363,20 +364,22 @@
                 showToast('Forensic ledger refreshed', 'success');
             });
 
-            // Dynamic actions (copy + view proof)
+            // Dynamic actions (copy hash, view proof, and card clicks)
             ledgerContainer?.addEventListener('click', (e) => {
+                // If user clicks the copy button specifically, handle copy and stop propagation
                 const copyBtn = e.target.closest('[data-action="copy-hash"]');
                 if (copyBtn) {
+                    e.stopPropagation();
                     const h = copyBtn.getAttribute('data-hash');
                     if (h) copyHash(h);
                     return;
                 }
 
-                const viewBtn = e.target.closest('[data-action="view-proof"]');
-                if (viewBtn) {
-                    const id = viewBtn.getAttribute('data-id');
+                // Check if user clicked anywhere else on the ledger card entry
+                const entryCard = e.target.closest('.ledger-entry');
+                if (entryCard) {
+                    const id = entryCard.dataset.id;
                     if (id) {
-                        // Real navigation – name must do what it says
                         window.location.href = `verify.html?id=${encodeURIComponent(id)}`;
                     }
                 }
