@@ -339,35 +339,75 @@ function renderFilteredPosts(posts, container) {
     feedContainer.innerHTML = '';
 
     if (posts.length === 0) {
-        // Strong, motivating empty state
-        feedContainer.innerHTML = `
-            <div id="empty-feed-state" class="rounded-3xl border border-dashed border-emerald-500/30 bg-zinc-900/50 px-6 py-16 text-center">
-                <div class="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10 text-3xl">
-                    🗣️
+        // Detect if this is a filtered/search result or truly empty Square
+        const searchInput = document.getElementById('feedSearchInput');
+        const hasSearch = searchInput && searchInput.value.trim().length > 0;
+        const activeFilterBtn = document.querySelector('#filterBtnGroup .filter-btn[data-active="true"]');
+        const filterType = activeFilterBtn ? activeFilterBtn.getAttribute('data-filter') : 'all';
+        const isFiltered = hasSearch || (filterType && filterType !== 'all');
+
+        if (isFiltered) {
+            // Case 1: User searched or filtered and got zero results
+            feedContainer.innerHTML = `
+                <div class="rounded-3xl border border-dashed border-zinc-700 bg-zinc-900/40 px-6 py-14 text-center">
+                    <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-800 text-2xl">
+                        🔍
+                    </div>
+                    <h4 class="text-lg font-semibold text-white">No matching reports found</h4>
+                    <p class="mx-auto mt-2 max-w-sm text-sm text-zinc-400">
+                        Try different keywords or clear your filters to see more reports.
+                    </p>
+                    <button type="button" 
+                            onclick="
+                                const input = document.getElementById('feedSearchInput');
+                                if (input) input.value = '';
+                                document.querySelectorAll('#filterBtnGroup .filter-btn').forEach(btn => {
+                                    btn.setAttribute('data-active', 'false');
+                                    btn.className = 'filter-btn px-4 py-2 rounded-xl text-xs font-medium bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white transition';
+                                });
+                                const allBtn = document.querySelector('#filterBtnGroup .filter-btn[data-filter=\\'all\\']');
+                                if (allBtn) {
+                                    allBtn.setAttribute('data-active', 'true');
+                                    allBtn.className = 'filter-btn px-4 py-2 rounded-xl text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition';
+                                }
+                                applySearchAndFilter(document.getElementById('testimonies-feed'));
+                            "
+                            class="mt-6 inline-flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800 px-5 py-2.5 text-sm font-medium text-zinc-200 transition hover:bg-zinc-700">
+                        Clear search & filters
+                    </button>
                 </div>
-                <h4 class="text-xl font-bold text-white">The Square is waiting for the first sealed reports</h4>
-                <p class="mx-auto mt-3 max-w-md text-sm leading-relaxed text-zinc-400">
-                    Be among the first citizens to publish a cryptographically sealed report. 
-                    Your voice becomes part of the permanent public record.
-                </p>
-                <button type="button" 
-                        onclick="document.getElementById('mainInput')?.focus(); document.getElementById('btn-voice')?.scrollIntoView({behavior:'smooth', block:'center'});"
-                        class="mt-7 inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-6 py-3.5 text-sm font-bold text-black shadow-lg shadow-emerald-500/25 transition hover:bg-emerald-400 active:scale-[0.98]">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                              d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z"/>
-                    </svg>
-                    Record Live Voice Now
-                </button>
-                <p class="mt-4 text-xs text-zinc-500">Recommended • Stronger evidence weight</p>
-            </div>
-        `;
+            `;
+        } else {
+            // Case 2: Truly empty Public Square (no posts at all)
+            feedContainer.innerHTML = `
+                <div id="empty-feed-state" class="rounded-3xl border border-dashed border-emerald-500/30 bg-zinc-900/50 px-6 py-16 text-center">
+                    <div class="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10 text-3xl">
+                        🗣️
+                    </div>
+                    <h4 class="text-xl font-bold text-white">The Square is waiting for the first sealed reports</h4>
+                    <p class="mx-auto mt-3 max-w-md text-sm leading-relaxed text-zinc-400">
+                        Be among the first citizens to publish a cryptographically sealed report. 
+                        Your voice becomes part of the permanent public record.
+                    </p>
+                    <button type="button" 
+                            onclick="document.getElementById('mainInput')?.focus(); document.getElementById('btn-voice')?.scrollIntoView({behavior:'smooth', block:'center'});"
+                            class="mt-7 inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-6 py-3.5 text-sm font-bold text-black shadow-lg shadow-emerald-500/25 transition hover:bg-emerald-400 active:scale-[0.98]">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z"/>
+                        </svg>
+                        Record Live Voice Now
+                    </button>
+                    <p class="mt-4 text-xs text-zinc-500">Recommended • Stronger evidence weight</p>
+                </div>
+            `;
+        }
         return;
     }
 
     posts.forEach(post => renderSinglePostDOM(post.id, post, feedContainer));
 }
-
+  
 function renderSinglePostDOM(id, data, container) {
     const currentUser = auth.currentUser || state.currentUser;
     const isOwner = currentUser && currentUser.uid === data.authorId;
