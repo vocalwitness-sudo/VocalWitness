@@ -163,7 +163,7 @@ function renderWitnessGrid(people) {
             <div class="flex items-start gap-4">
                 <div class="h-12 w-12 shrink-0 rounded-full bg-zinc-800 flex items-center justify-center text-xl overflow-hidden">
                     ${p.photoURL
-                        ? `<img src="${p.photoURL}" alt="" class="h-full w-full object-cover">`
+                        ? `<img src="${escapeHtml(p.photoURL)}" alt="" class="h-full w-full object-cover">`
                         : '🛡️'}
                 </div>
                 <div class="min-w-0 flex-1">
@@ -175,7 +175,7 @@ function renderWitnessGrid(people) {
                                 ? `<span class="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-medium text-emerald-400">Phone</span>`
                                 : ''}
                     </div>
-                    <p class="mt-1 text-xs text-zinc-400">Rep: ${p.reputation}</p>
+                    <p class="mt-1 text-xs text-zinc-400">Rep: ${p.reputation ?? 0}</p>
                     ${p.bio ? `<p class="mt-2 text-sm text-zinc-300 line-clamp-2">${escapeHtml(p.bio)}</p>` : ''}
                 </div>
             </div>
@@ -185,6 +185,7 @@ function renderWitnessGrid(people) {
 
 /**
  * Load verified people into the Witness tab grid
+ * Uses publicProfiles (publicly readable) instead of private users collection.
  * @param {'all'|'zk'|'phone'} filter
  */
 export async function loadVerifiedWitnesses(filter = 'all') {
@@ -207,7 +208,7 @@ export async function loadVerifiedWitnesses(filter = 'all') {
         // Primary query – Higher Trust (ZK)
         if (filter === 'all' || filter === 'zk') {
             const zkQ = query(
-                collection(db, 'users'),
+                collection(db, 'publicProfiles'),
                 where('zkVerified', '==', true),
                 orderBy('reputation', 'desc'),
                 limit(30)
@@ -216,12 +217,12 @@ export async function loadVerifiedWitnesses(filter = 'all') {
             zkSnap.forEach(docSnap => {
                 const d = docSnap.data();
                 people.push({
-                    uid: docSnap.id,
+                    uid: d.uid || docSnap.id,
                     displayName: d.displayName || d.name || 'Anonymous Witness',
                     photoURL: d.photoURL || null,
                     reputation: d.reputation || 0,
                     zkVerified: true,
-                    isPhoneVerified: !!(d.isPhoneVerified || d.hasVerifiedPhone),
+                    isPhoneVerified: !!(d.isPhoneVerified || d.hasVerifiedPhone || d.isVerified),
                     bio: d.bio || ''
                 });
             });
@@ -229,19 +230,19 @@ export async function loadVerifiedWitnesses(filter = 'all') {
 
         // Phone verified (when filter is phone or when all returned nothing)
         if (filter === 'phone' || (filter === 'all' && people.length === 0)) {
+            // Prefer isPhoneVerified; fall back to isVerified if that is what you store
             const phoneQ = query(
-                collection(db, 'users'),
+                collection(db, 'publicProfiles'),
                 where('isPhoneVerified', '==', true),
                 orderBy('reputation', 'desc'),
                 limit(30)
             );
             const phoneSnap = await getDocs(phoneQ);
             phoneSnap.forEach(docSnap => {
-                // avoid duplicates
-                if (people.some(p => p.uid === docSnap.id)) return;
+                if (people.some(p => p.uid === (docSnap.data().uid || docSnap.id))) return;
                 const d = docSnap.data();
                 people.push({
-                    uid: docSnap.id,
+                    uid: d.uid || docSnap.id,
                     displayName: d.displayName || d.name || 'Anonymous Witness',
                     photoURL: d.photoURL || null,
                     reputation: d.reputation || 0,
