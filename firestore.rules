@@ -481,14 +481,17 @@ function isSafeUserUpdate() {
     // PUBLIC PROFILES (safe projection)
     // ==========================================
     match /publicProfiles/{uid} {
-      allow read: if true;
-      allow create, update: if isOwner(uid)
-        && request.resource.data.keys().hasOnly([
-             'uid', 'displayName', 'photoURL', 'username',
-             'bio', 'region', 'tierBadge', 'updatedAt'
-           ]);
-      allow delete: if false;
-    }
+  allow read: if true;
+  allow create, update: if isOwner(uid)
+    && request.resource.data.keys().hasOnly([
+         'uid', 'displayName', 'photoURL', 'username',
+         'bio', 'region', 'tierBadge', 'updatedAt',
+         'zkVerified', 'isPhoneVerified', 'isVerified',
+         'reputation', 'tier'
+       ])
+    && request.resource.data.uid == uid;
+  allow delete: if false;
+}
 
     // ==========================================
     // LIVE ARENA ROOMS
