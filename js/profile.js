@@ -138,12 +138,10 @@ async function ensureUserProfile(user) {
     try {
         const userRef = doc(db, "users", user.uid);
         const snap = await getDoc(userRef);
-
         if (!snap.exists()) {
             console.log("New user detected. Provisioning profile...");
-            // Payload MUST satisfy isSafeUserCreation() in firestore.rules
             await setDoc(userRef, {
-                uid: user.uid,                          // REQUIRED by rules
+                uid: user.uid,
                 email: user.email || "",
                 displayName: user.displayName || "Anonymous Witness",
                 firstName: "",
@@ -159,16 +157,12 @@ async function ensureUserProfile(user) {
                 activeWitnessCycle: false,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp()
-                // Do NOT include: reputation, isPhoneVerified,
-                // hasVerifiedPhone, zkVerified, role, etc.
             });
         }
-
         listenToUserProfile(user.uid);
     } catch (error) {
         console.error("Error provisioning user profile:", error);
         showToast(t("profile.error_loading", "Error initializing profile"), "error");
-        // Still attempt to listen so spinner is not permanent
         try {
             listenToUserProfile(user.uid);
         } catch (_) {
@@ -182,7 +176,6 @@ async function ensureUserProfile(user) {
  */
 function listenToUserProfile(userId) {
     if (userUnsubscribe) userUnsubscribe();
-
     const userRef = doc(db, "users", userId);
     userUnsubscribe = onSnapshot(
         userRef,
@@ -223,29 +216,6 @@ function renderProfileError(err) {
             <p class="text-sm text-zinc-400 max-w-sm">${sanitize(msg)}</p>
             <button type="button" onclick="location.reload()"
                     class="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl cursor-pointer">
-                Retry
-            </button>
-        </div>
-    `;
-}
-function renderProfileError(err) {
-    const content =
-        document.getElementById("mainProfileContent") ||
-        document.getElementById("profileContent") ||
-        document.getElementById("modalProfileContent");
-    if (!content) return;
-
-    content.innerHTML = `
-        <div class="flex flex-col items-center justify-center py-20 space-y-4 text-center px-6">
-            <div class="text-4xl">⚠️</div>
-            <h2 class="text-lg font-bold text-white">Could not load profile</h2>
-            <p class="text-sm text-zinc-400 max-w-sm">
-                ${err?.code === "permission-denied"
-                    ? "Permission denied while creating/reading your profile. Check Firestore rules."
-                    : (err?.message || "Unknown error")}
-            </p>
-            <button onclick="location.reload()"
-                    class="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl">
                 Retry
             </button>
         </div>
