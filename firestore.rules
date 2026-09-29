@@ -83,7 +83,7 @@ service cloud.firestore {
       );
     }
 
-    function isSafeUserCreation() {
+       function isSafeUserCreation() {
       return request.resource.data.uid == request.auth.uid
         && request.resource.data.uid is string
         && request.resource.data.keys().hasAll(['uid', 'email', 'displayName', 'createdAt'])
@@ -97,49 +97,48 @@ service cloud.firestore {
              'credibilityScore', 'zkVerified', 'weeklyPoints',
              'phoneNumber', 'phone', 'phoneHash'
            ]);
-&& (!('activeWitnessCycle' in request.resource.data) || request.resource.data.activeWitnessCycle is bool)
-&& (!('lastCycleStart' in request.resource.data) || request.resource.data.lastCycleStart is timestamp);
     }
 
-function isSafeUserUpdate() {
-  // Fields the client is NEVER allowed to change
-  let forbidden = [
-    'role', 'isBanned', 'badges', 'admin', 'moderator',
-    'zkVerified', 'score', 'isVerified', 'uid', 'tier',
-    'hasVerifiedPhone', 'isPhoneVerified', 'phoneVerifiedAt',
-    'reputation', 'credibilityScore', 'weeklyPoints',
-    'phoneNumber', 'phone', 'phoneHash', 'humanityScore'
-'lastTestimonyAt', 'following', 'trusted', 'followers', 'privacyMode', 'hidePublicInfo',
-'activeWitnessCycle', 'lastCycleStart'
-  ];
+    function isSafeUserUpdate() {
+      let forbidden = [
+        'role', 'isBanned', 'badges', 'admin', 'moderator',
+        'zkVerified', 'score', 'isVerified', 'uid', 'tier',
+        'hasVerifiedPhone', 'isPhoneVerified', 'phoneVerifiedAt',
+        'reputation', 'credibilityScore', 'weeklyPoints',
+        'phoneNumber', 'phone', 'phoneHash', 'humanityScore'
+      ];
 
-  // Fields the client IS allowed to change
-  let allowed = [
-    'email', 'displayName', 'photoURL', 'bio',
-    'location', 'website', 'region', 'username',
-    'updatedAt', 'lastLoginAt', 'lastLogin', 'lastActive', 'lastUpdated',
-    'theme', 'language', 'interestedInArena', 'arenaNotifyAt', 'lastNameChange',
-    'lastTestimonyAt', 'following', 'trusted', 'followers', 'privacyMode', 'hidePublicInfo'
-  ];
+      let allowed = [
+        'email', 'displayName', 'photoURL', 'bio',
+        'location', 'website', 'region', 'username',
+        'updatedAt', 'lastLoginAt', 'lastLogin', 'lastActive', 'lastUpdated',
+        'theme', 'language', 'interestedInArena', 'arenaNotifyAt', 'lastNameChange',
+        'lastTestimonyAt', 'following', 'trusted', 'followers',
+        'privacyMode', 'hidePublicInfo',
+        'activeWitnessCycle', 'lastCycleStart'
+      ];
 
-  let changed = request.resource.data.diff(resource.data).affectedKeys();
+      let changed = request.resource.data.diff(resource.data).affectedKeys();
 
-  return !changed.hasAny(forbidden)
-      && changed.hasOnly(allowed)
-      && (!('email' in request.resource.data) || request.resource.data.email is string)
-      && (!('displayName' in request.resource.data) || request.resource.data.displayName is string)
-      && (!('photoURL' in request.resource.data)
-          || request.resource.data.photoURL == null
-          || isValidMediaUrl(request.resource.data.photoURL))
-      && (!('bio' in request.resource.data) || request.resource.data.bio is string)
-      && (!('interestedInArena' in request.resource.data) || request.resource.data.interestedInArena is bool)
-      && (!('following' in request.resource.data) || request.resource.data.following is list)
-      && (!('trusted' in request.resource.data) || request.resource.data.trusted is list)
-      && (!('followers' in request.resource.data) || request.resource.data.followers is list)
-      && (!('privacyMode' in request.resource.data) || request.resource.data.privacyMode is string);
-      && (!('privacyMode' in request.resource.data) || request.resource.data.privacyMode is string)
-      && (!('hidePublicInfo' in request.resource.data) || request.resource.data.hidePublicInfo is bool);
-  }
+      return !changed.hasAny(forbidden)
+          && changed.hasOnly(allowed)
+          && (!('email' in request.resource.data) || request.resource.data.email is string)
+          && (!('displayName' in request.resource.data) || request.resource.data.displayName is string)
+          && (!('photoURL' in request.resource.data)
+              || request.resource.data.photoURL == null
+              || isValidMediaUrl(request.resource.data.photoURL))
+          && (!('bio' in request.resource.data) || request.resource.data.bio is string)
+          && (!('interestedInArena' in request.resource.data) || request.resource.data.interestedInArena is bool)
+          && (!('following' in request.resource.data) || request.resource.data.following is list)
+          && (!('trusted' in request.resource.data) || request.resource.data.trusted is list)
+          && (!('followers' in request.resource.data) || request.resource.data.followers is list)
+          && (!('privacyMode' in request.resource.data) || request.resource.data.privacyMode is string)
+          && (!('hidePublicInfo' in request.resource.data) || request.resource.data.hidePublicInfo is bool)
+          && (!('activeWitnessCycle' in request.resource.data) || request.resource.data.activeWitnessCycle is bool)
+          && (!('lastCycleStart' in request.resource.data)
+              || request.resource.data.lastCycleStart is timestamp
+              || request.resource.data.lastCycleStart == request.time);
+    }
 
     function isValidNotification() {
       return request.resource.data.keys().hasAll(['type', 'createdAt'])
