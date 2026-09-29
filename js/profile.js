@@ -15,6 +15,7 @@ import {
 import { auth, db } from './firebase-config.js';
 import { AppState } from './app-state.js';
 import { giveSupport, getRemainingSupportBudget } from './reputation.js';
+import { enrollTotpMfa, finalizeTotpEnrollment, getEnrolledFactors, unenrollMfa } from "./mfa.js";
 import {
     getUserTierData,
     hasStewardAccess,
@@ -973,7 +974,6 @@ export async function triggerPasswordReset() {
     return;
   }
 
-  // Social / anonymous accounts cannot use email password reset
   const providers = (user.providerData || []).map(p => p.providerId);
   const hasPassword = providers.includes('password');
   if (!hasPassword) {
@@ -1011,7 +1011,106 @@ export async function triggerPasswordReset() {
 }
 
 window.handlePasswordReset = triggerPasswordReset;
+// (The rogue closing brace '}' that caused the syntax error has been removed here)
+
+// ====================== INIT PROFILE MODALS (CSP-safe – SINGLE SOURCE OF TRUTH) ======================
+export function initProfileModals() {
+    document.getElementById('cancelEditProfileBtn')?.addEventListener('click', closeEditProfile);
+    document.getElementById('btn-cancel-edit')?.addEventListener('click', closeEditProfile);
+    document.getElementById('avatarInput')?.addEventListener('change', handleImagePreview);
+    document.getElementById('editProfileForm')?.addEventListener('submit', handleSaveProfile);
+    document.getElementById('closeSettingsBtn')?.addEventListener('click', closeSettings);
+    document.getElementById('triggerPasswordResetBtn')?.addEventListener('click', triggerPasswordReset);
+
+    document.getElementById('exportUserDataPdfBtn')?.addEventListener('click', () => {
+        if (!currentUserData) {
+            showToast("Profile data not loaded", "error");
+            return;
+        }
+        generateAndDownloadPDF(currentUserData, db);
+    });
+
+    document.getElementById('settingsSignOutBtn')?.addEventListener('click', handleSignOut);
+
+    document.getElementById('panicClearBtn')?.addEventListener('click', async () => {
+        const confirmed = confirm(
+            '⚠️ EMERGENCY CLEAR\n\nErases ALL VocalWitness data on THIS device and signs you out.\nPublic ledger is unchanged.\n\nContinue?'
+        );
+        if (!confirmed) return;
+
+        if (typeof window.panicClearDevice === 'function') {
+            await window.panicClearDevice({ redirectUrl: 'https://www.accuweather.com' });
+        } else {
+            localStorage.clear();
+            sessionStorage.clear();
+            await handleSignOut();
+        }
+    });
+
+    // ====================== REAL MFA / 2FA WIRING ======================
+    try {
+        const factors = getEnrolledFactors();
+        const toggle2FAEl = document.getElementById("toggle2FA");
+        if (toggle2FAEl) {
+            toggle2FAEl.checked = factors && factors.length > 0;
+        }
+    } catch (err) {
+        console.error("Error loading enrolled factors:", err);
+    }
+
+    document.getElementById('toggle2FA')?.addEventListener('change', async (e) => {
+        const user = auth.currentUser;
+        if (!user) {
+            e.target.checked = false;
+            showToast("Sign in required for 2FA", "error");
+            return;
+        }
+
+        if (e.target.checked) {
+            e.target.checked = false; // Stay off until enrollment succeeds
+            try {
+                const { totpSecret, qrCodeUrl, secretKey } = await enrollTotpMfa();
+                if (typeof openMfaEnrollmentModal === 'function') {
+                    openMfaEnrollmentModal({ qrCodeUrl, secretKey, totpSecret });
+                } else {
+                    const mfaModal = document.getElementById('mfaModal');
+                    if (mfaModal) mfaModal.classList.remove('hidden');
+                    else showToast("MFA enrollment modal unavailable", "error");
+                }
+            } catch (err) {
+                console.error(err);
+                showToast(err.message || "Could not start 2FA setup", "error");
+            }
+        } else {
+            try {
+                const factors = getEnrolledFactors();
+                if (factors && factors[0]) {
+                    await unenrollMfa(factors[0].uid);
+                    showToast("🛡️ 2FA disabled successfully", "success");
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Failed to disable 2FA", "error");
+                e.target.checked = true; // Revert toggle state on failure
+            }
+        }
+    });
+
+    document.getElementById('closeProfileModalBtn')?.addEventListener('click', closeProfile);
+    document.getElementById('closeEditProfileBtn')?.addEventListener('click', closeEditProfile);
+    document.getElementById('btn-close-edit-profile')?.addEventListener('click', closeEditProfile);
+
+    document.getElementById('profileModal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'profileModal') closeProfile();
+    });
+    document.getElementById('editProfileModal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'editProfileModal') closeEditProfile();
+    });
+    document.getElementById('settingsModal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'settingsModal') closeSettings();
+    });
 }
+
 
 // ====================== LANGUAGE CHANGE SUPPORT ======================
 window.addEventListener('languageChanged', () => {
