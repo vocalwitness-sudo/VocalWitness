@@ -97,6 +97,8 @@ service cloud.firestore {
              'credibilityScore', 'zkVerified', 'weeklyPoints',
              'phoneNumber', 'phone', 'phoneHash'
            ]);
+&& (!('activeWitnessCycle' in request.resource.data) || request.resource.data.activeWitnessCycle is bool)
+&& (!('lastCycleStart' in request.resource.data) || request.resource.data.lastCycleStart is timestamp);
     }
 
 function isSafeUserUpdate() {
@@ -107,6 +109,8 @@ function isSafeUserUpdate() {
     'hasVerifiedPhone', 'isPhoneVerified', 'phoneVerifiedAt',
     'reputation', 'credibilityScore', 'weeklyPoints',
     'phoneNumber', 'phone', 'phoneHash', 'humanityScore'
+'lastTestimonyAt', 'following', 'trusted', 'followers', 'privacyMode', 'hidePublicInfo',
+'activeWitnessCycle', 'lastCycleStart'
   ];
 
   // Fields the client IS allowed to change
@@ -317,6 +321,24 @@ function isSafeUserUpdate() {
       allow delete: if isNotBanned()
         && resource.data.creatorId == request.auth.uid;
     }
+
+
+match /witnessCycles/{cycleId} {
+  allow read: if isAuthenticated();
+  allow create: if isNotBanned()
+    && isWitnessCircle()
+    && request.resource.data.witnessId == request.auth.uid
+    && request.resource.data.status is string
+    && request.resource.data.status in ['active', 'ended']
+    && (request.resource.data.createdAt is timestamp
+        || request.resource.data.createdAt == request.time);
+  allow update: if isNotBanned()
+    && resource.data.witnessId == request.auth.uid
+    && request.resource.data.diff(resource.data).affectedKeys()
+         .hasOnly(['status', 'endedAt', 'updatedAt']);
+  allow delete: if false;
+}
+
 
     // ==========================================
     // CORROBORATIONS & FORENSIC LEDGER
