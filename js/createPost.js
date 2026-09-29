@@ -14,6 +14,7 @@ import { analyzeReportContent } from './composer.js';
 import { processAndUploadMedia } from './media-pipeline.js';
 import { parsePostMetadata } from './utils/parser.js';
 import { state } from './app-state.js';
+import { createEvidencePack } from './evidence-pack.js'; // 👈 Imported evidence pack builder
 
 /**
  * Computes a SHA-256 hash of a file or text buffer using native Web Crypto API.
@@ -83,7 +84,7 @@ export async function submitTestimony({
     // AI Content Moderation Pre-Flight Check
     // -------------------------------------------------------------
     let moderationResult = { flagged: false, category: 'general', status: 'approved', flags: [] };
-    
+     
     if (content.trim().length > 0 && typeof analyzeReportContent === 'function') {
         try {
             const aiCheck = await analyzeReportContent(content.trim());
@@ -147,6 +148,36 @@ export async function submitTestimony({
     // 3. Parse hashtags and mentions from content text
     const { hashtags, mentions, cleanedContent } = parsePostMetadata(content);
 
+    // 3.5. Build Evidence Pack Cryptographic Manifest
+    let firestorePack = null;
+    let packCoreHash = null;
+    try {
+        const packResult = await createEvidencePack({
+            content: cleanedContent || '',
+            bodyHash: forensicHash,
+            media: {
+                imageUrl: mediaType === 'image' ? mediaUrl : null,
+                imageHash: mediaType === 'image' ? forensicHash : null,
+                videoUrl: mediaType === 'video' ? mediaUrl : null,
+                videoHash: mediaType === 'video' ? forensicHash : null,
+                audioUrl: mediaType === 'audio' ? mediaUrl : null,
+                audioHash: mediaType === 'audio' ? forensicHash : null,
+            },
+            identity: {
+                mode: isAnonymous ? 'ANONYMOUS' : 'IDENTIFIED',
+                authorId: isAnonymous ? null : user.uid,
+                displayName: isAnonymous ? null : (user.displayName || null),
+            },
+            channel,
+            forensicHash,
+            testimonyId: null, // Populated after addDoc if needed
+        });
+        firestorePack = packResult.firestorePack;
+        packCoreHash = packResult.packCoreHash;
+    } catch (packErr) {
+        console.warn("Evidence pack generation encountered an issue, proceeding without pack:", packErr);
+    }
+
     // 4. Assemble Firestore Payload – MUST satisfy the create rules
     const payload = {
         content: cleanedContent || '',
@@ -169,6 +200,10 @@ export async function submitTestimony({
         isDeleted: false,
         profileMode: state.profileMode || 'ANONYMOUS',
 
+        // Evidence Pack Cryptographic References
+        evidencePack: firestorePack,
+        packCoreHash: packCoreHash,
+
         // Moderation fields
         moderationStatus: moderationResult.status,
         moderationFlags: moderationResult.flags,
@@ -190,7 +225,7 @@ export async function submitTestimony({
     } catch (err) {
         console.warn("Could not update lastTestimonyAt:", err);
     }
-    
+  
     if (moderationResult.status === 'pending_review') {
         showToast("⚠️ Testimony submitted and queued for community review.", "warning");
     } else {
