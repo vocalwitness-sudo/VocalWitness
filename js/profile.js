@@ -1073,7 +1073,6 @@ window.openSettings = openSettings;
 window.closeSettings = closeSettings;
 window.handleSaveProfile = handleSaveProfile;
 window.saveProfileChanges = saveProfileChanges;
-window.handleImagePreview = handleImagePreview;
 window.handleSignOut = handleSignOut;
 window.handleProfileStartCycle = handleProfileStartCycle;
 window.triggerPasswordReset = triggerPasswordReset;
