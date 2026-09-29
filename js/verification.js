@@ -6,7 +6,7 @@ import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/
 import { db, auth } from "./firebase-config.js";
 import { showToast } from "./utils.js";
 import { canAdvanceTier, refreshTierAndUI, TIERS, getUserProfile } from './tier.js';
-import { generateZKProofAsync } from './zk-client.js';
+import { elevateWithZKProof } from './zk-client.js';
 import { 
   sendPhoneVerification, 
   verifyPhoneCode, 
@@ -185,6 +185,9 @@ async function buildZKInputs() {
 /**
  * ZK Verification → Witness Circle
  */
+/**
+ * Triggers the end-to-end server-side ZK verification & elevation flow
+ */
 export async function startZKVerification() {
   try {
     if (!auth.currentUser) {
@@ -204,13 +207,11 @@ export async function startZKVerification() {
       return showToast(`Verification blocked: ${advanceResult.reason}`, "warning");
     }
 
-    const inputs = await buildZKInputs();
-    console.log("ZK Inputs prepared:", inputs);
-
     showToast("Generating cryptographic proof... This may take a few seconds", "info");
     
+    // Use the unified server-backed elevation function
     const zkResult = await withTimeout(
-      generateZKProofAsync(inputs),
+      elevateWithZKProof(),
       45000,
       "ZK proof generation timed out"
     );
@@ -235,11 +236,12 @@ export async function startZKVerification() {
       "Database update timed out"
     );
 
-   const sealLabel = zkResult.isFallback
-  ? `Integrity Seal (${zkResult.proofType || 'Hash/Signature'})`
-  : 'ZK-SNARK Seal';
+    const sealLabel = zkResult.isFallback
+      ? `Integrity Seal (${zkResult.proofType || 'Hash/Signature'})`
+      : 'ZK-SNARK Seal';
 
-showToast(`🛡️ Cryptographic seal complete! You now have a ${sealLabel}`, "success");
+    showToast(`🛡️ Cryptographic seal complete! You now have a ${sealLabel}`, "success");
+    
     if (typeof refreshTierAndUI === 'function') refreshTierAndUI();
 
   } catch (error) {
@@ -247,7 +249,6 @@ showToast(`🛡️ Cryptographic seal complete! You now have a ${sealLabel}`, "s
     showToast(error.message || "ZK Verification failed or timed out", "error");
   }
 }
-
 /**
  * Handle Send OTP button
  */
