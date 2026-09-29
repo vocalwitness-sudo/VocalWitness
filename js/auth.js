@@ -23,6 +23,7 @@ import { showToast } from './utils.js';
 import { updateAppState } from './app-state.js';
 import { applyTierTheme, updateTierBadge, clearProfileCache } from './tier.js';
 import { initNotifications } from './notifications.js';
+import { onAuthStateChangedForZk } from './zk-secret-manager.js';
 
 import { 
   doc, 
@@ -317,7 +318,7 @@ export async function logout() {
     } catch (_) {}
 
     await signOut(auth);
-
+    onAuthStateChangedForZk(null);
     updateAppState({ isAuthenticated: false, currentUser: null });
     updateVerificationUI(false);
     showToast("Signed out successfully", "success");
@@ -602,12 +603,14 @@ export function initAuth() {
       });
 
     // Auth state observer
-    onAuthStateChanged(auth, async (user) => {
-      try {
-        if (user) {
-          updateAppState({ isAuthenticated: true, currentUser: user });
-          await createOrUpdateUser(user);
-          refreshTierUI();
+ onAuthStateChanged(auth, async (user) => {
+  try {
+    // ZK session cache: clear on sign-out, ready on sign-in
+    onAuthStateChangedForZk(user);
+
+    if (user) {
+      updateAppState({ isAuthenticated: true, currentUser: user });
+      await createOrUpdateUser(user);
           try {
             if (typeof initNotifications === 'function') {
               initNotifications(user.uid);
