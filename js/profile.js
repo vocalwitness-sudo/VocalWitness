@@ -1187,12 +1187,436 @@ document.addEventListener('DOMContentLoaded', () => {
         manager.init();
     }
 
-    initProfileModals();
+// ====================== INIT PROFILE MODALS (CSP-safe – SINGLE SOURCE OF TRUTH) ======================
+export function initProfileModals() {
+    document.getElementById('cancelEditProfileBtn')?.addEventListener('click', closeEditProfile);
+    document.getElementById('btn-cancel-edit')?.addEventListener('click', closeEditProfile);
+    document.getElementById('avatarInput')?.addEventListener('change', handleImagePreview);
+    document.getElementById('editProfileForm')?.addEventListener('submit', handleSaveProfile);
+    document.getElementById('closeSettingsBtn')?.addEventListener('click', closeSettings);
+    document.getElementById('triggerPasswordResetBtn')?.addEventListener('click', triggerPasswordReset);
+
+    document.getElementById('exportUserDataPdfBtn')?.addEventListener('click', () => {
+        if (!currentUserData) {
+            showToast("Profile data not loaded", "error");
+            return;
+        }
+        generateAndDownloadPDF(currentUserData, db);
+    });
+
+    document.getElementById('settingsSignOutBtn')?.addEventListener('click', handleSignOut);
+
+    document.getElementById('panicClearBtn')?.addEventListener('click', async () => {
+        const confirmed = confirm(
+            '⚠️ EMERGENCY CLEAR\n\nErases ALL VocalWitness data on THIS device and signs you out.\nPublic ledger is unchanged.\n\nContinue?'
+        );
+        if (!confirmed) return;
+
+        if (typeof window.panicClearDevice === 'function') {
+            await window.panicClearDevice({ redirectUrl: 'https://www.accuweather.com' });
+        } else {
+            localStorage.clear();
+            sessionStorage.clear();
+            await handleSignOut();
+        }
+    });
+
+    // ====================== REAL MFA / 2FA WIRING ======================
+    try {
+        const factors = getEnrolledFactors();
+        const toggle2FAEl = document.getElementById("toggle2FA");
+        if (toggle2FAEl) {
+            toggle2FAEl.checked = factors && factors.length > 0;
+        }
+    } catch (err) {
+        console.error("Error loading enrolled factors:", err);
+    }
+
+    document.getElementById('toggle2FA')?.addEventListener('change', async (e) => {
+        const user = auth.currentUser;
+        if (!user) {
+            e.target.checked = false;
+            showToast("Sign in required for 2FA", "error");
+            return;
+        }
+
+        if (e.target.checked) {
+            e.target.checked = false; // Stay off until enrollment succeeds
+            try {
+                const { totpSecret, qrCodeUrl, secretKey } = await enrollTotpMfa();
+                if (typeof openMfaEnrollmentModal === 'function') {
+                    openMfaEnrollmentModal({ qrCodeUrl, secretKey, totpSecret });
+                } else {
+                    const mfaModal = document.getElementById('mfaModal');
+                    if (mfaModal) mfaModal.classList.remove('hidden');
+                    else showToast("MFA enrollment modal unavailable", "error");
+                }
+            } catch (err) {
+                console.error(err);
+                showToast(err.message || "Could not start 2FA setup", "error");
+            }
+        } else {
+            try {
+                const factors = getEnrolledFactors();
+                if (factors && factors[0]) {
+                    await unenrollMfa(factors[0].uid);
+                    showToast("🛡️ 2FA disabled successfully", "success");
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Failed to disable 2FA", "error");
+                e.target.checked = true; // Revert toggle state on failure
+            }
+        }
+    });
+
+    document.getElementById('closeProfileModalBtn')?.addEventListener('click', closeProfile);
+    document.getElementById('closeEditProfileBtn')?.addEventListener('click', closeEditProfile);
+    document.getElementById('btn-close-edit-profile')?.addEventListener('click', closeEditProfile);
+
+    document.getElementById('profileModal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'profileModal') closeProfile();
+    });
+    document.getElementById('editProfileModal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'editProfileModal') closeEditProfile();
+    });
+    document.getElementById('settingsModal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'settingsModal') closeSettings();
+    });
+}
+
+// ====================== LANGUAGE CHANGE SUPPORT ======================
+window.addEventListener('languageChanged', () => {
+    if (currentUserData) renderProfileUI(currentUserData);
+});
+
+// ====================== GLOBAL EXPORTS & LEGACY ALIASES ======================
+window.startPhoneVerification = function () {
+    closeProfile();
+    if (typeof startPhoneVerificationModule === 'function') {
+        startPhoneVerificationModule();
+    } else {
+        const verifModal = document.getElementById('verificationModal') ||
+            document.getElementById('phoneVerificationModal');
+        if (verifModal) {
+            verifModal.classList.remove('hidden');
+            verifModal.classList.add('flex');
+            verifModal.style.zIndex = '10000';
+        } else {
+            showToast('Verification module unavailable', 'error');
+        }
+    }
+};
+
+window.openProfile = openProfile;
+window.closeProfile = closeProfile;
+window.closeProfileModal = closeProfile;
+window.openProfileModal = openProfile;
+window.openEditProfile = openEditProfile;
+window.closeEditProfile = closeEditProfile;
+window.openSettings = openSettings;
+window.closeSettings = closeSettings;
+window.handleSaveProfile = handleSaveProfile;
+window.saveProfileChanges = saveProfileChanges;
+window.handleImagePreview = handleImagePreview;
+window.handleSignOut = handleSignOut;
+window.handleProfileStartCycle = handleProfileStartCycle;
+window.triggerPasswordReset = triggerPasswordReset;
+window.renderProfileUI = renderProfileUI;
+window.initProfile = initProfile;
+
+window.openVerificationModalFromProfile = window.startPhoneVerification;
+window.openSettingsModal = window.openSettings;
+window.closeSettingsModal = window.closeSettings;
+window.saveProfileBio = window.saveUserBio;
+
+// ====================== PROFILE MANAGER (Card / Dual-Identity View) ======================
+export class ProfileManager {
+    constructor() {
+        this.profileContainer = document.getElementById('profileCard');
+        this.modeToggleBtn = document.getElementById('identityModeToggleBtn');
+    }
+
+    async init() {
+        if (!auth.currentUser) {
+            this.renderLoggedOutState();
+            return;
+        }
+        const user = auth.currentUser;
+        const tierData = await getUserTierData(user.uid);
+        const currentMode = AppState.getIdentityMode();
+        this.renderProfileCard(user, tierData, currentMode);
+        this.bindEvents(user, tierData);
+    }
+
+    renderProfileCard(user, tierData, mode) {
+        if (!this.profileContainer) return;
+        const isBold = mode === 'BOLD_WITNESS';
+        const displayName = isBold
+            ? (user.displayName || 'Verified Witness')
+            : `Witness #${user.uid.slice(0, 6)}`;
+        const avatarUrl = isBold
+            ? (user.photoURL || 'assets/default-avatar.png')
+            : 'assets/zk-shield-avatar.png';
+        const identityBadge = isBold
+            ? `<span class="bg-amber-500/10 text-amber-400 border border-amber-500/30 text-xs px-2.5 py-1 rounded-full font-mono">⚡ Bold Witness</span>`
+            : `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-xs px-2.5 py-1 rounded-full font-mono">🛡️ ZK-Anonymous</span>`;
+
+        this.profileContainer.innerHTML = `
+            <div class="bg-zinc-950 border border-zinc-800 rounded-3xl p-6 shadow-2xl space-y-6">
+                <div class="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
+                    <img src="${avatarUrl}" alt="Avatar" class="w-20 h-20 rounded-full border-2 border-zinc-700 object-cover" />
+                    <div class="space-y-1">
+                        <div class="flex items-center justify-center sm:justify-start gap-2">
+                            <h2 class="text-xl font-bold text-white">${displayName}</h2>
+                            ${renderTierBadge(tierData?.tier || 'citizen')}
+                        </div>
+                        <p class="text-xs text-zinc-400 font-mono">${user.email || 'Phone Verified'}</p>
+                        <div class="pt-1">${identityBadge}</div>
+                    </div>
+                </div>
+                <hr class="border-zinc-800" />
+                <div class="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-4 flex items-center justify-between">
+                    <div>
+                        <h4 class="text-sm font-semibold text-zinc-200">Active Identity Mode</h4>
+                        <p class="text-xs text-zinc-400 mt-0.5">
+                            ${isBold
+                                ? 'Metadata preserved for legal validity.'
+                                : 'EXIF & IP stripped via zero-knowledge layer.'}
+                        </p>
+                    </div>
+                    <button id="switchModeBtn" type="button"
+                            class="bg-zinc-800 hover:bg-zinc-700 text-zinc-100 px-4 py-2 rounded-xl text-xs font-semibold transition border border-zinc-700">
+                        ${isBold ? 'Switch to Anonymous' : 'Enable Bold Witness'}
+                    </button>
+                </div>
+                <div class="space-y-3">
+                    <h4 class="text-xs font-mono uppercase tracking-wider text-zinc-500">Forensic Pipeline Defaults</h4>
+                    <div class="space-y-2">
+                        <label class="flex items-center justify-between p-3 bg-zinc-900/40 rounded-xl border border-zinc-800/60 cursor-pointer">
+                            <span class="text-xs text-zinc-300">Auto-Pitch Shift Audio Recordings</span>
+                            <input type="checkbox" id="prefVoiceObfuscation"
+                                   ${AppState.getPref('voiceObfuscate') ? 'checked' : ''}
+                                   class="rounded bg-zinc-800 border-zinc-700 text-emerald-500">
+                        </label>
+                        <label class="flex items-center justify-between p-3 bg-zinc-900/40 rounded-xl border border-zinc-800/60 cursor-pointer">
+                            <span class="text-xs text-zinc-300">Strip Image EXIF & Location Data</span>
+                            <input type="checkbox" id="prefExifScrub"
+                                   ${AppState.getPref('exifScrub') ? 'checked' : ''}
+                                   class="rounded bg-zinc-800 border-zinc-700 text-emerald-500">
+                        </label>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    bindEvents(user, tierData) {
+        const switchBtn = document.getElementById('switchModeBtn');
+        if (switchBtn) {
+            switchBtn.addEventListener('click', () => {
+                const currentMode = AppState.getIdentityMode();
+                if (currentMode === 'ANONYMOUS') {
+                    showBoldWitnessModal(async () => {
+                        AppState.setIdentityMode('BOLD_WITNESS');
+                        this.init();
+                        showToast('Bold Witness Mode Activated', 'info');
+                    });
+                } else {
+                    AppState.setIdentityMode('ANONYMOUS');
+                    this.init();
+                    showToast('Switched to ZK-Anonymous Mode', 'success');
+                }
+            });
+        }
+        const voiceToggle = document.getElementById('prefVoiceObfuscation');
+        if (voiceToggle) {
+            voiceToggle.addEventListener('change', (e) => {
+                AppState.setPref('voiceObfuscate', e.target.checked);
+            });
+        }
+        const exifToggle = document.getElementById('prefExifScrub');
+        if (exifToggle) {
+            exifToggle.addEventListener('change', (e) => {
+                AppState.setPref('exifScrub', e.target.checked);
+            });
+        }
+    }
+
+    renderLoggedOutState() {
+        if (!this.profileContainer) return;
+        this.profileContainer.innerHTML = `
+            <div class="text-center py-12 text-zinc-500">
+                <p class="text-sm">Please connect or verify your account to view profile settings.</p>
+            </div>
+        `;
+    }
+}
+
+// ====================== AUTO-INIT ======================
+initProfile();
+
+// ====================== INIT PROFILE MODALS (CSP-safe – SINGLE SOURCE OF TRUTH) ======================
+export function initProfileModals() {
+    if (window.__vwProfileModalsWired) return;
+    window.__vwProfileModalsWired = true;
+
+    document.getElementById('cancelEditProfileBtn')?.addEventListener('click', closeEditProfile);
+    document.getElementById('btn-cancel-edit')?.addEventListener('click', closeEditProfile);
+    document.getElementById('avatarInput')?.addEventListener('change', handleImagePreview);
+    document.getElementById('editProfileForm')?.addEventListener('submit', handleSaveProfile);
+    document.getElementById('closeSettingsBtn')?.addEventListener('click', closeSettings);
+    document.getElementById('triggerPasswordResetBtn')?.addEventListener('click', triggerPasswordReset);
+
+    document.getElementById('exportUserDataPdfBtn')?.addEventListener('click', () => {
+        if (!currentUserData) {
+            showToast('Profile data not loaded', 'error');
+            return;
+        }
+        generateAndDownloadPDF(currentUserData, db);
+    });
+
+    document.getElementById('settingsSignOutBtn')?.addEventListener('click', handleSignOut);
+
+    document.getElementById('panicClearBtn')?.addEventListener('click', async () => {
+        const confirmed = confirm(
+            '⚠️ EMERGENCY CLEAR\n\nErases ALL VocalWitness data on THIS device and signs you out.\nPublic ledger is unchanged.\n\nContinue?'
+        );
+        if (!confirmed) return;
+
+        if (typeof window.panicClearDevice === 'function') {
+            await window.panicClearDevice({ redirectUrl: 'https://www.accuweather.com' });
+        } else {
+            localStorage.clear();
+            sessionStorage.clear();
+            await handleSignOut();
+        }
+    });
+
+    // ---- 2FA toggle (wired to mfa.js) ----
+    const toggle2FAEl = document.getElementById('toggle2FA');
+    if (toggle2FAEl) {
+        try {
+            const factors = getEnrolledFactors();
+            toggle2FAEl.checked = !!(factors && factors.length);
+        } catch (err) {
+            console.warn('[profile] MFA status read failed:', err);
+        }
+
+        toggle2FAEl.addEventListener('change', async (e) => {
+            const user = auth.currentUser;
+            if (!user) {
+                e.target.checked = false;
+                showToast('Sign in required for 2FA', 'error');
+                return;
+            }
+
+            if (e.target.checked) {
+                e.target.checked = false; // stay off until enrollment succeeds
+                try {
+                    const { totpSecret, qrCodeUrl, secretKey } = await enrollTotpMfa();
+                    window.__pendingTotpSecret = totpSecret;
+
+                    if (typeof window.openMfaEnrollmentModal === 'function') {
+                        window.openMfaEnrollmentModal({ qrCodeUrl, secretKey, totpSecret });
+                    } else {
+                        const mfaModal = document.getElementById('mfaModal');
+                        if (mfaModal) {
+                            const qrImg = document.getElementById('mfaQrImage');
+                            const secretEl = document.getElementById('mfaSecretKey');
+                            if (qrImg) {
+                                qrImg.src =
+                                    'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' +
+                                    encodeURIComponent(qrCodeUrl);
+                            }
+                            if (secretEl) secretEl.textContent = secretKey;
+                            mfaModal.classList.remove('hidden');
+                            mfaModal.classList.add('flex');
+                        } else {
+                            showToast(
+                                'Scan this key in your authenticator app: ' + secretKey,
+                                'info'
+                            );
+                        }
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showToast(err.message || 'Could not start 2FA setup', 'error');
+                }
+            } else {
+                try {
+                    const factors = getEnrolledFactors();
+                    if (factors && factors[0]) {
+                        await unenrollMfa(factors[0].uid);
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showToast(err.message || 'Failed to disable 2FA', 'error');
+                    e.target.checked = true;
+                }
+            }
+        });
+    }
+
+    document.getElementById('closeProfileModalBtn')?.addEventListener('click', closeProfile);
+    document.getElementById('closeEditProfileBtn')?.addEventListener('click', closeEditProfile);
+    document.getElementById('btn-close-edit-profile')?.addEventListener('click', closeEditProfile);
+
+    document.getElementById('profileModal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'profileModal') closeProfile();
+    });
+    document.getElementById('editProfileModal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'editProfileModal') closeEditProfile();
+    });
+    document.getElementById('settingsModal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'settingsModal') closeSettings();
+    });
+
+    // MFA confirm button (if present in HTML)
+    document.getElementById('mfaConfirmBtn')?.addEventListener('click', async () => {
+        const code = (document.getElementById('mfaOtpInput')?.value || '').replace(/\D/g, '');
+        const secret = window.__pendingTotpSecret;
+        if (!secret || code.length !== 6) {
+            showToast('Enter the 6-digit code from your authenticator app', 'error');
+            return;
+        }
+        try {
+            await finalizeTotpEnrollment(secret, code);
+            window.__pendingTotpSecret = null;
+            const mfaModal = document.getElementById('mfaModal');
+            if (mfaModal) {
+                mfaModal.classList.add('hidden');
+                mfaModal.classList.remove('flex');
+            }
+            const toggle = document.getElementById('toggle2FA');
+            if (toggle) toggle.checked = true;
+        } catch (err) {
+            console.error(err);
+            showToast(err.message || 'Invalid code — try again', 'error');
+        }
+    });
+}
+
+window.initProfileModals = initProfileModals;
+
+function bootProfileUi() {
+    try {
+        const manager = new ProfileManager();
+        if (manager.profileContainer) manager.init();
+    } catch (err) {
+        console.warn('[profile] ProfileManager init skipped:', err);
+    }
+
+    try {
+        initProfileModals();
+    } catch (err) {
+        console.error('[profile] initProfileModals failed:', err);
+    }
 
     document.getElementById('defaultDoorSelect')?.addEventListener('change', (e) => {
         localStorage.setItem('vw_default_page', e.target.value);
         if (typeof showToast === 'function') {
-            showToast("Default page saved", "success");
+            showToast('Default page saved', 'success');
         }
     });
 
@@ -1203,4 +1627,10 @@ document.addEventListener('DOMContentLoaded', () => {
             closeSettings();
         }
     });
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootProfileUi);
+} else {
+    bootProfileUi();
+}
