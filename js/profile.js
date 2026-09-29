@@ -27,6 +27,7 @@ import { showToast } from './utils.js';
 import { startWitnessCycle } from './witnessCycle.js';
 import { startPhoneVerification as startPhoneVerificationModule } from './verification.js';
 import { generateAndDownloadPDF } from './pdf.js';
+import './zk-elevation.js';
 
 // ====================== STATE ======================
 let currentUserData = null;
