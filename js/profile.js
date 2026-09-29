@@ -616,21 +616,20 @@ function attachProfileEventListeners(userData, isCitizenCircle, isWitness) {
     });
 }
 // ====================== SESSIONS & LOGIN HISTORY PLACEHOLDERS ======================
-export function renderSessionsPlaceholder() {
-  const el = document.getElementById('activeSessionsList');
-  if (el) {
-    el.innerHTML = `<p class="text-xs text-zinc-500">
-      Session list requires server-side tracking (not available in browser Auth). 
-      Use <strong>Sign out</strong> on this device, or <strong>Emergency Clear</strong> to wipe local data.
-    </p>`;
-  }
-  const hist = document.getElementById('loginHistoryList');
-  if (hist) {
-    hist.innerHTML = `<p class="text-xs text-zinc-500">Login history is not stored yet.</p>`;
-  }
-}
-
-window.renderSessionsPlaceholder = renderSessionsPlaceholder;
+// ========================================== SESSIONS & LOGIN HISTORY PLACEHOLDERS ==========================================
+window.renderSessionsPlaceholder = function() {
+    const el = document.getElementById('activeSessionsList');
+    if (el) {
+        el.innerHTML = `<p class="text-xs text-zinc-500">
+            Session list requires server-side tracking (not available in browser Auth).
+            Use <strong>Sign out</strong> on this device, or <strong>Emergency Clear</strong> to wipe local data.
+        </p>`;
+    }
+    const hist = document.getElementById('loginHistoryList');
+    if (hist) {
+        hist.innerHTML = `<p class="text-xs text-zinc-500">Login history is not stored yet.</p>`;
+    }
+};
 
 // ====================== BIO EDIT HELPERS ======================
 window.toggleBioEdit = function () {
