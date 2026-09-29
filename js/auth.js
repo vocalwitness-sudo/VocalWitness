@@ -8,10 +8,12 @@ import {
   browserLocalPersistence,
   browserSessionPersistence,
   onAuthStateChanged,
-  signInAnonymously
+  signInAnonymously,
+  getMultiFactorResolver,
+  TotpMultiFactorGenerator
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 
-import { 
+import {  
   auth, 
   googleProvider, 
   twitterProvider, 
@@ -25,7 +27,7 @@ import { applyTierTheme, updateTierBadge, clearProfileCache } from './tier.js';
 import { initNotifications } from './notifications.js';
 import { onAuthStateChangedForZk } from './zk-secret-manager.js';
 
-import { 
+import {  
   doc, 
   getDoc, 
   setDoc, 
@@ -67,31 +69,25 @@ async function createOrUpdateUser(user) {
 
     const safeEmail = (user.email || "").trim();
     const safeDisplayName = (user.displayName || (user.isAnonymous ? "Anonymous Citizen" : "Citizen Witness")).trim();
-    // Rules prefer null over empty string for photoURL
     const safePhotoURL = user.photoURL && user.photoURL.trim() ? user.photoURL.trim() : null;
 
     if (!snap.exists()) {
-      // ---------- Brand-new user ----------
-      // Only fields allowed by isSafeUserCreation()
       const newUserData = {
         uid: user.uid,
         email: safeEmail,
         displayName: safeDisplayName,
         photoURL: safePhotoURL,
         isAnonymous: !!user.isAnonymous,
-        tier: DEFAULT_TIER,          // "citizen" – allowed
-        isVerified: false,           // must be false on create
+        tier: DEFAULT_TIER,         
+        isVerified: false,            
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
-        // NEVER include: isPhoneVerified, hasVerifiedPhone, phoneVerifiedAt,
-        // role, isBanned, badges, admin, moderator, score, steward, etc.
       };
 
       try {
         await setDoc(userRef, newUserData);
         console.log("[auth] Created user document for", user.uid);
       } catch (createErr) {
-        // Extremely rare fallback – try the absolute minimum
         console.warn("[auth] Full create failed, trying minimal payload:", createErr);
         await setDoc(userRef, {
           uid: user.uid,
@@ -107,7 +103,6 @@ async function createOrUpdateUser(user) {
         showToast("🎉 Account created! Welcome to the Public Square.", "success");
       }
     } else {
-      // ---------- Existing user ----------
       const existing = snap.data() || {};
       const changes = {
         lastLoginAt: serverTimestamp(),
@@ -144,9 +139,9 @@ async function createOrUpdateUser(user) {
   }
 }
 
-// Optional – make it available to other modules
 export { createOrUpdateUser };
 window.createOrUpdateUser = createOrUpdateUser;
+
 export function updateVerificationUI(isVerified = false) {
   const statusEl = document.getElementById('verification-status');
   const verifyBtn = document.getElementById('request-verification-btn');
@@ -210,9 +205,38 @@ function handleAuthError(error) {
       return "Popup was blocked by your browser. Switch to redirect mode or enable popups.";
     case 'auth/account-exists-with-different-credential':
       return "An account already exists with this email address using a different login provider.";
+    case 'auth/multi-factor-auth-required':
+      // Handled separately in flows via openMfaChallengeModal
+      return null;
     default:
       return error?.message || "Authentication failed. Please try again.";
   }
+}
+
+// ====================== MFA HANDLER ======================
+
+export function openMfaChallengeModal(resolver) {
+  window.__pendingMfaResolver = resolver;
+  const mfaModal = document.getElementById('mfaChallengeModal');
+  
+  if (mfaModal) {
+    mfaModal.classList.remove('hidden');
+    mfaModal.classList.add('flex');
+    mfaModal.setAttribute('aria-hidden', 'false');
+  } else {
+    console.warn("[auth] MFA modal element (#mfaChallengeModal) not found in DOM.");
+    showToast("Multi-factor authentication required, but challenge UI is missing.", "error");
+  }
+}
+
+export function closeMfaChallengeModal() {
+  const mfaModal = document.getElementById('mfaChallengeModal');
+  if (mfaModal) {
+    mfaModal.classList.add('hidden');
+    mfaModal.classList.remove('flex');
+    mfaModal.setAttribute('aria-hidden', 'true');
+  }
+  window.__pendingMfaResolver = null;
 }
 
 // ====================== ANONYMOUS AUTH ======================
@@ -271,6 +295,12 @@ async function socialLogin(provider, providerName, event) {
         restorePendingDraft();
       }
     } catch (popupError) {
+      if (popupError.code === "auth/multi-factor-auth-required") {
+        const resolver = getMultiFactorResolver(auth, popupError);
+        closeLoginModal();
+        openMfaChallengeModal(resolver);
+        return;
+      }
       if (['auth/popup-blocked', 'auth/popup-closed-by-user'].includes(popupError.code)) {
         showToast("Popup blocked. Switching to redirect...", "info");
         await signInWithRedirect(auth, provider);
@@ -279,6 +309,12 @@ async function socialLogin(provider, providerName, event) {
       throw popupError;
     }
   } catch (error) {
+    if (error.code === "auth/multi-factor-auth-required") {
+      const resolver = getMultiFactorResolver(auth, error);
+      closeLoginModal();
+      openMfaChallengeModal(resolver);
+      return;
+    }
     if (['auth/popup-closed-by-user', 'auth/cancelled-popup-request'].includes(error.code)) {
       return;
     }
@@ -345,7 +381,6 @@ export function updateUIForAuthState(userParam = null) {
   const activeUser = userParam || auth.currentUser;
   const isLoggedIn = !!activeUser;
 
-  // Guest / Sign-in buttons
   const guestSelectors = [
     '#guest-action-btn',
     '#guest-action-btn-mobile',
@@ -360,7 +395,6 @@ export function updateUIForAuthState(userParam = null) {
   document.querySelectorAll(guestSelectors)
     .forEach(el => el.classList.toggle('hidden', isLoggedIn));
 
-  // Profile buttons
   const profileSelectors = [
     '#profile-btn',
     '#profile-btn-mobile',
@@ -372,28 +406,23 @@ export function updateUIForAuthState(userParam = null) {
   document.querySelectorAll(profileSelectors)
     .forEach(el => el.classList.toggle('hidden', !isLoggedIn));
 
-  // Protected elements
   document.querySelectorAll('.requires-auth')
     .forEach(el => el.classList.toggle('hidden', !isLoggedIn));
 
-  // Post action element opacity feedback
   document.querySelectorAll('#postButton, #btn-photo, #btn-voice')
     .forEach(btn => {
       if (btn) btn.style.opacity = isLoggedIn ? '1' : '0.6';
     });
 
-  // Desktop user elements
   const userAvatarDesktop = document.getElementById('user-avatar-desktop');
   const defaultAvatarDesktop = document.getElementById('default-avatar-icon-desktop');
   const userNameDesktop = document.getElementById('user-name-desktop');
 
-  // Mobile user elements
   const userAvatarMobile = document.getElementById('user-avatar-mobile');
   const defaultAvatarMobile = document.getElementById('default-avatar-icon-mobile');
   const userNameMobile = document.getElementById('user-name-mobile');
 
   if (isLoggedIn && activeUser) {
-    // Desktop
     if (activeUser.photoURL && userAvatarDesktop) {
       userAvatarDesktop.src = activeUser.photoURL;
       userAvatarDesktop.classList.remove('hidden');
@@ -406,7 +435,6 @@ export function updateUIForAuthState(userParam = null) {
       userNameDesktop.textContent = activeUser.displayName.split(' ')[0];
     }
 
-    // Mobile
     if (activeUser.photoURL && userAvatarMobile) {
       userAvatarMobile.src = activeUser.photoURL;
       userAvatarMobile.classList.remove('hidden');
@@ -501,56 +529,48 @@ export function bindHeaderEvents() {
   window.__authDelegationBound = true;
 
   document.addEventListener('click', (e) => {
-    // Google Auth
     if (e.target.closest('#googleAuthBtn, #googleSignInBtn, [data-action="google-login"], .google-auth-btn')) {
       e.preventDefault();
       googleLogin(e);
       return;
     }
 
-    // Twitter / X Auth
     if (e.target.closest('#twitterAuthBtn, [data-action="twitter-login"], .twitter-auth-btn')) {
       e.preventDefault();
       twitterLogin(e);
       return;
     }
 
-    // GitHub Auth
     if (e.target.closest('#githubAuthBtn, [data-action="github-login"], .github-auth-btn')) {
       e.preventDefault();
       githubLogin(e);
       return;
     }
 
-    // Anonymous Auth Trigger
     if (e.target.closest('#anonAuthBtn, [data-action="anon-login"], .anon-auth-btn')) {
       e.preventDefault();
       loginAnonymously();
       return;
     }
 
-    // Logout Trigger
     if (e.target.closest('#logoutBtn, #logout-btn, [data-action="logout"], .logout-btn')) {
       e.preventDefault();
       logout();
       return;
     }
 
-    // Open Auth Modal
     if (e.target.closest('#openAuthModalBtn, #openAuthModalBtnMobile, #guest-action-btn, #guest-action-btn-mobile, #guest-action-btn-drawer, #signin-btn-mobile, .auth-trigger-btn, [data-action="open-auth-modal"]')) {
       e.preventDefault();
       showAuthModal();
       return;
     }
 
-    // Close Auth Modal
     if (e.target.closest('[data-action="close-auth-modal"], #closeAuthModalBtn')) {
       e.preventDefault();
       closeLoginModal();
       return;
     }
 
-    // Profile Trigger
     if (e.target.closest('#userProfileBtn, #userProfileBtnMobile, #profile-btn, #profile-btn-mobile, [data-action="open-profile"]')) {
       e.preventDefault();
       if (typeof window.openProfileModal === 'function') {
@@ -561,14 +581,12 @@ export function bindHeaderEvents() {
       return;
     }
 
-    // Verification Trigger
     if (e.target.closest('#request-verification-btn')) {
       e.preventDefault();
       openVerificationModal();
       return;
     }
 
-    // Close Dropdowns Outside Click
     if (!e.target.closest('#profile-btn, #profile-btn-mobile, #userProfileBtn, #profile-menu, #user-dropdown')) {
       document.querySelectorAll('#profile-menu, #user-dropdown')
         .forEach(el => el.classList.add('hidden'));
@@ -585,7 +603,6 @@ export function initAuth() {
   bindHeaderEvents();
 
   return new Promise((resolve) => {
-    // Handle redirect result for mobile devices
     getRedirectResult(auth)
       .then((result) => {
         if (result?.user) {
@@ -595,6 +612,12 @@ export function initAuth() {
         }
       })
       .catch((error) => {
+        if (error?.code === 'auth/multi-factor-auth-required') {
+          const resolver = getMultiFactorResolver(auth, error);
+          closeLoginModal();
+          openMfaChallengeModal(resolver);
+          return;
+        }
         if (error?.code !== 'auth/missing-initial-state') {
           console.error("Redirect auth error:", error);
           const msg = handleAuthError(error);
@@ -602,15 +625,13 @@ export function initAuth() {
         }
       });
 
-    // Auth state observer
- onAuthStateChanged(auth, async (user) => {
-  try {
-    // ZK session cache: clear on sign-out, ready on sign-in
-    onAuthStateChangedForZk(user);
+    onAuthStateChanged(auth, async (user) => {
+      try {
+        onAuthStateChangedForZk(user);
 
-    if (user) {
-      updateAppState({ isAuthenticated: true, currentUser: user });
-      await createOrUpdateUser(user);
+        if (user) {
+          updateAppState({ isAuthenticated: true, currentUser: user });
+          await createOrUpdateUser(user);
           try {
             if (typeof initNotifications === 'function') {
               initNotifications(user.uid);
@@ -654,3 +675,5 @@ window.toggleProfileMenu = toggleProfileMenu;
 window.initAuth = initAuth;
 window.requireAuth = requireAuth;
 window.updateUIForAuthState = updateUIForAuthState;
+window.openMfaChallengeModal = openMfaChallengeModal;
+window.closeMfaChallengeModal = closeMfaChallengeModal;
