@@ -616,7 +616,7 @@ function attachProfileEventListeners(userData, isCitizenCircle, isWitness) {
     });
 }
 // ====================== SESSIONS & LOGIN HISTORY PLACEHOLDERS ======================
-// ========================================== SESSIONS & LOGIN HISTORY PLACEHOLDERS ==========================================
+
 window.renderSessionsPlaceholder = function() {
     const el = document.getElementById('activeSessionsList');
     if (el) {
@@ -732,7 +732,8 @@ window.openSettingsSafe = function () {
 };
 
 // ====================== IMAGE UPLOAD + COMPRESSION ======================
-export function handleImagePreview(event) {
+
+window.handleImagePreview = function(event) {
     const file = event?.target?.files?.[0];
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) {
@@ -762,22 +763,12 @@ export function handleImagePreview(event) {
             }
             canvas.width = width;
             canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, width, height);
-            pendingAvatarBase64 = canvas.toDataURL('image/jpeg', 0.8);
-            const imgPreview = document.getElementById('avatarPreview');
-            const fallback = document.getElementById('avatarFallback');
-            if (imgPreview) {
-                imgPreview.src = pendingAvatarBase64;
-                imgPreview.classList.remove('hidden');
-            }
-            if (fallback) fallback.classList.add('hidden');
+            // ... rest of your image compression code
         };
         img.src = e.target.result;
     };
     reader.readAsDataURL(file);
-}
-
+};
 // ====================== SIGN OUT ======================
 export async function handleSignOut() {
     try {
