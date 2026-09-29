@@ -1280,9 +1280,6 @@ export class ProfileManager {
     }
 }
 
-// ====================== AUTO-INIT ======================
-initProfile();
-
 // ====================== INIT PROFILE MODALS (CSP-safe – SINGLE SOURCE OF TRUTH) ======================
 export function initProfileModals() {
     document.getElementById('cancelEditProfileBtn')?.addEventListener('click', closeEditProfile);
