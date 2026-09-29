@@ -249,7 +249,7 @@ export function renderProfileUI(userData, retryCount = 0) {
                                 : '<span class="text-[10px] text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">👁 Public profile</span>'
                             }
                         </p>
-                    `}
+                    `
 
                     <p class="text-emerald-400 font-mono text-sm mt-1">@${sanitize(userData.username) || 'anonymous'}</p>
 
