@@ -4,6 +4,7 @@
 
 import { showToast } from './utils.js';
 import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js';
+import { buildCircuitInputs } from './zk-secret-manager.js';
 
 /**
  * Full Witness Circle elevation:
