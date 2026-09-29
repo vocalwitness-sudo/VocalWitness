@@ -1,7 +1,8 @@
 // js/zk-elevation.js
 import { elevateWithZKProof } from './zk-client.js';
 import { showToast } from './utils.js';
-import { auth } from './firebase-config.js'; // Ensure path matches your project
+import { auth } from './firebase-config.js';
+import { clearProfileCache, refreshTierAndUI } from './tier.js';
 
 export async function startZKVerification() {
   if (!auth.currentUser) {
@@ -25,16 +26,25 @@ export async function startZKVerification() {
       throw new Error('Server did not return a valid SNARK proof.');
     }
 
-    showToast('⚖️ Higher Trust verified. Your tier will update shortly.', 'success');
+    showToast('⚖️ Higher Trust verified! Updating profile...', 'success');
 
-    if (typeof window.renderProfileUI === 'function' && window.currentUserData) {
+    // 1. Clear local profile/tier caches so stale data isn't re-read
+    if (typeof window.clearProfileCache === 'function') {
+      window.clearProfileCache();
+    }
+
+    // 2. Refresh the tier and user interface dynamically
+    if (typeof window.refreshTierAndUI === 'function') {
+      await window.refreshTierAndUI();
+    } else if (typeof window.renderProfileUI === 'function' && window.currentUserData) {
       window.currentUserData.zkVerified = true;
-      window.currentUserData.lastZkProofType = result.proofType || 'SNARK_GROTH16_SERVER';
-      window.currentUserData.lastZkIsFallback = false;
+      window.currentUserData.tier = 'witness_circle'; // Update tier locally
       window.renderProfileUI(window.currentUserData);
     } else {
+      // Fallback soft reload if UI hooks aren't globally available
       setTimeout(() => location.reload(), 1200);
     }
+
   } catch (err) {
     console.error('[ZK elevation]', err);
     showToast(err.message || 'Verification failed. Try again.', 'error');
@@ -47,7 +57,7 @@ export async function startZKVerification() {
   }
 }
 
-// Expose globally just in case an inline onclick exists somewhere in legacy HTML
+// Expose globally for legacy inline onclick handlers
 window.startZKVerification = startZKVerification;
 
 // Automatically bind via addEventListener when DOM is ready
