@@ -578,6 +578,22 @@ function attachProfileEventListeners(userData, isCitizenCircle, isWitness) {
         }
     });
 }
+// ====================== SESSIONS & LOGIN HISTORY PLACEHOLDERS ======================
+export function renderSessionsPlaceholder() {
+  const el = document.getElementById('activeSessionsList');
+  if (el) {
+    el.innerHTML = `<p class="text-xs text-zinc-500">
+      Session list requires server-side tracking (not available in browser Auth). 
+      Use <strong>Sign out</strong> on this device, or <strong>Emergency Clear</strong> to wipe local data.
+    </p>`;
+  }
+  const hist = document.getElementById('loginHistoryList');
+  if (hist) {
+    hist.innerHTML = `<p class="text-xs text-zinc-500">Login history is not stored yet.</p>`;
+  }
+}
+
+window.renderSessionsPlaceholder = renderSessionsPlaceholder;
 
 // ====================== BIO EDIT HELPERS ======================
 window.toggleBioEdit = function () {
@@ -1187,16 +1203,20 @@ export function initProfileModals() {
 
     document.getElementById('settingsSignOutBtn')?.addEventListener('click', handleSignOut);
 
-    document.getElementById('panicClearBtn')?.addEventListener('click', async () => {
-        const confirmed = confirm(
-            "⚠️ EMERGENCY CLEAR\n\nThis will immediately erase all VocalWitness data from THIS device and sign you out.\n\nThe public ledger will NOT be affected.\n\nContinue?"
-        );
-        if (!confirmed) return;
-        showToast("Clearing device...", "info");
-        localStorage.clear();
-        sessionStorage.clear();
-        await handleSignOut();
-    });
+   document.getElementById('panicClearBtn')?.addEventListener('click', async () => {
+  const confirmed = confirm(
+    '⚠️ EMERGENCY CLEAR\n\nErases ALL VocalWitness data on THIS device and signs you out.\nPublic ledger is unchanged.\n\nContinue?'
+  );
+  if (!confirmed) return;
+
+  if (typeof window.panicClearDevice === 'function') {
+    await window.panicClearDevice({ redirectUrl: 'https://www.accuweather.com' });
+  } else {
+    localStorage.clear();
+    sessionStorage.clear();
+    await handleSignOut();
+  }
+});
 
     document.getElementById('toggle2FA')?.addEventListener('change', (e) => {
         const mfaModal = document.getElementById('mfaModal');
