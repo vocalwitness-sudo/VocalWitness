@@ -6,6 +6,7 @@
 
 import { auth } from './firebase-config.js';
 import { showToast } from './utils.js';
+import { clearZkSessionCache } from './zk-secret-manager.js';
 
 /** All local keys that must be destroyed on panic */
 export const PANIC_STORAGE_KEYS = [
@@ -169,6 +170,7 @@ export async function panicClearDevice(opts = {}) {
 
   // 2. Clear all local data
   clearLocalIdentityStores();
+  clearZkSessionCache();
   await clearAllIndexedDB();
   requestServiceWorkerCachePurge();
 
