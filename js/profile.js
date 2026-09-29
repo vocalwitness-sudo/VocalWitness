@@ -1023,13 +1023,15 @@ window.startPhoneVerification = function () {
     if (typeof startPhoneVerificationModule === 'function') {
         startPhoneVerificationModule();
     } else {
-        const verifModal = document.getElementById('verificationModal') || document.getElementById('phoneVerificationModal');
+        const verifModal =
+            document.getElementById('verificationModal') ||
+            document.getElementById('phoneVerificationModal');
         if (verifModal) {
             verifModal.classList.remove('hidden');
             verifModal.classList.add('flex');
             verifModal.style.zIndex = '10000';
         } else {
-            showToast("Verification module unavailable", "error");
+            showToast('Verification module unavailable', 'error');
         }
     }
 };
@@ -1077,6 +1079,7 @@ export class ProfileManager {
 
     renderProfileCard(user, tierData, mode) {
         if (!this.profileContainer) return;
+
         const isBold = mode === 'BOLD_WITNESS';
         const displayName = isBold
             ? (user.displayName || 'Verified Witness')
@@ -1108,8 +1111,7 @@ export class ProfileManager {
                         <p class="text-xs text-zinc-400 mt-0.5">
                             ${isBold
                                 ? 'Metadata preserved for legal validity.'
-                                : 'EXIF & IP stripped via zero-knowledge layer.'
-                            }
+                                : 'EXIF & IP stripped via zero-knowledge layer.'}
                         </p>
                     </div>
                     <button id="switchModeBtn" type="button"
@@ -1147,21 +1149,23 @@ export class ProfileManager {
                     showBoldWitnessModal(async () => {
                         AppState.setIdentityMode('BOLD_WITNESS');
                         this.init();
-                        showToast("Bold Witness Mode Activated", "info");
+                        showToast('Bold Witness Mode Activated', 'info');
                     });
                 } else {
                     AppState.setIdentityMode('ANONYMOUS');
                     this.init();
-                    showToast("Switched to ZK-Anonymous Mode", "success");
+                    showToast('Switched to ZK-Anonymous Mode', 'success');
                 }
             });
         }
+
         const voiceToggle = document.getElementById('prefVoiceObfuscation');
         if (voiceToggle) {
             voiceToggle.addEventListener('change', (e) => {
                 AppState.setPref('voiceObfuscate', e.target.checked);
             });
         }
+
         const exifToggle = document.getElementById('prefExifScrub');
         if (exifToggle) {
             exifToggle.addEventListener('change', (e) => {
@@ -1180,14 +1184,6 @@ export class ProfileManager {
     }
 }
 
-// ====================== INITIALIZATION HOOKS ======================
-document.addEventListener('DOMContentLoaded', () => {
-    const manager = new ProfileManager();
-    if (manager.profileContainer) {
-        manager.init();
-    }
-
-// ====================== INIT PROFILE MODALS (CSP-safe – SINGLE SOURCE OF TRUTH) ======================
 // ====================== INIT PROFILE MODALS (CSP-safe – SINGLE SOURCE OF TRUTH) ======================
 export function initProfileModals() {
     if (window.__vwProfileModalsWired) return;
@@ -1225,7 +1221,7 @@ export function initProfileModals() {
         }
     });
 
-    // ---- 2FA / MFA toggle (uses mfa.js imports at top of file) ----
+    // ---- 2FA / MFA toggle (requires mfa helpers imported at top of file) ----
     const toggle2FAEl = document.getElementById('toggle2FA');
     if (toggle2FAEl) {
         try {
