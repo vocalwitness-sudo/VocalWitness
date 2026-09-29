@@ -769,6 +769,7 @@ window.handleImagePreview = function(event) {
     };
     reader.readAsDataURL(file);
 };
+    }
 // ====================== SIGN OUT ======================
 export async function handleSignOut() {
     try {
