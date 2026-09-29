@@ -115,7 +115,7 @@ function isSafeUserUpdate() {
     'location', 'website', 'region', 'username',
     'updatedAt', 'lastLoginAt', 'lastLogin', 'lastActive', 'lastUpdated',
     'theme', 'language', 'interestedInArena', 'arenaNotifyAt', 'lastNameChange',
-    'lastTestimonyAt', 'following', 'trusted', 'followers', 'privacyMode'
+    'lastTestimonyAt', 'following', 'trusted', 'followers', 'privacyMode', 'hidePublicInfo'
   ];
 
   let changed = request.resource.data.diff(resource.data).affectedKeys();
@@ -133,7 +133,9 @@ function isSafeUserUpdate() {
       && (!('trusted' in request.resource.data) || request.resource.data.trusted is list)
       && (!('followers' in request.resource.data) || request.resource.data.followers is list)
       && (!('privacyMode' in request.resource.data) || request.resource.data.privacyMode is string);
-}
+      && (!('privacyMode' in request.resource.data) || request.resource.data.privacyMode is string)
+      && (!('hidePublicInfo' in request.resource.data) || request.resource.data.hidePublicInfo is bool);
+  }
 
     function isValidNotification() {
       return request.resource.data.keys().hasAll(['type', 'createdAt'])
