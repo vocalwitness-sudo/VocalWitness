@@ -1153,17 +1153,22 @@ async function fetchCuratedNews() {
       })
       .join('');
 
-    // Duplicate for seamless CSS loop
+       // Duplicate for seamless CSS loop
     tickerEl.innerHTML = html + html;
 
+    // Force a real animation restart (don't leave animation as "")
     tickerEl.style.animation = 'none';
-    void tickerEl.offsetWidth;
-    tickerEl.style.animation = '';
+    void tickerEl.offsetWidth; // reflow
+    tickerEl.style.animation = 'ticker-scroll 55s linear infinite';
 
     console.log(`[Ticker] Loaded ${finalHeadlines.length} headlines`);
+    
   } catch (err) {
     console.warn('[Ticker] Using fallback:', err?.message || err);
     tickerEl.innerHTML = fallbackHtml + fallbackHtml;
+    tickerEl.style.animation = 'none';
+    void tickerEl.offsetWidth;
+    tickerEl.style.animation = 'ticker-scroll 55s linear infinite';
   } finally {
     tickerEl.dataset.loading = '0';
   }
