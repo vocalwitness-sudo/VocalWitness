@@ -286,6 +286,11 @@ async function generateStandardPassport(userData, tier, docId, verificationUrl) 
   pdf.text("This document is bound to the VocalWitness public ledger.", 20, y);
   pdf.text("Any alteration invalidates the verification seal.", 20, y + 6);
 
+  // Light watermark
+  pdf.setTextColor(230, 230, 230);
+  pdf.setFontSize(48);
+  pdf.text("STANDARD", 55, 160, { angle: 30 });
+
   const qrData = await generateQRCodeDataUrl(verificationUrl, 110);
   if (qrData) {
     try {
@@ -310,7 +315,7 @@ async function generateStandardPassport(userData, tier, docId, verificationUrl) 
 }
 
 /* ============================================================
-   PREMIUM CERTIFICATE
+   PREMIUM CERTIFICATE  (much stronger difference)
    ============================================================ */
 async function generatePremiumCertificate(userData, tier, docId, verificationUrl) {
   const { jsPDF } = window.jspdf;
@@ -320,7 +325,7 @@ async function generatePremiumCertificate(userData, tier, docId, verificationUrl
   pdf.setFillColor(9, 9, 11);
   pdf.rect(0, 0, 210, 54, 'F');
 
-  // Gold line
+  // Gold accent line
   pdf.setFillColor(234, 179, 8);
   pdf.rect(0, 54, 210, 1.8, 'F');
 
@@ -331,23 +336,28 @@ async function generatePremiumCertificate(userData, tier, docId, verificationUrl
 
   pdf.setFontSize(12);
   pdf.setTextColor(253, 224, 71);
-  pdf.text("PREMIUM IDENTITY CERTIFICATE", 20, 33);
+  pdf.text("OFFICIAL VERIFIED IDENTITY CERTIFICATE", 20, 33);
 
   pdf.setFont("courier", "normal");
   pdf.setFontSize(8);
   pdf.setTextColor(161, 161, 170);
   pdf.text(`Certificate ID: ${docId}`, 20, 45);
 
+  // Official seal badge
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(9);
   pdf.setTextColor(52, 211, 153);
   pdf.text("● ZK-VERIFIED  •  OFFICIAL SEAL", 128, 28);
 
-  // Avatar
+  // Avatar with gold ring
   let y = 68;
   const avatarData = await loadImageAsDataUrl(userData.photoURL);
   if (avatarData) {
     try {
+      // Gold ring
+      pdf.setDrawColor(234, 179, 8);
+      pdf.setLineWidth(1.5);
+      pdf.circle(34, y + 14, 16);
       pdf.addImage(avatarData, 'JPEG', 20, y, 28, 28);
     } catch (e) {}
   }
@@ -366,12 +376,24 @@ async function generatePremiumCertificate(userData, tier, docId, verificationUrl
 
   y = 108;
 
+  // Richer data only on Premium
+  const membershipSince = userData.createdAt?.toDate
+    ? userData.createdAt.toDate().toLocaleDateString()
+    : (userData.createdAt ? new Date(userData.createdAt).toLocaleDateString() : "—");
+
+  const sealedCount = userData.sealedReportsCount || userData.totalTestimonies || 0;
+  const highestLevel = userData.highestWitnessLevel || tier.name || "—";
+
   const premiumLines = [
-    `Reputation Score   : ${userData.reputation || userData.trustScore || 0} REP`,
-    `Verification       : Zero-Knowledge Proof Confirmed`,
-    `Phone Status       : ${userData.isPhoneVerified || userData.hasVerifiedPhone ? "Verified" : "Not verified"}`,
-    `Privacy Shield     : ${userData.hidePublicInfo !== false ? "Active" : "Public"}`,
-    `Issued On          : ${new Date().toLocaleString()}`
+    `Reputation Score     : ${userData.reputation || userData.trustScore || 0} REP`,
+    `Verification         : Zero-Knowledge Proof Confirmed`,
+    `Phone Status         : ${userData.isPhoneVerified || userData.hasVerifiedPhone ? "Verified" : "Not verified"}`,
+    `Privacy Shield       : ${userData.hidePublicInfo !== false ? "Active" : "Public"}`,
+    `Membership Since     : ${membershipSince}`,
+    `Sealed Reports       : ${sealedCount}`,
+    `Highest Level        : ${highestLevel}`,
+    `Issued On            : ${new Date().toLocaleString()}`,
+    `Valid Until          : ${new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toLocaleDateString()}`
   ];
 
   pdf.setFont("helvetica", "normal");
@@ -380,7 +402,7 @@ async function generatePremiumCertificate(userData, tier, docId, verificationUrl
 
   premiumLines.forEach(line => {
     pdf.text(line, 20, y);
-    y += 8.2;
+    y += 7.8;
   });
 
   y += 6;
@@ -388,28 +410,33 @@ async function generatePremiumCertificate(userData, tier, docId, verificationUrl
   pdf.setLineWidth(0.7);
   pdf.line(20, y, 190, y);
 
-  y += 12;
+  y += 11;
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(11);
   pdf.setTextColor(24, 24, 27);
   pdf.text("Cryptographic & Forensic Guarantee", 20, y);
 
-  y += 9;
+  y += 8;
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(9.5);
   pdf.setTextColor(63, 63, 70);
   pdf.text("This Premium Certificate is permanently registered on the VocalWitness", 20, y);
-  pdf.text("verifiable documents ledger. It serves as official proof of identity", 20, y + 6);
+  pdf.text("Verifiable Documents Ledger. It serves as official proof of identity", 20, y + 6);
   pdf.text("standing and zero-knowledge verification within the network.", 20, y + 12);
   pdf.text("Any modification of this file voids the cryptographic seal.", 20, y + 18);
 
+  // Larger QR with gold border
   const qrData = await generateQRCodeDataUrl(verificationUrl, 140);
   if (qrData) {
     try {
+      pdf.setDrawColor(234, 179, 8);
+      pdf.setLineWidth(1.2);
+      pdf.rect(148, 173, 42, 42);
       pdf.addImage(qrData, 'PNG', 150, 175, 38, 38);
     } catch (e) {}
   }
 
+  // Dark verification box
   pdf.setFillColor(24, 24, 27);
   pdf.roundedRect(20, 230, 120, 38, 4, 4, 'F');
 
@@ -428,7 +455,7 @@ async function generatePremiumCertificate(userData, tier, docId, verificationUrl
   pdf.setTextColor(161, 161, 170);
   pdf.text("Scan the QR or visit the link to confirm authenticity.", 28, 259);
 
-  pdf.save(`VocalWitness_Premium_${docId.slice(0, 8)}.pdf`);
+  pdf.save(`VocalWitness_Official_Certificate_${docId.slice(0, 8)}.pdf`);
 }
 
 /* ============================================================
