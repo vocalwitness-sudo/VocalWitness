@@ -57,30 +57,29 @@ function isPrivacyPrivate(userData) {
  * without reading the private users/{uid} document.
  */
 async function syncPublicProfile(uid, userData) {
-  if (!uid || !userData) return;
-  try {
-    const publicRef = doc(db, "publicProfiles", uid);
-    const isPrivate = userData.hidePublicInfo !== false; // default private
+    if (!uid || !userData) return;
+    try {
+        const publicRef = doc(db, "publicProfiles", uid);
+        const isPrivate = userData.hidePublicInfo !== false; // default private
 
-    const publicData = {
-      uid,
-      displayName: userData.displayName || "Anonymous Witness",
-      photoURL: userData.photoURL || null,
-      username: userData.username || null,
-      bio: isPrivate ? null : (userData.bio || null),
-      region: isPrivate ? null : (userData.region || null),
-      tierBadge: (userData.tier === "citizen_circle" || userData.isPhoneVerified || userData.hasVerifiedPhone)
-        ? "citizen_circle"
-        : "citizen",
-      updatedAt: serverTimestamp()
-    };
+        const publicData = {
+            uid,
+            displayName: userData.displayName || "Anonymous Witness",
+            photoURL: userData.photoURL || null,
+            username: userData.username || null,
+            bio: isPrivate ? null : (userData.bio || null),
+            region: isPrivate ? null : (userData.region || null),
+            tierBadge: (userData.tier === "citizen_circle" || userData.isPhoneVerified || userData.hasVerifiedPhone)
+                ? "citizen_circle"
+                : "citizen",
+            updatedAt: serverTimestamp()
+        };
 
-    await setDoc(publicRef, publicData, { merge: true });
-  } catch (err) {
-    console.warn("[profile] syncPublicProfile failed:", err);
-  }
+        await setDoc(publicRef, publicData, { merge: true });
+    } catch (err) {
+        console.warn("[profile] syncPublicProfile failed:", err);
+    }
 }
-
 
 // ====================== OPEN / CLOSE MAIN PROFILE MODAL ======================
 export function openProfile() {
@@ -111,8 +110,6 @@ export function openProfile() {
     document.body.style.overflow = 'hidden';
 }
 
-
-
 // ====================== INITIALIZATION ======================
 export function initProfile() {
     if (userUnsubscribe) userUnsubscribe();
@@ -132,7 +129,7 @@ export function initProfile() {
 }
 
 /**
- * Ensures user document exists in Firestore (must match isSafeUserCreation rules)
+ * Ensures user document exists in Firestore
  */
 async function ensureUserProfile(user) {
     try {
@@ -196,7 +193,7 @@ function listenToUserProfile(userId) {
     );
 }
 
-/** Shown when profile cannot load (never leave spinner forever) */
+/** Shown when profile cannot load */
 function renderProfileError(err) {
     const content =
         document.getElementById("mainProfileContent") ||
@@ -221,6 +218,7 @@ function renderProfileError(err) {
         </div>
     `;
 }
+
 // ====================== RENDER PROFILE UI ======================
 export function renderProfileUI(userData, retryCount = 0) {
     if (!userData) return;
@@ -240,293 +238,290 @@ export function renderProfileUI(userData, retryCount = 0) {
         ? getCurrentWitnessLevel()
         : Promise.resolve(null);
 
-witnessPromise.then(level => {
-    const isWitness = level !== null;
-    const isCitizenCircle =
-        userData.isPhoneVerified ||
-        userData.hasVerifiedPhone ||
-        userData.tier === 'citizen_circle';
+    witnessPromise.then(level => {
+        const isWitness = level !== null;
+        const isCitizenCircle =
+            userData.isPhoneVerified ||
+            userData.hasVerifiedPhone ||
+            userData.tier === 'citizen_circle';
 
-    const fullName = [userData.firstName, userData.lastName].filter(Boolean).join(" ");
-    const isPrivacyShieldActive = isPrivacyPrivate(userData);
+        const fullName = [userData.firstName, userData.lastName].filter(Boolean).join(" ");
+        const isPrivacyShieldActive = isPrivacyPrivate(userData);
 
-    const html = `
-        <div class="space-y-5 p-1 text-white">
-            <!-- Profile Header -->
-            <div class="flex flex-col items-center text-center">
-                <div class="relative">
-                    <div class="w-24 h-24 mx-auto rounded-3xl overflow-hidden border-4 border-zinc-700 shadow-2xl bg-zinc-800">
-                        ${userData.photoURL
-                            ? `<img src="${sanitize(userData.photoURL)}" class="w-full h-full object-cover" alt="Profile Photo">`
-                            : `<div class="w-full h-full flex items-center justify-center text-5xl">👤</div>`
-                        }
+        const html = `
+            <div class="space-y-5 p-1 text-white">
+                <!-- Profile Header -->
+                <div class="flex flex-col items-center text-center">
+                    <div class="relative">
+                        <div class="w-24 h-24 mx-auto rounded-3xl overflow-hidden border-4 border-zinc-700 shadow-2xl bg-zinc-800">
+                            ${userData.photoURL
+                                ? `<img src="${sanitize(userData.photoURL)}" class="w-full h-full object-cover" alt="Profile Photo">`
+                                : `<div class="w-full h-full flex items-center justify-center text-5xl">👤</div>`
+                            }
+                        </div>
+                        ${isWitness ? `<div class="absolute -bottom-1 -right-1 text-2xl">🔐</div>` : ''}
                     </div>
-                    ${isWitness ? `<div class="absolute -bottom-1 -right-1 text-2xl">🔐</div>` : ''}
-                </div>
 
-                <h2 class="text-xl font-bold mt-3 text-white">${sanitize(userData.displayName) || "Anonymous Witness"}</h2>
+                    <h2 class="text-xl font-bold mt-3 text-white">${sanitize(userData.displayName) || "Anonymous Witness"}</h2>
 
-                ${fullName ? `
-                    <p class="text-xs font-semibold text-zinc-300 mt-0.5">
-                        ${sanitize(fullName)}${isPrivacyShieldActive
-                            ? '<span class="text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full ml-1">🛡️ Private</span>'
-                            : '<span class="text-[10px] text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full ml-1">👁 Public</span>'
-                        }
-                    </p>
-                ` : `
-                    <p class="text-xs mt-0.5">
-                        ${isPrivacyShieldActive
-                            ? '<span class="text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">🛡️ Private profile</span>'
-                            : '<span class="text-[10px] text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">👁 Public profile</span>'
-                        }
-                    </p>
-                `}
-
-                <p class="text-emerald-400 font-mono text-sm mt-1">@${sanitize(userData.username) || 'anonymous'}</p>
-
-                ${userData.region && !isPrivacyShieldActive
-                    ? `<p class="text-xs text-zinc-400 mt-1">📍 ${sanitize(userData.region)}</p>`
-                    : ''
-                }
-
-                <!-- Tier Badge -->
-                <div class="mt-3 flex flex-wrap justify-center gap-2">
-                    ${level ? `
-                        <div class="inline-flex items-center gap-2 px-4 py-2 bg-zinc-900 border border-zinc-700 rounded-2xl">
-                            <span class="text-2xl">${level.emblem}</span>
-                            <div class="text-left">
-                                <div class="font-bold text-sm text-white">${sanitize(level.name)}</div>
-                                <div class="text-xs text-zinc-400">Level ${level.level} •${userData.reputation || 0} REP</div>
-                            </div>
-                        </div>
-                    ` : isCitizenCircle ? `
-                        <div class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl">
-                            <span class="text-xl">🛡️</span>
-                            <div class="text-left">
-                                <div class="font-bold text-sm text-emerald-400">Citizen Circle</div>
-                                <div class="text-xs text-zinc-400">Phone Verified • ${userData.reputation || 60} REP</div>
-                            </div>
-                        </div>
+                    ${fullName ? `
+                        <p class="text-xs font-semibold text-zinc-300 mt-0.5">
+                            ${sanitize(fullName)}${isPrivacyShieldActive
+                                ? '<span class="text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full ml-1">🛡️ Private</span>'
+                                : '<span class="text-[10px] text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full ml-1">👁 Public</span>'
+                            }
+                        </p>
                     ` : `
-                        <div class="px-4 py-2 bg-zinc-800 rounded-2xl text-xs text-zinc-300">
-                            👤 Citizen (Unverified)
-                        </div>
+                        <p class="text-xs mt-0.5">
+                            ${isPrivacyShieldActive
+                                ? '<span class="text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">🛡️ Private profile</span>'
+                                : '<span class="text-[10px] text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">👁 Public profile</span>'
+                            }
+                        </p>
                     `}
 
-                    ${userData.zkVerified ? (() => {
-                        const isFallback = userData.lastZkIsFallback === true;
-                        const type = (userData.lastZkProofType || '').toUpperCase();
-                        const isRealSNARK = !isFallback && (type.includes('SNARK') || type.includes('GROTH16'));
-                        if (isRealSNARK) {
-                            return `<div class="inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl text-xs text-emerald-400 font-medium">
-                                        <span>⚖️</span> ZK-SNARK Seal
+                    <p class="text-emerald-400 font-mono text-sm mt-1">@${sanitize(userData.username) || 'anonymous'}</p>
+
+                    ${userData.region && !isPrivacyShieldActive
+                        ? `<p class="text-xs text-zinc-400 mt-1">📍 ${sanitize(userData.region)}</p>`
+                        : ''
+                    }
+
+                    <!-- Tier Badge -->
+                    <div class="mt-3 flex flex-wrap justify-center gap-2">
+                        ${level ? `
+                            <div class="inline-flex items-center gap-2 px-4 py-2 bg-zinc-900 border border-zinc-700 rounded-2xl">
+                                <span class="text-2xl">${level.emblem}</span>
+                                <div class="text-left">
+                                    <div class="font-bold text-sm text-white">${sanitize(level.name)}</div>
+                                    <div class="text-xs text-zinc-400">Level ${level.level} • ${userData.reputation || 0} REP</div>
+                                </div>
+                            </div>
+                        ` : isCitizenCircle ? `
+                            <div class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl">
+                                <span class="text-xl">🛡️</span>
+                                <div class="text-left">
+                                    <div class="font-bold text-sm text-emerald-400">Citizen Circle</div>
+                                    <div class="text-xs text-zinc-400">Phone Verified • ${userData.reputation || 60} REP</div>
+                                </div>
+                            </div>
+                        ` : `
+                            <div class="px-4 py-2 bg-zinc-800 rounded-2xl text-xs text-zinc-300">
+                                👤 Citizen (Unverified)
+                            </div>
+                        `}
+
+                        ${userData.zkVerified ? (() => {
+                            const isFallback = userData.lastZkIsFallback === true;
+                            const type = (userData.lastZkProofType || '').toUpperCase();
+                            const isRealSNARK = !isFallback && (type.includes('SNARK') || type.includes('GROTH16'));
+                            if (isRealSNARK) {
+                                return `<div class="inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl text-xs text-emerald-400 font-medium">
+                                            <span>⚖️</span> ZK-SNARK Seal
+                                        </div>`;
+                            }
+                            return `<div class="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-500/10 border border-slate-500/30 rounded-2xl text-xs text-slate-300 font-medium">
+                                        <span>🔏</span> Integrity Seal
                                     </div>`;
-                        }
-                        return `<div class="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-500/10 border border-slate-500/30 rounded-2xl text-xs text-slate-300 font-medium">
-                                    <span>🔏</span> Integrity Seal
-                                </div>`;
-                    })() : ''}
-                </div>
-            </div>
-
-            <!-- Witness Cycle -->
-            <div class="bg-zinc-900 rounded-2xl p-4 border border-amber-500/20">
-                <div class="flex justify-between items-start mb-3">
-                    <div>
-                        <h4 class="font-semibold text-sm text-amber-400 flex items-center gap-2">
-                            <span>🔄</span> Witness Cycle
-                        </h4>
-                        <p class="text-xs text-zinc-400 mt-0.5">Participate in active testimony attestation cycles.</p>
+                        })() : ''}
                     </div>
-                    <span class="px-2.5 py-1 bg-amber-500/10 text-amber-400 text-xs font-mono rounded-full border border-amber-500/30">
-                        ${userData.activeWitnessCycle ? 'Active' : 'Inactive'}
-                    </span>
                 </div>
-                <button type="button" id="btnStartWitnessCycle"
-                        class="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-black font-semibold rounded-xl transition text-sm">
-                    ${userData.activeWitnessCycle ? 'End Witness Cycle' : 'Start Witness Cycle'}
-                </button>
-            </div>
 
-            <!-- Bio -->
-            <div class="bg-zinc-900/80 border border-zinc-700 rounded-2xl p-4">
-                <div class="flex items-center justify-between mb-2">
-                    <h4 class="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Bio</h4>
-                    <button type="button" id="btnToggleBioEdit"
-                            class="text-xs text-emerald-400 hover:text-emerald-300 font-medium transition">
-                        Edit
+                <!-- Witness Cycle -->
+                <div class="bg-zinc-900 rounded-2xl p-4 border border-amber-500/20">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <h4 class="font-semibold text-sm text-amber-400 flex items-center gap-2">
+                                <span>🔄</span> Witness Cycle
+                            </h4>
+                            <p class="text-xs text-zinc-400 mt-0.5">Participate in active testimony attestation cycles.</p>
+                        </div>
+                        <span class="px-2.5 py-1 bg-amber-500/10 text-amber-400 text-xs font-mono rounded-full border border-amber-500/30">
+                            ${userData.activeWitnessCycle ? 'Active' : 'Inactive'}
+                        </span>
+                    </div>
+                    <button type="button" id="btnStartWitnessCycle"
+                            class="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-black font-semibold rounded-xl transition text-sm">
+                        ${userData.activeWitnessCycle ? 'End Witness Cycle' : 'Start Witness Cycle'}
                     </button>
                 </div>
-                <div id="bioDisplay" class="text-sm text-zinc-300 leading-relaxed min-h-[52px]">
-                    ${userData.bio
-                        ? sanitize(userData.bio)
-                        : `<span class="text-zinc-500 italic">Tell the Square who you are... Share your story, values, or what truth means to you.</span>`
-                    }
-                </div>
-                <div id="bioEditSection" class="hidden space-y-3 mt-2">
-                    <textarea id="profileBioTextarea"
-                            rows="3"
-                            maxlength="280"
-                            class="w-full bg-zinc-950 border border-zinc-700 rounded-xl p-3 text-sm text-zinc-200 focus:outline-none focus:border-emerald-500 resize-none"
-                            placeholder="Write a short bio about yourself...">${sanitize(userData.bio || '')}</textarea>
-                    <div class="flex gap-2">
-                        <button type="button" id="btnSaveBio"
-                                class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-black text-xs font-semibold rounded-xl transition">
-                            Save Bio
-                        </button>
-                        <button type="button" id="btnCancelBioEdit"
-                                class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs rounded-xl transition">
-                            Cancel
+
+                <!-- Bio -->
+                <div class="bg-zinc-900/80 border border-zinc-700 rounded-2xl p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Bio</h4>
+                        <button type="button" id="btnToggleBioEdit"
+                                class="text-xs text-emerald-400 hover:text-emerald-300 font-medium transition">
+                            Edit
                         </button>
                     </div>
-                </div>
-            </div>
-
-            <!-- Stats -->
-            <div class="grid grid-cols-3 gap-3">
-                <div class="bg-zinc-900 rounded-2xl p-3 text-center">
-                    <div class="text-xl font-bold text-emerald-400">${userData.reputation || 0}</div>
-                    <div class="text-xs text-zinc-500 mt-1">Reputation</div>
-                </div>
-                <div class="bg-zinc-900 rounded-2xl p-3 text-center">
-                    <div class="text-xl font-bold text-white">${userData.testimoniesCount || 0}</div>
-                    <div class="text-xs text-zinc-500 mt-1">Testimonies</div>
-                </div>
-                <div class="bg-zinc-900 rounded-2xl p-3 text-center">
-                    <div class="text-xl font-bold text-amber-400">${userData.verifications || 0}</div>
-                    <div class="text-xs text-zinc-500 mt-1">Verifications</div>
-                </div>
-            </div>
-
-            <!-- Verification Channel -->
-            <div class="bg-zinc-900 rounded-2xl p-4 border border-zinc-700 space-y-3">
-                <div class="flex items-center justify-between">
-                    <h4 class="font-semibold text-sm text-white flex items-center gap-2">
-                        <span>🛡️</span> Verification
-                    </h4>
-                    <span class="text-[10px] text-zinc-500 uppercase tracking-wider">Progression</span>
-                </div>
-
-                <!-- Step 1: Phone -->
-                <div class="flex items-center justify-between gap-3 p-3 rounded-xl bg-zinc-950/80 border border-zinc-800">
-                    <div class="min-w-0">
-                        <div class="text-sm font-medium text-zinc-200">1. Phone verification</div>
-                        <div class="text-xs text-zinc-500">Citizen Circle • anti-spam • corroboration</div>
+                    <div id="bioDisplay" class="text-sm text-zinc-300 leading-relaxed min-h-[52px]">
+                        ${userData.bio
+                            ? sanitize(userData.bio)
+                            : `<span class="text-zinc-500 italic">Tell the Square who you are... Share your story, values, or what truth means to you.</span>`
+                        }
                     </div>
-                    ${isCitizenCircle
-                        ? `<span class="shrink-0 text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 rounded-full">✅ Done</span>`
-                        : `<button type="button" id="btnStartPhoneVerify"
-                                class="shrink-0 text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-black px-3 py-1.5 rounded-xl">
-                                Verify
-                           </button>`
-                    }
-                </div>
-
-                <!-- Step 2: Higher Trust (ZK) -->
-                <div class="p-3 rounded-xl bg-zinc-950/80 border border-zinc-800 space-y-3">
-                    <div class="flex items-center justify-between gap-3">
-                        <div class="min-w-0">
-                            <div class="text-sm font-medium text-zinc-200 flex items-center gap-1.5">
-                                2. Higher Trust Verification
-                                <span class="text-[10px] bg-teal-500/15 text-teal-400 px-1.5 py-0.5 rounded-full">Recommended</span>
-                            </div>
-                            <div class="text-xs text-zinc-500 mt-1 leading-relaxed">
-                                Prove your evidence is real and unchanged — without revealing who you are.
-                            </div>
+                    <div id="bioEditSection" class="hidden space-y-3 mt-2">
+                        <textarea id="profileBioTextarea"
+                                rows="3"
+                                maxlength="280"
+                                class="w-full bg-zinc-950 border border-zinc-700 rounded-xl p-3 text-sm text-zinc-200 focus:outline-none focus:border-emerald-500 resize-none"
+                                placeholder="Write a short bio about yourself...">${sanitize(userData.bio || '')}</textarea>
+                        <div class="flex gap-2">
+                            <button type="button" id="btnSaveBio"
+                                    class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-black text-xs font-semibold rounded-xl transition">
+                                Save Bio
+                            </button>
+                            <button type="button" id="btnCancelBioEdit"
+                                    class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs rounded-xl transition">
+                                Cancel
+                            </button>
                         </div>
-                        ${userData.zkVerified
-                            ? (() => {
-                                const isFallback = userData.lastZkIsFallback === true;
-                                const type = (userData.lastZkProofType || '').toUpperCase();
-                                const isRealSNARK = !isFallback && (type.includes('SNARK') || type.includes('GROTH16'));
-                                return isRealSNARK
-                                    ? `<span class="shrink-0 text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 rounded-full">⚖️ ZK-SNARK</span>`
-                                    : `<span class="shrink-0 text-xs font-semibold text-slate-300 bg-slate-500/10 border border-slate-500/30 px-2.5 py-1 rounded-full">🔏 Integrity Seal</span>`;
-                            })()
-                            : `<button type="button" id="btnStartZkVerify"
-                                   class="shrink-0 text-xs font-semibold bg-teal-600 hover:bg-teal-500 text-white px-3.5 py-1.5 rounded-xl transition">
-                               Start Verification
+                    </div>
+                </div>
+
+                <!-- Stats -->
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="bg-zinc-900 rounded-2xl p-3 text-center">
+                        <div class="text-xl font-bold text-emerald-400">${userData.reputation || 0}</div>
+                        <div class="text-xs text-zinc-500 mt-1">Reputation</div>
+                    </div>
+                    <div class="bg-zinc-900 rounded-2xl p-3 text-center">
+                        <div class="text-xl font-bold text-white">${userData.testimoniesCount || 0}</div>
+                        <div class="text-xs text-zinc-500 mt-1">Testimonies</div>
+                    </div>
+                    <div class="bg-zinc-900 rounded-2xl p-3 text-center">
+                        <div class="text-xl font-bold text-amber-400">${userData.verifications || 0}</div>
+                        <div class="text-xs text-zinc-500 mt-1">Verifications</div>
+                    </div>
+                </div>
+
+                <!-- Verification Channel -->
+                <div class="bg-zinc-900 rounded-2xl p-4 border border-zinc-700 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h4 class="font-semibold text-sm text-white flex items-center gap-2">
+                            <span>🛡️</span> Verification
+                        </h4>
+                        <span class="text-[10px] text-zinc-500 uppercase tracking-wider">Progression</span>
+                    </div>
+
+                    <!-- Step 1: Phone -->
+                    <div class="flex items-center justify-between gap-3 p-3 rounded-xl bg-zinc-950/80 border border-zinc-800">
+                        <div class="min-w-0">
+                            <div class="text-sm font-medium text-zinc-200">1. Phone verification</div>
+                            <div class="text-xs text-zinc-500">Citizen Circle • anti-spam • corroboration</div>
+                        </div>
+                        ${isCitizenCircle
+                            ? `<span class="shrink-0 text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 rounded-full">✅ Done</span>`
+                            : `<button type="button" id="btnStartPhoneVerify"
+                                    class="shrink-0 text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-black px-3 py-1.5 rounded-xl">
+                                    Verify
                                </button>`
                         }
                     </div>
 
-                    ${!userData.zkVerified ? `
-                    <div class="text-[11px] text-zinc-400 bg-zinc-900/60 border border-zinc-800 rounded-lg p-2.5 leading-relaxed">
-                        <div class="font-medium text-zinc-300 mb-1">Quick Guide:</div>
-                        <ul class="list-disc pl-4 space-y-0.5">
-                            <li>Takes about 1–2 minutes</li>
-                            <li>Works fully on your phone or computer</li>
-                            <li>Does <strong>not</strong> reveal your real identity</li>
-                            <li>Gives your future reports stronger trust weight</li>
-                        </ul>
+                    <!-- Step 2: Higher Trust (ZK) -->
+                    <div class="p-3 rounded-xl bg-zinc-950/80 border border-zinc-800 space-y-3">
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="min-w-0">
+                                <div class="text-sm font-medium text-zinc-200 flex items-center gap-1.5">
+                                    2. Higher Trust Verification
+                                    <span class="text-[10px] bg-teal-500/15 text-teal-400 px-1.5 py-0.5 rounded-full">Recommended</span>
+                                </div>
+                                <div class="text-xs text-zinc-500 mt-1 leading-relaxed">
+                                    Prove your evidence is real and unchanged — without revealing who you are.
+                                </div>
+                            </div>
+                            ${userData.zkVerified
+                                ? (() => {
+                                    const isFallback = userData.lastZkIsFallback === true;
+                                    const type = (userData.lastZkProofType || '').toUpperCase();
+                                    const isRealSNARK = !isFallback && (type.includes('SNARK') || type.includes('GROTH16'));
+                                    return isRealSNARK
+                                        ? `<span class="shrink-0 text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 rounded-full">⚖️ ZK-SNARK</span>`
+                                        : `<span class="shrink-0 text-xs font-semibold text-slate-300 bg-slate-500/10 border border-slate-500/30 px-2.5 py-1 rounded-full">🔏 Integrity Seal</span>`;
+                                })()
+                                : `<button type="button" id="btnStartZkVerify"
+                                       class="shrink-0 text-xs font-semibold bg-teal-600 hover:bg-teal-500 text-white px-3.5 py-1.5 rounded-xl transition">
+                                   Start Verification
+                                   </button>`
+                            }
+                        </div>
+
+                        ${!userData.zkVerified ? `
+                        <div class="text-[11px] text-zinc-400 bg-zinc-900/60 border border-zinc-800 rounded-lg p-2.5 leading-relaxed">
+                            <div class="font-medium text-zinc-300 mb-1">Quick Guide:</div>
+                            <ul class="list-disc pl-4 space-y-0.5">
+                                <li>Takes about 1–2 minutes</li>
+                                <li>Works fully on your phone or computer</li>
+                                <li>Does <strong>not</strong> reveal your real identity</li>
+                                <li>Gives your future reports stronger trust weight</li>
+                            </ul>
+                        </div>
+                        ` : ''}
                     </div>
+
+                    <!-- Step 3: Public profile -->
+                    <div class="flex items-center justify-between gap-3 p-3 rounded-xl bg-zinc-950/80 border border-zinc-800">
+                        <div class="min-w-0">
+                            <div class="text-sm font-medium text-zinc-200">3. Public profile</div>
+                            <div class="text-xs text-zinc-500">Optional. Default private. Separate from Bold Witness posting mode.</div>
+                        </div>
+                        <button type="button" id="btnTogglePrivacyShield"
+                                class="shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full border transition
+                                ${isPrivacyShieldActive
+                                    ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30 hover:bg-emerald-500/20'
+                                    : 'text-amber-400 bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/20'}">
+                            ${isPrivacyShieldActive ? '🛡️ Private' : '👁 Public'}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                    ${!isCitizenCircle && !isWitness ? `
+                        <button type="button" id="btnGetVerifiedCta"
+                                class="col-span-1 sm:col-span-2 py-3 px-4 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
+                            🛡️ Get Verified — Unlock Citizen Circle
+                        </button>
                     ` : ''}
-                </div>
 
-                <!-- Step 3: Public profile (optional) -->
-                <div class="flex items-center justify-between gap-3 p-3 rounded-xl bg-zinc-950/80 border border-zinc-800">
-                    <div class="min-w-0">
-                        <div class="text-sm font-medium text-zinc-200">3. Public profile</div>
-                        <div class="text-xs text-zinc-500">Optional. Default private. Separate from Bold Witness posting mode.</div>
-                    </div>
-                    <button type="button" id="btnTogglePrivacyShield"
-                            class="shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full border transition
-                            ${isPrivacyShieldActive
-                                ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30 hover:bg-emerald-500/20'
-                                : 'text-amber-400 bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/20'}">
-                        ${isPrivacyShieldActive ? '🛡️ Private' : '👁 Public'}
+                    <button type="button" id="btnOpenEditProfile"
+                            class="py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-black text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
+                        ✏️ Edit Profile
+                    </button>
+
+                    <button type="button" id="btnOpenSettings"
+                            class="py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
+                        ⚙️ Settings & Security
+                    </button>
+
+                    <button type="button" id="btnSignOut"
+                            class="col-span-1 sm:col-span-2 py-3 px-4 bg-red-950/40 hover:bg-red-900/60 border border-red-500/40 text-red-400 hover:text-red-300 text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
+                        🚪 Sign Out
                     </button>
                 </div>
             </div>
+        `;
 
-            <!-- Action Buttons -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
-                ${!isCitizenCircle && !isWitness ? `
-                    <button type="button" id="btnGetVerifiedCta"
-                            class="col-span-1 sm:col-span-2 py-3 px-4 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
-                        🛡️ Get Verified — Unlock Citizen Circle
-                    </button>
-                ` : ''}
-
-                <button type="button" id="btnOpenEditProfile"
-                        class="py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-black text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
-                    ✏️ Edit Profile
-                </button>
-
-                <button type="button" id="btnOpenSettings"
-                        class="py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
-                    ⚙️ Settings & Security
-                </button>
-
-                <button type="button" id="btnSignOut"
-                        class="col-span-1 sm:col-span-2 py-3 px-4 bg-red-950/40 hover:bg-red-900/60 border border-red-500/40 text-red-400 hover:text-red-300 text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
-                    🚪 Sign Out
-                </button>
+        content.innerHTML = html;
+        attachProfileEventListeners(userData, isCitizenCircle, isWitness);
+    }).catch(err => {
+        console.error("renderProfileUI failed:", err);
+        content.innerHTML = `
+            <div class="flex flex-col items-center justify-center py-16 space-y-4 text-center text-white">
+                <div class="w-20 h-20 rounded-3xl bg-zinc-800 flex items-center justify-center text-4xl">👤</div>
+                <h2 class="text-xl font-bold text-white">${sanitize(userData.displayName) || "Anonymous Witness"}</h2>
+                <p class="text-sm text-zinc-400">Profile loaded (witness level temporarily unavailable)</p>
             </div>
-        </div>
-    `;
+        `;
+    });
+}
 
-    content.innerHTML = html;
-
-    // CSP-safe wiring
-    attachProfileEventListeners(userData, isCitizenCircle, isWitness);
-}).catch(err => {
-    console.error("renderProfileUI failed:", err);
-    // Fallback: still show basic profile without witness level so the loading spinner clears out
-    content.innerHTML = `
-        <div class="flex flex-col items-center justify-center py-16 space-y-4 text-center text-white">
-            <div class="w-20 h-20 rounded-3xl bg-zinc-800 flex items-center justify-center text-4xl">👤</div>
-            <h2 class="text-xl font-bold text-white">${sanitize(userData.displayName) || "Anonymous Witness"}</h2>
-            <p class="text-sm text-zinc-400">Profile loaded (witness level temporarily unavailable)</p>
-        </div>
-    `;
-});
 /**
- * Attach all event listeners after the profile HTML is injected.
- * This is the CSP-safe replacement for the old onclick attributes.
+ * Attach all event listeners after the profile HTML is injected (CSP-safe)
  */
 function attachProfileEventListeners(userData, isCitizenCircle, isWitness) {
-    // Witness Cycle
     document.getElementById('btnStartWitnessCycle')?.addEventListener('click', () => {
         if (typeof handleProfileStartCycle === 'function') {
             handleProfileStartCycle();
@@ -535,7 +530,6 @@ function attachProfileEventListeners(userData, isCitizenCircle, isWitness) {
         }
     });
 
-    // Bio editing
     document.getElementById('btnToggleBioEdit')?.addEventListener('click', () => {
         if (typeof window.toggleBioEdit === 'function') window.toggleBioEdit();
     });
@@ -546,7 +540,6 @@ function attachProfileEventListeners(userData, isCitizenCircle, isWitness) {
         if (typeof window.cancelBioEdit === 'function') window.cancelBioEdit();
     });
 
-    // Phone verification
     document.getElementById('btnStartPhoneVerify')?.addEventListener('click', () => {
         if (typeof window.startPhoneVerification === 'function') window.startPhoneVerification();
     });
@@ -554,7 +547,6 @@ function attachProfileEventListeners(userData, isCitizenCircle, isWitness) {
         if (typeof window.startPhoneVerification === 'function') window.startPhoneVerification();
     });
 
-   // ZK / Higher Trust
     document.getElementById('btnStartZkVerify')?.addEventListener('click', () => {
         if (typeof window.startZKVerification === 'function') {
             window.startZKVerification();
@@ -563,12 +555,10 @@ function attachProfileEventListeners(userData, isCitizenCircle, isWitness) {
         }
     });
 
-    // Privacy Shield
     document.getElementById('btnTogglePrivacyShield')?.addEventListener('click', () => {
         if (typeof window.togglePrivacyShield === 'function') window.togglePrivacyShield();
     });
 
-    // Edit Profile
     document.getElementById('btnOpenEditProfile')?.addEventListener('click', () => {
         if (typeof window.openEditProfileSafe === 'function') {
             window.openEditProfileSafe();
@@ -577,27 +567,20 @@ function attachProfileEventListeners(userData, isCitizenCircle, isWitness) {
         }
     });
 
-    // Support / Give Reputation Button
     document.getElementById('supportBtn')?.addEventListener('click', async () => {
         const targetUserId = window.currentProfileUserId || userData?.uid;
-        const strength = 3; 
-
+        const strength = 3;
         if (targetUserId && typeof giveSupport === 'function') {
-            const success = await giveSupport(targetUserId, strength);
-            if (success) {
-                // Optionally refresh reputation display
-            }
+            await giveSupport(targetUserId, strength);
         }
     });
 
-    // Dark Mode Toggle
     document.getElementById('theme-toggle-btn')?.addEventListener('click', () => {
         if (typeof window.toggleDarkMode === 'function') {
             window.toggleDarkMode();
         }
     });
 
-    // Settings
     document.getElementById('btnOpenSettings')?.addEventListener('click', () => {
         if (typeof window.openSettingsSafe === 'function') {
             window.openSettingsSafe();
@@ -606,7 +589,6 @@ function attachProfileEventListeners(userData, isCitizenCircle, isWitness) {
         }
     });
 
-    // Sign Out
     document.getElementById('btnSignOut')?.addEventListener('click', () => {
         if (typeof handleSignOut === 'function') {
             handleSignOut();
@@ -615,8 +597,8 @@ function attachProfileEventListeners(userData, isCitizenCircle, isWitness) {
         }
     });
 }
-// ====================== SESSIONS & LOGIN HISTORY PLACEHOLDERS ======================
 
+// ====================== SESSIONS & LOGIN HISTORY PLACEHOLDERS ======================
 window.renderSessionsPlaceholder = function() {
     const el = document.getElementById('activeSessionsList');
     if (el) {
@@ -688,16 +670,11 @@ window.togglePrivacyShield = async function () {
             hidePublicInfo: nextPrivate,
             updatedAt: serverTimestamp()
         });
-        await syncPublicProfile(auth.currentUser.uid, currentUserData || {});
 
-        // keep public projection in sync
-        if (currentUserData) {
-            currentUserData.hidePublicInfo = nextPrivate;
-            await syncPublicProfile(auth.currentUser.uid, currentUserData);
-        }
         if (currentUserData) {
             currentUserData.hidePublicInfo = nextPrivate;
             window.currentUserData = currentUserData;
+            await syncPublicProfile(auth.currentUser.uid, currentUserData);
         }
         showToast(
             nextPrivate
@@ -710,6 +687,7 @@ window.togglePrivacyShield = async function () {
         showToast("Could not update privacy setting", "error");
     }
 };
+
 // ====================== SAFE MODAL OPENERS ======================
 window.openEditProfileSafe = function () {
     const modal = document.getElementById('editProfileModal');
@@ -768,7 +746,7 @@ export function handleImagePreview(event) {
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, width, height);
 
-            // Assign to the outer variable so saveProfileChanges can use it
+            // Assign to outer variable (critical for saving)
             pendingAvatarBase64 = canvas.toDataURL('image/jpeg', 0.85);
 
             const imgPreview = document.getElementById('avatarPreview');
@@ -787,7 +765,6 @@ export function handleImagePreview(event) {
     reader.readAsDataURL(file);
 }
 
-// Keep available for any legacy code
 window.handleImagePreview = handleImagePreview;
 
 // ====================== SIGN OUT ======================
@@ -913,7 +890,7 @@ export function closeSettings() {
     }
 }
 
-// ====================== EDIT PROFILE FORM POPULATION ======================
+// ====================== EDIT PROFILE FORM ======================
 export function populateEditProfileForm() {
     const modal = document.getElementById('editProfileModal');
     if (!modal) return;
