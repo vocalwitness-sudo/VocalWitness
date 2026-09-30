@@ -569,11 +569,21 @@ footer .grid {
 .ticker-track,
 #ticker-content {
   display: inline-flex;
+  flex-wrap: nowrap;
   white-space: nowrap;
+  width: max-content;              /* must be wider than the viewport */
   animation: ticker-scroll 55s linear infinite;
   will-change: transform;
+  transform: translateZ(0);        /* smoother on some GPUs */
 }
 
+.ticker-item {
+  display: inline-block;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* Pause only while hovering the wrap */
 .ticker-wrap:hover .ticker-track,
 .ticker-wrap:hover #ticker-content {
   animation-play-state: paused;
@@ -581,9 +591,17 @@ footer .grid {
 
 @keyframes ticker-scroll {
   0% {
-    transform: translateX(0);
+    transform: translate3d(0, 0, 0);
   }
   100% {
-    transform: translateX(-50%);
+    transform: translate3d(-50%, 0, 0); /* needs duplicated content */
+  }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track,
+  #ticker-content {
+    animation: none;
   }
 }
