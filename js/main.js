@@ -758,12 +758,11 @@ const testimonyData = {
   evidencePack: evidencePackResult?.firestorePack || null,
 
   // ZK Proof
-  zkProof: zkResult.proof || null,
-  zkPublicSignals: zkResult.publicSignals || [],
-  proofType: zkResult.proofType || 'NONE',
-  isZkVerified: !zkResult.isFallback,
-};
-
+  zkProof: null,                       // never put the full proof object
+zkPublicSignals: (zkResult.publicSignals || []).flat().map(String),
+proofType: zkResult.proofType || 'NONE',
+isZkVerified: Boolean(zkResult.proofType === 'SNARK_GROTH16_SERVER' && !zkResult.isFallback),
+  
 // 4. Write once
 const docRef = await addDoc(collection(db, 'testimonies'), testimonyData);
 console.log('[publish] SUCCESS →', docRef.id);
