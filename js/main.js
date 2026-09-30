@@ -757,16 +757,16 @@ const testimonyData = {
   hasEvidencePack: !!evidencePackResult,
   evidencePack: evidencePackResult?.firestorePack || null,
 
-  // ZK Proof
-  zkProof: null,                       // never put the full proof object
-zkPublicSignals: (zkResult.publicSignals || []).flat().map(String),
-proofType: zkResult.proofType || 'NONE',
-isZkVerified: Boolean(zkResult.proofType === 'SNARK_GROTH16_SERVER' && !zkResult.isFallback),
-  
+    // ZK Proof (Firestore-safe — never store nested proof object)
+  zkProof: null,
+  zkPublicSignals: (zkResult.publicSignals || []).flat().map(String),
+  proofType: zkResult.proofType || 'NONE',
+  isZkVerified: Boolean(zkResult.proofType === 'SNARK_GROTH16_SERVER' && !zkResult.isFallback),
+};
+
 // 4. Write once
 const docRef = await addDoc(collection(db, 'testimonies'), testimonyData);
 console.log('[publish] SUCCESS →', docRef.id);
-
 // 5. Update the pack with the real testimony ID
 if (evidencePackResult && docRef.id) {
   try {
