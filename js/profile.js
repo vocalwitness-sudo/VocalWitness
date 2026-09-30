@@ -710,7 +710,6 @@ window.togglePrivacyShield = async function () {
         showToast("Could not update privacy setting", "error");
     }
 };
-
 // ====================== SAFE MODAL OPENERS ======================
 window.openEditProfileSafe = function () {
     const modal = document.getElementById('editProfileModal');
@@ -731,14 +730,17 @@ window.openSettingsSafe = function () {
     showToast("Settings & Security panel is being improved. Coming soon!", "info");
 };
 
-   export function handleImagePreview(event) {
+// ====================== IMAGE PREVIEW + COMPRESSION ======================
+export function handleImagePreview(event) {
     const file = event?.target?.files?.[0];
     if (!file) return;
+
     if (file.size > 2 * 1024 * 1024) {
         showToast("Image size must be under 2MB", "error");
         event.target.value = '';
         return;
     }
+
     const reader = new FileReader();
     reader.onload = (e) => {
         const img = new Image();
@@ -748,26 +750,30 @@ window.openSettingsSafe = function () {
             const MAX_HEIGHT = 256;
             let width = img.width;
             let height = img.height;
+
             if (width > height) {
                 if (width > MAX_WIDTH) {
-                    height *= MAX_WIDTH / width;
+                    height = height * (MAX_WIDTH / width);
                     width = MAX_WIDTH;
                 }
             } else {
                 if (height > MAX_HEIGHT) {
-                    width *= MAX_HEIGHT / height;
+                    width = width * (MAX_HEIGHT / height);
                     height = MAX_HEIGHT;
                 }
             }
+
             canvas.width = width;
             canvas.height = height;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, width, height);
 
-            const pendingAvatarBase64 = canvas.toDataURL('image/jpeg', 0.85);
+            // Assign to the outer variable so saveProfileChanges can use it
+            pendingAvatarBase64 = canvas.toDataURL('image/jpeg', 0.85);
 
             const imgPreview = document.getElementById('avatarPreview');
             const avatarFallback = document.getElementById('avatarFallback');
+
             if (imgPreview) {
                 imgPreview.src = pendingAvatarBase64;
                 imgPreview.classList.remove('hidden');
@@ -781,48 +787,9 @@ window.openSettingsSafe = function () {
     reader.readAsDataURL(file);
 }
 
-// Make sure it's also on window if needed by legacy code
+// Keep available for any legacy code
 window.handleImagePreview = handleImagePreview;
 
-// ====================== IMAGE UPLOAD + COMPRESSION ======================
-
-window.handleImagePreview = function(event) {
-    const file = event?.target?.files?.[0];
-    if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-        showToast("Image size must be under 2MB", "error");
-        event.target.value = '';
-        return;
-    }
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 256;
-            const MAX_HEIGHT = 256;
-            let width = img.width;
-            let height = img.height;
-            if (width > height) {
-                if (width > MAX_WIDTH) {
-                    height *= MAX_WIDTH / width;
-                    width = MAX_WIDTH;
-                }
-            } else {
-                if (height > MAX_HEIGHT) {
-                    width *= MAX_HEIGHT / height;
-                    height = MAX_HEIGHT;
-                }
-            }
-            canvas.width = width;
-            canvas.height = height;
-            // ... rest of your image compression code
-        };
-        img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-};
-    }
 // ====================== SIGN OUT ======================
 export async function handleSignOut() {
     try {
@@ -854,7 +821,7 @@ export async function handleProfileStartCycle() {
     }
 }
 
-// ====================== MODAL CLOSE / OPEN (local — do not import from modals.js) ======================
+// ====================== MODAL CLOSE / OPEN ======================
 export function closeProfile() {
     const modal = document.getElementById('profileModal');
     if (!modal) return;
@@ -885,7 +852,9 @@ export function openEditProfile() {
         }, 300);
         return;
     }
+
     pendingAvatarBase64 = null;
+
     if (currentUserData) {
         const firstNameInput   = document.getElementById('editFirstName');
         const lastNameInput    = document.getElementById('editLastName');
@@ -896,6 +865,7 @@ export function openEditProfile() {
         const hidePublicToggle = document.getElementById('toggleHidePublicInfo');
         const imgPreview       = document.getElementById('avatarPreview');
         const avatarFallback   = document.getElementById('avatarFallback');
+
         if (firstNameInput)   firstNameInput.value   = currentUserData.firstName || '';
         if (lastNameInput)    lastNameInput.value    = currentUserData.lastName || '';
         if (displayNameInput) displayNameInput.value = currentUserData.displayName || '';
@@ -903,6 +873,7 @@ export function openEditProfile() {
         if (regionInput)      regionInput.value      = currentUserData.region || '';
         if (bioInput)         bioInput.value         = currentUserData.bio || '';
         if (hidePublicToggle) hidePublicToggle.checked = isPrivacyPrivate(currentUserData);
+
         if (currentUserData.photoURL && imgPreview) {
             imgPreview.src = currentUserData.photoURL;
             imgPreview.classList.remove('hidden');
@@ -912,6 +883,7 @@ export function openEditProfile() {
             if (avatarFallback) avatarFallback.classList.remove('hidden');
         }
     }
+
     modal.classList.remove('hidden');
     modal.classList.add('flex');
     modal.setAttribute('aria-hidden', 'false');
@@ -1006,12 +978,12 @@ export async function saveProfileChanges(event) {
     const bioEl         = document.getElementById('editBio');
     const hidePublicEl  = document.getElementById('toggleHidePublicInfo');
 
-    const firstName     = firstNameEl?.value?.trim() || "";
-    const lastName      = lastNameEl?.value?.trim() || "";
-    const displayName   = displayNameEl?.value?.trim();
-    const username      = usernameEl?.value?.trim();
-    const region        = regionEl?.value?.trim();
-    const bio           = bioEl?.value?.trim();
+    const firstName      = firstNameEl?.value?.trim() || "";
+    const lastName       = lastNameEl?.value?.trim() || "";
+    const displayName    = displayNameEl?.value?.trim();
+    const username       = usernameEl?.value?.trim();
+    const region         = regionEl?.value?.trim();
+    const bio            = bioEl?.value?.trim();
     const hidePublicInfo = hidePublicEl ? hidePublicEl.checked : true;
 
     if (!displayNameEl) {
@@ -1034,9 +1006,11 @@ export async function saveProfileChanges(event) {
             hidePublicInfo,
             updatedAt: serverTimestamp()
         };
+
         if (pendingAvatarBase64) {
             updatePayload.photoURL = pendingAvatarBase64;
         }
+
         await updateDoc(userRef, updatePayload);
         showToast("✅ Profile updated successfully!", "success");
         closeEditProfile();
@@ -1048,46 +1022,46 @@ export async function saveProfileChanges(event) {
 }
 
 export async function triggerPasswordReset() {
-  const user = auth.currentUser;
-  if (!user) {
-    showToast('Sign in required', 'error');
-    return;
-  }
+    const user = auth.currentUser;
+    if (!user) {
+        showToast('Sign in required', 'error');
+        return;
+    }
 
-  const providers = (user.providerData || []).map(p => p.providerId);
-  const hasPassword = providers.includes('password');
-  if (!hasPassword) {
-    showToast(
-      'This account uses Google/Twitter/GitHub sign-in. There is no password to reset. Sign in with that provider instead.',
-      'info'
-    );
-    return;
-  }
+    const providers = (user.providerData || []).map(p => p.providerId);
+    const hasPassword = providers.includes('password');
+    if (!hasPassword) {
+        showToast(
+            'This account uses Google/Twitter/GitHub sign-in. There is no password to reset. Sign in with that provider instead.',
+            'info'
+        );
+        return;
+    }
 
-  if (!user.email) {
-    showToast('No email on this account', 'error');
-    return;
-  }
+    if (!user.email) {
+        showToast('No email on this account', 'error');
+        return;
+    }
 
-  try {
-    await sendPasswordResetEmail(auth, user.email, {
-      url: 'https://vocalwitness.com/profile',
-      handleCodeInApp: false
-    });
-    showToast(
-      `Reset link sent to ${user.email}. Check inbox and spam. Link expires in ~1 hour.`,
-      'success'
-    );
-  } catch (error) {
-    console.error('Password reset error:', error);
-    const msg =
-      error.code === 'auth/too-many-requests'
-        ? 'Too many attempts. Try again later.'
-        : error.code === 'auth/user-not-found'
-          ? 'No password account for this email.'
-          : 'Could not send reset email. Check Firebase Auth email settings.';
-    showToast(msg, 'error');
-  }
+    try {
+        await sendPasswordResetEmail(auth, user.email, {
+            url: 'https://vocalwitness.com/profile',
+            handleCodeInApp: false
+        });
+        showToast(
+            `Reset link sent to ${user.email}. Check inbox and spam. Link expires in ~1 hour.`,
+            'success'
+        );
+    } catch (error) {
+        console.error('Password reset error:', error);
+        const msg =
+            error.code === 'auth/too-many-requests'
+                ? 'Too many attempts. Try again later.'
+                : error.code === 'auth/user-not-found'
+                  ? 'No password account for this email.'
+                  : 'Could not send reset email. Check Firebase Auth email settings.';
+        showToast(msg, 'error');
+    }
 }
 
 window.handlePasswordReset = triggerPasswordReset;
@@ -1137,7 +1111,7 @@ window.openSettingsModal = window.openSettings;
 window.closeSettingsModal = window.closeSettings;
 window.saveProfileBio = window.saveUserBio;
 
-// ====================== PROFILE MANAGER (Card / Dual-Identity View) ======================
+// ====================== PROFILE MANAGER ======================
 export class ProfileManager {
     constructor() {
         this.profileContainer = document.getElementById('profileCard');
@@ -1263,7 +1237,7 @@ export class ProfileManager {
     }
 }
 
-// ====================== INIT PROFILE MODALS (CSP-safe – SINGLE SOURCE OF TRUTH) ======================
+// ====================== INIT PROFILE MODALS (CSP-safe) ======================
 export function initProfileModals() {
     if (window.__vwProfileModalsWired) return;
     window.__vwProfileModalsWired = true;
@@ -1300,7 +1274,7 @@ export function initProfileModals() {
         }
     });
 
-    // ---- 2FA / MFA toggle (requires mfa helpers imported at top of file) ----
+    // 2FA / MFA toggle
     const toggle2FAEl = document.getElementById('toggle2FA');
     if (toggle2FAEl) {
         try {
@@ -1319,7 +1293,7 @@ export function initProfileModals() {
             }
 
             if (e.target.checked) {
-                e.target.checked = false; // stay off until enrollment succeeds
+                e.target.checked = false;
                 try {
                     const { totpSecret, qrCodeUrl, secretKey } = await enrollTotpMfa();
                     window.__pendingTotpSecret = totpSecret;
