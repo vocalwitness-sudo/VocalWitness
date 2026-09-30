@@ -315,11 +315,15 @@
     import { initDarkMode } from './js/utils.js';
     import { auth } from './js/firebase-config.js';
     import { sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-   import { handleImagePreview } from './js/profile.js';
+    import { initProfile, initProfileModals, handleImagePreview } from './js/profile.js';
 
     document.addEventListener('DOMContentLoaded', () => {
             if (typeof initLanguage === 'function') initLanguage();
             if (typeof initDarkMode === 'function') initDarkMode();
+
+            // Initialize profile system and modal event listeners
+            if (typeof initProfile === 'function') initProfile();
+            if (typeof initProfileModals === 'function') initProfileModals();
 
             // ===== Back / Close buttons (event delegation) =====
             document.addEventListener('click', (e) => {
