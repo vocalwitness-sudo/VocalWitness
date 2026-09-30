@@ -1368,6 +1368,15 @@ function bootProfileUi() {
         console.error('[profile] initProfileModals failed:', err);
     }
 
+    // Always start the real profile loader on pages that have a mount point
+    if (document.getElementById('mainProfileContent') ||
+        document.getElementById('profileContent') ||
+        document.getElementById('modalProfileContent')) {
+        if (typeof initProfile === 'function') {
+            initProfile();
+        }
+    }
+
     document.getElementById('defaultDoorSelect')?.addEventListener('change', (e) => {
         localStorage.setItem('vw_default_page', e.target.value);
         if (typeof showToast === 'function') {
@@ -1377,9 +1386,9 @@ function bootProfileUi() {
 
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
-            closeProfile();
-            closeEditProfile();
-            closeSettings();
+            if (typeof closeProfile === 'function') closeProfile();
+            if (typeof closeEditProfile === 'function') closeEditProfile();
+            if (typeof closeSettings === 'function') closeSettings();
         }
     });
 }
