@@ -2,7 +2,7 @@
 import { db, auth } from './firebase-config.js';
 import {
     doc, getDoc, updateDoc, arrayUnion, arrayRemove,
-    collection, query, where, getDocs, limit, orderBy
+    collection, query, where, getDocs, limit
 } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
 
 const CACHE_TTL_MS = 60_000; // 1 min
@@ -206,11 +206,11 @@ export async function loadVerifiedWitnesses(filter = 'all') {
         let people = [];
 
         // Primary query – Higher Trust (ZK)
+        // No orderBy → avoids composite index requirement; sort client-side below
         if (filter === 'all' || filter === 'zk') {
             const zkQ = query(
                 collection(db, 'publicProfiles'),
                 where('zkVerified', '==', true),
-                orderBy('reputation', 'desc'),
                 limit(30)
             );
             const zkSnap = await getDocs(zkQ);
@@ -230,11 +230,9 @@ export async function loadVerifiedWitnesses(filter = 'all') {
 
         // Phone verified (when filter is phone or when all returned nothing)
         if (filter === 'phone' || (filter === 'all' && people.length === 0)) {
-            // Prefer isPhoneVerified; fall back to isVerified if that is what you store
             const phoneQ = query(
                 collection(db, 'publicProfiles'),
                 where('isPhoneVerified', '==', true),
-                orderBy('reputation', 'desc'),
                 limit(30)
             );
             const phoneSnap = await getDocs(phoneQ);
@@ -252,6 +250,9 @@ export async function loadVerifiedWitnesses(filter = 'all') {
                 });
             });
         }
+
+        // Sort by reputation descending (client-side)
+        people.sort((a, b) => (b.reputation || 0) - (a.reputation || 0));
 
         renderWitnessGrid(people);
     } catch (err) {
