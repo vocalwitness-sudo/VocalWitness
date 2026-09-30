@@ -50,10 +50,10 @@
           { "key": "X-Content-Type-Options", "value": "nosniff" },
           { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
           { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-          {
-            "key": "Content-Security-Policy",
-            "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://accounts.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://js.paystack.co https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; media-src 'self' blob: data: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net https://*.firebaseapp.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebasestorage.googleapis.com https://www.googleapis.com https://api.rss2json.com https://media.vocalwitness.com https://*.r2.cloudflarestorage.com https://api.paystack.co https://*.livekit.cloud wss://*.livekit.cloud https://static.cloudflareinsights.com; worker-src 'self' blob:; child-src 'self' blob:; frame-src 'self' https://accounts.google.com https://js.paystack.co; object-src 'none'; base-uri 'self'; form-action 'self';"
-          }
+{
+  "key": "Content-Security-Policy",
+  "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://apis.google.com https://accounts.google.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://js.paystack.co https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; media-src 'self' blob: data: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net https://*.firebaseapp.com https://apis.google.com https://accounts.google.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebasestorage.googleapis.com https://www.googleapis.com https://api.rss2json.com https://media.vocalwitness.com https://*.r2.cloudflarestorage.com https://api.paystack.co https://*.livekit.cloud wss://*.livekit.cloud https://static.cloudflareinsights.com; worker-src 'self' blob:; child-src 'self' blob:; frame-src 'self' https://accounts.google.com https://apis.google.com https://js.paystack.co https://*.firebaseapp.com https://*.google.com; object-src 'none'; base-uri 'self'; form-action 'self';"
+}
         ]
       },
       {
