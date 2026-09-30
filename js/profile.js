@@ -731,7 +731,7 @@ window.openSettingsSafe = function () {
     showToast("Settings & Security panel is being improved. Coming soon!", "info");
 };
 
-    export function handleImagePreview(event) {
+   export function handleImagePreview(event) {
     const file = event?.target?.files?.[0];
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) {
@@ -781,7 +781,7 @@ window.openSettingsSafe = function () {
     reader.readAsDataURL(file);
 }
 
-// Ensure it's available globally as well
+// Make sure it's also on window if needed by legacy code
 window.handleImagePreview = handleImagePreview;
 
 // ====================== IMAGE UPLOAD + COMPRESSION ======================
