@@ -89,6 +89,9 @@ export function openProfile() {
         return;
     }
 
+    // 🛠️ CRITICAL FIX: Clear out inline 'display: none' left over by closeProfile()
+    modal.style.display = ''; 
+
     if (currentUserData) {
         renderProfileUI(currentUserData);
     } else {
@@ -109,6 +112,8 @@ export function openProfile() {
     modal.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
 }
+
+window.openProfile = openProfile;
 
 // ====================== INITIALIZATION ======================
 export function initProfile() {
