@@ -1503,7 +1503,7 @@ function setupEventListeners() {
   });
 
   console.log("✅ Application listeners active");
-}
+
 
 /* ====================== NOTIFICATION HELPER ====================== */
 window.toggleNotificationDropdown = function (event) {
