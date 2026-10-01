@@ -154,6 +154,19 @@ exports.getUploadUrl = onRequest(
       }
 
       try {
+        // 1. Enforce App Check Header Verification
+        const appCheckToken = req.headers["x-firebase-appcheck"];
+        if (!appCheckToken) {
+          return res.status(401).json({ error: "Unauthorized: Missing App Check token." });
+        }
+
+        try {
+          await admin.appCheck().verifyToken(appCheckToken);
+        } catch (err) {
+          return res.status(403).json({ error: "Forbidden: Invalid App Check token." });
+        }
+
+        // 2. Verify Firebase Auth ID Token
         const authHeader = req.headers.authorization;
         if (!authHeader?.startsWith("Bearer ")) {
           return res.status(401).json({ error: "Unauthorized. ID token required." });
@@ -163,11 +176,13 @@ exports.getUploadUrl = onRequest(
         const decodedToken = await admin.auth().verifyIdToken(idToken);
         const uid = decodedToken.uid;
 
+        // 3. Validate Request Body
         const { fileName, fileType } = req.body || {};
         if (!fileName || typeof fileName !== "string" || !fileType || typeof fileType !== "string") {
           return res.status(400).json({ error: "fileName and fileType must be non-empty strings." });
         }
 
+        // 4. Generate Cloudflare R2 Presigned URL
         const s3Client = getR2Client(r2AccessKeyId.value(), r2SecretAccessKey.value());
         const sanitizedName = fileName.replace(/[^a-zA-Z0-9.\-_]/g, "_");
         const objectKey = `uploads/${uid}/${Date.now()}-${sanitizedName}`;
@@ -1324,9 +1339,15 @@ exports.generateZKProof = onCall(
   {
     cors: allowedOrigins,
     timeoutSeconds: 120,
-    memory: "512MiB"
+    memory: "512MiB",
+    consumeAppCheckToken: true // Enforces and consumes the App Check token automatically
   },
   async (request) => {
+    // request.app will be populated if App Check validation passes
+    if (!request.app) {
+      throw new HttpsError("unauthenticated", "Unauthorized: Missing or invalid App Check token.");
+    }
+
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "Sign in required.");
     }
