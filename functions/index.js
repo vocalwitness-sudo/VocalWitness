@@ -1453,3 +1453,73 @@ exports.generateZKProof = onCall(
     }
   }
 );
+
+
+const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const admin = require("firebase-admin");
+const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
+
+// Initialize S3 client for Cloudflare R2
+const s3 = new S3Client({
+  region: "auto",
+  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  credentials: {
+    accessKeyId: process.env.R2_ACCESS_KEY_ID,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+  },
+});
+
+exports.getPresignedUrl = onCall(
+  {
+    cors: ["https://vocalwitness.com", "https://vocalwitness-3affa.web.app"],
+    consumeAppCheckToken: true, // Enforces Firebase App Check automatically
+    secrets: ["R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY"],
+  },
+  async (request) => {
+    // 1. Validate Authentication & App Check
+    if (!request.app) {
+      throw new HttpsError("unauthenticated", "Unauthorized: Missing or invalid App Check token.");
+    }
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Must be logged in to generate upload URLs.");
+    }
+
+    const uid = request.auth.uid;
+    const db = admin.firestore();
+    const rateLimitRef = db.collection("rateLimits").doc(uid);
+    const now = Date.now();
+    const throttleMs = 10000; // 10-second throttle per user
+
+    // 2. Atomic Rate Limiting via Firestore Transaction (Safe for multi-instance scaling)
+    await db.runTransaction(async (transaction) => {
+      const doc = await transaction.get(rateLimitRef);
+      
+      if (doc.exists) {
+        const lastRequest = doc.data().lastRequest || 0;
+        if (now - lastRequest < throttleMs) {
+          throw new HttpsError("resource-exhausted", "Rate limit exceeded. Slow down.");
+        }
+      }
+
+      transaction.set(rateLimitRef, { lastRequest: now }, { merge: true });
+    });
+
+    // 3. Generate and return Cloudflare R2 pre-signed URL
+    const { fileName, fileType } = request.data;
+    if (!fileName || !fileType) {
+      throw new HttpsError("invalid-argument", "Missing fileName or fileType.");
+    }
+
+    const safeKey = `evidence/${uid}/${now}_${fileName.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
+    const command = new PutObjectCommand({
+      Bucket: "vocalwitness-media",
+      Key: safeKey,
+      ContentType: fileType,
+    });
+
+    const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 300 }); // 5 minutes expiry
+
+    return { uploadUrl, fileKey: safeKey };
+  }
+);
