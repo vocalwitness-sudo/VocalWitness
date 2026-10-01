@@ -1,0 +1,28 @@
+const admin = require('firebase-admin');
+const serviceAccount = require('./serviceAccountKey.json');
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
+
+const db = admin.firestore();
+
+async function seedGenesisReports() {
+  const batch = db.batch();
+  const genesisRef = db.collection('reports').doc('genesis-report-01');
+  
+  batch.set(genesisRef, {
+    title: "Genesis Public Record Anchor",
+    summary: "First cryptographic anchor establishing immutable state logging for VocalWitness.",
+    authorTier: "Witness",
+    mediaHash: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    sealed: true,
+    blockNumber: 1
+  });
+
+  await batch.commit();
+  console.log("Genesis report successfully seeded into Firestore ledger.");
+}
+
+seedGenesisReports();
