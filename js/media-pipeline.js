@@ -1,19 +1,20 @@
 // js/media-pipeline.js
 // Unified pre-upload media pipeline for VocalWitness
-// Handles image EXIF scrubbing, audio normalization, and video pass-through
+// Handles image EXIF scrubbing, audio normalization, video pass-through, and SHA-256 hashing
 
 import { scrubImageMetadata } from './imageScrubber.js';
 import { normalizeAudioBlob } from './audio-normalize.js';
 import { compressImage } from './media-compression.js';
+import { computeSHA256 } from './utils.js';
 import { showToast } from './utils.js';
 
 /**
  * Universal media preparation pipeline.
- * Applies privacy-preserving processing based on current identity mode.
+ * Scrubs metadata, normalizes audio/images, and computes the local SHA-256 fingerprint.
  *
  * @param {File|Blob} file
  * @param {Object} [options]
- * @returns {Promise<File|Blob>} Cleaned / normalized media ready for upload
+ * @returns {Promise<{file: File, hash: string, size: number, mimeType: string}>}
  */
 export async function prepareMediaForUpload(file, options = {}) {
     if (!file) {
@@ -29,13 +30,15 @@ export async function prepareMediaForUpload(file, options = {}) {
         if (['mp4', 'webm', 'mov', 'mkv'].includes(ext)) type = 'video/' + ext;
     }
 
+    let processedBlob = file;
+
     // ========== IMAGE PATH ==========
     if (type.startsWith('image/')) {
         try {
             showToast('🛡️ Scrubbing image metadata...', 'info');
 
-            // 1. Strip EXIF / GPS / device info (respects ANONYMOUS vs BOLD_WITNESS)
-            let processed = await scrubImageMetadata(file, {
+            // 1. Strip EXIF / GPS / device info
+            processedBlob = await scrubImageMetadata(file, {
                 maxWidth: options.maxWidth || 1920,
                 maxHeight: options.maxHeight || 1080,
                 outputType: 'image/webp',
@@ -44,81 +47,79 @@ export async function prepareMediaForUpload(file, options = {}) {
             });
 
             // 2. Extra compression if still large
-            if (processed.size > 450 * 1024) {
-                processed = await compressImage(processed, {
+            if (processedBlob.size > 450 * 1024) {
+                processedBlob = await compressImage(processedBlob, {
                     maxWidth: options.maxWidth || 1600,
                     maxHeight: options.maxHeight || 1600,
                     quality: 0.82
                 });
             }
 
-            // Ensure we return a File object retaining name/metadata interface
-            if (processed instanceof Blob && !(processed instanceof File)) {
-                const baseName = (file.name || 'image').replace(/\.[^/.]+$/, '');
-                return new File([processed], `${baseName}_scrubbed.webp`, {
-                    type: 'image/webp',
-                    lastModified: Date.now()
-                });
-            }
-
-            return processed;
-
+            type = 'image/webp';
         } catch (err) {
             console.error('[MediaPipeline] Image processing failed:', err);
             showToast('Image processing failed – using original', 'warning');
-            return file;
+            processedBlob = file;
         }
     }
 
     // ========== AUDIO PATH ==========
-    if (type.startsWith('audio/')) {
+    else if (type.startsWith('audio/')) {
         try {
             showToast('🛡️ Normalizing audio...', 'info');
-
             const result = await normalizeAudioBlob(file, {
                 forceNormalize: options.forceNormalize
             });
-
-            // Return as a proper File so downstream code stays happy
-            const normalizedFile = new File(
-                [result.blob],
-                (file.name || 'recording').replace(/\.[^/.]+$/, '') + '_normalized.wav',
-                {
-                    type: 'audio/wav',
-                    lastModified: Date.now()
-                }
-            );
-
-            return normalizedFile;
-
+            processedBlob = result.blob;
+            type = 'audio/wav';
         } catch (err) {
             console.error('[MediaPipeline] Audio normalization failed:', err);
             showToast('Audio processing failed – using original', 'warning');
-            return file;
+            processedBlob = file;
         }
     }
 
-    // ========== VIDEO PATH (Pass-through for video-validator) ==========
-    if (type.startsWith('video/')) {
-        // Videos are validated via video-validator.js during selection.
-        // Direct pass-through avoids breaking video payload pipelines.
-        return file;
+    // ========== VIDEO PATH ==========
+    else if (type.startsWith('video/')) {
+        // Direct pass-through for video (handled by video-validator.js)
+        processedBlob = file;
+    } else {
+        throw new Error(`Unsupported media type: ${type || 'unknown'}`);
     }
 
-    // Fallback for unsupported media types
-    throw new Error(`Unsupported media type: ${type || 'unknown'}`);
+    // Ensure we have a proper File object retaining name/metadata interface
+    let finalFile = processedBlob;
+    if (!(finalFile instanceof File)) {
+        const extMap = { 'image/webp': 'webp', 'audio/wav': 'wav', 'image/jpeg': 'jpg' };
+        const ext = extMap[type] || type.split('/')[1] || 'bin';
+        const baseName = (file.name || 'media').replace(/\.[^/.]+$/, '');
+        finalFile = new File([processedBlob], `${baseName}_processed.${ext}`, {
+            type: type,
+            lastModified: Date.now()
+        });
+    }
+
+    // ========== STEP 4: COMPUTE CLIENT-SIDE SHA-256 FINGERPRINT ==========
+    const fileHash = await computeSHA256(finalFile);
+
+    return {
+        file: finalFile,
+        hash: fileHash,
+        mimeType: finalFile.type,
+        size: finalFile.size
+    };
 }
 
 import { uploadMedia } from './upload.js';
 
 /**
- * Complete Pipeline: Prepares (scrubs/normalizes) and securely uploads any media file to Cloudflare R2.
+ * Complete Pipeline: Prepares (scrubs/normalizes/hashes) and securely uploads any media file to Cloudflare R2.
  * 
  * @param {File|Blob} file - The raw file selected by the user.
  * @param {string} [folderPath='evidence'] - Destination directory in R2.
  * @param {Function} [onProgress] - Callback for real-time progress percentage (0-100).
  * @param {Object} [options] - Optional pipeline settings.
- * @returns {Promise<string>} - Resolves with the public Cloudflare R2 canonical URL.
+ * @returns {Promise<{publicUrl: string, hash: string}>} - Resolves with the R2 URL and SHA-256 hash.
  */
 export async function processAndUploadMedia(file, folderPath = 'evidence', onProgress = null, options = {}) {
     if (!file) {
@@ -126,13 +127,17 @@ export async function processAndUploadMedia(file, folderPath = 'evidence', onPro
     }
 
     try {
-        // 1. Run through the universal preparation pipeline (EXIF scrubbing, audio normalization, pass-through)
-        const preparedFile = await prepareMediaForUpload(file, options);
+        // 1. Run through the universal preparation pipeline
+        const { file: preparedFile, hash } = await prepareMediaForUpload(file, options);
 
         // 2. Hand off to the secure R2 upload module
         const publicUrl = await uploadMedia(preparedFile, folderPath, onProgress);
 
-        return publicUrl;
+        // Return both the URL and the hash so components can immediately log the timestamp or anchor it
+        return {
+            publicUrl,
+            hash
+        };
 
     } catch (error) {
         console.error('[MediaPipeline] Processing and upload sequence failed:', error);
