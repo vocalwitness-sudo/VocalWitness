@@ -2,22 +2,27 @@
  * Cloud Functions for Firebase / Cloudflare R2 Integration
  * Stack: Firebase Functions v2 • AWS SDK v3 • SnarkJS • Paystack • Cloud Tasks • Gemini API
  */
-const functions = require("firebase-functions");
-const { onRequest, onCall, HttpsError } = require("firebase-functions/v2/https");
-const { onDocumentCreated, onDocumentWritten } = require("firebase-functions/v2/firestore");
-const { GoogleGenAI, Type } = require("@google/genai");
-const { defineSecret } = require("firebase-functions/params");
-const { CloudTasksClient } = require("@google-cloud/tasks");
-const admin = require("firebase-admin");
-const paystackApi = require("paystack-api");
-const snarkjs = require("snarkjs");
-const fs = require("fs");
-const path = require("path");
-const crypto = require("crypto");
-const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
-const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
-const axios = require("axios");
-const { setGlobalOptions } = require("firebase-functions/v2");
+import functions from "firebase-functions";
+import { onRequest, onCall, HttpsError } from "firebase-functions/v2/https";
+import { onDocumentCreated, onDocumentWritten } from "firebase-functions/v2/firestore";
+import { GoogleGenAI, Type } from "@google/genai";
+import { defineSecret } from "firebase-functions/params";
+import { CloudTasksClient } from "@google-cloud/tasks";
+import admin from "firebase-admin";
+import paystackApi from "paystack-api";
+import snarkjs from "snarkjs";
+import fs from "fs";
+import path from "path";
+import crypto from "crypto";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import axios from "axios";
+import { setGlobalOptions } from "firebase-functions/v2";
+import corsPackage from "cors";
+
+// Get current directory equivalent in ES modules
+const __filename = path.fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 setGlobalOptions({ region: "us-central1" });
 
@@ -76,7 +81,7 @@ function getPaystackClient() {
 }
 
 // Native Express CORS middleware wrapper
-const corsHandler = require("cors")({
+const corsHandler = corsPackage({
   origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
@@ -141,7 +146,7 @@ async function writeAuditLog({
 // ======================================================
 // 1. R2 PRE-SIGNED URL
 // ======================================================
-exports.getUploadUrl = onRequest(
+export const getUploadUrl = onRequest(
   {
     cors: allowedOrigins,
     secrets: [r2AccessKeyId, r2SecretAccessKey]
@@ -208,7 +213,7 @@ exports.getUploadUrl = onRequest(
 // ======================================================
 // 2. USER INITIALIZATION & PHONE VERIFICATION
 // ======================================================
-exports.initializeCitizenProfile = functions.auth.user().onCreate(async (user) => {
+export const initializeCitizenProfile = functions.auth.user().onCreate(async (user) => {
   const userId = user.uid;
   const defaultUsername = `citizen_${Math.floor(1000 + Math.random() * 9000)}`;
 
@@ -268,7 +273,7 @@ exports.initializeCitizenProfile = functions.auth.user().onCreate(async (user) =
   }
 });
 
-exports.confirmPhoneVerification = onCall(
+export const confirmPhoneVerification = onCall(
   { cors: allowedOrigins },
   async (request) => {
     if (!request.auth) {
@@ -287,7 +292,6 @@ exports.confirmPhoneVerification = onCall(
         );
       }
 
-      // Server-only write — no raw phone number ever stored
       await db.collection("users").doc(uid).set(
         {
           isPhoneVerified: true,
@@ -295,9 +299,8 @@ exports.confirmPhoneVerification = onCall(
           isVerified: true,
           phoneVerifiedAt: admin.firestore.FieldValue.serverTimestamp(),
           verifiedAt: admin.firestore.FieldValue.serverTimestamp(),
-          tier: "citizen_circle",          // server is allowed to set this
+          tier: "citizen_circle",
           updatedAt: admin.firestore.FieldValue.serverTimestamp()
-          // NEVER write phoneNumber
         },
         { merge: true }
       );
@@ -307,11 +310,11 @@ exports.confirmPhoneVerification = onCall(
         performedBy: uid,
         targetId: uid,
         targetType: "user",
-        details: { phoneVerified: true },   // no actual number
+        details: { phoneVerified: true },
         severity: "info"
       });
 
-      return { success: true };   // do not return the phone number
+      return { success: true };
     } catch (error) {
       console.error("Phone verification confirmation error:", error);
       if (error instanceof HttpsError) throw error;
@@ -319,10 +322,11 @@ exports.confirmPhoneVerification = onCall(
     }
   }
 );
+
 // ======================================================
 // 3. TRUST TIER
 // ======================================================
-exports.evaluateTrustTier = onCall(
+export const evaluateTrustTier = onCall(
   { cors: allowedOrigins },
   async (request) => {
     if (!request.auth) {
@@ -388,7 +392,7 @@ exports.evaluateTrustTier = onCall(
 // ======================================================
 // 4. USER MANAGEMENT
 // ======================================================
-exports.setUserClaims = onCall(
+export const setUserClaims = onCall(
   { cors: allowedOrigins },
   async (request) => {
     if (!request.auth) throw new HttpsError("unauthenticated", "You must be signed in.");
@@ -447,7 +451,7 @@ exports.setUserClaims = onCall(
   }
 );
 
-exports.banUser = onCall(
+export const banUser = onCall(
   { cors: allowedOrigins },
   async (request) => {
     if (!request.auth) throw new HttpsError("unauthenticated", "Sign in required.");
@@ -496,7 +500,7 @@ exports.banUser = onCall(
   }
 );
 
-exports.unbanUser = onCall(
+export const unbanUser = onCall(
   { cors: allowedOrigins },
   async (request) => {
     if (!request.auth?.token?.admin) {
@@ -544,10 +548,26 @@ exports.unbanUser = onCall(
   }
 );
 
+
+const { onCall, onRequest } = require("firebase-functions/v2/https");
+const { logger } = require("firebase-functions/logger");
+const { HttpsError } = require("firebase-functions/v2/https");
+const admin = require("firebase-admin");
+const { GoogleGenAI, Type } = require("@google/genai");
+const axios = require("axios");
+const fs = require("fs");
+const path = require("path");
+const snarkjs = require("snarkjs");
+
+// ======================================================
+// MODERATED DELETE & TOXICITY HELPERS
+// ======================================================
+
 exports.moderatedDelete = onCall(
   { cors: allowedOrigins },
   async (request) => {
     if (!request.auth) throw new HttpsError("unauthenticated", "Sign in required.");
+    
     const isMod = request.auth.token.moderator === true || request.auth.token.admin === true;
     if (!isMod) {
       throw new HttpsError("permission-denied", "Only moderators or admins can perform moderated deletes.");
@@ -589,15 +609,17 @@ exports.moderatedDelete = onCall(
 
       return { success: true, message: "Document deleted and audited." };
     } catch (error) {
-      console.error("Moderated delete error:", error);
+      logger.error("Moderated delete error:", error);
       if (error instanceof HttpsError) throw error;
       throw new HttpsError("internal", error.message || "Failed to delete document.");
     }
   }
 );
+
 // ======================================================
-// 5. TOXICITY HELPERS, GEMINI AI MODERATION & AI TOOLS
+// TOXICITY HELPERS, GEMINI AI MODERATION & AI TOOLS
 // ======================================================
+
 async function analyzeToxicityWithPerspective(content = "") {
   const apiKey = perspectiveApiKey.value() || process.env.PERSPECTIVE_API_KEY;
   if (!apiKey || !content || content.length < 3) {
@@ -630,7 +652,7 @@ async function analyzeToxicityWithPerspective(content = "") {
         : "Passed Perspective API check."
     };
   } catch (error) {
-    console.error("Perspective API evaluation error:", error.message);
+    logger.error("Perspective API evaluation error:", error.message);
     return gentleModerationCheck(content);
   }
 }
@@ -655,7 +677,7 @@ exports.analyzeToxicity = onRequest(
         const result = await analyzeToxicityWithPerspective(text);
         res.status(200).json(result);
       } catch (error) {
-        console.error("Perspective API error:", error);
+        logger.error("Perspective API error:", error);
         res.status(500).json({ error: error.message });
       }
     });
@@ -683,7 +705,7 @@ exports.moderatePostContent = onCall(
     try {
       const apiKey = geminiApiKey.value() || process.env.GEMINI_API_KEY;
       if (!apiKey) {
-        console.warn("GEMINI_API_KEY is not set. Falling back to local check.");
+        logger.warn("GEMINI_API_KEY is not set. Falling back to local check.");
         const fallback = gentleModerationCheck(fullContent);
         return {
           flagged: !fallback.safe,
@@ -728,7 +750,7 @@ exports.moderatePostContent = onCall(
 
       return JSON.parse(resultText);
     } catch (error) {
-      console.error("Error in moderatePostContent function:", error);
+      logger.error("Error in moderatePostContent function:", error);
       return { flagged: false, reason: "Moderation system error fallback", categories: [], safetyScore: 1.0 };
     }
   }
@@ -771,7 +793,7 @@ exports.transcribeAudioWitness = onCall(
       contents: [
         {
           inlineData: {
-            mimeType: mimeType, // e.g., "audio/mp3", "audio/wav", "audio/ogg"
+            mimeType: mimeType,
             data: audioBase64
           }
         },
@@ -804,9 +826,11 @@ exports.summarizeReport = onCall(
     return { summary };
   }
 );
+
 // ======================================================
-// 6. ZERO-KNOWLEDGE PROOF VERIFICATION & WITNESS CIRCLE
+// ZERO-KNOWLEDGE PROOF VERIFICATION & WITNESS CIRCLE
 // ======================================================
+
 const vKey = JSON.parse(
   fs.readFileSync(path.join(__dirname, "verification_key.json"), "utf8")
 );
@@ -823,17 +847,15 @@ exports.verifyAndElevateZKProof = onCall(
       throw new HttpsError("invalid-argument", "Missing proof or public signals.");
     }
 
-    const nullifier = signals[0]; // Assuming nullifier is the first public signal from witness.circom
+    const nullifier = signals[0];
     const nullifierRef = db.collection("zk_nullifiers").doc(nullifier);
     
-    // Transaction to ensure nullifier hasn't been used
     await db.runTransaction(async (transaction) => {
       const doc = await transaction.get(nullifierRef);
       if (doc.exists) {
         throw new HttpsError("already-exists", "Nullifier has already been utilized. Proof reuse detected.");
       }
       
-      // SnarkJS verification logic using your loaded verification_key.json
       const isValid = await snarkjs.groth16.verify(vKey, signals, proof);
       if (!isValid) {
         throw new HttpsError("invalid-argument", "Invalid ZK Proof.");
@@ -845,12 +867,10 @@ exports.verifyAndElevateZKProof = onCall(
       });
     });
 
-    // Promote custom claims to elevate user to Witness Circle
     const userRecord = await admin.auth().getUser(request.auth.uid);
     const existingClaims = userRecord.customClaims || {};
     await admin.auth().setCustomUserClaims(request.auth.uid, { ...existingClaims, witnessTier: true });
 
-    // Update Firestore user record for tracking
     await db.collection("users").doc(request.auth.uid).set(
       {
         zkVerified: true,
@@ -872,10 +892,6 @@ exports.verifyAndElevateZKProof = onCall(
   }
 );
 
-/**
- * Stronger on-demand synthetic / deepfake detection
- * (Can be called from client when user wants a deeper check)
- */
 exports.detectSyntheticMedia = onCall(
   {
     cors: allowedOrigins,
@@ -938,24 +954,18 @@ exports.detectSyntheticMedia = onCall(
 
       const result = JSON.parse(response.text || "{}");
 
-      // Safety clamp
       result.score = Math.min(100, Math.max(0, Math.round(result.score || 0)));
       result.requiresHumanReview = result.score >= 75;
-
-      // Always remind that this is advisory
       result.note = "Advisory result only. No sealed report was changed or hidden.";
 
       return result;
     } catch (error) {
-      console.error("detectSyntheticMedia error:", error);
+      logger.error("detectSyntheticMedia error:", error);
       throw new HttpsError("internal", "Synthetic detection failed.");
     }
   }
 );
 
-/**
- * Content consistency check (text vs transcript vs caption)
- */
 exports.checkContentConsistency = onCall(
   {
     cors: allowedOrigins,
@@ -1013,15 +1023,12 @@ exports.checkContentConsistency = onCall(
       result.note = "Advisory consistency signal only. Does not alter any sealed record.";
       return result;
     } catch (error) {
-      console.error("checkContentConsistency error:", error);
+      logger.error("checkContentConsistency error:", error);
       throw new HttpsError("internal", "Consistency check failed.");
     }
   }
 );
 
-/**
- * Corroboration helper – suggests similar reports (advisory)
- */
 exports.suggestCorroborations = onCall(
   {
     cors: allowedOrigins
@@ -1031,22 +1038,20 @@ exports.suggestCorroborations = onCall(
       throw new HttpsError("unauthenticated", "Authentication required.");
     }
 
-    const { testimonyId, text = "", timestamp } = request.data || {};
-
     try {
-      // Simple version for now – can be improved later with vector search or better queries
-      // For safety we return an empty list + message until a proper similarity system is ready
       return {
         suggestions: [],
         message: "Corroboration suggestions are currently limited. This feature only helps humans find related reports.",
         note: "Advisory helper only. Never changes sealed records."
       };
     } catch (error) {
-      console.error("suggestCorroborations error:", error);
+      logger.error("suggestCorroborations error:", error);
       throw new HttpsError("internal", "Corroboration suggestion failed.");
     }
   }
 );
+
+
 
 /**
  * Toxicity scoring specifically for comments / replies
