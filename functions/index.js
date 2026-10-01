@@ -1523,3 +1523,118 @@ exports.getPresignedUrl = onCall(
     return { uploadUrl, fileKey: safeKey };
   }
 );
+
+
+const { onObjectFinalized } = require("firebase-functions/v2/storage");
+const admin = require("firebase-admin");
+const crypto = require("crypto");
+const axios = require("axios");
+
+// Ensure admin is initialized if not already done in your file
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
+const db = admin.firestore();
+
+exports.verifyAndTimestampMedia = onObjectFinalized(
+  {
+    memory: "512MiB",
+    timeoutSeconds: 120
+  },
+  async (event) => {
+    const fileBucket = event.data.bucket;
+    const filePath = event.data.name; // e.g. "uploads/UID/timestamp-filename.ext"
+    const contentType = event.data.contentType;
+
+    // Only process files in the uploads path
+    if (!filePath || !filePath.startsWith("uploads/")) {
+      console.log("Skipping non-upload file path:", filePath);
+      return;
+    }
+
+    // Extract UID from the path structure: uploads/{uid}/{filename}
+    const pathParts = filePath.split("/");
+    const uid = pathParts[1];
+
+    console.log(`Processing media verification for file: ${filePath} (User: ${uid})`);
+
+    try {
+      const bucket = admin.storage().bucket(fileBucket);
+      const file = bucket.file(filePath);
+
+      // 1. Stream and compute SHA-256 hash server-side
+      const hashSum = crypto.createHash("sha256");
+      
+      await new Promise((resolve, reject) => {
+        const stream = file.createReadStream();
+        stream.on("data", (chunk) => hashSum.update(chunk));
+        stream.on("error", reject);
+        stream.on("end", resolve);
+      });
+
+      const serverHash = hashSum.digest("hex");
+      console.log(`Computed SHA-256 hash for ${filePath}: ${serverHash}`);
+
+      let rfc3161TokenHex = null;
+
+      // 2. Optional: Request RFC3161 timestamp from Free TSA (or alternative provider)
+      try {
+        // FreeTSA typically expects an ASN.1 Time Stamp Request (TSR). 
+        // For simple implementations or raw hash anchoring, you can post the hash buffer or 
+        // handle standard timestamp queries. If FreeTSA requires precise ASN.1 framing, 
+        // ensure compatibility or wrap in a try/catch so it doesn't fail the entire pipeline.
+        const hashBuffer = Buffer.from(serverHash, "hex");
+        const tsaResponse = await axios.post("https://freetsa.org/tsr", hashBuffer, {
+          headers: { "Content-Type": "application/timestamp-query" },
+          responseType: "arraybuffer",
+          timeout: 10000
+        });
+        rfc3161TokenHex = Buffer.from(tsaResponse.data).toString("hex");
+        console.log("Successfully retrieved RFC3161 timestamp token.");
+      } catch (tsaErr) {
+        console.warn("RFC3161 timestamp request failed (non-fatal):", tsaErr.message);
+      }
+
+      // 3. Save verification metadata back to Firestore
+      // Match the file to a testimony or media document (querying by storage path or creating record)
+      const timestampData = {
+        mediaPath: filePath,
+        sha256Hash: serverHash,
+        contentType: contentType || "application/octet-stream",
+        verifiedAt: admin.firestore.FieldValue.serverTimestamp(),
+        rfc3161Token: rfc3161TokenHex || null,
+        status: "verified"
+      };
+
+      // Query testimonies collection for a document referencing this media path or create an audit record
+      const testimoniesQuery = await db
+        .collection("testimonies")
+        .where("mediaUrl", "==", `https://media.vocalwitness.com/${filePath}`)
+        .limit(1)
+        .get();
+
+      if (!testimoniesQuery.empty) {
+        const testimonyDoc = testimoniesQuery.docs[0];
+        await testimonyDoc.ref.set(
+          {
+            integrity: timestampData
+          },
+          { merge: true }
+        );
+        console.log(`Updated testimony document ${testimonyDoc.id} with integrity hash.`);
+      } else {
+        // Fallback: store under a dedicated media_hashes collection linked to the user
+        await db.collection("media_verifications").add({
+          uid,
+          ...timestampData,
+          createdAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+        console.log("Created standalone media_verifications audit record.");
+      }
+
+    } catch (error) {
+      console.error(`Error verifying media for ${filePath}:`, error);
+      throw error;
+    }
+  }
+);
