@@ -4,7 +4,6 @@
 
 import { showToast } from './utils.js';
 import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js';
-import { buildCircuitInputs } from './zk-secret-manager.js';
 
 /**
  * Full Witness Circle elevation:
@@ -80,11 +79,9 @@ export async function generateZKProofAsync(_inputs, options = {}) {
 /**
  * Optional client-side check of a server-produced proof.
  * Elevation already verifies on the server; this is for local display / audit only.
- * Rejects fallbacks — they are not valid membership proofs.
  */
 export async function verifyZKProofAsync(proofObj) {
-  if (!proofObj || proofObj.isFallback) return false;
-  if (!proofObj.proof || !proofObj.publicSignals) return false;
+  if (!proofObj || !proofObj.proof || !proofObj.publicSignals) return false;
 
   try {
     if (window.snarkjs?.groth16) {
@@ -107,7 +104,7 @@ export async function verifyZKProofAsync(proofObj) {
 
 /**
  * Strip EXIF/GPS and SHA-256 hash media on-device.
- * Independent of membership ZK — keep for evidence pipeline.
+ * Independent of membership ZK — kept strictly for the evidence pipeline.
  */
 export async function sanitizeAndHashMediaAsync(file) {
   if (!file) {
