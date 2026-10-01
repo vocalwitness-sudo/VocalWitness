@@ -1,0 +1,21 @@
+name: Anchor Forensic Ledger
+on:
+  schedule:
+    - cron: '0 0 * * *' # Run daily at midnight
+  workflow_dispatch:
+
+jobs:
+  anchor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Run Merkle Root Generator Script
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: node scripts/generate-ledger-root.js
+      - name: Commit Transparency Proof
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore(ledger): daily cryptographic anchor root generated"
+          file_pattern: transparency-roots/*.json
