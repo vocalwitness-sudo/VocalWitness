@@ -188,6 +188,7 @@
                 <div id="jsonSection" class="hidden">
                     <label for="proofInput" data-i18n="proofInputLabel">Paste Proof / Evidence Pack (JSON)</label>
                     <textarea id="proofInput" rows="6" placeholder='{"packCoreHash":"...","integrity":{"forensicHash":"..."}}'></textarea>
+                    <span id="verify-result" class="block mt-2 text-xs"></span>
                     <button type="button" id="btnVerifyJSON" class="btn-primary" data-i18n="btnVerifySig">Verify payload</button>
                 </div>
             </div>
@@ -200,7 +201,7 @@
     </div>
 
     <script type="module">
-        import { verifyMediaProvenance } from './js/verification.js';
+        import { verifyMediaProvenance, verifyEvidenceJSON } from './js/verification.js';
         import { initLanguage } from './js/i18n.js';
         import { db } from './js/firebase-config.js';
         import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
@@ -304,10 +305,10 @@
                     match === true
                         ? '✅ Hash matches ledger'
                         : match === false
-                          ? '❌ Hash does not match ledger'
-                          : storedNorm
-                            ? 'ℹ️ Record found (no h= in link to compare)'
-                            : '⚠️ Record found but no forensic hash stored';
+                            ? '❌ Hash does not match ledger'
+                            : storedNorm
+                                ? 'ℹ️ Record found (no h= in link to compare)'
+                                : '⚠️ Record found but no forensic hash stored';
 
                 const isOk = match !== false && !!storedNorm;
 
@@ -390,48 +391,35 @@
             }
         });
 
-        // JSON / Evidence Pack
+        // JSON / Evidence Pack Verification
         document.getElementById('btnVerifyJSON')?.addEventListener('click', async () => {
             const rawText = document.getElementById('proofInput').value.trim();
             if (!rawText) {
-                alert('Paste a JSON proof or evidence pack.');
+                alert('Please paste a JSON proof or evidence pack.');
                 return;
             }
+
+            resultBox.className = 'glass';
+            resultBox.classList.remove('hidden');
+            document.getElementById('resultHeader').textContent = '⏳ Computing SHA-256 & Verifying Hash...';
+            document.getElementById('resultDetails').innerHTML = '<p>Running cryptographic hash verification against local payload...</p>';
+
             try {
-                const proofObj = JSON.parse(rawText);
-                const hash =
-                    proofObj.packCoreHash ||
-                    proofObj.forensicHash ||
-                    proofObj.integrity?.forensicHash ||
-                    proofObj.hash ||
-                    null;
-                const id = proofObj.packId || proofObj.testimony?.id || null;
-                const verifyUrl = proofObj.verifyUrl || null;
+                const isValid = await verifyEvidenceJSON(rawText);
 
-                if (id && hash) {
-                    document.getElementById('ledgerIdInput').value = id;
-                    document.getElementById('ledgerHashInput').value = hash;
-                    setTab('ledger');
-                    await verifyLedger(id, hash);
-                    return;
-                }
-
-                const structural =
-                    typeof hash === 'string' &&
-                    hash.length >= 16 &&
-                    (proofObj.schemaVersion || proofObj.signature || proofObj.integrity);
-
-                if (structural) {
-                    showResult(true, '✅ Pack structure looks valid', `
-                        <p><strong>Hash:</strong> ${escapeHtml(hash)}</p>
-                        <p><strong>verifyUrl:</strong> ${escapeHtml(verifyUrl || '—')}</p>
-                        <p>Open Ledger tab with id + h for live comparison when available.</p>
+                if (isValid) {
+                    showResult(true, '✓ VERIFIED: Evidence Hash Match', `
+                        <p class="text-green-400 font-bold">Evidence hash matches immutable record successfully.</p>
+                        <p style="margin-top:0.75rem;color:#9ca3af">The embedded media data hashes correctly to the claimed cryptographic reference.</p>
                     `);
                 } else {
-                    showResult(false, '❌ Incomplete proof payload', '<p>Need packCoreHash / forensicHash (and ideally packId).</p>');
+                    showResult(false, '✗ TAMPERED: Hash Mismatch', `
+                        <p class="text-red-400 font-bold">Hashes do not match! The payload or media data may have been altered.</p>
+                    `);
                 }
             } catch (err) {
-                showResult(false, '⚠️ Invalid JSON Structure', '<p>Could not parse JSON.</p>');
+                console.error("JSON verification error:", err);
+                showResult(false, '⚠️️ Invalid Evidence Structure', `<p>${escapeHtml(err.message || 'Could not parse or verify JSON structure.')}</p>`);
             }
         });
 
