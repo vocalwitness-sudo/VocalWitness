@@ -1,3 +1,8 @@
+
+
+
+
+
 // js/firebase-config.js - Centralized Firebase Initialization & Config
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
 import { 
@@ -15,6 +20,7 @@ import {
   persistentMultipleTabManager
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { getStorage } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app-check.js";
 
 // Dynamically target auth domain for custom domain or web.app execution
 const hostDomain = window.location.hostname;
@@ -31,6 +37,13 @@ const firebaseConfig = {
 
 // Safe singleton initialization
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+
+// ========== INITIALIZE APP CHECK ==========
+// Ensure you register your site key in the Firebase Console under App Check -> reCAPTCHA Enterprise
+const appCheck = initializeAppCheck(app, {
+  provider: new ReCaptchaEnterpriseProvider('6LdT0tktAAAAABiw8cRxNV06RyHuvPcvaxXeJ6qM'),
+  isTokenAutoRefreshEnabled: true
+});
 
 // Authentication
 const auth = getAuth(app);
@@ -66,6 +79,7 @@ const githubProvider = new GithubAuthProvider();
 
 export { 
   app, 
+  appCheck,
   auth, 
   db, 
   storage, 
