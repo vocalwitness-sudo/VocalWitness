@@ -1263,12 +1263,14 @@ function setupEventListeners() {
       // Fallbacks for buttons without data-action
       if (e.target.closest('#data-saver-btn') || e.target.closest('#data-saver-btn-mobile')) {
         e.preventDefault();
-        if (typeof toggleDataSaver === 'function') toggleDataSaver();
+        const toggleFn = window.toggleDataSaver || toggleDataSaver;
+        if (typeof toggleFn === 'function') toggleFn();
         return;
       }
       if (e.target.closest('#openSupportModalBtn') || e.target.closest('#openSupportModalBtnMobile')) {
         e.preventDefault();
-        if (typeof window.openSupportModal === 'function') window.openSupportModal();
+        const supportFn = window.openSupportModal || openSupportModal;
+        if (typeof supportFn === 'function') supportFn();
         return;
       }
       return;
@@ -1278,40 +1280,72 @@ function setupEventListeners() {
     switch (action) {
       case 'toggle-data-saver':
         e.preventDefault();
-        if (typeof toggleDataSaver === 'function') toggleDataSaver();
+        {
+          const toggleFn = window.toggleDataSaver || toggleDataSaver;
+          if (typeof toggleFn === 'function') toggleFn();
+        }
         break;
+
       case 'open-support-modal':
         e.preventDefault();
-        if (typeof window.openSupportModal === 'function') window.openSupportModal();
+        {
+          const supportFn = window.openSupportModal || openSupportModal;
+          if (typeof supportFn === 'function') supportFn();
+        }
         break;
+
       case 'open-auth-modal':
         e.preventDefault();
-        if (typeof window.openAuthModal === 'function') window.openAuthModal();
+        {
+          const authFn = window.openAuthModal || openAuthModal;
+          if (typeof authFn === 'function') authFn();
+        }
         break;
+
       case 'open-profile':
         e.preventDefault();
         if (typeof window.openProfile === 'function') {
           window.openProfile();
         } else if (typeof window.showProfile === 'function') {
           window.showProfile();
+        } else if (typeof openProfile === 'function') {
+          openProfile();
         }
         break;
+
       case 'open-bookmarks':
         e.preventDefault();
         document.querySelectorAll('.tab-view, [role="tabpanel"]').forEach(view => {
           view.classList.add('hidden');
         });
         document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
-        if (typeof initBookmarksView === 'function') initBookmarksView();
+        {
+          const bookmarksFn = window.initBookmarksView || initBookmarksView;
+          if (typeof bookmarksFn === 'function') bookmarksFn();
+        }
         break;
+
+      case 'close-bookmarks':
+        e.preventDefault();
+        {
+          const closeBookmarksFn = window.closeBookmarksView || closeBookmarksView;
+          if (typeof closeBookmarksFn === 'function') {
+            closeBookmarksFn();
+          } else {
+            console.warn("⚠️ closeBookmarksView function is not defined.");
+          }
+        }
+        break;
+
       case 'open-notifications':
         // Handled by dedicated listeners
         break;
+
       default:
         break;
     }
   });
-
+}
     // ---------- More Menu (robust version) ----------
   const moreBtn = document.getElementById('more-btn');
   const moreMenu = document.getElementById('more-menu');
