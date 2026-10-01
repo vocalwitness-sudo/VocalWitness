@@ -804,11 +804,73 @@ exports.summarizeReport = onCall(
     return { summary };
   }
 );
+// ======================================================
+// 6. ZERO-KNOWLEDGE PROOF VERIFICATION & WITNESS CIRCLE
+// ======================================================
+const vKey = JSON.parse(
+  fs.readFileSync(path.join(__dirname, "verification_key.json"), "utf8")
+);
 
-// ======================================================
-// 5B. ADDITIONAL AI ADVISORY TOOLS (VocalWitness)
-// Principle: AI assists humans. Never auto-deletes or alters sealed records.
-// ======================================================
+exports.verifyAndElevateZKProof = onCall(
+  { cors: allowedOrigins },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Login required.");
+    }
+    
+    const { proof, signals } = request.data || {};
+    if (!proof || !signals || !Array.isArray(signals)) {
+      throw new HttpsError("invalid-argument", "Missing proof or public signals.");
+    }
+
+    const nullifier = signals[0]; // Assuming nullifier is the first public signal from witness.circom
+    const nullifierRef = db.collection("zk_nullifiers").doc(nullifier);
+    
+    // Transaction to ensure nullifier hasn't been used
+    await db.runTransaction(async (transaction) => {
+      const doc = await transaction.get(nullifierRef);
+      if (doc.exists) {
+        throw new HttpsError("already-exists", "Nullifier has already been utilized. Proof reuse detected.");
+      }
+      
+      // SnarkJS verification logic using your loaded verification_key.json
+      const isValid = await snarkjs.groth16.verify(vKey, signals, proof);
+      if (!isValid) {
+        throw new HttpsError("invalid-argument", "Invalid ZK Proof.");
+      }
+
+      transaction.set(nullifierRef, {
+        uid: request.auth.uid,
+        usedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+    });
+
+    // Promote custom claims to elevate user to Witness Circle
+    const userRecord = await admin.auth().getUser(request.auth.uid);
+    const existingClaims = userRecord.customClaims || {};
+    await admin.auth().setCustomUserClaims(request.auth.uid, { ...existingClaims, witnessTier: true });
+
+    // Update Firestore user record for tracking
+    await db.collection("users").doc(request.auth.uid).set(
+      {
+        zkVerified: true,
+        tier: "witness_circle",
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      },
+      { merge: true }
+    );
+
+    await writeAuditLog({
+      action: "zk_proof_verified",
+      performedBy: request.auth.uid,
+      targetId: request.auth.uid,
+      targetType: "user",
+      severity: "medium"
+    });
+
+    return { success: true };
+  }
+);
 
 /**
  * Stronger on-demand synthetic / deepfake detection
