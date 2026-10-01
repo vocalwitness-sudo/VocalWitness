@@ -1,4 +1,4 @@
-// js/verification.js - Production Ready: Real Phone Verification + Backend Confirmation + Real ZK + C2PA
+// js/verification.js - Production Ready: Real Phone Verification + Backend Confirmation + Real ZK + C2PA + Standalone JSON Verification
 // Updated to work cleanly with the hardened phoneVerification.js
 
 import { doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
@@ -25,6 +25,16 @@ function withTimeout(promise, ms = 10000, timeoutMsg = "Operation timed out") {
     promise,
     new Promise((_, reject) => setTimeout(() => reject(new Error(timeoutMsg)), ms))
   ]);
+}
+
+/**
+ * Compute SHA-256 helper for evidence hashing
+ */
+async function computeSHA256(message) {
+  const msgBuffer = new TextEncoder().encode(message);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 /**
@@ -96,6 +106,32 @@ export async function verifyMediaProvenance(file) {
     console.error("C2PA verification error:", error);
     showToast(error.message || "Failed to parse C2PA provenance data", "error");
     return { hasC2PA: false, isValid: false, error: error.message };
+  }
+}
+
+/**
+ * Verify Standalone Evidence JSON Pack
+ */
+export async function verifyEvidenceJSON(jsonString) {
+  try {
+    const pack = JSON.parse(jsonString);
+    const calculatedHash = await computeSHA256(pack.mediaData);
+    
+    const isValid = calculatedHash === pack.claimedHash;
+    const resultEl = document.getElementById('verify-result');
+    if (resultEl) {
+      resultEl.innerHTML = isValid 
+        ? `<span class="text-green-600 font-bold">✓ VERIFIED: Evidence hash matches immutable record.</span>`
+        : `<span class="text-red-600 font-bold">✗ TAMPERED: Hashes do not match!</span>`;
+    }
+    return isValid;
+  } catch (err) {
+    console.error("Invalid evidence format", err);
+    const resultEl = document.getElementById('verify-result');
+    if (resultEl) {
+      resultEl.innerHTML = `<span class="text-red-600 font-bold">✗ ERROR: Invalid JSON or evidence structure.</span>`;
+    }
+    return false;
   }
 }
 
@@ -183,9 +219,6 @@ async function buildZKInputs() {
 }
 
 /**
- * ZK Verification → Witness Circle
- */
-/**
  * Triggers the end-to-end server-side ZK verification & elevation flow
  */
 export async function startZKVerification() {
@@ -249,6 +282,7 @@ export async function startZKVerification() {
     showToast(error.message || "ZK Verification failed or timed out", "error");
   }
 }
+
 /**
  * Handle Send OTP button
  */
@@ -276,8 +310,6 @@ export async function handleSendOTP() {
     const success = await sendPhoneVerification(phone);
 
     if (success) {
-      // Move to OTP step only if we actually need a code
-      // (if it was already-linked, phoneVerification.js already closed the modal)
       const step1 = document.getElementById('phone-step-1');
       const step2 = document.getElementById('phone-step-2');
 
@@ -305,7 +337,6 @@ export async function handleVerifyOTP() {
   const otpInput = document.getElementById('otp-input');
   const rawCode = otpInput?.value || "";
 
-  // Clean the code
   const code = String(rawCode).replace(/\D/g, "").trim();
 
   if (code.length !== 6) {
@@ -326,7 +357,6 @@ export async function handleVerifyOTP() {
     const success = await verifyPhoneCode(code);
 
     if (success) {
-      // Optional backend confirmation (non-blocking)
       try {
         const functions = getFunctions();
         const confirmPhone = httpsCallable(functions, 'confirmPhoneVerification');
@@ -337,11 +367,9 @@ export async function handleVerifyOTP() {
           console.log("✅ Backend phone confirmation successful");
         }
       } catch (backendError) {
-        // Non-critical – we already unlocked the user on the client
         console.warn("Backend confirmation skipped or failed:", backendError);
       }
 
-      // Extra safety refresh
       if (typeof refreshTierAndUI === 'function') {
         refreshTierAndUI();
       }
@@ -382,5 +410,6 @@ document.addEventListener('DOMContentLoaded', () => {
 window.startPhoneVerification = startPhoneVerification;
 window.startZKVerification = startZKVerification;
 window.verifyMediaProvenance = verifyMediaProvenance;
+window.verifyEvidenceJSON = verifyEvidenceJSON;
 window.handleSendOTP = handleSendOTP;
 window.handleVerifyOTP = handleVerifyOTP;
