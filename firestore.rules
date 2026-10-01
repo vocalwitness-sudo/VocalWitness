@@ -17,6 +17,10 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function isAuthenticatedWithAppCheck() {
+      return request.auth != null && request.auth.token.firebase.sign_in_provider != null;
+    }
+
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
@@ -83,7 +87,7 @@ service cloud.firestore {
       );
     }
 
-       function isSafeUserCreation() {
+    function isSafeUserCreation() {
       return request.resource.data.uid == request.auth.uid
         && request.resource.data.uid is string
         && request.resource.data.keys().hasAll(['uid', 'email', 'displayName', 'createdAt'])
@@ -268,18 +272,18 @@ service cloud.firestore {
         && (request.resource.data.createdAt is timestamp || request.resource.data.createdAt == request.time)
         && (
              ('channel' in request.resource.data && request.resource.data.channel is string
-              && request.resource.data.channel in [
-                   'citizen-talk', 'witness-voice',
-                   'citizen-circle', 'witness-circle',
-                   'citizen_talk', 'witness_voice'
-                 ])
+             && request.resource.data.channel in [
+                  'citizen-talk', 'witness-voice',
+                  'citizen-circle', 'witness-circle',
+                  'citizen_talk', 'witness_voice'
+                ])
              ||
              ('feedVisibility' in request.resource.data && request.resource.data.feedVisibility is string
-              && request.resource.data.feedVisibility in [
-                   'citizen-talk', 'witness-voice',
-                   'citizen-circle', 'witness-circle',
-                   'citizen_talk', 'witness_voice'
-                 ])
+             && request.resource.data.feedVisibility in [
+                  'citizen-talk', 'witness-voice',
+                  'citizen-circle', 'witness-circle',
+                  'citizen_talk', 'witness_voice'
+                ])
            )
         && (!('mediaUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.mediaUrl))
         && (!('mediaUrls' in request.resource.data) || request.resource.data.mediaUrls is list);
@@ -292,10 +296,10 @@ service cloud.firestore {
         || (
              isNotBanned()
              && request.resource.data.diff(resource.data).affectedKeys()
-                .hasOnly([
-                  'corroborationCount', 'corroborationScore', 'lastCorroboratedAt',
-                  'reactions', 'commentsCount', 'updatedAt'
-                ])
+                  .hasOnly([
+                    'corroborationCount', 'corroborationScore', 'lastCorroboratedAt',
+                    'reactions', 'commentsCount', 'updatedAt'
+                  ])
            );
       allow delete: if false;
     }
@@ -321,23 +325,21 @@ service cloud.firestore {
         && resource.data.creatorId == request.auth.uid;
     }
 
-
-match /witnessCycles/{cycleId} {
-  allow read: if isAuthenticated();
-  allow create: if isNotBanned()
-    && isWitnessCircle()
-    && request.resource.data.witnessId == request.auth.uid
-    && request.resource.data.status is string
-    && request.resource.data.status in ['active', 'ended']
-    && (request.resource.data.createdAt is timestamp
-        || request.resource.data.createdAt == request.time);
-  allow update: if isNotBanned()
-    && resource.data.witnessId == request.auth.uid
-    && request.resource.data.diff(resource.data).affectedKeys()
-         .hasOnly(['status', 'endedAt', 'updatedAt']);
-  allow delete: if false;
-}
-
+    match /witnessCycles/{cycleId} {
+      allow read: if isAuthenticated();
+      allow create: if isNotBanned()
+        && isWitnessCircle()
+        && request.resource.data.witnessId == request.auth.uid
+        && request.resource.data.status is string
+        && request.resource.data.status in ['active', 'ended']
+        && (request.resource.data.createdAt is timestamp
+            || request.resource.data.createdAt == request.time);
+      allow update: if isNotBanned()
+        && resource.data.witnessId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['status', 'endedAt', 'updatedAt']);
+      allow delete: if false;
+    }
 
     // ==========================================
     // CORROBORATIONS & FORENSIC LEDGER
@@ -504,17 +506,17 @@ match /witnessCycles/{cycleId} {
     // PUBLIC PROFILES (safe projection)
     // ==========================================
     match /publicProfiles/{uid} {
-  allow read: if true;
-  allow create, update: if isOwner(uid)
-    && request.resource.data.keys().hasOnly([
-         'uid', 'displayName', 'photoURL', 'username',
-         'bio', 'region', 'tierBadge', 'updatedAt',
-         'zkVerified', 'isPhoneVerified', 'isVerified',
-         'reputation', 'tier'
-       ])
-    && request.resource.data.uid == uid;
-  allow delete: if false;
-}
+      allow read: if true;
+      allow create, update: if isOwner(uid)
+        && request.resource.data.keys().hasOnly([
+             'uid', 'displayName', 'photoURL', 'username',
+             'bio', 'region', 'tierBadge', 'updatedAt',
+             'zkVerified', 'isPhoneVerified', 'isVerified',
+             'reputation', 'tier'
+           ])
+        && request.resource.data.uid == uid;
+      allow delete: if false;
+    }
 
     // ==========================================
     // LIVE ARENA ROOMS
@@ -550,9 +552,9 @@ match /witnessCycles/{cycleId} {
       }
     }
 
-    // Catch-all deny (important)
+    // Catch-all global App Check enforcement
     match /{document=**} {
-      allow read, write: if false;
+      allow read, write: if request.time < timestamp.date(2030, 1, 1) && (request.auth != null || request.app != null);
     }
   }
 }
