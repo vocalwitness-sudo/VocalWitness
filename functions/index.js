@@ -19,6 +19,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import axios from "axios";
 import { setGlobalOptions } from "firebase-functions/v2";
 import corsPackage from "cors";
+import { onRequest } from "firebase-functions/v2/https";
 
 // Get current directory equivalent in ES modules
 const __filename = path.fileURLToPath(import.meta.url);
@@ -1703,5 +1704,17 @@ exports.verifyAndTimestampMedia = onObjectFinalized(
       console.error(`Error verifying media for ${filePath}:`, error);
       throw error;
     }
+  }
+);
+
+export const heavyProcessingTask = onRequest(
+  { 
+    concurrency: 80, // Limit simultaneous execution slots per container instance
+    memory: "512MiB",
+    timeoutSeconds: 60 
+  }, 
+  (req, res) => {
+    // Process request safely within cost guardrails
+    res.status(200).send({ status: "processed" });
   }
 );
