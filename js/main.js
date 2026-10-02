@@ -6,7 +6,7 @@ if (typeof window !== 'undefined') {
 /* ====================== IMPORTS ====================== */
 import { db, auth, storage } from './firebase-config.js';
 import { state, updateAppState, isUserAuthenticated } from './app-state.js';
-import { initAuth, requireAuth, updateUIForAuthState, bindHeaderEvents } from './auth.js';
+import { initAuth, requireAuth, updateUIForAuthState, bindHeaderEvents, openAuthModal } from './auth.js';
 import { initFeed } from './feed.js';
 import { initLanguage } from './i18n.js';
 import * as mediaModule from './media.js';
