@@ -1,5 +1,5 @@
-// js/pdf.js - Complete Dual System (Standard + Premium)
-// Features: Real QR, Avatar, Soft limits, 1 free Premium/month for Gold+, $2.99 paid
+// js/pdf.js - Complete Dual System (Standard + Premium) with Offline Fallbacks & Stripe Integration
+// Features: Real QR, Monogram Avatar Fallbacks, Soft limits, 1 free Premium/month for Gold+, $2.99 Stripe checkout
 
 import { showToast } from './utils.js';
 import { 
@@ -81,7 +81,6 @@ export async function generateAndDownloadPDF(userData, db, preferredType = null)
     return;
   }
 
-  // Safety: jsPDF must be loaded
   if (!window.jspdf || !window.jspdf.jsPDF) {
     showToast("PDF library not loaded. Please refresh the page.", "error");
     return;
@@ -111,11 +110,9 @@ export async function generateAndDownloadPDF(userData, db, preferredType = null)
   const hasFreeQuota = await canGenerateFreePremium(db, userId, decision.canPremiumFree);
 
   if (hasFreeQuota) {
-    // Free by merit (Gold+)
     return await proceedGeneration(userData, db, decision, "premium");
   }
 
-  // No free quota left → show payment modal
   showPremiumUpgradeModal(userData, db);
 }
 
@@ -171,12 +168,13 @@ async function proceedGeneration(userData, db, decision, type) {
 }
 
 /* ============================================================
-   HELPERS: QR + Avatar
+   HELPERS: QR + Avatar with Fallbacks
    ============================================================ */
 async function generateQRCodeDataUrl(text, size = 120) {
   const url = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(text)}&margin=8`;
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, { mode: 'cors' });
+    if (!response.ok) throw new Error('QR API network response failed');
     const blob = await response.blob();
     return await new Promise((resolve) => {
       const reader = new FileReader();
@@ -184,8 +182,8 @@ async function generateQRCodeDataUrl(text, size = 120) {
       reader.readAsDataURL(blob);
     });
   } catch (err) {
-    console.warn("QR generation failed:", err);
-    return null;
+    console.warn("QR generation failed, using text fallback indicator:", err);
+    return null; // Handled gracefully in layout
   }
 }
 
@@ -193,6 +191,7 @@ async function loadImageAsDataUrl(url) {
   if (!url) return null;
   try {
     const response = await fetch(url, { mode: 'cors' });
+    if (!response.ok) throw new Error('Avatar fetch failed');
     const blob = await response.blob();
     return await new Promise((resolve) => {
       const reader = new FileReader();
@@ -200,9 +199,26 @@ async function loadImageAsDataUrl(url) {
       reader.readAsDataURL(blob);
     });
   } catch (err) {
-    console.warn("Avatar load failed:", err);
-    return null;
+    console.warn("Avatar load failed (CORS/Offline):", err);
+    return null; // Will trigger monogram fallback
   }
+}
+
+function drawMonogramFallback(pdf, name, x, y, size = 22, isGold = false) {
+  const initials = (name || "Anonymous")
+    .split(' ')
+    .map(n => n[0])
+    .join('')
+    .substring(0, 2)
+    .toUpperCase();
+
+  pdf.setFillColor(isGold ? 234 : 51, isGold ? 179 : 65, isGold ? 8 : 85);
+  pdf.circle(x + size / 2, y + size / 2, size / 2, 'F');
+
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(size * 0.45);
+  pdf.setTextColor(255, 255, 255);
+  pdf.text(initials, x + size / 2, y + size / 2 + 1.5, { align: 'center' });
 }
 
 /* ============================================================
@@ -230,16 +246,20 @@ async function generateStandardPassport(userData, tier, docId, verificationUrl) 
   pdf.setTextColor(148, 163, 184);
   pdf.text(`ID: ${docId}`, 20, 36);
 
-  // Avatar
+  // Avatar or Monogram
   let y = 55;
   const avatarData = await loadImageAsDataUrl(userData.photoURL);
   if (avatarData) {
     try {
       pdf.addImage(avatarData, 'JPEG', 20, y, 22, 22);
-    } catch (e) {}
+    } catch (e) {
+      drawMonogramFallback(pdf, userData.displayName, 20, y, 22, false);
+    }
+  } else {
+    drawMonogramFallback(pdf, userData.displayName, 20, y, 22, false);
   }
 
-  const textX = avatarData ? 48 : 20;
+  const textX = 48;
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(13);
   pdf.setTextColor(30, 41, 59);
@@ -315,7 +335,7 @@ async function generateStandardPassport(userData, tier, docId, verificationUrl) 
 }
 
 /* ============================================================
-   PREMIUM CERTIFICATE  (much stronger difference)
+   PREMIUM CERTIFICATE
    ============================================================ */
 async function generatePremiumCertificate(userData, tier, docId, verificationUrl) {
   const { jsPDF } = window.jspdf;
@@ -343,26 +363,28 @@ async function generatePremiumCertificate(userData, tier, docId, verificationUrl
   pdf.setTextColor(161, 161, 170);
   pdf.text(`Certificate ID: ${docId}`, 20, 45);
 
-  // Official seal badge
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(9);
   pdf.setTextColor(52, 211, 153);
   pdf.text("● ZK-VERIFIED  •  OFFICIAL SEAL", 128, 28);
 
-  // Avatar with gold ring
+  // Avatar or Gold Monogram
   let y = 68;
   const avatarData = await loadImageAsDataUrl(userData.photoURL);
   if (avatarData) {
     try {
-      // Gold ring
       pdf.setDrawColor(234, 179, 8);
       pdf.setLineWidth(1.5);
       pdf.circle(34, y + 14, 16);
       pdf.addImage(avatarData, 'JPEG', 20, y, 28, 28);
-    } catch (e) {}
+    } catch (e) {
+      drawMonogramFallback(pdf, userData.displayName, 20, y, 28, true);
+    }
+  } else {
+    drawMonogramFallback(pdf, userData.displayName, 20, y, 28, true);
   }
 
-  const textX = avatarData ? 55 : 20;
+  const textX = 55;
 
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(16);
@@ -376,7 +398,6 @@ async function generatePremiumCertificate(userData, tier, docId, verificationUrl
 
   y = 108;
 
-  // Richer data only on Premium
   const membershipSince = userData.createdAt?.toDate
     ? userData.createdAt.toDate().toLocaleDateString()
     : (userData.createdAt ? new Date(userData.createdAt).toLocaleDateString() : "—");
@@ -425,7 +446,6 @@ async function generatePremiumCertificate(userData, tier, docId, verificationUrl
   pdf.text("standing and zero-knowledge verification within the network.", 20, y + 12);
   pdf.text("Any modification of this file voids the cryptographic seal.", 20, y + 18);
 
-  // Larger QR with gold border
   const qrData = await generateQRCodeDataUrl(verificationUrl, 140);
   if (qrData) {
     try {
@@ -459,7 +479,7 @@ async function generatePremiumCertificate(userData, tier, docId, verificationUrl
 }
 
 /* ============================================================
-   UPGRADE MODAL ($2.99)
+   UPGRADE MODAL ($2.99) WITH STRIPE HOOK
    ============================================================ */
 export function showPremiumUpgradeModal(userData, db) {
   document.getElementById('premiumUpgradeModal')?.remove();
@@ -483,7 +503,7 @@ export function showPremiumUpgradeModal(userData, db) {
         </div>
         <div class="flex items-start gap-3">
           <span class="text-emerald-400 mt-0.5">✓</span>
-          <span>Profile photo + Luxury dark/gold design</span>
+          <span>Profile photo / Monogram + Luxury dark/gold design</span>
         </div>
         <div class="flex items-start gap-3">
           <span class="text-emerald-400 mt-0.5">✓</span>
@@ -499,8 +519,8 @@ export function showPremiumUpgradeModal(userData, db) {
         <div class="text-xs text-zinc-400 mt-1">One-time download • Does not change your membership tier</div>
       </div>
       <div class="flex flex-col gap-3">
-        <button id="upgradeToPremiumBtn" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold transition">
-          Pay $2.99 & Download Premium
+        <button id="upgradeToPremiumBtn" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold transition flex items-center justify-center gap-2">
+          <span>Pay $2.99 & Download Premium</span>
         </button>
         <button id="downloadStandardInstead" class="w-full py-2.5 rounded-xl border border-zinc-700 text-zinc-300 hover:bg-zinc-800 text-sm transition">
           Download Standard Passport (Free)
@@ -516,15 +536,29 @@ export function showPremiumUpgradeModal(userData, db) {
   modal.addEventListener('click', (e) => {
     if (e.target === modal) modal.remove();
   });
-  document.getElementById('upgradeToPremiumBtn')?.addEventListener('click', () => {
+  
+  document.getElementById('upgradeToPremiumBtn')?.addEventListener('click', async () => {
     modal.remove();
-    showToast("Redirecting to secure payment...", "info");
-    // After successful payment you can call:
-    // proceedGeneration(userData, db, resolveCertificateType(userData), "premium");
-    if (typeof window.openSupportModal === 'function') {
-      window.openSupportModal();
+    showToast("Redirecting to secure Stripe checkout...", "info");
+    
+    // Example Stripe Checkout session integration hook:
+    try {
+      if (window.createStripeCheckoutSession) {
+        await window.createStripeCheckoutSession({
+          priceId: 'price_vocalwitness_premium_cert',
+          userId: userData.uid || userData.authorId,
+          successUrl: window.location.href,
+          cancelUrl: window.location.href
+        });
+      } else if (typeof window.openSupportModal === 'function') {
+        window.openSupportModal();
+      }
+    } catch (err) {
+      console.error("Payment redirection failed:", err);
+      showToast("Unable to initiate payment gateway", "error");
     }
   });
+
   document.getElementById('downloadStandardInstead')?.addEventListener('click', () => {
     modal.remove();
     generateAndDownloadPDF(userData, db, 'standard');
