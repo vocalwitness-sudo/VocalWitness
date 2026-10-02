@@ -1,8 +1,3 @@
-
-
-
-
-
 // js/firebase-config.js - Centralized Firebase Initialization & Config
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
 import { 
