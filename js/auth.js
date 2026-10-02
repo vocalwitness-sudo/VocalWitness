@@ -661,7 +661,13 @@ export function initAuth() {
   });
 }
 
+// Alias for compatibility with callers expecting openAuthModal
+export function openAuthModal() {
+  return showAuthModal();
+}
+
 // Global exports
+window.openAuthModal = openAuthModal;
 window.showAuthModal = showAuthModal;
 window.closeLoginModal = closeLoginModal;
 window.logout = logout;
