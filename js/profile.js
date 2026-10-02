@@ -479,7 +479,7 @@ export function renderProfileUI(userData, retryCount = 0) {
                     </div>
                 </div>
 
-                <!-- Action Buttons -->
+                                <!-- Action Buttons -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
                     ${!isCitizenCircle && !isWitness ? `
                         <button type="button" id="btnGetVerifiedCta"
@@ -498,13 +498,21 @@ export function renderProfileUI(userData, retryCount = 0) {
                         ⚙️ Settings & Security
                     </button>
 
+                    <button type="button" id="downloadLedgerPdfBtn"
+                            class="py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
+                        📑 Witness PDF
+                    </button>
+
+                    <button type="button" id="downloadProfileJsonBtn"
+                            class="py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
+                        📄 Profile JSON
+                    </button>
+
                     <button type="button" id="btnSignOut"
                             class="col-span-1 sm:col-span-2 py-3 px-4 bg-red-950/40 hover:bg-red-900/60 border border-red-500/40 text-red-400 hover:text-red-300 text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
                         🚪 Sign Out
                     </button>
                 </div>
-            </div>
-        `;
 
         content.innerHTML = html;
         attachProfileEventListeners(userData, isCitizenCircle, isWitness);
@@ -596,6 +604,53 @@ function attachProfileEventListeners(userData, isCitizenCircle, isWitness) {
             handleSignOut();
         } else if (typeof window.handleSignOut === 'function') {
             window.handleSignOut();
+        }
+    });
+
+    // Witness PDF Download Listener
+    document.getElementById('downloadLedgerPdfBtn')?.addEventListener('click', async () => {
+        const data = window.currentUserData || userData;
+        if (!data) {
+            showToast('Profile data not loaded', 'error');
+            return;
+        }
+        try {
+            if (typeof generateAndDownloadPDF === 'function') {
+                await generateAndDownloadPDF(data, db, 'standard');
+            } else {
+                showToast('PDF module unavailable', 'error');
+            }
+        } catch (err) {
+            console.error(err);
+            showToast('Failed to generate Witness PDF', 'error');
+        }
+    });
+
+    // Profile JSON Download Listener
+    document.getElementById('downloadProfileJsonBtn')?.addEventListener('click', () => {
+        const data = window.currentUserData || userData;
+        if (!data) {
+            showToast('Profile data not loaded', 'error');
+            return;
+        }
+        try {
+            const exportData = { ...data };
+            if (exportData.photoURL && String(exportData.photoURL).startsWith('data:')) {
+                exportData.photoURL = '[base64 image omitted]';
+            }
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `vocalwitness-profile-${(data.username || data.uid || 'user').toString().slice(0, 24)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+            showToast('Profile JSON downloaded', 'success');
+        } catch (err) {
+            console.error(err);
+            showToast('Failed to download JSON', 'error');
         }
     });
 }
