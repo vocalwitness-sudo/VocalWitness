@@ -332,25 +332,22 @@ export function renderProfileUI(userData, retryCount = 0) {
                     </div>
                 </div>
 
-                <!-- Witness Cycle -->
-                <div class="bg-zinc-900 rounded-2xl p-4 border border-amber-500/20">
-                    <div class="flex justify-between items-start mb-3">
-                        <div>
-                            <h4 class="font-semibold text-sm text-amber-400 flex items-center gap-2">
-                                <span>🔄</span> Witness Cycle
-                            </h4>
-                            <p class="text-xs text-zinc-400 mt-0.5">Participate in active testimony attestation cycles.</p>
+                               <!-- Witness Cycle (compact) -->
+                <div class="flex items-center justify-between gap-3 bg-zinc-900/80 rounded-xl px-4 py-3 border border-amber-500/20">
+                    <div class="min-w-0">
+                        <div class="text-sm font-medium text-amber-400 flex items-center gap-1.5">
+                            <span>🔄</span> Witness Cycle
                         </div>
-                        <span class="px-2.5 py-1 bg-amber-500/10 text-amber-400 text-xs font-mono rounded-full border border-amber-500/30">
-                            ${userData.activeWitnessCycle ? 'Active' : 'Inactive'}
-                        </span>
+                        <div class="text-[11px] text-zinc-500 truncate">
+                            ${userData.activeWitnessCycle ? 'Active attestation cycle' : 'Tap to join attestation cycle'}
+                        </div>
                     </div>
                     <button type="button" id="btnStartWitnessCycle"
-                            class="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-black font-semibold rounded-xl transition text-sm">
-                        ${userData.activeWitnessCycle ? 'End Witness Cycle' : 'Start Witness Cycle'}
+                            class="shrink-0 px-3.5 py-2 bg-amber-500 hover:bg-amber-400 text-black text-xs font-semibold rounded-lg transition">
+                        ${userData.activeWitnessCycle ? 'End' : 'Start'}
                     </button>
                 </div>
-
+                
                 <!-- Bio -->
                 <div class="bg-zinc-900/80 border border-zinc-700 rounded-2xl p-4">
                     <div class="flex items-center justify-between mb-2">
