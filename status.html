@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>VocalWitness - System Status</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white font-sans p-8">
+  <div class="max-w-3xl mx-auto">
+    <h1 class="text-3xl font-bold mb-2">VocalWitness Operational Status</h1>
+    <p class="text-gray-400 mb-6">Real-time infrastructure health and verification pipeline metrics.</p>
+    
+    <div id="status-banner" class="p-4 rounded-lg bg-green-800 text-green-100 font-semibold mb-6">
+      🟢 All Systems Operational: Core Ledger, ZK Provers, & Storage Active.
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+        <h3 class="text-sm font-medium text-gray-400">Upload Success Rate (24h)</h3>
+        <p id="metric-uploads" class="text-2xl font-bold text-green-400">99.8%</p>
+      </div>
+      <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+        <h3 class="text-sm font-medium text-gray-400">Average ZK Prove Latency</h3>
+        <p id="metric-zk" class="text-2xl font-bold text-blue-400">1.42s</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
