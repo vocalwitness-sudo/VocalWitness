@@ -34,6 +34,17 @@
                 </button>
             </div>
         </div>
+         <!-- Compact secondary export (JSON kept, clean) -->
+        <div class="rounded-3xl bg-[#111827] border border-zinc-800 p-4 sm:p-5 shadow-xl">
+            <button type="button" id="downloadProfileJsonBtn"
+                    class="w-full p-3.5 rounded-2xl bg-zinc-900/80 hover:bg-zinc-900 border border-zinc-800 hover:border-emerald-500/50 transition flex items-center gap-3 text-left group cursor-pointer">
+                <div class="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-lg group-hover:scale-105 transition">📄</div>
+                <div>
+                    <div class="text-sm font-semibold text-white">Download Profile JSON</div>
+                    <div class="text-xs text-zinc-400">Full account data backup</div>
+                </div>
+            </button>
+        </div>
     </header>
 
     <!-- Main Page Content Container -->
@@ -76,17 +87,7 @@
             </div>
         </div>
 
-        <!-- Compact secondary export (JSON kept, clean) -->
-        <div class="rounded-3xl bg-[#111827] border border-zinc-800 p-4 sm:p-5 shadow-xl">
-            <button type="button" id="downloadProfileJsonBtn"
-                    class="w-full p-3.5 rounded-2xl bg-zinc-900/80 hover:bg-zinc-900 border border-zinc-800 hover:border-emerald-500/50 transition flex items-center gap-3 text-left group cursor-pointer">
-                <div class="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-lg group-hover:scale-105 transition">📄</div>
-                <div>
-                    <div class="text-sm font-semibold text-white">Download Profile JSON</div>
-                    <div class="text-xs text-zinc-400">Full account data backup</div>
-                </div>
-            </button>
-        </div>
+    
 
         <!-- Dynamic profile mount point / Activity Feed -->
         <div class="rounded-3xl bg-[#111827] border border-zinc-800 overflow-hidden min-h-[400px] flex flex-col shadow-2xl">
