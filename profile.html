@@ -22,8 +22,11 @@
                 <span class="font-bold text-xl tracking-tight text-white" data-i18n="appTitle">VocalWitness</span>
             </a>
             <div class="flex items-center gap-3">
-                <button type="button" data-action="back" class="text-sm font-medium text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-1 bg-emerald-500/10 px-3.5 py-2 rounded-xl border border-emerald-500/20 cursor-pointer">
-                    <span>←</span> <span data-i18n="backToSquareText">Back to Square</span>
+                <!-- Stronger Back button (still uses data-action="back") -->
+                <button type="button" data-action="back"
+                        class="text-sm font-semibold text-black bg-emerald-500 hover:bg-emerald-400 transition-colors flex items-center gap-1.5 px-4 py-2.5 rounded-xl shadow-lg shadow-emerald-500/20 cursor-pointer">
+                    <span>←</span>
+                    <span data-i18n="backToSquareText">Back</span>
                 </button>
                 <button type="button" id="theme-toggle-btn" aria-label="Toggle Theme"
                         class="p-2.5 rounded-2xl bg-zinc-900/50 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer">
@@ -57,6 +60,7 @@
                 </div>
                 <p id="profileBio" class="text-zinc-400 text-sm max-w-xl leading-relaxed">Loading bio and user credentials...</p>
                 
+                <!-- Actions: Edit + Settings + PDF (PDF now in first viewport) -->
                 <div class="flex flex-wrap items-center justify-center sm:justify-start gap-3 pt-2">
                     <button type="button" id="btn-open-edit-profile" class="px-4 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black font-semibold rounded-xl text-sm transition shadow-lg shadow-emerald-500/20 cursor-pointer flex items-center gap-2">
                         <span>✏️</span> Edit Profile
@@ -64,36 +68,24 @@
                     <button type="button" id="btn-open-settings" class="px-4 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 font-semibold rounded-xl text-sm border border-zinc-700 transition cursor-pointer flex items-center gap-2">
                         <span>⚙️</span> Security & Settings
                     </button>
+                    <button type="button" id="downloadLedgerPdfBtn"
+                            class="px-4 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 font-semibold rounded-xl text-sm border border-zinc-700 hover:border-emerald-500/50 transition cursor-pointer flex items-center gap-2">
+                        <span>📑</span> Witness PDF
+                    </button>
                 </div>
             </div>
         </div>
 
-        <!-- Data & Document Export Section (Properly Placed Out of Settings) -->
-        <div class="rounded-3xl bg-[#111827] border border-zinc-800 p-6 sm:p-8 shadow-2xl space-y-4">
-            <div class="flex items-center justify-between border-b border-zinc-800 pb-4">
+        <!-- Compact secondary export (JSON kept, clean) -->
+        <div class="rounded-3xl bg-[#111827] border border-zinc-800 p-4 sm:p-5 shadow-xl">
+            <button type="button" id="downloadProfileJsonBtn"
+                    class="w-full p-3.5 rounded-2xl bg-zinc-900/80 hover:bg-zinc-900 border border-zinc-800 hover:border-emerald-500/50 transition flex items-center gap-3 text-left group cursor-pointer">
+                <div class="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-lg group-hover:scale-105 transition">📄</div>
                 <div>
-                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
-                        <span>📥</span> Data & Document Exports
-                    </h3>
-                    <p class="text-xs text-zinc-400 mt-0.5">Download your profile ledger, records, or activity backups.</p>
+                    <div class="text-sm font-semibold text-white">Download Profile JSON</div>
+                    <div class="text-xs text-zinc-400">Full account data backup</div>
                 </div>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <button type="button" id="downloadProfileJsonBtn" class="p-4 rounded-2xl bg-zinc-900/80 hover:bg-zinc-900 border border-zinc-800 hover:border-emerald-500/50 transition flex items-center gap-3 text-left group cursor-pointer">
-                    <div class="p-3 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xl group-hover:scale-105 transition">📄</div>
-                    <div>
-                        <div class="text-sm font-semibold text-white">Download Profile JSON</div>
-                        <div class="text-xs text-zinc-400">Export complete account data backup</div>
-                    </div>
-                </button>
-                <button type="button" id="downloadLedgerPdfBtn" class="p-4 rounded-2xl bg-zinc-900/80 hover:bg-zinc-900 border border-zinc-800 hover:border-emerald-500/50 transition flex items-center gap-3 text-left group cursor-pointer">
-                    <div class="p-3 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xl group-hover:scale-105 transition">📑</div>
-                    <div>
-                        <div class="text-sm font-semibold text-white">Generate Witness PDF</div>
-                        <div class="text-xs text-zinc-400">Export official verification record sheet</div>
-                    </div>
-                </button>
-            </div>
+            </button>
         </div>
 
         <!-- Dynamic profile mount point / Activity Feed -->
@@ -359,9 +351,10 @@
     <script type="module">
     import { initLanguage } from './js/i18n.js';
     import { initDarkMode } from './js/utils.js';
-    import { auth } from './js/firebase-config.js';
+    import { auth, db } from './js/firebase-config.js';
     import { sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
     import { initProfile, initProfileModals } from './js/profile.js';
+    import { generateAndDownloadPDF } from './js/pdf.js';
 
     document.addEventListener('DOMContentLoaded', () => {
         if (typeof initLanguage === 'function') initLanguage();
@@ -530,6 +523,72 @@
                 }
             });
         }
+
+        // ========== PDF DOWNLOAD (Witness PDF) ==========
+        document.getElementById('downloadLedgerPdfBtn')?.addEventListener('click', async () => {
+            const data = window.currentUserData;
+            if (!data) {
+                if (typeof window.showToast === 'function') {
+                    window.showToast('Profile data not loaded yet', 'error');
+                } else {
+                    alert('Profile data not loaded yet');
+                }
+                return;
+            }
+            try {
+                if (typeof generateAndDownloadPDF === 'function') {
+                    await generateAndDownloadPDF(data, db, 'standard');
+                } else {
+                    alert('PDF module not available');
+                }
+            } catch (err) {
+                console.error('Witness PDF failed:', err);
+                if (typeof window.showToast === 'function') {
+                    window.showToast('Failed to generate Witness PDF', 'error');
+                } else {
+                    alert('Failed to generate Witness PDF');
+                }
+            }
+        });
+
+        // ========== JSON DOWNLOAD (safe backup) ==========
+        document.getElementById('downloadProfileJsonBtn')?.addEventListener('click', () => {
+            const data = window.currentUserData;
+            if (!data) {
+                if (typeof window.showToast === 'function') {
+                    window.showToast('Profile data not loaded yet', 'error');
+                } else {
+                    alert('Profile data not loaded yet');
+                }
+                return;
+            }
+            try {
+                // Remove any heavy/base64 fields that could make the file huge
+                const exportData = { ...data };
+                if (exportData.photoURL && exportData.photoURL.startsWith('data:')) {
+                    exportData.photoURL = '[base64 image omitted – use live profile photo]';
+                }
+                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `vocalwitness-profile-${(data.username || data.uid || 'user').toString().slice(0, 24)}.json`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+                if (typeof window.showToast === 'function') {
+                    window.showToast('Profile JSON downloaded', 'success');
+                }
+            } catch (err) {
+                console.error('JSON export failed:', err);
+                if (typeof window.showToast === 'function') {
+                    window.showToast('Failed to download JSON', 'error');
+                } else {
+                    alert('Failed to download JSON');
+                }
+            }
+        });
 
         // Escape Key Handler
         document.addEventListener('keydown', (e) => {
