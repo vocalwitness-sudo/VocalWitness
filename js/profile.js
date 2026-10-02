@@ -1220,6 +1220,7 @@ export class ProfileManager {
 }
 
 // ====================== INIT PROFILE MODALS (CSP-safe) ======================
+// ====================== INIT PROFILE MODALS (CSP-safe) ======================
 export function initProfileModals() {
     if (window.__vwProfileModalsWired) return;
     window.__vwProfileModalsWired = true;
@@ -1231,12 +1232,26 @@ export function initProfileModals() {
     document.getElementById('closeSettingsBtn')?.addEventListener('click', closeSettings);
     document.getElementById('triggerPasswordResetBtn')?.addEventListener('click', triggerPasswordReset);
 
-    document.getElementById('exportUserDataPdfBtn')?.addEventListener('click', () => {
+    // ====================== CERTIFICATE DOWNLOAD ======================
+    document.getElementById('exportUserDataPdfBtn')?.addEventListener('click', async () => {
         if (!currentUserData) {
             showToast('Profile data not loaded', 'error');
             return;
         }
-        generateAndDownloadPDF(currentUserData, db);
+
+        // Optional: Ask user which version they want
+        const wantsPremium = confirm(
+            "Download Independent Citizen Press Credential\n\n" +
+            "OK = Official (Premium) version\n" +
+            "Cancel = Standard version"
+        );
+
+        try {
+            await generateAndDownloadPDF(currentUserData, db, wantsPremium ? 'premium' : 'standard');
+        } catch (err) {
+            console.error("Certificate download failed:", err);
+            showToast("Failed to generate credential", "error");
+        }
     });
 
     document.getElementById('settingsSignOutBtn')?.addEventListener('click', handleSignOut);
