@@ -74,23 +74,24 @@
     <div class="glass rounded-3xl p-8 mb-10">
         <div class="flex items-center justify-between mb-4">
             <h3 class="text-xl font-semibold">Focus Regions</h3>
-            <span class="text-xs bg-zinc-900 text-zinc-400 border border-zinc-700 px-3 py-1 rounded-full">Density pilot</span>
+            <span class="text-xs bg-emerald-950 text-emerald-300 border border-emerald-800 px-3 py-1 rounded-full">Africa-first</span>
         </div>
         <p class="text-sm text-zinc-400 mb-4">
-            Geographic density pilot: seed real witnesses in 1–2 cities, measure sealed reports and challenges there first.
+            Africa-first density strategy: seed real sealed reports in Nigerian cities first (Enugu + Lagos), then expand across the continent.
         </p>
-        <div id="densityRegions" class="flex flex-wrap gap-2 text-xs mb-4">
+        <div class="flex flex-wrap gap-2 text-xs mb-4">
+            <span class="px-3 py-1.5 rounded-full border border-emerald-800 bg-emerald-950 text-emerald-300 font-medium">Enugu, NG</span>
             <span class="px-3 py-1.5 rounded-full border border-emerald-800 bg-emerald-950 text-emerald-300 font-medium">Lagos, NG</span>
-            <span class="px-3 py-1.5 rounded-full border border-emerald-800 bg-emerald-950 text-emerald-300 font-medium">Nairobi, KE</span>
+            <span class="px-3 py-1.5 rounded-full border border-zinc-700 bg-zinc-900 text-zinc-400 font-medium">+ more African cities</span>
         </div>
         <div id="densityStats" class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-zinc-400">
             <div class="bg-zinc-950/60 border border-zinc-800 rounded-2xl p-4">
-                <div class="text-zinc-500 text-[11px] uppercase tracking-wide mb-1">Lagos (sample)</div>
-                <div id="density-lagos" class="text-white font-semibold">— sealed</div>
+                <div class="text-zinc-500 text-[11px] uppercase tracking-wide mb-1">Enugu (sample)</div>
+                <div id="density-enugu" class="text-white font-semibold">— sealed</div>
             </div>
             <div class="bg-zinc-950/60 border border-zinc-800 rounded-2xl p-4">
-                <div class="text-zinc-500 text-[11px] uppercase tracking-wide mb-1">Nairobi (sample)</div>
-                <div id="density-nairobi" class="text-white font-semibold">— sealed</div>
+                <div class="text-zinc-500 text-[11px] uppercase tracking-wide mb-1">Lagos (sample)</div>
+                <div id="density-lagos" class="text-white font-semibold">— sealed</div>
             </div>
         </div>
     </div>
@@ -220,7 +221,8 @@
         </div>
     </div>
 </div>
-    <!-- ====================== FOOTER ====================== -->
+
+<!-- ====================== FOOTER ====================== -->
 <footer class="mt-16 border-t border-zinc-800 pt-10 pb-8">
   <div class="max-w-3xl mx-auto px-4 text-center">
 
@@ -272,7 +274,7 @@
   </div>
 </footer>
 
-<script type="module" src="./js/transparency.js"></script>
+<script type="module">
     import { db } from './js/firebase-config.js';
     import {
         collection,
@@ -353,10 +355,10 @@
             }
 
             if (m.density) {
+                const enugu = document.getElementById('density-enugu');
                 const lagos = document.getElementById('density-lagos');
-                const nairobi = document.getElementById('density-nairobi');
+                if (enugu) enugu.textContent = `${m.density.enugu ?? 0} sealed`;
                 if (lagos) lagos.textContent = `${m.density.lagos ?? 0} sealed`;
-                if (nairobi) nairobi.textContent = `${m.density.nairobi ?? 0} sealed`;
             }
 
             const lastUpdatedEl = document.getElementById('lastUpdated');
