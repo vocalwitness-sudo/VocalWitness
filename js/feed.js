@@ -156,7 +156,7 @@ feedContainer.innerHTML = `
                 } else if (action === 'share') {
                     try {
                         const post = (typeof allPostsCache !== 'undefined' ? allPostsCache : []).find(p => p.id === id);
-                        const shareUrl = `${window.location.origin}?post=${encodeURIComponent(id)}`;
+                     const shareUrl = `${window.location.origin}/#citizen-talk?post=${encodeURIComponent(id)}`;
                         const title = post?.headline || post?.title || 'VocalWitness Testimony';
                         const text = post?.content
                             ? (post.content.length > 120 ? post.content.slice(0, 117) + '…' : post.content)
@@ -205,6 +205,34 @@ feedContainer.innerHTML = `
                 if (action !== 'share' && action !== 'corroborate') {
                     showToast("Something went wrong. Please try again.", "error");
                 }
+                } else if (action === 'share') {
+  const post = allPostsCache.find(p => p.id === id);
+  const shareUrl = `${window.location.origin}/#citizen-talk?post=${encodeURIComponent(id)}`;
+  const title = post?.headline || post?.title || 'VocalWitness Testimony';
+  const text = (post?.content || '').slice(0, 120);
+
+  // Prefer native share sheet (mobile)
+  if (navigator.share) {
+    await navigator.share({ title, text, url: shareUrl });
+    return;
+  }
+
+  // Desktop: small menu
+  const choice = prompt(
+    `Share this report:\n\n1 = Copy link\n2 = Twitter/X\n3 = WhatsApp\n4 = Facebook\n\nEnter 1-4:`,
+    '1'
+  );
+  if (choice === '1') {
+    await navigator.clipboard.writeText(shareUrl);
+    showToast('Link copied', 'success');
+  } else if (choice === '2') {
+    window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(title)}`, '_blank');
+  } else if (choice === '3') {
+    window.open(`https://wa.me/?text=${encodeURIComponent(title + ' ' + shareUrl)}`, '_blank');
+  } else if (choice === '4') {
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank');
+  }
+}
             } finally {
                 // Only re-enable if it wasn't permanently disabled by successful corroboration
                 if (action !== 'corroborate' || !btn.classList.contains('cursor-default')) {
