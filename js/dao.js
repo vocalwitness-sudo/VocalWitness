@@ -18,6 +18,8 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 import { showToast, escapeHTML } from './utils.js';
+import { getFunctions, httpsCallable } from
+  "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
 import {
   getCurrentUserTier,
   getUserVotingWeight,
@@ -162,6 +164,69 @@ export async function createModerationAppeal(postId, reason, originalDecision = 
     return null;
   }
 }
+
+/**
+ * Cast Quadratic Vote via Cloud Function (server validates + writes tallies/rep)
+ */
+export async function castQuadraticVote(proposalId, direction, strength = 1, proofContext = {}) {
+  if (!auth.currentUser) {
+    return showToast("Sign in required to cast votes", "error");
+  }
+  if (strength < 1 || strength > 5) {
+    return showToast("Strength parameters must range between 1 and 5", "error");
+  }
+  if (!['for', 'against'].includes(direction)) {
+    return showToast("Invalid vote direction specified", "error");
+  }
+
+  try {
+    const functions = getFunctions();
+    // Optional: getFunctions(app, 'us-central1') if region differs
+    const castDaoVote = httpsCallable(functions, 'castDaoVote');
+    const result = await castDaoVote({
+      proposalId,
+      direction,
+      strength: Number(strength),
+      // proofContext reserved for later ZK attach on server if needed
+      context: proofContext || {}
+    });
+
+    const data = result.data || {};
+    showToast(
+      `Successfully voted ${direction.toUpperCase()} (Cost: ${data.cost} • Effective strength: ${data.effectiveStrength})`,
+      "success"
+    );
+
+    try {
+      await logSecurityAudit('DAO_VOTE_CAST', proposalId, {
+        direction,
+        strength,
+        effectiveStrength: data.effectiveStrength
+      });
+    } catch (_) { /* audit optional on client */ }
+
+    return data;
+  } catch (e) {
+    console.error("castDaoVote failed:", e);
+    const code = e?.code || '';
+    const msg = e?.message || 'Vote failed';
+    // Firebase callable errors often look like "functions/permission-denied"
+    if (code.includes('already-exists') || msg.includes('Already voted')) {
+      showToast("You have already cast a vote in this direction.", "info");
+    } else if (code.includes('resource-exhausted') || msg.includes('budget')) {
+      showToast("Exceeded maximum voting budget (max 25 points)", "error");
+    } else if (code.includes('permission-denied')) {
+      showToast(msg.replace(/^.*?:\s*/, '') || "Not allowed to vote", "error");
+    } else if (code.includes('failed-precondition')) {
+      showToast("This proposal is closed", "error");
+    } else {
+      showToast("Failed to cast vote. Try again.", "error");
+    }
+    return null;
+  }
+}
+
+
 
 /**
  * Cast Quadratic Vote with cryptographic validation and voting power calculation
