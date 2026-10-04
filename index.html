@@ -1503,6 +1503,49 @@
     </form>
   </div>
 </div>
+
+    <!-- ===== CREDENTIAL CHOICE MODAL ===== -->
+<div id="credentialChoiceModal"
+     class="fixed inset-0 z-[10050] hidden items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+     role="dialog" aria-modal="true" aria-labelledby="credentialChoiceTitle">
+  
+  <div class="w-full max-w-sm rounded-3xl border border-zinc-700 bg-[#111827] p-6 text-white shadow-2xl">
+    
+    <h3 id="credentialChoiceTitle" class="text-lg font-bold mb-1">
+      Download Press Credential
+    </h3>
+    <p class="text-sm text-zinc-400 mb-6">
+      Choose the version you want
+    </p>
+
+    <div class="space-y-3">
+      <!-- Premium -->
+      <button type="button" id="btnChoosePremium"
+              class="w-full flex items-center justify-between gap-3 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 px-5 py-4 text-left transition hover:bg-emerald-500/20">
+        <div>
+          <div class="font-semibold text-emerald-400">Official (Premium)</div>
+          <div class="text-xs text-zinc-400 mt-0.5">Higher visual authority • Recommended for professionals</div>
+        </div>
+        <span class="text-emerald-400 text-lg">★</span>
+      </button>
+
+      <!-- Standard -->
+      <button type="button" id="btnChooseStandard"
+              class="w-full flex items-center justify-between gap-3 rounded-2xl border border-zinc-700 bg-zinc-900 px-5 py-4 text-left transition hover:bg-zinc-800">
+        <div>
+          <div class="font-semibold text-white">Standard</div>
+          <div class="text-xs text-zinc-400 mt-0.5">Free basic credential</div>
+        </div>
+      </button>
+
+      <!-- Cancel -->
+      <button type="button" id="btnCancelCredential"
+              class="w-full mt-2 py-3 text-sm text-zinc-400 hover:text-white transition">
+        Cancel
+      </button>
+    </div>
+  </div>
+</div>
   
 <!-- ====================== SETTINGS & SECURITY MODAL ====================== -->
 <div id="settingsModal"
