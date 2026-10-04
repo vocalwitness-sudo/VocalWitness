@@ -19,6 +19,15 @@ import { hasStewardAccess, canCorroborate } from './tier.js';
 import { toggleReaction } from './reactions.js';
 import { applyPostDoorDecorations } from './door-ui.js';
 import { state } from './app-state.js';
+import { getFunctions, httpsCallable } from
+  "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
+
+async function translateTestimony(text, targetLanguage) {
+  const functions = getFunctions();
+  const fn = httpsCallable(functions, 'translateTestimony');
+  const res = await fn({ text, targetLanguage });
+  return res.data?.translatedText || '';
+}
 import { 
     submitCorroboration, 
     getCorroborationScoreFromDoc 
@@ -245,6 +254,13 @@ feedContainer.innerHTML = `
                 Failed to load feed items. Please refresh or try again later.
             </div>`;
     });
+}
+
+async function translateTestimony(text, targetLanguage) {
+  const functions = getFunctions();
+  const fn = httpsCallable(functions, 'translateTestimony');
+  const res = await fn({ text, targetLanguage });
+  return res.data?.translatedText || '';
 }
 function ensureSearchAndFilterUI(container) {
     let existingWrapper = document.getElementById('feed-controls-wrapper');
