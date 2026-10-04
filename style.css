@@ -124,6 +124,7 @@ body {
   text-shadow: 0 0 20px var(--primary-glow);
 }
 
+
 /* ====================== GLASS & CARDS ====================== */
 .glass {
   background: var(--glass-bg);
@@ -335,6 +336,9 @@ button.nav-tab.active {
 /* ====================== MORE MENU ====================== */
 #more-menu {
   z-index: 70 !important;
+  max-height: 70vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 #more-menu a {
