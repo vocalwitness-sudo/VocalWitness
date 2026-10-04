@@ -152,7 +152,7 @@
         <main>
             <div class="header">
                 <h1 data-i18n="verifyHeaderTitle">🔍 Evidence Verifier</h1>
-                <p data-i18n="verifyHeaderSubtitle">Ledger link, C2PA media, or JSON proof — confirm integrity references.</p>
+                <p data-i18n="verifyHeaderSubtitle">Press credential, ledger link, C2PA media, or JSON proof — confirm integrity references.</p>
             </div>
 
             <div class="glass">
@@ -163,13 +163,14 @@
                 </div>
 
                 <div id="ledgerSection">
-                    <label for="ledgerIdInput">Testimony ID</label>
-                    <input type="text" id="ledgerIdInput" placeholder="Firestore testimony id" autocomplete="off" />
-                    <label for="ledgerHashInput" style="margin-top: 0.75rem;">Ledger / forensic hash (h)</label>
-                    <input type="text" id="ledgerHashInput" placeholder="SHA-256 hex from share link" autocomplete="off" />
+                    <label for="ledgerIdInput">Testimony or Credential ID</label>
+                    <input type="text" id="ledgerIdInput" placeholder="Firestore id or credential id from PDF QR" autocomplete="off" />
+                    <label for="ledgerHashInput" style="margin-top: 0.75rem;">Ledger / forensic hash (h) — optional for credentials</label>
+                    <input type="text" id="ledgerHashInput" placeholder="SHA-256 hex from share link (testimonies)" autocomplete="off" />
                     <button type="button" id="btnVerifyLedger" class="btn-primary">Verify against ledger</button>
                     <p style="font-size: 0.7rem; color: #6b7280; margin-top: 0.75rem;">
-                        Share links look like <code style="color:#6ee7b7">/verify.html?id=…&amp;h=…</code>
+                        Credential PDFs use <code style="color:#6ee7b7">/verify.html?id=…</code>.
+                        Testimony shares use <code style="color:#6ee7b7">/verify.html?id=…&amp;h=…</code>.
                     </p>
                 </div>
 
@@ -268,6 +269,51 @@
             document.getElementById('resultDetails').innerHTML = html;
         }
 
+        function formatTs(val) {
+            if (!val) return '—';
+            try {
+                if (typeof val.toDate === 'function') return val.toDate().toLocaleString();
+                return new Date(val).toLocaleString();
+            } catch {
+                return '—';
+            }
+        }
+
+        function renderCredentialResult(data) {
+            const typeLabel = data.type === 'premium' ? 'Official (Premium)' : 'Standard';
+            const issued = formatTs(data.createdAt);
+            let displayUntil = '—';
+            if (data.createdAt && data.displayValidDays) {
+                try {
+                    const base = typeof data.createdAt.toDate === 'function'
+                        ? data.createdAt.toDate()
+                        : new Date(data.createdAt);
+                    displayUntil = new Date(base.getTime() + data.displayValidDays * 86400000).toLocaleDateString();
+                } catch { /* keep — */ }
+            } else if (data.type === 'premium') {
+                displayUntil = '(see PDF; typically 1 year from issue)';
+            }
+
+            const permanent = data.ledgerPermanent !== false;
+
+            showResult(true, '✅ Press Credential found on ledger', `
+                <p><strong>Record type:</strong> Independent Citizen Press Credential</p>
+                <p><strong>Credential ID:</strong> ${escapeHtml(data.id)}</p>
+                <p><strong>Version:</strong> ${escapeHtml(typeLabel)}</p>
+                <p><strong>Status:</strong> ${escapeHtml(data.status || 'active')}</p>
+                <p><strong>Tier at issue:</strong> ${escapeHtml(data.tier || '—')}</p>
+                <p><strong>ZK verified:</strong> ${data.zkVerified ? 'yes' : 'no'}</p>
+                <p><strong>Username:</strong> ${escapeHtml(data.username || '—')}</p>
+                <p><strong>Issued:</strong> ${escapeHtml(issued)}</p>
+                <p><strong>Display valid until:</strong> ${escapeHtml(displayUntil)}</p>
+                <p><strong>Ledger record:</strong> ${permanent ? 'Permanent (lifetime)' : '—'}</p>
+                <p style="margin-top:0.75rem;color:#9ca3af">
+                    The ledger entry does not expire. Display validity is a recommended window for formal presentation only.
+                    This checks platform registration — not real-world truth.
+                </p>
+            `);
+        }
+
         async function verifyLedger(id, claimedHash) {
             const resultHeader = document.getElementById('resultHeader');
             const resultDetails = document.getElementById('resultDetails');
@@ -275,17 +321,26 @@
             resultBox.classList.remove('hidden');
             resultHeader.className = 'result-header text-valid';
             resultHeader.textContent = '⏳ Checking ledger…';
-            resultDetails.innerHTML = '<p>Loading testimony record…</p>';
+            resultDetails.innerHTML = '<p>Loading record…</p>';
 
             if (!id) {
-                showResult(false, 'Missing testimony id', '<p>Provide id from the share link.</p>');
+                showResult(false, 'Missing id', '<p>Provide id from the share or credential link.</p>');
                 return;
             }
 
             try {
+                // 1) Press Credential (PDF QR → verifiable_docs)
+                const credSnap = await getDoc(doc(db, 'verifiable_docs', id));
+                if (credSnap.exists()) {
+                    renderCredentialResult({ id: credSnap.id, ...credSnap.data() });
+                    return;
+                }
+
+                // 2) Testimony
                 const snap = await getDoc(doc(db, 'testimonies', id));
                 if (!snap.exists()) {
-                    showResult(false, '❌ Not found on ledger', `<p>No testimony with id <strong>${escapeHtml(id)}</strong>.</p>`);
+                    showResult(false, '❌ Not found on ledger',
+                        `<p>No testimony or press credential with id <strong>${escapeHtml(id)}</strong>.</p>`);
                     return;
                 }
 
@@ -313,6 +368,7 @@
                 const isOk = match !== false && !!storedNorm;
 
                 showResult(isOk, title, `
+                    <p><strong>Record type:</strong> Testimony</p>
                     <p><strong>Testimony ID:</strong> ${escapeHtml(data.id)}</p>
                     <p><strong>Stored hash:</strong> ${escapeHtml(stored || '—')}</p>
                     <p><strong>Claimed h=:</strong> ${escapeHtml(claimed || '—')}</p>
@@ -419,7 +475,7 @@
                 }
             } catch (err) {
                 console.error("JSON verification error:", err);
-                showResult(false, '⚠️️ Invalid Evidence Structure', `<p>${escapeHtml(err.message || 'Could not parse or verify JSON structure.')}</p>`);
+                showResult(false, '⚠️ Invalid Evidence Structure', `<p>${escapeHtml(err.message || 'Could not parse or verify JSON structure.')}</p>`);
             }
         });
 
