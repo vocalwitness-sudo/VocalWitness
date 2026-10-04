@@ -563,28 +563,71 @@ function attachProfileEventListeners(userData, isCitizenCircle, isWitness) {
         }
     });
 
-    // ===== Download Press Credential (Standard + Premium choice) =====
-    document.getElementById('exportUserDataPdfBtn')?.addEventListener('click', async () => {
-        const data = window.currentUserData || userData;
-        if (!data) {
-            showToast('Profile data not loaded', 'error');
-            return;
-        }
+  // ===== Download Press Credential (Proper Choice Modal) =====
+document.getElementById('exportUserDataPdfBtn')?.addEventListener('click', () => {
+    const data = window.currentUserData || userData;
+    if (!data) {
+        showToast('Profile data not loaded', 'error');
+        return;
+    }
 
-        const wantsPremium = confirm(
-            "Download Independent Citizen Press Credential\n\n" +
-            "OK = Official (Premium) version\n" +
-            "Cancel = Standard version"
-        );
+    const modal = document.getElementById('credentialChoiceModal');
+    if (!modal) {
+        showToast('Credential choice modal not found', 'error');
+        return;
+    }
 
+    // Show the modal
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+
+    // Clean previous listeners (important)
+    const btnPremium = document.getElementById('btnChoosePremium');
+    const btnStandard = document.getElementById('btnChooseStandard');
+    const btnCancel = document.getElementById('btnCancelCredential');
+
+    const closeModal = () => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    };
+
+    // Remove old listeners by cloning
+    const newPremium = btnPremium.cloneNode(true);
+    const newStandard = btnStandard.cloneNode(true);
+    const newCancel = btnCancel.cloneNode(true);
+    btnPremium.parentNode.replaceChild(newPremium, btnPremium);
+    btnStandard.parentNode.replaceChild(newStandard, btnStandard);
+    btnCancel.parentNode.replaceChild(newCancel, btnCancel);
+
+    newPremium.addEventListener('click', async () => {
+        closeModal();
         try {
-            showToast(wantsPremium ? "Generating Official Credential..." : "Generating Standard Credential...", "info");
-            await generateAndDownloadPDF(data, db, wantsPremium ? 'premium' : 'standard');
+            showToast("Generating Official (Premium) Credential...", "info");
+            await generateAndDownloadPDF(data, db, 'premium');
         } catch (err) {
-            console.error("Credential download failed:", err);
+            console.error(err);
             showToast("Failed to generate credential", "error");
         }
     });
+
+    newStandard.addEventListener('click', async () => {
+        closeModal();
+        try {
+            showToast("Generating Standard Credential...", "info");
+            await generateAndDownloadPDF(data, db, 'standard');
+        } catch (err) {
+            console.error(err);
+            showToast("Failed to generate credential", "error");
+        }
+    });
+
+    newCancel.addEventListener('click', closeModal);
+
+    // Also close when clicking outside
+    modal.onclick = (e) => {
+        if (e.target === modal) closeModal();
+    };
+});
 
     // Profile JSON Download
     document.getElementById('downloadProfileJsonBtn')?.addEventListener('click', () => {
