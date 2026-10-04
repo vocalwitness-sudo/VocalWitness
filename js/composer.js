@@ -426,15 +426,29 @@ export async function handleVideoSelectAction(event) {
  * Distinct handler for Audio Selection (file upload only)
  * Live voice recording is owned 100% by media.js
  */
+// ====================== AUDIO SELECT ACTION ======================
 export async function handleAudioSelectAction(event) {
+  const previewArea = document.getElementById('preview-area') || document.getElementById('media-preview');
   const file = event.target?.files?.[0];
   if (!file) return;
 
+  if (!file.type.startsWith('audio/')) {
+    showToast('Please select an audio file', 'error');
+    event.target.value = '';
+    return;
+  }
+
+  // Size guard (e.g., 15 MB)
+  if (file.size > 15 * 1024 * 1024) {
+    showToast('Audio file too large (max 15 MB)', 'error');
+    event.target.value = '';
+    return;
+  }
+
   setAudioFile(file, 'uploaded_audio');
-  renderMediaTrustBadge(null, file, { provenance: 'uploaded_audio' });
+  renderGenericMediaPreview(file, previewArea);
   renderMediaOriginClaimUI();
   showToast('Uploaded audio ready', 'success');
-  // After successful media is set
   window.dispatchEvent(new CustomEvent('media-changed'));
 }
 
@@ -473,6 +487,15 @@ export function initComposer() {
       return;
     }
 
+    // Audio upload (secondary fallback only)
+    if (e.target.closest('#btn-upload-audio, [data-action="upload-audio"]')) {
+      e.preventDefault();
+      e.stopPropagation();
+      const input = document.getElementById('audioInput');
+      if (input) input.click();
+      return;
+    }
+
     // Publish button
     if (e.target.closest('#postButton, #submitBtn')) {
       handleComposerSubmit(e);
@@ -490,6 +513,12 @@ export function initComposer() {
   if (videoInput && !videoInput.dataset.listenerAttached) {
     videoInput.dataset.listenerAttached = 'true';
     videoInput.addEventListener('change', handleVideoSelectAction);
+  }
+
+  const audioInput = document.getElementById('audioInput');
+  if (audioInput && !audioInput.dataset.listenerAttached) {
+    audioInput.dataset.listenerAttached = 'true';
+    audioInput.addEventListener('change', handleAudioSelectAction);
   }
 
   // ===== AI Analysis (debounced) =====
@@ -518,6 +547,7 @@ export function initComposer() {
 
   console.log('✅ Composer initialized (media handlers isolated, voice left to media.js)');
 }
+
 
 /**
  * Executes background AI analysis on composer text input
