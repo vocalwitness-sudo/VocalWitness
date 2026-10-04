@@ -68,28 +68,23 @@ async function syncStewardPermission() {
  */
 export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
     currentChannel = channelType;
-
     const feedContainer =
         document.getElementById('testimonies-feed') ||
         document.getElementById('feed-container') ||
         document.querySelector('#public-square #testimonies-feed');
-
     if (!feedContainer) {
         console.warn('Feed container not found');
         return;
     }
-
     await syncStewardPermission();
-
     if (typeof activeFeedListener === 'function') {
         activeFeedListener();
         activeFeedListener = null;
     }
-
     ensureSearchAndFilterUI(feedContainer);
 
-    // Initial loading 
-feedContainer.innerHTML = `
+    // Initial loading
+    feedContainer.innerHTML = `
     <div class="text-center py-16 text-zinc-500" id="feed-loading">
         <div class="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent"></div>
         <p class="text-sm">Loading reports from the Square...</p>
@@ -102,18 +97,18 @@ feedContainer.innerHTML = `
         const btn = document.querySelector(`#sortBtnGroup .sort-btn[data-sort="${sort}"]`);
         btn?.click();
     });
-// Event delegation (attached only once, fully safeguarded)
-    if (!feedContainer.dataset.listenerAttached) {
-        feedContainer.dataset.listenerAttached = "true";
 
+    // Event delegation (attached only once)
+    if (!feedContainer.dataset.listenerAttached) {
+        feedContainer.dataset.listenerAttached = 'true';
         feedContainer.addEventListener('click', async (e) => {
             const btn = e.target.closest('button[data-action]');
             if (!btn || btn.disabled) return;
 
             const action = btn.getAttribute('data-action');
             const id = btn.getAttribute('data-id');
-            
-            // Quick toggle for UI expansion panels (no button disable needed)
+
+            // Quick toggle for UI expansion panels
             if (action === 'toggle-translate') {
                 const box = document.getElementById(`translate-box-${id}`);
                 if (box) box.classList.toggle('hidden');
@@ -126,114 +121,112 @@ feedContainer.innerHTML = `
             try {
                 if (action === 'like') {
                     if (typeof handleUpvote === 'function') await handleUpvote(id);
-                    else console.warn("handleUpvote is not defined");
+                    else console.warn('handleUpvote is not defined');
                 } else if (action === 'react') {
                     const reactionType = btn.getAttribute('data-reaction');
                     if (typeof toggleReaction === 'function') await toggleReaction(id, reactionType);
-                    else console.warn("toggleReaction is not defined");
+                    else console.warn('toggleReaction is not defined');
                 } else if (action === 'comment') {
                     if (typeof openCommentModal === 'function') await openCommentModal(id);
-                    else console.warn("openCommentModal is not defined");
+                    else console.warn('openCommentModal is not defined');
                 } else if (action === 'download-pack') {
-                    showToast("📥 Downloading Evidence Pack: Safe verification text file with cryptographic hashes. No code installed.", "success");
+                    showToast('📥 Downloading Evidence Pack: Safe verification text file with cryptographic hashes. No code installed.', 'success');
                     if (typeof handleDownloadEvidencePack === 'function') await handleDownloadEvidencePack(id);
-                    else console.warn("handleDownloadEvidencePack is not defined");
+                    else console.warn('handleDownloadEvidencePack is not defined');
                 } else if (action === 'report') {
-                    // Prefer modal so user can choose reason (incl. suspected_synthetic)
                     if (typeof window.openReportModal === 'function') {
                         window.openReportModal(id);
                     } else if (typeof reportContent === 'function') {
                         try {
-                            await reportContent(id, "other");
-                            showToast("Report submitted to Stewards.", "success");
+                            await reportContent(id, 'other');
+                            showToast('Report submitted to Stewards.', 'success');
                         } catch (err) {
-                            console.error("Report action failed:", err);
-                            showToast("Failed to submit report.", "error");
+                            console.error('Report action failed:', err);
+                            showToast('Failed to submit report.', 'error');
                         }
                     } else {
-                        console.warn("reportContent / openReportModal not available yet");
-                        showToast("Report feature is temporarily unavailable. Please try again later.", "info");
+                        console.warn('reportContent / openReportModal not available yet');
+                        showToast('Report feature is temporarily unavailable. Please try again later.', 'info');
                     }
                 } else if (action === 'share') {
                     try {
                         const post = (typeof allPostsCache !== 'undefined' ? allPostsCache : []).find(p => p.id === id);
-                     const shareUrl = `${window.location.origin}/#citizen-talk?post=${encodeURIComponent(id)}`;
+                        const shareUrl = `${window.location.origin}/#citizen-talk?post=${encodeURIComponent(id)}`;
                         const title = post?.headline || post?.title || 'VocalWitness Testimony';
                         const text = post?.content
                             ? (post.content.length > 120 ? post.content.slice(0, 117) + '…' : post.content)
                             : 'Witness report shared via VocalWitness';
 
+                        // Mobile / supporting browsers: native share sheet
                         if (navigator.share) {
                             await navigator.share({ title, text, url: shareUrl });
-                            showToast("Shared successfully", "success");
-                        } else if (navigator.clipboard?.writeText) {
-                            await navigator.clipboard.writeText(shareUrl);
-                            showToast("Link copied to clipboard", "success");
+                            showToast('Shared successfully', 'success');
                         } else {
-                            // Ultimate fallback for older browsers
-                            const tempInput = document.createElement('input');
-                            tempInput.value = shareUrl;
-                            document.body.appendChild(tempInput);
-                            tempInput.select();
-                            document.execCommand('copy');
-                            document.body.removeChild(tempInput);
-                            showToast("Link copied to clipboard", "success");
+                            // Desktop: simple choice menu
+                            const choice = prompt(
+                                `Share this report:\n\n1 = Copy link\n2 = Twitter/X\n3 = WhatsApp\n4 = Facebook\n\nEnter 1-4:`,
+                                '1'
+                            );
+
+                            if (choice === '1' || choice === null) {
+                                if (navigator.clipboard?.writeText) {
+                                    await navigator.clipboard.writeText(shareUrl);
+                                } else {
+                                    const tempInput = document.createElement('input');
+                                    tempInput.value = shareUrl;
+                                    document.body.appendChild(tempInput);
+                                    tempInput.select();
+                                    document.execCommand('copy');
+                                    document.body.removeChild(tempInput);
+                                }
+                                showToast('Link copied to clipboard', 'success');
+                            } else if (choice === '2') {
+                                window.open(
+                                    `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(title)}`,
+                                    '_blank',
+                                    'noopener,noreferrer'
+                                );
+                            } else if (choice === '3') {
+                                window.open(
+                                    `https://wa.me/?text=${encodeURIComponent(title + ' ' + shareUrl)}`,
+                                    '_blank',
+                                    'noopener,noreferrer'
+                                );
+                            } else if (choice === '4') {
+                                window.open(
+                                    `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
+                                    '_blank',
+                                    'noopener,noreferrer'
+                                );
+                            }
                         }
                     } catch (err) {
-                        if (err.name !== 'AbortError') {
-                            console.error("Share failed:", err);
-                            showToast("Failed to share testimony link", "error");
+                        if (err?.name !== 'AbortError') {
+                            console.error('Share failed:', err);
+                            showToast('Failed to share testimony link', 'error');
                         }
                     }
                 } else if (action === 'pin') {
                     if (typeof handlePinPost === 'function') await handlePinPost(id);
-                    else console.warn("handlePinPost is not defined");
+                    else console.warn('handlePinPost is not defined');
                 } else if (action === 'delete') {
                     if (typeof handleDeletePost === 'function') await handleDeletePost(id);
-                    else console.warn("handleDeletePost is not defined");
+                    else console.warn('handleDeletePost is not defined');
                 } else if (action === 'menu') {
                     if (typeof showPostMenu === 'function') showPostMenu(id);
-                    else console.warn("showPostMenu is not defined");
+                    else console.warn('showPostMenu is not defined');
                 } else if (action === 'corroborate') {
                     if (typeof handleCorroborate === 'function') await handleCorroborate(id, btn);
-                    else console.warn("handleCorroborate is not defined");
+                    else console.warn('handleCorroborate is not defined');
                 } else if (action === 'execute-translate') {
                     if (typeof handleTranslateAction === 'function') await handleTranslateAction(id, btn);
-                    else console.warn("handleTranslateAction is not defined");
+                    else console.warn('handleTranslateAction is not defined');
                 }
             } catch (err) {
                 console.error(`Action "${action}" failed:`, err);
                 if (action !== 'share' && action !== 'corroborate') {
-                    showToast("Something went wrong. Please try again.", "error");
+                    showToast('Something went wrong. Please try again.', 'error');
                 }
-                } else if (action === 'share') {
-  const post = allPostsCache.find(p => p.id === id);
-  const shareUrl = `${window.location.origin}/#citizen-talk?post=${encodeURIComponent(id)}`;
-  const title = post?.headline || post?.title || 'VocalWitness Testimony';
-  const text = (post?.content || '').slice(0, 120);
-
-  // Prefer native share sheet (mobile)
-  if (navigator.share) {
-    await navigator.share({ title, text, url: shareUrl });
-    return;
-  }
-
-  // Desktop: small menu
-  const choice = prompt(
-    `Share this report:\n\n1 = Copy link\n2 = Twitter/X\n3 = WhatsApp\n4 = Facebook\n\nEnter 1-4:`,
-    '1'
-  );
-  if (choice === '1') {
-    await navigator.clipboard.writeText(shareUrl);
-    showToast('Link copied', 'success');
-  } else if (choice === '2') {
-    window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(title)}`, '_blank');
-  } else if (choice === '3') {
-    window.open(`https://wa.me/?text=${encodeURIComponent(title + ' ' + shareUrl)}`, '_blank');
-  } else if (choice === '4') {
-    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank');
-  }
-}
             } finally {
                 // Only re-enable if it wasn't permanently disabled by successful corroboration
                 if (action !== 'corroborate' || !btn.classList.contains('cursor-default')) {
@@ -245,46 +238,39 @@ feedContainer.innerHTML = `
     }
 
     const q = query(
-        collection(dbInstance, "testimonies"),
+        collection(dbInstance, 'testimonies'),
         limit(50)
     );
 
     activeFeedListener = onSnapshot(q, (snapshot) => {
         allPostsCache = [];
-
         if (snapshot.empty) {
             renderFilteredPosts([], feedContainer);
             return;
         }
-
         snapshot.forEach((docSnap) => {
             const data = docSnap.data();
             const postVisibility = data.feedVisibility || data.channel;
-
             if (!postVisibility || postVisibility === currentChannel) {
                 allPostsCache.push({ id: docSnap.id, ...data });
             }
         });
-
         allPostsCache.sort((a, b) => {
             if (a.isPinned && !b.isPinned) return -1;
             if (!a.isPinned && b.isPinned) return 1;
-
             const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : new Date(a.createdAt || 0).getTime();
             const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : new Date(b.createdAt || 0).getTime();
             return timeB - timeA;
         });
-
         applySearchAndFilter(feedContainer);
     }, (error) => {
-        console.error("Feed error:", error);
+        console.error('Feed error:', error);
         feedContainer.innerHTML = `
             <div class="text-center py-8 text-red-400 bg-red-950/20 rounded-2xl border border-red-900/40">
                 Failed to load feed items. Please refresh or try again later.
             </div>`;
     });
 }
-
 async function translateTestimony(text, targetLanguage) {
   const functions = getFunctions();
   const fn = httpsCallable(functions, 'translateTestimony');
