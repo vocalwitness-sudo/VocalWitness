@@ -113,7 +113,6 @@ service cloud.firestore {
         'reputation', 'credibilityScore', 'weeklyPoints',
         'phoneNumber', 'phone', 'phoneHash', 'humanityScore'
       ];
-
       let allowed = [
         'email', 'displayName', 'photoURL', 'bio',
         'location', 'website', 'region', 'username',
@@ -123,9 +122,7 @@ service cloud.firestore {
         'privacyMode', 'hidePublicInfo',
         'activeWitnessCycle', 'lastCycleStart'
       ];
-
       let changed = request.resource.data.diff(resource.data).affectedKeys();
-
       return !changed.hasAny(forbidden)
           && changed.hasOnly(allowed)
           && (!('email' in request.resource.data) || request.resource.data.email is string)
@@ -195,18 +192,22 @@ service cloud.firestore {
       match /drafts/{draftId} {
         allow read, write: if isOwner(userId);
       }
+
       match /notifications/{notificationId} {
         allow read: if isOwner(userId);
         allow update, delete: if isOwner(userId);
         allow create: if isNotBanned() && isValidNotification();
       }
+
       match /bookmarks/{bookmarkId} {
         allow read, write: if isOwner(userId);
       }
+
       match /following/{targetUid} {
         allow read: if true;
         allow write: if isOwner(userId);
       }
+
       match /followers/{targetUid} {
         allow read: if true;
         allow write: if isOwner(userId) || request.auth.uid == targetUid;
@@ -371,16 +372,13 @@ service cloud.firestore {
         && request.resource.data.hash.size() == 64;
       allow update, delete: if false;
     }
+
     // ==========================================
     // PRESS CREDENTIALS (verifiable_docs)
-    // PDF QR → verify.html?id=…  needs public get
     // ==========================================
     match /verifiable_docs/{docId} {
-      // Anyone can verify a credential by ID (no list-all)
       allow get: if true;
       allow list: if false;
-
-      // Issue credential: signed-in, not banned, must attach own userId
       allow create: if isNotBanned()
         && request.resource.data.keys().hasAll(['userId', 'type', 'createdAt', 'status'])
         && request.resource.data.userId == request.auth.uid
@@ -401,12 +399,12 @@ service cloud.firestore {
             || request.resource.data.displayValidDays is number)
         && (!('ledgerPermanent' in request.resource.data)
             || request.resource.data.ledgerPermanent is bool);
-
-      // Immutable once issued (no client edits)
       allow update, delete: if false;
     }
 
-
+    // ==========================================
+    // DAO COMMENTS
+    // ==========================================
     match /dao_comments/{commentId} {
       allow read: if true;
       allow create: if isNotBanned()
@@ -489,10 +487,12 @@ service cloud.firestore {
     }
 
     // ==========================================
-    // DAO
+    // DAO PROPOSALS (vote fields locked to Cloud Function)
     // ==========================================
     match /dao_proposals/{proposalId} {
       allow read: if true;
+
+      // Anyone not banned can create a proposal
       allow create: if isNotBanned()
         && request.resource.data.title is string
         && request.resource.data.title.size() > 0
@@ -500,10 +500,25 @@ service cloud.firestore {
         && request.resource.data.description is string
         && request.resource.data.description.size() <= 800
         && request.resource.data.createdBy == request.auth.uid
-        && request.resource.data.status == 'active';
-      allow update: if isNotBanned() && (
-        resource.data.createdBy == request.auth.uid || isModerator()
-      );
+        && request.resource.data.status == 'active'
+        // Force empty tallies on create
+        && request.resource.data.totalVotesFor == 0
+        && request.resource.data.totalVotesAgainst == 0
+        && request.resource.data.totalVotingPowerSpent == 0
+        && request.resource.data.voteLog == {};
+
+      // Client may only close / change metadata.
+      // Vote fields are immutable from the client (only Admin SDK / Cloud Function can write them).
+      allow update: if isNotBanned()
+        && (resource.data.createdBy == request.auth.uid || isModerator())
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly([
+               'status', 'closedAt', 'closedBy',
+               'finalResult', 'finalVotesFor', 'finalVotesAgainst',
+               'updatedAt', 'commentCount',
+               'multiSigSignatures', 'relatedPostId', 'originalDecision'
+             ]);
+
       allow delete: if false;
     }
 
@@ -589,14 +604,12 @@ service cloud.firestore {
       }
     }
 
-    // Catch-all global App Check enforcement
+    // ==========================================
+    // CATCH-ALL (temporary safety net – remove when all collections are covered)
+    // ==========================================
     match /{document=**} {
-      allow read, write: if request.time < timestamp.date(2030, 1, 1) && (request.auth != null || request.app != null);
+      allow read, write: if request.time < timestamp.date(2030, 1, 1)
+        && (request.auth != null || request.app != null);
     }
   }
-}
-
-match /{document=**} {
-  allow read, write: if request.time < timestamp.date(2030, 1, 1)
-    && (request.auth != null || request.app != null);
 }
