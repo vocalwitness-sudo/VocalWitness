@@ -1397,6 +1397,179 @@ exports.registerZKCommitment = onCall(
   }
 );
 
+// ======================================================
+// DAO QUADRATIC VOTE (server-authoritative)
+// ======================================================
+
+const MAX_VOTING_BUDGET_POINTS = 25;
+const MIN_STRENGTH = 1;
+const MAX_STRENGTH = 5;
+
+function quadraticCost(strength) {
+  return strength * strength;
+}
+
+function getVotingWeightFromUser(userData) {
+  const rep = userData.reputationScore || 0;
+  const tier = userData.tier || "citizen";
+
+  let weight = 1;
+  if (tier === "witness_circle" || userData.zkVerified) weight = 4;
+  else if (rep >= 80) weight = 3;
+  else if (rep >= 40) weight = 2;
+  return weight;
+}
+
+export const castDaoVote = onCall(
+  { cors: allowedOrigins },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Sign in required");
+    }
+
+    const uid = request.auth.uid;
+    const { proposalId, direction } = request.data || {};
+    const strength = Number(request.data?.strength || 1);
+
+    if (!proposalId || typeof proposalId !== "string") {
+      throw new HttpsError("invalid-argument", "proposalId required");
+    }
+    if (!["for", "against"].includes(direction)) {
+      throw new HttpsError("invalid-argument", "direction must be for|against");
+    }
+    if (!Number.isInteger(strength) || strength < MIN_STRENGTH || strength > MAX_STRENGTH) {
+      throw new HttpsError("invalid-argument", "strength must be 1–5");
+    }
+
+    const userRef = db.collection("users").doc(uid);
+    const proposalRef = db.collection("dao_proposals").doc(proposalId);
+
+    return db.runTransaction(async (tx) => {
+      const [userSnap, proposalSnap] = await Promise.all([
+        tx.get(userRef),
+        tx.get(proposalRef)
+      ]);
+
+      if (!userSnap.exists) {
+        throw new HttpsError("not-found", "User profile not found");
+      }
+      if (!proposalSnap.exists) {
+        throw new HttpsError("not-found", "Proposal not found");
+      }
+
+      const userData = userSnap.data() || {};
+      const proposal = proposalSnap.data() || {};
+
+      if (userData.isBanned === true) {
+        throw new HttpsError("permission-denied", "Account banned");
+      }
+      if (proposal.status !== "active") {
+        throw new HttpsError("failed-precondition", "Proposal is closed");
+      }
+
+      const phoneOk = !!(userData.isPhoneVerified || userData.hasVerifiedPhone);
+      const rep = userData.reputationScore || 0;
+      if (!phoneOk && rep < 10) {
+        throw new HttpsError(
+          "permission-denied",
+          "Phone verified or 10+ reputation required to vote"
+        );
+      }
+
+      const voteLog = proposal.voteLog || {};
+      const previous = voteLog[uid] || null;
+
+      if (previous && previous.direction === direction) {
+        throw new HttpsError("already-exists", "Already voted in this direction");
+      }
+
+      const cost = quadraticCost(strength);
+      const alreadySpent = previous?.cost || 0;
+      if (alreadySpent + cost > MAX_VOTING_BUDGET_POINTS) {
+        throw new HttpsError(
+          "resource-exhausted",
+          "Voting budget exceeded (max 25 points)"
+        );
+      }
+
+      const votingWeight = getVotingWeightFromUser(userData);
+      const effectiveStrength = Math.min(
+        strength * Math.max(1, Math.floor(votingWeight / 2)),
+        8
+      );
+
+      let totalFor = proposal.totalVotesFor || 0;
+      let totalAgainst = proposal.totalVotesAgainst || 0;
+
+      // Reverse previous contribution if switching side
+      if (previous) {
+        if (previous.direction === "for") {
+          totalFor = Math.max(0, totalFor - (previous.effectiveStrength || 0));
+        } else if (previous.direction === "against") {
+          totalAgainst = Math.max(0, totalAgainst - (previous.effectiveStrength || 0));
+        }
+      }
+
+      if (direction === "for") totalFor += effectiveStrength;
+      else totalAgainst += effectiveStrength;
+
+      const totalSpent = alreadySpent + cost;
+
+      const newVote = {
+        direction,
+        strength,
+        effectiveStrength,
+        cost: totalSpent,           // cumulative for this user on this proposal
+        voterTier: userData.tier || "citizen",
+        voterRole: userData.role || "citizen",
+        votingWeight,
+        timestamp: admin.firestore.Timestamp.now()
+      };
+
+      tx.update(proposalRef, {
+        totalVotesFor: totalFor,
+        totalVotesAgainst: totalAgainst,
+        totalVotingPowerSpent: admin.firestore.FieldValue.increment(cost),
+        [`voteLog.${uid}`]: newVote,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+
+      // Server-only reputation award
+      tx.update(userRef, {
+        reputationScore: admin.firestore.FieldValue.increment(3),
+        lastGovernanceAction: admin.firestore.FieldValue.serverTimestamp()
+      });
+
+      return {
+        ok: true,
+        direction,
+        strength,
+        effectiveStrength,
+        cost,
+        totalVotesFor: totalFor,
+        totalVotesAgainst: totalAgainst
+      };
+    }).then(async (result) => {
+      // Audit outside the transaction (non-critical)
+      await writeAuditLog({
+        action: "dao_vote_cast",
+        performedBy: uid,
+        targetId: proposalId,
+        targetType: "dao_proposal",
+        details: {
+          direction: result.direction,
+          strength: result.strength,
+          effectiveStrength: result.effectiveStrength,
+          cost: result.cost
+        },
+        severity: "info"
+      });
+      return result;
+    });
+  }
+);
+
+
 /**
  * Step 2: Prove membership and elevate tier.
  * Full Groth16 can be plugged in when circuit assets are on the function.
