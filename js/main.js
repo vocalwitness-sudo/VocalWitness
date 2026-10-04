@@ -306,37 +306,37 @@ function initMoreMenu() {
   }
   moreBtn.dataset.moreWired = 'true';
 
+  // CRITICAL: force closed state on init
+  moreMenu.classList.add('hidden');
+  moreBtn.setAttribute('aria-expanded', 'false');
+
   const setOpen = (open) => {
     moreMenu.classList.toggle('hidden', !open);
     moreBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
 
-    // Rotate chevron for visual feedback
     const chevron = moreBtn.querySelector('svg');
     if (chevron) {
       chevron.style.transition = 'transform 0.2s ease';
       chevron.style.transform = open ? 'rotate(180deg)' : 'rotate(0deg)';
     }
-
     console.log('[more-menu] setOpen →', open);
   };
 
-  // Toggle on click
   moreBtn.addEventListener('click', (e) => {
     e.preventDefault();
-    e.stopPropagation();
-    const isHidden = moreMenu.classList.contains('hidden');
-    console.log('[more-menu] button clicked, currently hidden?', isHidden);
-    setOpen(isHidden);
+    e.stopPropagation(); // stop document listener from seeing this click
+    const willOpen = moreMenu.classList.contains('hidden');
+    console.log('[more-menu] button clicked, currently hidden?', willOpen);
+    setOpen(willOpen);
   });
 
-  // Close when clicking outside
+  // Close only when clicking truly outside
   document.addEventListener('click', (e) => {
     if (moreMenu.classList.contains('hidden')) return;
-    if (moreMenu.contains(e.target) || moreBtn.contains(e.target)) return;
+    if (moreBtn.contains(e.target) || moreMenu.contains(e.target)) return;
     setOpen(false);
   });
 
-  // Close on Escape
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && !moreMenu.classList.contains('hidden')) {
       setOpen(false);
@@ -374,7 +374,6 @@ function initHashRouting() {
 
 // Call once after DOM is ready (bootstrap / setupEventListeners)
 initNavigationChrome();
-
 /**
  * Updates the visual state of the voice recorder UI
  * Call this from your existing start / pause / stop / reset handlers
