@@ -9,6 +9,8 @@ service cloud.firestore {
     // testimonies: feedVisibility ASC, createdAt DESC
     // posts: visibilityDoor ASC, createdAt DESC
     // corroborations: testimonyId ASC, createdAt DESC
+    // verifiable_docs: userId ASC, type ASC, createdAt ASC
+    // (needed for monthly quota queries in pdf.js)
 
     // ==========================================
     // HELPER FUNCTIONS (single definition only)
