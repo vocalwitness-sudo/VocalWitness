@@ -345,6 +345,57 @@
       </div>
     </div>
 
+    <!-- ====================== CREDENTIAL CHOICE MODAL ====================== -->
+<div id="credentialChoiceModal"
+     class="fixed inset-0 z-[10050] hidden items-center justify-center bg-black/85 p-4"
+     role="dialog" aria-modal="true" aria-labelledby="credentialChoiceTitle">
+  <div class="relative w-full max-w-lg rounded-3xl border border-zinc-700 bg-[#111827] p-6 sm:p-8 text-white shadow-2xl">
+    
+    <button type="button" id="btnCancelCredential"
+            class="absolute top-4 right-4 text-zinc-400 hover:text-white text-2xl leading-none cursor-pointer"
+            aria-label="Close">&times;</button>
+
+    <div class="text-center mb-6">
+      <h3 id="credentialChoiceTitle" class="text-xl font-bold text-white">
+        Choose your Press Credential
+      </h3>
+      <p class="text-sm text-zinc-400 mt-1">
+        Both are ZK-verified and permanently recorded on the public ledger.
+      </p>
+    </div>
+
+    <div class="grid gap-4 sm:grid-cols-2">
+      <!-- Standard -->
+      <button type="button" id="btnChooseStandard"
+              class="text-left rounded-2xl border border-zinc-700 bg-zinc-900/80 p-5 hover:border-emerald-500/50 hover:bg-zinc-900 transition cursor-pointer group">
+        <div class="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-2">Standard · Free</div>
+        <div class="font-semibold text-white mb-2 group-hover:text-emerald-300">Everyday proof</div>
+        <ul class="text-xs text-zinc-400 space-y-1.5 leading-relaxed">
+          <li>• Personal records & quick sharing</li>
+          <li>• Permanent ledger verification</li>
+          <li>• Best for day-to-day use</li>
+        </ul>
+      </button>
+
+      <!-- Official / Premium -->
+      <button type="button" id="btnChoosePremium"
+              class="text-left rounded-2xl border border-amber-500/40 bg-amber-500/5 p-5 hover:border-amber-400 hover:bg-amber-500/10 transition cursor-pointer group">
+        <div class="text-xs font-bold uppercase tracking-wider text-amber-400 mb-2">Official · $2.99</div>
+        <div class="font-semibold text-white mb-2 group-hover:text-amber-300">For external presentation</div>
+        <ul class="text-xs text-zinc-400 space-y-1.5 leading-relaxed">
+          <li>• Press, partners, institutions</li>
+          <li>• Formal format + ZK seal</li>
+          <li>• 1-year display + lifetime ledger</li>
+        </ul>
+        <p class="text-[10px] text-amber-500/80 mt-3">Gold+ members: 1 free Official / month</p>
+      </button>
+    </div>
+
+    <p class="text-[11px] text-zinc-500 text-center mt-5">
+      Official is the version you use when someone else needs to take the document seriously.
+    </p>
+  </div>
+</div>
     <!-- Script Module -->
     <script type="module">
     import { initLanguage } from './js/i18n.js';
