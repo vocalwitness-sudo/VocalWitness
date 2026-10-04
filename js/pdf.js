@@ -1,10 +1,16 @@
 // js/pdf.js - Complete Dual System (Standard + Premium)
 // Features: Real QR, Monogram Avatar Fallbacks, Soft limits, 1 free Premium/month for Gold+, $2.99 Stripe checkout
+// Validity: 1-year display window + lifetime ledger record
 import { showToast } from './utils.js';
 import { 
   doc, setDoc, collection, query, where, getDocs, 
   serverTimestamp, Timestamp 
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+/* ============================================================
+   CONSTANTS
+   ============================================================ */
+const DISPLAY_VALIDITY_DAYS = 365; // change to 730 for 2-year display window
 
 /* ============================================================
    TIER + ACCESS LOGIC
@@ -91,7 +97,7 @@ export async function generateAndDownloadPDF(userData, db, preferredType = null)
   if (!wantsPremium) {
     const allowed = await canGenerateStandard(db, userId);
     if (!allowed) {
-      showToast("Monthly limit of 3 Standard Credentials reached. Try again next month or upgrade to Premium.", "warning");
+      showToast("Monthly limit of 3 Standard Credentials reached. Try again next month or upgrade to Official.", "warning");
       return;
     }
     return await proceedGeneration(userData, db, decision, "standard");
@@ -110,8 +116,8 @@ export async function generateAndDownloadPDF(userData, db, preferredType = null)
    ============================================================ */
 async function proceedGeneration(userData, db, decision, type) {
   const message = type === 'premium'
-    ? "Premium Credential Notice:\n\nThis is an Official Independent Citizen Press Credential. It is cryptographically linked to the public ledger and reflects verified on-the-ground participation. Any alteration will invalidate it."
-    : "Standard Credential Notice:\n\nThis Independent Citizen Press Credential is cryptographically linked to your VocalWitness record. Any alteration will invalidate its authenticity.";
+    ? "Official Credential Notice:\n\nThis is an Official Independent Citizen Press Credential. It is cryptographically linked to the public ledger (lifetime record) and reflects verified on-the-ground participation. Any alteration will invalidate it.\n\nDisplay validity is a recommended presentation window; the ledger record does not expire."
+    : "Standard Credential Notice:\n\nThis Independent Citizen Press Credential is cryptographically linked to your VocalWitness record (lifetime ledger). Any alteration will invalidate its authenticity.";
 
   if (!confirm(message)) return;
 
@@ -134,7 +140,9 @@ async function proceedGeneration(userData, db, decision, type) {
         username: userData.username || null,
         zkVerified: true,
         isSupporter: !!decision.isSupporter,
-        paid: type === "premium"
+        paid: type === "premium",
+        displayValidDays: type === "premium" ? DISPLAY_VALIDITY_DAYS : null,
+        ledgerPermanent: true
       });
     }
 
@@ -269,7 +277,8 @@ async function generateStandardPassport(userData, tier, docId, verificationUrl) 
     `ZK Verification     : Confirmed`,
     `Phone Status        : ${userData.isPhoneVerified || userData.hasVerifiedPhone ? "Verified" : "Not verified"}`,
     `Privacy Shield      : ${userData.hidePublicInfo !== false ? "Active" : "Public"}`,
-    `Issued              : ${new Date().toLocaleString()}`
+    `Issued              : ${new Date().toLocaleString()}`,
+    `Ledger record       : Permanent (lifetime)`
   ];
 
   pdf.setFont("helvetica", "normal");
@@ -297,6 +306,7 @@ async function generateStandardPassport(userData, tier, docId, verificationUrl) 
   pdf.text("This Independent Citizen Press Credential certifies that the holder is an active,", 20, y);
   pdf.text("zero-knowledge verified contributor on the VocalWitness network. It serves as", 20, y + 5.5);
   pdf.text("proof of participation in ground-level citizen journalism and public-interest reporting.", 20, y + 11);
+  pdf.text("The public ledger record is permanent.", 20, y + 16.5);
 
   // Light watermark
   pdf.setTextColor(235, 235, 235);
@@ -325,13 +335,13 @@ async function generateStandardPassport(userData, tier, docId, verificationUrl) 
 }
 
 /* ============================================================
-   PREMIUM CREDENTIAL
+   PREMIUM / OFFICIAL CREDENTIAL
    ============================================================ */
 async function generatePremiumCertificate(userData, tier, docId, verificationUrl) {
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
-  // Luxury dark header
+  // Dark header
   pdf.setFillColor(9, 9, 11);
   pdf.rect(0, 0, 210, 56, 'F');
 
@@ -397,6 +407,8 @@ async function generatePremiumCertificate(userData, tier, docId, verificationUrl
 
   const sealedCount = userData.sealedReportsCount || userData.totalTestimonies || 0;
   const highestLevel = userData.highestWitnessLevel || tier.name || "—";
+  const displayUntil = new Date(Date.now() + DISPLAY_VALIDITY_DAYS * 24 * 60 * 60 * 1000)
+    .toLocaleDateString();
 
   const premiumLines = [
     `Reputation Score        : ${userData.reputation || userData.trustScore || 0} REP`,
@@ -407,7 +419,8 @@ async function generatePremiumCertificate(userData, tier, docId, verificationUrl
     `Sealed Reports          : ${sealedCount}`,
     `Highest Level           : ${highestLevel}`,
     `Issued On               : ${new Date().toLocaleString()}`,
-    `Valid Until             : ${new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toLocaleDateString()}`
+    `Display valid until     : ${displayUntil}`,
+    `Ledger record           : Permanent (lifetime)`
   ];
 
   pdf.setFont("helvetica", "normal");
@@ -472,7 +485,7 @@ async function generatePremiumCertificate(userData, tier, docId, verificationUrl
 }
 
 /* ============================================================
-   UPGRADE MODAL
+   UPGRADE / PAYWALL MODAL (Official only)
    ============================================================ */
 export function showPremiumUpgradeModal(userData, db) {
   document.getElementById('premiumUpgradeModal')?.remove();
@@ -483,32 +496,34 @@ export function showPremiumUpgradeModal(userData, db) {
 
   modal.innerHTML = `
     <div class="relative w-full max-w-md rounded-3xl border border-amber-500/30 bg-zinc-900 p-6 shadow-2xl text-white">
-      <button id="closePremiumModal" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl leading-none">&times;</button>
+      <button id="closePremiumModal" type="button"
+              class="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl leading-none cursor-pointer"
+              aria-label="Close">&times;</button>
       
       <div class="text-center mb-5">
         <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 mb-3">
           <span class="text-2xl">🎖️</span>
         </div>
         <h3 class="text-xl font-bold text-amber-400">Official Independent Citizen Press Credential</h3>
-        <p class="text-sm text-zinc-400 mt-1">Premium version with stronger visual authority</p>
+        <p class="text-sm text-zinc-400 mt-1">Formal credential for external presentation</p>
       </div>
 
       <div class="space-y-3 mb-6 text-sm">
         <div class="flex items-start gap-3">
           <span class="text-emerald-400 mt-0.5">✓</span>
-          <span>Luxury dark + gold design + Official ZK Seal</span>
+          <span>Formal format with ZK seal — for press, partners, institutions</span>
         </div>
         <div class="flex items-start gap-3">
           <span class="text-emerald-400 mt-0.5">✓</span>
-          <span>Profile photo / Monogram with gold ring</span>
+          <span>Profile photo / monogram with gold ring</span>
         </div>
         <div class="flex items-start gap-3">
           <span class="text-emerald-400 mt-0.5">✓</span>
-          <span>Detailed activity record + 1-year validity</span>
+          <span>Full activity record • 1-year display validity + lifetime ledger record</span>
         </div>
         <div class="flex items-start gap-3">
           <span class="text-emerald-400 mt-0.5">✓</span>
-          <span>Stronger professional presentation</span>
+          <span>Stronger weight when others must take the document seriously</span>
         </div>
       </div>
 
@@ -518,16 +533,19 @@ export function showPremiumUpgradeModal(userData, db) {
       </div>
 
       <div class="flex flex-col gap-3">
-        <button id="upgradeToPremiumBtn" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold transition">
+        <button id="upgradeToPremiumBtn" type="button"
+                class="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold transition cursor-pointer">
           Pay $2.99 & Download Official Credential
         </button>
-        <button id="downloadStandardInstead" class="w-full py-2.5 rounded-xl border border-zinc-700 text-zinc-300 hover:bg-zinc-800 text-sm transition">
+        <button id="downloadStandardInstead" type="button"
+                class="w-full py-2.5 rounded-xl border border-zinc-700 text-zinc-300 hover:bg-zinc-800 text-sm transition cursor-pointer">
           Download Standard Credential (Free)
         </button>
       </div>
 
       <p class="text-[11px] text-zinc-500 text-center mt-4">
         Gold & higher members receive 1 free Official Credential every month.
+        The public ledger record is permanent; the display date is a recommended presentation window.
       </p>
     </div>
   `;
@@ -553,6 +571,8 @@ export function showPremiumUpgradeModal(userData, db) {
         });
       } else if (typeof window.openSupportModal === 'function') {
         window.openSupportModal();
+      } else {
+        showToast("Payment is not available yet. Try Standard for free, or contact support.", "warning");
       }
     } catch (err) {
       console.error("Payment redirection failed:", err);
