@@ -1083,6 +1083,77 @@ window.addEventListener('languageChanged', () => {
     if (currentUserData) renderProfileUI(currentUserData);
 });
 
+// ====================== CREDENTIAL CHOICE MODAL ======================
+export function openCredentialChoiceModal(data) {
+    const userData = data || window.currentUserData;
+    if (!userData) {
+        showToast('Profile data not loaded', 'error');
+        return;
+    }
+
+    const modal = document.getElementById('credentialChoiceModal');
+    if (!modal) {
+        showToast('Credential choice modal not found', 'error');
+        return;
+    }
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+
+    const btnPremium = document.getElementById('btnChoosePremium');
+    const btnStandard = document.getElementById('btnChooseStandard');
+    const btnCancel = document.getElementById('btnCancelCredential');
+
+    if (!btnPremium || !btnStandard || !btnCancel) {
+        showToast('Credential choice controls not found', 'error');
+        return;
+    }
+
+    const closeModal = () => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    };
+
+    // Remove previous listeners by cloning
+    const newPremium = btnPremium.cloneNode(true);
+    const newStandard = btnStandard.cloneNode(true);
+    const newCancel = btnCancel.cloneNode(true);
+
+    btnPremium.parentNode.replaceChild(newPremium, btnPremium);
+    btnStandard.parentNode.replaceChild(newStandard, btnStandard);
+    btnCancel.parentNode.replaceChild(newCancel, btnCancel);
+
+    newPremium.addEventListener('click', async () => {
+        closeModal();
+        try {
+            showToast('Generating Official Credential...', 'info');
+            await generateAndDownloadPDF(userData, db, 'premium');
+        } catch (err) {
+            console.error(err);
+            showToast('Failed to generate credential', 'error');
+        }
+    });
+
+    newStandard.addEventListener('click', async () => {
+        closeModal();
+        try {
+            showToast('Generating Standard Credential...', 'info');
+            await generateAndDownloadPDF(userData, db, 'standard');
+        } catch (err) {
+            console.error(err);
+            showToast('Failed to generate credential', 'error');
+        }
+    });
+
+    newCancel.addEventListener('click', closeModal);
+
+    // Click outside to close
+    modal.onclick = (e) => {
+        if (e.target === modal) closeModal();
+    };
+}
+window.openCredentialChoiceModal = openCredentialChoiceModal;
+
 // ====================== GLOBAL EXPORTS & LEGACY ALIASES ======================
 window.startPhoneVerification = function () {
     closeProfile();
@@ -1257,8 +1328,13 @@ export function initProfileModals() {
     document.getElementById('closeSettingsBtn')?.addEventListener('click', closeSettings);
     document.getElementById('triggerPasswordResetBtn')?.addEventListener('click', triggerPasswordReset);
 
-    // Note: PDF download listener is now only in attachProfileEventListeners()
-    // to avoid double-firing
+    // PDF / Credential download buttons
+    document.getElementById('exportUserDataPdfBtn')?.addEventListener('click', () => {
+        openCredentialChoiceModal(window.currentUserData);
+    });
+    document.getElementById('downloadLedgerPdfBtn')?.addEventListener('click', () => {
+        openCredentialChoiceModal(window.currentUserData);
+    });
 
     document.getElementById('settingsSignOutBtn')?.addEventListener('click', handleSignOut);
 
@@ -1403,11 +1479,24 @@ function bootProfileUi() {
         }
     });
 
+    // Updated Escape handler (closes all modals including credential + MFA)
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            if (typeof closeProfile === 'function') closeProfile();
-            if (typeof closeEditProfile === 'function') closeEditProfile();
-            if (typeof closeSettings === 'function') closeSettings();
+        if (e.key !== 'Escape') return;
+
+        if (typeof closeProfile === 'function') closeProfile();
+        if (typeof closeEditProfile === 'function') closeEditProfile();
+        if (typeof closeSettings === 'function') closeSettings();
+
+        const cred = document.getElementById('credentialChoiceModal');
+        if (cred) {
+            cred.classList.add('hidden');
+            cred.classList.remove('flex');
+        }
+
+        const mfa = document.getElementById('mfaModal');
+        if (mfa) {
+            mfa.classList.add('hidden');
+            mfa.classList.remove('flex');
         }
     });
 }
