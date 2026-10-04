@@ -28,13 +28,7 @@ import {
     getCorroborationScoreFromDoc 
 } from './corroboration.js';
 
-// ===== helpers (after all imports) =====
-async function translateTestimony(text, targetLanguage) {
-  const functions = getFunctions();
-  const fn = httpsCallable(functions, 'translateTestimony');
-  const res = await fn({ text, targetLanguage });
-  return res.data?.translatedText || '';
-}
+
 let activeFeedListener = null;
 let allPostsCache = [];
 let currentChannel = 'citizen-talk';
@@ -272,12 +266,7 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
             </div>`;
     });
 }
-async function translateTestimony(text, targetLanguage) {
-  const functions = getFunctions();
-  const fn = httpsCallable(functions, 'translateTestimony');
-  const res = await fn({ text, targetLanguage });
-  return res.data?.translatedText || '';
-}
+
 function ensureSearchAndFilterUI(container) {
     let existingWrapper = document.getElementById('feed-controls-wrapper');
     if (existingWrapper) existingWrapper.remove();
