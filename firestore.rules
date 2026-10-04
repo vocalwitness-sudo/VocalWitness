@@ -369,6 +369,41 @@ service cloud.firestore {
         && request.resource.data.hash.size() == 64;
       allow update, delete: if false;
     }
+    // ==========================================
+    // PRESS CREDENTIALS (verifiable_docs)
+    // PDF QR → verify.html?id=…  needs public get
+    // ==========================================
+    match /verifiable_docs/{docId} {
+      // Anyone can verify a credential by ID (no list-all)
+      allow get: if true;
+      allow list: if false;
+
+      // Issue credential: signed-in, not banned, must attach own userId
+      allow create: if isNotBanned()
+        && request.resource.data.keys().hasAll(['userId', 'type', 'createdAt', 'status'])
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.type in ['standard', 'premium']
+        && request.resource.data.status == 'active'
+        && (request.resource.data.createdAt is timestamp
+            || request.resource.data.createdAt == request.time)
+        && (!('zkVerified' in request.resource.data) || request.resource.data.zkVerified is bool)
+        && (!('paid' in request.resource.data) || request.resource.data.paid is bool)
+        && (!('trustScore' in request.resource.data) || request.resource.data.trustScore is number)
+        && (!('tier' in request.resource.data) || request.resource.data.tier is string)
+        && (!('username' in request.resource.data)
+            || request.resource.data.username == null
+            || request.resource.data.username is string)
+        && (!('isSupporter' in request.resource.data) || request.resource.data.isSupporter is bool)
+        && (!('displayValidDays' in request.resource.data)
+            || request.resource.data.displayValidDays == null
+            || request.resource.data.displayValidDays is number)
+        && (!('ledgerPermanent' in request.resource.data)
+            || request.resource.data.ledgerPermanent is bool);
+
+      // Immutable once issued (no client edits)
+      allow update, delete: if false;
+    }
+
 
     match /dao_comments/{commentId} {
       allow read: if true;
