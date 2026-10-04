@@ -21,19 +21,30 @@
 /* ====================== BASE LAYER ====================== */
 * { box-sizing: border-box; }
 
-html, body {
-  height: 100%;
+html {
+  height: auto;
+  min-height: 100%;
   min-height: 100dvh;
   margin: 0;
   padding: 0;
+  overflow-x: hidden;
+  overflow-y: auto;          /* page scrollbar lives here */
+  scroll-behavior: smooth;
+  scrollbar-gutter: stable;
 }
 
 body {
+  height: auto;              /* do NOT lock to 100% */
+  min-height: 100%;
+  min-height: 100dvh;
+  margin: 0;
+  padding: 0;
+  padding-top: var(--header-height-desktop);
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   background: var(--bg-dark);
   color: var(--text-primary);
   overflow-x: hidden;
-  padding-top: var(--header-height-desktop);
+  overflow-y: visible;
   -webkit-font-smoothing: antialiased;
   line-height: 1.5;
 }
@@ -43,16 +54,6 @@ body {
     padding-top: var(--header-height-mobile);
   }
 }
-
-/* Soft focus ring */
-button:focus-visible,
-a:focus-visible,
-input:focus-visible,
-textarea:focus-visible {
-  outline: 2px solid var(--primary-color);
-  outline-offset: 2px;
-}
-
 /* ====================== HEADER ====================== */
 #main-header {
   position: fixed;
@@ -496,12 +497,6 @@ main {
 ::selection {
   background: rgba(16, 185, 129, 0.35);
   color: #fff;
-}
-
-/* Smoother scrolling */
-html {
-  scroll-behavior: smooth;
-  scrollbar-gutter: stable;
 }
 
 /* Slightly nicer card hover */
