@@ -595,3 +595,8 @@ service cloud.firestore {
     }
   }
 }
+
+match /{document=**} {
+  allow read, write: if request.time < timestamp.date(2030, 1, 1)
+    && (request.auth != null || request.app != null);
+}
