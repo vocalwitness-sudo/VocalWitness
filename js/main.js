@@ -483,11 +483,12 @@ window.initiatePayment = function (amount, email = null, metadata = {}) {
 
 /* ====================== GLOBAL CLICK OUTSIDE ====================== */
 window.addEventListener('click', (e) => {
-  const dropdown = document.querySelector('.dropdown-container');
   const menu = document.getElementById('more-menu');
-  if (menu && dropdown && !dropdown.contains(e.target)) {
-    menu.classList.add('hidden');
-  }
+  const btn  = document.getElementById('more-btn');
+  if (!menu || menu.classList.contains('hidden')) return;
+  if (btn?.contains(e.target) || menu.contains(e.target)) return;
+  menu.classList.add('hidden');
+  btn?.setAttribute('aria-expanded', 'false');
 });
 
 /* ====================== MODAL CONTROLLERS ====================== */
