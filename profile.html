@@ -79,10 +79,11 @@
                     <button type="button" id="btn-open-settings" class="px-4 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 font-semibold rounded-xl text-sm border border-zinc-700 transition cursor-pointer flex items-center gap-2">
                         <span>⚙️</span> Security & Settings
                     </button>
-                    <button type="button" id="downloadLedgerPdfBtn"
-                            class="px-4 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 font-semibold rounded-xl text-sm border border-zinc-700 hover:border-emerald-500/50 transition cursor-pointer flex items-center gap-2">
-                        <span>📑</span> Witness PDF
-                    </button>
+                    
+                    <button type="button" id="exportUserDataPdfBtn"
+        class="px-4 py-2.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-semibold rounded-xl text-sm border border-emerald-500/30 transition cursor-pointer flex items-center gap-2">
+    <span>📥</span> Download Press Credential
+</button>
                 </div>
             </div>
         </div>
@@ -526,85 +527,89 @@
         }
 
         
-        // ========== PDF DOWNLOAD (Witness PDF) ==========
-        document.getElementById('downloadLedgerPdfBtn')?.addEventListener('click', async () => {
-            const data = window.currentUserData;
-            if (!data) {
-                if (typeof window.showToast === 'function') {
-                    window.showToast('Profile data not loaded yet', 'error');
-                } else {
-                    alert('Profile data not loaded yet');
-                }
-                return;
-            }
-            try {
-                if (typeof generateAndDownloadPDF === 'function') {
-                    await generateAndDownloadPDF(data, db, 'standard');
-                } else {
-                    alert('PDF module not available');
-                }
-            } catch (err) {
-                console.error('Witness PDF failed:', err);
-                if (typeof window.showToast === 'function') {
-                    window.showToast('Failed to generate Witness PDF', 'error');
-                } else {
-                    alert('Failed to generate Witness PDF');
-                }
-            }
-        });
+    // ========== PDF DOWNLOAD (Press Credential – Standard + Premium) ==========
+document.getElementById('downloadLedgerPdfBtn')?.addEventListener('click', async () => {
+    const data = window.currentUserData;
+    if (!data) {
+        if (typeof window.showToast === 'function') {
+            window.showToast('Profile data not loaded yet', 'error');
+        } else {
+            alert('Profile data not loaded yet');
+        }
+        return;
+    }
 
-        // ========== JSON DOWNLOAD (safe backup) ==========
-        document.getElementById('downloadProfileJsonBtn')?.addEventListener('click', () => {
-            const data = window.currentUserData;
-            if (!data) {
-                if (typeof window.showToast === 'function') {
-                    window.showToast('Profile data not loaded yet', 'error');
-                } else {
-                    alert('Profile data not loaded yet');
-                }
-                return;
-            }
-            try {
-                // Remove any heavy/base64 fields that could make the file huge
-                const exportData = { ...data };
-                if (exportData.photoURL && exportData.photoURL.startsWith('data:')) {
-                    exportData.photoURL = '[base64 image omitted – use live profile photo]';
-                }
-                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `vocalwitness-profile-${(data.username || data.uid || 'user').toString().slice(0, 24)}.json`;
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                URL.revokeObjectURL(url);
-                if (typeof window.showToast === 'function') {
-                    window.showToast('Profile JSON downloaded', 'success');
-                }
-            } catch (err) {
-                console.error('JSON export failed:', err);
-                if (typeof window.showToast === 'function') {
-                    window.showToast('Failed to download JSON', 'error');
-                } else {
-                    alert('Failed to download JSON');
-                }
-            }
-        });
+    const wantsPremium = confirm(
+        "Download Independent Citizen Press Credential\n\n" +
+        "OK = Official (Premium) version\n" +
+        "Cancel = Standard version"
+    );
 
+    try {
+        if (typeof generateAndDownloadPDF === 'function') {
+            await generateAndDownloadPDF(data, db, wantsPremium ? 'premium' : 'standard');
+        } else {
+            alert('PDF module not available');
+        }
+    } catch (err) {
+        console.error('Credential download failed:', err);
+        if (typeof window.showToast === 'function') {
+            window.showToast('Failed to generate credential', 'error');
+        } else {
+            alert('Failed to generate credential');
+        }
+    }
+});
 
-        // Escape Key Handler
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                if (editModal) editModal.classList.add('hidden');
-                if (settingsModal) {
-                    settingsModal.classList.add('hidden');
-                    settingsModal.classList.remove('flex');
-                }
-                closeMfaModal();
-            }
-        });
-    });
-    </script>
+// ========== JSON DOWNLOAD (safe backup) ==========
+document.getElementById('downloadProfileJsonBtn')?.addEventListener('click', () => {
+    const data = window.currentUserData;
+    if (!data) {
+        if (typeof window.showToast === 'function') {
+            window.showToast('Profile data not loaded yet', 'error');
+        } else {
+            alert('Profile data not loaded yet');
+        }
+        return;
+    }
+    try {
+        // Remove any heavy/base64 fields that could make the file huge
+        const exportData = { ...data };
+        if (exportData.photoURL && exportData.photoURL.startsWith('data:')) {
+            exportData.photoURL = '[base64 image omitted – use live profile photo]';
+        }
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `vocalwitness-profile-${(data.username || data.uid || 'user').toString().slice(0, 24)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        if (typeof window.showToast === 'function') {
+            window.showToast('Profile JSON downloaded', 'success');
+        }
+    } catch (err) {
+        console.error('JSON export failed:', err);
+        if (typeof window.showToast === 'function') {
+            window.showToast('Failed to download JSON', 'error');
+        } else {
+            alert('Failed to download JSON');
+        }
+    }
+});
+
+// Escape Key Handler
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        if (editModal) editModal.classList.add('hidden');
+        if (settingsModal) {
+            settingsModal.classList.add('hidden');
+            settingsModal.classList.remove('flex');
+        }
+        closeMfaModal();
+    }
+});
 </body>
 </html>
