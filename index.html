@@ -727,9 +727,24 @@
 <div class="glass mb-8 rounded-3xl border border-zinc-800/80 p-5 shadow-xl sm:p-6">
       
   <!-- Hidden file inputs -->
-  <input type="file" id="photoInput" accept="image/jpeg,image/png,image/webp" capture="environment" class="hidden">
-  <input type="file" id="videoInput" accept="video/mp4,video/webm,video/quicktime" capture="environment" class="hidden">
-  <input type="file" id="audioInput" accept="audio/webm,audio/mp3,audio/mpeg,audio/wav,audio/ogg" class="hidden">
+ <!-- Photo: gallery + camera, broad accept -->
+<input type="file"
+       id="photoInput"
+       accept="image/*"
+       class="hidden">
+
+<!-- Video: gallery + camera, broad accept -->
+<input type="file"
+       id="videoInput"
+       accept="video/*"
+       class="hidden">
+
+<!-- Audio -->
+<input type="file"
+       id="audioInput"
+       accept="audio/*"
+       class="hidden">
+  
 
   <!-- Speak Zone Header -->
   <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -2006,21 +2021,21 @@
       }
     });
 
-    // More dropdown
-    document.addEventListener('click', (e) => {
-      const moreBtn = $('more-btn');
-      const moreMenu = $('more-menu');
-      if (!moreMenu) return;
-      if (moreBtn && moreBtn.contains(e.target)) {
-        e.stopPropagation();
-        const open = moreMenu.classList.toggle('hidden') === false;
-        moreBtn.setAttribute('aria-expanded', String(open));
-      } else if (!moreMenu.contains(e.target)) {
-        moreMenu.classList.add('hidden');
-        moreBtn?.setAttribute('aria-expanded', 'false');
-      }
-    });
-
+   // More dropdown
+document.addEventListener('click', (e) => {
+  const moreBtn = $('more-btn');
+  const moreMenu = $('more-menu');
+  if (!moreMenu) return;
+  if (moreBtn && moreBtn.contains(e.target)) {
+    e.stopPropagation();
+    const open = moreMenu.classList.toggle('hidden') === false;
+    moreBtn.setAttribute('aria-expanded', String(open));
+  } else if (!moreMenu.contains(e.target)) {
+    moreMenu.classList.add('hidden');
+    moreBtn?.setAttribute('aria-expanded', 'false');
+  }
+});
+    
    // Support tier buttons (improved)
 document.addEventListener('click', (e) => {
   const btn = e.target.closest('.support-tier-btn');
