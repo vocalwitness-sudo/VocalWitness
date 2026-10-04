@@ -1,5 +1,5 @@
 // js/comments.js - VocalWitness Forensics & Dynamic Reply Tree Engine
-// Updated: Event delegation, like guard, max-length, removed unused import
+// Fixed: i18n import, likes allowed for any signed-in user, safer counter updates
 
 import {
     collection,
@@ -11,13 +11,14 @@ import {
     updateDoc,
     deleteDoc,
     increment,
-    serverTimestamp
+    serverTimestamp,
+    runTransaction
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { db, auth } from './firebase-config.js';
 import { showToast } from './utils.js';
 import { renderTierCircle } from './ui-components.js';
 import { hasStewardAccess, getUserTierData } from './tier.js';
-import { getText } from './i18n.js';
+import { t } from './i18n.js';                    // ← fixed
 import { logAuditEvent } from './audit.js';
 
 let activeCommentsListener = null;
@@ -37,7 +38,6 @@ function escapeHTML(str) {
 
 /**
  * Initializes and displays the Comment Modal for a specific testimony.
- * @param {string} postId - Firestore document ID of the parent testimony
  */
 export async function openCommentModal(postId) {
     currentPostId = postId;
@@ -80,7 +80,7 @@ export function closeCommentModal() {
 }
 
 /**
- * Ensures the comment modal markup exists in document body with full VocalWitness styling.
+ * Ensures the comment modal markup exists in document body.
  */
 function ensureModalDOM() {
     if (document.getElementById('commentModal')) return;
@@ -95,20 +95,20 @@ function ensureModalDOM() {
             <div class="p-4 border-b border-zinc-800 flex items-center justify-between bg-zinc-900/50 backdrop-blur-sm">
                 <div class="flex items-center gap-2">
                     <span class="text-xl">💬</span>
-                    <h3 class="font-bold text-zinc-100 text-sm sm:text-base">${getText('comments_header') || 'Testimony Discussion & Evidence Notes'}</h3>
+                    <h3 class="font-bold text-zinc-100 text-sm sm:text-base">${t('comments_header') || 'Testimony Discussion & Evidence Notes'}</h3>
                 </div>
                 <button id="closeCommentModalBtn" class="text-zinc-400 hover:text-white text-xl transition p-1">✕</button>
             </div>
 
             <!-- Comment Stream Container -->
             <div id="commentsTreeContainer" class="p-4 overflow-y-auto flex-1 space-y-4 font-sans">
-                <div class="text-center py-8 text-zinc-500 font-mono text-xs animate-pulse">${getText('loading_comments') || 'Decrypting discussion stream...'}</div>
+                <div class="text-center py-8 text-zinc-500 font-mono text-xs animate-pulse">${t('loading_comments') || 'Decrypting discussion stream...'}</div>
             </div>
 
             <!-- Input Box -->
             <div class="p-4 border-t border-zinc-800 bg-zinc-900/40 flex flex-col gap-2.5">
                 <div id="replyIndicator" class="hidden items-center justify-between bg-emerald-950/40 border border-emerald-500/30 px-3 py-1.5 rounded-xl text-xs text-emerald-400">
-                    <span id="replyTargetText">${getText('replying_to') || 'Replying to comment...'}</span>
+                    <span id="replyTargetText">${t('replying_to') || 'Replying to comment...'}</span>
                     <button id="cancelReplyBtn" class="text-zinc-400 hover:text-white">✕</button>
                 </div>
 
@@ -117,21 +117,21 @@ function ensureModalDOM() {
                         id="commentInput"
                         rows="2"
                         maxlength="1200"
-                        placeholder="${getText('add_comment_placeholder') || 'Add a verified response or note to the public record...'}"
+                        placeholder="${t('add_comment_placeholder') || 'Add a verified response or note to the public record...'}"
                         class="w-full bg-zinc-900 border border-zinc-800 rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-emerald-500 transition resize-none"
                     ></textarea>
 
                     <div class="flex items-center justify-between sm:justify-end gap-2 shrink-0">
                         <label class="flex items-center gap-1.5 text-[11px] text-zinc-400 cursor-pointer select-none">
                             <input type="checkbox" id="anonCommentToggle" class="rounded bg-zinc-900 border-zinc-700 text-emerald-500 focus:ring-0 focus:ring-offset-0">
-                            <span>${getText('anon_mode') || 'ZK-Anon'}</span>
+                            <span>${t('anon_mode') || 'ZK-Anon'}</span>
                         </label>
 
                         <button
                             id="submitCommentBtn"
                             class="bg-emerald-500 hover:bg-emerald-400 text-black font-semibold px-5 py-2 sm:py-0 rounded-2xl text-xs sm:text-sm transition flex items-center justify-center shrink-0 shadow-lg shadow-emerald-500/10"
                         >
-                            ${getText('send') || 'Publish'}
+                            ${t('send') || 'Publish'}
                         </button>
                     </div>
                 </div>
@@ -141,14 +141,13 @@ function ensureModalDOM() {
 
     document.body.appendChild(modalContainer);
 
-    // Attach base event listeners (once)
     document.getElementById('closeCommentModalBtn').addEventListener('click', closeCommentModal);
     document.getElementById('cancelReplyBtn').addEventListener('click', cancelReplyTarget);
     document.getElementById('submitCommentBtn').addEventListener('click', handleCommentSubmission);
 }
 
 /**
- * Listens for real-time comment collection snapshots for the given testimony.
+ * Real-time comment stream
  */
 function initCommentsStream(postId) {
     const container = document.getElementById('commentsTreeContainer');
@@ -167,8 +166,8 @@ function initCommentsStream(postId) {
         if (snapshot.empty) {
             container.innerHTML = `
                 <div class="text-center py-12 text-zinc-500">
-                    <p class="text-sm font-medium">${getText('no_comments_yet') || 'No verified comments on this testimony yet.'}</p>
-                    <p class="text-xs text-zinc-600 mt-1">${getText('start_discussion') || 'Be the first to contribute to the forensic stream.'}</p>
+                    <p class="text-sm font-medium">${t('no_comments_yet') || 'No verified comments on this testimony yet.'}</p>
+                    <p class="text-xs text-zinc-600 mt-1">${t('start_discussion') || 'Be the first to contribute to the forensic stream.'}</p>
                 </div>`;
             return;
         }
@@ -178,11 +177,9 @@ function initCommentsStream(postId) {
             comments.push({ id: docSnap.id, ...docSnap.data() });
         });
 
-        // Build and render hierarchical tree
         const treeHtml = renderCommentTree(comments);
         container.innerHTML = treeHtml;
 
-        // Bind once via delegation (prevents listener leaks)
         ensureCommentDelegation(container);
     }, (err) => {
         console.error("[VocalWitness] Comments subscription failed:", err);
@@ -190,9 +187,6 @@ function initCommentsStream(postId) {
     });
 }
 
-/**
- * Transforms flat array into nested HTML structure based on parentId references.
- */
 function renderCommentTree(comments) {
     const map = {};
     const roots = [];
@@ -212,9 +206,6 @@ function renderCommentTree(comments) {
     return roots.map(node => renderCommentNodeHTML(node)).join('');
 }
 
-/**
- * Recursively builds HTML for individual comment node and nested replies.
- */
 function renderCommentNodeHTML(node) {
     const user = auth.currentUser;
     const isOwner = user && user.uid === node.authorId;
@@ -226,7 +217,7 @@ function renderCommentNodeHTML(node) {
     else if (node.createdAt) dateStr = new Date(node.createdAt).toLocaleString();
 
     const deleteBtn = (isOwner || isStewardCache)
-        ? `<button data-comment-action="delete" data-comment-id="${node.id}" title="${getText('delete') || 'Delete'}" class="text-zinc-500 hover:text-red-400 text-xs transition">🗑️</button>`
+        ? `<button data-comment-action="delete" data-comment-id="${node.id}" title="${t('delete') || 'Delete'}" class="text-zinc-500 hover:text-red-400 text-xs transition">🗑️</button>`
         : '';
 
     const childrenHTML = node.children.length > 0
@@ -262,7 +253,7 @@ function renderCommentNodeHTML(node) {
                 </button>
                 <button data-comment-action="reply" data-comment-id="${node.id}" data-author="${authorName}" class="hover:text-emerald-400 transition flex items-center gap-1">
                     <span>💬</span>
-                    <span>${getText('reply') || 'Reply'}</span>
+                    <span>${t('reply') || 'Reply'}</span>
                 </button>
             </div>
 
@@ -271,10 +262,6 @@ function renderCommentNodeHTML(node) {
     `;
 }
 
-/**
- * Single delegated click handler – attached only once per container.
- * Prevents listener accumulation on every snapshot update.
- */
 function ensureCommentDelegation(container) {
     if (container.dataset.delegationBound === "true") return;
     container.dataset.delegationBound = "true";
@@ -303,7 +290,7 @@ function setReplyTarget(commentId, authorName) {
     const targetText = document.getElementById('replyTargetText');
 
     if (indicator && targetText) {
-        targetText.textContent = `${getText('replying_to') || 'Replying to'} ${authorName}...`;
+        targetText.textContent = `${t('replying_to') || 'Replying to'} ${authorName}...`;
         indicator.classList.remove('hidden');
         indicator.classList.add('flex');
     }
@@ -324,7 +311,7 @@ function cancelReplyTarget() {
 async function handleCommentSubmission() {
     const user = auth.currentUser;
     if (!user) {
-        showToast(getText('login_required') || "Please log in or verify your identity to participate.", "error");
+        showToast(t('login_required') || "Please log in or verify your identity to participate.", "error");
         return;
     }
 
@@ -333,7 +320,7 @@ async function handleCommentSubmission() {
     const content = input ? input.value.trim() : '';
 
     if (!content) {
-        showToast(getText('comment_empty_err') || "Comment content cannot be empty.", "error");
+        showToast(t('comment_empty_err') || "Comment content cannot be empty.", "error");
         return;
     }
 
@@ -362,21 +349,22 @@ async function handleCommentSubmission() {
             createdAt: serverTimestamp()
         };
 
-        // 1. Save Comment to subcollection
-        await addDoc(collection(db, "testimonies", currentPostId, "comments"), commentData);
+        // Transaction: create comment + increment counter safely
+        await runTransaction(db, async (transaction) => {
+            const commentRef = doc(collection(db, "testimonies", currentPostId, "comments"));
+            transaction.set(commentRef, commentData);
 
-        // 2. Increment comment count on parent testimony document
-        const testimonyRef = doc(db, "testimonies", currentPostId);
-        await updateDoc(testimonyRef, {
-            commentsCount: increment(1)
+            const testimonyRef = doc(db, "testimonies", currentPostId);
+            transaction.update(testimonyRef, {
+                commentsCount: increment(1)
+            });
         });
 
-        // 3. Log audit event
         await logAuditEvent("COMMENT_ADDED", { postId: currentPostId, isAnonymous: commentData.isAnonymous });
 
         input.value = '';
         cancelReplyTarget();
-        showToast(getText('comment_published') || "Comment published to testimony stream.", "success");
+        showToast(t('comment_published') || "Comment published to testimony stream.", "success");
     } catch (err) {
         console.error("[VocalWitness] Failed to post comment:", err);
         showToast("Failed to publish comment.", "error");
@@ -386,15 +374,14 @@ async function handleCommentSubmission() {
 }
 
 /**
- * Like handler with basic client-side guard against rapid re-clicks.
- * Note: True "one like per user" still requires a likes subcollection or UID map + security rules.
+ * Like handler – any signed-in user can like (rules updated)
  */
 async function handleCommentLike(commentId, btn) {
     if (!auth.currentUser) {
-        return showToast(getText('login_required') || "Log in to endorse responses.", "error");
+        return showToast(t('login_required') || "Log in to endorse responses.", "error");
     }
 
-    // Prevent rapid re-clicks on the same button
+    // Simple client-side guard against rapid re-clicks
     if (btn.dataset.liked === "true") return;
     btn.dataset.liked = "true";
     btn.disabled = true;
@@ -407,27 +394,29 @@ async function handleCommentLike(commentId, btn) {
         });
     } catch (err) {
         console.error("[VocalWitness] Comment upvote failed:", err);
-        // Re-enable on failure so user can retry
         btn.dataset.liked = "false";
         btn.disabled = false;
         btn.classList.remove("opacity-50", "pointer-events-none");
+        showToast("Could not register like.", "error");
     }
 }
 
 async function handleCommentDelete(commentId) {
-    if (!confirm(getText('confirm_comment_delete') || "Permanently remove this response from the record?")) return;
+    if (!confirm(t('confirm_comment_delete') || "Permanently remove this response from the record?")) return;
 
     try {
-        const commentRef = doc(db, "testimonies", currentPostId, "comments", commentId);
-        await deleteDoc(commentRef);
+        await runTransaction(db, async (transaction) => {
+            const commentRef = doc(db, "testimonies", currentPostId, "comments", commentId);
+            transaction.delete(commentRef);
 
-        const testimonyRef = doc(db, "testimonies", currentPostId);
-        await updateDoc(testimonyRef, {
-            commentsCount: increment(-1)
+            const testimonyRef = doc(db, "testimonies", currentPostId);
+            transaction.update(testimonyRef, {
+                commentsCount: increment(-1)
+            });
         });
 
         await logAuditEvent("COMMENT_DELETED", { postId: currentPostId, commentId });
-        showToast(getText('comment_deleted') || "Comment removed", "info");
+        showToast(t('comment_deleted') || "Comment removed", "info");
     } catch (err) {
         console.error("[VocalWitness] Comment deletion failed:", err);
         showToast("Failed to delete comment.", "error");
