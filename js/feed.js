@@ -8,8 +8,11 @@ import {
     updateDoc, 
     increment, 
     deleteDoc, 
-    serverTimestamp 
+    serverTimestamp,
+    runTransaction
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { getFunctions, httpsCallable } from
+  "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
 import { renderDownloadPackButton } from './evidence-ui.js';
 import { toFullEvidencePack, downloadEvidencePack } from './evidence-pack.js';
 import { db, auth } from './firebase-config.js?v=2';
@@ -19,20 +22,18 @@ import { hasStewardAccess, canCorroborate } from './tier.js';
 import { toggleReaction } from './reactions.js';
 import { applyPostDoorDecorations } from './door-ui.js';
 import { state } from './app-state.js';
-import { getFunctions, httpsCallable } from
-  "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
+import { 
+    submitCorroboration, 
+    getCorroborationScoreFromDoc 
+} from './corroboration.js';
 
+// ===== helpers (after all imports) =====
 async function translateTestimony(text, targetLanguage) {
   const functions = getFunctions();
   const fn = httpsCallable(functions, 'translateTestimony');
   const res = await fn({ text, targetLanguage });
   return res.data?.translatedText || '';
 }
-import { 
-    submitCorroboration, 
-    getCorroborationScoreFromDoc 
-} from './corroboration.js';
-
 let activeFeedListener = null;
 let allPostsCache = [];
 let currentChannel = 'citizen-talk';
@@ -730,19 +731,44 @@ async function handleTranslateAction(postId, btn) {
 }
 
 async function handleUpvote(postId) {
-    if (!auth.currentUser) {
-        showToast("Please log in to support testimonies.", "error");
-        return;
-    }
+  if (!auth.currentUser) {
+    showToast("Please log in to support testimonies.", "error");
+    return;
+  }
 
-    try {
-        const postRef = doc(db, "testimonies", postId);
-        await updateDoc(postRef, { likes: increment(1) });
-        showToast("👍 Upvoted testimony!", "success");
-    } catch (e) {
-        console.error("Upvote failed:", e);
-        showToast("Failed to record upvote.", "error");
+  const uid = auth.currentUser.uid;
+  const postRef = doc(db, "testimonies", postId);
+
+  try {
+    await runTransaction(db, async (tx) => {
+      const snap = await tx.get(postRef);
+      if (!snap.exists()) {
+        throw new Error("Post not found");
+      }
+
+      const data = snap.data() || {};
+      const likedBy = data.likedBy || {};
+
+      // Already liked → do nothing (or toggle off if you prefer)
+      if (likedBy[uid] === true) {
+        throw new Error("ALREADY_LIKED");
+      }
+
+      tx.update(postRef, {
+        [`likedBy.${uid}`]: true,
+        likes: increment(1)
+      });
+    });
+
+    showToast("👍 Upvoted testimony!", "success");
+  } catch (e) {
+    if (e?.message === "ALREADY_LIKED") {
+      showToast("You already supported this testimony", "info");
+      return;
     }
+    console.error("Upvote failed:", e);
+    showToast("Failed to record upvote.", "error");
+  }
 }
 
 async function handleDeletePost(postId) {
