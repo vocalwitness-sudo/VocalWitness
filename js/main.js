@@ -1510,6 +1510,20 @@ window.toggleNotificationDropdown = function (event) {
   event?.stopPropagation();
   toggleNotification('notification-dropdown');
 };
+window.addEventListener('error', (event) => {
+  // Benign browser noise – ignore
+  if (event.message && event.message.includes('ResizeObserver loop')) {
+    return;
+  }
+
+  console.error('🔴 Global Error:', {
+    message: event.message,
+    filename: event.filename,
+    lineno: event.lineno,
+    colno: event.colno,
+    error: event.error
+  });
+});
 /* ====================== MOBILE + GLOBAL SEARCH ====================== */
 function initHeaderSearch() {
   const mobileSearch = document.getElementById('searchInputMobile') ||
