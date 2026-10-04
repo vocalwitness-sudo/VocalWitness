@@ -260,7 +260,7 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-  // ==========================================
+    // ==========================================
     // MAIN TESTIMONIES
     // ==========================================
     match /testimonies/{testimonyId} {
@@ -306,7 +306,7 @@ service cloud.firestore {
            );
       allow delete: if false;
 
-   // ==========================================
+      // ==========================================
       // TESTIMONY COMMENTS (Nested Subcollection)
       // ==========================================
       match /comments/{commentId} {
@@ -329,6 +329,7 @@ service cloud.firestore {
         allow delete: if isAuthenticated()
           && (resource.data.authorId == request.auth.uid || isModerator());
       }
+    } // ← CRITICAL: this closes the testimonies match
 
     // ==========================================
     // GROUPS
@@ -460,7 +461,20 @@ service cloud.firestore {
 
       match /comments/{commentId} {
         allow read: if true;
-        allow create: if isNotBanned() && canCommentOnPost(postId);
+        allow create: if isNotBanned()
+          && isAuthenticated()
+          && canCommentOnPost(postId)
+          && request.resource.data.authorId == request.auth.uid
+          && request.resource.data.keys().hasAll(['content', 'authorId', 'createdAt'])
+          && request.resource.data.content is string
+          && request.resource.data.content.size() > 0
+          && request.resource.data.content.size() <= 1200
+          && (request.resource.data.createdAt is timestamp || request.resource.data.createdAt == request.time);
+        allow update: if isNotBanned()
+          && resource.data.authorId == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['content', 'updatedAt']);
+        allow delete: if isAuthenticated()
+          && (resource.data.authorId == request.auth.uid || isModerator());
       }
     }
 
@@ -515,7 +529,6 @@ service cloud.firestore {
     match /dao_proposals/{proposalId} {
       allow read: if true;
 
-      // Anyone not banned can create a proposal
       allow create: if isNotBanned()
         && request.resource.data.title is string
         && request.resource.data.title.size() > 0
@@ -524,14 +537,11 @@ service cloud.firestore {
         && request.resource.data.description.size() <= 800
         && request.resource.data.createdBy == request.auth.uid
         && request.resource.data.status == 'active'
-        // Force empty tallies on create
         && request.resource.data.totalVotesFor == 0
         && request.resource.data.totalVotesAgainst == 0
         && request.resource.data.totalVotingPowerSpent == 0
         && request.resource.data.voteLog == {};
 
-      // Client may only close / change metadata.
-      // Vote fields are immutable from the client (only Admin SDK / Cloud Function can write them).
       allow update: if isNotBanned()
         && (resource.data.createdBy == request.auth.uid || isModerator())
         && request.resource.data.diff(resource.data).affectedKeys()
@@ -582,12 +592,12 @@ service cloud.firestore {
     // ==========================================
     match /publicProfiles/{uid} {
       allow read: if true;
+      // Privileged fields (zkVerified, isPhoneVerified, isVerified, reputation, tier)
+      // should only be written by Cloud Functions / Admin SDK.
       allow create, update: if isOwner(uid)
         && request.resource.data.keys().hasOnly([
              'uid', 'displayName', 'photoURL', 'username',
-             'bio', 'region', 'tierBadge', 'updatedAt',
-             'zkVerified', 'isPhoneVerified', 'isVerified',
-             'reputation', 'tier'
+             'bio', 'region', 'tierBadge', 'updatedAt'
            ])
         && request.resource.data.uid == uid;
       allow delete: if false;
@@ -611,7 +621,7 @@ service cloud.firestore {
           && request.resource.data.uid == request.auth.uid;
         allow delete: if isAuthenticated() && (
           request.auth.uid == participantId ||
-          resource.data.createdBy == request.auth.uid
+          get(/databases/$(database)/documents/liveRooms/$(roomId)).data.createdBy == request.auth.uid
         );
       }
 
@@ -627,12 +637,7 @@ service cloud.firestore {
       }
     }
 
-    // ==========================================
-    // CATCH-ALL (temporary safety net – remove when all collections are covered)
-    // ==========================================
-    match /{document=**} {
-      allow read, write: if request.time < timestamp.date(2030, 1, 1)
-        && (request.auth != null || request.app != null);
-    }
+    // No catch-all. All collections are explicitly defined above.
+    // Unknown paths are denied by default.
   }
 }
