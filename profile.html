@@ -523,8 +523,8 @@
         }
 
         
-        // ========== PDF DOWNLOAD (Press Credential – Standard + Premium) ==========
-        document.getElementById('downloadLedgerPdfBtn')?.addEventListener('click', async () => {
+        // ========== PDF DOWNLOAD (Press Credential – Proper Choice Modal) ==========
+        document.getElementById('downloadLedgerPdfBtn')?.addEventListener('click', () => {
             const data = window.currentUserData;
             if (!data) {
                 if (typeof window.showToast === 'function') {
@@ -535,26 +535,77 @@
                 return;
             }
 
-            const wantsPremium = confirm(
-                "Download Independent Citizen Press Credential\n\n" +
-                "OK = Official (Premium) version\n" +
-                "Cancel = Standard version"
-            );
-
-            try {
-                if (typeof generateAndDownloadPDF === 'function') {
-                    await generateAndDownloadPDF(data, db, wantsPremium ? 'premium' : 'standard');
-                } else {
-                    alert('PDF module not available');
-                }
-            } catch (err) {
-                console.error('Credential download failed:', err);
+            const modal = document.getElementById('credentialChoiceModal');
+            if (!modal) {
                 if (typeof window.showToast === 'function') {
-                    window.showToast('Failed to generate credential', 'error');
+                    window.showToast('Credential choice modal not found', 'error');
                 } else {
-                    alert('Failed to generate credential');
+                    alert('Credential choice modal not found');
                 }
+                return;
             }
+
+            // Show the modal
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            const btnPremium = document.getElementById('btnChoosePremium');
+            const btnStandard = document.getElementById('btnChooseStandard');
+            const btnCancel = document.getElementById('btnCancelCredential');
+
+            const closeModal = () => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            };
+
+            // Clean previous listeners by cloning
+            const newPremium = btnPremium.cloneNode(true);
+            const newStandard = btnStandard.cloneNode(true);
+            const newCancel = btnCancel.cloneNode(true);
+            btnPremium.parentNode.replaceChild(newPremium, btnPremium);
+            btnStandard.parentNode.replaceChild(newStandard, btnStandard);
+            btnCancel.parentNode.replaceChild(newCancel, btnCancel);
+
+            newPremium.addEventListener('click', async () => {
+                closeModal();
+                try {
+                    if (typeof window.showToast === 'function') {
+                        window.showToast("Generating Official (Premium) Credential...", "info");
+                    }
+                    await generateAndDownloadPDF(data, db, 'premium');
+                } catch (err) {
+                    console.error(err);
+                    if (typeof window.showToast === 'function') {
+                        window.showToast("Failed to generate credential", "error");
+                    } else {
+                        alert("Failed to generate credential");
+                    }
+                }
+            });
+
+            newStandard.addEventListener('click', async () => {
+                closeModal();
+                try {
+                    if (typeof window.showToast === 'function') {
+                        window.showToast("Generating Standard Credential...", "info");
+                    }
+                    await generateAndDownloadPDF(data, db, 'standard');
+                } catch (err) {
+                    console.error(err);
+                    if (typeof window.showToast === 'function') {
+                        window.showToast("Failed to generate credential", "error");
+                    } else {
+                        alert("Failed to generate credential");
+                    }
+                }
+            });
+
+            newCancel.addEventListener('click', closeModal);
+
+            // Close when clicking outside the modal
+            modal.onclick = (e) => {
+                if (e.target === modal) closeModal();
+            };
         });
 
         // ========== JSON DOWNLOAD (safe backup) ==========
@@ -610,5 +661,4 @@
     });   
     </script>
 </body>
-</html>
 </html>
