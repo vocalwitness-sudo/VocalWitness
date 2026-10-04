@@ -22,6 +22,7 @@ import { hasStewardAccess, canCorroborate } from './tier.js';
 import { toggleReaction } from './reactions.js';
 import { applyPostDoorDecorations } from './door-ui.js';
 import { state } from './app-state.js';
+import { openCommentModal } from './comments.js';
 import { 
     submitCorroboration, 
     getCorroborationScoreFromDoc 
@@ -879,9 +880,6 @@ function showPostMenu(postId) {
     showToast(`Post options menu for: ${postId.substring(0, 8)}...`, "info");
 }
 
-async function openCommentModal(postId) {
-    showToast("Comments section loading...", "info");
-}
 
 async function handleDownloadEvidencePack(postId) {
     try {
