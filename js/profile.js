@@ -48,20 +48,14 @@ function sanitize(str) {
 }
 
 function isPrivacyPrivate(userData) {
-    // Default private when field is missing
     return !userData || userData.hidePublicInfo !== false;
 }
 
-/**
- * Writes a safe public projection so other users can see display info
- * without reading the private users/{uid} document.
- */
 async function syncPublicProfile(uid, userData) {
     if (!uid || !userData) return;
     try {
         const publicRef = doc(db, "publicProfiles", uid);
-        const isPrivate = userData.hidePublicInfo !== false; // default private
-
+        const isPrivate = userData.hidePublicInfo !== false;
         const publicData = {
             uid,
             displayName: userData.displayName || "Anonymous Witness",
@@ -74,7 +68,6 @@ async function syncPublicProfile(uid, userData) {
                 : "citizen",
             updatedAt: serverTimestamp()
         };
-
         await setDoc(publicRef, publicData, { merge: true });
     } catch (err) {
         console.warn("[profile] syncPublicProfile failed:", err);
@@ -88,10 +81,7 @@ export function openProfile() {
         showToast(t("profile.modal_not_found", "Profile modal not found"), "error");
         return;
     }
-
-    // 🛠️ CRITICAL FIX: Clear out inline 'display: none' left over by closeProfile()
-    modal.style.display = ''; 
-
+    modal.style.display = '';
     if (currentUserData) {
         renderProfileUI(currentUserData);
     } else {
@@ -106,19 +96,16 @@ export function openProfile() {
                 </div>`;
         }
     }
-
     modal.classList.remove('hidden');
     modal.classList.add('flex');
     modal.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
 }
-
 window.openProfile = openProfile;
 
 // ====================== INITIALIZATION ======================
 export function initProfile() {
     if (userUnsubscribe) userUnsubscribe();
-
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             await ensureUserProfile(user);
@@ -133,9 +120,6 @@ export function initProfile() {
     });
 }
 
-/**
- * Ensures user document exists in Firestore
- */
 async function ensureUserProfile(user) {
     try {
         const userRef = doc(db, "users", user.uid);
@@ -173,9 +157,6 @@ async function ensureUserProfile(user) {
     }
 }
 
-/**
- * Real-time Firestore user document listener
- */
 function listenToUserProfile(userId) {
     if (userUnsubscribe) userUnsubscribe();
     const userRef = doc(db, "users", userId);
@@ -198,19 +179,16 @@ function listenToUserProfile(userId) {
     );
 }
 
-/** Shown when profile cannot load */
 function renderProfileError(err) {
     const content =
         document.getElementById("mainProfileContent") ||
         document.getElementById("profileContent") ||
         document.getElementById("modalProfileContent");
     if (!content) return;
-
     const msg =
         err?.code === "permission-denied"
             ? "Permission denied while creating/reading your profile. Check Firestore rules."
             : (err?.message || "Unknown error");
-
     content.innerHTML = `
         <div class="flex flex-col items-center justify-center py-20 space-y-4 text-center px-6">
             <div class="text-4xl">⚠️</div>
@@ -227,11 +205,9 @@ function renderProfileError(err) {
 // ====================== RENDER PROFILE UI ======================
 export function renderProfileUI(userData, retryCount = 0) {
     if (!userData) return;
-
     const content = document.getElementById('profileContent') ||
                     document.getElementById('mainProfileContent') ||
                     document.getElementById('modalProfileContent');
-
     if (!content) {
         if (retryCount < 5) {
             setTimeout(() => renderProfileUI(userData, retryCount + 1), 80);
@@ -249,7 +225,6 @@ export function renderProfileUI(userData, retryCount = 0) {
             userData.isPhoneVerified ||
             userData.hasVerifiedPhone ||
             userData.tier === 'citizen_circle';
-
         const fullName = [userData.firstName, userData.lastName].filter(Boolean).join(" ");
         const isPrivacyShieldActive = isPrivacyPrivate(userData);
 
@@ -266,9 +241,7 @@ export function renderProfileUI(userData, retryCount = 0) {
                         </div>
                         ${isWitness ? `<div class="absolute -bottom-1 -right-1 text-2xl">🔐</div>` : ''}
                     </div>
-
                     <h2 class="text-xl font-bold mt-3 text-white">${sanitize(userData.displayName) || "Anonymous Witness"}</h2>
-
                     ${fullName ? `
                         <p class="text-xs font-semibold text-zinc-300 mt-0.5">
                             ${sanitize(fullName)}${isPrivacyShieldActive
@@ -284,9 +257,7 @@ export function renderProfileUI(userData, retryCount = 0) {
                             }
                         </p>
                     `}
-
                     <p class="text-emerald-400 font-mono text-sm mt-1">@${sanitize(userData.username) || 'anonymous'}</p>
-
                     ${userData.region && !isPrivacyShieldActive
                         ? `<p class="text-xs text-zinc-400 mt-1">📍 ${sanitize(userData.region)}</p>`
                         : ''
@@ -315,7 +286,6 @@ export function renderProfileUI(userData, retryCount = 0) {
                                 👤 Citizen (Unverified)
                             </div>
                         `}
-
                         ${userData.zkVerified ? (() => {
                             const isFallback = userData.lastZkIsFallback === true;
                             const type = (userData.lastZkProofType || '').toUpperCase();
@@ -332,7 +302,7 @@ export function renderProfileUI(userData, retryCount = 0) {
                     </div>
                 </div>
 
-                               <!-- Witness Cycle (compact) -->
+                <!-- Witness Cycle -->
                 <div class="flex items-center justify-between gap-3 bg-zinc-900/80 rounded-xl px-4 py-3 border border-amber-500/20">
                     <div class="min-w-0">
                         <div class="text-sm font-medium text-amber-400 flex items-center gap-1.5">
@@ -449,7 +419,6 @@ export function renderProfileUI(userData, retryCount = 0) {
                                    </button>`
                             }
                         </div>
-
                         ${!userData.zkVerified ? `
                         <div class="text-[11px] text-zinc-400 bg-zinc-900/60 border border-zinc-800 rounded-lg p-2.5 leading-relaxed">
                             <div class="font-medium text-zinc-300 mb-1">Quick Guide:</div>
@@ -479,7 +448,7 @@ export function renderProfileUI(userData, retryCount = 0) {
                     </div>
                 </div>
 
-                                <!-- Action Buttons -->
+                <!-- Action Buttons -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
                     ${!isCitizenCircle && !isWitness ? `
                         <button type="button" id="btnGetVerifiedCta"
@@ -498,9 +467,10 @@ export function renderProfileUI(userData, retryCount = 0) {
                         ⚙️ Settings & Security
                     </button>
 
-                    <button type="button" id="downloadLedgerPdfBtn"
-                            class="py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
-                        📑 Witness PDF
+                    <!-- Single clean PDF Credential button -->
+                    <button type="button" id="exportUserDataPdfBtn"
+                            class="col-span-1 sm:col-span-2 py-3.5 px-4 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-semibold rounded-2xl transition flex items-center justify-center gap-2">
+                        📥 Download Press Credential
                     </button>
 
                     <button type="button" id="downloadProfileJsonBtn"
@@ -513,6 +483,8 @@ export function renderProfileUI(userData, retryCount = 0) {
                         🚪 Sign Out
                     </button>
                 </div>
+            </div>
+        `;
 
         content.innerHTML = html;
         attachProfileEventListeners(userData, isCitizenCircle, isWitness);
@@ -556,7 +528,6 @@ function attachProfileEventListeners(userData, isCitizenCircle, isWitness) {
     document.getElementById('btnGetVerifiedCta')?.addEventListener('click', () => {
         if (typeof window.startPhoneVerification === 'function') window.startPhoneVerification();
     });
-
     document.getElementById('btnStartZkVerify')?.addEventListener('click', () => {
         if (typeof window.startZKVerification === 'function') {
             window.startZKVerification();
@@ -564,7 +535,6 @@ function attachProfileEventListeners(userData, isCitizenCircle, isWitness) {
             window.location.href = '/verify.html?action=zk';
         }
     });
-
     document.getElementById('btnTogglePrivacyShield')?.addEventListener('click', () => {
         if (typeof window.togglePrivacyShield === 'function') window.togglePrivacyShield();
     });
@@ -574,20 +544,6 @@ function attachProfileEventListeners(userData, isCitizenCircle, isWitness) {
             window.openEditProfileSafe();
         } else if (typeof openEditProfile === 'function') {
             openEditProfile();
-        }
-    });
-
-    document.getElementById('supportBtn')?.addEventListener('click', async () => {
-        const targetUserId = window.currentProfileUserId || userData?.uid;
-        const strength = 3;
-        if (targetUserId && typeof giveSupport === 'function') {
-            await giveSupport(targetUserId, strength);
-        }
-    });
-
-    document.getElementById('theme-toggle-btn')?.addEventListener('click', () => {
-        if (typeof window.toggleDarkMode === 'function') {
-            window.toggleDarkMode();
         }
     });
 
@@ -607,26 +563,30 @@ function attachProfileEventListeners(userData, isCitizenCircle, isWitness) {
         }
     });
 
-    // Witness PDF Download Listener
-    document.getElementById('downloadLedgerPdfBtn')?.addEventListener('click', async () => {
+    // ===== Download Press Credential (Standard + Premium choice) =====
+    document.getElementById('exportUserDataPdfBtn')?.addEventListener('click', async () => {
         const data = window.currentUserData || userData;
         if (!data) {
             showToast('Profile data not loaded', 'error');
             return;
         }
+
+        const wantsPremium = confirm(
+            "Download Independent Citizen Press Credential\n\n" +
+            "OK = Official (Premium) version\n" +
+            "Cancel = Standard version"
+        );
+
         try {
-            if (typeof generateAndDownloadPDF === 'function') {
-                await generateAndDownloadPDF(data, db, 'standard');
-            } else {
-                showToast('PDF module unavailable', 'error');
-            }
+            showToast(wantsPremium ? "Generating Official Credential..." : "Generating Standard Credential...", "info");
+            await generateAndDownloadPDF(data, db, wantsPremium ? 'premium' : 'standard');
         } catch (err) {
-            console.error(err);
-            showToast('Failed to generate Witness PDF', 'error');
+            console.error("Credential download failed:", err);
+            showToast("Failed to generate credential", "error");
         }
     });
 
-    // Profile JSON Download Listener
+    // Profile JSON Download
     document.getElementById('downloadProfileJsonBtn')?.addEventListener('click', () => {
         const data = window.currentUserData || userData;
         if (!data) {
@@ -727,7 +687,6 @@ window.togglePrivacyShield = async function () {
             hidePublicInfo: nextPrivate,
             updatedAt: serverTimestamp()
         });
-
         if (currentUserData) {
             currentUserData.hidePublicInfo = nextPrivate;
             window.currentUserData = currentUserData;
@@ -769,13 +728,11 @@ window.openSettingsSafe = function () {
 export function handleImagePreview(event) {
     const file = event?.target?.files?.[0];
     if (!file) return;
-
     if (file.size > 2 * 1024 * 1024) {
         showToast("Image size must be under 2MB", "error");
         event.target.value = '';
         return;
     }
-
     const reader = new FileReader();
     reader.onload = (e) => {
         const img = new Image();
@@ -785,7 +742,6 @@ export function handleImagePreview(event) {
             const MAX_HEIGHT = 256;
             let width = img.width;
             let height = img.height;
-
             if (width > height) {
                 if (width > MAX_WIDTH) {
                     height = height * (MAX_WIDTH / width);
@@ -797,18 +753,13 @@ export function handleImagePreview(event) {
                     height = MAX_HEIGHT;
                 }
             }
-
             canvas.width = width;
             canvas.height = height;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, width, height);
-
-            // Assign to outer variable (critical for saving)
             pendingAvatarBase64 = canvas.toDataURL('image/jpeg', 0.85);
-
             const imgPreview = document.getElementById('avatarPreview');
             const avatarFallback = document.getElementById('avatarFallback');
-
             if (imgPreview) {
                 imgPreview.src = pendingAvatarBase64;
                 imgPreview.classList.remove('hidden');
@@ -821,7 +772,6 @@ export function handleImagePreview(event) {
     };
     reader.readAsDataURL(file);
 }
-
 window.handleImagePreview = handleImagePreview;
 
 // ====================== SIGN OUT ======================
@@ -886,9 +836,7 @@ export function openEditProfile() {
         }, 300);
         return;
     }
-
     pendingAvatarBase64 = null;
-
     if (currentUserData) {
         const firstNameInput   = document.getElementById('editFirstName');
         const lastNameInput    = document.getElementById('editLastName');
@@ -917,7 +865,6 @@ export function openEditProfile() {
             if (avatarFallback) avatarFallback.classList.remove('hidden');
         }
     }
-
     modal.classList.remove('hidden');
     modal.classList.add('flex');
     modal.setAttribute('aria-hidden', 'false');
@@ -951,9 +898,7 @@ export function closeSettings() {
 export function populateEditProfileForm() {
     const modal = document.getElementById('editProfileModal');
     if (!modal) return;
-
     pendingAvatarBase64 = null;
-
     if (currentUserData) {
         const firstNameInput   = document.getElementById('editFirstName');
         const lastNameInput    = document.getElementById('editLastName');
@@ -982,17 +927,14 @@ export function populateEditProfileForm() {
             if (avatarFallback) avatarFallback.classList.remove('hidden');
         }
     }
-
     modal.classList.remove('hidden');
     modal.classList.add('flex');
     modal.style.display = 'flex';
     modal.setAttribute('aria-hidden', 'false');
-
     if (typeof closeProfile === 'function') {
         closeProfile();
     }
 }
-
 window.populateEditProfileForm = populateEditProfileForm;
 
 export function handleSaveProfile(event) {
@@ -1024,7 +966,6 @@ export async function saveProfileChanges(event) {
         showToast("Edit form not ready", "error");
         return;
     }
-
     if (!displayName) return showToast("Display name is required", "error");
 
     try {
@@ -1040,11 +981,9 @@ export async function saveProfileChanges(event) {
             hidePublicInfo,
             updatedAt: serverTimestamp()
         };
-
         if (pendingAvatarBase64) {
             updatePayload.photoURL = pendingAvatarBase64;
         }
-
         await updateDoc(userRef, updatePayload);
         showToast("✅ Profile updated successfully!", "success");
         closeEditProfile();
@@ -1061,7 +1000,6 @@ export async function triggerPasswordReset() {
         showToast('Sign in required', 'error');
         return;
     }
-
     const providers = (user.providerData || []).map(p => p.providerId);
     const hasPassword = providers.includes('password');
     if (!hasPassword) {
@@ -1071,12 +1009,10 @@ export async function triggerPasswordReset() {
         );
         return;
     }
-
     if (!user.email) {
         showToast('No email on this account', 'error');
         return;
     }
-
     try {
         await sendPasswordResetEmail(auth, user.email, {
             url: 'https://vocalwitness.com/profile',
@@ -1097,7 +1033,6 @@ export async function triggerPasswordReset() {
         showToast(msg, 'error');
     }
 }
-
 window.handlePasswordReset = triggerPasswordReset;
 
 // ====================== LANGUAGE CHANGE SUPPORT ======================
@@ -1139,7 +1074,6 @@ window.handleProfileStartCycle = handleProfileStartCycle;
 window.triggerPasswordReset = triggerPasswordReset;
 window.renderProfileUI = renderProfileUI;
 window.initProfile = initProfile;
-
 window.openVerificationModalFromProfile = window.startPhoneVerification;
 window.openSettingsModal = window.openSettings;
 window.closeSettingsModal = window.closeSettings;
@@ -1166,7 +1100,6 @@ export class ProfileManager {
 
     renderProfileCard(user, tierData, mode) {
         if (!this.profileContainer) return;
-
         const isBold = mode === 'BOLD_WITNESS';
         const displayName = isBold
             ? (user.displayName || 'Verified Witness')
@@ -1245,14 +1178,12 @@ export class ProfileManager {
                 }
             });
         }
-
         const voiceToggle = document.getElementById('prefVoiceObfuscation');
         if (voiceToggle) {
             voiceToggle.addEventListener('change', (e) => {
                 AppState.setPref('voiceObfuscate', e.target.checked);
             });
         }
-
         const exifToggle = document.getElementById('prefExifScrub');
         if (exifToggle) {
             exifToggle.addEventListener('change', (e) => {
@@ -1272,7 +1203,6 @@ export class ProfileManager {
 }
 
 // ====================== INIT PROFILE MODALS (CSP-safe) ======================
-// ====================== INIT PROFILE MODALS (CSP-safe) ======================
 export function initProfileModals() {
     if (window.__vwProfileModalsWired) return;
     window.__vwProfileModalsWired = true;
@@ -1284,27 +1214,8 @@ export function initProfileModals() {
     document.getElementById('closeSettingsBtn')?.addEventListener('click', closeSettings);
     document.getElementById('triggerPasswordResetBtn')?.addEventListener('click', triggerPasswordReset);
 
-    // ====================== CERTIFICATE DOWNLOAD ======================
-    document.getElementById('exportUserDataPdfBtn')?.addEventListener('click', async () => {
-        if (!currentUserData) {
-            showToast('Profile data not loaded', 'error');
-            return;
-        }
-
-        // Optional: Ask user which version they want
-        const wantsPremium = confirm(
-            "Download Independent Citizen Press Credential\n\n" +
-            "OK = Official (Premium) version\n" +
-            "Cancel = Standard version"
-        );
-
-        try {
-            await generateAndDownloadPDF(currentUserData, db, wantsPremium ? 'premium' : 'standard');
-        } catch (err) {
-            console.error("Certificate download failed:", err);
-            showToast("Failed to generate credential", "error");
-        }
-    });
+    // Note: PDF download listener is now only in attachProfileEventListeners()
+    // to avoid double-firing
 
     document.getElementById('settingsSignOutBtn')?.addEventListener('click', handleSignOut);
 
@@ -1313,7 +1224,6 @@ export function initProfileModals() {
             '⚠️ EMERGENCY CLEAR\n\nErases ALL VocalWitness data on THIS device and signs you out.\nPublic ledger is unchanged.\n\nContinue?'
         );
         if (!confirmed) return;
-
         if (typeof window.panicClearDevice === 'function') {
             await window.panicClearDevice({ redirectUrl: 'https://www.accuweather.com' });
         } else {
@@ -1332,7 +1242,6 @@ export function initProfileModals() {
         } catch (err) {
             console.warn('[profile] MFA status read failed:', err);
         }
-
         toggle2FAEl.addEventListener('change', async (e) => {
             const user = auth.currentUser;
             if (!user) {
@@ -1340,13 +1249,11 @@ export function initProfileModals() {
                 showToast('Sign in required for 2FA', 'error');
                 return;
             }
-
             if (e.target.checked) {
                 e.target.checked = false;
                 try {
                     const { totpSecret, qrCodeUrl, secretKey } = await enrollTotpMfa();
                     window.__pendingTotpSecret = totpSecret;
-
                     if (typeof window.openMfaEnrollmentModal === 'function') {
                         window.openMfaEnrollmentModal({ qrCodeUrl, secretKey, totpSecret });
                     } else {
@@ -1422,7 +1329,6 @@ export function initProfileModals() {
         }
     });
 }
-
 window.initProfileModals = initProfileModals;
 
 // ====================== SINGLE BOOT ======================
@@ -1433,14 +1339,12 @@ function bootProfileUi() {
     } catch (err) {
         console.warn('[profile] ProfileManager init skipped:', err);
     }
-
     try {
         initProfileModals();
     } catch (err) {
         console.error('[profile] initProfileModals failed:', err);
     }
 
-    // Always start the real profile loader on pages that have a mount point
     if (document.getElementById('mainProfileContent') ||
         document.getElementById('profileContent') ||
         document.getElementById('modalProfileContent')) {
