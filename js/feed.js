@@ -46,6 +46,127 @@ function escapeHTML(str) {
         .replace(/'/g, '&#039;');
 }
 
+// ========== SHARE HELPERS (High-value platforms) ==========
+function openShareMenu(shareUrl, title, text) {
+    document.getElementById('vw-share-menu')?.remove();
+
+    const menu = document.createElement('div');
+    menu.id = 'vw-share-menu';
+    menu.className = 'fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4';
+    menu.innerHTML = `
+        <div class="w-full max-w-sm rounded-2xl border border-zinc-700 bg-zinc-900 p-5 shadow-2xl">
+            <div class="mb-4 flex items-center justify-between">
+                <h3 class="text-base font-semibold text-white">Share this report</h3>
+                <button type="button" data-share-close
+                        class="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-white transition">
+                    ✕
+                </button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <button data-share="copy"
+                        class="flex flex-col items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800/80 px-3 py-4 text-sm text-zinc-200 hover:border-emerald-500/50 hover:bg-zinc-800 transition">
+                    <span class="text-xl">🔗</span>
+                    <span>Copy link</span>
+                </button>
+
+                <button data-share="whatsapp"
+                        class="flex flex-col items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800/80 px-3 py-4 text-sm text-zinc-200 hover:border-emerald-500/50 hover:bg-zinc-800 transition">
+                    <span class="text-xl">💬</span>
+                    <span>WhatsApp</span>
+                </button>
+
+                <button data-share="twitter"
+                        class="flex flex-col items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800/80 px-3 py-4 text-sm text-zinc-200 hover:border-emerald-500/50 hover:bg-zinc-800 transition">
+                    <span class="text-xl">𝕏</span>
+                    <span>Twitter / X</span>
+                </button>
+
+                <button data-share="facebook"
+                        class="flex flex-col items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800/80 px-3 py-4 text-sm text-zinc-200 hover:border-emerald-500/50 hover:bg-zinc-800 transition">
+                    <span class="text-xl">📘</span>
+                    <span>Facebook</span>
+                </button>
+
+                <button data-share="telegram"
+                        class="flex flex-col items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800/80 px-3 py-4 text-sm text-zinc-200 hover:border-emerald-500/50 hover:bg-zinc-800 transition">
+                    <span class="text-xl">✈️</span>
+                    <span>Telegram</span>
+                </button>
+
+                <button data-share="linkedin"
+                        class="flex flex-col items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800/80 px-3 py-4 text-sm text-zinc-200 hover:border-emerald-500/50 hover:bg-zinc-800 transition">
+                    <span class="text-xl">💼</span>
+                    <span>LinkedIn</span>
+                </button>
+            </div>
+
+            <p class="mt-4 truncate rounded-lg bg-zinc-950 px-3 py-2 text-xs text-zinc-500" title="${shareUrl}">
+                ${shareUrl}
+            </p>
+        </div>
+    `;
+
+    document.body.appendChild(menu);
+
+    // Close on backdrop or ✕
+    menu.addEventListener('click', (e) => {
+        if (e.target === menu || e.target.closest('[data-share-close]')) {
+            menu.remove();
+        }
+    });
+
+    // Handle each button
+    menu.querySelectorAll('[data-share]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const type = btn.getAttribute('data-share');
+            menu.remove();
+
+            if (type === 'copy') {
+                await copyToClipboard(shareUrl);
+                return;
+            }
+
+            const encodedUrl = encodeURIComponent(shareUrl);
+            const encodedTitle = encodeURIComponent(title);
+
+            const urls = {
+                whatsapp: `https://wa.me/?text=${encodedTitle}%20${encodedUrl}`,
+                twitter:  `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`,
+                facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
+                telegram: `https://t.me/share/url?url=${encodedUrl}&text=${encodedTitle}`,
+                linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`
+            };
+
+            if (urls[type]) {
+                window.open(urls[type], '_blank', 'noopener,noreferrer');
+            }
+        });
+    });
+}
+
+async function copyToClipboard(text) {
+    try {
+        if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(text);
+        } else {
+            const temp = document.createElement('input');
+            temp.value = text;
+            temp.setAttribute('readonly', '');
+            temp.style.position = 'absolute';
+            temp.style.left = '-9999px';
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand('copy');
+            document.body.removeChild(temp);
+        }
+        showToast('Link copied to clipboard', 'success');
+    } catch (err) {
+        console.warn('Clipboard failed:', err);
+        showToast('Could not copy link', 'error');
+    }
+}
+
 /**
  * Checks and caches the user's steward status to prevent unhandled promises in sync renderers.
  */
@@ -144,7 +265,7 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                         console.warn('reportContent / openReportModal not available yet');
                         showToast('Report feature is temporarily unavailable. Please try again later.', 'info');
                     }
-                            } else if (action === 'share') {
+                           } else if (action === 'share') {
                     try {
                         const post = (typeof allPostsCache !== 'undefined' ? allPostsCache : []).find(p => p.id === id);
                         const shareUrl = `${window.location.origin}/#citizen-talk?post=${encodeURIComponent(id)}`;
@@ -164,7 +285,7 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                                     }
                                 });
                         } else {
-                            // Desktop / laptop → clean button menu
+                            // Desktop → clean button menu
                             openShareMenu(shareUrl, title, text);
                         }
                     } catch (err) {
@@ -319,134 +440,6 @@ function applySearchAndFilter(container) {
 
     renderFilteredPosts(filtered, container);
 }
-/**
- * Opens a clean, non-blocking share menu with real buttons.
- */
-function openShareMenu(shareUrl, title, text) {
-    // Remove any existing menu
-    document.getElementById('vw-share-menu')?.remove();
-
-    const menu = document.createElement('div');
-    menu.id = 'vw-share-menu';
-    menu.className = 'fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4';
-    menu.innerHTML = `
-        <div class="w-full max-w-sm rounded-2xl border border-zinc-700 bg-zinc-900 p-5 shadow-2xl">
-            <div class="mb-4 flex items-center justify-between">
-                <h3 class="text-base font-semibold text-white">Share this report</h3>
-                <button type="button" data-share-close
-                        class="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-white transition">
-                    ✕
-                </button>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-                <button data-share="copy"
-                        class="flex flex-col items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800/80 px-3 py-4 text-sm text-zinc-200 hover:border-emerald-500/50 hover:bg-zinc-800 transition">
-                    <span class="text-xl">🔗</span>
-                    <span>Copy link</span>
-                </button>
-
-                <button data-share="whatsapp"
-                        class="flex flex-col items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800/80 px-3 py-4 text-sm text-zinc-200 hover:border-emerald-500/50 hover:bg-zinc-800 transition">
-                    <span class="text-xl">💬</span>
-                    <span>WhatsApp</span>
-                </button>
-
-                <button data-share="twitter"
-                        class="flex flex-col items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800/80 px-3 py-4 text-sm text-zinc-200 hover:border-emerald-500/50 hover:bg-zinc-800 transition">
-                    <span class="text-xl">𝕏</span>
-                    <span>Twitter / X</span>
-                </button>
-
-                <button data-share="facebook"
-                        class="flex flex-col items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800/80 px-3 py-4 text-sm text-zinc-200 hover:border-emerald-500/50 hover:bg-zinc-800 transition">
-                    <span class="text-xl">📘</span>
-                    <span>Facebook</span>
-                </button>
-
-                <button data-share="telegram"
-                        class="flex flex-col items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800/80 px-3 py-4 text-sm text-zinc-200 hover:border-emerald-500/50 hover:bg-zinc-800 transition">
-                    <span class="text-xl">✈️</span>
-                    <span>Telegram</span>
-                </button>
-
-                <button data-share="linkedin"
-                        class="flex flex-col items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800/80 px-3 py-4 text-sm text-zinc-200 hover:border-emerald-500/50 hover:bg-zinc-800 transition">
-                    <span class="text-xl">💼</span>
-                    <span>LinkedIn</span>
-                </button>
-            </div>
-
-            <p class="mt-4 truncate rounded-lg bg-zinc-950 px-3 py-2 text-xs text-zinc-500" title="${shareUrl}">
-                ${shareUrl}
-            </p>
-        </div>
-    `;
-
-    document.body.appendChild(menu);
-
-    // Close on backdrop click or ✕
-    menu.addEventListener('click', (e) => {
-        if (e.target === menu || e.target.closest('[data-share-close]')) {
-            menu.remove();
-        }
-    });
-
-    // Handle each share option
-    menu.querySelectorAll('[data-share]').forEach(btn => {
-        btn.addEventListener('click', async () => {
-            const type = btn.getAttribute('data-share');
-            menu.remove();
-
-            if (type === 'copy') {
-                await copyToClipboard(shareUrl);
-                return;
-            }
-
-            const encodedUrl = encodeURIComponent(shareUrl);
-            const encodedTitle = encodeURIComponent(title);
-            const encodedText = encodeURIComponent(text);
-
-            const urls = {
-                whatsapp:  `https://wa.me/?text=${encodedTitle}%20${encodedUrl}`,
-                twitter:   `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`,
-                facebook:  `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
-                telegram:  `https://t.me/share/url?url=${encodedUrl}&text=${encodedTitle}`,
-                linkedin:  `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`
-            };
-
-            if (urls[type]) {
-                window.open(urls[type], '_blank', 'noopener,noreferrer');
-            }
-        });
-    });
-}
-
-/**
- * Copy text to clipboard with fallback
- */
-async function copyToClipboard(text) {
-    try {
-        if (navigator.clipboard?.writeText) {
-            await navigator.clipboard.writeText(text);
-        } else {
-            const temp = document.createElement('input');
-            temp.value = text;
-            temp.setAttribute('readonly', '');
-            temp.style.position = 'absolute';
-            temp.style.left = '-9999px';
-            document.body.appendChild(temp);
-            temp.select();
-            document.execCommand('copy');
-            document.body.removeChild(temp);
-        }
-        showToast('Link copied to clipboard', 'success');
-    } catch (err) {
-        console.warn('Clipboard failed:', err);
-        showToast('Could not copy link', 'error');
-    }
-}
-
 
 function renderFilteredPosts(posts, container) {
     const feedContainer = container || 
