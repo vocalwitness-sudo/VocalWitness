@@ -170,7 +170,7 @@ export async function verifyMediaUrl(url, maxRetries = 6, delayMs = 1000) {
 // ====================== VALIDATION ======================
 export function validateMediaFile(file, options = {}) {
     const {
-        maxSizeBytes = 25 * 1024 * 1024, // default 25MB
+        maxSizeBytes = 25 * 1024 * 1024,
         allowedTypes = null
     } = options;
 
@@ -187,22 +187,35 @@ export function validateMediaFile(file, options = {}) {
         return { valid: false, error: `File size exceeds the ${maxSizeMB}MB limit.` };
     }
 
+    // ===== MOBILE HARDENING =====
+    let type = (file.type || '').toLowerCase();
+
+    // Infer type from extension when MIME is missing
+    if (!type || type === 'application/octet-stream') {
+        const ext = (file.name || '').split('.').pop().toLowerCase();
+        if (['jpg', 'jpeg', 'png', 'webp', 'gif', 'heic', 'heif'].includes(ext)) type = 'image/' + (ext === 'jpg' ? 'jpeg' : ext);
+        else if (['mp3', 'mpeg', 'wav', 'ogg', 'm4a', 'webm'].includes(ext)) type = 'audio/' + ext;
+        else if (['mp4', 'webm', 'mov', 'mkv'].includes(ext)) type = 'video/' + ext;
+    }
+
     if (allowedTypes && Array.isArray(allowedTypes)) {
-        if (!allowedTypes.includes(file.type)) {
+        // Also accept empty type if extension matches any allowed type family
+        const isAllowed = allowedTypes.some(t => type === t || type.startsWith(t.split('/')[0] + '/')) ||
+                          (!file.type && allowedTypes.some(t => t.startsWith('image/') && /\.(jpe?g|png|webp|gif|heic)$/i.test(file.name || '')));
+
+        if (!isAllowed) {
             return { valid: false, error: 'Unsupported file type.' };
         }
     } else {
-        // Fallback: allow image, video, audio
-        if (!file.type.startsWith('image/') &&
-            !file.type.startsWith('video/') &&
-            !file.type.startsWith('audio/')) {
+        if (!type.startsWith('image/') &&
+            !type.startsWith('video/') &&
+            !type.startsWith('audio/')) {
             return { valid: false, error: 'Unsupported media type.' };
         }
     }
 
     return { valid: true };
 }
-
 export function setImageFile(file) {
   clearAllMedia();
   selectedImageFile = file;
