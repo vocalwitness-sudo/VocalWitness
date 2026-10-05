@@ -1,4 +1,6 @@
 // js/imageScrubber.js - VocalWitness Client-Side EXIF & Metadata Scrubber
+// Mobile-hardened version
+
 import { state, getActiveIdentityConfig } from './app-state.js';
 import { logAuditEvent } from './audit.js';
 
@@ -7,12 +9,7 @@ import { logAuditEvent } from './audit.js';
  *
  * @param {File|Blob} imageFile - The raw uploaded image file.
  * @param {Object} [options={}] - Configuration options.
- * @param {number} [options.maxWidth=2048] - Max width allowed (downscales larger images).
- * @param {number} [options.maxHeight=2048] - Max height allowed.
- * @param {string} [options.outputType='image/webp'] - Target format ('image/webp', 'image/jpeg').
- * @param {number} [options.quality=0.85] - Compression quality (0.0 to 1.0).
- * @param {boolean} [options.forceScrub] - Manual override to force or bypass scrubbing regardless of state.
- * @returns {Promise<File>} A clean, metadata-free image File or intact raw File.
+ * @returns {Promise<File>} A clean, metadata-free image File
  */
 export async function scrubImageMetadata(imageFile, options = {}) {
     const {
@@ -23,13 +20,24 @@ export async function scrubImageMetadata(imageFile, options = {}) {
         forceScrub
     } = options;
 
-    if (!imageFile || !(imageFile instanceof Blob) || !imageFile.type?.startsWith('image/')) {
+    if (!imageFile || !(imageFile instanceof Blob)) {
+        throw new Error('Invalid input: A valid image File or Blob must be provided.');
+    }
+
+    // ===== MOBILE HARDENING =====
+    // Accept files even when type is empty (common on iOS/Android pickers)
+    const type = (imageFile.type || '').toLowerCase();
+    const isProbablyImage =
+        type.startsWith('image/') ||
+        type === '' ||
+        type === 'application/octet-stream' ||
+        /\.(jpe?g|png|webp|gif|heic|heif)$/i.test(imageFile.name || '');
+
+    if (!isProbablyImage) {
         throw new Error('Invalid input: A valid image File or Blob must be provided.');
     }
 
     // Batch 1 policy: always scrub by default.
-    // Only skip if caller explicitly sets forceScrub = false.
-    // Identity config can also request scrub (anonymous / non-bold modes).
     const identity = typeof getActiveIdentityConfig === 'function'
         ? getActiveIdentityConfig()
         : { mode: state?.profileMode || 'ANONYMOUS', scrubMetadata: true };
@@ -119,8 +127,8 @@ export async function scrubImageMetadata(imageFile, options = {}) {
             lastModified: Date.now()
         });
 
-        // 7. Audit — use identity.mode (was undefined activeMode)
-        await logAuditEvent("MEDIA_METADATA_SCRUBBED", {
+        // 7. Audit
+        await logAuditEvent?.("MEDIA_METADATA_SCRUBBED", {
             filename: imageFile.name || 'unnamed',
             mode: identity.mode || state?.profileMode || 'scrub',
             originalSize: imageFile.size,
