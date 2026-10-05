@@ -1891,3 +1891,87 @@ export const heavyProcessingTask = onRequest(
     res.status(200).send({ status: "processed" });
   }
 );
+
+// functions/index.js  (add this export)
+export const ogPost = onRequest(
+  { cors: true },
+  async (req, res) => {
+    const id = req.query.id || req.path.split('/').pop();
+    if (!id) {
+      return res.status(400).send('Missing post id');
+    }
+
+    try {
+      const snap = await db.collection('testimonies').doc(id).get();
+      if (!snap.exists) {
+        return res.status(404).send('Post not found');
+      }
+
+      const post = snap.data();
+      const title = (post.headline || post.title || post.content || 'VocalWitness Testimony')
+        .slice(0, 70);
+      const description = (post.content || 'Sealed testimony on VocalWitness')
+        .slice(0, 200);
+
+      // Prefer image → video poster/thumbnail → audio waveform placeholder → logo
+      let image = post.imageUrl 
+        || post.thumbnailUrl 
+        || 'https://vocalwitness.com/logo.png';
+
+      // Optional: for video you can later generate a real poster; for now use image or logo
+      if (post.videoUrl && !post.imageUrl) {
+        // image stays logo or a static “video evidence” card you host
+        image = 'https://vocalwitness.com/og-video-fallback.png'; // optional asset
+      }
+
+      const pageUrl = `https://vocalwitness.com/verify.html?id=${id}`;
+
+      const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>${escape(title)} • VocalWitness</title>
+  <meta name="description" content="${escape(description)}">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="${escape(title)}">
+  <meta property="og:description" content="${escape(description)}">
+  <meta property="og:url" content="${pageUrl}">
+  <meta property="og:site_name" content="VocalWitness">
+  <meta property="og:image" content="${image}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+
+  <!-- Twitter / X -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${escape(title)}">
+  <meta name="twitter:description" content="${escape(description)}">
+  <meta name="twitter:image" content="${image}">
+
+  <!-- Redirect humans to the real page -->
+  <meta http-equiv="refresh" content="0;url=${pageUrl}">
+  <script>location.replace("${pageUrl}");</script>
+</head>
+<body>
+  <p>Redirecting to <a href="${pageUrl}">VocalWitness testimony</a>…</p>
+</body>
+</html>`;
+
+      res.set('Cache-Control', 'public, max-age=300'); // 5 min cache is fine
+      res.status(200).send(html);
+    } catch (err) {
+      console.error(err);
+      res.status(500).send('Error generating preview');
+    }
+  }
+);
+
+function escape(s) {
+  return String(s || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
