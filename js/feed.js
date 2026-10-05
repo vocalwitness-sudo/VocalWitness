@@ -25,7 +25,8 @@ import { state } from './app-state.js';
 import { openCommentModal } from './comments.js';
 import { 
     submitCorroboration, 
-    getCorroborationScoreFromDoc 
+    getCorroborationScoreFromDoc,
+    renderCorroborationUI  
 } from './corroboration.js';
 
 
@@ -649,10 +650,23 @@ function renderSinglePostDOM(id, data, container) {
         🌐 Translate
       </button>
 
-      <button data-action="corroborate" data-id="${id}"
-              class="corroborate-btn flex items-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-600/15 px-3 py-1.5 text-xs font-medium text-emerald-400 transition hover:bg-emerald-600/25">
-        👁️ I witnessed this
-      </button>
+               ${(() => {
+          // isOwner is already computed at the top of renderSinglePostDOM
+          if (isOwner) {
+              return `
+                <button disabled
+                        class="corroborate-btn flex items-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-500 cursor-not-allowed"
+                        title="You cannot corroborate your own report — only other witnesses can strengthen it">
+                  👁️ Your report
+                </button>`;
+          }
+          return `
+            <button data-action="corroborate" data-id="${id}"
+                    class="corroborate-btn flex items-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-600/15 px-3 py-1.5 text-xs font-medium text-emerald-400 transition hover:bg-emerald-600/25"
+                    title="I saw this too">
+              👁️ I witnessed this
+            </button>`;
+      })()}
 
       ${corrScoreHTML}
     </div>
@@ -802,20 +816,33 @@ async function handlePinPost(postId) {
 }
 
 /**
- * Handle "I saw this too" click – Corroboration Engine
+ * Handle "I witnessed this" click – Corroboration Engine
  */
 async function handleCorroborate(postId, btnEl) {
     if (!auth.currentUser) {
-        showToast("Please sign in to corroborate.", "error");
+        showToast("Please sign in to corroborate a report.", "error");
+        return;
+    }
+
+    // Extra safety: block self-corroboration in the UI layer too
+    const post = allPostsCache.find(p => p.id === postId);
+    if (post && post.authorId === auth.currentUser.uid) {
+        showToast(
+            "You can’t corroborate your own report. Only other witnesses who also saw the event can strengthen it — this keeps the public record honest.",
+            "info"
+        );
         return;
     }
 
     const allowed = await canCorroborate();
     if (!allowed) {
-        showToast("Phone verification required to corroborate reports.", "info");
+        showToast(
+            "Phone verification is required to corroborate reports. This helps keep bots and spam out of the Square.",
+            "info"
+        );
         const modal = document.getElementById('phoneVerificationModal') ||
-                    document.getElementById('phone-upgrade-modal') ||
-                    document.getElementById('verificationModal');
+                      document.getElementById('phone-upgrade-modal') ||
+                      document.getElementById('verificationModal');
         if (modal) {
             modal.classList.remove('hidden');
             modal.style.display = 'flex';
@@ -835,7 +862,6 @@ async function handleCorroborate(postId, btnEl) {
         });
 
         // Optimistic UI update
-        const post = allPostsCache.find(p => p.id === postId);
         if (post) {
             post.corroborationCount = (post.corroborationCount || 0) + 1;
         }
@@ -846,25 +872,31 @@ async function handleCorroborate(postId, btnEl) {
 
         const scoreEl = btnEl.parentElement?.querySelector('.corr-score');
         if (scoreEl && post) {
-            const { count, score } = getCorroborationScoreFromDoc(post);
-            scoreEl.textContent = `${score || count} pts · ${count} saw this`;
+            const count = post.corroborationCount || 1;
+            scoreEl.textContent = `Witnessed by ${count} Citizen${count === 1 ? '' : 's'}`;
         }
     } catch (err) {
         console.error("Corroboration failed:", err);
 
-        // Friendly message for the intentional self-corroboration block
         const msg = (err?.message || String(err)).toLowerCase();
         if (msg.includes("self-corroboration") || msg.includes("self corroboration")) {
-            showToast("You can’t corroborate your own post", "info");
+            showToast(
+                "You can’t corroborate your own report. Only other witnesses who also saw the event can strengthen it — this keeps the public record honest.",
+                "info"
+            );
+        } else if (msg.includes("insufficient tier") || msg.includes("phone")) {
+            showToast(
+                "Phone verification is required to corroborate reports. This helps keep bots and spam out of the Square.",
+                "info"
+            );
         } else {
             showToast(err.message || "Corroboration failed. Please try again.", "error");
         }
 
         btnEl.disabled = false;
-        btnEl.textContent = "👁️ I saw this too";
+        btnEl.textContent = "👁️ I witnessed this";
     }
 }
-
 function showPostMenu(postId) {
     showToast(`Post options menu for: ${postId.substring(0, 8)}...`, "info");
 }
