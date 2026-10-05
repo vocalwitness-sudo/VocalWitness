@@ -268,7 +268,7 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                            } else if (action === 'share') {
                     try {
                         const post = (typeof allPostsCache !== 'undefined' ? allPostsCache : []).find(p => p.id === id);
-                        const shareUrl = `${window.location.origin}/#citizen-talk?post=${encodeURIComponent(id)}`;
+                       const shareUrl = `${window.location.origin}/p/${encodeURIComponent(id)}`;
                         const title = post?.headline || post?.title || 'VocalWitness Testimony';
                         const text = post?.content
                             ? (post.content.length > 120 ? post.content.slice(0, 117) + '…' : post.content)
