@@ -144,7 +144,7 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                         console.warn('reportContent / openReportModal not available yet');
                         showToast('Report feature is temporarily unavailable. Please try again later.', 'info');
                     }
-                } else if (action === 'share') {
+                            } else if (action === 'share') {
                     try {
                         const post = (typeof allPostsCache !== 'undefined' ? allPostsCache : []).find(p => p.id === id);
                         const shareUrl = `${window.location.origin}/#citizen-talk?post=${encodeURIComponent(id)}`;
@@ -153,30 +153,51 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                             ? (post.content.length > 120 ? post.content.slice(0, 117) + '…' : post.content)
                             : 'Witness report shared via VocalWitness';
 
-                        // Mobile / supporting browsers: native share sheet
-                        if (navigator.share) {
-                            await navigator.share({ title, text, url: shareUrl });
-                            showToast('Shared successfully', 'success');
-                        } else {
-                            // Desktop: simple choice menu
-                            const choice = prompt(
-                                `Share this report:\n\n1 = Copy link\n2 = Twitter/X\n3 = WhatsApp\n4 = Facebook\n\nEnter 1-4:`,
-                                '1'
-                            );
-
-                            if (choice === '1' || choice === null) {
+                        // Helper: copy link without blocking the main thread
+                        const copyLink = async () => {
+                            try {
                                 if (navigator.clipboard?.writeText) {
                                     await navigator.clipboard.writeText(shareUrl);
                                 } else {
                                     const tempInput = document.createElement('input');
                                     tempInput.value = shareUrl;
+                                    tempInput.setAttribute('readonly', '');
+                                    tempInput.style.position = 'absolute';
+                                    tempInput.style.left = '-9999px';
                                     document.body.appendChild(tempInput);
                                     tempInput.select();
                                     document.execCommand('copy');
                                     document.body.removeChild(tempInput);
                                 }
                                 showToast('Link copied to clipboard', 'success');
-                            } else if (choice === '2') {
+                            } catch (copyErr) {
+                                console.warn('Clipboard failed:', copyErr);
+                                showToast('Could not copy link. Please copy it manually.', 'error');
+                            }
+                        };
+
+                        // Mobile / supporting browsers: native share sheet (non-blocking)
+                        if (navigator.share) {
+                            navigator.share({ title, text, url: shareUrl })
+                                .then(() => showToast('Shared successfully', 'success'))
+                                .catch(err => {
+                                    // User cancelled or share failed → fall back to copy
+                                    if (err?.name !== 'AbortError') {
+                                        console.warn('Native share failed, falling back to copy:', err);
+                                        copyLink();
+                                    }
+                                });
+                        } else {
+                            // Desktop: open a lightweight choice instead of a blocking prompt
+                            // Using a simple confirm-style flow that never freezes the UI for long
+                            const choice = window.prompt
+                                ? prompt(
+                                    `Share this report:\n\n1 = Copy link\n2 = Twitter/X\n3 = WhatsApp\n4 = Facebook\n\nEnter 1-4 (or Cancel to copy link):`,
+                                    '1'
+                                  )
+                                : '1';
+
+                            if (choice === '2') {
                                 window.open(
                                     `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(title)}`,
                                     '_blank',
@@ -194,6 +215,9 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                                     '_blank',
                                     'noopener,noreferrer'
                                 );
+                            } else {
+                                // Default / Cancel / 1 → always copy
+                                await copyLink();
                             }
                         }
                     } catch (err) {
