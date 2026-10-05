@@ -1,15 +1,40 @@
 // js/media-compression.js
+// Mobile-hardened version
 
 /**
  * Compresses an image file before upload while respecting aspect ratio.
  * @param {File} file - The original image file
- * @param {number} maxWidth - Maximum width in pixels (default 1200)
- * @param {number} quality - JPEG quality between 0 and 1 (default 0.80)
- * @returns {Promise<File>} - Returns a new compressed File object
+ * @param {Object|number} optionsOrMaxWidth
+ * @param {number} [quality]
+ * @returns {Promise<File>}
  */
-export async function compressImage(file, maxWidth = 1200, quality = 0.80) {
-    if (!file || !file.type.startsWith('image/')) {
-        return file; // Return original if not an image
+export async function compressImage(file, optionsOrMaxWidth = 1200, quality = 0.80) {
+    // Support both old signature (maxWidth, quality) and new options object
+    let maxWidth = 1200;
+    let maxHeight = 1600;
+    let q = 0.80;
+
+    if (typeof optionsOrMaxWidth === 'object' && optionsOrMaxWidth !== null) {
+        maxWidth = optionsOrMaxWidth.maxWidth || 1600;
+        maxHeight = optionsOrMaxWidth.maxHeight || 1600;
+        q = optionsOrMaxWidth.quality || 0.82;
+    } else {
+        maxWidth = optionsOrMaxWidth || 1200;
+        q = quality || 0.80;
+    }
+
+    if (!file) return file;
+
+    // ===== MOBILE HARDENING =====
+    const type = (file.type || '').toLowerCase();
+    const isImage =
+        type.startsWith('image/') ||
+        type === '' ||
+        type === 'application/octet-stream' ||
+        /\.(jpe?g|png|webp|gif)$/i.test(file.name || '');
+
+    if (!isImage) {
+        return file;
     }
 
     // Skip compression if the image is already tiny (< 150 KB)
@@ -18,30 +43,30 @@ export async function compressImage(file, maxWidth = 1200, quality = 0.80) {
     }
 
     return new Promise((resolve, reject) => {
-        // Use createImageBitmap when available for better memory handling & speed
         if ('createImageBitmap' in window) {
             createImageBitmap(file)
                 .then((bitmap) => {
-                    const compressed = processBitmap(bitmap, file.name, maxWidth, quality);
-                    resolve(compressed);
+                    processBitmap(bitmap, file.name, maxWidth, maxHeight, q)
+                        .then(resolve)
+                        .catch(reject);
                 })
                 .catch(() => {
-                    // Fallback to Image/FileReader if createImageBitmap fails
-                    fallbackCompress(file, maxWidth, quality).then(resolve).catch(reject);
+                    fallbackCompress(file, maxWidth, maxHeight, q).then(resolve).catch(reject);
                 });
         } else {
-            fallbackCompress(file, maxWidth, quality).then(resolve).catch(reject);
+            fallbackCompress(file, maxWidth, maxHeight, q).then(resolve).catch(reject);
         }
     });
 }
 
-function processBitmap(bitmap, fileName, maxWidth, quality) {
+function processBitmap(bitmap, fileName, maxWidth, maxHeight, quality) {
     let width = bitmap.width;
     let height = bitmap.height;
 
-    if (width > maxWidth) {
-        height = Math.round((height * maxWidth) / width);
-        width = maxWidth;
+    if (width > maxWidth || height > maxHeight) {
+        const ratio = Math.min(maxWidth / width, maxHeight / height);
+        width = Math.round(width * ratio);
+        height = Math.round(height * ratio);
     }
 
     const canvas = document.createElement('canvas');
@@ -51,6 +76,10 @@ function processBitmap(bitmap, fileName, maxWidth, quality) {
     const ctx = canvas.getContext('2d');
     ctx.drawImage(bitmap, 0, 0, width, height);
 
+    if (typeof bitmap.close === 'function') {
+        bitmap.close();
+    }
+
     return new Promise((resolve, reject) => {
         canvas.toBlob(
             (blob) => {
@@ -58,14 +87,11 @@ function processBitmap(bitmap, fileName, maxWidth, quality) {
                     reject(new Error('Canvas compression failed'));
                     return;
                 }
-                // Rename extension to .jpg
-                const cleanName = fileName.replace(/\.[^/.]+$/, "") + ".jpg";
-                
+                const cleanName = (fileName || 'image').replace(/\.[^/.]+$/, "") + ".jpg";
                 const compressedFile = new File([blob], cleanName, {
                     type: 'image/jpeg',
                     lastModified: Date.now()
                 });
-
                 resolve(compressedFile);
             },
             'image/jpeg',
@@ -74,10 +100,10 @@ function processBitmap(bitmap, fileName, maxWidth, quality) {
     });
 }
 
-function fallbackCompress(file, maxWidth, quality) {
+function fallbackCompress(file, maxWidth, maxHeight, quality) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        
+
         reader.onload = (event) => {
             const img = new Image();
             img.src = event.target.result;
@@ -86,9 +112,10 @@ function fallbackCompress(file, maxWidth, quality) {
                 let width = img.width;
                 let height = img.height;
 
-                if (width > maxWidth) {
-                    height = Math.round((height * maxWidth) / width);
-                    width = maxWidth;
+                if (width > maxWidth || height > maxHeight) {
+                    const ratio = Math.min(maxWidth / width, maxHeight / height);
+                    width = Math.round(width * ratio);
+                    height = Math.round(height * ratio);
                 }
 
                 const canvas = document.createElement('canvas');
@@ -105,7 +132,7 @@ function fallbackCompress(file, maxWidth, quality) {
                             return;
                         }
 
-                        const cleanName = file.name.replace(/\.[^/.]+$/, "") + ".jpg";
+                        const cleanName = (file.name || 'image').replace(/\.[^/.]+$/, "") + ".jpg";
                         const compressedFile = new File([blob], cleanName, {
                             type: 'image/jpeg',
                             lastModified: Date.now()
