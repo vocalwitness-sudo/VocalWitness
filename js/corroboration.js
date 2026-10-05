@@ -43,16 +43,38 @@ export const CORROBORATION_CONFIG = {
 export async function submitCorroboration(testimonyId, opts = {}) {
     const user = auth.currentUser;
     if (!user) {
-        showToast("Sign in required", "error");
+        showToast("Sign in required to corroborate a report.", "error");
         throw new Error("Unauthenticated");
     }
 
+    // Fast path: load testimony early so we can block self-corroboration before extra reads
+    const testimonyRef = doc(db, TESTIMONIES, testimonyId);
+    const testimonySnap = await getDoc(testimonyRef);
+    if (!testimonySnap.exists()) {
+        showToast("Report not found.", "error");
+        throw new Error("Testimony missing");
+    }
+    const testimony = testimonySnap.data();
+
+    // 1a. Prevent self-corroboration (clear explanation, non-error styling)
+    if (testimony.authorId === user.uid) {
+        showToast(
+            "You can’t corroborate your own report. Only other witnesses who also saw the event can strengthen it — this keeps the public record honest.",
+            "info"
+        );
+        throw new Error("Self-corroboration blocked");
+    }
+
+    // 1b. Tier / phone gate
     if (!(await canCorroborate(user))) {
-        showToast("Phone verification required to corroborate", "error");
+        showToast(
+            "Phone verification is required to corroborate reports. This helps keep bots and spam out of the Square.",
+            "info"
+        );
         throw new Error("Insufficient tier");
     }
 
-    // 1. Prevent self-corroboration & double-corroboration
+    // 1c. Prevent double-corroboration
     const existing = await getDocs(query(
         collection(db, CORROBORATIONS),
         where("testimonyId", "==", testimonyId),
@@ -60,20 +82,8 @@ export async function submitCorroboration(testimonyId, opts = {}) {
         limit(1)
     ));
     if (!existing.empty) {
-        showToast("You already corroborated this report", "info");
+        showToast("You’ve already corroborated this report. Thank you.", "info");
         return null;
-    }
-
-    const testimonyRef = doc(db, TESTIMONIES, testimonyId);
-    const testimonySnap = await getDoc(testimonyRef);
-    if (!testimonySnap.exists()) {
-        showToast("Report not found", "error");
-        throw new Error("Testimony missing");
-    }
-    const testimony = testimonySnap.data();
-    if (testimony.authorId === user.uid) {
-        showToast("You cannot corroborate your own report", "error");
-        throw new Error("Self-corroboration blocked");
     }
 
     // 2. Forensic hashing & media upload handling
@@ -82,7 +92,14 @@ export async function submitCorroboration(testimonyId, opts = {}) {
     let forensicHash = null;
     if (opts.mediaFile) {
         forensicHash = await computeSHA256(opts.mediaFile);
-        mediaType = opts.mediaFile.type.startsWith('audio/') ? 'audio' : 'image';
+        const mime = (opts.mediaFile.type || "").toLowerCase();
+        if (mime.startsWith("audio/")) {
+            mediaType = "audio";
+        } else if (mime.startsWith("video/")) {
+            mediaType = "video";
+        } else {
+            mediaType = "image";
+        }
         mediaUrl = await uploadEvidenceMedia(opts.mediaFile, mediaType);
     }
 
@@ -117,7 +134,9 @@ export async function submitCorroboration(testimonyId, opts = {}) {
     const newScore = (testimony.corroborationScore || 0) + weight;
     const computedTrustScore = Math.min(
         CORROBORATION_CONFIG.MAX_TRUST_SCORE,
-        CORROBORATION_CONFIG.BASE_TRUST_SCORE + (newCount * CORROBORATION_CONFIG.CORROBORATED_BOOST_PER_MATCH) + (weight * 5)
+        CORROBORATION_CONFIG.BASE_TRUST_SCORE +
+            (newCount * CORROBORATION_CONFIG.CORROBORATED_BOOST_PER_MATCH) +
+            (weight * 5)
     );
     const isCorroborated = computedTrustScore >= CORROBORATION_CONFIG.CORROBORATION_THRESHOLD;
 
@@ -126,7 +145,7 @@ export async function submitCorroboration(testimonyId, opts = {}) {
         corroborationCount: increment(1),
         corroborationScore: increment(weight),
         trustScore: computedTrustScore,
-        corroborationStatus: isCorroborated ? 'corroborated' : 'isolated_unverified',
+        corroborationStatus: isCorroborated ? "corroborated" : "isolated_unverified",
         lastCorroboratedAt: serverTimestamp()
     });
 
@@ -136,9 +155,9 @@ export async function submitCorroboration(testimonyId, opts = {}) {
     if (isCorroborated) {
         await logAuditEvent({
             testimonyId,
-            eventType: 'CORROBORATION_THRESHOLD_REACHED',
+            eventType: "CORROBORATION_THRESHOLD_REACHED",
             syntheticScore: testimony.syntheticLikelihood || 0,
-            actionTaken: 'trust_score_boosted',
+            actionTaken: "trust_score_boosted",
             details: { newCount, newScore, computedTrustScore }
         });
     }
@@ -152,7 +171,7 @@ export async function submitCorroboration(testimonyId, opts = {}) {
         }
     }
 
-    showToast("🛡️ Corroboration sealed", "success");
+    showToast("🛡️ Corroboration sealed. Your witness strengthens this report.", "success");
     return corrRef.id;
 }
 
@@ -188,9 +207,9 @@ function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
     const R = 6371; // Earth radius in km
     const dLat = (lat2 - lat1) * (Math.PI / 180);
     const dLon = (lon2 - lon1) * (Math.PI / 180);
-    const a = 
+    const a =
         Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * 
+        Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
         Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
@@ -231,7 +250,7 @@ export function clusterTestimonies(testimonies, windowHours = CORROBORATION_CONF
 
             // Forensic SHA256 Hash match
             const sameHash = t.forensicHash && t.forensicHash === other.forensicHash;
-            
+
             // Textual similarity match
             const contentSim = simpleSimilarity(t.content || t.text || "", other.content || other.text || "");
 
@@ -258,28 +277,68 @@ function simpleSimilarity(a, b) {
 }
 
 /**
- * UI helper – returns HTML for the corroboration action button + score badge
+ * UI helper – returns HTML for the corroboration action button + score badge.
+ * Supports three states so the user is never left guessing:
+ *   - own post
+ *   - already corroborated
+ *   - normal / locked by tier
+ *
+ * @param {object} testimony
+ * @param {object} [options]
+ * @param {boolean} [options.canCorroborate=false]
+ * @param {boolean} [options.isOwnPost=false]
+ * @param {boolean} [options.alreadyCorroborated=false]
  */
-export function renderCorroborationUI(testimony, currentUserCanCorroborate) {
+export function renderCorroborationUI(testimony, options = {}) {
+    const {
+        canCorroborate = false,
+        isOwnPost = false,
+        alreadyCorroborated = false
+    } = options;
+
     const { count, score } = getCorroborationScoreFromDoc(testimony);
     const scoreLabel = score > 0 ? `${score} pts · ${count} saw this` : "";
 
-    return `
-        <div class="flex items-center gap-2 mt-2">
+    let btnHtml;
+
+    if (isOwnPost) {
+        btnHtml = `
+            <button disabled
+                    class="corroborate-btn px-3 py-1.5 rounded-full text-xs font-medium
+                           bg-zinc-800 text-zinc-500 cursor-not-allowed border border-zinc-700"
+                    title="You cannot corroborate your own report — only other witnesses can strengthen it">
+                👁️ Your report
+            </button>`;
+    } else if (alreadyCorroborated) {
+        btnHtml = `
+            <button disabled
+                    class="corroborate-btn px-3 py-1.5 rounded-full text-xs font-medium
+                           bg-emerald-900/40 text-emerald-500/90 cursor-default border border-emerald-800/50"
+                    title="You already corroborated this report">
+                👁️ You witnessed this
+            </button>`;
+    } else {
+        btnHtml = `
             <button
                 class="corroborate-btn px-3 py-1.5 rounded-full text-xs font-medium
-                       ${currentUserCanCorroborate
-                         ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-600/30'
-                         : 'bg-zinc-800 text-zinc-500 cursor-not-allowed'}"
+                       ${canCorroborate
+                         ? "bg-emerald-600/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-600/30"
+                         : "bg-zinc-800 text-zinc-500 cursor-not-allowed border border-zinc-700"}"
                 data-testimony-id="${testimony.id}"
-                ${currentUserCanCorroborate ? '' : 'disabled'}
-                title="${currentUserCanCorroborate ? 'I saw this too' : 'Phone verification required'}">
+                data-action="corroborate"
+                ${canCorroborate ? "" : "disabled"}
+                title="${canCorroborate ? "I saw this too" : "Phone verification required to corroborate"}">
                 👁️ I saw this too
-            </button>
+            </button>`;
+    }
+
+    return `
+        <div class="flex items-center gap-2 mt-2">
+            ${btnHtml}
             ${score > 0 ? `
                 <span class="text-[11px] text-emerald-400/90 font-medium tracking-tight">
                     ${scoreLabel}
-                </span>` : ''}
+                </span>` : ""}
         </div>
     `;
 }
