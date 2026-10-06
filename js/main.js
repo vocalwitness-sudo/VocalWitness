@@ -290,62 +290,6 @@ function wireTabButtons() {
   });
 }
 
-function initMoreMenu() {
-  const moreBtn = document.getElementById('more-btn');
-  const moreMenu = document.getElementById('more-menu');
-
-  if (!moreBtn || !moreMenu) {
-    console.warn('[more-menu] #more-btn or #more-menu not found in DOM');
-    return;
-  }
-
-  // Prevent double-wiring
-  if (moreBtn.dataset.moreWired === 'true') {
-    console.log('[more-menu] Already wired – skipping');
-    return;
-  }
-  moreBtn.dataset.moreWired = 'true';
-
-  // CRITICAL: force closed state on init
-  moreMenu.classList.add('hidden');
-  moreBtn.setAttribute('aria-expanded', 'false');
-
-  const setOpen = (open) => {
-    moreMenu.classList.toggle('hidden', !open);
-    moreBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
-
-    const chevron = moreBtn.querySelector('svg');
-    if (chevron) {
-      chevron.style.transition = 'transform 0.2s ease';
-      chevron.style.transform = open ? 'rotate(180deg)' : 'rotate(0deg)';
-    }
-    console.log('[more-menu] setOpen →', open);
-  };
-
-  moreBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation(); // stop document listener from seeing this click
-    const willOpen = moreMenu.classList.contains('hidden');
-    console.log('[more-menu] button clicked, currently hidden?', willOpen);
-    setOpen(willOpen);
-  });
-
-  // Close only when clicking truly outside
-  document.addEventListener('click', (e) => {
-    if (moreMenu.classList.contains('hidden')) return;
-    if (moreBtn.contains(e.target) || moreMenu.contains(e.target)) return;
-    setOpen(false);
-  });
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !moreMenu.classList.contains('hidden')) {
-      setOpen(false);
-      moreBtn.focus();
-    }
-  });
-
-  console.log('[more-menu] Successfully initialized');
-}
 
 function initHashRouting() {
   if (window.__hashRoutingWired) return;
@@ -436,6 +380,53 @@ function updateVoiceUI(state) {
       break;
   }
 }
+
+// Single source of truth – put this near the top of setupEventListeners or in its own function
+function createDropdown(btnId, menuId) {
+  const btn = document.getElementById(btnId);
+  const menu = document.getElementById(menuId);
+  if (!btn || !menu || btn.dataset.wired === 'true') return;
+
+  btn.dataset.wired = 'true';
+  menu.classList.add('hidden');
+  btn.setAttribute('aria-expanded', 'false');
+
+  const setOpen = (open) => {
+    menu.classList.toggle('hidden', !open);
+    btn.setAttribute('aria-expanded', String(open));
+    const chevron = btn.querySelector('svg');
+    if (chevron) chevron.style.transform = open ? 'rotate(180deg)' : '';
+  };
+
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();          // stop the document closer
+    const willOpen = menu.classList.contains('hidden');
+    // close siblings
+    document.querySelectorAll('[data-dropdown]').forEach(m => {
+      if (m !== menu) m.classList.add('hidden');
+    });
+    setOpen(willOpen);
+  });
+
+  // Only ONE document closer for this dropdown
+  document.addEventListener('click', (e) => {
+    if (!menu.classList.contains('hidden') &&
+        !btn.contains(e.target) &&
+        !menu.contains(e.target)) {
+      setOpen(false);
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') setOpen(false);
+  });
+}
+
+// Then call once:
+createDropdown('more-btn', 'more-menu');
+createDropdown('notification-btn', 'notification-dropdown');
+createDropdown('notification-btn-mobile', 'notification-dropdown-mobile');
 
 /* ====================== PAYMENT (PAYSTACK) ====================== */
 const PAYSTACK_PUBLIC_KEY = 'pk_live_5d13a6db326f02375127aae9d0fb03678ed1d923'; // TODO: move to env / Remote Config
