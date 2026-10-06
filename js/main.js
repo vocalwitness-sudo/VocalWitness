@@ -21,7 +21,7 @@ import { initComposer } from './composer.js';
 import { createEvidencePack } from './evidence-pack.js';
 import { generateSha256Hash } from './utils.js';
 import { getAudioForPublish, uploadForensicMedia } from './media.js';
-import { initLiveArena } from './live-arena.js';          // ← ADDED
+import { initLiveArena } from './live-arena.js';
 import { loadCircle, loadVerifiedWitnesses } from './circle.js';
 import {
   collection, addDoc, doc, getDoc, setDoc, updateDoc,
@@ -30,6 +30,7 @@ import {
 
 /* ====================== GLOBAL ERROR LOGGING ====================== */
 window.addEventListener('error', (event) => {
+  if (event.message && event.message.includes('ResizeObserver loop')) return;
   console.error('🔴 Global Error:', {
     message: event.message,
     filename: event.filename,
@@ -48,7 +49,6 @@ console.log('%c[VocalWitness] main.js loaded', 'color:#10b981;font-weight:bold')
 /* ====================== GLOBAL MODULE STATE ====================== */
 let engineInstance = null;
 let isInitialized = false;
-let listenersInitialized = false;
 let isSwitchingTab = false;
 
 /* ====================== DATA SAVER ====================== */
@@ -179,7 +179,6 @@ window.switchTab = async function (tab) {
   console.log('[Tab] Switching to:', tab);
 
   try {
-    // 1. Update nav button styles
     document.querySelectorAll('#main-nav button[data-tab]').forEach((btn) => {
       const isActive = btn.dataset.tab === tab;
       btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
@@ -194,7 +193,6 @@ window.switchTab = async function (tab) {
       }
     });
 
-    // 2. Hide every tab panel
     Object.values(TAB_TO_SECTION).flat().forEach((id) => {
       const el = document.getElementById(id);
       if (!el) return;
@@ -203,7 +201,6 @@ window.switchTab = async function (tab) {
       el.setAttribute('aria-hidden', 'true');
     });
 
-    // 3. Show the selected panel
     const sectionId = TAB_TO_SECTION[tab][0];
     const section = document.getElementById(sectionId);
     if (section) {
@@ -215,36 +212,29 @@ window.switchTab = async function (tab) {
       console.warn('[Tab] Section not found:', sectionId);
     }
 
-    // 4. Update URL hash
     const newHash = `#${tab === 'square' ? 'citizen-talk' : tab}`;
     if (window.location.hash !== newHash) {
       history.pushState({ tab }, '', newHash);
     }
 
-    // 5. Tab-specific initialization
     if (tab === 'square' && typeof initFeed === 'function') {
       initFeed(undefined, 'citizen-talk');
     }
-
     if (tab === 'ledger' && typeof loadEvidenceLedger === 'function') {
       loadEvidenceLedger();
     }
-
     if (tab === 'mycircle' && typeof loadCircle === 'function') {
       loadCircle();
     }
-
     if (tab === 'witness' && typeof loadVerifiedWitnesses === 'function') {
-  loadVerifiedWitnesses();
-}
+      loadVerifiedWitnesses();
+    }
 
-    // ===== LIVE ARENA (fixed) =====
     if (tab === 'arena') {
       try {
         if (typeof initLiveArena === 'function') {
           initLiveArena();
         } else {
-          // Fallback dynamic import
           const module = await import('./live-arena.js');
           if (typeof module.initLiveArena === 'function') {
             module.initLiveArena();
@@ -258,19 +248,17 @@ window.switchTab = async function (tab) {
         showToast('Could not load Live Arena', 'error');
       }
     }
-
   } catch (err) {
     console.error('[Tab] switchTab failed:', err);
   } finally {
     isSwitchingTab = false;
   }
 };
-/**
- * Tabs + More menu — single init, no double-bind, a11y-aware
- */
+
+/* ====================== NAVIGATION CHROME ====================== */
 function initNavigationChrome() {
   wireTabButtons();
-  initMoreMenu();
+  initAllDropdowns();
   initHashRouting();
 }
 
@@ -290,6 +278,81 @@ function wireTabButtons() {
   });
 }
 
+/* ====================== UNIFIED DROPDOWN SYSTEM ====================== */
+function createDropdown(btnId, menuId) {
+  const btn = document.getElementById(btnId);
+  const menu = document.getElementById(menuId);
+  if (!btn || !menu) {
+    console.warn(`[dropdown] Missing #${btnId} or #${menuId}`);
+    return;
+  }
+  if (btn.dataset.dropdownWired === 'true') return;
+  btn.dataset.dropdownWired = 'true';
+
+  menu.classList.add('hidden');
+  menu.setAttribute('aria-hidden', 'true');
+  btn.setAttribute('aria-expanded', 'false');
+
+  const setOpen = (open) => {
+    menu.classList.toggle('hidden', !open);
+    menu.setAttribute('aria-hidden', open ? 'false' : 'true');
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+
+    const chevron = btn.querySelector('svg');
+    if (chevron) {
+      chevron.style.transition = 'transform 0.2s ease';
+      chevron.style.transform = open ? 'rotate(180deg)' : 'rotate(0deg)';
+    }
+  };
+
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const willOpen = menu.classList.contains('hidden');
+
+    document.querySelectorAll('[data-dropdown-menu]').forEach((other) => {
+      if (other !== menu) {
+        other.classList.add('hidden');
+        other.setAttribute('aria-hidden', 'true');
+      }
+    });
+    document.querySelectorAll('[data-dropdown-btn]').forEach((otherBtn) => {
+      if (otherBtn !== btn) otherBtn.setAttribute('aria-expanded', 'false');
+    });
+
+    setOpen(willOpen);
+  });
+
+  document.addEventListener('click', (e) => {
+    if (menu.classList.contains('hidden')) return;
+    if (btn.contains(e.target) || menu.contains(e.target)) return;
+    setOpen(false);
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !menu.classList.contains('hidden')) {
+      setOpen(false);
+      btn.focus();
+    }
+  });
+
+  btn.setAttribute('data-dropdown-btn', '');
+  menu.setAttribute('data-dropdown-menu', '');
+  console.log(`[dropdown] Wired #${btnId} → #${menuId}`);
+}
+
+function initAllDropdowns() {
+  createDropdown('more-btn', 'more-menu');
+  createDropdown('notification-btn', 'notification-dropdown');
+  createDropdown('notification-btn-mobile', 'notification-dropdown-mobile');
+}
+
+window.toggleNotificationDropdown = function (event) {
+  event?.stopPropagation?.();
+  const btn = document.getElementById('notification-btn');
+  if (btn) btn.click();
+};
 
 function initHashRouting() {
   if (window.__hashRoutingWired) return;
@@ -297,7 +360,6 @@ function initHashRouting() {
 
   const resolveTabFromHash = () => {
     const hash = (window.location.hash || '').slice(1);
-    // Map legacy / empty hashes
     if (!hash || hash === 'citizen-talk') return 'square';
     return hash;
   };
@@ -308,7 +370,6 @@ function initHashRouting() {
     }
   });
 
-  // Optional: also react to hashchange (some browsers / in-app links)
   window.addEventListener('hashchange', () => {
     if (typeof window.switchTab === 'function') {
       window.switchTab(resolveTabFromHash());
@@ -316,11 +377,11 @@ function initHashRouting() {
   });
 }
 
-// Call once after DOM is ready (bootstrap / setupEventListeners)
+// Call once after functions are defined
 initNavigationChrome();
+
 /**
  * Updates the visual state of the voice recorder UI
- * Call this from your existing start / pause / stop / reset handlers
  */
 function updateVoiceUI(state) {
   const btn = document.getElementById('btn-voice');
@@ -334,7 +395,6 @@ function updateVoiceUI(state) {
 
   if (!btn || !btnText) return;
 
-  // Reset classes
   btn.classList.remove('bg-emerald-500', 'text-zinc-950', 'bg-red-600', 'text-white', 'bg-amber-600', 'text-white');
   btn.classList.add('text-emerald-400');
 
@@ -381,53 +441,6 @@ function updateVoiceUI(state) {
   }
 }
 
-// Single source of truth – put this near the top of setupEventListeners or in its own function
-function createDropdown(btnId, menuId) {
-  const btn = document.getElementById(btnId);
-  const menu = document.getElementById(menuId);
-  if (!btn || !menu || btn.dataset.wired === 'true') return;
-
-  btn.dataset.wired = 'true';
-  menu.classList.add('hidden');
-  btn.setAttribute('aria-expanded', 'false');
-
-  const setOpen = (open) => {
-    menu.classList.toggle('hidden', !open);
-    btn.setAttribute('aria-expanded', String(open));
-    const chevron = btn.querySelector('svg');
-    if (chevron) chevron.style.transform = open ? 'rotate(180deg)' : '';
-  };
-
-  btn.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();          // stop the document closer
-    const willOpen = menu.classList.contains('hidden');
-    // close siblings
-    document.querySelectorAll('[data-dropdown]').forEach(m => {
-      if (m !== menu) m.classList.add('hidden');
-    });
-    setOpen(willOpen);
-  });
-
-  // Only ONE document closer for this dropdown
-  document.addEventListener('click', (e) => {
-    if (!menu.classList.contains('hidden') &&
-        !btn.contains(e.target) &&
-        !menu.contains(e.target)) {
-      setOpen(false);
-    }
-  });
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') setOpen(false);
-  });
-}
-
-// Then call once:
-createDropdown('more-btn', 'more-menu');
-createDropdown('notification-btn', 'notification-dropdown');
-createDropdown('notification-btn-mobile', 'notification-dropdown-mobile');
-
 /* ====================== PAYMENT (PAYSTACK) ====================== */
 const PAYSTACK_PUBLIC_KEY = 'pk_live_5d13a6db326f02375127aae9d0fb03678ed1d923'; // TODO: move to env / Remote Config
 
@@ -449,7 +462,7 @@ window.initiatePayment = function (amount, email = null, metadata = {}) {
     const handler = PaystackPop.setup({
       key: PAYSTACK_PUBLIC_KEY,
       email: email || auth?.currentUser?.email || 'guest@vocalwitness.com',
-      amount: Math.round(finalAmount * 100), // kobo
+      amount: Math.round(finalAmount * 100),
       currency: "NGN",
       metadata: {
         source: "VocalWitness",
@@ -472,16 +485,6 @@ window.initiatePayment = function (amount, email = null, metadata = {}) {
   }
 };
 
-/* ====================== GLOBAL CLICK OUTSIDE ====================== */
-window.addEventListener('click', (e) => {
-  const menu = document.getElementById('more-menu');
-  const btn  = document.getElementById('more-btn');
-  if (!menu || menu.classList.contains('hidden')) return;
-  if (btn?.contains(e.target) || menu.contains(e.target)) return;
-  menu.classList.add('hidden');
-  btn?.setAttribute('aria-expanded', 'false');
-});
-
 /* ====================== MODAL CONTROLLERS ====================== */
 const toggleModal = (modalId, show = true) => {
   const modal = document.getElementById(modalId);
@@ -502,6 +505,7 @@ window.openQvModal = () => toggleModal('quadratic-vote-modal', true);
 window.closeQvModal = () => toggleModal('quadratic-vote-modal', false);
 window.openSupportModal = () => toggleModal('supportModal', true);
 window.closeSupportModal = () => toggleModal('supportModal', false);
+window.openSupportPackagesModal = window.openSupportModal; // alias
 
 /* ====================== WELCOME NOTE ====================== */
 function showWelcomeNote() {
@@ -533,7 +537,6 @@ window.publishTestimony = async () => {
     return;
   }
 
-  // Auto-generate title if empty
   if (!title && content) {
     title = content.length <= 80
       ? content
@@ -554,7 +557,6 @@ window.publishTestimony = async () => {
   }
 
   try {
-    // AI notice (non-blocking)
     try {
       const { remindUserOfAIRestrictions } = await import('./ai-services.js');
       remindUserOfAIRestrictions("publish");
@@ -562,7 +564,6 @@ window.publishTestimony = async () => {
       console.warn("[publish] AI notice skipped:", aiErr);
     }
 
-    // Ensure user document exists
     const userRef = doc(db, 'users', currentUser.uid);
     const userSnap = await getDoc(userRef);
     if (!userSnap.exists()) {
@@ -577,7 +578,6 @@ window.publishTestimony = async () => {
       }, { merge: true });
     }
 
-    // ====================== MEDIA HANDLING (FAIL-CLOSED) ======================
     const audioInfo = typeof getAudioForPublish === 'function' ? getAudioForPublish() : null;
 
     let mediaData = {
@@ -643,7 +643,6 @@ window.publishTestimony = async () => {
       }
     }
 
-    // Body hash
     try {
       if (content && typeof generateSha256Hash === 'function') {
         const textBlob = new Blob([content], { type: 'text/plain' });
@@ -653,162 +652,149 @@ window.publishTestimony = async () => {
       console.warn('[publish] Could not compute bodyHash:', hashErr);
     }
 
-// ====================== WRITE TO FIRESTORE ======================
+    let zkResult = {
+      isFallback: true,
+      proofType: 'NONE',
+      proof: null,
+      publicSignals: []
+    };
 
-// 1. Generate ZK proof (needs the hashes we already have)
-let zkResult = {
-  isFallback: true,
-  proofType: 'NONE',
-  proof: null,
-  publicSignals: []
-};
+    try {
+      const { generateZKProofAsync } = await import('./zk-client.js');
+      const contentHash = mediaData.bodyHash || await generateSha256Hash(new Blob([content]));
+      const authorHash  = await generateSha256Hash(currentUser.uid);
 
-try {
-  const { generateZKProofAsync } = await import('./zk-client.js');
-  const contentHash = mediaData.bodyHash || await generateSha256Hash(new Blob([content]));
-  const authorHash  = await generateSha256Hash(currentUser.uid);
+      zkResult = await generateZKProofAsync({
+        contentHash,
+        authorHash,
+        timestamp: Date.now().toString(),
+        mediaHash: mediaData.imageHash || mediaData.videoHash || mediaData.audioHash || mediaData.bodyHash || '0'
+      });
 
-  zkResult = await generateZKProofAsync({
-    contentHash,
-    authorHash,
-    timestamp: Date.now().toString(),
-    mediaHash: mediaData.imageHash || mediaData.videoHash || mediaData.audioHash || mediaData.bodyHash || '0'
-  });
+      console.log('[publish] ZK result:', zkResult.proofType, zkResult.isFallback ? '(fallback)' : '(real proof)');
+    } catch (zkErr) {
+      console.warn('[publish] ZK generation failed, continuing without proof:', zkErr);
+    }
 
-  console.log('[publish] ZK result:', zkResult.proofType, zkResult.isFallback ? '(fallback)' : '(real proof)');
-} catch (zkErr) {
-  console.warn('[publish] ZK generation failed, continuing without proof:', zkErr);
-}
+    let evidencePackResult = null;
+    try {
+      const { createEvidencePack } = await import('./evidence-pack.js');
 
-// 2. Build real Evidence Pack
-let evidencePackResult = null;
-try {
-  const { createEvidencePack } = await import('./evidence-pack.js');
+      evidencePackResult = await createEvidencePack({
+        content,
+        bodyHash: mediaData.bodyHash,
+        media: {
+          imageUrl: mediaData.imageUrl,
+          imageHash: mediaData.imageHash,
+          videoUrl: mediaData.videoUrl,
+          videoHash: mediaData.videoHash,
+          audioUrl: mediaData.audioUrl,
+          audioHash: mediaData.audioHash,
+        },
+        identity: {
+          mode: 'IDENTIFIED',
+          authorId: currentUser.uid,
+          displayName: currentUser.displayName || 'Registered Witness',
+        },
+        channel: 'citizen-talk',
+        clientCaptureMs: Date.now(),
+        testimonyId: null,
+        forensicHash: mediaData.imageHash || mediaData.videoHash || mediaData.audioHash || mediaData.bodyHash || null,
+      });
 
-  evidencePackResult = await createEvidencePack({
-    content,
-    bodyHash: mediaData.bodyHash,
-    media: {
-      imageUrl: mediaData.imageUrl,
-      imageHash: mediaData.imageHash,
-      videoUrl: mediaData.videoUrl,
-      videoHash: mediaData.videoHash,
-      audioUrl: mediaData.audioUrl,
-      audioHash: mediaData.audioHash,
-    },
-    identity: {
-      mode: 'IDENTIFIED',                     // change to 'ANONYMOUS' if needed
+      console.log('[publish] Evidence Pack created →', evidencePackResult.packCoreHash?.slice(0, 12) + '…');
+    } catch (packErr) {
+      console.warn('[publish] Evidence Pack creation failed (non-blocking):', packErr);
+    }
+
+    const hasAnyHash = !!(
+      mediaData.imageHash ||
+      mediaData.videoHash ||
+      mediaData.audioHash ||
+      mediaData.bodyHash ||
+      evidencePackResult?.packCoreHash
+    );
+
+    const testimonyData = {
       authorId: currentUser.uid,
-      displayName: currentUser.displayName || 'Registered Witness',
-    },
-    channel: 'citizen-talk',
-    clientCaptureMs: Date.now(),
-    testimonyId: null,                        // will be filled after we get the doc ID
-    forensicHash: mediaData.imageHash || mediaData.videoHash || mediaData.audioHash || mediaData.bodyHash || null,
-  });
-
-  console.log('[publish] Evidence Pack created →', evidencePackResult.packCoreHash?.slice(0, 12) + '…');
-} catch (packErr) {
-  console.warn('[publish] Evidence Pack creation failed (non-blocking):', packErr);
-}
-
-// 3. Final complete payload
-const hasAnyHash = !!(
-  mediaData.imageHash ||
-  mediaData.videoHash ||
-  mediaData.audioHash ||
-  mediaData.bodyHash ||
-  evidencePackResult?.packCoreHash
-);
-
-const testimonyData = {
-  authorId: currentUser.uid,
-  content,
-  createdAt: serverTimestamp(),
-  channel: 'citizen-talk',
-  title: title || null,
-  author: currentUser.displayName || 'Registered Witness',
-  feedVisibility: 'citizen-talk',
-  timestamp: Date.now(),
-
-  // Media
-  imageUrl: mediaData.imageUrl || null,
-  videoUrl: mediaData.videoUrl || null,
-  audioUrl: mediaData.audioUrl || null,
-  imageHash: mediaData.imageHash || null,
-  videoHash: mediaData.videoHash || null,
-  audioHash: mediaData.audioHash || null,
-  bodyHash: mediaData.bodyHash || null,
-
-  // Forensic / Evidence flags (this is what makes the name true)
-  hasForensic: hasAnyHash,
-  forensicVerified: hasAnyHash,                 // ← Critical for Forensic Ledger
-  hash: mediaData.imageHash || mediaData.videoHash || mediaData.audioHash || mediaData.bodyHash || evidencePackResult?.packCoreHash || null,
-  packCoreHash: evidencePackResult?.packCoreHash || null,
-  hasEvidencePack: !!evidencePackResult,
-  evidencePack: evidencePackResult?.firestorePack || null,
-
-    // ZK Proof (Firestore-safe — never store nested proof object)
-  zkProof: null,
-  zkPublicSignals: (zkResult.publicSignals || []).flat().map(String),
-  proofType: zkResult.proofType || 'NONE',
-  isZkVerified: Boolean(zkResult.proofType === 'SNARK_GROTH16_SERVER' && !zkResult.isFallback),
-};
-
-// 4. Write once
-const docRef = await addDoc(collection(db, 'testimonies'), testimonyData);
-console.log('[publish] SUCCESS →', docRef.id);
-// 5. Update the pack with the real testimony ID
-if (evidencePackResult && docRef.id) {
-  try {
-    const { createEvidencePack } = await import('./evidence-pack.js');
-    const finalPack = await createEvidencePack({
       content,
-      bodyHash: mediaData.bodyHash,
-      media: {
-        imageUrl: mediaData.imageUrl,
-        imageHash: mediaData.imageHash,
-        videoUrl: mediaData.videoUrl,
-        videoHash: mediaData.videoHash,
-        audioUrl: mediaData.audioUrl,
-        audioHash: mediaData.audioHash,
-      },
-      identity: {
-        mode: 'IDENTIFIED',
-        authorId: currentUser.uid,
-        displayName: currentUser.displayName || 'Registered Witness',
-      },
+      createdAt: serverTimestamp(),
       channel: 'citizen-talk',
-      clientCaptureMs: Date.now(),
-      testimonyId: docRef.id,
-      forensicHash: testimonyData.hash,
-    });
+      title: title || null,
+      author: currentUser.displayName || 'Registered Witness',
+      feedVisibility: 'citizen-talk',
+      timestamp: Date.now(),
 
-    await setDoc(docRef, {
-      evidencePack: finalPack.firestorePack,
-      packCoreHash: finalPack.packCoreHash,
+      imageUrl: mediaData.imageUrl || null,
+      videoUrl: mediaData.videoUrl || null,
+      audioUrl: mediaData.audioUrl || null,
+      imageHash: mediaData.imageHash || null,
+      videoHash: mediaData.videoHash || null,
+      audioHash: mediaData.audioHash || null,
+      bodyHash: mediaData.bodyHash || null,
+
+      hasForensic: hasAnyHash,
+      forensicVerified: hasAnyHash,
+      hash: mediaData.imageHash || mediaData.videoHash || mediaData.audioHash || mediaData.bodyHash || evidencePackResult?.packCoreHash || null,
+      packCoreHash: evidencePackResult?.packCoreHash || null,
+      hasEvidencePack: !!evidencePackResult,
+      evidencePack: evidencePackResult?.firestorePack || null,
+
+      zkProof: null,
+      zkPublicSignals: (zkResult.publicSignals || []).flat().map(String),
+      proofType: zkResult.proofType || 'NONE',
+      isZkVerified: Boolean(zkResult.proofType === 'SNARK_GROTH16_SERVER' && !zkResult.isFallback),
+    };
+
+    const docRef = await addDoc(collection(db, 'testimonies'), testimonyData);
+    console.log('[publish] SUCCESS →', docRef.id);
+
+    if (evidencePackResult && docRef.id) {
+      try {
+        const { createEvidencePack } = await import('./evidence-pack.js');
+        const finalPack = await createEvidencePack({
+          content,
+          bodyHash: mediaData.bodyHash,
+          media: {
+            imageUrl: mediaData.imageUrl,
+            imageHash: mediaData.imageHash,
+            videoUrl: mediaData.videoUrl,
+            videoHash: mediaData.videoHash,
+            audioUrl: mediaData.audioUrl,
+            audioHash: mediaData.audioHash,
+          },
+          identity: {
+            mode: 'IDENTIFIED',
+            authorId: currentUser.uid,
+            displayName: currentUser.displayName || 'Registered Witness',
+          },
+          channel: 'citizen-talk',
+          clientCaptureMs: Date.now(),
+          testimonyId: docRef.id,
+          forensicHash: testimonyData.hash,
+        });
+
+        await setDoc(docRef, {
+          evidencePack: finalPack.firestorePack,
+          packCoreHash: finalPack.packCoreHash,
+        }, { merge: true });
+      } catch (finalPackErr) {
+        console.warn('[publish] Could not finalize Evidence Pack with ID:', finalPackErr);
+      }
+    }
+
+    if (typeof window.loadEvidenceLedger === 'function') {
+      window.loadEvidenceLedger();
+    }
+    if (typeof window.loadForensicLedger === 'function') {
+      window.loadForensicLedger();
+    }
+    window.dispatchEvent(new CustomEvent('vocalWitness:posted'));
+
+    await setDoc(userRef, {
+      lastTestimonyAt: serverTimestamp()
     }, { merge: true });
 
-  } catch (finalPackErr) {
-    console.warn('[publish] Could not finalize Evidence Pack with ID:', finalPackErr);
-  }
-}
-
-// 5.1 Refresh UI ledgers and notify application components
-if (typeof window.loadEvidenceLedger === 'function') {
-  window.loadEvidenceLedger();
-}
-if (typeof window.loadForensicLedger === 'function') {
-  window.loadForensicLedger();
-}
-window.dispatchEvent(new CustomEvent('vocalWitness:posted'));
-
-// 6. Update throttle
-await setDoc(userRef, {
-  lastTestimonyAt: serverTimestamp()
-}, { merge: true });
-    
-    // ====================== SUCCESS STATE ======================
     if (testimonyData.isZkVerified) {
       showToast("🛡️ Report sealed with Zero-Knowledge proof", "success");
     } else {
@@ -824,7 +810,6 @@ await setDoc(userRef, {
       successEl.classList.remove('hidden');
       if (postBtn) postBtn.classList.add('hidden');
 
-      // Wire Download Evidence Pack
       if (downloadPackBtn) {
         downloadPackBtn.onclick = async () => {
           try {
@@ -854,7 +839,6 @@ await setDoc(userRef, {
         };
       }
 
-      // Wire "View in Public Square"
       if (viewSquareBtn) {
         viewSquareBtn.onclick = () => {
           document.getElementById('feed-container')?.scrollIntoView({
@@ -864,12 +848,10 @@ await setDoc(userRef, {
         };
       }
 
-      // Keep success visible longer so user can download the pack
       setTimeout(() => {
         successEl.classList.add('hidden');
         if (postBtn) postBtn.classList.remove('hidden');
 
-        // Reset form
         if (titleInput) titleInput.value = '';
         if (textarea) textarea.value = '';
         if (typeof mediaModule?.resetMediaState === 'function') {
@@ -879,9 +861,8 @@ await setDoc(userRef, {
         if (fileInputEl) fileInputEl.value = '';
 
         window.dispatchEvent(new CustomEvent('media-changed'));
-      }, 12000); // 12 seconds
+      }, 12000);
     } else {
-      // Fallback reset (no success UI found)
       if (titleInput) titleInput.value = '';
       if (textarea) textarea.value = '';
       if (typeof mediaModule?.resetMediaState === 'function') {
@@ -911,9 +892,9 @@ await setDoc(userRef, {
     }
   }
 };
+
 /* ====================== EVIDENCE LEDGER ====================== */
 async function loadEvidenceLedger() {
-  // Support both possible container IDs for compatibility
   const container = document.getElementById('ledger-list') ||
                     document.getElementById('ledgerContainer') ||
                     document.getElementById('evidence-ledger');
@@ -923,7 +904,6 @@ async function loadEvidenceLedger() {
     return;
   }
 
-  // Clear and show loading state
   container.innerHTML = `
     <div class="glass rounded-3xl p-6 sm:p-8 border border-zinc-700/60 shadow-2xl">
       <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-5 border-b border-zinc-800">
@@ -948,7 +928,6 @@ async function loadEvidenceLedger() {
   const innerWrapper = document.getElementById('ledgerTableInnerWrapper');
   const syncBtn = document.getElementById('syncLedgerBtn');
 
-  // Proper re-bindable refresh button (no { once: true })
   if (syncBtn) {
     syncBtn.onclick = () => {
       if (typeof window.refreshLedger === 'function') {
@@ -992,8 +971,6 @@ async function loadEvidenceLedger() {
 
     querySnapshot.forEach((docSnapshot) => {
       const data = docSnapshot.data();
-
-      // Safe timestamp handling (works with both number and Firestore Timestamp)
       const ts = data.timestamp;
       const dateStr = ts
         ? (ts.toDate ? ts.toDate() : new Date(ts)).toLocaleString()
@@ -1030,13 +1007,14 @@ async function loadEvidenceLedger() {
   }
 }
 
+window.loadEvidenceLedger = loadEvidenceLedger;
+window.refreshLedger = loadEvidenceLedger;
 
-/* ====================== LIVE BREAKING TICKER (Robust Version) ====================== */
+/* ====================== LIVE BREAKING TICKER ====================== */
 async function fetchCuratedNews() {
   const tickerEl = document.getElementById('ticker-content');
   if (!tickerEl) return;
 
-  // Avoid overlapping runs (e.g. double bootstrap)
   if (tickerEl.dataset.loading === '1') return;
   tickerEl.dataset.loading = '1';
 
@@ -1046,13 +1024,9 @@ async function fetchCuratedNews() {
     </span>
   `;
 
-  // Reliable feeds only (AllAfrica via rss2json often returns 422)
   const feeds = [
-    // Global
     { url: 'https://feeds.bbci.co.uk/news/world/rss.xml', weight: 1 },
     { url: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml', weight: 1 },
-
-    // Africa focused (higher weight)
     { url: 'https://feeds.bbci.co.uk/news/world/africa/rss.xml', weight: 2 },
     { url: 'https://www.africanews.com/feed/', weight: 2 }
   ];
@@ -1093,7 +1067,6 @@ async function fetchCuratedNews() {
               weight: feed.weight
             }));
         } catch (err) {
-          // Quiet expected proxy failures; log others once
           const msg = err?.message || String(err);
           if (!/HTTP 422|HTTP 429|timeout|AbortError/i.test(msg)) {
             console.warn(`[Ticker] Failed to load ${feed.url}:`, msg);
@@ -1110,7 +1083,6 @@ async function fetchCuratedNews() {
       }
     });
 
-    // Africa-weighted first, then light shuffle within same weight
     allHeadlines.sort((a, b) => {
       if (b.weight !== a.weight) return b.weight - a.weight;
       return Math.random() - 0.5;
@@ -1143,16 +1115,12 @@ async function fetchCuratedNews() {
       })
       .join('');
 
-       // Duplicate for seamless CSS loop
     tickerEl.innerHTML = html + html;
-
-    // Force a real animation restart (don't leave animation as "")
     tickerEl.style.animation = 'none';
-    void tickerEl.offsetWidth; // reflow
+    void tickerEl.offsetWidth;
     tickerEl.style.animation = 'ticker-scroll 55s linear infinite';
 
     console.log(`[Ticker] Loaded ${finalHeadlines.length} headlines`);
-    
   } catch (err) {
     console.warn('[Ticker] Using fallback:', err?.message || err);
     tickerEl.innerHTML = fallbackHtml + fallbackHtml;
@@ -1215,11 +1183,9 @@ function rotateFocusBanner() {
   }, 300);
 }
 
-// Start rotation once (safe if this block is evaluated more than once)
 if (!window.__vwFocusBannerTimer) {
   window.__vwFocusBannerTimer = setInterval(rotateFocusBanner, 8000);
 }
-
 
 /* ====================== UTILITIES ====================== */
 function escapeHtml(str) {
@@ -1238,9 +1204,8 @@ function setupEventListeners() {
   window.listenersInitialized = true;
   console.log("✅ Wiring application listeners...");
 
-  // ---------- Global click delegation (data-action + tabs) ----------
+  // Global click delegation (data-action + tabs)
   document.addEventListener('click', (e) => {
-    // Tab buttons
     const tabBtn = e.target.closest('#main-nav button[data-tab]');
     if (tabBtn && typeof window.switchTab === 'function') {
       e.preventDefault();
@@ -1248,20 +1213,16 @@ function setupEventListeners() {
       return;
     }
 
-    // data-action buttons
     const actionTarget = e.target.closest('[data-action]');
     if (!actionTarget) {
-      // Fallbacks for buttons without data-action
       if (e.target.closest('#data-saver-btn') || e.target.closest('#data-saver-btn-mobile')) {
         e.preventDefault();
-        const toggleFn = window.toggleDataSaver || toggleDataSaver;
-        if (typeof toggleFn === 'function') toggleFn();
+        if (typeof window.toggleDataSaver === 'function') window.toggleDataSaver();
         return;
       }
       if (e.target.closest('#openSupportModalBtn') || e.target.closest('#openSupportModalBtnMobile')) {
         e.preventDefault();
-        const supportFn = window.openSupportModal || openSupportModal;
-        if (typeof supportFn === 'function') supportFn();
+        if (typeof window.openSupportModal === 'function') window.openSupportModal();
         return;
       }
       return;
@@ -1271,36 +1232,25 @@ function setupEventListeners() {
     switch (action) {
       case 'toggle-data-saver':
         e.preventDefault();
-        {
-          const toggleFn = window.toggleDataSaver || toggleDataSaver;
-          if (typeof toggleFn === 'function') toggleFn();
-        }
+        if (typeof window.toggleDataSaver === 'function') window.toggleDataSaver();
         break;
 
       case 'open-support-modal':
         e.preventDefault();
-        {
-          const supportFn = window.openSupportModal || openSupportModal;
-          if (typeof supportFn === 'function') supportFn();
-        }
+        if (typeof window.openSupportModal === 'function') window.openSupportModal();
         break;
 
       case 'open-auth-modal':
         e.preventDefault();
-        {
-          const authFn = window.openAuthModal || openAuthModal;
-          if (typeof authFn === 'function') authFn();
-        }
+        if (typeof window.openAuthModal === 'function') window.openAuthModal();
         break;
 
       case 'open-profile':
         e.preventDefault();
         if (typeof window.openProfile === 'function') {
           window.openProfile();
-        } else if (typeof window.showProfile === 'function') {
-          window.showProfile();
-        } else if (typeof openProfile === 'function') {
-          openProfile();
+        } else if (typeof window.openProfileModal === 'function') {
+          window.openProfileModal();
         }
         break;
 
@@ -1310,157 +1260,30 @@ function setupEventListeners() {
           view.classList.add('hidden');
         });
         document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
-        {
-          const bookmarksFn = window.initBookmarksView || initBookmarksView;
-          if (typeof bookmarksFn === 'function') bookmarksFn();
+        if (typeof window.initBookmarksView === 'function') {
+          window.initBookmarksView();
+        } else if (typeof initBookmarksView === 'function') {
+          initBookmarksView();
         }
         break;
 
       case 'close-bookmarks':
         e.preventDefault();
-        {
-          const closeBookmarksFn = window.closeBookmarksView || closeBookmarksView;
-          if (typeof closeBookmarksFn === 'function') {
-            closeBookmarksFn();
-          } else {
-            console.warn("⚠️ closeBookmarksView function is not defined.");
-          }
+        if (typeof window.closeBookmarksView === 'function') {
+          window.closeBookmarksView();
         }
         break;
 
       case 'open-notifications':
-        // Handled by dedicated listeners
+        // Handled by unified dropdown system
         break;
 
       default:
         break;
     }
   });
-}
-    // ---------- More Menu (robust version) ----------
-  const moreBtn = document.getElementById('more-btn');
-  const moreMenu = document.getElementById('more-menu');
 
-  if (moreBtn && moreMenu) {
-    // Prevent double-wiring
-    if (!moreBtn.dataset.moreWired) {
-      moreBtn.dataset.moreWired = 'true';
-
-      const setOpen = (open) => {
-        moreMenu.classList.toggle('hidden', !open);
-        moreBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
-        console.log('[more-menu] setOpen →', open);
-      };
-
-      moreBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const isOpen = !moreMenu.classList.contains('hidden');
-        setOpen(!isOpen);
-
-        // Close other dropdowns
-        document.getElementById('notification-dropdown')?.classList.add('hidden');
-        document.getElementById('notification-dropdown-mobile')?.classList.add('hidden');
-      });
-
-      // Close when clicking outside
-      document.addEventListener('click', (e) => {
-        if (!moreBtn.contains(e.target) && !moreMenu.contains(e.target)) {
-          setOpen(false);
-        }
-      });
-
-      // Close on Escape
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') setOpen(false);
-      });
-    }
-  }
-
-  // ---------- Notification Toggles (accessible + reliable) ----------
-  function setNotificationOpen(dropdownId, open) {
-    const dropdown = document.getElementById(dropdownId);
-    if (!dropdown) return;
-
-    const isDesktop = dropdownId === 'notification-dropdown';
-    const btnId = isDesktop ? 'notification-btn' : 'notification-btn-mobile';
-    const btn = document.getElementById(btnId);
-
-    // Close the other dropdown first
-    const otherId = isDesktop ? 'notification-dropdown-mobile' : 'notification-dropdown';
-    const otherDropdown = document.getElementById(otherId);
-    const otherBtnId = isDesktop ? 'notification-btn-mobile' : 'notification-btn';
-    const otherBtn = document.getElementById(otherBtnId);
-
-    if (otherDropdown) {
-      otherDropdown.classList.add('hidden');
-      otherDropdown.setAttribute('aria-hidden', 'true');
-    }
-    if (otherBtn) {
-      otherBtn.setAttribute('aria-expanded', 'false');
-    }
-
-    // Close more menu if open
-    document.getElementById('more-menu')?.classList.add('hidden');
-    document.getElementById('more-btn')?.setAttribute('aria-expanded', 'false');
-
-    // Set current dropdown state
-    dropdown.classList.toggle('hidden', !open);
-    dropdown.setAttribute('aria-hidden', open ? 'false' : 'true');
-
-    if (btn) {
-      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-    }
-  }
-
-  function toggleNotification(id) {
-    const dropdown = document.getElementById(id);
-    if (!dropdown) return;
-
-    const isCurrentlyHidden = dropdown.classList.contains('hidden');
-    setNotificationOpen(id, isCurrentlyHidden); // open if currently hidden
-  }
-
-  // Desktop button
-  document.getElementById('notification-btn')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    toggleNotification('notification-dropdown');
-  });
-
-  // Mobile button
-  document.getElementById('notification-btn-mobile')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    toggleNotification('notification-dropdown-mobile');
-  });
-
-  // ---------- Global click-outside closer ----------
-  document.addEventListener('click', (e) => {
-    // More menu
-    const moreMenu = document.getElementById('more-menu');
-    const moreBtn = document.getElementById('more-btn');
-    if (moreMenu && !moreMenu.contains(e.target) && !moreBtn?.contains(e.target)) {
-      moreMenu.classList.add('hidden');
-      moreBtn?.setAttribute('aria-expanded', 'false');
-    }
-
-    // Desktop notifications
-    const notifDesktop = document.getElementById('notification-dropdown');
-    const notifBtnDesktop = document.getElementById('notification-btn');
-    if (notifDesktop && !notifDesktop.contains(e.target) && !notifBtnDesktop?.contains(e.target)) {
-      setNotificationOpen('notification-dropdown', false);
-    }
-
-    // Mobile notifications
-    const notifMobile = document.getElementById('notification-dropdown-mobile');
-    const notifBtnMobile = document.getElementById('notification-btn-mobile');
-    if (notifMobile && !notifMobile.contains(e.target) && !notifBtnMobile?.contains(e.target)) {
-      setNotificationOpen('notification-dropdown-mobile', false);
-    }
-  });
-
-  // ---------- Language selectors ----------
+  // Language selectors
   ['languageSelect', 'languageSelectMobile'].forEach(id => {
     const selectEl = document.getElementById(id);
     if (selectEl) {
@@ -1473,17 +1296,17 @@ function setupEventListeners() {
     }
   });
 
-  // ---------- Header-specific events ----------
+  // Header events from auth.js
   if (typeof bindHeaderEvents === 'function') {
     bindHeaderEvents();
   }
 
-  // ---------- Composer ----------
+  // Composer
   if (typeof initComposer === 'function') {
     initComposer();
   }
 
-  // ---------- Paystack button ----------
+  // Paystack button
   document.getElementById('paystackPayBtn')?.addEventListener('click', (e) => {
     e.preventDefault();
     const amountInput = document.getElementById('customSupportAmount');
@@ -1494,27 +1317,8 @@ function setupEventListeners() {
   });
 
   console.log("✅ Application listeners active");
+}
 
-
-/* ====================== NOTIFICATION HELPER ====================== */
-window.toggleNotificationDropdown = function (event) {
-  event?.stopPropagation();
-  toggleNotification('notification-dropdown');
-};
-window.addEventListener('error', (event) => {
-  // Benign browser noise – ignore
-  if (event.message && event.message.includes('ResizeObserver loop')) {
-    return;
-  }
-
-  console.error('🔴 Global Error:', {
-    message: event.message,
-    filename: event.filename,
-    lineno: event.lineno,
-    colno: event.colno,
-    error: event.error
-  });
-});
 /* ====================== MOBILE + GLOBAL SEARCH ====================== */
 function initHeaderSearch() {
   const mobileSearch = document.getElementById('searchInputMobile') ||
@@ -1566,7 +1370,6 @@ function initFocusBanner() {
   });
 }
 
-
 /* ====================== COMPOSER WIRING ====================== */
 function wireTestimonyComposer() {
   const postBtn = document.getElementById('postButton');
@@ -1579,23 +1382,22 @@ function wireTestimonyComposer() {
   }
   console.log('✅ Testimony composer wired (publish only)');
 }
+
 /* ====================== COMPOSER LIVE STATE ====================== */
 function initComposerLiveState() {
   const textarea = document.getElementById('mainInput');
   const titleInput = document.getElementById('testimonyTitle');
   const charCount = document.getElementById('char-count');
   const postBtn = document.getElementById('postButton');
-  const successEl = document.getElementById('publish-success');
 
   if (!textarea || !postBtn) return;
 
   const updateState = () => {
     const text = textarea.value.trim();
     const len = text.length;
-    const hasMedia = !!(window.selectedImageFile || window.selectedVideoFile || 
+    const hasMedia = !!(window.selectedImageFile || window.selectedVideoFile ||
                         (typeof getAudioForPublish === 'function' && getAudioForPublish()));
 
-    // Character counter colours
     if (charCount) {
       charCount.textContent = `${len} / 2000`;
       charCount.classList.remove('text-zinc-500', 'text-emerald-400', 'text-red-400');
@@ -1608,18 +1410,13 @@ function initComposerLiveState() {
       }
     }
 
-    // Enable / disable Publish button
     const canPublish = len >= 15 || hasMedia;
     postBtn.disabled = !canPublish;
   };
 
   textarea.addEventListener('input', updateState);
   titleInput?.addEventListener('input', updateState);
-
-  // Also listen for media changes
   window.addEventListener('media-changed', updateState);
-
-  // Initial state
   updateState();
 }
 
@@ -1634,13 +1431,11 @@ async function bootstrap() {
   console.log('%c🚀 VocalWitness Bootstrap started', 'color:#10b981;font-weight:bold');
 
   try {
-    // Core UI
     console.log('[Bootstrap] Initializing core UI...');
     initDataSaver();
     initFocusBanner();
     initHeaderSearch();
 
-    // Tier + leaderboard
     if (typeof refreshTierAndUI === 'function') {
       console.log('[Bootstrap] Refreshing tier UI...');
       refreshTierAndUI();
@@ -1649,7 +1444,6 @@ async function bootstrap() {
       loadWeeklyLeaderboard();
     }
 
-    // Auth state listener
     window.addEventListener('auth-changed', (e) => {
       const user = e.detail?.user;
       console.log("🔐 Auth state:", user ? `Logged in as ${user.uid}` : "Guest");
@@ -1665,42 +1459,35 @@ async function bootstrap() {
       showWelcomeNote();
     });
 
-    // Page wiring
     if (typeof wireIndexPage === 'function') wireIndexPage();
     if (typeof initLanguage === 'function') initLanguage();
     if (typeof initProfile === 'function') initProfile();
 
-    // Engine
     if (typeof CitizenTalkEngine === 'function' && db && storage) {
       console.log('[Bootstrap] Starting CitizenTalkEngine...');
       engineInstance = new CitizenTalkEngine(db, storage);
       window.engineInstance = engineInstance;
       mediaModule.setEngine?.(engineInstance);
 
-      // Wire Record Live Voice vs Upload existing audio (once)
       if (typeof mediaModule.initMediaButtons === 'function') {
         mediaModule.initMediaButtons();
       }
     } else {
       console.warn('[Bootstrap] CitizenTalkEngine / db / storage not ready — engine skipped');
     }
-      
-    // Navigation + news
+
     if (typeof loadDynamicNavigation === 'function') loadDynamicNavigation();
     fetchCuratedNews();
 
-    // Auth
     console.log('[Bootstrap] Initializing auth...');
     await initAuth();
 
-    // Event listeners & Live Composer State
     setupEventListeners();
 
     if (typeof initComposerLiveState === 'function') {
       initComposerLiveState();
     }
 
-    // Set initial tab
     const initialHash = window.location.hash.slice(1);
     const initialTab = (initialHash === 'citizen-talk' || !initialHash) ? 'square' : initialHash;
     console.log('[Bootstrap] Setting initial tab:', initialTab);
@@ -1713,12 +1500,19 @@ async function bootstrap() {
 
     console.log('%c✅ Bootstrap finished successfully', 'color:#10b981;font-weight:bold');
 
+    // Force splash removal after bootstrap
+    setTimeout(() => {
+      hideSplash();
+      removeSplash();
+    }, 300);
+
   } catch (e) {
     console.error('%c❌ Bootstrap error:', 'color:red;font-weight:bold', e);
     showToast?.("Failed to initialize app. Please refresh.", "error");
   }
 }
-/* ====================== AGGRESSIVE SPLASH SCREEN REMOVAL ====================== */
+
+/* ====================== SPLASH SCREEN REMOVAL ====================== */
 function removeSplash() {
   const selectors = [
     '#app-splash-screen',
@@ -1746,17 +1540,15 @@ function removeSplash() {
     });
   });
 
-  // Restore scrolling just in case
   document.body.style.overflow = '';
   document.documentElement.style.overflow = '';
 }
 
-// At the very end of the Bootstrap process (right after "✅ Bootstrap finished successfully")
 function hideSplash() {
   const splash = document.getElementById('app-splash-screen');
   if (!splash) return;
 
-  splash.classList.add('fade-out');          // optional CSS class
+  splash.classList.add('fade-out');
   splash.style.opacity = '0';
   splash.style.transition = 'opacity 0.4s ease';
   splash.style.pointerEvents = 'none';
@@ -1765,12 +1557,6 @@ function hideSplash() {
     splash.remove();
   }, 450);
 }
-
-    // Force splash removal
-    setTimeout(() => {
-      hideSplash();
-      removeSplash();
-    }, 300);
 
 /* ====================== DOM READY ====================== */
 document.addEventListener('DOMContentLoaded', async () => {
@@ -1782,7 +1568,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     removeSplash();
   }
 
-  // Wire composer after a short delay to ensure all elements exist
   setTimeout(() => {
     if (typeof wireTestimonyComposer === 'function') {
       wireTestimonyComposer();
