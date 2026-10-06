@@ -1,6 +1,8 @@
 // js/ui-events.js
 // -------------------------------------------------
 // Central event wiring – no inline handlers
+// Dropdowns (More + Notifications) are owned by main.js only
+// Auth / Profile are owned by auth.js
 // -------------------------------------------------
 
 function on(el, event, handler, options) {
@@ -12,6 +14,8 @@ function openProfileHandler(e) {
   e?.preventDefault?.();
   if (typeof window.openProfile === 'function') {
     window.openProfile();
+  } else if (typeof window.openProfileModal === 'function') {
+    window.openProfileModal();
   } else {
     window.location.href = '/profile';
   }
@@ -24,14 +28,22 @@ export function wireIndexPage() {
   // ---------- Data Saver ----------
   on(document.getElementById('data-saver-btn'), 'click', () => window.toggleDataSaver?.());
   on(document.getElementById('data-saver-btn-mobile'), 'click', () => window.toggleDataSaver?.());
-
-  // ---------- Support ----------
-  on(document.getElementById('openSupportModalBtn'), 'click', () => window.openSupportPackagesModal?.());
-  on(document.getElementById('openSupportModalBtnMobile'), 'click', () => window.openSupportPackagesModal?.());
-  on(document.getElementById('footerSupportBtn'), 'click', () => window.openSupportPackagesModal?.());
   on(document.getElementById('footer-data-saver-btn'), 'click', () => window.toggleDataSaver?.());
 
-  // ---------- Auth / Profile ----------
+  // ---------- Support ----------
+  // Use one consistent name. Prefer openSupportModal (defined in main.js)
+  const openSupport = () => {
+    if (typeof window.openSupportModal === 'function') {
+      window.openSupportModal();
+    } else if (typeof window.openSupportPackagesModal === 'function') {
+      window.openSupportPackagesModal();
+    }
+  };
+  on(document.getElementById('openSupportModalBtn'), 'click', openSupport);
+  on(document.getElementById('openSupportModalBtnMobile'), 'click', openSupport);
+  on(document.getElementById('footerSupportBtn'), 'click', openSupport);
+
+  // ---------- Auth / Profile (safety net – auth.js also handles these via delegation) ----------
   document.querySelectorAll('[data-action="open-auth-modal"]').forEach((btn) => {
     on(btn, 'click', () => window.openAuthModal?.());
   });
@@ -40,11 +52,18 @@ export function wireIndexPage() {
 
   // ---------- Bookmarks ----------
   document.querySelectorAll('[data-action="open-bookmarks"]').forEach((btn) => {
-    on(btn, 'click', () => window.openBookmarks?.());
+    on(btn, 'click', () => {
+      if (typeof window.openBookmarks === 'function') {
+        window.openBookmarks();
+      } else if (typeof window.initBookmarksView === 'function') {
+        window.initBookmarksView();
+      }
+    });
   });
 
   // ---------- Focus banner ----------
   on(document.getElementById('dismiss-focus-banner'), 'click', () => {
+    localStorage.setItem('vw_focus_banner_dismissed', '1');
     document.getElementById('focus-banner')?.remove();
   });
 
@@ -59,22 +78,23 @@ export function wireIndexPage() {
   // ---------- Feed filter pills ----------
   document.querySelectorAll('.feed-pill[data-filter]').forEach((pill) => {
     on(pill, 'click', () => {
-      document.querySelectorAll('.feed-pill').forEach((p) => p.classList.remove('active', 'bg-emerald-500', 'text-black'));
+      document.querySelectorAll('.feed-pill').forEach((p) => {
+        p.classList.remove('active', 'bg-emerald-500', 'text-black');
+      });
       pill.classList.add('active', 'bg-emerald-500', 'text-black');
       window.applyFeedFilter?.(pill.dataset.filter);
     });
   });
 
   // ---------- Main nav tabs ----------
-  document.querySelectorAll('.nav-tab[data-tab]').forEach((tab) => {
-    on(tab, 'click', () => {
-      document.querySelectorAll('.nav-tab').forEach((t) => {
-        t.classList.remove('active', 'bg-emerald-500', 'text-black', 'border-emerald-400/50');
-        t.setAttribute('aria-selected', 'false');
-      });
-      tab.classList.add('active', 'bg-emerald-500', 'text-black', 'border-emerald-400/50');
-      tab.setAttribute('aria-selected', 'true');
-      window.switchMainTab?.(tab.dataset.tab);
+  // IMPORTANT: use the real function name switchTab (not switchMainTab)
+  document.querySelectorAll('.nav-tab[data-tab], #main-nav button[data-tab]').forEach((tab) => {
+    on(tab, 'click', (e) => {
+      e.preventDefault();
+      const tabName = tab.dataset.tab;
+      if (tabName && typeof window.switchTab === 'function') {
+        window.switchTab(tabName);
+      }
     });
   });
 
@@ -104,6 +124,7 @@ export function wireIndexPage() {
   on(document.getElementById('rec-pause-btn'), 'click', () => window.pauseRecording?.());
   on(document.getElementById('rec-stop-btn'), 'click', () => window.stopRecording?.());
   on(document.getElementById('rec-replay-btn'), 'click', () => window.replayRecording?.());
+  on(document.getElementById('rec-rerecord-btn'), 'click', () => window.rerecordVoice?.());
   on(document.getElementById('verify-voice-btn'), 'click', () => window.verifyVoiceRecording?.());
   on(document.getElementById('postButton'), 'click', () => window.publishTestimony?.());
   on(document.getElementById('feedSortSelect'), 'change', (e) => window.applyFeedSort?.(e.target.value));
@@ -113,12 +134,13 @@ export function wireIndexPage() {
   on(document.getElementById('refreshLedgerBtn'), 'click', () => window.refreshLedger?.());
 
   // ========== LIVE ARENA ==========
+  on(document.getElementById('createRoomBtn'), 'click', () => window.createLiveRoom?.());
   on(document.getElementById('notifyArenaBtn'), 'click', () => window.notifyLiveArena?.());
 
   // ========== MY CIRCLE ==========
   on(document.getElementById('startPhoneVerificationBtn'), 'click', () => window.startPhoneVerification?.());
   on(document.getElementById('startZKVerificationBtn'), 'click', () => {
-    window.startZKUpgrade?.() || window.startZKVerification?.();
+    (window.startZKUpgrade || window.startZKVerification)?.();
   });
 
   document.querySelectorAll('[data-circle-tab]').forEach((btn) => {
@@ -133,7 +155,7 @@ export function wireIndexPage() {
     });
   });
 
-  // ========== TRUSTED VOICES ==========
+  // ========== TRUSTED VOICES / WITNESS ==========
   on(document.getElementById('witness-search'), 'input', (e) => {
     window.filterTrustedVoices?.(e.target.value);
   });
@@ -169,14 +191,25 @@ export function wireIndexPage() {
   on(document.getElementById('customSupportAmount'), 'input', (e) => {
     window.setSupportAmount?.(Number(e.target.value) || 0);
   });
-  on(document.getElementById('paystackPayBtn'), 'click', () => window.startPaystackPayment?.());
+  on(document.getElementById('paystackPayBtn'), 'click', () => {
+    if (typeof window.initiatePayment === 'function') {
+      const amountInput = document.getElementById('customSupportAmount');
+      const amount = amountInput ? parseFloat(amountInput.value) || 15 : 15;
+      window.initiatePayment(amount);
+    } else {
+      window.startPaystackPayment?.();
+    }
+  });
   on(document.getElementById('proceedCryptoBtn'), 'click', () => window.startCryptoPayment?.());
   on(document.getElementById('copyUsdtBtn'), 'click', () => window.copyUsdtAddress?.());
   on(document.getElementById('supportModal'), 'click', (e) => {
     if (e.target.id === 'supportModal') window.closeSupportModal?.();
   });
+
+  console.log('[ui-events] wireIndexPage complete (dropdowns left to main.js)');
 }
 
+// Auto-run once DOM is ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', wireIndexPage);
 } else {
