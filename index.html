@@ -689,188 +689,170 @@
     </div>
   </div>
 </div>
-  <!-- ========== 1. PUBLIC SQUARE ========== -->
-  <section id="public-square" 
-           data-view="citizenTalkView" 
-           role="tabpanel" 
-           aria-labelledby="public-square-title"
-           aria-hidden="false">
-    
-    <div class="mb-6">
-      <h2 id="public-square-title" class="text-2xl sm:text-3xl font-bold text-white">
-        Public Square
-      </h2>
-      <p class="mt-1 text-sm text-zinc-400">
-        Where Citizens speak and evidence is preserved
-      </p>
-    </div>
+<!-- ========== 1. PUBLIC SQUARE ========== -->
+<section id="public-square" 
+         data-view="citizenTalkView" 
+         role="tabpanel" 
+         aria-labelledby="public-square-title"
+         aria-hidden="false">
 
-    <!-- Quick Latest Reports Teaser (shown when feed is empty) -->
-<div id="latest-teaser" class="mb-6 hidden rounded-2xl border border-zinc-800 bg-zinc-900/60 px-4 py-3">
-  <div class="flex items-center justify-between">
-    <p class="text-sm font-medium text-zinc-300">
-      <span class="text-emerald-400">●</span> Latest sealed reports will appear here
+  <!-- Title -->
+  <div class="mb-5">
+    <h2 id="public-square-title" class="text-2xl sm:text-3xl font-bold text-white">
+      Public Square
+    </h2>
+    <p class="mt-1 text-sm text-zinc-400">
+      Where Citizens speak and evidence is preserved
     </p>
-    <button type="button" 
-            onclick="document.getElementById('feed-container')?.scrollIntoView({behavior:'smooth'})"
-            class="text-xs font-medium text-emerald-400 hover:underline">
-      View all ↓
-    </button>
   </div>
-</div>
 
   <!-- ==================================================
-     COMPOSER / PUBLISH TESTIMONY
-     (Speak as a Citizen + Media + Publish)
-     ================================================== -->
-<div class="glass mb-8 rounded-3xl border border-zinc-800/80 p-5 shadow-xl sm:p-6">
-      
-  <!-- Hidden file inputs -->
- <!-- Photo: gallery + camera, broad accept -->
-<input type="file"
-       id="photoInput"
-       accept="image/*"
-       class="hidden">
+       COMPACT STATUS COMPOSER (Facebook / LinkedIn style)
+       ================================================== -->
+  <div id="compact-composer" class="glass mb-6 rounded-2xl border border-zinc-800/80 p-4 shadow-lg transition-all">
 
-<!-- Video: gallery + camera, broad accept -->
-<input type="file"
-       id="videoInput"
-       accept="video/*"
-       class="hidden">
+    <!-- Hidden file inputs (must stay) -->
+    <input type="file" id="photoInput" accept="image/*" class="hidden">
+    <input type="file" id="videoInput" accept="video/*" class="hidden">
+    <input type="file" id="audioInput" accept="audio/*" class="hidden">
 
-<!-- Audio -->
-<input type="file"
-       id="audioInput"
-       accept="audio/*"
-       class="hidden">
-  
-
-  <!-- Speak Zone Header -->
-  <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-    <div>
-      <h3 class="text-xl font-bold text-white">Speak as a Citizen</h3>
-      <p class="mt-1 text-sm text-zinc-400">Your report can be sealed and added to the public record</p>
+    <!-- ========== COLLAPSED VIEW (default) ========== -->
+    <div id="composer-collapsed" 
+         class="flex items-center gap-3 cursor-pointer group"
+         onclick="expandComposer()">
+      <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-xl text-emerald-400 group-hover:bg-emerald-500/25 transition">
+        🗣️
+      </div>
+      <div class="flex-1 rounded-full border border-zinc-700 bg-zinc-900/70 px-5 py-3.5 text-sm text-zinc-400 transition
+                  group-hover:border-emerald-500/50 group-hover:bg-zinc-900 group-hover:text-zinc-300">
+        What did you see or experience? Speak as a Citizen…
+      </div>
+      <div class="hidden sm:flex items-center gap-1.5 text-xs text-zinc-500">
+        <span class="rounded-full bg-zinc-800 px-2.5 py-1">🎤</span>
+        <span class="rounded-full bg-zinc-800 px-2.5 py-1">📷</span>
+      </div>
     </div>
-    <select id="targetFeedSelect" 
-            class="rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-emerald-400 
-                   focus:border-emerald-500 focus:outline-none">
-      <option value="citizen-talk">Citizen Talk (Open)</option>
-      <option value="witness-voice">Witness Voice (Higher Trust)</option>
-    </select>
-  </div>
-      <!-- Title -->
+
+    <!-- ========== EXPANDED VIEW ========== -->
+    <div id="composer-expanded" class="hidden space-y-4">
+
+      <!-- Header + channel -->
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 class="text-lg font-bold text-white">Speak as a Citizen</h3>
+          <p class="text-xs text-zinc-400">Your report will be sealed and added to the permanent public record</p>
+        </div>
+        <select id="targetFeedSelect" 
+                class="rounded-xl border border-zinc-700 bg-zinc-900 px-3.5 py-2 text-sm font-medium text-emerald-400 
+                       focus:border-emerald-500 focus:outline-none">
+          <option value="citizen-talk">Citizen Talk (Open)</option>
+          <option value="witness-voice">Witness Voice (Higher Trust)</option>
+        </select>
+      </div>
+
+      <!-- Optional title -->
       <input type="text" id="testimonyTitle" maxlength="120" 
              placeholder="Add a short title (optional)"
-             class="mb-4 w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-5 py-3.5 text-base text-white 
+             class="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm text-white 
                     placeholder-zinc-500 focus:border-emerald-500 focus:outline-none transition">
 
-      <!-- Main Text -->
-      <textarea id="mainInput" rows="4" maxlength="2000"
+      <!-- Main text -->
+      <textarea id="mainInput" rows="3" maxlength="2000"
           placeholder="What did you see or experience? Speak clearly and stick to the facts..."
-          class="w-full resize-none rounded-2xl border border-zinc-700 bg-zinc-900 p-5 text-base text-white 
+          class="w-full resize-none rounded-xl border border-zinc-700 bg-zinc-900 p-4 text-sm text-white 
                  placeholder-zinc-500 focus:border-emerald-500 focus:outline-none transition"></textarea>
-      <div class="mb-5 mt-1.5 flex justify-end">
-        <span id="char-count" class="text-xs text-zinc-500 transition-colors duration-200">0 / 2000</span>
+      <div class="flex justify-end -mt-2">
+        <span id="char-count" class="text-xs text-zinc-500">0 / 2000</span>
       </div>
 
-      <!-- LIVE VOICE & RECORDING SECTION -->
-      <div class="space-y-4 mb-6">
-        <div id="voice-section" class="rounded-2xl border-2 border-emerald-500/40 bg-emerald-500/5 overflow-hidden">
-          
-          <button id="btn-voice" type="button"
-                  class="flex w-full items-center justify-center gap-3 px-5 py-4 text-base font-semibold text-emerald-400 transition-all
-                         hover:bg-emerald-500 hover:text-zinc-950 active:scale-[0.98]">
-            <svg class="h-6 w-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                    d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z"/>
-            </svg>
-            <span id="btn-voice-text">Record Live Voice</span>
-            <span id="btn-voice-badge" class="ml-1 rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-medium text-emerald-300">
-              Recommended
-            </span>
-          </button>
+      <!-- Media action row -->
+      <div class="flex flex-wrap items-center gap-2">
+        <button id="btn-voice" type="button"
+                class="inline-flex items-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-500/10 
+                       px-3.5 py-2.5 text-sm font-semibold text-emerald-400 
+                       hover:bg-emerald-500 hover:text-zinc-950 active:scale-95 transition">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                  d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z"/>
+          </svg>
+          Live Voice
+          <span class="rounded-full bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-medium">Rec</span>
+        </button>
 
-          <div id="voice-instruction" class="border-t border-emerald-500/20 bg-zinc-900/40 px-5 py-2.5 text-center text-xs text-zinc-400">
-            Live voice carries stronger weight as evidence. Speak clearly.
-          </div>
+        <button id="btn-photo" type="button"
+                class="inline-flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800/80 
+                       px-3.5 py-2.5 text-sm font-medium text-emerald-400 
+                       hover:border-emerald-500 hover:bg-zinc-800 active:scale-95 transition">
+          📷 Photo
+        </button>
 
-          <div id="voice-recorder-bar" class="hidden border-t border-emerald-500/20 bg-zinc-900/70 p-4">
-            <div class="flex flex-wrap items-center gap-3">
-              <div class="flex min-w-[70px] items-center gap-2">
-                <span id="rec-indicator" class="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500" aria-hidden="true"></span>
-                <span id="rec-timer" class="font-mono text-sm text-emerald-400">00:00</span>
-              </div>
-              <button id="verify-voice-btn" type="button"
-                      class="rounded-xl bg-blue-600/80 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-600">
-                🛡️ Verify
-              </button>
-              <canvas id="rec-waveform" width="180" height="36" class="max-w-[200px] flex-1 rounded bg-zinc-950" aria-hidden="true"></canvas>
-              <div class="ml-auto flex items-center gap-2">
-                <button id="rec-pause-btn" type="button"
-                        class="rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700">
-                  ⏸ Pause
-                </button>
-                <button id="rec-stop-btn" type="button"
-                        class="rounded-xl bg-red-600/80 px-3 py-1.5 text-xs text-white hover:bg-red-600">
-                  ⏹ Stop
-                </button>
-                <button id="rec-replay-btn" type="button"
-                        class="hidden rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700">
-                  ↻ Replay
-                </button>
-                <button id="rec-rerecord-btn" type="button"
-                        class="hidden rounded-xl border border-amber-600/60 bg-amber-900/40 px-3 py-1.5 text-xs text-amber-300 hover:bg-amber-800/50">
-                  ↺ Re-record
-                </button>
-              </div>
+        <button id="btn-video" type="button"
+                class="inline-flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800/80 
+                       px-3.5 py-2.5 text-sm font-medium text-sky-400 
+                       hover:border-sky-500 hover:bg-zinc-800 active:scale-95 transition">
+          🎬 Video
+        </button>
+
+        <button id="btn-upload-audio" type="button"
+                class="text-xs text-zinc-400 hover:text-emerald-400 underline-offset-2 hover:underline transition ml-1">
+          Upload audio
+        </button>
+      </div>
+
+      <!-- Voice recorder section (full power kept) -->
+      <div id="voice-section" class="rounded-xl border border-emerald-500/30 bg-emerald-500/5 overflow-hidden">
+        <div id="voice-instruction" class="px-4 py-2 text-center text-xs text-zinc-400 border-b border-emerald-500/20">
+          Live voice carries stronger weight as evidence. Speak clearly.
+        </div>
+
+        <div id="voice-recorder-bar" class="hidden p-4">
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="flex min-w-[70px] items-center gap-2">
+              <span id="rec-indicator" class="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500"></span>
+              <span id="rec-timer" class="font-mono text-sm text-emerald-400">00:00</span>
             </div>
-            <audio id="rec-replay-audio" class="hidden"></audio>
+            <button id="verify-voice-btn" type="button"
+                    class="rounded-lg bg-blue-600/80 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-600">
+              🛡️ Verify
+            </button>
+            <canvas id="rec-waveform" width="160" height="32" class="max-w-[180px] flex-1 rounded bg-zinc-950"></canvas>
+            <div class="ml-auto flex items-center gap-2">
+              <button id="rec-pause-btn" type="button"
+                      class="rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700">
+                ⏸ Pause
+              </button>
+              <button id="rec-stop-btn" type="button"
+                      class="rounded-lg bg-red-600/80 px-3 py-1.5 text-xs text-white hover:bg-red-600">
+                ⏹ Stop
+              </button>
+              <button id="rec-replay-btn" type="button"
+                      class="hidden rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white hover:bg-zinc-700">
+                ↻ Replay
+              </button>
+              <button id="rec-rerecord-btn" type="button"
+                      class="hidden rounded-lg border border-amber-600/60 bg-amber-900/40 px-3 py-1.5 text-xs text-amber-300 hover:bg-amber-800/50">
+                ↺ Re-record
+              </button>
+            </div>
           </div>
-
-          <div id="mic-permission-msg" class="hidden border-t border-amber-500/20 bg-amber-950/30 p-4 text-xs text-amber-200">
-            <!-- filled by media.js -->
-          </div>
+          <audio id="rec-replay-audio" class="hidden"></audio>
         </div>
 
-        <!-- Photo + Video -->
-        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <button id="btn-photo" type="button"
-                  class="flex items-center justify-center gap-2.5 rounded-2xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 font-medium text-emerald-400 transition-all
-                         hover:border-emerald-500 hover:bg-zinc-800">
-            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-            </svg>
-            Add Photo
-          </button>
-          <button id="btn-video" type="button"
-                  class="flex items-center justify-center gap-2.5 rounded-2xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 font-medium text-sky-400 transition-all
-                         hover:border-sky-500 hover:bg-zinc-800">
-            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                    d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-            </svg>
-            Add Video
-          </button>
+        <div id="mic-permission-msg" class="hidden border-t border-amber-500/20 bg-amber-950/30 p-4 text-xs text-amber-200">
+          <!-- filled by media.js -->
         </div>
-
-               <div class="text-center">
-          <button id="btn-upload-audio" type="button"
-                  class="text-sm text-zinc-400 underline-offset-2 hover:text-emerald-400 hover:underline transition">
-            Or upload existing audio file
-          </button>
-        </div>
+      </div>
 
       <!-- Preview Area -->
-      <div id="preview-area" class="mt-5 flex min-h-[110px] flex-wrap items-center justify-center gap-4 rounded-2xl border border-dashed border-zinc-700 bg-zinc-900/50 p-5 text-sm text-zinc-500">
+      <div id="preview-area" class="min-h-[90px] flex flex-wrap items-center justify-center gap-3 rounded-xl border border-dashed border-zinc-700 bg-zinc-900/50 p-4 text-sm text-zinc-500">
         <div id="preview-empty" class="text-center">
-          <p>Preview will appear here...</p>
-          <p class="mt-1 text-xs text-zinc-600">Live voice, photos, videos or uploaded audio will show here</p>
+          <p class="text-sm">Preview will appear here...</p>
+          <p class="mt-1 text-xs text-zinc-600">Live voice, photos, videos or audio</p>
         </div>
       </div>
 
-      <!-- Upload Progress (moved above publish button) -->
-      <div id="upload-progress-container" class="mt-5 mb-4 hidden">
+      <!-- Upload Progress -->
+      <div id="upload-progress-container" class="hidden">
         <div class="mb-1 flex justify-between text-xs text-zinc-400">
           <span id="upload-status-text">Uploading media...</span>
           <span id="upload-progress-pct">0%</span>
@@ -880,82 +862,85 @@
         </div>
       </div>
 
-      <!-- Publish Button -->
-      <button id="postButton" type="button"
-              class="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 py-4 text-base font-bold text-black shadow-lg shadow-emerald-500/25 transition-all
-                     hover:bg-emerald-400 hover:shadow-emerald-500/40
-                     active:scale-[0.98] active:bg-emerald-600
-                     disabled:opacity-60 disabled:cursor-not-allowed">
-        <span data-i18n="postButton">Publish Report</span>
+      <!-- Actions -->
+      <div class="flex items-center justify-between gap-3 pt-1">
+        <button type="button" onclick="collapseComposer()"
+                class="rounded-xl px-4 py-2.5 text-sm font-medium text-zinc-400 hover:bg-zinc-800 hover:text-white transition">
+          Cancel
+        </button>
+        <button id="postButton" type="button"
+                class="rounded-xl bg-emerald-500 px-7 py-2.5 text-sm font-bold text-black shadow-lg shadow-emerald-500/25 
+                       hover:bg-emerald-400 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed transition">
+          <span data-i18n="postButton">Publish Report</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success state after publish -->
+  <div id="publish-success" class="mb-6 hidden rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-5 text-center">
+    <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/20 text-2xl">
+      🛡️
+    </div>
+    <h4 class="text-lg font-bold text-white">Report sealed and published</h4>
+    <p class="mt-1.5 text-sm text-zinc-400">
+      Your evidence is now part of the permanent public record.
+    </p>
+    <div class="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-center">
+      <button type="button" id="download-pack-after-publish"
+              class="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-bold text-black shadow-lg shadow-emerald-500/25 transition hover:bg-emerald-400 active:scale-[0.98]">
+        📥 Download Evidence Pack
+      </button>
+      <button type="button" id="view-in-square-btn"
+              class="inline-flex items-center justify-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-900 px-5 py-3 text-sm font-medium text-zinc-200 transition hover:bg-zinc-800">
+        View in Public Square ↓
       </button>
     </div>
-
-    <!-- Success state after publish -->
-<div id="publish-success" class="mt-4 hidden rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-5 text-center">
-  <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/20 text-2xl">
-    🛡️
-  </div>
-  <h4 class="text-lg font-bold text-white">Report sealed and published</h4>
-  <p class="mt-1.5 text-sm text-zinc-400">
-    Your evidence is now part of the permanent public record.
-  </p>
-
-  <div class="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-center">
-    <button type="button"
-            id="download-pack-after-publish"
-            class="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-bold text-black shadow-lg shadow-emerald-500/25 transition hover:bg-emerald-400 active:scale-[0.98]">
-      📥 Download Evidence Pack
-    </button>
-    <button type="button"
-            id="view-in-square-btn"
-            class="inline-flex items-center justify-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-900 px-5 py-3 text-sm font-medium text-zinc-200 transition hover:bg-zinc-800">
-      View in Public Square ↓
-    </button>
-  </div>
-
-  <p class="mt-3 text-xs text-zinc-500">
-    Safe verification file with cryptographic hashes. No app installed.
-  </p>
-</div>
-    
-
-    <!-- Recent Reports -->
-    <div id="feed-container" class="space-y-6">
-      <div class="flex items-center justify-between">
-        <h3 id="feed-title" class="text-lg font-bold text-white">Recent Reports in the Square</h3>
-        <div class="flex items-center gap-2 text-xs text-zinc-400">
-          <span>Sort:</span>
-          <select id="feedSortSelect" class="rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 py-1.5 text-zinc-300 focus:border-emerald-500 focus:outline-none">
-            <option value="latest">Latest</option>
-            <option value="verified">Verified First</option>
-            <option value="trending">Trending</option>
-          </select>
-        </div>
-      </div>
-     <div id="testimonies-feed" class="space-y-4">
-  <!-- Strong Empty State -->
-  <div id="empty-feed-state" class="rounded-3xl border border-dashed border-emerald-500/30 bg-zinc-900/50 px-6 py-16 text-center">
-    <div class="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10 text-3xl">
-      🗣️
-    </div>
-    <h4 class="text-xl font-bold text-white">The Square is waiting for the first sealed reports</h4>
-    <p class="mx-auto mt-3 max-w-md text-sm leading-relaxed text-zinc-400">
-      Be among the first citizens to publish a cryptographically sealed report. 
-      Your voice becomes part of the permanent public record.
+    <p class="mt-3 text-xs text-zinc-500">
+      Safe verification file with cryptographic hashes. No app installed.
     </p>
-    <button type="button" 
-            onclick="document.getElementById('mainInput')?.focus(); document.getElementById('btn-voice')?.scrollIntoView({behavior:'smooth', block:'center'});"
-            class="mt-7 inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-6 py-3.5 text-sm font-bold text-black shadow-lg shadow-emerald-500/25 transition hover:bg-emerald-400 active:scale-[0.98]">
-      <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z"/>
-      </svg>
-      Record Live Voice Now
-    </button>
-    <p class="mt-4 text-xs text-zinc-500">Recommended • Stronger evidence weight</p>
   </div>
-</div>
-  </section>
 
+  <!-- ==================================================
+       FEED (now right under the composer)
+       ================================================== -->
+  <div id="feed-container" class="space-y-5">
+    <div class="flex items-center justify-between">
+      <h3 id="feed-title" class="text-lg font-bold text-white">Recent Reports in the Square</h3>
+      <div class="flex items-center gap-2 text-xs text-zinc-400">
+        <span>Sort:</span>
+        <select id="feedSortSelect" 
+                class="rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 py-1.5 text-zinc-300 focus:border-emerald-500 focus:outline-none">
+          <option value="latest">Latest</option>
+          <option value="verified">Verified First</option>
+          <option value="trending">Trending</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="testimonies-feed" class="space-y-4">
+      <!-- Strong Empty State (only shows when truly empty) -->
+      <div id="empty-feed-state" class="rounded-3xl border border-dashed border-emerald-500/30 bg-zinc-900/40 px-6 py-14 text-center">
+        <div class="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10 text-3xl">
+          🗣️
+        </div>
+        <h4 class="text-xl font-bold text-white">The Square is waiting for sealed reports</h4>
+        <p class="mx-auto mt-3 max-w-md text-sm leading-relaxed text-zinc-400">
+          Be among the first citizens to publish a cryptographically sealed report. 
+          Your voice becomes part of the permanent public record.
+        </p>
+        <button type="button" 
+                onclick="expandComposer(); document.getElementById('mainInput')?.focus();"
+                class="mt-7 inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-6 py-3.5 text-sm font-bold text-black shadow-lg shadow-emerald-500/25 transition hover:bg-emerald-400 active:scale-[0.98]">
+          🎤 Speak as a Citizen Now
+        </button>
+        <p class="mt-4 text-xs text-zinc-500">Live voice carries stronger evidence weight</p>
+      </div>
+    </div>
+  </div>
+
+</section>
+  
 <!-- ========== 2. IMMUTABLE RECORD ========== -->
   <section id="evidence-ledger" class="hidden space-y-6" role="tabpanel" aria-label="Immutable Record" aria-hidden="true">
     <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
