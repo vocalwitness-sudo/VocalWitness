@@ -1,116 +1,101 @@
-{
-  "firestore": {
-    "rules": "firestore.rules",
-    "indexes": "firestore.indexes.json"
-  },
-  "storage": {
-    "rules": "storage.rules"
-  },
-  "hosting": {
-    "public": ".",
-    "cleanUrls": true,
-    "trailingSlash": false,
-    "rewrites": [
-      { "source": "/witness-voice", "destination": "/witness-voice.html" },
-      { "source": "/about", "destination": "/about.html" },
-      { "source": "/privacy", "destination": "/privacy.html" },
-      { "source": "/terms", "destination": "/terms.html" },
-      { "source": "/safety", "destination": "/safety.html" },
-      { "source": "/groups", "destination": "/groups.html" },
-      { "source": "/my-testimonies", "destination": "/my-testimonies.html" },
-      { "source": "/dao", "destination": "/dao.html" },
-      { "source": "/admin", "destination": "/admin.html" },
-      { "source": "/moderation", "destination": "/moderation.html" },
-      { "source": "/forensic-ledger", "destination": "/forensic-ledger.html" },
-      { "source": "/true-witness", "destination": "/true-witness.html" },
-      { "source": "/verify", "destination": "/verify.html" },
-      { "source": "/transparency", "destination": "/transparency.html" },
-      { "source": "/legal", "destination": "/legal.html" },
-      { "source": "/p/**", "function": "ogPost" },
-      { "source": "/share/**", "function": "ogPost" },
-      { "source": "/profile", "destination": "/profile.html" }
-    ],
-    "ignore": [
-      "firebase.json",
-      "**/node_modules/**",
-      "functions/**",
-      ".git/**",
-      ".github/**",
-      "package.json",
-      "package-lock.json",
-      "vite.config.js",
-      "input.css",
-      "DEPLOY_CHECKLIST.md",
-      "*.md"
-    ],
+"headers": [
+  {
+    "source": "**",
     "headers": [
       {
-        "source": "**",
-        "headers": [
-          { "key": "Cross-Origin-Opener-Policy", "value": "unsafe-none" },
-          { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains; preload" },
-          { "key": "X-Content-Type-Options", "value": "nosniff" },
-          { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
-          { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-       {
-  "key": "Content-Security-Policy",
-  "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://apis.google.com https://accounts.google.com https://www.google.com https://www.gstatic.com/recaptcha/ https://www.recaptcha.net https://js.paystack.co https://static.cloudflareinsights.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://challenges.cloudflare.com https://vocalwitness.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; media-src 'self' blob: data: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebasestorage.googleapis.com https://content-firebaseappcheck.googleapis.com https://*.cloudfunctions.net https://us-central1-vocalwitness-3affa.cloudfunctions.net https://api.rss2json.com https://media.vocalwitness.com https://api.paystack.co https://static.cloudflareinsights.com https://*.cloudflare.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://vocalwitness.com https://*.vocalwitness.com blob: data:; worker-src 'self' blob:; child-src 'self' blob:; frame-src 'self' https://accounts.google.com https://apis.google.com https://js.paystack.co https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self';"
-}
-        ]
+        "key": "Cross-Origin-Opener-Policy",
+        "value": "unsafe-none"
       },
       {
-        "source": "sw.js",
-        "headers": [
-          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
-          { "key": "Content-Type", "value": "application/javascript; charset=utf-8" }
-        ]
+        "key": "Strict-Transport-Security",
+        "value": "max-age=31536000; includeSubDomains; preload"
       },
       {
-        "source": "**/*.html",
-        "headers": [
-          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
-        ]
+        "key": "X-Content-Type-Options",
+        "value": "nosniff"
       },
       {
-        "source": "**/*.js",
-        "headers": [
-          { "key": "Content-Type", "value": "application/javascript; charset=utf-8" }
-        ]
+        "key": "X-Frame-Options",
+        "value": "SAMEORIGIN"
       },
       {
-        "source": "**/*.css",
-        "headers": [
-          { "key": "Content-Type", "value": "text/css; charset=utf-8" }
-        ]
+        "key": "Referrer-Policy",
+        "value": "strict-origin-when-cross-origin"
       },
       {
-        "source": "**/*.wasm",
-        "headers": [
-          { "key": "Content-Type", "value": "application/wasm" },
-          { "key": "Cache-Control", "value": "max-age=31536000, immutable" }
-        ]
+        "key": "Permissions-Policy",
+        "value": "camera=(), microphone=(self), geolocation=(), payment=(self)"
       },
       {
-        "source": "**/*.zkey",
-        "headers": [
-          { "key": "Content-Type", "value": "application/octet-stream" },
-          { "key": "Cache-Control", "value": "max-age=31536000, immutable" }
-        ]
+        "key": "Content-Security-Policy",
+        "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://apis.google.com https://accounts.google.com https://www.google.com https://www.gstatic.com/recaptcha/ https://www.recaptcha.net https://js.paystack.co https://static.cloudflareinsights.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; media-src 'self' blob: data: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebasestorage.googleapis.com https://content-firebaseappcheck.googleapis.com https://*.cloudfunctions.net https://us-central1-vocalwitness-3affa.cloudfunctions.net https://api.rss2json.com https://media.vocalwitness.com https://api.paystack.co https://static.cloudflareinsights.com https://*.cloudflare.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://vocalwitness.com https://*.vocalwitness.com blob: data:; worker-src 'self' blob:; child-src 'self' blob:; frame-src 'self' https://accounts.google.com https://apis.google.com https://js.paystack.co https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self';"
       }
     ]
   },
-  "functions": [
-    {
-      "source": "functions",
-      "codebase": "default",
-      "disallowLegacyRuntimeConfig": true,
-      "ignore": [
-        "node_modules",
-        ".git",
-        "firebase-debug.log",
-        "firebase-debug.*.log",
-        "*.local"
-      ]
-    }
-  ]
-}
+  {
+    "source": "sw.js",
+    "headers": [
+      {
+        "key": "Cache-Control",
+        "value": "no-cache, no-store, must-revalidate"
+      },
+      {
+        "key": "Content-Type",
+        "value": "application/javascript; charset=utf-8"
+      }
+    ]
+  },
+  {
+    "source": "**/*.html",
+    "headers": [
+      {
+        "key": "Cache-Control",
+        "value": "no-cache, no-store, must-revalidate"
+      }
+    ]
+  },
+  {
+    "source": "**/*.js",
+    "headers": [
+      {
+        "key": "Content-Type",
+        "value": "application/javascript; charset=utf-8"
+      }
+    ]
+  },
+  {
+    "source": "**/*.css",
+    "headers": [
+      {
+        "key": "Content-Type",
+        "value": "text/css; charset=utf-8"
+      }
+    ]
+  },
+  {
+    "source": "**/*.wasm",
+    "headers": [
+      {
+        "key": "Content-Type",
+        "value": "application/wasm"
+      },
+      {
+        "key": "Cache-Control",
+        "value": "max-age=31536000, immutable"
+      }
+    ]
+  },
+  {
+    "source": "**/*.zkey",
+    "headers": [
+      {
+        "key": "Content-Type",
+        "value": "application/octet-stream"
+      },
+      {
+        "key": "Cache-Control",
+        "value": "max-age=31536000, immutable"
+      }
+    ]
+  }
+]
