@@ -278,6 +278,7 @@ function wireTabButtons() {
 }
 
 /* ====================== UNIFIED DROPDOWN SYSTEM ====================== */
+/* ====================== DROPDOWN WIDGET ====================== */
 function createDropdown(btnId, menuId) {
   const btn = document.getElementById(btnId);
   const menu = document.getElementById(menuId);
@@ -340,7 +341,6 @@ function createDropdown(btnId, menuId) {
   menu.setAttribute('data-dropdown-menu', '');
   console.log(`[dropdown] Wired #${btnId} → #${menuId}`);
 }
-
 function initAllDropdowns() {
   createDropdown('more-btn', 'more-menu');
   createDropdown('notification-btn', 'notification-dropdown');
@@ -1317,7 +1317,7 @@ function setupEventListeners() {
   });
 
   console.log("✅ Application listeners active");
-}
+} // ← function ends here
 
 /* ====================== MOBILE + GLOBAL SEARCH ====================== */
 function initHeaderSearch() {
