@@ -64,10 +64,6 @@ function timeAgo(date) {
 /**
  * Returns the quiet "Edited · 2h ago" label if the post was edited
  */
-function getEditedLabel(data) {
-  if (!data.editedAt) return '';
-  return `<span class="text-[11px] text-zinc-500 ml-1.5">· Edited ${timeAgo(data.editedAt)}</span>`;
-}
 
 // ========== SHARE HELPERS (High-value platforms) ==========
 function openShareMenu(shareUrl, title, text) {
