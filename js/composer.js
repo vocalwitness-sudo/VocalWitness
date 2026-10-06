@@ -452,6 +452,52 @@ export async function handleAudioSelectAction(event) {
   window.dispatchEvent(new CustomEvent('media-changed'));
 }
 
+// ======================================================
+// COMPACT COMPOSER EXPAND / COLLAPSE (Facebook-style)
+// ======================================================
+
+/**
+ * Expand the compact status box into the full composer
+ */
+export function expandComposer() {
+  const collapsed = document.getElementById('composer-collapsed');
+  const expanded  = document.getElementById('composer-expanded');
+
+  if (!collapsed || !expanded) return;
+
+  collapsed.classList.add('hidden');
+  expanded.classList.remove('hidden');
+
+  // Focus the textarea after a short delay so the browser finishes rendering
+  setTimeout(() => {
+    const input = document.getElementById('mainInput');
+    if (input) {
+      input.focus();
+      // Move cursor to the end
+      const len = input.value.length;
+      input.setSelectionRange(len, len);
+    }
+  }, 40);
+}
+
+/**
+ * Collapse back to the low-profile status box
+ */
+export function collapseComposer() {
+  const collapsed = document.getElementById('composer-collapsed');
+  const expanded  = document.getElementById('composer-expanded');
+
+  if (!collapsed || !expanded) return;
+
+  expanded.classList.add('hidden');
+  collapsed.classList.remove('hidden');
+}
+
+// Make them available globally (for the onclick in HTML)
+window.expandComposer  = expandComposer;
+window.collapseComposer = collapseComposer;
+
+
 // ====================== INIT COMPOSER ======================
 export function initComposer() {
   const root = document.getElementById('composer-form') ||
@@ -464,7 +510,7 @@ export function initComposer() {
     return;
   }
   root.dataset.composerInitialized = 'true';
-
+collapseComposer();
   // ===== CLICK DELEGATION =====
   // Voice button (#btn-voice / live recording) is intentionally NOT handled here.
   // media.js owns 100% of voice recording UI + logic.
@@ -694,25 +740,31 @@ async function handleComposerSubmit(e) {
 // ======================================================
 
 /**
- * Reset form UI
+ * Reset form UI + collapse the composer back to compact state
  */
 export function resetForm() {
-    const form = document.getElementById('composer-form') || document.getElementById('testimonyForm');
-    const headlineInput = document.getElementById('headlineInput') ||
-                          document.getElementById('testimonyHeadline') ||
-                          document.getElementById('testimonyTitle') ||
-                          document.getElementById('postHeadline');
-    const bodyInput = document.getElementById('mainInput') || document.getElementById('postBody') || document.getElementById('testimonyBody');
-    const anonymousCheckbox = document.getElementById('post-anonymously') || document.getElementById('isAnonymous');
+  const form = document.getElementById('composer-form') || document.getElementById('testimonyForm');
+  const headlineInput = document.getElementById('headlineInput') ||
+                        document.getElementById('testimonyHeadline') ||
+                        document.getElementById('testimonyTitle') ||
+                        document.getElementById('postHeadline');
+  const bodyInput = document.getElementById('mainInput') || 
+                    document.getElementById('postBody') || 
+                    document.getElementById('testimonyBody');
+  const anonymousCheckbox = document.getElementById('post-anonymously') || 
+                            document.getElementById('isAnonymous');
 
-    if (form) form.reset();
-    if (headlineInput) headlineInput.value = '';
-    if (bodyInput) bodyInput.value = '';
-    if (anonymousCheckbox) anonymousCheckbox.checked = false;
+  if (form) form.reset();
+  if (headlineInput) headlineInput.value = '';
+  if (bodyInput) bodyInput.value = '';
+  if (anonymousCheckbox) anonymousCheckbox.checked = false;
 
-    // Full media cleanup (variables + preview + object URLs + badges)
-    clearAllMediaStates();
-    window.activeSubmissionDraft = {};
-    clearAiFeedback();
-    lastAnalyzedText = '';
+  // Full media cleanup
+  clearAllMediaStates();
+  window.activeSubmissionDraft = {};
+  clearAiFeedback();
+  lastAnalyzedText = '';
+
+  // Collapse back to the compact status box
+  collapseComposer();
 }
