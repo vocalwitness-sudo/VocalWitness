@@ -167,6 +167,31 @@ async function copyToClipboard(text) {
     }
 }
 
+
+/**
+ * Returns a quiet relative time string (e.g. "2h ago", "3d ago")
+ */
+function timeAgo(date) {
+  if (!date) return '';
+  const d = date.toDate ? date.toDate() : new Date(date);
+  const seconds = Math.floor((Date.now() - d.getTime()) / 1000);
+
+  if (seconds < 60) return 'just now';
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+  if (seconds < 2592000) return `${Math.floor(seconds / 86400)}d ago`;
+  return d.toLocaleDateString();
+}
+
+/**
+ * Returns the quiet "Edited · 2h ago" label if the post was edited
+ */
+function getEditedLabel(data) {
+  if (!data.editedAt) return '';
+  return `<span class="text-[11px] text-zinc-500 ml-1.5">· Edited ${timeAgo(data.editedAt)}</span>`;
+}
+
+
 /**
  * Checks and caches the user's steward status to prevent unhandled promises in sync renderers.
  */
@@ -215,7 +240,7 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
         btn?.click();
     });
 
-    // Event delegation (attached only once)
+// Event delegation (attached only once)
     if (!feedContainer.dataset.listenerAttached) {
         feedContainer.dataset.listenerAttached = 'true';
         feedContainer.addEventListener('click', async (e) => {
@@ -265,10 +290,10 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                         console.warn('reportContent / openReportModal not available yet');
                         showToast('Report feature is temporarily unavailable. Please try again later.', 'info');
                     }
-                           } else if (action === 'share') {
+                } else if (action === 'share') {
                     try {
                         const post = (typeof allPostsCache !== 'undefined' ? allPostsCache : []).find(p => p.id === id);
-                       const shareUrl = `${window.location.origin}/p/${encodeURIComponent(id)}`;
+                        const shareUrl = `${window.location.origin}/p/${encodeURIComponent(id)}`;
                         const title = post?.headline || post?.title || 'VocalWitness Testimony';
                         const text = post?.content
                             ? (post.content.length > 120 ? post.content.slice(0, 117) + '…' : post.content)
@@ -297,9 +322,12 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                 } else if (action === 'pin') {
                     if (typeof handlePinPost === 'function') await handlePinPost(id);
                     else console.warn('handlePinPost is not defined');
-                } else if (action === 'delete') {
-                    if (typeof handleDeletePost === 'function') await handleDeletePost(id);
-                    else console.warn('handleDeletePost is not defined');
+                } else if (action === 'edit') {
+                    await handleEditPost(id);
+                } else if (action === 'hide') {
+                    await handleHidePost(id, false);          // revocable
+                } else if (action === 'permanent-hide') {
+                    await handleHidePost(id, true);           // permanent
                 } else if (action === 'menu') {
                     if (typeof showPostMenu === 'function') showPostMenu(id);
                     else console.warn('showPostMenu is not defined');
@@ -417,8 +445,7 @@ function applySearchAndFilter(container) {
     const filterType = activeFilterBtn ? activeFilterBtn.getAttribute('data-filter') : 'all';
 
     const filtered = allPostsCache.filter(post => {
-        if (post.moderationStatus === "removed" || post.isDeleted) return false;
-
+       if (post.moderationStatus === "removed" || post.isDeleted || post.isHidden || post.isPermanentlyHidden) return false;
         const matchesSearch = !queryText || 
             (post.headline && post.headline.toLowerCase().includes(queryText)) ||
             (post.title && post.title.toLowerCase().includes(queryText)) ||
@@ -627,10 +654,31 @@ function renderSinglePostDOM(id, data, container) {
     (data.authorId ? `Citizen` : 'Citizen')
 );
 
-    const deleteBtnHTML = isOwner || isStewardUserCache
-        ? `<button data-action="delete" data-id="${id}" title="Delete Testimony" class="text-zinc-500 hover:text-red-400 text-xs transition">🗑️</button>`
-        : '';
-
+  // Owner controls: Edit + Hide options
+let ownerControlsHTML = '';
+if (isOwner) {
+  ownerControlsHTML = `
+    <button data-action="edit" data-id="${id}" title="Edit Report"
+            class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-emerald-400 transition text-xs">
+      ✏️
+    </button>
+    <button data-action="hide" data-id="${id}" title="Hide from Square"
+            class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-amber-400 transition text-xs">
+      👁️‍🗨️
+    </button>
+    <button data-action="permanent-hide" data-id="${id}" title="Permanently Hide"
+            class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-red-400 transition text-xs">
+      🔒
+    </button>
+  `;
+} else if (isStewardUserCache) {
+  ownerControlsHTML = `
+    <button data-action="hide" data-id="${id}" title="Hide (Steward)"
+            class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-amber-400 transition text-xs">
+      👁️‍🗨️
+    </button>
+  `;
+}
     const corrCount = data.corroborationCount || 0;
     const corrScore = data.corroborationScore || corrCount;
     const corrScoreHTML = corrCount > 0
@@ -652,21 +700,23 @@ function renderSinglePostDOM(id, data, container) {
           <p class="font-semibold text-zinc-100 truncate">${authorDisplayName}</p>
           ${pinnedBadge}
         </div>
-        <p class="text-xs text-zinc-500 mt-0.5">${formattedDate}</p>
+      <p class="text-xs text-zinc-500 mt-0.5">
+  ${formattedDate}${getEditedLabel(data)}
+</p>
       </div>
     </div>
 
-    <div class="flex items-center gap-1.5 shrink-0">
-      <button data-action="pin" data-id="${id}" title="Pin Post" 
-              class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-amber-400 transition">
-        📌
-      </button>
-      ${deleteBtnHTML}
-      <button data-action="menu" data-id="${id}" 
-              class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-white transition text-lg leading-none">
-        ⋯
-      </button>
-    </div>
+   <div class="flex items-center gap-1.5 shrink-0">
+  <button data-action="pin" data-id="${id}" title="Pin Post" 
+          class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-amber-400 transition">
+    📌
+  </button>
+  ${ownerControlsHTML}
+  <button data-action="menu" data-id="${id}" 
+          class="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-white transition text-lg leading-none">
+    ⋯
+  </button>
+</div>
   </div>
 
   <!-- Trust Badges -->
@@ -852,34 +902,158 @@ async function handleUpvote(postId) {
   }
 }
 
-async function handleDeletePost(postId) {
-    if (!auth.currentUser) {
-        showToast("Authentication required.", "error");
-        return;
+/**
+ * Edit post (title + content only)
+ */
+async function handleEditPost(postId) {
+  const post = allPostsCache.find(p => p.id === postId);
+  if (!post) {
+    showToast('Post not found', 'error');
+    return;
+  }
+
+  const currentUser = auth.currentUser;
+  if (!currentUser || currentUser.uid !== post.authorId) {
+    showToast('You can only edit your own reports', 'error');
+    return;
+  }
+
+  const existing = document.getElementById('edit-post-modal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'edit-post-modal';
+  modal.className = 'fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm';
+  modal.innerHTML = `
+    <div class="w-full max-w-lg rounded-2xl border border-zinc-700 bg-zinc-900 p-6 shadow-2xl">
+      <div class="mb-5 flex items-center justify-between">
+        <h3 class="text-lg font-bold text-white">Edit Report</h3>
+        <button type="button" class="edit-cancel text-zinc-400 hover:text-white text-xl">✕</button>
+      </div>
+
+      <input type="text" id="edit-title" maxlength="120"
+             value="${escapeHTML(post.headline || post.title || '')}"
+             placeholder="Title (optional)"
+             class="mb-3 w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white placeholder-zinc-500 focus:border-emerald-500 focus:outline-none">
+
+      <textarea id="edit-content" rows="5" maxlength="2000"
+                class="mb-4 w-full resize-none rounded-xl border border-zinc-700 bg-zinc-800 p-4 text-sm text-white placeholder-zinc-500 focus:border-emerald-500 focus:outline-none">${escapeHTML(post.content || '')}</textarea>
+
+      <p class="mb-5 text-xs text-zinc-500">
+        Media cannot be changed after sealing. Only text can be edited.
+      </p>
+
+      <div class="flex justify-end gap-3">
+        <button type="button" class="edit-cancel rounded-xl px-5 py-2.5 text-sm font-medium text-zinc-400 hover:bg-zinc-800 hover:text-white">
+          Cancel
+        </button>
+        <button type="button" id="edit-save-btn"
+                class="rounded-xl bg-emerald-500 px-6 py-2.5 text-sm font-bold text-black hover:bg-emerald-400 active:scale-95">
+          Save Changes
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  const close = () => modal.remove();
+  modal.querySelectorAll('.edit-cancel').forEach(btn => btn.onclick = close);
+  modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+
+  modal.querySelector('#edit-save-btn').onclick = async () => {
+    const newTitle   = document.getElementById('edit-title').value.trim();
+    const newContent = document.getElementById('edit-content').value.trim();
+
+    if (!newContent) {
+      showToast('Content cannot be empty', 'error');
+      return;
     }
 
-    if (!confirm("Are you sure you want to delete this testimony?")) return;
+    const saveBtn = document.getElementById('edit-save-btn');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving…';
 
     try {
-        const post = allPostsCache.find(p => p.id === postId);
-        const postRef = doc(db, "testimonies", postId);
-
-        if (post && (post.forensicHash || post.imageHash || post.audioHash || post.videoHash)) {
-            await updateDoc(postRef, {
-                isDeleted: true,
-                content: "[This testimony was deleted by the user]",
-                updatedAt: serverTimestamp()
-            });
-        } else {
-            await deleteDoc(postRef);
-        }
-        showToast("Testimony deleted.", "info");
-    } catch (e) {
-        console.error("Delete failed:", e);
-        showToast("Failed to delete testimony.", "error");
+      await updateDoc(doc(db, 'testimonies', postId), {
+        headline: newTitle || null,
+        title: newTitle || null,
+        content: newContent,
+        editedAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+      showToast('Report updated', 'success');
+      close();
+    } catch (err) {
+      console.error('Edit failed:', err);
+      showToast('Failed to update report', 'error');
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Save Changes';
     }
+  };
 }
 
+/**
+ * Hide post (revocable or permanent)
+ * @param {string} postId
+ * @param {boolean} permanent - true = cannot be unhidden later
+ */
+async function handleHidePost(postId, permanent = false) {
+  const post = allPostsCache.find(p => p.id === postId);
+  if (!post) {
+    showToast('Post not found', 'error');
+    return;
+  }
+
+  const currentUser = auth.currentUser;
+  const isOwner = currentUser && currentUser.uid === post.authorId;
+
+  if (!isOwner && !isStewardUserCache) {
+    showToast('You can only hide your own reports', 'error');
+    return;
+  }
+
+  if (permanent) {
+    const confirmed = confirm(
+      '⚠️ PERMANENTLY HIDE this report?\n\n' +
+      'This cannot be undone.\n' +
+      'The report will never appear in the Public Square again.\n\n' +
+      'The sealed record is still preserved for integrity, but it will be hidden from public view forever.'
+    );
+    if (!confirmed) return;
+  } else {
+    const confirmed = confirm(
+      'Hide this report from the Public Square?\n\n' +
+      'You can restore it later from "My Reports".'
+    );
+    if (!confirmed) return;
+  }
+
+  try {
+    const updateData = {
+      isHidden: true,
+      hiddenAt: serverTimestamp(),
+      hiddenBy: currentUser.uid,
+      updatedAt: serverTimestamp()
+    };
+
+    if (permanent) {
+      updateData.isPermanentlyHidden = true;
+    }
+
+    await updateDoc(doc(db, 'testimonies', postId), updateData);
+
+    showToast(
+      permanent
+        ? 'Report permanently hidden from the Square'
+        : 'Report hidden. You can restore it later from My Reports.',
+      'success'
+    );
+  } catch (err) {
+    console.error('Hide failed:', err);
+    showToast('Failed to hide report', 'error');
+  }
+}
 async function handlePinPost(postId) {
     const isSteward = await hasStewardAccess();
     if (!isSteward) {
