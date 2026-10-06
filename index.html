@@ -1842,18 +1842,12 @@
     if (!anyOpen) document.body.style.overflow = '';
   }
 
-  // Expose globally
-  window.$ = $;
-  window.showToast = showToast;
-  window.openModal = openModal;
-  window.closeModal = closeModal;
-
-  window.closeAuthModal = () => closeModal('authModal');
-  window.closeLoginModal = () => {
-    closeModal('loginModal');
-    closeModal('authModal');
-  };
-
+// Expose globally
+window.$ = $;
+window.showToast = showToast;
+window.openModal = openModal;
+window.closeModal = closeModal;
+  
   window.openProfileModal = window.openProfileModal || (() => openModal('profileModal'));
   window.closeProfileModal = window.closeProfileModal || (() => closeModal('profileModal'));
   window.closeEditProfile = () => closeModal('editProfileModal');
