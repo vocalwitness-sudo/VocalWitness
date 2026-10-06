@@ -262,13 +262,15 @@ export async function loginAnonymously() {
 }
 
 // ====================== SOCIAL LOGIN ======================
-
 async function socialLogin(provider, providerName, event) {
   if (authActionInProgress) return;
   authActionInProgress = true;
 
   const btn = event?.target?.closest?.('button');
+  let originalBtnContent = null;
+
   if (btn) {
+    originalBtnContent = btn.innerHTML;
     btn.disabled = true;
     btn.classList.add('opacity-50', 'cursor-not-allowed');
   }
@@ -282,11 +284,17 @@ async function socialLogin(provider, providerName, event) {
     const remember = document.getElementById('rememberMe')?.checked ?? true;
     await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
 
+    // ===== MOBILE → always use redirect =====
     if (isMobile) {
+      if (btn) {
+        btn.innerHTML = 'Redirecting…';
+      }
       await signInWithRedirect(auth, provider);
+      // Page will navigate away – no need to restore button
       return;
     }
 
+    // ===== DESKTOP → try popup first =====
     try {
       const result = await signInWithPopup(auth, provider);
       if (result?.user) {
@@ -301,11 +309,14 @@ async function socialLogin(provider, providerName, event) {
         openMfaChallengeModal(resolver);
         return;
       }
+
       if (['auth/popup-blocked', 'auth/popup-closed-by-user'].includes(popupError.code)) {
         showToast("Popup blocked. Switching to redirect...", "info");
+        if (btn) btn.innerHTML = 'Redirecting…';
         await signInWithRedirect(auth, provider);
         return;
       }
+
       throw popupError;
     }
   } catch (error) {
@@ -315,17 +326,22 @@ async function socialLogin(provider, providerName, event) {
       openMfaChallengeModal(resolver);
       return;
     }
+
     if (['auth/popup-closed-by-user', 'auth/cancelled-popup-request'].includes(error.code)) {
       return;
     }
+
     console.error(`${providerName} login error:`, error);
     const msg = handleAuthError(error);
     if (msg) showToast(msg, "error");
   } finally {
     authActionInProgress = false;
-    if (btn) {
+
+    // Only restore the button if we did NOT redirect
+    if (btn && originalBtnContent && !isMobile) {
       btn.disabled = false;
       btn.classList.remove('opacity-50', 'cursor-not-allowed');
+      btn.innerHTML = originalBtnContent;
     }
   }
 }
