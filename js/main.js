@@ -258,7 +258,6 @@ window.switchTab = async function (tab) {
 /* ====================== NAVIGATION CHROME ====================== */
 function initNavigationChrome() {
   wireTabButtons();
-  initAllDropdowns();
   initHashRouting();
 }
 
@@ -525,6 +524,7 @@ window.publishTestimony = async () => {
   if (!currentUser) {
     showToast("Session expired. Please re-authenticate.", "error");
     return;
+    
   }
 
   const titleInput = document.getElementById('testimonyTitle');
