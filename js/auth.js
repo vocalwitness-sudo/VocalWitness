@@ -483,10 +483,9 @@ export function showAuthModal() {
     modal.classList.remove('hidden');
     modal.classList.add('flex');
     modal.setAttribute('aria-hidden', 'false');
-    document.body.style.overflow = 'hidden';   // ← add this
+    document.body.style.overflow = 'hidden';   // lock scroll on mobile
   }
 }
-
 export function closeLoginModal() {
   document.querySelectorAll('#authModal, #loginModal, #createAccountModal')
     .forEach(modal => {
@@ -496,9 +495,34 @@ export function closeLoginModal() {
         modal.setAttribute('aria-hidden', 'true');
       }
     });
-  document.body.style.overflow = '';          // ← add this
+  document.body.style.overflow = '';          // restore scroll
 }
 
+export function openMfaChallengeModal(resolver) {
+  window.__pendingMfaResolver = resolver;
+  const mfaModal = document.getElementById('mfaChallengeModal');
+  
+  if (mfaModal) {
+    mfaModal.classList.remove('hidden');
+    mfaModal.classList.add('flex');
+    mfaModal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  } else {
+    console.warn("[auth] MFA modal element (#mfaChallengeModal) not found in DOM.");
+    showToast("Multi-factor authentication required, but challenge UI is missing.", "error");
+  }
+}
+
+export function closeMfaChallengeModal() {
+  const mfaModal = document.getElementById('mfaChallengeModal');
+  if (mfaModal) {
+    mfaModal.classList.add('hidden');
+    mfaModal.classList.remove('flex');
+    mfaModal.setAttribute('aria-hidden', 'true');
+  }
+  window.__pendingMfaResolver = null;
+  document.body.style.overflow = '';
+}
 export function openVerificationModal() {
   if (!requireAuth("Please sign in to complete citizen verification.")) return;
 
