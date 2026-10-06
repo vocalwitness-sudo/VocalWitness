@@ -467,6 +467,7 @@ export function showAuthModal() {
     modal.classList.remove('hidden');
     modal.classList.add('flex');
     modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';   // ← add this
   }
 }
 
@@ -479,6 +480,7 @@ export function closeLoginModal() {
         modal.setAttribute('aria-hidden', 'true');
       }
     });
+  document.body.style.overflow = '';          // ← add this
 }
 
 export function openVerificationModal() {
