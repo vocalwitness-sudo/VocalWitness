@@ -25,26 +25,6 @@ export function wireIndexPage() {
   on(document.getElementById('data-saver-btn'), 'click', () => window.toggleDataSaver?.());
   on(document.getElementById('data-saver-btn-mobile'), 'click', () => window.toggleDataSaver?.());
 
-  // ---------- Notifications ----------
-  const notifBtn = document.getElementById('notification-btn');
-  const notifBtnMobile = document.getElementById('notification-btn-mobile');
-
-  on(notifBtn, 'click', (e) => {
-    e.stopPropagation();
-    window.toggleNotificationDropdown?.(e);
-  });
-  on(notifBtnMobile, 'click', (e) => {
-    e.stopPropagation();
-    window.toggleNotificationDropdown?.(e);
-  });
-
-  document.addEventListener('click', (e) => {
-    const desktop = document.getElementById('notification-dropdown');
-    if (desktop && !desktop.contains(e.target) && !notifBtn?.contains(e.target)) {
-      desktop.classList.add('hidden');
-    }
-  });
-
   // ---------- Support ----------
   on(document.getElementById('openSupportModalBtn'), 'click', () => window.openSupportPackagesModal?.());
   on(document.getElementById('openSupportModalBtnMobile'), 'click', () => window.openSupportPackagesModal?.());
@@ -97,22 +77,6 @@ export function wireIndexPage() {
       window.switchMainTab?.(tab.dataset.tab);
     });
   });
-
-  // ---------- More menu ----------
-  const moreBtn = document.getElementById('more-btn');
-  const moreMenu = document.getElementById('more-menu');
-  if (moreBtn && moreMenu) {
-    on(moreBtn, 'click', (e) => {
-      e.stopPropagation();
-      const isOpen = !moreMenu.classList.contains('hidden');
-      moreMenu.classList.toggle('hidden', isOpen);
-      moreBtn.setAttribute('aria-expanded', String(!isOpen));
-    });
-    document.addEventListener('click', () => {
-      moreMenu.classList.add('hidden');
-      moreBtn.setAttribute('aria-expanded', 'false');
-    });
-  }
 
   // ========== PUBLIC SQUARE – COMPOSER ==========
   const mainInput = document.getElementById('mainInput');
