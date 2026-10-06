@@ -711,11 +711,21 @@
        ================================================== -->
   <div id="compact-composer" class="glass mb-6 rounded-2xl border border-zinc-800/80 p-4 shadow-lg transition-all">
 
-    <!-- Hidden file inputs (must stay) -->
-    <input type="file" id="photoInput" accept="image/*" class="hidden">
-    <input type="file" id="videoInput" accept="video/*" class="hidden">
-    <input type="file" id="audioInput" accept="audio/*" class="hidden">
+   <!-- Safe visual hide for mobile file pickers (do NOT use class="hidden") -->
+<input type="file"
+       id="photoInput"
+       accept="image/*,image/heic,image/heif"
+       class="sr-only-file">
 
+<input type="file"
+       id="videoInput"
+       accept="video/*,video/mp4,video/quicktime,video/webm"
+       class="sr-only-file">
+
+<input type="file"
+       id="audioInput"
+       accept="audio/*,audio/mp4,audio/mpeg,audio/wav,audio/webm,audio/ogg,audio/m4a"
+       class="sr-only-file">
     <!-- ========== COLLAPSED VIEW (default) ========== -->
     <div id="composer-collapsed" 
          class="flex items-center gap-3 cursor-pointer group"
