@@ -212,32 +212,6 @@ function handleAuthError(error) {
   }
 }
 
-// ====================== MFA HANDLER ======================
-
-export function openMfaChallengeModal(resolver) {
-  window.__pendingMfaResolver = resolver;
-  const mfaModal = document.getElementById('mfaChallengeModal');
-  
-  if (mfaModal) {
-    mfaModal.classList.remove('hidden');
-    mfaModal.classList.add('flex');
-    mfaModal.setAttribute('aria-hidden', 'false');
-  } else {
-    console.warn("[auth] MFA modal element (#mfaChallengeModal) not found in DOM.");
-    showToast("Multi-factor authentication required, but challenge UI is missing.", "error");
-  }
-}
-
-export function closeMfaChallengeModal() {
-  const mfaModal = document.getElementById('mfaChallengeModal');
-  if (mfaModal) {
-    mfaModal.classList.add('hidden');
-    mfaModal.classList.remove('flex');
-    mfaModal.setAttribute('aria-hidden', 'true');
-  }
-  window.__pendingMfaResolver = null;
-}
-
 // ====================== ANONYMOUS AUTH ======================
 
 export async function loginAnonymously() {
