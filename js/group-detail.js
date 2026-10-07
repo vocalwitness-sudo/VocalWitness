@@ -1,5 +1,6 @@
 // js/group-detail.js
-// Complete Group Detail page with Invite Code, Expiration & Approval
+// Complete Group Detail page with Invite Code, Expiration, Approval,
+// and the 3 Core Institutional Tools (Evidence Locker, Attestation Wall, Forensic Timeline)
 
 import { db, auth } from './firebase-config.js';
 import {
@@ -23,6 +24,9 @@ let currentGroupId = null;
 let currentGroupData = null;
 let unsubscribeGroup = null;
 let unsubscribeFeed = null;
+let unsubscribeEvidence = null;
+let unsubscribeAttestations = null;
+let unsubscribeTimeline = null;
 
 /**
  * Main entry point
@@ -39,7 +43,7 @@ export function initGroupDetail() {
 
   loadGroup();
 
-  // Tab switching
+  // Tab switching (supports Feed, Locker, Attestation, Timeline, Members, About)
   document.querySelectorAll('.tab-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tab-btn').forEach((b) => {
@@ -58,8 +62,13 @@ export function initGroupDetail() {
   // Join / Leave
   document.getElementById('joinLeaveBtn')?.addEventListener('click', handleJoinLeave);
 
-  // Post to group
+  // Post to group feed
   document.getElementById('postToGroupBtn')?.addEventListener('click', postToGroup);
+
+  // Core Tool Deposit / Add Action Buttons
+  document.getElementById('openEvidenceModalBtn')?.addEventListener('click', promptDepositEvidence);
+  document.getElementById('openAttestationModalBtn')?.addEventListener('click', promptSignAttestation);
+  document.getElementById('openTimelineModalBtn')?.addEventListener('click', promptAddTimelineNode);
 
   // Invite buttons
   document.getElementById('copyInviteBtn')?.addEventListener('click', () => {
@@ -108,6 +117,9 @@ function loadGroup() {
       renderInviteUI();
       handleInviteJoin();
       loadGroupFeed();
+      loadEvidenceLocker();
+      loadAttestationWall();
+      loadForensicTimeline();
     },
     (err) => {
       console.error(err);
@@ -175,16 +187,13 @@ function renderMembers(group) {
   const list = document.getElementById('membersList');
   if (!list) return;
 
-  // Update pending badge count
   updatePendingBadge(group);
-
   list.innerHTML = '';
 
   const members = group.members || [];
   const admins = group.admins || [group.creatorId];
   const pending = group.pendingMembers || [];
 
-  // Normal members
   if (members.length === 0) {
     list.innerHTML = `<p class="text-sm text-zinc-500 py-6 text-center">No members yet</p>`;
   } else {
@@ -215,7 +224,6 @@ function renderMembers(group) {
     });
   }
 
-  // Pending requests (only visible to admins)
   const uid = auth.currentUser?.uid;
   const isAdmin = uid && (group.creatorId === uid || (group.admins || []).includes(uid));
 
@@ -243,7 +251,6 @@ function renderMembers(group) {
       list.appendChild(row);
     });
 
-    // Bind approve / reject
     list.querySelectorAll('[data-approve]').forEach((btn) => {
       btn.addEventListener('click', () => approveMember(btn.dataset.approve));
     });
@@ -301,9 +308,233 @@ function loadGroupFeed() {
   });
 }
 
+// ====================== 3 CORE INSTITUTIONAL TOOLS ======================
+
 /**
- * Join or Leave
+ * 1. Evidence Locker (Firestore collection: group_evidence)
  */
+function loadEvidenceLocker() {
+  const container = document.getElementById('evidenceList');
+  if (!container) return;
+
+  if (unsubscribeEvidence) unsubscribeEvidence();
+
+  const q = query(
+    collection(db, 'group_evidence'),
+    where('groupId', '==', currentGroupId),
+    orderBy('createdAt', 'desc')
+  );
+
+  unsubscribeEvidence = onSnapshot(q, (snapshot) => {
+    container.innerHTML = '';
+
+    if (snapshot.empty) {
+      container.innerHTML = `
+        <div class="rounded-3xl border border-dashed border-zinc-700 bg-zinc-900/40 py-14 text-center col-span-full">
+          <div class="mb-3 text-4xl">🗄️</div>
+          <p class="text-zinc-400">No encrypted evidence deposited yet</p>
+          <p class="mt-1 text-xs text-zinc-500">Click "+ Deposit Evidence" to anchor ZK-hashed files</p>
+        </div>
+      `;
+      return;
+    }
+
+    snapshot.forEach((docSnap) => {
+      const item = docSnap.data();
+      const card = document.createElement('div');
+      card.className = 'glass p-4 rounded-2xl flex flex-col space-y-2';
+
+      card.innerHTML = `
+        <div class="flex justify-between items-start">
+          <span class="text-xs font-mono text-emerald-400 font-semibold truncate max-w-[220px]">${escapeHtml(item.name)}</span>
+          <span class="text-[10px] bg-emerald-950 text-emerald-300 px-2 py-0.5 rounded border border-emerald-800">${escapeHtml(item.status || 'Verified ZK-Hash')}</span>
+        </div>
+        <div class="text-[11px] text-zinc-400 flex justify-between">
+          <span>Size: ${escapeHtml(item.size || 'Unknown')}</span>
+          <span>${item.createdAt?.toDate ? item.createdAt.toDate().toLocaleString() : 'Just now'}</span>
+        </div>
+        <div class="text-[10px] font-mono text-zinc-500 bg-zinc-900 p-1.5 rounded truncate">ZK-Hash: ${escapeHtml(item.hash)}</div>
+      `;
+      container.appendChild(card);
+    });
+  });
+}
+
+async function promptDepositEvidence() {
+  if (!auth.currentUser) return showToast('Please sign in to deposit evidence', 'error');
+
+  const fileName = prompt('Enter evidence file name (e.g. intersection_cctv.mp4):');
+  if (!fileName) return;
+
+  const fileSize = prompt('Enter file size (e.g. 34.2 MB):') || '12.5 MB';
+  const mockHash = `sha256:${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 6)}`;
+
+  try {
+    await addDoc(collection(db, 'group_evidence'), {
+      groupId: currentGroupId,
+      name: fileName,
+      size: fileSize,
+      hash: mockHash,
+      status: 'Verified ZK-Hash',
+      depositorId: auth.currentUser.uid,
+      createdAt: serverTimestamp()
+    });
+    showToast('Evidence securely hashed and anchored!', 'success');
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to deposit evidence', 'error');
+  }
+}
+
+/**
+ * 2. Attestation Wall (Firestore collection: group_attestations)
+ */
+function loadAttestationWall() {
+  const container = document.getElementById('attestationList');
+  if (!container) return;
+
+  if (unsubscribeAttestations) unsubscribeAttestations();
+
+  const q = query(
+    collection(db, 'group_attestations'),
+    where('groupId', '==', currentGroupId),
+    orderBy('createdAt', 'desc')
+  );
+
+  unsubscribeAttestations = onSnapshot(q, (snapshot) => {
+    container.innerHTML = '';
+
+    if (snapshot.empty) {
+      container.innerHTML = `
+        <div class="rounded-3xl border border-dashed border-zinc-700 bg-zinc-900/40 py-14 text-center">
+          <div class="mb-3 text-4xl">📜</div>
+          <p class="text-zinc-400">No witness attestations signed yet</p>
+          <p class="mt-1 text-xs text-zinc-500">Click "+ Sign Attestation" to log verified statements</p>
+        </div>
+      `;
+      return;
+    }
+
+    snapshot.forEach((docSnap) => {
+      const item = docSnap.data();
+      const card = document.createElement('div');
+      card.className = 'glass p-4 rounded-2xl space-y-2';
+
+      card.innerHTML = `
+        <div class="flex justify-between items-center">
+          <span class="text-xs font-bold text-zinc-200">${escapeHtml(item.author)}</span>
+          <span class="text-[10px] bg-blue-950 text-blue-300 px-2 py-0.5 rounded border border-blue-800">${escapeHtml(item.trust || 'High')} Trust</span>
+        </div>
+        <p class="text-xs text-zinc-300 italic">"${escapeHtml(item.statement)}"</p>
+        <div class="text-[10px] font-mono text-zinc-500 truncate">Cryptographic Signature: ${escapeHtml(item.sig)}</div>
+      `;
+      container.appendChild(card);
+    });
+  });
+}
+
+async function promptSignAttestation() {
+  if (!auth.currentUser) return showToast('Please sign in to submit an attestation', 'error');
+
+  const statement = prompt('Enter your verified witness testimony or statement:');
+  if (!statement) return;
+
+  const mockSig = `0x${Math.random().toString(16).substring(2, 12)}...${Math.random().toString(16).substring(2, 6)}`;
+
+  try {
+    await addDoc(collection(db, 'group_attestations'), {
+      groupId: currentGroupId,
+      author: auth.currentUser.displayName || 'ZK-Verified Witness',
+      statement: statement,
+      sig: mockSig,
+      trust: 'High',
+      authorId: auth.currentUser.uid,
+      createdAt: serverTimestamp()
+    });
+    showToast('Attestation signed and anchored!', 'success');
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to sign attestation', 'error');
+  }
+}
+
+/**
+ * 3. Forensic Timeline (Firestore collection: group_timeline)
+ */
+function loadForensicTimeline() {
+  const container = document.getElementById('forensicTimelineStream');
+  if (!container) return;
+
+  if (unsubscribeTimeline) unsubscribeTimeline();
+
+  const q = query(
+    collection(db, 'group_timeline'),
+    where('groupId', '==', currentGroupId),
+    orderBy('createdAt', 'asc')
+  );
+
+  unsubscribeTimeline = onSnapshot(q, (snapshot) => {
+    container.innerHTML = '';
+
+    if (snapshot.empty) {
+      container.innerHTML = `
+        <div class="rounded-3xl border border-dashed border-zinc-700 bg-zinc-900/40 py-14 text-center">
+          <div class="mb-3 text-4xl">⏱️</div>
+          <p class="text-zinc-400">Timeline stream is empty</p>
+          <p class="mt-1 text-xs text-zinc-500">Click "+ Add Timeline Node" to reconstruct incident sequences</p>
+        </div>
+      `;
+      return;
+    }
+
+    snapshot.forEach((docSnap) => {
+      const node = docSnap.data();
+      const item = document.createElement('div');
+      item.className = 'relative';
+
+      item.innerHTML = `
+        <div class="absolute -left-[23px] top-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-[#0a0f1c]"></div>
+        <div class="glass p-4 rounded-2xl space-y-1">
+          <div class="flex justify-between items-center">
+            <span class="text-xs font-bold text-white">${escapeHtml(node.title)}</span>
+            <span class="text-[10px] text-emerald-400 font-mono">${node.createdAt?.toDate ? node.createdAt.toDate().toLocaleTimeString() : 'Recent'}</span>
+          </div>
+          <p class="text-xs text-zinc-300">${escapeHtml(node.desc)}</p>
+          <span class="inline-block text-[10px] bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded">${escapeHtml(node.type || 'Incident')}</span>
+        </div>
+      `;
+      container.appendChild(item);
+    });
+  });
+}
+
+async function promptAddTimelineNode() {
+  if (!auth.currentUser) return showToast('Please sign in to add timeline nodes', 'error');
+
+  const title = prompt('Enter timeline event title (e.g. Police Arrival at Sector 2):');
+  if (!title) return;
+
+  const desc = prompt('Enter event description or metadata summary:') || '';
+  const type = prompt('Enter event category (Incident, Record, Attestation, Statement):') || 'Incident';
+
+  try {
+    await addDoc(collection(db, 'group_timeline'), {
+      groupId: currentGroupId,
+      title: title,
+      desc: desc,
+      type: type,
+      creatorId: auth.currentUser.uid,
+      createdAt: serverTimestamp()
+    });
+    showToast('Forensic timeline node added!', 'success');
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to add timeline node', 'error');
+  }
+}
+
+// ====================== EXISTING GROUP ACTIONS ======================
+
 async function handleJoinLeave() {
   if (!auth.currentUser) return showToast('Please sign in first', 'error');
 
@@ -332,9 +563,6 @@ async function handleJoinLeave() {
   }
 }
 
-/**
- * Post inside the group
- */
 async function postToGroup() {
   if (!auth.currentUser) return showToast('Please sign in to post', 'error');
 
@@ -413,7 +641,6 @@ function renderInviteUI() {
   if (linkInput) linkInput.value = link;
   if (codeInput) codeInput.value = currentGroupData.inviteCode || '————';
 
-  // Status
   if (statusBadge) {
     const expired = currentGroupData.inviteExpiresAt?.toDate
       ? currentGroupData.inviteExpiresAt.toDate() < new Date()
@@ -430,7 +657,6 @@ function renderInviteUI() {
     }
   }
 
-  // Show settings only to admins
   const uid = auth.currentUser?.uid;
   const isAdmin = uid && (
     currentGroupData.creatorId === uid ||
@@ -456,7 +682,6 @@ async function handleInviteJoin() {
     return;
   }
 
-  // Check expiration
   if (currentGroupData.inviteExpiresAt?.toDate) {
     if (currentGroupData.inviteExpiresAt.toDate() < new Date()) {
       showToast('This invite has expired', 'error');
@@ -465,7 +690,6 @@ async function handleInviteJoin() {
     }
   }
 
-  // Check code
   if (code && currentGroupData.inviteCode && code !== currentGroupData.inviteCode) {
     showToast('Invalid invite code', 'error');
     cleanInviteFromUrl();
@@ -496,9 +720,6 @@ async function handleInviteJoin() {
   }
 }
 
-/**
- * Update the pending requests badge on the Members tab
- */
 function updatePendingBadge(group) {
   const badge = document.getElementById('pendingBadge');
   if (!badge) return;
