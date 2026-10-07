@@ -637,14 +637,18 @@
         <span class="truncate">Circle</span>
       </button>
       
-      <!-- 5. Witness -->
-     <!-- 5. Witness → Witness Voice -->
-<a href="/witness-voice"
-   id="tab-witness"
-   class="nav-tab flex-shrink-0 min-w-[4.5rem] h-11 items-center justify-center gap-1.5 rounded-xl border border-amber-700/50 bg-amber-950/40 px-3 text-xs font-medium text-amber-300 transition hover:border-amber-500 sm:h-12 sm:px-4 sm:text-sm no-underline">
+   <!-- 5. Witness -->
+<button type="button"
+        id="tab-witness"
+        data-tab="witness"
+        role="tab"
+        aria-selected="false"
+        aria-controls="witness"
+        class="nav-tab flex-shrink-0 min-w-[4.5rem] h-11 items-center justify-center gap-1.5 rounded-xl border border-amber-700/50 bg-amber-950/40 px-3 text-xs font-medium text-amber-300 transition hover:border-amber-500 sm:h-12 sm:px-4 sm:text-sm">
   <span class="text-base leading-none" aria-hidden="true">🛡️</span>
   <span class="truncate">Witness</span>
-</a>
+</button>
+      
     </nav>
 <!-- More Menu -->
     <div class="relative shrink-0">
@@ -1095,41 +1099,59 @@
     </div>
   </section>
 
-  <!-- ========== 5. WITNESS ========== -->
-  <section id="witness" class="hidden space-y-6" role="tabpanel" aria-label="Witness" aria-hidden="true">
-    <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-      <div>
-        <h2 class="text-2xl font-bold text-amber-400">Witness</h2>
-        <p class="mt-1 text-sm text-zinc-400">Verified reporters and higher-trust accounts</p>
-      </div>
-      <input type="search" id="witness-search"
-             placeholder="Search trusted voices…"
-             class="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:border-amber-500 focus:outline-none sm:w-72"
-             aria-label="Search trusted voices">
-    </div>
+ <!-- ========== 5. WITNESS (Reports + People) ========== -->
+<section id="witness" class="hidden space-y-6" role="tabpanel" aria-label="Witness" aria-hidden="true">
 
+  <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+    <div>
+      <h2 class="text-2xl font-bold text-amber-400">Witness</h2>
+      <p class="mt-1 text-sm text-zinc-400">Higher-trust reports and verified field voices</p>
+    </div>
+  </div>
+
+  <!-- Sub-tabs: Reports | People -->
+  <div class="flex gap-1 border-b border-zinc-800" role="tablist" aria-label="Witness views">
+    <button type="button" id="witness-sub-reports" data-witness-view="reports"
+            class="border-b-2 border-amber-500 px-5 py-2.5 text-sm font-medium text-amber-400"
+            aria-selected="true">
+      🔬 Reports
+    </button>
+    <button type="button" id="witness-sub-people" data-witness-view="people"
+            class="border-b-2 border-transparent px-5 py-2.5 text-sm font-medium text-zinc-400 hover:text-zinc-200"
+            aria-selected="false">
+      👥 People
+    </button>
+  </div>
+
+  <!-- REPORTS VIEW (True Witness feed — in-app, no separate page) -->
+  <div id="witness-reports-view" class="space-y-4">
+    <p class="text-xs text-zinc-500">
+      Sealed higher-trust reports from the field. No separate office page — this is the live record.
+    </p>
+    <div id="witness-reports-feed" class="space-y-4">
+      <!-- filled by JS -->
+    </div>
+  </div>
+
+  <!-- PEOPLE VIEW (existing verified voices) -->
+  <div id="witness-people-view" class="hidden space-y-4">
     <div class="flex flex-wrap gap-2" id="witness-filters" role="group" aria-label="Filter witnesses">
       <button type="button" data-filter="all"
               class="rounded-full border border-amber-500/40 bg-amber-500/15 px-4 py-1.5 text-xs font-medium text-amber-400"
-              aria-pressed="true">
-        All
-      </button>
+              aria-pressed="true">All</button>
       <button type="button" data-filter="zk"
               class="rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs font-medium text-zinc-300 transition hover:border-amber-500/50"
-              aria-pressed="false">
-        Higher Trust
-      </button>
+              aria-pressed="false">Higher Trust</button>
       <button type="button" data-filter="phone"
               class="rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs font-medium text-zinc-300 transition hover:border-amber-500/50"
-              aria-pressed="false">
-        Phone verified
-      </button>
+              aria-pressed="false">Phone verified</button>
     </div>
-
     <div id="verified-witnesses-grid" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      <!-- content loads dynamically -->
+      <!-- filled by loadVerifiedWitnesses -->
     </div>
-  </section>
+  </div>
+
+</section>
 </main>
   
 <!-- ====================== SUPPORT MODAL ====================== -->
