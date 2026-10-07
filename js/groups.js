@@ -145,19 +145,19 @@ function renderGroups() {
         </div>
       </div>
 
-      <!-- Tools row -->
+      <!-- Institutional Tools Row -->
       <div class="mt-4 pt-3 border-t border-zinc-800 flex flex-wrap gap-2 items-center">
-        <button data-action="tool" data-tool="evidence"
+        <button data-action="tool" data-tool="locker" data-group-id="${group.id}"
                 class="text-[11px] px-2.5 py-1 bg-emerald-500/10 text-emerald-400 rounded-full hover:bg-emerald-500/20 transition">
-          Evidence Locker
+          🗄️ Evidence Locker
         </button>
-        <button data-action="tool" data-tool="attestation"
+        <button data-action="tool" data-tool="attestation" data-group-id="${group.id}"
                 class="text-[11px] px-2.5 py-1 bg-amber-500/10 text-amber-400 rounded-full hover:bg-amber-500/20 transition">
-          Attestation
+          📜 Attestation Wall
         </button>
-        <button data-action="tool" data-tool="timeline"
+        <button data-action="tool" data-tool="timeline" data-group-id="${group.id}"
                 class="text-[11px] px-2.5 py-1 bg-cyan-500/10 text-cyan-400 rounded-full hover:bg-cyan-500/20 transition">
-          Timeline
+          ⏱️ Forensic Timeline
         </button>
         ${group.visibility === 'witness_circle'
           ? '<span class="text-[11px] text-cyan-400/80 ml-1">ZK Protected</span>'
@@ -167,7 +167,6 @@ function renderGroups() {
 
     // Click on card → go to detail page
     card.addEventListener('click', (e) => {
-      // Don't navigate if user clicked a button
       if (e.target.closest('button')) return;
       window.location.href = `group-detail.html?id=${group.id}`;
     });
@@ -183,14 +182,17 @@ function renderGroups() {
     });
   });
 
-  // Bind tool buttons
+  // Bind tool buttons -> navigate directly to the specific tool tab on group-detail.html
   container.querySelectorAll('button[data-action="tool"]').forEach(btn => {
     btn.addEventListener('click', async (e) => {
       e.stopPropagation();
-      const toolName = btn.getAttribute('data-tool');
-      if (typeof window.handleToolClick === 'function') {
-        await window.handleToolClick(toolName);
-      }
+      const toolName = btn.getAttribute('data-tool'); // 'locker', 'attestation', 'timeline'
+      const groupId = btn.getAttribute('data-group-id');
+      
+      const isWitness = await isWitnessCircleUser();
+      // Optional: enforce witness tier check for high-trust tools if desired, 
+      // or allow seamless navigation directly into the operational tool tab:
+      window.location.href = `group-detail.html?id=${groupId}&tab=${toolName}`;
     });
   });
 }
@@ -356,17 +358,6 @@ window.startZKUpgradeFromGroups = function () {
   } else {
     showToast('ZK Verification module not available', 'error');
   }
-};
-
-// ====================== TOOL CLICK HANDLER ======================
-
-window.handleToolClick = async function (toolName) {
-  const isWitness = await isWitnessCircleUser();
-  if (!isWitness) {
-    showUpgradeToWitnessModal();
-    return;
-  }
-  showToast(`Opening ${toolName} tool... (Coming soon)`, 'info');
 };
 
 // Re-render on language change
