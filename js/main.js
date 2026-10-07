@@ -7,6 +7,7 @@ if (typeof window !== 'undefined') {
 import { db, auth, storage } from './firebase-config.js';
 import { state, updateAppState, isUserAuthenticated } from './app-state.js';
 import { initAuth, requireAuth, updateUIForAuthState, bindHeaderEvents, openAuthModal } from './auth.js';
+import { bindMfaChallengeEvents } from './mfa.js';
 import { initFeed } from './feed.js';
 import { initLanguage } from './i18n.js';
 import * as mediaModule from './media.js';
@@ -1296,10 +1297,15 @@ function setupEventListeners() {
     }
   });
 
-  // Header events from auth.js
-  if (typeof bindHeaderEvents === 'function') {
-    bindHeaderEvents();
-  }
+// Header events from auth.js
+if (typeof bindHeaderEvents === 'function') {
+  bindHeaderEvents();
+}
+
+// MFA challenge modal handlers
+if (typeof bindMfaChallengeEvents === 'function') {
+  bindMfaChallengeEvents();
+}
 
   // Composer
   if (typeof initComposer === 'function') {
