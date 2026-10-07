@@ -23,7 +23,7 @@ import { createEvidencePack } from './evidence-pack.js';
 import { generateSha256Hash } from './utils.js';
 import { getAudioForPublish, uploadForensicMedia } from './media.js';
 import { initLiveArena } from './live-arena.js';
-import { loadCircle, loadVerifiedWitnesses } from './circle.js';
+import { loadCircle, loadVerifiedWitnesses, loadHigherTrustReports, initWitnessSubTabs } from './circle.js';
 import {
   collection, addDoc, doc, getDoc, setDoc, updateDoc,
   serverTimestamp, query, getDocs, orderBy, limit
@@ -227,8 +227,18 @@ window.switchTab = async function (tab) {
     if (tab === 'mycircle' && typeof loadCircle === 'function') {
       loadCircle();
     }
-    if (tab === 'witness' && typeof loadVerifiedWitnesses === 'function') {
-      loadVerifiedWitnesses();
+
+    // ===== WITNESS: Reports + People (True Witness lives here) =====
+    if (tab === 'witness') {
+      if (typeof initWitnessSubTabs === 'function') {
+        initWitnessSubTabs();
+      }
+      // Default to Reports so the field looks active
+      if (typeof loadHigherTrustReports === 'function') {
+        loadHigherTrustReports();
+      } else if (typeof loadVerifiedWitnesses === 'function') {
+        loadVerifiedWitnesses();
+      }
     }
 
     if (tab === 'arena') {
