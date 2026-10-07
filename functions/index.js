@@ -20,6 +20,7 @@ import axios from "axios";
 import { setGlobalOptions } from "firebase-functions/v2";
 import corsPackage from "cors";
 import { onRequest } from "firebase-functions/v2/https";
+import { buildPoseidon } from "circomlibjs";
 
 // Get current directory equivalent in ES modules
 const __filename = path.fileURLToPath(import.meta.url);
@@ -1263,6 +1264,20 @@ exports.requestTimestamp = onCall(
 );
 
 // ======================================================
+// ZK CRYPTOGRAPHY UTILS (POSEIDON)
+// ======================================================
+const { buildPoseidon } = require("circomlibjs");
+
+let poseidonInstance = null;
+
+async function getPoseidon() {
+  if (!poseidonInstance) {
+    poseidonInstance = await buildPoseidon();
+  }
+  return poseidonInstance;
+}
+
+// ======================================================
 // 11. LIVEKIT TOKEN FOR LIVE ARENA
 // ======================================================
 const { AccessToken } = require("livekit-server-sdk");
@@ -1317,42 +1332,169 @@ exports.getLiveKitToken = onCall(
     }
   }
 );
-
 // ======================================================
-// 12. ZK MEMBERSHIP — Witness Circle elevation
-// Server owns secret, nullifier, commitment. Client never writes zkVerified.
+// 12. ZK MEMBERSHIP — real Groth16 (Poseidon + Merkle)
+// Elevate ONLY after snarkjs.groth16.verify succeeds.
+// Client never writes zkVerified.
 // ======================================================
 
-const cryptoNode = require("crypto");
+const ZK_LEVELS = 8;
+const MIN_TRUST_SCORE = "50";
+const MIN_POSTS = "1";
+const TREE_ID = "membership_v1";
 
-/** Poseidon-friendly field-ish hash via SHA-256 (decimal string for consistency) */
-function hashToFieldDecimal(...parts) {
-  const h = cryptoNode
-    .createHash("sha256")
-    .update(parts.map(String).join("|"))
-    .digest("hex");
-  // Keep within a safe numeric string range for storage / future circuit use
-  return BigInt("0x" + h.slice(0, 31)).toString();
+const ZK_DIR = path.join(__dirname, "zk");
+const WASM_PATH = path.join(ZK_DIR, "witness.wasm");
+const ZKEY_PATH = path.join(ZK_DIR, "witness_final.zkey");
+const VKEY_PATH = path.join(ZK_DIR, "verification_key.json");
+
+let poseidonInstance = null;
+let poseidonF = null;
+
+async function getPoseidon() {
+  if (!poseidonInstance) {
+    poseidonInstance = await buildPoseidon();
+    poseidonF = poseidonInstance.F;
+  }
+  return poseidonInstance;
+}
+
+function toFieldStr(x) {
+  if (typeof x === "bigint") return x.toString();
+  if (typeof x === "string") return x;
+  return BigInt(x).toString();
+}
+
+async function poseidonHash(inputs) {
+  const poseidon = await getPoseidon();
+  const hashed = poseidon(inputs.map((v) => BigInt(toFieldStr(v))));
+  return poseidonF.toObject(hashed).toString();
+}
+
+async function poseidon2(a, b) {
+  return poseidonHash([a || "0", b || "0"]);
+}
+
+function randomFieldElement() {
+  const buf = crypto.randomBytes(31);
+  return BigInt("0x" + buf.toString("hex")).toString();
+}
+
+let ZERO_HASHES = null;
+async function getZeroHashes() {
+  if (ZERO_HASHES) return ZERO_HASHES;
+  ZERO_HASHES = ["0"];
+  for (let i = 0; i < ZK_LEVELS; i++) {
+    ZERO_HASHES.push(await poseidon2(ZERO_HASHES[i], ZERO_HASHES[i]));
+  }
+  return ZERO_HASHES;
+}
+
+function zkNodeRef(level, index) {
+  return db.collection("zk_tree").doc(TREE_ID).collection("nodes").doc(`${level}_${index}`);
+}
+
+function zkMetaRef() {
+  return db.collection("zk_tree").doc(TREE_ID);
+}
+
+async function insertLeafAndGetPath(commitment) {
+  const zeros = await getZeroHashes();
+
+  return db.runTransaction(async (tx) => {
+    const metaSnap = await tx.get(zkMetaRef());
+    const meta = metaSnap.exists ? metaSnap.data() : { nextIndex: 0, root: zeros[ZK_LEVELS] };
+    const leafIndex = meta.nextIndex || 0;
+
+    if (leafIndex >= 1 << ZK_LEVELS) {
+      throw new HttpsError("resource-exhausted", "Membership tree full.");
+    }
+
+    const pathElements = [];
+    const pathIndices = [];
+    let curr = commitment;
+    let idx = leafIndex;
+
+    tx.set(zkNodeRef(0, leafIndex), { value: commitment, updatedAt: Date.now() }, { merge: true });
+
+    for (let level = 0; level < ZK_LEVELS; level++) {
+      const isRight = idx % 2 === 1;
+      const siblingIdx = isRight ? idx - 1 : idx + 1;
+      const sibSnap = await tx.get(zkNodeRef(level, siblingIdx));
+      const sibling =
+        sibSnap.exists && sibSnap.data().value ? sibSnap.data().value : zeros[level];
+
+      pathElements.push(sibling);
+      pathIndices.push(isRight ? 1 : 0);
+
+      const left = isRight ? sibling : curr;
+      const right = isRight ? curr : sibling;
+      curr = await poseidon2(left, right);
+      idx = Math.floor(idx / 2);
+
+      tx.set(zkNodeRef(level + 1, idx), { value: curr, updatedAt: Date.now() }, { merge: true });
+    }
+
+    tx.set(
+      zkMetaRef(),
+      {
+        nextIndex: leafIndex + 1,
+        root: curr,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      },
+      { merge: true }
+    );
+
+    return { leafIndex, pathElements, pathIndices, root: curr };
+  });
+}
+
+async function getPathForLeaf(leafIndex, commitment) {
+  const zeros = await getZeroHashes();
+  const pathElements = [];
+  const pathIndices = [];
+  let curr = commitment;
+  let idx = leafIndex;
+
+  for (let level = 0; level < ZK_LEVELS; level++) {
+    const isRight = idx % 2 === 1;
+    const siblingIdx = isRight ? idx - 1 : idx + 1;
+    const sibSnap = await zkNodeRef(level, siblingIdx).get();
+    const sibling =
+      sibSnap.exists && sibSnap.data().value ? sibSnap.data().value : zeros[level];
+
+    pathElements.push(sibling);
+    pathIndices.push(isRight ? 1 : 0);
+
+    const left = isRight ? sibling : curr;
+    const right = isRight ? curr : sibling;
+    curr = await poseidon2(left, right);
+    idx = Math.floor(idx / 2);
+  }
+
+  return { pathElements, pathIndices, root: curr };
 }
 
 /**
- * Step 1: Register membership commitment for the signed-in user.
- * Creates secret + nullifier server-side, stores commitment, does NOT elevate yet.
+ * Step 1: Poseidon commitment + Merkle leaf insert
  */
 exports.registerZKCommitment = onCall(
-  { cors: allowedOrigins, timeoutSeconds: 60, memory: "256MiB" },
+  { cors: allowedOrigins, timeoutSeconds: 60, memory: "512MiB" },
   async (request) => {
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "Sign in required.");
     }
 
     const uid = request.auth.uid;
-    const userRef = db.collection("users").doc(uid);
     const commitRef = db.collection("zk_commitments").doc(uid);
 
     try {
       const existing = await commitRef.get();
-      if (existing.exists && existing.data()?.commitment) {
+      if (
+        existing.exists &&
+        existing.data()?.commitment &&
+        existing.data()?.hashAlgo === "poseidon"
+      ) {
         return {
           success: true,
           alreadyRegistered: true,
@@ -1360,19 +1502,22 @@ exports.registerZKCommitment = onCall(
         };
       }
 
-      // Server-only secrets — never returned to client in production logs
-      const secret = hashToFieldDecimal("vw-secret", uid, cryptoNode.randomBytes(16).toString("hex"));
-      const nullifier = hashToFieldDecimal("vw-nullifier", uid, cryptoNode.randomBytes(16).toString("hex"));
-      const commitment = hashToFieldDecimal("vw-commit", secret, nullifier);
+      const secret = randomFieldElement();
+      const nullifier = randomFieldElement();
+      const commitment = await poseidonHash([secret, nullifier]);
+
+      const { leafIndex, root } = await insertLeafAndGetPath(commitment);
 
       await commitRef.set(
         {
           uid,
           commitment,
-          // Store encrypted-at-rest style: only server reads these
           secretEnc: secret,
           nullifierEnc: nullifier,
+          leafIndex,
+          hashAlgo: "poseidon",
           status: "registered",
+          registeredRoot: root,
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
           updatedAt: admin.firestore.FieldValue.serverTimestamp()
         },
@@ -1384,7 +1529,7 @@ exports.registerZKCommitment = onCall(
         performedBy: uid,
         targetId: uid,
         targetType: "user",
-        details: { commitment },
+        details: { commitment, leafIndex, hashAlgo: "poseidon" },
         severity: "info"
       });
 
@@ -1397,6 +1542,186 @@ exports.registerZKCommitment = onCall(
   }
 );
 
+/**
+ * Step 2: Real Groth16 prove + verify, then elevate
+ */
+exports.generateZKProof = onCall(
+  {
+    cors: allowedOrigins,
+    timeoutSeconds: 180,
+    memory: "2GiB",
+    consumeAppCheckToken: true
+  },
+  async (request) => {
+    if (!request.app) {
+      throw new HttpsError(
+        "unauthenticated",
+        "Unauthorized: Missing or invalid App Check token."
+      );
+    }
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Sign in required.");
+    }
+
+    const uid = request.auth.uid;
+    const userRef = db.collection("users").doc(uid);
+    const commitRef = db.collection("zk_commitments").doc(uid);
+
+    try {
+      if (
+        !fs.existsSync(WASM_PATH) ||
+        !fs.existsSync(ZKEY_PATH) ||
+        !fs.existsSync(VKEY_PATH)
+      ) {
+        throw new HttpsError(
+          "failed-precondition",
+          "ZK circuit artifacts missing. Put wasm/zkey/vkey in functions/zk/"
+        );
+      }
+
+      const [commitSnap, userSnap] = await Promise.all([
+        commitRef.get(),
+        userRef.get()
+      ]);
+
+      if (!commitSnap.exists || !commitSnap.data()?.commitment) {
+        throw new HttpsError(
+          "failed-precondition",
+          "No commitment registered. Call registerZKCommitment first."
+        );
+      }
+
+      const commitData = commitSnap.data();
+      if (commitData.hashAlgo !== "poseidon") {
+        throw new HttpsError(
+          "failed-precondition",
+          "Legacy commitment. Call registerZKCommitment again for Poseidon."
+        );
+      }
+
+      const secret = commitData.secretEnc;
+      const nullifier = commitData.nullifierEnc;
+      const commitment = commitData.commitment;
+      const leafIndex = commitData.leafIndex;
+
+      const user = userSnap.exists ? userSnap.data() : {};
+      const trustScore = String(
+        Math.max(0, Number(user.reputationScore || user.trustScore || 0))
+      );
+      const postCount = String(
+        Math.max(0, Number(user.testimoniesCount || user.postCount || 0))
+      );
+
+      const { pathElements, pathIndices, root: merkleRoot } =
+        await getPathForLeaf(leafIndex, commitment);
+
+      const nullifierHash = await poseidonHash([nullifier]);
+
+      const nullifierRef = db.collection("zk_nullifiers").doc(nullifierHash);
+      const nullifierDoc = await nullifierRef.get();
+      if (nullifierDoc.exists && nullifierDoc.data()?.uid !== uid) {
+        throw new HttpsError("already-exists", "Nullifier already spent.");
+      }
+
+      const input = {
+        secret,
+        nullifier,
+        trustScore,
+        postCount,
+        pathElements,
+        pathIndices,
+        merkleRoot,
+        minTrustScore: MIN_TRUST_SCORE,
+        minPosts: MIN_POSTS
+      };
+
+      const { proof, publicSignals } = await snarkjs.groth16.fullProve(
+        input,
+        WASM_PATH,
+        ZKEY_PATH
+      );
+
+      const vKey = JSON.parse(fs.readFileSync(VKEY_PATH, "utf8"));
+      const ok = await snarkjs.groth16.verify(vKey, publicSignals, proof);
+      if (!ok) {
+        throw new HttpsError("internal", "Generated ZK proof failed verification.");
+      }
+
+      await userRef.set(
+        {
+          zkVerified: true,
+          tier: "witness_circle",
+          lastZkProofType: "SNARK_GROTH16_SERVER",
+          lastZkIsFallback: false,
+          zkElevatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        },
+        { merge: true }
+      );
+
+      await commitRef.set(
+        {
+          status: "elevated",
+          elevatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          lastMerkleRoot: merkleRoot,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        },
+        { merge: true }
+      );
+
+      await nullifierRef.set(
+        {
+          uid,
+          commitment,
+          createdAt: admin.firestore.FieldValue.serverTimestamp()
+        },
+        { merge: true }
+      );
+
+      try {
+        const userRecord = await admin.auth().getUser(uid);
+        const claims = userRecord.customClaims || {};
+        await admin.auth().setCustomUserClaims(uid, {
+          ...claims,
+          zkVerified: true,
+          tier: "witness_circle"
+        });
+      } catch (claimErr) {
+        console.warn("Custom claims update failed (non-fatal):", claimErr.message);
+      }
+
+      await writeAuditLog({
+        action: "zk_elevation",
+        performedBy: uid,
+        targetId: uid,
+        targetType: "user",
+        details: {
+          commitment,
+          nullifierHash,
+          merkleRoot,
+          proofType: "SNARK_GROTH16_SERVER",
+          realSnark: true
+        },
+        severity: "info"
+      });
+
+      return {
+        success: true,
+        proof,
+        publicSignals,
+        merkleRoot,
+        proofType: "SNARK_GROTH16_SERVER"
+      };
+    } catch (error) {
+      console.error("generateZKProof error:", error);
+      if (error instanceof HttpsError) throw error;
+      throw new HttpsError(
+        "internal",
+        error.message || "Failed to generate ZK proof."
+      );
+    }
+  }
+);
 // ======================================================
 // DAO QUADRATIC VOTE (server-authoritative)
 // ======================================================
