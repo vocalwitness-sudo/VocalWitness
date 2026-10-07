@@ -13,11 +13,11 @@
 </head>
 <body class="min-h-screen p-6 md:p-12 pb-24">
     <div class="max-w-3xl mx-auto">
-        
+
         <!-- Header -->
         <div class="flex items-center justify-between mb-10 glass rounded-3xl p-4">
             <div class="flex items-center gap-3">
-                <a href="index.html" class="w-10 h-10 bg-emerald-500/20 rounded-2xl flex items-center justify-center text-xl hover:bg-emerald-500/30 transition">⬅️</a>
+                <a href="index.html" class="w-10 h-10 bg-emerald-500/20 rounded-2xl flex items-center justify-center text-xl hover:bg-emerald-500/30 transition" aria-label="Back">⬅️</a>
                 <h1 class="text-2xl font-bold tracking-tight text-white" data-i18n="appTitle">VocalWitness</h1>
             </div>
             <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-4 py-2 text-sm focus:outline-none focus:border-emerald-500">
@@ -34,42 +34,46 @@
             <p class="text-xl text-zinc-400" data-i18n="aboutSubtitle">Your voice. Your truth. Protected.</p>
         </header>
 
-        <!-- Friendly Mission -->
+        <!-- Mission -->
         <section class="glass rounded-3xl p-8 mb-8 space-y-6">
             <div>
                 <h2 class="text-2xl font-bold text-emerald-400 mb-4">What is VocalWitness?</h2>
                 <p class="leading-relaxed mb-4 text-zinc-200">
-                    VocalWitness is a privacy-first public square where anyone can share what they saw safely. 
-                    We start in Africa — rooted in Nigeria (including Enugu and Lagos) — and grow outward. 
-                    Your identity is protected, and your report can never be secretly deleted or edited.
+                    VocalWitness is a privacy-first public square where anyone can share what they saw or experienced —
+                    with strong protection so reports cannot be quietly rewritten. We start in Africa — rooted in Nigeria
+                    (including Enugu and Lagos) — and grow outward.
                 </p>
                 <p class="leading-relaxed text-zinc-300">
-                    In a world full of edited videos and fake news, we give ordinary people a safe place to publish photos, voice notes, and reports. Everything is protected so the evidence stays trustworthy and your privacy stays intact.
+                    In a world full of edited media and noise, ordinary people get a place to publish photos, voice notes,
+                    and reports. Media is fingerprinted on your device; sealed entries are designed to stay on the public record.
                 </p>
             </div>
             <div class="pt-4 border-t border-zinc-800 flex flex-wrap items-center gap-3 text-xs text-zinc-300">
-                <span class="text-zinc-400 font-medium">Protected by strong technology:</span>
+                <span class="text-zinc-400 font-medium">Protected by:</span>
                 <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-emerald-400">Google Cloud / Firebase</span>
-                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-amber-400">Cloudflare Edge Shield</span>
-                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-cyan-400">Web Crypto & Zero-Knowledge</span>
+                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-amber-400">Cloudflare Edge</span>
+                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-cyan-400">Web Crypto • Hash seals</span>
+                <span class="badge-glass px-3 py-1.5 rounded-full font-semibold text-violet-400">Membership proofs (evolving)</span>
             </div>
         </section>
 
-        <!-- Friendly Pillars -->
+        <!-- Pillars -->
         <section class="grid md:grid-cols-2 gap-6 mb-12">
             <div class="glass rounded-3xl p-6">
                 <div class="text-4xl mb-4">🔬</div>
                 <h3 class="font-bold text-white mb-2">Proof Nothing Was Changed</h3>
                 <p class="text-zinc-400 text-sm leading-relaxed">
-                    Every photo, voice note and document gets a unique digital fingerprint on your device before upload. Others can confirm it is real without seeing your private details.
+                    Photos, voice notes, and files can receive a <strong class="text-zinc-300">SHA-256 digital fingerprint on your device</strong>
+                    before upload. Others can check that a download matches the sealed hash via Evidence Packs and the Verify page.
                 </p>
             </div>
-            
+
             <div class="glass rounded-3xl p-6">
                 <div class="text-4xl mb-4">🛡️</div>
                 <h3 class="font-bold text-white mb-2">Your Privacy Comes First</h3>
                 <p class="text-zinc-400 text-sm leading-relaxed">
-                    Speaking out is always your choice. We automatically remove location and device information. Phone checks are only temporary to stop spam and are never stored publicly.
+                    Speaking out is your choice. We strip routine location and device metadata from media where privacy mode applies.
+                    Phone checks are for anti-spam; they are not written onto the public sealed ledger as your identity.
                 </p>
             </div>
 
@@ -77,74 +81,133 @@
                 <div class="text-4xl mb-4">🌍</div>
                 <h3 class="font-bold text-white mb-2">Community, Not Control</h3>
                 <p class="text-zinc-400 text-sm leading-relaxed">
-                    No single person decides what is true. Trust grows through honest participation and clear reputation. We stay neutral.
+                    No single person decides what is true. Trust grows through participation, corroboration, and clear reputation signals.
+                    We aim to stay neutral infrastructure — not an editorial channel.
                 </p>
             </div>
 
             <div class="glass rounded-3xl p-6">
                 <div class="text-4xl mb-4">🤝</div>
-                <h3 class="font-bold text-white mb-2">Free Core + Optional Credential</h3>
+                <h3 class="font-bold text-white mb-2">Free to Report. Funded with Care.</h3>
                 <p class="text-zinc-400 text-sm leading-relaxed">
-                    Publishing sealed reports, privacy tools, verification and the public square are free forever — no ads, no paywalls. 
-                    An optional higher-quality Official Independent Citizen Press Credential (PDF) is available for a small one-time fee for journalists, lawyers, organisers, researchers and other professionals who need a stronger formal document.
+                    Publishing sealed reports, using privacy tools, reading the Square, and basic verification stay
+                    <strong class="text-zinc-300">free</strong> — no ads on testimony, no paywall on the public record.
+                    Voluntary <strong class="text-zinc-300">Support the Square</strong> contributions and an
+                    <strong class="text-zinc-300">optional</strong> Independent Citizen Press Credential (for professionals who need a formal PDF)
+                    help pay for servers and development. <strong class="text-zinc-300">Trust tiers are never for sale.</strong>
                 </p>
             </div>
         </section>
 
-        <!-- How Trust Works (Friendly) -->
+        <!-- How Trust Works -->
         <section class="glass rounded-3xl p-8 mb-8">
             <h2 class="text-2xl font-bold text-emerald-400 mb-6">How Trust Works Here</h2>
             <div class="space-y-6">
                 <div>
-                    <h3 class="font-semibold text-white mb-2">1. Start Simple, Grow Stronger</h3>
+                    <h3 class="font-semibold text-white mb-2">1. Start simple, grow stronger</h3>
                     <p class="text-zinc-400 text-sm leading-relaxed">
-                        Everyone begins as a Citizen. You can raise your level with simple checks. Higher levels unlock stronger protection.
+                        Everyone can begin in open citizen reporting. Optional phone verification helps reduce spam (Citizen Circle).
+                        Higher Trust / Witness Circle is earned through platform checks and membership safeguards — not by payment.
                     </p>
                 </div>
                 <div>
-                    <h3 class="font-semibold text-white mb-2">2. Protected Public Record</h3>
+                    <h3 class="font-semibold text-white mb-2">2. Protected public record</h3>
                     <p class="text-zinc-400 text-sm leading-relaxed">
-                        Once something is published, it is locked. No one can quietly change or delete the original.
+                        Once a report is sealed and published, the original is designed so it cannot be quietly edited or deleted
+                        through normal user actions. Integrity rests on client-side hashing, server rules, and auditability tools.
                     </p>
                 </div>
                 <div>
-                    <h3 class="font-semibold text-white mb-2">3. We Don’t Control the Narrative</h3>
+                    <h3 class="font-semibold text-white mb-2">3. We don’t own the narrative</h3>
                     <p class="text-zinc-400 text-sm leading-relaxed">
-                        VocalWitness is a neutral public square. We do not edit posts or push certain stories. The evidence speaks for itself.
+                        VocalWitness is a public square for evidence-bearing speech. We provide structure and safety rails;
+                        we do not rewrite your report to fit a storyline.
                     </p>
                 </div>
             </div>
+        </section>
+
+        <!-- Funding (soft) -->
+        <section class="glass rounded-3xl p-8 mb-8 border border-emerald-500/20">
+            <h2 class="text-2xl font-bold text-emerald-400 mb-4">How the Square stays online</h2>
+            <p class="text-zinc-300 text-sm leading-relaxed mb-4">
+                Infrastructure, storage, and continuous development cost real money. We fund the project without turning
+                citizen reporting into a payment product:
+            </p>
+            <ul class="text-sm text-zinc-400 space-y-2 list-disc list-inside">
+                <li><strong class="text-zinc-300">Free core</strong> — report, read, basic Evidence Pack, Verify page</li>
+                <li><strong class="text-zinc-300">Voluntary support</strong> — optional gifts to keep the Square independent</li>
+                <li><strong class="text-zinc-300">Optional press credential</strong> — formal PDF for professionals who need it</li>
+                <li><strong class="text-zinc-300">Partners &amp; grants</strong> — aligned studios, civic, and journalism support where available</li>
+            </ul>
+            <p class="mt-4 text-xs text-zinc-500 leading-relaxed">
+                Paying never buys a higher truth rank. Supporter recognition is thank-you only; sealed integrity and trust tiers follow the same rules for everyone.
+            </p>
         </section>
 
         <!-- Technical Details -->
         <section class="glass rounded-3xl p-8 mb-12 border border-zinc-700">
             <h2 class="text-xl font-bold text-zinc-300 mb-6 flex items-center gap-2">
-                <span>⚙️</span> Technical Details (for journalists, researchers & developers)
+                <span>⚙️</span> Technical details (journalists, researchers &amp; developers)
             </h2>
-            
+
             <div class="space-y-6 text-sm text-zinc-400">
                 <div>
-                    <h3 class="font-semibold text-emerald-400 mb-1">Cryptographic Integrity</h3>
-                    <p>All media receives a local <strong>SHA-256</strong> cryptographic hash before upload. Entries are hash-chained (<code>prevHash + hash</code>). Zero-Knowledge proofs (zk-SNARKs) allow verification of authenticity without revealing private identifiers.</p>
-                </div>
-                
-                <div>
-                    <h3 class="font-semibold text-emerald-400 mb-1">Privacy Architecture</h3>
-                    <p>Client-side EXIF/GPS scrubbing • No IP logging (Cloudflare Edge) • Ephemeral phone verification (never stored on public ledger) • Zero-Knowledge Subpoena Defense design.</p>
-                </div>
-
-                <div>
-                    <h3 class="font-semibold text-emerald-400 mb-1">Trust Tiers</h3>
+                    <h3 class="font-semibold text-emerald-400 mb-1">Media &amp; evidence integrity</h3>
                     <p>
-                        • <strong>Open Talk / Citizen Talk</strong> – basic participation<br>
-                        • <strong>Citizen Circle</strong> – temporary phone verification (anti-spam only)<br>
-                        • <strong>Higher Trust / True Witness / Witness Voice</strong> – full cryptographic notarization + ZK proofs
+                        Media can be hashed locally with <strong>SHA-256</strong> before upload. Evidence Packs and the
+                        <a href="/verify" class="text-emerald-400/90 hover:underline">Verify</a> flow let third parties
+                        recompute hashes and compare them to sealed metadata. Entries may be hash-linked for tamper evidence
+                        at the application layer.
                     </p>
                 </div>
 
                 <div>
-                    <h3 class="font-semibold text-emerald-400 mb-1">Immutability Model</h3>
-                    <p>Application-level immutability enforced by Firestore security rules + client-side hashing + hash-chaining. This is <em>not</em> a full public blockchain. Optional future IPFS / public-chain anchoring is planned but not yet active.</p>
+                    <h3 class="font-semibold text-emerald-400 mb-1">Membership &amp; higher trust</h3>
+                    <p>
+                        Higher Trust / Witness Circle uses a <strong>membership commitment and nullifier</strong> model so
+                        elevation cannot be casually replayed. A Circom/Groth16 membership circuit (Poseidon, Merkle inclusion,
+                        trust and activity thresholds) is part of the roadmap and artifact pipeline.
+                        Production elevation is being hardened toward full client-side proving and server-side verification;
+                        until that path is complete, treat membership badges as <strong>platform higher-trust status</strong>,
+                        and treat <strong>media hash seals</strong> as the primary cryptographic integrity story for evidence files.
+                    </p>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold text-emerald-400 mb-1">Privacy architecture</h3>
+                    <p>
+                        Client-side EXIF/GPS scrubbing in privacy mode • Edge protection via Cloudflare •
+                        Phone verification aimed at anti-spam, not as a public identity on the sealed ledger •
+                        Data minimization in product design.
+                    </p>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold text-emerald-400 mb-1">Trust tiers</h3>
+                    <p>
+                        • <strong>Citizen Talk</strong> — open participation<br>
+                        • <strong>Citizen Circle</strong> — phone verification (anti-spam)<br>
+                        • <strong>Witness Circle / Higher Trust</strong> — stronger membership checks and evidence tooling<br>
+                        • Reputation grows with honest use; it is not a paid ranking product
+                    </p>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold text-emerald-400 mb-1">Immutability model</h3>
+                    <p>
+                        Application-level sealing: Firestore security rules (including no ordinary delete of sealed testimonies),
+                        client-side hashing, and operational audit logs. This is <em>not</em> a full public blockchain.
+                        Optional public-chain or IPFS-style anchoring may come later; it is not required for day-to-day hash verification.
+                    </p>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold text-emerald-400 mb-1">Independent checks</h3>
+                    <p>
+                        See the journalist verification notes in our docs: download an Evidence Pack, recompute SHA-256 on the media,
+                        and compare to sealed metadata. Use Transparency and Verify for ledger-oriented checks as those surfaces mature.
+                    </p>
                 </div>
             </div>
         </section>
@@ -155,14 +218,12 @@
             </p>
         </section>
 
-        <!-- Bottom Return Button -->
         <div class="text-center mb-12">
             <a href="index.html" class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 font-semibold rounded-2xl border border-emerald-500/30 transition shadow-lg">
                 <span>←</span> Back to Public Square
             </a>
         </div>
 
-        <!-- Footer -->
         <footer class="mt-16 border-t border-zinc-800 pt-10 pb-8">
             <div class="max-w-3xl mx-auto px-4 text-center">
                 <div class="mb-6">
@@ -173,7 +234,7 @@
                         </span>
                     </div>
                     <p class="mt-2 text-sm text-zinc-400">
-                        Truth • Evidence • Zero-Knowledge
+                        Truth • Evidence • Protected public record
                     </p>
                 </div>
                 <div class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-zinc-400 mb-6">
@@ -186,7 +247,7 @@
                 </div>
                 <div class="mb-6 text-xs text-zinc-500">
                     <span class="text-zinc-400">Partner:</span>
-                    <span class="font-medium text-zinc-300"> OK CREATION PHOTO & VIDEO STUDIO</span>
+                    <span class="font-medium text-zinc-300"> OK CREATION PHOTO &amp; VIDEO STUDIO</span>
                     <span class="mx-1.5">·</span>
                     <a href="https://www.youtube.com/@okcreationphotovideostudio2425" target="_blank" rel="noopener noreferrer" class="text-emerald-400/90 hover:text-emerald-300 hover:underline">YouTube</a>
                     <span class="mx-1">·</span>
@@ -196,7 +257,7 @@
                     © 2026 VocalWitness • Citizen Reporting • Real Evidence
                 </p>
                 <p class="mt-1 text-[11px] text-zinc-600 max-w-md mx-auto leading-relaxed">
-                    Application-level integrity • Client-side hashing • The public record is designed to remain sealed
+                    Application-level integrity • Client-side hashing • Free core reporting • Trust is not for sale
                 </p>
             </div>
         </footer>
