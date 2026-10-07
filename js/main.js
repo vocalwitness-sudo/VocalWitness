@@ -23,7 +23,8 @@ import { createEvidencePack } from './evidence-pack.js';
 import { generateSha256Hash } from './utils.js';
 import { getAudioForPublish, uploadForensicMedia } from './media.js';
 import { initLiveArena } from './live-arena.js';
-import { loadCircle, loadVerifiedWitnesses, loadHigherTrustReports, initWitnessSubTabs } from './circle.js';
+import { loadCircle, loadVerifiedWitnesses } from './circle.js';
+import { loadHigherTrustReports, initWitnessSubTabs } from './witness-tab.js';
 import {
   collection, addDoc, doc, getDoc, setDoc, updateDoc,
   serverTimestamp, query, getDocs, orderBy, limit
