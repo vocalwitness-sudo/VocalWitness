@@ -10,7 +10,7 @@ import {
 import { db, auth } from './firebase-config.js';
 import { showToast } from './utils.js';
 import { getUserTier } from './tier.js';
-import { analyzeReportContent } from './composer.js';
+import { analyzeReportContent } from './moderation.js';
 import { processAndUploadMedia } from './media-pipeline.js';
 import { parsePostMetadata } from './utils/parser.js';
 import { state } from './app-state.js';
