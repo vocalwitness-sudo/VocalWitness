@@ -1,5 +1,5 @@
 // js/witness-voice.js
-// Witness Voice Channel + Structured Evidence Intake
+// Witness Voice Channel + Structured Evidence Intake (Upgraded)
 
 import { initFeed } from './feed.js';
 import { sanitizeUserPII } from './onboarding.js';
@@ -42,6 +42,25 @@ function blobToBase64(blob) {
   });
 }
 
+async function computeSHA256(fileOrBlob) {
+  const buffer = await fileOrBlob.arrayBuffer();
+  const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function showStatus(message, type = 'info') {
+  const el = document.getElementById('wv-status');
+  if (!el) return;
+  el.classList.remove('hidden');
+  el.textContent = message;
+  el.className = `mt-4 text-center text-sm ${
+    type === 'success' ? 'text-emerald-400' :
+    type === 'error'   ? 'text-red-400' :
+    type === 'warning' ? 'text-amber-400' : 'text-zinc-400'
+  }`;
+}
+
 /**
  * Renders the Evidence Intake Assistant
  */
@@ -59,14 +78,12 @@ export function renderEvidenceIntakeAssistant(container) {
           Court-Admissible Guide
         </span>
       </div>
-
       <div id="intake-chat-history" class="space-y-3 max-h-[220px] overflow-y-auto p-2 bg-zinc-900/60 rounded-2xl text-xs text-zinc-300">
         <div class="p-2.5 bg-zinc-800/80 rounded-xl border border-zinc-700/50">
           <strong class="text-emerald-400">Assistant:</strong> 
           Welcome. Did you witness this event directly with your own senses, or learn of it through a third party?
         </div>
       </div>
-
       <div class="flex gap-2">
         <input type="text" id="intake-user-input" 
                placeholder="Type or attach audio testimony..."
@@ -99,7 +116,7 @@ export function renderEvidenceIntakeAssistant(container) {
     factSummary: ''
   };
 
-  // Audio upload
+  // Audio upload + transcription
   if (audioBtn && audioInput) {
     audioBtn.addEventListener('click', () => audioInput.click());
 
@@ -252,8 +269,104 @@ function setupCharCounter() {
   update();
 }
 
+/* ------------------------------------------------------------------ */
+/*  Media handling (NEW)                                              */
+/* ------------------------------------------------------------------ */
+
+const attachedMedia = []; // { id, type, file, hash, previewUrl }
+
+function setupMediaButtons() {
+  const btnVoice  = document.getElementById('wv-btn-voice');
+  const btnPhoto  = document.getElementById('wv-btn-photo');
+  const btnVideo  = document.getElementById('wv-btn-video');
+
+  const inputVoice = document.getElementById('wv-voice-input');
+  const inputPhoto = document.getElementById('wv-photo-input');
+  const inputVideo = document.getElementById('wv-video-input');
+
+  if (btnVoice && inputVoice) {
+    btnVoice.addEventListener('click', () => inputVoice.click());
+    inputVoice.addEventListener('change', (e) => handleMediaSelect(e, 'audio'));
+  }
+  if (btnPhoto && inputPhoto) {
+    btnPhoto.addEventListener('click', () => inputPhoto.click());
+    inputPhoto.addEventListener('change', (e) => handleMediaSelect(e, 'image'));
+  }
+  if (btnVideo && inputVideo) {
+    btnVideo.addEventListener('click', () => inputVideo.click());
+    inputVideo.addEventListener('change', (e) => handleMediaSelect(e, 'video'));
+  }
+}
+
+async function handleMediaSelect(e, type) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  try {
+    showToast('Computing SHA-256 hash...', 'info');
+    const hash = await computeSHA256(file);
+    const previewUrl = URL.createObjectURL(file);
+    const id = crypto.randomUUID();
+
+    attachedMedia.push({ id, type, file, hash, previewUrl });
+    renderMediaPreview();
+    showToast(`${type} attached & hashed`, 'success');
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to process media', 'error');
+  } finally {
+    e.target.value = '';
+  }
+}
+
+function renderMediaPreview() {
+  const container = document.getElementById('wv-preview');
+  const list      = document.getElementById('wv-preview-list');
+  if (!container || !list) return;
+
+  if (attachedMedia.length === 0) {
+    container.classList.add('hidden');
+    list.innerHTML = '';
+    return;
+  }
+
+  container.classList.remove('hidden');
+  list.innerHTML = attachedMedia.map(item => {
+    let mediaEl = '';
+    if (item.type === 'image') {
+      mediaEl = `<img src="${item.previewUrl}" alt="evidence">`;
+    } else if (item.type === 'video') {
+      mediaEl = `<video src="${item.previewUrl}" controls muted></video>`;
+    } else {
+      mediaEl = `<div class="h-[140px] flex items-center justify-center text-4xl bg-zinc-800">🎤</div>`;
+    }
+
+    return `
+      <div class="media-card" data-id="${item.id}">
+        ${mediaEl}
+        <button type="button" class="remove-btn" data-remove="${item.id}" title="Remove">×</button>
+        <div class="p-2 text-[10px]">
+          <div class="text-zinc-400 mb-1">${item.type.toUpperCase()}</div>
+          <div class="hash-badge">${item.hash.slice(0, 16)}…${item.hash.slice(-8)}</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  list.querySelectorAll('[data-remove]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-remove');
+      const idx = attachedMedia.findIndex(m => m.id === id);
+      if (idx > -1) {
+        URL.revokeObjectURL(attachedMedia[idx].previewUrl);
+        attachedMedia.splice(idx, 1);
+        renderMediaPreview();
+      }
+    });
+  });
+}
+
 /**
- * Publish handler for the new form
+ * Publish handler (upgraded)
  */
 async function setupPublishButton() {
   const btn = document.getElementById('wv-publishBtn');
@@ -271,14 +384,22 @@ async function setupPublishButton() {
     const category = document.getElementById('wv-category')?.value || '';
     const isAnonymous = document.getElementById('wv-anonymous')?.checked || false;
 
-    if (!content) {
-      return showToast('Please write what you witnessed', 'error');
+    if (!title || !content || !when || !where) {
+      showStatus('Please fill all required fields (*)', 'error');
+      return showToast('Missing required fields', 'error');
     }
 
     btn.disabled = true;
-    btn.textContent = 'Publishing...';
+    btn.textContent = 'Sealing...';
+    showStatus('Computing final hashes and publishing...', 'info');
 
     try {
+      const mediaHashes = attachedMedia.map(m => ({
+        type: m.type,
+        hash: m.hash,
+        name: m.file.name
+      }));
+
       await addDoc(collection(db, 'testimonies'), {
         title,
         content,
@@ -291,11 +412,13 @@ async function setupPublishButton() {
         author: isAnonymous ? 'Anonymous' : (auth.currentUser.displayName || 'Witness'),
         channel: 'witness-voice',
         feedVisibility: 'witness-voice',
+        mediaHashes,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
 
-      showToast('Testimony published successfully', 'success');
+      showToast('Testimony sealed & published successfully', 'success');
+      showStatus('✅ Testimony sealed and published to the forensic ledger', 'success');
 
       // Reset form
       document.getElementById('wv-title').value = '';
@@ -306,12 +429,18 @@ async function setupPublishButton() {
       document.getElementById('wv-anonymous').checked = false;
       document.getElementById('wv-char-count').textContent = '0 / 4000';
 
+      // Clear media
+      attachedMedia.forEach(m => URL.revokeObjectURL(m.previewUrl));
+      attachedMedia.length = 0;
+      renderMediaPreview();
+
     } catch (err) {
       console.error(err);
       showToast('Failed to publish testimony', 'error');
+      showStatus('Publish failed. Please try again.', 'error');
     } finally {
       btn.disabled = false;
-      btn.textContent = 'Publish Testimony';
+      btn.textContent = 'Seal & Publish Testimony';
     }
   });
 }
@@ -327,14 +456,15 @@ export async function initWitnessVoice() {
       renderEvidenceIntakeAssistant(intakeContainer);
     }
 
-    // 2. Character counter + Publish button
+    // 2. Form utilities
     setupCharCounter();
+    setupMediaButtons();          // ← NEW
     setupPublishButton();
 
     // 3. Load the Witness Voice feed
     await initFeed(undefined, 'witness-voice');
 
-    console.log('✅ Witness Voice channel ready');
+    console.log('✅ Witness Voice channel ready (upgraded)');
   } catch (err) {
     console.error('Failed to initialize Witness Voice:', err);
   }
