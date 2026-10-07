@@ -406,3 +406,5 @@ export function initWitnessSubTabs() {
   });
 }
 
+// at the bottom of circle.js exports area
+export { loadHigherTrustReports, initWitnessSubTabs };
