@@ -14,27 +14,51 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
  
   <style>
-    body {
-      background-color: #0a0f1c;
-      font-family: 'Inter', system-ui, sans-serif;
+    body { background-color: #0a0f1c; font-family: 'Inter', system-ui, sans-serif; }
+    .glass { background-color: #111827; border: 1px solid rgba(16, 185, 129, 0.22); }
+    html:not(.dark) body { background-color: #f4f4f5; color: #18181b; }
+    html:not(.dark) .glass { background-color: #ffffff; border-color: rgba(16, 185, 129, 0.35); }
+    
+    /* Media preview cards */
+    .media-card {
+      position: relative;
+      border-radius: 1rem;
+      overflow: hidden;
+      background: #18181b;
+      border: 1px solid #3f3f46;
     }
-    .glass {
-      background-color: #111827;
-      border: 1px solid rgba(16, 185, 129, 0.22);
+    .media-card img, .media-card video {
+      width: 100%;
+      height: 140px;
+      object-fit: cover;
+      display: block;
     }
-    html:not(.dark) body {
-      background-color: #f4f4f5;
-      color: #18181b;
+    .media-card .remove-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      border: none;
+      border-radius: 9999px;
+      width: 28px;
+      height: 28px;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    html:not(.dark) .glass {
-      background-color: #ffffff;
-      border-color: rgba(16, 185, 129, 0.35);
+    .hash-badge {
+      font-family: ui-monospace, monospace;
+      font-size: 10px;
+      color: #34d399;
+      word-break: break-all;
     }
   </style>
 </head>
 <body class="min-h-screen bg-zinc-950 text-white antialiased">
 
-  <!-- Skip link -->
   <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-emerald-600 focus:px-3 focus:py-2 focus:text-sm focus:text-black">
     Skip to content
   </a>
@@ -53,8 +77,10 @@
         <span class="text-zinc-600" aria-hidden="true">/</span>
         <span class="font-semibold text-white">Witness Voice</span>
       </div>
-
       <div class="flex items-center gap-3">
+        <span id="witness-tier-badge" class="hidden rounded-full border border-cyan-500/40 bg-cyan-500/10 px-3 py-1 text-xs font-medium text-cyan-400">
+          🔐 Witness Circle
+        </span>
         <button id="theme-toggle" type="button"
                 class="rounded-xl border border-zinc-700 bg-zinc-900 p-2 text-zinc-300 transition hover:border-emerald-500 hover:text-white"
                 title="Toggle dark / light mode" aria-label="Toggle theme">
@@ -73,54 +99,67 @@
     <!-- Page Intro -->
     <div class="mb-10">
       <div class="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400">
-        <span aria-hidden="true">⚖️</span> Structured Evidence Channel
+        <span aria-hidden="true">⚖️</span> Court-Admissible Forensic Channel
       </div>
       <h1 class="mb-3 text-3xl font-bold text-white sm:text-4xl">🎙️ Witness Voice</h1>
       <p class="max-w-2xl leading-relaxed text-zinc-400">
-        High-integrity testimony channel. Record what you personally witnessed with clear structure, 
-        timestamps, and optional cryptographic sealing.
+        High-integrity testimony channel. Record first-hand observations with structured timelines, EXIF scrubbing, automated PII protection, and immutable SHA-256 cryptographic sealing.
       </p>
     </div>
 
-    <!-- ========== EVIDENCE INTAKE CARD ========== -->
+    <!-- Evidence Intake Assistant -->
+    <div id="witness-intake-assistant-container"></div>
+
+    <!-- ========== STRUCTURED EVIDENCE FORM ========== -->
     <section class="glass mb-12 rounded-3xl p-6 sm:p-8" aria-label="Evidence intake">
       <div class="mb-6 flex items-center justify-between">
-        <h2 class="text-xl font-bold text-white">Record Testimony</h2>
+        <h2 class="text-xl font-bold text-white">Structured Testimony Record</h2>
         <span class="rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-medium text-emerald-400">
-          Official Record
+          SHA-256 Fingerprinted
         </span>
       </div>
 
       <!-- Title -->
       <div class="mb-5">
-        <label for="wv-title" class="mb-1.5 block text-sm font-medium text-zinc-300">Title (optional)</label>
-        <input id="wv-title" type="text" maxlength="120"
-               placeholder="Short title for this testimony"
+        <label for="wv-title" class="mb-1.5 block text-sm font-medium text-zinc-300">
+          Incident Title <span class="text-red-400">*</span>
+        </label>
+        <input id="wv-title" type="text" maxlength="120" required
+               placeholder="e.g. Unlawful Detention at 4th Avenue Checkpoint"
                class="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-5 py-3.5 text-base text-white placeholder-zinc-500 focus:border-emerald-500 focus:outline-none transition">
       </div>
 
-      <!-- Structured fields -->
+      <!-- When + Where -->
       <div class="mb-5 grid gap-4 sm:grid-cols-2">
         <div>
-          <label for="wv-when" class="mb-1.5 block text-sm font-medium text-zinc-300">When did it happen?</label>
-          <input id="wv-when" type="text" placeholder="Date / time or approximate"
+          <label for="wv-when" class="mb-1.5 block text-sm font-medium text-zinc-300">
+            Exact Timestamp / Window <span class="text-red-400">*</span>
+          </label>
+          <input id="wv-when" type="text" required
+                 placeholder="e.g. Oct 7, 2026 - 14:15 UTC"
                  class="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm text-white placeholder-zinc-500 focus:border-emerald-500 focus:outline-none">
         </div>
         <div>
-          <label for="wv-where" class="mb-1.5 block text-sm font-medium text-zinc-300">Where?</label>
-          <input id="wv-where" type="text" placeholder="Location or area"
+          <label for="wv-where" class="mb-1.5 block text-sm font-medium text-zinc-300">
+            Physical Landmark / Location <span class="text-red-400">*</span>
+          </label>
+          <input id="wv-where" type="text" required
+                 placeholder="e.g. Underneath Allen Avenue Bridge"
                  class="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm text-white placeholder-zinc-500 focus:border-emerald-500 focus:outline-none">
         </div>
       </div>
 
-      <!-- Main testimony -->
+      <!-- Main Testimony -->
       <div class="mb-5">
-        <label for="wv-content" class="mb-1.5 block text-sm font-medium text-zinc-300">What did you witness?</label>
-        <textarea id="wv-content" rows="6" maxlength="4000"
-                  placeholder="Describe only what you personally saw or heard. Stick to facts."
+        <label for="wv-content" class="mb-1.5 block text-sm font-medium text-zinc-300">
+          Direct Eyewitness Observation <span class="text-red-400">*</span>
+        </label>
+        <textarea id="wv-content" rows="6" maxlength="4000" required
+                  placeholder="Describe what you personally witnessed. Avoid hearsay or assumptions. (PII is automatically scrubbed)."
                   class="w-full resize-none rounded-2xl border border-zinc-700 bg-zinc-900 p-5 text-base text-white placeholder-zinc-500 focus:border-emerald-500 focus:outline-none transition"></textarea>
-        <div class="mt-1.5 flex justify-end">
-          <span id="wv-char-count" class="text-xs text-zinc-500">0 / 4000</span>
+        <div class="mt-1.5 flex justify-between items-center text-xs text-zinc-500">
+          <span class="text-emerald-400/80">🛡️ Auto-PII Redaction Enabled</span>
+          <span id="wv-char-count">0 / 4000</span>
         </div>
       </div>
 
@@ -129,42 +168,50 @@
         <label for="wv-category" class="mb-1.5 block text-sm font-medium text-zinc-300">Category</label>
         <select id="wv-category"
                 class="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm text-white focus:border-emerald-500 focus:outline-none">
-          <option value="">Select category...</option>
-          <option value="human-rights">Human Rights</option>
-          <option value="election">Election / Politics</option>
-          <option value="police">Police / Security Forces</option>
-          <option value="corruption">Corruption</option>
-          <option value="violence">Violence / Conflict</option>
-          <option value="personal-safety">Personal Safety</option>
-          <option value="other">Other</option>
+          <option value="">Select forensic category...</option>
+          <option value="human-rights">Human Rights Abuse</option>
+          <option value="election">Election Irregularities</option>
+          <option value="police">Security Force Overreach</option>
+          <option value="corruption">Official Corruption</option>
+          <option value="violence">Conflict / Civil Unrest</option>
+          <option value="infrastructure">Infrastructure Neglect</option>
+          <option value="other">Other Incident</option>
         </select>
       </div>
 
       <!-- Media Section -->
       <div class="mb-6 space-y-3">
-        <p class="text-sm font-medium text-zinc-300">Add Evidence (strongly recommended)</p>
+        <p class="text-sm font-medium text-zinc-300">Attach Cryptographic Evidence (EXIF Scrubbed)</p>
+        
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <button type="button" id="wv-btn-voice"
                   class="flex items-center justify-center gap-2 rounded-2xl border-2 border-emerald-500/40 bg-emerald-500/10 px-4 py-3.5 text-sm font-medium text-emerald-400 transition hover:bg-emerald-500/20">
-            🎤 Live Voice
+            🎤 Live Voice Note
           </button>
           <button type="button" id="wv-btn-photo"
                   class="flex items-center justify-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 text-sm font-medium text-zinc-300 transition hover:border-emerald-500/50">
-            📷 Photo
+            📷 Incident Photo
           </button>
           <button type="button" id="wv-btn-video"
                   class="flex items-center justify-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-800/80 px-4 py-3.5 text-sm font-medium text-zinc-300 transition hover:border-sky-500/50">
-            🎥 Video
+            🎥 Video Clip
           </button>
         </div>
+
+        <!-- Hidden file inputs -->
+        <input type="file" id="wv-voice-input" accept="audio/*" class="hidden">
+        <input type="file" id="wv-photo-input" accept="image/*" class="hidden">
+        <input type="file" id="wv-video-input" accept="video/*" class="hidden">
+
         <p class="text-xs text-zinc-500">
-          Live voice carries the highest evidential weight.
+          Files are hashed locally via SHA-256 prior to upload. Metadata coordinates are stripped for personal protection.
         </p>
       </div>
 
-      <!-- Preview Area -->
-      <div id="wv-preview" class="mb-6 hidden min-h-[80px] rounded-2xl border border-dashed border-zinc-700 bg-zinc-900/50 p-4 text-center text-sm text-zinc-500">
-        <!-- Media previews appear here -->
+      <!-- Media Preview Area -->
+      <div id="wv-preview" class="mb-6 hidden space-y-3">
+        <p class="text-sm font-medium text-zinc-300">Attached Evidence</p>
+        <div id="wv-preview-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
       </div>
 
       <!-- Anonymity + Publish -->
@@ -172,38 +219,38 @@
         <label class="flex cursor-pointer items-center gap-2.5 text-sm text-zinc-300 select-none">
           <input type="checkbox" id="wv-anonymous" class="h-4 w-4 rounded border-zinc-600 accent-emerald-500">
           <span>
-            Post Anonymously
-            <span class="text-zinc-500">(tier still counts privately)</span>
+            Post Anonymously (ZK-Shielded)
+            <span class="text-zinc-500">(Tier verified privately)</span>
           </span>
         </label>
 
         <button id="wv-publishBtn" type="button"
                 class="rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 px-8 py-3.5 text-base font-bold text-slate-950 shadow-lg shadow-emerald-500/20 transition hover:opacity-90 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed">
-          Publish Testimony
+          Seal & Publish Testimony
         </button>
       </div>
 
-      <!-- Safety Notice -->
+      <!-- Status message -->
+      <div id="wv-status" class="mt-4 hidden text-center text-sm"></div>
+
       <p class="mt-5 text-center text-xs leading-relaxed text-zinc-500">
-        False testimony may have legal consequences. Only submit what you personally witnessed.
-        Once published, the original record cannot be edited or deleted.
+        Submissions are cryptographically anchored to the VocalWitness forensic ledger. 
+        False testimony carries severe community and legal penalties. Only submit first-hand observations.
       </p>
     </section>
 
-    <!-- ========== RECENT WITNESS VOICES ========== -->
+    <!-- Recent Witness Voices -->
     <section aria-label="Recent Witness Voices">
       <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <h2 class="text-xl font-semibold text-white">Recent Witness Voices</h2>
+        <h2 class="text-xl font-semibold text-white">Verified Witness Records</h2>
         <select id="wv-feedSort"
                 class="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300 focus:border-emerald-500 focus:outline-none">
-          <option value="latest">Latest</option>
-          <option value="verified">Verified First</option>
-          <option value="trending">Trending</option>
+          <option value="latest">Latest Verified</option>
+          <option value="corroborated">Highest Corroboration</option>
+          <option value="witness-circle">Witness Circle Only</option>
         </select>
       </div>
-
       <div id="feed-container" class="space-y-5">
-        <!-- Loading skeleton -->
         <div class="glass animate-pulse rounded-3xl p-6">
           <div class="mb-4 flex items-center gap-3">
             <div class="h-10 w-10 rounded-full bg-zinc-800"></div>
@@ -217,7 +264,6 @@
         </div>
       </div>
     </section>
-
   </main>
 
   <footer class="border-t border-zinc-800 py-8 text-center text-xs text-zinc-500">
@@ -226,11 +272,9 @@
 
   <script type="module">
     import { initWitnessVoice } from './js/witness-voice.js';
-
     document.addEventListener('DOMContentLoaded', () => {
       initWitnessVoice();
 
-      // Back button
       document.addEventListener('click', (e) => {
         const backTrigger = e.target.closest('[data-action="back"]');
         if (backTrigger) {
