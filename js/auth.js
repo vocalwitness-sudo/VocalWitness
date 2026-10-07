@@ -206,7 +206,6 @@ function handleAuthError(error) {
     case 'auth/account-exists-with-different-credential':
       return "An account already exists with this email address using a different login provider.";
     case 'auth/multi-factor-auth-required':
-      // Handled separately in flows via openMfaChallengeModal
       return null;
     default:
       return error?.message || "Authentication failed. Please try again.";
