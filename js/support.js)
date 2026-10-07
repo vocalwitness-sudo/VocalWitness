@@ -135,39 +135,46 @@ export function initSupportModal() {
     });
 
     // Paystack - Improved
-    paystackBtn?.addEventListener('click', async () => {
-        const amountVal = parseFloat(customInput?.value) || 15;
-        if (amountVal < 1) return showToast('Please enter a valid amount', 'error');
+paystackBtn?.addEventListener('click', async () => {
+  const amountVal = parseFloat(customInput?.value) || 15;
+  if (!Number.isFinite(amountVal) || amountVal < 1) {
+    return showToast('Please enter a valid amount (minimum $1).', 'error');
+  }
 
-        showToast('Connecting to secure payment...', 'info');
+  if (!auth.currentUser) {
+    showToast('Sign in to support with card — or send USDT below without signing in.', 'info');
+    if (typeof window.showAuthModal === 'function') window.showAuthModal();
+    return;
+  }
 
-        try {
-            const initialize = httpsCallable(functions, 'initializePaystack');
-            const result = await initialize({
-                amount: Math.round(amountVal * 1650 * 100),
-                metadata: {
-                    source: 'support_modal',
-                    amount_usd: amountVal,
-                    userId: auth.currentUser?.uid || null
-                }
-            });
+  showToast('Connecting to secure payment…', 'info');
 
-            if (result.data.authorization_url) {
-                window.location.href = result.data.authorization_url;
-            } else {
-                throw new Error('No authorization URL');
-            }
-        } catch (error) {
-            console.error(error);
-            showToast('Payment initialization failed. Please try again.', 'error');
-        }
+  try {
+    // Paystack amount is kobo (NGN * 100). Approximate USD→NGN; adjust rate as needed.
+    const USD_TO_NGN = 1600;
+    const amountKobo = Math.max(1000, Math.round(amountVal * USD_TO_NGN * 100));
+
+    const initialize = httpsCallable(functions, 'initializePaystack');
+    const result = await initialize({
+      amount: amountKobo,
+      metadata: {
+        purpose: 'support',
+        source: 'support_modal',
+        amount_usd: amountVal
+      }
     });
 
-    copyTrxBtn?.addEventListener('click', () => {
-        navigator.clipboard.writeText('TDtka2ZxJHtnWc3sRygm7WWfJVZHbhkLtK');
-        showToast('TRC-20 address copied!', 'success');
-    });
-}
+    const url = result?.data?.authorization_url;
+    if (!url) throw new Error('No authorization URL');
+    window.location.href = url;
+  } catch (error) {
+    console.error(error);
+    const msg = error?.message?.includes('unauthenticated')
+      ? 'Please sign in to pay with card.'
+      : 'Payment initialization failed. Try again or use USDT.';
+    showToast(msg, 'error');
+  }
+});
 
 // Auto init
 document.addEventListener('DOMContentLoaded', () => {
