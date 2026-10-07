@@ -2,109 +2,17 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#10b981">
-  <meta name="color-scheme" content="dark">
-  <meta name="description" content="Witness Voice – ZK-Verified high-trust testimonies on VocalWitness">
-
-  <!-- PWA / Mobile -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="mobile-web-app-capable" content="yes">
-
-  <link rel="manifest" href="./manifest.json">
-  <link rel="icon" href="./logo.png" type="image/png">
-  <link rel="apple-touch-icon" href="./icon-192.png" sizes="192x192">
-  <link rel="canonical" href="https://vocalwitness.com/true-witness">
-
-  <title data-i18n="witnessVoiceTitle">Witness Voice • VocalWitness</title>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./style.css?v=3.1">
-
-  <style>
-    body {
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      background: #0b1120;
-      color: #f8fafc;
-      min-height: 100dvh;
-      margin: 0;
-      -webkit-font-smoothing: antialiased;
-    }
-    .glass {
-      background: rgba(17, 24, 39, 0.95);
-      border: 1px solid rgba(245, 158, 11, 0.3);
-    }
-  </style>
-</head>
-<body class="min-h-screen pb-20 p-4">
-
-  <div class="max-w-2xl mx-auto">
-    <!-- HEADER -->
-    <header class="flex items-center justify-between mb-8 pt-[env(safe-area-inset-top)]">
-      <div class="flex items-center gap-3">
-        <button type="button"
-                data-action="back"
-                class="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-2xl flex items-center gap-2 text-sm text-zinc-200 hover:text-white transition-colors"
-                data-i18n="backButton">
-          ← Back
-        </button>
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-2xl flex items-center justify-center text-2xl" aria-hidden="true">🔬</div>
-          <div>
-            <h1 class="text-2xl sm:text-3xl font-bold tracking-tighter text-amber-400" data-i18n="witnessVoice">Witness Voice</h1>
-            <p class="text-xs text-amber-500" data-i18n="witnessVoiceSubtitle">ZK Verified • High Trust</p>
-          </div>
-        </div>
-      </div>
-
-      <select id="languageSelector"
-              class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-3 py-2 text-sm focus:outline-none focus:border-amber-500"
-              aria-label="Select language">
-        <!-- Populated by i18n.js -->
-      </select>
-    </header>
-
-    <div class="glass rounded-3xl p-5 sm:p-6">
-      <h2 class="text-xl font-semibold mb-6 text-amber-300" data-i18n="zkVerifiedTestimonies">ZK-Verified Testimonies</h2>
-      <div id="witnessVoiceContainer" class="space-y-6">
-        <!-- Populated by JS -->
-      </div>
-    </div>
-  </div>
-
-  <script type="module">
-    import './js/utils.js';
-    import { initAuth } from './js/auth.js';
-    import { initLanguage } from './js/i18n.js';
-    import { initWitnessVoice } from './js/witness-voice.js';
-
-    document.addEventListener('click', (e) => {
-      const backTrigger = e.target.closest('[data-action="back"]');
-      if (backTrigger) {
-        e.preventDefault();
-        if (window.history.length > 1) {
-          window.history.back();
-        } else {
-          window.location.href = '/';
-        }
-      }
-    });
-
-    document.addEventListener('DOMContentLoaded', async () => {
-      console.log('Witness Voice page loaded');
-      try {
-        if (typeof initAuth === 'function') await initAuth();
-        if (typeof initLanguage === 'function') initLanguage();
-        if (typeof initWitnessVoice === 'function') {
-          initWitnessVoice('witnessVoiceContainer');
-        }
-      } catch (err) {
-        console.error('Witness Voice init error:', err);
-      }
-    });
+  <title>Witness • VocalWitness</title>
+  <link rel="canonical" href="https://vocalwitness.com/#witness">
+  <meta http-equiv="refresh" content="0;url=/#witness">
+  <script>
+    // True Witness is no longer a separate page — it lives inside the Witness tab
+    window.location.replace('/#witness');
   </script>
+</head>
+<body style="background:#0b1120;color:#a1a1aa;font-family:system-ui;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;">
+  <p>Opening Witness…</p>
 </body>
 </html>
