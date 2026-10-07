@@ -1,7 +1,8 @@
-// sw.js - Production Service Worker for VocalWitness (v14)
+// sw.js - Production Service Worker for VocalWitness (v15)
 // Features: Dynamic Asset Caching, PWA Web Share Target, Offline Evidence Queue, Background Sync & Panic Purge
+// FIX: Never intercept Firebase Auth paths (/__/) – required for mobile Google redirect
 
-const CACHE_NAME = 'vocalwitness-v14';
+const CACHE_NAME = 'vocalwitness-v15';
 const STATIC_ASSETS = [
     '/',
     '/index.html',
@@ -55,7 +56,7 @@ async function removeEvidenceFromQueue(id) {
 
 // 1. Install Event: Pre-cache core application shell
 self.addEventListener('install', (event) => {
-    console.log('✅ Service Worker installing (v14)...');
+    console.log('✅ Service Worker installing (v15)...');
     self.skipWaiting();
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
@@ -64,7 +65,7 @@ self.addEventListener('install', (event) => {
 
 // 2. Activate Event: Clean up legacy caches & claim clients immediately
 self.addEventListener('activate', (event) => {
-    console.log('✅ Service Worker activated (v14)');
+    console.log('✅ Service Worker activated (v15)');
     event.waitUntil(
         caches.keys().then((cacheNames) => {
             return Promise.all(
@@ -83,6 +84,12 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
 
+    // ===== CRITICAL: never intercept Firebase Auth paths =====
+    // Without this, mobile Google redirect stays on a white loading page
+    if (url.pathname.startsWith('/__/')) {
+        return; // let the browser talk directly to Firebase
+    }
+
     // --- A. Handle PWA Web Share Target Intercept ---
     if (url.pathname.endsWith('/index.html') && url.searchParams.has('share')) {
         event.respondWith((async () => {
@@ -90,7 +97,6 @@ self.addEventListener('fetch', (event) => {
                 try {
                     const formData = await event.request.formData();
                     const mediaFile = formData.get('media');
-
                     if (mediaFile && mediaFile.size > 0) {
                         const cache = await caches.open(CACHE_NAME);
                         await cache.put('/shared-media-payload', new Response(mediaFile));
