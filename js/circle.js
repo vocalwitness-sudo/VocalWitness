@@ -2,7 +2,8 @@
 import { db, auth } from './firebase-config.js';
 import {
     doc, getDoc, updateDoc, arrayUnion, arrayRemove,
-    collection, query, where, getDocs, limit
+    collection, query, where, getDocs, limit,
+    onSnapshot, orderBy
 } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
 
 const CACHE_TTL_MS = 60_000; // 1 min
@@ -268,12 +269,6 @@ export async function loadVerifiedWitnesses(filter = 'all') {
 }
 
 // ====================== HIGHER-TRUST REPORTS (True Witness, in-app) ======================
-import {
-  onSnapshot,
-  where,
-  orderBy
-} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-// (if you already import query, collection, getDocs, limit — reuse those; only add missing ones)
 
 let witnessReportsUnsub = null;
 
@@ -397,14 +392,4 @@ export function initWitnessSubTabs() {
     btn.addEventListener('click', () => {
       document.querySelectorAll('#witness-filters [data-filter]').forEach((b) => {
         b.setAttribute('aria-pressed', 'false');
-        b.className = 'rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs font-medium text-zinc-300 transition hover:border-amber-500/50';
-      });
-      btn.setAttribute('aria-pressed', 'true');
-      btn.className = 'rounded-full border border-amber-500/40 bg-amber-500/15 px-4 py-1.5 text-xs font-medium text-amber-400';
-      loadVerifiedWitnesses(btn.dataset.filter || 'all');
-    });
-  });
-}
-
-// at the bottom of circle.js exports area
-export { loadHigherTrustReports, initWitnessSubTabs };
+        b.className = 'rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs font-medium text-zinc-300
