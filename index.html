@@ -1100,25 +1100,33 @@
   </section>
 
 <!-- ========== 5. WITNESS (Witness Voice) ========== -->
-<section id="witness" class="hidden space-y-6" role="tabpanel" aria-label="Witness Voice" aria-hidden="true">
+<section id="witness" class="hidden space-y-8" role="tabpanel" aria-label="Witness Voice" aria-hidden="true">
 
-  <!-- Header -->
-  <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+  <!-- Header + Primary CTAs -->
+  <div class="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
     <div>
       <h2 class="text-2xl font-bold text-amber-400">Witness Voice</h2>
-      <p class="mt-1 text-sm text-zinc-400">
+      <p class="mt-1 text-sm text-zinc-400 max-w-xl">
         High-integrity first-hand reports. Sealed on-device. Verifiable by anyone.
       </p>
     </div>
 
-    <!-- Primary CTA -->
-    <a href="/witness-voice"
-       class="inline-flex items-center justify-center gap-2 rounded-2xl bg-amber-500 px-5 py-2.5 text-sm font-bold text-black shadow-lg shadow-amber-500/20 transition hover:bg-amber-400 active:scale-[0.98]">
-      🎙️ Record Witness Voice
-    </a>
+    <div class="flex flex-wrap gap-3">
+      <!-- Upload / Record CTA -->
+      <a href="/witness-voice"
+         class="inline-flex items-center justify-center gap-2 rounded-2xl bg-amber-500 px-5 py-2.5 text-sm font-bold text-black shadow-lg shadow-amber-500/25 transition hover:bg-amber-400 active:scale-[0.98]">
+        🎙️ Record / Upload
+      </a>
+
+      <!-- Verify CTA -->
+      <a href="/verify.html"
+         class="inline-flex items-center justify-center gap-2 rounded-2xl border border-amber-500/40 bg-amber-500/10 px-5 py-2.5 text-sm font-semibold text-amber-300 transition hover:bg-amber-500/20">
+        🛡️ Verify Evidence
+      </a>
+    </div>
   </div>
 
-  <!-- Positioning text -->
+  <!-- Positioning banner -->
   <div class="rounded-2xl border border-amber-500/20 bg-amber-500/5 px-5 py-4">
     <p class="text-sm text-zinc-300 leading-relaxed">
       This is the forensic channel. Only first-hand observations. 
@@ -1127,24 +1135,44 @@
     </p>
   </div>
 
-  <!-- Live sealed reports feed -->
+  <!-- ========== SEALED WITNESS VOICE REPORTS ========== -->
   <div class="space-y-4">
     <div class="flex items-center justify-between">
-      <h3 class="text-sm font-medium text-zinc-300">Sealed Witness Voice Reports</h3>
-      <span class="text-[11px] text-zinc-500">Live field record</span>
+      <h3 class="text-sm font-semibold text-zinc-200">Sealed Witness Voice Reports</h3>
+      <span class="text-[11px] text-zinc-500">Higher-trust • Cryptographically sealed</span>
     </div>
 
     <div id="witness-reports-feed" class="space-y-4">
-      <!-- filled by loadHigherTrustReports() / witness-tab.js -->
-      <div class="py-16 text-center text-zinc-500">
+      <!-- filled by JS -->
+      <div class="py-14 text-center text-zinc-500">
         <p class="text-4xl mb-3">🛡️</p>
         <p class="font-medium">No Witness Voice reports in the field yet.</p>
-        <p class="text-xs text-zinc-600 mt-1">
-          Be among the first to publish a cryptographically sealed observation.
-        </p>
+        <p class="text-xs text-zinc-600 mt-1">Be among the first to publish a sealed observation.</p>
       </div>
     </div>
   </div>
+
+  <!-- ========== CITIZEN REPORTS (open channel) ========== -->
+  <div class="space-y-4 pt-4 border-t border-zinc-800">
+    <div class="flex items-center justify-between">
+      <div>
+        <h3 class="text-sm font-semibold text-zinc-200">Citizen Reports</h3>
+        <p class="text-xs text-zinc-500 mt-0.5">Open public square • All sealed citizen posts</p>
+      </div>
+      <a href="/#square" class="text-xs text-emerald-400 hover:text-emerald-300 font-medium">
+        View full Square →
+      </a>
+    </div>
+
+    <div id="citizen-reports-feed" class="space-y-4">
+      <!-- filled by JS -->
+      <div class="py-10 text-center text-zinc-500">
+        <p class="text-3xl mb-2">🗣️</p>
+        <p class="text-sm">Loading citizen reports…</p>
+      </div>
+    </div>
+  </div>
+
 </section>
 </main>
   
