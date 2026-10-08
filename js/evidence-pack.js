@@ -1,4 +1,5 @@
-// js/evidence-pack.js — Evidence pack + share / newsroom export
+// js/evidence-pack.js
+// Evidence Pack + share / newsroom export
 // Name = Reality: every pack must be independently verifiable
 
 import { generateSha256Hash } from './utils.js';
@@ -38,7 +39,7 @@ export async function buildPackCore({
   bodyHash,
   media = {},
   identity = {},
-  channel = 'citizen-talk',
+  channel = 'witness-voice',
   clientCaptureMs = Date.now(),
 }) {
   const mediaRows = [];
@@ -125,11 +126,7 @@ export function toFullEvidencePack(core, packCoreHash, rfc3161, testimonyId, ext
     (testimonyId
       ? buildShareUrl({
           id: testimonyId,
-          forensicHash:
-            extra.forensicHash ||
-            packCoreHash ||
-            core?.content?.bodyHash ||
-            null,
+          forensicHash: extra.forensicHash || packCoreHash || core?.content?.bodyHash || null,
         })
       : null);
 
@@ -162,12 +159,9 @@ export function toFullEvidencePack(core, packCoreHash, rfc3161, testimonyId, ext
 
 /**
  * Convenience: build a full pack directly from a Firestore testimony document.
- * This is the function most UI code should call.
  */
 export async function buildFullPackFromTestimony(testimony = {}, extras = {}) {
   const id = testimony.id || testimony.testimonyId || extras.testimonyId || null;
-
-  // If we already have a stored core-like structure, reuse it
   const existingCore = testimony.evidencePackCore || null;
   const packCoreHash =
     testimony.packCoreHash ||
@@ -179,7 +173,6 @@ export async function buildFullPackFromTestimony(testimony = {}, extras = {}) {
   let finalPackCoreHash = packCoreHash;
 
   if (!core) {
-    // Rebuild a minimal core from the testimony fields
     const media = {
       imageUrl: testimony.imageUrl,
       imageHash: testimony.imageHash,
@@ -198,7 +191,7 @@ export async function buildFullPackFromTestimony(testimony = {}, extras = {}) {
         authorId: testimony.authorId || testimony.uid || null,
         displayName: testimony.author || testimony.displayName || null,
       },
-      channel: testimony.targetFeed || testimony.channel || 'citizen-talk',
+      channel: testimony.targetFeed || testimony.channel || 'witness-voice',
       clientCaptureMs: testimony.clientCaptureMs || Date.now(),
     });
 
@@ -242,7 +235,7 @@ export async function createEvidencePack(options) {
     bodyHash,
     media = {},
     identity = {},
-    channel = 'citizen-talk',
+    channel = 'witness-voice',
     clientCaptureMs = Date.now(),
     testimonyId = null,
     rfc3161 = null,
@@ -260,11 +253,7 @@ export async function createEvidencePack(options) {
     clientCaptureMs,
   });
 
-  const firestorePack = toFirestoreEvidencePack(
-    packCoreHash,
-    rfc3161,
-    clientCaptureMs
-  );
+  const firestorePack = toFirestoreEvidencePack(packCoreHash, rfc3161, clientCaptureMs);
 
   const fullPack = toFullEvidencePack(core, packCoreHash, rfc3161, testimonyId, {
     forensicHash: forensicHash || packCoreHash,
@@ -439,30 +428,4 @@ export function exportForNewsroom(testimony, extras = {}) {
   const id = pack.packId || 'unknown';
   downloadJson(`vocalwitness-newsroom-${id}.json`, pack);
   return pack;
-}
-
-export function buildPartnerWebhookPayload(testimony, event = 'testimony.sealed') {
-  const id = testimony.id || null;
-  const forensicHash = resolveLedgerHash(testimony);
-  return {
-    event,
-    id,
-    forensicHash,
-    verifyUrl: buildShareUrl({ ...testimony, id }),
-    region: testimony.region || testimony.city || null,
-    createdAt:
-      testimony.createdAt?.toDate?.()?.toISOString?.() ||
-      testimony.createdAt ||
-      new Date().toISOString(),
-    isAnonymous: Boolean(testimony.isAnonymous),
-  };
-}
-
-// Expose useful helpers globally for convenience
-if (typeof window !== 'undefined') {
-  window.buildShareUrl = buildShareUrl;
-  window.shareTestimony = shareTestimony;
-  window.exportForNewsroom = exportForNewsroom;
-  window.buildNewsroomPack = buildNewsroomPack;
-  window.buildFullPackFromTestimony = buildFullPackFromTestimony;
 }
