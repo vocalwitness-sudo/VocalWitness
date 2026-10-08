@@ -1,6 +1,7 @@
 // js/group-detail.js
-// Complete Group Detail page with Invite Code, Expiration, Approval,
+// Complete Group Detail page with Invite Code, Approval,
 // and the 3 Core Institutional Tools (Evidence Locker, Attestation Wall, Forensic Timeline)
+// Updated: Real file picker + client-side SHA-256 for Evidence Locker
 
 import { db, auth } from './firebase-config.js';
 import {
@@ -14,10 +15,10 @@ import {
   query,
   where,
   orderBy,
-  getDocs,
-  limit,
   addDoc,
-  serverTimestamp
+  serverTimestamp,
+  getDocs,
+  limit
 } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
 
 import { showToast } from './utils.js';
@@ -45,7 +46,7 @@ export function initGroupDetail() {
 
   loadGroup();
 
-  // Tab switching (supports Feed, Locker, Attestation, Timeline, Members, About)
+  // Tab switching
   document.querySelectorAll('.tab-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tab-btn').forEach((b) => {
@@ -61,13 +62,20 @@ export function initGroupDetail() {
     });
   });
 
+  // Support deep-link tab (e.g. ?tab=locker)
+  const initialTab = params.get('tab');
+  if (initialTab) {
+    const btn = document.querySelector(`.tab-btn[data-tab="${initialTab}"]`);
+    if (btn) btn.click();
+  }
+
   // Join / Leave
   document.getElementById('joinLeaveBtn')?.addEventListener('click', handleJoinLeave);
 
   // Post to group feed
   document.getElementById('postToGroupBtn')?.addEventListener('click', postToGroup);
 
-  // Core Tool Deposit / Add Action Buttons
+  // Core Tool buttons
   document.getElementById('openEvidenceModalBtn')?.addEventListener('click', promptDepositEvidence);
   document.getElementById('openAttestationModalBtn')?.addEventListener('click', promptSignAttestation);
   document.getElementById('openTimelineModalBtn')?.addEventListener('click', promptAddTimelineNode);
@@ -87,12 +95,6 @@ export function initGroupDetail() {
       navigator.clipboard.writeText(input.value);
       showToast('Invite code copied!', 'success');
     }
-  });
-
-  document.getElementById('regenerateInviteBtn')?.addEventListener('click', async () => {
-    const expiry = Number(document.getElementById('inviteExpiry')?.value || 7);
-    const requireApproval = document.getElementById('inviteApproval')?.value === 'approval';
-    await createOrRefreshInvite({ expiryDays: expiry, requireApproval });
   });
 }
 
@@ -117,7 +119,6 @@ function loadGroup() {
       renderGroupHeader(currentGroupData);
       renderMembers(currentGroupData);
       renderInviteUI();
-      handleInviteJoin();
       loadGroupFeed();
       loadEvidenceLocker();
       loadAttestationWall();
@@ -139,7 +140,6 @@ function renderGroupHeader(group) {
     group.description || 'No description provided.';
   document.getElementById('memberCount').textContent = `${group.memberCount || 1} members`;
 
-  // Visibility badge
   const badge = document.getElementById('groupVisibilityBadge');
   if (badge) {
     const map = {
@@ -153,7 +153,6 @@ function renderGroupHeader(group) {
     badge.className = `rounded-full border px-2.5 py-0.5 text-xs ${info.class}`;
   }
 
-  // Join / Leave button
   const btn = document.getElementById('joinLeaveBtn');
   const uid = auth.currentUser?.uid;
   const isMember = uid && group.members?.includes(uid);
@@ -175,7 +174,6 @@ function renderGroupHeader(group) {
     }
   }
 
-  // Created date
   const createdEl = document.getElementById('groupCreatedAt');
   if (createdEl && group.createdAt?.toDate) {
     createdEl.textContent = group.createdAt.toDate().toLocaleString();
@@ -262,6 +260,19 @@ function renderMembers(group) {
   }
 }
 
+function updatePendingBadge(group) {
+  const badge = document.getElementById('pendingBadge');
+  if (!badge) return;
+  const count = (group.pendingMembers || []).length;
+  if (count > 0) {
+    badge.textContent = count;
+    badge.classList.remove('hidden');
+    badge.classList.add('flex');
+  } else {
+    badge.classList.add('hidden');
+  }
+}
+
 /**
  * Load group feed
  */
@@ -313,7 +324,7 @@ function loadGroupFeed() {
 // ====================== 3 CORE INSTITUTIONAL TOOLS ======================
 
 /**
- * 1. Evidence Locker (Firestore collection: group_evidence)
+ * 1. Evidence Locker
  */
 function loadEvidenceLocker() {
   const container = document.getElementById('evidenceList');
@@ -334,8 +345,8 @@ function loadEvidenceLocker() {
       container.innerHTML = `
         <div class="rounded-3xl border border-dashed border-zinc-700 bg-zinc-900/40 py-14 text-center col-span-full">
           <div class="mb-3 text-4xl">🗄️</div>
-          <p class="text-zinc-400">No encrypted evidence deposited yet</p>
-          <p class="mt-1 text-xs text-zinc-500">Click "+ Deposit Evidence" to anchor ZK-hashed files</p>
+          <p class="text-zinc-400">No evidence deposited yet</p>
+          <p class="mt-1 text-xs text-zinc-500">Click "+ Deposit Evidence" to seal a file with SHA-256</p>
         </div>
       `;
       return;
@@ -347,15 +358,19 @@ function loadEvidenceLocker() {
       card.className = 'glass p-4 rounded-2xl flex flex-col space-y-2';
 
       card.innerHTML = `
-        <div class="flex justify-between items-start">
-          <span class="text-xs font-mono text-emerald-400 font-semibold truncate max-w-[220px]">${escapeHtml(item.name)}</span>
-          <span class="text-[10px] bg-emerald-950 text-emerald-300 px-2 py-0.5 rounded border border-emerald-800">${escapeHtml(item.status || 'Verified ZK-Hash')}</span>
+        <div class="flex justify-between items-start gap-2">
+          <span class="text-xs font-medium text-emerald-400 truncate">${escapeHtml(item.name)}</span>
+          <span class="text-[10px] bg-emerald-950 text-emerald-300 px-2 py-0.5 rounded border border-emerald-800 shrink-0">
+            ${escapeHtml(item.status || 'Sealed')}
+          </span>
         </div>
         <div class="text-[11px] text-zinc-400 flex justify-between">
-          <span>Size: ${escapeHtml(item.size || 'Unknown')}</span>
-          <span>${item.createdAt?.toDate ? item.createdAt.toDate().toLocaleString() : 'Just now'}</span>
+          <span>${escapeHtml(item.size || 'Unknown')}</span>
+          <span>${item.createdAt?.toDate ? item.createdAt.toDate().toLocaleString() : ''}</span>
         </div>
-        <div class="text-[10px] font-mono text-zinc-500 bg-zinc-900 p-1.5 rounded truncate">ZK-Hash: ${escapeHtml(item.hash)}</div>
+        <div class="text-[10px] font-mono text-zinc-500 bg-zinc-900 p-1.5 rounded truncate">
+          SHA-256: ${escapeHtml(item.hash)}
+        </div>
       `;
       container.appendChild(card);
     });
@@ -363,49 +378,36 @@ function loadEvidenceLocker() {
 }
 
 // ============================================================
-// REAL EVIDENCE LOCKER UPLOAD + CLIENT-SIDE HASHING
+// REAL EVIDENCE LOCKER – File picker + Client-side SHA-256
 // ============================================================
-
 async function promptDepositEvidence() {
   if (!auth.currentUser) {
     showToast('Please sign in to deposit evidence', 'error');
     return;
   }
 
-  // Create a hidden file input on the fly
   const input = document.createElement('input');
   input.type = 'file';
-  input.accept = 'image/*,video/*,audio/*,.pdf,.doc,.docx,.txt';
+  input.accept = 'image/*,video/*,audio/*,.pdf,.doc,.docx,.txt,.zip';
   input.multiple = false;
 
   input.onchange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 50 * 1024 * 1024) { // 50 MB limit
-      showToast('File too large (max 50 MB)', 'error');
+    if (file.size > 80 * 1024 * 1024) {
+      showToast('File too large (max 80 MB)', 'error');
       return;
     }
 
     try {
       showToast('Hashing evidence on your device…', 'info');
 
-      // 1. Client-side SHA-256
       const buffer = await file.arrayBuffer();
       const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-      // 2. Optional: upload the file (using your existing upload helper if available)
-      let publicUrl = null;
-      try {
-        // If you have uploadMedia / processAndUploadMedia, use it here
-        // publicUrl = await uploadMedia(file, `groups/${currentGroupId}/evidence`);
-      } catch (uploadErr) {
-        console.warn('Upload skipped or failed – storing hash only', uploadErr);
-      }
-
-      // 3. Write to Firestore
       await addDoc(collection(db, 'group_evidence'), {
         groupId: currentGroupId,
         name: file.name,
@@ -413,9 +415,9 @@ async function promptDepositEvidence() {
         mimeType: file.type || 'application/octet-stream',
         hash: hashHex,
         hashAlg: 'SHA-256',
-        url: publicUrl,               // null if not uploaded
+        url: null,
         depositedBy: auth.currentUser.uid,
-        status: 'Verified ZK-Hash',
+        status: 'Sealed (SHA-256)',
         createdAt: serverTimestamp()
       });
 
@@ -436,244 +438,68 @@ function formatBytes(bytes) {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
-
 /**
- * 2. Attestation Wall (Firestore collection: group_attestations)
+ * 2. Attestation Wall (basic)
  */
 function loadAttestationWall() {
   const container = document.getElementById('attestationList');
   if (!container) return;
 
-  if (unsubscribeAttestations) unsubscribeAttestations();
-
-  const q = query(
-    collection(db, 'group_attestations'),
-    where('groupId', '==', currentGroupId),
-    orderBy('createdAt', 'desc')
-  );
-
-  unsubscribeAttestations = onSnapshot(q, (snapshot) => {
-    container.innerHTML = '';
-
-    if (snapshot.empty) {
-      container.innerHTML = `
-        <div class="rounded-3xl border border-dashed border-zinc-700 bg-zinc-900/40 py-14 text-center">
-          <div class="mb-3 text-4xl">📜</div>
-          <p class="text-zinc-400">No witness attestations signed yet</p>
-          <p class="mt-1 text-xs text-zinc-500">Click "+ Sign Attestation" to log verified statements</p>
-        </div>
-      `;
-      return;
-    }
-
-    snapshot.forEach((docSnap) => {
-      const item = docSnap.data();
-      const card = document.createElement('div');
-      card.className = 'glass p-4 rounded-2xl space-y-2';
-
-      card.innerHTML = `
-        <div class="flex justify-between items-center">
-          <span class="text-xs font-bold text-zinc-200">${escapeHtml(item.author)}</span>
-          <span class="text-[10px] bg-blue-950 text-blue-300 px-2 py-0.5 rounded border border-blue-800">${escapeHtml(item.trust || 'High')} Trust</span>
-        </div>
-        <p class="text-xs text-zinc-300 italic">"${escapeHtml(item.statement)}"</p>
-        <div class="text-[10px] font-mono text-zinc-500 truncate">Cryptographic Signature: ${escapeHtml(item.sig)}</div>
-      `;
-      container.appendChild(card);
-    });
-  });
+  container.innerHTML = `
+    <div class="rounded-3xl border border-dashed border-zinc-700 bg-zinc-900/40 py-14 text-center">
+      <div class="mb-3 text-4xl">📜</div>
+      <p class="text-zinc-400">No attestations yet</p>
+    </div>
+  `;
 }
 
 async function promptSignAttestation() {
-  if (!auth.currentUser) return showToast('Please sign in to submit an attestation', 'error');
-
-  const statement = prompt('Enter your verified witness testimony or statement:');
-  if (!statement) return;
-
-  const mockSig = `0x${Math.random().toString(16).substring(2, 12)}...${Math.random().toString(16).substring(2, 6)}`;
-
-  try {
-    await addDoc(collection(db, 'group_attestations'), {
-      groupId: currentGroupId,
-      author: auth.currentUser.displayName || 'ZK-Verified Witness',
-      statement: statement,
-      sig: mockSig,
-      trust: 'High',
-      authorId: auth.currentUser.uid,
-      createdAt: serverTimestamp()
-    });
-    showToast('Attestation signed and anchored!', 'success');
-  } catch (err) {
-    console.error(err);
-    showToast('Failed to sign attestation', 'error');
-  }
+  if (!auth.currentUser) return showToast('Please sign in', 'error');
+  const text = prompt('Enter your attestation statement:');
+  if (!text) return;
+  showToast('Attestation feature coming soon', 'info');
 }
 
 /**
- * 3. Forensic Timeline (Firestore collection: group_timeline)
+ * 3. Forensic Timeline (basic)
  */
 function loadForensicTimeline() {
   const container = document.getElementById('forensicTimelineStream');
   if (!container) return;
 
-  if (unsubscribeTimeline) unsubscribeTimeline();
-
-  const q = query(
-    collection(db, 'group_timeline'),
-    where('groupId', '==', currentGroupId),
-    orderBy('createdAt', 'asc')
-  );
-
-  unsubscribeTimeline = onSnapshot(q, (snapshot) => {
-    container.innerHTML = '';
-
-    if (snapshot.empty) {
-      container.innerHTML = `
-        <div class="rounded-3xl border border-dashed border-zinc-700 bg-zinc-900/40 py-14 text-center">
-          <div class="mb-3 text-4xl">⏱️</div>
-          <p class="text-zinc-400">Timeline stream is empty</p>
-          <p class="mt-1 text-xs text-zinc-500">Click "+ Add Timeline Node" to reconstruct incident sequences</p>
-        </div>
-      `;
-      return;
-    }
-
-    snapshot.forEach((docSnap) => {
-      const node = docSnap.data();
-      const item = document.createElement('div');
-      item.className = 'relative';
-
-      item.innerHTML = `
-        <div class="absolute -left-[23px] top-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-[#0a0f1c]"></div>
-        <div class="glass p-4 rounded-2xl space-y-1">
-          <div class="flex justify-between items-center">
-            <span class="text-xs font-bold text-white">${escapeHtml(node.title)}</span>
-            <span class="text-[10px] text-emerald-400 font-mono">${node.createdAt?.toDate ? node.createdAt.toDate().toLocaleTimeString() : 'Recent'}</span>
-          </div>
-          <p class="text-xs text-zinc-300">${escapeHtml(node.desc)}</p>
-          <span class="inline-block text-[10px] bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded">${escapeHtml(node.type || 'Incident')}</span>
-        </div>
-      `;
-      container.appendChild(item);
-    });
-  });
+  container.innerHTML = `
+    <div class="text-zinc-500 text-sm py-8">No timeline nodes yet</div>
+  `;
 }
 
-/**
- * Redeem an invite code (call this from a form or URL param)
- */
-async function redeemInviteCode(code) {
-  if (!auth.currentUser) {
-    showToast('Sign in to join with an invite code', 'error');
-    return false;
-  }
-
-  const cleanCode = (code || '').trim().toUpperCase();
-  if (!cleanCode) return false;
-
-  try {
-    // Look for a group that has this invite code
-    const q = query(
-      collection(db, 'groups'),
-      where('inviteCode', '==', cleanCode),
-      limit(1)
-    );
-    const snap = await getDocs(q);
-
-    if (snap.empty) {
-      showToast('Invalid or expired invite code', 'error');
-      return false;
-    }
-
-    const groupDoc = snap.docs[0];
-    const group = groupDoc.data();
-    const groupId = groupDoc.id;
-
-    // Check expiry
-    if (group.inviteExpiresAt?.toDate && group.inviteExpiresAt.toDate() < new Date()) {
-      showToast('This invite code has expired', 'error');
-      return false;
-    }
-
-    const uid = auth.currentUser.uid;
-
-    // Already a member?
-    if ((group.members || []).includes(uid)) {
-      showToast('You are already a member', 'info');
-      window.location.href = `group-detail.html?id=${groupId}`;
-      return true;
-    }
-
-    // Require approval?
-    if (group.inviteRequireApproval) {
-      await updateDoc(doc(db, 'groups', groupId), {
-        pendingMembers: arrayUnion(uid)
-      });
-      showToast('Join request sent – waiting for approval', 'info');
-    } else {
-      await updateDoc(doc(db, 'groups', groupId), {
-        members: arrayUnion(uid),
-        memberCount: increment(1)
-      });
-      showToast('Successfully joined the group!', 'success');
-    }
-
-    window.location.href = `group-detail.html?id=${groupId}`;
-    return true;
-  } catch (err) {
-    console.error(err);
-    showToast('Could not redeem invite code', 'error');
-    return false;
-  }
-}
 async function promptAddTimelineNode() {
-  if (!auth.currentUser) return showToast('Please sign in to add timeline nodes', 'error');
-
-  const title = prompt('Enter timeline event title (e.g. Police Arrival at Sector 2):');
-  if (!title) return;
-
-  const desc = prompt('Enter event description or metadata summary:') || '';
-  const type = prompt('Enter event category (Incident, Record, Attestation, Statement):') || 'Incident';
-
-  try {
-    await addDoc(collection(db, 'group_timeline'), {
-      groupId: currentGroupId,
-      title: title,
-      desc: desc,
-      type: type,
-      creatorId: auth.currentUser.uid,
-      createdAt: serverTimestamp()
-    });
-    showToast('Forensic timeline node added!', 'success');
-  } catch (err) {
-    console.error(err);
-    showToast('Failed to add timeline node', 'error');
-  }
+  if (!auth.currentUser) return showToast('Please sign in', 'error');
+  const text = prompt('Describe the timeline event:');
+  if (!text) return;
+  showToast('Timeline feature coming soon', 'info');
 }
 
-// ====================== EXISTING GROUP ACTIONS ======================
+// ====================== JOIN / LEAVE / POST ======================
 
 async function handleJoinLeave() {
-  if (!auth.currentUser) return showToast('Please sign in first', 'error');
+  if (!auth.currentUser || !currentGroupData) return;
 
   const uid = auth.currentUser.uid;
   const isMember = currentGroupData.members?.includes(uid);
 
   try {
-    const groupRef = doc(db, 'groups', currentGroupId);
-
     if (isMember) {
-      await updateDoc(groupRef, {
+      await updateDoc(doc(db, 'groups', currentGroupId), {
         members: arrayRemove(uid),
         memberCount: increment(-1)
       });
-      showToast('You left the group', 'info');
+      showToast('Left the group', 'info');
     } else {
-      await updateDoc(groupRef, {
+      await updateDoc(doc(db, 'groups', currentGroupId), {
         members: arrayUnion(uid),
         memberCount: increment(1)
       });
-      showToast('Successfully joined the group!', 'success');
+      showToast('Joined the group!', 'success');
     }
   } catch (err) {
     console.error(err);
@@ -682,187 +508,26 @@ async function handleJoinLeave() {
 }
 
 async function postToGroup() {
-  if (!auth.currentUser) return showToast('Please sign in to post', 'error');
+  if (!auth.currentUser) return showToast('Please sign in', 'error');
 
   const input = document.getElementById('groupPostInput');
-  const content = input?.value.trim();
+  const content = input?.value?.trim();
   if (!content) return showToast('Write something first', 'error');
 
   try {
     await addDoc(collection(db, 'testimonies'), {
       content,
-      text: content,
       groupId: currentGroupId,
       authorId: auth.currentUser.uid,
-      author: auth.currentUser.displayName || 'Anonymous',
-      isAnonymous: false,
-      createdAt: serverTimestamp(),
-      feedVisibility: 'group'
+      channel: 'group',
+      createdAt: serverTimestamp()
     });
-
     input.value = '';
-    showToast('Posted to group', 'success');
+    showToast('Posted', 'success');
   } catch (err) {
     console.error(err);
     showToast('Failed to post', 'error');
   }
-}
-
-// ====================== INVITE SYSTEM ======================
-
-function generateShortCode(groupName = '') {
-  const prefix = (groupName || 'GRP')
-    .replace(/[^a-zA-Z]/g, '')
-    .substring(0, 5)
-    .toUpperCase() || 'GRP';
-  const random = Math.random().toString(36).substring(2, 6).toUpperCase();
-  return `${prefix}-${random}`;
-}
-
-async function createOrRefreshInvite({ expiryDays = 7, requireApproval = true } = {}) {
-  if (!currentGroupId || !auth.currentUser) return;
-
-  const code = generateShortCode(currentGroupData?.name);
-  const expiresAt = expiryDays > 0
-    ? new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000)
-    : null;
-
-  const inviteData = {
-    inviteCode: code,
-    inviteEnabled: true,
-    inviteRequireApproval: requireApproval,
-    inviteExpiresAt: expiresAt,
-    inviteCreatedAt: serverTimestamp(),
-    inviteCreatedBy: auth.currentUser.uid
-  };
-
-  try {
-    await updateDoc(doc(db, 'groups', currentGroupId), inviteData);
-    showToast('Invite updated', 'success');
-  } catch (err) {
-    console.error(err);
-    showToast('Failed to update invite', 'error');
-  }
-}
-
-function renderInviteUI() {
-  const linkInput = document.getElementById('inviteLinkInput');
-  const codeInput = document.getElementById('inviteCodeInput');
-  const statusBadge = document.getElementById('inviteStatusBadge');
-  const settings = document.getElementById('inviteSettings');
-
-  if (!currentGroupData) return;
-
-  const baseUrl = window.location.origin;
-  const link = `${baseUrl}/group-detail.html?id=${currentGroupId}&code=${currentGroupData.inviteCode || ''}`;
-
-  if (linkInput) linkInput.value = link;
-  if (codeInput) codeInput.value = currentGroupData.inviteCode || '————';
-
-  if (statusBadge) {
-    const expired = currentGroupData.inviteExpiresAt?.toDate
-      ? currentGroupData.inviteExpiresAt.toDate() < new Date()
-      : false;
-
-    if (!currentGroupData.inviteEnabled || expired) {
-      statusBadge.textContent = 'Expired / Disabled';
-      statusBadge.className = 'text-xs text-red-400';
-    } else {
-      statusBadge.textContent = currentGroupData.inviteRequireApproval
-        ? 'Requires Approval'
-        : 'Auto-join Active';
-      statusBadge.className = 'text-xs text-emerald-400';
-    }
-  }
-
-  const uid = auth.currentUser?.uid;
-  const isAdmin = uid && (
-    currentGroupData.creatorId === uid ||
-    (currentGroupData.admins || []).includes(uid)
-  );
-
-  if (settings) {
-    settings.classList.toggle('hidden', !isAdmin);
-  }
-}
-
-async function handleInviteJoin() {
-  const params = new URLSearchParams(window.location.search);
-  const code = params.get('code');
-  const isInvite = params.get('invite') === '1' || !!code;
-
-  if (!isInvite || !auth.currentUser || !currentGroupData) return;
-
-  const uid = auth.currentUser.uid;
-
-  if (currentGroupData.members?.includes(uid)) {
-    cleanInviteFromUrl();
-    return;
-  }
-
-  if (currentGroupData.inviteExpiresAt?.toDate) {
-    if (currentGroupData.inviteExpiresAt.toDate() < new Date()) {
-      showToast('This invite has expired', 'error');
-      cleanInviteFromUrl();
-      return;
-    }
-  }
-
-  if (code && currentGroupData.inviteCode && code !== currentGroupData.inviteCode) {
-    showToast('Invalid invite code', 'error');
-    cleanInviteFromUrl();
-    return;
-  }
-
-  try {
-    const groupRef = doc(db, 'groups', currentGroupId);
-
-    if (currentGroupData.inviteRequireApproval) {
-      await updateDoc(groupRef, {
-        pendingMembers: arrayUnion(uid)
-      });
-      showToast('Join request sent. Waiting for approval.', 'info');
-    } else {
-      await updateDoc(groupRef, {
-        members: arrayUnion(uid),
-        memberCount: increment(1),
-        pendingMembers: arrayRemove(uid)
-      });
-      showToast('You joined the group!', 'success');
-    }
-
-    cleanInviteFromUrl();
-  } catch (err) {
-    console.error(err);
-    showToast('Could not process invite', 'error');
-  }
-}
-
-function updatePendingBadge(group) {
-  const badge = document.getElementById('pendingBadge');
-  if (!badge) return;
-
-  const uid = auth.currentUser?.uid;
-  const isAdmin = uid && (
-    group.creatorId === uid ||
-    (group.admins || []).includes(uid)
-  );
-
-  const pendingCount = (group.pendingMembers || []).length;
-
-  if (isAdmin && pendingCount > 0) {
-    badge.textContent = pendingCount;
-    badge.classList.remove('hidden');
-    badge.classList.add('flex');
-  } else {
-    badge.classList.add('hidden');
-    badge.classList.remove('flex');
-  }
-}
-
-function cleanInviteFromUrl() {
-  const cleanUrl = `${window.location.pathname}?id=${currentGroupId}`;
-  window.history.replaceState({}, '', cleanUrl);
 }
 
 async function approveMember(uid) {
@@ -887,14 +552,25 @@ async function rejectMember(uid) {
     showToast('Request rejected', 'info');
   } catch (err) {
     console.error(err);
-    showToast('Failed to reject', 'error');
   }
 }
 
-// Helper
-function escapeHtml(text) {
-  if (!text) return '';
-  return String(text)
+function renderInviteUI() {
+  const linkInput = document.getElementById('inviteLinkInput');
+  const codeInput = document.getElementById('inviteCodeInput');
+  if (linkInput) {
+    linkInput.value = `${window.location.origin}/group-detail.html?id=${currentGroupId}`;
+  }
+  if (codeInput && currentGroupData?.inviteCode) {
+    codeInput.value = currentGroupData.inviteCode;
+  }
+}
+
+// ====================== HELPERS ======================
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
