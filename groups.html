@@ -50,17 +50,29 @@
     </div>
 
     <!-- Search -->
-    <div class="relative mb-6">
+    <div class="relative mb-5">
       <input type="text" id="searchInput" placeholder="Search groups by name, topic or location..."
              class="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-5 py-4 text-white placeholder-zinc-500 focus:border-emerald-500 focus:outline-none">
     </div>
 
-    <!-- Filters (optional but professional) -->
+    <!-- Filters -->
     <div class="mb-6 flex flex-wrap gap-2">
       <button class="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-4 py-1.5 text-xs font-medium text-emerald-400">All</button>
       <button class="rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs text-zinc-300 hover:border-emerald-500/50">Public</button>
       <button class="rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs text-zinc-300 hover:border-emerald-500/50">Citizen Circle</button>
       <button class="rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs text-zinc-300 hover:border-cyan-500/50">Witness Circle</button>
+    </div>
+
+    <!-- HIGHLY VISIBLE CREATE BUTTON (right under filters) -->
+    <div class="mb-8">
+      <button type="button" id="openCreateModalBtn"
+              class="w-full rounded-2xl bg-emerald-500 py-4 text-base font-bold text-black shadow-lg shadow-emerald-500/30 transition hover:bg-emerald-400 active:scale-[0.98] flex items-center justify-center gap-2">
+        <span class="text-xl">➕</span>
+        Create New Group
+      </button>
+      <p class="mt-2 text-center text-xs text-zinc-500">
+        Start a Truth Circle for your community, organisation or investigation
+      </p>
     </div>
 
     <!-- Groups List -->
@@ -74,15 +86,7 @@
     </div>
   </div>
 
-  <!-- Floating Create Button -->
-  <div class="fixed bottom-6 left-0 right-0 z-40 px-4">
-    <button type="button" id="openCreateModalBtn"
-            class="mx-auto block w-full max-w-md rounded-2xl bg-emerald-500 py-4 font-semibold text-black shadow-lg shadow-emerald-900/30 transition hover:bg-emerald-400 active:scale-[0.98]">
-      ➕ Create New Group
-    </button>
-  </div>
-
-  <!-- Create Group Modal (same as yours, kept clean) -->
+  <!-- Create Group Modal -->
   <div id="groupModal" class="fixed inset-0 z-[200] hidden items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
     <div class="glass w-full max-w-md overflow-hidden rounded-3xl shadow-2xl">
       <div class="border-b border-zinc-700 p-6">
@@ -134,6 +138,17 @@
     document.addEventListener('DOMContentLoaded', () => {
       initLanguage();
       initGroups('group-container');
+
+      // Wire Create buttons
+      document.getElementById('openCreateModalBtn')?.addEventListener('click', () => {
+        window.showGroupCreationModal?.();
+      });
+      document.getElementById('closeCreateModalBtn')?.addEventListener('click', () => {
+        window.closeGroupModal?.();
+      });
+      document.getElementById('submitCreateGroupBtn')?.addEventListener('click', () => {
+        window.createGroup?.();
+      });
     });
   </script>
 </body>
