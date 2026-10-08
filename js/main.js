@@ -24,7 +24,7 @@ import { generateSha256Hash } from './utils.js';
 import { getAudioForPublish, uploadForensicMedia } from './media.js';
 import { initLiveArena } from './live-arena.js';
 import { loadCircle, loadVerifiedWitnesses } from './circle.js';
-import { loadHigherTrustReports, initWitnessSubTabs } from './witness-tab.js';
+import { initWitnessTab, destroyWitnessTab } from './witness-tab.js';
 import {
   collection, addDoc, doc, getDoc, setDoc, updateDoc,
   serverTimestamp, query, getDocs, orderBy, limit
@@ -179,6 +179,12 @@ window.switchTab = async function (tab) {
 
   isSwitchingTab = true;
   console.log('[Tab] Switching to:', tab);
+  const previousTab = window.__currentTab || 'square';
+  window.__currentTab = tab;
+
+if (previousTab === 'witness' && tab !== 'witness' && typeof destroyWitnessTab === 'function') {
+  destroyWitnessTab();
+}
 
   try {
     document.querySelectorAll('#main-nav button[data-tab]').forEach((btn) => {
@@ -229,18 +235,12 @@ window.switchTab = async function (tab) {
       loadCircle();
     }
 
-    // ===== WITNESS: Reports + People (True Witness lives here) =====
-    if (tab === 'witness') {
-      if (typeof initWitnessSubTabs === 'function') {
-        initWitnessSubTabs();
-      }
-      // Default to Reports so the field looks active
-      if (typeof loadHigherTrustReports === 'function') {
-        loadHigherTrustReports();
-      } else if (typeof loadVerifiedWitnesses === 'function') {
-        loadVerifiedWitnesses();
-      }
-    }
+   // ===== WITNESS VOICE =====
+if (tab === 'witness') {
+  if (typeof initWitnessTab === 'function') {
+    initWitnessTab();          // loads sealed Witness Voice + citizen reports
+  }
+}
 
     if (tab === 'arena') {
       try {
@@ -289,7 +289,6 @@ function wireTabButtons() {
   });
 }
 
-/* ====================== UNIFIED DROPDOWN SYSTEM ====================== */
 /* ====================== DROPDOWN WIDGET ====================== */
 function createDropdown(btnId, menuId) {
   const btn = document.getElementById(btnId);
