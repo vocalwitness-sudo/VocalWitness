@@ -646,7 +646,7 @@
         aria-controls="witness"
         class="nav-tab flex-shrink-0 min-w-[4.5rem] h-11 items-center justify-center gap-1.5 rounded-xl border border-amber-700/50 bg-amber-950/40 px-3 text-xs font-medium text-amber-300 transition hover:border-amber-500 sm:h-12 sm:px-4 sm:text-sm">
   <span class="text-base leading-none" aria-hidden="true">🛡️</span>
-  <span class="truncate">Witness</span>
+  <span class="truncate">Witness Voice</span>
 </button>
       
     </nav>
@@ -1099,58 +1099,52 @@
     </div>
   </section>
 
- <!-- ========== 5. WITNESS (Reports + People) ========== -->
-<section id="witness" class="hidden space-y-6" role="tabpanel" aria-label="Witness" aria-hidden="true">
+<!-- ========== 5. WITNESS (Witness Voice) ========== -->
+<section id="witness" class="hidden space-y-6" role="tabpanel" aria-label="Witness Voice" aria-hidden="true">
 
+  <!-- Header -->
   <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
     <div>
-      <h2 class="text-2xl font-bold text-amber-400">Witness</h2>
-      <p class="mt-1 text-sm text-zinc-400">Higher-trust reports and verified field voices</p>
+      <h2 class="text-2xl font-bold text-amber-400">Witness Voice</h2>
+      <p class="mt-1 text-sm text-zinc-400">
+        High-integrity first-hand reports. Sealed on-device. Verifiable by anyone.
+      </p>
     </div>
+
+    <!-- Primary CTA -->
+    <a href="/witness-voice"
+       class="inline-flex items-center justify-center gap-2 rounded-2xl bg-amber-500 px-5 py-2.5 text-sm font-bold text-black shadow-lg shadow-amber-500/20 transition hover:bg-amber-400 active:scale-[0.98]">
+      🎙️ Record Witness Voice
+    </a>
   </div>
 
-  <!-- Sub-tabs: Reports | People -->
-  <div class="flex gap-1 border-b border-zinc-800" role="tablist" aria-label="Witness views">
-    <button type="button" id="witness-sub-reports" data-witness-view="reports"
-            class="border-b-2 border-amber-500 px-5 py-2.5 text-sm font-medium text-amber-400"
-            aria-selected="true">
-      🔬 Reports
-    </button>
-    <button type="button" id="witness-sub-people" data-witness-view="people"
-            class="border-b-2 border-transparent px-5 py-2.5 text-sm font-medium text-zinc-400 hover:text-zinc-200"
-            aria-selected="false">
-      👥 People
-    </button>
-  </div>
-
-  <!-- REPORTS VIEW (True Witness feed — in-app, no separate page) -->
-  <div id="witness-reports-view" class="space-y-4">
-    <p class="text-xs text-zinc-500">
-      Sealed higher-trust reports from the field. No separate office page — this is the live record.
+  <!-- Positioning text -->
+  <div class="rounded-2xl border border-amber-500/20 bg-amber-500/5 px-5 py-4">
+    <p class="text-sm text-zinc-300 leading-relaxed">
+      This is the forensic channel. Only first-hand observations. 
+      Media and text are hashed on your device before upload. 
+      Every sealed report can be independently verified with an Evidence Pack.
     </p>
+  </div>
+
+  <!-- Live sealed reports feed -->
+  <div class="space-y-4">
+    <div class="flex items-center justify-between">
+      <h3 class="text-sm font-medium text-zinc-300">Sealed Witness Voice Reports</h3>
+      <span class="text-[11px] text-zinc-500">Live field record</span>
+    </div>
+
     <div id="witness-reports-feed" class="space-y-4">
-      <!-- filled by JS -->
+      <!-- filled by loadHigherTrustReports() / witness-tab.js -->
+      <div class="py-16 text-center text-zinc-500">
+        <p class="text-4xl mb-3">🛡️</p>
+        <p class="font-medium">No Witness Voice reports in the field yet.</p>
+        <p class="text-xs text-zinc-600 mt-1">
+          Be among the first to publish a cryptographically sealed observation.
+        </p>
+      </div>
     </div>
   </div>
-
-  <!-- PEOPLE VIEW (existing verified voices) -->
-  <div id="witness-people-view" class="hidden space-y-4">
-    <div class="flex flex-wrap gap-2" id="witness-filters" role="group" aria-label="Filter witnesses">
-      <button type="button" data-filter="all"
-              class="rounded-full border border-amber-500/40 bg-amber-500/15 px-4 py-1.5 text-xs font-medium text-amber-400"
-              aria-pressed="true">All</button>
-      <button type="button" data-filter="zk"
-              class="rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs font-medium text-zinc-300 transition hover:border-amber-500/50"
-              aria-pressed="false">Higher Trust</button>
-      <button type="button" data-filter="phone"
-              class="rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs font-medium text-zinc-300 transition hover:border-amber-500/50"
-              aria-pressed="false">Phone verified</button>
-    </div>
-    <div id="verified-witnesses-grid" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      <!-- filled by loadVerifiedWitnesses -->
-    </div>
-  </div>
-
 </section>
 </main>
   
