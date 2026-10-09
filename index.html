@@ -779,6 +779,40 @@
   </div>
 </div>
 
+            <!-- Posting Style: Citizen vs Field Note -->
+      <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+        <label class="text-xs font-medium text-zinc-400 shrink-0">Posting as</label>
+        <select id="postingStyleSelect"
+                class="rounded-xl border border-zinc-700 bg-zinc-900 px-3.5 py-2 text-sm font-medium text-zinc-200
+                       focus:border-emerald-500 focus:outline-none">
+          <option value="citizen" selected>Citizen Report</option>
+          <option value="field-note">Field Note (Professional)</option>
+        </select>
+      </div>
+
+      <!-- Field Note extras (hidden by default) -->
+      <div id="field-note-fields" class="hidden space-y-3 rounded-xl border border-sky-500/25 bg-sky-500/5 p-4">
+        <p class="text-xs text-sky-300/90">
+          Field Notes are attributed professional observations. Role and organisation are shown publicly.
+        </p>
+        <div class="grid gap-3 sm:grid-cols-2">
+          <div>
+            <label for="field-note-role" class="mb-1 block text-xs font-medium text-zinc-400">Role / Title</label>
+            <input type="text" id="field-note-role" maxlength="80"
+                   placeholder="e.g. Journalist, Observer, Researcher"
+                   class="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3.5 py-2.5 text-sm text-white
+                          placeholder-zinc-500 focus:border-sky-500 focus:outline-none transition">
+          </div>
+          <div>
+            <label for="field-note-org" class="mb-1 block text-xs font-medium text-zinc-400">Organisation (optional)</label>
+            <input type="text" id="field-note-org" maxlength="100"
+                   placeholder="e.g. Independent, Newsroom, NGO"
+                   class="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3.5 py-2.5 text-sm text-white
+                          placeholder-zinc-500 focus:border-sky-500 focus:outline-none transition">
+          </div>
+        </div>
+      </div>
+      
 <!-- ===== Field Note extra fields (hidden by default) ===== -->
 <div id="field-note-panel" class="hidden space-y-3 p-4 rounded-2xl border border-sky-500/30 bg-sky-500/5">
   <div class="flex flex-wrap gap-2">
