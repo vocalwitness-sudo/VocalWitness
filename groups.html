@@ -63,47 +63,56 @@
       </button>
     </div>
 
-    <!-- Tabs + Language -->
-    <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <!-- Tabs -->
-      <div class="flex gap-1 rounded-2xl border border-zinc-800 bg-zinc-900/80 p-1.5 overflow-x-auto">
-        <button type="button" 
-                class="tab-btn active flex-1 min-w-[100px] rounded-xl px-5 py-2.5 text-sm" 
-                data-tab="discover">
-          Discover
-        </button>
-        <button type="button" 
-                class="tab-btn flex-1 min-w-[100px] rounded-xl px-5 py-2.5 text-sm" 
-                data-tab="my-groups">
-          My Groups
-        </button>
-        <button type="button" 
-                class="tab-btn flex-1 min-w-[100px] rounded-xl px-5 py-2.5 text-sm" 
-                data-tab="trending">
-          🔥 Trending
-        </button>
-      </div>
+   <!-- Tabs + Language Selector -->
+<div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+  <!-- Tabs -->
+  <div class="flex gap-1 rounded-2xl border border-zinc-800 bg-zinc-900/80 p-1.5 overflow-x-auto">
+    <button type="button" 
+            class="tab-btn active flex-1 min-w-[100px] rounded-xl px-5 py-2.5 text-sm" 
+            data-tab="discover">
+      Discover
+    </button>
+    <button type="button" 
+            class="tab-btn flex-1 min-w-[100px] rounded-xl px-5 py-2.5 text-sm" 
+            data-tab="my-groups">
+      My Groups
+    </button>
+    <button type="button" 
+            class="tab-btn flex-1 min-w-[100px] rounded-xl px-5 py-2.5 text-sm" 
+            data-tab="trending">
+      🔥 Trending
+    </button>
+  </div>
 
-      <!-- Language Selector -->
-      <select id="languageSelector" 
-              class="rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-white 
-                     focus:border-emerald-500 focus:outline-none">
-        <option value="en">English</option>
-        <option value="pcm">Naija Pidgin</option>
-        <option value="yo">Yorùbá</option>
-        <option value="ha">Hausa</option>
-        <option value="ig">Igbo</option>
-        <option value="sw">Swahili</option>
-      </select>
-    </div>
+  <!-- Language Selector -->
+  <select id="languageSelector" 
+          class="rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-white 
+                 focus:border-emerald-500 focus:outline-none">
+    <option value="en">English</option>
+    <option value="pcm">Naija Pidgin</option>
+    <option value="yo">Yorùbá</option>
+    <option value="ha">Hausa</option>
+    <option value="ig">Igbo</option>
+    <option value="sw">Swahili</option>
+  </select>
+</div>
 
-    <!-- Search -->
-    <div class="relative mb-5">
-      <input type="text" id="searchInput" 
-             placeholder="Search groups by name, topic or location..."
-             class="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-5 py-4 text-white placeholder-zinc-500 
-                    focus:border-emerald-500 focus:outline-none">
-    </div>
+<!-- Search Bar for Groups -->
+<div class="relative mb-6">
+  <input type="text" 
+         id="searchInput" 
+         placeholder="Search groups by name, topic or location..."
+         class="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-5 py-4 pl-12 text-white placeholder-zinc-500 
+                focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/50">
+  
+  <!-- Search Icon -->
+  <svg class="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-500" 
+       fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+  </svg>
+</div>
+    
 
     <!-- Filters -->
     <div class="mb-8 flex flex-wrap gap-2">
