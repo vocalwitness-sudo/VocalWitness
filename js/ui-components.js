@@ -127,6 +127,35 @@ export function renderFieldNoteBadge(post = {}) {
         </span>
     `;
 }
+    /**
+ * Small “Field Note” badge for professional / org-attributed posts.
+ * Shows only when postingStyle === 'field-note'.
+ * @param {Object} post
+ * @returns {string} HTML
+ */
+function renderFieldNoteBadge(post = {}) {
+    if (post.postingStyle !== 'field-note') return '';
+
+    const role = post.fieldNoteRole ? String(post.fieldNoteRole).trim() : '';
+    const org  = post.fieldNoteOrg  ? String(post.fieldNoteOrg).trim()  : '';
+
+    const titleParts = [];
+    if (role) titleParts.push(role);
+    if (org)  titleParts.push(org);
+    const title = titleParts.length
+        ? `Field Note · ${titleParts.join(' · ')}`
+        : 'Field Note';
+
+    const safeTitle = title.replace(/"/g, '&quot;');
+
+    return `
+        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold
+                     bg-sky-500/10 text-sky-400 border border-sky-500/30"
+              title="${safeTitle}">
+            📋 Field Note
+        </span>
+    `;
+}
 
     /**
      * Copy text to clipboard with modern API + legacy fallback.
@@ -321,9 +350,8 @@ export function showBoldWitnessModal(onConfirm) {
 if (typeof window !== 'undefined') {
     window.renderTierBadge = renderTierBadge;
     window.showBoldWitnessModal = showBoldWitnessModal;
-    window.renderFieldNoteBadge = renderFieldNoteBadge;   
+    window.renderFieldNoteBadge = renderFieldNoteBadge;
 }
-
 /**
  * Shows a small trust badge on each post
  */
