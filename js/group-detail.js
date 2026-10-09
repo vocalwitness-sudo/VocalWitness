@@ -16,9 +16,7 @@ import {
   where,
   orderBy,
   addDoc,
-  serverTimestamp,
-  getDocs,
-  limit
+  serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
 
 import { showToast } from './utils.js';
@@ -50,10 +48,10 @@ export function initGroupDetail() {
   document.querySelectorAll('.tab-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tab-btn').forEach((b) => {
-        b.classList.remove('active', 'text-emerald-400');
+        b.classList.remove('active');
         b.classList.add('text-zinc-400');
       });
-      btn.classList.add('active', 'text-emerald-400');
+      btn.classList.add('active');
       btn.classList.remove('text-zinc-400');
 
       document.querySelectorAll('[id^="tab-"]').forEach((t) => t.classList.add('hidden'));
@@ -62,11 +60,13 @@ export function initGroupDetail() {
     });
   });
 
-  // Support deep-link tab (e.g. ?tab=locker)
+  // Deep-link tab support (?tab=locker | attestation | timeline | members | about)
   const initialTab = params.get('tab');
   if (initialTab) {
-    const btn = document.querySelector(`.tab-btn[data-tab="${initialTab}"]`);
-    if (btn) btn.click();
+    setTimeout(() => {
+      const btn = document.querySelector(`.tab-btn[data-tab="${initialTab}"]`);
+      if (btn) btn.click();
+    }, 150);
   }
 
   // Join / Leave
@@ -162,15 +162,18 @@ function renderGroupHeader(group) {
     if (isCreator) {
       btn.textContent = 'Creator';
       btn.disabled = true;
-      btn.className = 'rounded-2xl bg-zinc-800 px-5 py-2.5 text-sm font-medium text-zinc-400 cursor-default';
+      btn.className =
+        'rounded-2xl bg-zinc-800 px-5 py-2.5 text-sm font-medium text-zinc-400 cursor-default';
     } else if (isMember) {
       btn.textContent = 'Leave Group';
       btn.disabled = false;
-      btn.className = 'rounded-2xl bg-zinc-800 px-5 py-2.5 text-sm font-medium text-zinc-300 hover:bg-zinc-700';
+      btn.className =
+        'rounded-2xl bg-zinc-800 px-5 py-2.5 text-sm font-medium text-zinc-300 hover:bg-zinc-700';
     } else {
       btn.textContent = 'Join Group';
       btn.disabled = false;
-      btn.className = 'rounded-2xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-black hover:bg-emerald-400';
+      btn.className =
+        'rounded-2xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-black hover:bg-emerald-400';
     }
   }
 
@@ -202,7 +205,8 @@ function renderMembers(group) {
       const isCreator = uid === group.creatorId;
 
       const row = document.createElement('div');
-      row.className = 'flex items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-900/60 px-4 py-3';
+      row.className =
+        'flex items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-900/60 px-4 py-3';
 
       row.innerHTML = `
         <div class="flex items-center gap-3">
@@ -210,15 +214,17 @@ function renderMembers(group) {
             ${uid.substring(0, 2).toUpperCase()}
           </div>
           <div>
-            <p class="text-sm font-medium text-white">${uid.substring(0, 8)}...</p>
+            <p class="text-sm font-medium text-white">${uid.substring(0, 8)}…</p>
             <p class="text-xs text-zinc-500">
               ${isCreator ? 'Creator' : isAdmin ? 'Admin' : 'Member'}
             </p>
           </div>
         </div>
-        ${isCreator || isAdmin
-          ? `<span class="text-[10px] rounded-full bg-amber-500/15 text-amber-400 px-2 py-0.5">Admin</span>`
-          : ''}
+        ${
+          isCreator || isAdmin
+            ? `<span class="text-[10px] rounded-full bg-amber-500/15 text-amber-400 px-2 py-0.5">Admin</span>`
+            : ''
+        }
       `;
       list.appendChild(row);
     });
@@ -235,10 +241,11 @@ function renderMembers(group) {
 
     pending.forEach((pendingUid) => {
       const row = document.createElement('div');
-      row.className = 'flex items-center justify-between rounded-2xl border border-amber-500/30 bg-amber-500/5 px-4 py-3';
+      row.className =
+        'flex items-center justify-between rounded-2xl border border-amber-500/30 bg-amber-500/5 px-4 py-3';
 
       row.innerHTML = `
-        <div class="text-sm text-zinc-300">${pendingUid.substring(0, 10)}...</div>
+        <div class="text-sm text-zinc-300">${pendingUid.substring(0, 10)}…</div>
         <div class="flex gap-2">
           <button data-approve="${pendingUid}" class="rounded-lg bg-emerald-600 px-3 py-1 text-xs text-black hover:bg-emerald-500">
             Approve
@@ -263,6 +270,7 @@ function renderMembers(group) {
 function updatePendingBadge(group) {
   const badge = document.getElementById('pendingBadge');
   if (!badge) return;
+
   const count = (group.pendingMembers || []).length;
   if (count > 0) {
     badge.textContent = count;
@@ -270,6 +278,7 @@ function updatePendingBadge(group) {
     badge.classList.add('flex');
   } else {
     badge.classList.add('hidden');
+    badge.classList.remove('flex');
   }
 }
 
@@ -324,7 +333,7 @@ function loadGroupFeed() {
 // ====================== 3 CORE INSTITUTIONAL TOOLS ======================
 
 /**
- * 1. Evidence Locker
+ * 1. Evidence Locker – Real file picker + client-side SHA-256
  */
 function loadEvidenceLocker() {
   const container = document.getElementById('evidenceList');
@@ -377,9 +386,6 @@ function loadEvidenceLocker() {
   });
 }
 
-// ============================================================
-// REAL EVIDENCE LOCKER – File picker + Client-side SHA-256
-// ============================================================
 async function promptDepositEvidence() {
   if (!auth.currentUser) {
     showToast('Please sign in to deposit evidence', 'error');
@@ -406,7 +412,7 @@ async function promptDepositEvidence() {
       const buffer = await file.arrayBuffer();
       const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
       const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
 
       await addDoc(collection(db, 'group_evidence'), {
         groupId: currentGroupId,
@@ -415,7 +421,7 @@ async function promptDepositEvidence() {
         mimeType: file.type || 'application/octet-stream',
         hash: hashHex,
         hashAlg: 'SHA-256',
-        url: null,
+        url: null, // file itself is never uploaded – only the hash
         depositedBy: auth.currentUser.uid,
         status: 'Sealed (SHA-256)',
         createdAt: serverTimestamp()
@@ -438,45 +444,142 @@ function formatBytes(bytes) {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
+
 /**
- * 2. Attestation Wall (basic)
+ * 2. Attestation Wall
  */
 function loadAttestationWall() {
   const container = document.getElementById('attestationList');
   if (!container) return;
 
-  container.innerHTML = `
-    <div class="rounded-3xl border border-dashed border-zinc-700 bg-zinc-900/40 py-14 text-center">
-      <div class="mb-3 text-4xl">📜</div>
-      <p class="text-zinc-400">No attestations yet</p>
-    </div>
-  `;
+  if (unsubscribeAttestations) unsubscribeAttestations();
+
+  const q = query(
+    collection(db, 'group_attestations'),
+    where('groupId', '==', currentGroupId),
+    orderBy('createdAt', 'desc')
+  );
+
+  unsubscribeAttestations = onSnapshot(q, (snapshot) => {
+    container.innerHTML = '';
+
+    if (snapshot.empty) {
+      container.innerHTML = `
+        <div class="rounded-3xl border border-dashed border-zinc-700 bg-zinc-900/40 py-14 text-center">
+          <div class="mb-3 text-4xl">📜</div>
+          <p class="text-zinc-400">No attestations yet</p>
+          <p class="mt-1 text-xs text-zinc-500">Be the first to sign a statement</p>
+        </div>
+      `;
+      return;
+    }
+
+    snapshot.forEach((docSnap) => {
+      const item = docSnap.data();
+      const card = document.createElement('div');
+      card.className = 'glass p-4 rounded-2xl';
+
+      card.innerHTML = `
+        <p class="text-sm text-zinc-200 leading-relaxed whitespace-pre-wrap">${escapeHtml(item.statement)}</p>
+        <div class="mt-3 flex justify-between items-center text-[11px] text-zinc-500">
+          <span>${item.createdAt?.toDate ? item.createdAt.toDate().toLocaleString() : ''}</span>
+          <span class="font-mono">${(item.signedBy || '').substring(0, 8)}…</span>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  });
 }
 
 async function promptSignAttestation() {
-  if (!auth.currentUser) return showToast('Please sign in', 'error');
-  const text = prompt('Enter your attestation statement:');
-  if (!text) return;
-  showToast('Attestation feature coming soon', 'info');
+  if (!auth.currentUser) {
+    showToast('Please sign in', 'error');
+    return;
+  }
+
+  const statement = prompt('Enter your attestation statement:');
+  if (!statement?.trim()) return;
+
+  try {
+    await addDoc(collection(db, 'group_attestations'), {
+      groupId: currentGroupId,
+      statement: statement.trim().slice(0, 1000),
+      signedBy: auth.currentUser.uid,
+      createdAt: serverTimestamp()
+    });
+    showToast('Attestation signed', 'success');
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to sign attestation', 'error');
+  }
 }
 
 /**
- * 3. Forensic Timeline (basic)
+ * 3. Forensic Timeline
  */
 function loadForensicTimeline() {
   const container = document.getElementById('forensicTimelineStream');
   if (!container) return;
 
-  container.innerHTML = `
-    <div class="text-zinc-500 text-sm py-8">No timeline nodes yet</div>
-  `;
+  if (unsubscribeTimeline) unsubscribeTimeline();
+
+  const q = query(
+    collection(db, 'group_timeline'),
+    where('groupId', '==', currentGroupId),
+    orderBy('eventTime', 'asc')
+  );
+
+  unsubscribeTimeline = onSnapshot(q, (snapshot) => {
+    container.innerHTML = '';
+
+    if (snapshot.empty) {
+      container.innerHTML = `
+        <div class="text-zinc-500 text-sm py-8 text-center">No timeline nodes yet</div>
+      `;
+      return;
+    }
+
+    snapshot.forEach((docSnap) => {
+      const item = docSnap.data();
+      const node = document.createElement('div');
+      node.className = 'relative';
+
+      node.innerHTML = `
+        <div class="absolute -left-[21px] top-1.5 h-3 w-3 rounded-full bg-emerald-500 border-2 border-[#070b14]"></div>
+        <div class="glass rounded-2xl p-4">
+          <p class="text-sm text-zinc-200">${escapeHtml(item.description)}</p>
+          <div class="mt-2 text-[11px] text-zinc-500">
+            ${item.eventTime?.toDate ? item.eventTime.toDate().toLocaleString() : ''}
+          </div>
+        </div>
+      `;
+      container.appendChild(node);
+    });
+  });
 }
 
 async function promptAddTimelineNode() {
-  if (!auth.currentUser) return showToast('Please sign in', 'error');
-  const text = prompt('Describe the timeline event:');
-  if (!text) return;
-  showToast('Timeline feature coming soon', 'info');
+  if (!auth.currentUser) {
+    showToast('Please sign in', 'error');
+    return;
+  }
+
+  const description = prompt('Describe the timeline event:');
+  if (!description?.trim()) return;
+
+  try {
+    await addDoc(collection(db, 'group_timeline'), {
+      groupId: currentGroupId,
+      description: description.trim().slice(0, 500),
+      eventTime: serverTimestamp(),
+      addedBy: auth.currentUser.uid,
+      createdAt: serverTimestamp()
+    });
+    showToast('Timeline node added', 'success');
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to add timeline node', 'error');
+  }
 }
 
 // ====================== JOIN / LEAVE / POST ======================
@@ -508,11 +611,17 @@ async function handleJoinLeave() {
 }
 
 async function postToGroup() {
-  if (!auth.currentUser) return showToast('Please sign in', 'error');
+  if (!auth.currentUser) {
+    showToast('Please sign in', 'error');
+    return;
+  }
 
   const input = document.getElementById('groupPostInput');
   const content = input?.value?.trim();
-  if (!content) return showToast('Write something first', 'error');
+  if (!content) {
+    showToast('Write something first', 'error');
+    return;
+  }
 
   try {
     await addDoc(collection(db, 'testimonies'), {
@@ -558,11 +667,13 @@ async function rejectMember(uid) {
 function renderInviteUI() {
   const linkInput = document.getElementById('inviteLinkInput');
   const codeInput = document.getElementById('inviteCodeInput');
+
   if (linkInput) {
     linkInput.value = `${window.location.origin}/group-detail.html?id=${currentGroupId}`;
   }
-  if (codeInput && currentGroupData?.inviteCode) {
-    codeInput.value = currentGroupData.inviteCode;
+
+  if (codeInput) {
+    codeInput.value = currentGroupData?.inviteCode || '————';
   }
 }
 
