@@ -24,7 +24,7 @@
   <div class="mx-auto max-w-3xl px-4 py-6">
 
     <!-- Header -->
-    <div class="glass mb-8 flex items-center justify-between rounded-3xl p-4">
+    <div class="glass mb-6 flex items-center justify-between rounded-3xl p-4">
       <div class="flex items-center gap-3">
         <a href="/" class="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/15 text-lg transition hover:bg-emerald-500/25">←</a>
         <div>
@@ -32,6 +32,25 @@
           <p class="text-xs text-zinc-400">Truth communities & evidence circles</p>
         </div>
       </div>
+
+      <!-- LOUD Create button – now in the header -->
+      <button type="button" id="openCreateModalBtn"
+              class="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-400 to-emerald-500 px-5 py-3 text-sm font-bold text-black shadow-lg shadow-emerald-500/40 transition hover:from-emerald-300 hover:to-emerald-400 active:scale-95">
+        <span class="text-lg">➕</span>
+        Create Group
+      </button>
+    </div>
+
+    <!-- Tabs + Language -->
+    <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex gap-2 rounded-2xl border border-zinc-800 bg-zinc-900/80 p-1">
+        <button type="button" class="tab-btn active flex-1 rounded-xl px-5 py-3 text-sm font-medium" data-tab="discover">Discover</button>
+        <button type="button" class="tab-btn flex-1 rounded-xl px-5 py-3 text-sm font-medium" data-tab="my-groups">My Groups</button>
+        
+        <!-- Suggested new social tabs -->
+        <button type="button" class="tab-btn flex-1 rounded-xl px-5 py-3 text-sm font-medium" data-tab="trending">🔥 Trending</button>
+      </div>
+
       <select id="languageSelector" class="rounded-2xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none">
         <option value="en">English</option>
         <option value="pcm">Naija Pidgin</option>
@@ -40,12 +59,6 @@
         <option value="ig">Igbo</option>
         <option value="sw">Swahili</option>
       </select>
-    </div>
-
-    <!-- Tabs -->
-    <div class="mb-6 flex gap-2 rounded-2xl border border-zinc-800 bg-zinc-900/80 p-1">
-      <button type="button" class="tab-btn active flex-1 rounded-xl py-3 text-sm font-medium" data-tab="discover">Discover</button>
-      <button type="button" class="tab-btn flex-1 rounded-xl py-3 text-sm font-medium" data-tab="my-groups">My Groups</button>
     </div>
 
     <!-- Search -->
@@ -60,18 +73,6 @@
       <button class="rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs text-zinc-300 hover:border-emerald-500/50">Public</button>
       <button class="rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs text-zinc-300 hover:border-emerald-500/50">Citizen Circle</button>
       <button class="rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs text-zinc-300 hover:border-cyan-500/50">Witness Circle</button>
-    </div>
-
-    <!-- Create Button -->
-    <div class="mb-8">
-      <button type="button" id="openCreateModalBtn"
-              class="w-full rounded-2xl bg-emerald-500 py-4 text-base font-bold text-black shadow-lg shadow-emerald-500/30 transition hover:bg-emerald-400 active:scale-[0.98] flex items-center justify-center gap-2">
-        <span class="text-xl">➕</span>
-        Create New Group
-      </button>
-      <p class="mt-2 text-center text-xs text-zinc-500">
-        Start a Truth Circle for your community, organisation or investigation
-      </p>
     </div>
 
     <!-- Groups List -->
