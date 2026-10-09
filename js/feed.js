@@ -23,6 +23,7 @@ import { toggleReaction } from './reactions.js';
 import { applyPostDoorDecorations } from './door-ui.js';
 import { state } from './app-state.js';
 import { openCommentModal } from './comments.js';
+import { renderTierCircle, renderFieldNoteBadge } from './ui-components.js';
 import { 
     submitCorroboration, 
     getCorroborationScoreFromDoc,
@@ -603,6 +604,24 @@ function renderSinglePostDOM(id, data, container) {
 
     if (data.ipfsCid) {
         trustBadgesHTML += `<a href="https://ipfs.io/ipfs/${escapeHTML(data.ipfsCid)}" target="_blank" rel="noopener noreferrer" class="bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px] px-2 py-0.5 rounded flex items-center gap-1 hover:bg-purple-500/20 transition">📦 IPFS</a>`;
+    }
+            // Field Note badge (professional / org-attributed posts)
+    if (data.postingStyle === 'field-note') {
+        if (typeof renderFieldNoteBadge === 'function') {
+            trustBadgesHTML += renderFieldNoteBadge(data);
+        } else {
+            // Fallback so it still works if the import is missing
+            const role = data.fieldNoteRole ? String(data.fieldNoteRole).trim() : '';
+            const org  = data.fieldNoteOrg  ? String(data.fieldNoteOrg).trim()  : '';
+            const title = [role, org].filter(Boolean).join(' · ') || 'Field Note';
+            trustBadgesHTML += `
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold
+                             bg-sky-500/10 text-sky-400 border border-sky-500/30"
+                      title="${escapeHTML(title)}">
+                    📋 Field Note
+                </span>
+            `;
+        }
     }
 
     const trustContainer = trustBadgesHTML
