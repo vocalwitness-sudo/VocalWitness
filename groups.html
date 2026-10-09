@@ -3,152 +3,224 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Groups • VocalWitness</title>
-
-  <link rel="stylesheet" href="./style.css">
+  <title>Group • VocalWitness</title>
   <link rel="icon" href="./logo.png" type="image/png">
+  <link rel="stylesheet" href="./style.css">
   <style>
     .glass {
-      background: rgba(17, 24, 39, 0.92);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(16, 185, 129, 0.22);
+      background: rgba(13, 18, 30, 0.95);
+      backdrop-filter: blur(24px);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
     }
     .tab-btn.active {
-      background: #10b981;
-      color: #000;
-      font-weight: 600;
+      border: 1px solid rgba(16, 185, 129, 0.6);
+      background: rgba(16, 185, 129, 0.15);
+      color: #10b981;
+      font-weight: 700;
+    }
+    .neon-glow {
+      box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.35);
     }
   </style>
 </head>
-<body class="min-h-screen bg-[#0a0f1c] pb-28 text-white">
+<body class="min-h-screen bg-[#070b14] text-white selection:bg-emerald-500 selection:text-black">
 
-  <div class="mx-auto max-w-3xl px-4 py-6">
+  <div class="mx-auto max-w-4xl px-4 py-8">
 
-    <!-- Header -->
-    <div class="glass mb-8 flex items-center justify-between rounded-3xl p-4">
-      <div class="flex items-center gap-3">
-        <a href="/" class="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/15 text-lg transition hover:bg-emerald-500/25">←</a>
-        <div>
-          <h1 class="text-2xl font-bold text-emerald-400">Groups</h1>
-          <p class="text-xs text-zinc-400">Truth communities & evidence circles</p>
-        </div>
-      </div>
-      <select id="languageSelector" class="rounded-2xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none">
-        <option value="en">English</option>
-        <option value="pcm">Naija Pidgin</option>
-        <option value="yo">Yorùbá</option>
-        <option value="ha">Hausa</option>
-        <option value="ig">Igbo</option>
-        <option value="sw">Swahili</option>
-      </select>
-    </div>
-
-    <!-- Tabs -->
-    <div class="mb-6 flex gap-2 rounded-2xl border border-zinc-800 bg-zinc-900/80 p-1">
-      <button type="button" class="tab-btn active flex-1 rounded-xl py-3 text-sm font-medium" data-tab="discover">Discover</button>
-      <button type="button" class="tab-btn flex-1 rounded-xl py-3 text-sm font-medium" data-tab="my-groups">My Groups</button>
-    </div>
-
-    <!-- Search -->
-    <div class="relative mb-5">
-      <input type="text" id="searchInput" placeholder="Search groups by name, topic or location..."
-             class="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-5 py-4 text-white placeholder-zinc-500 focus:border-emerald-500 focus:outline-none">
-    </div>
-
-    <!-- Filters -->
-    <div class="mb-6 flex flex-wrap gap-2">
-      <button class="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-4 py-1.5 text-xs font-medium text-emerald-400">All</button>
-      <button class="rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs text-zinc-300 hover:border-emerald-500/50">Public</button>
-      <button class="rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs text-zinc-300 hover:border-emerald-500/50">Citizen Circle</button>
-      <button class="rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs text-zinc-300 hover:border-cyan-500/50">Witness Circle</button>
-    </div>
-
-    <!-- HIGHLY VISIBLE CREATE BUTTON (right under filters) -->
-    <div class="mb-8">
-      <button type="button" id="openCreateModalBtn"
-              class="w-full rounded-2xl bg-emerald-500 py-4 text-base font-bold text-black shadow-lg shadow-emerald-500/30 transition hover:bg-emerald-400 active:scale-[0.98] flex items-center justify-center gap-2">
-        <span class="text-xl">➕</span>
-        Create New Group
-      </button>
-      <p class="mt-2 text-center text-xs text-zinc-500">
-        Start a Truth Circle for your community, organisation or investigation
-      </p>
-    </div>
-
-    <!-- Groups List -->
-    <div id="group-container" class="space-y-5"></div>
-
-    <!-- Empty State -->
-    <div id="empty-state" class="hidden py-16 text-center">
-      <div class="mb-4 text-5xl">🛡️</div>
-      <h3 class="mb-2 text-xl font-semibold">No groups yet</h3>
-      <p class="mx-auto max-w-xs text-sm text-zinc-400">Be the first to create a Truth Circle in your community.</p>
-    </div>
-  </div>
-
-  <!-- Create Group Modal -->
-  <div id="groupModal" class="fixed inset-0 z-[200] hidden items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
-    <div class="glass w-full max-w-md overflow-hidden rounded-3xl shadow-2xl">
-      <div class="border-b border-zinc-700 p-6">
-        <h2 class="text-xl font-bold">Create New Group</h2>
-        <p class="mt-1 text-sm text-zinc-400">Build a Truth Circle for your community</p>
-      </div>
-      <div class="space-y-5 p-6">
-        <div>
-          <label class="mb-1.5 block text-sm text-zinc-400">Group Name *</label>
-          <input id="groupName" type="text" maxlength="60"
-                 class="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 focus:border-emerald-500 focus:outline-none"
-                 placeholder="e.g. Lagos Truth Seekers">
-        </div>
-        <div>
-          <label class="mb-1.5 block text-sm text-zinc-400">Description</label>
-          <textarea id="groupDesc" rows="3" maxlength="280"
-                    class="w-full resize-none rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 focus:border-emerald-500 focus:outline-none"
-                    placeholder="What truth or cause does this group stand for?"></textarea>
-        </div>
-        <div>
-          <label class="mb-1.5 block text-sm text-zinc-400">Visibility</label>
-          <select id="groupVisibility" class="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 focus:border-emerald-500 focus:outline-none">
-            <option value="public">🌍 Public – Anyone can discover & join</option>
-            <option value="network">🔗 Network Only</option>
-            <option value="citizen_circle">🛡️ Citizen Circle Only</option>
-            <option value="witness_circle">🔐 Witness Circle Only (Highest Trust)</option>
-          </select>
-        </div>
-        <div class="rounded-2xl border border-zinc-700 bg-zinc-900/70 p-4">
-          <p class="mb-2 text-xs text-zinc-400">Every group includes:</p>
-          <div class="flex flex-wrap gap-2 text-xs">
-            <span class="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-emerald-400">Evidence Locker</span>
-            <span class="rounded-full border border-amber-500/20 bg-amber-500/10 px-2.5 py-1 text-amber-400">Attestation Wall</span>
-            <span class="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-2.5 py-1 text-cyan-400">Forensic Timeline</span>
+    <!-- ========== HEADER ========== -->
+    <div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800 pb-6">
+      <div class="flex items-center gap-4">
+        <a href="groups.html"
+           class="flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-900 border border-zinc-800 text-xl text-emerald-400 transition hover:bg-emerald-500 hover:text-black hover:border-emerald-500"
+           aria-label="Back to Groups">
+          ←
+        </a>
+        <div class="flex-1 min-w-0">
+          <h1 id="groupName" class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-200 truncate">
+            Loading...
+          </h1>
+          <div class="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-zinc-400">
+            <span id="groupVisibilityBadge"
+                  class="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-0.5 text-emerald-400">
+              Public
+            </span>
+            <span id="memberCount">0 members</span>
           </div>
         </div>
       </div>
-      <div class="flex gap-3 border-t border-zinc-700 p-6">
-        <button type="button" id="closeCreateModalBtn" class="flex-1 rounded-2xl bg-zinc-800 py-3.5 text-sm font-medium hover:bg-zinc-700">Cancel</button>
-        <button type="button" id="submitCreateGroupBtn" class="flex-1 rounded-2xl bg-emerald-600 py-3.5 text-sm font-semibold text-black hover:bg-emerald-500">Create Group</button>
+      <button id="joinLeaveBtn" type="button"
+              class="rounded-2xl bg-emerald-500 px-6 py-3 text-sm font-extrabold text-black shadow-lg shadow-emerald-500/25 hover:bg-emerald-400 transition transform hover:-translate-y-0.5 shrink-0">
+        Join Group
+      </button>
+    </div>
+
+    <!-- Group Description -->
+    <div class="glass mb-8 rounded-3xl p-5 neon-glow">
+      <p id="groupDescription" class="text-sm leading-relaxed text-zinc-300">
+        Loading group description...
+      </p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="mb-6 flex gap-2 border-b border-zinc-800 pb-3 overflow-x-auto scrollbar-none" role="tablist">
+      <button type="button" class="tab-btn active px-5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-sm font-medium transition whitespace-nowrap" data-tab="feed">
+        Feed
+      </button>
+      <button type="button" class="tab-btn px-5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-sm font-medium transition text-zinc-400 whitespace-nowrap" data-tab="locker">
+        Evidence Locker
+      </button>
+      <button type="button" class="tab-btn px-5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-sm font-medium transition text-zinc-400 whitespace-nowrap" data-tab="attestation">
+        Attestation Wall
+      </button>
+      <button type="button" class="tab-btn px-5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-sm font-medium transition text-zinc-400 whitespace-nowrap" data-tab="timeline">
+        Forensic Timeline
+      </button>
+      <button type="button" class="tab-btn relative px-5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-sm font-medium transition text-zinc-400 whitespace-nowrap" data-tab="members">
+        Members
+        <span id="pendingBadge"
+              class="absolute -top-1 -right-1 hidden min-w-[18px] h-[18px] items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-black px-1">
+          0
+        </span>
+      </button>
+      <button type="button" class="tab-btn px-5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-sm font-medium transition text-zinc-400 whitespace-nowrap" data-tab="about">
+        About
+      </button>
+    </div>
+
+    <!-- ========== 1. FEED TAB ========== -->
+    <div id="tab-feed" class="space-y-5">
+      <div class="glass rounded-3xl p-5">
+        <textarea id="groupPostInput" rows="3"
+                  placeholder="Share an update or testimony with the group..."
+                  class="w-full resize-none rounded-2xl border border-zinc-700 bg-zinc-950 p-4 text-sm text-white placeholder-zinc-500 focus:border-emerald-500 focus:outline-none"></textarea>
+        <div class="mt-3 flex items-center justify-between">
+          <div class="flex gap-2">
+            <button type="button" class="rounded-xl border border-zinc-700 px-3 py-1.5 text-xs text-zinc-300 hover:border-emerald-500 transition">🎤 Voice</button>
+            <button type="button" class="rounded-xl border border-zinc-700 px-3 py-1.5 text-xs text-zinc-300 hover:border-emerald-500 transition">📷 Photo</button>
+          </div>
+          <button id="postToGroupBtn" type="button"
+                  class="rounded-xl bg-emerald-500 px-5 py-2 text-sm font-bold text-black hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20">
+            Post
+          </button>
+        </div>
+      </div>
+      <div id="groupFeed" class="space-y-4"></div>
+    </div>
+
+    <!-- ========== 2. EVIDENCE LOCKER TAB ========== -->
+    <div id="tab-locker" class="hidden space-y-4">
+      <div class="glass rounded-3xl p-5 flex justify-between items-center">
+        <div>
+          <h3 class="font-medium text-white">Cryptographic Evidence Locker</h3>
+          <p class="text-xs text-zinc-400 mt-0.5">Zero-knowledge client-hashed files anchored to this group.</p>
+        </div>
+        <button id="openEvidenceModalBtn" type="button"
+                class="rounded-xl bg-emerald-500 px-4 py-2 text-xs font-bold text-black hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20">
+          + Deposit Evidence
+        </button>
+      </div>
+      <div id="evidenceList" class="grid grid-cols-1 gap-3">
+        <!-- Dynamic evidence cards injected here -->
       </div>
     </div>
+
+    <!-- ========== 3. ATTESTATION WALL TAB ========== -->
+    <div id="tab-attestation" class="hidden space-y-4">
+      <div class="glass rounded-3xl p-5 flex justify-between items-center">
+        <div>
+          <h3 class="font-medium text-white">Witness Attestation Wall</h3>
+          <p class="text-xs text-zinc-400 mt-0.5">Cryptographically signed peer testimonies and verified statements.</p>
+        </div>
+        <button id="openAttestationModalBtn" type="button"
+                class="rounded-xl bg-emerald-500 px-4 py-2 text-xs font-bold text-black hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20">
+          + Sign Attestation
+        </button>
+      </div>
+      <div id="attestationList" class="space-y-3">
+        <!-- Dynamic attestation cards injected here -->
+      </div>
+    </div>
+
+    <!-- ========== 4. FORENSIC TIMELINE TAB ========== -->
+    <div id="tab-timeline" class="hidden space-y-4">
+      <div class="glass rounded-3xl p-5 flex justify-between items-center">
+        <div>
+          <h3 class="font-medium text-white">Forensic Incident Timeline</h3>
+          <p class="text-xs text-zinc-400 mt-0.5">Chronological stream reconstructed from verified metadata and logs.</p>
+        </div>
+        <button id="openTimelineModalBtn" type="button"
+                class="rounded-xl bg-emerald-500 px-4 py-2 text-xs font-bold text-black hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20">
+          + Add Timeline Node
+        </button>
+      </div>
+      <div id="forensicTimelineStream" class="border-l-2 border-emerald-500/40 pl-4 space-y-6 ml-2">
+        <!-- Dynamic timeline nodes injected here -->
+      </div>
+    </div>
+
+    <!-- ========== 5. MEMBERS TAB ========== -->
+    <div id="tab-members" class="hidden space-y-5">
+      <div class="glass rounded-3xl p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-medium text-white">Invite People</h3>
+          <span id="inviteStatusBadge" class="text-xs text-zinc-500">Active</span>
+        </div>
+        <div class="mb-4">
+          <label class="mb-1.5 block text-xs text-zinc-400 font-medium">Invite Link</label>
+          <div class="flex gap-2">
+            <input id="inviteLinkInput" type="text" readonly
+                   class="flex-1 rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-zinc-300 focus:outline-none"
+                   placeholder="Generating invite link...">
+            <button id="copyInviteBtn" type="button"
+                    class="rounded-xl bg-emerald-500 px-5 py-3 text-sm font-bold text-black hover:bg-emerald-400 transition">
+              Copy
+            </button>
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="mb-1.5 block text-xs text-zinc-400 font-medium">Invite Code</label>
+          <div class="flex gap-2">
+            <input id="inviteCodeInput" type="text" readonly
+                   class="flex-1 rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm font-mono tracking-widest text-emerald-400 focus:outline-none"
+                   placeholder="————">
+            <button id="copyCodeBtn" type="button"
+                    class="rounded-xl bg-zinc-700 px-5 py-3 text-sm font-medium text-white hover:bg-zinc-600 transition">
+              Copy
+            </button>
+          </div>
+        </div>
+      </div>
+      <div>
+        <h3 class="mb-3 font-medium text-white">Members</h3>
+        <div id="membersList" class="space-y-3"></div>
+      </div>
+    </div>
+
+    <!-- ========== 6. ABOUT TAB ========== -->
+    <div id="tab-about" class="hidden space-y-6">
+      <div class="glass rounded-3xl p-6">
+        <h3 class="mb-3 font-medium text-emerald-400">Group Rules</h3>
+        <ul class="space-y-2 text-sm text-zinc-300">
+          <li>• Only post what you personally witnessed</li>
+          <li>• No harassment or personal attacks</li>
+          <li>• Respect anonymity requests</li>
+          <li>• Evidence must be original when possible</li>
+        </ul>
+      </div>
+      <div class="glass rounded-3xl p-6">
+        <h3 class="mb-3 font-medium text-emerald-400">Created</h3>
+        <p id="groupCreatedAt" class="text-sm text-zinc-400">—</p>
+      </div>
+    </div>
+
   </div>
 
   <script type="module">
-    import { initGroups } from './js/groups.js';
-    import { initLanguage } from './js/i18n.js';
-    
-    document.addEventListener('DOMContentLoaded', () => {
-      initLanguage();
-      initGroups('group-container');
+    import { initGroupDetail } from './js/group-detail.js';
 
-      // Wire Create buttons
-      document.getElementById('openCreateModalBtn')?.addEventListener('click', () => {
-        window.showGroupCreationModal?.();
-      });
-      document.getElementById('closeCreateModalBtn')?.addEventListener('click', () => {
-        window.closeGroupModal?.();
-      });
-      document.getElementById('submitCreateGroupBtn')?.addEventListener('click', () => {
-        window.createGroup?.();
-      });
+    document.addEventListener('DOMContentLoaded', () => {
+      initGroupDetail();
     });
   </script>
 </body>
