@@ -26,6 +26,13 @@ import {
 let isSubmitting = false;
 let aiAnalysisDebounceTimer = null;
 let lastAnalyzedText = '';
+let isSubmitting = false;
+let aiAnalysisDebounceTimer = null;
+let lastAnalyzedText = '';
+
+// ===== Field Note state =====
+let currentPostingStyle = 'citizen';   // 'citizen' | 'field-note'
+let selectedRole = null;
 
 /**
  * Safely get user tier string
@@ -497,6 +504,79 @@ export function collapseComposer() {
 window.expandComposer  = expandComposer;
 window.collapseComposer = collapseComposer;
 
+/**
+ * Field Note / Citizen style toggle + role chips
+ */
+function initFieldNoteUI() {
+  const styleBtns = document.querySelectorAll('.posting-style-btn');
+  const panel = document.getElementById('field-note-panel');
+  const titleEl = document.getElementById('composer-title');
+  const subtitleEl = document.getElementById('composer-subtitle');
+  const roleInput = document.getElementById('field-note-role');
+  const roleChips = document.querySelectorAll('.role-chip');
+
+  if (!styleBtns.length || !panel) {
+    console.warn('[composer] Field Note UI elements not found');
+    return;
+  }
+
+  // Style buttons (Citizen / Field Note)
+  styleBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      // Reset all buttons
+      styleBtns.forEach(b => {
+        b.classList.remove('active', 'bg-emerald-500/20', 'text-emerald-400');
+        b.classList.add('bg-zinc-900', 'text-zinc-300');
+      });
+
+      // Activate clicked button
+      btn.classList.add('active', 'bg-emerald-500/20', 'text-emerald-400');
+      btn.classList.remove('bg-zinc-900', 'text-zinc-300');
+
+      currentPostingStyle = btn.dataset.style; // 'citizen' or 'field-note'
+
+      if (currentPostingStyle === 'field-note') {
+        panel.classList.remove('hidden');
+        if (titleEl) titleEl.textContent = 'Share a Field Note';
+        if (subtitleEl) subtitleEl.textContent = 'Still fully sealed • Optional role & organisation';
+      } else {
+        panel.classList.add('hidden');
+        if (titleEl) titleEl.textContent = 'Speak as a Citizen';
+        if (subtitleEl) subtitleEl.textContent = 'Your report will be sealed and added to the permanent public record';
+        selectedRole = null;
+        if (roleInput) roleInput.value = '';
+        roleChips.forEach(c => {
+          c.classList.remove('border-sky-500', 'text-sky-300', 'bg-sky-500/10');
+        });
+      }
+    });
+  });
+
+  // Role chips
+  roleChips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      roleChips.forEach(c => {
+        c.classList.remove('border-sky-500', 'text-sky-300', 'bg-sky-500/10');
+      });
+      chip.classList.add('border-sky-500', 'text-sky-300', 'bg-sky-500/10');
+
+      selectedRole = chip.dataset.role;
+      if (roleInput) {
+        roleInput.value = selectedRole === 'Other' ? '' : selectedRole;
+      }
+    });
+  });
+
+  // Manual typing overrides chip selection
+  if (roleInput) {
+    roleInput.addEventListener('input', () => {
+      selectedRole = roleInput.value.trim() || null;
+      roleChips.forEach(c => {
+        c.classList.remove('border-sky-500', 'text-sky-300', 'bg-sky-500/10');
+      });
+    });
+  }
+}
 
 // ====================== INIT COMPOSER ======================
 export function initComposer() {
@@ -507,6 +587,7 @@ export function initComposer() {
 
   if (root.dataset.composerInitialized === 'true') {
     console.log('[composer] Already initialized – skipping');
+      initFieldNoteUI();
     return;
   }
   root.dataset.composerInitialized = 'true';
@@ -546,6 +627,9 @@ collapseComposer();
     if (e.target.closest('#postButton, #submitBtn')) {
       handleComposerSubmit(e);
     }
+      const postingStyle   = currentPostingStyle; // 'citizen' | 'field-note'
+const fieldNoteRole  = document.getElementById('field-note-role')?.value.trim() || selectedRole || null;
+const fieldNoteOrg   = document.getElementById('field-note-org')?.value.trim() || null;
   });
 
   // ===== FILE INPUT LISTENERS =====
