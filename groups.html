@@ -13,7 +13,7 @@
       border: 1px solid rgba(16, 185, 129, 0.22);
     }
 
-    /* Tab buttons look like real tabs */
+    /* Tab buttons */
     .tab-btn {
       background: transparent;
       color: #a1a1aa; /* zinc-400 */
@@ -38,9 +38,8 @@
 
   <div class="mx-auto max-w-3xl px-4 py-6">
 
-    <!-- Header -->
+    <!-- 1. Header (Now at the very top) -->
     <div class="glass mb-6 flex items-center justify-between rounded-3xl p-4">
-      <!-- Left: Back + Title -->
       <div class="flex items-center gap-3">
         <a href="/" 
            class="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/15 text-lg transition hover:bg-emerald-500/25">
@@ -52,73 +51,53 @@
         </div>
       </div>
 
-      <!-- Right: Create button with text color change -->
-<button type="button" id="openCreateModalBtn"
-        class="flex items-center gap-2 rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-semibold 
-               text-black
-               shadow-[0_0_15px_rgba(16,185,129,0.4)] 
-               transition-all duration-200
-               hover:bg-emerald-400 
-               hover:text-black
-               hover:shadow-[0_0_25px_rgba(16,185,129,0.6)] 
-               active:scale-95">
-  <span class="text-lg">➕</span>
-  Create Group
-</button>
+      <!-- Create Group Button (Text color changed to white, non-black styling) -->
+      <button type="button" id="openCreateModalBtn"
+              class="flex items-center gap-2 rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white
+                     shadow-[0_0_15px_rgba(16,185,129,0.3)] 
+                     transition-all duration-200
+                     hover:bg-emerald-500 
+                     hover:shadow-[0_0_25px_rgba(16,185,129,0.5)] 
+                     active:scale-95">
+        <span class="text-lg">➕</span>
+        Create Group
+      </button>
+    </div>
 
-   <!-- Tabs + Language Selector -->
-<div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-  <!-- Tabs -->
-  <div class="flex gap-1 rounded-2xl border border-zinc-800 bg-zinc-900/80 p-1.5 overflow-x-auto">
-    <button type="button" 
-            class="tab-btn active flex-1 min-w-[100px] rounded-xl px-5 py-2.5 text-sm" 
-            data-tab="discover">
-      Discover
-    </button>
-    <button type="button" 
-            class="tab-btn flex-1 min-w-[100px] rounded-xl px-5 py-2.5 text-sm" 
-            data-tab="my-groups">
-      My Groups
-    </button>
-    <button type="button" 
-            class="tab-btn flex-1 min-w-[100px] rounded-xl px-5 py-2.5 text-sm" 
-            data-tab="trending">
-      🔥 Trending
-    </button>
-  </div>
+    <!-- 2. Tabs + Language Selector -->
+    <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex gap-1 rounded-2xl border border-zinc-800 bg-zinc-900/80 p-1.5 overflow-x-auto">
+        <button type="button" 
+                class="tab-btn active flex-1 min-w-[100px] rounded-xl px-5 py-2.5 text-sm" 
+                data-tab="discover">
+          Discover
+        </button>
+        <button type="button" 
+                class="tab-btn flex-1 min-w-[100px] rounded-xl px-5 py-2.5 text-sm" 
+                data-tab="my-groups">
+          My Groups
+        </button>
+        <button type="button" 
+                class="tab-btn flex-1 min-w-[100px] rounded-xl px-5 py-2.5 text-sm" 
+                data-tab="trending">
+          🔥 Trending
+        </button>
+      </div>
 
-  <!-- Language Selector -->
-  <select id="languageSelector" 
-          class="rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-white 
-                 focus:border-emerald-500 focus:outline-none">
-    <option value="en">English</option>
-    <option value="pcm">Naija Pidgin</option>
-    <option value="yo">Yorùbá</option>
-    <option value="ha">Hausa</option>
-    <option value="ig">Igbo</option>
-    <option value="sw">Swahili</option>
-  </select>
-</div>
+      <select id="languageSelector" 
+              class="rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-white 
+                     focus:border-emerald-500 focus:outline-none">
+        <option value="en">English</option>
+        <option value="pcm">Naija Pidgin</option>
+        <option value="yo">Yorùbá</option>
+        <option value="ha">Hausa</option>
+        <option value="ig">Igbo</option>
+        <option value="sw">Swahili</option>
+      </select>
+    </div>
 
-<!-- Search Bar for Groups -->
-<div class="relative mb-6">
-  <input type="text" 
-         id="searchInput" 
-         placeholder="Search groups by name, topic or location..."
-         class="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-5 py-4 pl-12 text-white placeholder-zinc-500 
-                focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/50">
-  
-  <!-- Search Icon -->
-  <svg class="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-500" 
-       fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-  </svg>
-</div>
-    
-
-    <!-- Filters -->
-    <div class="mb-8 flex flex-wrap gap-2">
+    <!-- 3. Filters (Moved directly below tabs) -->
+    <div class="mb-6 flex flex-wrap gap-2">
       <button class="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-4 py-1.5 text-xs font-medium text-emerald-400">
         All
       </button>
@@ -131,6 +110,21 @@
       <button class="rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs text-zinc-300 hover:border-cyan-500/50">
         Witness Circle
       </button>
+    </div>
+
+    <!-- 4. Search Bar -->
+    <div class="relative mb-8">
+      <input type="text" 
+             id="searchInput" 
+             placeholder="Search groups by name, topic or location..."
+             class="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-5 py-4 pl-12 text-white placeholder-zinc-500 
+                    focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/50">
+      
+      <svg class="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-500" 
+           fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
     </div>
 
     <!-- Groups List -->
@@ -184,7 +178,7 @@
       </div>
       <div class="flex gap-3 border-t border-zinc-700 p-6">
         <button type="button" id="closeCreateModalBtn" class="flex-1 rounded-2xl bg-zinc-800 py-3.5 text-sm font-medium hover:bg-zinc-700">Cancel</button>
-        <button type="button" id="submitCreateGroupBtn" class="flex-1 rounded-2xl bg-emerald-600 py-3.5 text-sm font-semibold text-black hover:bg-emerald-500">Create Group</button>
+        <button type="button" id="submitCreateGroupBtn" class="flex-1 rounded-2xl bg-emerald-600 py-3.5 text-sm font-semibold text-white hover:bg-emerald-500">Create Group</button>
       </div>
     </div>
   </div>
