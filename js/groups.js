@@ -1,4 +1,4 @@
-// js/groups.js - Upgraded Groups System for VocalWitness
+// js/groups.js - VocalWitness Groups System
 
 import { db, auth } from './firebase-config.js';
 import {
@@ -9,7 +9,6 @@ import {
   updateDoc,
   doc,
   arrayUnion,
-  arrayRemove,
   increment,
   addDoc,
   serverTimestamp
@@ -46,6 +45,9 @@ export function initGroups(containerId = 'group-container') {
     searchInput.addEventListener('input', () => renderGroups());
   }
 
+  // Create Group modal wiring
+  wireCreateGroupModal();
+
   // Real-time listener
   if (unsubscribe) unsubscribe();
 
@@ -70,6 +72,48 @@ export function initGroups(containerId = 'group-container') {
   );
 }
 
+function wireCreateGroupModal() {
+  const openBtn = document.getElementById('openCreateModalBtn');
+  const closeBtn = document.getElementById('closeCreateModalBtn');
+  const submitBtn = document.getElementById('submitCreateGroupBtn');
+  const modal = document.getElementById('groupModal');
+
+  if (openBtn) {
+    openBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      showGroupCreationModal();
+    });
+  }
+
+  if (closeBtn) {
+    closeBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      closeGroupModal();
+    });
+  }
+
+  if (submitBtn) {
+    submitBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      await createGroupFromForm();
+    });
+  }
+
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeGroupModal();
+    });
+  }
+
+  document.getElementById('groupName')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      createGroupFromForm();
+    }
+  });
+}
+
 /**
  * Render groups based on current tab + search
  */
@@ -83,20 +127,12 @@ function renderGroups() {
 
   let filtered = [...allGroups];
 
-  // Tab filter logic
-  if (currentTab === 'my-groups') {
-    if (!currentUid) {
-      filtered = [];
-    } else {
-      filtered = filtered.filter(
-        (g) => g.members?.includes(currentUid) || g.creatorId === currentUid
-      );
-    }
-  } else if (currentTab === 'witness_circles') {
-    filtered = filtered.filter((g) => g.visibility === 'witness_circle');
+  if (currentTab === 'my-groups' && currentUid) {
+    filtered = filtered.filter(
+      (g) => g.members?.includes(currentUid) || g.creatorId === currentUid
+    );
   }
 
-  // Search filter
   if (searchTerm) {
     filtered = filtered.filter(
       (g) =>
@@ -119,8 +155,7 @@ function renderGroups() {
     const isCreator = currentUid && group.creatorId === currentUid;
 
     const card = document.createElement('div');
-    card.className =
-      'glass p-5 rounded-3xl transition hover:border-emerald-500/50 cursor-pointer shadow-lg';
+    card.className = 'glass p-5 rounded-3xl transition hover:border-emerald-500/40 cursor-pointer';
     card.dataset.groupId = group.id;
 
     card.innerHTML = `
@@ -128,23 +163,19 @@ function renderGroups() {
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2 mb-1 flex-wrap">
             <h3 class="font-bold text-lg text-emerald-400 truncate">${escapeHtml(group.name)}</h3>
-            ${
-              isCreator
-                ? '<span class="text-[10px] bg-amber-500/15 border border-amber-500/30 text-amber-400 px-2.5 py-0.5 rounded-full font-bold">Creator</span>'
-                : ''
-            }
+            ${isCreator ? '<span class="text-[10px] bg-amber-500/15 text-amber-400 px-2 py-0.5 rounded-full">Creator</span>' : ''}
             ${
               group.visibility === 'witness_circle' || group.creatorTier === 'witness_circle'
-                ? '<span class="text-[10px] bg-cyan-500/15 text-cyan-400 px-2.5 py-0.5 rounded-full border border-cyan-500/30 font-bold">🔐 High Trust</span>'
+                ? '<span class="text-[10px] bg-cyan-500/15 text-cyan-400 px-2 py-0.5 rounded-full border border-cyan-500/30">🔐 High Trust</span>'
                 : ''
             }
           </div>
           <p class="text-zinc-400 text-sm line-clamp-2 mb-3">
-            ${escapeHtml(group.description || 'No operational description provided')}
+            ${escapeHtml(group.description || 'No description provided')}
           </p>
           <div class="flex flex-wrap items-center gap-3 text-xs text-zinc-500">
             <span>👥 ${group.memberCount || 1} members</span>
-            <span class="px-3 py-1 bg-zinc-900 border border-zinc-800 rounded-full capitalize text-zinc-300">
+            <span class="px-2.5 py-1 bg-zinc-800 rounded-full capitalize">
               ${formatVisibility(group.visibility)}
             </span>
           </div>
@@ -152,31 +183,28 @@ function renderGroups() {
         <div class="shrink-0">
           ${
             isMember
-              ? `<button type="button" class="px-5 py-2.5 bg-zinc-900 border border-zinc-800 text-zinc-400 rounded-2xl text-sm font-medium cursor-default">Joined</button>`
-              : `<button type="button" class="join-btn bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-2xl text-sm font-bold transition shadow-md shadow-emerald-600/20"
-                       data-id="${group.id}">Join</button>`
+              ? `<button type="button" class="px-5 py-2.5 bg-zinc-800 text-zinc-300 rounded-2xl text-sm font-medium cursor-default">Joined</button>`
+              : `<button type="button" class="join-btn bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-2xl text-sm font-medium transition"
+                         data-id="${group.id}">Join</button>`
           }
         </div>
       </div>
-
-      <!-- Institutional Tools Row -->
-      <div class="mt-4 pt-3 border-t border-zinc-800/80 flex flex-wrap gap-2 items-center">
+      <div class="mt-4 pt-3 border-t border-zinc-800 flex flex-wrap gap-2 items-center">
         <button type="button" data-action="tool" data-tool="locker" data-group-id="${group.id}"
-                class="text-[11px] px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full hover:bg-emerald-500/20 transition font-medium">
+                class="text-[11px] px-2.5 py-1 bg-emerald-500/10 text-emerald-400 rounded-full hover:bg-emerald-500/20 transition">
           🗄️ Evidence Locker
         </button>
         <button type="button" data-action="tool" data-tool="attestation" data-group-id="${group.id}"
-                class="text-[11px] px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-full hover:bg-amber-500/20 transition font-medium">
+                class="text-[11px] px-2.5 py-1 bg-amber-500/10 text-amber-400 rounded-full hover:bg-amber-500/20 transition">
           📜 Attestation Wall
         </button>
         <button type="button" data-action="tool" data-tool="timeline" data-group-id="${group.id}"
-                class="text-[11px] px-3 py-1 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 rounded-full hover:bg-cyan-500/20 transition font-medium">
+                class="text-[11px] px-2.5 py-1 bg-cyan-500/10 text-cyan-400 rounded-full hover:bg-cyan-500/20 transition">
           ⏱️ Forensic Timeline
         </button>
       </div>
     `;
 
-    // Click on card → go to detail page
     card.addEventListener('click', (e) => {
       if (e.target.closest('button')) return;
       window.location.href = `group-detail.html?id=${group.id}`;
@@ -185,7 +213,6 @@ function renderGroups() {
     container.appendChild(card);
   });
 
-  // Bind join buttons
   container.querySelectorAll('.join-btn').forEach((btn) => {
     btn.addEventListener('click', async (e) => {
       e.stopPropagation();
@@ -193,7 +220,6 @@ function renderGroups() {
     });
   });
 
-  // Bind tool buttons → navigate directly to the specific tool tab
   container.querySelectorAll('button[data-action="tool"]').forEach((btn) => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -247,14 +273,7 @@ export async function createNewGroup(name, description, visibility) {
   let tier = TIERS.CITIZEN;
   try {
     tier = (await getCurrentUserTier()) || TIERS.CITIZEN;
-  } catch (_) {
-    /* allow create even if tier lookup fails */
-  }
-
-  if (tier === TIERS.CITIZEN) {
-    showToast('You must be at least Citizen Circle to create groups', 'error');
-    return null;
-  }
+  } catch (_) {}
 
   if (visibility === 'witness_circle' && tier !== TIERS.WITNESS_CIRCLE) {
     showToast('Only Witness Circle members can create Witness-only groups', 'error');
@@ -262,25 +281,25 @@ export async function createNewGroup(name, description, visibility) {
   }
 
   const uid = auth.currentUser.uid;
+  const payload = {
+    name: trimmed,
+    description: (description || '').trim().slice(0, 280),
+    visibility: visibility || 'public',
+    creatorId: uid,
+    creatorTier: tier,
+    memberCount: 1,
+    members: [uid],
+    admins: [uid],
+    pendingMembers: [],
+    hasEvidenceLocker: true,
+    hasAttestationWall: true,
+    hasForensicTimeline: true,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  };
 
   try {
-    const ref = await addDoc(collection(db, 'groups'), {
-      name: trimmed,
-      description: (description || '').trim().slice(0, 280),
-      visibility: visibility || 'public',
-      creatorId: uid,
-      creatorTier: tier,
-      memberCount: 1,
-      members: [uid],
-      admins: [uid],
-      pendingMembers: [],
-      hasEvidenceLocker: true,
-      hasAttestationWall: true,
-      hasForensicTimeline: true,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    });
-
+    const ref = await addDoc(collection(db, 'groups'), payload);
     showToast(`🎉 Group "${trimmed}" created!`, 'success');
     return ref.id;
   } catch (err) {
@@ -291,6 +310,45 @@ export async function createNewGroup(name, description, visibility) {
         : err?.message || 'Failed to create group';
     showToast(msg, 'error');
     return null;
+  }
+}
+
+async function createGroupFromForm() {
+  const nameInput = document.getElementById('groupName');
+  const descInput = document.getElementById('groupDesc');
+  const visibilityInput = document.getElementById('groupVisibility');
+  const submitBtn = document.getElementById('submitCreateGroupBtn');
+
+  if (!nameInput || !nameInput.value.trim()) {
+    showToast('Group Name is required', 'error');
+    nameInput?.focus();
+    return;
+  }
+
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Creating…';
+  }
+
+  try {
+    const id = await createNewGroup(
+      nameInput.value.trim(),
+      descInput ? descInput.value.trim() : '',
+      visibilityInput ? visibilityInput.value : 'public'
+    );
+
+    if (id) {
+      nameInput.value = '';
+      if (descInput) descInput.value = '';
+      if (visibilityInput) visibilityInput.value = 'public';
+      closeGroupModal();
+      window.location.href = `group-detail.html?id=${id}`;
+    }
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Create Group';
+    }
   }
 }
 
@@ -318,55 +376,58 @@ function formatVisibility(vis) {
 
 // ====================== GLOBAL MODAL CONTROLS ======================
 
-window.showGroupCreationModal = function () {
+function showGroupCreationModal() {
+  const modal = document.getElementById('groupModal');
+  if (!modal) {
+    showToast('Create modal missing — hard refresh the page', 'error');
+    return;
+  }
   if (!auth.currentUser) {
     showToast('Please sign in to create a group', 'error');
     return;
   }
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+  document.getElementById('groupName')?.focus();
+}
+
+function closeGroupModal() {
   const modal = document.getElementById('groupModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+}
+
+window.showGroupCreationModal = showGroupCreationModal;
+window.closeGroupModal = closeGroupModal;
+window.createGroup = createGroupFromForm;
+
+window.showUpgradeToWitnessModal = function () {
+  const modal = document.getElementById('upgradeToWitnessModal');
   if (modal) {
     modal.classList.remove('hidden');
     modal.classList.add('flex');
-    document.getElementById('groupName')?.focus();
   }
 };
 
-window.closeGroupModal = function () {
-  const modal = document.getElementById('groupModal');
+window.closeUpgradeModal = function () {
+  const modal = document.getElementById('upgradeToWitnessModal');
   if (modal) {
     modal.classList.add('hidden');
     modal.classList.remove('flex');
   }
 };
 
-window.createGroup = async function () {
-  const nameInput = document.getElementById('groupName');
-  const descInput = document.getElementById('groupDesc');
-  const visibilityInput = document.getElementById('groupVisibility');
-
-  if (!nameInput || !nameInput.value.trim()) {
-    showToast('Group Name is required', 'error');
-    nameInput?.focus();
-    return;
-  }
-
-  const id = await createNewGroup(
-    nameInput.value.trim(),
-    descInput ? descInput.value.trim() : '',
-    visibilityInput ? visibilityInput.value : 'public'
-  );
-
-  if (id) {
-    nameInput.value = '';
-    if (descInput) descInput.value = '';
-    if (visibilityInput) visibilityInput.value = 'public';
-    window.closeGroupModal();
-    // Go straight to the new group
-    window.location.href = `group-detail.html?id=${id}`;
+window.startZKUpgradeFromGroups = function () {
+  closeUpgradeModal();
+  if (typeof startZKVerification === 'function') {
+    startZKVerification();
+  } else {
+    showToast('ZK Verification module not available', 'error');
   }
 };
 
-// Re-render on language change
 window.addEventListener('languageChanged', () => {
   renderGroups();
 });
