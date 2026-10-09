@@ -747,19 +747,57 @@
     <div id="composer-expanded" class="hidden space-y-4">
 
       <!-- Header + channel -->
-      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h3 class="text-lg font-bold text-white">Speak as a Citizen</h3>
-          <p class="text-xs text-zinc-400">Your report will be sealed and added to the permanent public record</p>
-        </div>
-        <select id="targetFeedSelect" 
-                class="rounded-xl border border-zinc-700 bg-zinc-900 px-3.5 py-2 text-sm font-medium text-emerald-400 
-                       focus:border-emerald-500 focus:outline-none">
-          <option value="citizen-talk">Citizen Talk (Open)</option>
-          <option value="witness-voice">Witness Voice (Higher Trust)</option>
-        </select>
-      </div>
+      <!-- Header + Posting Style -->
+<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+  <div>
+    <h3 id="composer-title" class="text-lg font-bold text-white">Speak as a Citizen</h3>
+    <p id="composer-subtitle" class="text-xs text-zinc-400">
+      Your report will be sealed and added to the permanent public record
+    </p>
+  </div>
 
+  <div class="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+    <!-- Posting Style Selector -->
+    <div class="flex rounded-xl border border-zinc-700 overflow-hidden text-xs font-medium">
+      <button type="button" data-style="citizen"
+              class="posting-style-btn active px-3.5 py-2 bg-emerald-500/20 text-emerald-400">
+        Citizen
+      </button>
+      <button type="button" data-style="field-note"
+              class="posting-style-btn px-3.5 py-2 bg-zinc-900 text-zinc-300 hover:bg-zinc-800">
+        Field Note
+      </button>
+    </div>
+
+    <!-- Channel selector (kept) -->
+    <select id="targetFeedSelect"
+            class="rounded-xl border border-zinc-700 bg-zinc-900 px-3.5 py-2 text-sm font-medium text-emerald-400 
+                   focus:border-emerald-500 focus:outline-none">
+      <option value="citizen-talk">Citizen Talk (Open)</option>
+      <option value="witness-voice">Witness Voice (Higher Trust)</option>
+    </select>
+  </div>
+</div>
+
+<!-- ===== Field Note extra fields (hidden by default) ===== -->
+<div id="field-note-panel" class="hidden space-y-3 p-4 rounded-2xl border border-sky-500/30 bg-sky-500/5">
+  <div class="flex flex-wrap gap-2">
+    <span class="text-xs text-sky-300 font-medium self-center">Role (optional):</span>
+    <button type="button" class="role-chip px-3 py-1 rounded-full text-xs border border-zinc-600 bg-zinc-900 text-zinc-300 hover:border-sky-500 hover:text-sky-300" data-role="Marketer">Marketer</button>
+    <button type="button" class="role-chip px-3 py-1 rounded-full text-xs border border-zinc-600 bg-zinc-900 text-zinc-300 hover:border-sky-500 hover:text-sky-300" data-role="Researcher">Researcher</button>
+    <button type="button" class="role-chip px-3 py-1 rounded-full text-xs border border-zinc-600 bg-zinc-900 text-zinc-300 hover:border-sky-500 hover:text-sky-300" data-role="NGO">NGO</button>
+    <button type="button" class="role-chip px-3 py-1 rounded-full text-xs border border-zinc-600 bg-zinc-900 text-zinc-300 hover:border-sky-500 hover:text-sky-300" data-role="Educator">Educator</button>
+    <button type="button" class="role-chip px-3 py-1 rounded-full text-xs border border-zinc-600 bg-zinc-900 text-zinc-300 hover:border-sky-500 hover:text-sky-300" data-role="Local Business">Local Business</button>
+    <button type="button" class="role-chip px-3 py-1 rounded-full text-xs border border-zinc-600 bg-zinc-900 text-zinc-300 hover:border-sky-500 hover:text-sky-300" data-role="Other">Other</button>
+  </div>
+
+  <input id="field-note-role" type="text" maxlength="50" placeholder="Or type your role…"
+         class="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:border-sky-500 focus:outline-none">
+
+  <input id="field-note-org" type="text" maxlength="80" placeholder="Organisation / Project (optional)"
+         class="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:border-sky-500 focus:outline-none">
+</div>
+      
       <!-- Optional title -->
       <input type="text" id="testimonyTitle" maxlength="120" 
              placeholder="Add a short title (optional)"
