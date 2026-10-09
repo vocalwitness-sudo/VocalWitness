@@ -718,6 +718,13 @@ export function initComposer() {
         syncPostingStyleUI();
       }
     });
+
+        // Reset Field Note UI
+  const styleSelect = document.getElementById('postingStyleSelect');
+  if (styleSelect) {
+    styleSelect.value = 'citizen';
+    syncPostingStyleUI();
+  }
     // Run once so UI matches the default <option>
     if (typeof syncPostingStyleUI === 'function') {
       syncPostingStyleUI();
