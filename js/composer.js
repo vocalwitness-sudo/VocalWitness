@@ -29,6 +29,13 @@ let lastAnalyzedText = '';
 let isSubmitting = false;
 let aiAnalysisDebounceTimer = null;
 let lastAnalyzedText = '';
+/** Current posting style for the composer. 'citizen' | 'field-note' */
+let currentPostingStyle = 'citizen';
+
+// Expose so main.js publish path can read it
+if (typeof window !== 'undefined') {
+  window.currentPostingStyle = currentPostingStyle;
+}
 
 // ===== Field Note state =====
 let currentPostingStyle = 'citizen';   // 'citizen' | 'field-note'
@@ -83,6 +90,49 @@ function showVideoPolicyModal(customMessage) {
     modal.classList.add('flex');
     modal.setAttribute('aria-hidden', 'false');
   }
+}
+
+/**
+ * Show / hide Field Note role + org fields and keep currentPostingStyle in sync.
+ */
+function syncPostingStyleUI() {
+  const select = document.getElementById('postingStyleSelect');
+  const fields = document.getElementById('field-note-fields');
+  if (!select) return;
+
+  const style = select.value === 'field-note' ? 'field-note' : 'citizen';
+  currentPostingStyle = style;
+  window.currentPostingStyle = style;
+
+  if (fields) {
+    fields.classList.toggle('hidden', style !== 'field-note');
+  }
+
+  // Optional: clear role/org when switching back to citizen
+  if (style === 'citizen') {
+    const role = document.getElementById('field-note-role');
+    const org  = document.getElementById('field-note-org');
+    if (role) role.value = '';
+    if (org)  org.value  = '';
+  }
+}
+
+/**
+ * Collect Field Note values for the publish payload.
+ * Returns { postingStyle, fieldNoteRole, fieldNoteOrg }
+ */
+export function getFieldNoteValues() {
+  const style = currentPostingStyle === 'field-note' ? 'field-note' : 'citizen';
+  if (style !== 'field-note') {
+    return { postingStyle: 'citizen', fieldNoteRole: null, fieldNoteOrg: null };
+  }
+  const role = document.getElementById('field-note-role')?.value.trim() || null;
+  const org  = document.getElementById('field-note-org')?.value.trim()  || null;
+  return {
+    postingStyle: 'field-note',
+    fieldNoteRole: role || null,
+    fieldNoteOrg:  org  || null,
+  };
 }
 
 /**
@@ -587,11 +637,17 @@ export function initComposer() {
 
   if (root.dataset.composerInitialized === 'true') {
     console.log('[composer] Already initialized – skipping');
+    if (typeof initFieldNoteUI === 'function') {
       initFieldNoteUI();
+    }
     return;
   }
   root.dataset.composerInitialized = 'true';
-collapseComposer();
+  
+  if (typeof collapseComposer === 'function') {
+    collapseComposer();
+  }
+
   // ===== CLICK DELEGATION =====
   // Voice button (#btn-voice / live recording) is intentionally NOT handled here.
   // media.js owns 100% of voice recording UI + logic.
@@ -625,11 +681,13 @@ collapseComposer();
 
     // Publish button
     if (e.target.closest('#postButton, #submitBtn')) {
-      handleComposerSubmit(e);
+      e.preventDefault();
+      if (typeof handleComposerSubmit === 'function') {
+        handleComposerSubmit(e);
+      } else if (typeof window.publishTestimony === 'function') {
+        window.publishTestimony();
+      }
     }
-      const postingStyle   = currentPostingStyle; // 'citizen' | 'field-note'
-const fieldNoteRole  = document.getElementById('field-note-role')?.value.trim() || selectedRole || null;
-const fieldNoteOrg   = document.getElementById('field-note-org')?.value.trim() || null;
   });
 
   // ===== FILE INPUT LISTENERS =====
@@ -651,6 +709,21 @@ const fieldNoteOrg   = document.getElementById('field-note-org')?.value.trim() |
     audioInput.addEventListener('change', handleAudioSelectAction);
   }
 
+  // ===== Field Note Posting-Style Toggle Wiring =====
+  const postingStyleSelect = document.getElementById('postingStyleSelect');
+  if (postingStyleSelect && !postingStyleSelect.dataset.listenerAttached) {
+    postingStyleSelect.dataset.listenerAttached = 'true';
+    postingStyleSelect.addEventListener('change', () => {
+      if (typeof syncPostingStyleUI === 'function') {
+        syncPostingStyleUI();
+      }
+    });
+    // Run once so UI matches the default <option>
+    if (typeof syncPostingStyleUI === 'function') {
+      syncPostingStyleUI();
+    }
+  }
+
   // ===== AI Analysis (debounced) =====
   const bodyInput = document.getElementById('mainInput');
   if (bodyInput && !bodyInput.dataset.aiListenerAttached) {
@@ -659,13 +732,15 @@ const fieldNoteOrg   = document.getElementById('field-note-org')?.value.trim() |
       const text = e.target.value.trim();
       if (text.length < 30 || text === lastAnalyzedText) {
         clearTimeout(aiAnalysisDebounceTimer);
-        if (text.length < 30) clearAiFeedback();
+        if (text.length < 30 && typeof clearAiFeedback === 'function') clearAiFeedback();
         return;
       }
       clearTimeout(aiAnalysisDebounceTimer);
       aiAnalysisDebounceTimer = setTimeout(() => {
         lastAnalyzedText = text;
-        runRealtimeAiAnalysis(text);
+        if (typeof runRealtimeAiAnalysis === 'function') {
+          runRealtimeAiAnalysis(text);
+        }
       }, 900);
     });
   }
@@ -677,7 +752,6 @@ const fieldNoteOrg   = document.getElementById('field-note-org')?.value.trim() |
 
   console.log('✅ Composer initialized (media handlers isolated, voice left to media.js)');
 }
-
 
 /**
  * Executes background AI analysis on composer text input
