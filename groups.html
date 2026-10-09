@@ -12,10 +12,25 @@
       backdrop-filter: blur(20px);
       border: 1px solid rgba(16, 185, 129, 0.22);
     }
+
+    /* Tab buttons look like real tabs */
+    .tab-btn {
+      background: transparent;
+      color: #a1a1aa; /* zinc-400 */
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn:hover {
+      color: #e4e4e7; /* zinc-200 */
+      background: rgba(255, 255, 255, 0.05);
+    }
+
     .tab-btn.active {
-      background: #10b981;
+      background: #10b981; /* emerald-500 */
       color: #000;
       font-weight: 600;
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
     }
   </style>
 </head>
@@ -23,41 +38,56 @@
 
   <div class="mx-auto max-w-3xl px-4 py-6">
 
-    <!-- Header with Create button on the right -->
+    <!-- Header -->
     <div class="glass mb-6 flex items-center justify-between rounded-3xl p-4">
+      <!-- Left: Back + Title -->
       <div class="flex items-center gap-3">
-        <a href="/" class="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/15 text-lg transition hover:bg-emerald-500/25">←</a>
+        <a href="/" 
+           class="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/15 text-lg transition hover:bg-emerald-500/25">
+          ←
+        </a>
         <div>
           <h1 class="text-2xl font-bold text-emerald-400">Groups</h1>
           <p class="text-xs text-zinc-400">Truth communities & evidence circles</p>
         </div>
       </div>
 
-    <!-- LOUD & BRIGHT Create button -->
-<button type="button" id="openCreateModalBtn"
-        class="flex items-center gap-2 rounded-2xl bg-emerald-400 px-6 py-3.5 text-sm font-bold text-black 
-               shadow-[0_0_20px_rgba(52,211,153,0.6)] 
-               transition hover:bg-emerald-300 hover:shadow-[0_0_28px_rgba(52,211,153,0.8)] 
-               active:scale-95">
-  <span class="text-lg">➕</span>
-  Create Group
-</button>
+      <!-- Right: Bright Create button -->
+      <button type="button" id="openCreateModalBtn"
+              class="flex items-center gap-2 rounded-2xl bg-emerald-400 px-5 py-3 text-sm font-bold text-black 
+                     shadow-[0_0_20px_rgba(52,211,153,0.6)] 
+                     transition hover:bg-emerald-300 hover:shadow-[0_0_28px_rgba(52,211,153,0.8)] 
+                     active:scale-95">
+        <span class="text-lg">➕</span>
+        Create Group
+      </button>
+    </div>
 
     <!-- Tabs + Language -->
     <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div class="flex gap-2 rounded-2xl border border-zinc-800 bg-zinc-900/80 p-1 overflow-x-auto">
-        <button type="button" class="tab-btn active flex-1 min-w-[100px] rounded-xl px-5 py-3 text-sm font-medium" data-tab="discover">
+      <!-- Tabs -->
+      <div class="flex gap-1 rounded-2xl border border-zinc-800 bg-zinc-900/80 p-1.5 overflow-x-auto">
+        <button type="button" 
+                class="tab-btn active flex-1 min-w-[100px] rounded-xl px-5 py-2.5 text-sm" 
+                data-tab="discover">
           Discover
         </button>
-        <button type="button" class="tab-btn flex-1 min-w-[100px] rounded-xl px-5 py-3 text-sm font-medium" data-tab="my-groups">
+        <button type="button" 
+                class="tab-btn flex-1 min-w-[100px] rounded-xl px-5 py-2.5 text-sm" 
+                data-tab="my-groups">
           My Groups
         </button>
-        <button type="button" class="tab-btn flex-1 min-w-[100px] rounded-xl px-5 py-3 text-sm font-medium" data-tab="trending">
+        <button type="button" 
+                class="tab-btn flex-1 min-w-[100px] rounded-xl px-5 py-2.5 text-sm" 
+                data-tab="trending">
           🔥 Trending
         </button>
       </div>
 
-      <select id="languageSelector" class="rounded-2xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none">
+      <!-- Language Selector -->
+      <select id="languageSelector" 
+              class="rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-white 
+                     focus:border-emerald-500 focus:outline-none">
         <option value="en">English</option>
         <option value="pcm">Naija Pidgin</option>
         <option value="yo">Yorùbá</option>
@@ -69,16 +99,26 @@
 
     <!-- Search -->
     <div class="relative mb-5">
-      <input type="text" id="searchInput" placeholder="Search groups by name, topic or location..."
-             class="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-5 py-4 text-white placeholder-zinc-500 focus:border-emerald-500 focus:outline-none">
+      <input type="text" id="searchInput" 
+             placeholder="Search groups by name, topic or location..."
+             class="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-5 py-4 text-white placeholder-zinc-500 
+                    focus:border-emerald-500 focus:outline-none">
     </div>
 
     <!-- Filters -->
     <div class="mb-8 flex flex-wrap gap-2">
-      <button class="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-4 py-1.5 text-xs font-medium text-emerald-400">All</button>
-      <button class="rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs text-zinc-300 hover:border-emerald-500/50">Public</button>
-      <button class="rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs text-zinc-300 hover:border-emerald-500/50">Citizen Circle</button>
-      <button class="rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs text-zinc-300 hover:border-cyan-500/50">Witness Circle</button>
+      <button class="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-4 py-1.5 text-xs font-medium text-emerald-400">
+        All
+      </button>
+      <button class="rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs text-zinc-300 hover:border-emerald-500/50">
+        Public
+      </button>
+      <button class="rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs text-zinc-300 hover:border-emerald-500/50">
+        Citizen Circle
+      </button>
+      <button class="rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs text-zinc-300 hover:border-cyan-500/50">
+        Witness Circle
+      </button>
     </div>
 
     <!-- Groups List -->
