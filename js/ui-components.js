@@ -321,6 +321,7 @@ export function showBoldWitnessModal(onConfirm) {
 if (typeof window !== 'undefined') {
     window.renderTierBadge = renderTierBadge;
     window.showBoldWitnessModal = showBoldWitnessModal;
+    window.renderFieldNoteBadge = renderFieldNoteBadge;   
 }
 
 /**
