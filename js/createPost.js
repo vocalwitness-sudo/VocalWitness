@@ -14,7 +14,7 @@ import { analyzeReportContent } from './moderation.js';
 import { processAndUploadMedia } from './media-pipeline.js';
 import { parsePostMetadata } from './utils/parser.js';
 import { state } from './app-state.js';
-import { createEvidencePack } from './evidence-pack.js'; // 👈 Imported evidence pack builder
+import { createEvidencePack } from './evidence-pack.js';
 
 /**
  * Computes a SHA-256 hash of a file or text buffer using native Web Crypto API.
@@ -47,9 +47,11 @@ export async function computeSHA256(data) {
  * @param {boolean} params.isAnonymous - Whether user hides public identity (UI only)
  * @param {boolean} params.isZkVerified - Optional ZK proof indicator
  * @param {Function} [params.onProgress] - Optional progress callback (0-100)
+ * @param {string} [params.postingStyle] - 'citizen' | 'field-note'
+ * @param {string|null} [params.fieldNoteRole] - Role / title for Field Notes
+ * @param {string|null} [params.fieldNoteOrg] - Organisation for Field Notes
  * @returns {Promise<string>} Created Firestore document ID
  */
-
 export async function submitTestimony({
     content = '',
     channel = 'citizen-talk',
@@ -58,9 +60,9 @@ export async function submitTestimony({
     isZkVerified = false,
     onProgress = null,
     // ===== Field Note fields =====
-    postingStyle = 'citizen',      // 'citizen' | 'field-note'
+    postingStyle = 'citizen',
     fieldNoteRole = null,
-    fieldNoteOrg = null
+    fieldNoteOrg = null,
 }) {
     const user = auth.currentUser;
 
@@ -184,18 +186,18 @@ export async function submitTestimony({
     }
 
     // 4. Assemble Firestore Payload – MUST satisfy the create rules
-   const payload = {
-    content: cleanedContent || '',
-    hashtags: hashtags || [],
-    mentions: mentions || [],
-    channel: channel,
+    const payload = {
+        content: cleanedContent || '',
+        hashtags: hashtags || [],
+        mentions: mentions || [],
+        channel: channel,
 
-    // ===== Field Note fields =====
-    postingStyle: postingStyle === 'field-note' ? 'field-note' : 'citizen',
-    fieldNoteRole: postingStyle === 'field-note' ? (fieldNoteRole || null) : null,
-    fieldNoteOrg:  postingStyle === 'field-note' ? (fieldNoteOrg || null) : null,
+        // ===== Field Note fields =====
+        postingStyle: postingStyle === 'field-note' ? 'field-note' : 'citizen',
+        fieldNoteRole: postingStyle === 'field-note' ? (fieldNoteRole || null) : null,
+        fieldNoteOrg:  postingStyle === 'field-note' ? (fieldNoteOrg  || null) : null,
 
-    authorId: user.uid,
+        authorId: user.uid,
         isAnonymous: !!isAnonymous,
         author: isAnonymous ? "Anonymous Witness" : (user.displayName || "Citizen Witness"),
         authorTier: authorTier,
@@ -205,7 +207,7 @@ export async function submitTestimony({
         imageUrl: mediaType === 'image' ? mediaUrl : null,
         videoUrl: mediaType === 'video' ? mediaUrl : null,
         audioUrl: mediaType === 'audio' ? mediaUrl : null,
-        reactions: { respect: 0, truth: 0, concern: 0, impact: 0 },
+        reactions: { respect: 0, truth: 0, solidarity: 0, impact: 0 },
         commentsCount: 0,
         isPinned: false,
         isDeleted: false,
