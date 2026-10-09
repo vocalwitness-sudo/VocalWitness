@@ -98,6 +98,37 @@ if (typeof window !== 'undefined' && !window.__hashCopyListenerAttached) {
     window.__hashCopyListenerAttached = true;
 
     /**
+ * Small “Field Note” badge for professional / org-attributed posts.
+ * Shows only when postingStyle === 'field-note'.
+ * @param {Object} post
+ * @returns {string} HTML
+ */
+export function renderFieldNoteBadge(post = {}) {
+    if (post.postingStyle !== 'field-note') return '';
+
+    const role = post.fieldNoteRole ? String(post.fieldNoteRole).trim() : '';
+    const org  = post.fieldNoteOrg  ? String(post.fieldNoteOrg).trim()  : '';
+
+    const titleParts = [];
+    if (role) titleParts.push(role);
+    if (org)  titleParts.push(org);
+    const title = titleParts.length
+        ? `Field Note · ${titleParts.join(' · ')}`
+        : 'Field Note';
+
+    // Escape quotes for the title attribute
+    const safeTitle = title.replace(/"/g, '&quot;');
+
+    return `
+        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold
+                     bg-sky-500/10 text-sky-400 border border-sky-500/30"
+              title="${safeTitle}">
+            📋 Field Note
+        </span>
+    `;
+}
+
+    /**
      * Copy text to clipboard with modern API + legacy fallback.
      * @param {string} text
      * @returns {Promise<boolean>} true if copy succeeded
