@@ -75,4 +75,110 @@
     <div id="tab-locker" class="hidden space-y-5">
       <div class="flex items-center justify-between">
         <h3 class="text-lg font-semibold">Evidence Locker</h3>
-        <button id="
+        <button id="openEvidenceModalBtn" class="rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-medium text-black hover:bg-emerald-500">
+          + Deposit Evidence
+        </button>
+      </div>
+      <div id="evidenceList" class="grid gap-4 sm:grid-cols-2"></div>
+    </div>
+
+    <!-- ===================== TAB: ATTESTATION WALL ===================== -->
+    <div id="tab-attestation" class="hidden space-y-5">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-semibold">Attestation Wall</h3>
+        <button id="openAttestationModalBtn" class="rounded-2xl bg-amber-600 px-4 py-2 text-sm font-medium text-black hover:bg-amber-500">
+          + Sign Attestation
+        </button>
+      </div>
+      <div id="attestationList" class="space-y-4"></div>
+    </div>
+
+    <!-- ===================== TAB: FORENSIC TIMELINE ===================== -->
+    <div id="tab-timeline" class="hidden space-y-5">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-semibold">Forensic Timeline</h3>
+        <button id="openTimelineModalBtn" class="rounded-2xl bg-cyan-600 px-4 py-2 text-sm font-medium text-black hover:bg-cyan-500">
+          + Add Timeline Node
+        </button>
+      </div>
+      <div class="relative border-l-2 border-emerald-500/30 ml-3 space-y-6 pl-6" id="forensicTimelineStream"></div>
+    </div>
+
+    <!-- ===================== TAB: MEMBERS ===================== -->
+    <div id="tab-members" class="hidden space-y-5">
+      <h3 class="text-lg font-semibold">Members</h3>
+      <div id="membersList" class="space-y-3"></div>
+    </div>
+
+    <!-- ===================== TAB: ABOUT + INVITE ===================== -->
+    <div id="tab-about" class="hidden space-y-5">
+      <div class="glass rounded-3xl p-5">
+        <h3 class="mb-3 text-lg font-semibold">About this group</h3>
+        <p id="groupDescription" class="text-sm text-zinc-300"></p>
+      </div>
+
+      <!-- Invite System -->
+      <div class="glass rounded-3xl p-5">
+        <div class="mb-4 flex items-center justify-between">
+          <h3 class="text-lg font-semibold">Invite Link & Code</h3>
+          <span id="inviteStatusBadge" class="text-xs text-emerald-400">—</span>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="mb-1 block text-xs text-zinc-400">Invite Link</label>
+            <div class="flex gap-2">
+              <input id="inviteLinkInput" type="text" readonly
+                     class="flex-1 rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm">
+              <button id="copyInviteBtn" class="rounded-2xl bg-zinc-800 px-4 py-2.5 text-sm hover:bg-zinc-700">Copy</button>
+            </div>
+          </div>
+
+          <div>
+            <label class="mb-1 block text-xs text-zinc-400">Invite Code</label>
+            <div class="flex gap-2">
+              <input id="inviteCodeInput" type="text" readonly
+                     class="flex-1 rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm font-mono">
+              <button id="copyCodeBtn" class="rounded-2xl bg-zinc-800 px-4 py-2.5 text-sm hover:bg-zinc-700">Copy</button>
+            </div>
+          </div>
+
+          <!-- Admin-only settings -->
+          <div id="inviteSettings" class="hidden space-y-3 border-t border-zinc-800 pt-4">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="mb-1 block text-xs text-zinc-400">Expires in (days)</label>
+                <select id="inviteExpiry" class="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm">
+                  <option value="1">1 day</option>
+                  <option value="3">3 days</option>
+                  <option value="7" selected>7 days</option>
+                  <option value="30">30 days</option>
+                  <option value="0">Never</option>
+                </select>
+              </div>
+              <div>
+                <label class="mb-1 block text-xs text-zinc-400">Join mode</label>
+                <select id="inviteApproval" class="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm">
+                  <option value="approval">Require Approval</option>
+                  <option value="auto">Auto-join</option>
+                </select>
+              </div>
+            </div>
+            <button id="regenerateInviteBtn" class="w-full rounded-2xl bg-emerald-600 py-3 text-sm font-semibold text-black hover:bg-emerald-500">
+              Generate / Refresh Invite
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script type="module">
+    import { initGroupDetail } from './js/group-detail.js';
+    document.addEventListener('DOMContentLoaded', () => {
+      initGroupDetail();
+    });
+  </script>
+</body>
+</html>
