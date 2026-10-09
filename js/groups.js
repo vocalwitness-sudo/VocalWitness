@@ -1,4 +1,4 @@
-// js/groups.js - VocalWitness Groups System
+// js/groups.js - VocalWitness Groups System (with Trending)
 
 import { db, auth } from './firebase-config.js';
 import {
@@ -134,17 +134,14 @@ function renderGroups() {
     );
   }
 
-  // 🔥 TRENDING – sort by activity score
+  // 🔥 TRENDING
   if (currentTab === 'trending') {
     filtered = filtered
       .map((g) => {
-        // Simple trending score:
-        // memberCount is the strongest signal + recency bonus
         const members = g.memberCount || 1;
-        const created = g.createdAt?.toMillis?.() || g.createdAt?.seconds * 1000 || 0;
-        const updated = g.updatedAt?.toMillis?.() || g.updatedAt?.seconds * 1000 || created;
+        const created = g.createdAt?.toMillis?.() || (g.createdAt?.seconds ? g.createdAt.seconds * 1000 : 0);
+        const updated = g.updatedAt?.toMillis?.() || (g.updatedAt?.seconds ? g.updatedAt.seconds * 1000 : created);
 
-        // Score = members * 5 + recency boost (newer = higher)
         const ageInDays = (Date.now() - updated) / (1000 * 60 * 60 * 24);
         const recencyBoost = Math.max(0, 30 - ageInDays); // last 30 days get boost
 
@@ -154,10 +151,10 @@ function renderGroups() {
         };
       })
       .sort((a, b) => b._trendingScore - a._trendingScore)
-      .slice(0, 30); // show top 30 trending
+      .slice(0, 30);
   }
 
-  // Search filter (works on all tabs)
+  // Search filter
   if (searchTerm) {
     filtered = filtered.filter(
       (g) =>
@@ -171,9 +168,9 @@ function renderGroups() {
   if (filtered.length === 0) {
     if (emptyState) {
       emptyState.classList.remove('hidden');
-      // Dynamic empty message
       const title = emptyState.querySelector('h3');
       const desc = emptyState.querySelector('p');
+
       if (currentTab === 'trending') {
         if (title) title.textContent = 'No trending groups yet';
         if (desc) desc.textContent = 'Create a group and invite people to make it trend!';
@@ -198,7 +195,6 @@ function renderGroups() {
     card.className = 'glass p-5 rounded-3xl transition hover:border-emerald-500/40 cursor-pointer';
     card.dataset.groupId = group.id;
 
-    // Show a small "Trending" badge when on the trending tab
     const trendingBadge =
       currentTab === 'trending'
         ? `<span class="text-[10px] bg-orange-500/15 text-orange-400 px-2 py-0.5 rounded-full border border-orange-500/30">🔥 Trending</span>`
