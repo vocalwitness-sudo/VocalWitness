@@ -49,13 +49,18 @@ export async function computeSHA256(data) {
  * @param {Function} [params.onProgress] - Optional progress callback (0-100)
  * @returns {Promise<string>} Created Firestore document ID
  */
+
 export async function submitTestimony({
     content = '',
     channel = 'citizen-talk',
     mediaFile = null,
     isAnonymous = false,
     isZkVerified = false,
-    onProgress = null
+    onProgress = null,
+    // ===== Field Note fields =====
+    postingStyle = 'citizen',      // 'citizen' | 'field-note'
+    fieldNoteRole = null,
+    fieldNoteOrg = null
 }) {
     const user = auth.currentUser;
 
@@ -179,12 +184,18 @@ export async function submitTestimony({
     }
 
     // 4. Assemble Firestore Payload – MUST satisfy the create rules
-    const payload = {
-        content: cleanedContent || '',
-        hashtags: hashtags || [],
-        mentions: mentions || [],
-        channel: channel,
-        authorId: user.uid,
+   const payload = {
+    content: cleanedContent || '',
+    hashtags: hashtags || [],
+    mentions: mentions || [],
+    channel: channel,
+
+    // ===== Field Note fields =====
+    postingStyle: postingStyle === 'field-note' ? 'field-note' : 'citizen',
+    fieldNoteRole: postingStyle === 'field-note' ? (fieldNoteRole || null) : null,
+    fieldNoteOrg:  postingStyle === 'field-note' ? (fieldNoteOrg || null) : null,
+
+    authorId: user.uid,
         isAnonymous: !!isAnonymous,
         author: isAnonymous ? "Anonymous Witness" : (user.displayName || "Citizen Witness"),
         authorTier: authorTier,
