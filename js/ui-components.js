@@ -98,66 +98,6 @@ if (typeof window !== 'undefined' && !window.__hashCopyListenerAttached) {
     window.__hashCopyListenerAttached = true;
 
     /**
- * Small “Field Note” badge for professional / org-attributed posts.
- * Shows only when postingStyle === 'field-note'.
- * @param {Object} post
- * @returns {string} HTML
- */
-export function renderFieldNoteBadge(post = {}) {
-    if (post.postingStyle !== 'field-note') return '';
-
-    const role = post.fieldNoteRole ? String(post.fieldNoteRole).trim() : '';
-    const org  = post.fieldNoteOrg  ? String(post.fieldNoteOrg).trim()  : '';
-
-    const titleParts = [];
-    if (role) titleParts.push(role);
-    if (org)  titleParts.push(org);
-    const title = titleParts.length
-        ? `Field Note · ${titleParts.join(' · ')}`
-        : 'Field Note';
-
-    // Escape quotes for the title attribute
-    const safeTitle = title.replace(/"/g, '&quot;');
-
-    return `
-        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold
-                     bg-sky-500/10 text-sky-400 border border-sky-500/30"
-              title="${safeTitle}">
-            📋 Field Note
-        </span>
-    `;
-}
-    /**
- * Small “Field Note” badge for professional / org-attributed posts.
- * Shows only when postingStyle === 'field-note'.
- * @param {Object} post
- * @returns {string} HTML
- */
-function renderFieldNoteBadge(post = {}) {
-    if (post.postingStyle !== 'field-note') return '';
-
-    const role = post.fieldNoteRole ? String(post.fieldNoteRole).trim() : '';
-    const org  = post.fieldNoteOrg  ? String(post.fieldNoteOrg).trim()  : '';
-
-    const titleParts = [];
-    if (role) titleParts.push(role);
-    if (org)  titleParts.push(org);
-    const title = titleParts.length
-        ? `Field Note · ${titleParts.join(' · ')}`
-        : 'Field Note';
-
-    const safeTitle = title.replace(/"/g, '&quot;');
-
-    return `
-        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold
-                     bg-sky-500/10 text-sky-400 border border-sky-500/30"
-              title="${safeTitle}">
-            📋 Field Note
-        </span>
-    `;
-}
-
-    /**
      * Copy text to clipboard with modern API + legacy fallback.
      * @param {string} text
      * @returns {Promise<boolean>} true if copy succeeded
@@ -244,6 +184,7 @@ function renderFieldNoteBadge(post = {}) {
         }
     });
 }
+
 /**
  * Renders HTML string for a user's Tier / Level badge.
  * Used by profile.js and UI components.
@@ -330,7 +271,7 @@ export function showBoldWitnessModal(onConfirm) {
     document.addEventListener('keydown', onKey);
 
     modal.querySelector('#boldWitnessCancel')?.addEventListener('click', close);
-    modal.querySelector('#boldWitnessCloseTop')?.addEventListener('click', close); // Added listener
+    modal.querySelector('#boldWitnessCloseTop')?.addEventListener('click', close);
     modal.addEventListener('click', (e) => {
         if (e.target === modal) close();
     });
@@ -346,12 +287,13 @@ export function showBoldWitnessModal(onConfirm) {
         }
     });
 }
+
 // Global window exports
 if (typeof window !== 'undefined') {
     window.renderTierBadge = renderTierBadge;
     window.showBoldWitnessModal = showBoldWitnessModal;
-    window.renderFieldNoteBadge = renderFieldNoteBadge;
 }
+
 /**
  * Shows a small trust badge on each post
  */
@@ -373,6 +315,38 @@ function renderTrustBadge(post) {
   return `
     <span class="inline-flex items-center gap-1 rounded-full bg-zinc-800 border border-zinc-700 px-2.5 py-0.5 text-[11px] font-medium text-zinc-400">
       Standard Report
+    </span>
+  `;
+}
+
+/**
+ * Small "Field Note" badge for professional / org-attributed posts.
+ * Shows only when postingStyle === 'field-note'.
+ * @param {Object} post
+ * @returns {string} HTML
+ */
+export function renderFieldNoteBadge(post = {}) {
+  if (post.postingStyle !== 'field-note') return '';
+
+  const role = post.fieldNoteRole ? String(post.fieldNoteRole).trim() : '';
+  const org  = post.fieldNoteOrg  ? String(post.fieldNoteOrg).trim()  : '';
+
+  const titleParts = [];
+  if (role) titleParts.push(role);
+  if (org)  titleParts.push(org);
+
+  const title = titleParts.length
+    ? `Field Note · ${titleParts.join(' · ')}`
+    : 'Field Note';
+
+  // Escape quotes for the title attribute
+  const safeTitle = title.replace(/"/g, '&quot;');
+
+  return `
+    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium
+                 bg-sky-500/10 text-sky-400 border border-sky-500/30"
+          title="${safeTitle}">
+      📝 Field Note
     </span>
   `;
 }
