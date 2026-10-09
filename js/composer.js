@@ -15,31 +15,27 @@ import { prepareAnonymousSubmission } from './onboarding.js';
 import { publishTestimonyOrQueue } from './db.js';
 import { analyzeReportContent, classifyCategory } from './moderation.js';
 import {
- resetMediaState,
- clearAllMedia,
- setImageFile,
- setVideoFile,
- setAudioFile,
- getActiveMedia
+  resetMediaState,
+  clearAllMedia,
+  setImageFile,
+  setVideoFile,
+  setAudioFile,
+  getActiveMedia
 } from './media.js';
 
+// ===== State =====
 let isSubmitting = false;
 let aiAnalysisDebounceTimer = null;
 let lastAnalyzedText = '';
-let isSubmitting = false;
-let aiAnalysisDebounceTimer = null;
-let lastAnalyzedText = '';
+
 /** Current posting style for the composer. 'citizen' | 'field-note' */
 let currentPostingStyle = 'citizen';
+let selectedRole = null;
 
 // Expose so main.js publish path can read it
 if (typeof window !== 'undefined') {
   window.currentPostingStyle = currentPostingStyle;
 }
-
-// ===== Field Note state =====
-let currentPostingStyle = 'citizen';   // 'citizen' | 'field-note'
-let selectedRole = null;
 
 /**
  * Safely get user tier string
@@ -76,12 +72,10 @@ function showVideoPolicyModal(customMessage) {
     showToast(customMessage || 'Video policy restriction applied', 'warning');
     return;
   }
-
   const msgEl = document.getElementById('video-policy-msg');
   if (msgEl && customMessage) {
     msgEl.textContent = customMessage;
   }
-
   // Use the global helper if available
   if (typeof window.openVideoPolicyModal === 'function') {
     window.openVideoPolicyModal(customMessage);
@@ -230,14 +224,11 @@ function renderMediaTrustBadge(costInfo, file, validationResult) {
             fileInput.parentNode.insertBefore(container, fileInput.nextSibling);
         }
     }
-
     if (!file || (!costInfo && !validationResult)) {
         container.classList.add('hidden');
         return;
     }
-
     const fileMB = (file.size / (1024 * 1024)).toFixed(1);
-
     if (costInfo?.blocked) {
         container.className = 'mt-2 p-3 rounded-xl border border-red-500/40 bg-red-950/20 text-red-300 text-xs';
         container.innerHTML = `
@@ -313,17 +304,14 @@ function clearAiFeedback() {
  */
 function renderGenericMediaPreview(file, previewArea) {
     if (!previewArea) return;
-
     // Revoke previous object URL if it exists
     if (previewArea.dataset.objectUrl) {
         URL.revokeObjectURL(previewArea.dataset.objectUrl);
         delete previewArea.dataset.objectUrl;
     }
-
     previewArea.innerHTML = '';
     const objectUrl = URL.createObjectURL(file);
     previewArea.dataset.objectUrl = objectUrl;
-
     let previewElement;
     if (file.type.startsWith('image/')) {
         previewElement = document.createElement('img');
@@ -354,14 +342,14 @@ function renderGenericMediaPreview(file, previewArea) {
  * Helper to fully reset all media states and UI
  */
 function clearAllMediaStates() {
- clearAllMedia();   // single source of truth from media.js
- ['media-input', 'photoInput', 'videoInput', 'audioInput', 'media-file-input', 'mediaFileInput']
+  clearAllMedia();   // single source of truth from media.js
+  ['media-input', 'photoInput', 'videoInput', 'audioInput', 'media-file-input', 'mediaFileInput']
     .forEach(id => {
       const el = document.getElementById(id);
       if (el) el.value = '';
     });
- clearMediaQuotaBadge();
- clearMediaOriginClaimUI();
+  clearMediaQuotaBadge();
+  clearMediaOriginClaimUI();
 }
 
 // ======================================================
@@ -376,7 +364,7 @@ export async function handleImageSelectAction(event) {
   const file = event.target?.files?.[0];
   if (!file) return;
 
-  setImageFile(file);   // ← use this
+  setImageFile(file);
   renderMediaTrustBadge(null, file, { provenance: 'standard_image' });
 
   try {
@@ -384,7 +372,6 @@ export async function handleImageSelectAction(event) {
     renderGenericMediaPreview(file, previewArea);
     renderMediaOriginClaimUI();
     showToast('Photo ready for submission', 'success');
-    // After successful media is set
     window.dispatchEvent(new CustomEvent('media-changed'));
   } catch (err) {
     console.error('Image processing error:', err);
@@ -403,7 +390,6 @@ export async function handleVideoSelectAction(event) {
 
     // Enforce exclusivity
     clearAllMediaStates();
-
     showToast('Validating video authenticity & size rules...', 'info');
 
     const validationResult = await validateVideoFile(file);
@@ -417,7 +403,6 @@ export async function handleVideoSelectAction(event) {
     let syntheticInfo = null;
     try {
         syntheticInfo = await calculateSyntheticScoreFromMetadata(file);
-        // Optionally also run: evaluateClientSyntheticAdvisory(syntheticInfo)
     } catch (err) {
         console.warn('Synthetic score calculation failed (non-blocking):', err);
     }
@@ -452,10 +437,8 @@ export async function handleVideoSelectAction(event) {
     setVideoFile(file);
 
     try {
-        // Safe neutral preview – NEVER call handleImageSelect here
         renderGenericMediaPreview(file, previewArea);
         renderMediaOriginClaimUI();
-
         window.activeSubmissionDraft = window.activeSubmissionDraft || {};
         window.activeSubmissionDraft.mediaMetadata = {
             fileName: file.name,
@@ -468,9 +451,7 @@ export async function handleVideoSelectAction(event) {
             syntheticScore: enrichedValidation.syntheticScore,
             syntheticAdvisory: enrichedValidation.syntheticAdvisory
         };
-
         showToast('Video ready for submission', 'success');
-        // After successful media is set
         window.dispatchEvent(new CustomEvent('media-changed'));
     } catch (err) {
         console.error('Video preview error:', err);
@@ -483,7 +464,6 @@ export async function handleVideoSelectAction(event) {
  * Distinct handler for Audio Selection (file upload only)
  * Live voice recording is owned 100% by media.js
  */
-// ====================== AUDIO SELECT ACTION ======================
 export async function handleAudioSelectAction(event) {
   const previewArea = document.getElementById('preview-area') || document.getElementById('media-preview');
   const file = event.target?.files?.[0];
@@ -519,7 +499,6 @@ export async function handleAudioSelectAction(event) {
 export function expandComposer() {
   const collapsed = document.getElementById('composer-collapsed');
   const expanded  = document.getElementById('composer-expanded');
-
   if (!collapsed || !expanded) return;
 
   collapsed.classList.add('hidden');
@@ -530,7 +509,6 @@ export function expandComposer() {
     const input = document.getElementById('mainInput');
     if (input) {
       input.focus();
-      // Move cursor to the end
       const len = input.value.length;
       input.setSelectionRange(len, len);
     }
@@ -543,7 +521,6 @@ export function expandComposer() {
 export function collapseComposer() {
   const collapsed = document.getElementById('composer-collapsed');
   const expanded  = document.getElementById('composer-expanded');
-
   if (!collapsed || !expanded) return;
 
   expanded.classList.add('hidden');
@@ -584,6 +561,7 @@ function initFieldNoteUI() {
       btn.classList.remove('bg-zinc-900', 'text-zinc-300');
 
       currentPostingStyle = btn.dataset.style; // 'citizen' or 'field-note'
+      window.currentPostingStyle = currentPostingStyle;
 
       if (currentPostingStyle === 'field-note') {
         panel.classList.remove('hidden');
@@ -609,7 +587,6 @@ function initFieldNoteUI() {
         c.classList.remove('border-sky-500', 'text-sky-300', 'bg-sky-500/10');
       });
       chip.classList.add('border-sky-500', 'text-sky-300', 'bg-sky-500/10');
-
       selectedRole = chip.dataset.role;
       if (roleInput) {
         roleInput.value = selectedRole === 'Other' ? '' : selectedRole;
@@ -719,13 +696,8 @@ export function initComposer() {
       }
     });
 
-        // Reset Field Note UI
-  const styleSelect = document.getElementById('postingStyleSelect');
-  if (styleSelect) {
-    styleSelect.value = 'citizen';
-    syncPostingStyleUI();
-  }
-    // Run once so UI matches the default <option>
+    // Reset to citizen on init
+    postingStyleSelect.value = 'citizen';
     if (typeof syncPostingStyleUI === 'function') {
       syncPostingStyleUI();
     }
@@ -750,6 +722,11 @@ export function initComposer() {
         }
       }, 900);
     });
+  }
+
+  // Init Field Note UI (role chips + style buttons)
+  if (typeof initFieldNoteUI === 'function') {
+    initFieldNoteUI();
   }
 
   // Make sure the live publish button state is wired
@@ -834,7 +811,6 @@ function renderAiFeedback(container, analysis, category) {
   }
 
   const isFlagged = analysis.isToxic || analysis.flagged;
-
   if (isFlagged) {
     container.className = 'mt-3 p-3 rounded-xl border border-red-500/30 bg-red-950/20 text-red-300 text-xs';
     container.innerHTML = `
@@ -866,10 +842,9 @@ function renderAiFeedback(container, analysis, category) {
 async function handleComposerSubmit(e) {
   if (e?.preventDefault) e.preventDefault();
   if (e?.stopImmediatePropagation) e.stopImmediatePropagation();
-
   if (isSubmitting) return;
-  isSubmitting = true;
 
+  isSubmitting = true;
   const submitBtn = document.getElementById('postButton');
   if (submitBtn) {
     submitBtn.disabled = true;
