@@ -127,12 +127,37 @@ function renderGroups() {
 
   let filtered = [...allGroups];
 
+  // ===== TAB FILTERS =====
   if (currentTab === 'my-groups' && currentUid) {
     filtered = filtered.filter(
       (g) => g.members?.includes(currentUid) || g.creatorId === currentUid
     );
   }
 
+  // 🔥 TRENDING – sort by activity score
+  if (currentTab === 'trending') {
+    filtered = filtered
+      .map((g) => {
+        // Simple trending score:
+        // memberCount is the strongest signal + recency bonus
+        const members = g.memberCount || 1;
+        const created = g.createdAt?.toMillis?.() || g.createdAt?.seconds * 1000 || 0;
+        const updated = g.updatedAt?.toMillis?.() || g.updatedAt?.seconds * 1000 || created;
+
+        // Score = members * 5 + recency boost (newer = higher)
+        const ageInDays = (Date.now() - updated) / (1000 * 60 * 60 * 24);
+        const recencyBoost = Math.max(0, 30 - ageInDays); // last 30 days get boost
+
+        return {
+          ...g,
+          _trendingScore: members * 5 + recencyBoost * 2
+        };
+      })
+      .sort((a, b) => b._trendingScore - a._trendingScore)
+      .slice(0, 30); // show top 30 trending
+  }
+
+  // Search filter (works on all tabs)
   if (searchTerm) {
     filtered = filtered.filter(
       (g) =>
@@ -144,7 +169,22 @@ function renderGroups() {
   container.innerHTML = '';
 
   if (filtered.length === 0) {
-    if (emptyState) emptyState.classList.remove('hidden');
+    if (emptyState) {
+      emptyState.classList.remove('hidden');
+      // Dynamic empty message
+      const title = emptyState.querySelector('h3');
+      const desc = emptyState.querySelector('p');
+      if (currentTab === 'trending') {
+        if (title) title.textContent = 'No trending groups yet';
+        if (desc) desc.textContent = 'Create a group and invite people to make it trend!';
+      } else if (currentTab === 'my-groups') {
+        if (title) title.textContent = 'You haven’t joined any groups';
+        if (desc) desc.textContent = 'Discover groups or create your own Truth Circle.';
+      } else {
+        if (title) title.textContent = 'No groups yet';
+        if (desc) desc.textContent = 'Be the first to create a Truth Circle in your community.';
+      }
+    }
     return;
   }
 
@@ -158,6 +198,12 @@ function renderGroups() {
     card.className = 'glass p-5 rounded-3xl transition hover:border-emerald-500/40 cursor-pointer';
     card.dataset.groupId = group.id;
 
+    // Show a small "Trending" badge when on the trending tab
+    const trendingBadge =
+      currentTab === 'trending'
+        ? `<span class="text-[10px] bg-orange-500/15 text-orange-400 px-2 py-0.5 rounded-full border border-orange-500/30">🔥 Trending</span>`
+        : '';
+
     card.innerHTML = `
       <div class="flex justify-between items-start gap-4">
         <div class="flex-1 min-w-0">
@@ -169,6 +215,7 @@ function renderGroups() {
                 ? '<span class="text-[10px] bg-cyan-500/15 text-cyan-400 px-2 py-0.5 rounded-full border border-cyan-500/30">🔐 High Trust</span>'
                 : ''
             }
+            ${trendingBadge}
           </div>
           <p class="text-zinc-400 text-sm line-clamp-2 mb-3">
             ${escapeHtml(group.description || 'No description provided')}
@@ -213,6 +260,7 @@ function renderGroups() {
     container.appendChild(card);
   });
 
+  // Join buttons
   container.querySelectorAll('.join-btn').forEach((btn) => {
     btn.addEventListener('click', async (e) => {
       e.stopPropagation();
@@ -220,6 +268,7 @@ function renderGroups() {
     });
   });
 
+  // Tool buttons
   container.querySelectorAll('button[data-action="tool"]').forEach((btn) => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
