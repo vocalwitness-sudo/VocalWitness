@@ -535,13 +535,17 @@ window.publishTestimony = async () => {
   if (!currentUser) {
     showToast("Session expired. Please re-authenticate.", "error");
     return;
-    
   }
 
   const titleInput = document.getElementById('testimonyTitle');
   const textarea = document.getElementById('mainInput');
   let title = titleInput ? titleInput.value.trim() : '';
   const content = textarea ? textarea.value.trim() : '';
+
+  // Capture composer metadata for standard/field-note posting styles and roles
+  const postingStyle   = typeof currentPostingStyle !== 'undefined' ? currentPostingStyle : 'citizen';
+  const fieldNoteRole  = document.getElementById('field-note-role')?.value.trim() || window.selectedRole || null;
+  const fieldNoteOrg   = document.getElementById('field-note-org')?.value.trim() || null;
 
   if (!content) {
     showToast("Please write something before publishing", "error");
@@ -735,6 +739,11 @@ window.publishTestimony = async () => {
       author: currentUser.displayName || 'Registered Witness',
       feedVisibility: 'citizen-talk',
       timestamp: Date.now(),
+
+      // Included Composer Fields
+      postingStyle: postingStyle,
+      fieldNoteRole: fieldNoteRole,
+      fieldNoteOrg: fieldNoteOrg,
 
       imageUrl: mediaData.imageUrl || null,
       videoUrl: mediaData.videoUrl || null,
