@@ -186,47 +186,46 @@ export async function submitTestimony({
     }
 
     // 4. Assemble Firestore Payload – MUST satisfy the create rules
-    const payload = {
-        content: cleanedContent || '',
-        hashtags: hashtags || [],
-        mentions: mentions || [],
-        channel: channel,
+const payload = {
+    content: cleanedContent || '',
+    hashtags: hashtags || [],
+    mentions: mentions || [],
+    channel: channel,
 
-        // ===== Field Note fields =====
-        postingStyle: postingStyle === 'field-note' ? 'field-note' : 'citizen',
-        fieldNoteRole: postingStyle === 'field-note' ? (fieldNoteRole || null) : null,
-        fieldNoteOrg:  postingStyle === 'field-note' ? (fieldNoteOrg  || null) : null,
+    // ===== Field Note fields =====
+    postingStyle: postingStyle === 'field-note' ? 'field-note' : 'citizen',
+    fieldNoteRole: postingStyle === 'field-note' ? (fieldNoteRole || null) : null,
+    fieldNoteOrg:  postingStyle === 'field-note' ? (fieldNoteOrg  || null) : null,
 
-        authorId: user.uid,
-        isAnonymous: !!isAnonymous,
-        author: isAnonymous ? "Anonymous Witness" : (user.displayName || "Citizen Witness"),
-        authorTier: authorTier,
-        reputation: reputation,
-        forensicHash: forensicHash,
-        zkVerified: !!isZkVerified,
-        imageUrl: mediaType === 'image' ? mediaUrl : null,
-        videoUrl: mediaType === 'video' ? mediaUrl : null,
-        audioUrl: mediaType === 'audio' ? mediaUrl : null,
-        reactions: { respect: 0, truth: 0, solidarity: 0, impact: 0 },
-        commentsCount: 0,
-        isPinned: false,
-        isDeleted: false,
-        profileMode: state.profileMode || 'ANONYMOUS',
+    authorId: user.uid,
+    isAnonymous: !!isAnonymous,
+    author: isAnonymous ? "Anonymous Witness" : (user.displayName || "Citizen Witness"),
+    authorTier: authorTier,
+    reputation: reputation,
+    forensicHash: forensicHash,
+    zkVerified: !!isZkVerified,
+    imageUrl: mediaType === 'image' ? mediaUrl : null,
+    videoUrl: mediaType === 'video' ? mediaUrl : null,
+    audioUrl: mediaType === 'audio' ? mediaUrl : null,
+    reactions: { respect: 0, truth: 0, solidarity: 0, impact: 0 },
+    commentsCount: 0,
+    isPinned: false,
+    isDeleted: false,
+    profileMode: state.profileMode || 'ANONYMOUS',
 
-        // Evidence Pack Cryptographic References
-        evidencePack: firestorePack,
-        packCoreHash: packCoreHash,
+    // Evidence Pack Cryptographic References
+    evidencePack: firestorePack,
+    packCoreHash: packCoreHash,
 
-        // Moderation fields
-        moderationStatus: moderationResult.status,
-        moderationFlags: moderationResult.flags,
-        aiCategory: moderationResult.category,
-        feedVisibility: moderationResult.status === 'pending_review' ? 'review_queue' : channel,
+    // Moderation fields
+    moderationStatus: moderationResult.status,
+    moderationFlags: moderationResult.flags,
+    aiCategory: moderationResult.category,
+    feedVisibility: moderationResult.status === 'pending_review' ? 'review_queue' : channel,
 
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-    };
-
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+};
     // 5. Commit to Firestore
     const docRef = await addDoc(collection(db, "testimonies"), payload);
 
