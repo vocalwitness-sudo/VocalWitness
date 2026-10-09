@@ -17,26 +17,23 @@ import { renderDownloadPackButton } from './evidence-ui.js';
 import { toFullEvidencePack, downloadEvidencePack } from './evidence-pack.js';
 import { db, auth } from './firebase-config.js?v=2';
 import { showToast } from './utils.js';
-import { renderTierCircle } from './ui-components.js';
+import { renderTierCircle, renderFieldNoteBadge } from './ui-components.js';   // ← single import
 import { hasStewardAccess, canCorroborate } from './tier.js';
 import { toggleReaction } from './reactions.js';
 import { applyPostDoorDecorations } from './door-ui.js';
 import { state } from './app-state.js';
 import { openCommentModal } from './comments.js';
-import { renderTierCircle, renderFieldNoteBadge } from './ui-components.js';
 import { 
     submitCorroboration, 
     getCorroborationScoreFromDoc,
     renderCorroborationUI  
 } from './corroboration.js';
 
-
 let activeFeedListener = null;
 let allPostsCache = [];
 let currentChannel = 'citizen-talk';
 let searchDebounceTimer = null;
 let isStewardUserCache = false;
-
 function escapeHTML(str) {
     if (!str) return '';
     return String(str)
