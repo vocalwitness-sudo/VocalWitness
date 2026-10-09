@@ -6,15 +6,13 @@ import {
   query,
   onSnapshot,
   orderBy,
-  where,
   updateDoc,
   doc,
   arrayUnion,
   arrayRemove,
   increment,
   addDoc,
-  serverTimestamp,
-  getDoc
+  serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
 
 import { showToast } from './utils.js';
@@ -33,9 +31,9 @@ export function initGroups(containerId = 'group-container') {
   if (!container) return;
 
   // Tab switching
-  document.querySelectorAll('.tab-btn').forEach(btn => {
+  document.querySelectorAll('.tab-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('active'));
       btn.classList.add('active');
       currentTab = btn.dataset.tab;
       renderGroups();
@@ -53,19 +51,23 @@ export function initGroups(containerId = 'group-container') {
 
   const q = query(collection(db, 'groups'), orderBy('createdAt', 'desc'));
 
-  unsubscribe = onSnapshot(q, (snapshot) => {
-    allGroups = [];
-    snapshot.forEach((docSnap) => {
-      allGroups.push({
-        id: docSnap.id,
-        ...docSnap.data()
+  unsubscribe = onSnapshot(
+    q,
+    (snapshot) => {
+      allGroups = [];
+      snapshot.forEach((docSnap) => {
+        allGroups.push({
+          id: docSnap.id,
+          ...docSnap.data()
+        });
       });
-    });
-    renderGroups();
-  }, (error) => {
-    console.error('Groups listener error:', error);
-    container.innerHTML = `<p class="text-red-400 text-center py-10">Failed to load groups</p>`;
-  });
+      renderGroups();
+    },
+    (error) => {
+      console.error('Groups listener error:', error);
+      container.innerHTML = `<p class="text-red-400 text-center py-10">Failed to load groups. Check console / indexes.</p>`;
+    }
+  );
 }
 
 /**
@@ -81,18 +83,25 @@ function renderGroups() {
 
   let filtered = [...allGroups];
 
-  // Tab filter
-  if (currentTab === 'my-groups' && currentUid) {
-    filtered = filtered.filter(g =>
-      g.members?.includes(currentUid) || g.creatorId === currentUid
-    );
+  // Tab filter logic
+  if (currentTab === 'my-groups') {
+    if (!currentUid) {
+      filtered = [];
+    } else {
+      filtered = filtered.filter(
+        (g) => g.members?.includes(currentUid) || g.creatorId === currentUid
+      );
+    }
+  } else if (currentTab === 'witness_circles') {
+    filtered = filtered.filter((g) => g.visibility === 'witness_circle');
   }
 
   // Search filter
   if (searchTerm) {
-    filtered = filtered.filter(g =>
-      (g.name || '').toLowerCase().includes(searchTerm) ||
-      (g.description || '').toLowerCase().includes(searchTerm)
+    filtered = filtered.filter(
+      (g) =>
+        (g.name || '').toLowerCase().includes(searchTerm) ||
+        (g.description || '').toLowerCase().includes(searchTerm)
     );
   }
 
@@ -105,12 +114,13 @@ function renderGroups() {
 
   if (emptyState) emptyState.classList.add('hidden');
 
-  filtered.forEach(group => {
+  filtered.forEach((group) => {
     const isMember = currentUid && group.members?.includes(currentUid);
     const isCreator = currentUid && group.creatorId === currentUid;
 
     const card = document.createElement('div');
-    card.className = 'glass p-5 rounded-3xl transition hover:border-emerald-500/40 cursor-pointer';
+    card.className =
+      'glass p-5 rounded-3xl transition hover:border-emerald-500/50 cursor-pointer shadow-lg';
     card.dataset.groupId = group.id;
 
     card.innerHTML = `
@@ -118,50 +128,51 @@ function renderGroups() {
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2 mb-1 flex-wrap">
             <h3 class="font-bold text-lg text-emerald-400 truncate">${escapeHtml(group.name)}</h3>
-            ${isCreator ? '<span class="text-[10px] bg-amber-500/15 text-amber-400 px-2 py-0.5 rounded-full">Creator</span>' : ''}
-            ${group.visibility === 'witness_circle' || group.creatorTier === 'witness_circle'
-              ? '<span class="text-[10px] bg-cyan-500/15 text-cyan-400 px-2 py-0.5 rounded-full border border-cyan-500/30">🔐 High Trust</span>'
-              : ''}
+            ${
+              isCreator
+                ? '<span class="text-[10px] bg-amber-500/15 border border-amber-500/30 text-amber-400 px-2.5 py-0.5 rounded-full font-bold">Creator</span>'
+                : ''
+            }
+            ${
+              group.visibility === 'witness_circle' || group.creatorTier === 'witness_circle'
+                ? '<span class="text-[10px] bg-cyan-500/15 text-cyan-400 px-2.5 py-0.5 rounded-full border border-cyan-500/30 font-bold">🔐 High Trust</span>'
+                : ''
+            }
           </div>
-
           <p class="text-zinc-400 text-sm line-clamp-2 mb-3">
-            ${escapeHtml(group.description || 'No description provided')}
+            ${escapeHtml(group.description || 'No operational description provided')}
           </p>
-
           <div class="flex flex-wrap items-center gap-3 text-xs text-zinc-500">
             <span>👥 ${group.memberCount || 1} members</span>
-            <span class="px-2.5 py-1 bg-zinc-800 rounded-full capitalize">
+            <span class="px-3 py-1 bg-zinc-900 border border-zinc-800 rounded-full capitalize text-zinc-300">
               ${formatVisibility(group.visibility)}
             </span>
           </div>
         </div>
-
         <div class="shrink-0">
-          ${isMember
-            ? `<button class="px-5 py-2.5 bg-zinc-800 text-zinc-300 rounded-2xl text-sm font-medium cursor-default">Joined</button>`
-            : `<button class="join-btn bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-2xl text-sm font-medium transition"
+          ${
+            isMember
+              ? `<button type="button" class="px-5 py-2.5 bg-zinc-900 border border-zinc-800 text-zinc-400 rounded-2xl text-sm font-medium cursor-default">Joined</button>`
+              : `<button type="button" class="join-btn bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-2xl text-sm font-bold transition shadow-md shadow-emerald-600/20"
                        data-id="${group.id}">Join</button>`
           }
         </div>
       </div>
 
       <!-- Institutional Tools Row -->
-      <div class="mt-4 pt-3 border-t border-zinc-800 flex flex-wrap gap-2 items-center">
-        <button data-action="tool" data-tool="locker" data-group-id="${group.id}"
-                class="text-[11px] px-2.5 py-1 bg-emerald-500/10 text-emerald-400 rounded-full hover:bg-emerald-500/20 transition">
+      <div class="mt-4 pt-3 border-t border-zinc-800/80 flex flex-wrap gap-2 items-center">
+        <button type="button" data-action="tool" data-tool="locker" data-group-id="${group.id}"
+                class="text-[11px] px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full hover:bg-emerald-500/20 transition font-medium">
           🗄️ Evidence Locker
         </button>
-        <button data-action="tool" data-tool="attestation" data-group-id="${group.id}"
-                class="text-[11px] px-2.5 py-1 bg-amber-500/10 text-amber-400 rounded-full hover:bg-amber-500/20 transition">
+        <button type="button" data-action="tool" data-tool="attestation" data-group-id="${group.id}"
+                class="text-[11px] px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-full hover:bg-amber-500/20 transition font-medium">
           📜 Attestation Wall
         </button>
-        <button data-action="tool" data-tool="timeline" data-group-id="${group.id}"
-                class="text-[11px] px-2.5 py-1 bg-cyan-500/10 text-cyan-400 rounded-full hover:bg-cyan-500/20 transition">
+        <button type="button" data-action="tool" data-tool="timeline" data-group-id="${group.id}"
+                class="text-[11px] px-3 py-1 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 rounded-full hover:bg-cyan-500/20 transition font-medium">
           ⏱️ Forensic Timeline
         </button>
-        ${group.visibility === 'witness_circle'
-          ? '<span class="text-[11px] text-cyan-400/80 ml-1">ZK Protected</span>'
-          : ''}
       </div>
     `;
 
@@ -175,23 +186,19 @@ function renderGroups() {
   });
 
   // Bind join buttons
-  container.querySelectorAll('.join-btn').forEach(btn => {
+  container.querySelectorAll('.join-btn').forEach((btn) => {
     btn.addEventListener('click', async (e) => {
       e.stopPropagation();
       await joinGroup(btn.dataset.id);
     });
   });
 
-  // Bind tool buttons -> navigate directly to the specific tool tab on group-detail.html
-  container.querySelectorAll('button[data-action="tool"]').forEach(btn => {
-    btn.addEventListener('click', async (e) => {
+  // Bind tool buttons → navigate directly to the specific tool tab
+  container.querySelectorAll('button[data-action="tool"]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      const toolName = btn.getAttribute('data-tool'); // 'locker', 'attestation', 'timeline'
+      const toolName = btn.getAttribute('data-tool');
       const groupId = btn.getAttribute('data-group-id');
-      
-      const isWitness = await isWitnessCircleUser();
-      // Optional: enforce witness tier check for high-trust tools if desired, 
-      // or allow seamless navigation directly into the operational tool tab:
       window.location.href = `group-detail.html?id=${groupId}&tab=${toolName}`;
     });
   });
@@ -214,7 +221,7 @@ export async function joinGroup(groupId) {
     showToast('✅ Successfully joined the group!', 'success');
   } catch (err) {
     console.error(err);
-    showToast('Failed to join group', 'error');
+    showToast(err?.message || 'Failed to join group', 'error');
   }
 }
 
@@ -223,29 +230,50 @@ export async function joinGroup(groupId) {
  */
 export async function createNewGroup(name, description, visibility) {
   if (!auth.currentUser) {
-    return showToast('Sign in required', 'error');
+    showToast('Sign in required to create a group', 'error');
+    return null;
   }
 
-  const tier = await getCurrentUserTier();
+  const trimmed = (name || '').trim();
+  if (!trimmed) {
+    showToast('Group name is required', 'error');
+    return null;
+  }
+  if (trimmed.length > 60) {
+    showToast('Group name must be 60 characters or less', 'error');
+    return null;
+  }
+
+  let tier = TIERS.CITIZEN;
+  try {
+    tier = (await getCurrentUserTier()) || TIERS.CITIZEN;
+  } catch (_) {
+    /* allow create even if tier lookup fails */
+  }
 
   if (tier === TIERS.CITIZEN) {
-    return showToast('You must be at least Citizen Circle to create groups', 'error');
+    showToast('You must be at least Citizen Circle to create groups', 'error');
+    return null;
   }
 
   if (visibility === 'witness_circle' && tier !== TIERS.WITNESS_CIRCLE) {
-    return showToast('Only Witness Circle members can create Witness-only groups', 'error');
+    showToast('Only Witness Circle members can create Witness-only groups', 'error');
+    return null;
   }
 
+  const uid = auth.currentUser.uid;
+
   try {
-    await addDoc(collection(db, 'groups'), {
-      name: name.trim(),
-      description: description.trim() || '',
-      visibility,
-      creatorId: auth.currentUser.uid,
+    const ref = await addDoc(collection(db, 'groups'), {
+      name: trimmed,
+      description: (description || '').trim().slice(0, 280),
+      visibility: visibility || 'public',
+      creatorId: uid,
       creatorTier: tier,
       memberCount: 1,
-      members: [auth.currentUser.uid],
-      admins: [auth.currentUser.uid],
+      members: [uid],
+      admins: [uid],
+      pendingMembers: [],
       hasEvidenceLocker: true,
       hasAttestationWall: true,
       hasForensicTimeline: true,
@@ -253,12 +281,16 @@ export async function createNewGroup(name, description, visibility) {
       updatedAt: serverTimestamp()
     });
 
-    showToast(`🎉 Group "${name}" created successfully!`, 'success');
-    return true;
+    showToast(`🎉 Group "${trimmed}" created!`, 'success');
+    return ref.id;
   } catch (err) {
-    console.error(err);
-    showToast('Failed to create group', 'error');
-    return false;
+    console.error('createNewGroup error:', err);
+    const msg =
+      err?.code === 'permission-denied'
+        ? 'Permission denied — sign in and check Firestore rules'
+        : err?.message || 'Failed to create group';
+    showToast(msg, 'error');
+    return null;
   }
 }
 
@@ -284,14 +316,13 @@ function formatVisibility(vis) {
   return map[vis] || vis || 'Public';
 }
 
-async function isWitnessCircleUser() {
-  const tier = await getCurrentUserTier();
-  return tier === TIERS.WITNESS_CIRCLE;
-}
-
 // ====================== GLOBAL MODAL CONTROLS ======================
 
 window.showGroupCreationModal = function () {
+  if (!auth.currentUser) {
+    showToast('Please sign in to create a group', 'error');
+    return;
+  }
   const modal = document.getElementById('groupModal');
   if (modal) {
     modal.classList.remove('hidden');
@@ -319,44 +350,19 @@ window.createGroup = async function () {
     return;
   }
 
-  const success = await createNewGroup(
+  const id = await createNewGroup(
     nameInput.value.trim(),
     descInput ? descInput.value.trim() : '',
     visibilityInput ? visibilityInput.value : 'public'
   );
 
-  if (success) {
+  if (id) {
     nameInput.value = '';
     if (descInput) descInput.value = '';
     if (visibilityInput) visibilityInput.value = 'public';
     window.closeGroupModal();
-  }
-};
-
-// ====================== UPGRADE MODAL ======================
-
-window.showUpgradeToWitnessModal = function () {
-  const modal = document.getElementById('upgradeToWitnessModal');
-  if (modal) {
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-  }
-};
-
-window.closeUpgradeModal = function () {
-  const modal = document.getElementById('upgradeToWitnessModal');
-  if (modal) {
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
-  }
-};
-
-window.startZKUpgradeFromGroups = function () {
-  closeUpgradeModal();
-  if (typeof startZKVerification === 'function') {
-    startZKVerification();
-  } else {
-    showToast('ZK Verification module not available', 'error');
+    // Go straight to the new group
+    window.location.href = `group-detail.html?id=${id}`;
   }
 };
 
