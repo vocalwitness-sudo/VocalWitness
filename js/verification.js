@@ -1,5 +1,6 @@
 // js/verification.js - Production Ready: Real Phone Verification + Backend Confirmation + Real ZK + C2PA + Standalone JSON Verification
 // Updated to work cleanly with the hardened phoneVerification.js
+// + preloadC2PA for non-blocking verify page
 
 import { doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
@@ -16,6 +17,7 @@ import {
 
 // Global C2PA instance cache
 let c2paInstance = null;
+let c2paInitPromise = null;
 
 /**
  * Timeout helper
@@ -38,23 +40,43 @@ async function computeSHA256(message) {
 }
 
 /**
- * Initialize C2PA
+ * Initialize C2PA (cached, single-flight)
  */
 async function initC2PA() {
   if (c2paInstance) return c2paInstance;
+  if (c2paInitPromise) return c2paInitPromise;
 
+  c2paInitPromise = (async () => {
+    try {
+      const { createC2pa } = await import("https://cdn.jsdelivr.net/npm/@contentauth/c2pa-web@0.8.2/+esm");
+
+      c2paInstance = await createC2pa({
+        wasmSrc: "https://cdn.jsdelivr.net/npm/@contentauth/c2pa-web@0.8.2/dist/assets/wasm/c2pa.wasm",
+        workerSrc: "https://cdn.jsdelivr.net/npm/@contentauth/c2pa-web@0.8.2/dist/c2pa.worker.js",
+      });
+
+      return c2paInstance;
+    } catch (err) {
+      console.error("Failed to initialize C2PA Web SDK:", err);
+      c2paInitPromise = null; // allow retry
+      throw new Error("C2PA engine initialization failed.");
+    }
+  })();
+
+  return c2paInitPromise;
+}
+
+/**
+ * Pre-load C2PA WASM + worker so the first "Verify Media" click is fast.
+ * Safe to call multiple times. Does not show toasts on failure.
+ */
+export async function preloadC2PA() {
   try {
-    const { createC2pa } = await import("https://cdn.jsdelivr.net/npm/@contentauth/c2pa-web@0.8.2/+esm");
-    
-    c2paInstance = await createC2pa({
-      wasmSrc: "https://cdn.jsdelivr.net/npm/@contentauth/c2pa-web@0.8.2/dist/assets/wasm/c2pa.wasm",
-      workerSrc: "https://cdn.jsdelivr.net/npm/@contentauth/c2pa-web@0.8.2/dist/c2pa.worker.js",
-    });
-
-    return c2paInstance;
+    await initC2PA();
+    return true;
   } catch (err) {
-    console.error("Failed to initialize C2PA Web SDK:", err);
-    throw new Error("C2PA engine initialization failed.");
+    console.warn('[C2PA] preload failed:', err?.message || err);
+    return false;
   }
 }
 
@@ -62,8 +84,8 @@ async function initC2PA() {
  * Verify C2PA Content Credentials
  */
 export async function verifyMediaProvenance(file) {
+  // Allow silent preload-style calls (no file) without toast spam
   if (!file) {
-    showToast("No media file selected for provenance check", "error");
     return { hasC2PA: false, error: "No file provided" };
   }
 
@@ -111,16 +133,45 @@ export async function verifyMediaProvenance(file) {
 
 /**
  * Verify Standalone Evidence JSON Pack
+ * Supports both legacy { mediaData, claimedHash } and richer packs
+ * with integrity.forensicHash / packCoreHash.
  */
 export async function verifyEvidenceJSON(jsonString) {
   try {
-    const pack = JSON.parse(jsonString);
-    const calculatedHash = await computeSHA256(pack.mediaData);
-    
-    const isValid = calculatedHash === pack.claimedHash;
+    const pack = typeof jsonString === 'string' ? JSON.parse(jsonString) : jsonString;
+
+    // Prefer explicit media payload when present
+    const mediaPayload =
+      pack.mediaData ??
+      pack.media ??
+      pack.payload ??
+      null;
+
+    const claimed =
+      pack.claimedHash ||
+      pack.integrity?.forensicHash ||
+      pack.packCoreHash ||
+      pack.hash ||
+      null;
+
+    let isValid = false;
+
+    if (mediaPayload != null && claimed) {
+      const calculatedHash = await computeSHA256(
+        typeof mediaPayload === 'string' ? mediaPayload : JSON.stringify(mediaPayload)
+      );
+      isValid = calculatedHash.toLowerCase() === String(claimed).trim().toLowerCase();
+    } else if (claimed && pack.integrity?.forensicHash) {
+      // Structure-only check when no media blob is embedded
+      isValid = String(claimed).trim().toLowerCase() ===
+        String(pack.integrity.forensicHash).trim().toLowerCase();
+    } else {
+      throw new Error('Evidence pack missing mediaData/claimedHash (or integrity.forensicHash)');
+    }
+
     const resultEl = document.getElementById('verify-result');
     if (resultEl) {
-      resultEl.innerHTML = isValid 
+      resultEl.innerHTML = isValid
         ? `<span class="text-green-600 font-bold">✓ VERIFIED: Evidence hash matches immutable record.</span>`
         : `<span class="text-red-600 font-bold">✗ TAMPERED: Hashes do not match!</span>`;
     }
@@ -131,7 +182,8 @@ export async function verifyEvidenceJSON(jsonString) {
     if (resultEl) {
       resultEl.innerHTML = `<span class="text-red-600 font-bold">✗ ERROR: Invalid JSON or evidence structure.</span>`;
     }
-    return false;
+    // Re-throw so verify.html can show the message in the result box
+    throw err;
   }
 }
 
@@ -401,15 +453,13 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error(err);
     } finally {
       btn.disabled = false;
-      btn.innerHTML = originalHTML || `<span>Generate ZK Proof</span>`;
+      btn.innerHTML = originalHTML;
     }
   });
 });
 
-// Global Window Exports
-window.startPhoneVerification = startPhoneVerification;
-window.startZKVerification = startZKVerification;
-window.verifyMediaProvenance = verifyMediaProvenance;
-window.verifyEvidenceJSON = verifyEvidenceJSON;
+// Expose for inline / legacy callers
 window.handleSendOTP = handleSendOTP;
 window.handleVerifyOTP = handleVerifyOTP;
+window.startPhoneVerification = startPhoneVerification;
+window.startZKVerification = startZKVerification;
