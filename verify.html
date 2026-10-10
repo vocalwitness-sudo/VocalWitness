@@ -114,8 +114,13 @@
             border-radius: 1rem;
             border: none;
             cursor: pointer;
+            transition: opacity 0.15s, background-color 0.15s;
         }
-        .btn-primary:hover { background-color: var(--emerald-hover); }
+        .btn-primary:hover:not(:disabled) { background-color: var(--emerald-hover); }
+        .btn-primary:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
         .hidden { display: none !important; }
         .result-valid { border-color: rgba(16, 185, 129, 0.5); background-color: rgba(6, 78, 59, 0.2); }
         .result-invalid { border-color: rgba(239, 68, 68, 0.5); background-color: rgba(127, 29, 29, 0.2); }
@@ -215,6 +220,8 @@
         const jsonSection = document.getElementById('jsonSection');
         const resultBox = document.getElementById('resultBox');
 
+        let c2paPreloadStarted = false;
+
         function escapeHtml(str) {
             return String(str ?? '')
                 .replace(/&/g, '&amp;')
@@ -237,6 +244,20 @@
             } else if (which === 'c2pa') {
                 tabC2PA.classList.add('active');
                 c2paSection.classList.remove('hidden');
+                // Warm C2PA engine in the background as soon as the tab is opened
+                if (!c2paPreloadStarted) {
+                    c2paPreloadStarted = true;
+                    // Defer so the tab switch stays responsive
+                    setTimeout(() => {
+                        import('./js/verification.js')
+                            .then((m) => {
+                                if (typeof m.preloadC2PA === 'function') return m.preloadC2PA();
+                                // Fallback: just trigger the module path that loads C2PA
+                                return m.verifyMediaProvenance?.(null).catch(() => {});
+                            })
+                            .catch(() => {});
+                    }, 0);
+                }
             } else {
                 tabJSON.classList.add('active');
                 jsonSection.classList.remove('hidden');
@@ -255,7 +276,10 @@
                 setTab('ledger');
                 if (id) document.getElementById('ledgerIdInput').value = id;
                 if (h) document.getElementById('ledgerHashInput').value = h;
-                if (id) verifyLedger(id, h);
+                if (id) {
+                    // Yield so the click / load path stays short
+                    setTimeout(() => verifyLedger(id, h), 0);
+                }
             }
         }
 
@@ -292,9 +316,7 @@
             } else if (data.type === 'premium') {
                 displayUntil = '(see PDF; typically 1 year from issue)';
             }
-
             const permanent = data.ledgerPermanent !== false;
-
             showResult(true, '✅ Press Credential found on ledger', `
                 <p><strong>Record type:</strong> Independent Citizen Press Credential</p>
                 <p><strong>Credential ID:</strong> ${escapeHtml(data.id)}</p>
@@ -354,7 +376,6 @@
                 }
 
                 const share = buildShareUrl(data);
-
                 const title =
                     match === true
                         ? '✅ Hash matches ledger'
@@ -386,19 +407,36 @@
             }
         }
 
-        document.getElementById('btnVerifyLedger')?.addEventListener('click', () => {
+        // ---------- Ledger button: return immediately, then do work ----------
+        document.getElementById('btnVerifyLedger')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            const btn = e.currentTarget;
             const id = document.getElementById('ledgerIdInput').value.trim();
             const h = document.getElementById('ledgerHashInput').value.trim();
-            verifyLedger(id, h);
+
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Checking…';
+
+            // Yield so the click handler itself stays under a few ms
+            setTimeout(async () => {
+                try {
+                    await verifyLedger(id, h);
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                }
+            }, 0);
         });
 
-        // C2PA / Media
+        // ---------- C2PA / Media ----------
         const dropZone = document.getElementById('dropZone');
         const mediaInput = document.getElementById('mediaInput');
         const dropZoneText = document.getElementById('dropZoneText');
         let selectedFile = null;
 
         dropZone?.addEventListener('click', () => mediaInput.click());
+
         ['dragenter', 'dragover'].forEach((eventName) => {
             dropZone?.addEventListener(eventName, (e) => {
                 e.preventDefault();
@@ -411,12 +449,14 @@
                 dropZone.classList.remove('dragover');
             });
         });
+
         dropZone?.addEventListener('drop', (e) => {
             if (e.dataTransfer?.files?.length) {
                 selectedFile = e.dataTransfer.files[0];
                 dropZoneText.innerHTML = `📄 <strong>${escapeHtml(selectedFile.name)}</strong>`;
             }
         });
+
         mediaInput?.addEventListener('change', (e) => {
             if (e.target.files?.length) {
                 selectedFile = e.target.files[0];
@@ -424,58 +464,101 @@
             }
         });
 
-        document.getElementById('btnVerifyC2PA')?.addEventListener('click', async () => {
+        // C2PA button: immediate UI feedback + deferred heavy work
+        document.getElementById('btnVerifyC2PA')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            const btn = e.currentTarget;
+
             if (!selectedFile) {
                 alert('Please select or drop a media file first.');
                 return;
             }
+
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Inspecting…';
+
             resultBox.className = 'glass';
             resultBox.classList.remove('hidden');
-            document.getElementById('resultHeader').textContent = '⏳ Inspecting C2PA Manifest...';
-            const res = await verifyMediaProvenance(selectedFile);
-            if (res.hasC2PA && res.isValid) {
-                showResult(true, '✅ Authenticated C2PA Content Credentials', `
-                    <p><strong>Issuer:</strong> ${escapeHtml(res.issuer || '—')}</p>
-                    <p><strong>Claim Generator:</strong> ${escapeHtml(res.claimGenerator || '—')}</p>
-                    <p><strong>Title:</strong> ${escapeHtml(res.title || '—')}</p>
-                `);
-            } else if (res.hasC2PA) {
-                showResult(false, '⚠️ C2PA Manifest Tampered or Invalid', '<p>Validation failed or bytes modified after signature.</p>');
-            } else {
-                showResult(false, 'ℹ️ No C2PA Credentials Found', `<p>${escapeHtml(res.message || res.error || 'No embedded C2PA manifest.')}</p>`);
-            }
+            document.getElementById('resultHeader').className = 'result-header text-valid';
+            document.getElementById('resultHeader').textContent = '⏳ Inspecting C2PA Manifest…';
+            document.getElementById('resultDetails').innerHTML = '<p>Loading C2PA engine and parsing media (this may take a few seconds)…</p>';
+
+            // Critical: yield so the click handler finishes quickly
+            setTimeout(async () => {
+                try {
+                    const res = await verifyMediaProvenance(selectedFile);
+
+                    if (res.hasC2PA && res.isValid) {
+                        showResult(true, '✅ Authenticated C2PA Content Credentials', `
+                            <p><strong>Issuer:</strong> ${escapeHtml(res.issuer || '—')}</p>
+                            <p><strong>Claim Generator:</strong> ${escapeHtml(res.claimGenerator || '—')}</p>
+                            <p><strong>Title:</strong> ${escapeHtml(res.title || '—')}</p>
+                        `);
+                    } else if (res.hasC2PA) {
+                        showResult(false, '⚠️ C2PA Manifest Tampered or Invalid',
+                            '<p>Validation failed or bytes modified after signature.</p>');
+                    } else {
+                        showResult(false, 'ℹ️ No C2PA Credentials Found',
+                            `<p>${escapeHtml(res.message || res.error || 'No embedded C2PA manifest.')}</p>`);
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showResult(false, 'Verification error',
+                        `<p>${escapeHtml(err.message || 'C2PA inspection failed')}</p>`);
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                }
+            }, 0);
         });
 
-        // JSON / Evidence Pack Verification
-        document.getElementById('btnVerifyJSON')?.addEventListener('click', async () => {
+        // ---------- JSON / Evidence Pack ----------
+        document.getElementById('btnVerifyJSON')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            const btn = e.currentTarget;
             const rawText = document.getElementById('proofInput').value.trim();
+
             if (!rawText) {
                 alert('Please paste a JSON proof or evidence pack.');
                 return;
             }
 
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Verifying…';
+
             resultBox.className = 'glass';
             resultBox.classList.remove('hidden');
-            document.getElementById('resultHeader').textContent = '⏳ Computing SHA-256 & Verifying Hash...';
-            document.getElementById('resultDetails').innerHTML = '<p>Running cryptographic hash verification against local payload...</p>';
+            document.getElementById('resultHeader').className = 'result-header text-valid';
+            document.getElementById('resultHeader').textContent = '⏳ Computing SHA-256 & Verifying Hash…';
+            document.getElementById('resultDetails').innerHTML =
+                '<p>Running cryptographic hash verification against local payload…</p>';
 
-            try {
-                const isValid = await verifyEvidenceJSON(rawText);
+            // Yield so the click handler stays short
+            setTimeout(async () => {
+                try {
+                    const isValid = await verifyEvidenceJSON(rawText);
 
-                if (isValid) {
-                    showResult(true, '✓ VERIFIED: Evidence Hash Match', `
-                        <p class="text-green-400 font-bold">Evidence hash matches immutable record successfully.</p>
-                        <p style="margin-top:0.75rem;color:#9ca3af">The embedded media data hashes correctly to the claimed cryptographic reference.</p>
-                    `);
-                } else {
-                    showResult(false, '✗ TAMPERED: Hash Mismatch', `
-                        <p class="text-red-400 font-bold">Hashes do not match! The payload or media data may have been altered.</p>
-                    `);
+                    if (isValid) {
+                        showResult(true, '✓ VERIFIED: Evidence Hash Match', `
+                            <p class="text-green-400 font-bold">Evidence hash matches immutable record successfully.</p>
+                            <p style="margin-top:0.75rem;color:#9ca3af">The embedded media data hashes correctly to the claimed cryptographic reference.</p>
+                        `);
+                    } else {
+                        showResult(false, '✗ TAMPERED: Hash Mismatch', `
+                            <p class="text-red-400 font-bold">Hashes do not match! The payload or media data may have been altered.</p>
+                        `);
+                    }
+                } catch (err) {
+                    console.error('JSON verification error:', err);
+                    showResult(false, '⚠️ Invalid Evidence Structure',
+                        `<p>${escapeHtml(err.message || 'Could not parse or verify JSON structure.')}</p>`);
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = originalText;
                 }
-            } catch (err) {
-                console.error("JSON verification error:", err);
-                showResult(false, '⚠️ Invalid Evidence Structure', `<p>${escapeHtml(err.message || 'Could not parse or verify JSON structure.')}</p>`);
-            }
+            }, 0);
         });
 
         document.addEventListener('DOMContentLoaded', () => {
