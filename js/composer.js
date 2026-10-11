@@ -91,7 +91,7 @@ function showVideoPolicyModal(customMessage) {
  */
 function syncPostingStyleUI() {
   const select = document.getElementById('postingStyleSelect');
-  const fields = document.getElementById('field-note-fields');
+ const fields = document.getElementById('field-note-panel');
   if (!select) return;
 
   const style = select.value === 'field-note' ? 'field-note' : 'citizen';
