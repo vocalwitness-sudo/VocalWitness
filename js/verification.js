@@ -39,10 +39,6 @@ async function computeSHA256(message) {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// ====================== C2PA ENGINE ======================
-
-let c2paInitPromise = null;
-
 /**
  * Initialize C2PA (safe to call multiple times)
  * Uses modern version + correct paths
