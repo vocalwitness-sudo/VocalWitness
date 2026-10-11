@@ -6,7 +6,10 @@ import { generateSha256Hash } from './utils.js';
 
 const SCHEMA = 'vocalwitness.evidence-pack.v1';
 const DISCLAIMER =
-  'Integrity package for documented bitstrings. Not legal advice. Does not prove real-world events occurred. Application-level ledger (not a public blockchain).';
+  "This is an integrity package for documented digital evidence. " +
+  "It proves the bitstrings have not been altered after sealing. " +
+  "It does not prove that real-world events occurred. " +
+  "Not legal advice. Application-level ledger (not a public blockchain).";
 
 const DEFAULT_ORIGIN =
   typeof window !== 'undefined' && window.location?.origin
@@ -118,7 +121,8 @@ export function toFirestoreEvidencePack(packCoreHash, rfc3161, clientCaptureMs) 
 }
 
 /**
- * Full pack for download (includes disclaimer + verify steps).
+ * Full pack for download (includes disclaimer + verify steps)
+ * Improved version – clearer for humans + machines
  */
 export function toFullEvidencePack(core, packCoreHash, rfc3161, testimonyId, extra = {}) {
   const verifyUrl =
@@ -130,29 +134,58 @@ export function toFullEvidencePack(core, packCoreHash, rfc3161, testimonyId, ext
         })
       : null);
 
+  const forensicHash = extra.forensicHash || packCoreHash || null;
+
   return {
-    ...core,
+    schemaVersion: SCHEMA,
     packId: testimonyId || null,
     generatedAt: new Date().toISOString(),
     disclaimer: DISCLAIMER,
+
+    // Human-readable summary (new)
+    summary: {
+      title: core?.content?.body?.slice(0, 120) || "Sealed Testimony",
+      channel: core?.content?.channel || "witness-voice",
+      identityMode: core?.identity?.mode || "ANONYMOUS",
+      mediaCount: (core?.media || []).length,
+      hasTimestamp: Boolean(rfc3161),
+      forensicHashShort: forensicHash ? forensicHash.slice(0, 16) + "…" : null,
+    },
+
+    // Core integrity data
     packCoreHash: packCoreHash || null,
-    forensicHash: extra.forensicHash || packCoreHash || null,
-    verifyUrl,
+    forensicHash,
+
+    content: core?.content || {},
+    media: core?.media || [],
+    identity: core?.identity || {},
     timestamps: {
       ...(core?.timestamps || {}),
       rfc3161: rfc3161 || null,
+      generatedAt: new Date().toISOString(),
     },
+    environment: core?.environment || {
+      app: "VocalWitness",
+      hashApi: "WebCrypto.subtle.digest SHA-256",
+    },
+
+    verifyUrl,
     disputes: extra.disputes || [],
     auditSnippet: extra.auditSnippet || null,
+
     verify: {
       instructions: [
-        'Open the verifyUrl (contains testimony id + ledger hash)',
-        'Re-download media from the listed URLs',
-        'Compute SHA-256 of each file and compare to hashAfterUpload',
-        'Compute SHA-256 of the body text (UTF-8) and compare to bodyHash',
-        'If rfc3161.tokenBase64 is present, verify offline with TSA tools',
-        'This pack proves integrity of the bitstrings, not real-world events',
+        "1. Open the verifyUrl (contains testimony id + ledger hash)",
+        "2. Re-download media from the listed URLs",
+        "3. Compute SHA-256 of each file and compare to hashAfterUpload",
+        "4. Compute SHA-256 of the body text (UTF-8) and compare to bodyHash",
+        "5. If rfc3161.tokenBase64 is present, verify offline with TSA tools",
+        "6. This pack proves integrity of the bitstrings, not real-world events",
       ],
+      tools: {
+        online: verifyUrl,
+        offlineHash: "sha256sum (Linux/macOS) or certutil -hashfile (Windows)",
+      },
     },
   };
 }
