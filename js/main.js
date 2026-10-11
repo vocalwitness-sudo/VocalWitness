@@ -738,6 +738,9 @@ window.publishTestimony = async () => {
       title: title || null,
       author: currentUser.displayName || 'Registered Witness',
       feedVisibility: 'citizen-talk',
+      visibility: document.getElementById('postToTrustedCircleOnly')?.checked 
+        ? 'trusted_circle' 
+        : 'public',
       timestamp: Date.now(),
 
       // Included Composer Fields
