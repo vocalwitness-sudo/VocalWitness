@@ -342,3 +342,43 @@ export function renderCorroborationUI(testimony, options = {}) {
         </div>
     `;
 }
+/**
+ * Get corroborators for the "Graph" / detail view
+ */
+export async function getCorroborationGraph(testimonyId, max = 30) {
+  const list = await getCorroborations(testimonyId, max);
+  return list.map(c => ({
+    id: c.id,
+    uid: c.authorId,
+    displayName: c.authorDisplay || "Verified Witness",
+    tierWeight: c.weight || 1,
+    note: c.note || null,
+    mediaUrl: c.mediaUrl || null,
+    createdAt: c.createdAt,
+  }));
+}
+
+/**
+ * Simple HTML for the corroboration list (can be used in a modal)
+ */
+export function renderCorroborationGraph(corroborators = []) {
+  if (!corroborators.length) {
+    return `<p class="text-sm text-zinc-500 py-4 text-center">No independent witnesses yet.</p>`;
+  }
+
+  return `
+    <div class="space-y-3">
+      ${corroborators.map(c => `
+        <div class="flex items-start gap-3 p-3 rounded-xl bg-zinc-900/60 border border-zinc-800">
+          <div class="h-9 w-9 rounded-full bg-emerald-500/15 flex items-center justify-center text-emerald-400 text-sm font-bold">
+            ${c.tierWeight}
+          </div>
+          <div class="min-w-0 flex-1">
+            <div class="font-medium text-sm text-white truncate">${escapeHtml(c.displayName)}</div>
+            ${c.note ? `<p class="text-xs text-zinc-400 mt-0.5 line-clamp-2">${escapeHtml(c.note)}</p>` : ""}
+          </div>
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
