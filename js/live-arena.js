@@ -516,59 +516,58 @@ async function showActiveRoom(roomId, room = {}) {
 
   window._corrUnsub = corrUnsub;
 }
-
-      <!-- Main stage -->
-      <div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
-        <!-- Speakers Stage -->
-        <div class="flex-1 p-4 lg:p-6 flex flex-col">
-          <div class="flex-1 flex items-center justify-center">
-            <div id="speakersArea" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5 w-full max-w-4xl">
-              <div class="col-span-full text-center text-zinc-500 py-16">
-                <div class="text-5xl mb-3 opacity-60">🎤</div>
-                <p class="font-medium">No one is speaking yet</p>
-                <p class="text-sm mt-1 text-zinc-600">Hold the mic to take the stage</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Controls -->
-          <div class="mt-4 flex flex-col items-center gap-4 pb-2">
-            <button id="pushToTalkBtn"
-                    class="w-24 h-24 rounded-full bg-gradient-to-br from-sky-500 to-cyan-500 text-white text-3xl shadow-2xl shadow-sky-500/30 active:scale-95 transition-all flex items-center justify-center select-none">
-              🎤
-            </button>
-            <p class="text-sm text-zinc-400" id="talkStatus">Hold to speak • Release to stop</p>
-
-            <div class="flex gap-3 mt-1">
-              <button id="raiseHandBtn" class="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm transition">
-                ✋ Raise Hand
-              </button>
-              <button class="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm transition">👏</button>
-              <button class="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm transition">🔥</button>
-            </div>
-
-            <!-- Host Control Center (Underneath mic controls) -->
-            <div id="hostControls" class="hidden mt-3 flex flex-wrap justify-center gap-2">
-              <button id="muteAllBtn" class="px-3 py-1.5 rounded-lg bg-zinc-800 text-sm hover:bg-zinc-700">🔇 Mute All</button>
-              <button id="lowerHandsBtn" class="px-3 py-1.5 rounded-lg bg-zinc-800 text-sm hover:bg-zinc-700">✋ Lower All Hands</button>
+stage.innerHTML = `
+    // Main stage
+    <div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
+      // Speakers Stage
+      <div class="flex-1 p-4 lg:p-6 flex flex-col">
+        <div class="flex-1 flex items-center justify-center">
+          <div id="speakersArea" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5 w-full max-w-4xl">
+            <div class="col-span-full text-center text-zinc-500 py-16">
+              <div class="text-5xl mb-3 opacity-60">🎤</div>
+              <p class="font-medium">No one is speaking yet</p>
+              <p class="text-sm mt-1 text-zinc-600">Hold the mic to take the stage</p>
             </div>
           </div>
         </div>
 
-        <!-- Audience sidebar -->
-        <div class="w-full lg:w-80 border-t lg:border-t-0 lg:border-l border-zinc-800 bg-zinc-900/40 flex flex-col">
-          <div class="p-4 border-b border-zinc-800 font-medium text-sm text-zinc-300 flex justify-between">
-            <span>In this room</span>
-            <span id="sidebarCount" class="text-zinc-500">0</span>
+        // Controls
+        <div class="mt-4 flex flex-col items-center gap-4 pb-2">
+          <button id="pushToTalkBtn"
+                  class="w-24 h-24 rounded-full bg-gradient-to-br from-sky-500 to-cyan-500 text-white text-3xl shadow-2xl shadow-sky-500/30 active:scale-95 transition-all flex items-center justify-center select-none">
+            🎤
+          </button>
+          <p class="text-sm text-zinc-400" id="talkStatus">Hold to speak • Release to stop</p>
+
+          <div class="flex gap-3 mt-1">
+            <button id="raiseHandBtn" class="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm transition">
+              ✋ Raise Hand
+            </button>
+            <button class="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm transition">👏</button>
+            <button class="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm transition">🔥</button>
           </div>
-          <div id="participantsList" class="flex-1 overflow-y-auto p-3 space-y-1.5">
-            <!-- Participants injected -->
+
+          // Host Control Center (Underneath mic controls)
+          <div id="hostControls" class="hidden mt-3 flex flex-wrap justify-center gap-2">
+            <button id="muteAllBtn" class="px-3 py-1.5 rounded-lg bg-zinc-800 text-sm hover:bg-zinc-700">🔇 Mute All</button>
+            <button id="lowerHandsBtn" class="px-3 py-1.5 rounded-lg bg-zinc-800 text-sm hover:bg-zinc-700">✋ Lower All Hands</button>
           </div>
+        </div>
+      </div>
+
+      // Audience sidebar
+      <div class="w-full lg:w-80 border-t lg:border-t-0 lg:border-l border-zinc-800 bg-zinc-900/40 flex flex-col">
+        <div class="p-4 border-b border-zinc-800 font-medium text-sm text-zinc-300 flex justify-between">
+          <span>In this room</span>
+          <span id="sidebarCount" class="text-zinc-500">0</span>
+        </div>
+        <div id="participantsList" class="flex-1 overflow-y-auto p-3 space-y-1.5">
+          // Participants injected
         </div>
       </div>
     </div>
 
-    <!-- Drop Evidence Modal -->
+    // Drop Evidence Modal
     <div id="dropEvidenceModal" class="hidden fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/70 p-4">
       <div class="w-full max-w-md rounded-2xl bg-zinc-900 border border-zinc-700 p-5 shadow-2xl">
         <div class="flex items-center justify-between mb-4">
