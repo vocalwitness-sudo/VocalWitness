@@ -255,75 +255,89 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // ==========================================
-    // MAIN TESTIMONIES
-    // ==========================================
-    match /testimonies/{testimonyId} {
-      allow read: if true;
-      allow create: if isNotBanned()
-        && isNotThrottled()
-        && request.resource.data.authorId == request.auth.uid
-        && request.resource.data.keys().hasAll(['content', 'createdAt', 'authorId'])
-        && request.resource.data.content is string
-        && request.resource.data.content.size() > 0
-        && request.resource.data.content.size() <= 4000
-        && (request.resource.data.createdAt is timestamp || request.resource.data.createdAt == request.time)
-        && (
-             ('channel' in request.resource.data && request.resource.data.channel is string
-             && request.resource.data.channel in [
-                  'citizen-talk', 'witness-voice',
-                  'citizen-circle', 'witness-circle',
-                  'citizen_talk', 'witness_voice'
-                ])
-             ||
-             ('feedVisibility' in request.resource.data && request.resource.data.feedVisibility is string
-             && request.resource.data.feedVisibility in [
-                  'citizen-talk', 'witness-voice',
-                  'citizen-circle', 'witness-circle',
-                  'citizen_talk', 'witness_voice'
-                ])
-           )
-        && (!('mediaUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.mediaUrl))
-        && (!('mediaUrls' in request.resource.data) || request.resource.data.mediaUrls is list);
+   // ==========================================
+// MAIN TESTIMONIES
+// ==========================================
+match /testimonies/{testimonyId} {
 
-      allow update: if isModerator()
-        || (
-             isNotBanned()
-             && resource.data.authorId == request.auth.uid
-             && isSafeAuthorTestimonyUpdate()
-           )
-        || (
-             isNotBanned()
-             && request.resource.data.diff(resource.data).affectedKeys()
-                  .hasOnly([
-                    'corroborationCount', 'corroborationScore', 'lastCorroboratedAt',
-                    'reactions', 'commentsCount', 'updatedAt'
-                  ])
-           );
-      allow delete: if false;
+  // READ: public posts for everyone, trusted_circle only for author + their trusted list
+  allow read: if 
+    resource.data.get('visibility', 'public') == 'public'
+    || resource.data.authorId == request.auth.uid
+    || (
+         resource.data.visibility == 'trusted_circle'
+         && request.auth != null
+         && request.auth.uid in get(/databases/$(database)/documents/users/$(resource.data.authorId)).data.get('trusted', [])
+       );
 
-      match /comments/{commentId} {
-        allow read: if true;
-        allow create: if isNotBanned()
-          && isAuthenticated()
-          && request.resource.data.authorId == request.auth.uid
-          && request.resource.data.keys().hasAll(['content', 'authorId', 'createdAt'])
-          && request.resource.data.content is string
-          && request.resource.data.content.size() > 0
-          && request.resource.data.content.size() <= 1200
-          && (request.resource.data.createdAt is timestamp || request.resource.data.createdAt == request.time);
-        allow update: if isNotBanned() && isAuthenticated() && (
-          (resource.data.authorId == request.auth.uid
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['content', 'updatedAt']))
-          ||
-          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])
-            && request.resource.data.likes is number
-            && request.resource.data.likes == resource.data.get('likes', 0) + 1)
-        );
-        allow delete: if isAuthenticated()
-          && (resource.data.authorId == request.auth.uid || isModerator());
-      }
-    }
+  allow create: if isNotBanned()
+    && isNotThrottled()
+    && request.resource.data.authorId == request.auth.uid
+    && request.resource.data.keys().hasAll(['content', 'createdAt', 'authorId'])
+    && request.resource.data.content is string
+    && request.resource.data.content.size() > 0
+    && request.resource.data.content.size() <= 4000
+    && (request.resource.data.createdAt is timestamp || request.resource.data.createdAt == request.time)
+    && (
+         ('channel' in request.resource.data && request.resource.data.channel is string
+         && request.resource.data.channel in [
+              'citizen-talk', 'witness-voice',
+              'citizen-circle', 'witness-circle',
+              'citizen_talk', 'witness_voice'
+            ])
+         ||
+         ('feedVisibility' in request.resource.data && request.resource.data.feedVisibility is string
+         && request.resource.data.feedVisibility in [
+              'citizen-talk', 'witness-voice',
+              'citizen-circle', 'witness-circle',
+              'citizen_talk', 'witness_voice'
+            ])
+       )
+    && (!('mediaUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.mediaUrl))
+    && (!('mediaUrls' in request.resource.data) || request.resource.data.mediaUrls is list)
+    // NEW: allow visibility field
+    && (!('visibility' in request.resource.data) 
+        || request.resource.data.visibility in ['public', 'trusted_circle']);
+
+  allow update: if isModerator()
+    || (
+         isNotBanned()
+         && resource.data.authorId == request.auth.uid
+         && isSafeAuthorTestimonyUpdate()
+       )
+    || (
+         isNotBanned()
+         && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly([
+                'corroborationCount', 'corroborationScore', 'lastCorroboratedAt',
+                'reactions', 'commentsCount', 'updatedAt'
+              ])
+       );
+
+  allow delete: if false;
+
+  match /comments/{commentId} {
+    allow read: if true;
+    allow create: if isNotBanned()
+      && isAuthenticated()
+      && request.resource.data.authorId == request.auth.uid
+      && request.resource.data.keys().hasAll(['content', 'authorId', 'createdAt'])
+      && request.resource.data.content is string
+      && request.resource.data.content.size() > 0
+      && request.resource.data.content.size() <= 1200
+      && (request.resource.data.createdAt is timestamp || request.resource.data.createdAt == request.time);
+    allow update: if isNotBanned() && isAuthenticated() && (
+      (resource.data.authorId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['content', 'updatedAt']))
+      ||
+      (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])
+        && request.resource.data.likes is number
+        && request.resource.data.likes == resource.data.get('likes', 0) + 1)
+    );
+    allow delete: if isAuthenticated()
+      && (resource.data.authorId == request.auth.uid || isModerator());
+  }
+}
 
     // ==========================================
     // GROUPS
