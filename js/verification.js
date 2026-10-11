@@ -115,78 +115,8 @@ function closeVerificationModal() {
   modal.setAttribute('aria-hidden', 'true');
   document.body.style.overflow = '';
 }
-
 /**
- * Actual media verification — still fully awaited & secure
- */
-export async function verifyMediaProvenance(file) {
-  if (!file) {
-    showToast("No media file selected", "error");
-    return { hasC2PA: false, error: "No file provided" };
-  }
-
-  try {
-    showToast("🔎 Checking C2PA Content Credentials...", "info");
-
-    // We still wait here — security is preserved
-    const c2pa = await initC2PA();
-    const result = await c2pa.read(file);
-
-    if (!result || !result.manifestStore) {
-      showToast("ℹ️ No C2PA credentials found in this file", "info");
-      return {
-        hasC2PA: false,
-        isValid: false,
-        message: "No C2PA Content Credentials found."
-      };
-    }
-
-    const activeManifest = result.manifestStore.activeManifest;
-    const validationErrors = result.manifestStore.validationStatus || [];
-    const isValid = validationErrors.length === 0;
-
-    if (isValid) {
-      showToast("✅ C2PA credentials verified successfully!", "success");
-    } else {
-      showToast("⚠️ C2PA found but validation failed", "warning");
-    }
-
-    return {
-      hasC2PA: true,
-      isValid,
-      issuer: activeManifest?.signatureInfo?.issuer || "Unknown",
-      claimGenerator: activeManifest?.claimGenerator || "Unknown",
-      title: activeManifest?.title || file.name,
-      format: activeManifest?.format || file.type,
-      validationErrors,
-      rawManifest: activeManifest
-    };
-  } catch (error) {
-    console.error("[C2PA] Verification error:", error);
-    showToast(error.message || "Failed to verify media provenance", "error");
-    return { hasC2PA: false, isValid: false, error: error.message };
-  }
-}
-
-// Make available globally if needed
-window.openVerificationModal = openVerificationModal;
-window.closeVerificationModal = closeVerificationModal;
-/**
- * Pre-load C2PA WASM + worker so the first "Verify Media" click is fast.
- * Safe to call multiple times. Does not show toasts on failure.
- */
-export async function preloadC2PA() {
-  try {
-    await initC2PA();
-    return true;
-  } catch (err) {
-    console.warn('[C2PA] preload failed:', err?.message || err);
-    return false;
-  }
-}
-
-/**
- * Verify C2PA Content Credentials
+ * Actual media verification — fully awaited & secure (with timeouts)
  */
 export async function verifyMediaProvenance(file) {
   // Allow silent preload-style calls (no file) without toast spam
@@ -230,9 +160,27 @@ export async function verifyMediaProvenance(file) {
       rawManifest: activeManifest
     };
   } catch (error) {
-    console.error("C2PA verification error:", error);
+    console.error("[C2PA] Verification error:", error);
     showToast(error.message || "Failed to parse C2PA provenance data", "error");
     return { hasC2PA: false, isValid: false, error: error.message };
+  }
+}
+
+// Make available globally if needed
+window.openVerificationModal = openVerificationModal;
+window.closeVerificationModal = closeVerificationModal;
+
+/**
+ * Pre-load C2PA WASM + worker so the first "Verify Media" click is fast.
+ * Safe to call multiple times. Does not show toasts on failure.
+ */
+export async function preloadC2PA() {
+  try {
+    await initC2PA();
+    return true;
+  } catch (err) {
+    console.warn('[C2PA] preload failed:', err?.message || err);
+    return false;
   }
 }
 
