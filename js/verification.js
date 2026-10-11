@@ -41,7 +41,6 @@ async function computeSHA256(message) {
 
 // ====================== C2PA ENGINE ======================
 
-let c2paInstance = null;
 let c2paInitPromise = null;
 
 /**
