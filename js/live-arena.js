@@ -287,7 +287,7 @@ async function showActiveRoom(roomId, room = {}) {
           <button id="reportBtn" class="px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-400 text-sm hover:bg-zinc-700">Report</button>
         </div>
       </div>
-      // ===== DROP EVIDENCE =====
+  // ===== DROP EVIDENCE =====
   const dropBtn = document.getElementById('dropEvidenceBtn');
   const dropModal = document.getElementById('dropEvidenceModal');
   const closeDropBtn = document.getElementById('closeDropEvidenceBtn');
@@ -393,7 +393,6 @@ async function showActiveRoom(roomId, room = {}) {
       confirmDropBtn.textContent = "🛡️ Seal & Drop Evidence";
     }
   });
-
       <!-- Main stage -->
       <div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
         <!-- Speakers Stage -->
