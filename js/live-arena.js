@@ -1,6 +1,3 @@
-Here is the fully updated `live-arena.js` file with the **Drop Evidence Modal** added directly into the `showActiveRoom` template and fully wired up with event handlers to manage file selections, input states, and sealing/dropping evidence into the room.
-
-```javascript
 // js/live-arena.js – World-Class Live Arena (Evidence-grade)
 import { listenToVerifiedCount, showToast } from './utils.js';
 import { requireAuth } from './auth.js';
