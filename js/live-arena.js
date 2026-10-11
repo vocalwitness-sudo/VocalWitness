@@ -273,17 +273,20 @@ async function showActiveRoom(roomId, room = {}) {
             </p>
           </div>
         </div>
-        <div class="flex items-center gap-2">
-          <button id="corroborateBtn" class="px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 text-sm font-medium hover:bg-emerald-500/25 transition flex items-center gap-1.5">
-            ✅ I saw this
-            <span id="corroborationCount" class="bg-emerald-500/20 text-emerald-300 text-xs px-1.5 py-0.5 rounded-md font-bold">0</span>
-          </button>
-          <button id="sealBtn" class="px-3 py-1.5 rounded-lg bg-amber-500/15 text-amber-400 text-sm font-medium hover:bg-amber-500/25 transition">
-            🛡️ Seal
-          </button>
-          <button id="reportBtn" class="px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-400 text-sm hover:bg-zinc-700">Report</button>
-        </div>
-      </div>
+       <div class="flex items-center gap-2">
+  <button id="corroborateBtn" class="px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 text-sm font-medium hover:bg-emerald-500/25 transition flex items-center gap-1.5">
+    ✅ I saw this
+    <span id="corroborationCount" class="bg-emerald-500/20 text-emerald-300 text-xs px-1.5 py-0.5 rounded-md font-bold">0</span>
+  </button>
+  <button id="sealBtn" class="px-3 py-1.5 rounded-lg bg-amber-500/15 text-amber-400 text-sm font-medium hover:bg-amber-500/25 transition">
+    🛡️ Seal
+  </button>
+  <button id="dropEvidenceBtn" class="px-3 py-1.5 rounded-lg bg-sky-500/15 text-sky-400 text-sm font-medium hover:bg-sky-500/25 transition">
+    📎 Drop Evidence
+  </button>
+  <button id="reportBtn" class="px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-400 text-sm hover:bg-zinc-700">Report</button>
+</div>
+</div>
 
       <!-- Main stage -->
       <div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
