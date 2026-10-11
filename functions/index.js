@@ -21,6 +21,7 @@ import { setGlobalOptions } from "firebase-functions/v2";
 import corsPackage from "cors";
 import { onRequest } from "firebase-functions/v2/https";
 import { buildPoseidon } from "circomlibjs";
+import { AccessToken } from "livekit-server-sdk";   
 
 // Get current directory equivalent in ES modules
 const __filename = path.fileURLToPath(import.meta.url);
@@ -1280,15 +1281,13 @@ async function getPoseidon() {
 // ======================================================
 // 11. LIVEKIT TOKEN FOR LIVE ARENA
 // ======================================================
-const { AccessToken } = require("livekit-server-sdk");
-
 const livekitApiKey = defineSecret("LIVEKIT_API_KEY");
 const livekitApiSecret = defineSecret("LIVEKIT_API_SECRET");
 
-exports.getLiveKitToken = onCall(
+export const getLiveKitToken = onCall(
   {
     cors: allowedOrigins,
-    secrets: [livekitApiKey, livekitApiSecret]
+    secrets: [livekitApiKey, livekitApiSecret],
   },
   async (request) => {
     if (!request.auth) {
@@ -1308,7 +1307,8 @@ exports.getLiveKitToken = onCall(
         livekitApiSecret.value(),
         {
           identity: request.auth.uid,
-          name: participantName
+          name: participantName,
+          ttl: "2h",               // explicit expiry
         }
       );
 
@@ -1317,14 +1317,14 @@ exports.getLiveKitToken = onCall(
         room: roomName,
         canPublish: true,
         canSubscribe: true,
-        canPublishData: true
+        canPublishData: true,
       });
 
       const token = await at.toJwt();
 
       return {
         token,
-        url: "wss://vocal-witness-0qwfaorm.livekit.cloud"
+        url: "wss://vocal-witness-0qwfaorm.livekit.cloud",
       };
     } catch (error) {
       console.error("LiveKit token error:", error);
@@ -1332,6 +1332,7 @@ exports.getLiveKitToken = onCall(
     }
   }
 );
+
 // ======================================================
 // 12. ZK MEMBERSHIP — real Groth16 (Poseidon + Merkle)
 // Elevate ONLY after snarkjs.groth16.verify succeeds.
