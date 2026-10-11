@@ -48,11 +48,16 @@ async function initC2PA() {
 
   c2paInitPromise = (async () => {
     try {
-      const { createC2pa } = await import("https://cdn.jsdelivr.net/npm/@contentauth/c2pa-web@0.8.2/+esm");
+      // Use a modern version
+      const { createC2pa } = await import(
+        "https://cdn.jsdelivr.net/npm/@contentauth/c2pa-web@0.14.3/+esm"
+      );
 
       c2paInstance = await createC2pa({
-        wasmSrc: "https://cdn.jsdelivr.net/npm/@contentauth/c2pa-web@0.8.2/dist/assets/wasm/c2pa.wasm",
-        workerSrc: "https://cdn.jsdelivr.net/npm/@contentauth/c2pa-web@0.8.2/dist/c2pa.worker.js",
+        // Correct WASM path for current packages
+        wasmSrc: "https://cdn.jsdelivr.net/npm/@contentauth/c2pa-web@0.14.3/dist/resources/c2pa_bg.wasm",
+        // Correct worker path
+        workerSrc: "https://cdn.jsdelivr.net/npm/@contentauth/c2pa-web@0.14.3/dist/c2pa_worker.js",
       });
 
       return c2paInstance;
