@@ -39,8 +39,14 @@ async function computeSHA256(message) {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+// ====================== C2PA ENGINE ======================
+
+let c2paInstance = null;
+let c2paInitPromise = null;
+
 /**
- * Initialize C2PA (cached, single-flight)
+ * Initialize C2PA (safe to call multiple times)
+ * Uses modern version + correct paths
  */
 async function initC2PA() {
   if (c2paInstance) return c2paInstance;
@@ -48,21 +54,20 @@ async function initC2PA() {
 
   c2paInitPromise = (async () => {
     try {
-      // Use a modern version
+      // Modern version (recommended)
       const { createC2pa } = await import(
         "https://cdn.jsdelivr.net/npm/@contentauth/c2pa-web@0.14.3/+esm"
       );
 
       c2paInstance = await createC2pa({
-        // Correct WASM path for current packages
         wasmSrc: "https://cdn.jsdelivr.net/npm/@contentauth/c2pa-web@0.14.3/dist/resources/c2pa_bg.wasm",
-        // Correct worker path
         workerSrc: "https://cdn.jsdelivr.net/npm/@contentauth/c2pa-web@0.14.3/dist/c2pa_worker.js",
       });
 
+      console.log("[C2PA] Engine initialized successfully");
       return c2paInstance;
     } catch (err) {
-      console.error("Failed to initialize C2PA Web SDK:", err);
+      console.error("[C2PA] Failed to initialize:", err);
       c2paInitPromise = null; // allow retry
       throw new Error("C2PA engine initialization failed.");
     }
@@ -71,6 +76,106 @@ async function initC2PA() {
   return c2paInitPromise;
 }
 
+/**
+ * Completely non-blocking modal opener
+ * Modal appears instantly, C2PA loads in background
+ */
+function openVerificationModal() {
+  const modal = document.getElementById('c2pa-modal');
+  if (!modal) {
+    console.warn('[C2PA] Modal #c2pa-modal not found');
+    return;
+  }
+
+  // Show modal immediately
+  modal.classList.remove('hidden');
+  modal.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+
+  // Fire-and-forget preload (zero blocking)
+  initC2PA()
+    .then(() => {
+      console.log('[C2PA] Engine ready for verification');
+    })
+    .catch((err) => {
+      console.error('[C2PA] Pre-load failed:', err);
+
+      // Optional soft feedback inside the modal
+      const statusEl = modal.querySelector('[data-c2pa-status]');
+      if (statusEl) {
+        statusEl.textContent = 'C2PA engine is still loading or failed. You can still try verifying.';
+        statusEl.classList.remove('hidden');
+      }
+    });
+}
+
+/**
+ * Close the modal cleanly
+ */
+function closeVerificationModal() {
+  const modal = document.getElementById('c2pa-modal');
+  if (!modal) return;
+
+  modal.classList.add('hidden');
+  modal.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+}
+
+/**
+ * Actual media verification — still fully awaited & secure
+ */
+export async function verifyMediaProvenance(file) {
+  if (!file) {
+    showToast("No media file selected", "error");
+    return { hasC2PA: false, error: "No file provided" };
+  }
+
+  try {
+    showToast("🔎 Checking C2PA Content Credentials...", "info");
+
+    // We still wait here — security is preserved
+    const c2pa = await initC2PA();
+    const result = await c2pa.read(file);
+
+    if (!result || !result.manifestStore) {
+      showToast("ℹ️ No C2PA credentials found in this file", "info");
+      return {
+        hasC2PA: false,
+        isValid: false,
+        message: "No C2PA Content Credentials found."
+      };
+    }
+
+    const activeManifest = result.manifestStore.activeManifest;
+    const validationErrors = result.manifestStore.validationStatus || [];
+    const isValid = validationErrors.length === 0;
+
+    if (isValid) {
+      showToast("✅ C2PA credentials verified successfully!", "success");
+    } else {
+      showToast("⚠️ C2PA found but validation failed", "warning");
+    }
+
+    return {
+      hasC2PA: true,
+      isValid,
+      issuer: activeManifest?.signatureInfo?.issuer || "Unknown",
+      claimGenerator: activeManifest?.claimGenerator || "Unknown",
+      title: activeManifest?.title || file.name,
+      format: activeManifest?.format || file.type,
+      validationErrors,
+      rawManifest: activeManifest
+    };
+  } catch (error) {
+    console.error("[C2PA] Verification error:", error);
+    showToast(error.message || "Failed to verify media provenance", "error");
+    return { hasC2PA: false, isValid: false, error: error.message };
+  }
+}
+
+// Make available globally if needed
+window.openVerificationModal = openVerificationModal;
+window.closeVerificationModal = closeVerificationModal;
 /**
  * Pre-load C2PA WASM + worker so the first "Verify Media" click is fast.
  * Safe to call multiple times. Does not show toasts on failure.
