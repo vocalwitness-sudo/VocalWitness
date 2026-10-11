@@ -363,16 +363,101 @@ async function showActiveRoom(roomId, room = {}) {
         </button>
       </div>
     </div>
-  `;
+   `;
 
-  // ===== AFTER template is closed — DOM nodes exist now =====
+ function enterStage(roomId) {
+  // 1. Assign the template string properly with the opening backtick
+  stage.innerHTML = `
+    // Main stage
+    <div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
+      // Speakers Stage
+      <div class="flex-1 p-4 lg:p-6 flex flex-col">
+        <div class="flex-1 flex items-center justify-center">
+          <div id="speakersArea" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5 w-full max-w-4xl">
+            <div class="col-span-full text-center text-zinc-500 py-16">
+              <div class="text-5xl mb-3 opacity-60">🎤</div>
+              <p class="font-medium">No one is speaking yet</p>
+              <p class="text-sm mt-1 text-zinc-600">Hold the mic to take the stage</p>
+            </div>
+          </div>
+        </div>
+
+        // Controls
+        <div class="mt-4 flex flex-col items-center gap-4 pb-2">
+          <button id="pushToTalkBtn"
+                  class="w-24 h-24 rounded-full bg-gradient-to-br from-sky-500 to-cyan-500 text-white text-3xl shadow-2xl shadow-sky-500/30 active:scale-95 transition-all flex items-center justify-center select-none">
+            🎤
+          </button>
+          <p class="text-sm text-zinc-400" id="talkStatus">Hold to speak • Release to stop</p>
+
+          <div class="flex gap-3 mt-1">
+            <button id="raiseHandBtn" class="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm transition">
+              ✋ Raise Hand
+            </button>
+            <button class="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm transition">👏</button>
+            <button class="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm transition">🔥</button>
+          </div>
+
+          // Host Control Center (Underneath mic controls)
+          <div id="hostControls" class="hidden mt-3 flex flex-wrap justify-center gap-2">
+            <button id="muteAllBtn" class="px-3 py-1.5 rounded-lg bg-zinc-800 text-sm hover:bg-zinc-700">🔇 Mute All</button>
+            <button id="lowerHandsBtn" class="px-3 py-1.5 rounded-lg bg-zinc-800 text-sm hover:bg-zinc-700">✋ Lower All Hands</button>
+          </div>
+        </div>
+      </div>
+
+      // Audience sidebar
+      <div class="w-full lg:w-80 border-t lg:border-t-0 lg:border-l border-zinc-800 bg-zinc-900/40 flex flex-col">
+        <div class="p-4 border-b border-zinc-800 font-medium text-sm text-zinc-300 flex justify-between">
+          <span>In this room</span>
+          <span id="sidebarCount" class="text-zinc-500">0</span>
+        </div>
+        <div id="participantsList" class="flex-1 overflow-y-auto p-3 space-y-1.5">
+          // Participants injected
+        </div>
+      </div>
+    </div>
+
+    // Drop Evidence Modal
+    <div id="dropEvidenceModal" class="hidden fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/70 p-4">
+      <div class="w-full max-w-md rounded-2xl bg-zinc-900 border border-zinc-700 p-5 shadow-2xl">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-bold text-white">📎 Drop Evidence</h3>
+          <button id="closeDropEvidenceBtn" class="text-zinc-400 hover:text-white text-xl">✕</button>
+        </div>
+
+        <textarea id="dropEvidenceNote" rows="3" maxlength="500"
+          placeholder="What are you witnessing right now? (optional note)"
+          class="w-full rounded-xl border border-zinc-700 bg-zinc-800 p-3 text-sm text-white placeholder-zinc-500 focus:border-sky-500 focus:outline-none mb-3"></textarea>
+
+        <div class="flex gap-2 mb-4">
+          <label class="flex-1 cursor-pointer rounded-xl border border-zinc-700 bg-zinc-800 py-3 text-center text-sm text-zinc-300 hover:border-sky-500 hover:text-sky-300 transition">
+            📷 Photo
+            <input type="file" id="dropEvidencePhoto" accept="image/*" class="hidden">
+          </label>
+          <label class="flex-1 cursor-pointer rounded-xl border border-zinc-700 bg-zinc-800 py-3 text-center text-sm text-zinc-300 hover:border-sky-500 hover:text-sky-300 transition">
+            🎤 Audio
+            <input type="file" id="dropEvidenceAudio" accept="audio/*" class="hidden">
+          </label>
+        </div>
+
+        <p id="dropEvidenceFileName" class="text-xs text-zinc-500 mb-3 min-h-[1rem]"></p>
+
+        <button id="confirmDropEvidenceBtn"
+          class="w-full rounded-xl bg-sky-500 py-3 text-sm font-bold text-black hover:bg-sky-400 active:scale-[0.98] transition">
+          🛡️ Seal & Drop Evidence
+        </button>
+      </div>
+    </div>
+  `; // Template string closed properly here
+
+  // 2. DOM manipulation & Event listeners logic follow seamlessly
   stage.classList.remove('hidden');
 
   if (isHost) {
     document.getElementById('hostControls')?.classList.remove('hidden');
   }
 
-  // Drop Evidence wiring (only once here; remove duplicate from wireActiveRoomControls if present)
   const dropBtn = document.getElementById('dropEvidenceBtn');
   const dropModal = document.getElementById('dropEvidenceModal');
   const closeDropBtn = document.getElementById('closeDropEvidenceBtn');
@@ -516,129 +601,7 @@ async function showActiveRoom(roomId, room = {}) {
 
   window._corrUnsub = corrUnsub;
 }
-stage.innerHTML = `
-    // Main stage
-    <div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
-      // Speakers Stage
-      <div class="flex-1 p-4 lg:p-6 flex flex-col">
-        <div class="flex-1 flex items-center justify-center">
-          <div id="speakersArea" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5 w-full max-w-4xl">
-            <div class="col-span-full text-center text-zinc-500 py-16">
-              <div class="text-5xl mb-3 opacity-60">🎤</div>
-              <p class="font-medium">No one is speaking yet</p>
-              <p class="text-sm mt-1 text-zinc-600">Hold the mic to take the stage</p>
-            </div>
-          </div>
-        </div>
-
-        // Controls
-        <div class="mt-4 flex flex-col items-center gap-4 pb-2">
-          <button id="pushToTalkBtn"
-                  class="w-24 h-24 rounded-full bg-gradient-to-br from-sky-500 to-cyan-500 text-white text-3xl shadow-2xl shadow-sky-500/30 active:scale-95 transition-all flex items-center justify-center select-none">
-            🎤
-          </button>
-          <p class="text-sm text-zinc-400" id="talkStatus">Hold to speak • Release to stop</p>
-
-          <div class="flex gap-3 mt-1">
-            <button id="raiseHandBtn" class="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm transition">
-              ✋ Raise Hand
-            </button>
-            <button class="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm transition">👏</button>
-            <button class="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm transition">🔥</button>
-          </div>
-
-          // Host Control Center (Underneath mic controls)
-          <div id="hostControls" class="hidden mt-3 flex flex-wrap justify-center gap-2">
-            <button id="muteAllBtn" class="px-3 py-1.5 rounded-lg bg-zinc-800 text-sm hover:bg-zinc-700">🔇 Mute All</button>
-            <button id="lowerHandsBtn" class="px-3 py-1.5 rounded-lg bg-zinc-800 text-sm hover:bg-zinc-700">✋ Lower All Hands</button>
-          </div>
-        </div>
-      </div>
-
-      // Audience sidebar
-      <div class="w-full lg:w-80 border-t lg:border-t-0 lg:border-l border-zinc-800 bg-zinc-900/40 flex flex-col">
-        <div class="p-4 border-b border-zinc-800 font-medium text-sm text-zinc-300 flex justify-between">
-          <span>In this room</span>
-          <span id="sidebarCount" class="text-zinc-500">0</span>
-        </div>
-        <div id="participantsList" class="flex-1 overflow-y-auto p-3 space-y-1.5">
-          // Participants injected
-        </div>
-      </div>
-    </div>
-
-    // Drop Evidence Modal
-    <div id="dropEvidenceModal" class="hidden fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/70 p-4">
-      <div class="w-full max-w-md rounded-2xl bg-zinc-900 border border-zinc-700 p-5 shadow-2xl">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-bold text-white">📎 Drop Evidence</h3>
-          <button id="closeDropEvidenceBtn" class="text-zinc-400 hover:text-white text-xl">✕</button>
-        </div>
-
-        <textarea id="dropEvidenceNote" rows="3" maxlength="500"
-          placeholder="What are you witnessing right now? (optional note)"
-          class="w-full rounded-xl border border-zinc-700 bg-zinc-800 p-3 text-sm text-white placeholder-zinc-500 focus:border-sky-500 focus:outline-none mb-3"></textarea>
-
-        <div class="flex gap-2 mb-4">
-          <label class="flex-1 cursor-pointer rounded-xl border border-zinc-700 bg-zinc-800 py-3 text-center text-sm text-zinc-300 hover:border-sky-500 hover:text-sky-300 transition">
-            📷 Photo
-            <input type="file" id="dropEvidencePhoto" accept="image/*" class="hidden">
-          </label>
-          <label class="flex-1 cursor-pointer rounded-xl border border-zinc-700 bg-zinc-800 py-3 text-center text-sm text-zinc-300 hover:border-sky-500 hover:text-sky-300 transition">
-            🎤 Audio
-            <input type="file" id="dropEvidenceAudio" accept="audio/*" class="hidden">
-          </label>
-        </div>
-
-        <p id="dropEvidenceFileName" class="text-xs text-zinc-500 mb-3 min-h-[1rem]"></p>
-
-        <button id="confirmDropEvidenceBtn"
-          class="w-full rounded-xl bg-sky-500 py-3 text-sm font-bold text-black hover:bg-sky-400 active:scale-[0.98] transition">
-          🛡️ Seal & Drop Evidence
-        </button>
-      </div>
-    </div>
-  `;
-
-  stage.classList.remove('hidden');
-
-  if (isHost) {
-    document.getElementById('hostControls')?.classList.remove('hidden');
-  }
-
-  wireActiveRoomControls(roomId);
-
-  if (participantsUnsubscribe) participantsUnsubscribe();
-  participantsUnsubscribe = onSnapshot(
-    collection(db, 'liveRooms', roomId, 'participants'),
-    (snap) => {
-      const participants = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      renderParticipants(participants);
-      const count = participants.length;
-      document.getElementById('liveListenerCount').textContent = count;
-      document.getElementById('sidebarCount').textContent = count;
-    }
-  );
-
-  // Live Corroboration Counter
-  const corrUnsub = onSnapshot(
-    collection(db, 'liveRooms', roomId, 'corroborations'),
-    (snap) => {
-      const count = snap.size;
-      const el = document.getElementById('corroborationCount');
-      if (el) {
-        el.textContent = count;
-        if (count > 0) {
-          el.classList.add('animate-pulse');
-          setTimeout(() => el.classList.remove('animate-pulse'), 800);
-        }
-      }
-    }
-  );
-
-  window._corrUnsub = corrUnsub;
-}
-
+  
 function renderParticipants(participants) {
   const list = document.getElementById('participantsList');
   const speakersArea = document.getElementById('speakersArea');
