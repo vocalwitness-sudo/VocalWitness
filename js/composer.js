@@ -875,10 +875,34 @@ async function handleComposerSubmit(e) {
   }
 }
 
-// ======================================================
-// UPDATED: resetForm with full media cleanup
-// ======================================================
-<label class="flex items-center gap-2 text-sm text-zinc-300 cursor-pointer select-none">
-  <input type="checkbox" id="postToTrustedCircleOnly" class="h-4 w-4 rounded accent-emerald-500">
-  <span>Only my Trusted Circle can see this</span>
-</label>
+/**
+ * Reset form UI + collapse the composer back to compact state
+ */
+export function resetForm() {
+  const form = document.getElementById('composer-form') || document.getElementById('testimonyForm');
+  const headlineInput = document.getElementById('headlineInput') ||
+                        document.getElementById('testimonyHeadline') ||
+                        document.getElementById('testimonyTitle') ||
+                        document.getElementById('postHeadline');
+  const bodyInput = document.getElementById('mainInput') || 
+                    document.getElementById('postBody') || 
+                    document.getElementById('testimonyBody');
+  const anonymousCheckbox = document.getElementById('post-anonymously') || 
+                            document.getElementById('isAnonymous');
+  const trustedOnly = document.getElementById('postToTrustedCircleOnly');
+
+  if (form) form.reset();
+  if (headlineInput) headlineInput.value = '';
+  if (bodyInput) bodyInput.value = '';
+  if (anonymousCheckbox) anonymousCheckbox.checked = false;
+  if (trustedOnly) trustedOnly.checked = false;
+
+  // Full media cleanup
+  clearAllMediaStates();
+  window.activeSubmissionDraft = {};
+  clearAiFeedback();
+  lastAnalyzedText = '';
+
+  // Collapse back to the compact status box
+  collapseComposer();
+}
