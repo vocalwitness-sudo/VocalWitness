@@ -232,6 +232,7 @@ export async function publishTestimonyNow(publicData, privateData = null) {
     targetFeed,
     channel, // Matches rule validation array
     isWitnessVoice,
+    visibility: publicData.visibility === 'trusted_circle' ? 'trusted_circle' : 'public',
     imageUrl: publicData.imageUrl || null,
     audioUrl: publicData.audioUrl || null,
     forensicHash, // Guaranteed null or 64-char string
