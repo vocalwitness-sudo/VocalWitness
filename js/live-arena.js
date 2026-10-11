@@ -1,3 +1,6 @@
+Here is the fully updated `live-arena.js` file with the **Drop Evidence Modal** added directly into the `showActiveRoom` template and fully wired up with event handlers to manage file selections, input states, and sealing/dropping evidence into the room.
+
+```javascript
 // js/live-arena.js – World-Class Live Arena (Evidence-grade)
 import { listenToVerifiedCount, showToast } from './utils.js';
 import { requireAuth } from './auth.js';
@@ -274,19 +277,125 @@ async function showActiveRoom(roomId, room = {}) {
           </div>
         </div>
        <div class="flex items-center gap-2">
-  <button id="corroborateBtn" class="px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 text-sm font-medium hover:bg-emerald-500/25 transition flex items-center gap-1.5">
-    ✅ I saw this
-    <span id="corroborationCount" class="bg-emerald-500/20 text-emerald-300 text-xs px-1.5 py-0.5 rounded-md font-bold">0</span>
-  </button>
-  <button id="sealBtn" class="px-3 py-1.5 rounded-lg bg-amber-500/15 text-amber-400 text-sm font-medium hover:bg-amber-500/25 transition">
-    🛡️ Seal
-  </button>
-  <button id="dropEvidenceBtn" class="px-3 py-1.5 rounded-lg bg-sky-500/15 text-sky-400 text-sm font-medium hover:bg-sky-500/25 transition">
-    📎 Drop Evidence
-  </button>
-  <button id="reportBtn" class="px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-400 text-sm hover:bg-zinc-700">Report</button>
-</div>
-</div>
+          <button id="corroborateBtn" class="px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 text-sm font-medium hover:bg-emerald-500/25 transition flex items-center gap-1.5">
+            ✅ I saw this
+            <span id="corroborationCount" class="bg-emerald-500/20 text-emerald-300 text-xs px-1.5 py-0.5 rounded-md font-bold">0</span>
+          </button>
+          <button id="sealBtn" class="px-3 py-1.5 rounded-lg bg-amber-500/15 text-amber-400 text-sm font-medium hover:bg-amber-500/25 transition">
+            🛡️ Seal
+          </button>
+          <button id="dropEvidenceBtn" class="px-3 py-1.5 rounded-lg bg-sky-500/15 text-sky-400 text-sm font-medium hover:bg-sky-500/25 transition">
+            📎 Drop Evidence
+          </button>
+          <button id="reportBtn" class="px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-400 text-sm hover:bg-zinc-700">Report</button>
+        </div>
+      </div>
+      // ===== DROP EVIDENCE =====
+  const dropBtn = document.getElementById('dropEvidenceBtn');
+  const dropModal = document.getElementById('dropEvidenceModal');
+  const closeDropBtn = document.getElementById('closeDropEvidenceBtn');
+  const confirmDropBtn = document.getElementById('confirmDropEvidenceBtn');
+  const noteInput = document.getElementById('dropEvidenceNote');
+  const photoInput = document.getElementById('dropEvidencePhoto');
+  const audioInput = document.getElementById('dropEvidenceAudio');
+  const fileNameEl = document.getElementById('dropEvidenceFileName');
+
+  let selectedDropFile = null;
+
+  dropBtn?.addEventListener('click', () => {
+    if (!requireAuth("Sign in to drop evidence")) return;
+    dropModal?.classList.remove('hidden');
+  });
+
+  closeDropBtn?.addEventListener('click', () => {
+    dropModal?.classList.add('hidden');
+    selectedDropFile = null;
+    if (noteInput) noteInput.value = '';
+    if (fileNameEl) fileNameEl.textContent = '';
+  });
+
+  photoInput?.addEventListener('change', (e) => {
+    selectedDropFile = e.target.files?.[0] || null;
+    if (fileNameEl) fileNameEl.textContent = selectedDropFile ? `📷 ${selectedDropFile.name}` : '';
+    if (audioInput) audioInput.value = '';
+  });
+
+  audioInput?.addEventListener('change', (e) => {
+    selectedDropFile = e.target.files?.[0] || null;
+    if (fileNameEl) fileNameEl.textContent = selectedDropFile ? `🎤 ${selectedDropFile.name}` : '';
+    if (photoInput) photoInput.value = '';
+  });
+
+  confirmDropBtn?.addEventListener('click', async () => {
+    if (!requireAuth()) return;
+
+    const note = (noteInput?.value || '').trim();
+    if (!note && !selectedDropFile) {
+      showToast("Add a note or attach a photo/audio", "warning");
+      return;
+    }
+
+    confirmDropBtn.disabled = true;
+    confirmDropBtn.textContent = "Sealing…";
+
+    try {
+      let mediaUrl = null;
+      let mediaType = null;
+      let mediaHash = null;
+
+      if (selectedDropFile) {
+        const { uploadEvidenceMedia } = await import('./storage.js');
+        const { computeSHA256 } = await import('./utils.js');
+
+        mediaHash = await computeSHA256(selectedDropFile);
+        mediaType = selectedDropFile.type.startsWith('audio/') ? 'audio' : 'image';
+        mediaUrl = await uploadEvidenceMedia(selectedDropFile, mediaType);
+      }
+
+      await addDoc(collection(db, 'liveRooms', roomId, 'evidenceDrops'), {
+        droppedBy: auth.currentUser.uid,
+        displayName: auth.currentUser.displayName || 'Citizen',
+        note: note || null,
+        mediaUrl,
+        mediaType,
+        mediaHash,
+        roomId,
+        createdAt: serverTimestamp()
+      });
+
+      await addDoc(collection(db, 'testimonies'), {
+        content: note || `Live evidence dropped from room: ${roomId}`,
+        title: `Live Evidence – Arena`,
+        channel: 'witness-voice',
+        targetFeed: 'witness_voice',
+        visibility: 'public',
+        authorId: auth.currentUser.uid,
+        author: auth.currentUser.displayName || 'Citizen',
+        isAnonymous: false,
+        imageUrl: mediaType === 'image' ? mediaUrl : null,
+        audioUrl: mediaType === 'audio' ? mediaUrl : null,
+        imageHash: mediaType === 'image' ? mediaHash : null,
+        audioHash: mediaType === 'audio' ? mediaHash : null,
+        forensicHash: mediaHash,
+        liveRoomId: roomId,
+        source: 'live-arena',
+        createdAt: serverTimestamp(),
+        status: 'published'
+      });
+
+      showToast("🛡️ Evidence sealed and dropped", "success");
+      dropModal?.classList.add('hidden');
+      selectedDropFile = null;
+      if (noteInput) noteInput.value = '';
+      if (fileNameEl) fileNameEl.textContent = '';
+    } catch (err) {
+      console.error('[Drop Evidence]', err);
+      showToast("Failed to drop evidence", "error");
+    } finally {
+      confirmDropBtn.disabled = false;
+      confirmDropBtn.textContent = "🛡️ Seal & Drop Evidence";
+    }
+  });
 
       <!-- Main stage -->
       <div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
@@ -336,6 +445,38 @@ async function showActiveRoom(roomId, room = {}) {
             <!-- Participants injected -->
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Drop Evidence Modal -->
+    <div id="dropEvidenceModal" class="hidden fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/70 p-4">
+      <div class="w-full max-w-md rounded-2xl bg-zinc-900 border border-zinc-700 p-5 shadow-2xl">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-bold text-white">📎 Drop Evidence</h3>
+          <button id="closeDropEvidenceBtn" class="text-zinc-400 hover:text-white text-xl">✕</button>
+        </div>
+
+        <textarea id="dropEvidenceNote" rows="3" maxlength="500"
+          placeholder="What are you witnessing right now? (optional note)"
+          class="w-full rounded-xl border border-zinc-700 bg-zinc-800 p-3 text-sm text-white placeholder-zinc-500 focus:border-sky-500 focus:outline-none mb-3"></textarea>
+
+        <div class="flex gap-2 mb-4">
+          <label class="flex-1 cursor-pointer rounded-xl border border-zinc-700 bg-zinc-800 py-3 text-center text-sm text-zinc-300 hover:border-sky-500 hover:text-sky-300 transition">
+            📷 Photo
+            <input type="file" id="dropEvidencePhoto" accept="image/*" class="hidden">
+          </label>
+          <label class="flex-1 cursor-pointer rounded-xl border border-zinc-700 bg-zinc-800 py-3 text-center text-sm text-zinc-300 hover:border-sky-500 hover:text-sky-300 transition">
+            🎤 Audio
+            <input type="file" id="dropEvidenceAudio" accept="audio/*" class="hidden">
+          </label>
+        </div>
+
+        <p id="dropEvidenceFileName" class="text-xs text-zinc-500 mb-3 min-h-[1rem]"></p>
+
+        <button id="confirmDropEvidenceBtn"
+          class="w-full rounded-xl bg-sky-500 py-3 text-sm font-bold text-black hover:bg-sky-400 active:scale-[0.98] transition">
+          🛡️ Seal & Drop Evidence
+        </button>
       </div>
     </div>
   `;
@@ -553,29 +694,30 @@ function wireActiveRoomControls(roomId) {
   }
 
   document.getElementById('corroborateBtn')?.addEventListener('click', async () => {
-  if (!requireAuth()) return;
+    if (!requireAuth()) return;
 
-  try {
-    const corrRef = doc(db, 'liveRooms', roomId, 'corroborations', auth.currentUser.uid);
-    const existing = await getDoc(corrRef);
+    try {
+      const corrRef = doc(db, 'liveRooms', roomId, 'corroborations', auth.currentUser.uid);
+      const existing = await getDoc(corrRef);
 
-    if (existing.exists()) {
-      showToast("You already corroborated this room", "info");
-      return;
+      if (existing.exists()) {
+        showToast("You already corroborated this room", "info");
+        return;
+      }
+
+      await setDoc(corrRef, {
+        uid: auth.currentUser.uid,
+        displayName: auth.currentUser.displayName || 'Citizen',
+        createdAt: serverTimestamp()
+      });
+
+      showToast("✅ Corroboration recorded – strengthens the evidence", "success");
+    } catch (err) {
+      console.error(err);
+      showToast("Could not record corroboration", "error");
     }
+  });
 
-    await setDoc(corrRef, {
-      uid: auth.currentUser.uid,
-      displayName: auth.currentUser.displayName || 'Citizen',
-      createdAt: serverTimestamp()
-    });
-
-    showToast("✅ Corroboration recorded – strengthens the evidence", "success");
-  } catch (err) {
-    console.error(err);
-    showToast("Could not record corroboration", "error");
-  }
-});
   document.getElementById('sealBtn')?.addEventListener('click', async () => {
     if (!requireAuth()) return;
     try {
@@ -590,6 +732,85 @@ function wireActiveRoomControls(roomId) {
     } catch (err) {
       console.error(err);
       showToast("Could not seal segment", "error");
+    }
+  });
+
+  // Drop Evidence Modal Wiring
+  const dropModal = document.getElementById('dropEvidenceModal');
+  const dropBtn = document.getElementById('dropEvidenceBtn');
+  const closeDropBtn = document.getElementById('closeDropEvidenceBtn');
+  const confirmDropBtn = document.getElementById('confirmDropEvidenceBtn');
+  const photoInput = document.getElementById('dropEvidencePhoto');
+  const audioInput = document.getElementById('dropEvidenceAudio');
+  const fileNameDisplay = document.getElementById('dropEvidenceFileName');
+  const noteInput = document.getElementById('dropEvidenceNote');
+
+  let selectedEvidenceFile = null;
+
+  if (dropBtn && dropModal) {
+    dropBtn.addEventListener('click', () => dropModal.classList.remove('hidden'));
+  }
+  if (closeDropBtn && dropModal) {
+    closeDropBtn.addEventListener('click', () => {
+      dropModal.classList.add('hidden');
+      selectedEvidenceFile = null;
+      if (fileNameDisplay) fileNameDisplay.textContent = '';
+      if (noteInput) noteInput.value = '';
+    });
+  }
+
+  const handleFileSelection = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      selectedEvidenceFile = file;
+      if (fileNameDisplay) fileNameDisplay.textContent = `Selected: ${file.name}`;
+    }
+  };
+
+  photoInput?.addEventListener('change', (e) => {
+    if (audioInput) audioInput.value = '';
+    handleFileSelection(e);
+  });
+
+  audioInput?.addEventListener('change', (e) => {
+    if (photoInput) photoInput.value = '';
+    handleFileSelection(e);
+  });
+
+  confirmDropBtn?.addEventListener('click', async () => {
+    if (!requireAuth()) return;
+    const note = noteInput?.value.trim() || '';
+
+    if (!note && !selectedEvidenceFile) {
+      showToast("Please add a note or select a file to drop evidence", "warning");
+      return;
+    }
+
+    try {
+      confirmDropBtn.disabled = true;
+      confirmDropBtn.textContent = "Sealing & Dropping...";
+
+      // Save evidence entry to room subcollection
+      await addDoc(collection(db, 'liveRooms', roomId, 'evidenceDrops'), {
+        uid: auth.currentUser.uid,
+        displayName: auth.currentUser.displayName || 'Citizen',
+        note: note,
+        hasFile: !!selectedEvidenceFile,
+        fileName: selectedEvidenceFile ? selectedEvidenceFile.name : null,
+        createdAt: serverTimestamp()
+      });
+
+      showToast("🛡️ Evidence successfully sealed and dropped into room", "success");
+      dropModal.classList.add('hidden');
+      selectedEvidenceFile = null;
+      if (fileNameDisplay) fileNameDisplay.textContent = '';
+      if (noteInput) noteInput.value = '';
+    } catch (err) {
+      console.error(err);
+      showToast("Failed to drop evidence", "error");
+    } finally {
+      confirmDropBtn.disabled = false;
+      confirmDropBtn.textContent = "🛡️ Seal & Drop Evidence";
     }
   });
 
@@ -708,3 +929,5 @@ function escapeHTML(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
+
+```
