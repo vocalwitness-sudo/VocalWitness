@@ -49,18 +49,18 @@ setPersistence(auth, browserLocalPersistence).catch((err) => {
 // ========== SAFE FIRESTORE INITIALIZATION ==========
 let db;
 try {
-  // First try to get already initialized instance
-  db = getFirestore(app);
-} catch (e) {
-  // Not initialized yet → initialize with preferred settings
   db = initializeFirestore(app, {
     localCache: persistentLocalCache({
       tabManager: persistentMultipleTabManager()
     }),
-    experimentalForceLongPolling: true
+    experimentalForceLongPolling: true   // ← now actually applied
+    // Alternative (often better): experimentalAutoDetectLongPolling: true
   });
+} catch (e) {
+  // Already initialized (HMR, multiple imports, etc.)
+  console.warn("[firebase-config] Firestore already initialized, using existing instance");
+  db = getFirestore(app);
 }
-
 const storage = getStorage(app);
 
 // OAuth Providers
