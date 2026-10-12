@@ -19,7 +19,6 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import axios from "axios";
 import { setGlobalOptions } from "firebase-functions/v2";
 import corsPackage from "cors";
-import { onRequest } from "firebase-functions/v2/https";
 import { buildPoseidon } from "circomlibjs";
 import { AccessToken } from "livekit-server-sdk";   
 
