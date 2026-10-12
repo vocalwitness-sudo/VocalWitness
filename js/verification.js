@@ -1,6 +1,7 @@
 // js/verification.js - Production Ready: Real Phone Verification + Backend Confirmation + Real ZK + C2PA + Standalone JSON Verification
 // Updated to work cleanly with the hardened phoneVerification.js
 // + preloadC2PA for non-blocking verify page
+// + same-origin C2PA worker/wasm + modern Reader API
 
 import { doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
@@ -41,7 +42,8 @@ async function computeSHA256(message) {
 
 /**
  * Initialize C2PA (safe to call multiple times)
- * Production-ready: correct workerSrc type + modern Reader API
+ * Same-origin worker + wasm required (cross-origin Workers are blocked by browsers)
+ * workerSrc MUST be a URL instance, not a string
  */
 async function initC2PA() {
   if (c2paInstance) return c2paInstance;
@@ -49,13 +51,11 @@ async function initC2PA() {
 
   c2paInitPromise = (async () => {
     try {
-      const VERSION = "0.14.3";
       const { createC2pa } = await import(
-        `https://cdn.jsdelivr.net/npm/@contentauth/c2pa-web@${VERSION}/+esm`
+        "https://cdn.jsdelivr.net/npm/@contentauth/c2pa-web@0.14.3/+esm"
       );
 
-      // Same-origin worker + wasm (required — cross-origin Workers are blocked)
-      const origin = window.location.origin; // https://vocalwitness.com
+      const origin = window.location.origin;
 
       c2paInstance = await createC2pa({
         wasmSrc: `${origin}/c2pa/c2pa_bg.wasm`,
@@ -66,13 +66,14 @@ async function initC2PA() {
       return c2paInstance;
     } catch (err) {
       console.error("[C2PA] Failed to initialize:", err);
-      c2paInitPromise = null;
+      c2paInitPromise = null; // allow retry
       throw new Error("C2PA engine initialization failed.");
     }
   })();
 
   return c2paInitPromise;
 }
+
 /**
  * Completely non-blocking modal opener
  * Modal appears instantly, C2PA loads in background
@@ -117,9 +118,10 @@ function closeVerificationModal() {
   modal.setAttribute('aria-hidden', 'true');
   document.body.style.overflow = '';
 }
+
 /**
  * Actual media verification — fully awaited & secure (with timeouts)
- * Uses modern Reader API (c2pa.read is gone / broken on current packages)
+ * Uses modern Reader API (c2pa.read is not available on current packages)
  */
 export async function verifyMediaProvenance(file) {
   // Allow silent preload-style calls (no file) without toast spam
@@ -132,7 +134,6 @@ export async function verifyMediaProvenance(file) {
 
     const c2pa = await withTimeout(initC2PA(), 12000, "C2PA WASM engine load timed out");
 
-    // Reader is exported from the same package as createC2pa
     const { Reader } = await import(
       "https://cdn.jsdelivr.net/npm/@contentauth/c2pa-web@0.14.3/+esm"
     );
@@ -147,7 +148,6 @@ export async function verifyMediaProvenance(file) {
     try {
       manifestStore = await reader.manifestStore();
     } finally {
-      // Always free WASM resources
       try { await reader.free(); } catch (_) {}
     }
 
@@ -190,6 +190,7 @@ export async function verifyMediaProvenance(file) {
 // Make available globally if needed
 window.openVerificationModal = openVerificationModal;
 window.closeVerificationModal = closeVerificationModal;
+
 /**
  * Pre-load C2PA WASM + worker so the first "Verify Media" click is fast.
  * Safe to call multiple times. Does not show toasts on failure.
