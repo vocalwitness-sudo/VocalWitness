@@ -4,16 +4,27 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#0a0f1c">
+  <meta name="description" content="VocalWitness Live Arena — real-time citizen stages for live witnessing, corroboration, and evidence-grade public record.">
+  <meta property="og:title" content="Live Arena • VocalWitness">
+  <meta property="og:description" content="Join live citizen stages. Raise your hand, react, seal evidence, and share rooms across platforms.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://vocalwitness.com/live-arena.html">
+  <meta name="twitter:card" content="summary_large_image">
   <title>Live Arena • VocalWitness</title>
   <link rel="manifest" href="/manifest.json">
   <link rel="icon" href="/logo.png" type="image/png">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="/style.css">
   <style>
-    body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1c; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: #0a0f1c;
+    }
     .glass {
       background: rgba(17, 24, 39, 0.85);
       backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
       border: 1px solid rgba(14, 165, 233, 0.18);
     }
     .stage-glow {
@@ -21,6 +32,36 @@
     }
     .speaking-ring {
       box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.7), 0 0 25px rgba(56, 189, 248, 0.4);
+      animation: pulse-ring 1.6s ease-in-out infinite;
+    }
+    @keyframes pulse-ring {
+      0%, 100% { box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.7), 0 0 25px rgba(56, 189, 248, 0.35); }
+      50% { box-shadow: 0 0 0 5px rgba(56, 189, 248, 0.45), 0 0 35px rgba(56, 189, 248, 0.55); }
+    }
+    .scrollbar-hide {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .scrollbar-hide::-webkit-scrollbar {
+      display: none;
+    }
+    /* Floating emoji reactions (spawned by JS) */
+    .vw-float-react {
+      position: fixed;
+      pointer-events: none;
+      z-index: 100;
+      font-size: 1.75rem;
+      transition: transform 1s ease-out, opacity 1s ease-out;
+      will-change: transform, opacity;
+    }
+    /* Push-to-talk active state helper */
+    #pushToTalkBtn.ptt-live {
+      box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.55), 0 0 40px rgba(239, 68, 68, 0.35);
+      transform: scale(1.08);
+    }
+    /* Safe area for notched phones when in room */
+    #activeRoomView {
+      padding-bottom: env(safe-area-inset-bottom, 0);
     }
   </style>
 </head>
@@ -31,13 +72,15 @@
 
     <!-- Header -->
     <header class="flex flex-col lg:flex-row lg:items-center justify-between gap-5 mb-8">
-      <div class="flex items-center gap-3">
-        <button id="backBtn" class="p-2.5 rounded-xl bg-zinc-800/80 hover:bg-zinc-700 transition">
+      <div class="flex items-center gap-3 min-w-0">
+        <button id="backBtn" type="button"
+                class="p-2.5 rounded-xl bg-zinc-800/80 hover:bg-zinc-700 transition shrink-0"
+                aria-label="Back">
           ←
         </button>
-        <div>
+        <div class="min-w-0">
           <h1 class="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-2">
-            <span class="text-3xl">🏟️</span>
+            <span class="text-3xl" aria-hidden="true">🏟️</span>
             <span class="bg-gradient-to-r from-sky-400 to-cyan-300 bg-clip-text text-transparent">Live Arena</span>
           </h1>
           <p class="text-sm text-zinc-400 mt-0.5">Real-time citizen stages • Evidence grade</p>
@@ -51,7 +94,7 @@
             <span id="verifiedCount">0</span><span class="text-zinc-600"> / 500</span>
           </div>
         </div>
-        <button id="createRoomBtn"
+        <button id="createRoomBtn" type="button"
                 class="rounded-2xl bg-gradient-to-r from-sky-500 to-cyan-500 px-5 py-3 font-semibold text-white shadow-lg shadow-sky-500/25 hover:brightness-110 active:scale-[0.98] transition">
           + Start a Room
         </button>
@@ -60,45 +103,87 @@
 
     <!-- Goal Progress -->
     <div class="glass rounded-2xl p-4 sm:p-5 mb-7">
-      <div class="flex justify-between text-sm mb-2.5">
+      <div class="flex justify-between text-sm mb-2.5 gap-3">
         <span class="text-zinc-300">Community Goal — Unlock global mega-stages</span>
-        <span id="progressText" class="text-sky-400 font-medium">Loading…</span>
+        <span id="progressText" class="text-sky-400 font-medium shrink-0">Loading…</span>
       </div>
       <div class="h-2 overflow-hidden rounded-full bg-zinc-800/80">
-        <div id="verifiedProgress" class="h-full bg-gradient-to-r from-sky-500 to-cyan-400 transition-all duration-700 ease-out" style="width: 0%"></div>
+        <div id="verifiedProgress"
+             class="h-full bg-gradient-to-r from-sky-500 to-cyan-400 transition-all duration-700 ease-out"
+             style="width: 0%"
+             role="progressbar"
+             aria-valuenow="0"
+             aria-valuemin="0"
+             aria-valuemax="500"></div>
       </div>
     </div>
 
     <!-- Filters + Title -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
       <h2 class="text-lg font-semibold text-zinc-100">Live Now</h2>
-      <div class="flex gap-2 overflow-x-auto pb-1 text-sm scrollbar-hide">
-        <button data-filter="all" class="filter-btn px-3.5 py-1.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/40 whitespace-nowrap">All</button>
-        <button data-filter="near" class="filter-btn px-3.5 py-1.5 rounded-full bg-zinc-800 text-zinc-400 hover:bg-zinc-700 whitespace-nowrap">Near Me</button>
-        <button data-filter="circle" class="filter-btn px-3.5 py-1.5 rounded-full bg-zinc-800 text-zinc-400 hover:bg-zinc-700 whitespace-nowrap">My Circle</button>
-        <button data-filter="traffic" class="filter-btn px-3.5 py-1.5 rounded-full bg-zinc-800 text-zinc-400 hover:bg-zinc-700 whitespace-nowrap">Traffic</button>
-        <button data-filter="safety" class="filter-btn px-3.5 py-1.5 rounded-full bg-zinc-800 text-zinc-400 hover:bg-zinc-700 whitespace-nowrap">Safety</button>
+      <div class="flex gap-2 overflow-x-auto pb-1 text-sm scrollbar-hide" role="toolbar" aria-label="Room filters">
+        <button type="button" data-filter="all"
+                class="filter-btn px-3.5 py-1.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/40 whitespace-nowrap">
+          All
+        </button>
+        <button type="button" data-filter="near"
+                class="filter-btn px-3.5 py-1.5 rounded-full bg-zinc-800 text-zinc-400 hover:bg-zinc-700 whitespace-nowrap">
+          Near Me
+        </button>
+        <button type="button" data-filter="circle"
+                class="filter-btn px-3.5 py-1.5 rounded-full bg-zinc-800 text-zinc-400 hover:bg-zinc-700 whitespace-nowrap">
+          My Circle
+        </button>
+        <button type="button" data-filter="traffic"
+                class="filter-btn px-3.5 py-1.5 rounded-full bg-zinc-800 text-zinc-400 hover:bg-zinc-700 whitespace-nowrap">
+          Traffic
+        </button>
+        <button type="button" data-filter="safety"
+                class="filter-btn px-3.5 py-1.5 rounded-full bg-zinc-800 text-zinc-400 hover:bg-zinc-700 whitespace-nowrap">
+          Safety
+        </button>
+        <button type="button" data-filter="protest"
+                class="filter-btn px-3.5 py-1.5 rounded-full bg-zinc-800 text-zinc-400 hover:bg-zinc-700 whitespace-nowrap">
+          Protest
+        </button>
+        <button type="button" data-filter="weather"
+                class="filter-btn px-3.5 py-1.5 rounded-full bg-zinc-800 text-zinc-400 hover:bg-zinc-700 whitespace-nowrap">
+          Weather
+        </button>
+        <button type="button" data-filter="election"
+                class="filter-btn px-3.5 py-1.5 rounded-full bg-zinc-800 text-zinc-400 hover:bg-zinc-700 whitespace-nowrap">
+          Election
+        </button>
+        <button type="button" data-filter="general"
+                class="filter-btn px-3.5 py-1.5 rounded-full bg-zinc-800 text-zinc-400 hover:bg-zinc-700 whitespace-nowrap">
+          General
+        </button>
       </div>
     </div>
 
-    <!-- Rooms Grid -->
+    <!-- Rooms Grid (filled by JS) -->
     <div id="liveRoomsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       <div class="col-span-full py-24 text-center text-zinc-500">
-        <div class="text-6xl mb-4 opacity-60">🌍</div>
+        <div class="text-6xl mb-4 opacity-60" aria-hidden="true">🌍</div>
         <p class="text-lg font-medium text-zinc-400">Loading live rooms…</p>
       </div>
     </div>
   </div>
 
-  <!-- ===================== ACTIVE ROOM (injected) ===================== -->
-  <div id="activeRoomView" class="hidden"></div>
+  <!-- ===================== ACTIVE ROOM (injected by live-arena.js) ===================== -->
+  <div id="activeRoomView" class="hidden" aria-live="polite"></div>
 
-  <script type="module" src="/js/live-arena.js"></script>
+  <!-- Boot -->
   <script type="module">
+    import { initLiveArena } from '/js/live-arena.js?v=20261012';
+
     document.getElementById('backBtn')?.addEventListener('click', () => {
       if (window.history.length > 1) window.history.back();
       else window.location.href = '/';
     });
+
+    // Start engine (lobby list, filters, ?room= deep link)
+    initLiveArena();
   </script>
 </body>
 </html>
