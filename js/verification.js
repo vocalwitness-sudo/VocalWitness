@@ -49,31 +49,30 @@ async function initC2PA() {
 
   c2paInitPromise = (async () => {
     try {
-      const VERSION = "0.14.3"; // keep in sync with the import below
+      const VERSION = "0.14.3";
       const { createC2pa } = await import(
         `https://cdn.jsdelivr.net/npm/@contentauth/c2pa-web@${VERSION}/+esm`
       );
 
+      // Same-origin worker + wasm (required — cross-origin Workers are blocked)
+      const origin = window.location.origin; // https://vocalwitness.com
+
       c2paInstance = await createC2pa({
-        wasmSrc: `https://cdn.jsdelivr.net/npm/@contentauth/c2pa-web@${VERSION}/dist/resources/c2pa_bg.wasm`,
-        // MUST be a URL instance, not a string
-        workerSrc: new URL(
-          `https://cdn.jsdelivr.net/npm/@contentauth/c2pa-web@${VERSION}/dist/c2pa_worker.js`
-        ),
+        wasmSrc: `${origin}/c2pa/c2pa_bg.wasm`,
+        workerSrc: new URL(`${origin}/c2pa/c2pa_worker.js`),
       });
 
       console.log("[C2PA] Engine initialized successfully");
       return c2paInstance;
     } catch (err) {
       console.error("[C2PA] Failed to initialize:", err);
-      c2paInitPromise = null; // allow retry
+      c2paInitPromise = null;
       throw new Error("C2PA engine initialization failed.");
     }
   })();
 
   return c2paInitPromise;
 }
-
 /**
  * Completely non-blocking modal opener
  * Modal appears instantly, C2PA loads in background
