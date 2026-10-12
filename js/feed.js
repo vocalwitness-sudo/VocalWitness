@@ -28,6 +28,7 @@ import {
     getCorroborationScoreFromDoc,
     renderCorroborationUI  
 } from './corroboration.js';
+import { translateTestimony } from './ai-services.js';
 
 let activeFeedListener = null;
 let allPostsCache = [];
@@ -464,6 +465,7 @@ function applySearchAndFilter(container) {
 
     renderFilteredPosts(filtered, container);
 }
+window.applySearchAndFilter = applySearchAndFilter;
 
 function renderFilteredPosts(posts, container) {
     const feedContainer = container || 
