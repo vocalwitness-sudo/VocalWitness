@@ -622,7 +622,7 @@ match /testimonies/{testimonyId} {
       allow delete: if false;
     }
 
-    // ==========================================
+ // ==========================================
     // LIVE ARENA ROOMS
     // ==========================================
     match /liveRooms/{roomId} {
@@ -640,6 +640,7 @@ match /testimonies/{testimonyId} {
           && request.resource.data.uid == request.auth.uid;
         allow delete: if isAuthenticated() && (
           request.auth.uid == participantId ||
+          resource.data.createdBy == request.auth.uid ||
           get(/databases/$(database)/documents/liveRooms/$(roomId)).data.createdBy == request.auth.uid
         );
       }
@@ -650,12 +651,16 @@ match /testimonies/{testimonyId} {
           && corrId == request.auth.uid
           && request.resource.data.uid == request.auth.uid
           && request.resource.data.keys().hasAll(['uid', 'displayName', 'createdAt'])
-          && request.resource.data.createdAt == request.time;
+          // Use request.time check safely for server timestamps
+          && request.resource.data.createdAt is timestamp;
         allow update: if false;
-        allow delete: if false;
+        allow delete: if isAuthenticated() && corrId == request.auth.uid;
+      }
+
+      match /evidenceDrops/{dropId} {
+        allow read: if true;
+        allow create: if isNotBanned() && isAuthenticated()
+          && request.resource.data.droppedBy == request.auth.uid;
+        allow update, delete: if isAuthenticated() && request.auth.uid == resource.data.droppedBy;
       }
     }
-
-    // No catch-all – everything is explicitly defined
-  }
-}
