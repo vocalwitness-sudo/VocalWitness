@@ -120,6 +120,7 @@ function closeVerificationModal() {
 }
 /**
  * Actual media verification — fully awaited & secure (with timeouts)
+ * Uses modern Reader API (c2pa.read is gone / broken on current packages)
  */
 export async function verifyMediaProvenance(file) {
   // Allow silent preload-style calls (no file) without toast spam
@@ -131,9 +132,27 @@ export async function verifyMediaProvenance(file) {
     showToast("🔎 Inspecting C2PA Content Credentials...", "info");
 
     const c2pa = await withTimeout(initC2PA(), 12000, "C2PA WASM engine load timed out");
-    const result = await withTimeout(c2pa.read(file), 15000, "C2PA media parsing timed out");
 
-    if (!result || !result.manifestStore) {
+    // Reader is exported from the same package as createC2pa
+    const { Reader } = await import(
+      "https://cdn.jsdelivr.net/npm/@contentauth/c2pa-web@0.14.3/+esm"
+    );
+
+    const reader = await withTimeout(
+      Reader.fromBlob(c2pa, file.type || undefined, file),
+      15000,
+      "C2PA media parsing timed out"
+    );
+
+    let manifestStore = null;
+    try {
+      manifestStore = await reader.manifestStore();
+    } finally {
+      // Always free WASM resources
+      try { await reader.free(); } catch (_) {}
+    }
+
+    if (!manifestStore) {
       showToast("ℹ️ No embedded C2PA credentials found in file", "info");
       return {
         hasC2PA: false,
@@ -142,8 +161,8 @@ export async function verifyMediaProvenance(file) {
       };
     }
 
-    const activeManifest = result.manifestStore.activeManifest;
-    const validationErrors = result.manifestStore.validationStatus || [];
+    const activeManifest = manifestStore.activeManifest;
+    const validationErrors = manifestStore.validationStatus || [];
     const isValid = validationErrors.length === 0;
 
     if (isValid) {
@@ -172,7 +191,6 @@ export async function verifyMediaProvenance(file) {
 // Make available globally if needed
 window.openVerificationModal = openVerificationModal;
 window.closeVerificationModal = closeVerificationModal;
-
 /**
  * Pre-load C2PA WASM + worker so the first "Verify Media" click is fast.
  * Safe to call multiple times. Does not show toasts on failure.
