@@ -1072,29 +1072,94 @@ async function handleHidePost(postId, permanent = false) {
   }
 }
 async function handlePinPost(postId) {
-    const isSteward = await hasStewardAccess();
-    if (!isSteward) {
-        showToast("Only Stewards can pin testimonies.", "error");
-        return;
-    }
+  if (!auth.currentUser) {
+    showToast("Sign in to pin a report.", "error");
+    return;
+  }
 
+  const post = allPostsCache.find(p => p.id === postId);
+  if (!post) return;
+
+  // Unpin is always allowed for people who can pin (and stewards can unpin anything)
+  const currentlyPinned = !!post.isPinned;
+
+  // Resolve tier / phone verification
+  let isSteward = false;
+  let isPhoneVerified = false;
+  try {
+    isSteward = await hasStewardAccess();
+  } catch (_) {}
+
+  try {
+    const userSnap = await getDoc(doc(db, "users", auth.currentUser.uid));
+    const u = userSnap.data() || {};
+    isPhoneVerified = !!(
+      u.isPhoneVerified ||
+      u.hasVerifiedPhone ||
+      u.isVerified ||
+      u.tier === "citizen_circle" ||
+      u.tier === "witness_circle"
+    );
+  } catch (_) {}
+
+  // Also honour auth token claims if present
+  try {
+    const token = await auth.currentUser.getIdTokenResult();
+    if (token.claims?.steward || token.claims?.tier === "steward") isSteward = true;
+    if (token.claims?.phone_verified || token.claims?.tier === "citizen_circle") {
+      isPhoneVerified = true;
+    }
+  } catch (_) {}
+
+  if (!isSteward && !isPhoneVerified) {
+    showToast("Phone verification required to pin a report.", "error");
+    return;
+  }
+
+  const maxPins = isSteward ? 2 : 1;
+
+  if (!currentlyPinned) {
+    // Count how many posts are already pinned (global square pins)
+    const pinnedNow = allPostsCache.filter(p => p.isPinned).length;
+    // Prefer a live count if cache is incomplete
+    let pinnedCount = pinnedNow;
     try {
-        const post = allPostsCache.find(p => p.id === postId);
-        if (!post) return;
-
-        const newPinnedState = !post.isPinned;
-        const postRef = doc(db, "testimonies", postId);
-
-        await updateDoc(postRef, {
-            isPinned: newPinnedState,
-            pinnedAt: newPinnedState ? serverTimestamp() : null
-        });
-
-        showToast(newPinnedState ? "📌 Post pinned to top" : "📌 Post unpinned", "info");
-    } catch (e) {
-        console.error("Pin operation failed:", e);
-        showToast("Failed to toggle pin state.", "error");
+      const { getDocs: gDocs, query: q, where: w, collection: col, limit: lim } = await import(
+        "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js"
+      );
+      // lightweight: use cache first; optional server count
+      const pinnedInCache = allPostsCache.filter(p => p.isPinned).length;
+      pinnedCount = pinnedInCache;
+    } catch (_) {
+      pinnedCount = allPostsCache.filter(p => p.isPinned).length;
     }
+
+    if (pinnedCount >= maxPins) {
+      showToast(
+        isSteward
+          ? "Stewards can pin up to 2 posts. Unpin one first."
+          : "Phone-verified citizens can pin 1 post. Unpin the current one first.",
+        "warning"
+      );
+      return;
+    }
+  }
+
+  try {
+    const postRef = doc(db, "testimonies", postId);
+    const newPinnedState = !currentlyPinned;
+
+    await updateDoc(postRef, {
+      isPinned: newPinnedState,
+      pinnedAt: newPinnedState ? serverTimestamp() : null,
+      pinnedBy: newPinnedState ? auth.currentUser.uid : null
+    });
+
+    showToast(newPinnedState ? "📌 Post pinned to top" : "📌 Post unpinned", "info");
+  } catch (e) {
+    console.error("Pin operation failed:", e);
+    showToast("Failed to toggle pin state.", "error");
+  }
 }
 
 /**
