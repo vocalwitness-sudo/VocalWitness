@@ -161,6 +161,17 @@ service cloud.firestore {
       ]);
     }
 
+    // Posts: authors cannot touch moderation / ownership / visibility fields
+    function isSafeAuthorPostUpdate() {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+        'moderationStatus', 'toxicityScore', 'autoFlaggedReasons',
+        'isSynthetic', 'syntheticScore', 'authorTier',
+        'reviewedBy', 'reviewedAt', 'reviewNotes',
+        'c2paStatus', 'c2paManifest',
+        'authorId', 'visibilityDoor', 'authorDoorPrivacy'
+      ]);
+    }
+
     function canCommentOnPost(postId) {
       let post = get(/databases/$(database)/documents/posts/$(postId)).data;
       return post.authorDoorPrivacy == 'open'
@@ -255,89 +266,75 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-   // ==========================================
-// MAIN TESTIMONIES
-// ==========================================
-match /testimonies/{testimonyId} {
+    // ==========================================
+    // MAIN TESTIMONIES
+    // ==========================================
+    match /testimonies/{testimonyId} {
+      allow read: if true;
+      allow create: if isNotBanned()
+        && isNotThrottled()
+        && request.resource.data.authorId == request.auth.uid
+        && request.resource.data.keys().hasAll(['content', 'createdAt', 'authorId'])
+        && request.resource.data.content is string
+        && request.resource.data.content.size() > 0
+        && request.resource.data.content.size() <= 4000
+        && (request.resource.data.createdAt is timestamp || request.resource.data.createdAt == request.time)
+        && (
+             ('channel' in request.resource.data && request.resource.data.channel is string
+             && request.resource.data.channel in [
+                  'citizen-talk', 'witness-voice',
+                  'citizen-circle', 'witness-circle',
+                  'citizen_talk', 'witness_voice'
+                ])
+             ||
+             ('feedVisibility' in request.resource.data && request.resource.data.feedVisibility is string
+             && request.resource.data.feedVisibility in [
+                  'citizen-talk', 'witness-voice',
+                  'citizen-circle', 'witness-circle',
+                  'citizen_talk', 'witness_voice'
+                ])
+           )
+        && (!('mediaUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.mediaUrl))
+        && (!('mediaUrls' in request.resource.data) || request.resource.data.mediaUrls is list);
 
-  // READ: public posts for everyone, trusted_circle only for author + their trusted list
-  allow read: if 
-    resource.data.get('visibility', 'public') == 'public'
-    || resource.data.authorId == request.auth.uid
-    || (
-         resource.data.visibility == 'trusted_circle'
-         && request.auth != null
-         && request.auth.uid in get(/databases/$(database)/documents/users/$(resource.data.authorId)).data.get('trusted', [])
-       );
+      allow update: if isModerator()
+        || (
+             isNotBanned()
+             && resource.data.authorId == request.auth.uid
+             && isSafeAuthorTestimonyUpdate()
+           )
+        || (
+             isNotBanned()
+             && request.resource.data.diff(resource.data).affectedKeys()
+                  .hasOnly([
+                    'corroborationCount', 'corroborationScore', 'lastCorroboratedAt',
+                    'reactions', 'commentsCount', 'updatedAt'
+                  ])
+           );
+      allow delete: if false;
 
-  allow create: if isNotBanned()
-    && isNotThrottled()
-    && request.resource.data.authorId == request.auth.uid
-    && request.resource.data.keys().hasAll(['content', 'createdAt', 'authorId'])
-    && request.resource.data.content is string
-    && request.resource.data.content.size() > 0
-    && request.resource.data.content.size() <= 4000
-    && (request.resource.data.createdAt is timestamp || request.resource.data.createdAt == request.time)
-    && (
-         ('channel' in request.resource.data && request.resource.data.channel is string
-         && request.resource.data.channel in [
-              'citizen-talk', 'witness-voice',
-              'citizen-circle', 'witness-circle',
-              'citizen_talk', 'witness_voice'
-            ])
-         ||
-         ('feedVisibility' in request.resource.data && request.resource.data.feedVisibility is string
-         && request.resource.data.feedVisibility in [
-              'citizen-talk', 'witness-voice',
-              'citizen-circle', 'witness-circle',
-              'citizen_talk', 'witness_voice'
-            ])
-       )
-    && (!('mediaUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.mediaUrl))
-    && (!('mediaUrls' in request.resource.data) || request.resource.data.mediaUrls is list)
-    // NEW: allow visibility field
-    && (!('visibility' in request.resource.data) 
-        || request.resource.data.visibility in ['public', 'trusted_circle']);
-
-  allow update: if isModerator()
-    || (
-         isNotBanned()
-         && resource.data.authorId == request.auth.uid
-         && isSafeAuthorTestimonyUpdate()
-       )
-    || (
-         isNotBanned()
-         && request.resource.data.diff(resource.data).affectedKeys()
-              .hasOnly([
-                'corroborationCount', 'corroborationScore', 'lastCorroboratedAt',
-                'reactions', 'commentsCount', 'updatedAt'
-              ])
-       );
-
-  allow delete: if false;
-
-  match /comments/{commentId} {
-    allow read: if true;
-    allow create: if isNotBanned()
-      && isAuthenticated()
-      && request.resource.data.authorId == request.auth.uid
-      && request.resource.data.keys().hasAll(['content', 'authorId', 'createdAt'])
-      && request.resource.data.content is string
-      && request.resource.data.content.size() > 0
-      && request.resource.data.content.size() <= 1200
-      && (request.resource.data.createdAt is timestamp || request.resource.data.createdAt == request.time);
-    allow update: if isNotBanned() && isAuthenticated() && (
-      (resource.data.authorId == request.auth.uid
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['content', 'updatedAt']))
-      ||
-      (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])
-        && request.resource.data.likes is number
-        && request.resource.data.likes == resource.data.get('likes', 0) + 1)
-    );
-    allow delete: if isAuthenticated()
-      && (resource.data.authorId == request.auth.uid || isModerator());
-  }
-}
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if isNotBanned()
+          && isAuthenticated()
+          && request.resource.data.authorId == request.auth.uid
+          && request.resource.data.keys().hasAll(['content', 'authorId', 'createdAt'])
+          && request.resource.data.content is string
+          && request.resource.data.content.size() > 0
+          && request.resource.data.content.size() <= 1200
+          && (request.resource.data.createdAt is timestamp || request.resource.data.createdAt == request.time);
+        allow update: if isNotBanned() && isAuthenticated() && (
+          (resource.data.authorId == request.auth.uid
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['content', 'updatedAt']))
+          ||
+          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])
+            && request.resource.data.likes is number
+            && request.resource.data.likes == resource.data.get('likes', 0) + 1)
+        );
+        allow delete: if isAuthenticated()
+          && (resource.data.authorId == request.auth.uid || isModerator());
+      }
+    }
 
     // ==========================================
     // GROUPS
@@ -351,13 +348,17 @@ match /testimonies/{testimonyId} {
         && request.resource.data.name.size() > 0
         && request.resource.data.name.size() <= 60
         && request.resource.data.members is list
-        && request.resource.data.memberCount is number;
+        && request.resource.data.memberCount is number
+        && request.resource.data.memberCount == request.resource.data.members.size();
       allow update: if isNotBanned() && (
         resource.data.creatorId == request.auth.uid
         || request.auth.uid in resource.data.get('admins', [])
         || (
           request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['members', 'memberCount', 'pendingMembers'])
+          && request.resource.data.members is list
+          && request.resource.data.memberCount is number
+          && request.resource.data.memberCount == request.resource.data.members.size()
           && (
             (request.auth.uid in request.resource.data.members
               && !(request.auth.uid in resource.data.members))
@@ -479,7 +480,9 @@ match /testimonies/{testimonyId} {
         && (request.resource.data.createdAt is timestamp || request.resource.data.createdAt == request.time)
         && (!('mediaUrl' in request.resource.data) || isValidMediaUrl(request.resource.data.mediaUrl));
       allow update: if isModerator() || (
-        isNotBanned() && resource.data.authorId == request.auth.uid
+        isNotBanned()
+        && resource.data.authorId == request.auth.uid
+        && isSafeAuthorPostUpdate()
       );
       allow delete: if false;
 
@@ -515,11 +518,14 @@ match /testimonies/{testimonyId} {
 
     match /audit_logs/{auditId} {
       allow read: if isAuthenticated();
-      allow create: if (
-          ('actionType' in request.resource.data && request.resource.data.actionType is string) ||
-          ('action' in request.resource.data && request.resource.data.action is string)
-        )
-        && request.resource.data.clientTimestamp is number;
+      allow create: if isAuthenticated()
+        && request.resource.data.keys().hasAll(['actionType', 'clientTimestamp', 'uid'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.actionType is string
+        && request.resource.data.actionType.size() > 0
+        && request.resource.data.actionType.size() <= 64
+        && request.resource.data.clientTimestamp is number
+        && (!('action' in request.resource.data) || request.resource.data.action is string);
       allow update, delete: if false;
     }
 
@@ -622,7 +628,7 @@ match /testimonies/{testimonyId} {
       allow delete: if false;
     }
 
- // ==========================================
+    // ==========================================
     // LIVE ARENA ROOMS
     // ==========================================
     match /liveRooms/{roomId} {
@@ -640,7 +646,6 @@ match /testimonies/{testimonyId} {
           && request.resource.data.uid == request.auth.uid;
         allow delete: if isAuthenticated() && (
           request.auth.uid == participantId ||
-          resource.data.createdBy == request.auth.uid ||
           get(/databases/$(database)/documents/liveRooms/$(roomId)).data.createdBy == request.auth.uid
         );
       }
@@ -651,16 +656,12 @@ match /testimonies/{testimonyId} {
           && corrId == request.auth.uid
           && request.resource.data.uid == request.auth.uid
           && request.resource.data.keys().hasAll(['uid', 'displayName', 'createdAt'])
-          // Use request.time check safely for server timestamps
-          && request.resource.data.createdAt is timestamp;
+          && request.resource.data.createdAt == request.time;
         allow update: if false;
-        allow delete: if isAuthenticated() && corrId == request.auth.uid;
-      }
-
-      match /evidenceDrops/{dropId} {
-        allow read: if true;
-        allow create: if isNotBanned() && isAuthenticated()
-          && request.resource.data.droppedBy == request.auth.uid;
-        allow update, delete: if isAuthenticated() && request.auth.uid == resource.data.droppedBy;
+        allow delete: if false;
       }
     }
+
+    // No catch-all – everything is explicitly defined
+  }
+}
