@@ -26,6 +26,7 @@
       { "source": "/verify", "destination": "/verify.html" },
       { "source": "/transparency", "destination": "/transparency.html" },
       { "source": "/legal", "destination": "/legal.html" },
+      { "source": "/live-arena", "destination": "/live-arena.html" },
       { "source": "/p/**", "function": "ogPost" },
       { "source": "/share/**", "function": "ogPost" },
       { "source": "/profile", "destination": "/profile.html" }
