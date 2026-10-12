@@ -628,25 +628,55 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // ==========================================
+       // ==========================================
     // LIVE ARENA ROOMS
     // ==========================================
     match /liveRooms/{roomId} {
       allow read: if true;
+
       allow create: if isNotBanned() && isAuthenticated()
-        && request.resource.data.createdBy == request.auth.uid;
-      allow update, delete: if isNotBanned() && isAuthenticated() && (
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.title is string
+        && request.resource.data.title.size() >= 6
+        && request.resource.data.title.size() <= 120;
+
+      // Host/moderator: full update/delete
+      // Anyone signed-in (not banned): limited counter / reaction updates only
+      allow update: if isNotBanned() && isAuthenticated() && (
+        resource.data.createdBy == request.auth.uid
+        || isModerator()
+        || request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly([
+               'participantCount',
+               'speakingCount',
+               'reactions',
+               'lastActivityAt'
+             ])
+      );
+
+      allow delete: if isNotBanned() && isAuthenticated() && (
         resource.data.createdBy == request.auth.uid || isModerator()
       );
 
       match /participants/{participantId} {
         allow read: if true;
+
+        // Join / update own row
         allow create, update: if isNotBanned() && isAuthenticated()
-          && request.auth.uid == participantId
-          && request.resource.data.uid == request.auth.uid;
+          && (
+            // Self
+            (request.auth.uid == participantId
+              && request.resource.data.uid == request.auth.uid)
+            ||
+            // Host may mute / lower hand / soft-promote others
+            (get(/databases/$(database)/documents/liveRooms/$(roomId)).data.createdBy == request.auth.uid
+              && request.resource.data.uid == participantId)
+          );
+
         allow delete: if isAuthenticated() && (
-          request.auth.uid == participantId ||
-          get(/databases/$(database)/documents/liveRooms/$(roomId)).data.createdBy == request.auth.uid
+          request.auth.uid == participantId
+          || get(/databases/$(database)/documents/liveRooms/$(roomId)).data.createdBy == request.auth.uid
+          || isModerator()
         );
       }
 
@@ -657,11 +687,32 @@ service cloud.firestore {
           && request.resource.data.uid == request.auth.uid
           && request.resource.data.keys().hasAll(['uid', 'displayName', 'createdAt'])
           && request.resource.data.createdAt == request.time;
-        allow update: if false;
-        allow delete: if false;
+        allow update, delete: if false;
+      }
+
+      match /sealedSegments/{segmentId} {
+        allow read: if true;
+        allow create: if isNotBanned() && isAuthenticated()
+          && request.resource.data.sealedBy == request.auth.uid
+          && request.resource.data.keys().hasAll(['sealedBy', 'displayName', 'sealedAt']);
+        allow update, delete: if isModerator();
+      }
+
+      match /evidenceDrops/{dropId} {
+        allow read: if true;
+        allow create: if isNotBanned() && isAuthenticated()
+          && request.resource.data.droppedBy == request.auth.uid;
+        allow update, delete: if isModerator();
+      }
+
+      match /reports/{reportId} {
+        allow read: if isModerator() || isAdmin();
+        allow create: if isNotBanned() && isAuthenticated()
+          && request.resource.data.reportedBy == request.auth.uid
+          && request.resource.data.reason is string
+          && request.resource.data.reason.size() > 0
+          && request.resource.data.reason.size() <= 500
+          && request.resource.data.createdAt == request.time;
+        allow update, delete: if isModerator() || isAdmin();
       }
     }
-
-    // No catch-all – everything is explicitly defined
-  }
-}
