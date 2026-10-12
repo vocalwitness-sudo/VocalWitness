@@ -552,7 +552,7 @@ export const unbanUser = onCall(
 // MODERATED DELETE & TOXICITY HELPERS
 // ======================================================
 
-exports.moderatedDelete = onCall(
+export.moderatedDelete = onCall(
   { cors: allowedOrigins },
   async (request) => {
     if (!request.auth) throw new HttpsError("unauthenticated", "Sign in required.");
@@ -657,7 +657,7 @@ function gentleModerationCheck(content = "") {
   };
 }
 
-exports.analyzeToxicity = onRequest(
+export.analyzeToxicity = onRequest(
   { secrets: [perspectiveApiKey] },
   (req, res) => {
     corsHandler(req, res, async () => {
@@ -674,7 +674,7 @@ exports.analyzeToxicity = onRequest(
 );
 
 // 1. Post Content Moderation
-exports.moderatePostContent = onCall(
+export.moderatePostContent = onCall(
   {
     cors: allowedOrigins,
     secrets: [geminiApiKey]
@@ -746,7 +746,7 @@ exports.moderatePostContent = onCall(
 );
 
 // 2. Multi-Language Feed Translation
-exports.translateTestimony = onCall(
+export.translateTestimony = onCall(
   { cors: allowedOrigins, secrets: [geminiApiKey] },
   async (request) => {
     const { text, targetLanguage } = request.data || {};
@@ -767,7 +767,7 @@ exports.translateTestimony = onCall(
 );
 
 // 3. Audio-to-Text Witness Transcriptions (Base64 Audio Input)
-exports.transcribeAudioWitness = onCall(
+export.transcribeAudioWitness = onCall(
   { cors: allowedOrigins, secrets: [geminiApiKey] },
   async (request) => {
     const { audioBase64, mimeType } = request.data || {};
@@ -796,7 +796,7 @@ exports.transcribeAudioWitness = onCall(
 );
 
 // 4. Compact Report Summarization
-exports.summarizeReport = onCall(
+export.summarizeReport = onCall(
   { cors: allowedOrigins, secrets: [geminiApiKey] },
   async (request) => {
     const { text } = request.data || {};
@@ -824,7 +824,7 @@ const vKey = JSON.parse(
   fs.readFileSync(path.join(__dirname, "verification_key.json"), "utf8")
 );
 
-exports.verifyAndElevateZKProof = onCall(
+export.verifyAndElevateZKProof = onCall(
   { cors: allowedOrigins },
   async (request) => {
     if (!request.auth) {
@@ -881,7 +881,7 @@ exports.verifyAndElevateZKProof = onCall(
   }
 );
 
-exports.detectSyntheticMedia = onCall(
+export.detectSyntheticMedia = onCall(
   {
     cors: allowedOrigins,
     secrets: [geminiApiKey],
@@ -955,7 +955,7 @@ exports.detectSyntheticMedia = onCall(
   }
 );
 
-exports.checkContentConsistency = onCall(
+export.checkContentConsistency = onCall(
   {
     cors: allowedOrigins,
     secrets: [geminiApiKey]
@@ -1018,7 +1018,7 @@ exports.checkContentConsistency = onCall(
   }
 );
 
-exports.suggestCorroborations = onCall(
+export.suggestCorroborations = onCall(
   {
     cors: allowedOrigins
   },
@@ -1046,7 +1046,7 @@ exports.suggestCorroborations = onCall(
  * Toxicity scoring specifically for comments / replies
  * (Keep primary reports under the existing moderatePostContent + Perspective flow)
  */
-exports.scoreToxicity = onCall(
+export.scoreToxicity = onCall(
   {
     cors: allowedOrigins,
     secrets: [perspectiveApiKey]
@@ -1081,7 +1081,7 @@ exports.scoreToxicity = onCall(
 // ======================================================
 // 6. PAYSTACK
 // ======================================================
-exports.initializePaystack = onCall(
+export.initializePaystack = onCall(
   {
     cors: allowedOrigins,
     secrets: [paystackSecretKey]
@@ -1117,7 +1117,7 @@ exports.initializePaystack = onCall(
   }
 );
 
-exports.paystackWebhook = onRequest(
+export.paystackWebhook = onRequest(
   { cors: allowedOrigins, secrets: [paystackSecretKey] },
   async (req, res) => {
     if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
@@ -1180,7 +1180,7 @@ exports.paystackWebhook = onRequest(
 //// ======================================================
 // 10. EVIDENCE PACK — PLATFORM TIMESTAMP
 // ======================================================
-exports.requestTimestamp = onCall(
+export.requestTimestamp = onCall(
   { cors: allowedOrigins },
   async (request) => {
     if (!request.auth) {
@@ -1465,7 +1465,7 @@ async function getPathForLeaf(leafIndex, commitment) {
 /**
  * Step 1: Poseidon commitment + Merkle leaf insert
  */
-exports.registerZKCommitment = onCall(
+export.registerZKCommitment = onCall(
   { cors: allowedOrigins, timeoutSeconds: 60, memory: "512MiB" },
   async (request) => {
     if (!request.auth) {
@@ -1532,7 +1532,7 @@ exports.registerZKCommitment = onCall(
 /**
  * Step 2: Real Groth16 prove + verify, then elevate
  */
-exports.generateZKProof = onCall(
+export.generateZKProof = onCall(
   {
     cors: allowedOrigins,
     timeoutSeconds: 180,
@@ -1888,7 +1888,7 @@ export const castDaoVote = onCall(
  * Until then: server verifies registered commitment + auth, then writes zkVerified.
  * Client elevateWithZKProof expects success + proofType SNARK_GROTH16_SERVER.
  */
-exports.generateZKProof = onCall(
+export.generateZKProof = onCall(
   {
     cors: allowedOrigins,
     timeoutSeconds: 120,
@@ -2023,7 +2023,7 @@ const s3 = new S3Client({
   },
 });
 
-exports.getPresignedUrl = onCall(
+export.getPresignedUrl = onCall(
   {
     cors: ["https://vocalwitness.com", "https://vocalwitness-3affa.web.app"],
     consumeAppCheckToken: true, // Enforces Firebase App Check automatically
@@ -2089,7 +2089,7 @@ if (!admin.apps.length) {
 }
 const db = admin.firestore();
 
-exports.verifyAndTimestampMedia = onObjectFinalized(
+export.verifyAndTimestampMedia = onObjectFinalized(
   {
     memory: "512MiB",
     timeoutSeconds: 120
