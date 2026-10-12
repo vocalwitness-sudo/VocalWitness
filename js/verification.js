@@ -41,7 +41,7 @@ async function computeSHA256(message) {
 
 /**
  * Initialize C2PA (safe to call multiple times)
- * Uses modern version + correct paths
+ * Production-ready: correct workerSrc type + modern Reader API
  */
 async function initC2PA() {
   if (c2paInstance) return c2paInstance;
@@ -49,14 +49,17 @@ async function initC2PA() {
 
   c2paInitPromise = (async () => {
     try {
-      // Modern version (recommended)
+      const VERSION = "0.14.3"; // keep in sync with the import below
       const { createC2pa } = await import(
-        "https://cdn.jsdelivr.net/npm/@contentauth/c2pa-web@0.14.3/+esm"
+        `https://cdn.jsdelivr.net/npm/@contentauth/c2pa-web@${VERSION}/+esm`
       );
 
       c2paInstance = await createC2pa({
-        wasmSrc: "https://cdn.jsdelivr.net/npm/@contentauth/c2pa-web@0.14.3/dist/resources/c2pa_bg.wasm",
-        workerSrc: "https://cdn.jsdelivr.net/npm/@contentauth/c2pa-web@0.14.3/dist/c2pa_worker.js",
+        wasmSrc: `https://cdn.jsdelivr.net/npm/@contentauth/c2pa-web@${VERSION}/dist/resources/c2pa_bg.wasm`,
+        // MUST be a URL instance, not a string
+        workerSrc: new URL(
+          `https://cdn.jsdelivr.net/npm/@contentauth/c2pa-web@${VERSION}/dist/c2pa_worker.js`
+        ),
       });
 
       console.log("[C2PA] Engine initialized successfully");
