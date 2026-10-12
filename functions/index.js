@@ -5,8 +5,10 @@
 import functions from "firebase-functions";
 import { onRequest, onCall, HttpsError } from "firebase-functions/v2/https";
 import { onDocumentCreated, onDocumentWritten } from "firebase-functions/v2/firestore";
-import { GoogleGenAI, Type } from "@google/genai";
+import { logger } from "firebase-functions/logger";
+import { setGlobalOptions } from "firebase-functions/v2";
 import { defineSecret } from "firebase-functions/params";
+import { GoogleGenAI, Type } from "@google/genai";
 import { CloudTasksClient } from "@google-cloud/tasks";
 import admin from "firebase-admin";
 import paystackApi from "paystack-api";
@@ -17,13 +19,13 @@ import crypto from "crypto";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import axios from "axios";
-import { setGlobalOptions } from "firebase-functions/v2";
 import corsPackage from "cors";
 import { buildPoseidon } from "circomlibjs";
-import { AccessToken } from "livekit-server-sdk";   
+import { AccessToken } from "livekit-server-sdk";
+import { fileURLToPath } from "url";
 
-// Get current directory equivalent in ES modules
-const __filename = path.fileURLToPath(import.meta.url);
+// ESM __dirname equivalent
+const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 setGlobalOptions({ region: "us-central1" });
@@ -161,7 +163,6 @@ export const getUploadUrl = onRequest(
       }
 
       try {
-        // 1. Enforce App Check Header Verification
         const appCheckToken = req.headers["x-firebase-appcheck"];
         if (!appCheckToken) {
           return res.status(401).json({ error: "Unauthorized: Missing App Check token." });
@@ -173,7 +174,6 @@ export const getUploadUrl = onRequest(
           return res.status(403).json({ error: "Forbidden: Invalid App Check token." });
         }
 
-        // 2. Verify Firebase Auth ID Token
         const authHeader = req.headers.authorization;
         if (!authHeader?.startsWith("Bearer ")) {
           return res.status(401).json({ error: "Unauthorized. ID token required." });
@@ -183,13 +183,11 @@ export const getUploadUrl = onRequest(
         const decodedToken = await admin.auth().verifyIdToken(idToken);
         const uid = decodedToken.uid;
 
-        // 3. Validate Request Body
         const { fileName, fileType } = req.body || {};
         if (!fileName || typeof fileName !== "string" || !fileType || typeof fileType !== "string") {
           return res.status(400).json({ error: "fileName and fileType must be non-empty strings." });
         }
 
-        // 4. Generate Cloudflare R2 Presigned URL
         const s3Client = getR2Client(r2AccessKeyId.value(), r2SecretAccessKey.value());
         const sanitizedName = fileName.replace(/[^a-zA-Z0-9.\-_]/g, "_");
         const objectKey = `uploads/${uid}/${Date.now()}-${sanitizedName}`;
@@ -549,17 +547,6 @@ export const unbanUser = onCall(
     }
   }
 );
-
-
-const { onCall, onRequest } = require("firebase-functions/v2/https");
-const { logger } = require("firebase-functions/logger");
-const { HttpsError } = require("firebase-functions/v2/https");
-const admin = require("firebase-admin");
-const { GoogleGenAI, Type } = require("@google/genai");
-const axios = require("axios");
-const fs = require("fs");
-const path = require("path");
-const snarkjs = require("snarkjs");
 
 // ======================================================
 // MODERATED DELETE & TOXICITY HELPERS
