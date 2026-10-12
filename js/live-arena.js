@@ -579,15 +579,27 @@ function renderParticipants(participants) {
 // ========== LIVEKIT ==========
 async function connectToLiveKit(roomId) {
   try {
+    const user = auth.currentUser;
+    if (!user) {
+      showToast("Sign in required to connect voice", "error");
+      return;
+    }
+
+    // Force refresh ID token to prevent expired/invalid token errors on the backend
+    await user.getIdToken(true);
+
     const functions = getFunctions();
     const getToken = httpsCallable(functions, 'getLiveKitToken');
 
     const result = await getToken({
       roomName: roomId,
-      participantName: auth.currentUser?.displayName || 'Citizen'
+      participantName: user.displayName || 'Citizen'
     });
 
     const { token, url } = result.data;
+    if (!token || !url) {
+      throw new Error("Invalid token data received from server.");
+    }
 
     livekitRoom = new Room({
       adaptiveStream: true,
@@ -616,7 +628,7 @@ async function connectToLiveKit(roomId) {
     showToast("Voice connected – ready to speak", "success");
   } catch (err) {
     console.error('LiveKit connect error:', err);
-    showToast("Could not connect voice channel", "error");
+    showToast(`Could not connect voice channel: ${err.message || 'Unknown error'}`, "error");
   }
 }
 
