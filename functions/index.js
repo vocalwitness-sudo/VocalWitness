@@ -1253,10 +1253,6 @@ export.requestTimestamp = onCall(
 // ======================================================
 // ZK CRYPTOGRAPHY UTILS (POSEIDON)
 // ======================================================
-const { buildPoseidon } = require("circomlibjs");
-
-let poseidonInstance = null;
-
 async function getPoseidon() {
   if (!poseidonInstance) {
     poseidonInstance = await buildPoseidon();
