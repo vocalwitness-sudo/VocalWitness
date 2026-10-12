@@ -179,6 +179,27 @@ service cloud.firestore {
         || request.auth.uid == post.authorId;
     }
 
+    function isPhoneVerifiedUser() {
+      return isAuthenticated() && (
+        request.auth.token.phone_verified == true
+        || request.auth.token.tier == 'citizen_circle'
+        || request.auth.token.tier == 'witness_circle'
+        || (
+          exists(/databases/$(database)/documents/users/$(request.auth.uid))
+          && (
+            getUserData().get('isPhoneVerified', false) == true
+            || getUserData().get('hasVerifiedPhone', false) == true
+            || getUserData().get('isVerified', false) == true
+            || getUserData().get('tier', '') in ['citizen_circle', 'witness_circle', 'verified_citizen']
+          )
+        )
+      );
+    }
+
+    function canPinPosts() {
+      return isSteward() || isModerator() || isAdmin() || isPhoneVerifiedUser();
+    }
+
     // ==========================================
     // INTERNAL
     // ==========================================
@@ -310,6 +331,12 @@ service cloud.firestore {
                     'corroborationCount', 'corroborationScore', 'lastCorroboratedAt',
                     'reactions', 'commentsCount', 'updatedAt'
                   ])
+           )
+        || (
+             canPinPosts()
+             && isNotBanned()
+             && request.resource.data.diff(resource.data).affectedKeys()
+                  .hasOnly(['isPinned', 'pinnedAt', 'pinnedBy', 'updatedAt'])
            );
       allow delete: if false;
 
@@ -628,7 +655,7 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-       // ==========================================
+    // ==========================================
     // LIVE ARENA ROOMS
     // ==========================================
     match /liveRooms/{roomId} {
@@ -716,3 +743,5 @@ service cloud.firestore {
         allow update, delete: if isModerator() || isAdmin();
       }
     }
+  }
+}
