@@ -2,28 +2,22 @@
   "appTitle": "VocalWitness",
   "appSubtitle": "Citizen Reporting • Real Evidence",
   "pageTitle": "VocalWitness • Citizen Reporting • Real Evidence",
-
   "legalLabel": "Important Notice:",
   "privacyWarning": "VocalWitness is a protected public square. We do not collect ID cards, passports, or personal data.",
-
   "placeholder": "What did you see or experience? Share the facts...",
   "postButton": "Publish Report",
   "searchPlaceholder": "Search reports, news, hashtags, or people...",
-
   "citizenTalk": "Open Talk",
   "trueWitness": "Verified Reports",
   "liveArena": "Live Arena",
   "groups": "Groups",
-
   "photoForensic": "📸 Add Photo",
   "voiceTestimony": "🎤 Record Voice",
-
   "supportPlatform": "Support",
   "about": "About",
   "safety": "Safety",
   "privacy": "Privacy",
   "terms": "Terms",
-
   "myDigitalPassport": "My Profile",
   "editProfile": "✏️ Edit Profile",
   "changePassword": "🔑 Change Password",
@@ -31,7 +25,6 @@
   "signOut": "Sign Out",
   "signIn": "Sign In",
   "signUp": "Create Account",
-
   "createGroup": "Create New Group",
   "createGroupBtn": "Create Group",
   "cultivateSquare": "Support the Public Square",
@@ -43,7 +36,6 @@
   "maybeLater": "Maybe later",
   "becomeSteward": "🌱 Become a Guardian",
   "cancel": "Cancel",
-
   "daoProposal": "Guardian Proposal",
   "submitProposal": "Submit Proposal",
   "moderationDashboard": "Moderation Dashboard",
@@ -52,14 +44,12 @@
   "trustLevel": "Trust Level",
   "currentCircle": "Current Circle",
   "level": "Level",
-
   "loading": "Loading...",
   "success": "Success",
   "error": "Error",
   "warning": "Warning",
   "postPublished": "Report published successfully!",
   "postFailed": "Failed to publish report",
-
   "privacyLink": "🔒 Privacy First",
   "supportBtn": "Support",
   "joinBtn": "Join",
@@ -69,7 +59,6 @@
   "backToSquare": "← Back to Square",
   "backToSquareText": "Back to Square",
   "backToVocalWitness": "← Back to VocalWitness",
-
   "identity": {
     "anonymous_title": "Private Mode",
     "anonymous_desc": "Location, device details, and voice patterns are automatically removed before publishing.",
@@ -82,14 +71,12 @@
     "confirm_bold": "I Understand, Enable Full Evidence",
     "cancel": "Cancel"
   },
-
   "composer": {
     "scrubbing_active": "🛡️ Privacy protection active: Location and device details will be removed.",
     "preserving_active": "⚡ Full evidence mode: Original details will be kept.",
     "audio_normalized": "🎵 Audio cleaned for clarity.",
     "audio_raw": "🎙️ Original audio recorded."
   },
-
   "supportModal": {
     "title": "Support the Public Square",
     "description": "Help keep VocalWitness free and independent. Your support keeps the platform running.",
@@ -98,7 +85,6 @@
     "warning": "Send only USDT on the TRC-20 network.",
     "closeButton": "Close"
   },
-
   "authModal": {
     "title": "Join VocalWitness",
     "subtitle": "Create your account to report, follow trusted voices, and publish.",
@@ -106,7 +92,6 @@
     "anonymousBtn": "Continue Anonymously",
     "cancelBtn": "Cancel & Continue Browsing"
   },
-
   "toast": {
     "nodeConnected": "Signed in with Google",
     "anonymousInit": "Anonymous mode ready",
@@ -116,7 +101,6 @@
     "signInCancelled": "Sign-in cancelled.",
     "requireAuth": "Please sign in to continue."
   },
-
   "profile": {
     "title": "User Profile",
     "reputation": "Reputation",
@@ -144,7 +128,6 @@
     "stat_hashes": "Protected",
     "stat_rep": "Rep Score"
   },
-
   "accountSettings": "Account Settings",
   "securityHeader": "Security & Access",
   "passwordLabel": "Password",
@@ -161,14 +144,12 @@
   "exportLabel": "Export Profile",
   "exportSub": "Download a summary of your account",
   "exportBtn": "Download PDF",
-
   "displayName": "Display Name",
   "username": "Username",
   "region": "Region / Location",
   "bio": "Bio",
   "save": "Save",
   "saveChanges": "Save Changes",
-
   "common": {
     "verified": "Verified",
     "not_verified": "Not Verified",
@@ -178,7 +159,6 @@
     "cancel": "Cancel",
     "close": "Close"
   },
-
   "trueWitnessTitle": "Verified Reports • VocalWitness",
   "trueWitnessSubtitle": "Higher Trust • Protected",
   "zkVerifiedTestimonies": "Higher-Trust Reports",
@@ -187,12 +167,10 @@
   "trustScore": "Trust Score",
   "forensicProof": "Protection Proof",
   "viewFullTestimony": "View Full Report",
-
   "myProfileTitle": "My Profile | VocalWitness",
   "myProfile": "My Profile",
   "loadingProfile": "Loading your profile...",
   "settings": "Settings",
-
   "publicSquareTab": "Public Square",
   "publicSquareDesc": "Share what you see",
   "evidenceLedgerTab": "Public Record",
@@ -204,7 +182,6 @@
   "verifiedWitnessesTab": "Trusted Voices",
   "verifiedWitnessesDesc": "Verified reporters",
   "moreOptionsBtn": "More",
-
   "myTestimoniesMenu": "My Reports",
   "groupsMenu": "Groups",
   "trueWitnessMenu": "Verified Reports",
@@ -212,7 +189,6 @@
   "privacyPolicyMenu": "Privacy",
   "termsOfServiceMenu": "Terms",
   "safetyGuidelinesMenu": "Safety",
-
   "shareTestimonyTitle": "Share what you saw",
   "publicSquareSubtitle": "Public Square",
   "mainInputPlaceholder": "What did you see or experience? Share the facts...",
@@ -229,7 +205,6 @@
   "sortLatest": "Latest",
   "sortVerified": "Verified First",
   "sortTrending": "Trending",
-
   "aboutPageTitle": "About VocalWitness • Citizen Reporting",
   "aboutTitle": "About VocalWitness",
   "aboutSubtitle": "Your voice. Your truth. Protected.",
@@ -238,9 +213,9 @@
   "missionPara1": "VocalWitness is a simple public square where anyone can share what they saw or experienced — with proof that it hasn’t been changed.",
   "missionPara2": "In a world full of edited videos and fake news, we give ordinary people a safe place to publish photos, voice notes, and reports. Everything is protected so the evidence stays trustworthy and your privacy stays intact.",
   "aboutSecuredBy": "Protected by strong technology:",
-  "forensicIntegrityTitle": "Proof Nothing Was Changed",
-  "forensicIntegrityTitleTechnical": "Forensic Integrity (SHA-256 + zk-SNARKs)",
-  "forensicIntegrityDesc": "Every photo, voice note and document gets a unique digital fingerprint on your device before upload. Others can confirm it is real without seeing your private details.",
+  "forensicIntegrityTitle": "Proof of Integrity",
+  "forensicIntegrityTitleTechnical": "Integrity Checks (SHA-256 + optional zk-SNARKs)",
+  "forensicIntegrityDesc": "Media can be fingerprinted on your device before upload. Higher-trust flows may use zero-knowledge proofs; other paths use standard hashes. This helps detect changes — it is not full cryptographic sovereignty.",
   "privacyFirstTitle": "Your Privacy Comes First",
   "privacyFirstDesc": "Speaking out is always your choice. We automatically remove location and device information. Phone checks are only temporary to stop spam and are never stored publicly.",
   "communityStewardshipTitle": "Community, Not Control",
@@ -256,13 +231,12 @@
   "trustStep3Desc": "VocalWitness is a neutral public square. We do not edit posts or push certain stories. The evidence speaks for itself.",
   "aboutQuote": "\"In the age of noise, the clearest voice is the one that can prove it was never altered.\"",
   "footerCopyright": "© 2026 VocalWitness • Citizen Reporting • Real Evidence",
-
   "privacyPageTitle": "Privacy Policy • VocalWitness",
   "privacyTitle": "Privacy Policy",
   "privacyLastUpdated": "Last updated: August 25, 2026",
-  "privacySubtitle": "Your privacy is protected by strong technology — not just promises.",
-  "zkSubpoenaTitle": "We Cannot Give What We Do Not Have",
-  "zkSubpoenaDesc": "VocalWitness is built so that your personal identity never reaches our servers. If any authority asks for your private information, our answer is simple: We have nothing to give.",
+  "privacySubtitle": "Your privacy is improved by technical choices — not absolute guarantees.",
+  "zkSubpoenaTitle": "We Minimize What We Collect",
+  "zkSubpoenaDesc": "VocalWitness is designed to collect as little identifying data as possible. Phone numbers are not stored in our database. Some account and operational data still exists on Firebase (Google Cloud) and can be subject to lawful process. We cannot promise absolute subpoena resistance.",
   "privacyArchitectureBy": "Protected by:",
   "privacySec1Title": "1. Everything Important Happens on Your Device",
   "privacySec1Para1": "When you upload a photo, voice note, or document, the sensitive work is done inside your own browser before anything leaves your device:",
@@ -291,12 +265,11 @@
   "privacySec6Title": "6. What Is Not Allowed & How to Report",
   "privacySec6Text1": "Harassment, sharing someone’s private personal details without consent, child sexual abuse material, and deliberately fake harmful media are strictly forbidden.",
   "privacySec6Text2": "If you see content that breaks these rules, please report it using the in-app button.",
-  "privacySec7Title": "7. Quick Exit & Permanent Records",
-  "privacySec7Text": "You can instantly clear your local browser data with the Quick Exit button. However, once a report is published and locked, it becomes a permanent record.",
+  "privacySec7Title": "7. Quick Exit & Published Records",
+  "privacySec7Text": "You can clear local browser data with Quick Exit. Published reports are protected by application rules so ordinary users cannot edit or delete them. Operators and cloud infrastructure still control the underlying data.",
   "privacySec8Title": "8. Intellectual Property",
   "privacySec8Text": "The VocalWitness platform, including its software, design, name, and logo, is the exclusive intellectual property of VocalWitness. You may not copy or reuse it without permission.",
   "panicExit": "Quick Exit",
-
   "termsPageTitle": "Terms of Service • VocalWitness",
   "termsTitle": "Terms of Service",
   "termsLastUpdated": "Last updated: August 25, 2026",
@@ -318,7 +291,7 @@
   "termsConduct3": "No Doxxing or Harassment: Do not share other people’s private details. Targeted harassment is not allowed.",
   "termsConduct4": "No Fake or Harmful Content: Creating deepfakes to harm someone is strictly forbidden.",
   "termsSection5Title": "5. Who Owns Your Content",
-  "termsSection5Text": "You keep full ownership of everything you post. By publishing, you give VocalWitness permission to store and display your content. Once locked, it becomes part of a permanent record.",
+  "termsSection5Text": "You keep ownership of what you post. By publishing, you give VocalWitness permission to store and display it. Published content is protected against ordinary user edits or deletes by security rules. It is not a public blockchain; the data lives on Firebase.",
   "termsSection6Title": "6. Technology We Use",
   "termsSection6Text": "We use trusted global services for secure storage and protection against attacks. The platform is provided “as is”.",
   "termsSection7Title": "7. How VocalWitness Stays Free",
@@ -330,18 +303,17 @@
   "termsSection10Title": "10. Intellectual Property",
   "termsSection10Text": "All rights in the VocalWitness platform, including its software, design, name, and logo, remain the exclusive property of VocalWitness.",
   "termsSection10Text2": "You may not copy, modify, or commercially exploit any part of the platform without written permission.",
-
   "safetyPageTitle": "Safety & Your Rights • VocalWitness",
   "safetyTitle": "Safety & Your Rights",
   "safetySubtitle": "Practical protocols to protect your identity, location, and digital footprint when capturing and sharing evidence.",
   "divineNaturalLawTitle": "Your Right to Speak the Truth",
   "divineNaturalLawDesc": "Every person has the right to share what they have witnessed. This is protected under Article 19 of the Universal Declaration of Human Rights.",
   "safetySecuredBy": "Protected by:",
-  "subpoenaDefenseTitle": "1. Strong Protection by Design",
-  "subpoenaDefenseDesc": "We cannot give away information that we never collected. Your identity stays protected.",
-  "subpoenaDefenseBullet1": "No identity logs linked to your public posts.",
-  "subpoenaDefenseBullet2": "Location and device details are removed in your browser before upload.",
-  "subpoenaDefenseBullet3": "Strong technical protection for anonymous reporters.",
+  "subpoenaDefenseTitle": "1. Data Minimization by Design",
+  "subpoenaDefenseDesc": "We avoid storing phone numbers and strip location metadata in the browser before upload. Account data still lives on Firebase.",
+  "subpoenaDefenseBullet1": "Phone numbers are not written to our Firestore database.",
+  "subpoenaDefenseBullet2": "Location and device details are stripped in the browser before upload when possible.",
+  "subpoenaDefenseBullet3": "Higher-trust options use cryptographic checks; some paths still use simpler hashes.",
   "opsecProtocolTitle": "2. Extra Safety Tips for High-Risk Situations",
   "networkSafetySub": "Safer Internet Connection",
   "networkSafetySubDesc": "In restrictive areas, use Tor or a trusted VPN. Avoid publishing on networks linked to your official ID.",
@@ -360,7 +332,7 @@
   "safetyGoalTitle": "Our Goal:",
   "safetyGoalText": "A safe public square where real reports can be shared and people are protected by design.",
   "threatModelTitle": "Understand Your Threat Model",
-  "threatModelDesc": "While VocalWitness automatically scrubs EXIF metadata and utilizes client-side zero-knowledge proofs, technology alone cannot prevent accidental personal exposure. If you are submitting high-risk testimonies or evidence under hostile surveillance, follow these operational security best practices.",
+  "threatModelDesc": "VocalWitness strips EXIF metadata in the browser and offers optional higher-trust verification. Technology alone cannot prevent all exposure. For high-risk reporting, use extra operational security.",
   "networkSafetyTitle": "Network Connection & IP Masking",
   "networkTip1": "Use Tor or a Trustworthy VPN: Hide your physical location and IP address from network eavesdroppers before navigating to VocalWitness.",
   "networkTip2": "Avoid Public Personal Wi-Fi: Do not upload sensitive whistleblower materials over home broadband or personal mobile accounts registered directly to your government ID.",
@@ -369,13 +341,12 @@
   "mediaTip2": "Voice & Face Anonymization: When recording video or audio in hostile environments, blur faces of non-consenting bystanders and alter distinct voice patterns before publishing.",
   "identitySafetyTitle": "Identity & Account Discretion",
   "identityTip1": "Pseudonymous Handle: Choose a username completely unlinked to your real name, social handles, or personal email address.",
-  "identityTip2": "Zero-Knowledge Verification: Take advantage of True Witness ZK-verification options to establish trust without linking personal contact details to your submissions.",
+  "identityTip2": "Higher-Trust Verification: Prefer stronger verification options when available. Some paths use real zero-knowledge proofs; others use simpler cryptographic checks — check the badge on each report.",
   "physicalSafetyTitle": "Physical Security & Device Handling",
   "physicalTip1": "Secure Device Storage: Keep your mobile phone encrypted and passcoded (avoid biometrics like fingerprint/face unlock in regions where authorities can compel biometric unlock).",
   "physicalTip2": "Clear Browser Data: If using a shared or at-risk device, clear local storage and browser cache immediately after submitting your record.",
   "goldenRuleTitle": "The Golden Rule of Citizen Witnessing",
-  "goldenRuleText": "Never put yourself in immediate physical danger to capture evidence. Secure your physical safety first. Once you are in a protected location, use cryptographic tools to notarize and share your record with the world.",
-
+  "goldenRuleText": "Never put yourself in immediate physical danger to capture evidence. Secure your safety first. Then use the tools available to timestamp and share a verifiable record.",
   "ledgerIntegrityTitle": "Public Record Protection",
   "ledgerIntegrityPara1": "Once a report is published, the rules make it extremely hard for anyone to edit or delete the original.",
   "ledgerIntegrityPoint1": "Database rules block updates and deletes on the record.",
