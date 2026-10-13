@@ -242,19 +242,6 @@ export async function verifyMediaProvenance(file) {
 window.openVerificationModal = openVerificationModal;
 window.closeVerificationModal = closeVerificationModal;
 
-/**
- * Pre-load C2PA WASM + worker so the first "Verify Media" click is fast.
- * Safe to call multiple times. Does not show toasts on failure.
- */
-export async function preloadC2PA() {
-  try {
-    await initC2PA();
-    return true;
-  } catch (err) {
-    console.warn('[C2PA] preload failed:', err?.message || err);
-    return false;
-  }
-}
 
 /**
  * Verify Standalone Evidence JSON Pack
