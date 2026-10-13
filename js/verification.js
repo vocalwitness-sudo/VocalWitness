@@ -51,20 +51,14 @@ async function initC2PA() {
 
   c2paInitPromise = (async () => {
     try {
+      // Inline build = WASM is embedded → no separate .wasm fetch
       const { createC2pa } = await import(
-        "https://cdn.jsdelivr.net/npm/@contentauth/c2pa-web@0.14.3/+esm"
+        "https://cdn.jsdelivr.net/npm/@contentauth/c2pa-web@0.14.3/inline/+esm"
       );
 
-      c2paInstance = await createC2pa({
-        // Official CDN path for this exact version
-        wasmSrc: "https://cdn.jsdelivr.net/npm/@contentauth/c2pa-web@0.14.3/dist/resources/c2pa_bg.wasm",
-        // Worker also from CDN (works in most modern browsers)
-        workerSrc: new URL(
-          "https://cdn.jsdelivr.net/npm/@contentauth/c2pa-web@0.14.3/dist/c2pa_worker.js"
-        ),
-      });
+      c2paInstance = await createC2pa();   // no wasmSrc / workerSrc needed
 
-      console.log("[C2PA] Engine initialized successfully (CDN)");
+      console.log("[C2PA] Engine initialized successfully (inline)");
       return c2paInstance;
     } catch (err) {
       console.error("[C2PA] Failed to initialize:", err);
@@ -75,7 +69,6 @@ async function initC2PA() {
 
   return c2paInitPromise;
 }
-
 /**
  * Completely non-blocking modal opener
  * Modal appears instantly, C2PA loads in background
