@@ -45,29 +45,85 @@ async function computeSHA256(message) {
  * Same-origin worker + wasm required (cross-origin Workers are blocked by browsers)
  * workerSrc MUST be a URL instance, not a string
  */
+/**
+ * Initialize C2PA using the inline build (WASM embedded → no separate .wasm fetch)
+ */
 async function initC2PA() {
   if (c2paInstance) return c2paInstance;
   if (c2paInitPromise) return c2paInitPromise;
 
   c2paInitPromise = (async () => {
     try {
-      // Inline build = WASM is embedded → no separate .wasm fetch
       const { createC2pa } = await import(
         "https://cdn.jsdelivr.net/npm/@contentauth/c2pa-web@0.14.3/inline/+esm"
       );
 
-      c2paInstance = await createC2pa();   // no wasmSrc / workerSrc needed
+      c2paInstance = await createC2pa(); // no wasmSrc / workerSrc needed
 
       console.log("[C2PA] Engine initialized successfully (inline)");
       return c2paInstance;
     } catch (err) {
       console.error("[C2PA] Failed to initialize:", err);
-      c2paInitPromise = null;
+      c2paInitPromise = null; // allow retry
       throw new Error("C2PA engine initialization failed.");
     }
   })();
 
   return c2paInitPromise;
+}
+
+/**
+ * Pre-load C2PA so the first "Verify Media" click is fast.
+ * Shows a friendly message in the UI instead of only console errors.
+ */
+export async function preloadC2PA() {
+  // Create a small status element if it doesn't exist yet
+  let statusEl = document.getElementById('c2pa-status');
+  if (!statusEl) {
+    const c2paSection = document.getElementById('c2paSection');
+    if (c2paSection) {
+      statusEl = document.createElement('div');
+      statusEl.id = 'c2pa-status';
+      statusEl.style.cssText = 'font-size:0.8rem; margin-top:0.75rem; color:#9ca3af; text-align:center;';
+      c2paSection.appendChild(statusEl);
+    }
+  }
+
+  if (statusEl) {
+    statusEl.textContent = 'Loading Content Credentials engine…';
+    statusEl.style.color = '#9ca3af';
+  }
+
+  try {
+    await initC2PA();
+    if (statusEl) {
+      statusEl.textContent = '✅ Content Credentials engine ready';
+      statusEl.style.color = '#34d399';
+      // Fade out after a few seconds
+      setTimeout(() => {
+        if (statusEl) statusEl.style.opacity = '0.6';
+      }, 2500);
+    }
+    return true;
+  } catch (err) {
+    console.warn('[C2PA] preload failed:', err?.message || err);
+
+    if (statusEl) {
+      statusEl.innerHTML = `
+        ⚠️ Content Credentials engine could not load.<br>
+        <span style="font-size:0.75rem;">
+          You can still try verifying — or switch to Ledger / JSON tabs.
+        </span>`;
+      statusEl.style.color = '#fbbf24';
+    }
+
+    // Also show a soft toast if the helper exists
+    if (typeof showToast === 'function') {
+      showToast('Content Credentials engine failed to load. Other verification methods still work.', 'warning');
+    }
+
+    return false;
+  }
 }
 /**
  * Completely non-blocking modal opener
