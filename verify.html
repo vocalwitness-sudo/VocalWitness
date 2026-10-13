@@ -209,7 +209,40 @@
                     <button type="button" id="btnVerifyJSON" class="btn-primary" data-i18n="btnVerifySig">Verify payload</button>
                 </div>
             </div>
+             <!-- ========== THE USER GUIDE HERE ========== -->
+            <div class="glass" style="margin-top:1.5rem; font-size:0.875rem; line-height:1.55;">
+              <h3 style="color:#10b981; margin-bottom:0.75rem; font-size:1rem;">How verification works</h3>
 
+              <p style="margin-bottom:1rem; color:#d1d5db;">
+                VocalWitness only checks <strong>integrity</strong>.  
+                A green result means the data has <strong>not been changed</strong> since it was recorded or signed.  
+                It does <strong>not</strong> prove the real-world event happened.
+              </p>
+
+              <div style="margin-bottom:1.1rem;">
+                <strong style="color:#6ee7b7;">1. 🔗 Ledger link</strong><br>
+                Paste the Testimony/Credential ID (+ optional hash) → click Verify.<br>
+                <span style="color:#9ca3af; font-size:0.8rem;">Best for shared links &amp; QR codes.</span>
+              </div>
+
+              <div style="margin-bottom:1.1rem;">
+                <strong style="color:#6ee7b7;">2. 📷 Media C2PA</strong><br>
+                Drop an image or video → click Verify Media Provenance.<br>
+                <span style="color:#9ca3af; font-size:0.8rem;">Checks for official Content Credentials embedded in the file.</span>
+              </div>
+
+              <div style="margin-bottom:1.1rem;">
+                <strong style="color:#6ee7b7;">3. 📜 JSON proof</strong><br>
+                Paste a full Evidence Pack JSON → click Verify payload.<br>
+                <span style="color:#9ca3af; font-size:0.8rem;">Confirms the JSON itself has not been altered.</span>
+              </div>
+
+              <p style="font-size:0.8rem; color:#9ca3af; border-top:1px solid rgba(16,185,129,0.2); padding-top:0.75rem; margin:0;">
+                No account needed. Always keep the original file or JSON.
+              </p>
+            </div>
+            
+              <!-- ========== result box ========== -->
             <div id="resultBox" class="hidden glass">
                 <div id="resultHeader" class="result-header"></div>
                 <div id="resultDetails" class="result-details"></div>
