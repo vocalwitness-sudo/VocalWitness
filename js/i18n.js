@@ -3,6 +3,8 @@
 let currentTranslations = {};
 let fallbackTranslations = {};
 let currentLang = 'en';
+let currentFetchController = null;
+
 
 const DEFAULT_FALLBACK_DICTIONARY = {
   shareTestimonyTitle: "Share Your Testimony",
@@ -153,31 +155,40 @@ function syncSelectors(langCode) {
 }
 
 export async function loadTranslations(langCode = 'en') {
-  // Validate language code
   const isSupported = supportedLanguages.some(l => l.code === langCode);
   const targetLang = isSupported ? langCode : 'en';
+
+  // Abort any pending fetch request
+  if (currentFetchController) {
+    currentFetchController.abort();
+  }
+  currentFetchController = new AbortController();
 
   try {
     // Always keep English as fallback
     if (Object.keys(fallbackTranslations).length === 0) {
       try {
-        const fallbackRes = await fetch('./translations/en.json');
+        const fallbackRes = await fetch('/translations/en.json', {
+          signal: currentFetchController.signal
+        });
         if (fallbackRes.ok) {
           fallbackTranslations = await fallbackRes.json();
         } else {
           fallbackTranslations = { ...DEFAULT_FALLBACK_DICTIONARY };
         }
-      } catch (_) {
+      } catch (err) {
+        if (err.name === 'AbortError') return;
         fallbackTranslations = { ...DEFAULT_FALLBACK_DICTIONARY };
       }
     }
 
-    // Load requested language
     if (targetLang === 'en') {
       currentTranslations = { ...fallbackTranslations };
       currentLang = 'en';
     } else {
-      const response = await fetch(`./translations/${targetLang}.json`);
+      const response = await fetch(`/translations/${targetLang}.json`, {
+        signal: currentFetchController.signal
+      });
       if (response.ok) {
         currentTranslations = await response.json();
         currentLang = targetLang;
@@ -188,26 +199,25 @@ export async function loadTranslations(langCode = 'en') {
       }
     }
   } catch (e) {
+    if (e.name === 'AbortError') return;
     console.warn(`[i18n] Failed to load language ${targetLang}`, e);
     currentTranslations = { ...fallbackTranslations };
     currentLang = 'en';
+  } finally {
+    currentFetchController = null;
   }
 
-  // Persist preference
+  // Persist and apply
   localStorage.setItem('preferredLang', currentLang);
-
-  // Apply everything
   document.documentElement.lang = currentLang;
   applyTextDirection(currentLang);
   applyTranslations();
   syncSelectors(currentLang);
 
-  // Notify the rest of the app
   window.dispatchEvent(new CustomEvent('languageChanged', {
     detail: { lang: currentLang }
   }));
 }
-
 export async function updateUILanguage(langCode) {
   await loadTranslations(langCode);
 }
