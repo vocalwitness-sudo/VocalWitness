@@ -55,18 +55,20 @@ async function initC2PA() {
         "https://cdn.jsdelivr.net/npm/@contentauth/c2pa-web@0.14.3/+esm"
       );
 
-      const origin = window.location.origin;
-
       c2paInstance = await createC2pa({
-        wasmSrc: `${origin}/c2pa/c2pa_bg.wasm`,
-        workerSrc: new URL(`${origin}/c2pa/c2pa_worker.js`),
+        // Official CDN path for this exact version
+        wasmSrc: "https://cdn.jsdelivr.net/npm/@contentauth/c2pa-web@0.14.3/dist/resources/c2pa_bg.wasm",
+        // Worker also from CDN (works in most modern browsers)
+        workerSrc: new URL(
+          "https://cdn.jsdelivr.net/npm/@contentauth/c2pa-web@0.14.3/dist/c2pa_worker.js"
+        ),
       });
 
-      console.log("[C2PA] Engine initialized successfully");
+      console.log("[C2PA] Engine initialized successfully (CDN)");
       return c2paInstance;
     } catch (err) {
       console.error("[C2PA] Failed to initialize:", err);
-      c2paInitPromise = null; // allow retry
+      c2paInitPromise = null;
       throw new Error("C2PA engine initialization failed.");
     }
   })();
