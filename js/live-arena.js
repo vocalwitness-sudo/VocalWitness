@@ -1,5 +1,4 @@
 // js/live-arena.js – World-Class Live Arena (Evidence-grade)
-// Part 1: imports, lobby, create room, join room
 
 import { listenToVerifiedCount, showToast } from './utils.js';
 import { requireAuth } from './auth.js';
