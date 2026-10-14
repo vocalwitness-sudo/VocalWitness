@@ -2,7 +2,7 @@
 // Features: Dynamic Asset Caching, PWA Web Share Target, Offline Evidence Queue, Background Sync & Panic Purge
 // FIX: Never intercept Firebase Auth paths (/__/) – required for mobile Google redirect
 
-const CACHE_NAME = 'vocalwitness-v15';
+const CACHE_NAME = 'vocalwitness-v16';
 const STATIC_ASSETS = [
     '/',
     '/index.html',
