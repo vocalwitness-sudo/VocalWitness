@@ -1,4 +1,5 @@
 // js/dao.js - Enhanced Quadratic Voting, Multi-Sig Governance, Cryptographic Trust + Proposal Discussion
+// Democratic by nature – The people decide
 
 import { db, auth } from './firebase-config.js';
 import {
@@ -14,12 +15,12 @@ import {
   limit,
   serverTimestamp,
   arrayUnion,
-  onSnapshot
+  onSnapshot,
+  increment
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 import { showToast, escapeHTML } from './utils.js';
-import { getFunctions, httpsCallable } from
-  "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
 import {
   getCurrentUserTier,
   getUserVotingWeight,
@@ -31,66 +32,109 @@ import { generateRigorousProof } from './zk-crypto.js';
 import { logSecurityAudit } from './audit.js';
 import { generateZKProofAsync } from './zk-client.js';
 
-// Constant Thresholds and Governance Security Parameters
+// ====================== CONSTANTS ======================
 export const MINIMUM_MULTISIG_THRESHOLD = 3;
 export const MAX_VOTING_BUDGET_POINTS = 25;
 export const BASE_REPUTATION_REWARD = 15;
 
 /**
- * Compute Quadratic Voting Cost based on strength level
- * Formula: cost = strength^2
+ * Quadratic cost formula
+ * strength 1 → 1 point
+ * strength 2 → 4 points
+ * strength 3 → 9 points
+ * strength 4 → 16 points
+ * strength 5 → 25 points
  */
 function quadraticCost(strength) {
   return strength * strength;
 }
 
-/**
- * Record Testimony Contribution and award credibility score points
- */
+// ====================== REPUTATION HELPERS ======================
+
 export async function recordTestimonyContribution() {
   if (!auth.currentUser) return;
   try {
     const userRef = doc(db, "users", auth.currentUser.uid);
-    const snap = await getDoc(userRef);
-    if (snap.exists()) {
-      const data = snap.data();
-      const currentRep = data.credibilityScore || data.reputation || 0;
-      await updateDoc(userRef, {
-        credibilityScore: currentRep + BASE_REPUTATION_REWARD,
-        reputation: currentRep + BASE_REPUTATION_REWARD,
-        lastContribution: serverTimestamp()
-      });
-      console.log("✅ +15 Reputation awarded for verified testimony contribution");
-    }
+    await updateDoc(userRef, {
+      credibilityScore: increment(BASE_REPUTATION_REWARD),
+      reputation: increment(BASE_REPUTATION_REWARD),
+      lastContribution: serverTimestamp()
+    });
+    console.log("✅ +15 Reputation awarded for verified testimony");
   } catch (e) {
-    console.warn("Reputation update operation failed during testimony recording:", e);
+    console.warn("Reputation update failed:", e);
   }
 }
 
-/**
- * Award reputation points for active governance participation
- */
 async function awardGovernanceRep(points = 5) {
   if (!auth.currentUser) return;
   try {
     const userRef = doc(db, "users", auth.currentUser.uid);
-    const snap = await getDoc(userRef);
-    if (!snap.exists()) return;
-    const data = snap.data();
-    const currentRep = data.credibilityScore || data.reputation || 0;
     await updateDoc(userRef, {
-      credibilityScore: currentRep + points,
-      reputation: currentRep + points,
+      credibilityScore: increment(points),
+      reputation: increment(points),
       lastGovernanceAction: serverTimestamp()
     });
   } catch (e) {
-    console.warn("Governance reputation update operation failed:", e);
+    console.warn("Governance reputation update failed:", e);
   }
 }
 
+// ====================== GET USER POWER DATA (for Power Card) ======================
+
 /**
- * Create DAO Proposal (Witness Circle, Stewards, or Authorized Moderators)
+ * Returns the data needed for the Personal Power Card
  */
+export async function getUserGovernancePower() {
+  if (!auth.currentUser) {
+    return {
+      reputation: 0,
+      remainingBudget: MAX_VOTING_BUDGET_POINTS,
+      votingWeight: 1,
+      tierName: 'Citizen',
+      canPropose: false
+    };
+  }
+
+  try {
+    const userSnap = await getDoc(doc(db, "users", auth.currentUser.uid));
+    const userData = userSnap.exists() ? userSnap.data() : {};
+
+    const reputation = userData.credibilityScore || userData.reputation || 0;
+    const votingWeight = await getUserVotingWeight() || 1;
+    const tier = await getCurrentUserTier();
+
+    // Calculate remaining budget (you can improve this later with real spent tracking)
+    const remainingBudget = userData.votingBudgetRemaining ?? MAX_VOTING_BUDGET_POINTS;
+
+    let tierName = 'Citizen';
+    if (tier === TIERS.WITNESS_CIRCLE) tierName = 'Witness Circle';
+    else if (tier === TIERS.CITIZEN_CIRCLE) tierName = 'Citizen Circle';
+
+    const canPropose = tier === TIERS.WITNESS_CIRCLE || 
+                       ['admin', 'moderator', 'steward'].includes(userData.role);
+
+    return {
+      reputation,
+      remainingBudget,
+      votingWeight,
+      tierName,
+      canPropose
+    };
+  } catch (e) {
+    console.error("Failed to load user governance power:", e);
+    return {
+      reputation: 0,
+      remainingBudget: MAX_VOTING_BUDGET_POINTS,
+      votingWeight: 1,
+      tierName: 'Citizen',
+      canPropose: false
+    };
+  }
+}
+
+// ====================== CREATE PROPOSAL ======================
+
 export async function createDAOProposal(title, description, category = 'governance') {
   if (!auth.currentUser) return showToast("Sign in required to initiate proposals", "error");
 
@@ -126,122 +170,89 @@ export async function createDAOProposal(title, description, category = 'governan
     });
 
     await awardGovernanceRep(8);
-    await logSecurityAudit('DAO_PROPOSAL_CREATED', proposalRef.id, {
-      title,
-      category
-    });
+    await logSecurityAudit('DAO_PROPOSAL_CREATED', proposalRef.id, { title, category });
 
-    showToast("✅ DAO Proposal created successfully", "success");
+    showToast("✅ Proposal submitted to the people", "success");
     return proposalRef.id;
   } catch (e) {
-    console.error("Proposal creation encountered an error:", e);
-    showToast("Failed to create proposal due to network or permission error", "error");
+    console.error("Proposal creation error:", e);
+    showToast("Failed to create proposal", "error");
     return null;
   }
 }
 
-/**
- * Create a Community Moderation Appeal proposal linked to a specific post ID
- */
 export async function createModerationAppeal(postId, reason, originalDecision = 'purged') {
   if (!auth.currentUser) return showToast("Sign in required to file an appeal", "error");
 
-  try {
-    const title = `Appeal: ${originalDecision.toUpperCase()} decision on post ${postId.substring(0, 8)}…`;
-    const description = `Community appeal against moderation decision.\n\nOriginal Decision: ${originalDecision}\nPost ID: ${postId}\n\nReason for appeal:\n${reason.trim()}`;
+  const title = `Appeal: ${originalDecision.toUpperCase()} decision on post ${postId.substring(0, 8)}…`;
+  const description = `Community appeal against moderation decision.\n\nOriginal Decision: ${originalDecision}\nPost ID: ${postId}\n\nReason for appeal:\n${reason.trim()}`;
 
-    const proposalId = await createDAOProposal(title, description, 'moderation_appeal');
-    if (proposalId) {
-      await updateDoc(doc(db, "dao_proposals", proposalId), {
-        relatedPostId: postId,
-        originalDecision
-      });
-    }
-    return proposalId;
-  } catch (e) {
-    console.error("Moderation appeal creation error:", e);
-    showToast("Failed to create moderation appeal", "error");
-    return null;
+  const proposalId = await createDAOProposal(title, description, 'moderation_appeal');
+  if (proposalId) {
+    await updateDoc(doc(db, "dao_proposals", proposalId), {
+      relatedPostId: postId,
+      originalDecision
+    });
   }
+  return proposalId;
 }
 
+// ====================== CAST QUADRATIC VOTE (Single Clean Version) ======================
+
 /**
- * Cast Quadratic Vote via Cloud Function (server validates + writes tallies/rep)
+ * Main voting function – uses Cloud Function when available, falls back to client
  */
 export async function castQuadraticVote(proposalId, direction, strength = 1, proofContext = {}) {
   if (!auth.currentUser) {
     return showToast("Sign in required to cast votes", "error");
   }
   if (strength < 1 || strength > 5) {
-    return showToast("Strength parameters must range between 1 and 5", "error");
+    return showToast("Strength must be between 1 and 5", "error");
   }
   if (!['for', 'against'].includes(direction)) {
-    return showToast("Invalid vote direction specified", "error");
+    return showToast("Invalid vote direction", "error");
   }
 
+  // Prefer Cloud Function (more secure)
   try {
     const functions = getFunctions();
-    // Optional: getFunctions(app, 'us-central1') if region differs
     const castDaoVote = httpsCallable(functions, 'castDaoVote');
     const result = await castDaoVote({
       proposalId,
       direction,
       strength: Number(strength),
-      // proofContext reserved for later ZK attach on server if needed
       context: proofContext || {}
     });
 
     const data = result.data || {};
     showToast(
-      `Successfully voted ${direction.toUpperCase()} (Cost: ${data.cost} • Effective strength: ${data.effectiveStrength})`,
+      `Voted ${direction.toUpperCase()} • Cost: ${data.cost || strength * strength} • Power: ${data.effectiveStrength || strength}`,
       "success"
     );
 
-    try {
-      await logSecurityAudit('DAO_VOTE_CAST', proposalId, {
-        direction,
-        strength,
-        effectiveStrength: data.effectiveStrength
-      });
-    } catch (_) { /* audit optional on client */ }
+    await logSecurityAudit('DAO_VOTE_CAST', proposalId, {
+      direction,
+      strength,
+      effectiveStrength: data.effectiveStrength
+    });
 
     return data;
-  } catch (e) {
-    console.error("castDaoVote failed:", e);
-    const code = e?.code || '';
-    const msg = e?.message || 'Vote failed';
-    // Firebase callable errors often look like "functions/permission-denied"
-    if (code.includes('already-exists') || msg.includes('Already voted')) {
-      showToast("You have already cast a vote in this direction.", "info");
-    } else if (code.includes('resource-exhausted') || msg.includes('budget')) {
-      showToast("Exceeded maximum voting budget (max 25 points)", "error");
-    } else if (code.includes('permission-denied')) {
-      showToast(msg.replace(/^.*?:\s*/, '') || "Not allowed to vote", "error");
-    } else if (code.includes('failed-precondition')) {
-      showToast("This proposal is closed", "error");
-    } else {
-      showToast("Failed to cast vote. Try again.", "error");
-    }
-    return null;
+  } catch (cloudError) {
+    console.warn("Cloud Function vote failed, falling back to client-side:", cloudError);
+
+    // ========== CLIENT-SIDE FALLBACK ==========
+    return await castQuadraticVoteClient(proposalId, direction, strength, proofContext);
   }
 }
 
-
-
 /**
- * Cast Quadratic Vote with cryptographic validation and voting power calculation
+ * Client-side fallback voting (used if Cloud Function is not ready)
  */
-export async function castQuadraticVote(proposalId, direction, strength = 1, proofContext = {}) {
-  if (!auth.currentUser) return showToast("Sign in required to cast votes", "error");
-  if (strength < 1 || strength > 5) return showToast("Strength parameters must range between 1 and 5", "error");
-  if (!['for', 'against'].includes(direction)) {
-    return showToast("Invalid vote direction specified", "error");
-  }
-
+async function castQuadraticVoteClient(proposalId, direction, strength = 1, proofContext = {}) {
   const userId = auth.currentUser.uid;
   const userRef = doc(db, "users", userId);
   const userSnap = await getDoc(userRef);
-  if (!userSnap.exists()) return showToast("User profile record not found", "error");
+  if (!userSnap.exists()) return showToast("User profile not found", "error");
 
   const userData = userSnap.data();
   const userReputation = userData.credibilityScore || userData.reputation || 0;
@@ -249,30 +260,30 @@ export async function castQuadraticVote(proposalId, direction, strength = 1, pro
   if (!userData.isPhoneVerified && !userData.hasVerifiedPhone && userReputation < 10) {
     if (typeof requireCitizenCirclePermission === 'function') {
       const hasPermission = await requireCitizenCirclePermission();
-      if (!hasPermission) return;
+      if (!hasPermission) return null;
     } else {
-      return showToast("Account must be phone verified or maintain 10+ credibility score to vote", "error");
+      return showToast("Phone verification or 10+ reputation required to vote", "error");
     }
   }
 
   const proposalRef = doc(db, "dao_proposals", proposalId);
   const proposalSnap = await getDoc(proposalRef);
-  if (!proposalSnap.exists()) return showToast("Target proposal not found", "error");
+  if (!proposalSnap.exists()) return showToast("Proposal not found", "error");
 
   const data = proposalSnap.data();
   if (data.status !== 'active') {
-    return showToast("This proposal is closed and no longer open for voting", "error");
+    return showToast("This proposal is closed", "error");
   }
 
   const previousVote = data.voteLog?.[userId];
   if (previousVote && previousVote.direction === direction) {
-    return showToast("You have already cast a vote in this exact direction.", "info");
+    return showToast("You already voted this direction", "info");
   }
 
   const cost = quadraticCost(strength);
   const currentSpent = previousVote?.cost || 0;
   if (currentSpent + cost > MAX_VOTING_BUDGET_POINTS) {
-    return showToast("Exceeded maximum voting budget (max 25 cumulative power points)", "error");
+    return showToast("Voting budget exceeded (max 25 points)", "error");
   }
 
   let zkProof = null;
@@ -285,7 +296,7 @@ export async function castQuadraticVote(proposalId, direction, strength = 1, pro
       context: proofContext
     });
   } catch (e) {
-    console.warn("ZK Proof generation bypassed or skipped:", e);
+    console.warn("ZK Proof skipped:", e);
   }
 
   const currentTier = await getCurrentUserTier();
@@ -319,16 +330,15 @@ export async function castQuadraticVote(proposalId, direction, strength = 1, pro
     effectiveStrength
   });
 
-  showToast(`Successfully voted ${direction.toUpperCase()} (Cost: ${cost} points • Effective strength: ${effectiveStrength})`, "success");
+  showToast(`Voted ${direction.toUpperCase()} • Cost: ${cost} • Power: ${effectiveStrength}`, "success");
+  return { cost, effectiveStrength };
 }
 
-/* ==========================================================================
-   MULTI-SIG & HIGH-STAKES ATTESTATION PIPELINES
-   ========================================================================== */
+// ====================== MULTI-SIG ======================
 
 export async function submitMultiSigAttestation(targetId, proofData, isProposal = false) {
   if (!auth.currentUser) {
-    showToast("Authentication required to submit multi-sig attestations.", "error");
+    showToast("Authentication required", "error");
     return false;
   }
 
@@ -357,11 +367,11 @@ export async function submitMultiSigAttestation(targetId, proofData, isProposal 
       isProposal
     });
 
-    showToast("✅ Multi-Sig cryptographic attestation anchored securely!", "success");
+    showToast("✅ Multi-Sig attestation sealed", "success");
     return true;
   } catch (error) {
-    console.error("Multi-Sig attestation submission error:", error);
-    showToast("Failed to submit multi-sig attestation to ledger.", "error");
+    console.error("Multi-Sig error:", error);
+    showToast("Failed to submit multi-sig attestation", "error");
     return false;
   }
 }
@@ -373,8 +383,8 @@ export async function handleHighStakesAttestation(targetId, inputs, isProposal =
       return await submitMultiSigAttestation(targetId, proofResult, isProposal);
     }
   } catch (err) {
-    console.error("High-stakes cryptographic attestation pipeline failed:", err);
-    showToast("High-stakes attestation aborted due to generation error.", "error");
+    console.error("High-stakes attestation failed:", err);
+    showToast("High-stakes attestation failed", "error");
   }
   return false;
 }
@@ -384,9 +394,8 @@ export function evaluateMultiSigStatus(entityData) {
   const count = signatures.length;
 
   const hasZkProof = signatures.some(sig =>
-    sig.proofType === "SNARK_GROTH16" ||
-    sig.proofType === "SNARK_GROTH16_SERVER" ||
-    sig.proofType === "GROTH16_CIRCOM_ZK"
+    (sig.proofType || "").toUpperCase().includes("GROTH16") ||
+    (sig.proofType || "").toUpperCase().includes("ZK")
   );
 
   return {
@@ -400,29 +409,23 @@ export function evaluateMultiSigStatus(entityData) {
   };
 }
 
-/* ==========================================================================
-   PROPOSAL DISCUSSION & COMMUNITY COMMENTS MODULE
-   ========================================================================== */
+// ====================== DISCUSSION ======================
 
 const commentUnsubscribers = {};
 
-/**
- * Post a verified community comment on an active DAO proposal
- */
 export async function postDAOComment(proposalId, content) {
   if (!auth.currentUser) {
-    showToast("Please sign in to participate in proposal discussions", "error");
+    showToast("Please sign in to comment", "error");
     return false;
   }
 
   const trimmed = content?.trim();
-  if (!trimmed || trimmed.length === 0) {
-    showToast("Comment body cannot be empty", "error");
+  if (!trimmed) {
+    showToast("Comment cannot be empty", "error");
     return false;
   }
-
   if (trimmed.length > 400) {
-    showToast("Comment exceeds maximum length constraint (max 400 characters)", "error");
+    showToast("Comment too long (max 400 characters)", "error");
     return false;
   }
 
@@ -435,28 +438,20 @@ export async function postDAOComment(proposalId, content) {
       createdAt: serverTimestamp()
     });
 
-    const proposalRef = doc(db, "dao_proposals", proposalId);
-    const snap = await getDoc(proposalRef);
-    if (snap.exists()) {
-      const currentCount = snap.data().commentCount || 0;
-      await updateDoc(proposalRef, {
-        commentCount: currentCount + 1
-      });
-    }
+    await updateDoc(doc(db, "dao_proposals", proposalId), {
+      commentCount: increment(1)
+    });
 
     await awardGovernanceRep(2);
-    showToast("Comment published to discussion ledger", "success");
+    showToast("Comment published", "success");
     return true;
   } catch (err) {
-    console.error("Failed to post discussion comment:", err);
+    console.error("Failed to post comment:", err);
     showToast("Failed to post comment", "error");
     return false;
   }
 }
 
-/**
- * Real-time snapshot subscription for proposal discussion comments
- */
 export function subscribeToProposalComments(proposalId, callback) {
   if (commentUnsubscribers[proposalId]) {
     commentUnsubscribers[proposalId]();
@@ -469,13 +464,10 @@ export function subscribeToProposalComments(proposalId, callback) {
   );
 
   const unsubscribe = onSnapshot(q, (snapshot) => {
-    const comments = snapshot.docs.map(d => ({
-      id: d.id,
-      ...d.data()
-    }));
+    const comments = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
     callback(comments);
   }, (error) => {
-    console.error("Real-time comments listener snapshot error:", error);
+    console.error("Comments listener error:", error);
     callback([]);
   });
 
@@ -483,9 +475,6 @@ export function subscribeToProposalComments(proposalId, callback) {
   return unsubscribe;
 }
 
-/**
- * Terminate active snapshot subscription for proposal comments
- */
 export function unsubscribeFromComments(proposalId) {
   if (commentUnsubscribers[proposalId]) {
     commentUnsubscribers[proposalId]();
@@ -493,9 +482,7 @@ export function unsubscribeFromComments(proposalId) {
   }
 }
 
-/* ==========================================================================
-   FETCH & PROPOSAL LIFECYCLE MANAGEMENT UTILITIES
-   ========================================================================== */
+// ====================== FETCH & LIFECYCLE ======================
 
 export async function fetchActiveProposals(max = 20) {
   try {
@@ -508,7 +495,7 @@ export async function fetchActiveProposals(max = 20) {
     const snapshot = await getDocs(q);
     return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
   } catch (e) {
-    console.error("Failed to query active proposals collection:", e);
+    console.error("Failed to fetch proposals:", e);
     return [];
   }
 }
@@ -519,22 +506,22 @@ export async function getProposal(proposalId) {
     if (!snap.exists()) return null;
     return { id: snap.id, ...snap.data() };
   } catch (e) {
-    console.error("Failed to fetch individual proposal record:", e);
+    console.error("Failed to fetch proposal:", e);
     return null;
   }
 }
 
 export async function closeProposal(proposalId, finalStatus = 'closed') {
-  if (!auth.currentUser) return showToast("Sign in required to close proposals", "error");
+  if (!auth.currentUser) return showToast("Sign in required", "error");
 
   try {
     const isSteward = await hasStewardAccess();
     const proposal = await getProposal(proposalId);
-    if (!proposal) return showToast("Target proposal record not found", "error");
+    if (!proposal) return showToast("Proposal not found", "error");
 
     const isCreator = proposal.createdBy === auth.currentUser.uid;
     if (!isSteward && !isCreator) {
-      return showToast("Only designated Stewards or the original proposal creator can close this proposal", "error");
+      return showToast("Only Stewards or the creator can close this proposal", "error");
     }
 
     const passed = hasProposalPassed(proposal);
@@ -548,30 +535,41 @@ export async function closeProposal(proposalId, finalStatus = 'closed') {
       finalVotesAgainst: proposal.totalVotesAgainst || 0
     });
 
-    await logSecurityAudit('DAO_PROPOSAL_CLOSED', proposalId, {
-      finalStatus,
-      passed
-    });
+    await logSecurityAudit('DAO_PROPOSAL_CLOSED', proposalId, { finalStatus, passed });
 
-    showToast(passed ? "✅ Proposal PASSED voting threshold and is now closed" : "Proposal closed (did not satisfy quorum/approval requirements)", "success");
+    showToast(passed ? "✅ Proposal PASSED" : "Proposal closed (did not pass)", "success");
     return true;
   } catch (e) {
-    console.error("Error executing proposal close operation:", e);
+    console.error("Close proposal error:", e);
     showToast("Failed to close proposal", "error");
     return false;
   }
 }
 
-// ====================== DISCUSSION HELPERS ======================
+// ====================== PASSING LOGIC ======================
+
+export const MODERATION_PROFILES = {
+  PERMISSIVE: { quorum: 5, approvalRate: 0.51, multiSigRequired: 2 },
+  BALANCED:   { quorum: 12, approvalRate: 0.65, multiSigRequired: 3 },
+  STRICT:     { quorum: 25, approvalRate: 0.75, multiSigRequired: 5 }
+};
+
+export function hasProposalPassed(proposal, profile = MODERATION_PROFILES.BALANCED) {
+  const total = (proposal.totalVotesFor || 0) + (proposal.totalVotesAgainst || 0);
+  if (total === 0) return false;
+  const approvalRatio = proposal.totalVotesFor / total;
+  const targetQuorum = proposal.quorum || profile.quorum;
+  return approvalRatio >= profile.approvalRate && total >= targetQuorum;
+}
+
+// ====================== WINDOW HELPERS ======================
 
 window.toggleDiscussion = function (proposalId) {
   const panel = document.getElementById(`discussion-${proposalId}`);
   const arrow = document.getElementById(`discussion-arrow-${proposalId}`);
-
   if (!panel) return;
 
   const isHidden = panel.classList.contains('hidden');
-
   if (isHidden) {
     panel.classList.remove('hidden');
     if (arrow) arrow.textContent = '▲';
@@ -606,22 +604,16 @@ function loadComments(proposalId) {
 
       const el = document.createElement('div');
       el.className = 'rounded-2xl border border-zinc-800 bg-zinc-900/60 p-3';
-
       el.innerHTML = `
         <div class="mb-1 flex items-center justify-between">
-          <span class="text-xs font-medium text-emerald-400">
-            ${escapeHTML(c.authorName || 'Anonymous')}
-          </span>
+          <span class="text-xs font-medium text-emerald-400">${escapeHTML(c.authorName || 'Anonymous')}</span>
           <span class="text-[10px] text-zinc-500">${time}</span>
         </div>
-        <p class="text-sm leading-relaxed text-zinc-300">
-          ${escapeHTML(c.content)}
-        </p>
+        <p class="text-sm leading-relaxed text-zinc-300">${escapeHTML(c.content)}</p>
       `;
       list.appendChild(el);
     });
 
-    // Scroll to bottom
     list.scrollTop = list.scrollHeight;
   });
 }
@@ -629,40 +621,16 @@ function loadComments(proposalId) {
 window.postComment = async function (proposalId) {
   const input = document.getElementById(`comment-input-${proposalId}`);
   const content = input?.value.trim();
-
-  if (!content) {
-    return showToast('Write something first', 'error');
-  }
+  if (!content) return showToast('Write something first', 'error');
 
   const success = await postDAOComment(proposalId, content);
-  if (success && input) {
-    input.value = '';
-  }
+  if (success && input) input.value = '';
 };
 
-export const MODERATION_PROFILES = {
-  PERMISSIVE: { quorum: 5, approvalRate: 0.51, multiSigRequired: 2 },
-  BALANCED:   { quorum: 12, approvalRate: 0.65, multiSigRequired: 3 },
-  STRICT:     { quorum: 25, approvalRate: 0.75, multiSigRequired: 5 }
-};
-
-export function hasProposalPassed(proposal, profile = MODERATION_PROFILES.BALANCED) {
-  const total = (proposal.totalVotesFor || 0) + (proposal.totalVotesAgainst || 0);
-  if (total === 0) return false;
-  const approvalRatio = proposal.totalVotesFor / total;
-  const targetQuorum = proposal.quorum || profile.quorum;
-  return approvalRatio >= profile.approvalRate && total >= targetQuorum;
-}
-
-// Global Window Namespace Registrations for DOM Event Handlers
+// Global exports
 window.submitMultiSigAttestation = submitMultiSigAttestation;
 window.handleHighStakesAttestation = handleHighStakesAttestation;
 window.evaluateMultiSigStatus = evaluateMultiSigStatus;
 window.postDAOComment = postDAOComment;
 window.subscribeToProposalComments = subscribeToProposalComments;
 window.unsubscribeFromComments = unsubscribeFromComments;
-
-// Re-initialize UI modules upon localization language change events
-window.addEventListener('languageChanged', () => {
-  if (typeof initDAO === 'function') initDAO();
-});
