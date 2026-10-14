@@ -1,4 +1,5 @@
-// js/i18n.js - Production i18n Module (Full language support + RTL Header Fix + Ledger Keys)
+// js/i18n.js - Production i18n Module (Full language support + RTL Header Fix)
+// Updated: absolute paths + AbortController + safer loading
 
 let currentTranslations = {};
 let fallbackTranslations = {};
@@ -33,52 +34,42 @@ const DEFAULT_FALLBACK_DICTIONARY = {
   physicalTip1: "Secure Device Storage: Keep your mobile phone encrypted and passcoded (avoid biometrics like fingerprint/face unlock in regions where authorities can compel biometric unlock).",
   physicalTip2: "Clear Browser Data: If using a shared or at-risk device, clear local storage and browser cache immediately after submitting your record.",
   goldenRuleTitle: "The Golden Rule of Citizen Witnessing",
-  goldenRuleText: "Never put yourself in immediate physical danger to capture evidence. Secure your physical safety first. Once you are in a protected location, use cryptographic tools to notarize and share your record with the world.",
-  // --- Forensic Ledger & Verification Keys ---
-  tabLedger: "Forensic Ledger",
-  ledgerIdLabel: "Ledger Entry ID",
-  ledgerIdPlaceholder: "Enter ledger ID or hash...",
-  ledgerHashLabel: "Cryptographic Hash",
-  ledgerHashPlaceholder: "SHA-256 or proof hash...",
-  btnVerifyLedger: "Verify Record",
-  howVerificationWorks: "How Verification Works",
-  verifyGuideIntro: "VocalWitness uses immutable cryptographic checks to ensure authenticity.",
-  verifyGuideLedger: "Ledger tracking records all publication events immutably.",
-  verifyGuideC2PA: "C2PA manifest verification confirms media provenance.",
-  verifyGuideJSON: "Raw JSON cryptographic proof verification ensures zero tampering.",
-  verifyGuideFooter: "All verification runs locally in your browser for maximum privacy.",
-  c2paEngineLoading: "Loading C2PA verification engine...",
-  c2paEngineReady: "C2PA engine ready for verification.",
-  c2paEngineFailed: "Failed to initialize C2PA verification engine."
+  goldenRuleText: "Never put yourself in immediate physical danger to capture evidence. Secure your physical safety first. Once you are in a protected location, use cryptographic tools to notarize and share your record with the world."
 };
 
 const supportedLanguages = [
   { code: 'en',  name: 'English',     flag: '🇬🇧', native: 'English',     rtl: false },
-  { code: 'pcm', name: 'Naija Pidgin', flag: '🇳🇬', native: 'Pidgin',         rtl: false },
-  { code: 'ha',  name: 'Hausa',        flag: '🇳🇬', native: 'Hausa',         rtl: false },
-  { code: 'yo',  name: 'Yorùbá',       flag: '🇳🇬', native: 'Yorùbá',        rtl: false },
-  { code: 'ig',  name: 'Igbo',         flag: '🇳🇬', native: 'Igbo',          rtl: false },
-  { code: 'sw',  name: 'Swahili',      flag: '🇹🇿', native: 'Kiswahili',     rtl: false },
-  { code: 'ar',  name: 'Arabic',       flag: '🇸🇦', native: 'العربية',       rtl: true },
-  { code: 'es',  name: 'Spanish',      flag: '🇪🇸', native: 'Español',       rtl: false },
-  { code: 'fr',  name: 'French',       flag: '🇫🇷', native: 'Français',      rtl: false },
-  { code: 'pt',  name: 'Portuguese',   flag: '🇵🇹', native: 'Português',     rtl: false }
+  { code: 'pcm', name: 'Naija Pidgin', flag: '🇳🇬', native: 'Pidgin',        rtl: false },
+  { code: 'ha',  name: 'Hausa',        flag: '🇳🇬', native: 'Hausa',        rtl: false },
+  { code: 'yo',  name: 'Yorùbá',       flag: '🇳🇬', native: 'Yorùbá',       rtl: false },
+  { code: 'ig',  name: 'Igbo',         flag: '🇳🇬', native: 'Igbo',         rtl: false },
+  { code: 'sw',  name: 'Swahili',      flag: '🇹🇿', native: 'Kiswahili',    rtl: false },
+  { code: 'ar',  name: 'Arabic',       flag: '🇸🇦', native: 'العربية',      rtl: true },
+  { code: 'es',  name: 'Spanish',      flag: '🇪🇸', native: 'Español',      rtl: false },
+  { code: 'fr',  name: 'French',       flag: '🇫🇷', native: 'Français',     rtl: false },
+  { code: 'pt',  name: 'Portuguese',   flag: '🇵🇹', native: 'Português',    rtl: false }
 ];
 
 function getNestedTranslation(obj, path) {
   if (!obj || !path) return null;
-  return path.split('.').reduce((acc, part) => (acc && acc[part] !== undefined ? acc[part] : null), obj);
+  return path.split('.').reduce((acc, part) => {
+    return (acc && acc[part] !== undefined) ? acc[part] : null;
+  }, obj);
 }
 
 export function t(key, fallback = "") {
+  // 1. Current language
   const val = getNestedTranslation(currentTranslations, key);
   if (val !== null && val !== "") return val;
 
+  // 2. English fallback (loaded file)
   const fallbackVal = getNestedTranslation(fallbackTranslations, key);
   if (fallbackVal !== null && fallbackVal !== "") return fallbackVal;
 
+  // 3. Hard-coded emergency dictionary
   if (DEFAULT_FALLBACK_DICTIONARY[key]) return DEFAULT_FALLBACK_DICTIONARY[key];
 
+  // 4. Caller-provided fallback or the key itself
   return fallback || key;
 }
 
@@ -86,38 +77,32 @@ function applyTextDirection(langCode) {
   const lang = supportedLanguages.find(l => l.code === langCode);
   const isRTL = lang?.rtl || false;
 
+  // Set page direction
   document.documentElement.setAttribute('dir', isRTL ? 'rtl' : 'ltr');
   document.documentElement.setAttribute('lang', langCode);
 
+  // CRITICAL: Keep header always LTR to prevent layout breakage
   const header = document.getElementById('main-header');
   if (header) {
     header.setAttribute('dir', 'ltr');
   }
 
+  // Optional: also force any navigation that must stay LTR
   document.querySelectorAll('[data-force-ltr]').forEach(el => {
     el.setAttribute('dir', 'ltr');
   });
 }
 
 export function applyTranslations() {
+  // Text content
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
     if (!key) return;
 
     const text = t(key);
-    if (!text || text === key) return;
+    if (!text) return;
 
-    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
-      el.placeholder = text;
-      return;
-    }
-
-    const labelSpan = el.querySelector(':scope > .i18n-label');
-    if (labelSpan) {
-      labelSpan.textContent = text;
-      return;
-    }
-
+    // Replace first non-empty text node
     let textNodeFound = false;
     for (let node of el.childNodes) {
       if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '') {
@@ -127,22 +112,19 @@ export function applyTranslations() {
       }
     }
 
+    // Fallback: element has no children → set whole text
     if (!textNodeFound && el.children.length === 0) {
       el.textContent = text;
     }
   });
 
+  // Placeholders
   document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
     const key = el.getAttribute('data-i18n-placeholder');
     if (!key) return;
     const text = t(key);
-    if (text && text !== key) el.placeholder = text;
+    if (text) el.setAttribute('placeholder', text);
   });
-
-  const pageTitle = t('pageTitle');
-  if (pageTitle && pageTitle !== 'pageTitle') {
-    document.title = pageTitle;
-  }
 }
 
 function syncSelectors(langCode) {
@@ -160,12 +142,14 @@ export async function loadTranslations(langCode = 'en') {
   const isSupported = supportedLanguages.some(l => l.code === langCode);
   const targetLang = isSupported ? langCode : 'en';
 
+  // Abort any pending fetch request
   if (currentFetchController) {
     currentFetchController.abort();
   }
   currentFetchController = new AbortController();
 
   try {
+    // Always keep English as fallback
     if (Object.keys(fallbackTranslations).length === 0) {
       try {
         const fallbackRes = await fetch('/translations/en.json', {
@@ -207,12 +191,16 @@ export async function loadTranslations(langCode = 'en') {
     currentFetchController = null;
   }
 
+  // Persist preference
   localStorage.setItem('preferredLang', currentLang);
+
+  // Apply everything
   document.documentElement.lang = currentLang;
   applyTextDirection(currentLang);
   applyTranslations();
   syncSelectors(currentLang);
 
+  // Notify the rest of the app
   window.dispatchEvent(new CustomEvent('languageChanged', {
     detail: { lang: currentLang }
   }));
@@ -223,8 +211,10 @@ export async function updateUILanguage(langCode) {
 }
 
 export function initLanguage() {
+  // Restore last chosen language (or default to English)
   let savedLang = localStorage.getItem('preferredLang') || 'en';
 
+  // Listen for language selector changes
   document.addEventListener('change', (e) => {
     if (
       e.target.matches(
@@ -236,9 +226,11 @@ export function initLanguage() {
     }
   });
 
+  // Initial load
   loadTranslations(savedLang);
 }
 
+// ── Mutation Observer (auto-translate dynamically added content) ──
 let observerTimeout = null;
 const observer = new MutationObserver((mutations) => {
   let shouldTranslate = false;
@@ -263,28 +255,36 @@ const observer = new MutationObserver((mutations) => {
     clearTimeout(observerTimeout);
     observerTimeout = setTimeout(() => {
       applyTranslations();
-    }, 40);
+    }, 50);
   }
 });
 
+// Start observing
 if (document.body) {
-  observer.observe(document.body, { childList: true, subtree: true });
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
 } else {
   document.addEventListener('DOMContentLoaded', () => {
-    observer.observe(document.body, { childList: true, subtree: true });
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
   });
 }
 
+// Boot
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initLanguage);
 } else {
   initLanguage();
 }
 
+// Global exports (for non-module scripts)
 window.initLanguage = initLanguage;
 window.changeLanguage = loadTranslations;
 window.setLanguage = loadTranslations;
 window.updateUILanguage = updateUILanguage;
 window.t = t;
 window.applyTranslations = applyTranslations;
-
