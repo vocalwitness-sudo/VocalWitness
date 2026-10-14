@@ -917,6 +917,7 @@ window.publishTestimony = async () => {
 };
 
 /* ====================== EVIDENCE LEDGER ====================== */
+/* ====================== EVIDENCE LEDGER ====================== */
 async function loadEvidenceLedger() {
   const container = document.getElementById('ledger-list') ||
                     document.getElementById('ledgerContainer') ||
@@ -927,7 +928,13 @@ async function loadEvidenceLedger() {
     return;
   }
 
-  container.innerHTML = `
+  // Keep the existing section header if present; only replace the list area
+  let listTarget = document.getElementById('ledger-list');
+  if (!listTarget) {
+    listTarget = container;
+  }
+
+  listTarget.innerHTML = `
     <div class="glass rounded-3xl p-6 sm:p-8 border border-zinc-700/60 shadow-2xl">
       <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-5 border-b border-zinc-800">
         <div>
@@ -980,6 +987,9 @@ async function loadEvidenceLedger() {
       return;
     }
 
+    // Store data for the modal
+    window.__ledgerDocs = {};
+
     let html = `
       <table class="w-full text-left border-collapse">
         <thead>
@@ -994,7 +1004,10 @@ async function loadEvidenceLedger() {
 
     querySnapshot.forEach((docSnapshot) => {
       const data = docSnapshot.data();
-      const ts = data.timestamp;
+      const id = docSnapshot.id;
+      window.__ledgerDocs[id] = { id, ...data };
+
+      const ts = data.timestamp || data.createdAt;
       const dateStr = ts
         ? (ts.toDate ? ts.toDate() : new Date(ts)).toLocaleString()
         : 'N/A';
@@ -1004,17 +1017,46 @@ async function loadEvidenceLedger() {
         ? `<span class="inline-flex items-center gap-1 font-semibold text-emerald-400">🔒 Verified</span>`
         : `<span class="text-zinc-500">Standard</span>`;
 
+      const summary = (data.content || data.headline || data.title || '').slice(0, 90);
+
       html += `
-        <tr class="hover:bg-zinc-800/40 transition">
-          <td class="py-3.5 px-3 sm:px-4 font-medium text-white">${escapeHtml(data.author || 'Anonymous')}</td>
-          <td class="py-3.5 px-3 sm:px-4 max-w-[180px] sm:max-w-xs truncate text-zinc-300">${escapeHtml(data.content || '')}</td>
+        <tr class="hover:bg-zinc-800/40 transition cursor-pointer group"
+            data-ledger-id="${id}"
+            role="button"
+            tabindex="0"
+            title="View sealed record (read-only)">
+          <td class="py-3.5 px-3 sm:px-4 font-medium text-white group-hover:text-emerald-300">${escapeHtml(data.author || 'Anonymous')}</td>
+          <td class="py-3.5 px-3 sm:px-4 max-w-[180px] sm:max-w-xs truncate text-zinc-300">${escapeHtml(summary)}</td>
           <td class="py-3.5 px-3 sm:px-4 font-mono text-xs">${hashDisplay}</td>
           <td class="py-3.5 px-3 sm:px-4 text-xs text-zinc-500">${dateStr}</td>
         </tr>`;
     });
 
-    html += `</tbody></table>`;
+    html += `</tbody></table>
+      <p class="mt-4 text-center text-xs text-zinc-500">Click any row to view the sealed record (read-only)</p>`;
     innerWrapper.innerHTML = html;
+
+    // Wire clicks (event delegation)
+    innerWrapper.onclick = (e) => {
+      const row = e.target.closest('tr[data-ledger-id]');
+      if (!row) return;
+      const id = row.getAttribute('data-ledger-id');
+      if (id && typeof window.viewSealedReport === 'function') {
+        window.viewSealedReport(id);
+      }
+    };
+
+    // Keyboard support
+    innerWrapper.onkeydown = (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        const row = e.target.closest('tr[data-ledger-id]');
+        if (row) {
+          e.preventDefault();
+          const id = row.getAttribute('data-ledger-id');
+          window.viewSealedReport?.(id);
+        }
+      }
+    };
 
   } catch (err) {
     console.error("[Ledger] Fetch error:", err);
@@ -1033,7 +1075,110 @@ async function loadEvidenceLedger() {
 window.loadEvidenceLedger = loadEvidenceLedger;
 window.refreshLedger = loadEvidenceLedger;
 
-/* ====================== LIVE BREAKING TICKER ====================== */
+/* ====================== SEALED REPORT VIEWER (read-only) ====================== */
+window.viewSealedReport = function (id) {
+  const data = window.__ledgerDocs?.[id];
+  if (!data) {
+    showToast?.('Record not found', 'error');
+    return;
+  }
+
+  // Remove any existing modal
+  document.getElementById('sealed-report-modal')?.remove();
+
+  const ts = data.timestamp || data.createdAt;
+  const dateStr = ts
+    ? (ts.toDate ? ts.toDate() : new Date(ts)).toLocaleString()
+    : 'N/A';
+
+  const hashes = [];
+  if (data.bodyHash) hashes.push(`Body: ${data.bodyHash.slice(0, 16)}…`);
+  if (data.imageHash) hashes.push(`Image: ${data.imageHash.slice(0, 16)}…`);
+  if (data.audioHash) hashes.push(`Audio: ${data.audioHash.slice(0, 16)}…`);
+  if (data.videoHash) hashes.push(`Video: ${data.videoHash.slice(0, 16)}…`);
+
+  const modal = document.createElement('div');
+  modal.id = 'sealed-report-modal';
+  modal.className = 'fixed inset-0 z-[10000] flex items-center justify-center bg-black/70 p-4';
+  modal.setAttribute('role', 'dialog');
+  modal.setAttribute('aria-modal', 'true');
+  modal.innerHTML = `
+    <div class="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-zinc-700 bg-zinc-900 shadow-2xl">
+      <div class="sticky top-0 flex items-center justify-between border-b border-zinc-800 bg-zinc-900 px-5 py-4">
+        <div>
+          <h3 class="text-lg font-bold text-white">Sealed Record</h3>
+          <p class="text-xs text-emerald-400 mt-0.5">🔒 Read-only • Immutable</p>
+        </div>
+        <button type="button" data-close-sealed
+                class="rounded-lg p-2 text-zinc-400 hover:bg-zinc-800 hover:text-white transition">
+          ✕
+        </button>
+      </div>
+      <div class="space-y-4 p-5 text-sm">
+        <div>
+          <p class="text-xs uppercase tracking-wider text-zinc-500 mb-1">Witness</p>
+          <p class="font-medium text-white">${escapeHtml(data.author || 'Anonymous')}</p>
+        </div>
+        <div>
+          <p class="text-xs uppercase tracking-wider text-zinc-500 mb-1">Timestamp</p>
+          <p class="text-zinc-300">${dateStr}</p>
+        </div>
+        <div>
+          <p class="text-xs uppercase tracking-wider text-zinc-500 mb-1">Content</p>
+          <p class="text-zinc-200 whitespace-pre-wrap leading-relaxed">${escapeHtml(data.content || data.headline || data.title || '—')}</p>
+        </div>
+        ${hashes.length ? `
+        <div>
+          <p class="text-xs uppercase tracking-wider text-zinc-500 mb-1">Cryptographic hashes</p>
+          <ul class="font-mono text-xs text-emerald-400/90 space-y-1">
+            ${hashes.map(h => `<li>${escapeHtml(h)}</li>`).join('')}
+          </ul>
+        </div>` : ''}
+        <div class="rounded-xl border border-zinc-700 bg-zinc-950/60 px-4 py-3 text-xs text-zinc-400">
+          This record is sealed. The original cannot be edited or deleted by anyone.
+        </div>
+      </div>
+      <div class="flex gap-3 border-t border-zinc-800 px-5 py-4">
+        <button type="button" data-close-sealed
+                class="flex-1 rounded-xl border border-zinc-700 bg-zinc-800 py-2.5 text-sm font-medium text-zinc-200 hover:bg-zinc-700 transition">
+          Close
+        </button>
+        <button type="button" id="sealed-download-pack"
+                class="flex-1 rounded-xl bg-emerald-500 py-2.5 text-sm font-bold text-black hover:bg-emerald-400 transition">
+          📥 Evidence Pack
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+  document.body.style.overflow = 'hidden';
+
+  const close = () => {
+    modal.remove();
+    document.body.style.overflow = '';
+  };
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal || e.target.closest('[data-close-sealed]')) close();
+  });
+
+  document.getElementById('sealed-download-pack')?.addEventListener('click', async () => {
+    if (typeof handleDownloadEvidencePack === 'function') {
+      await handleDownloadEvidencePack(id);
+    } else {
+      showToast?.('Evidence Pack download not available', 'info');
+    }
+  });
+
+  document.addEventListener('keydown', function escHandler(e) {
+    if (e.key === 'Escape') {
+      close();
+      document.removeEventListener('keydown', escHandler);
+    }
+  });
+};
+
 /* ====================== LIVE BREAKING TICKER ====================== */
 async function fetchCuratedNews() {
   const tickerEl = document.getElementById('ticker-content');
