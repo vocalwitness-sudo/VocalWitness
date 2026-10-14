@@ -1331,6 +1331,16 @@ if (!window.__vwTickerRefresh) {
   }, 12 * 60 * 1000);
 }
 
+// Focus banner rotating messages
+const focusMessages = [
+  { title: "Truth first.", text: "Seal what you saw. Evidence stays immutable." },
+  { title: "Citizen power.", text: "Anyone can report. Only sealed records stay public." },
+  { title: "Zero-knowledge ready.", text: "Prove integrity without revealing identity." },
+  { title: "Your voice matters.", text: "Live voice carries stronger evidence weight." },
+  { title: "Public Square.", text: "Where citizens speak and evidence is preserved." }
+];
+let focusIndex = 0;
+
 function rotateFocusBanner() {
   const el = document.getElementById('focus-banner-text');
   if (!el || !focusMessages.length) return;
@@ -1360,7 +1370,6 @@ function rotateFocusBanner() {
 if (!window.__vwFocusBannerTimer) {
   window.__vwFocusBannerTimer = setInterval(rotateFocusBanner, 8000);
 }
-
 /* ====================== UTILITIES ====================== */
 function escapeHtml(str) {
   if (!str) return '';
