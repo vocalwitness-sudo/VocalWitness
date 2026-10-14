@@ -111,7 +111,7 @@ export async function getUserGovernancePower() {
     if (tier === TIERS.WITNESS_CIRCLE) tierName = 'Witness Circle';
     else if (tier === TIERS.CITIZEN_CIRCLE) tierName = 'Citizen Circle';
 
-    const canPropose = tier === TIERS.WITNESS_CIRCLE || 
+    const canPropose = tier === TIERS.WITNESS_CIRCLE ||
                        ['admin', 'moderator', 'steward'].includes(userData.role);
 
     return {
@@ -627,6 +627,11 @@ window.postComment = async function (proposalId) {
   if (success && input) input.value = '';
 };
 
+// Thin wrapper so existing onclick="castInlineVote(...)" handlers work
+window.castInlineVote = function (proposalId, direction, strength = 1) {
+  return castQuadraticVote(proposalId, direction, Number(strength) || 1);
+};
+
 // Global exports
 window.submitMultiSigAttestation = submitMultiSigAttestation;
 window.handleHighStakesAttestation = handleHighStakesAttestation;
@@ -634,3 +639,4 @@ window.evaluateMultiSigStatus = evaluateMultiSigStatus;
 window.postDAOComment = postDAOComment;
 window.subscribeToProposalComments = subscribeToProposalComments;
 window.unsubscribeFromComments = unsubscribeFromComments;
+window.castQuadraticVote = castQuadraticVote;
