@@ -1409,8 +1409,12 @@ document.addEventListener('DOMContentLoaded', () => {
       // 1. Reset all pills to inactive style
       pills.forEach(btn => {
         btn.classList.remove(
-          'active', 'bg-emerald-500', 'text-black',
-          'bg-emerald-500/10', 'border-emerald-500/40', 'text-emerald-400'
+          'active',
+          'bg-emerald-500',
+          'text-black',
+          'bg-emerald-500/10',
+          'border-emerald-500/40',
+          'text-emerald-400'
         );
         btn.classList.add('border', 'border-zinc-800', 'bg-zinc-900', 'text-zinc-300');
       });
@@ -1431,11 +1435,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Call your existing feed function
       if (typeof initFeed === 'function') {
-        if (filter === 'all') {
-          initFeed(db, 'all');
-        } else {
-          initFeed(db, filter);
-        }
+        initFeed(db, filter === 'all' ? 'all' : filter);
       }
     });
   });
