@@ -260,7 +260,7 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
         btn?.click();
     });
 
-// Event delegation (attached only once)
+    // Event delegation (attached only once)
     if (!feedContainer.dataset.listenerAttached) {
         feedContainer.dataset.listenerAttached = 'true';
         feedContainer.addEventListener('click', async (e) => {
@@ -373,7 +373,7 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
         });
     }
 
-       const q = query(
+    const q = query(
         collection(dbInstance, 'testimonies'),
         limit(50)
     );
@@ -455,6 +455,7 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                 Failed to load feed items. Please refresh or try again later.
             </div>`;
     });
+}
     
 function ensureSearchAndFilterUI(container) {
     let existingWrapper = document.getElementById('feed-controls-wrapper');
