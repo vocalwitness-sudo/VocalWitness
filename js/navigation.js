@@ -8,7 +8,7 @@ export const menuItems = [
     { id: "my-circle", icon: "👥", label: "My Circle", route: "my-circle" },
     { id: "arena", icon: "🏟️", label: "Live Arena", route: "arena" },
     { id: "audit-log", icon: "📊", label: "Forensic Ledger", route: "audit-log" },
-    { id: "dao", icon: "🏛️", label: "DAO Governance", route: "dao" },
+    { id: "dao", icon: "🏛️", label: "Governance", route: "dao" },
     { id: "my-testimonies", icon: "📜", label: "My Testimonies", route: "profile" }
 ];
 
