@@ -1,7 +1,4 @@
 // js/verification.js - Production Ready: Real Phone Verification + Backend Confirmation + Real ZK + C2PA + Standalone JSON Verification
-// Updated to work cleanly with the hardened phoneVerification.js
-// + preloadC2PA for non-blocking verify page
-// + same-origin C2PA worker/wasm + modern Reader API
 
 import { doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
