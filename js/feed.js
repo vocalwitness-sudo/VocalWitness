@@ -1438,3 +1438,5 @@ document.addEventListener('DOMContentLoaded', () => {
         initFeed(db, filter === 'all' ? 'all' : filter);
       }
     });
+  });
+});
