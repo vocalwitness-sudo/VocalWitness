@@ -41,11 +41,6 @@ async function computeSHA256(message) {
 }
 
 /**
- * Initialize C2PA (safe to call multiple times)
- * Same-origin worker + wasm required (cross-origin Workers are blocked by browsers)
- * workerSrc MUST be a URL instance, not a string
- */
-/**
  * Initialize C2PA using the inline build (WASM embedded → no separate .wasm fetch)
  */
 async function initC2PA() {
@@ -64,7 +59,7 @@ async function initC2PA() {
       return c2paInstance;
     } catch (err) {
       console.error("[C2PA] Failed to initialize:", err);
-      c2paInitPromise = null; // allow retry
+      c2paInitPromise = null;
       throw new Error("C2PA engine initialization failed.");
     }
   })();
@@ -92,6 +87,7 @@ export async function preloadC2PA() {
   if (statusEl) {
     statusEl.textContent = 'Loading Content Credentials engine…';
     statusEl.style.color = '#9ca3af';
+    statusEl.style.opacity = '1';
   }
 
   try {
@@ -99,7 +95,6 @@ export async function preloadC2PA() {
     if (statusEl) {
       statusEl.textContent = '✅ Content Credentials engine ready';
       statusEl.style.color = '#34d399';
-      // Fade out after a few seconds
       setTimeout(() => {
         if (statusEl) statusEl.style.opacity = '0.6';
       }, 2500);
@@ -117,7 +112,6 @@ export async function preloadC2PA() {
       statusEl.style.color = '#fbbf24';
     }
 
-    // Also show a soft toast if the helper exists
     if (typeof showToast === 'function') {
       showToast('Content Credentials engine failed to load. Other verification methods still work.', 'warning');
     }
