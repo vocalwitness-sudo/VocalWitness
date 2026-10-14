@@ -31,7 +31,7 @@
         </div>
         <div>
           <h1 class="text-xl font-bold text-white">DAO Governance</h1>
-          <p class="text-xs text-zinc-400">Quadratic voting • Reputation-weighted</p>
+          <p class="text-xs text-zinc-400">You decide. We don’t.</p>
         </div>
       </div>
       <a href="index.html"
@@ -41,30 +41,96 @@
     </div>
   </header>
 
-  <main class="mx-auto max-w-4xl px-4 pt-8">
+  <main class="mx-auto max-w-4xl px-4 pt-8 space-y-8">
+
+    <!-- ========== YOU ARE THE GOVERNMENT BANNER ========== -->
+    <div class="rounded-3xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 to-cyan-500/5 p-6">
+      <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+        <div class="text-4xl">👑</div>
+        <div>
+          <h2 class="text-xl font-bold text-emerald-400">You are the government of VocalWitness</h2>
+          <p class="mt-1 text-sm text-zinc-300 leading-relaxed">
+            No founder, no admin, no company decides the future of this platform.  
+            <strong class="text-white">You do.</strong>  
+            Your votes protect sealed reports, control the treasury, and set the rules.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== PERSONAL POWER CARD ========== -->
+    <div class="glass rounded-3xl border border-emerald-500/25 p-6">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
+        <div class="flex items-center gap-4">
+          <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/20 text-3xl border border-emerald-500/40">
+            ⚡
+          </div>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h2 class="text-xl font-bold text-white">Your Power</h2>
+              <span id="userTierBadge" class="rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-medium text-emerald-400 border border-emerald-500/30">
+                Loading...
+              </span>
+            </div>
+            <p class="mt-1 text-sm text-zinc-400">Reputation-weighted • Quadratic voting</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-4 text-center">
+          <div>
+            <p class="text-xs text-zinc-500 uppercase tracking-wider">Reputation</p>
+            <p id="userReputation" class="text-2xl font-bold text-cyan-400">—</p>
+          </div>
+          <div>
+            <p class="text-xs text-zinc-500 uppercase tracking-wider">Budget Left</p>
+            <p id="userBudget" class="text-2xl font-bold text-emerald-400">—</p>
+          </div>
+          <div>
+            <p class="text-xs text-zinc-500 uppercase tracking-wider">Multiplier</p>
+            <p id="userMultiplier" class="text-2xl font-bold text-amber-400">—</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== IMPACT COUNTER ========== -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="glass rounded-2xl border border-emerald-500/20 p-5 text-center">
+        <p class="text-3xl font-bold text-emerald-400" id="impactReports">—</p>
+        <p class="mt-1 text-sm text-zinc-400">Sealed reports protected<br>by your community votes</p>
+      </div>
+      <div class="glass rounded-2xl border border-emerald-500/20 p-5 text-center">
+        <p class="text-3xl font-bold text-cyan-400" id="impactAppeals">—</p>
+        <p class="mt-1 text-sm text-zinc-400">Appeals decided<br>by the people</p>
+      </div>
+      <div class="glass rounded-2xl border border-emerald-500/20 p-5 text-center">
+        <p class="text-3xl font-bold text-amber-400" id="impactFeatures">—</p>
+        <p class="mt-1 text-sm text-zinc-400">Features & rules<br>you collectively set</p>
+      </div>
+    </div>
 
     <!-- Page Intro -->
-    <div class="mb-8">
+    <div>
       <div class="mb-3 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400">
         Community-Led Decisions
       </div>
-      <h2 class="text-3xl font-bold text-emerald-400">Active Proposals</h2>
+      <h2 class="text-3xl font-bold text-white">Active Proposals</h2>
       <p class="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-400">
-        Shape the future of VocalWitness through quadratic voting.
-        Higher reputation gives more voting power, but cost grows with the square of strength.
+        Every decision below is made by you — the citizens.  
+        Use your voting power wisely. This is your government.
       </p>
     </div>
 
     <!-- Stats + Create -->
-    <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div class="flex flex-wrap gap-3 text-sm">
         <div class="rounded-2xl border border-zinc-700 bg-zinc-900/60 px-4 py-2">
           <span class="text-zinc-400">Your Voting Budget</span>
-          <span id="userBudget" class="ml-2 font-semibold text-emerald-400">—</span>
+          <span id="userBudgetSmall" class="ml-2 font-semibold text-emerald-400">—</span>
         </div>
         <div class="rounded-2xl border border-zinc-700 bg-zinc-900/60 px-4 py-2">
           <span class="text-zinc-400">Reputation</span>
-          <span id="userReputation" class="ml-2 font-semibold text-cyan-400">—</span>
+          <span id="userReputationSmall" class="ml-2 font-semibold text-cyan-400">—</span>
         </div>
       </div>
 
@@ -75,7 +141,7 @@
     </div>
 
     <!-- Filters -->
-    <div class="mb-6 flex flex-wrap gap-2">
+    <div class="flex flex-wrap gap-2">
       <button class="filter-btn active rounded-full border border-emerald-500/40 bg-emerald-500/10 px-4 py-1.5 text-xs font-medium text-emerald-400"
               data-filter="all">All</button>
       <button class="filter-btn rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs text-zinc-300 hover:border-emerald-500/50"
@@ -97,7 +163,7 @@
     <div class="w-full max-w-md space-y-5 rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
       <div>
         <h3 class="text-lg font-bold text-white">Create DAO Proposal</h3>
-        <p class="mt-1 text-sm text-zinc-400">Clear proposals get better participation</p>
+        <p class="mt-1 text-sm text-zinc-400">You are proposing a law for the community</p>
       </div>
 
       <div>
@@ -123,7 +189,7 @@
         <label class="mb-1.5 block text-xs text-zinc-400">Description *</label>
         <textarea id="proposalDesc" rows="4" maxlength="800"
                   class="w-full resize-none rounded-xl border border-zinc-700 bg-zinc-950 p-3 text-sm focus:border-emerald-500 focus:outline-none"
-                  placeholder="Explain the proposal and why it matters..."></textarea>
+                  placeholder="Explain the proposal and why it matters to the community..."></textarea>
       </div>
 
       <div class="flex justify-end gap-2 pt-2">
@@ -131,44 +197,52 @@
           Cancel
         </button>
         <button id="submitCreateBtn" class="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-black hover:bg-emerald-500">
-          Create Proposal
+          Submit to the People
         </button>
       </div>
     </div>
   </div>
 
-  <!-- ========== VOTE MODAL ========== -->
+  <!-- ========== IMPROVED QUADRATIC VOTE MODAL ========== -->
   <div id="voteModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 p-4 backdrop-blur-md">
-    <div class="w-full max-w-sm space-y-5 rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
+    <div class="w-full max-w-sm space-y-6 rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
       <div>
-        <h3 class="text-lg font-bold text-white">Cast Quadratic Vote</h3>
-        <p id="voteProposalTitle" class="mt-1 text-sm text-zinc-400"></p>
+        <h3 class="text-lg font-bold text-white">Cast Your Vote</h3>
+        <p id="voteProposalTitle" class="mt-1 text-sm text-zinc-400 line-clamp-2"></p>
       </div>
 
+      <!-- Strength Selector -->
       <div>
-        <label class="mb-2 block text-xs text-zinc-400">Vote Strength (1–5)</label>
-        <div class="flex gap-2" id="strengthButtons">
-          <button data-s="1" class="strength-btn flex-1 rounded-xl bg-zinc-800 py-2 text-sm hover:bg-zinc-700">1</button>
-          <button data-s="2" class="strength-btn flex-1 rounded-xl bg-zinc-800 py-2 text-sm hover:bg-zinc-700">2</button>
-          <button data-s="3" class="strength-btn flex-1 rounded-xl bg-zinc-800 py-2 text-sm hover:bg-zinc-700">3</button>
-          <button data-s="4" class="strength-btn flex-1 rounded-xl bg-zinc-800 py-2 text-sm hover:bg-zinc-700">4</button>
-          <button data-s="5" class="strength-btn flex-1 rounded-xl bg-zinc-800 py-2 text-sm hover:bg-zinc-700">5</button>
+        <div class="mb-3 flex items-center justify-between">
+          <label class="text-xs text-zinc-400">How strongly do you feel?</label>
+          <span class="text-xs text-emerald-400 font-medium">Cost: <span id="liveCost">1</span> points</span>
         </div>
-        <p class="mt-2 text-[11px] text-zinc-500">
-          Cost = strength² • Your remaining budget: <span id="voteBudgetDisplay">—</span>
+        
+        <div class="flex gap-2" id="strengthButtons">
+          <button data-s="1" class="strength-btn flex-1 rounded-xl bg-emerald-600 py-3 text-sm font-medium text-white">1</button>
+          <button data-s="2" class="strength-btn flex-1 rounded-xl bg-zinc-800 py-3 text-sm hover:bg-zinc-700">2</button>
+          <button data-s="3" class="strength-btn flex-1 rounded-xl bg-zinc-800 py-3 text-sm hover:bg-zinc-700">3</button>
+          <button data-s="4" class="strength-btn flex-1 rounded-xl bg-zinc-800 py-3 text-sm hover:bg-zinc-700">4</button>
+          <button data-s="5" class="strength-btn flex-1 rounded-xl bg-zinc-800 py-3 text-sm hover:bg-zinc-700">5</button>
+        </div>
+
+        <p class="mt-3 text-[11px] text-zinc-500 text-center">
+          1 vote = 1 point • 2 votes = 4 points • 3 = 9 • 4 = 16 • 5 = 25<br>
+          Remaining budget: <span id="voteBudgetDisplay" class="text-emerald-400 font-medium">—</span>
         </p>
       </div>
 
-      <div class="flex gap-3">
-        <button id="voteForBtn" class="flex-1 rounded-xl bg-emerald-600 py-2.5 text-sm font-semibold text-black hover:bg-emerald-500">
+      <!-- Vote Buttons -->
+      <div class="grid grid-cols-2 gap-3">
+        <button id="voteForBtn" class="rounded-xl bg-emerald-600 py-3.5 text-sm font-semibold text-black hover:bg-emerald-500 transition">
           Vote FOR
         </button>
-        <button id="voteAgainstBtn" class="flex-1 rounded-xl bg-rose-600/80 py-2.5 text-sm font-semibold text-white hover:bg-rose-500">
+        <button id="voteAgainstBtn" class="rounded-xl bg-rose-600/90 py-3.5 text-sm font-semibold text-white hover:bg-rose-500 transition">
           Vote AGAINST
         </button>
       </div>
 
-      <button id="cancelVoteBtn" class="w-full py-2 text-sm text-zinc-400 hover:text-white">
+      <button id="cancelVoteBtn" class="w-full py-2 text-sm text-zinc-400 hover:text-white transition">
         Cancel
       </button>
     </div>
@@ -188,8 +262,37 @@
     let selectedStrength = 1;
     let currentProposalId = null;
     let currentFilter = 'all';
+    let userBudget = 25; // Will be updated from real data
 
-    // ---------- Render ----------
+    // ---------- Power Card & Impact (placeholder - connect to real data) ----------
+    function updateUserPower(data = {}) {
+      const rep = data.reputation || 0;
+      const budget = data.remainingBudget ?? 25;
+      const multiplier = data.votingWeight || 1;
+      const tier = data.tierName || 'Citizen';
+
+      document.getElementById('userReputation').textContent = rep;
+      document.getElementById('userReputationSmall').textContent = rep;
+      document.getElementById('userBudget').textContent = budget;
+      document.getElementById('userBudgetSmall').textContent = budget + ' / 25';
+      document.getElementById('userMultiplier').textContent = '×' + multiplier.toFixed(1);
+      document.getElementById('userTierBadge').textContent = tier;
+      document.getElementById('voteBudgetDisplay').textContent = budget;
+
+      userBudget = budget;
+    }
+
+    function updateImpactCounters(data = {}) {
+      document.getElementById('impactReports').textContent = (data.reportsProtected || 0).toLocaleString();
+      document.getElementById('impactAppeals').textContent = (data.appealsResolved || 0).toLocaleString();
+      document.getElementById('impactFeatures').textContent = (data.featuresPrioritized || 0).toLocaleString();
+    }
+
+    // Call these with real data from your backend
+    updateUserPower({ reputation: 248, remainingBudget: 18, votingWeight: 1.8, tierName: 'Witness Circle' });
+    updateImpactCounters({ reportsProtected: 1247, appealsResolved: 89, featuresPrioritized: 14 });
+
+    // ---------- Render Proposals ----------
     async function loadProposals() {
       const container = document.getElementById('proposalsContainer');
       container.innerHTML = `<div class="py-16 text-center text-zinc-500">Loading proposals...</div>`;
@@ -200,14 +303,13 @@
           <div class="rounded-3xl border border-dashed border-zinc-700 bg-zinc-900/40 py-16 text-center">
             <div class="mb-4 text-5xl">🏛️</div>
             <h3 class="text-lg font-medium text-white">No active proposals yet</h3>
-            <p class="mt-2 text-sm text-zinc-400">Be the first to create one and shape the platform.</p>
+            <p class="mt-2 text-sm text-zinc-400">Be the first to create one.<br>You are the government.</p>
           </div>`;
         return;
       }
 
       const isSteward = await hasStewardAccess();
 
-      // Simple client-side filter
       let filtered = proposals;
       if (currentFilter === 'passed') {
         filtered = proposals.filter(p => hasProposalPassed(p));
@@ -255,17 +357,16 @@
               ${escapeHTML(p.description || '')}
             </p>
 
-            <!-- Vote bars -->
             <div class="mb-4">
               <div class="mb-1 flex justify-between text-xs text-zinc-400">
                 <span>FOR ${p.totalVotesFor || 0}</span>
                 <span>AGAINST ${p.totalVotesAgainst || 0}</span>
               </div>
-              <div class="flex h-2 overflow-hidden rounded-full bg-zinc-800">
+              <div class="flex h-2.5 overflow-hidden rounded-full bg-zinc-800">
                 <div class="bg-emerald-500 transition-all" style="width:${forPct}%"></div>
                 <div class="bg-rose-500 transition-all" style="width:${againstPct}%"></div>
               </div>
-              <p class="mt-1 text-[11px] text-zinc-500">
+              <p class="mt-1.5 text-[11px] text-zinc-500">
                 Quorum: ${p.quorum || 12} • Total power: ${total}
                 ${passed ? ' • <span class="text-emerald-400">Threshold reached</span>' : ''}
               </p>
@@ -274,8 +375,8 @@
             <div class="flex gap-3">
               ${!isClosed ? `
                 <button onclick="openVoteModal('${p.id}', '${escapeHTML(p.title).replace(/'/g, "\\'")}')"
-                        class="flex-1 rounded-xl bg-zinc-800 py-2.5 text-sm font-medium transition hover:bg-zinc-700">
-                  Cast Vote
+                        class="flex-1 rounded-xl bg-emerald-600/90 py-2.5 text-sm font-semibold text-black transition hover:bg-emerald-500">
+                  Cast Your Vote
                 </button>` : ''}
               ${isSteward && !isClosed ? `
                 <button onclick="handleClose('${p.id}')"
@@ -283,34 +384,6 @@
                   Close
                 </button>` : ''}
             </div>
-
-            <!-- Discussion Toggle -->
-            <div class="mt-4 border-t border-zinc-800 pt-4">
-              <button onclick="toggleDiscussion('${p.id}')"
-                      class="flex w-full items-center justify-between text-sm text-zinc-400 hover:text-white transition">
-                <span>Discussion (<span id="comment-count-${p.id}">0</span>)</span>
-                <span id="discussion-arrow-${p.id}">▼</span>
-              </button>
-
-              <div id="discussion-${p.id}" class="mt-4 hidden space-y-4">
-                <!-- Comments will load here -->
-                <div id="comments-list-${p.id}" class="space-y-3 max-h-64 overflow-y-auto">
-                  <p class="text-xs text-zinc-500 text-center py-4">Loading comments...</p>
-                </div>
-
-                <!-- Add comment -->
-                <div class="flex gap-2">
-                  <input id="comment-input-${p.id}" type="text" maxlength="400"
-                         placeholder="Add a comment..."
-                         class="flex-1 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-white focus:border-emerald-500 focus:outline-none">
-                  <button onclick="postComment('${p.id}')"
-                          class="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-medium text-black hover:bg-emerald-500 transition">
-                    Post
-                  </button>
-                </div>
-              </div>
-            </div>
-
           </div>`;
       }).join('');
     }
@@ -324,32 +397,6 @@
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
     }
-
-    // ---------- Discussion Handlers ----------
-    window.toggleDiscussion = (proposalId) => {
-      const discDiv = document.getElementById(`discussion-${proposalId}`);
-      const arrow = document.getElementById(`discussion-arrow-${proposalId}`);
-      if (!discDiv) return;
-
-      const isHidden = discDiv.classList.contains('hidden');
-      if (isHidden) {
-        discDiv.classList.remove('hidden');
-        arrow.textContent = '▲';
-        // Trigger loading comments when opened if needed
-      } else {
-        discDiv.classList.add('hidden');
-        arrow.textContent = '▼';
-      }
-    };
-
-    window.postComment = (proposalId) => {
-      const input = document.getElementById(`comment-input-${proposalId}`);
-      if (!input || !input.value.trim()) return showToast('Comment cannot be empty', 'error');
-      
-      // Implement your comment submission logic here
-      showToast('Comment submitted', 'success');
-      input.value = '';
-    };
 
     // ---------- Filters ----------
     document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -393,7 +440,7 @@
       }
     });
 
-    // ---------- Vote ----------
+    // ---------- Improved Vote Modal ----------
     window.openVoteModal = (id, title) => {
       currentProposalId = id;
       selectedStrength = 1;
@@ -416,6 +463,9 @@
     });
 
     function updateStrengthUI() {
+      const cost = selectedStrength * selectedStrength;
+      document.getElementById('liveCost').textContent = cost;
+
       document.querySelectorAll('.strength-btn').forEach(btn => {
         const s = parseInt(btn.dataset.s);
         if (s === selectedStrength) {
