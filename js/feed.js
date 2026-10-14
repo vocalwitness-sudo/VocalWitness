@@ -44,6 +44,28 @@ function escapeHTML(str) {
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
 }
+function showNewPostsBanner(count) {
+  // Remove existing banner
+  document.getElementById('new-posts-banner')?.remove();
+
+  const banner = document.createElement('div');
+  banner.id = 'new-posts-banner';
+  banner.className = 'fixed top-20 left-1/2 z-[90] -translate-x-1/2 cursor-pointer rounded-full border border-emerald-500/40 bg-emerald-500 px-5 py-2.5 text-sm font-bold text-black shadow-lg shadow-emerald-500/30 transition hover:bg-emerald-400 active:scale-95';
+  banner.innerHTML = `↑ ${count} new report${count > 1 ? 's' : ''} — tap to view`;
+  banner.onclick = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    banner.remove();
+    // Re-render so newest is visible
+    applySearchAndFilter(
+      document.getElementById('testimonies-feed') ||
+      document.getElementById('feed-container')
+    );
+  };
+  document.body.appendChild(banner);
+
+  // Auto-dismiss after 12s
+  setTimeout(() => banner.remove(), 12000);
+}
 
 /**
  * Returns a quiet relative time string (e.g. "2h ago", "3d ago")
@@ -351,17 +373,25 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
         });
     }
 
-    const q = query(
+       const q = query(
         collection(dbInstance, 'testimonies'),
         limit(50)
     );
 
+    let previousIds = new Set();
+    let isFirstSnapshot = true;
+
     activeFeedListener = onSnapshot(q, (snapshot) => {
+        const previousCache = [...allPostsCache];
         allPostsCache = [];
+
         if (snapshot.empty) {
             renderFilteredPosts([], feedContainer);
+            previousIds = new Set();
+            isFirstSnapshot = false;
             return;
         }
+
         snapshot.forEach((docSnap) => {
             const data = docSnap.data();
             const postVisibility = data.feedVisibility || data.channel;
@@ -369,14 +399,55 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                 allPostsCache.push({ id: docSnap.id, ...data });
             }
         });
+
+        // Newest first (pinned stay on top)
         allPostsCache.sort((a, b) => {
             if (a.isPinned && !b.isPinned) return -1;
             if (!a.isPinned && b.isPinned) return 1;
-            const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : new Date(a.createdAt || 0).getTime();
-            const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : new Date(b.createdAt || 0).getTime();
+            const timeA = a.createdAt?.toMillis
+                ? a.createdAt.toMillis()
+                : (a.timestamp?.toMillis
+                    ? a.timestamp.toMillis()
+                    : new Date(a.createdAt || a.timestamp || 0).getTime());
+            const timeB = b.createdAt?.toMillis
+                ? b.createdAt.toMillis()
+                : (b.timestamp?.toMillis
+                    ? b.timestamp.toMillis()
+                    : new Date(b.createdAt || b.timestamp || 0).getTime());
             return timeB - timeA;
         });
+
+        // Detect truly new posts (after first load)
+        const currentIds = new Set(allPostsCache.map(p => p.id));
+        let newCount = 0;
+        if (!isFirstSnapshot) {
+            currentIds.forEach(id => {
+                if (!previousIds.has(id)) newCount++;
+            });
+        }
+        previousIds = currentIds;
+        isFirstSnapshot = false;
+
         applySearchAndFilter(feedContainer);
+
+        // Show "New reports" banner if user is scrolled down and new posts arrived
+        if (newCount > 0) {
+            const feedTop = feedContainer.getBoundingClientRect().top;
+            const isNearTop = feedTop > -80 && window.scrollY < 200;
+
+            if (!isNearTop) {
+                showNewPostsBanner(newCount);
+            } else {
+                // Subtle highlight for the newest card
+                const firstCard = feedContainer.querySelector('[data-post-id]');
+                if (firstCard) {
+                    firstCard.classList.add('ring-2', 'ring-emerald-500/50');
+                    setTimeout(() => {
+                        firstCard.classList.remove('ring-2', 'ring-emerald-500/50');
+                    }, 2500);
+                }
+            }
+        }
     }, (error) => {
         console.error('Feed error:', error);
         feedContainer.innerHTML = `
@@ -384,7 +455,7 @@ export async function initFeed(dbInstance = db, channelType = 'citizen-talk') {
                 Failed to load feed items. Please refresh or try again later.
             </div>`;
     });
-}
+    
 function ensureSearchAndFilterUI(container) {
     let existingWrapper = document.getElementById('feed-controls-wrapper');
     if (existingWrapper) existingWrapper.remove();
