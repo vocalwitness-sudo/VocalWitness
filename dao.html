@@ -192,50 +192,115 @@
     </div>
   </main>
 
-  <!-- ========== CREATE PROPOSAL MODAL ========== -->
-  <div id="createModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 p-4 backdrop-blur-md">
-    <div class="w-full max-w-md space-y-5 rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
-      <div>
-        <h3 class="text-lg font-bold text-white">Create DAO Proposal</h3>
-        <p class="mt-1 text-sm text-zinc-400">You are proposing a law for the community</p>
-      </div>
+<!-- ========== CREATE PROPOSAL MODAL (WITH PREVIEW) ========== -->
+<div id="createModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 p-4 backdrop-blur-md">
+  <div class="w-full max-w-lg space-y-5 rounded-3xl border border-zinc-800 bg-zinc-900 p-6 max-h-[92vh] overflow-y-auto">
 
-      <div>
-        <label class="mb-1.5 block text-xs text-zinc-400">Title *</label>
-        <input id="proposalTitle" type="text" maxlength="120"
-               class="w-full rounded-xl border border-zinc-700 bg-zinc-950 p-3 text-sm focus:border-emerald-500 focus:outline-none"
+    <!-- Header -->
+    <div>
+      <div class="mb-1 flex items-center gap-2">
+        <span class="text-2xl">📜</span>
+        <h3 class="text-xl font-bold text-white">Create a Proposal</h3>
+      </div>
+      <p class="text-sm text-zinc-400">
+        You are proposing a decision for the entire community.
+      </p>
+    </div>
+
+    <!-- ========== STEP 1: WRITE FORM ========== -->
+    <div id="proposalFormStep">
+
+      <!-- Title -->
+      <div class="mb-4">
+        <label class="mb-1.5 block text-sm font-medium text-zinc-300">Proposal Title *</label>
+        <input id="proposalTitle" 
+               type="text" 
+               maxlength="120"
+               class="w-full rounded-xl border border-zinc-700 bg-zinc-950 p-3.5 text-sm focus:border-emerald-500 focus:outline-none"
                placeholder="Clear and specific title">
       </div>
 
-      <div>
-        <label class="mb-1.5 block text-xs text-zinc-400">Category</label>
+      <!-- Category -->
+      <div class="mb-4">
+        <label class="mb-1.5 block text-sm font-medium text-zinc-300">Category</label>
         <select id="proposalCategory"
-                class="w-full rounded-xl border border-zinc-700 bg-zinc-950 p-3 text-sm focus:border-emerald-500 focus:outline-none">
+                class="w-full rounded-xl border border-zinc-700 bg-zinc-950 p-3.5 text-sm focus:border-emerald-500 focus:outline-none">
           <option value="governance">Governance</option>
-          <option value="moderation_appeal">Moderation Appeal</option>
+          <option value="policy">Policy Change</option>
           <option value="feature">Feature Request</option>
           <option value="treasury">Treasury</option>
-          <option value="policy">Policy Change</option>
+          <option value="moderation_appeal">Moderation Appeal</option>
         </select>
       </div>
 
-      <div>
-        <label class="mb-1.5 block text-xs text-zinc-400">Description *</label>
-        <textarea id="proposalDesc" rows="4" maxlength="800"
-                  class="w-full resize-none rounded-xl border border-zinc-700 bg-zinc-950 p-3 text-sm focus:border-emerald-500 focus:outline-none"
-                  placeholder="Explain the proposal and why it matters to the community..."></textarea>
+      <!-- Description -->
+      <div class="mb-4">
+        <label class="mb-1.5 block text-sm font-medium text-zinc-300">Description *</label>
+        <textarea id="proposalDesc" 
+                  rows="5" 
+                  maxlength="800"
+                  class="w-full resize-none rounded-xl border border-zinc-700 bg-zinc-950 p-3.5 text-sm focus:border-emerald-500 focus:outline-none"
+                  placeholder="Explain the problem, your proposal, and why it matters to the community..."></textarea>
+        <div class="mt-1 flex justify-between text-xs text-zinc-500">
+          <span>Be clear and respectful</span>
+          <span id="descCount">0 / 800</span>
+        </div>
       </div>
 
-      <div class="flex justify-end gap-2 pt-2">
-        <button id="cancelCreateBtn" class="rounded-xl bg-zinc-800 px-4 py-2 text-sm hover:bg-zinc-700">
+      <!-- Actions -->
+      <div class="flex gap-3 pt-2">
+        <button id="cancelCreateBtn" 
+                class="flex-1 rounded-xl bg-zinc-800 py-3 text-sm font-medium hover:bg-zinc-700 transition">
           Cancel
         </button>
-        <button id="submitCreateBtn" class="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-black hover:bg-emerald-500">
+        <button id="previewProposalBtn" 
+                class="flex-1 rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-black hover:bg-emerald-500 transition">
+          Preview Proposal →
+        </button>
+      </div>
+    </div>
+
+    <!-- ========== STEP 2: PREVIEW SECTION ========== -->
+    <div id="proposalPreviewStep" class="hidden">
+
+      <div class="mb-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4">
+        <p class="text-sm font-medium text-emerald-400 mb-1">Preview</p>
+        <p class="text-xs text-zinc-400">This is exactly how your proposal will appear to the community.</p>
+      </div>
+
+      <!-- Preview Card -->
+      <div class="rounded-2xl border border-zinc-700 bg-zinc-950/80 p-5 mb-5">
+        <div class="mb-2 flex items-center gap-2">
+          <span id="previewCategory" class="rounded-full border border-zinc-600 bg-zinc-800 px-2.5 py-0.5 text-[10px] uppercase tracking-wider text-zinc-400">
+            governance
+          </span>
+          <span class="text-xs text-zinc-500">Draft</span>
+        </div>
+
+        <h4 id="previewTitle" class="text-lg font-semibold text-white mb-3">
+          Proposal Title
+        </h4>
+
+        <p id="previewDescription" class="text-sm leading-relaxed text-zinc-300 whitespace-pre-wrap">
+          Description will appear here...
+        </p>
+      </div>
+
+      <!-- Final Actions -->
+      <div class="flex gap-3">
+        <button id="backToEditBtn" 
+                class="flex-1 rounded-xl bg-zinc-800 py-3 text-sm font-medium hover:bg-zinc-700 transition">
+          ← Edit
+        </button>
+        <button id="submitCreateBtn" 
+                class="flex-1 rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-black hover:bg-emerald-500 transition">
           Submit to the People
         </button>
       </div>
     </div>
+
   </div>
+</div>
 
   <!-- ========== IMPROVED QUADRATIC VOTE MODAL ========== -->
   <div id="voteModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 p-4 backdrop-blur-md">
@@ -328,99 +393,166 @@
 
     // ---------- Render Proposals ----------
     async function loadProposals() {
-      const container = document.getElementById('proposalsContainer');
-      container.innerHTML = `<div class="py-16 text-center text-zinc-500">Loading proposals...</div>`;
+  const container = document.getElementById('proposalsContainer');
+  container.innerHTML = `<div class="py-16 text-center text-zinc-500">Loading proposals...</div>`;
 
-      const proposals = await fetchActiveProposals(30);
-      if (!proposals || proposals.length === 0) {
-        container.innerHTML = `
-          <div class="rounded-3xl border border-dashed border-zinc-700 bg-zinc-900/40 py-16 text-center">
-            <div class="mb-4 text-5xl">🏛️</div>
-            <h3 class="text-lg font-medium text-white">No active proposals yet</h3>
-            <p class="mt-2 text-sm text-zinc-400">Be the first to create one.<br>You are the government.</p>
-          </div>`;
-        return;
-      }
+  const proposals = await fetchActiveProposals(30);
+  if (!proposals || proposals.length === 0) {
+    container.innerHTML = `
+      <div class="rounded-3xl border border-dashed border-zinc-700 bg-zinc-900/40 py-16 text-center">
+        <div class="mb-4 text-5xl">🏛️</div>
+        <h3 class="text-lg font-medium text-white">No active proposals yet</h3>
+        <p class="mt-2 text-sm text-zinc-400">Be the first to create one.<br>You are the government.</p>
+      </div>`;
 
-      const isSteward = await hasStewardAccess();
+    return;
+  }
 
-      let filtered = proposals;
-      if (currentFilter === 'passed') {
-        filtered = proposals.filter(p => hasProposalPassed(p));
-      } else if (currentFilter === 'closed') {
-        filtered = proposals.filter(p => p.status === 'closed');
-      } else if (currentFilter === 'active') {
-        filtered = proposals.filter(p => p.status !== 'closed' && !hasProposalPassed(p));
-      }
+  const isSteward = await hasStewardAccess();
 
-      container.innerHTML = filtered.map(p => {
-        const total = (p.totalVotesFor || 0) + (p.totalVotesAgainst || 0);
-        const forPct = total > 0 ? Math.round((p.totalVotesFor / total) * 100) : 0;
-        const againstPct = total > 0 ? 100 - forPct : 0;
-        const passed = hasProposalPassed(p);
-        const isClosed = p.status === 'closed';
+  let filtered = proposals;
+  if (currentFilter === 'passed') {
+    filtered = proposals.filter(p => hasProposalPassed(p));
+  } else if (currentFilter === 'closed') {
+    filtered = proposals.filter(p => p.status === 'closed');
+  } else if (currentFilter === 'active') {
+    filtered = proposals.filter(p => p.status !== 'closed' && !hasProposalPassed(p));
+  }
 
-        let statusBadge = '';
-        if (isClosed) {
-          statusBadge = `<span class="rounded-full border border-zinc-600 bg-zinc-800 px-2.5 py-0.5 text-[10px] text-zinc-400">Closed</span>`;
-        } else if (passed) {
-          statusBadge = `<span class="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] text-emerald-400">Passing</span>`;
-        } else {
-          statusBadge = `<span class="rounded-full border border-sky-500/40 bg-sky-500/10 px-2.5 py-0.5 text-[10px] text-sky-400">Active</span>`;
-        }
+  container.innerHTML = filtered.map(p => {
+    const total = (p.totalVotesFor || 0) + (p.totalVotesAgainst || 0);
+    const forPct = total > 0 ? Math.round((p.totalVotesFor / total) * 100) : 0;
+    const againstPct = total > 0 ? 100 - forPct : 0;
+    const passed = hasProposalPassed(p);
+    const isClosed = p.status === 'closed';
 
-        return `
-          <div class="glass rounded-3xl border border-emerald-500/20 p-6">
-            <div class="mb-3 flex items-start justify-between gap-4">
-              <div>
-                <div class="mb-1 flex flex-wrap items-center gap-2">
-                  ${statusBadge}
-                  <span class="rounded-full border border-zinc-700 bg-zinc-800 px-2.5 py-0.5 text-[10px] uppercase tracking-wider text-zinc-400">
-                    ${p.category || 'governance'}
-                  </span>
-                </div>
-                <h3 class="text-lg font-semibold text-white">${escapeHTML(p.title)}</h3>
-                <p class="mt-1 text-xs text-zinc-500">
-                  by ${escapeHTML(p.creatorDisplayName || 'Anonymous')} • 
-                  ${p.createdAt?.toDate ? p.createdAt.toDate().toLocaleDateString() : 'Recently'}
-                </p>
-              </div>
-            </div>
-
-            <p class="mb-5 text-sm leading-relaxed text-zinc-300">
-              ${escapeHTML(p.description || '')}
-            </p>
-
-            <div class="mb-4">
-              <div class="mb-1 flex justify-between text-xs text-zinc-400">
-                <span>FOR ${p.totalVotesFor || 0}</span>
-                <span>AGAINST ${p.totalVotesAgainst || 0}</span>
-              </div>
-              <div class="flex h-2.5 overflow-hidden rounded-full bg-zinc-800">
-                <div class="bg-emerald-500 transition-all" style="width:${forPct}%"></div>
-                <div class="bg-rose-500 transition-all" style="width:${againstPct}%"></div>
-              </div>
-              <p class="mt-1.5 text-[11px] text-zinc-500">
-                Quorum: ${p.quorum || 12} • Total power: ${total}
-                ${passed ? ' • <span class="text-emerald-400">Threshold reached</span>' : ''}
-              </p>
-            </div>
-
-            <div class="flex gap-3">
-              ${!isClosed ? `
-                <button onclick="openVoteModal('${p.id}', '${escapeHTML(p.title).replace(/'/g, "\\'")}')"
-                        class="flex-1 rounded-xl bg-emerald-600/90 py-2.5 text-sm font-semibold text-black transition hover:bg-emerald-500">
-                  Cast Your Vote
-                </button>` : ''}
-              ${isSteward && !isClosed ? `
-                <button onclick="handleClose('${p.id}')"
-                        class="rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-zinc-400 transition hover:bg-zinc-800">
-                  Close
-                </button>` : ''}
-            </div>
-          </div>`;
-      }).join('');
+    let statusBadge = '';
+    if (isClosed) {
+      statusBadge = `<span class="rounded-full border border-zinc-600 bg-zinc-800 px-2.5 py-0.5 text-[10px] text-zinc-400">Closed</span>`;
+    } else if (passed) {
+      statusBadge = `<span class="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] text-emerald-400">Passing</span>`;
+    } else {
+      statusBadge = `<span class="rounded-full border border-sky-500/40 bg-sky-500/10 px-2.5 py-0.5 text-[10px] text-sky-400">Active</span>`;
     }
+
+    return `
+      <div class="glass rounded-3xl border border-emerald-500/20 p-6">
+        
+        <!-- Header -->
+        <div class="mb-3 flex items-start justify-between gap-4">
+          <div>
+            <div class="mb-1 flex flex-wrap items-center gap-2">
+              ${statusBadge}
+              <span class="rounded-full border border-zinc-700 bg-zinc-800 px-2.5 py-0.5 text-[10px] uppercase tracking-wider text-zinc-400">
+                ${p.category || 'governance'}
+              </span>
+            </div>
+            <h3 class="text-lg font-semibold text-white">${escapeHTML(p.title)}</h3>
+            <p class="mt-1 text-xs text-zinc-500">
+              by ${escapeHTML(p.creatorDisplayName || 'Anonymous')} • 
+              ${p.createdAt?.toDate ? p.createdAt.toDate().toLocaleDateString() : 'Recently'}
+            </p>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <p class="mb-5 text-sm leading-relaxed text-zinc-300">
+          ${escapeHTML(p.description || '')}
+        </p>
+
+        <!-- Vote Progress -->
+        <div class="mb-5">
+          <div class="mb-1 flex justify-between text-xs text-zinc-400">
+            <span>FOR ${p.totalVotesFor || 0}</span>
+            <span>AGAINST ${p.totalVotesAgainst || 0}</span>
+          </div>
+          <div class="flex h-2.5 overflow-hidden rounded-full bg-zinc-800">
+            <div class="bg-emerald-500 transition-all" style="width:${forPct}%"></div>
+            <div class="bg-rose-500 transition-all" style="width:${againstPct}%"></div>
+          </div>
+          <p class="mt-1.5 text-[11px] text-zinc-500">
+            Quorum: ${p.quorum || 12} • Total power: ${total}
+            ${passed ? ' • <span class="text-emerald-400">Threshold reached</span>' : ''}
+          </p>
+        </div>
+
+        <!-- ========== VOTING INTERFACE ========== -->
+        ${!isClosed ? `
+        <div class="mb-5 rounded-2xl border border-zinc-700 bg-zinc-900/50 p-4">
+          <div class="mb-3 flex items-center justify-between">
+            <p class="text-sm font-medium text-white">Cast Your Vote</p>
+            <p class="text-xs text-zinc-400">Quadratic • Cost = strength²</p>
+          </div>
+
+          <!-- Strength Buttons -->
+          <div class="flex gap-2 mb-3" id="inline-strength-${p.id}">
+            <button onclick="setInlineStrength('${p.id}', 1)" class="inline-strength-btn flex-1 rounded-lg bg-emerald-600 py-2 text-sm font-medium text-white" data-s="1">1</button>
+            <button onclick="setInlineStrength('${p.id}', 2)" class="inline-strength-btn flex-1 rounded-lg bg-zinc-800 py-2 text-sm hover:bg-zinc-700" data-s="2">2</button>
+            <button onclick="setInlineStrength('${p.id}', 3)" class="inline-strength-btn flex-1 rounded-lg bg-zinc-800 py-2 text-sm hover:bg-zinc-700" data-s="3">3</button>
+            <button onclick="setInlineStrength('${p.id}', 4)" class="inline-strength-btn flex-1 rounded-lg bg-zinc-800 py-2 text-sm hover:bg-zinc-700" data-s="4">4</button>
+            <button onclick="setInlineStrength('${p.id}', 5)" class="inline-strength-btn flex-1 rounded-lg bg-zinc-800 py-2 text-sm hover:bg-zinc-700" data-s="5">5</button>
+          </div>
+
+          <p class="text-xs text-zinc-500 mb-3 text-center">
+            Strength: <span id="selected-strength-${p.id}" class="text-emerald-400 font-medium">1</span> 
+            • Cost: <span id="selected-cost-${p.id}" class="text-emerald-400 font-medium">1</span> points
+          </p>
+
+          <div class="grid grid-cols-2 gap-3">
+            <button onclick="castInlineVote('${p.id}', 'for')"
+                    class="rounded-xl bg-emerald-600 py-2.5 text-sm font-semibold text-black hover:bg-emerald-500 transition">
+              Vote FOR
+            </button>
+            <button onclick="castInlineVote('${p.id}', 'against')"
+                    class="rounded-xl bg-rose-600/90 py-2.5 text-sm font-semibold text-white hover:bg-rose-500 transition">
+              Vote AGAINST
+            </button>
+          </div>
+        </div>
+        ` : ''}
+
+        <!-- Steward Close Button -->
+        ${isSteward && !isClosed ? `
+          <button onclick="handleClose('${p.id}')"
+                  class="mb-4 w-full rounded-xl border border-zinc-700 bg-zinc-900 py-2 text-sm text-zinc-400 hover:bg-zinc-800 transition">
+            Close Proposal
+          </button>
+        ` : ''}
+
+        <!-- ========== DISCUSSION SECTION ========== -->
+        <div class="border-t border-zinc-800 pt-4">
+          <button onclick="toggleDiscussion('${p.id}')"
+                  class="flex w-full items-center justify-between text-sm text-zinc-400 hover:text-white transition">
+            <span class="font-medium">
+              Discussion (<span id="comment-count-${p.id}">${p.commentCount || 0}</span>)
+            </span>
+            <span id="discussion-arrow-${p.id}">▼</span>
+          </button>
+
+          <div id="discussion-${p.id}" class="mt-4 hidden space-y-4">
+            <!-- Comments List -->
+            <div id="comments-list-${p.id}" class="space-y-3 max-h-72 overflow-y-auto pr-1">
+              <p class="text-xs text-zinc-500 text-center py-4">Loading comments...</p>
+            </div>
+
+            <!-- Add Comment -->
+            <div class="flex gap-2">
+              <input id="comment-input-${p.id}" 
+                     type="text" 
+                     maxlength="400"
+                     placeholder="Share your thoughts as a citizen..."
+                     class="flex-1 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-white focus:border-emerald-500 focus:outline-none">
+              <button onclick="postComment('${p.id}')"
+                      class="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-medium text-black hover:bg-emerald-500 transition">
+                Post
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>`;
+  }).join('');
+}
 
     function escapeHTML(str) {
       if (!str) return '';
@@ -535,6 +667,111 @@
 
     // Init
     loadProposals();
+
+    // ========== INLINE VOTING HELPERS ==========
+const inlineStrengths = {};
+
+window.setInlineStrength = (proposalId, strength) => {
+  inlineStrengths[proposalId] = strength;
+
+  document.getElementById(`selected-strength-${proposalId}`).textContent = strength;
+  document.getElementById(`selected-cost-${proposalId}`).textContent = strength * strength;
+
+  const container = document.getElementById(`inline-strength-${proposalId}`);
+  if (container) {
+    container.querySelectorAll('.inline-strength-btn').forEach(btn => {
+      const s = parseInt(btn.dataset.s);
+      if (s === strength) {
+        btn.classList.add('bg-emerald-600', 'text-white');
+        btn.classList.remove('bg-zinc-800');
+      } else {
+        btn.classList.remove('bg-emerald-600', 'text-white');
+        btn.classList.add('bg-zinc-800');
+      }
+    });
+  }
+};
+
+window.castInlineVote = async (proposalId, direction) => {
+  const strength = inlineStrengths[proposalId] || 1;
+  await castQuadraticVote(proposalId, direction, strength);
+  loadProposals(); // Refresh the list
+};
+
+
+// Character counter
+document.getElementById('proposalDesc')?.addEventListener('input', (e) => {
+  const count = e.target.value.length;
+  document.getElementById('descCount').textContent = `${count} / 800`;
+});
+
+// Open Modal
+document.getElementById('openCreateBtn')?.addEventListener('click', () => {
+  // Always start on the form step
+  document.getElementById('proposalFormStep').classList.remove('hidden');
+  document.getElementById('proposalPreviewStep').classList.add('hidden');
+
+  document.getElementById('createModal').classList.remove('hidden');
+  document.getElementById('createModal').classList.add('flex');
+});
+
+// Cancel
+document.getElementById('cancelCreateBtn')?.addEventListener('click', () => {
+  document.getElementById('createModal').classList.add('hidden');
+  document.getElementById('createModal').classList.remove('flex');
+});
+
+// Go to Preview
+document.getElementById('previewProposalBtn')?.addEventListener('click', () => {
+  const title = document.getElementById('proposalTitle').value.trim();
+  const desc = document.getElementById('proposalDesc').value.trim();
+  const category = document.getElementById('proposalCategory').value;
+
+  if (!title || !desc) {
+    return showToast('Title and description are required', 'error');
+  }
+  if (title.length < 8) {
+    return showToast('Title is too short', 'error');
+  }
+
+  // Fill the preview
+  document.getElementById('previewTitle').textContent = title;
+  document.getElementById('previewDescription').textContent = desc;
+  document.getElementById('previewCategory').textContent = category.replace('_', ' ');
+
+  // Switch to preview
+  document.getElementById('proposalFormStep').classList.add('hidden');
+  document.getElementById('proposalPreviewStep').classList.remove('hidden');
+});
+
+// Back to Edit
+document.getElementById('backToEditBtn')?.addEventListener('click', () => {
+  document.getElementById('proposalPreviewStep').classList.add('hidden');
+  document.getElementById('proposalFormStep').classList.remove('hidden');
+});
+
+// Final Submit
+document.getElementById('submitCreateBtn')?.addEventListener('click', async () => {
+  const title = document.getElementById('proposalTitle').value.trim();
+  const desc = document.getElementById('proposalDesc').value.trim();
+  const category = document.getElementById('proposalCategory').value;
+
+  const id = await createDAOProposal(title, desc, category);
+
+  if (id) {
+    // Reset form
+    document.getElementById('proposalTitle').value = '';
+    document.getElementById('proposalDesc').value = '';
+    document.getElementById('descCount').textContent = '0 / 800';
+
+    // Close modal
+    document.getElementById('createModal').classList.add('hidden');
+    document.getElementById('createModal').classList.remove('flex');
+
+    // Refresh list
+    loadProposals();
+  }
+});
   </script>
 </body>
 </html>
