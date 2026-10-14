@@ -93,6 +93,40 @@
       </div>
     </div>
 
+    <!-- ========== INLINE VOTING INTERFACE (add inside each proposal card) ========== -->
+<div class="mt-5 border-t border-zinc-800 pt-5">
+  <div class="flex items-center justify-between mb-3">
+    <p class="text-sm font-medium text-white">Your Vote</p>
+    <p class="text-xs text-zinc-400">Cost = strength²</p>
+  </div>
+
+  <!-- Strength Selector -->
+  <div class="flex gap-2 mb-4" id="inline-strength-${p.id}">
+    <button onclick="setInlineStrength('${p.id}', 1)" class="inline-strength-btn flex-1 rounded-lg bg-zinc-800 py-2 text-sm hover:bg-zinc-700" data-s="1">1</button>
+    <button onclick="setInlineStrength('${p.id}', 2)" class="inline-strength-btn flex-1 rounded-lg bg-zinc-800 py-2 text-sm hover:bg-zinc-700" data-s="2">2</button>
+    <button onclick="setInlineStrength('${p.id}', 3)" class="inline-strength-btn flex-1 rounded-lg bg-zinc-800 py-2 text-sm hover:bg-zinc-700" data-s="3">3</button>
+    <button onclick="setInlineStrength('${p.id}', 4)" class="inline-strength-btn flex-1 rounded-lg bg-zinc-800 py-2 text-sm hover:bg-zinc-700" data-s="4">4</button>
+    <button onclick="setInlineStrength('${p.id}', 5)" class="inline-strength-btn flex-1 rounded-lg bg-zinc-800 py-2 text-sm hover:bg-zinc-700" data-s="5">5</button>
+  </div>
+
+  <p class="text-xs text-zinc-500 mb-3 text-center">
+    Selected strength: <span id="selected-strength-${p.id}">1</span> 
+    • Cost: <span id="selected-cost-${p.id}">1</span> points
+  </p>
+
+  <!-- Vote Buttons -->
+  <div class="grid grid-cols-2 gap-3">
+    <button onclick="castInlineVote('${p.id}', 'for')"
+            class="rounded-xl bg-emerald-600 py-2.5 text-sm font-semibold text-black hover:bg-emerald-500 transition">
+      Vote FOR
+    </button>
+    <button onclick="castInlineVote('${p.id}', 'against')"
+            class="rounded-xl bg-rose-600/90 py-2.5 text-sm font-semibold text-white hover:bg-rose-500 transition">
+      Vote AGAINST
+    </button>
+  </div>
+</div>
+
     <!-- ========== IMPACT COUNTER ========== -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
       <div class="glass rounded-2xl border border-emerald-500/20 p-5 text-center">
