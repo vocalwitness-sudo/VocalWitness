@@ -1034,6 +1034,7 @@ window.loadEvidenceLedger = loadEvidenceLedger;
 window.refreshLedger = loadEvidenceLedger;
 
 /* ====================== LIVE BREAKING TICKER ====================== */
+/* ====================== LIVE BREAKING TICKER ====================== */
 async function fetchCuratedNews() {
   const tickerEl = document.getElementById('ticker-content');
   if (!tickerEl) return;
@@ -1041,11 +1042,64 @@ async function fetchCuratedNews() {
   if (tickerEl.dataset.loading === '1') return;
   tickerEl.dataset.loading = '1';
 
-  tickerEl.innerHTML = `
-    <span class="ticker-item px-8 text-zinc-400">
-      🌍 Loading Global + Africa headlines...
-    </span>
-  `;
+  const CACHE_KEY = 'vw_ticker_headlines_v1';
+  const CACHE_TTL = 15 * 60 * 1000; // 15 minutes
+
+  const fallbackItems = [
+    '🛡️ VocalWitness Public Square is live • Zero-knowledge ledger online',
+    '🌍 Citizen reporting active across Africa & the world',
+    '⚡ Share what you saw — evidence stays protected',
+    '🔒 Every sealed report is cryptographically timestamped',
+    '🎤 Live Voice carries higher evidence weight',
+    '📜 Immutable Record protects the original forever'
+  ];
+
+  function applyTicker(items) {
+    if (!items || items.length === 0) items = fallbackItems;
+
+    // Ensure enough content for a smooth loop
+    while (items.length < 8) {
+      items = items.concat(items);
+    }
+
+    const html = items
+      .map((title) => {
+        const safe = String(title)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+        return `<span class="ticker-item px-8"><strong class="text-emerald-400">•</strong> ${safe}</span>`;
+      })
+      .join('');
+
+    // Duplicate for seamless -50% scroll
+    tickerEl.innerHTML = html + html;
+
+    // Force restart animation
+    tickerEl.style.animation = 'none';
+    void tickerEl.offsetWidth;
+    tickerEl.style.animation = 'ticker-scroll 55s linear infinite';
+  }
+
+  // Show cached headlines immediately if available
+  try {
+    const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+    if (cached && Array.isArray(cached.items) && cached.items.length >= 3 &&
+        Date.now() - (cached.ts || 0) < CACHE_TTL) {
+      applyTicker(cached.items);
+    } else {
+      tickerEl.innerHTML = `
+        <span class="ticker-item px-8 text-zinc-400">
+          🌍 Loading Global + Africa headlines...
+        </span>
+        <span class="ticker-item px-8 text-zinc-400">
+          🌍 Loading Global + Africa headlines...
+        </span>
+      `;
+      tickerEl.style.animation = 'ticker-scroll 40s linear infinite';
+    }
+  } catch (_) {}
 
   const feeds = [
     { url: 'https://feeds.bbci.co.uk/news/world/rss.xml', weight: 1 },
@@ -1054,45 +1108,27 @@ async function fetchCuratedNews() {
     { url: 'https://www.africanews.com/feed/', weight: 2 }
   ];
 
-  const fallbackHtml = `
-    <span class="ticker-item px-8 text-zinc-400">
-      🛡️ VocalWitness Public Square is live • Zero-knowledge ledger online
-    </span>
-    <span class="ticker-item px-8 text-zinc-400">
-      🌍 Citizen reporting active across Africa & the world
-    </span>
-    <span class="ticker-item px-8 text-zinc-400">
-      ⚡ Share what you saw — evidence stays protected
-    </span>
-  `;
-
   try {
     const results = await Promise.allSettled(
       feeds.map(async (feed) => {
         try {
           const res = await fetch(
             `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}`,
-            { signal: AbortSignal.timeout(8000) }
+            { signal: AbortSignal.timeout(7000) }
           );
-
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           const data = await res.json();
-
           if (data.status !== 'ok' || !Array.isArray(data.items)) {
             throw new Error('Invalid response');
           }
-
           return data.items
             .slice(0, 6)
-            .filter((item) => item.title && item.title.trim().length > 20)
-            .map((item) => ({
-              title: item.title.trim(),
-              weight: feed.weight
-            }));
+            .filter((item) => item.title && item.title.trim().length > 18)
+            .map((item) => ({ title: item.title.trim(), weight: feed.weight }));
         } catch (err) {
           const msg = err?.message || String(err);
           if (!/HTTP 422|HTTP 429|timeout|AbortError/i.test(msg)) {
-            console.warn(`[Ticker] Failed to load ${feed.url}:`, msg);
+            console.warn(`[Ticker] Failed ${feed.url}:`, msg);
           }
           return [];
         }
@@ -1100,9 +1136,9 @@ async function fetchCuratedNews() {
     );
 
     let allHeadlines = [];
-    results.forEach((result) => {
-      if (result.status === 'fulfilled' && Array.isArray(result.value)) {
-        allHeadlines.push(...result.value);
+    results.forEach((r) => {
+      if (r.status === 'fulfilled' && Array.isArray(r.value)) {
+        allHeadlines.push(...r.value);
       }
     });
 
@@ -1114,7 +1150,7 @@ async function fetchCuratedNews() {
     const uniqueTitles = [];
     const seen = new Set();
     for (const item of allHeadlines) {
-      const key = item.title.toLowerCase().slice(0, 60);
+      const key = item.title.toLowerCase().slice(0, 55);
       if (!seen.has(key)) {
         seen.add(key);
         uniqueTitles.push(item.title);
@@ -1123,62 +1159,32 @@ async function fetchCuratedNews() {
 
     const finalHeadlines = uniqueTitles.slice(0, 14);
 
-    if (finalHeadlines.length < 3) {
+    if (finalHeadlines.length >= 3) {
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+          ts: Date.now(),
+          items: finalHeadlines
+        }));
+      } catch (_) {}
+      applyTicker(finalHeadlines);
+      console.log(`[Ticker] Loaded ${finalHeadlines.length} headlines`);
+    } else {
       throw new Error('Not enough headlines');
     }
-
-    const html = finalHeadlines
-      .map((title) => {
-        const safe = String(title)
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;');
-        return `<span class="ticker-item px-8"><strong class="text-emerald-400">•</strong> ${safe}</span>`;
-      })
-      .join('');
-
-    tickerEl.innerHTML = html + html;
-    tickerEl.style.animation = 'none';
-    void tickerEl.offsetWidth;
-    tickerEl.style.animation = 'ticker-scroll 55s linear infinite';
-
-    console.log(`[Ticker] Loaded ${finalHeadlines.length} headlines`);
   } catch (err) {
-    console.warn('[Ticker] Using fallback:', err?.message || err);
-    tickerEl.innerHTML = fallbackHtml + fallbackHtml;
-    tickerEl.style.animation = 'none';
-    void tickerEl.offsetWidth;
-    tickerEl.style.animation = 'ticker-scroll 55s linear infinite';
+    console.warn('[Ticker] Using fallback / cache:', err?.message || err);
+    applyTicker(fallbackItems);
   } finally {
     tickerEl.dataset.loading = '0';
   }
 }
 
-const focusMessages = [
-  {
-    title: 'Social citizen journalism.',
-    text: 'Anyone can report — only sealed records stay public.'
-  },
-  {
-    title: 'Zero-Knowledge sealed.',
-    text: 'Your identity stays private while the evidence stays verifiable.'
-  },
-  {
-    title: 'Record Live Voice recommended.',
-    text: 'Audio evidence is harder to fake and carries higher weight.'
-  },
-  {
-    title: 'Forensic hashes enabled.',
-    text: 'Every media file is cryptographically fingerprinted on upload.'
-  },
-  {
-    title: 'Public Square is live.',
-    text: 'Browse verified citizen reports from around the world.'
-  }
-];
-
-let focusIndex = 0;
+// Refresh ticker every 12 minutes
+if (!window.__vwTickerRefresh) {
+  window.__vwTickerRefresh = setInterval(() => {
+    fetchCuratedNews();
+  }, 12 * 60 * 1000);
+}
 
 function rotateFocusBanner() {
   const el = document.getElementById('focus-banner-text');
