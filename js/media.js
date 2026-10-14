@@ -790,16 +790,35 @@ export async function uploadForensicMedia(
       try {
         if (targetImage.size === 0) throw new Error("Selected image is empty");
 
-        // Scrub EXIF / GPS and optionally compress
-        const cleanedFile = await prepareMediaForUpload(targetImage, {
+        // media-pipeline returns { file, hash, mimeType, size }
+        const prepared = await prepareMediaForUpload(targetImage, {
           maxWidth: 1920,
           maxHeight: 1080
         });
 
-        // Forensic hash of the cleaned file
-        const hash = await generateSha256Hash(cleanedFile);
+        // Support both shapes: object from pipeline OR a plain File
+        const cleanedFile = (prepared && prepared.file instanceof Blob)
+          ? prepared.file
+          : prepared;
 
-        // Upload
+        if (!(cleanedFile instanceof Blob)) {
+          throw new Error('Image preparation returned an invalid file');
+        }
+
+        // Prefer hash from pipeline when available
+        const hash = prepared?.hash || await generateSha256Hash(cleanedFile);
+
+        // Mark as already cleaned so uploadSecurePhoto does not re-process
+        try {
+          Object.defineProperty(cleanedFile, 'isCleaned', {
+            value: true,
+            writable: false,
+            configurable: true
+          });
+        } catch (_) {
+          // Some environments disallow defineProperty on File – safe to ignore
+        }
+
         const uploadedUrl = await uploadSecurePhoto(cleanedFile, 'evidence');
         await verifyMediaUrl(uploadedUrl);
 
@@ -809,10 +828,9 @@ export async function uploadForensicMedia(
       } catch (e) {
         console.error("Image upload failed:", e);
         showToast(e.message || "Image upload failed", "error");
-        throw e; // critical – let publish abort
+        throw e;
       }
     }
-
     // ---------- 2. Video Path (Isolated) ----------
     if (targetVideo) {
       try {
