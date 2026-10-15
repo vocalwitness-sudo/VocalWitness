@@ -39,10 +39,14 @@
     .in { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.35); }
     .out { background: rgba(113,113,122,0.2); color: #a1a1aa; border: 1px solid #3f3f46; }
     .warn { background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.35); }
-    .links { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
-    .links a {
+    .links { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; align-items: center; }
+    .links a, .dao-btn {
       color: #34d399; text-decoration: none; font-size: 0.85rem;
       border: 1px solid rgba(16,185,129,0.35); padding: 0.5rem 0.9rem; border-radius: 0.75rem;
+      background: transparent; cursor: pointer; font-family: inherit;
+    }
+    .dao-btn-primary {
+      background: rgba(16, 185, 129, 0.2);
     }
   </style>
 </head>
@@ -204,17 +208,20 @@
     </div>
     
     <div class="card glass">
-  <h2>6. Safety layer (not the DAO)</h2>
-  <p>
-    Flagging synthetic media, steward consensus on removals, and testimony challenges
-    are handled by the safety engine — separate from quadratic platform votes.
-  </p>
-  <div class="links">
-    <a href="moderation.html">Moderation</a>
-    <a href="transparency.html">Transparency / disputes</a>
-    <a href="dao.html">DAO appeals</a>
-  </div>
-</div>
+      <h2>6. Safety layer (not the DAO)</h2>
+      <p>
+        Flagging synthetic media, steward consensus on removals, and testimony challenges
+        are handled by the safety engine — separate from quadratic platform votes.
+      </p>
+      <div class="links">
+        <a href="moderation.html">Moderation</a>
+        <a href="transparency.html">Transparency / disputes</a>
+        <a href="dao.html">DAO appeals</a>
+        <button type="button" id="escalateDaoBtn" class="dao-btn dao-btn-primary">
+          Escalate to DAO appeal
+        </button>
+      </div>
+    </div>
 
     <div class="card glass">
       <h2>Participate</h2>
