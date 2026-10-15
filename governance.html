@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How the Square is Governed • VocalWitness</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="/logo.png" type="image/png">
+  <style>
+    body { background: #0a0f1c; color: #e4e4e7; font-family: Inter, system-ui, sans-serif; margin: 0; padding-bottom: 4rem; }
+    .wrap { max-width: 48rem; margin: 0 auto; padding: 1rem; }
+    .glass {
+      background: rgba(17, 24, 39, 0.95);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: 1.5rem;
+      backdrop-filter: blur(16px);
+    }
+    header.bar {
+      position: sticky; top: 0; z-index: 20;
+      margin: 1rem; padding: 1rem;
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    }
+    header.bar a {
+      color: #fff; text-decoration: none; background: #27272a;
+      padding: 0.6rem 1.1rem; border-radius: 1rem; font-size: 0.875rem;
+    }
+    h1 { color: #34d399; font-size: 1.75rem; margin: 0 0 0.5rem; }
+    h2 { color: #34d399; font-size: 1.15rem; margin: 0 0 0.75rem; }
+    p, li { line-height: 1.6; color: #a1a1aa; font-size: 0.9rem; }
+    .card { padding: 1.5rem; margin-bottom: 1.25rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    th, td { text-align: left; padding: 0.65rem 0.5rem; border-bottom: 1px solid #27272a; vertical-align: top; }
+    th { color: #71717a; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    td { color: #d4d4d8; }
+    .tag {
+      display: inline-block; font-size: 0.65rem; font-weight: 600;
+      padding: 0.15rem 0.5rem; border-radius: 999px; margin-right: 0.25rem;
+    }
+    .in { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.35); }
+    .out { background: rgba(113,113,122,0.2); color: #a1a1aa; border: 1px solid #3f3f46; }
+    .warn { background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.35); }
+    .links { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+    .links a {
+      color: #34d399; text-decoration: none; font-size: 0.85rem;
+      border: 1px solid rgba(16,185,129,0.35); padding: 0.5rem 0.9rem; border-radius: 0.75rem;
+    }
+  </style>
+</head>
+<body>
+  <header class="bar glass">
+    <strong style="color:#fff">How the Square is Governed</strong>
+    <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+      <a href="dao.html">DAO →</a>
+      <a href="index.html">← Square</a>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="card glass">
+      <h1>Co-owners of decisions — not buyers of truth</h1>
+      <p>
+        VocalWitness is a public square for sealed reports. Day-to-day speech uses the <strong style="color:#d4d4d8">Feed</strong>
+        (like a normal social post). Hard rules and rare shared decisions use the <strong style="color:#d4d4d8">DAO</strong>
+        (quadratic votes). Money never buys voting power or a higher “truth rank.”
+      </p>
+    </div>
+
+    <div class="card glass">
+      <h2>1. Three zones</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Zone</th>
+            <th>What you do</th>
+            <th>Money?</th>
+            <th>Governance?</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Feed</strong></td>
+            <td>Post, read, like / support signals, corroborate, report abuse</td>
+            <td>Optional tips only</td>
+            <td><span class="tag out">Not DAO</span></td>
+          </tr>
+          <tr>
+            <td><strong>DAO</strong></td>
+            <td>Propose &amp; vote on policy, appeals, features, process; rare treasury</td>
+            <td>Votes cost reputation budget, not cash</td>
+            <td><span class="tag in">Yes</span></td>
+          </tr>
+          <tr>
+            <td><strong>Operations</strong></td>
+            <td>Keep servers up, legal minimums, security patches</td>
+            <td>Platform costs</td>
+            <td><span class="tag out">Founder / stewards</span> with transparency</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card glass">
+      <h2>2. What belongs on the DAO table (co-ownership)</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Examples</th>
+            <th>Bar</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Policy</strong></td>
+            <td>What counts as testimony; privacy defaults; safety rules</td>
+            <td>Normal quorum</td>
+          </tr>
+          <tr>
+            <td><strong>Moderation appeal</strong></td>
+            <td>Challenge a remove/purge on a specific post</td>
+            <td>Normal quorum + evidence</td>
+          </tr>
+          <tr>
+            <td><strong>Feature</strong></td>
+            <td>Product changes the community wants prioritized</td>
+            <td>Normal quorum</td>
+          </tr>
+          <tr>
+            <td><strong>Process (governance)</strong></td>
+            <td>Who may propose; quorum; voting seasons</td>
+            <td>Higher care</td>
+          </tr>
+          <tr>
+            <td><strong>Treasury</strong></td>
+            <td>How to use <em>shared</em> support funds (servers, legal, critical tools)</td>
+            <td><span class="tag warn">Highest bar</span> — rare, public, detailed</td>
+          </tr>
+        </tbody>
+      </table>
+      <p style="margin-top:1rem">
+        You co-own <strong style="color:#d4d4d8">how the Square is run</strong>, not a corporate share certificate.
+        Quadratic voting: stronger preference costs more (strength²), so one loud actor is expensive to dominate.
+      </p>
+    </div>
+
+    <div class="card glass">
+      <h2>3. What stays out of the DAO</h2>
+      <table>
+        <thead>
+          <tr><th>Action</th><th>Why</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Likes / support on a normal post</td>
+            <td>Engagement, not law-making</td>
+          </tr>
+          <tr>
+            <td>Corroboration (“I saw this too”)</td>
+            <td>Evidence signal</td>
+          </tr>
+          <tr>
+            <td>Report spam or abuse</td>
+            <td>Safety pipeline (mods + rules)</td>
+          </tr>
+          <tr>
+            <td>Personal tips to an author</td>
+            <td>Private support — must not buy votes or rank</td>
+          </tr>
+          <tr>
+            <td>Optional “Support the Square” or press credential</td>
+            <td>Keeps lights on — never sells trust tier or vote weight</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card glass">
+      <h2>4. Money — highest bar, minimal surface</h2>
+      <p>
+        Hostile actors (including state-linked accounts posing as ordinary citizens) often target money and ranking.
+        So VocalWitness keeps the money surface small:
+      </p>
+      <ul>
+        <li><strong style="color:#d4d4d8">Personal tips / donations do not change vote weight or evidence rank.</strong></li>
+        <li><strong style="color:#d4d4d8">Shared funds</strong> (if any) move only through an explicit <strong>Treasury</strong> proposal with clear amount, purpose, and public outcome.</li>
+        <li><strong style="color:#d4d4d8">Treasury proposals should be rare</strong> — running costs are mostly ops; governance is mostly rules and appeals.</li>
+        <li>Paying for an optional professional credential never buys a higher truth score.</li>
+      </ul>
+      <p>
+        Reality: many people prefer paying for a clear product over pure donations. Optional paid tools are allowed for sustainability;
+        they are <strong style="color:#d4d4d8">not</strong> a path into government of the Square.
+      </p>
+    </div>
+
+    <div class="card glass">
+      <h2>5. Defenses against bad-faith “citizens”</h2>
+      <ul>
+        <li>Phone / tier checks reduce mass fake accounts (not perfect).</li>
+        <li>Quadratic cost makes flooding strong votes expensive.</li>
+        <li>Proposing is limited to higher-trust roles so the table is not pure spam.</li>
+        <li>Vote tallies are server-checked; clients cannot invent totals.</li>
+        <li>Sealed reports stay integrity-first; governance does not “edit truth” by popularity alone.</li>
+      </ul>
+    </div>
+
+    <div class="card glass">
+      <h2>Participate</h2>
+      <div class="links">
+        <a href="dao.html">Open DAO</a>
+        <a href="index.html">Feed / Square</a>
+        <a href="transparency.html">Transparency</a>
+        <a href="about.html">About</a>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
