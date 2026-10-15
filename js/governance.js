@@ -5,7 +5,7 @@
  * - Multi-sig attestation + Batch 5 testimony challenge / dispute flow.
  * - Flagging with explicit "Suspected synthetic / deceptive deepfake" category.
  * - Steward consensus voting & quorum execution for removals/bans.
- * - AI false-positive appeals stay in audit.js (submitFlagAppeal).
+ * - DAO escalation for moderation appeals.
  */
 
 import {
@@ -27,6 +27,7 @@ import { db, auth } from './firebase-config.js';
 import { showToast } from './utils.js';
 import { logAuditEvent, logSecurityAudit } from './audit.js';
 import { assertStewardAuthority, isHumanSteward } from './rbac.js';
+import { createModerationAppeal } from './dao.js';
 
 /* ==========================================================================
    CONFIG & CONSTANTS
@@ -119,7 +120,7 @@ export function evaluateMultiSigStatus(testimonyData) {
    ========================================================================== */
 
 /**
- * Flag a testimony with a specific report category (e.g. "Suspected synthetic / deceptive deepfake")
+ * Flag a testimony with a specific report category
  */
 export async function reportTestimony(testimonyId, category, reasonDetails = "") {
   const user = auth.currentUser;
@@ -133,7 +134,6 @@ export async function reportTestimony(testimonyId, category, reasonDetails = "")
     throw new Error("Invalid category");
   }
 
-  // Check for duplicate pending reports by the same user on this testimony
   const existing = await getDocs(query(
     collection(db, REPORTS_COLLECTION),
     where("testimonyId", "==", testimonyId),
@@ -158,7 +158,6 @@ export async function reportTestimony(testimonyId, category, reasonDetails = "")
 
   const docRef = await addDoc(collection(db, REPORTS_COLLECTION), reportData);
 
-  // Route testimony into review queue state
   const testimonyRef = doc(db, TESTIMONIES_COLLECTION, testimonyId);
   await updateDoc(testimonyRef, {
     feedVisibility: 'review_queue',
@@ -194,13 +193,11 @@ export async function fetchModerationQueue(max = 20) {
 
 /**
  * Record a steward's consensus vote on a flagged item.
- * Restricts permanent removal / ban actions strictly to human steward consensus.
  */
 export async function submitStewardVote(testimonyId, voteAction, notes = "") {
   const user = auth.currentUser;
   if (!user) throw new Error("Unauthenticated");
   
-  // Enforce Steward role check for notifications
   const stewardStatus = await isHumanSteward();
   if (!stewardStatus) {
     showToast("Reviewers can vote; final action requires Steward authority", "info");
@@ -213,7 +210,6 @@ export async function submitStewardVote(testimonyId, voteAction, notes = "") {
   const testimony = testimonySnap.data();
   const currentVotes = testimony.stewardVotes || [];
 
-  // Prevent double voting by the same reviewer/steward
   if (currentVotes.some(v => v.stewardId === user.uid)) {
     showToast("You have already recorded your vote on this item", "info");
     return;
@@ -221,7 +217,7 @@ export async function submitStewardVote(testimonyId, voteAction, notes = "") {
 
   const newVote = {
     stewardId: user.uid,
-    action: voteAction, // 'approve_keep', 'label_synthetic', 'remove_content', 'ban_author'
+    action: voteAction,
     notes: notes.trim(),
     votedAt: new Date().toISOString()
   };
@@ -229,7 +225,6 @@ export async function submitStewardVote(testimonyId, voteAction, notes = "") {
   const updatedVotes = [...currentVotes, newVote];
   const updatePayload = { stewardVotes: updatedVotes };
 
-  // Calculate quorum consensus
   const removalVotes = updatedVotes.filter(v => v.action === 'remove_content' || v.action === 'ban_author').length;
   const labelVotes = updatedVotes.filter(v => v.action === 'label_synthetic').length;
   const approveVotes = updatedVotes.filter(v => v.action === 'approve_keep').length;
@@ -237,7 +232,7 @@ export async function submitStewardVote(testimonyId, voteAction, notes = "") {
   let decisionReached = null;
 
   if (removalVotes >= QUORUM_REQUIRED) {
-    await assertStewardAuthority(); // Guard restriction: Must be human steward to execute permanent removal
+    await assertStewardAuthority();
     updatePayload.isDeleted = true;
     updatePayload.moderationStatus = 'removed_by_steward_consensus';
     updatePayload.feedVisibility = 'hidden';
@@ -270,17 +265,48 @@ export async function submitStewardVote(testimonyId, voteAction, notes = "") {
 }
 
 /* ==========================================================================
-   BATCH 5 — TESTIMONY CHALLENGE / DISPUTE
+   DAO ESCALATION FOR MODERATION
    ========================================================================== */
 
 /**
- * Open a challenge against a published testimony.
- * Feeds reputation when resolved (via Cloud Function / tier.js — not client score writes).
- *
- * @param {string} testimonyId
- * @param {string} reason
- * @returns {Promise<string|null>} dispute document id
+ * Escalate a moderated / challenged post to the citizen DAO.
+ * Does not spend treasury. Does not change feed likes into votes.
  */
+export async function escalateModerationToDAO({
+  testimonyId,
+  reason,
+  originalDecision = 'removed'
+}) {
+  if (!auth.currentUser) {
+    showToast('Sign in to open a DAO appeal', 'error');
+    return null;
+  }
+  if (!testimonyId) {
+    showToast('Missing post id', 'error');
+    return null;
+  }
+  const why = (reason || '').trim();
+  if (why.length < 20) {
+    showToast('Explain the appeal (at least 20 characters)', 'error');
+    return null;
+  }
+
+  const proposalId = await createModerationAppeal(
+    testimonyId,
+    why,
+    originalDecision
+  );
+
+  if (proposalId) {
+    showToast('Appeal opened in DAO — community can vote FOR/AGAINST', 'success');
+  }
+  return proposalId;
+}
+
+/* ==========================================================================
+   BATCH 5 — TESTIMONY CHALLENGE / DISPUTE
+   ========================================================================== */
+
 export async function openTestimonyChallenge(testimonyId, reason) {
   if (!auth.currentUser) {
     showToast('Sign in to challenge a report.', 'error');
@@ -347,15 +373,6 @@ export async function openTestimonyChallenge(testimonyId, reason) {
   }
 }
 
-/**
- * Resolve a testimony challenge.
- * Restrict via Firestore rules + admin claim, or call only from Cloud Functions.
- *
- * @param {string} disputeId
- * @param {'UPHELD'|'REJECTED'} resolution
- * @param {string} [note]
- * @returns {Promise<boolean>}
- */
 export async function resolveTestimonyChallenge(
   disputeId,
   resolution,
@@ -412,7 +429,6 @@ export async function resolveTestimonyChallenge(
   }
 }
 
-// Attach this to your challenge submission form or modal button
 export function setupChallengeModalListeners() {
   const challengeForm = document.getElementById('testimony-challenge-form');
   if (!challengeForm) return;
@@ -433,12 +449,10 @@ export function setupChallengeModalListeners() {
     submitBtn.textContent = 'Submitting Challenge...';
 
     try {
-      // Calls the function from js/governance.js
-      const disputeId = await window.openTestimonyChallenge(testimonyId, reasonInput);
+      const disputeId = await openTestimonyChallenge(testimonyId, reasonInput);
 
       if (disputeId) {
         challengeForm.reset();
-        // Close your modal here
         const modal = document.getElementById('challenge-modal');
         if (modal) modal.style.display = 'none';
         
@@ -454,17 +468,30 @@ export function setupChallengeModalListeners() {
   });
 }
 
-// Auto-initialize if DOM is ready
-if (typeof window !== 'undefined') {
-  document.addEventListener('DOMContentLoaded', setupChallengeModalListeners);
+export function setupEscalateDaoButton() {
+  const escalateBtn = document.getElementById('escalateDaoBtn');
+  if (!escalateBtn) return;
+
+  escalateBtn.addEventListener('click', async () => {
+    const testimonyId = escalateBtn.dataset.testimonyId || prompt('Enter Post ID to escalate:') || '';
+    if (!testimonyId) return;
+
+    const reason = prompt('Why should the community review this decision?') || '';
+    await escalateModerationToDAO({
+      testimonyId,
+      reason,
+      originalDecision: escalateBtn.dataset.originalDecision || 'removed'
+    });
+  });
 }
 
+if (typeof window !== 'undefined') {
+  document.addEventListener('DOMContentLoaded', () => {
+    setupChallengeModalListeners();
+    setupEscalateDaoButton();
+  });
+}
 
-/**
- * List recent disputes for transparency dashboard.
- * @param {number} limitCount
- * @returns {Promise<Array<object>>}
- */
 export async function listRecentDisputes(limitCount = 25) {
   try {
     const q = query(
@@ -491,9 +518,6 @@ export async function listRecentDisputes(limitCount = 25) {
   }
 }
 
-/**
- * Count dispute outcomes.
- */
 export async function getDisputeOutcomeCounts(limitCount = 200) {
   const rows = await listRecentDisputes(limitCount);
   return {
@@ -514,6 +538,7 @@ if (typeof window !== 'undefined') {
   window.reportTestimony = reportTestimony;
   window.fetchModerationQueue = fetchModerationQueue;
   window.submitStewardVote = submitStewardVote;
+  window.escalateModerationToDAO = escalateModerationToDAO;
   window.openTestimonyChallenge = openTestimonyChallenge;
   window.resolveTestimonyChallenge = resolveTestimonyChallenge;
   window.listRecentDisputes = listRecentDisputes;
