@@ -7,342 +7,633 @@
   <link rel="stylesheet" href="style.css">
   <link rel="icon" href="/logo.png" type="image/png">
   <style>
-    body {
-      background: #0a0f1c;
-      color: white;
-      font-family: 'Inter', system-ui, sans-serif;
+    /* Page-specific layout (uses your existing design tokens where possible) */
+    :root {
+      --dao-bg: #0a0f1c;
+      --dao-card: rgba(17, 24, 39, 0.95);
+      --dao-border: rgba(16, 185, 129, 0.25);
+      --dao-emerald: #10b981;
+      --dao-rose: #f43f5e;
+      --dao-zinc-300: #d4d4d8;
+      --dao-zinc-400: #a1a1aa;
+      --dao-zinc-500: #71717a;
+      --dao-zinc-700: #3f3f46;
+      --dao-zinc-800: #27272a;
+      --dao-zinc-900: #18181b;
+      --dao-zinc-950: #09090b;
     }
-    .glass {
-      background: rgba(17, 24, 39, 0.95);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(16, 185, 129, 0.25);
+
+    body.dao-page {
+      background: var(--dao-bg);
+      color: #fff;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      margin: 0;
+      padding-bottom: 6rem;
+    }
+
+    .dao-wrap {
+      max-width: 56rem;
+      margin: 0 auto;
+      padding: 0 1rem;
+    }
+
+    .dao-glass {
+      background: var(--dao-card);
+      border: 1px solid var(--dao-border);
+      border-radius: 1.5rem;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .dao-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      margin: 1rem 1rem 0;
+      padding: 1rem;
+    }
+
+    .dao-header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 56rem;
+      margin: 0 auto;
+      gap: 1rem;
+    }
+
+    .dao-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .dao-brand-icon {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 1rem;
+      background: var(--dao-emerald);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+    }
+
+    .dao-brand h1 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .dao-brand p {
+      margin: 0.15rem 0 0;
+      font-size: 0.75rem;
+      color: var(--dao-zinc-400);
+    }
+
+    .dao-back {
+      display: inline-block;
+      padding: 0.6rem 1.25rem;
+      border-radius: 1rem;
+      background: var(--dao-zinc-800);
+      color: #fff;
+      text-decoration: none;
+      font-size: 0.875rem;
+      transition: background 0.15s;
+    }
+    .dao-back:hover { background: #3f3f46; }
+
+    .dao-main { padding-top: 2rem; }
+
+    .dao-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 999px;
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      background: rgba(16, 185, 129, 0.1);
+      color: #34d399;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+
+    .dao-main h2 {
+      margin: 0;
+      font-size: 1.875rem;
+      font-weight: 700;
+      color: #34d399;
+    }
+
+    .dao-intro {
+      margin: 0.5rem 0 0;
+      max-width: 42rem;
+      font-size: 0.875rem;
+      line-height: 1.6;
+      color: var(--dao-zinc-400);
+    }
+
+    .dao-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin: 2rem 0 1.5rem;
+    }
+
+    .dao-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .dao-stat {
+      padding: 0.5rem 1rem;
+      border-radius: 1rem;
+      border: 1px solid var(--dao-zinc-700);
+      background: rgba(24, 24, 27, 0.6);
+      font-size: 0.875rem;
+    }
+    .dao-stat span:first-child { color: var(--dao-zinc-400); }
+    .dao-stat .val-emerald { margin-left: 0.5rem; font-weight: 600; color: #34d399; }
+    .dao-stat .val-cyan { margin-left: 0.5rem; font-weight: 600; color: #22d3ee; }
+
+    .dao-btn {
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      border-radius: 1rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      transition: background 0.15s, transform 0.1s, border-color 0.15s;
+    }
+    .dao-btn:active { transform: scale(0.98); }
+    .dao-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .dao-btn-primary {
+      background: #059669;
+      color: #000;
+      padding: 0.75rem 1.5rem;
+    }
+    .dao-btn-primary:hover:not(:disabled) { background: #10b981; }
+
+    .dao-btn-muted {
+      background: var(--dao-zinc-800);
+      color: #fff;
+      padding: 0.65rem 1rem;
+    }
+    .dao-btn-muted:hover:not(:disabled) { background: #3f3f46; }
+
+    .dao-btn-danger {
+      background: rgba(244, 63, 94, 0.85);
+      color: #fff;
+      padding: 0.65rem 1rem;
+    }
+    .dao-btn-danger:hover:not(:disabled) { background: #f43f5e; }
+
+    .dao-btn-ghost {
+      background: transparent;
+      color: var(--dao-zinc-400);
+      padding: 0.5rem;
+    }
+    .dao-btn-ghost:hover { color: #fff; }
+
+    .dao-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .filter-btn {
+      padding: 0.4rem 1rem;
+      border-radius: 999px;
+      border: 1px solid var(--dao-zinc-700);
+      background: var(--dao-zinc-800);
+      color: var(--dao-zinc-300);
+      font-size: 0.75rem;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .filter-btn.active {
+      border-color: rgba(16, 185, 129, 0.4);
+      background: rgba(16, 185, 129, 0.1);
+      color: #34d399;
+    }
+    .filter-btn:hover:not(.active) {
+      border-color: rgba(16, 185, 129, 0.5);
+    }
+
+    #proposalsContainer {
+      min-height: 18rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .dao-empty {
+      border: 1px dashed var(--dao-zinc-700);
+      border-radius: 1.5rem;
+      background: rgba(24, 24, 27, 0.4);
+      padding: 4rem 1.5rem;
+      text-align: center;
+    }
+    .dao-empty .icon { font-size: 3rem; margin-bottom: 1rem; }
+    .dao-empty h3 { margin: 0; font-size: 1.125rem; color: #fff; }
+    .dao-empty p { margin: 0.5rem 0 0; font-size: 0.875rem; color: var(--dao-zinc-400); }
+
+    .dao-loading {
+      padding: 4rem 1rem;
+      text-align: center;
+      color: var(--dao-zinc-500);
+    }
+
+    .proposal-card { padding: 1.5rem; }
+
+    .proposal-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.35rem;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 0.15rem 0.65rem;
+      border-radius: 999px;
+      font-size: 0.625rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .pill-active {
+      border: 1px solid rgba(14, 165, 233, 0.4);
+      background: rgba(14, 165, 233, 0.1);
+      color: #38bdf8;
+    }
+    .pill-passing {
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      background: rgba(16, 185, 129, 0.1);
+      color: #34d399;
+    }
+    .pill-closed {
+      border: 1px solid #52525b;
+      background: var(--dao-zinc-800);
+      color: var(--dao-zinc-400);
+    }
+    .pill-cat {
+      border: 1px solid var(--dao-zinc-700);
+      background: var(--dao-zinc-800);
+      color: var(--dao-zinc-400);
+    }
+
+    .proposal-card h3 {
+      margin: 0.25rem 0 0;
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .proposal-by {
+      margin: 0.35rem 0 0;
+      font-size: 0.75rem;
+      color: var(--dao-zinc-500);
+    }
+
+    .proposal-desc {
+      margin: 1.25rem 0;
+      font-size: 0.875rem;
+      line-height: 1.6;
+      color: #d4d4d8;
+    }
+
+    .vote-bars { margin-bottom: 1rem; }
+    .vote-bars-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--dao-zinc-400);
+      margin-bottom: 0.25rem;
+    }
+    .vote-track {
+      display: flex;
+      height: 0.5rem;
+      border-radius: 999px;
+      overflow: hidden;
+      background: var(--dao-zinc-800);
+    }
+    .vote-for { background: #10b981; transition: width 0.3s; }
+    .vote-against { background: #f43f5e; transition: width 0.3s; }
+    .vote-meta {
+      margin: 0.35rem 0 0;
+      font-size: 0.6875rem;
+      color: var(--dao-zinc-500);
+    }
+
+    .proposal-actions {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .proposal-actions .dao-btn { flex: 1; min-width: 7rem; }
+
+    .discussion-section {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--dao-zinc-800);
+    }
+
+    .discussion-toggle {
+      display: flex;
+      width: 100%;
+      align-items: center;
+      justify-content: space-between;
+      background: none;
+      border: none;
+      color: var(--dao-zinc-400);
+      font-size: 0.875rem;
+      cursor: pointer;
+      font-family: inherit;
+      padding: 0;
+    }
+    .discussion-toggle:hover { color: #fff; }
+
+    .discussion-panel { margin-top: 1rem; }
+
+    .comments-list {
+      max-height: 16rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .comment-item {
+      border-radius: 1rem;
+      border: 1px solid var(--dao-zinc-800);
+      background: rgba(24, 24, 27, 0.6);
+      padding: 0.75rem;
+    }
+    .comment-item .head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.35rem;
+    }
+    .comment-item .author {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #34d399;
+    }
+    .comment-item .time {
+      font-size: 0.625rem;
+      color: var(--dao-zinc-500);
+    }
+    .comment-item .body {
+      margin: 0;
+      font-size: 0.875rem;
+      line-height: 1.5;
+      color: #d4d4d8;
+    }
+
+    .comment-form {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .comment-form input {
+      flex: 1;
+      border-radius: 0.75rem;
+      border: 1px solid var(--dao-zinc-700);
+      background: var(--dao-zinc-900);
+      color: #fff;
+      padding: 0.65rem 1rem;
+      font-size: 0.875rem;
+      font-family: inherit;
+      outline: none;
+    }
+    .comment-form input:focus { border-color: var(--dao-emerald); }
+
+    /* Modals */
+    .dao-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
+      padding: 1rem;
+    }
+    .dao-modal.open { display: flex; }
+
+    .dao-modal-box {
+      width: 100%;
+      max-width: 28rem;
+      border-radius: 1.5rem;
+      border: 1px solid var(--dao-zinc-800);
+      background: var(--dao-zinc-900);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .dao-modal-box h3 {
+      margin: 0;
+      font-size: 1.125rem;
+      font-weight: 700;
+    }
+    .dao-modal-box .sub {
+      margin: 0.35rem 0 0;
+      font-size: 0.875rem;
+      color: var(--dao-zinc-400);
+    }
+
+    .dao-field label {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--dao-zinc-400);
+      margin-bottom: 0.4rem;
+    }
+    .dao-field input,
+    .dao-field select,
+    .dao-field textarea {
+      width: 100%;
+      box-sizing: border-box;
+      border-radius: 0.75rem;
+      border: 1px solid var(--dao-zinc-700);
+      background: var(--dao-zinc-950);
+      color: #fff;
+      padding: 0.75rem;
+      font-size: 0.875rem;
+      font-family: inherit;
+      outline: none;
+    }
+    .dao-field input:focus,
+    .dao-field select:focus,
+    .dao-field textarea:focus { border-color: var(--dao-emerald); }
+    .dao-field textarea { resize: none; min-height: 6rem; }
+
+    .strength-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .strength-btn {
+      flex: 1;
+      padding: 0.5rem;
+      border-radius: 0.75rem;
+      border: none;
+      background: var(--dao-zinc-800);
+      color: #fff;
+      font-size: 0.875rem;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .strength-btn.active {
+      background: #059669;
+      color: #fff;
+    }
+
+    .strength-hint {
+      margin: 0.5rem 0 0;
+      font-size: 0.6875rem;
+      color: var(--dao-zinc-500);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 0.75rem;
+    }
+    .modal-actions .dao-btn { flex: 1; }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      padding-top: 0.25rem;
     }
   </style>
 </head>
-<body class="min-h-screen pb-24">
+<body class="dao-page">
 
-  <!-- Header -->
-  <header class="sticky top-0 z-50 glass mx-4 mt-4 rounded-3xl p-4">
-    <div class="mx-auto flex max-w-4xl items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500 text-2xl">
-          🏛️
-        </div>
+  <header class="dao-header dao-glass">
+    <div class="dao-header-inner">
+      <div class="dao-brand">
+        <div class="dao-brand-icon" aria-hidden="true">🏛️</div>
         <div>
-          <h1 class="text-xl font-bold text-white">DAO Governance</h1>
-          <p class="text-xs text-zinc-400">You decide. We don’t.</p>
+          <h1>DAO Governance</h1>
+          <p>Quadratic voting • Reputation-weighted</p>
         </div>
       </div>
-      <a href="index.html"
-         class="rounded-2xl bg-zinc-800 px-5 py-2.5 text-sm transition hover:bg-zinc-700">
-        ← Back to Square
-      </a>
+      <a href="index.html" class="dao-back">← Back to Square</a>
     </div>
   </header>
 
-  <main class="mx-auto max-w-4xl px-4 pt-8 space-y-8">
+  <main class="dao-main dao-wrap">
+    <div class="dao-badge">Community-Led Decisions</div>
+    <h2>Active Proposals</h2>
+    <p class="dao-intro">
+      Shape the future of VocalWitness through quadratic voting.
+      Higher reputation gives more voting power, but cost grows with the square of strength.
+    </p>
 
-    <!-- ========== YOU ARE THE GOVERNMENT BANNER ========== -->
-    <div class="rounded-3xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 to-cyan-500/5 p-6">
-      <div class="flex flex-col sm:flex-row sm:items-center gap-4">
-        <div class="text-4xl">👑</div>
-        <div>
-          <h2 class="text-xl font-bold text-emerald-400">You are the government of VocalWitness</h2>
-          <p class="mt-1 text-sm text-zinc-300 leading-relaxed">
-            No founder, no admin, no company decides the future of this platform.  
-            <strong class="text-white">You do.</strong>  
-            Your votes protect sealed reports, control the treasury, and set the rules.
-          </p>
+    <div class="dao-toolbar">
+      <div class="dao-stats">
+        <div class="dao-stat">
+          <span>Your Voting Budget</span>
+          <span id="userBudget" class="val-emerald">—</span>
+        </div>
+        <div class="dao-stat">
+          <span>Reputation</span>
+          <span id="userReputation" class="val-cyan">—</span>
         </div>
       </div>
+      <button type="button" id="openCreateBtn" class="dao-btn dao-btn-primary">+ New Proposal</button>
     </div>
 
-    <!-- ========== PERSONAL POWER CARD ========== -->
-    <div class="glass rounded-3xl border border-emerald-500/25 p-6">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
-        <div class="flex items-center gap-4">
-          <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/20 text-3xl border border-emerald-500/40">
-            ⚡
-          </div>
-          <div>
-            <div class="flex items-center gap-2 flex-wrap">
-              <h2 class="text-xl font-bold text-white">Your Power</h2>
-              <span id="userTierBadge" class="rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-medium text-emerald-400 border border-emerald-500/30">
-                Loading...
-              </span>
-            </div>
-            <p class="mt-1 text-sm text-zinc-400">Reputation-weighted • Quadratic voting</p>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-3 gap-4 text-center">
-          <div>
-            <p class="text-xs text-zinc-500 uppercase tracking-wider">Reputation</p>
-            <p id="userReputation" class="text-2xl font-bold text-cyan-400">—</p>
-          </div>
-          <div>
-            <p class="text-xs text-zinc-500 uppercase tracking-wider">Budget Left</p>
-            <p id="userBudget" class="text-2xl font-bold text-emerald-400">—</p>
-          </div>
-          <div>
-            <p class="text-xs text-zinc-500 uppercase tracking-wider">Multiplier</p>
-            <p id="userMultiplier" class="text-2xl font-bold text-amber-400">—</p>
-          </div>
-        </div>
-      </div>
+    <div class="dao-filters" role="tablist" aria-label="Proposal filters">
+      <button type="button" class="filter-btn active" data-filter="all">All</button>
+      <button type="button" class="filter-btn" data-filter="active">Active</button>
+      <button type="button" class="filter-btn" data-filter="passed">Passed</button>
+      <button type="button" class="filter-btn" data-filter="closed">Closed</button>
     </div>
 
-    <!-- ========== INLINE VOTING INTERFACE (add inside each proposal card) ========== -->
-<div class="mt-5 border-t border-zinc-800 pt-5">
-  <div class="flex items-center justify-between mb-3">
-    <p class="text-sm font-medium text-white">Your Vote</p>
-    <p class="text-xs text-zinc-400">Cost = strength²</p>
-  </div>
-
-  <!-- Strength Selector -->
-  <div class="flex gap-2 mb-4" id="inline-strength-${p.id}">
-    <button onclick="setInlineStrength('${p.id}', 1)" class="inline-strength-btn flex-1 rounded-lg bg-zinc-800 py-2 text-sm hover:bg-zinc-700" data-s="1">1</button>
-    <button onclick="setInlineStrength('${p.id}', 2)" class="inline-strength-btn flex-1 rounded-lg bg-zinc-800 py-2 text-sm hover:bg-zinc-700" data-s="2">2</button>
-    <button onclick="setInlineStrength('${p.id}', 3)" class="inline-strength-btn flex-1 rounded-lg bg-zinc-800 py-2 text-sm hover:bg-zinc-700" data-s="3">3</button>
-    <button onclick="setInlineStrength('${p.id}', 4)" class="inline-strength-btn flex-1 rounded-lg bg-zinc-800 py-2 text-sm hover:bg-zinc-700" data-s="4">4</button>
-    <button onclick="setInlineStrength('${p.id}', 5)" class="inline-strength-btn flex-1 rounded-lg bg-zinc-800 py-2 text-sm hover:bg-zinc-700" data-s="5">5</button>
-  </div>
-
-  <p class="text-xs text-zinc-500 mb-3 text-center">
-    Selected strength: <span id="selected-strength-${p.id}">1</span> 
-    • Cost: <span id="selected-cost-${p.id}">1</span> points
-  </p>
-
-  <!-- Vote Buttons -->
-  <div class="grid grid-cols-2 gap-3">
-    <button onclick="castInlineVote('${p.id}', 'for')"
-            class="rounded-xl bg-emerald-600 py-2.5 text-sm font-semibold text-black hover:bg-emerald-500 transition">
-      Vote FOR
-    </button>
-    <button onclick="castInlineVote('${p.id}', 'against')"
-            class="rounded-xl bg-rose-600/90 py-2.5 text-sm font-semibold text-white hover:bg-rose-500 transition">
-      Vote AGAINST
-    </button>
-  </div>
-</div>
-
-    <!-- ========== IMPACT COUNTER ========== -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <div class="glass rounded-2xl border border-emerald-500/20 p-5 text-center">
-        <p class="text-3xl font-bold text-emerald-400" id="impactReports">—</p>
-        <p class="mt-1 text-sm text-zinc-400">Sealed reports protected<br>by your community votes</p>
-      </div>
-      <div class="glass rounded-2xl border border-emerald-500/20 p-5 text-center">
-        <p class="text-3xl font-bold text-cyan-400" id="impactAppeals">—</p>
-        <p class="mt-1 text-sm text-zinc-400">Appeals decided<br>by the people</p>
-      </div>
-      <div class="glass rounded-2xl border border-emerald-500/20 p-5 text-center">
-        <p class="text-3xl font-bold text-amber-400" id="impactFeatures">—</p>
-        <p class="mt-1 text-sm text-zinc-400">Features & rules<br>you collectively set</p>
-      </div>
-    </div>
-
-    <!-- Page Intro -->
-    <div>
-      <div class="mb-3 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400">
-        Community-Led Decisions
-      </div>
-      <h2 class="text-3xl font-bold text-white">Active Proposals</h2>
-      <p class="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-400">
-        Every decision below is made by you — the citizens.  
-        Use your voting power wisely. This is your government.
-      </p>
-    </div>
-
-    <!-- Stats + Create -->
-    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <div class="flex flex-wrap gap-3 text-sm">
-        <div class="rounded-2xl border border-zinc-700 bg-zinc-900/60 px-4 py-2">
-          <span class="text-zinc-400">Your Voting Budget</span>
-          <span id="userBudgetSmall" class="ml-2 font-semibold text-emerald-400">—</span>
-        </div>
-        <div class="rounded-2xl border border-zinc-700 bg-zinc-900/60 px-4 py-2">
-          <span class="text-zinc-400">Reputation</span>
-          <span id="userReputationSmall" class="ml-2 font-semibold text-cyan-400">—</span>
-        </div>
-      </div>
-
-      <button id="openCreateBtn"
-              class="rounded-2xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-black transition hover:bg-emerald-500">
-        + New Proposal
-      </button>
-    </div>
-
-    <!-- Filters -->
-    <div class="flex flex-wrap gap-2">
-      <button class="filter-btn active rounded-full border border-emerald-500/40 bg-emerald-500/10 px-4 py-1.5 text-xs font-medium text-emerald-400"
-              data-filter="all">All</button>
-      <button class="filter-btn rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs text-zinc-300 hover:border-emerald-500/50"
-              data-filter="active">Active</button>
-      <button class="filter-btn rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs text-zinc-300 hover:border-emerald-500/50"
-              data-filter="passed">Passed</button>
-      <button class="filter-btn rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs text-zinc-300 hover:border-emerald-500/50"
-              data-filter="closed">Closed</button>
-    </div>
-
-    <!-- Proposals List -->
-    <div id="proposalsContainer" class="min-h-[300px] space-y-5">
-      <div class="py-16 text-center text-zinc-500">Loading proposals...</div>
+    <div id="proposalsContainer">
+      <div class="dao-loading">Loading proposals…</div>
     </div>
   </main>
 
-<!-- ========== CREATE PROPOSAL MODAL (WITH PREVIEW) ========== -->
-<div id="createModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 p-4 backdrop-blur-md">
-  <div class="w-full max-w-lg space-y-5 rounded-3xl border border-zinc-800 bg-zinc-900 p-6 max-h-[92vh] overflow-y-auto">
-
-    <!-- Header -->
-    <div>
-      <div class="mb-1 flex items-center gap-2">
-        <span class="text-2xl">📜</span>
-        <h3 class="text-xl font-bold text-white">Create a Proposal</h3>
-      </div>
-      <p class="text-sm text-zinc-400">
-        You are proposing a decision for the entire community.
-      </p>
-    </div>
-
-    <!-- ========== STEP 1: WRITE FORM ========== -->
-    <div id="proposalFormStep">
-
-      <!-- Title -->
-      <div class="mb-4">
-        <label class="mb-1.5 block text-sm font-medium text-zinc-300">Proposal Title *</label>
-        <input id="proposalTitle" 
-               type="text" 
-               maxlength="120"
-               class="w-full rounded-xl border border-zinc-700 bg-zinc-950 p-3.5 text-sm focus:border-emerald-500 focus:outline-none"
-               placeholder="Clear and specific title">
+  <!-- Create Proposal Modal -->
+  <div id="createModal" class="dao-modal" role="dialog" aria-modal="true" aria-labelledby="createModalTitle">
+    <div class="dao-modal-box">
+      <div>
+        <h3 id="createModalTitle">Create DAO Proposal</h3>
+        <p class="sub">Clear proposals get better participation</p>
       </div>
 
-      <!-- Category -->
-      <div class="mb-4">
-        <label class="mb-1.5 block text-sm font-medium text-zinc-300">Category</label>
-        <select id="proposalCategory"
-                class="w-full rounded-xl border border-zinc-700 bg-zinc-950 p-3.5 text-sm focus:border-emerald-500 focus:outline-none">
+      <div class="dao-field">
+        <label for="proposalTitle">Title *</label>
+        <input id="proposalTitle" type="text" maxlength="120" placeholder="Clear and specific title" autocomplete="off">
+      </div>
+
+      <div class="dao-field">
+        <label for="proposalCategory">Category</label>
+        <select id="proposalCategory">
           <option value="governance">Governance</option>
-          <option value="policy">Policy Change</option>
+          <option value="moderation_appeal">Moderation Appeal</option>
           <option value="feature">Feature Request</option>
           <option value="treasury">Treasury</option>
-          <option value="moderation_appeal">Moderation Appeal</option>
+          <option value="policy">Policy Change</option>
         </select>
       </div>
 
-      <!-- Description -->
-      <div class="mb-4">
-        <label class="mb-1.5 block text-sm font-medium text-zinc-300">Description *</label>
-        <textarea id="proposalDesc" 
-                  rows="5" 
-                  maxlength="800"
-                  class="w-full resize-none rounded-xl border border-zinc-700 bg-zinc-950 p-3.5 text-sm focus:border-emerald-500 focus:outline-none"
-                  placeholder="Explain the problem, your proposal, and why it matters to the community..."></textarea>
-        <div class="mt-1 flex justify-between text-xs text-zinc-500">
-          <span>Be clear and respectful</span>
-          <span id="descCount">0 / 800</span>
-        </div>
+      <div class="dao-field">
+        <label for="proposalDesc">Description *</label>
+        <textarea id="proposalDesc" maxlength="800" placeholder="Explain the proposal and why it matters…"></textarea>
       </div>
 
-      <!-- Actions -->
-      <div class="flex gap-3 pt-2">
-        <button id="cancelCreateBtn" 
-                class="flex-1 rounded-xl bg-zinc-800 py-3 text-sm font-medium hover:bg-zinc-700 transition">
-          Cancel
-        </button>
-        <button id="previewProposalBtn" 
-                class="flex-1 rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-black hover:bg-emerald-500 transition">
-          Preview Proposal →
-        </button>
+      <div class="modal-footer">
+        <button type="button" id="cancelCreateBtn" class="dao-btn dao-btn-muted">Cancel</button>
+        <button type="button" id="submitCreateBtn" class="dao-btn dao-btn-primary">Create Proposal</button>
       </div>
     </div>
-
-    <!-- ========== STEP 2: PREVIEW SECTION ========== -->
-    <div id="proposalPreviewStep" class="hidden">
-
-      <div class="mb-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4">
-        <p class="text-sm font-medium text-emerald-400 mb-1">Preview</p>
-        <p class="text-xs text-zinc-400">This is exactly how your proposal will appear to the community.</p>
-      </div>
-
-      <!-- Preview Card -->
-      <div class="rounded-2xl border border-zinc-700 bg-zinc-950/80 p-5 mb-5">
-        <div class="mb-2 flex items-center gap-2">
-          <span id="previewCategory" class="rounded-full border border-zinc-600 bg-zinc-800 px-2.5 py-0.5 text-[10px] uppercase tracking-wider text-zinc-400">
-            governance
-          </span>
-          <span class="text-xs text-zinc-500">Draft</span>
-        </div>
-
-        <h4 id="previewTitle" class="text-lg font-semibold text-white mb-3">
-          Proposal Title
-        </h4>
-
-        <p id="previewDescription" class="text-sm leading-relaxed text-zinc-300 whitespace-pre-wrap">
-          Description will appear here...
-        </p>
-      </div>
-
-      <!-- Final Actions -->
-      <div class="flex gap-3">
-        <button id="backToEditBtn" 
-                class="flex-1 rounded-xl bg-zinc-800 py-3 text-sm font-medium hover:bg-zinc-700 transition">
-          ← Edit
-        </button>
-        <button id="submitCreateBtn" 
-                class="flex-1 rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-black hover:bg-emerald-500 transition">
-          Submit to the People
-        </button>
-      </div>
-    </div>
-
   </div>
-</div>
 
-  <!-- ========== IMPROVED QUADRATIC VOTE MODAL ========== -->
-  <div id="voteModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 p-4 backdrop-blur-md">
-    <div class="w-full max-w-sm space-y-6 rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
+  <!-- Vote Modal -->
+  <div id="voteModal" class="dao-modal" role="dialog" aria-modal="true" aria-labelledby="voteModalTitle">
+    <div class="dao-modal-box">
       <div>
-        <h3 class="text-lg font-bold text-white">Cast Your Vote</h3>
-        <p id="voteProposalTitle" class="mt-1 text-sm text-zinc-400 line-clamp-2"></p>
+        <h3 id="voteModalTitle">Cast Quadratic Vote</h3>
+        <p id="voteProposalTitle" class="sub"></p>
       </div>
 
-      <!-- Strength Selector -->
       <div>
-        <div class="mb-3 flex items-center justify-between">
-          <label class="text-xs text-zinc-400">How strongly do you feel?</label>
-          <span class="text-xs text-emerald-400 font-medium">Cost: <span id="liveCost">1</span> points</span>
+        <label class="dao-field" style="margin-bottom:0.5rem">Vote Strength (1–5)</label>
+        <div class="strength-row" id="strengthButtons">
+          <button type="button" data-s="1" class="strength-btn active">1</button>
+          <button type="button" data-s="2" class="strength-btn">2</button>
+          <button type="button" data-s="3" class="strength-btn">3</button>
+          <button type="button" data-s="4" class="strength-btn">4</button>
+          <button type="button" data-s="5" class="strength-btn">5</button>
         </div>
-        
-        <div class="flex gap-2" id="strengthButtons">
-          <button data-s="1" class="strength-btn flex-1 rounded-xl bg-emerald-600 py-3 text-sm font-medium text-white">1</button>
-          <button data-s="2" class="strength-btn flex-1 rounded-xl bg-zinc-800 py-3 text-sm hover:bg-zinc-700">2</button>
-          <button data-s="3" class="strength-btn flex-1 rounded-xl bg-zinc-800 py-3 text-sm hover:bg-zinc-700">3</button>
-          <button data-s="4" class="strength-btn flex-1 rounded-xl bg-zinc-800 py-3 text-sm hover:bg-zinc-700">4</button>
-          <button data-s="5" class="strength-btn flex-1 rounded-xl bg-zinc-800 py-3 text-sm hover:bg-zinc-700">5</button>
-        </div>
-
-        <p class="mt-3 text-[11px] text-zinc-500 text-center">
-          1 vote = 1 point • 2 votes = 4 points • 3 = 9 • 4 = 16 • 5 = 25<br>
-          Remaining budget: <span id="voteBudgetDisplay" class="text-emerald-400 font-medium">—</span>
+        <p class="strength-hint">
+          Cost = strength² • Remaining budget: <span id="voteBudgetDisplay">—</span>
         </p>
       </div>
 
-      <!-- Vote Buttons -->
-      <div class="grid grid-cols-2 gap-3">
-        <button id="voteForBtn" class="rounded-xl bg-emerald-600 py-3.5 text-sm font-semibold text-black hover:bg-emerald-500 transition">
-          Vote FOR
-        </button>
-        <button id="voteAgainstBtn" class="rounded-xl bg-rose-600/90 py-3.5 text-sm font-semibold text-white hover:bg-rose-500 transition">
-          Vote AGAINST
-        </button>
+      <div class="modal-actions">
+        <button type="button" id="voteForBtn" class="dao-btn dao-btn-primary">Vote FOR</button>
+        <button type="button" id="voteAgainstBtn" class="dao-btn dao-btn-danger">Vote AGAINST</button>
       </div>
 
-      <button id="cancelVoteBtn" class="w-full py-2 text-sm text-zinc-400 hover:text-white transition">
-        Cancel
-      </button>
+      <button type="button" id="cancelVoteBtn" class="dao-btn dao-btn-ghost" style="width:100%">Cancel</button>
     </div>
   </div>
 
@@ -352,7 +643,11 @@
       createDAOProposal,
       castQuadraticVote,
       closeProposal,
-      hasProposalPassed
+      hasProposalPassed,
+      getUserGovernancePower,
+      postDAOComment,
+      subscribeToProposalComments,
+      unsubscribeFromComments
     } from './js/dao.js';
     import { showToast } from './js/utils.js';
     import { hasStewardAccess } from './js/tier.js';
@@ -360,201 +655,10 @@
     let selectedStrength = 1;
     let currentProposalId = null;
     let currentFilter = 'all';
-    let userBudget = 25; // Will be updated from real data
-
-    // ---------- Power Card & Impact (placeholder - connect to real data) ----------
-    function updateUserPower(data = {}) {
-      const rep = data.reputation || 0;
-      const budget = data.remainingBudget ?? 25;
-      const multiplier = data.votingWeight || 1;
-      const tier = data.tierName || 'Citizen';
-
-      document.getElementById('userReputation').textContent = rep;
-      document.getElementById('userReputationSmall').textContent = rep;
-      document.getElementById('userBudget').textContent = budget;
-      document.getElementById('userBudgetSmall').textContent = budget + ' / 25';
-      document.getElementById('userMultiplier').textContent = '×' + multiplier.toFixed(1);
-      document.getElementById('userTierBadge').textContent = tier;
-      document.getElementById('voteBudgetDisplay').textContent = budget;
-
-      userBudget = budget;
-    }
-
-    function updateImpactCounters(data = {}) {
-      document.getElementById('impactReports').textContent = (data.reportsProtected || 0).toLocaleString();
-      document.getElementById('impactAppeals').textContent = (data.appealsResolved || 0).toLocaleString();
-      document.getElementById('impactFeatures').textContent = (data.featuresPrioritized || 0).toLocaleString();
-    }
-
-    // Call these with real data from your backend
-    updateUserPower({ reputation: 248, remainingBudget: 18, votingWeight: 1.8, tierName: 'Witness Circle' });
-    updateImpactCounters({ reportsProtected: 1247, appealsResolved: 89, featuresPrioritized: 14 });
-
-    // ---------- Render Proposals ----------
-    async function loadProposals() {
-  const container = document.getElementById('proposalsContainer');
-  container.innerHTML = `<div class="py-16 text-center text-zinc-500">Loading proposals...</div>`;
-
-  const proposals = await fetchActiveProposals(30);
-  if (!proposals || proposals.length === 0) {
-    container.innerHTML = `
-      <div class="rounded-3xl border border-dashed border-zinc-700 bg-zinc-900/40 py-16 text-center">
-        <div class="mb-4 text-5xl">🏛️</div>
-        <h3 class="text-lg font-medium text-white">No active proposals yet</h3>
-        <p class="mt-2 text-sm text-zinc-400">Be the first to create one.<br>You are the government.</p>
-      </div>`;
-
-    return;
-  }
-
-  const isSteward = await hasStewardAccess();
-
-  let filtered = proposals;
-  if (currentFilter === 'passed') {
-    filtered = proposals.filter(p => hasProposalPassed(p));
-  } else if (currentFilter === 'closed') {
-    filtered = proposals.filter(p => p.status === 'closed');
-  } else if (currentFilter === 'active') {
-    filtered = proposals.filter(p => p.status !== 'closed' && !hasProposalPassed(p));
-  }
-
-  container.innerHTML = filtered.map(p => {
-    const total = (p.totalVotesFor || 0) + (p.totalVotesAgainst || 0);
-    const forPct = total > 0 ? Math.round((p.totalVotesFor / total) * 100) : 0;
-    const againstPct = total > 0 ? 100 - forPct : 0;
-    const passed = hasProposalPassed(p);
-    const isClosed = p.status === 'closed';
-
-    let statusBadge = '';
-    if (isClosed) {
-      statusBadge = `<span class="rounded-full border border-zinc-600 bg-zinc-800 px-2.5 py-0.5 text-[10px] text-zinc-400">Closed</span>`;
-    } else if (passed) {
-      statusBadge = `<span class="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] text-emerald-400">Passing</span>`;
-    } else {
-      statusBadge = `<span class="rounded-full border border-sky-500/40 bg-sky-500/10 px-2.5 py-0.5 text-[10px] text-sky-400">Active</span>`;
-    }
-
-    return `
-      <div class="glass rounded-3xl border border-emerald-500/20 p-6">
-        
-        <!-- Header -->
-        <div class="mb-3 flex items-start justify-between gap-4">
-          <div>
-            <div class="mb-1 flex flex-wrap items-center gap-2">
-              ${statusBadge}
-              <span class="rounded-full border border-zinc-700 bg-zinc-800 px-2.5 py-0.5 text-[10px] uppercase tracking-wider text-zinc-400">
-                ${p.category || 'governance'}
-              </span>
-            </div>
-            <h3 class="text-lg font-semibold text-white">${escapeHTML(p.title)}</h3>
-            <p class="mt-1 text-xs text-zinc-500">
-              by ${escapeHTML(p.creatorDisplayName || 'Anonymous')} • 
-              ${p.createdAt?.toDate ? p.createdAt.toDate().toLocaleDateString() : 'Recently'}
-            </p>
-          </div>
-        </div>
-
-        <!-- Description -->
-        <p class="mb-5 text-sm leading-relaxed text-zinc-300">
-          ${escapeHTML(p.description || '')}
-        </p>
-
-        <!-- Vote Progress -->
-        <div class="mb-5">
-          <div class="mb-1 flex justify-between text-xs text-zinc-400">
-            <span>FOR ${p.totalVotesFor || 0}</span>
-            <span>AGAINST ${p.totalVotesAgainst || 0}</span>
-          </div>
-          <div class="flex h-2.5 overflow-hidden rounded-full bg-zinc-800">
-            <div class="bg-emerald-500 transition-all" style="width:${forPct}%"></div>
-            <div class="bg-rose-500 transition-all" style="width:${againstPct}%"></div>
-          </div>
-          <p class="mt-1.5 text-[11px] text-zinc-500">
-            Quorum: ${p.quorum || 12} • Total power: ${total}
-            ${passed ? ' • <span class="text-emerald-400">Threshold reached</span>' : ''}
-          </p>
-        </div>
-
-        <!-- ========== VOTING INTERFACE ========== -->
-        ${!isClosed ? `
-        <div class="mb-5 rounded-2xl border border-zinc-700 bg-zinc-900/50 p-4">
-          <div class="mb-3 flex items-center justify-between">
-            <p class="text-sm font-medium text-white">Cast Your Vote</p>
-            <p class="text-xs text-zinc-400">Quadratic • Cost = strength²</p>
-          </div>
-
-          <!-- Strength Buttons -->
-          <div class="flex gap-2 mb-3" id="inline-strength-${p.id}">
-            <button onclick="setInlineStrength('${p.id}', 1)" class="inline-strength-btn flex-1 rounded-lg bg-emerald-600 py-2 text-sm font-medium text-white" data-s="1">1</button>
-            <button onclick="setInlineStrength('${p.id}', 2)" class="inline-strength-btn flex-1 rounded-lg bg-zinc-800 py-2 text-sm hover:bg-zinc-700" data-s="2">2</button>
-            <button onclick="setInlineStrength('${p.id}', 3)" class="inline-strength-btn flex-1 rounded-lg bg-zinc-800 py-2 text-sm hover:bg-zinc-700" data-s="3">3</button>
-            <button onclick="setInlineStrength('${p.id}', 4)" class="inline-strength-btn flex-1 rounded-lg bg-zinc-800 py-2 text-sm hover:bg-zinc-700" data-s="4">4</button>
-            <button onclick="setInlineStrength('${p.id}', 5)" class="inline-strength-btn flex-1 rounded-lg bg-zinc-800 py-2 text-sm hover:bg-zinc-700" data-s="5">5</button>
-          </div>
-
-          <p class="text-xs text-zinc-500 mb-3 text-center">
-            Strength: <span id="selected-strength-${p.id}" class="text-emerald-400 font-medium">1</span> 
-            • Cost: <span id="selected-cost-${p.id}" class="text-emerald-400 font-medium">1</span> points
-          </p>
-
-          <div class="grid grid-cols-2 gap-3">
-            <button onclick="castInlineVote('${p.id}', 'for')"
-                    class="rounded-xl bg-emerald-600 py-2.5 text-sm font-semibold text-black hover:bg-emerald-500 transition">
-              Vote FOR
-            </button>
-            <button onclick="castInlineVote('${p.id}', 'against')"
-                    class="rounded-xl bg-rose-600/90 py-2.5 text-sm font-semibold text-white hover:bg-rose-500 transition">
-              Vote AGAINST
-            </button>
-          </div>
-        </div>
-        ` : ''}
-
-        <!-- Steward Close Button -->
-        ${isSteward && !isClosed ? `
-          <button onclick="handleClose('${p.id}')"
-                  class="mb-4 w-full rounded-xl border border-zinc-700 bg-zinc-900 py-2 text-sm text-zinc-400 hover:bg-zinc-800 transition">
-            Close Proposal
-          </button>
-        ` : ''}
-
-        <!-- ========== DISCUSSION SECTION ========== -->
-        <div class="border-t border-zinc-800 pt-4">
-          <button onclick="toggleDiscussion('${p.id}')"
-                  class="flex w-full items-center justify-between text-sm text-zinc-400 hover:text-white transition">
-            <span class="font-medium">
-              Discussion (<span id="comment-count-${p.id}">${p.commentCount || 0}</span>)
-            </span>
-            <span id="discussion-arrow-${p.id}">▼</span>
-          </button>
-
-          <div id="discussion-${p.id}" class="mt-4 hidden space-y-4">
-            <!-- Comments List -->
-            <div id="comments-list-${p.id}" class="space-y-3 max-h-72 overflow-y-auto pr-1">
-              <p class="text-xs text-zinc-500 text-center py-4">Loading comments...</p>
-            </div>
-
-            <!-- Add Comment -->
-            <div class="flex gap-2">
-              <input id="comment-input-${p.id}" 
-                     type="text" 
-                     maxlength="400"
-                     placeholder="Share your thoughts as a citizen..."
-                     class="flex-1 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-white focus:border-emerald-500 focus:outline-none">
-              <button onclick="postComment('${p.id}')"
-                      class="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-medium text-black hover:bg-emerald-500 transition">
-                Post
-              </button>
-            </div>
-          </div>
-        </div>
-
-      </div>`;
-  }).join('');
-}
+    let isVoting = false;
 
     function escapeHTML(str) {
-      if (!str) return '';
+      if (str == null) return '';
       return String(str)
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
@@ -563,214 +667,378 @@
         .replace(/'/g, '&#039;');
     }
 
+    // ---------- User power ----------
+    async function refreshUserPower() {
+      try {
+        const power = await getUserGovernancePower();
+        const budgetEl = document.getElementById('userBudget');
+        const repEl = document.getElementById('userReputation');
+        const voteBudgetEl = document.getElementById('voteBudgetDisplay');
+
+        if (budgetEl) budgetEl.textContent = power.remainingBudget ?? '—';
+        if (repEl) repEl.textContent = power.reputation ?? '—';
+        if (voteBudgetEl) voteBudgetEl.textContent = power.remainingBudget ?? '—';
+      } catch (e) {
+        console.warn('Failed to load governance power:', e);
+      }
+    }
+
+    // ---------- Proposals ----------
+    async function loadProposals() {
+      const container = document.getElementById('proposalsContainer');
+      container.innerHTML = `<div class="dao-loading">Loading proposals…</div>`;
+
+      const proposals = await fetchActiveProposals(30);
+      if (!proposals || proposals.length === 0) {
+        container.innerHTML = `
+          <div class="dao-empty">
+            <div class="icon">🏛️</div>
+            <h3>No active proposals yet</h3>
+            <p>Be the first to create one and shape the platform.</p>
+          </div>`;
+        return;
+      }
+
+      const isSteward = await hasStewardAccess();
+
+      let filtered = proposals;
+      if (currentFilter === 'passed') {
+        filtered = proposals.filter(p => hasProposalPassed(p));
+      } else if (currentFilter === 'closed') {
+        filtered = proposals.filter(p => p.status === 'closed');
+      } else if (currentFilter === 'active') {
+        filtered = proposals.filter(p => p.status !== 'closed' && !hasProposalPassed(p));
+      }
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="dao-empty">
+            <div class="icon">📭</div>
+            <h3>No proposals in this filter</h3>
+            <p>Try another filter or create a new proposal.</p>
+          </div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(p => {
+        const total = (p.totalVotesFor || 0) + (p.totalVotesAgainst || 0);
+        const forPct = total > 0 ? Math.round((p.totalVotesFor / total) * 100) : 0;
+        const againstPct = total > 0 ? 100 - forPct : 0;
+        const passed = hasProposalPassed(p);
+        const isClosed = p.status === 'closed';
+
+        let statusPill = '';
+        if (isClosed) {
+          statusPill = `<span class="pill pill-closed">Closed</span>`;
+        } else if (passed) {
+          statusPill = `<span class="pill pill-passing">Passing</span>`;
+        } else {
+          statusPill = `<span class="pill pill-active">Active</span>`;
+        }
+
+        const safeTitle = escapeHTML(p.title);
+        const safeTitleAttr = safeTitle.replace(/'/g, '&#039;');
+
+        return `
+          <article class="dao-glass proposal-card" data-proposal-id="${escapeHTML(p.id)}">
+            <div class="proposal-meta">
+              ${statusPill}
+              <span class="pill pill-cat">${escapeHTML(p.category || 'governance')}</span>
+            </div>
+            <h3>${safeTitle}</h3>
+            <p class="proposal-by">
+              by ${escapeHTML(p.creatorDisplayName || 'Anonymous')} •
+              ${p.createdAt?.toDate ? p.createdAt.toDate().toLocaleDateString() : 'Recently'}
+            </p>
+            <p class="proposal-desc">${escapeHTML(p.description || '')}</p>
+
+            <div class="vote-bars">
+              <div class="vote-bars-labels">
+                <span>FOR ${p.totalVotesFor || 0}</span>
+                <span>AGAINST ${p.totalVotesAgainst || 0}</span>
+              </div>
+              <div class="vote-track" role="img" aria-label="Vote distribution">
+                <div class="vote-for" style="width:${forPct}%"></div>
+                <div class="vote-against" style="width:${againstPct}%"></div>
+              </div>
+              <p class="vote-meta">
+                Quorum: ${p.quorum || 12} • Total power: ${total}
+                ${passed ? ' • <span style="color:#34d399">Threshold reached</span>' : ''}
+              </p>
+            </div>
+
+            <div class="proposal-actions">
+              ${!isClosed ? `
+                <button type="button"
+                        class="dao-btn dao-btn-muted cast-vote-btn"
+                        data-id="${escapeHTML(p.id)}"
+                        data-title="${safeTitleAttr}">
+                  Cast Vote
+                </button>` : ''}
+              ${isSteward && !isClosed ? `
+                <button type="button"
+                        class="dao-btn dao-btn-muted close-proposal-btn"
+                        data-id="${escapeHTML(p.id)}"
+                        style="flex:0;min-width:auto;color:var(--dao-zinc-400)">
+                  Close
+                </button>` : ''}
+            </div>
+
+            <div class="discussion-section">
+              <button type="button" class="discussion-toggle" data-id="${escapeHTML(p.id)}" aria-expanded="false">
+                <span>Discussion (<span class="comment-count" id="comment-count-${escapeHTML(p.id)}">${p.commentCount || 0}</span>)</span>
+                <span class="discussion-arrow" id="discussion-arrow-${escapeHTML(p.id)}">▼</span>
+              </button>
+              <div id="discussion-${escapeHTML(p.id)}" class="discussion-panel" hidden>
+                <div id="comments-list-${escapeHTML(p.id)}" class="comments-list">
+                  <p style="text-align:center;font-size:0.75rem;color:var(--dao-zinc-500);padding:1rem 0">Loading comments…</p>
+                </div>
+                <div class="comment-form">
+                  <input id="comment-input-${escapeHTML(p.id)}"
+                         type="text"
+                         maxlength="400"
+                         placeholder="Add a comment…"
+                         autocomplete="off">
+                  <button type="button"
+                          class="dao-btn dao-btn-primary post-comment-btn"
+                          data-id="${escapeHTML(p.id)}"
+                          style="padding:0.65rem 1rem;flex:0">
+                    Post
+                  </button>
+                </div>
+              </div>
+            </div>
+          </article>`;
+      }).join('');
+
+      // Wire dynamic buttons (no inline onclick)
+      container.querySelectorAll('.cast-vote-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          openVoteModal(btn.dataset.id, btn.dataset.title);
+        });
+      });
+
+      container.querySelectorAll('.close-proposal-btn').forEach(btn => {
+        btn.addEventListener('click', () => handleClose(btn.dataset.id));
+      });
+
+      container.querySelectorAll('.discussion-toggle').forEach(btn => {
+        btn.addEventListener('click', () => toggleDiscussion(btn.dataset.id));
+      });
+
+      container.querySelectorAll('.post-comment-btn').forEach(btn => {
+        btn.addEventListener('click', () => postComment(btn.dataset.id));
+      });
+
+      container.querySelectorAll('[id^="comment-input-"]').forEach(input => {
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            const id = input.id.replace('comment-input-', '');
+            postComment(id);
+          }
+        });
+      });
+    }
+
+    // ---------- Discussion / Comments ----------
+    function toggleDiscussion(proposalId) {
+      const panel = document.getElementById(`discussion-${proposalId}`);
+      const arrow = document.getElementById(`discussion-arrow-${proposalId}`);
+      const toggle = document.querySelector(`.discussion-toggle[data-id="${proposalId}"]`);
+      if (!panel) return;
+
+      const opening = panel.hasAttribute('hidden');
+      if (opening) {
+        panel.removeAttribute('hidden');
+        if (arrow) arrow.textContent = '▲';
+        if (toggle) toggle.setAttribute('aria-expanded', 'true');
+        loadComments(proposalId);
+      } else {
+        panel.setAttribute('hidden', '');
+        if (arrow) arrow.textContent = '▼';
+        if (toggle) toggle.setAttribute('aria-expanded', 'false');
+        unsubscribeFromComments(proposalId);
+      }
+    }
+
+    function loadComments(proposalId) {
+      const list = document.getElementById(`comments-list-${proposalId}`);
+      const countEl = document.getElementById(`comment-count-${proposalId}`);
+      if (!list) return;
+
+      subscribeToProposalComments(proposalId, (comments) => {
+        if (!comments || comments.length === 0) {
+          list.innerHTML = `<p style="text-align:center;font-size:0.75rem;color:var(--dao-zinc-500);padding:1rem 0">No comments yet. Start the discussion.</p>`;
+          if (countEl) countEl.textContent = '0';
+          return;
+        }
+
+        if (countEl) countEl.textContent = String(comments.length);
+
+        list.innerHTML = comments.map(c => {
+          const time = c.createdAt?.toDate
+            ? c.createdAt.toDate().toLocaleString()
+            : 'Just now';
+          return `
+            <div class="comment-item">
+              <div class="head">
+                <span class="author">${escapeHTML(c.authorName || 'Anonymous')}</span>
+                <span class="time">${escapeHTML(time)}</span>
+              </div>
+              <p class="body">${escapeHTML(c.content)}</p>
+            </div>`;
+        }).join('');
+
+        list.scrollTop = list.scrollHeight;
+      });
+    }
+
+    async function postComment(proposalId) {
+      const input = document.getElementById(`comment-input-${proposalId}`);
+      const content = input?.value.trim();
+      if (!content) {
+        showToast('Write something first', 'error');
+        return;
+      }
+
+      const btn = document.querySelector(`.post-comment-btn[data-id="${proposalId}"]`);
+      if (btn) btn.disabled = true;
+
+      try {
+        const success = await postDAOComment(proposalId, content);
+        if (success && input) input.value = '';
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
     // ---------- Filters ----------
     document.querySelectorAll('.filter-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('.filter-btn').forEach(b => {
-          b.classList.remove('active', 'border-emerald-500/40', 'bg-emerald-500/10', 'text-emerald-400');
-          b.classList.add('border-zinc-700', 'bg-zinc-800', 'text-zinc-300');
-        });
-        btn.classList.add('active', 'border-emerald-500/40', 'bg-emerald-500/10', 'text-emerald-400');
-        btn.classList.remove('border-zinc-700', 'bg-zinc-800', 'text-zinc-300');
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
         currentFilter = btn.dataset.filter;
         loadProposals();
       });
     });
 
-    // ---------- Create Proposal ----------
+    // ---------- Create proposal ----------
+    const createModal = document.getElementById('createModal');
+
     document.getElementById('openCreateBtn').addEventListener('click', () => {
-      document.getElementById('createModal').classList.remove('hidden');
-      document.getElementById('createModal').classList.add('flex');
+      createModal.classList.add('open');
     });
 
     document.getElementById('cancelCreateBtn').addEventListener('click', () => {
-      document.getElementById('createModal').classList.add('hidden');
-      document.getElementById('createModal').classList.remove('flex');
+      createModal.classList.remove('open');
+    });
+
+    createModal.addEventListener('click', (e) => {
+      if (e.target === createModal) createModal.classList.remove('open');
     });
 
     document.getElementById('submitCreateBtn').addEventListener('click', async () => {
       const title = document.getElementById('proposalTitle').value.trim();
       const desc = document.getElementById('proposalDesc').value.trim();
       const category = document.getElementById('proposalCategory').value;
+      const submitBtn = document.getElementById('submitCreateBtn');
 
-      if (!title || !desc) return showToast('Title and description required', 'error');
+      if (!title || !desc) {
+        showToast('Title and description required', 'error');
+        return;
+      }
 
-      const id = await createDAOProposal(title, desc, category);
-      if (id) {
-        document.getElementById('createModal').classList.add('hidden');
-        document.getElementById('createModal').classList.remove('flex');
-        document.getElementById('proposalTitle').value = '';
-        document.getElementById('proposalDesc').value = '';
-        loadProposals();
+      submitBtn.disabled = true;
+      try {
+        const id = await createDAOProposal(title, desc, category);
+        if (id) {
+          createModal.classList.remove('open');
+          document.getElementById('proposalTitle').value = '';
+          document.getElementById('proposalDesc').value = '';
+          await loadProposals();
+          await refreshUserPower();
+        }
+      } finally {
+        submitBtn.disabled = false;
       }
     });
 
-    // ---------- Improved Vote Modal ----------
-    window.openVoteModal = (id, title) => {
+    // ---------- Vote ----------
+    const voteModal = document.getElementById('voteModal');
+
+    function openVoteModal(id, title) {
       currentProposalId = id;
       selectedStrength = 1;
-      document.getElementById('voteProposalTitle').textContent = title;
-      document.getElementById('voteModal').classList.remove('hidden');
-      document.getElementById('voteModal').classList.add('flex');
+      document.getElementById('voteProposalTitle').textContent = title || '';
       updateStrengthUI();
-    };
+      refreshUserPower();
+      voteModal.classList.add('open');
+    }
 
     document.getElementById('cancelVoteBtn').addEventListener('click', () => {
-      document.getElementById('voteModal').classList.add('hidden');
-      document.getElementById('voteModal').classList.remove('flex');
+      voteModal.classList.remove('open');
+    });
+
+    voteModal.addEventListener('click', (e) => {
+      if (e.target === voteModal) voteModal.classList.remove('open');
     });
 
     document.querySelectorAll('.strength-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        selectedStrength = parseInt(btn.dataset.s);
+        selectedStrength = parseInt(btn.dataset.s, 10);
         updateStrengthUI();
       });
     });
 
     function updateStrengthUI() {
-      const cost = selectedStrength * selectedStrength;
-      document.getElementById('liveCost').textContent = cost;
-
       document.querySelectorAll('.strength-btn').forEach(btn => {
-        const s = parseInt(btn.dataset.s);
-        if (s === selectedStrength) {
-          btn.classList.add('bg-emerald-600', 'text-white');
-          btn.classList.remove('bg-zinc-800');
-        } else {
-          btn.classList.remove('bg-emerald-600', 'text-white');
-          btn.classList.add('bg-zinc-800');
-        }
+        const s = parseInt(btn.dataset.s, 10);
+        btn.classList.toggle('active', s === selectedStrength);
       });
     }
 
-    document.getElementById('voteForBtn').addEventListener('click', async () => {
-      await castQuadraticVote(currentProposalId, 'for', selectedStrength);
-      document.getElementById('voteModal').classList.add('hidden');
-      document.getElementById('voteModal').classList.remove('flex');
-      loadProposals();
-    });
+    async function submitVote(direction) {
+      if (!currentProposalId || isVoting) return;
+      isVoting = true;
+      const forBtn = document.getElementById('voteForBtn');
+      const againstBtn = document.getElementById('voteAgainstBtn');
+      forBtn.disabled = true;
+      againstBtn.disabled = true;
 
-    document.getElementById('voteAgainstBtn').addEventListener('click', async () => {
-      await castQuadraticVote(currentProposalId, 'against', selectedStrength);
-      document.getElementById('voteModal').classList.add('hidden');
-      document.getElementById('voteModal').classList.remove('flex');
-      loadProposals();
-    });
+      try {
+        await castQuadraticVote(currentProposalId, direction, selectedStrength);
+        voteModal.classList.remove('open');
+        await loadProposals();
+        await refreshUserPower();
+      } finally {
+        isVoting = false;
+        forBtn.disabled = false;
+        againstBtn.disabled = false;
+      }
+    }
 
-    // ---------- Close ----------
-    window.handleClose = async (id) => {
+    document.getElementById('voteForBtn').addEventListener('click', () => submitVote('for'));
+    document.getElementById('voteAgainstBtn').addEventListener('click', () => submitVote('against'));
+
+    // ---------- Close proposal ----------
+    async function handleClose(id) {
       if (!confirm('Close this proposal permanently?')) return;
       const ok = await closeProposal(id);
-      if (ok) loadProposals();
-    };
+      if (ok) await loadProposals();
+    }
 
-    // Init
-    loadProposals();
-
-    // ========== INLINE VOTING HELPERS ==========
-const inlineStrengths = {};
-
-window.setInlineStrength = (proposalId, strength) => {
-  inlineStrengths[proposalId] = strength;
-
-  document.getElementById(`selected-strength-${proposalId}`).textContent = strength;
-  document.getElementById(`selected-cost-${proposalId}`).textContent = strength * strength;
-
-  const container = document.getElementById(`inline-strength-${proposalId}`);
-  if (container) {
-    container.querySelectorAll('.inline-strength-btn').forEach(btn => {
-      const s = parseInt(btn.dataset.s);
-      if (s === strength) {
-        btn.classList.add('bg-emerald-600', 'text-white');
-        btn.classList.remove('bg-zinc-800');
-      } else {
-        btn.classList.remove('bg-emerald-600', 'text-white');
-        btn.classList.add('bg-zinc-800');
+    // ---------- Escape key closes modals ----------
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        createModal.classList.remove('open');
+        voteModal.classList.remove('open');
       }
     });
-  }
-};
 
-window.castInlineVote = async (proposalId, direction) => {
-  const strength = inlineStrengths[proposalId] || 1;
-  await castQuadraticVote(proposalId, direction, strength);
-  loadProposals(); // Refresh the list
-};
-
-
-// Character counter
-document.getElementById('proposalDesc')?.addEventListener('input', (e) => {
-  const count = e.target.value.length;
-  document.getElementById('descCount').textContent = `${count} / 800`;
-});
-
-// Open Modal
-document.getElementById('openCreateBtn')?.addEventListener('click', () => {
-  // Always start on the form step
-  document.getElementById('proposalFormStep').classList.remove('hidden');
-  document.getElementById('proposalPreviewStep').classList.add('hidden');
-
-  document.getElementById('createModal').classList.remove('hidden');
-  document.getElementById('createModal').classList.add('flex');
-});
-
-// Cancel
-document.getElementById('cancelCreateBtn')?.addEventListener('click', () => {
-  document.getElementById('createModal').classList.add('hidden');
-  document.getElementById('createModal').classList.remove('flex');
-});
-
-// Go to Preview
-document.getElementById('previewProposalBtn')?.addEventListener('click', () => {
-  const title = document.getElementById('proposalTitle').value.trim();
-  const desc = document.getElementById('proposalDesc').value.trim();
-  const category = document.getElementById('proposalCategory').value;
-
-  if (!title || !desc) {
-    return showToast('Title and description are required', 'error');
-  }
-  if (title.length < 8) {
-    return showToast('Title is too short', 'error');
-  }
-
-  // Fill the preview
-  document.getElementById('previewTitle').textContent = title;
-  document.getElementById('previewDescription').textContent = desc;
-  document.getElementById('previewCategory').textContent = category.replace('_', ' ');
-
-  // Switch to preview
-  document.getElementById('proposalFormStep').classList.add('hidden');
-  document.getElementById('proposalPreviewStep').classList.remove('hidden');
-});
-
-// Back to Edit
-document.getElementById('backToEditBtn')?.addEventListener('click', () => {
-  document.getElementById('proposalPreviewStep').classList.add('hidden');
-  document.getElementById('proposalFormStep').classList.remove('hidden');
-});
-
-// Final Submit
-document.getElementById('submitCreateBtn')?.addEventListener('click', async () => {
-  const title = document.getElementById('proposalTitle').value.trim();
-  const desc = document.getElementById('proposalDesc').value.trim();
-  const category = document.getElementById('proposalCategory').value;
-
-  const id = await createDAOProposal(title, desc, category);
-
-  if (id) {
-    // Reset form
-    document.getElementById('proposalTitle').value = '';
-    document.getElementById('proposalDesc').value = '';
-    document.getElementById('descCount').textContent = '0 / 800';
-
-    // Close modal
-    document.getElementById('createModal').classList.add('hidden');
-    document.getElementById('createModal').classList.remove('flex');
-
-    // Refresh list
+    // ---------- Init ----------
+    refreshUserPower();
     loadProposals();
-  }
-});
   </script>
 </body>
 </html>
