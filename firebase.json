@@ -29,7 +29,8 @@
       { "source": "/live-arena", "destination": "/live-arena.html" },
       { "source": "/p/**", "function": "ogPost" },
       { "source": "/share/**", "function": "ogPost" },
-      { "source": "/profile", "destination": "/profile.html" }
+      { "source": "/profile", "destination": "/profile.html" },
+      { "source": "/governance", "destination": "/governance.html" }
     ],
     "ignore": [
       "firebase.json",
