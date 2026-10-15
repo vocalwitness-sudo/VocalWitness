@@ -690,7 +690,7 @@
       const container = document.getElementById('proposalsContainer');
       container.innerHTML = `<div class="dao-loading">Loading proposals…</div>`;
 
-      const proposals = await fetchActiveProposals(30);
+      const proposals = await fetchProposals(40);
       if (!proposals || proposals.length === 0) {
         container.innerHTML = `
           <div class="dao-empty">
