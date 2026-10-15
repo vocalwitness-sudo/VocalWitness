@@ -17,6 +17,7 @@
                 <h1 class="text-base sm:text-xl font-bold tracking-tight text-white" data-i18n="moderationTitle">Steward Moderation Center</h1>
             </div>
             <div class="flex items-center space-x-3 sm:space-x-4 text-xs sm:text-sm">
+                <a href="./governance.html" class="text-slate-400 hover:text-white transition px-2 py-1">How governed</a>
                 <a href="./dao.html" class="flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 transition font-medium px-2.5 py-1 rounded-lg hover:bg-emerald-500/10" data-i18n="daoGovernanceMenu">
                     <span>🏛️</span>
                     <span>DAO</span>
@@ -95,7 +96,7 @@
                 .replace(/'/g, '&#039;');
         }
 
-        // Community Appeal function
+        // Community Appeal function with double-click prevention
         window.openAppeal = async (postId) => {
             const reason = prompt("Why should this moderation decision be reviewed by the community?\n\n(Minimum 10 characters)");
             if (!reason || reason.trim().length < 10) {
@@ -103,9 +104,19 @@
                 return;
             }
 
-            const proposalId = await createModerationAppeal(postId, reason.trim(), 'flagged');
-            if (proposalId) {
-                showToast("Appeal submitted to DAO. Community can now vote on it.", "success");
+            const btn = document.querySelector(`.appeal-dao-btn[data-id="${postId}"]`);
+            if (btn) btn.disabled = true;
+
+            try {
+                const proposalId = await createModerationAppeal(postId, reason.trim(), 'flagged');
+                if (proposalId) {
+                    showToast("Appeal submitted to DAO. Community can vote FOR/AGAINST.", "success");
+                    if (confirm("Open DAO to view the appeal?")) {
+                        window.location.href = "./dao.html";
+                    }
+                }
+            } finally {
+                if (btn) btn.disabled = false;
             }
         };
 
@@ -231,14 +242,19 @@
                                 ✅ <span data-i18n="approvePublish">Approve & Publish</span>
                             </button>
 
-                            <button onclick="openAppeal('${item.id}')"
-                                    class="border border-slate-700 text-slate-300 hover:bg-slate-800 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition">
+                            <button type="button" data-id="${item.id}"
+                                    class="appeal-dao-btn border border-slate-700 text-slate-300 hover:bg-slate-800 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition">
                                 ⚖️ Appeal to DAO
                             </button>
                         </div>
                     `;
 
                     queueContainer.appendChild(card);
+                });
+
+                // Attach appeal button listeners using class selector
+                queueContainer.querySelectorAll('.appeal-dao-btn').forEach(btn => {
+                    btn.addEventListener('click', () => openAppeal(btn.dataset.id));
                 });
 
                 // Attach steward vote and action handlers
@@ -252,14 +268,11 @@
                         button.classList.add('opacity-50', 'cursor-not-allowed');
 
                         try {
-                            // Route through steward consensus vote in governance engine
                             let voteAction = action;
                             if (action === 'purge') voteAction = 'remove_content';
                             if (action === 'approve') voteAction = 'approve_keep';
 
                             await submitStewardVote(postId, voteAction);
-                            
-                            // Re-fetch review status or fall back to single-steward action
                             await stewardReviewAction(postId, action);
                             
                             const card = document.getElementById(`post-${postId}`);
