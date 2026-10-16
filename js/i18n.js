@@ -1,5 +1,5 @@
-// js/i18n.js - Production i18n Module (Full language support + RTL Header Fix)
-// Updated: absolute paths + AbortController + safer loading
+// js/i18n.js - Production i18n Module (Complete 15-Language Support + RTL Header Fix)
+// Updated: Absolute paths, AbortController, and full supportedLanguages array covering all 15 locales.
 
 let currentTranslations = {};
 let fallbackTranslations = {};
@@ -37,17 +37,23 @@ const DEFAULT_FALLBACK_DICTIONARY = {
   goldenRuleText: "Never put yourself in immediate physical danger to capture evidence. Secure your physical safety first. Once you are in a protected location, use cryptographic tools to notarize and share your record with the world."
 };
 
+// Complete list of all 15 supported languages for VocalWitness
 const supportedLanguages = [
   { code: 'en',  name: 'English',     flag: '🇬🇧', native: 'English',     rtl: false },
-  { code: 'pcm', name: 'Naija Pidgin', flag: '🇳🇬', native: 'Pidgin',        rtl: false },
-  { code: 'ha',  name: 'Hausa',        flag: '🇳🇬', native: 'Hausa',        rtl: false },
-  { code: 'yo',  name: 'Yorùbá',       flag: '🇳🇬', native: 'Yorùbá',       rtl: false },
-  { code: 'ig',  name: 'Igbo',         flag: '🇳🇬', native: 'Igbo',         rtl: false },
-  { code: 'sw',  name: 'Swahili',      flag: '🇹🇿', native: 'Kiswahili',    rtl: false },
-  { code: 'ar',  name: 'Arabic',       flag: '🇸🇦', native: 'العربية',      rtl: true },
-  { code: 'es',  name: 'Spanish',      flag: '🇪🇸', native: 'Español',      rtl: false },
-  { code: 'fr',  name: 'French',       flag: '🇫🇷', native: 'Français',     rtl: false },
-  { code: 'pt',  name: 'Portuguese',   flag: '🇵🇹', native: 'Português',    rtl: false }
+  { code: 'pcm', name: 'Naija Pidgin', flag: '🇳🇬', native: 'Pidgin',      rtl: false },
+  { code: 'ha',  name: 'Hausa',       flag: '🇳🇬', native: 'Hausa',       rtl: false },
+  { code: 'yo',  name: 'Yorùbá',      flag: '🇳🇬', native: 'Yorùbá',      rtl: false },
+  { code: 'ig',  name: 'Igbo',        flag: '🇳🇬', native: 'Igbo',        rtl: false },
+  { code: 'sw',  name: 'Swahili',     flag: '🇹🇿', native: 'Kiswahili',   rtl: false },
+  { code: 'ar',  name: 'Arabic',      flag: '🇸🇦', native: 'العربية',     rtl: true  },
+  { code: 'es',  name: 'Spanish',     flag: '🇪🇸', native: 'Español',     rtl: false },
+  { code: 'fr',  name: 'French',      flag: '🇫🇷', native: 'Français',    rtl: false },
+  { code: 'pt',  name: 'Portuguese',  flag: '🇵🇹', native: 'Português',   rtl: false },
+  { code: 'de',  name: 'German',      flag: '🇩🇪', native: 'Deutsch',     rtl: false },
+  { code: 'zh-CN', name: 'Chinese',   flag: '🇨🇳', native: '中文',        rtl: false },
+  { code: 'ma',  name: 'Amharic',     flag: '🇪🇹', native: 'አማርኛ',       rtl: false },
+  { code: 'hi',  name: 'Hindi',       flag: '🇮🇳', native: 'हिन्दी',      rtl: false },
+  { code: 'id',  name: 'Indonesian',  flag: '🇮🇩', native: 'Bahasa',      rtl: false }
 ];
 
 function getNestedTranslation(obj, path) {
