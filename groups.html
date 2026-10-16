@@ -97,20 +97,24 @@
     </div>
 
     <!-- 3. Filters (Moved directly below tabs) -->
-    <div class="mb-6 flex flex-wrap gap-2">
-      <button class="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-4 py-1.5 text-xs font-medium text-emerald-400">
-        All
-      </button>
-      <button class="rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs text-zinc-300 hover:border-emerald-500/50">
-        Public
-      </button>
-      <button class="rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs text-zinc-300 hover:border-emerald-500/50">
-        Citizen Circle
-      </button>
-      <button class="rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs text-zinc-300 hover:border-cyan-500/50">
-        Witness Circle
-      </button>
-    </div>
+   <div class="mb-6 flex flex-wrap gap-2" id="visibilityFilters">
+  <button type="button" data-visibility="all"
+          class="visibility-filter active rounded-full border border-emerald-500/40 bg-emerald-500/10 px-4 py-1.5 text-xs font-medium text-emerald-400">
+    All
+  </button>
+  <button type="button" data-visibility="public"
+          class="visibility-filter rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs text-zinc-300 hover:border-emerald-500/50">
+    Public
+  </button>
+  <button type="button" data-visibility="citizen_circle"
+          class="visibility-filter rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs text-zinc-300 hover:border-emerald-500/50">
+    Citizen Circle
+  </button>
+  <button type="button" data-visibility="witness_circle"
+          class="visibility-filter rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs text-zinc-300 hover:border-cyan-500/50">
+    Witness Circle
+  </button>
+</div>
 
     <!-- 4. Search Bar -->
     <div class="relative mb-8">
