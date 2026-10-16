@@ -2,6 +2,7 @@
 // Features: Real QR, Monogram Avatar Fallbacks, Soft limits, 1 free Premium/month for Gold+, $2.99 Stripe checkout
 // Validity: 1-year display window + lifetime ledger record
 import { showToast } from './utils.js';
+import { t } from './i18n.js';
 import { 
   doc, setDoc, collection, query, where, getDocs, 
   serverTimestamp, Timestamp 
@@ -16,11 +17,11 @@ const DISPLAY_VALIDITY_DAYS = 365; // change to 730 for 2-year display window
    TIER + ACCESS LOGIC
    ============================================================ */
 export function getTier(trustScore = 0) {
-  if (trustScore >= 100) return { name: 'Premium', color: '#FFD700', level: 4 };
-  if (trustScore >= 80)  return { name: 'Gold',    color: '#FFD700', level: 3 };
-  if (trustScore >= 60)  return { name: 'Silver',  color: '#C0C0C0', level: 2 };
-  if (trustScore >= 40)  return { name: 'Bronze',  color: '#CD7F32', level: 1 };
-  return { name: 'Explorer', color: '#808080', level: 0 };
+  if (trustScore >= 100) return { name: t('tier.premium', 'Premium'), color: '#FFD700', level: 4 };
+  if (trustScore >= 80)  return { name: t('tier.gold', 'Gold'), color: '#FFD700', level: 3 };
+  if (trustScore >= 60)  return { name: t('tier.silver', 'Silver'), color: '#C0C0C0', level: 2 };
+  if (trustScore >= 40)  return { name: t('tier.bronze', 'Bronze'), color: '#CD7F32', level: 1 };
+  return { name: t('tier.explorer', 'Explorer'), color: '#808080', level: 0 };
 }
 
 function resolveCertificateType(userData) {
@@ -77,17 +78,17 @@ async function canGenerateFreePremium(db, userId, canPremiumFree) {
    ============================================================ */
 export async function generateAndDownloadPDF(userData, db, preferredType = null) {
   if (!userData) {
-    showToast("Profile data not loaded", "error");
+    showToast(t('pdf.toastProfileNotLoaded', "Profile data not loaded"), "error");
     return;
   }
   if (!window.jspdf || !window.jspdf.jsPDF) {
-    showToast("PDF library not loaded. Please refresh the page.", "error");
+    showToast(t('pdf.toastLibNotLoaded', "PDF library not loaded. Please refresh the page."), "error");
     return;
   }
 
   const decision = resolveCertificateType(userData);
   if (!decision.allowed) {
-    showToast("🔒 Independent Citizen Press Credential requires ZK Verification first", "warning");
+    showToast(t('pdf.toastZkRequired', "🔒 Independent Citizen Press Credential requires ZK Verification first"), "warning");
     return;
   }
 
@@ -97,7 +98,7 @@ export async function generateAndDownloadPDF(userData, db, preferredType = null)
   if (!wantsPremium) {
     const allowed = await canGenerateStandard(db, userId);
     if (!allowed) {
-      showToast("Monthly limit of 3 Standard Credentials reached. Try again next month or upgrade to Official.", "warning");
+      showToast(t('pdf.toastStandardLimit', "Monthly limit of 3 Standard Credentials reached. Try again next month or upgrade to Official."), "warning");
       return;
     }
     return await proceedGeneration(userData, db, decision, "standard");
@@ -116,14 +117,14 @@ export async function generateAndDownloadPDF(userData, db, preferredType = null)
    ============================================================ */
 async function proceedGeneration(userData, db, decision, type) {
   const message = type === 'premium'
-    ? "Official Credential Notice:\n\nThis is an Official Independent Citizen Press Credential. It is cryptographically linked to the public ledger (lifetime record) and reflects verified on-the-ground participation. Any alteration will invalidate it.\n\nDisplay validity is a recommended presentation window; the ledger record does not expire."
-    : "Standard Credential Notice:\n\nThis Independent Citizen Press Credential is cryptographically linked to your VocalWitness record (lifetime ledger). Any alteration will invalidate its authenticity.";
+    ? t('pdf.confirmPremiumMsg', "Official Credential Notice:\n\nThis is an Official Independent Citizen Press Credential. It is cryptographically linked to the public ledger (lifetime record) and reflects verified on-the-ground participation. Any alteration will invalidate it.\n\nDisplay validity is a recommended presentation window; the ledger record does not expire.")
+    : t('pdf.confirmStandardMsg', "Standard Credential Notice:\n\nThis Independent Citizen Press Credential is cryptographically linked to your VocalWitness record (lifetime ledger). Any alteration will invalidate its authenticity.");
 
   if (!confirm(message)) return;
 
   showToast(type === 'premium' 
-    ? "Generating Official Independent Citizen Press Credential..." 
-    : "Generating Standard Independent Citizen Press Credential...", "info");
+    ? t('pdf.toastGeneratingOfficial', "Generating Official Independent Citizen Press Credential...") 
+    : t('pdf.toastGeneratingStandard', "Generating Standard Independent Citizen Press Credential..."), "info");
 
   try {
     const docId = crypto.randomUUID();
@@ -156,13 +157,13 @@ async function proceedGeneration(userData, db, decision, type) {
 
     showToast(
       type === 'premium'
-        ? "✅ Official Independent Citizen Press Credential downloaded!"
-        : "✅ Standard Independent Citizen Press Credential downloaded!",
+        ? t('pdf.toastSuccessOfficial', "✅ Official Independent Citizen Press Credential downloaded!")
+        : t('pdf.toastSuccessStandard', "✅ Standard Independent Citizen Press Credential downloaded!"),
       "success"
     );
   } catch (error) {
     console.error("PDF generation failed:", error);
-    showToast("Failed to generate credential", "error");
+    showToast(t('pdf.toastFailed', "Failed to generate credential"), "error");
   }
 }
 
@@ -204,7 +205,7 @@ async function loadImageAsDataUrl(url) {
 }
 
 function drawMonogramFallback(pdf, name, x, y, size = 22, isGold = false) {
-  const initials = (name || "Anonymous")
+  const initials = (name || t('common.anonymous', "Anonymous"))
     .split(' ')
     .map(n => n[0])
     .join('')
@@ -233,15 +234,15 @@ async function generateStandardPassport(userData, tier, docId, verificationUrl) 
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(18);
   pdf.setTextColor(52, 211, 153);
-  pdf.text("VocalWitness", 20, 16);
+  pdf.text(t('appTitle', "VocalWitness"), 20, 16);
 
   pdf.setFontSize(12);
   pdf.setTextColor(226, 232, 240);
-  pdf.text("Independent Citizen Press Credential", 20, 25);
+  pdf.text(t('pdf.titleCredential', "Independent Citizen Press Credential"), 20, 25);
 
   pdf.setFontSize(9);
   pdf.setTextColor(148, 163, 184);
-  pdf.text("Standard  •  Proof of Verified Participation", 20, 33);
+  pdf.text(t('pdf.standardSubtitle', "Standard  •  Proof of Verified Participation"), 20, 33);
 
   pdf.setFont("courier", "normal");
   pdf.setFontSize(7.5);
@@ -264,7 +265,7 @@ async function generateStandardPassport(userData, tier, docId, verificationUrl) 
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(13);
   pdf.setTextColor(30, 41, 59);
-  pdf.text(userData.displayName || "Anonymous Contributor", textX, y + 8);
+  pdf.text(userData.displayName || t('pdf.anonymousContributor', "Anonymous Contributor"), textX, y + 8);
 
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(10);
@@ -273,12 +274,12 @@ async function generateStandardPassport(userData, tier, docId, verificationUrl) 
 
   y = 88;
   const lines = [
-    `Reputation          : ${userData.reputation || userData.trustScore || 0} REP`,
-    `ZK Verification     : Confirmed`,
-    `Phone Status        : ${userData.isPhoneVerified || userData.hasVerifiedPhone ? "Verified" : "Not verified"}`,
-    `Privacy Shield      : ${userData.hidePublicInfo !== false ? "Active" : "Public"}`,
-    `Issued              : ${new Date().toLocaleString()}`,
-    `Ledger record       : Permanent (lifetime)`
+    `${t('pdf.reputationLabel', "Reputation")}          : ${userData.reputation || userData.trustScore || 0} REP`,
+    `${t('pdf.zkLabel', "ZK Verification")}     : ${t('pdf.statusConfirmed', "Confirmed")}`,
+    `${t('pdf.phoneLabel', "Phone Status")}        : ${userData.isPhoneVerified || userData.hasVerifiedPhone ? t('common.verified', "Verified") : t('common.not_verified', "Not verified")}`,
+    `${t('pdf.privacyLabel', "Privacy Shield")}      : ${userData.hidePublicInfo !== false ? t('common.active', "Active") : t('common.public', "Public")}`,
+    `${t('pdf.issuedLabel', "Issued")}              : ${new Date().toLocaleString()}`,
+    `${t('pdf.ledgerRecordLabel', "Ledger record")}       : ${t('pdf.permanentLifetime', "Permanent (lifetime)")}`
   ];
 
   pdf.setFont("helvetica", "normal");
@@ -297,16 +298,16 @@ async function generateStandardPassport(userData, tier, docId, verificationUrl) 
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(11);
   pdf.setTextColor(15, 23, 42);
-  pdf.text("About this Credential", 20, y);
+  pdf.text(t('pdf.aboutHeader', "About this Credential"), 20, y);
   y += 8;
 
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(9);
   pdf.setTextColor(100, 116, 139);
-  pdf.text("This Independent Citizen Press Credential certifies that the holder is an active,", 20, y);
-  pdf.text("zero-knowledge verified contributor on the VocalWitness network. It serves as", 20, y + 5.5);
-  pdf.text("proof of participation in ground-level citizen journalism and public-interest reporting.", 20, y + 11);
-  pdf.text("The public ledger record is permanent. This is the free Standard version.", 20, y + 16.5);
+  pdf.text(t('pdf.standardBodyLine1', "This Independent Citizen Press Credential certifies that the holder is an active,"), 20, y);
+  pdf.text(t('pdf.standardBodyLine2', "zero-knowledge verified contributor on the VocalWitness network. It serves as"), 20, y + 5.5);
+  pdf.text(t('pdf.standardBodyLine3', "proof of participation in ground-level citizen journalism and public-interest reporting."), 20, y + 11);
+  pdf.text(t('pdf.standardBodyLine4', "The public ledger record is permanent. This is the free Standard version."), 20, y + 16.5);
 
   // Light watermark
   pdf.setTextColor(235, 235, 235);
@@ -326,7 +327,7 @@ async function generateStandardPassport(userData, tier, docId, verificationUrl) 
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(8);
   pdf.setTextColor(30, 41, 59);
-  pdf.text("Public Verification", 28, 245);
+  pdf.text(t('pdf.publicVerificationBox', "Public Verification"), 28, 245);
   pdf.setFont("courier", "normal");
   pdf.setFontSize(6.5);
   pdf.setTextColor(13, 148, 136);
@@ -353,25 +354,25 @@ async function generatePremiumCertificate(userData, tier, docId, verificationUrl
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(20);
   pdf.setTextColor(250, 204, 21);
-  pdf.text("VocalWitness", 20, 20);
+  pdf.text(t('appTitle', "VocalWitness"), 20, 20);
 
   pdf.setFontSize(13);
   pdf.setTextColor(253, 224, 71);
-  pdf.text("INDEPENDENT CITIZEN PRESS CREDENTIAL", 20, 31);
+  pdf.text(t('pdf.premiumTitle', "INDEPENDENT CITIZEN PRESS CREDENTIAL"), 20, 31);
 
   pdf.setFontSize(9);
   pdf.setTextColor(212, 212, 216);
-  pdf.text("Official  •  Verified On-the-Ground Participation", 20, 40);
+  pdf.text(t('pdf.premiumSubtitle', "Official  •  Verified On-the-Ground Participation"), 20, 40);
 
   pdf.setFont("courier", "normal");
   pdf.setFontSize(7.5);
   pdf.setTextColor(161, 161, 170);
-  pdf.text(`Credential ID: ${docId}`, 20, 49);
+  pdf.text(`${t('pdf.credentialIdPrefix', "Credential ID")}: ${docId}`, 20, 49);
 
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(8.5);
   pdf.setTextColor(52, 211, 153);
-  pdf.text("● ZK-VERIFIED  •  OFFICIAL SEAL", 135, 28);
+  pdf.text(t('pdf.zkSealBanner', "● ZK-VERIFIED  •  OFFICIAL SEAL"), 135, 28);
 
   // Avatar with gold ring
   let y = 70;
@@ -393,7 +394,7 @@ async function generatePremiumCertificate(userData, tier, docId, verificationUrl
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(15);
   pdf.setTextColor(24, 24, 27);
-  pdf.text(userData.displayName || "Anonymous Contributor", textX, y + 10);
+  pdf.text(userData.displayName || t('pdf.anonymousContributor', "Anonymous Contributor"), textX, y + 10);
 
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(10.5);
@@ -412,17 +413,17 @@ async function generatePremiumCertificate(userData, tier, docId, verificationUrl
     .toLocaleDateString();
 
   const premiumLines = [
-    `Credential Type         : Official (Paid)`,
-    `Reputation Score        : ${userData.reputation || userData.trustScore || 0} REP`,
-    `Verification            : Zero-Knowledge Proof Confirmed`,
-    `Phone Status            : ${userData.isPhoneVerified || userData.hasVerifiedPhone ? "Verified" : "Not verified"}`,
-    `Privacy Shield          : ${userData.hidePublicInfo !== false ? "Active" : "Public"}`,
-    `Active Since            : ${membershipSince}`,
-    `Sealed Reports          : ${sealedCount}`,
-    `Highest Level           : ${highestLevel}`,
-    `Issued On               : ${new Date().toLocaleString()}`,
-    `Display valid until     : ${displayUntil}`,
-    `Ledger record           : Permanent (lifetime)`
+    `${t('pdf.credTypeLabel', "Credential Type")}         : ${t('pdf.officialPaid', "Official (Paid)")}`,
+    `${t('pdf.repScoreLabel', "Reputation Score")}        : ${userData.reputation || userData.trustScore || 0} REP`,
+    `${t('pdf.verificationLabel', "Verification")}            : ${t('pdf.zkConfirmedText', "Zero-Knowledge Proof Confirmed")}`,
+    `${t('pdf.phoneStatusLabel', "Phone Status")}            : ${userData.isPhoneVerified || userData.hasVerifiedPhone ? t('common.verified', "Verified") : t('common.not_verified', "Not verified")}`,
+    `${t('pdf.privacyShieldLabel', "Privacy Shield")}          : ${userData.hidePublicInfo !== false ? t('common.active', "Active") : t('common.public', "Public")}`,
+    `${t('pdf.activeSinceLabel', "Active Since")}            : ${membershipSince}`,
+    `${t('pdf.sealedReportsLabel', "Sealed Reports")}          : ${sealedCount}`,
+    `${t('pdf.highestLevelLabel', "Highest Level")}           : ${highestLevel}`,
+    `${t('pdf.issuedOnLabel', "Issued On")}               : ${new Date().toLocaleString()}`,
+    `${t('pdf.displayValidLabel', "Display valid until")}     : ${displayUntil}`,
+    `${t('pdf.ledgerRecordLabel', "Ledger record")}          : ${t('pdf.permanentLifetime', "Permanent (lifetime)")}`
   ];
 
   pdf.setFont("helvetica", "normal");
@@ -442,17 +443,17 @@ async function generatePremiumCertificate(userData, tier, docId, verificationUrl
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(11);
   pdf.setTextColor(24, 24, 27);
-  pdf.text("Official Statement", 20, y);
+  pdf.text(t('pdf.officialStatementHeader', "Official Statement"), 20, y);
   y += 8;
 
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(9.5);
   pdf.setTextColor(63, 63, 70);
-  pdf.text("This Official Independent Citizen Press Credential certifies that the holder is a", 20, y);
-  pdf.text("zero-knowledge verified and active contributor on the VocalWitness network. It", 20, y + 5.5);
-  pdf.text("reflects sustained participation in citizen journalism and public-interest reporting", 20, y + 11);
-  pdf.text("on the ground. This document is permanently registered on the public ledger.", 20, y + 16.5);
-  pdf.text("Money never buys a higher truth rank or voting power on VocalWitness.", 20, y + 22);
+  pdf.text(t('pdf.officialStatement1', "This Official Independent Citizen Press Credential certifies that the holder is a"), 20, y);
+  pdf.text(t('pdf.officialStatement2', "zero-knowledge verified and active contributor on the VocalWitness network. It"), 20, y + 5.5);
+  pdf.text(t('pdf.officialStatement3', "reflects sustained participation in citizen journalism and public-interest reporting"), 20, y + 11);
+  pdf.text(t('pdf.officialStatement4', "on the ground. This document is permanently registered on the public ledger."), 20, y + 16.5);
+  pdf.text(t('pdf.officialStatement5', "Money never buys a higher truth rank or voting power on VocalWitness."), 20, y + 22);
 
   // QR with gold border
   const qrData = await generateQRCodeDataUrl(verificationUrl, 140);
@@ -472,7 +473,7 @@ async function generatePremiumCertificate(userData, tier, docId, verificationUrl
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(8.5);
   pdf.setTextColor(250, 204, 21);
-  pdf.text("PUBLIC VERIFICATION PORTAL", 28, 238);
+  pdf.text(t('pdf.publicVerificationPortalHeader', "PUBLIC VERIFICATION PORTAL"), 28, 238);
 
   pdf.setFont("courier", "normal");
   pdf.setFontSize(6.8);
@@ -484,8 +485,8 @@ async function generatePremiumCertificate(userData, tier, docId, verificationUrl
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(7);
   pdf.setTextColor(161, 161, 170);
-  pdf.text("Scan the QR code or open the link above to confirm", 28, 258);
-  pdf.text("this credential is authentic on VocalWitness.", 28, 263);
+  pdf.text(t('pdf.verificationInstruction1', "Scan the QR code or open the link above to confirm"), 28, 258);
+  pdf.text(t('pdf.verificationInstruction2', "this credential is authentic on VocalWitness."), 28, 263);
 
   pdf.save(`Independent_Citizen_Press_Credential_Official_${docId.slice(0, 8)}.pdf`);
 }
@@ -504,55 +505,50 @@ export function showPremiumUpgradeModal(userData, db) {
     <div class="relative w-full max-w-md rounded-3xl border border-amber-500/30 bg-zinc-900 p-6 shadow-2xl text-white">
       <button id="closePremiumModal" type="button"
               class="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl leading-none cursor-pointer"
-              aria-label="Close">&times;</button>
+              aria-label="${t('common.close', 'Close')}">&times;</button>
       
       <div class="text-center mb-5">
         <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 mb-3">
           <span class="text-2xl">🎖️</span>
         </div>
-        <h3 class="text-xl font-bold text-amber-400">Official Independent Citizen Press Credential</h3>
-        <p class="text-sm text-zinc-400 mt-1">Formal credential for external presentation</p>
+        <h3 class="text-xl font-bold text-amber-400" data-i18n="pdf.modalTitle">${t('pdf.modalTitle', "Official Independent Citizen Press Credential")}</h3>
+        <p class="text-sm text-zinc-400 mt-1" data-i18n="pdf.modalSub">${t('pdf.modalSub', "Formal credential for external presentation")}</p>
       </div>
 
       <div class="space-y-3 mb-6 text-sm">
         <div class="flex items-start gap-3">
           <span class="text-emerald-400 mt-0.5">✓</span>
-          <span>Formal format with ZK seal — for press, partners, institutions</span>
+          <span data-i18n="pdf.modalFeature1">${t('pdf.modalFeature1', "Formal format with ZK seal — for press, partners, institutions")}</span>
         </div>
         <div class="flex items-start gap-3">
           <span class="text-emerald-400 mt-0.5">✓</span>
-          <span>Profile photo / monogram with gold ring</span>
+          <span data-i18n="pdf.modalFeature2">${t('pdf.modalFeature2', "Profile photo / monogram with gold ring")}</span>
         </div>
         <div class="flex items-start gap-3">
           <span class="text-emerald-400 mt-0.5">✓</span>
-          <span>Full activity record • 1-year display validity + lifetime ledger record</span>
+          <span data-i18n="pdf.modalFeature3">${t('pdf.modalFeature3', "Full activity record • 1-year display validity + lifetime ledger record")}</span>
         </div>
         <div class="flex items-start gap-3">
           <span class="text-emerald-400 mt-0.5">✓</span>
-          <span>Stronger weight when others must take the document seriously</span>
+          <span data-i18n="pdf.modalFeature4">${t('pdf.modalFeature4', "Stronger weight when others must take the document seriously")}</span>
         </div>
       </div>
 
       <div class="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 mb-5 text-center">
         <div class="text-2xl font-bold text-white">$2.99</div>
-        <div class="text-xs text-zinc-400 mt-1">One-time download • Does not change your membership tier</div>
+        <div class="text-xs text-zinc-400 mt-1" data-i18n="pdf.modalPriceNote">${t('pdf.modalPriceNote', "One-time download • Does not change your membership tier")}</div>
       </div>
 
       <div class="flex flex-col gap-3">
         <button id="upgradeToPremiumBtn" type="button"
-                class="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold transition cursor-pointer">
-          Pay $2.99 & Download Official Credential
-        </button>
+                class="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold transition cursor-pointer"
+                data-i18n="pdf.btnPay">${t('pdf.btnPay', "Pay $2.99 & Download Official Credential")}</button>
         <button id="downloadStandardInstead" type="button"
-                class="w-full py-2.5 rounded-xl border border-zinc-700 text-zinc-300 hover:bg-zinc-800 text-sm transition cursor-pointer">
-          Download Standard Credential (Free)
-        </button>
+                class="w-full py-2.5 rounded-xl border border-zinc-700 text-zinc-300 hover:bg-zinc-800 text-sm transition cursor-pointer"
+                data-i18n="pdf.btnDownloadStandard">${t('pdf.btnDownloadStandard', "Download Standard Credential (Free)")}</button>
       </div>
 
-      <p class="text-[11px] text-zinc-500 text-center mt-4">
-        Gold & higher members receive 1 free Official Credential every month.
-        The public ledger record is permanent; the display date is a recommended presentation window.
-      </p>
+      <p class="text-[11px] text-zinc-500 text-center mt-4" data-i18n="pdf.modalFooter">${t('pdf.modalFooter', "Gold & higher members receive 1 free Official Credential every month. The public ledger record is permanent; the display date is a recommended presentation window.")}</p>
     </div>
   `;
 
@@ -565,7 +561,7 @@ export function showPremiumUpgradeModal(userData, db) {
 
   document.getElementById('upgradeToPremiumBtn')?.addEventListener('click', async () => {
     modal.remove();
-    showToast("Redirecting to secure Stripe checkout...", "info");
+    showToast(t('pdf.toastRedirectStripe', "Redirecting to secure Stripe checkout..."), "info");
 
     try {
       if (window.createStripeCheckoutSession) {
@@ -578,11 +574,11 @@ export function showPremiumUpgradeModal(userData, db) {
       } else if (typeof window.openSupportModal === 'function') {
         window.openSupportModal();
       } else {
-        showToast("Payment is not available yet. Try Standard for free, or contact support.", "warning");
+        showToast(t('pdf.toastPaymentNotAvail', "Payment is not available yet. Try Standard for free, or contact support."), "warning");
       }
     } catch (err) {
       console.error("Payment redirection failed:", err);
-      showToast("Unable to initiate payment gateway", "error");
+      showToast(t('pdf.toastPaymentError', "Unable to initiate payment gateway"), "error");
     }
   });
 
