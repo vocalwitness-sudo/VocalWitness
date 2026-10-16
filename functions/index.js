@@ -2283,3 +2283,4 @@ function escape(s) {
     .replace(/"/g, '&quot;');
 }
 
+export { dailyAnchor, triggerAnchorNow } from "./anchor.js";
