@@ -1,5 +1,8 @@
-// js/i18n.js - Production i18n Module (Complete 15-Language Support + RTL Header Fix)
-// Updated: Absolute paths, AbortController, and full supportedLanguages array covering all 15 locales.
+/**
+ * VocalWitness Internationalization (i18n) Engine
+ * Modern, high-performance ESM translation module with RTL support,
+ * parameter interpolation, dynamic MutationObserver, and complete accessibility binding.
+ */
 
 let currentTranslations = {};
 let fallbackTranslations = {};
@@ -37,25 +40,27 @@ const DEFAULT_FALLBACK_DICTIONARY = {
   goldenRuleText: "Never put yourself in immediate physical danger to capture evidence. Secure your physical safety first. Once you are in a protected location, use cryptographic tools to notarize and share your record with the world."
 };
 
-// Complete list of all 15 supported languages for VocalWitness
-const supportedLanguages = [
-  { code: 'en',  name: 'English',     flag: '🇬🇧', native: 'English',     rtl: false },
-  { code: 'pcm', name: 'Naija Pidgin', flag: '🇳🇬', native: 'Pidgin',      rtl: false },
-  { code: 'ha',  name: 'Hausa',       flag: '🇳🇬', native: 'Hausa',       rtl: false },
-  { code: 'yo',  name: 'Yorùbá',      flag: '🇳🇬', native: 'Yorùbá',      rtl: false },
-  { code: 'ig',  name: 'Igbo',        flag: '🇳🇬', native: 'Igbo',        rtl: false },
-  { code: 'sw',  name: 'Swahili',     flag: '🇹🇿', native: 'Kiswahili',   rtl: false },
-  { code: 'ar',  name: 'Arabic',      flag: '🇸🇦', native: 'العربية',     rtl: true  },
-  { code: 'es',  name: 'Spanish',     flag: '🇪🇸', native: 'Español',     rtl: false },
-  { code: 'fr',  name: 'French',      flag: '🇫🇷', native: 'Français',    rtl: false },
-  { code: 'pt',  name: 'Portuguese',  flag: '🇵🇹', native: 'Português',   rtl: false },
-  { code: 'de',  name: 'German',      flag: '🇩🇪', native: 'Deutsch',     rtl: false },
-  { code: 'zh-CN', name: 'Chinese',   flag: '🇨🇳', native: '中文',        rtl: false },
-  { code: 'ma',  name: 'Amharic',     flag: '🇪🇹', native: 'አማርኛ',       rtl: false },
-  { code: 'hi',  name: 'Hindi',       flag: '🇮🇳', native: 'हिन्दी',      rtl: false },
-  { code: 'id',  name: 'Indonesian',  flag: '🇮🇩', native: 'Bahasa',      rtl: false }
+export const supportedLanguages = [
+  { code: 'en',    name: 'English',      flag: '🇬🇧', native: 'English',     rtl: false },
+  { code: 'pcm',   name: 'Naija Pidgin', flag: '🇳🇬', native: 'Pidgin',      rtl: false },
+  { code: 'ha',    name: 'Hausa',        flag: '🇳🇬', native: 'Hausa',       rtl: false },
+  { code: 'yo',    name: 'Yorùbá',       flag: '🇳🇬', native: 'Yorùbá',      rtl: false },
+  { code: 'ig',    name: 'Igbo',         flag: '🇳🇬', native: 'Igbo',        rtl: false },
+  { code: 'sw',    name: 'Swahili',      flag: '🇹🇿', native: 'Kiswahili',   rtl: false },
+  { code: 'ar',    name: 'Arabic',       flag: '🇸🇦', native: 'العربية',     rtl: true  },
+  { code: 'es',    name: 'Spanish',      flag: '🇪🇸', native: 'Español',     rtl: false },
+  { code: 'fr',    name: 'French',       flag: '🇫🇷', native: 'Français',    rtl: false },
+  { code: 'pt',    name: 'Portuguese',   flag: '🇵🇹', native: 'Português',   rtl: false },
+  { code: 'de',    name: 'German',       flag: '🇩🇪', native: 'Deutsch',     rtl: false },
+  { code: 'zh-CN', name: 'Chinese',      flag: '🇨🇳', native: '中文',        rtl: false },
+  { code: 'ma',    name: 'Amharic',      flag: '🇪🇹', native: 'አማርኛ',        rtl: false },
+  { code: 'hi',    name: 'Hindi',        flag: '🇮🇳', native: 'हिन्दी',      rtl: false },
+  { code: 'id',    name: 'Indonesian',   flag: '🇮🇩', native: 'Bahasa',      rtl: false }
 ];
 
+/**
+ * Traverses nested JSON objects using dot notation (e.g., 'witness.upload.title')
+ */
 function getNestedTranslation(obj, path) {
   if (!obj || !path) return null;
   return path.split('.').reduce((acc, part) => {
@@ -63,52 +68,90 @@ function getNestedTranslation(obj, path) {
   }, obj);
 }
 
-export function t(key, fallback = "") {
-  // 1. Current language
-  const val = getNestedTranslation(currentTranslations, key);
-  if (val !== null && val !== "") return val;
-
-  // 2. English fallback (loaded file)
-  const fallbackVal = getNestedTranslation(fallbackTranslations, key);
-  if (fallbackVal !== null && fallbackVal !== "") return fallbackVal;
-
-  // 3. Hard-coded emergency dictionary
-  if (DEFAULT_FALLBACK_DICTIONARY[key]) return DEFAULT_FALLBACK_DICTIONARY[key];
-
-  // 4. Caller-provided fallback or the key itself
-  return fallback || key;
+/**
+ * Interpolates template variables into string (e.g., "Hello {name}" + {name: 'Alex'} -> "Hello Alex")
+ */
+function interpolate(template, params) {
+  if (!template || typeof template !== 'string' || !params) return template;
+  return template.replace(/\{(\w+)\}/g, (_, key) => {
+    return params[key] !== undefined ? params[key] : `{${key}}`;
+  });
 }
 
+/**
+ * Main Translation Function
+ * @param {string} key - Dictionary key (supports nested dot notation)
+ * @param {Object|string} paramsOrFallback - Variables for interpolation OR fallback string
+ * @param {string} defaultFallback - Fallback text if params object is supplied
+ */
+export function t(key, paramsOrFallback = {}, defaultFallback = "") {
+  let params = {};
+  let fallback = defaultFallback;
+
+  if (typeof paramsOrFallback === 'string') {
+    fallback = paramsOrFallback;
+  } else if (typeof paramsOrFallback === 'object') {
+    params = paramsOrFallback;
+  }
+
+  // 1. Current Language Lookup
+  let val = getNestedTranslation(currentTranslations, key);
+
+  // 2. Fallback to English (Loaded File)
+  if (val === null || val === "") {
+    val = getNestedTranslation(fallbackTranslations, key);
+  }
+
+  // 3. Fallback to Hardcoded Emergency Dictionary
+  if ((val === null || val === "") && DEFAULT_FALLBACK_DICTIONARY[key]) {
+    val = DEFAULT_FALLBACK_DICTIONARY[key];
+  }
+
+  // 4. Return resolved value or fallback/key
+  const finalString = (val !== null && val !== "") ? val : (fallback || key);
+  return interpolate(finalString, params);
+}
+
+/**
+ * Updates html direction and lang attributes
+ */
 function applyTextDirection(langCode) {
   const lang = supportedLanguages.find(l => l.code === langCode);
   const isRTL = lang?.rtl || false;
 
-  // Set page direction
   document.documentElement.setAttribute('dir', isRTL ? 'rtl' : 'ltr');
   document.documentElement.setAttribute('lang', langCode);
 
-  // CRITICAL: Keep header always LTR to prevent layout breakage
+  // Keep navigation header strictly LTR to avoid broken layouts
   const header = document.getElementById('main-header');
   if (header) {
     header.setAttribute('dir', 'ltr');
   }
 
-  // Optional: also force any navigation that must stay LTR
   document.querySelectorAll('[data-force-ltr]').forEach(el => {
     el.setAttribute('dir', 'ltr');
   });
 }
 
-export function applyTranslations() {
-  // Text content
-  document.querySelectorAll('[data-i18n]').forEach(el => {
+/**
+ * Scans the DOM and applies translations to marked elements
+ */
+export function applyTranslations(rootElement = document) {
+  // 1. Inner Text & HTML Content
+  rootElement.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
     if (!key) return;
 
-    const text = t(key);
+    let params = {};
+    const paramsAttr = el.getAttribute('data-i18n-params');
+    if (paramsAttr) {
+      try { params = JSON.parse(paramsAttr); } catch (e) { /* ignore JSON parse errors */ }
+    }
+
+    const text = t(key, params);
     if (!text) return;
 
-    // Replace first non-empty text node
+    // Preserve child icons/elements by only targetting text nodes
     let textNodeFound = false;
     for (let node of el.childNodes) {
       if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '') {
@@ -118,21 +161,39 @@ export function applyTranslations() {
       }
     }
 
-    // Fallback: element has no children → set whole text
     if (!textNodeFound && el.children.length === 0) {
       el.textContent = text;
     }
   });
 
-  // Placeholders
-  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+  // 2. Placeholders
+  rootElement.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
     const key = el.getAttribute('data-i18n-placeholder');
-    if (!key) return;
-    const text = t(key);
-    if (text) el.setAttribute('placeholder', text);
+    if (key) el.setAttribute('placeholder', t(key));
+  });
+
+  // 3. ARIA Labels (Accessibility)
+  rootElement.querySelectorAll('[data-i18n-aria]').forEach(el => {
+    const key = el.getAttribute('data-i18n-aria');
+    if (key) el.setAttribute('aria-label', t(key));
+  });
+
+  // 4. Tooltips (Title attribute)
+  rootElement.querySelectorAll('[data-i18n-title]').forEach(el => {
+    const key = el.getAttribute('data-i18n-title');
+    if (key) el.setAttribute('title', t(key));
+  });
+
+  // 5. Image Alt attributes
+  rootElement.querySelectorAll('[data-i18n-alt]').forEach(el => {
+    const key = el.getAttribute('data-i18n-alt');
+    if (key) el.setAttribute('alt', t(key));
   });
 }
 
+/**
+ * Syncs language selection dropdowns across desktop and mobile UI
+ */
 function syncSelectors(langCode) {
   const selectors = document.querySelectorAll(
     '#languageSelect, #languageSelectMobile, #languageSelector, #languageSelector-desktop, #languageSelector-mobile, [data-i18n-selector], .lang-select'
@@ -144,18 +205,20 @@ function syncSelectors(langCode) {
   });
 }
 
+/**
+ * Fetches and applies translation pack for chosen language
+ */
 export async function loadTranslations(langCode = 'en') {
   const isSupported = supportedLanguages.some(l => l.code === langCode);
   const targetLang = isSupported ? langCode : 'en';
 
-  // Abort any pending fetch request
   if (currentFetchController) {
     currentFetchController.abort();
   }
   currentFetchController = new AbortController();
 
   try {
-    // Always keep English as fallback
+    // Ensure English fallback dictionary is loaded
     if (Object.keys(fallbackTranslations).length === 0) {
       try {
         const fallbackRes = await fetch('/translations/en.json', {
@@ -183,7 +246,7 @@ export async function loadTranslations(langCode = 'en') {
         currentTranslations = await response.json();
         currentLang = targetLang;
       } else {
-        console.warn(`[i18n] ${targetLang}.json not found → falling back to English`);
+        console.warn(`[i18n] ${targetLang}.json not found -> falling back to English`);
         currentTranslations = { ...fallbackTranslations };
         currentLang = 'en';
       }
@@ -197,16 +260,13 @@ export async function loadTranslations(langCode = 'en') {
     currentFetchController = null;
   }
 
-  // Persist preference
   localStorage.setItem('preferredLang', currentLang);
 
-  // Apply everything
   document.documentElement.lang = currentLang;
   applyTextDirection(currentLang);
   applyTranslations();
   syncSelectors(currentLang);
 
-  // Notify the rest of the app
   window.dispatchEvent(new CustomEvent('languageChanged', {
     detail: { lang: currentLang }
   }));
@@ -217,26 +277,22 @@ export async function updateUILanguage(langCode) {
 }
 
 export function initLanguage() {
-  // Restore last chosen language (or default to English)
-  let savedLang = localStorage.getItem('preferredLang') || 'en';
+  const savedLang = localStorage.getItem('preferredLang') || 'en';
 
-  // Listen for language selector changes
   document.addEventListener('change', (e) => {
     if (
       e.target.matches(
         '#languageSelect, #languageSelectMobile, #languageSelector, #languageSelector-desktop, #languageSelector-mobile, [data-i18n-selector], .lang-select'
       )
     ) {
-      const selectedLang = e.target.value;
-      loadTranslations(selectedLang);
+      loadTranslations(e.target.value);
     }
   });
 
-  // Initial load
   loadTranslations(savedLang);
 }
 
-// ── Mutation Observer (auto-translate dynamically added content) ──
+// ── Mutation Observer for Dynamic UI Elements ──
 let observerTimeout = null;
 const observer = new MutationObserver((mutations) => {
   let shouldTranslate = false;
@@ -247,7 +303,8 @@ const observer = new MutationObserver((mutations) => {
         if (
           node.hasAttribute?.('data-i18n') ||
           node.hasAttribute?.('data-i18n-placeholder') ||
-          node.querySelector?.('[data-i18n], [data-i18n-placeholder]')
+          node.hasAttribute?.('data-i18n-aria') ||
+          node.querySelector?.('[data-i18n], [data-i18n-placeholder], [data-i18n-aria]')
         ) {
           shouldTranslate = true;
           break;
@@ -265,32 +322,28 @@ const observer = new MutationObserver((mutations) => {
   }
 });
 
-// Start observing
 if (document.body) {
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true
-  });
+  observer.observe(document.body, { childList: true, subtree: true });
 } else {
   document.addEventListener('DOMContentLoaded', () => {
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
+    observer.observe(document.body, { childList: true, subtree: true });
   });
 }
 
-// Boot
+// Boot setup
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initLanguage);
 } else {
   initLanguage();
 }
 
-// Global exports (for non-module scripts)
-window.initLanguage = initLanguage;
-window.changeLanguage = loadTranslations;
-window.setLanguage = loadTranslations;
-window.updateUILanguage = updateUILanguage;
-window.t = t;
-window.applyTranslations = applyTranslations;
+// Global scope registration
+if (typeof window !== 'undefined') {
+  window.initLanguage = initLanguage;
+  window.changeLanguage = loadTranslations;
+  window.setLanguage = loadTranslations;
+  window.updateUILanguage = updateUILanguage;
+  window.t = t;
+  window.applyTranslations = applyTranslations;
+  window.supportedLanguages = supportedLanguages;
+}
