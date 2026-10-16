@@ -483,6 +483,20 @@ match /group_timeline/{docId} {
     }
 
     // ==========================================
+    // EXTERNAL IMMUTABLE ANCHORS (OpenTimestamps)
+    // ==========================================
+    match /ledger_anchors/{date} {
+      // Publicly readable – anyone can verify the Merkle roots
+      allow read: if true;
+
+      // Only Cloud Functions (Admin SDK) can create anchors.
+      // Clients are never allowed to write.
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // ==========================================
     // PRESS CREDENTIALS
     // ==========================================
     match /verifiable_docs/{docId} {
