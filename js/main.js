@@ -1255,14 +1255,6 @@ async function fetchCuratedNews() {
     applyTicker(fallbackItems);
   }
 
-  // Reliable-first feeds (rss2json is flaky; fewer sources = fewer 500s)
-  const feeds = [
-    { url: 'https://feeds.bbci.co.uk/news/world/africa/rss.xml', weight: 3 },
-    { url: 'https://feeds.bbci.co.uk/news/world/rss.xml', weight: 2 },
-    { url: 'https://www.africanews.com/feed/', weight: 2 }
-    // NYT + Reuters via rss2json often 500 — omit for stability
-  ];
-
   try {
     const results = await Promise.allSettled(
       feeds.map(async (feed) => {
@@ -1284,8 +1276,8 @@ async function fetchCuratedNews() {
           // Expected proxy failures — stay quiet
           const msg = err?.message || String(err);
           if (!/HTTP 4\d\d|HTTP 5\d\d|timeout|AbortError|Failed to fetch/i.test(msg)) {
-            console.warn(`[Ticker] Failed ${feed.url}:`, msg);
-          }
+  console.warn(`[Ticker] Failed ${feed.url}:`, msg);
+}
           return [];
         }
       })
