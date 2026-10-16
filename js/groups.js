@@ -21,6 +21,7 @@ import { startZKVerification } from './verification.js';
 let currentTab = 'discover';
 let allGroups = [];
 let unsubscribe = null;
+let currentVisibility = 'all';
 
 /**
  * Initialize Groups page
@@ -35,6 +36,20 @@ export function initGroups(containerId = 'group-container') {
       document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('active'));
       btn.classList.add('active');
       currentTab = btn.dataset.tab;
+      renderGroups();
+    });
+  });
+
+  // Visibility filters
+  document.querySelectorAll('.visibility-filter').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.visibility-filter').forEach((b) => {
+        b.classList.remove('active', 'border-emerald-500/40', 'bg-emerald-500/10', 'text-emerald-400');
+        b.classList.add('border-zinc-700', 'bg-zinc-800', 'text-zinc-300');
+      });
+      btn.classList.add('active', 'border-emerald-500/40', 'bg-emerald-500/10', 'text-emerald-400');
+      btn.classList.remove('border-zinc-700', 'bg-zinc-800', 'text-zinc-300');
+      currentVisibility = btn.dataset.visibility;
       renderGroups();
     });
   });
@@ -154,6 +169,11 @@ function renderGroups() {
       .slice(0, 30);
   }
 
+  // Visibility filter
+  if (currentVisibility !== 'all') {
+    filtered = filtered.filter((g) => g.visibility === currentVisibility);
+  }
+
   // Search filter
   if (searchTerm) {
     filtered = filtered.filter(
@@ -228,7 +248,7 @@ function renderGroups() {
             isMember
               ? `<button type="button" class="px-5 py-2.5 bg-zinc-800 text-zinc-300 rounded-2xl text-sm font-medium cursor-default">Joined</button>`
               : `<button type="button" class="join-btn bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-2xl text-sm font-medium transition"
-                         data-id="${group.id}">Join</button>`
+                        data-id="${group.id}">Join</button>`
           }
         </div>
       </div>
