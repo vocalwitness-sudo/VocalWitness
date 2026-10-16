@@ -1,10 +1,7 @@
 /**
  * js/transparency.js
- * Public Transparency Dashboard data layer + UI binders.
- * Safe for guests: no challenger UIDs / full challenge text in the table.
- *
- * Requires deployed rules for:
- *   match /disputes/{disputeId} { allow read: if true; ... }
+ * Production Transparency Dashboard — guest-safe, no private contribution queries.
+ * Prove-It-Yourself lab included.
  */
 
 import { db } from './firebase-config.js';
@@ -46,12 +43,8 @@ function truncateId(id, head = 10) {
 function formatDate(value) {
   try {
     if (!value) return '—';
-    if (typeof value?.toDate === 'function') {
-      return value.toDate().toLocaleDateString();
-    }
-    if (typeof value === 'number') {
-      return new Date(value).toLocaleDateString();
-    }
+    if (typeof value?.toDate === 'function') return value.toDate().toLocaleDateString();
+    if (typeof value === 'number') return new Date(value).toLocaleDateString();
     if (typeof value === 'string') {
       const d = new Date(value);
       return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString();
@@ -66,7 +59,7 @@ function setText(id, text) {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Trust metrics (sealed / chain / disputes summary)                          */
+/* Trust metrics                                                              */
 /* -------------------------------------------------------------------------- */
 
 export async function loadTrustMetrics() {
@@ -77,19 +70,14 @@ export async function loadTrustMetrics() {
   try {
     let m = await getTransparencyMetrics();
 
-    // If audit metrics are thin, enrich disputes from public disputes collection
     if (!m || !m.disputes) {
       m = m || {};
       try {
         const rows = await listRecentDisputes(200);
         m.disputes = {
           open: rows.filter((x) => x.status === 'OPEN' || x.status === 'PENDING').length,
-          upheld: rows.filter(
-            (x) => x.status === 'UPHELD' || x.resolution === 'UPHELD'
-          ).length,
-          rejected: rows.filter(
-            (x) => x.status === 'REJECTED' || x.resolution === 'REJECTED'
-          ).length,
+          upheld: rows.filter((x) => x.status === 'UPHELD' || x.resolution === 'UPHELD').length,
+          rejected: rows.filter((x) => x.status === 'REJECTED' || x.resolution === 'REJECTED').length,
           total: rows.length,
         };
       } catch (_) {
@@ -106,15 +94,11 @@ export async function loadTrustMetrics() {
     }
 
     const chainLabel =
-      m.chain?.status === 'HEALTHY'
-        ? 'Healthy'
-        : m.chain?.status === 'BREAKS_DETECTED'
-          ? 'Breaks'
-          : m.chain?.status === 'HEALTHY_SHORT'
-            ? 'OK (short)'
-            : m.chain?.status === 'RESTRICTED_ACCESS'
-              ? 'Restricted'
-              : m.chain?.status || '—';
+      m.chain?.status === 'HEALTHY' ? 'Healthy' :
+      m.chain?.status === 'BREAKS_DETECTED' ? 'Breaks' :
+      m.chain?.status === 'HEALTHY_SHORT' ? 'OK (short)' :
+      m.chain?.status === 'RESTRICTED_ACCESS' ? 'Restricted' :
+      m.chain?.status || '—';
 
     const chainClass = m.chain?.ok === false ? 'text-red-400' : 'text-emerald-400';
 
@@ -168,10 +152,9 @@ export async function loadTrustMetrics() {
       chainHeadEl.textContent = `Chain head (newest forensicHash): ${m.chain.headHash}`;
     }
 
-    if (m.density) {
-      setText('density-lagos', `${m.density.lagos ?? 0} sealed`);
-      setText('density-nairobi', `${m.density.nairobi ?? 0} sealed`);
-    }
+    // Density – honest fallback when no city data yet
+    setText('density-enugu', m.density?.enugu != null ? `${m.density.enugu} sealed` : '0 sealed (pilot)');
+    setText('density-lagos', m.density?.lagos != null ? `${m.density.lagos} sealed` : '0 sealed (pilot)');
 
     const lastUpdatedEl = document.getElementById('lastUpdated');
     if (lastUpdatedEl) {
@@ -188,47 +171,40 @@ export async function loadTrustMetrics() {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Contributions (optional public totals)                                     */
+/* Support / contributions – guest-safe, non-extorting                        */
 /* -------------------------------------------------------------------------- */
 
 export async function loadTransparencyData() {
   const statsEl = document.getElementById('statsContainer');
+  const allocEl = document.getElementById('allocationContainer');
   if (!statsEl) return;
 
-  try {
-    const contributionsRef = collection(db, 'contributions');
-    const snapshot = await getDocs(
-      query(contributionsRef, orderBy('timestamp', 'desc'), limit(50))
-    );
+  // Never query a private / unruled collection.
+  // Honest public message only.
+  statsEl.innerHTML = `
+    <div class="glass rounded-3xl p-6 text-center md:col-span-3">
+      <p class="text-zinc-300 text-sm leading-relaxed">
+        The Square is free to use. Optional support keeps servers and legal minimums running.
+        <strong class="text-emerald-400">Money never buys voting power or a higher truth rank.</strong>
+      </p>
+      <p class="text-xs text-zinc-500 mt-3">
+        Personal tips stay private. No public dollar totals are shown here.
+      </p>
+    </div>
+  `;
 
-    let totalUSD = 0;
-    snapshot.forEach((docSnap) => {
-      totalUSD += Number(docSnap.data().amountUSD || 0);
-    });
-
-    statsEl.innerHTML = `
-      <div class="glass rounded-3xl p-6 text-center">
-        <div class="text-5xl font-bold text-emerald-400">$${totalUSD.toFixed(0)}</div>
-        <div class="text-sm text-zinc-400 mt-2">Total Contributions</div>
-      </div>
-      <div class="glass rounded-3xl p-6 text-center">
-        <div class="text-5xl font-bold">${snapshot.size}</div>
-        <div class="text-sm text-zinc-400 mt-2">Active Sustainers</div>
-      </div>
-      <div class="glass rounded-3xl p-6 text-center">
-        <div class="text-5xl font-bold text-amber-400">—</div>
-        <div class="text-sm text-zinc-400 mt-2">Utilization Rate</div>
-      </div>
+  if (allocEl) {
+    allocEl.innerHTML = `
+      <p class="text-zinc-400 text-sm leading-relaxed">
+        Shared operating costs (hosting, security, legal) are covered by optional support when available.
+        There is no public breakdown of individual donations on this page — by design.
+      </p>
     `;
-  } catch (e) {
-    console.warn('Contribution data unavailable:', e?.message || e);
-    statsEl.innerHTML =
-      '<p class="text-zinc-500 text-sm col-span-full text-center">Contribution data unavailable.</p>';
   }
 }
 
 /* -------------------------------------------------------------------------- */
-/* AI flag audit (may require auth under current rules)                       */
+/* AI flag audit (graceful for guests)                                        */
 /* -------------------------------------------------------------------------- */
 
 export async function loadAIAuditLogs() {
@@ -253,9 +229,7 @@ export async function loadAIAuditLogs() {
           (log.confidenceScore ?? log.details?.confidenceScore ?? 0) > 0.8
             ? 'text-red-400'
             : 'text-amber-400';
-        const status = escapeHtml(
-          log.status || log.details?.status || 'QUARANTINED'
-        );
+        const status = escapeHtml(log.status || log.details?.status || 'QUARANTINED');
         const statusClass =
           status === 'APPEAL_PENDING'
             ? 'bg-amber-950 text-amber-300 border-amber-800'
@@ -291,14 +265,14 @@ export async function loadAIAuditLogs() {
       });
     });
   } catch (e) {
-    console.warn('AI audit logs restricted or failed:', e?.message || e);
+    // Guests often cannot read audit_logs — show clean empty state
     tableBody.innerHTML =
-      '<tr><td colspan="5" class="p-4 text-center text-zinc-500">AI logs unavailable (sign in or restricted rules).</td></tr>';
+      '<tr><td colspan="5" class="p-4 text-center text-zinc-500">No public AI flags at this time (or sign in for full audit view).</td></tr>';
   }
 }
 
 /* -------------------------------------------------------------------------- */
-/* Public challenges table (privacy-safe columns only)                        */
+/* Challenges table                                                           */
 /* -------------------------------------------------------------------------- */
 
 export async function loadChallengesTable() {
@@ -342,8 +316,95 @@ export async function loadChallengesTable() {
   } catch (e) {
     console.error('Challenges table error:', e);
     tbody.innerHTML =
-      '<tr><td colspan="4" class="p-4 text-center text-zinc-500">Challenges unavailable (deploy disputes read rules).</td></tr>';
+      '<tr><td colspan="4" class="p-4 text-center text-zinc-500">Challenges unavailable.</td></tr>';
   }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Prove-It-Yourself Lab                                                      */
+/* -------------------------------------------------------------------------- */
+
+export async function initProveItLab() {
+  const dropZone = document.getElementById('labDropZone');
+  const fileInput = document.getElementById('labFileInput');
+  const hashBtn = document.getElementById('labHashBtn');
+  const localHashEl = document.getElementById('labLocalHash');
+  const chainHeadEl = document.getElementById('labChainHead');
+  const matchEl = document.getElementById('labMatchResult');
+  const copyHash = document.getElementById('labCopyHash');
+  const copyHead = document.getElementById('labCopyHead');
+
+  if (!dropZone || !fileInput) return;
+
+  // Load current chain head
+  try {
+    const health = await getHashChainHealth(30);
+    if (health?.headHash && chainHeadEl) {
+      chainHeadEl.value = health.headHash;
+    } else if (chainHeadEl) {
+      chainHeadEl.value = 'Restricted or empty (sign-in may show more)';
+    }
+  } catch (_) {
+    if (chainHeadEl) chainHeadEl.value = 'Unavailable for guests';
+  }
+
+  dropZone.addEventListener('click', () => fileInput.click());
+  dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('border-emerald-500', 'bg-emerald-950/30');
+  });
+  dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('border-emerald-500', 'bg-emerald-950/30');
+  });
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('border-emerald-500', 'bg-emerald-950/30');
+    if (e.dataTransfer.files?.[0]) {
+      fileInput.files = e.dataTransfer.files;
+      hashSelectedFile();
+    }
+  });
+
+  fileInput.addEventListener('change', hashSelectedFile);
+  hashBtn?.addEventListener('click', hashSelectedFile);
+
+  async function hashSelectedFile() {
+    const file = fileInput.files?.[0];
+    if (!file) return;
+
+    localHashEl.value = 'Computing…';
+    matchEl?.classList.add('hidden');
+
+    try {
+      const hash = await generateSha256Hash(file);
+      localHashEl.value = hash || 'Failed';
+
+      if (hash && chainHeadEl?.value && chainHeadEl.value.length === 64) {
+        const match = hash === chainHeadEl.value;
+        matchEl.textContent = match
+          ? 'Exact match with current chain head.'
+          : 'No exact match with head (normal for individual media). Compare against an Evidence Pack mediaHash.';
+        matchEl.className = match
+          ? 'text-sm font-medium text-emerald-400'
+          : 'text-sm font-medium text-zinc-400';
+        matchEl.classList.remove('hidden');
+      }
+    } catch (err) {
+      localHashEl.value = 'Error';
+      console.warn('Lab hash failed', err);
+    }
+  }
+
+  copyHash?.addEventListener('click', () => {
+    if (localHashEl.value && localHashEl.value.length === 64) {
+      navigator.clipboard.writeText(localHashEl.value);
+    }
+  });
+  copyHead?.addEventListener('click', () => {
+    if (chainHeadEl.value && chainHeadEl.value.length === 64) {
+      navigator.clipboard.writeText(chainHeadEl.value);
+    }
+  });
 }
 
 /* -------------------------------------------------------------------------- */
@@ -383,7 +444,7 @@ export function bindAppealModal() {
       justificationInput.value = '';
       loadAIAuditLogs();
     } else {
-      alert('Appeal failed. You may need to be signed in, or the flag record may be missing.');
+      alert('Appeal failed. You may need to be signed in.');
     }
   });
 }
@@ -394,6 +455,7 @@ export function bindAppealModal() {
 
 export function initTransparencyPage() {
   bindAppealModal();
+  initProveItLab();
 
   loadTrustMetrics();
   loadTransparencyData();
@@ -406,7 +468,6 @@ export function initTransparencyPage() {
   });
 }
 
-// Auto-run when this module is imported by transparency.html
 if (typeof window !== 'undefined') {
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initTransparencyPage);
@@ -422,104 +483,5 @@ export default {
   loadAIAuditLogs,
   loadChallengesTable,
   openAppealModal,
+  initProveItLab,
 };
-
-// ─── Prove-It-Now Lab ─────────────────────────────────────────────────
-
-export async function initProveItLab() {
-  const dropZone   = document.getElementById('labDropZone');
-  const fileInput  = document.getElementById('labFileInput');
-  const hashBtn    = document.getElementById('labHashBtn');
-  const localHashEl= document.getElementById('labLocalHash');
-  const chainHeadEl= document.getElementById('labChainHead');
-  const matchEl    = document.getElementById('labMatchResult');
-  const copyHash   = document.getElementById('labCopyHash');
-  const copyHead   = document.getElementById('labCopyHead');
-
-  if (!dropZone || !fileInput) return;
-
-  // Load current chain head once
-  try {
-    const health = await getHashChainHealth(30);
-    if (health?.headHash && chainHeadEl) {
-      chainHeadEl.value = health.headHash;
-    } else if (chainHeadEl) {
-      chainHeadEl.value = 'Restricted or empty';
-    }
-  } catch (_) {
-    if (chainHeadEl) chainHeadEl.value = 'Unavailable';
-  }
-
-  // Drag & drop
-  dropZone.addEventListener('click', () => fileInput.click());
-  dropZone.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    dropZone.classList.add('border-emerald-500', 'bg-emerald-950/30');
-  });
-  dropZone.addEventListener('dragleave', () => {
-    dropZone.classList.remove('border-emerald-500', 'bg-emerald-950/30');
-  });
-  dropZone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    dropZone.classList.remove('border-emerald-500', 'bg-emerald-950/30');
-    if (e.dataTransfer.files?.[0]) {
-      fileInput.files = e.dataTransfer.files;
-      hashSelectedFile();
-    }
-  });
-
-  fileInput.addEventListener('change', hashSelectedFile);
-  hashBtn?.addEventListener('click', hashSelectedFile);
-
-  async function hashSelectedFile() {
-    const file = fileInput.files?.[0];
-    if (!file) return;
-
-    localHashEl.value = 'Computing…';
-    matchEl?.classList.add('hidden');
-
-    try {
-      const hash = await generateSha256Hash(file); // works on Blob / File
-      localHashEl.value = hash || 'Failed';
-
-      // Optional soft match against current head (mostly educational)
-      if (hash && chainHeadEl?.value && chainHeadEl.value.length === 64) {
-        const match = hash === chainHeadEl.value;
-        matchEl.textContent = match
-          ? 'Exact match with current chain head (rare — usually a single entry).'
-          : 'No exact match with head (expected for individual media). Compare against Evidence Pack mediaHash.';
-        matchEl.className = match
-          ? 'text-sm font-medium text-emerald-400'
-          : 'text-sm font-medium text-zinc-400';
-        matchEl.classList.remove('hidden');
-      }
-    } catch (err) {
-      localHashEl.value = 'Error';
-      console.warn('Lab hash failed', err);
-    }
-  }
-
-  // Copy helpers
-  copyHash?.addEventListener('click', () => {
-    if (localHashEl.value) navigator.clipboard.writeText(localHashEl.value);
-  });
-  copyHead?.addEventListener('click', () => {
-    if (chainHeadEl.value) navigator.clipboard.writeText(chainHeadEl.value);
-  });
-}
-
-// ─── update initTransparencyPage ──────────────────────────────────────
-export function initTransparencyPage() {
-  bindAppealModal();
-  initProveItLab();          // ← new
-
-  loadTrustMetrics();
-  loadTransparencyData();
-  loadAIAuditLogs();
-  loadChallengesTable();
-
-  window.addEventListener('vocalWitness:posted', () => {
-    loadTrustMetrics();
-    loadChallengesTable();
-  });
-}
