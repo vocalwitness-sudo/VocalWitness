@@ -22,6 +22,7 @@ import {
   getHashChainHealth,
 } from './audit.js';
 import { listRecentDisputes } from './governance.js';
+import { generateSha256Hash } from './utils.js';
 
 /* -------------------------------------------------------------------------- */
 /* Helpers                                                                    */
@@ -422,3 +423,103 @@ export default {
   loadChallengesTable,
   openAppealModal,
 };
+
+// ─── Prove-It-Now Lab ─────────────────────────────────────────────────
+
+export async function initProveItLab() {
+  const dropZone   = document.getElementById('labDropZone');
+  const fileInput  = document.getElementById('labFileInput');
+  const hashBtn    = document.getElementById('labHashBtn');
+  const localHashEl= document.getElementById('labLocalHash');
+  const chainHeadEl= document.getElementById('labChainHead');
+  const matchEl    = document.getElementById('labMatchResult');
+  const copyHash   = document.getElementById('labCopyHash');
+  const copyHead   = document.getElementById('labCopyHead');
+
+  if (!dropZone || !fileInput) return;
+
+  // Load current chain head once
+  try {
+    const health = await getHashChainHealth(30);
+    if (health?.headHash && chainHeadEl) {
+      chainHeadEl.value = health.headHash;
+    } else if (chainHeadEl) {
+      chainHeadEl.value = 'Restricted or empty';
+    }
+  } catch (_) {
+    if (chainHeadEl) chainHeadEl.value = 'Unavailable';
+  }
+
+  // Drag & drop
+  dropZone.addEventListener('click', () => fileInput.click());
+  dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('border-emerald-500', 'bg-emerald-950/30');
+  });
+  dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('border-emerald-500', 'bg-emerald-950/30');
+  });
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('border-emerald-500', 'bg-emerald-950/30');
+    if (e.dataTransfer.files?.[0]) {
+      fileInput.files = e.dataTransfer.files;
+      hashSelectedFile();
+    }
+  });
+
+  fileInput.addEventListener('change', hashSelectedFile);
+  hashBtn?.addEventListener('click', hashSelectedFile);
+
+  async function hashSelectedFile() {
+    const file = fileInput.files?.[0];
+    if (!file) return;
+
+    localHashEl.value = 'Computing…';
+    matchEl?.classList.add('hidden');
+
+    try {
+      const hash = await generateSha256Hash(file); // works on Blob / File
+      localHashEl.value = hash || 'Failed';
+
+      // Optional soft match against current head (mostly educational)
+      if (hash && chainHeadEl?.value && chainHeadEl.value.length === 64) {
+        const match = hash === chainHeadEl.value;
+        matchEl.textContent = match
+          ? 'Exact match with current chain head (rare — usually a single entry).'
+          : 'No exact match with head (expected for individual media). Compare against Evidence Pack mediaHash.';
+        matchEl.className = match
+          ? 'text-sm font-medium text-emerald-400'
+          : 'text-sm font-medium text-zinc-400';
+        matchEl.classList.remove('hidden');
+      }
+    } catch (err) {
+      localHashEl.value = 'Error';
+      console.warn('Lab hash failed', err);
+    }
+  }
+
+  // Copy helpers
+  copyHash?.addEventListener('click', () => {
+    if (localHashEl.value) navigator.clipboard.writeText(localHashEl.value);
+  });
+  copyHead?.addEventListener('click', () => {
+    if (chainHeadEl.value) navigator.clipboard.writeText(chainHeadEl.value);
+  });
+}
+
+// ─── update initTransparencyPage ──────────────────────────────────────
+export function initTransparencyPage() {
+  bindAppealModal();
+  initProveItLab();          // ← new
+
+  loadTrustMetrics();
+  loadTransparencyData();
+  loadAIAuditLogs();
+  loadChallengesTable();
+
+  window.addEventListener('vocalWitness:posted', () => {
+    loadTrustMetrics();
+    loadChallengesTable();
+  });
+}
