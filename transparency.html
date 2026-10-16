@@ -298,6 +298,27 @@
         </div>
     </div>
 
+    <!-- External Immutable Anchor (OpenTimestamps) -->
+<div class="glass rounded-3xl p-8 mb-10">
+  <div class="flex items-center justify-between mb-6">
+    <h3 class="text-xl font-semibold">External Immutable Anchor</h3>
+    <span class="text-xs bg-cyan-950 text-cyan-300 border border-cyan-800 px-3 py-1 rounded-full">
+      OpenTimestamps
+    </span>
+  </div>
+
+  <p class="text-sm text-zinc-400 mb-6 leading-relaxed">
+    Every day the platform publishes a Merkle root of newly sealed reports to the
+    OpenTimestamps calendar network. Anyone can independently verify that the root
+    existed at that time — without trusting Firebase or VocalWitness.
+  </p>
+
+  <div id="otsAnchorContainer" class="space-y-4">
+    <!-- Populated by JS -->
+    <div class="text-zinc-500 text-sm">Loading latest external anchor…</div>
+  </div>
+</div>
+    
     <!-- Recent open challenges (public transparency) -->
     <div class="glass rounded-3xl p-8 mb-10">
         <div class="flex items-center justify-between mb-6">
