@@ -1,7 +1,13 @@
-// js/router.js - Clean Client-Side Router with pushState + Web Component ready structure
-import { showToast } from './utils.js';
+/**
+ * VocalWitness Client-Side Router
+ * Modern hash & pushState router with dynamic module lazy-loading,
+ * automatic i18n translation dispatch, and modal-aware back-navigation.
+ */
 
-// Central view mapping — values must match real element ids in index.html
+import { showToast } from './utils.js';
+import { applyTranslations, t } from './i18n.js';
+
+// Central view mapping — values must match real element IDs in index.html
 const VIEW_MAP = {
     'square': 'public-square',
     'public_square': 'public-square',
@@ -25,7 +31,8 @@ const VIEW_MAP = {
 const ROUTES = {
     'citizen-talk': {
         viewId: 'public-square',
-        title: 'Citizen Talk',
+        titleKey: 'nav.citizenTalk',
+        defaultTitle: 'Citizen Talk',
         init: async () => {
             const { initFeed } = await import('./feed.js');
             initFeed(undefined, 'citizen-talk');
@@ -33,7 +40,8 @@ const ROUTES = {
     },
     'witness-voice': {
         viewId: 'witness',
-        title: 'Witness Voice',
+        titleKey: 'nav.witnessVoice',
+        defaultTitle: 'Witness Voice',
         init: async () => {
             const { initFeed } = await import('./feed.js');
             initFeed(undefined, 'witness-voice');
@@ -41,7 +49,8 @@ const ROUTES = {
     },
     'moderation': {
         viewId: 'moderationView',
-        title: 'Steward Moderation',
+        titleKey: 'nav.moderation',
+        defaultTitle: 'Steward Moderation',
         init: async () => {
             const { initModeration } = await import('./moderation.js');
             initModeration();
@@ -49,7 +58,8 @@ const ROUTES = {
     },
     'profile': {
         viewId: 'profileModal',
-        title: 'Witness Profile',
+        titleKey: 'nav.profile',
+        defaultTitle: 'Witness Profile',
         init: async () => {
             const { initProfile } = await import('./profile.js');
             initProfile?.();
@@ -57,36 +67,38 @@ const ROUTES = {
     },
     'audit-log': {
         viewId: 'evidence-ledger',
-        title: 'Forensic Audit Log',
+        titleKey: 'nav.auditLog',
+        defaultTitle: 'Forensic Audit Log',
         init: async () => {
             const auditModule = await import('./audit.js').catch(() => null);
             auditModule?.initAuditLog?.();
         }
     },
     'arena': {
-    viewId: 'live-arena',
-    title: 'Live Arena',
-    init: async () => {
-        const container = document.getElementById('live-arena');
-        
-        try {
-            const { initLiveArena } = await import('./live-arena.js');
-            initLiveArena();          // the function doesn’t need the container
-        } catch (err) {
-            console.error("Failed to load Arena module:", err);
-            if (container) {
-                container.innerHTML = `
-                    <div class="text-center py-20 text-red-400">
-                        Failed to load Live Arena.<br>
-                        <span class="text-sm text-zinc-500">${err.message}</span>
-                    </div>`;
+        viewId: 'live-arena',
+        titleKey: 'nav.liveArena',
+        defaultTitle: 'Live Arena',
+        init: async () => {
+            const container = document.getElementById('live-arena');
+            try {
+                const { initLiveArena } = await import('./live-arena.js');
+                initLiveArena();
+            } catch (err) {
+                console.error("Failed to load Arena module:", err);
+                if (container) {
+                    container.innerHTML = `
+                        <div class="text-center py-20 text-red-400">
+                            Failed to load Live Arena.<br>
+                            <span class="text-sm text-zinc-500">${err.message}</span>
+                        </div>`;
+                }
             }
         }
-    }
-},
+    },
     'quadratic-vote': {
         viewId: 'quadraticVoteView',
-        title: 'Quadratic Voting',
+        titleKey: 'nav.quadraticVote',
+        defaultTitle: 'Quadratic Voting',
         init: async () => {
             const container = document.getElementById('quadraticVoteView');
             if (container) {
@@ -101,7 +113,8 @@ const ROUTES = {
     },
     'dao': {
         viewId: 'daoView',
-        title: 'DAO Governance',
+        titleKey: 'nav.dao',
+        defaultTitle: 'DAO Governance',
         fallbackUrl: 'dao.html',
         init: async (container) => {
             if (!container) return;
@@ -110,7 +123,8 @@ const ROUTES = {
     },
     'mycircle': {
         viewId: 'mycircle',
-        title: 'My Circle',
+        titleKey: 'nav.myCircle',
+        defaultTitle: 'My Circle',
         init: async () => {
             const circleModule = await import('./circle.js').catch(() => null);
             circleModule?.loadCircle?.();
@@ -118,14 +132,14 @@ const ROUTES = {
     },
     'ledger': {
         viewId: 'evidence-ledger',
-        title: 'Public Record',
+        titleKey: 'nav.publicRecord',
+        defaultTitle: 'Public Record',
         init: async () => {
-            // main.js also loads ledger; safe no-op if already active
+            // Main initialization handled elsewhere if needed
         }
     }
 };
 
-// Aliases mapping to standard route keys
 const ROUTE_ALIASES = {
     'square': 'citizen-talk',
     'public_square': 'citizen-talk',
@@ -140,17 +154,11 @@ const ROUTE_ALIASES = {
     'public_record': 'ledger'
 };
 
-/**
- * Normalizes input key using alias mapping defaults
- */
 function normalizeRouteKey(rawKey) {
     if (!rawKey) return 'citizen-talk';
     return ROUTE_ALIASES[rawKey] || (ROUTES[rawKey] ? rawKey : 'citizen-talk');
 }
 
-/**
- * Hide every registered view panel
- */
 function hideAllViews() {
     const ids = new Set([
         ...Object.values(ROUTES).map(r => r.viewId).filter(Boolean),
@@ -165,9 +173,6 @@ function hideAllViews() {
     });
 }
 
-/**
- * Update active state on navigation elements
- */
 function updateNavActiveState(routeKey, rawInputKey) {
     document.querySelectorAll('[data-route]').forEach(navBtn => {
         const routeAttr = navBtn.getAttribute('data-route');
@@ -182,7 +187,7 @@ function updateNavActiveState(routeKey, rawInputKey) {
 }
 
 /**
- * Core navigation function
+ * Core Navigation Function with i18n & History State Sync
  */
 export async function navigateTo(routeKey, { replace = false } = {}) {
     const finalKey = normalizeRouteKey(routeKey);
@@ -193,10 +198,10 @@ export async function navigateTo(routeKey, { replace = false } = {}) {
         return;
     }
 
-    // 1. Hide all views
+    // 1. Hide all view panels
     hideAllViews();
 
-    // 2. Try to show the in-app panel
+    // 2. Display target panel or follow fallback redirect
     let targetViewId = targetRoute.viewId || VIEW_MAP[routeKey] || VIEW_MAP[finalKey];
     let activePanel = targetViewId ? document.getElementById(targetViewId) : null;
 
@@ -210,38 +215,43 @@ export async function navigateTo(routeKey, { replace = false } = {}) {
         console.warn(`No view found for route: ${finalKey} (expected #${targetViewId})`);
     }
 
-    // 3. Update navigation UI
+    // 3. Update active nav styling
     updateNavActiveState(finalKey, routeKey);
 
-    // 4. History management (pushState with hash fallback)
+    // 4. Resolve and apply localized page title
+    const localizedTitle = targetRoute.titleKey ? t(targetRoute.titleKey, targetRoute.defaultTitle) : targetRoute.defaultTitle;
+    document.title = `${localizedTitle} • VocalWitness`;
+
+    // 5. History management
     const newHash = `#${finalKey}`;
-    const title = targetRoute.title || 'VocalWitness';
     try {
         if (replace) {
-            window.history.replaceState({ route: finalKey }, title, newHash);
+            window.history.replaceState({ route: finalKey }, localizedTitle, newHash);
         } else if (window.location.hash !== newHash) {
-            window.history.pushState({ route: finalKey }, title, newHash);
+            window.history.pushState({ route: finalKey }, localizedTitle, newHash);
         }
     } catch (err) {
         window.location.hash = finalKey;
     }
 
-    // 5. Run route initializer
+    // 6. Run route initializer and ensure translations are applied to newly loaded HTML
     if (typeof targetRoute.init === 'function') {
         try {
             await targetRoute.init(activePanel);
         } catch (err) {
             console.error(`Error initializing route ${finalKey}:`, err);
-            showToast(`Failed to load ${targetRoute.title}`, "error");
+            showToast(`Failed to load ${localizedTitle}`, "error");
         }
+    }
+
+    // 7. Ensure any newly injected markup is fully translated
+    if (activePanel) {
+        applyTranslations(activePanel);
     }
 }
 
 /**
- * Initialize the router
- */
-/**
- * Initialize the router
+ * Initialize Router Listeners
  */
 export function initRouter() {
     window.addEventListener('popstate', (event) => {
@@ -259,7 +269,6 @@ export function initRouter() {
     });
 
     document.addEventListener('click', (e) => {
-        // 1. Handle standard data-route navigation clicks
         const trigger = e.target.closest('[data-route]');
         if (trigger) {
             e.preventDefault();
@@ -268,7 +277,6 @@ export function initRouter() {
             return;
         }
 
-        // 2. Handle data-action="back" clicks safely
         const backTrigger = e.target.closest('[data-action="back"]');
         if (backTrigger) {
             e.preventDefault();
@@ -279,22 +287,20 @@ export function initRouter() {
     const initial = window.location.hash.slice(1) || 'citizen-talk';
     navigateTo(initial, { replace: true });
 }
+
 /**
- * Safe back navigation handler
+ * Safe Back Navigation Handler
  */
 export function goBack() {
-    // 1. If any modal or drawer is open, close it first instead of changing routes
     const openModal = document.querySelector('.fixed.inset-0:not(.hidden)');
     if (openModal) {
         openModal.remove();
         return;
     }
 
-    // 2. If there's history within the app session, step back
     if (window.history.length > 1) {
         window.history.back();
     } else {
-        // 3. Default fallback if history is exhausted
         navigateTo('citizen-talk');
     }
 }
