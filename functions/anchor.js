@@ -1,6 +1,8 @@
 /**
  * VocalWitness External Ledger Anchor
- * Daily Merkle root → OpenTimestamps
+ * Daily Merkle root of sealed reports → OpenTimestamps
+ *
+ * functions/anchor.js
  */
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
@@ -12,26 +14,31 @@ import crypto from "crypto";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { defineSecret } from "firebase-functions/params";
 
+// Re-use the same secrets already defined in the project
 const r2AccessKeyId = defineSecret("R2_ACCESS_KEY_ID");
 const r2SecretAccessKey = defineSecret("R2_SECRET_ACCESS_KEY");
 
 const db = admin.firestore();
 
-// ---------- Helpers ----------
+// --------------------------------------------------
+// Helpers
+// --------------------------------------------------
 function sha256(data) {
   return crypto.createHash("sha256").update(data).digest();
 }
 
 function buildMerkleRoot(leaves) {
-  if (leaves.length === 0) return null;
+  if (!leaves || leaves.length === 0) return null;
   const tree = new MerkleTree(leaves, sha256, { sortPairs: true });
   return tree.getRoot().toString("hex");
 }
 
-async function getR2Client() {
+function getR2Client() {
   return new S3Client({
     region: "auto",
-    endpoint: process.env.R2_ENDPOINT || "https://b282f46ef0831c8af75bfe52120bbac6.r2.cloudflarestorage.com",
+    endpoint:
+      process.env.R2_ENDPOINT ||
+      "https://b282f46ef0831c8af75bfe52120bbac6.r2.cloudflarestorage.com",
     credentials: {
       accessKeyId: r2AccessKeyId.value(),
       secretAccessKey: r2SecretAccessKey.value(),
@@ -39,104 +46,141 @@ async function getR2Client() {
   });
 }
 
-// ---------- Core anchoring logic ----------
+// --------------------------------------------------
+// Core anchoring logic
+// --------------------------------------------------
 async function createDailyAnchor() {
   const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
   const anchorRef = db.collection("ledger_anchors").doc(today);
 
-  // Idempotency check
+  // Idempotency – do not overwrite an existing anchor for today
   const existing = await anchorRef.get();
   if (existing.exists) {
-    logger.info(`Anchor for ${today} already exists`);
+    logger.info(`Anchor for ${today} already exists – skipping`);
     return existing.data();
   }
 
-  // 1. Collect sealed testimony hashes since last anchor (or all recent ones)
-  //    Prefer using the already-computed client-side SHA-256 hash stored on each doc
-  const lastAnchorSnap = await db.collection("ledger_anchors")
+  // Find the previous anchor so we only take new reports
+  const lastSnap = await db
+    .collection("ledger_anchors")
     .orderBy("createdAt", "desc")
     .limit(1)
     .get();
 
   let since = new Date(0);
-  if (!lastAnchorSnap.empty) {
-    since = lastAnchorSnap.docs[0].data().createdAt.toDate();
+  if (!lastSnap.empty) {
+    const prev = lastSnap.docs[0].data();
+    if (prev.createdAt?.toDate) {
+      since = prev.createdAt.toDate();
+    }
   }
 
-  const snap = await db.collection("testimonies")
+  // Collect sealed testimonies created after the last anchor
+  // Adjust field names if your schema uses different ones
+  const snap = await db
+    .collection("testimonies")
     .where("createdAt", ">", since)
-    .where("sealed", "==", true)          // or whatever field marks sealed reports
     .orderBy("createdAt", "asc")
     .get();
 
   const leaves = [];
   const includedIds = [];
 
-  snap.forEach(doc => {
+  snap.forEach((doc) => {
     const d = doc.data();
-    // Prefer the client-side media/content hash you already store
-    const hashHex = d.contentHash || d.mediaHash || d.sha256 || doc.id;
-    if (hashHex && typeof hashHex === "string") {
-      leaves.push(Buffer.from(hashHex.replace(/^0x/, ""), "hex"));
+
+    // Prefer the client-side hash you already store
+    let hashHex =
+      d.contentHash ||
+      d.mediaHash ||
+      d.sha256 ||
+      d.forensicHash ||
+      null;
+
+    // Fallback: hash the document ID itself (still deterministic)
+    if (!hashHex) {
+      hashHex = crypto.createHash("sha256").update(doc.id).digest("hex");
+    }
+
+    // Clean 0x prefix if present
+    hashHex = String(hashHex).replace(/^0x/i, "").toLowerCase();
+
+    if (/^[0-9a-f]{64}$/.test(hashHex)) {
+      leaves.push(Buffer.from(hashHex, "hex"));
       includedIds.push(doc.id);
     }
   });
 
   if (leaves.length === 0) {
-    logger.info("No new sealed reports to anchor");
+    logger.info(`No new sealed reports to anchor for ${today}`);
+    // Optionally still write an empty anchor so the chain stays continuous
     return null;
   }
 
-  // 2. Build Merkle root
+  // 1. Build Merkle root
   const rootHex = buildMerkleRoot(leaves);
-  logger.info(`Merkle root for ${today}: ${rootHex} (${leaves.length} leaves)`);
+  logger.info(`Merkle root ${today}: ${rootHex} (${leaves.length} leaves)`);
 
-  // 3. Create OpenTimestamps stamp
+  // 2. Create OpenTimestamps detached file from the root hash
+  const hashBuf = Buffer.from(rootHex, "hex");
   const detached = OpenTimestamps.DetachedTimestampFile.fromHash(
     new OpenTimestamps.Ops.OpSHA256(),
-    Buffer.from(rootHex, "hex")
+    hashBuf
   );
 
-  await OpenTimestamps.stamp(detached);          // submits to public calendars
+  // Submit to public calendars
+  await OpenTimestamps.stamp(detached);
 
   // Serialize the .ots receipt
-  const otsBuffer = detached.serializeToBytes();
+  const otsBuffer = Buffer.from(detached.serializeToBytes());
 
-  // 4. Upload .ots to R2 (public)
-  const r2 = await getR2Client();
+  // 3. Upload .ots file to R2 (public)
+  const r2 = getR2Client();
   const otsKey = `anchors/${today}.ots`;
-  await r2.send(new PutObjectCommand({
-    Bucket: "vocalwitness-media",
-    Key: otsKey,
-    Body: otsBuffer,
-    ContentType: "application/octet-stream",
-    ACL: "public-read",          // or use public bucket policy
-  }));
+
+  await r2.send(
+    new PutObjectCommand({
+      Bucket: "vocalwitness-media",
+      Key: otsKey,
+      Body: otsBuffer,
+      ContentType: "application/octet-stream",
+      // Make sure your bucket policy allows public read on anchors/*
+    })
+  );
 
   const otsPublicUrl = `https://media.vocalwitness.com/${otsKey}`;
 
-  // 5. Store anchor record
-  const previousRoot = lastAnchorSnap.empty ? null : lastAnchorSnap.docs[0].data().root;
+  // 4. Persist the anchor record
+  const previousRoot = lastSnap.empty ? null : lastSnap.docs[0].data().root;
 
   const anchorData = {
     date: today,
     root: rootHex,
     previousRoot,
     leafCount: leaves.length,
-    includedTestimonyIds: includedIds.slice(0, 500), // keep reasonable size
+    includedTestimonyIds: includedIds.slice(0, 1000), // keep document size reasonable
     otsUrl: otsPublicUrl,
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    calendarServers: ["https://alice.btc.calendar.opentimestamps.org", "https://bob.btc.calendar.opentimestamps.org"],
+    calendars: [
+      "https://alice.btc.calendar.opentimestamps.org",
+      "https://bob.btc.calendar.opentimestamps.org",
+    ],
   };
 
   await anchorRef.set(anchorData);
 
-  // Optional: also write a short public notice
+  // Audit log
   await db.collection("audit_logs").add({
     action: "daily_merkle_anchor",
-    root: rootHex,
-    leafCount: leaves.length,
-    otsUrl: otsPublicUrl,
+    performedBy: "system",
+    targetId: today,
+    targetType: "ledger_anchor",
+    details: {
+      root: rootHex,
+      leafCount: leaves.length,
+      otsUrl: otsPublicUrl,
+    },
+    severity: "info",
     timestamp: admin.firestore.FieldValue.serverTimestamp(),
   });
 
@@ -144,14 +188,17 @@ async function createDailyAnchor() {
   return anchorData;
 }
 
-// ---------- Scheduled function (daily 00:05 UTC) ----------
+// --------------------------------------------------
+// Scheduled function – runs every day at 00:05 UTC
+// --------------------------------------------------
 export const dailyAnchor = onSchedule(
   {
-    schedule: "5 0 * * *",          // 00:05 UTC every day
+    schedule: "5 0 * * *", // 00:05 UTC
     timeZone: "UTC",
     secrets: [r2AccessKeyId, r2SecretAccessKey],
     timeoutSeconds: 540,
     memory: "1GiB",
+    region: "us-central1",
   },
   async () => {
     try {
@@ -163,13 +210,21 @@ export const dailyAnchor = onSchedule(
   }
 );
 
-// ---------- Manual trigger (admin only) ----------
+// --------------------------------------------------
+// Manual admin trigger (for testing)
+// --------------------------------------------------
 export const triggerAnchorNow = onCall(
-  { secrets: [r2AccessKeyId, r2SecretAccessKey] },
+  {
+    secrets: [r2AccessKeyId, r2SecretAccessKey],
+    region: "us-central1",
+  },
   async (request) => {
+    // Only allow admins
     if (!request.auth?.token?.admin) {
       throw new HttpsError("permission-denied", "Admin only");
     }
-    return await createDailyAnchor();
+
+    const result = await createDailyAnchor();
+    return result || { message: "No new reports to anchor" };
   }
 );
