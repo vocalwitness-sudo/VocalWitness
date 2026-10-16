@@ -3,6 +3,7 @@
 // Name = Reality: every pack must be independently verifiable
 
 import { generateSha256Hash } from './utils.js';
+import { t } from './i18n.js';
 
 const SCHEMA = 'vocalwitness.evidence-pack.v1';
 const DISCLAIMER =
@@ -140,11 +141,11 @@ export function toFullEvidencePack(core, packCoreHash, rfc3161, testimonyId, ext
     schemaVersion: SCHEMA,
     packId: testimonyId || null,
     generatedAt: new Date().toISOString(),
-    disclaimer: DISCLAIMER,
+    disclaimer: t('evidencePack.disclaimer', DISCLAIMER),
 
     // Human-readable summary (new)
     summary: {
-      title: core?.content?.body?.slice(0, 120) || "Sealed Testimony",
+      title: core?.content?.body?.slice(0, 120) || t('evidencePack.sealedTestimony', "Sealed Testimony"),
       channel: core?.content?.channel || "witness-voice",
       identityMode: core?.identity?.mode || "ANONYMOUS",
       mediaCount: (core?.media || []).length,
@@ -175,12 +176,12 @@ export function toFullEvidencePack(core, packCoreHash, rfc3161, testimonyId, ext
 
     verify: {
       instructions: [
-        "1. Open the verifyUrl (contains testimony id + ledger hash)",
-        "2. Re-download media from the listed URLs",
-        "3. Compute SHA-256 of each file and compare to hashAfterUpload",
-        "4. Compute SHA-256 of the body text (UTF-8) and compare to bodyHash",
-        "5. If rfc3161.tokenBase64 is present, verify offline with TSA tools",
-        "6. This pack proves integrity of the bitstrings, not real-world events",
+        t('evidencePack.step1', "1. Open the verifyUrl (contains testimony id + ledger hash)"),
+        t('evidencePack.step2', "2. Re-download media from the listed URLs"),
+        t('evidencePack.step3', "3. Compute SHA-256 of each file and compare to hashAfterUpload"),
+        t('evidencePack.step4', "4. Compute SHA-256 of the body text (UTF-8) and compare to bodyHash"),
+        t('evidencePack.step5', "5. If rfc3161.tokenBase64 is present, verify offline with TSA tools"),
+        t('evidencePack.step6', "6. This pack proves integrity of the bitstrings, not real-world events"),
       ],
       tools: {
         online: verifyUrl,
@@ -344,11 +345,11 @@ export function buildShareUrl(testimony = {}, origin = DEFAULT_ORIGIN) {
 export async function shareTestimony(testimony, options = {}) {
   const link = buildShareUrl(testimony, options.origin);
   const hash = resolveLedgerHash(testimony);
-  const shortHash = hash ? `${hash.slice(0, 12)}…` : 'unsealed';
-  const title = testimony.headline || testimony.title || 'VocalWitness sealed report';
+  const shortHash = hash ? `${hash.slice(0, 12)}…` : t('evidencePack.unsealed', 'unsealed');
+  const title = testimony.headline || testimony.title || t('evidencePack.defaultTitle', 'VocalWitness sealed report');
   const text =
     options.text ||
-    `VocalWitness evidence (${shortHash}). Verify: ${link}`;
+    t('evidencePack.shareText', `VocalWitness evidence (${shortHash}). Verify: ${link}`, { hash: shortHash, link });
 
   if (!hash && options.requireSealed !== false) {
     console.warn('[share] No ledger hash — link is not fully sealed');
@@ -412,7 +413,7 @@ export function buildNewsroomPack(testimony, extras = {}) {
     packRole: 'newsroom-ngo',
     packId: id,
     generatedAt: new Date().toISOString(),
-    disclaimer: DISCLAIMER,
+    disclaimer: t('evidencePack.disclaimer', DISCLAIMER),
     verifyUrl,
     testimony: {
       id,
@@ -422,7 +423,7 @@ export function buildNewsroomPack(testimony, extras = {}) {
       status: testimony.status || null,
       isAnonymous: Boolean(testimony.isAnonymous),
       authorPublic: testimony.isAnonymous
-        ? 'Anonymous Witness'
+        ? t('evidencePack.anonymousWitness', 'Anonymous Witness')
         : testimony.author || testimony.displayName || null,
       region: testimony.region || testimony.city || null,
       createdAt:
@@ -447,10 +448,10 @@ export function buildNewsroomPack(testimony, extras = {}) {
     multiSig: extras.multiSig || null,
     verify: {
       instructions: [
-        'Open verifyUrl and confirm id + h match the ledger',
-        'Re-fetch media URLs and recompute SHA-256',
-        'Compare dispute outcomes if present',
-        'Treat pack as integrity aid, not proof of real-world events',
+        t('evidencePack.newsroomStep1', 'Open verifyUrl and confirm id + h match the ledger'),
+        t('evidencePack.newsroomStep2', 'Re-fetch media URLs and recompute SHA-256'),
+        t('evidencePack.newsroomStep3', 'Compare dispute outcomes if present'),
+        t('evidencePack.newsroomStep4', 'Treat pack as integrity aid, not proof of real-world events'),
       ],
     },
   };
