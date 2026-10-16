@@ -321,6 +321,109 @@ export async function loadChallengesTable() {
 }
 
 /* -------------------------------------------------------------------------- */
+/* External OpenTimestamps Anchor                                             */
+/* -------------------------------------------------------------------------- */
+
+export async function loadLatestOtsAnchor() {
+  const container = document.getElementById('otsAnchorContainer');
+  if (!container) return;
+
+  try {
+    const snap = await getDocs(
+      query(
+        collection(db, 'ledger_anchors'),
+        orderBy('createdAt', 'desc'),
+        limit(1)
+      )
+    );
+
+    if (snap.empty) {
+      container.innerHTML = `
+        <div class="text-zinc-500 text-sm">
+          No external anchors published yet. The first daily Merkle root will appear here after the scheduled function runs.
+        </div>`;
+      return;
+    }
+
+    const a = snap.docs[0].data();
+    const root = escapeHtml(a.root || '—');
+    const date = escapeHtml(a.date || formatDate(a.createdAt));
+    const leafCount = Number(a.leafCount || 0).toLocaleString();
+    const otsUrl = a.otsUrl || '';
+    const previousRoot = a.previousRoot ? escapeHtml(a.previousRoot) : null;
+
+    container.innerHTML = `
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+        <div class="bg-zinc-950/60 border border-zinc-800 rounded-2xl p-4">
+          <div class="text-zinc-500 text-[11px] uppercase tracking-wide mb-1">Anchor Date</div>
+          <div class="text-white font-semibold">${date}</div>
+        </div>
+        <div class="bg-zinc-950/60 border border-zinc-800 rounded-2xl p-4">
+          <div class="text-zinc-500 text-[11px] uppercase tracking-wide mb-1">Sealed Reports Included</div>
+          <div class="text-white font-semibold">${leafCount}</div>
+        </div>
+      </div>
+
+      <div class="bg-zinc-950/60 border border-zinc-800 rounded-2xl p-4 mt-4">
+        <div class="text-zinc-500 text-[11px] uppercase tracking-wide mb-2">Merkle Root (SHA-256)</div>
+        <div class="font-mono text-xs text-emerald-400 break-all select-all">${root}</div>
+      </div>
+
+      ${previousRoot ? `
+        <div class="bg-zinc-950/40 border border-zinc-800/70 rounded-2xl p-3 mt-3">
+          <div class="text-zinc-500 text-[10px] uppercase tracking-wide mb-1">Previous Root</div>
+          <div class="font-mono text-[10px] text-zinc-500 break-all">${previousRoot}</div>
+        </div>` : ''}
+
+      <div class="flex flex-wrap gap-3 mt-5">
+        ${otsUrl ? `
+          <a href="${escapeHtml(otsUrl)}" 
+             download 
+             class="inline-flex items-center gap-2 px-4 py-2.5 bg-cyan-900/40 hover:bg-cyan-800/50 border border-cyan-700 text-cyan-300 text-xs font-medium rounded-xl transition">
+            📥 Download .ots Receipt
+          </a>` : ''}
+
+        <a href="https://opentimestamps.org" 
+           target="_blank" 
+           rel="noopener"
+           class="inline-flex items-center gap-2 px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 text-xs font-medium rounded-xl transition">
+          🔗 Verify on OpenTimestamps.org
+        </a>
+
+        <button type="button" 
+                id="copyRootBtn"
+                class="inline-flex items-center gap-2 px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 text-xs font-medium rounded-xl transition">
+          📋 Copy Root
+        </button>
+      </div>
+
+      <p class="text-[11px] text-zinc-500 mt-4 leading-relaxed">
+        The <code class="text-zinc-400">.ots</code> file contains the cryptographic proof that this Merkle root was submitted to the public OpenTimestamps calendars. 
+        You can verify it independently at <a href="https://opentimestamps.org" class="text-cyan-400 hover:underline" target="_blank">opentimestamps.org</a> 
+        or with the <code class="text-zinc-400">ots</code> command-line tool.
+      </p>
+    `;
+
+    // Copy button
+    document.getElementById('copyRootBtn')?.addEventListener('click', () => {
+      navigator.clipboard.writeText(a.root || '').then(() => {
+        const btn = document.getElementById('copyRootBtn');
+        if (btn) {
+          btn.textContent = '✅ Copied';
+          setTimeout(() => { btn.textContent = '📋 Copy Root'; }, 2000);
+        }
+      });
+    });
+
+  } catch (e) {
+    console.error('OTS anchor load error:', e);
+    container.innerHTML = `
+      <div class="text-red-400/80 text-sm">
+        Unable to load external anchor data. The collection may not exist yet or rules may restrict public reads.
+      </div>`;
+  }
+}
+/* -------------------------------------------------------------------------- */
 /* Prove-It-Yourself Lab                                                      */
 /* -------------------------------------------------------------------------- */
 
