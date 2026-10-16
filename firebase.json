@@ -27,10 +27,10 @@
       { "source": "/transparency", "destination": "/transparency.html" },
       { "source": "/legal", "destination": "/legal.html" },
       { "source": "/live-arena", "destination": "/live-arena.html" },
+      { "source": "/governance", "destination": "/governance.html" },
       { "source": "/p/**", "function": "ogPost" },
       { "source": "/share/**", "function": "ogPost" },
-      { "source": "/profile", "destination": "/profile.html" },
-      { "source": "/governance", "destination": "/governance.html" }
+      { "source": "/profile", "destination": "/profile.html" }
     ],
     "ignore": [
       "firebase.json",
