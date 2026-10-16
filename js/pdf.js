@@ -220,7 +220,7 @@ function drawMonogramFallback(pdf, name, x, y, size = 22, isGold = false) {
 }
 
 /* ============================================================
-   STANDARD CREDENTIAL
+   STANDARD CREDENTIAL (Free)
    ============================================================ */
 async function generateStandardPassport(userData, tier, docId, verificationUrl) {
   const { jsPDF } = window.jspdf;
@@ -306,7 +306,7 @@ async function generateStandardPassport(userData, tier, docId, verificationUrl) 
   pdf.text("This Independent Citizen Press Credential certifies that the holder is an active,", 20, y);
   pdf.text("zero-knowledge verified contributor on the VocalWitness network. It serves as", 20, y + 5.5);
   pdf.text("proof of participation in ground-level citizen journalism and public-interest reporting.", 20, y + 11);
-  pdf.text("The public ledger record is permanent.", 20, y + 16.5);
+  pdf.text("The public ledger record is permanent. This is the free Standard version.", 20, y + 16.5);
 
   // Light watermark
   pdf.setTextColor(235, 235, 235);
@@ -320,6 +320,7 @@ async function generateStandardPassport(userData, tier, docId, verificationUrl) 
     } catch (e) {}
   }
 
+  // Verification box (Standard – shorter)
   pdf.setFillColor(241, 245, 249);
   pdf.roundedRect(20, 235, 120, 28, 3, 3, 'F');
   pdf.setFont("helvetica", "bold");
@@ -327,15 +328,15 @@ async function generateStandardPassport(userData, tier, docId, verificationUrl) 
   pdf.setTextColor(30, 41, 59);
   pdf.text("Public Verification", 28, 245);
   pdf.setFont("courier", "normal");
-  pdf.setFontSize(7);
+  pdf.setFontSize(6.5);
   pdf.setTextColor(13, 148, 136);
-  pdf.text(verificationUrl.substring(0, 52) + "...", 28, 253);
+  pdf.text(verificationUrl, 28, 253);
 
   pdf.save(`Independent_Citizen_Press_Credential_Standard_${docId.slice(0, 8)}.pdf`);
 }
 
 /* ============================================================
-   PREMIUM / OFFICIAL CREDENTIAL
+   PREMIUM / OFFICIAL CREDENTIAL (Paid – extra value)
    ============================================================ */
 async function generatePremiumCertificate(userData, tier, docId, verificationUrl) {
   const { jsPDF } = window.jspdf;
@@ -411,6 +412,7 @@ async function generatePremiumCertificate(userData, tier, docId, verificationUrl
     .toLocaleDateString();
 
   const premiumLines = [
+    `Credential Type         : Official (Paid)`,
     `Reputation Score        : ${userData.reputation || userData.trustScore || 0} REP`,
     `Verification            : Zero-Knowledge Proof Confirmed`,
     `Phone Status            : ${userData.isPhoneVerified || userData.hasVerifiedPhone ? "Verified" : "Not verified"}`,
@@ -450,6 +452,7 @@ async function generatePremiumCertificate(userData, tier, docId, verificationUrl
   pdf.text("zero-knowledge verified and active contributor on the VocalWitness network. It", 20, y + 5.5);
   pdf.text("reflects sustained participation in citizen journalism and public-interest reporting", 20, y + 11);
   pdf.text("on the ground. This document is permanently registered on the public ledger.", 20, y + 16.5);
+  pdf.text("Money never buys a higher truth rank or voting power on VocalWitness.", 20, y + 22);
 
   // QR with gold border
   const qrData = await generateQRCodeDataUrl(verificationUrl, 140);
@@ -462,24 +465,27 @@ async function generatePremiumCertificate(userData, tier, docId, verificationUrl
     } catch (e) {}
   }
 
-  // Dark verification box
+  // Dark verification box – PREMIUM gets full URL + clear instruction
   pdf.setFillColor(24, 24, 27);
-  pdf.roundedRect(20, 232, 120, 36, 4, 4, 'F');
+  pdf.roundedRect(20, 228, 120, 42, 4, 4, 'F');
 
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(8.5);
   pdf.setTextColor(250, 204, 21);
-  pdf.text("PUBLIC VERIFICATION PORTAL", 28, 243);
+  pdf.text("PUBLIC VERIFICATION PORTAL", 28, 238);
 
   pdf.setFont("courier", "normal");
-  pdf.setFontSize(7);
+  pdf.setFontSize(6.8);
   pdf.setTextColor(52, 211, 153);
-  pdf.text(verificationUrl.substring(0, 48) + "...", 28, 251);
+  // Full URL (wraps if needed)
+  const urlLines = pdf.splitTextToSize(verificationUrl, 108);
+  pdf.text(urlLines, 28, 246);
 
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(7);
   pdf.setTextColor(161, 161, 170);
-  pdf.text("Scan the QR or visit the link to confirm authenticity.", 28, 258);
+  pdf.text("Scan the QR code or open the link above to confirm", 28, 258);
+  pdf.text("this credential is authentic on VocalWitness.", 28, 263);
 
   pdf.save(`Independent_Citizen_Press_Credential_Official_${docId.slice(0, 8)}.pdf`);
 }
