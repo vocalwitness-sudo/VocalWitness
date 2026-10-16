@@ -285,16 +285,16 @@ if (document.getElementById('ledgerContainer')) {
     document.addEventListener('DOMContentLoaded', () => {
         loadForensicLedger();
 
-        document.getElementById('backBtn')?.addEventListener('click', () => {
-            if (window.history.length > 1) window.history.back();
-            else window.location.href = 'index.html';
-        });
-
+        // Fixed Back button – reliable navigation
         document.addEventListener('click', (e) => {
             if (e.target.closest('[data-action="back"]')) {
                 e.preventDefault();
-                if (window.history.length > 1) window.history.back();
-                else window.location.href = 'index.html';
+                // Prefer going back only if we actually came from the same origin
+                if (document.referrer && document.referrer.startsWith(window.location.origin)) {
+                    window.history.back();
+                } else {
+                    window.location.href = 'index.html';
+                }
             }
         });
 
@@ -335,7 +335,6 @@ if (document.getElementById('ledgerContainer')) {
 
     window.addEventListener('beforeunload', cleanupLedger);
 }
-
 export default {
     loadForensicLedger,
     refreshLedger,
