@@ -3,33 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="safetyPageTitle">Safety & Your Rights • VocalWitness</title>
+    <title>Safety & Your Rights • VocalWitness</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="./style.css">
 </head>
 <body class="min-h-screen bg-[#0a0f1c] text-zinc-200 antialiased">
 
-    <!-- ====================== HEADER ====================== -->
+    <!-- Header -->
     <header class="sticky top-0 z-50 border-b border-zinc-800 bg-zinc-950/95 backdrop-blur-md">
         <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-            
-            <!-- Back Button -->
             <a href="index.html" 
                class="flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm font-medium text-emerald-400 hover:border-emerald-500/50 hover:bg-zinc-800 transition">
-                ← <span data-i18n="backToSquareText">Back to Square</span>
+                ← <span>Back to Square</span>
             </a>
 
             <h1 class="text-base font-bold text-white tracking-tight hidden sm:block">VocalWitness</h1>
 
             <div class="flex items-center gap-2">
-                <!-- Quick Exit -->
                 <button id="panicButton" type="button"
                         class="flex items-center gap-1.5 rounded-xl bg-red-600/90 px-3 py-2 text-xs font-bold text-white hover:bg-red-500 transition shadow-lg"
                         title="Clear local data and exit immediately">
-                    🚨 <span data-i18n="panicExit">Quick Exit</span>
+                    🚨 Quick Exit
                 </button>
 
-                <!-- Language -->
                 <select id="languageSelector" 
                         class="h-9 rounded-xl border border-zinc-700 bg-zinc-900 px-2 text-xs text-white focus:border-emerald-500 focus:outline-none">
                     <option value="en">English</option>
@@ -46,161 +42,136 @@
         </div>
     </header>
 
-    <!-- ====================== MAIN CONTENT ====================== -->
     <main class="max-w-3xl mx-auto px-4 py-8 pb-20">
 
         <!-- Page Title -->
         <div class="flex items-center gap-4 mb-8">
             <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/20 text-3xl">🛡️</div>
             <div>
-                <h1 class="text-3xl font-bold text-white tracking-tight" data-i18n="safetyTitle">Safety & Your Rights</h1>
+                <h1 class="text-3xl font-bold text-white tracking-tight">Safety & Your Rights</h1>
                 <p class="text-sm text-zinc-400 mt-1">Your protection is built into the system</p>
             </div>
         </div>
 
         <!-- Banner -->
         <div class="rounded-3xl border border-emerald-500/30 bg-emerald-950/20 p-6 mb-10 space-y-4">
-            <h2 class="text-xl font-bold text-emerald-400" data-i18n="safetyBannerTitle">The Right to Verifiable Truth</h2>
-            <p class="text-zinc-300 leading-relaxed text-sm md:text-base" data-i18n="safetyBannerDesc">
+            <h2 class="text-xl font-bold text-emerald-400">The Right to Verifiable Truth</h2>
+            <p class="text-zinc-300 leading-relaxed text-sm md:text-base">
                 Every individual has the right to record and publish verified accounts of public events. 
                 This framework is anchored to Article 19 of the Universal Declaration of Human Rights.
             </p>
             <div class="flex flex-wrap gap-2 text-xs">
-                <span class="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 font-medium text-emerald-400">Data Minimization Practices</span>
+                <span class="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 font-medium text-emerald-400">Data Minimization</span>
                 <span class="rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 font-medium text-amber-400">Cloudflare Edge Shield</span>
                 <span class="rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 font-medium text-cyan-400">Client-Side EXIF Scrubbing</span>
             </div>
         </div>
 
-        <!-- Sections -->
         <div class="space-y-10">
 
-            <!-- Section 1 -->
+            <!-- 1 -->
             <section>
-                <h2 class="text-xl font-semibold text-white mb-4" data-i18n="safetySec1Title">1. Privacy & Data Protection Design</h2>
+                <h2 class="text-xl font-semibold text-white mb-4">1. Privacy & Data Protection Design</h2>
                 <div class="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-6 space-y-3">
-                    <p class="text-sm text-zinc-300" data-i18n="safetySec1Text">
+                    <p class="text-sm text-zinc-300">
                         We apply data minimization principles to reduce unnecessary tracking and protect contributor privacy:
                     </p>
                     <ul class="space-y-2 text-sm text-zinc-400 list-disc pl-5">
-                        <li data-i18n="safetySec1Bullet1"><strong class="text-zinc-200">Focused Collection:</strong> Only necessary post and account data required for platform operation are processed.</li>
-                        <li data-i18n="safetySec1Bullet2"><strong class="text-zinc-200">Automated Sanitization:</strong> Metadata and device signatures can be processed or stripped in-browser before publishing.</li>
-                        <li data-i18n="safetySec1Bullet3"><strong class="text-zinc-200">Secure Storage:</strong> Information is stored securely via Firebase and Cloudflare infrastructure with operational controls.</li>
+                        <li><strong class="text-zinc-200">Focused Collection:</strong> Only necessary post and account data required for platform operation are processed.</li>
+                        <li><strong class="text-zinc-200">Automated Sanitization:</strong> Metadata and device signatures can be stripped in-browser before publishing.</li>
+                        <li><strong class="text-zinc-200">Secure Storage:</strong> Information is stored securely via Firebase and Cloudflare with operational controls.</li>
                     </ul>
+                    <p class="text-xs text-zinc-500 pt-2">See the full <a href="/privacy" class="text-emerald-400 hover:underline">Privacy Policy</a> for details on what is collected and how it is used.</p>
                 </div>
             </section>
 
-            <!-- Section 2 -->
+            <!-- 2 -->
             <section>
-                <h2 class="text-xl font-semibold text-white mb-4" data-i18n="safetySec2Title">2. High-Risk Operational Protocols</h2>
+                <h2 class="text-xl font-semibold text-white mb-4">2. High-Risk Operational Protocols</h2>
                 <div class="grid sm:grid-cols-2 gap-4">
                     <div class="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5">
                         <div class="text-2xl mb-2">📡</div>
-                        <h3 class="font-semibold text-white mb-2" data-i18n="safetyCard1Title">Network Obfuscation</h3>
-                        <p class="text-sm text-zinc-400" data-i18n="safetyCard1Desc">
-                            In restricted or sensitive environments, consider utilizing secure connection tools or VPNs to safeguard your browsing context.
+                        <h3 class="font-semibold text-white mb-2">Network Obfuscation</h3>
+                        <p class="text-sm text-zinc-400">
+                            In restricted or sensitive environments, consider using secure connection tools or trusted VPNs to protect your browsing context.
                         </p>
                     </div>
                     <div class="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5">
                         <div class="text-2xl mb-2">📱</div>
-                        <h3 class="font-semibold text-white mb-2" data-i18n="safetyCard2Title">Device Security & Quick Exit</h3>
-                        <p class="text-sm text-zinc-400" data-i18n="safetyCard2Desc">
+                        <h3 class="font-semibold text-white mb-2">Device Security & Quick Exit</h3>
+                        <p class="text-sm text-zinc-400">
                             Maintain strong device lock safeguards. Press <strong>Quick Exit</strong> to instantly clear local browser storage and redirect away from the site.
                         </p>
                     </div>
                 </div>
             </section>
 
-            <!-- Section 3 -->
+            <!-- 3 -->
             <section>
-                <h2 class="text-xl font-semibold text-white mb-4" data-i18n="safetySec3Title">3. Prohibited Conduct</h2>
+                <h2 class="text-xl font-semibold text-white mb-4">3. Prohibited Conduct</h2>
                 <ul class="space-y-3 text-sm text-zinc-300">
-                    <li class="flex gap-3"><span class="text-red-400 font-bold">✕</span> <span data-i18n="safetyRule1"><strong>Doxxing</strong> — Publishing non-public personal details without consent.</span></li>
-                    <li class="flex gap-3"><span class="text-red-400 font-bold">✕</span> <span data-i18n="safetyRule2"><strong>Harassment & Coercion</strong> — Targeted intimidation or threats.</span></li>
-                    <li class="flex gap-3"><span class="text-red-400 font-bold">✕</span> <span data-i18n="safetyRule3"><strong>Synthetic Disinformation</strong> — Fabricated or heavily manipulated media meant to deceive.</span></li>
-                    <li class="flex gap-3"><span class="text-red-400 font-bold">✕</span> <span data-i18n="safetyRule4"><strong>Spam & Sybil Attacks</strong> — Automated or fake accounts designed to abuse the system.</span></li>
+                    <li class="flex gap-3"><span class="text-red-400 font-bold">✕</span> <span><strong>Doxxing</strong> — Publishing non-public personal details without consent.</span></li>
+                    <li class="flex gap-3"><span class="text-red-400 font-bold">✕</span> <span><strong>Harassment & Coercion</strong> — Targeted intimidation or threats.</span></li>
+                    <li class="flex gap-3"><span class="text-red-400 font-bold">✕</span> <span><strong>Synthetic Disinformation</strong> — Fabricated or heavily manipulated media meant to deceive.</span></li>
+                    <li class="flex gap-3"><span class="text-red-400 font-bold">✕</span> <span><strong>Spam & Sybil Attacks</strong> — Automated or fake accounts designed to abuse the system.</span></li>
                 </ul>
             </section>
 
-            <!-- Section 4 -->
+            <!-- 4 -->
             <section>
-                <h2 class="text-xl font-semibold text-white mb-4" data-i18n="safetySec4Title">4. Community Governance & Trust Tiers</h2>
+                <h2 class="text-xl font-semibold text-white mb-4">4. Community Governance & Trust Tiers</h2>
                 <div class="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5 space-y-3 text-sm text-zinc-400">
-                    <p data-i18n="safetyTier1">• <strong class="text-zinc-200">Citizen Talk</strong> — Open public discussions moderated via community flags and platform oversight.</p>
-                    <p data-i18n="safetyTier2">• <strong class="text-zinc-200">Witness Voice</strong> — Reports backed by client-side media hashing, verification metadata, and hash integrity proofs.</p>
+                    <p>• <strong class="text-zinc-200">Citizen Talk</strong> — Open public discussions moderated via community flags and platform oversight.</p>
+                    <p>• <strong class="text-zinc-200">Citizen Circle</strong> — Phone verification to reduce spam and bots.</p>
+                    <p>• <strong class="text-zinc-200">Witness Voice / Higher Trust</strong> — Reports backed by client-side media hashing and stronger integrity tooling.</p>
+                    <p class="text-xs text-zinc-500 pt-1">Trust tiers and reputation are never for sale.</p>
                 </div>
             </section>
 
             <!-- Mission -->
             <section class="pt-6 border-t border-zinc-800">
-                <p class="text-emerald-400 font-medium mb-1" data-i18n="safetyMissionHeader">Protocol Mission</p>
-                <p class="text-sm text-zinc-400" data-i18n="safetyMissionDesc">
+                <p class="text-emerald-400 font-medium mb-1">Protocol Mission</p>
+                <p class="text-sm text-zinc-400">
                     Building a reliable public square where factual reporting is supported by strong structural safeguards and clear operational standards.
                 </p>
             </section>
         </div>
-        <!-- ====================== FOOTER ====================== -->
-<footer class="mt-16 border-t border-zinc-800 pt-10 pb-8">
-  <div class="max-w-3xl mx-auto px-4 text-center">
 
-    <!-- Brand + Tagline -->
-    <div class="mb-6">
-      <div class="inline-flex items-center gap-2.5">
-        <img src="./logo.png" alt="VocalWitness" class="h-8 w-8 rounded-lg border border-emerald-500/40 object-cover">
-        <span class="text-lg font-bold tracking-tight">
-          <span class="text-emerald-400">Vocal</span><span class="text-white">Witness</span>
-        </span>
-      </div>
-      <p class="mt-2 text-sm text-zinc-400">
-        Truth • Evidence • Zero-Knowledge
-      </p>
-    </div>
+        <!-- Footer -->
+        <footer class="mt-16 border-t border-zinc-800 pt-10 pb-8">
+            <div class="text-center">
+                <div class="mb-6">
+                    <div class="inline-flex items-center gap-2.5">
+                        <img src="./logo.png" alt="VocalWitness" class="h-8 w-8 rounded-lg border border-emerald-500/40 object-cover">
+                        <span class="text-lg font-bold tracking-tight">
+                            <span class="text-emerald-400">Vocal</span><span class="text-white">Witness</span>
+                        </span>
+                    </div>
+                    <p class="mt-2 text-sm text-zinc-400">Truth • Evidence • Zero-Knowledge</p>
+                </div>
+                <div class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-zinc-400 mb-6">
+                    <a href="/about" class="hover:text-emerald-400 transition">About</a>
+                    <a href="/safety" class="hover:text-emerald-400 transition">Safety</a>
+                    <a href="/privacy" class="hover:text-emerald-400 transition">Privacy</a>
+                    <a href="/terms" class="hover:text-emerald-400 transition">Terms</a>
+                    <a href="/transparency" class="hover:text-emerald-400 transition">Transparency</a>
+                    <a href="/verify" class="hover:text-emerald-400 transition">Verify</a>
+                </div>
+                <p class="text-xs text-zinc-500">© 2026 VocalWitness • Citizen Reporting • Real Evidence</p>
+                <p class="mt-1 text-[11px] text-zinc-600 max-w-md mx-auto leading-relaxed">
+                    Application-level integrity • Client-side hashing • The public record is designed to remain sealed
+                </p>
+            </div>
+        </footer>
 
-    <!-- Links -->
-    <div class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-zinc-400 mb-6">
-      <a href="/about" class="hover:text-emerald-400 transition">About</a>
-      <a href="/safety" class="hover:text-emerald-400 transition">Safety</a>
-      <a href="/privacy" class="hover:text-emerald-400 transition">Privacy</a>
-      <a href="/terms" class="hover:text-emerald-400 transition">Terms</a>
-      <a href="/transparency" class="hover:text-emerald-400 transition">Transparency</a>
-      <a href="/verify" class="hover:text-emerald-400 transition">Verify</a>
-    </div>
-
-    <!-- Partner -->
-    <div class="mb-6 text-xs text-zinc-500">
-      <span class="text-zinc-400">Partner:</span>
-      <span class="font-medium text-zinc-300"> OK CREATION PHOTO & VIDEO STUDIO</span>
-      <span class="mx-1.5">·</span>
-      <a href="https://www.youtube.com/@okcreationphotovideostudio2425" 
-         target="_blank" rel="noopener noreferrer" 
-         class="text-emerald-400/90 hover:text-emerald-300 hover:underline">YouTube</a>
-      <span class="mx-1">·</span>
-      <a href="https://www.facebook.com/Okcreationfotostudio/" 
-         target="_blank" rel="noopener noreferrer" 
-         class="text-emerald-400/90 hover:text-emerald-300 hover:underline">Facebook</a>
-    </div>
-
-    <!-- Copyright -->
-    <p class="text-xs text-zinc-500">
-      © 2026 VocalWitness • Citizen Reporting • Real Evidence
-    </p>
-    <p class="mt-1 text-[11px] text-zinc-600 max-w-md mx-auto leading-relaxed">
-      Application-level integrity • Client-side hashing • The public record is designed to remain sealed
-    </p>
-
-  </div>
-</footer>
-
-        <!-- Bottom Back Button -->
-        <div class="mt-14 text-center">
+        <div class="mt-10 text-center">
             <a href="index.html" 
                class="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-8 py-3.5 font-semibold text-white shadow-lg hover:bg-emerald-500 transition">
-                ← <span data-i18n="backToSquare">Back to VocalWitness</span>
+                ← Back to VocalWitness
             </a>
         </div>
     </main>
 
-    <!-- Scripts -->
     <script>
         document.getElementById('panicButton')?.addEventListener('click', () => {
             localStorage.clear();
