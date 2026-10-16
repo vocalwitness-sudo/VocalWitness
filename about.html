@@ -63,8 +63,9 @@
                 <div class="text-4xl mb-4">🔬</div>
                 <h3 class="font-bold text-white mb-2">Proof Nothing Was Changed</h3>
                 <p class="text-zinc-400 text-sm leading-relaxed">
-                    Photos, voice notes, and files can receive a <strong class="text-zinc-300">SHA-256 digital fingerprint on your device</strong>
-                    before upload. Others can check that a download matches the sealed hash via Evidence Packs and the Verify page.
+                    Photos, voice notes, and files receive a <strong class="text-zinc-300">SHA-256 digital fingerprint on your device</strong>
+                    before upload. Anyone can check that a download matches the sealed hash via Evidence Packs and the 
+                    <a href="/verify" class="text-emerald-400 hover:underline">Verify</a> page.
                 </p>
             </div>
 
@@ -90,11 +91,10 @@
                 <div class="text-4xl mb-4">🤝</div>
                 <h3 class="font-bold text-white mb-2">Free to Report. Funded with Care.</h3>
                 <p class="text-zinc-400 text-sm leading-relaxed">
-                    Publishing sealed reports, using privacy tools, reading the Square, and basic verification stay
+                    Publishing sealed reports, reading the Square, and basic verification stay
                     <strong class="text-zinc-300">free</strong> — no ads on testimony, no paywall on the public record.
-                    Voluntary <strong class="text-zinc-300">Support the Square</strong> contributions and an
-                    <strong class="text-zinc-300">optional</strong> Independent Citizen Press Credential (for professionals who need a formal PDF)
-                    help pay for servers and development. <strong class="text-zinc-300">Trust tiers are never for sale.</strong>
+                    Optional Support and an optional Independent Citizen Press Credential help keep the lights on.
+                    <strong class="text-zinc-300">Trust tiers are never for sale.</strong>
                 </p>
             </div>
         </section>
@@ -107,7 +107,7 @@
                     <h3 class="font-semibold text-white mb-2">1. Start simple, grow stronger</h3>
                     <p class="text-zinc-400 text-sm leading-relaxed">
                         Everyone can begin in open citizen reporting. Optional phone verification helps reduce spam (Citizen Circle).
-                        Higher Trust / Witness Circle is earned through platform checks and membership safeguards — not by payment.
+                        Higher Trust / Witness Circle is earned through platform checks — not by payment.
                     </p>
                 </div>
                 <div>
@@ -137,11 +137,11 @@
             <ul class="text-sm text-zinc-400 space-y-2 list-disc list-inside">
                 <li><strong class="text-zinc-300">Free core</strong> — report, read, basic Evidence Pack, Verify page</li>
                 <li><strong class="text-zinc-300">Voluntary support</strong> — optional gifts to keep the Square independent</li>
-                <li><strong class="text-zinc-300">Optional press credential</strong> — formal PDF for professionals who need it</li>
+                <li><strong class="text-zinc-300">Optional press credential</strong> — formal PDF for professionals who need it (Standard free, Official paid)</li>
                 <li><strong class="text-zinc-300">Partners &amp; grants</strong> — aligned studios, civic, and journalism support where available</li>
             </ul>
             <p class="mt-4 text-xs text-zinc-500 leading-relaxed">
-                Paying never buys a higher truth rank. Supporter recognition is thank-you only; sealed integrity and trust tiers follow the same rules for everyone.
+                Paying never buys a higher truth rank or voting power. Supporter recognition is thank-you only.
             </p>
         </section>
 
@@ -155,31 +155,28 @@
                 <div>
                     <h3 class="font-semibold text-emerald-400 mb-1">Media &amp; evidence integrity</h3>
                     <p>
-                        Media can be hashed locally with <strong>SHA-256</strong> before upload. Evidence Packs and the
+                        Media is hashed locally with <strong>SHA-256</strong> before upload. Evidence Packs and the
                         <a href="/verify" class="text-emerald-400/90 hover:underline">Verify</a> flow let third parties
-                        recompute hashes and compare them to sealed metadata. Entries may be hash-linked for tamper evidence
-                        at the application layer.
+                        recompute hashes and compare them to sealed metadata.
                     </p>
                 </div>
 
                 <div>
-                    <h3 class="font-semibold text-emerald-400 mb-1">Membership &amp; higher trust</h3>
+                    <h3 class="font-semibold text-emerald-400 mb-1">Independent verification</h3>
                     <p>
-                        Higher Trust / Witness Circle uses a <strong>membership commitment and nullifier</strong> model so
-                        elevation cannot be casually replayed. A Circom/Groth16 membership circuit (Poseidon, Merkle inclusion,
-                        trust and activity thresholds) is part of the roadmap and artifact pipeline.
-                        Production elevation is being hardened toward full client-side proving and server-side verification;
-                        until that path is complete, treat membership badges as <strong>platform higher-trust status</strong>,
-                        and treat <strong>media hash seals</strong> as the primary cryptographic integrity story for evidence files.
+                        Journalists and investigators can follow the short guide:
+                        <a href="/docs/journalist-verification.md" class="text-emerald-400 hover:underline">Journalist Verification Guide</a>.
+                        Also see the live <a href="/transparency" class="text-emerald-400 hover:underline">Transparency dashboard</a>
+                        and the Prove-It-Yourself lab.
                     </p>
                 </div>
 
                 <div>
-                    <h3 class="font-semibold text-emerald-400 mb-1">Privacy architecture</h3>
+                    <h3 class="font-semibold text-emerald-400 mb-1">Immutability model</h3>
                     <p>
-                        Client-side EXIF/GPS scrubbing in privacy mode • Edge protection via Cloudflare •
-                        Phone verification aimed at anti-spam, not as a public identity on the sealed ledger •
-                        Data minimization in product design.
+                        Application-level sealing: Firestore security rules (including no ordinary delete of sealed testimonies),
+                        client-side hashing, and operational audit logs. This is <em>not</em> a full public blockchain.
+                        Optional public-chain anchoring may come later.
                     </p>
                 </div>
 
@@ -192,23 +189,6 @@
                         • Reputation grows with honest use; it is not a paid ranking product
                     </p>
                 </div>
-
-                <div>
-                    <h3 class="font-semibold text-emerald-400 mb-1">Immutability model</h3>
-                    <p>
-                        Application-level sealing: Firestore security rules (including no ordinary delete of sealed testimonies),
-                        client-side hashing, and operational audit logs. This is <em>not</em> a full public blockchain.
-                        Optional public-chain or IPFS-style anchoring may come later; it is not required for day-to-day hash verification.
-                    </p>
-                </div>
-
-                <div>
-                    <h3 class="font-semibold text-emerald-400 mb-1">Independent checks</h3>
-                    <p>
-                        See the journalist verification notes in our docs: download an Evidence Pack, recompute SHA-256 on the media,
-                        and compare to sealed metadata. Use Transparency and Verify for ledger-oriented checks as those surfaces mature.
-                    </p>
-                </div>
             </div>
         </section>
 
@@ -218,54 +198,22 @@
             </p>
         </section>
 
-        <div class="text-center mb-12">
-            <a href="index.html" class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 font-semibold rounded-2xl border border-emerald-500/30 transition shadow-lg">
-                <span>←</span> Back to Public Square
-            </a>
+        <!-- Footer links -->
+        <div class="flex flex-wrap justify-center gap-4 text-sm text-zinc-400 mb-10">
+            <a href="/transparency" class="hover:text-emerald-400">Transparency</a>
+            <a href="/verify" class="hover:text-emerald-400">Verify</a>
+            <a href="/safety" class="hover:text-emerald-400">Safety</a>
+            <a href="/privacy" class="hover:text-emerald-400">Privacy</a>
+            <a href="/terms" class="hover:text-emerald-400">Terms</a>
         </div>
 
-        <footer class="mt-16 border-t border-zinc-800 pt-10 pb-8">
-            <div class="max-w-3xl mx-auto px-4 text-center">
-                <div class="mb-6">
-                    <div class="inline-flex items-center gap-2.5">
-                        <img src="./logo.png" alt="VocalWitness" class="h-8 w-8 rounded-lg border border-emerald-500/40 object-cover">
-                        <span class="text-lg font-bold tracking-tight">
-                            <span class="text-emerald-400">Vocal</span><span class="text-white">Witness</span>
-                        </span>
-                    </div>
-                    <p class="mt-2 text-sm text-zinc-400">
-                        Truth • Evidence • Protected public record
-                    </p>
-                </div>
-                <div class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-zinc-400 mb-6">
-                    <a href="/about" class="hover:text-emerald-400 transition">About</a>
-                    <a href="/safety" class="hover:text-emerald-400 transition">Safety</a>
-                    <a href="/privacy" class="hover:text-emerald-400 transition">Privacy</a>
-                    <a href="/terms" class="hover:text-emerald-400 transition">Terms</a>
-                    <a href="/transparency" class="hover:text-emerald-400 transition">Transparency</a>
-                    <a href="/verify" class="hover:text-emerald-400 transition">Verify</a>
-                </div>
-                <div class="mb-6 text-xs text-zinc-500">
-                    <span class="text-zinc-400">Partner:</span>
-                    <span class="font-medium text-zinc-300"> OK CREATION PHOTO &amp; VIDEO STUDIO</span>
-                    <span class="mx-1.5">·</span>
-                    <a href="https://www.youtube.com/@okcreationphotovideostudio2425" target="_blank" rel="noopener noreferrer" class="text-emerald-400/90 hover:text-emerald-300 hover:underline">YouTube</a>
-                    <span class="mx-1">·</span>
-                    <a href="https://www.facebook.com/Okcreationfotostudio/" target="_blank" rel="noopener noreferrer" class="text-emerald-400/90 hover:text-emerald-300 hover:underline">Facebook</a>
-                </div>
-                <p class="text-xs text-zinc-500">
-                    © 2026 VocalWitness • Citizen Reporting • Real Evidence
-                </p>
-                <p class="mt-1 text-[11px] text-zinc-600 max-w-md mx-auto leading-relaxed">
-                    Application-level integrity • Client-side hashing • Free core reporting • Trust is not for sale
-                </p>
-            </div>
-        </footer>
     </div>
 
     <script type="module">
         import { initLanguage } from './js/i18n.js';
-        document.addEventListener('DOMContentLoaded', () => initLanguage());
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof initLanguage === 'function') initLanguage();
+        });
     </script>
 </body>
 </html>
