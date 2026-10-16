@@ -558,12 +558,12 @@ export function bindAppealModal() {
 
 export function initTransparencyPage() {
   bindAppealModal();
-  initProveItLab();
 
   loadTrustMetrics();
   loadTransparencyData();
   loadAIAuditLogs();
   loadChallengesTable();
+  loadLatestOtsAnchor();          // ← add this line
 
   window.addEventListener('vocalWitness:posted', () => {
     loadTrustMetrics();
