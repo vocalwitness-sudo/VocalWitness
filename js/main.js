@@ -1187,70 +1187,80 @@ async function fetchCuratedNews() {
   if (tickerEl.dataset.loading === '1') return;
   tickerEl.dataset.loading = '1';
 
-  const CACHE_KEY = 'vw_ticker_headlines_v1';
-  const CACHE_TTL = 15 * 60 * 1000; // 15 minutes
+  const CACHE_KEY = 'vw_ticker_headlines_v2';
+  const CACHE_TTL = 20 * 60 * 1000; // 20 minutes
 
+  // Always enough items so the strip never looks like a stuck pole
   const fallbackItems = [
     '🛡️ VocalWitness Public Square is live • Zero-knowledge ledger online',
     '🌍 Citizen reporting active across Africa & the world',
     '⚡ Share what you saw — evidence stays protected',
     '🔒 Every sealed report is cryptographically timestamped',
     '🎤 Live Voice carries higher evidence weight',
-    '📜 Immutable Record protects the original forever'
+    '📜 Immutable Record protects the original forever',
+    '🏛️ DAO governance: quadratic voting is open',
+    '✅ Verify integrity without revealing identity'
   ];
 
+  function restartTickerAnimation() {
+    // Force reflow so CSS animation always restarts
+    tickerEl.style.animation = 'none';
+    void tickerEl.offsetWidth;
+    tickerEl.style.animation = '';
+    tickerEl.classList.remove('ticker-paused');
+  }
+
   function applyTicker(items) {
-    if (!items || items.length === 0) items = fallbackItems;
+    let list = Array.isArray(items) ? items.filter(Boolean).map(String) : [];
+    if (list.length < 4) list = fallbackItems.slice();
 
-    // Ensure enough content for a smooth loop
-    while (items.length < 8) {
-      items = items.concat(items);
+    // Pad so the marquee never sits still with 1–2 lines
+    while (list.length < 10) {
+      list = list.concat(list);
     }
+    list = list.slice(0, 16);
 
-    const html = items
+    const html = list
       .map((title) => {
         const safe = String(title)
           .replace(/&/g, '&amp;')
           .replace(/</g, '&lt;')
           .replace(/>/g, '&gt;')
           .replace(/"/g, '&quot;');
-        return `<span class="ticker-item px-8"><strong class="text-emerald-400">•</strong> ${safe}</span>`;
+        return `<span class="ticker-item px-8 whitespace-nowrap"><strong class="text-emerald-400">•</strong> ${safe}</span>`;
       })
       .join('');
 
-    // Duplicate for seamless -50% scroll
+    // Duplicate strip for seamless -50% loop
     tickerEl.innerHTML = html + html;
-
-    // Force restart animation
-    tickerEl.style.animation = 'none';
-    void tickerEl.offsetWidth;
-    tickerEl.style.animation = 'ticker-scroll 55s linear infinite';
+    restartTickerAnimation();
   }
 
-  // Show cached headlines immediately if available
+  // Paint something immediately (cache or fallback) so UI never freezes
+  let usedCache = false;
   try {
     const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
-    if (cached && Array.isArray(cached.items) && cached.items.length >= 3 &&
-        Date.now() - (cached.ts || 0) < CACHE_TTL) {
+    if (
+      cached &&
+      Array.isArray(cached.items) &&
+      cached.items.length >= 3 &&
+      Date.now() - (cached.ts || 0) < CACHE_TTL * 3 // allow slightly stale
+    ) {
       applyTicker(cached.items);
+      usedCache = true;
     } else {
-      tickerEl.innerHTML = `
-        <span class="ticker-item px-8 text-zinc-400">
-          🌍 Loading Global + Africa headlines...
-        </span>
-        <span class="ticker-item px-8 text-zinc-400">
-          🌍 Loading Global + Africa headlines...
-        </span>
-      `;
-      tickerEl.style.animation = 'ticker-scroll 40s linear infinite';
+      applyTicker(fallbackItems);
     }
-  } catch (_) {}
+  } catch (_) {
+    applyTicker(fallbackItems);
+  }
 
+  // Reliable-first feeds (rss2json is flaky; fewer sources = fewer 500s)
   const feeds = [
-    { url: 'https://feeds.bbci.co.uk/news/world/rss.xml', weight: 1 },
-    { url: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml', weight: 1 },
-    { url: 'https://feeds.bbci.co.uk/news/world/africa/rss.xml', weight: 2 },
+    { url: 'https://feeds.bbci.co.uk/news/world/africa/rss.xml', weight: 3 },
+    { url: 'https://feeds.bbci.co.uk/news/world/rss.xml', weight: 2 },
     { url: 'https://www.africanews.com/feed/', weight: 2 }
+    // NYT + Reuters via rss2json often 500 — omit for stability
   ];
 
   try {
@@ -1259,7 +1269,7 @@ async function fetchCuratedNews() {
         try {
           const res = await fetch(
             `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}`,
-            { signal: AbortSignal.timeout(7000) }
+            { signal: AbortSignal.timeout(6000) }
           );
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           const data = await res.json();
@@ -1267,12 +1277,13 @@ async function fetchCuratedNews() {
             throw new Error('Invalid response');
           }
           return data.items
-            .slice(0, 6)
-            .filter((item) => item.title && item.title.trim().length > 18)
+            .slice(0, 5)
+            .filter((item) => item.title && item.title.trim().length > 16)
             .map((item) => ({ title: item.title.trim(), weight: feed.weight }));
         } catch (err) {
+          // Expected proxy failures — stay quiet
           const msg = err?.message || String(err);
-          if (!/HTTP 422|HTTP 429|timeout|AbortError/i.test(msg)) {
+          if (!/HTTP 4\d\d|HTTP 5\d\d|timeout|AbortError|Failed to fetch/i.test(msg)) {
             console.warn(`[Ticker] Failed ${feed.url}:`, msg);
           }
           return [];
@@ -1295,7 +1306,7 @@ async function fetchCuratedNews() {
     const uniqueTitles = [];
     const seen = new Set();
     for (const item of allHeadlines) {
-      const key = item.title.toLowerCase().slice(0, 55);
+      const key = item.title.toLowerCase().slice(0, 50);
       if (!seen.has(key)) {
         seen.add(key);
         uniqueTitles.push(item.title);
@@ -1306,70 +1317,36 @@ async function fetchCuratedNews() {
 
     if (finalHeadlines.length >= 3) {
       try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify({
-          ts: Date.now(),
-          items: finalHeadlines
-        }));
+        localStorage.setItem(
+          CACHE_KEY,
+          JSON.stringify({ ts: Date.now(), items: finalHeadlines })
+        );
       } catch (_) {}
       applyTicker(finalHeadlines);
-      console.log(`[Ticker] Loaded ${finalHeadlines.length} headlines`);
-    } else {
-      throw new Error('Not enough headlines');
+    } else if (!usedCache) {
+      applyTicker(fallbackItems);
     }
+    // else: keep showing cache already painted
   } catch (err) {
-    console.warn('[Ticker] Using fallback / cache:', err?.message || err);
-    applyTicker(fallbackItems);
+    console.warn('[Ticker] Network path failed, keeping current strip:', err?.message || err);
+    if (!tickerEl.innerHTML || tickerEl.innerHTML.length < 40) {
+      applyTicker(fallbackItems);
+    } else {
+      restartTickerAnimation();
+    }
   } finally {
     tickerEl.dataset.loading = '0';
   }
 }
 
-// Refresh ticker every 12 minutes
+// Refresh every 15 minutes
 if (!window.__vwTickerRefresh) {
   window.__vwTickerRefresh = setInterval(() => {
     fetchCuratedNews();
-  }, 12 * 60 * 1000);
+  }, 15 * 60 * 1000);
 }
 
-// Focus banner rotating messages
-const focusMessages = [
-  { title: "Truth first.", text: "Seal what you saw. Evidence stays immutable." },
-  { title: "Citizen power.", text: "Anyone can report. Only sealed records stay public." },
-  { title: "Zero-knowledge ready.", text: "Prove integrity without revealing identity." },
-  { title: "Your voice matters.", text: "Live voice carries stronger evidence weight." },
-  { title: "Public Square.", text: "Where citizens speak and evidence is preserved." }
-];
-let focusIndex = 0;
 
-function rotateFocusBanner() {
-  const el = document.getElementById('focus-banner-text');
-  if (!el || !focusMessages.length) return;
-
-  el.style.opacity = '0';
-
-  setTimeout(() => {
-    const msg = focusMessages[focusIndex];
-    const safeTitle = String(msg.title)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
-    const safeText = String(msg.text)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
-
-    el.innerHTML = `
-      <span class="font-medium text-emerald-300">${safeTitle}</span>
-      <span class="text-zinc-400"> ${safeText}</span>
-    `;
-    el.style.opacity = '1';
-    focusIndex = (focusIndex + 1) % focusMessages.length;
-  }, 300);
-}
-
-if (!window.__vwFocusBannerTimer) {
-  window.__vwFocusBannerTimer = setInterval(rotateFocusBanner, 8000);
-}
 /* ====================== UTILITIES ====================== */
 function escapeHtml(str) {
   if (!str) return '';
