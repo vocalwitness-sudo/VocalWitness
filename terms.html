@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title data-i18n="termsPageTitle">Terms of Service • VocalWitness</title>
+  <title>Terms of Service • VocalWitness</title>
   <link rel="stylesheet" href="./style.css">
   <style>
     body { background-color: #0a0f1c; color: white; font-family: 'Inter', system-ui, sans-serif; }
@@ -18,7 +18,7 @@
     <div class="flex items-center justify-between mb-10 glass rounded-3xl p-4">
       <div class="flex items-center gap-3">
         <a href="index.html" class="w-10 h-10 bg-emerald-500/20 rounded-2xl flex items-center justify-center text-xl hover:bg-emerald-500/30 transition" aria-label="Back to home">⬅️</a>
-        <h1 class="text-2xl font-bold tracking-tight" data-i18n="appTitle">VocalWitness</h1>
+        <h1 class="text-2xl font-bold tracking-tight">VocalWitness</h1>
       </div>
       <div class="flex items-center gap-3">
         <select id="languageSelector" class="bg-zinc-900 border border-zinc-700 text-white rounded-2xl px-4 py-2 text-sm focus:outline-none focus:border-emerald-500">
@@ -33,10 +33,10 @@
 
     <div class="flex items-center gap-4 mb-6">
       <div class="w-12 h-12 bg-emerald-500/20 rounded-3xl flex items-center justify-center text-4xl">📜</div>
-      <h1 class="text-4xl font-bold tracking-tight" data-i18n="termsTitle">Terms of Service</h1>
+      <h1 class="text-4xl font-bold tracking-tight">Terms of Service</h1>
     </div>
 
-    <p class="text-zinc-400 mb-10" data-i18n="termsLastUpdated">Last updated: September 23, 2026</p>
+    <p class="text-zinc-400 mb-10">Last updated: October 16, 2026</p>
 
     <!-- Friendly Intro -->
     <div class="glass rounded-3xl p-8 mb-10 space-y-4">
@@ -54,30 +54,27 @@
 
     <div class="space-y-12 text-zinc-300">
       
-      <!-- 1 -->
       <div>
         <h2 class="text-2xl font-semibold text-white mb-4">1. Acceptance of These Terms</h2>
-        <p>By creating an account, posting, or using VocalWitness, you agree to these Terms and our Privacy Policy. If you do not agree, please do not use the platform.</p>
+        <p>By creating an account, posting, or using VocalWitness, you agree to these Terms and our <a href="/privacy" class="text-emerald-400 hover:underline">Privacy Policy</a>. If you do not agree, please do not use the platform.</p>
       </div>
 
-      <!-- 2 -->
       <div>
         <h2 class="text-2xl font-semibold text-white mb-4">2. Our Role – A Public Square Infrastructure</h2>
-        <p>VocalWitness provides a structured interface for public reporting. We offer tools to publish reports and manage community interaction, operating on cloud infrastructure (Firebase) with moderation capabilities managed by operators and platform systems.</p>
+        <p>VocalWitness provides a structured interface for public reporting. We offer tools to publish reports and manage community interaction, operating on cloud infrastructure (Firebase) with moderation capabilities managed by operators and platform systems. We do not act as an editorial publisher of user content.</p>
       </div>
 
-      <!-- 3 -->
       <div>
         <h2 class="text-2xl font-semibold text-white mb-4">3. Verification Levels (How Trust Works)</h2>
         <p class="mb-3">To keep the square safe from bots and spam, we use tiered verification levels:</p>
         <ul class="list-disc pl-6 space-y-3 text-zinc-400">
           <li><strong class="text-emerald-400">Citizen Talk</strong> — Open to everyone who signs up for basic public discussion.</li>
           <li><strong class="text-emerald-400">Citizen Circle</strong> — Unlocked with a phone verification workflow to help prevent spam and bot accounts.</li>
-          <li><strong class="text-emerald-400">Witness Voice / Higher Trust</strong> — Advanced tiers incorporating client-side media hashing, metadata processing, and optional zero-knowledge proofs backed by simpler hash fallbacks.</li>
+          <li><strong class="text-emerald-400">Witness Voice / Higher Trust</strong> — Advanced tiers incorporating client-side media hashing, metadata processing, and optional zero-knowledge proofs.</li>
         </ul>
+        <p class="mt-3 text-sm text-zinc-500">Trust tiers and reputation are never for sale.</p>
       </div>
 
-      <!-- 4 -->
       <div>
         <h2 class="text-2xl font-semibold text-white mb-4">4. Your Rights and Responsibilities</h2>
         <p class="mb-4 text-zinc-400">You stay in control of your voice. Here are the clear rules:</p>
@@ -89,132 +86,85 @@
         </ul>
       </div>
 
-      <!-- 5 -->
       <div>
         <h2 class="text-2xl font-semibold text-white mb-4">5. Content Ownership & Visibility</h2>
-        <p>You retain ownership of the content you post. By publishing, you grant VocalWitness the necessary license to store, process, and display your contributions across feeds and ledgers. While user posts can be managed or removed from public view via standard application controls, database records and audit layers remain accessible to system operators for moderation, compliance, and platform integrity.</p>
+        <p>You retain ownership of the content you post. By publishing, you grant VocalWitness the necessary license to store, process, and display your contributions across feeds and ledgers. Sealed reports are designed so ordinary users cannot quietly edit or delete them. Operators retain the ability to moderate for safety and legal compliance.</p>
       </div>
 
-      <!-- 6 -->
       <div>
         <h2 class="text-2xl font-semibold text-white mb-4">6. Technology and Hosting</h2>
         <p>The platform relies on trusted cloud infrastructure (including Google Firebase and Cloudflare) to deliver secure hosting and database services. The platform is provided on an “as is” and “as available” basis.</p>
       </div>
 
-      <!-- 7 -->
       <div>
-        <h2 class="text-2xl font-semibold text-white mb-4">7. Support and Contributions</h2>
-        <p>The platform can be supported through voluntary contributions or payment gateways. Financial support does not grant special administrative control, ownership, or exemption from platform rules.</p>
+        <h2 class="text-2xl font-semibold text-white mb-4">7. Support, Credentials and Contributions</h2>
+        <p>The platform can be supported through voluntary contributions. An optional Independent Citizen Press Credential (Standard free / Official paid) is available for professionals who need a formal document. Financial support or purchase of a credential does <strong>not</strong> grant special administrative control, ownership, higher truth rank, or exemption from platform rules.</p>
       </div>
 
-      <!-- 8 -->
       <div>
         <h2 class="text-2xl font-semibold text-white mb-4">8. Limitation of Liability</h2>
         <p>To the fullest extent permitted by applicable law, VocalWitness and its operators are not liable for indirect, incidental, or consequential damages arising from your use of the platform or content posted by community members.</p>
       </div>
 
-      <!-- 9 -->
       <div>
         <h2 class="text-2xl font-semibold text-white mb-4">9. User Accountability</h2>
         <p>You are solely responsible for the content you publish. If you encounter content that violates these terms, please use the platform's reporting channels for review by moderators.</p>
       </div>
 
-      <!-- 10 -->
       <div>
         <h2 class="text-2xl font-semibold text-white mb-4">10. Intellectual Property</h2>
         <p>All rights in the VocalWitness platform, including software code, design, interface elements, branding, logos, and repository structures, remain the exclusive property of VocalWitness. Unauthorized copying, reverse-engineering, or commercial exploitation is prohibited.</p>
       </div>
-    </div>
-    <!-- ====================== FOOTER ====================== -->
-<footer class="mt-16 border-t border-zinc-800 pt-10 pb-8">
-  <div class="max-w-3xl mx-auto px-4 text-center">
 
-    <!-- Brand + Tagline -->
-    <div class="mb-6">
-      <div class="inline-flex items-center gap-2.5">
-        <img src="./logo.png" alt="VocalWitness" class="h-8 w-8 rounded-lg border border-emerald-500/40 object-cover">
-        <span class="text-lg font-bold tracking-tight">
-          <span class="text-emerald-400">Vocal</span><span class="text-white">Witness</span>
-        </span>
+      <div>
+        <h2 class="text-2xl font-semibold text-white mb-4">11. Indemnification</h2>
+        <p>You agree to defend, indemnify, and hold harmless VocalWitness and its operators from any claims, liabilities, or expenses arising from your violation of these Terms or your use of the platform.</p>
       </div>
-      <p class="mt-2 text-sm text-zinc-400">
-        Truth • Evidence • Zero-Knowledge
-      </p>
-    </div>
 
-    <!-- Links -->
-    <div class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-zinc-400 mb-6">
-      <a href="/about" class="hover:text-emerald-400 transition">About</a>
-      <a href="/safety" class="hover:text-emerald-400 transition">Safety</a>
-      <a href="/privacy" class="hover:text-emerald-400 transition">Privacy</a>
-      <a href="/terms" class="hover:text-emerald-400 transition">Terms</a>
-      <a href="/transparency" class="hover:text-emerald-400 transition">Transparency</a>
-      <a href="/verify" class="hover:text-emerald-400 transition">Verify</a>
-    </div>
-
-    <!-- Partner -->
-    <div class="mb-6 text-xs text-zinc-500">
-      <span class="text-zinc-400">Partner:</span>
-      <span class="font-medium text-zinc-300"> OK CREATION PHOTO & VIDEO STUDIO</span>
-      <span class="mx-1.5">·</span>
-      <a href="https://www.youtube.com/@okcreationphotovideostudio2425" 
-         target="_blank" rel="noopener noreferrer" 
-         class="text-emerald-400/90 hover:text-emerald-300 hover:underline">YouTube</a>
-      <span class="mx-1">·</span>
-      <a href="https://www.facebook.com/Okcreationfotostudio/" 
-         target="_blank" rel="noopener noreferrer" 
-         class="text-emerald-400/90 hover:text-emerald-300 hover:underline">Facebook</a>
-    </div>
-
-    <!-- Copyright -->
-    <p class="text-xs text-zinc-500">
-      © 2026 VocalWitness • Citizen Reporting • Real Evidence
-    </p>
-    <p class="mt-1 text-[11px] text-zinc-600 max-w-md mx-auto leading-relaxed">
-      Application-level integrity • Client-side hashing • The public record is designed to remain sealed
-    </p>
-
-  </div>
-</footer>
-
-    <!-- ===================== TECHNICAL / FULL LEGAL DETAILS ===================== -->
-    <section class="glass rounded-3xl p-6 md:p-8 mt-16 border border-zinc-700">
-      <h2 class="text-xl font-bold text-zinc-300 mb-6 flex items-center gap-2">
-        <span>⚙️</span> Technical & Architecture Overview
-      </h2>
-      
-      <div class="space-y-6 text-sm text-zinc-400 leading-relaxed">
-        <div>
-          <h3 class="font-semibold text-emerald-400 mb-1">Verification Architecture</h3>
-          <p>
-            • <strong>Citizen Talk</strong>: Open public discourse for registered participants on Firebase.<br>
-            • <strong>Citizen Circle</strong>: Unlocked via phone verification workflows to manage spam.<br>
-            • <strong>Witness Voice</strong>: Client-side media hashing, metadata processing, and hybrid zero-knowledge / cryptographic hash verification layers.
-          </p>
-        </div>
-
-        <div>
-          <h3 class="font-semibold text-emerald-400 mb-1">Data Storage & Management</h3>
-          <p>Data minimization principles are applied where feasible; however, account data, posts, and verification states are stored securely on Firebase cloud infrastructure where operators retain administrative and moderation access.</p>
-        </div>
-
-        <div>
-          <h3 class="font-semibold text-emerald-400 mb-1">Indemnification</h3>
-          <p>You agree to defend, indemnify, and hold harmless VocalWitness and its operators from any claims, liabilities, or expenses arising from your violation of these Terms or your use of the platform.</p>
-        </div>
+      <div>
+        <h2 class="text-2xl font-semibold text-white mb-4">12. Changes to These Terms</h2>
+        <p>We may update these Terms from time to time. The “Last updated” date at the top will change when we do. Continued use of the platform after changes constitutes acceptance of the revised Terms.</p>
       </div>
-    </section>
+    </div>
 
-    <div class="mt-16 pt-8 border-t border-zinc-800 flex justify-between items-center text-sm text-zinc-500">
+    <!-- Footer -->
+    <footer class="mt-16 border-t border-zinc-800 pt-10 pb-8">
+      <div class="text-center">
+        <div class="mb-6">
+          <div class="inline-flex items-center gap-2.5">
+            <img src="./logo.png" alt="VocalWitness" class="h-8 w-8 rounded-lg border border-emerald-500/40 object-cover">
+            <span class="text-lg font-bold tracking-tight">
+              <span class="text-emerald-400">Vocal</span><span class="text-white">Witness</span>
+            </span>
+          </div>
+          <p class="mt-2 text-sm text-zinc-400">Truth • Evidence • Zero-Knowledge</p>
+        </div>
+        <div class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-zinc-400 mb-6">
+          <a href="/about" class="hover:text-emerald-400 transition">About</a>
+          <a href="/safety" class="hover:text-emerald-400 transition">Safety</a>
+          <a href="/privacy" class="hover:text-emerald-400 transition">Privacy</a>
+          <a href="/terms" class="hover:text-emerald-400 transition">Terms</a>
+          <a href="/transparency" class="hover:text-emerald-400 transition">Transparency</a>
+          <a href="/verify" class="hover:text-emerald-400 transition">Verify</a>
+        </div>
+        <p class="text-xs text-zinc-500">© 2026 VocalWitness • Citizen Reporting • Real Evidence</p>
+        <p class="mt-1 text-[11px] text-zinc-600 max-w-md mx-auto leading-relaxed">
+          Application-level integrity • Client-side hashing • The public record is designed to remain sealed
+        </p>
+      </div>
+    </footer>
+
+    <div class="mt-10 text-center">
       <a href="index.html" class="text-emerald-400 hover:underline">← Back to Public Square</a>
-      <span>© 2026 VocalWitness</span>
     </div>
 
   </div>
 
   <script type="module">
       import { initLanguage } from './js/i18n.js';
-      document.addEventListener('DOMContentLoaded', () => initLanguage());
+      document.addEventListener('DOMContentLoaded', () => {
+        if (typeof initLanguage === 'function') initLanguage();
+      });
   </script>
 </body>
 </html>
