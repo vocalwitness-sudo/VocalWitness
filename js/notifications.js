@@ -1,5 +1,6 @@
-// js/notifications.js - Real-time Notification Listener & Fallback Engine
+// js/notifications.js - Real-time Notification Listener & Fallback Engine (I18n Modernized)
 import { db, auth } from './firebase-config.js';
+import { t } from './i18n.js';
 import {
   collection,
   query,
@@ -85,7 +86,7 @@ function updateNotificationBadge(count) {
     badgeMobile.classList.toggle("hidden", count === 0);
   }
   if (tag) {
-    tag.textContent = `${count} new`;
+    tag.textContent = `${count} ${t('common.new', 'new')}`;
   }
 }
 
@@ -146,8 +147,8 @@ export async function notifyCorroboration(ownerId, corroboratorId, testimonyId) 
     const notifRef = doc(collection(db, "users", ownerId, "notifications"));
     await setDoc(notifRef, {
       type: "corroboration",
-      title: "New corroboration",
-      message: "Someone corroborated your report",
+      title: t('notifications.corroborationTitle', 'New corroboration'),
+      message: t('notifications.corroborationMsg', 'Someone corroborated your report'),
       testimonyId,
       fromUid: corroboratorId,
       read: false,
@@ -189,7 +190,7 @@ function renderNotificationList(notifications) {
     listContainer.innerHTML = `
       <div class="p-8 text-center text-zinc-500">
           <p class="text-2xl mb-1">🔔</p>
-          <p class="text-sm">No notifications yet</p>
+          <p class="text-sm">${t('notifications.empty', 'No notifications yet')}</p>
       </div>`;
     return;
   }
@@ -198,7 +199,7 @@ function renderNotificationList(notifications) {
 
   notifications.forEach((item) => {
     const isUnread = !item.read;
-    let timeStr = "Recently";
+    let timeStr = t('notifications.recently', 'Recently');
 
     if (item.createdAt?.toDate) {
       timeStr = item.createdAt.toDate().toLocaleString();
@@ -213,7 +214,7 @@ function renderNotificationList(notifications) {
       }">
           <div class="flex items-start justify-between gap-2">
               <p class="text-xs font-semibold text-zinc-200">${escapeHTML(
-                item.title || "System Notification"
+                item.title || t('notifications.systemTitle', 'System Notification')
               )}</p>
               <span class="text-[10px] text-zinc-500 whitespace-nowrap">${timeStr}</span>
           </div>
@@ -232,7 +233,6 @@ function setupNotificationEventListeners() {
   const listContainer = document.getElementById("notification-list");
   if (!listContainer) return;
 
-  // Prevent duplicate event listeners
   if (listContainer.dataset.listenerAttached === "true") return;
   listContainer.dataset.listenerAttached = "true";
 
