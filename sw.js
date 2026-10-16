@@ -1,4 +1,4 @@
-// sw.js - Production Service Worker for VocalWitness (v15)
+// sw.js - Production Service Worker for VocalWitness (v16)
 // Features: Dynamic Asset Caching, PWA Web Share Target, Offline Evidence Queue, Background Sync & Panic Purge
 // FIX: Never intercept Firebase Auth paths (/__/) – required for mobile Google redirect
 
@@ -11,7 +11,23 @@ const STATIC_ASSETS = [
     '/my-testimonies.html',
     '/manifest.json',
     '/logo.png',
-    '/style.css'
+    '/style.css',
+    // Pre-cache all 15 language packs for full offline availability
+    '/translations/en.json',
+    '/translations/pcm.json',
+    '/translations/ha.json',
+    '/translations/yo.json',
+    '/translations/ig.json',
+    '/translations/sw.json',
+    '/translations/ar.json',
+    '/translations/es.json',
+    '/translations/fr.json',
+    '/translations/pt.json',
+    '/translations/de.json',
+    '/translations/zh-CN.json',
+    '/translations/ma.json',
+    '/translations/hi.json',
+    '/translations/id.json'
 ];
 
 // --- IndexedDB Offline Evidence Helpers ---
@@ -56,7 +72,7 @@ async function removeEvidenceFromQueue(id) {
 
 // 1. Install Event: Pre-cache core application shell
 self.addEventListener('install', (event) => {
-    console.log('✅ Service Worker installing (v15)...');
+    console.log('✅ Service Worker installing (v16)...');
     self.skipWaiting();
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
@@ -65,7 +81,7 @@ self.addEventListener('install', (event) => {
 
 // 2. Activate Event: Clean up legacy caches & claim clients immediately
 self.addEventListener('activate', (event) => {
-    console.log('✅ Service Worker activated (v15)');
+    console.log('✅ Service Worker activated (v16)');
     event.waitUntil(
         caches.keys().then((cacheNames) => {
             return Promise.all(
@@ -121,7 +137,26 @@ self.addEventListener('fetch', (event) => {
         return; // Handled directly by browser default network engine
     }
 
-    // --- C. JavaScript Modules Strategy (Network-First with Cache Fallback) ---
+    // --- C. Translation JSON Strategy (Stale-While-Revalidate with Cache Pre-fill) ---
+    if (url.pathname.startsWith('/translations/')) {
+        event.respondWith((async () => {
+            const cachedResponse = await caches.match(event.request);
+            const fetchPromise = fetch(event.request).then((networkResponse) => {
+                if (networkResponse && networkResponse.status === 200) {
+                    const responseClone = networkResponse.clone();
+                    caches.open(CACHE_NAME).then((cache) => {
+                        cache.put(event.request, responseClone);
+                    });
+                }
+                return networkResponse;
+            }).catch(() => cachedResponse);
+
+            return cachedResponse || fetchPromise;
+        })());
+        return;
+    }
+
+    // --- D. JavaScript Modules Strategy (Network-First with Cache Fallback) ---
     if (url.pathname.endsWith('.js')) {
         event.respondWith((async () => {
             try {
@@ -144,7 +179,7 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // --- D. Static Shell Strategy (Cache-First, Fallback to Network) ---
+    // --- E. Static Shell Strategy (Cache-First, Fallback to Network) ---
     event.respondWith(
         caches.match(event.request).then((cachedResponse) => {
             if (cachedResponse) return cachedResponse;
