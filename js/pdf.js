@@ -81,6 +81,20 @@ export async function generateAndDownloadPDF(userData, db, preferredType = null)
     showToast(t('pdf.toastProfileNotLoaded', "Profile data not loaded"), "error");
     return;
   }
+
+  // Dynamically load jsPDF only when needed
+  try {
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+      showToast("Loading PDF library…", "info");
+      const { loadJsPDF } = await import('./load-libs.js');
+      await loadJsPDF();
+    }
+  } catch (err) {
+    console.error("Failed to load jsPDF:", err);
+    showToast(t('pdf.toastLibNotLoaded', "PDF library failed to load. Please try again."), "error");
+    return;
+  }
+
   if (!window.jspdf || !window.jspdf.jsPDF) {
     showToast(t('pdf.toastLibNotLoaded', "PDF library not loaded. Please refresh the page."), "error");
     return;
