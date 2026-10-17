@@ -103,10 +103,24 @@ export async function generateWitnessProof(proofPayload, options = {}) {
  * @returns {Promise<boolean>}
  */
 export async function verifyWitnessProof(verificationKey, publicSignals, proof) {
-    if (typeof snarkjs === 'undefined') {
-        throw new Error("SnarkJS global library is not loaded on main thread.");
+  // Dynamically load snarkjs only when needed
+  if (typeof snarkjs === 'undefined' && !window.snarkjs) {
+    try {
+      const { loadSnarkjs } = await import('./load-libs.js');
+      await loadSnarkjs();
+    } catch (err) {
+      console.error('Failed to load snarkjs:', err);
+      throw new Error("SnarkJS library failed to load.");
     }
-    return await snarkjs.groth16.verify(verificationKey, publicSignals, proof);
+  }
+
+  const snark = window.snarkjs || snarkjs;
+
+  if (!snark?.groth16) {
+    throw new Error("SnarkJS global library is not loaded on main thread.");
+  }
+
+  return await snark.groth16.verify(verificationKey, publicSignals, proof);
 }
 
 // Global window bindings for non-module integration
