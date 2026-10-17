@@ -10,6 +10,27 @@
   <meta name="description" content="VocalWitness – Privacy-first public square for truth, evidence, and citizen reporting. Protected by zero-knowledge technology.">
   <meta name="robots" content="index, follow">
   <meta name="author" content="VocalWitness">
+  <!-- Modern Search & Discovery -->
+  <link rel="canonical" href="https://vocalwitness.com/">
+  <meta name="keywords" content="citizen journalism, zero knowledge proof, evidence logging, truth public square, decentralized media, anti-deepfake, cryptographic proof">
+
+  <!-- Open Graph Enhancements -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://vocalwitness.com/">
+  <meta property="og:title" content="VocalWitness • Decentralized Truth & Evidence Logging">
+  <meta property="og:description" content="Privacy-first public square for truth and evidence. Capture, seal, and verify field reports protected by zero-knowledge technology.">
+  <meta property="og:image" content="https://vocalwitness.com/logo.png">
+  <meta property="og:image:width" content="512">
+  <meta property="og:image:height" content="512">
+  <meta property="og:site_name" content="VocalWitness">
+  <meta property="og:locale" content="en_US">
+
+  <!-- Modern Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="VocalWitness • Truth & Evidence Logging">
+  <meta name="twitter:description" content="Capture, seal, and verify field reports protected by zero-knowledge technology.">
+  <meta name="twitter:image" content="https://vocalwitness.com/logo.png">
+  
 
   <!-- PWA / Mobile -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -55,13 +76,13 @@
   <link rel="preload" href="./style.css?v=3.1" as="style">
   <link rel="stylesheet" href="./style.css?v=3.1">
 
-  <!-- External scripts (deferred) -->
+  <!-- External Scripts & Libraries -->
   <script src="https://accounts.google.com/gsi/client" defer></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js" defer></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js" crossorigin="anonymous" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" crossorigin="anonymous" defer></script>
   <script src="https://js.paystack.co/v2/inline.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/snarkjs@0.7.0/build/snarkjs.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/snarkjs@0.7.0/build/snarkjs.min.js" crossorigin="anonymous" defer></script>
   <script type="module" src="./js/main.js?v=2.2"></script>
 
   <style>
@@ -207,6 +228,28 @@
       }
     }
   </style>
+
+  <!-- Structured Data / Search Engine Knowledge Graph -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "VocalWitness",
+    "url": "https://vocalwitness.com/",
+    "applicationCategory": "SocialNetworkingApplication",
+    "operatingSystem": "All",
+    "description": "Privacy-first public square for truth, evidence logging, and citizen reporting protected by zero-knowledge cryptography.",
+    "author": {
+      "@type": "Person",
+      "name": "Lawmann Ngwu"
+    },
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    }
+  }
+  </script>
 </head>
 
 <body class="theme-citizen tier-citizen">
