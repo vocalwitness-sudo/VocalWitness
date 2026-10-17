@@ -1,12 +1,13 @@
 {
   "name": "VocalWitness",
   "short_name": "VocalWitness",
-  "description": "Privacy First • Truth • Evidence • Public Square",
+  "description": "Privacy-first public square for truth, evidence, and citizen reporting. Protected by zero-knowledge technology.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0a0f1c",
+  "background_color": "#0b1120",
   "theme_color": "#10b981",
   "orientation": "portrait-primary",
+  "id": "/",
   "icons": [
     {
       "src": "/icon-192.png",
@@ -15,13 +16,13 @@
       "purpose": "any"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
