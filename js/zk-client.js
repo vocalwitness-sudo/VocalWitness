@@ -84,7 +84,16 @@ export async function verifyZKProofAsync(proofObj) {
   if (!proofObj || !proofObj.proof || !proofObj.publicSignals) return false;
 
   try {
-    if (window.snarkjs?.groth16) {
+if (!window.snarkjs?.groth16) {
+  try {
+    const { loadSnarkjs } = await import('./load-libs.js');
+    await loadSnarkjs();
+  } catch (e) {
+    console.warn('Could not load snarkjs for client verify');
+  }
+}
+
+if (window.snarkjs?.groth16) {
       const res = await fetch('/assets/zk/verification_key.json');
       if (!res.ok) return false;
       const vKey = await res.json();
