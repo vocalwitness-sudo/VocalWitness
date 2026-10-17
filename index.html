@@ -7,17 +7,18 @@
   <!-- Brand & Theme -->
   <meta name="theme-color" content="#10b981">
   <meta name="color-scheme" content="dark">
-  <meta name="description" content="VocalWitness – Privacy-first public square for truth, evidence, and citizen reporting. Protected by zero-knowledge technology.">
+  <meta name="description" content="VocalWitness – Privacy-first public square for truth, evidence, and citizen reporting. Protected by zero-knowledge technology. Built in Enugu, Nigeria.">
   <meta name="robots" content="index, follow">
-  <meta name="author" content="VocalWitness">
-  <!-- Modern Search & Discovery -->
-  <link rel="canonical" href="https://vocalwitness.com/">
-  <meta name="keywords" content="citizen journalism, zero knowledge proof, evidence logging, truth public square, decentralized media, anti-deepfake, cryptographic proof">
+  <meta name="author" content="Lawmann Ngwu">
+  <meta name="keywords" content="citizen journalism, zero knowledge proof, evidence logging, truth public square, decentralized media, anti-deepfake, cryptographic proof, VocalWitness, Nigeria">
 
-  <!-- Open Graph Enhancements -->
+  <!-- Canonical -->
+  <link rel="canonical" href="https://vocalwitness.com/">
+
+  <!-- Open Graph -->
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://vocalwitness.com/">
-  <meta property="og:title" content="VocalWitness • Decentralized Truth & Evidence Logging">
+  <meta property="og:title" content="VocalWitness • Truth • Evidence • Public Square">
   <meta property="og:description" content="Privacy-first public square for truth and evidence. Capture, seal, and verify field reports protected by zero-knowledge technology.">
   <meta property="og:image" content="https://vocalwitness.com/logo.png">
   <meta property="og:image:width" content="512">
@@ -25,12 +26,11 @@
   <meta property="og:site_name" content="VocalWitness">
   <meta property="og:locale" content="en_US">
 
-  <!-- Modern Twitter Card -->
+  <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="VocalWitness • Truth & Evidence Logging">
-  <meta name="twitter:description" content="Capture, seal, and verify field reports protected by zero-knowledge technology.">
+  <meta name="twitter:title" content="VocalWitness • Truth • Evidence • Public Square">
+  <meta name="twitter:description" content="Privacy-first public square for truth and evidence. Share what you saw — protected by zero-knowledge technology.">
   <meta name="twitter:image" content="https://vocalwitness.com/logo.png">
-  
 
   <!-- PWA / Mobile -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -40,23 +40,6 @@
   <meta name="apple-mobile-web-app-title" content="VocalWitness">
   <meta name="format-detection" content="telephone=no">
 
-  <!-- Open Graph -->
-  <meta property="og:title" content="VocalWitness • Truth • Evidence • Public Square">
-  <meta property="og:description" content="Privacy-first public square for truth and evidence. Share what you saw — protected by zero-knowledge technology.">
-  <meta property="og:image" content="https://vocalwitness.com/logo.png">
-  <meta property="og:image:width" content="512">
-  <meta property="og:image:height" content="512">
-  <meta property="og:url" content="https://vocalwitness.com/">
-  <meta property="og:type" content="website">
-  <meta property="og:site_name" content="VocalWitness">
-  <meta property="og:locale" content="en_US">
-
-  <!-- Twitter -->
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="VocalWitness • Truth • Evidence • Public Square">
-  <meta name="twitter:description" content="Privacy-first public square for truth and evidence. Share what you saw — protected by zero-knowledge technology.">
-  <meta name="twitter:image" content="https://vocalwitness.com/logo.png">
-
   <title data-i18n="pageTitle">VocalWitness • Truth • Evidence • Public Square</title>
 
   <!-- Icons & Manifest -->
@@ -64,7 +47,6 @@
   <link rel="icon" href="./logo.png" type="image/png">
   <link rel="icon" href="./icon-192.png" type="image/png" sizes="192x192">
   <link rel="apple-touch-icon" href="./icon-192.png" sizes="192x192">
-  <link rel="canonical" href="https://vocalwitness.com/">
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -229,25 +211,81 @@
     }
   </style>
 
-  <!-- Structured Data / Search Engine Knowledge Graph -->
+  <!-- Structured Data / Search Engine Knowledge Graph (Improved) -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "WebApplication",
-    "name": "VocalWitness",
-    "url": "https://vocalwitness.com/",
-    "applicationCategory": "SocialNetworkingApplication",
-    "operatingSystem": "All",
-    "description": "Privacy-first public square for truth, evidence logging, and citizen reporting protected by zero-knowledge cryptography.",
-    "author": {
-      "@type": "Person",
-      "name": "Lawmann Ngwu"
-    },
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "USD"
-    }
+    "@graph": [
+      {
+        "@type": "WebApplication",
+        "@id": "https://vocalwitness.com/#webapp",
+        "name": "VocalWitness",
+        "url": "https://vocalwitness.com/",
+        "logo": "https://vocalwitness.com/logo.png",
+        "image": "https://vocalwitness.com/logo.png",
+        "description": "Privacy-first public square for truth, evidence logging, and citizen reporting protected by zero-knowledge cryptography.",
+        "applicationCategory": "SocialNetworkingApplication",
+        "operatingSystem": "All",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "featureList": [
+          "Zero-knowledge evidence sealing",
+          "Cryptographic proof of authenticity",
+          "Citizen journalism tools",
+          "Privacy-preserving public square",
+          "Anti-deepfake verification"
+        ],
+        "author": {
+          "@id": "https://vocalwitness.com/#founder"
+        },
+        "creator": {
+          "@id": "https://vocalwitness.com/#founder"
+        },
+        "publisher": {
+          "@id": "https://vocalwitness.com/#organization"
+        }
+      },
+      {
+        "@type": "Organization",
+        "@id": "https://vocalwitness.com/#organization",
+        "name": "VocalWitness",
+        "url": "https://vocalwitness.com/",
+        "logo": "https://vocalwitness.com/logo.png",
+        "description": "Privacy-first platform for truth and evidence, powered by zero-knowledge technology.",
+        "foundingLocation": {
+          "@type": "Place",
+          "name": "Enugu, Nigeria"
+        },
+        "founder": {
+          "@id": "https://vocalwitness.com/#founder"
+        },
+        "sameAs": [
+          "https://github.com/vocalwitness-sudo/VocalWitness"
+        ]
+      },
+      {
+        "@type": "Person",
+        "@id": "https://vocalwitness.com/#founder",
+        "name": "Lawmann Ngwu",
+        "alternateName": "Lawrence Ngwu O.",
+        "homeLocation": {
+          "@type": "Place",
+          "name": "Enugu, Nigeria",
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Enugu",
+            "addressCountry": "NG"
+          }
+        },
+        "jobTitle": "Founder",
+        "worksFor": {
+          "@id": "https://vocalwitness.com/#organization"
+        }
+      }
+    ]
   }
   </script>
 </head>
